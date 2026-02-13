@@ -4,8 +4,6 @@ import { z } from 'zod';
 
 export * from './useNotebookResource';
 
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { createQueryHook } from '@/shared/lib/api-hooks';
 import { 
   notebookSchema, 
   noteWithRelationsSchema, 
@@ -15,39 +13,41 @@ import {
   noteCategoryWithChildrenSchema,
   relatedNoteSchema
 } from '@/shared/contracts/notes';
+import { createQueryHook } from '@/shared/lib/api-hooks';
+import { noteKeys } from '@/shared/lib/query-key-exports';
 
 const NOTES_STALE_MS = 10_000;
 
 export const useNotebooks = createQueryHook({
-  queryKeyFactory: () => QUERY_KEYS.notes.notebooks,
+  queryKeyFactory: () => noteKeys.notebooks,
   endpoint: '/api/notes/notebooks',
   schema: z.array(notebookSchema),
   staleTime: NOTES_STALE_MS,
 });
 
 export const useNoteFolderTree = createQueryHook({
-  queryKeyFactory: (notebookId?: string) => QUERY_KEYS.notes.folderTree(notebookId),
+  queryKeyFactory: (notebookId?: string) => noteKeys.folderTree(notebookId),
   endpoint: '/api/notes/categories/tree',
   schema: z.array(noteCategoryWithChildrenSchema),
   staleTime: NOTES_STALE_MS,
 });
 
 export const useNoteTags = createQueryHook({
-  queryKeyFactory: (notebookId?: string) => QUERY_KEYS.notes.tags(notebookId),
+  queryKeyFactory: (notebookId?: string) => noteKeys.tags(notebookId),
   endpoint: '/api/notes/tags',
   schema: z.array(noteTagSchema),
   staleTime: NOTES_STALE_MS,
 });
 
 export const useNoteThemes = createQueryHook({
-  queryKeyFactory: (notebookId?: string) => QUERY_KEYS.notes.themes(notebookId),
+  queryKeyFactory: (notebookId?: string) => noteKeys.themes(notebookId),
   endpoint: '/api/notes/themes',
   schema: z.array(noteThemeSchema),
   staleTime: NOTES_STALE_MS,
 });
 
 export const useNoteCategories = createQueryHook({
-  queryKeyFactory: (notebookId?: string | null) => QUERY_KEYS.notes.categories(notebookId),
+  queryKeyFactory: (notebookId?: string | null) => noteKeys.categories(notebookId),
   endpoint: '/api/notes/categories',
   schema: z.array(noteCategorySchema),
   staleTime: NOTES_STALE_MS,
@@ -66,21 +66,21 @@ export interface FetchNotesParams {
 }
 
 export const useNotes = createQueryHook({
-  queryKeyFactory: (params: FetchNotesParams) => QUERY_KEYS.notes.list(params),
+  queryKeyFactory: (params: FetchNotesParams) => noteKeys.list(params),
   endpoint: '/api/notes',
   schema: z.array(noteWithRelationsSchema),
   staleTime: NOTES_STALE_MS,
 });
 
 export const useNote = createQueryHook({
-  queryKeyFactory: (noteId: string | null) => QUERY_KEYS.notes.detail(noteId || 'none'),
+  queryKeyFactory: (noteId: string | null) => noteKeys.detail(noteId || 'none'),
   endpoint: (noteId: string | null) => `/api/notes/${noteId}`,
   schema: noteWithRelationsSchema.nullable(),
   staleTime: NOTES_STALE_MS,
 });
 
 export const useNotesLookup = createQueryHook({
-  queryKeyFactory: (noteIds: string[]) => QUERY_KEYS.notes.lookup(noteIds.filter(Boolean)),
+  queryKeyFactory: (noteIds: string[]) => noteKeys.lookup(noteIds.filter(Boolean)),
   endpoint: '/api/notes/lookup',
   schema: z.array(relatedNoteSchema),
   staleTime: NOTES_STALE_MS,

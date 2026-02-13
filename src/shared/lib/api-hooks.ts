@@ -34,10 +34,11 @@ export function createQueryHook<TData, TParams = void>(config: QueryConfig<TData
         if (method === 'POST') {
           data = await api.post<TData>(url, params as any, config.apiOptions);
         } else {
-          data = await api.get<TData>(url, { 
-            ...config.apiOptions,
-            params: (params && typeof params === 'object') ? (params as Record<string, any>) : undefined 
-          });
+          const requestOptions = { ...config.apiOptions };
+          if (params && typeof params === 'object') {
+            (requestOptions as any).params = params;
+          }
+          data = await api.get<TData>(url, requestOptions);
         }
         
         if (config.schema) {
@@ -45,7 +46,7 @@ export function createQueryHook<TData, TParams = void>(config: QueryConfig<TData
         }
         return data;
       },
-      staleTime: config.staleTime,
+      ...(config.staleTime !== undefined ? { staleTime: config.staleTime } : {}),
       ...options,
     });
   };
@@ -60,29 +61,37 @@ export interface MutationConfig<TData, TVariables, TContext = unknown> {
 export function createMutationHook<TData, TVariables, TContext = unknown>(
   config: MutationConfig<TData, TVariables, TContext>
 ) {
-  return (options?: Partial<UseMutationOptions<TData, Error, TVariables, TContext>>) => {
+  return (
+    options?: Partial<UseMutationOptions<TData, Error, TVariables, TContext>> & {
+      onSuccess?: (data: TData, variables: TVariables, context: TContext) => void | Promise<void>;
+    }
+  ) => {
     const queryClient = useQueryClient();
+    const { onSuccess, ...mutationOptions } = options || {};
 
     return useMutation({
       mutationFn: config.mutationFn,
       onSuccess: async (data, variables, context) => {
         if (config.invalidateKeys) {
-          const keys = typeof config.invalidateKeys === 'function' 
-            ? config.invalidateKeys(data, variables) 
-            : config.invalidateKeys;
-          
-          await Promise.all(keys.map(key => queryClient.invalidateQueries({ queryKey: key })));
+          const keys =
+            typeof config.invalidateKeys === 'function'
+              ? config.invalidateKeys(data, variables)
+              : config.invalidateKeys;
+
+          await Promise.all(
+            keys.map((key) => queryClient.invalidateQueries({ queryKey: key }))
+          );
         }
 
         if (config.onSuccess) {
-          await config.onSuccess(data, variables, context);
+          await (config.onSuccess as any)(data, variables, context);
         }
 
-        if (options?.onSuccess) {
-          await options.onSuccess(data, variables, context);
+        if (onSuccess) {
+          await (onSuccess as any)(data, variables, context);
         }
       },
-      ...options,
+      ...mutationOptions,
     });
   };
 }

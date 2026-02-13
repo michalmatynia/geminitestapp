@@ -1,8 +1,9 @@
 import React from 'react';
+
 import { useSaveCurrencyMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
-import { useToast } from '@/shared/ui';
 import { logClientError } from '@/features/observability';
 import type { CurrencyOption } from '@/shared/types/domain/internationalization';
+import { useToast } from '@/shared/ui';
 
 interface CurrencyFormState {
   code: string;

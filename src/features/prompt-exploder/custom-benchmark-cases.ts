@@ -85,7 +85,7 @@ export const parseCustomBenchmarkCasesDraft = (
     );
     const minSegments =
       typeof value['minSegments'] === 'number' && Number.isFinite(value['minSegments'])
-        ? clampNumber(Math.floor(value['minSegments'] as number), 1, 200)
+        ? clampNumber(Math.floor(value['minSegments']), 1, 200)
         : 1;
 
     if (!id) {

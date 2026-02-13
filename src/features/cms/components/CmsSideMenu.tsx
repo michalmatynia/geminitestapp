@@ -2,18 +2,15 @@
 
 import * as React from 'react';
 
+import { useCmsEditor } from '@/features/cms/components/CmsEditorContext';
 import type { PageComponent, Page } from '@/features/cms/types';
 import { Button } from '@/shared/ui';
 
 import RichTextBlock, { type RichTextContent } from './RichTextBlock';
 
+export default function CmsSideMenu(): React.JSX.Element {
+  const { page, setPage } = useCmsEditor();
 
-interface CmsSideMenuProps {
-  page: Page | null;
-  setPage: React.Dispatch<React.SetStateAction<Page | null>>;
-}
-
-export default function CmsSideMenu({ page, setPage }: CmsSideMenuProps): React.JSX.Element {
   const addComponent = (type: string): void => {
     const newComponent: PageComponent = {
       type,

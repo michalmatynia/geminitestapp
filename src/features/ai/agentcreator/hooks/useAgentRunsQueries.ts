@@ -1,13 +1,16 @@
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { agentRunsKeys } from '@/shared/lib/query-key-exports';
 import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/types/domain/chatbot';
 
 import * as api from '../api/client';
 
-export const agentRunsKeys = QUERY_KEYS.agentRuns;
+export { agentRunsKeys };
+
+
+
 
 export function useAgentRuns(): UseQueryResult<AiPathRunRecord[], Error> {
   return useQuery({

@@ -1,10 +1,13 @@
 'use client';
 
-import React from 'react';
 import { Loader2, RefreshCw } from 'lucide-react';
-import { PanelAction } from './types';
+import React from 'react';
+
+
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/utils/ui-utils';
+
+import { PanelAction } from './types';
 
 interface PanelHeaderProps {
   title: string;
@@ -55,30 +58,30 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
       )}
     >
       {/* Title and Description Section */}
-      <div className="flex items-start gap-3">
+      <div className='flex items-start gap-3'>
         {icon && (
-          <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-gray-100 text-gray-600">
+          <div className='mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-gray-100 text-gray-600'>
             {icon}
           </div>
         )}
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
+        <div className='flex-1'>
+          <div className='flex items-center gap-2'>
             <h2 className={cn('font-semibold text-gray-900', compact ? 'text-sm' : 'text-base')}>
               {title}
             </h2>
             {subtitle && (
-              <span className="text-xs text-gray-500 font-medium">{subtitle}</span>
+              <span className='text-xs text-gray-500 font-medium'>{subtitle}</span>
             )}
           </div>
           {description && (
-            <p className="text-xs text-gray-600 mt-1">{description}</p>
+            <p className='text-xs text-gray-600 mt-1'>{description}</p>
           )}
         </div>
       </div>
 
       {/* Actions Section */}
       {(actions.length > 0 || refreshable || customActions) && (
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100">
+        <div className='flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100'>
           {/* Custom Actions Slot */}
           {customActions}
 
@@ -87,13 +90,13 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
             <Button
               key={action.key}
               variant={action.variant || 'outline'}
-              size="sm"
-              onClick={action.onClick}
+              size='sm'
+              onClick={() => { void action.onClick(); }}
               disabled={action.disabled || isRefreshing}
               title={action.tooltip}
-              className="h-8"
+              className='h-8'
             >
-              {action.icon && <span className="mr-1">{action.icon}</span>}
+              {action.icon && <span className='mr-1'>{action.icon}</span>}
               {action.label}
             </Button>
           ))}
@@ -101,17 +104,17 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
           {/* Refresh Button */}
           {refreshable && (
             <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
+              variant='outline'
+              size='sm'
+              onClick={() => { void handleRefresh(); }}
               disabled={isRefreshing}
-              className="h-8 w-8 p-0"
-              title="Refresh"
+              className='h-8 w-8 p-0'
+              title='Refresh'
             >
               {isRefreshing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className='h-4 w-4 animate-spin' />
               ) : (
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className='h-4 w-4' />
               )}
             </Button>
           )}

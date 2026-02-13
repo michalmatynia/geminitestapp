@@ -5,8 +5,8 @@
  * They replace repetitive UseQueryResult<T[], Error> annotations with meaningful aliases.
  */
 
-import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import type { ListResponse } from './dto-utils';
+import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 
 /**
  * Standard result type for list queries
@@ -57,7 +57,7 @@ export type PagedQuery<T> = UseQueryResult<ListResponse<T>, Error>;
  * }
  * ```
  */
-export type CreateMutation<T> = UseMutationResult<T, Error, Omit<T, 'id' | 'createdAt' | 'updatedAt'>>;
+export type CreateMutation<T, TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>> = UseMutationResult<T, Error, TInput>;
 
 /**
  * Standard result type for update mutations
@@ -69,7 +69,7 @@ export type CreateMutation<T> = UseMutationResult<T, Error, Omit<T, 'id' | 'crea
  * }
  * ```
  */
-export type UpdateMutation<T> = UseMutationResult<T, Error, { id: string; data: Partial<T> }>;
+export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }> = UseMutationResult<T, Error, TInput>;
 
 /**
  * Standard result type for delete mutations
@@ -93,7 +93,7 @@ export type DeleteMutation = UseMutationResult<void, Error, string>;
  * }
  * ```
  */
-export type SaveMutation<T> = UseMutationResult<T, Error, { id?: string; data: Partial<T> }>;
+export type SaveMutation<T, TInput = { id?: string; data: Partial<T> }> = UseMutationResult<T, Error, TInput>;
 
 /**
  * Generic mutation result type for custom operations

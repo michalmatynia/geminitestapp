@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from 'react';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+
 import {
   GRID_TEMPLATE_SETTINGS_KEY,
   normalizeGridTemplates,

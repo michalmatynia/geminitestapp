@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { AppModal } from '@/shared/ui/app-modal';
 
 export interface DetailModalProps {

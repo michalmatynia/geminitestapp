@@ -95,7 +95,7 @@ export const extractMutationErrorMessage = (error: unknown, fallback: string): s
  */
 export const createMutationErrorHandler =
   (onCustomError?: (message: string, error: unknown) => void) =>
-  (error: unknown): void => {
-    const message = extractMutationErrorMessage(error, 'An error occurred');
-    onCustomError?.(message, error);
-  };
+    (error: unknown): void => {
+      const message = extractMutationErrorMessage(error, 'An error occurred');
+      onCustomError?.(message, error);
+    };

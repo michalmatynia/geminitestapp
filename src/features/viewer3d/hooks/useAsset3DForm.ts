@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
+
 import { logClientError } from '@/features/observability';
+
 import { updateAsset3D } from '../api';
+
 import type { Asset3DRecord, Asset3DUpdateInput } from '../types';
 
 export function useAsset3DForm(

@@ -199,7 +199,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const { data: integrationsWithConnectionsData, isLoading: checkingIntegration } = useIntegrationsWithConnections();
   const integrationsWithConnections = useMemo((): IntegrationWithConnections[] => 
     Array.isArray(integrationsWithConnectionsData) ? integrationsWithConnectionsData as IntegrationWithConnections[] : [],
-    [integrationsWithConnectionsData]
+  [integrationsWithConnectionsData]
   );
   const catalogsQuery = useCatalogs();
   const catalogsData = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);

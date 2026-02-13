@@ -7,6 +7,8 @@ import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/features/pl
 import type { PlaywrightSettings } from '@/features/playwright/types';
 import { Button, Input, Checkbox, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
+import { PlaywrightSettingsFormViewProvider, usePlaywrightSettingsFormView } from './context/PlaywrightSettingsFormViewContext';
+
 import type { Dispatch, SetStateAction } from 'react';
 
 export type PlaywrightSettingsFormProps = {
@@ -325,13 +327,14 @@ function AdvancedSettingsSection(): ReactElement {
   );
 }
 
-export function PlaywrightSettingsFormContent({
-  onSave,
-  saveLabel,
-  showSave,
-  title,
-  description,
-}: Omit<PlaywrightSettingsFormProps, 'settings' | 'setSettings'>): ReactElement {
+export function PlaywrightSettingsFormContent(): ReactElement {
+  const {
+    onSave,
+    saveLabel,
+    showSave,
+    title,
+    description,
+  } = usePlaywrightSettingsFormView();
   const shouldShowSave = showSave ?? Boolean(onSave);
 
   return (
@@ -365,15 +368,17 @@ export function PlaywrightSettingsFormContent({
 
 
 export function PlaywrightSettingsForm(props: PlaywrightSettingsFormProps): ReactElement {
+  const {
+    settings,
+    setSettings,
+    ...viewProps
+  } = props;
 
   return (
-
-    <PlaywrightSettingsProvider settings={props.settings} setSettings={props.setSettings}>
-
-      <PlaywrightSettingsFormContent {...props} />
-
+    <PlaywrightSettingsProvider settings={settings} setSettings={setSettings}>
+      <PlaywrightSettingsFormViewProvider value={viewProps}>
+        <PlaywrightSettingsFormContent />
+      </PlaywrightSettingsFormViewProvider>
     </PlaywrightSettingsProvider>
-
   );
-
 }

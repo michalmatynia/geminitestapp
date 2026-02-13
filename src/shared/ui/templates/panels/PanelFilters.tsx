@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
-import { FilterField } from './types';
-import { Input } from '@/shared/ui/input';
+import React, { useState, useCallback } from 'react';
+
+
 import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { Input } from '@/shared/ui/input';
 import {
   Select,
   SelectContent,
@@ -12,8 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select';
-import { Checkbox } from '@/shared/ui/checkbox';
 import { cn } from '@/shared/utils/ui-utils';
+
+import { FilterField } from './types';
 
 interface PanelFiltersProps {
   filters: FilterField[];
@@ -57,22 +60,22 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
     <div className={cn('space-y-3', className)}>
       {/* Search Bar */}
       {searchPlaceholder && (
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+        <div className='relative'>
+          <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-400' />
           <Input
-            type="text"
+            type='text'
             placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="pl-8 pr-8"
+            className='pl-8 pr-8'
           />
           {search && (
             <button
               onClick={() => onSearchChange?.('')}
-              className="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600"
-              aria-label="Clear search"
+              className='absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600'
+              aria-label='Clear search'
             >
-              <X className="h-4 w-4" />
+              <X className='h-4 w-4' />
             </button>
           )}
         </div>
@@ -97,7 +100,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
           ) : null}
 
           {isExpanded && (
-            <div className="flex flex-wrap gap-2">
+            <div className='flex flex-wrap gap-2'>
               {filterFieldsToRender.map((field) => (
                 <FilterControl
                   key={field.key}
@@ -110,10 +113,10 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
               {/* Reset Button */}
               {hasActiveFilters && (
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant='outline'
+                  size='sm'
                   onClick={handleReset}
-                  className="ml-auto"
+                  className='ml-auto'
                 >
                   Reset Filters
                 </Button>
@@ -143,10 +146,10 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
   switch (field.type) {
     case 'select':
       return (
-        <div style={containerStyle} className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">{field.label}</label>
+        <div style={containerStyle} className='flex flex-col gap-1'>
+          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
           <Select value={value || ''} onValueChange={onChange}>
-            <SelectTrigger className="h-8">
+            <SelectTrigger className='h-8'>
               <SelectValue placeholder={field.placeholder} />
             </SelectTrigger>
             <SelectContent>
@@ -162,13 +165,13 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
 
     case 'checkbox':
       return (
-        <div style={containerStyle} className="flex items-center gap-2 py-1">
+        <div style={containerStyle} className='flex items-center gap-2 py-1'>
           <Checkbox
             id={field.key}
             checked={value || false}
             onCheckedChange={onChange}
           />
-          <label htmlFor={field.key} className="text-sm font-medium cursor-pointer">
+          <label htmlFor={field.key} className='text-sm font-medium cursor-pointer'>
             {field.label}
           </label>
         </div>
@@ -176,39 +179,39 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
 
     case 'number':
       return (
-        <div style={containerStyle} className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">{field.label}</label>
+        <div style={containerStyle} className='flex flex-col gap-1'>
+          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
           <Input
-            type="number"
+            type='number'
             placeholder={field.placeholder}
             value={value || ''}
             onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
-            className="h-8 text-sm"
+            className='h-8 text-sm'
           />
         </div>
       );
 
     case 'date':
       return (
-        <div style={containerStyle} className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">{field.label}</label>
+        <div style={containerStyle} className='flex flex-col gap-1'>
+          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
           <Input
-            type="date"
+            type='date'
             value={value || ''}
             onChange={(e) => onChange(e.target.value || undefined)}
-            className="h-8 text-sm"
+            className='h-8 text-sm'
           />
         </div>
       );
 
     case 'dateRange':
       return (
-        <div style={containerStyle} className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">{field.label}</label>
-          <div className="flex gap-1">
+        <div style={containerStyle} className='flex flex-col gap-1'>
+          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
+          <div className='flex gap-1'>
             <Input
-              type="date"
-              placeholder="From"
+              type='date'
+              placeholder='From'
               value={value?.from || ''}
               onChange={(e) =>
                 onChange({
@@ -216,11 +219,11 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
                   from: e.target.value || undefined,
                 })
               }
-              className="h-8 text-sm"
+              className='h-8 text-sm'
             />
             <Input
-              type="date"
-              placeholder="To"
+              type='date'
+              placeholder='To'
               value={value?.to || ''}
               onChange={(e) =>
                 onChange({
@@ -228,7 +231,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
                   to: e.target.value || undefined,
                 })
               }
-              className="h-8 text-sm"
+              className='h-8 text-sm'
             />
           </div>
         </div>
@@ -237,14 +240,14 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     case 'text':
     default:
       return (
-        <div style={containerStyle} className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-gray-600">{field.label}</label>
+        <div style={containerStyle} className='flex flex-col gap-1'>
+          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
           <Input
-            type="text"
+            type='text'
             placeholder={field.placeholder}
             value={value || ''}
             onChange={(e) => onChange(e.target.value || undefined)}
-            className="h-8 text-sm"
+            className='h-8 text-sm'
           />
         </div>
       );

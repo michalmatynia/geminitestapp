@@ -19,6 +19,7 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { useRuleItemDragState } from './context/RuleListDragContext';
 import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
 import {
   DEFAULT_PROMPT_VALIDATION_SCOPES,
@@ -65,11 +66,6 @@ const formatAutofixOperation = (op: PromptAutofixOperation): string => {
 
 type RuleItemProps = {
   draft: RuleDraft;
-  draggableEnabled?: boolean | undefined;
-  isDragging?: boolean | undefined;
-  isDragTarget?: boolean | undefined;
-  onDragStart?: (() => void) | undefined;
-  onDragEnd?: (() => void) | undefined;
 };
 
 const LAUNCH_OPERATORS: Array<{ value: PromptValidationLaunchOperator; label: string }> = [
@@ -129,12 +125,14 @@ const normalizeRuleKind = (value: string): PromptValidationRule['kind'] =>
 
 export function RuleItem({
   draft,
-  draggableEnabled = false,
-  isDragging = false,
-  isDragTarget = false,
-  onDragStart,
-  onDragEnd,
 }: RuleItemProps): React.JSX.Element {
+  const {
+    draggableEnabled,
+    isDragging,
+    isDragTarget,
+    onDragStart,
+    onDragEnd,
+  } = useRuleItemDragState(draft.uid);
   const {
     handleRuleTextChange,
     handlePatchRule,

@@ -19,9 +19,9 @@ export const mergeRegexLearnedRule = (args: {
         ),
         similar: existingRule.similar ?? args.incomingRule.similar,
         sequence:
-          typeof existingRule.sequence === 'number'
+          (typeof existingRule.sequence === 'number'
             ? existingRule.sequence
-            : args.incomingRule.sequence,
+            : args.incomingRule.sequence) ?? null,
       }
       : args.incomingRule;
 

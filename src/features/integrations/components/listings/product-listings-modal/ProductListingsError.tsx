@@ -3,25 +3,21 @@
 import React from 'react';
 
 import type { ImageRetryPreset } from '@/features/data-import-export';
+import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
+import { isImageExportError } from '@/features/integrations/components/listings/utils';
+import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import { ImageRetryDropdown, Alert } from '@/shared/ui';
 
-type ProductListingsErrorProps = {
-  error: string;
-  isImageExportError: boolean;
-  lastExportListingId: string | null;
-  imageRetryPresets: ImageRetryPreset[];
-  onImageRetry: (preset: ImageRetryPreset) => void;
-  exportingListing: string | null;
-};
+export function ProductListingsError(): React.JSX.Element {
+  const {
+    error,
+    lastExportListingId,
+    exportingListing,
+    handleImageRetry,
+  } = useProductListingsContext();
+  const imageRetryPresets: ImageRetryPreset[] = useImageRetryPresets();
+  const isImageError = isImageExportError(error);
 
-export function ProductListingsError({
-  error,
-  isImageExportError: isImageError,
-  lastExportListingId,
-  imageRetryPresets,
-  onImageRetry,
-  exportingListing,
-}: ProductListingsErrorProps): React.JSX.Element {
   return (
     <Alert variant='error'>
       <div className='flex flex-col gap-3'>
@@ -30,7 +26,9 @@ export function ProductListingsError({
           <div className='flex flex-wrap items-center gap-2'>
             <ImageRetryDropdown
               presets={imageRetryPresets}
-              onRetry={onImageRetry}
+              onRetry={(preset: ImageRetryPreset): void => {
+                void handleImageRetry(preset);
+              }}
               disabled={Boolean(exportingListing)}
             />
             <span className='text-xs text-red-200/80'>

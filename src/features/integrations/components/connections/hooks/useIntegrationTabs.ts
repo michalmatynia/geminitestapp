@@ -18,8 +18,8 @@ type UseIntegrationTabsResult = {
   playwrightPersonas: PlaywrightPersona[];
   playwrightPersonasLoading: boolean;
   playwrightPersonaId: string | null;
-  handleSelectPlaywrightPersona: (id: string | null) => void;
-  handleSavePlaywrightSettings: () => void;
+  handleSelectPlaywrightPersona: (id: string | null) => Promise<void>;
+  handleSavePlaywrightSettings: () => Promise<void>;
 };
 
 export function useIntegrationTabs(): UseIntegrationTabsResult {

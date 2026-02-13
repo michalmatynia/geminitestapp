@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+
 import { PanelState, UsePanelStateOptions, UsePanelStateReturn } from './types';
 
 /**
@@ -7,7 +8,7 @@ import { PanelState, UsePanelStateOptions, UsePanelStateReturn } from './types';
  * @returns State object and setter functions
  */
 export function usePanelState(
-  options: UsePanelStateOptions<any> = {}
+  options: UsePanelStateOptions = {}
 ): UsePanelStateReturn {
   const {
     initialPage = 1,

@@ -1,8 +1,9 @@
 import React from 'react';
-import { useToast } from '@/shared/ui';
+
 import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog } from '@/features/products/types';
 import type { Language } from '@/shared/types/domain/internationalization';
+import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface CatalogFormState {

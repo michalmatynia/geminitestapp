@@ -1,27 +1,25 @@
 import React from 'react';
 
 import type { ImageRetryPreset } from '@/features/data-import-export';
+import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/ui';
 
-type ListProductErrorPanelProps = {
-  error: string;
-  isBaseComIntegration: boolean;
-  imageRetryPresets: ImageRetryPreset[];
-  submitting: boolean;
-  onRetry: (preset: ImageRetryPreset) => void;
-};
+import { useImageRetryPresets } from '../useImageRetryPresets';
+import { useListProductModalFormContext } from './context/ListProductModalFormContext';
 
 const isImageExportError = (error: string): boolean => {
   return error.toLowerCase().includes('image') && error.toLowerCase().includes('export');
 };
 
-export function ListProductErrorPanel({
-  error,
-  isBaseComIntegration,
-  imageRetryPresets,
-  submitting,
-  onRetry,
-}: ListProductErrorPanelProps): React.JSX.Element {
+export function ListProductErrorPanel(): React.JSX.Element {
+  const { isBaseComIntegration } = useListingSettingsContext();
+  const { error, submitting, onRetryImageExport } = useListProductModalFormContext();
+  const imageRetryPresets = useImageRetryPresets();
+
+  if (!error) {
+    return <></>;
+  }
+
   return (
     <div className='rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200'>
       <div className='flex flex-col gap-3'>
@@ -43,7 +41,7 @@ export function ListProductErrorPanel({
                 {imageRetryPresets.map((preset: ImageRetryPreset) => (
                   <DropdownMenuItem
                     key={preset.id}
-                    onSelect={() => onRetry(preset)}
+                    onSelect={() => onRetryImageExport(preset)}
                     className='text-gray-200 focus:bg-gray-800/70'
                   >
                     <div className='flex flex-col'>

@@ -15,11 +15,18 @@ import { MarkdownToolbar } from './editor/MarkdownToolbar';
 import { NoteMetadata } from './editor/NoteMetadata';
 import { WysiwygEditor } from './editor/WysiwygEditor';
 
-function NoteFormInner({ 
-  formRef 
-}: { 
-  formRef?: React.RefObject<HTMLFormElement | null> | undefined 
-}): React.JSX.Element {
+type NoteFormViewContextValue = {
+  formRef?: React.RefObject<HTMLFormElement | null> | undefined;
+};
+
+const NoteFormViewContext = React.createContext<NoteFormViewContextValue>({});
+
+function useNoteFormViewContext(): NoteFormViewContextValue {
+  return React.useContext(NoteFormViewContext);
+}
+
+function NoteFormInner(): React.JSX.Element {
+  const { formRef } = useNoteFormViewContext();
   const {
     note,
     content,
@@ -256,10 +263,25 @@ function NoteFormInner({
   );
 }
 
-export function NoteForm(props: NoteFormProps & { formRef?: React.RefObject<HTMLFormElement | null> | undefined }): React.JSX.Element {
+export function NoteForm({
+  note,
+  onSuccess,
+  formRef,
+}: NoteFormProps & {
+  formRef?: React.RefObject<HTMLFormElement | null> | undefined;
+}): React.JSX.Element {
+  const viewContextValue = React.useMemo(
+    () => ({
+      formRef: formRef ?? undefined,
+    }),
+    [formRef]
+  );
+
   return (
-    <NoteFormProvider note={props.note ?? null} onSuccess={props.onSuccess}>
-      <NoteFormInner formRef={props.formRef ?? undefined} />
+    <NoteFormProvider note={note ?? null} onSuccess={onSuccess}>
+      <NoteFormViewContext.Provider value={viewContextValue}>
+        <NoteFormInner />
+      </NoteFormViewContext.Provider>
     </NoteFormProvider>
   );
 }

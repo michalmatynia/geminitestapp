@@ -2,22 +2,26 @@
 
 import React, { useMemo } from 'react';
 
-import type { ImageRetryPreset } from '@/features/data-import-export';
 import { ExportLogViewer } from '@/features/integrations/components/listings/ExportLogViewer';
-import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
-import { isImageExportError } from '@/features/integrations/components/listings/utils';
 import { ProductListingsProvider, useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import type { ProductWithImages } from '@/features/products/types';
 import { AppModal } from '@/shared/ui';
 
+import {
+  ProductListingsModalViewProvider,
+  useProductListingsModalViewContext,
+} from './product-listings-modal/context/ProductListingsModalViewContext';
+import {
+  ProductListingsViewProvider,
+  type ProductListingsViewContextValue,
+} from './product-listings-modal/context/ProductListingsViewContext';
 import { ProductListingsConfirmDialogs } from './product-listings-modal/ProductListingsConfirmDialogs';
-import { ProductListingsStartPanel } from './product-listings-modal/ProductListingsStartPanel';
-import { ProductListingsSyncPanel } from './product-listings-modal/ProductListingsSyncPanel';
-import { ProductListingsLoading } from './product-listings-modal/ProductListingsLoading';
-import { ProductListingsError } from './product-listings-modal/ProductListingsError';
 import { ProductListingsContent } from './product-listings-modal/ProductListingsContent';
 import { ProductListingsEmpty } from './product-listings-modal/ProductListingsEmpty';
+import { ProductListingsError } from './product-listings-modal/ProductListingsError';
+import { ProductListingsLoading } from './product-listings-modal/ProductListingsLoading';
+import { ProductListingsStartPanel } from './product-listings-modal/ProductListingsStartPanel';
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
@@ -51,18 +55,13 @@ function ProductListingsModalContent(): React.JSX.Element {
     listings,
     isLoading,
     error,
-    exportingListing,
     exportLogs,
     logsOpen,
     setLogsOpen,
-    lastExportListingId,
-    handleImageRetry,
     onClose,
     onStartListing,
     filterIntegrationSlug,
   } = useProductListingsContext();
-
-  const imageRetryPresets: ImageRetryPreset[] = useImageRetryPresets();
 
   const productName: string =
     product.name_en || product.name_pl || product.name_de || 'Unnamed Product';
@@ -78,6 +77,21 @@ function ProductListingsModalContent(): React.JSX.Element {
   const isBaseFilter = BASE_INTEGRATION_SLUGS.has(normalizeSlug(filterIntegrationSlug));
   const statusTargetLabel: string = isBaseFilter ? 'Base.com' : filterIntegrationSlug ?? 'integration';
   const canStartListing: boolean = Boolean(onStartListing) && !filterIntegrationSlug;
+  const productListingsViewContextValue: ProductListingsViewContextValue = useMemo(
+    () => ({
+      filteredListings,
+      statusTargetLabel,
+      filterIntegrationSlug,
+      isBaseFilter,
+      showSync: Boolean(filterIntegrationSlug),
+    }),
+    [
+      filterIntegrationSlug,
+      filteredListings,
+      isBaseFilter,
+      statusTargetLabel,
+    ]
+  );
 
   return (
     <AppModal
@@ -91,37 +105,19 @@ function ProductListingsModalContent(): React.JSX.Element {
         {isLoading ? (
           <ProductListingsLoading />
         ) : error ? (
-          <ProductListingsError
-            error={error}
-            isImageExportError={isImageExportError(error)}
-            lastExportListingId={lastExportListingId}
-            imageRetryPresets={imageRetryPresets}
-            onImageRetry={handleImageRetry}
-            exportingListing={exportingListing}
-          />
+          <ProductListingsError />
         ) : (
-          <div className='space-y-3'>
-            {canStartListing && <ProductListingsStartPanel />}
-            
-            {filteredListings.length === 0 ? (
-              <ProductListingsEmpty
-                filterIntegrationSlug={filterIntegrationSlug}
-                statusTargetLabel={statusTargetLabel}
-                isBaseFilter={isBaseFilter}
-                showSync={filterIntegrationSlug ? true : false}
-                SyncPanel={ProductListingsSyncPanel}
-              />
-            ) : (
-              <ProductListingsContent
-                filteredListings={filteredListings}
-                statusTargetLabel={statusTargetLabel}
-                filterIntegrationSlug={filterIntegrationSlug}
-                isBaseFilter={isBaseFilter}
-                showSync={filterIntegrationSlug ? true : false}
-                SyncPanel={ProductListingsSyncPanel}
-              />
-            )}
-          </div>
+          <ProductListingsViewProvider value={productListingsViewContextValue}>
+            <div className='space-y-3'>
+              {canStartListing && <ProductListingsStartPanel />}
+
+              {filteredListings.length === 0 ? (
+                <ProductListingsEmpty />
+              ) : (
+                <ProductListingsContent />
+              )}
+            </div>
+          </ProductListingsViewProvider>
         )}
         
         {exportLogs.length > 0 && (
@@ -138,17 +134,50 @@ function ProductListingsModalContent(): React.JSX.Element {
   );
 }
 
-export function ProductListingsModal(props: ProductListingsModalProps): React.JSX.Element {
+function ProductListingsModalProviders(): React.JSX.Element {
+  const {
+    product,
+    onListingsUpdated,
+    onClose,
+    onStartListing,
+    filterIntegrationSlug,
+  } = useProductListingsModalViewContext();
+
   return (
-    <ProductListingsProvider 
-      product={props.product} 
-      onListingsUpdated={props.onListingsUpdated}
-      onClose={props.onClose}
-      onStartListing={props.onStartListing}
-      filterIntegrationSlug={props.filterIntegrationSlug}
+    <ProductListingsProvider
+      product={product}
+      onListingsUpdated={onListingsUpdated}
+      onClose={onClose}
+      onStartListing={onStartListing}
+      filterIntegrationSlug={filterIntegrationSlug}
     >
       <ProductListingsModalContent />
     </ProductListingsProvider>
+  );
+}
+
+export function ProductListingsModal({
+  product,
+  onClose,
+  onStartListing,
+  filterIntegrationSlug,
+  onListingsUpdated,
+}: ProductListingsModalProps): React.JSX.Element {
+  const viewContextValue = React.useMemo(
+    () => ({
+      product,
+      onClose,
+      ...(onStartListing !== undefined && { onStartListing }),
+      ...(filterIntegrationSlug !== undefined && { filterIntegrationSlug }),
+      ...(onListingsUpdated !== undefined && { onListingsUpdated }),
+    }),
+    [filterIntegrationSlug, onClose, onListingsUpdated, onStartListing, product]
+  );
+
+  return (
+    <ProductListingsModalViewProvider value={viewContextValue}>
+      <ProductListingsModalProviders />
+    </ProductListingsModalViewProvider>
   );
 }
 

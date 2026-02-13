@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useMemo } from 'react';
+
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
+
 import { useFileUploadEventsContext } from '../../contexts/FileUploadEventsContext';
 
 /**
@@ -67,7 +69,7 @@ export function FileUploadEventsFilters(): React.JSX.Element {
         filters={filterConfig}
         values={filterValues}
         search={query}
-        searchPlaceholder="filename, error, source…"
+        searchPlaceholder='filename, error, source…'
         onFilterChange={handleFilterChange}
         onSearchChange={(q) => { setPage(1); setQuery(q); }}
         onReset={handleResetFilters}

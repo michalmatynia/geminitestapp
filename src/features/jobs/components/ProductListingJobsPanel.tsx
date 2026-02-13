@@ -13,6 +13,7 @@ import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContex
 import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 import { Button, AppModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from '@/shared/ui';
 
+import { ProductListingJobsPanelViewProvider, useProductListingJobsPanelView } from './context/ProductListingJobsPanelViewContext';
 import { JobTable, type JobRowData } from './JobTable';
 
 type ProductListingJobsPanelProps = {
@@ -47,9 +48,8 @@ const getStatusIcon = (status: string): React.JSX.Element => {
   }
 };
 
-function ProductListingJobsPanelContent({
-  showBackToProducts = true,
-}: ProductListingJobsPanelProps): React.JSX.Element {
+function ProductListingJobsPanelContent(): React.JSX.Element {
+  const { showBackToProducts } = useProductListingJobsPanelView();
   const {
     listingJobs: jobs,
     listingJobsLoading: isLoading,
@@ -349,9 +349,12 @@ function ProductListingJobsPanelContent({
 }
 
 export default function ProductListingJobsPanel(props: ProductListingJobsPanelProps): React.JSX.Element {
+  const { showBackToProducts = true } = props;
   return (
     <JobsProvider>
-      <ProductListingJobsPanelContent {...props} />
+      <ProductListingJobsPanelViewProvider value={{ showBackToProducts }}>
+        <ProductListingJobsPanelContent />
+      </ProductListingJobsPanelViewProvider>
     </JobsProvider>
   );
 }

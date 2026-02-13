@@ -118,63 +118,63 @@ export function Asset3DListPage(): React.JSX.Element {
             containerClassName='flex-1 min-w-[200px] max-w-md'
           />
 
-            {categories.length > 0 && (
-              <div className='w-[180px]'>
-                <UnifiedSelect
-                  value={selectedCategory ?? '__all__'}
-                  onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
-                  options={[
-                    { value: '__all__', label: 'All categories' },
-                    ...categories.map((cat: string) => ({
-                      value: cat,
-                      label: cat,
-                    })),
-                  ]}
-                  placeholder='All categories'
-                  triggerClassName='h-8'
-                />
-              </div>
-            )}
-
-            {allTags.length > 0 && (
-              <div className='flex flex-wrap gap-2'>
-                {allTags.slice(0, 5).map((tag: string) => (
-                  <Button
-                    key={tag}
-                    variant={selectedTags.includes(tag) ? 'default' : 'outline'}
-                    size='sm'
-                    onClick={() =>
-                      setSelectedTags((prev: string[]) =>
-                        prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
-                      )
-                    }
-                    className='h-7 px-2 text-xs'
-                  >
-                    {tag}
-                  </Button>
-                ))}
-              </div>
-            )}
-
-            <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size='icon'
-                className='h-8 w-8 rounded-none'
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className='h-4 w-4' />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size='icon'
-                className='h-8 w-8 rounded-none'
-                onClick={() => setViewMode('list')}
-              >
-                <List className='h-4 w-4' />
-              </Button>
+          {categories.length > 0 && (
+            <div className='w-[180px]'>
+              <UnifiedSelect
+                value={selectedCategory ?? '__all__'}
+                onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
+                options={[
+                  { value: '__all__', label: 'All categories' },
+                  ...categories.map((cat: string) => ({
+                    value: cat,
+                    label: cat,
+                  })),
+                ]}
+                placeholder='All categories'
+                triggerClassName='h-8'
+              />
             </div>
+          )}
+
+          {allTags.length > 0 && (
+            <div className='flex flex-wrap gap-2'>
+              {allTags.slice(0, 5).map((tag: string) => (
+                <Button
+                  key={tag}
+                  variant={selectedTags.includes(tag) ? 'default' : 'outline'}
+                  size='sm'
+                  onClick={() =>
+                    setSelectedTags((prev: string[]) =>
+                      prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
+                    )
+                  }
+                  className='h-7 px-2 text-xs'
+                >
+                  {tag}
+                </Button>
+              ))}
+            </div>
+          )}
+
+          <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size='icon'
+              className='h-8 w-8 rounded-none'
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className='h-4 w-4' />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size='icon'
+              className='h-8 w-8 rounded-none'
+              onClick={() => setViewMode('list')}
+            >
+              <List className='h-4 w-4' />
+            </Button>
           </div>
+        </div>
       }
       footer={stats}
     >

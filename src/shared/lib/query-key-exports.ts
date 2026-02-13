@@ -120,7 +120,50 @@ export const logsKeys = QUERY_KEYS.system.logs;
 export const activityKeys = QUERY_KEYS.system.activity;
 
 /**
+ * System diagnostics query keys (from system.diagnostics)
+ * Used in: observability hooks
+ */
+export const diagnosticsKeys = QUERY_KEYS.system.diagnostics;
+
+/**
  * Playwright query keys (from playwright)
  * Used in: playwright hooks
  */
 export const playwrightKeys = QUERY_KEYS.playwright;
+
+/**
+ * AI Paths query keys (from ai.aiPaths)
+ * Used in: AI paths query hooks
+ */
+export const aiPathKeys = QUERY_KEYS.ai.aiPaths;
+
+/**
+ * Agent runs query keys (from agentRuns)
+ * Used in: agent creator query hooks
+ */
+export const agentRunsKeys = QUERY_KEYS.agentRuns;
+
+/**
+ * Brain query keys (from brain)
+ * Used in: brain/knowledge base query hooks
+ */
+export const brainKeys = QUERY_KEYS.brain;
+
+/**
+ * Image studio query keys (from imageStudio)
+ * Used in: image studio query hooks
+ */
+export const studioKeys = QUERY_KEYS.imageStudio;
+
+/**
+ * Category query keys (from products.categories)
+ * Used in: product category query hooks
+ */
+export const categoryKeys = QUERY_KEYS.products;
+
+/**
+ * Internationalization query keys (from internationalization)
+ * Used in: internationalization query hooks
+ */
+export const i18nKeys = QUERY_KEYS.internationalization;
+export const chatbotKeys = QUERY_KEYS.ai.chatbot;

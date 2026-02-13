@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { createMasterFolderTreeAdapter } from '@/features/foldertree/master/createMasterFolderTreeAdapter';
 import type {
   MasterFolderTreePersistContext,
   MasterFolderTreePersistOperation,
 } from '@/features/foldertree/master/types';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 type DecodedNode =
   | { entity: 'folder'; id: string; nodeId: string }

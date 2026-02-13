@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useMemo } from 'react';
 import { Store } from 'lucide-react';
 import Link from 'next/link';
-import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
-import type { PickerOption, PickerGroup } from '@/shared/ui/templates/pickers/types';
+import React, { useMemo } from 'react';
+
 import { useCategoryMapperPageContext } from '@/features/integrations/context/CategoryMapperPageContext';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { EmptyState, Skeleton } from '@/shared/ui';
+import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
+import type { PickerOption, PickerGroup } from '@/shared/ui/templates/pickers/types';
 
 export function MarketplaceSelector(): React.JSX.Element {
   const { integrations, loading, selectedConnectionId, setSelectedConnectionId } = useCategoryMapperPageContext();

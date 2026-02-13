@@ -1,8 +1,10 @@
 'use client';
 
 import { memo, useMemo } from 'react';
+
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
+
 import { useFileManager } from '../../contexts/FileManagerContext';
 
 /**

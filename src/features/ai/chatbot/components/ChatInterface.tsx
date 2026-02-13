@@ -6,25 +6,16 @@ import { ChatMessage } from '@/shared/types/domain/chatbot';
 import { Button, Input } from '@/shared/ui';
 
 import { ChatMessageContent } from './ChatMessageContent';
-import { ChatbotContext } from '../context/ChatbotContext';
+import { useChatbot } from '../context/ChatbotContext';
 
-export interface ChatInterfaceProps {
-  messages?: ChatMessage[];
-  input?: string;
-  setInput?: (val: string) => void;
-  isSending?: boolean;
-  onSend?: (e: React.FormEvent) => void;
-  renderFormattedMessage?: (content: string) => string;
-}
-
-export function ChatInterface(props: ChatInterfaceProps): React.JSX.Element {
-  const chatbot = React.useContext(ChatbotContext);
-  
-  const messages = props.messages ?? chatbot?.messages ?? [];
-  const input = props.input ?? chatbot?.input ?? '';
-  const setInput = props.setInput ?? chatbot?.setInput ?? ((): void => {});
-  const isSending = props.isSending ?? chatbot?.isSending ?? false;
-  const sendMessage = chatbot?.sendMessage ?? (async (): Promise<void> => {});
+export function ChatInterface(): React.JSX.Element {
+  const {
+    messages,
+    input,
+    setInput,
+    isSending,
+    sendMessage,
+  } = useChatbot();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -36,8 +27,6 @@ export function ChatInterface(props: ChatInterfaceProps): React.JSX.Element {
     e.preventDefault();
     void sendMessage();
   };
-
-  const onSend = props.onSend ?? defaultOnSend;
 
   return (
     <div className='flex h-full flex-col'>
@@ -71,7 +60,7 @@ export function ChatInterface(props: ChatInterfaceProps): React.JSX.Element {
         )}
       </div>
       <div className='border-t border-border p-4'>
-        <form onSubmit={onSend} className='flex gap-2'>
+        <form onSubmit={defaultOnSend} className='flex gap-2'>
           <Input
             className='flex-1 rounded-md border bg-gray-900 px-3 py-2 text-white focus:border-blue-500 focus:outline-none'
             value={input}
@@ -91,4 +80,3 @@ export function ChatInterface(props: ChatInterfaceProps): React.JSX.Element {
     </div>
   );
 }
-

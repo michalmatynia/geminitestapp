@@ -7,7 +7,7 @@ import type { ProductListPreferences } from '@/features/products/types/products-
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateUserPreferences } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { authKeys } from '@/shared/lib/query-key-exports';
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,
@@ -22,7 +22,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   thumbnailSource: 'file',
 };
 
-const userPreferencesQueryKey = QUERY_KEYS.auth.preferences.detail('product-list');
+const userPreferencesQueryKey = authKeys.preferences.detail('product-list');
 
 async function fetchUserPreferences(): Promise<ProductListPreferences> {
   const data = normalizeUserPreferencesResponse(
@@ -99,7 +99,7 @@ export interface UserPreferencesHookResult {
 export function useUserPreferences(): UserPreferencesHookResult {
   const queryClient = useQueryClient();
   const { data = DEFAULT_PREFERENCES, isLoading } = useQuery({
-    queryKey: [userPreferencesQueryKey],
+    queryKey: userPreferencesQueryKey,
     queryFn: fetchUserPreferences,
     staleTime: 1000 * 60 * 60,
     placeholderData: DEFAULT_PREFERENCES,
@@ -109,7 +109,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
     async (locale: 'name_en' | 'name_pl' | 'name_de') => {
       await updateUserPreference('nameLocale', locale);
       updateLocalStorage('nameLocale', locale);
-      invalidateUserPreferences(queryClient);
+      void invalidateUserPreferences(queryClient);
     },
     [queryClient],
   );
@@ -118,7 +118,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
     async (filter: string) => {
       await updateUserPreference('catalogFilter', filter);
       updateLocalStorage('catalogFilter', filter);
-      invalidateUserPreferences(queryClient);
+      void invalidateUserPreferences(queryClient);
     },
     [queryClient],
   );
@@ -127,7 +127,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
     async (code: string) => {
       await updateUserPreference('currencyCode', code);
       updateLocalStorage('currencyCode', code);
-      invalidateUserPreferences(queryClient);
+      void invalidateUserPreferences(queryClient);
     },
     [queryClient],
   );
@@ -136,7 +136,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
     async (size: number) => {
       await updateUserPreference('pageSize', size);
       updateLocalStorage('pageSize', size);
-      invalidateUserPreferences(queryClient);
+      void invalidateUserPreferences(queryClient);
     },
     [queryClient],
   );

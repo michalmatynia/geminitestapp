@@ -11,6 +11,7 @@ import { FormModal } from '@/shared/ui';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';
 import { SelectProductForListingModalProvider } from './select-product-modal/context/SelectProductForListingModalContext';
+import { SelectProductForListingModalViewProvider, useSelectProductForListingModalView } from './select-product-modal/context/SelectProductForListingModalViewContext';
 import { IntegrationSettingsSection } from './select-product-modal/IntegrationSettingsSection';
 import { ProductListSection } from './select-product-modal/ProductListSection';
 
@@ -21,10 +22,8 @@ type SelectProductForListingModalProps = {
   initialConnectionId?: string | null;
 };
 
-function SelectProductForListingModalContent({
-  onClose,
-  onSuccess,
-}: SelectProductForListingModalProps): React.JSX.Element {
+function SelectProductForListingModalContent(): React.JSX.Element {
+  const { onClose, onSuccess } = useSelectProductForListingModalView();
   const {
     selectedIntegrationId,
     selectedConnectionId,
@@ -90,12 +89,25 @@ function SelectProductForListingModalContent({
 }
 
 export function SelectProductForListingModal(props: SelectProductForListingModalProps): React.JSX.Element {
+  const {
+    initialIntegrationId,
+    initialConnectionId,
+    onClose,
+    onSuccess,
+  } = props;
   return (
     <ListingSettingsProvider
-      initialIntegrationId={props.initialIntegrationId ?? null}
-      initialConnectionId={props.initialConnectionId ?? null}
+      initialIntegrationId={initialIntegrationId ?? null}
+      initialConnectionId={initialConnectionId ?? null}
     >
-      <SelectProductForListingModalContent {...props} />
+      <SelectProductForListingModalViewProvider
+        value={{
+          onClose,
+          onSuccess,
+        }}
+      >
+        <SelectProductForListingModalContent />
+      </SelectProductForListingModalViewProvider>
     </ListingSettingsProvider>
   );
 }

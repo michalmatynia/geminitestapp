@@ -762,13 +762,13 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               onClick={() =>
                 updateMappingPath(imageEntryIndex, '$.media')
               }
-                          >
+            >
                             Use $.media
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                    <p className='text-[11px] text-gray-500'>        Use JSON paths like{' '}
+            </Button>
+          </div>
+        </div>
+      )}
+      <p className='text-[11px] text-gray-500'>        Use JSON paths like{' '}
         <span className='text-gray-300'>{'$.images'}</span>,{' '}
         <span className='text-gray-300'>{'$.imageLinks'}</span>, or{' '}
         <span className='text-gray-300'>{'$.media'}</span> for image arrays.

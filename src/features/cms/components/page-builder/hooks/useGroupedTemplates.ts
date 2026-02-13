@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
-import { getSectionTypesForZone } from '../section-registry';
-import { getTemplatesByCategory, type SectionTemplate } from '../section-templates';
+
 import { cloneGridTemplateSection, type GridTemplateRecord } from '../grid-templates';
+import { getSectionTypesForZone } from '../section-registry';
 import { cloneSectionTemplateSection, type SectionTemplateRecord } from '../section-template-store';
+import { getTemplatesByCategory, type SectionTemplate } from '../section-templates';
+
 import type { PageZone, SectionDefinition } from '../../../types/page-builder';
 
 export function useGroupedTemplates(

@@ -274,24 +274,16 @@ type PdfExtractResponse = {
   pageCount?: unknown;
 };
 
-type CaseResolverCanvasWorkspaceInnerProps = {
-  graph: CaseResolverGraph;
-  defaultDropFolder: string;
-  availableFiles: CaseResolverFile[];
-  onUploadAssets: (
-    files: File[],
-    targetFolderPath: string | null
-  ) => Promise<CaseResolverAssetFile[]>;
-  onGraphChange: (nextGraph: CaseResolverGraph) => void;
-};
-
-function CaseResolverCanvasWorkspaceInner({
-  graph,
-  defaultDropFolder,
-  availableFiles,
-  onUploadAssets,
-  onGraphChange,
-}: CaseResolverCanvasWorkspaceInnerProps): React.JSX.Element {
+function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
+  const {
+    activeFile,
+    workspace,
+    onUploadAssets,
+    onGraphChange,
+  } = useCaseResolverPageContext();
+  const graph = activeFile!.graph;
+  const defaultDropFolder = activeFile!.folder;
+  const availableFiles = workspace.files;
   const { toast } = useToast();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
@@ -1417,12 +1409,7 @@ function CaseResolverCanvasWorkspaceInner({
 }
 
 export function CaseResolverCanvasWorkspace(): React.JSX.Element {
-  const {
-    activeFile,
-    workspace,
-    onUploadAssets,
-    onGraphChange,
-  } = useCaseResolverPageContext();
+  const { activeFile } = useCaseResolverPageContext();
 
   if (!activeFile) {
     return (
@@ -1444,13 +1431,7 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
         history: {},
       }}
     >
-      <CaseResolverCanvasWorkspaceInner
-        graph={activeFile.graph}
-        availableFiles={workspace.files}
-        defaultDropFolder={activeFile.folder}
-        onUploadAssets={onUploadAssets}
-        onGraphChange={onGraphChange}
-      />
+      <CaseResolverCanvasWorkspaceInner />
     </AiPathsProvider>
   );
 }

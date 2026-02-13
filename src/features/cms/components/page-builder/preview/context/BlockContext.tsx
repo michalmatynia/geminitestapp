@@ -11,6 +11,8 @@ export interface BlockContextValue {
   columnId?: string;
   parentBlockId?: string;
   mediaStyles?: React.CSSProperties | null | undefined;
+  contained?: boolean;
+  stretch?: boolean;
 }
 
 const BlockContext = createContext<BlockContextValue>({});

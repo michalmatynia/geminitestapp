@@ -183,47 +183,15 @@ const useAiPathConfigDefaults = (): AiPathConfigData => {
   );
 };
 
+type AiPathConfigProviderProps = {
+  children: React.ReactNode;
+  value: AiPathConfigData;
+};
+
 export function AiPathConfigProvider({
   children,
-  ...props
-}: AiPathConfigData & { children: React.ReactNode }): React.ReactNode {
-  const value = useMemo(() => props, [
-    props.configOpen,
-    props.setConfigOpen,
-    props.selectedNode,
-    props.nodes,
-    props.edges,
-    props.isPathLocked,
-    props.modelOptions,
-    props.parserSamples,
-    props.setParserSamples,
-    props.parserSampleLoading,
-    props.updaterSamples,
-    props.setUpdaterSamples,
-    props.updaterSampleLoading,
-    props.runtimeState,
-    props.pathDebugSnapshot,
-    props.updateSelectedNode,
-    props.updateSelectedNodeConfig,
-    props.handleFetchParserSample,
-    props.handleFetchUpdaterSample,
-    props.handleRunSimulation,
-    props.clearRuntimeForNode,
-    props.clearNodeCache,
-    props.clearNodeHistory,
-    props.onSendToAi,
-    props.sendingToAi,
-    props.dbQueryPresets,
-    props.setDbQueryPresets,
-    props.saveDbQueryPresets,
-    props.dbNodePresets,
-    props.setDbNodePresets,
-    props.saveDbNodePresets,
-    props.toast,
-    props.onDirtyChange,
-    props.savePathConfig,
-  ]);
-
+  value,
+}: AiPathConfigProviderProps): React.ReactNode {
   return (
     <AiPathConfigContext.Provider value={value}>
       {children}
@@ -253,7 +221,7 @@ export function AiPathConfigProviderWithContext({
   }, [defaults, overrides]);
 
   return (
-    <AiPathConfigProvider {...value}>
+    <AiPathConfigProvider value={value}>
       {children}
     </AiPathConfigProvider>
   );

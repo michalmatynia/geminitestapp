@@ -140,7 +140,7 @@ export interface PanelConfig<T> {
   callbacks?: PanelCallbacks;
 }
 
-export interface UsePanelStateOptions<T> {
+export interface UsePanelStateOptions {
   initialPage?: number;
   initialPageSize?: number;
   initialFilters?: Record<string, any>;

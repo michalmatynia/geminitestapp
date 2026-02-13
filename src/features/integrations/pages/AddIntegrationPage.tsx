@@ -87,57 +87,57 @@ export default function AddIntegrationPage(): React.JSX.Element {
       />
 
       <div className='grid gap-6 md:grid-cols-2'>
-          {AVAILABLE_INTEGRATIONS.map((integration: (typeof AVAILABLE_INTEGRATIONS)[number]) => (
-            <div
-              key={integration.slug}
-              className='rounded-xl border bg-card p-5'
-            >
-              <div className='flex items-start justify-between'>
-                <div>
-                  <h2 className='text-xl font-semibold text-white'>
-                    {integration.name}
-                  </h2>
-                  <p className='mt-2 text-sm text-gray-400'>
-                    {integration.description}
-                  </p>
-                </div>
-                <div className='flex flex-col items-end gap-2'>
-                  <span
-                    className={`rounded-full px-2 py-1 text-xs ${
-                      integration.type === 'marketplace'
-                        ? 'bg-emerald-500/20 text-emerald-200'
-                        : 'bg-purple-500/20 text-purple-200'
-                    }`}
-                  >
-                    {integration.type === 'marketplace' ? 'Marketplace' : 'Platform'}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-1 text-xs ${
-                      integration.method === 'api'
-                        ? 'bg-blue-500/20 text-blue-200'
-                        : 'bg-orange-500/20 text-orange-200'
-                    }`}
-                  >
-                    {integration.method === 'api' ? 'API' : 'Browser'}
-                  </span>
-                  <span className='rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300'>
-                    Added: {integrationCounts[integration.slug] ?? 0}
-                  </span>
-                </div>
+        {AVAILABLE_INTEGRATIONS.map((integration: (typeof AVAILABLE_INTEGRATIONS)[number]) => (
+          <div
+            key={integration.slug}
+            className='rounded-xl border bg-card p-5'
+          >
+            <div className='flex items-start justify-between'>
+              <div>
+                <h2 className='text-xl font-semibold text-white'>
+                  {integration.name}
+                </h2>
+                <p className='mt-2 text-sm text-gray-400'>
+                  {integration.description}
+                </p>
               </div>
-              <div className='mt-6 flex justify-end'>
-                <Button
-                  className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
-                  type='button'
-                  disabled={createIntegrationMutation.isPending}
-                  onClick={() => { void handleAdd(integration); }}
+              <div className='flex flex-col items-end gap-2'>
+                <span
+                  className={`rounded-full px-2 py-1 text-xs ${
+                    integration.type === 'marketplace'
+                      ? 'bg-emerald-500/20 text-emerald-200'
+                      : 'bg-purple-500/20 text-purple-200'
+                  }`}
                 >
-                  Add
-                </Button>
+                  {integration.type === 'marketplace' ? 'Marketplace' : 'Platform'}
+                </span>
+                <span
+                  className={`rounded-full px-2 py-1 text-xs ${
+                    integration.method === 'api'
+                      ? 'bg-blue-500/20 text-blue-200'
+                      : 'bg-orange-500/20 text-orange-200'
+                  }`}
+                >
+                  {integration.method === 'api' ? 'API' : 'Browser'}
+                </span>
+                <span className='rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300'>
+                    Added: {integrationCounts[integration.slug] ?? 0}
+                </span>
               </div>
             </div>
-          ))}
-        </div>
+            <div className='mt-6 flex justify-end'>
+              <Button
+                className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
+                type='button'
+                disabled={createIntegrationMutation.isPending}
+                onClick={() => { void handleAdd(integration); }}
+              >
+                  Add
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import React from 'react';
+
 import { useSaveCountryMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
-import { useToast } from '@/shared/ui';
 import { logClientError } from '@/features/observability';
 import type { CountryOption, CurrencyOption } from '@/shared/types/domain/internationalization';
+import { useToast } from '@/shared/ui';
 
 interface CountryFormState {
   code: string;

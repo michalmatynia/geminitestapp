@@ -8,22 +8,22 @@ import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants
 import type { PlaywrightPersona } from '@/features/playwright/types';
 import { normalizePlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
+import {
+  importExportTemplateSchema
+} from '@/shared/contracts/data-import-export';
 import { 
   integrationSchema, 
   integrationConnectionSchema
 } from '@/shared/contracts/integrations';
-import {
-  importExportTemplateSchema
-} from '@/shared/contracts/data-import-export';
-import { createQueryHook } from '@/shared/lib/api-hooks';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { createQueryHook } from '@/shared/lib/api-hooks';
+import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';
 
 export const useIntegrations = createQueryHook({
-  queryKeyFactory: () => QUERY_KEYS.integrations.all,
+  queryKeyFactory: () => integrationKeys.all,
   endpoint: '/api/integrations',
   schema: z.array(integrationSchema),
 });
@@ -35,19 +35,19 @@ export const useIntegrationConnections = createQueryHook({
 });
 
 export const useConnectionSession = createQueryHook({
-  queryKeyFactory: (connectionId?: string) => QUERY_KEYS.integrations.connectionSession(connectionId),
+  queryKeyFactory: (connectionId?: string) => integrationKeys.connectionSession(connectionId),
   endpoint: (connectionId?: string) => `/api/integrations/connections/${connectionId}/session`,
   staleTime: 0,
 });
 
 export const useIntegrationsWithConnections = createQueryHook({
-  queryKeyFactory: () => QUERY_KEYS.integrations.withConnections(),
+  queryKeyFactory: () => integrationKeys.withConnections(),
   endpoint: '/api/integrations/with-connections',
 });
 
 export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
   return useQuery({
-    queryKey: QUERY_KEYS.playwright.personas(),
+    queryKey: playwrightKeys.personas(),
     queryFn: async (): Promise<PlaywrightPersona[]> => {
       const data = await fetchSettingsCached();
       const map = new Map(data.map((item: { key: string; value: string }) => [item.key, item.value]));
@@ -61,24 +61,24 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
 }
 
 export const useExportTemplates = createQueryHook({
-  queryKeyFactory: () => QUERY_KEYS.integrations.exportTemplates(),
+  queryKeyFactory: () => integrationKeys.exportTemplates(),
   endpoint: '/api/integrations/export-templates',
   schema: z.array(importExportTemplateSchema),
 });
 
 export const useActiveExportTemplate = createQueryHook({
-  queryKeyFactory: () => QUERY_KEYS.integrations.activeExportTemplate(),
+  queryKeyFactory: () => integrationKeys.activeExportTemplate(),
   endpoint: '/api/integrations/exports/base/active-template',
 });
 
 export const useDefaultExportInventory = createQueryHook({
-  queryKeyFactory: () => QUERY_KEYS.integrations.defaultExportInventory(),
+  queryKeyFactory: () => integrationKeys.defaultExportInventory(),
   endpoint: '/api/integrations/exports/base/default-inventory',
 });
 
 export function useBaseInventories(connectionId: string, enabled: boolean = true): UseQueryResult<BaseInventory[]> {
   return useQuery({
-    queryKey: QUERY_KEYS.integrations.baseInventories(connectionId),
+    queryKey: integrationKeys.baseInventories(connectionId),
     queryFn: async (): Promise<BaseInventory[]> => {
       const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
         action: 'inventories',

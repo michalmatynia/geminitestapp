@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import { memo, useState, useCallback, useMemo } from 'react';
 
 import { cn } from '@/shared/utils';
+
 import type { GenericPickerDropdownProps, PickerOption, PickerGroup } from './types';
 
 /**
@@ -201,8 +202,8 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
       )}
     </div>
   );
-}) as <T extends PickerOption = PickerOption>(
+}) as (<T extends PickerOption = PickerOption>(
   props: GenericPickerDropdownProps<T>
-) => React.ReactElement;
+) => React.ReactElement) & { displayName?: string };
 
 GenericPickerDropdown.displayName = 'GenericPickerDropdown';

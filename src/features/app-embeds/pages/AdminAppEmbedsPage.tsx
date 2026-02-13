@@ -3,9 +3,7 @@
 import React from 'react';
 
 import { AppEmbedList } from '@/features/app-embeds/components/AppEmbedList';
-
 import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-
 import { Button, SectionHeader, FormSection } from '@/shared/ui';
 
 

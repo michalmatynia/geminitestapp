@@ -5,7 +5,7 @@ import NextImage from 'next/image';
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 
-import { useBlockContext } from './context/BlockContext';
+import { useBlockContext, BlockContextProvider } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { getSpacingValue, resolveJustifyContent, resolveAlignItems } from './preview-utils';
 import { getSectionStyles, getTextAlign } from '../../frontend/theme-styles';
@@ -47,7 +47,8 @@ export function PreviewImageWithTextBlock({
   const {
     inspectorSettings,
   } = usePreviewEditor();
-  const { mediaStyles } = useBlockContext();
+  const { mediaStyles, stretch: contextStretch } = useBlockContext();
+  const resolvedStretch = stretch ?? contextStretch ?? false;
   
   const placement = block.settings['desktopImagePlacement'] as string | undefined;
   const imageFirst = placement !== 'image-second';
@@ -55,8 +56,8 @@ export function PreviewImageWithTextBlock({
   const blockImage = block.settings['image'] as string | undefined;
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
 
-  const stretchClass = stretch ? 'h-full' : '';
-  const stretchStyle = stretch ? { height: '100%' } : undefined;
+  const stretchClass = resolvedStretch ? 'h-full' : '';
+  const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
 
   return (
     <div
@@ -81,13 +82,14 @@ export function PreviewImageWithTextBlock({
       </div>
       <div className='flex w-full flex-col justify-center gap-3 md:w-3/5'>
         {children.length > 0 ? (
-          children.map((child: BlockInstance) => (
-            <PreviewBlockItemProxy
-              key={child.id}
-              block={child}
-              contained
-            />
-          ))
+          <BlockContextProvider value={{ contained: true }}>
+            {children.map((child: BlockInstance) => (
+              <PreviewBlockItemProxy
+                key={child.id}
+                block={child}
+              />
+            ))}
+          </BlockContextProvider>
         ) : showEditorChrome ? (
           <p className='text-gray-500'>Add content blocks</p>
         ) : null}
@@ -104,11 +106,12 @@ export function PreviewHeroBlock({
   block,
   stretch = false,
 }: PreviewSectionBlockProps): React.ReactNode {
-  const { mediaStyles } = useBlockContext();
+  const { mediaStyles, stretch: contextStretch } = useBlockContext();
+  const resolvedStretch = stretch ?? contextStretch ?? false;
   const children = block.blocks ?? [];
   const blockImage = block.settings['image'] as string | undefined;
 
-  const stretchStyle = stretch ? { height: '100%' } : undefined;
+  const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
 
   return (
     <div
@@ -127,13 +130,14 @@ export function PreviewHeroBlock({
       )}
       <div className='relative z-10 flex min-h-[200px] flex-col items-center justify-center gap-3 p-6 text-center'>
         {children.length > 0 ? (
-          children.map((child: BlockInstance) => (
-            <PreviewBlockItemProxy
-              key={child.id}
-              block={child}
-              contained
-            />
-          ))
+          <BlockContextProvider value={{ contained: true }}>
+            {children.map((child: BlockInstance) => (
+              <PreviewBlockItemProxy
+                key={child.id}
+                block={child}
+              />
+            ))}
+          </BlockContextProvider>
         ) : (
           <p className='text-gray-400'>Hero banner</p>
         )}
@@ -150,10 +154,12 @@ export function PreviewRichTextBlock({
   block,
   stretch = false,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const { stretch: contextStretch } = useBlockContext();
+  const resolvedStretch = stretch ?? contextStretch ?? false;
   const { inspectorSettings } = usePreviewEditor();
   const children = block.blocks ?? [];
   const blockStyles = getSectionStyles(block.settings);
-  const stretchStyle = stretch ? { height: '100%' } : undefined;
+  const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
 
   if (children.length === 0 && !showEditorChrome) {
@@ -161,15 +167,19 @@ export function PreviewRichTextBlock({
   }
 
   return (
-    <div style={{ ...blockStyles, ...(stretchStyle ?? {}) }} className={`space-y-4 ${stretch ? 'h-full' : ''}`}>
+    <div
+      style={{ ...blockStyles, ...(stretchStyle ?? {}) }}
+      className={`space-y-4 ${resolvedStretch ? 'h-full' : ''}`}
+    >
       {children.length > 0 ? (
-        children.map((child: BlockInstance) => (
-          <PreviewBlockItemProxy
-            key={child.id}
-            block={child}
-            contained
-          />
-        ))
+        <BlockContextProvider value={{ contained: true }}>
+          {children.map((child: BlockInstance) => (
+            <PreviewBlockItemProxy
+              key={child.id}
+              block={child}
+            />
+          ))}
+        </BlockContextProvider>
       ) : showEditorChrome ? (
         <p className='text-gray-500'>Rich text section</p>
       ) : null}
@@ -185,13 +195,15 @@ export function PreviewBlockSectionBlock({
   block,
   stretch = false,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const { stretch: contextStretch } = useBlockContext();
+  const resolvedStretch = stretch ?? contextStretch ?? false;
   const { inspectorSettings } = usePreviewEditor();
   const children = block.blocks ?? [];
   const blockStyles = {
     ...getSectionStyles(block.settings),
     ...getTextAlign(block.settings['contentAlignment']),
   };
-  const stretchStyle = stretch ? { height: '100%' } : undefined;
+  const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
   const alignment = (block.settings['contentAlignment'] as string) || 'left';
   const blockGap = getSpacingValue(block.settings['blockGap']);
   const direction = (block.settings['layoutDirection'] as string) || 'row';
@@ -203,7 +215,7 @@ export function PreviewBlockSectionBlock({
   const alignItems = resolveAlignItems(block.settings['alignItems']) ?? 'center';
   const flexDirClass = direction === 'column' ? 'flex-col' : 'flex-row';
   const wrapClass = direction === 'column' ? '' : wrapSetting === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
-  const shouldStretchChildren = stretch && children.length === 1;
+  const shouldStretchChildren = resolvedStretch && children.length === 1;
   const blockSelector = getCustomCssSelector(block.id);
   const blockCustomCss = buildScopedCustomCss(block.settings['customCss'], blockSelector);
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
@@ -211,7 +223,7 @@ export function PreviewBlockSectionBlock({
   return (
     <div
       style={{ ...blockStyles, ...(stretchStyle ?? {}) }}
-      className={`${stretch ? 'h-full' : ''} cms-node-${block.id}`.trim()}
+      className={`${resolvedStretch ? 'h-full' : ''} cms-node-${block.id}`.trim()}
     >
       {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
       {children.length === 0 && showEditorChrome ? (
@@ -223,14 +235,14 @@ export function PreviewBlockSectionBlock({
           className={`flex ${flexDirClass} ${wrapClass}`}
           style={{ gap: `${blockGap}px`, justifyContent, alignItems }}
         >
-          {children.map((child: BlockInstance) => (
-            <PreviewBlockItemProxy
-              key={child.id}
-              block={child}
-              contained
-              stretch={shouldStretchChildren}
-            />
-          ))}
+          <BlockContextProvider value={{ contained: true, stretch: shouldStretchChildren }}>
+            {children.map((child: BlockInstance) => (
+              <PreviewBlockItemProxy
+                key={child.id}
+                block={child}
+              />
+            ))}
+          </BlockContextProvider>
         </div>
       )}
     </div>
@@ -245,6 +257,8 @@ export function PreviewTextAtomBlock({
   block,
   stretch = false,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const { stretch: contextStretch } = useBlockContext();
+  const resolvedStretch = stretch ?? contextStretch ?? false;
   const { inspectorSettings } = usePreviewEditor();
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;
   const text = (block.settings['text'] as string) || '';
@@ -266,7 +280,7 @@ export function PreviewTextAtomBlock({
       : alignment === 'right'
         ? 'flex-end'
         : 'flex-start';
-  const stretchStyle = stretch ? { height: '100%' } : undefined;
+  const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
   const containerStyle: React.CSSProperties = {
     display: 'flex',
     flexWrap: wrap === 'nowrap' ? 'nowrap' : 'wrap',
@@ -282,15 +296,19 @@ export function PreviewTextAtomBlock({
   }
 
   return (
-    <div style={{ ...containerStyle, ...(stretchStyle ?? {}) }} className={stretch ? 'h-full' : ''}>
+    <div
+      style={{ ...containerStyle, ...(stretchStyle ?? {}) }}
+      className={resolvedStretch ? 'h-full' : ''}
+    >
       {letters.length > 0 ? (
-        letters.map((child: BlockInstance) => (
-          <PreviewBlockItemProxy
-            key={child.id}
-            block={child}
-            contained
-          />
-        ))
+        <BlockContextProvider value={{ contained: true }}>
+          {letters.map((child: BlockInstance) => (
+            <PreviewBlockItemProxy
+              key={child.id}
+              block={child}
+            />
+          ))}
+        </BlockContextProvider>
       ) : showEditorChrome ? (
         <div className='text-xs text-gray-600'>Text atoms</div>
       ) : null}

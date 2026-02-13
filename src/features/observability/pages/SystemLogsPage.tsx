@@ -334,7 +334,7 @@ function AiLogInterpreter(): React.JSX.Element {
       {insightsQuery.isLoading ? (
         <div className='text-xs text-gray-400'>Loading AI insights...</div>
       ) : insightsQuery.error ? (
-        <div className='text-xs text-red-400'>{(insightsQuery.error as Error).message}</div>
+        <div className='text-xs text-red-400'>{(insightsQuery.error).message}</div>
       ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
         <div className='text-xs text-gray-500'>No AI insights yet.</div>
       ) : (

@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Button } from '@/shared/ui/button';
+
 import { AppModal } from '@/shared/ui/app-modal';
+import { Button } from '@/shared/ui/button';
 
 export interface ConfirmModalProps {
   open: boolean;
@@ -62,7 +63,7 @@ export function ConfirmModal({
             {cancelText}
           </Button>
           <Button
-            onClick={handleConfirm}
+            onClick={() => { void handleConfirm(); }}
             variant={isDangerous ? 'destructive' : 'primary'}
             disabled={loading}
           >

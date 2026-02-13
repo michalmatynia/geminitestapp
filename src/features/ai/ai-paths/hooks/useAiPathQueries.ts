@@ -7,13 +7,12 @@ import {
   invalidateAiPathRunDetail,
   invalidateAiPathRuns,
 } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { aiPathKeys } from '@/shared/lib/query-key-exports';
 import type { AiPathRunRecord, AiPathRunNodeRecord, AiPathRunEventRecord } from '@/shared/types/domain/ai-paths';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 
-const aiPathKeys = QUERY_KEYS.ai.aiPaths;
 
 
 

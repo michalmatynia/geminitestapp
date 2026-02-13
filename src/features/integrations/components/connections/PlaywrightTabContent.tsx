@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import React from 'react';
 
-import type { PlaywrightPersona } from '@/features/playwright';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import type { PlaywrightPersona } from '@/features/playwright';
 import { Button, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
 
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';

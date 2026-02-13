@@ -1,4 +1,3 @@
-import { Entity } from '../core/base-types';
 
 import type {
   NoteDto,

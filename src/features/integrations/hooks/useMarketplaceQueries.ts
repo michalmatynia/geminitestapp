@@ -12,9 +12,8 @@ import type {
   TagMappingWithDetails,
 } from '@/features/integrations/types/tag-mapping';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { marketplaceKeys } from '@/shared/lib/query-key-exports';
 
-const marketplaceKeys = QUERY_KEYS.integrations.marketplace;
 
 export function useExternalCategories(connectionId: string): UseQueryResult<ExternalCategory[]> {
   return useQuery({

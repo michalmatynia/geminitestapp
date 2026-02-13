@@ -288,21 +288,21 @@ export function AdminProductsPage(): React.JSX.Element {
 
   const handleSetPageSize = useCallback((size: number) => {
     setPageSize(size);
-    updatePageSize(size);
+    void updatePageSize(size);
   }, [setPageSize, updatePageSize]);
 
   const handleSetNameLocale = useCallback((locale: 'name_en' | 'name_pl' | 'name_de') => {
-    updateNameLocale(locale);
+    void updateNameLocale(locale);
   }, [updateNameLocale]);
 
   const handleSetCurrencyCode = useCallback((code: string) => {
     setCurrencyCode(code);
-    updateCurrencyCode(code);
+    void updateCurrencyCode(code);
   }, [setCurrencyCode, updateCurrencyCode]);
 
   const handleSetCatalogFilter = useCallback((filter: string) => {
     setCatalogFilter(filter);
-    updateCatalogFilter(filter);
+    void updateCatalogFilter(filter);
   }, [setCatalogFilter, updateCatalogFilter]);
 
   useEffect(() => {
@@ -312,7 +312,7 @@ export function AdminProductsPage(): React.JSX.Element {
     const nextLocale = (fallbackNameLocale && allowed.has(fallbackNameLocale))
       ? fallbackNameLocale
       : languageOptions[0]!.value;
-    updateNameLocale(nextLocale);
+    void updateNameLocale(nextLocale);
   }, [languageOptions, fallbackNameLocale, preferences.nameLocale, updateNameLocale]);
 
   const handleCreateFromDraft = useCallback((draftId: string): void => {

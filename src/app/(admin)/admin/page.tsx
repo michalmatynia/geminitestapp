@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { JSX, useState } from 'react';
 
 import { useSystemActivity } from '@/features/observability/hooks/useLogQueries';
+import type { ActivityLogDto } from '@/shared/dtos/system';
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { Button } from '@/shared/ui';
 
@@ -74,7 +75,7 @@ export default function AdminDashboard(): JSX.Element {
               <p className='text-sm text-gray-400'>Loading activity...</p>
             ) : activityData?.data && activityData.data.length > 0 ? (
               <div className='space-y-3'>
-                {activityData.data.map((log) => (
+                {activityData.data.map((log: ActivityLogDto) => (
                   <div key={log.id} className='flex flex-col gap-1 border-b border-gray-800 pb-2 last:border-0'>
                     <div className='flex justify-between items-start'>
                       <span className='text-sm font-medium text-blue-400'>{log.type}</span>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { ReactNode } from 'react';
+
 import { PanelFilters } from './panels/PanelFilters';
 import { FilterField } from './panels/types';
 
@@ -72,33 +73,40 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
     <div className={className}>
       {/* Optional Header */}
       {showHeader && (
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-700">{headerTitle}</h3>
+        <div className='mb-3 flex items-center justify-between'>
+          <h3 className='text-sm font-medium text-gray-700'>{headerTitle}</h3>
           {headerAction}
         </div>
       )}
 
       {/* Main Filters */}
-      <PanelFilters
-        filters={filters}
-        values={values}
-        search={search}
-        searchPlaceholder={searchPlaceholder}
-        onFilterChange={onFilterChange}
-        onSearchChange={onSearchChange}
-        onReset={onReset}
-        compact={compact}
-      />
+      {(() => {
+        const panelFiltersProps: PanelFiltersProps = {
+          filters,
+          values,
+          search,
+          searchPlaceholder,
+          onFilterChange,
+          compact,
+        };
+        if (onSearchChange) {
+          panelFiltersProps.onSearchChange = onSearchChange;
+        }
+        if (onReset) {
+          panelFiltersProps.onReset = onReset;
+        }
+        return <PanelFilters {...panelFiltersProps} />;
+      })()}
 
       {/* Presets (if provided) */}
       {presets.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2 border-t border-gray-200 pt-3">
-          <span className="text-xs font-medium text-gray-600">Quick filters:</span>
+        <div className='mt-3 flex flex-wrap gap-2 border-t border-gray-200 pt-3'>
+          <span className='text-xs font-medium text-gray-600'>Quick filters:</span>
           {presets.map((preset, index) => (
             <button
               key={index}
               onClick={() => onApplyPreset?.(preset.values)}
-              className="inline-flex items-center rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100"
+              className='inline-flex items-center rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100'
             >
               {preset.label}
             </button>
@@ -108,7 +116,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 
       {/* Active Filter Count */}
       {hasActiveFilters && (
-        <div className="mt-2 text-xs text-gray-500">
+        <div className='mt-2 text-xs text-gray-500'>
           {activeFilterCount} filter{activeFilterCount !== 1 ? 's' : ''} active
         </div>
       )}

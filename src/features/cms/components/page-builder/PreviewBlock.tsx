@@ -512,13 +512,14 @@ export function PreviewSection({
                 Empty block
                 </div>
               ) : (
-                section.blocks.map((block: BlockInstance) => (
-                  <PreviewBlockItem
-                    key={block.id}
-                    block={block}
-                    contained
-                  />
-                ))
+                <BlockContextProvider value={{ contained: true }}>
+                  {section.blocks.map((block: BlockInstance) => (
+                    <PreviewBlockItem
+                      key={block.id}
+                      block={block}
+                    />
+                  ))}
+                </BlockContextProvider>
               )}
           </div>
         </div>
@@ -536,13 +537,14 @@ export function PreviewSection({
       ) : null
     ) : (
       <div className='space-y-2'>
-        {section.blocks.map((block: BlockInstance) => (
-          <PreviewBlockItem
-            key={block.id}
-            block={block}
-            contained
-          />
-        ))}
+        <BlockContextProvider value={{ contained: true }}>
+          {section.blocks.map((block: BlockInstance) => (
+            <PreviewBlockItem
+              key={block.id}
+              block={block}
+            />
+          ))}
+        </BlockContextProvider>
       </div>
     );
 
@@ -1171,7 +1173,13 @@ export function PreviewSection({
                                               ? undefined
                                               : columnGapStyle;
                                             return (
-                                              <BlockContextProvider value={{ columnId: column.id }}>
+                                              <BlockContextProvider
+                                                value={{
+                                                  columnId: column.id,
+                                                  contained: true,
+                                                  stretch: shouldStretch,
+                                                }}
+                                              >
                                                 <div
                                                   className={`relative z-10 flex flex-col ${shouldStretch ? 'h-full' : resolvedGapClass} ${
                                                     isInspecting
@@ -1216,8 +1224,6 @@ export function PreviewSection({
                                                       >
                                                         <PreviewBlockItem
                                                           block={block}
-                                                          contained
-                                                          stretch={shouldStretch}
                                                         />
                                                       </div>
                                                     ),
@@ -1327,13 +1333,14 @@ export function PreviewSection({
             </div>
             <div className='flex w-full flex-col justify-center gap-4 md:w-1/2'>
               {section.blocks.length > 0 ? (
-                section.blocks.map((block: BlockInstance) => (
-                  <PreviewBlockItem
-                    key={block.id}
-                    block={block}
-                    contained
-                  />
-                ))
+                <BlockContextProvider value={{ contained: true }}>
+                  {section.blocks.map((block: BlockInstance) => (
+                    <PreviewBlockItem
+                      key={block.id}
+                      block={block}
+                    />
+                  ))}
+                </BlockContextProvider>
               ) : showEditorChrome ? (
                 <p className='text-gray-500'>Add content blocks</p>
               ) : null}
@@ -1405,13 +1412,14 @@ export function PreviewSection({
             })} text-center`}
           >
             <div className='space-y-4'>
-              {section.blocks.map((block: BlockInstance) => (
-                <PreviewBlockItem
-                  key={block.id}
-                  block={block}
-                  contained
-                />
-              ))}
+              <BlockContextProvider value={{ contained: true }}>
+                {section.blocks.map((block: BlockInstance) => (
+                  <PreviewBlockItem
+                    key={block.id}
+                    block={block}
+                  />
+                ))}
+              </BlockContextProvider>
             </div>
             {section.blocks.length === 0 && (
               <p className='text-lg text-gray-400'>Hero section</p>
@@ -1460,13 +1468,14 @@ export function PreviewSection({
           })}
         >
           <div className='space-y-4'>
-            {section.blocks.map((block: BlockInstance) => (
-              <PreviewBlockItem
-                key={block.id}
-                block={block}
-                contained
-              />
-            ))}
+            <BlockContextProvider value={{ contained: true }}>
+              {section.blocks.map((block: BlockInstance) => (
+                <PreviewBlockItem
+                  key={block.id}
+                  block={block}
+                />
+              ))}
+            </BlockContextProvider>
             {showEditorChrome && section.blocks.length === 0 && (
               <p className='text-gray-500'>Rich text section</p>
             )}
@@ -1807,24 +1816,26 @@ export function PreviewSection({
         ) : showEditorChrome ? (
           <div className='rounded border border-dashed border-border/40 bg-gray-800/20 p-2'>
             <div style={containerStyle}>
-              {letters.map((letter: BlockInstance) => (
-                <PreviewBlockItem
-                  key={letter.id}
-                  block={letter}
-                  contained
-                />
-              ))}
+              <BlockContextProvider value={{ contained: true }}>
+                {letters.map((letter: BlockInstance) => (
+                  <PreviewBlockItem
+                    key={letter.id}
+                    block={letter}
+                  />
+                ))}
+              </BlockContextProvider>
             </div>
           </div>
         ) : (
           <div style={containerStyle}>
-            {letters.map((letter: BlockInstance) => (
-              <PreviewBlockItem
-                key={letter.id}
-                block={letter}
-                contained
-              />
-            ))}
+            <BlockContextProvider value={{ contained: true }}>
+              {letters.map((letter: BlockInstance) => (
+                <PreviewBlockItem
+                  key={letter.id}
+                  block={letter}
+                />
+              ))}
+            </BlockContextProvider>
           </div>
         )}
       </div>,
@@ -1888,31 +1899,31 @@ export function PreviewSection({
             })}
           >
             <div className='divide-y divide-gray-700/50'>
-              {items.map(
-                (
-                  item: { heading: BlockInstance; text?: BlockInstance },
-                  index: number,
-                ) => (
-                  <div key={item.heading.id} className='py-4'>
-                    <div className='flex w-full items-center justify-between text-left'>
-                      <PreviewBlockItem
-                        block={item.heading}
-                        contained
-                      />
-                      <span className='ml-4 shrink-0 text-gray-400 text-xl'>
-                        {index === 0 ? '−' : '+'}
-                      </span>
-                    </div>
-                    {index === 0 && item.text && (
-                      <div className='mt-3'>
+              <BlockContextProvider value={{ contained: true }}>
+                {items.map(
+                  (
+                    item: { heading: BlockInstance; text?: BlockInstance },
+                    index: number,
+                  ) => (
+                    <div key={item.heading.id} className='py-4'>
+                      <div className='flex w-full items-center justify-between text-left'>
                         <PreviewBlockItem
-                          block={item.text}
-                          contained
-                        />                      </div>
-                    )}
-                  </div>
-                ),
-              )}
+                          block={item.heading}
+                        />
+                        <span className='ml-4 shrink-0 text-gray-400 text-xl'>
+                          {index === 0 ? '−' : '+'}
+                        </span>
+                      </div>
+                      {index === 0 && item.text && (
+                        <div className='mt-3'>
+                          <PreviewBlockItem
+                            block={item.text}
+                          />                      </div>
+                      )}
+                    </div>
+                  ),
+                )}
+              </BlockContextProvider>
             </div>
           </div>
         )}
@@ -1955,23 +1966,24 @@ export function PreviewSection({
               className='grid gap-6'
               style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
             >
-              {section.blocks.map((block: BlockInstance) => (
-                <div
-                  key={block.id}
-                  className='cms-hover-card rounded-xl border border-gray-700/50 bg-gray-800/30 p-6'
-                >
-                  <svg
-                    className='mb-4 size-6 text-gray-500'
-                    fill='currentColor'
-                    viewBox='0 0 24 24'
+              <BlockContextProvider value={{ contained: true }}>
+                {section.blocks.map((block: BlockInstance) => (
+                  <div
+                    key={block.id}
+                    className='cms-hover-card rounded-xl border border-gray-700/50 bg-gray-800/30 p-6'
                   >
-                    <path d='M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z' />
-                  </svg>
-                  <PreviewBlockItem
-                    block={block}
-                    contained
-                  />                </div>
-              ))}
+                    <svg
+                      className='mb-4 size-6 text-gray-500'
+                      fill='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path d='M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10H14.017zM0 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151C7.546 6.068 5.983 8.789 5.983 11h4v10H0z' />
+                    </svg>
+                    <PreviewBlockItem
+                      block={block}
+                    />                </div>
+                ))}
+              </BlockContextProvider>
             </div>
           </div>
         )}
@@ -2227,11 +2239,13 @@ export function PreviewSection({
                             const triggerKey = `${child.id}-${currentSlideshowIndex}-${blockIdx}`;
                             return (
                               <div key={triggerKey} style={wrapperStyle}>
-                                <PreviewBlockItem
-                                  block={child}
-                                  contained
-                                  stretch={shouldFillBlock}
-                                />
+                                <BlockContextProvider
+                                  value={{ contained: true, stretch: shouldFillBlock }}
+                                >
+                                  <PreviewBlockItem
+                                    block={child}
+                                  />
+                                </BlockContextProvider>
                               </div>
                             );
                           },
@@ -2335,13 +2349,14 @@ export function PreviewSection({
         >
           {section.blocks.length > 0 && (
             <div className='mb-6 space-y-4'>
-              {section.blocks.map((block: BlockInstance) => (
-                <PreviewBlockItem
-                  key={block.id}
-                  block={block}
-                  contained
-                />
-              ))}
+              <BlockContextProvider value={{ contained: true }}>
+                {section.blocks.map((block: BlockInstance) => (
+                  <PreviewBlockItem
+                    key={block.id}
+                    block={block}
+                  />
+                ))}
+              </BlockContextProvider>
             </div>
           )}
           <form
@@ -2467,14 +2482,14 @@ export function PreviewSection({
 function PreviewBlockItem({
   block,
   isSelected: propIsSelected,
-  contained,
+  contained: propContained,
   sectionId: propSectionId,
   sectionType: propSectionType,
   sectionZone: propSectionZone,
   columnId: propColumnId,
   parentBlockId: propParentBlockId,
   mediaStyles: propMediaStyles,
-  stretch = false,
+  stretch: propStretch,
 }: PreviewBlockItemProps): React.ReactNode {
   const {
     selectedNodeId,
@@ -2492,6 +2507,8 @@ function PreviewBlockItem({
   const columnId = propColumnId ?? blockContext.columnId;
   const parentBlockId = propParentBlockId ?? blockContext.parentBlockId;
   const mediaStyles = propMediaStyles ?? blockContext.mediaStyles;
+  const contained = propContained ?? blockContext.contained ?? false;
+  const stretch = propStretch ?? blockContext.stretch ?? false;
   const isSelected = typeof propIsSelected === 'boolean'
     ? propIsSelected
     : selectedNodeId === block.id;
@@ -2652,48 +2669,43 @@ function PreviewBlockItem({
           )}
         >
           <div className={showEditorChrome ? 'overflow-hidden' : ''}>
-            {block.type === 'ImageWithText' && (
-              <PreviewImageWithTextBlock
-                block={block}
-                stretch={stretch}
-              />
-            )}
-            {block.type === 'Hero' && (
-              <PreviewHeroBlock
-                block={block}
-                stretch={stretch}
-              />
-            )}
-            {block.type === 'RichText' && (
-              <PreviewRichTextBlock
-                block={block}
-                stretch={stretch}
-              />
-            )}
-            {block.type === 'Block' && (
-              <PreviewBlockSectionBlock
-                block={block}
-                stretch={stretch}
-              />
-            )}
-            {block.type === 'TextAtom' && (
-              <PreviewTextAtomBlock
-                block={block}
-                stretch={stretch}
-              />
-            )}
-            {block.type === 'Carousel' && (
-              <PreviewCarouselBlock
-                block={block}
-                stretch={stretch}
-              />
-            )}
-            {block.type === 'Slideshow' && (
-              <PreviewSlideshowBlock
-                block={block}
-                stretch={stretch}
-              />
-            )}
+            <BlockContextProvider value={{ stretch }}>
+              {block.type === 'ImageWithText' && (
+                <PreviewImageWithTextBlock
+                  block={block}
+                />
+              )}
+              {block.type === 'Hero' && (
+                <PreviewHeroBlock
+                  block={block}
+                />
+              )}
+              {block.type === 'RichText' && (
+                <PreviewRichTextBlock
+                  block={block}
+                />
+              )}
+              {block.type === 'Block' && (
+                <PreviewBlockSectionBlock
+                  block={block}
+                />
+              )}
+              {block.type === 'TextAtom' && (
+                <PreviewTextAtomBlock
+                  block={block}
+                />
+              )}
+              {block.type === 'Carousel' && (
+                <PreviewCarouselBlock
+                  block={block}
+                />
+              )}
+              {block.type === 'Slideshow' && (
+                <PreviewSlideshowBlock
+                  block={block}
+                />
+              )}
+            </BlockContextProvider>
           </div>
         </div>
         {canReplaceImage && (

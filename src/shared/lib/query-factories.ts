@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions, type UseMutationOptions } from '@tanstack/react-query';
-import type { ListQuery, SingleQuery, PagedQuery, CreateMutation, UpdateMutation, DeleteMutation, SaveMutation } from '@/shared/types';
+
+import type { ListQuery, SingleQuery, PagedQuery, CreateMutation, UpdateMutation, DeleteMutation, SaveMutation, ListResponse } from '@/shared/types';
 
 export interface CreateListQueryConfig<T> {
   queryKey: readonly string[];
@@ -7,10 +8,12 @@ export interface CreateListQueryConfig<T> {
   options?: Partial<UseQueryOptions<T[]>>;
 }
 
+type SimplePagedResult<T> = { items: T[]; total: number; page: number };
+
 export interface CreatePagedQueryConfig<T> {
   queryKey: readonly string[];
-  queryFn: (page: number, limit: number) => Promise<{ items: T[]; total: number; page: number }>;
-  options?: Partial<UseQueryOptions<{ items: T[]; total: number; page: number }>>;
+  queryFn: (page: number, limit: number) => Promise<SimplePagedResult<T>>;
+  options?: Partial<UseQueryOptions<ListResponse<T>>>;
 }
 
 export interface CreateSingleQueryConfig<T> {
@@ -64,7 +67,18 @@ export function createListQuery<T>(config: CreateListQueryConfig<T>): ListQuery<
 export function createPagedQuery<T>(config: CreatePagedQueryConfig<T>): PagedQuery<T> {
   return useQuery({
     queryKey: config.queryKey,
-    queryFn: () => config.queryFn(1, 10),
+    queryFn: async () => {
+      const page = 1;
+      const limit = 10;
+      const result = await config.queryFn(page, limit);
+      return {
+        items: result.items,
+        total: result.total,
+        page: result.page,
+        pageSize: limit,
+        hasMore: result.total > result.page * limit,
+      };
+    },
     ...config.options,
   });
 }
@@ -84,10 +98,10 @@ export function createCreateMutation<T, TInput>(config: CreateCreateMutationConf
     mutationFn: config.mutationFn,
     ...config.options,
     onSuccess: mergeOnSuccess(
-      (data: T, variables: TInput) => {
+      (_data: T, _variables: TInput) => {
         if (config.invalidateKeys) {
           config.invalidateKeys.forEach((key) => {
-            queryClient.invalidateQueries({ queryKey: key as any });
+            void queryClient.invalidateQueries({ queryKey: key as any });
           });
         }
       },
@@ -103,10 +117,10 @@ export function createUpdateMutation<T, TInput>(config: CreateUpdateMutationConf
     mutationFn: config.mutationFn,
     ...config.options,
     onSuccess: mergeOnSuccess(
-      (data: T, variables: TInput) => {
+      (_data: T, _variables: TInput) => {
         if (config.invalidateKeys) {
           config.invalidateKeys.forEach((key) => {
-            queryClient.invalidateQueries({ queryKey: key as any });
+            void queryClient.invalidateQueries({ queryKey: key as any });
           });
         }
       },
@@ -125,7 +139,7 @@ export function createDeleteMutation(config: CreateDeleteMutationConfig): Delete
       () => {
         if (config.invalidateKeys) {
           config.invalidateKeys.forEach((key) => {
-            queryClient.invalidateQueries({ queryKey: key as any });
+            void queryClient.invalidateQueries({ queryKey: key as any });
           });
         }
       },
@@ -141,10 +155,10 @@ export function createSaveMutation<T, TInput>(config: CreateSaveMutationConfig<T
     mutationFn: config.mutationFn,
     ...config.options,
     onSuccess: mergeOnSuccess(
-      (data: T, variables: TInput) => {
+      (_data: T, _variables: TInput) => {
         if (config.invalidateKeys) {
           config.invalidateKeys.forEach((key) => {
-            queryClient.invalidateQueries({ queryKey: key as any });
+            void queryClient.invalidateQueries({ queryKey: key as any });
           });
         }
       },

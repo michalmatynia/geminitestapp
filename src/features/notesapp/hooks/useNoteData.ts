@@ -101,22 +101,22 @@ export const useNote = (
 };
 
 export const useNoteTree = (options?: QueryOptions): UseQueryResult<NotebookRecord[], Error> => {
-  return useNotebooksQuery(undefined, options) as UseQueryResult<NotebookRecord[], Error>;
+  return useNotebooksQuery(undefined, options);
 };
 
 export const useNoteTags = (options?: QueryOptions): UseQueryResult<TagRecord[], Error> => {
-  return useNoteTagsQuery(undefined, options) as UseQueryResult<TagRecord[], Error>;
+  return useNoteTagsQuery(undefined, options);
 };
 
 export const useNoteCategories = (
   notebookId?: string | null,
   options?: QueryOptions
 ): UseQueryResult<CategoryRecord[], Error> => {
-  return useNoteCategoriesQuery(notebookId, options) as UseQueryResult<CategoryRecord[], Error>;
+  return useNoteCategoriesQuery(notebookId, options);
 };
 
 export const useNoteThemes = (options?: QueryOptions): UseQueryResult<ThemeRecord[], Error> => {
-  return useNoteThemesQuery(undefined, options) as UseQueryResult<ThemeRecord[], Error>;
+  return useNoteThemesQuery(undefined, options);
 };
 
 // --- Mutations ---

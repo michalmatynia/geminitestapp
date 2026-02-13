@@ -1,9 +1,12 @@
 'use client';
 
+import { AlertCircle } from 'lucide-react';
 import React from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { PanelAlert } from './types';
+
 import { cn } from '@/shared/utils/ui-utils';
+
+import { PanelAlert } from './types';
+
 
 interface PanelAlertsProps {
   alerts: PanelAlert[];
@@ -72,16 +75,16 @@ export const PanelAlerts: React.FC<PanelAlertsProps> = ({
     <div className={cn('space-y-2', className)}>
       {allAlerts.map((alert, index) => (
         <div key={index} className={getAlertStyles(alert.type)}>
-          <div className="mt-0.5">
-            <AlertCircle className="h-4 w-4" />
+          <div className='mt-0.5'>
+            <AlertCircle className='h-4 w-4' />
           </div>
-          <div className="flex-1">
-            <div className="font-medium">{alert.title}</div>
-            {alert.message && <div className="text-xs opacity-90 mt-1">{alert.message}</div>}
+          <div className='flex-1'>
+            <div className='font-medium'>{alert.title}</div>
+            {alert.message && <div className='text-xs opacity-90 mt-1'>{alert.message}</div>}
             {alert.action && (
               <button
                 onClick={alert.action.onClick}
-                className="text-xs font-medium mt-2 underline hover:no-underline"
+                className='text-xs font-medium mt-2 underline hover:no-underline'
               >
                 {alert.action.label}
               </button>
@@ -90,8 +93,8 @@ export const PanelAlerts: React.FC<PanelAlertsProps> = ({
           {alert.dismissible && (
             <button
               onClick={() => onDismiss?.(index)}
-              className="mt-0.5 text-xs opacity-50 hover:opacity-100 ml-2"
-              aria-label="Dismiss"
+              className='mt-0.5 text-xs opacity-50 hover:opacity-100 ml-2'
+              aria-label='Dismiss'
             >
               ✕
             </button>

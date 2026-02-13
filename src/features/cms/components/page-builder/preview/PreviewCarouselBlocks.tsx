@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 
-import { BlockContextProvider } from './context/BlockContext';
+import { BlockContextProvider, useBlockContext } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 
@@ -52,6 +52,8 @@ export function PreviewCarouselBlock({
   block,
   stretch = false,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const { stretch: contextStretch } = useBlockContext();
+  const resolvedStretch = stretch ?? contextStretch ?? false;
   const {
     inspectorSettings,
   } = usePreviewEditor();
@@ -86,7 +88,7 @@ export function PreviewCarouselBlock({
     setCurrentIndex(index);
   }, [currentIndex]);
 
-  const stretchStyle = stretch ? { height: '100%' } : undefined;
+  const stretchStyle = resolvedStretch ? { height: '100%' } : undefined;
   const containerStyle: React.CSSProperties = {
     ...(stretchStyle ?? {}),
     ...(heightMode === 'fixed' ? { height: `${fixedHeight}px` } : {}),
@@ -234,6 +236,8 @@ export function PreviewSlideshowBlock({
   block,
   stretch = false,
 }: PreviewSectionBlockProps): React.ReactNode {
+  const { stretch: contextStretch } = useBlockContext();
+  const resolvedStretch = stretch ?? contextStretch ?? false;
   const {
     inspectorSettings,
     pauseSlideshowOnHoverInEditor,
@@ -295,7 +299,7 @@ export function PreviewSlideshowBlock({
   }
 
   return (
-    <div className={`relative w-full ${stretch ? 'h-full' : ''}`}>
+    <div className={`relative w-full ${resolvedStretch ? 'h-full' : ''}`}>
       {frames.length === 0 ? (
         showEditorChrome ? (
           <div className='flex min-h-[80px] items-center justify-center rounded border border-dashed border-gray-700/50 bg-gray-900/20 text-[10px] uppercase tracking-wider text-gray-600'>
@@ -390,10 +394,11 @@ export function PreviewSlideshowBlock({
                           const triggerKey = `${child.id}-${currentActiveIndex}-${blockIdx}`;
                           return (
                             <div key={triggerKey} style={wrapperStyle}>
-                              <PreviewBlockItemProxy
-                                block={child}
-                                stretch={shouldFillBlock}
-                              />
+                              <BlockContextProvider value={{ stretch: shouldFillBlock }}>
+                                <PreviewBlockItemProxy
+                                  block={child}
+                                />
+                              </BlockContextProvider>
                             </div>
                           );
                         })

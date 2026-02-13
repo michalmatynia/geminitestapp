@@ -5,24 +5,22 @@ import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResul
 import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset, BaseInventory, WarehouseOption, ImportListItem, ImportResponse } from '@/features/data-import-export/types/imports';
 import type { IntegrationWithConnections } from '@/features/integrations';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
 
 export type { CatalogRecord };
-
-const importKeys = QUERY_KEYS.integrations.importExport;
 
 // --- Queries ---
 
 export function useIntegrationConnections(): UseQueryResult<IntegrationWithConnections[], Error> {
   return useQuery({
-    queryKey: QUERY_KEYS.integrations.all,
+    queryKey: integrationKeys.withConnections(),
     queryFn: () => api.get<IntegrationWithConnections[]>('/api/integrations/with-connections'),
   });
 }
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[], Error> {
   return useQuery({
-    queryKey: QUERY_KEYS.products.metadata.catalogs,
+    queryKey: productMetadataKeys.catalogs,
     queryFn: () => api.get<CatalogRecord[]>('/api/catalogs'),
   });
 }
@@ -33,7 +31,7 @@ export function useTemplates(scope: 'import' | 'export'): UseQueryResult<Templat
     : '/api/integrations/export-templates';
     
   return useQuery({
-    queryKey: importKeys.templates(scope),
+    queryKey: importExportKeys.templates(scope),
     queryFn: () => api.get<Template[]>(endpoint, { cache: 'no-store' }),
   });
 }
@@ -49,7 +47,7 @@ export function useImportPreference<T>(
   options?: ImportPreferenceOptions<T>
 ): UseQueryResult<T, Error> {
   return useQuery({
-    queryKey: importKeys.pref(key),
+    queryKey: importExportKeys.pref(key),
     queryFn: async (): Promise<T> => {
       try {
         return await api.get<T>(endpoint, { cache: 'no-store' });
@@ -70,10 +68,10 @@ export function useSavePreferenceMutation(): UseMutationResult<unknown, Error, {
   return useMutation({
     mutationFn: ({ endpoint, data }: { endpoint: string; data: unknown }) => api.post<unknown>(endpoint, data),
     onSuccess: (_: unknown, { endpoint }: { endpoint: string; data: unknown }) => {
-      void queryClient.invalidateQueries({ queryKey: importKeys.preferences() });
+      void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
       const key = endpoint.split('/').pop();
       if (key) {
-        void queryClient.invalidateQueries({ queryKey: importKeys.pref(key) });
+        void queryClient.invalidateQueries({ queryKey: importExportKeys.pref(key) });
       }
     }
   });
@@ -93,7 +91,7 @@ export function useTemplateMutation(scope: 'import' | 'export', id?: string): Us
     },
     onSuccess: (result: unknown, variables: { data?: unknown; isDelete?: boolean }) => {
       queryClient.setQueryData<Template[]>(
-        importKeys.templates(scope),
+        importExportKeys.templates(scope),
         (previous: Template[] | undefined): Template[] => {
           const current = previous ?? [];
           if (variables.isDelete) {
@@ -113,14 +111,14 @@ export function useTemplateMutation(scope: 'import' | 'export', id?: string): Us
           );
         }
       );
-      void queryClient.invalidateQueries({ queryKey: importKeys.templates(scope) });
+      void queryClient.invalidateQueries({ queryKey: importExportKeys.templates(scope) });
     }
   });
 }
 
 export function useInventories(connectionId?: string, enabled: boolean = true): UseQueryResult<BaseInventory[], Error> {
   return useQuery({
-    queryKey: importKeys.inventories(connectionId),
+    queryKey: importExportKeys.inventories(connectionId),
     queryFn: async (): Promise<BaseInventory[]> => {
       const data = await api.post<{ inventories: BaseInventory[] }>('/api/integrations/imports/base', { action: 'inventories', connectionId });
       return data.inventories;
@@ -131,7 +129,7 @@ export function useInventories(connectionId?: string, enabled: boolean = true): 
 
 export function useWarehouses(inventoryId: string, connectionId?: string, includeAll: boolean = false, enabled: boolean = true): UseQueryResult<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }, Error> {
   return useQuery({
-    queryKey: importKeys.warehouses(inventoryId, connectionId, includeAll),
+    queryKey: importExportKeys.warehouses(inventoryId, connectionId, includeAll),
     queryFn: () => api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>('/api/integrations/imports/base', { 
       action: 'warehouses', 
       inventoryId, 
@@ -144,7 +142,7 @@ export function useWarehouses(inventoryId: string, connectionId?: string, includ
 
 export function useParameters(inventoryId: string, productId: string, enabled: boolean = true): UseQueryResult<{ parameters?: Array<{ id: string; name: string }> }, Error> {
   return useQuery({
-    queryKey: importKeys.parameters(inventoryId, productId),
+    queryKey: importExportKeys.parameters(inventoryId, productId),
     queryFn: () => api.post<{ parameters?: Array<{ id: string; name: string }> }>('/api/integrations/imports/base/parameters', { 
       inventoryId, 
       productId 
@@ -166,7 +164,7 @@ export function useImportList(
   enabled: boolean = true
 ): UseQueryResult<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number; page?: number; pageSize?: number; totalPages?: number }, Error> {
   return useQuery({
-    queryKey: importKeys.importList(inventoryId, params),
+    queryKey: importExportKeys.importList(inventoryId, params),
     queryFn: () => {
       const { limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
       return api.post<{
@@ -250,7 +248,7 @@ export function useSaveExportSettingsMutation(): UseMutationResult<void, Error, 
       ]);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: importKeys.preferences() });
+      void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
     }
   });
 }

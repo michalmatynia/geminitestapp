@@ -1,8 +1,11 @@
 'use client';
 
-import { memo, useState, useCallback, useMemo } from 'react';
+import { memo, useState, useCallback } from 'react';
+
 import { cn } from '@/shared/utils';
+
 import { usePickerSearch } from './usePickerSearch';
+
 import type { GenericGridPickerProps, GridPickerItem } from './types';
 
 /**
@@ -55,7 +58,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
   // Use search hook with custom matcher if provided
   const { query, setQuery, filtered, clearSearch } = usePickerSearch(
     items,
-    { matcher: searchMatcher }
+    { ...(searchMatcher !== undefined ? { matcher: searchMatcher } : {}) }
   );
 
   const handleSelect = useCallback(
@@ -80,7 +83,6 @@ export const GenericGridPicker = memo(function GenericGridPicker<
   );
 
   const hasItems = filtered.length > 0;
-  const gridColsClass = `grid-cols-${columns}`;
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -168,8 +170,8 @@ export const GenericGridPicker = memo(function GenericGridPicker<
       )}
     </div>
   );
-}) as <T extends GridPickerItem = GridPickerItem>(
+}) as (<T extends GridPickerItem = GridPickerItem>(
   props: GenericGridPickerProps<T>
-) => React.ReactElement;
+) => React.ReactElement) & { displayName?: string };
 
 GenericGridPicker.displayName = 'GenericGridPicker';

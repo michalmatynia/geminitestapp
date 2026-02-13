@@ -23,9 +23,27 @@ interface FileManagerProps {
   showTagSearch?: boolean;
 }
 
-export default function FileManager(props: FileManagerProps): React.JSX.Element {
+export default function FileManager({
+  onSelectFile,
+  mode,
+  selectionMode,
+  autoConfirmSelection,
+  showFolderFilter,
+  defaultFolder,
+  showBulkActions,
+  showTagSearch,
+}: FileManagerProps): React.JSX.Element {
   return (
-    <FileManagerProvider {...props}>
+    <FileManagerProvider
+      onSelectFile={onSelectFile}
+      mode={mode}
+      selectionMode={selectionMode}
+      autoConfirmSelection={autoConfirmSelection}
+      showFolderFilter={showFolderFilter}
+      defaultFolder={defaultFolder}
+      showBulkActions={showBulkActions}
+      showTagSearch={showTagSearch}
+    >
       <div className='p-4 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-800'>
         <FileManagerHeader />
         <FileManagerFilters />

@@ -42,6 +42,10 @@ export function useListingSettingsContext(): ListingSettingsContextType {
   return context;
 }
 
+export function useOptionalListingSettingsContext(): ListingSettingsContextType | null {
+  return useContext(ListingSettingsContext);
+}
+
 interface ListingSettingsProviderProps {
   children: ReactNode;
   initialIntegrationId?: string | null;

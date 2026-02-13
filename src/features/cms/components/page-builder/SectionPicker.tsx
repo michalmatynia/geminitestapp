@@ -5,8 +5,9 @@ import React, { useState, useCallback } from 'react';
 
 import { AppModal, Button } from '@/shared/ui';
 
-import { useTemplateManagement } from './hooks/useTemplateManagement';
 import { useGroupedTemplates } from './hooks/useGroupedTemplates';
+import { useTemplateManagement } from './hooks/useTemplateManagement';
+
 import type { PageZone, SectionDefinition } from '../../types/page-builder';
 
 interface SectionPickerProps {

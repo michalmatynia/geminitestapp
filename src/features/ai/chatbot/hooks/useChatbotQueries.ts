@@ -3,10 +3,10 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { chatbotKeys } from '@/shared/lib/query-key-exports';
 import type { ChatSession } from '@/shared/types/domain/chatbot';
 
 import {
-  chatbotQueryKeys,
   fetchChatbotSessions,
   fetchChatbotSession,
   fetchChatbotSettings,
@@ -44,7 +44,7 @@ const normalizeModelList = (payload: unknown): string[] => {
  */
 export function useChatbotSessions(options?: { enabled?: boolean }): UseQueryResult<ChatbotSessionListItem[]> {
   return useQuery({
-    queryKey: chatbotQueryKeys.sessions(),
+    queryKey: chatbotKeys.sessions(),
     queryFn: async (): Promise<ChatbotSessionListItem[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>();
       return data.sessions ?? [];
@@ -58,7 +58,7 @@ export function useChatbotSessions(options?: { enabled?: boolean }): UseQueryRes
  */
 export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }): UseQueryResult<string[]> {
   return useQuery({
-    queryKey: chatbotQueryKeys.sessionIds(query),
+    queryKey: chatbotKeys.sessionIds(query),
     queryFn: async (): Promise<string[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>({
         scope: 'ids',
@@ -75,7 +75,7 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
  */
 export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): UseQueryResult<ChatSession | null> {
   return useQuery({
-    queryKey: sessionId ? chatbotQueryKeys.session(sessionId) : [...chatbotQueryKeys.all, 'session', 'none'],
+    queryKey: sessionId ? chatbotKeys.session(sessionId) : [...chatbotKeys.all, 'session', 'none'],
     queryFn: async () => {
       if (!sessionId) return null;
       return fetchChatbotSession(sessionId);
@@ -89,7 +89,7 @@ export function useChatbotSession(sessionId: string | null, options?: { enabled?
  */
 export function useChatbotSettings(key?: string, options?: { enabled?: boolean }): UseQueryResult<{ settings?: { settings?: unknown } | null }> {
   return useQuery({
-    queryKey: chatbotQueryKeys.settings.all(key),
+    queryKey: chatbotKeys.settings.all(key),
     queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
     enabled: (options?.enabled ?? true) && !!key,
   });
@@ -100,7 +100,7 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
  */
 export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResult<string[]> {
   return useQuery<unknown, Error, string[]>({
-    queryKey: chatbotQueryKeys.models(),
+    queryKey: chatbotKeys.models(),
     queryFn: async (): Promise<unknown> => {
       return api.get<unknown>('/api/chatbot');
     },
@@ -115,7 +115,7 @@ export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResul
  */
 export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }): UseQueryResult<string[]> {
   return useQuery({
-    queryKey: chatbotQueryKeys.ollamaModels(baseUrl),
+    queryKey: chatbotKeys.ollamaModels(baseUrl),
     queryFn: (): Promise<string[]> => fetchOllamaModels(baseUrl),
     enabled: (options?.enabled ?? true) && !!baseUrl,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -127,7 +127,7 @@ export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }
  */
 export function useChatbotMemory(query?: string, options?: { enabled?: boolean }): UseQueryResult<unknown> {
   return useQuery({
-    queryKey: chatbotQueryKeys.memory(query),
+    queryKey: chatbotKeys.memory(query),
     queryFn: (): Promise<unknown> => fetchChatbotMemory(query ?? ''),
     enabled: options?.enabled ?? true,
   });

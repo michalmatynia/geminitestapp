@@ -6,9 +6,13 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
+import { z } from 'zod';
 
 import { getProducts, countProducts } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
+import { productSchema } from '@/shared/contracts/products';
+import { createQueryHook } from '@/shared/lib/api-hooks';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
   getProductCountQueryKey,
@@ -35,10 +39,6 @@ export interface UseProductsOptions {
 
 const PRODUCTS_STALE_MS = 10_000;
 
-import { createQueryHook } from '@/shared/lib/api-hooks';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { z } from 'zod';
-import { productSchema } from '@/shared/contracts/products';
 
 export const useProducts = (filters: UseProductsFilters, options?: UseProductsOptions): UseQueryResult<ProductWithImages[], Error> => {
   return _useProducts(filters, options) as UseQueryResult<ProductWithImages[], Error>;

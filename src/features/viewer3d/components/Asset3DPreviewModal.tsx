@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { AppModal, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { Asset3DPreviewModalViewProvider, useAsset3DPreviewModalViewContext } from './context/Asset3DPreviewModalViewContext';
 import { Viewer3D } from './Viewer3D';
 import { Viewer3DSettingsPanel } from './Viewer3DSettingsPanel';
 import { Viewer3DStatusInfo } from './Viewer3DStatusInfo';
@@ -25,11 +26,8 @@ interface Asset3DPreviewModalProps {
   asset: Asset3DRecord;
 }
 
-function Asset3DPreviewModalContent({
-  asset,
-}: {
-  asset: Asset3DRecord;
-}): React.JSX.Element {
+function Asset3DPreviewModalContent(): React.JSX.Element {
+  const { asset } = useAsset3DPreviewModalViewContext();
   const { resetSettings } = useViewer3D();
 
   // UI State
@@ -142,7 +140,9 @@ export function Asset3DPreviewModal({
       padding='none'
     >
       <Viewer3DProvider>
-        <Asset3DPreviewModalContent asset={asset} />
+        <Asset3DPreviewModalViewProvider value={{ asset }}>
+          <Asset3DPreviewModalContent />
+        </Asset3DPreviewModalViewProvider>
       </Viewer3DProvider>
     </AppModal>
   );

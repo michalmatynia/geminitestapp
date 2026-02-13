@@ -205,47 +205,47 @@ export function Admin3DAssetsPage(): React.JSX.Element {
             containerClassName='flex-1 min-w-[200px] max-w-md'
           />
 
-            <Button
-              variant={showFilters ? 'default' : 'outline'}
-              size='sm'
-              onClick={() => setShowFilters(!showFilters)}
-              className='gap-2'
-            >
-              <Filter className='h-4 w-4' />
+          <Button
+            variant={showFilters ? 'default' : 'outline'}
+            size='sm'
+            onClick={() => setShowFilters(!showFilters)}
+            className='gap-2'
+          >
+            <Filter className='h-4 w-4' />
               Filters
-              {hasActiveFilters && (
-                <span className='ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white'>
-                  {(selectedCategory ? 1 : 0) + selectedTags.length}
-                </span>
-              )}
-            </Button>
-
             {hasActiveFilters && (
-              <Button variant='ghost' size='sm' onClick={clearFilters} className='gap-1'>
-                <X className='h-4 w-4' />
-                Clear
-              </Button>
+              <span className='ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white'>
+                {(selectedCategory ? 1 : 0) + selectedTags.length}
+              </span>
             )}
+          </Button>
 
-            <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size='icon'
-                className='h-8 w-8 rounded-none'
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className='h-4 w-4' />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'ghost'}
-                size='icon'
-                className='h-8 w-8 rounded-none'
-                onClick={() => setViewMode('list')}
-              >
-                <List className='h-4 w-4' />
-              </Button>
-            </div>
+          {hasActiveFilters && (
+            <Button variant='ghost' size='sm' onClick={clearFilters} className='gap-1'>
+              <X className='h-4 w-4' />
+                Clear
+            </Button>
+          )}
+
+          <div className='ml-auto flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size='icon'
+              className='h-8 w-8 rounded-none'
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid className='h-4 w-4' />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size='icon'
+              className='h-8 w-8 rounded-none'
+              onClick={() => setViewMode('list')}
+            >
+              <List className='h-4 w-4' />
+            </Button>
           </div>
+        </div>
       }
       footer={stats}
     >

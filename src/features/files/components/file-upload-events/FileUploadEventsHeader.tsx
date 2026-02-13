@@ -4,14 +4,11 @@ import React from 'react';
 
 import { RefreshButton } from '@/shared/ui';
 
+import { useFileUploadEventsPanelContext } from './context/FileUploadEventsPanelContext';
 import { useFileUploadEventsContext } from '../../contexts/FileUploadEventsContext';
 
-interface Props {
-  title: string;
-  description: string;
-}
-
-export function FileUploadEventsHeader({ title, description }: Props): React.JSX.Element {
+export function FileUploadEventsHeader(): React.JSX.Element {
+  const { title, description } = useFileUploadEventsPanelContext();
   const { total, refetch, isFetching } = useFileUploadEventsContext();
 
   return (

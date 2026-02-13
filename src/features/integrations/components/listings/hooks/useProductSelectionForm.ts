@@ -5,9 +5,9 @@ import {
   useCreateListingMutation,
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
+import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
 import { validateFormData } from '@/shared/validations/form-validation';
-import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 
 type UseProductSelectionFormProps = {
   selectedIntegrationId: string | null;

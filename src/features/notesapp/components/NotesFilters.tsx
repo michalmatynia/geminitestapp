@@ -2,11 +2,12 @@
 
 import { ArrowUp, ArrowDown, Eye, EyeOff } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
-import type { FilterField } from '@/shared/ui/templates/panels';
+
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { TagRecord } from '@/shared/types/domain/notes';
 import { Button } from '@/shared/ui';
+import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
+import type { FilterField } from '@/shared/ui/templates/panels';
 
 /**
  * REFACTORED: NotesFilters using FilterPanel

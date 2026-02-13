@@ -1,9 +1,12 @@
 'use client';
 
+import { Loader2 } from 'lucide-react';
 import React from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { PanelStat } from './types';
+
 import { cn } from '@/shared/utils/ui-utils';
+
+import { PanelStat } from './types';
+
 
 interface PanelStatsProps {
   stats: PanelStat[];
@@ -49,17 +52,17 @@ export const PanelStats: React.FC<PanelStatsProps> = ({
           className={getStatColor(stat.color)}
           title={stat.tooltip}
         >
-          <div className="flex items-center gap-2">
-            {stat.icon && <span className="h-4 w-4 opacity-60">{stat.icon}</span>}
-            <span className="text-xs font-medium text-gray-600 uppercase">
+          <div className='flex items-center gap-2'>
+            {stat.icon && <span className='h-4 w-4 opacity-60'>{stat.icon}</span>}
+            <span className='text-xs font-medium text-gray-600 uppercase'>
               {stat.label}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className='h-4 w-4 animate-spin' />
             ) : (
-              <span className="text-lg font-bold text-gray-900">{stat.value}</span>
+              <span className='text-lg font-bold text-gray-900'>{stat.value}</span>
             )}
           </div>
         </div>

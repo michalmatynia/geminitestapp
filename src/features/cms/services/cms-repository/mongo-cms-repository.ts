@@ -10,7 +10,7 @@ import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsTheme
 import type { CmsRepository, PageUpdateData } from '../../types/services/cms-repository';
 import type { Filter } from 'mongodb';
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+ 
 const pagesCollection = 'cms_pages';
 const slugsCollection = 'cms_slugs';
 const themesCollection = 'cms_themes';

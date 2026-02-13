@@ -1,4 +1,4 @@
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule, PromptValidationScope } from '@/features/prompt-engine/settings';
 
 import type { PromptExploderPatternSnapshot } from './types';
 
@@ -41,7 +41,7 @@ export const ensurePromptExploderScopeOnRules = (
     ...rule,
     appliesToScopes: [
       ...new Set([...(rule.appliesToScopes ?? []), 'prompt_exploder']),
-    ],
+    ] as PromptValidationScope[],
   }));
 };
 

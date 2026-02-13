@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+
 import {
   ListingSettingsProvider,
   useListingSettingsContext,
@@ -9,8 +10,9 @@ import { FormModal } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';
 import { ExportLogViewer } from './ExportLogViewer';
-import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { useMassListForm } from './hooks/useMassListForm';
+import { IntegrationAccountSummary } from './IntegrationAccountSummary';
+import { MassListProductModalViewProvider, useMassListProductModalViewContext } from './mass-list-modal/context/MassListProductModalViewContext';
 
 type MassListProductModalProps = {
   productIds: string[];
@@ -20,13 +22,14 @@ type MassListProductModalProps = {
   onSuccess: () => void;
 };
 
-function MassListProductModalContent({
-  productIds,
-  integrationId,
-  connectionId,
-  onClose,
-  onSuccess,
-}: MassListProductModalProps): React.JSX.Element {
+function MassListProductModalContent(): React.JSX.Element {
+  const {
+    productIds,
+    integrationId,
+    connectionId,
+    onClose,
+    onSuccess,
+  } = useMassListProductModalViewContext();
   const [logsOpen, setLogsOpen] = useState(false);
 
   const {
@@ -56,10 +59,6 @@ function MassListProductModalContent({
     allowDuplicateSku,
     onSuccess,
   });
-
-  const connectionName = (selectedIntegration?.connections as Array<{ id: string; name: string }>)?.find(
-    (c: { id: string; name: string }) => c.id === selectedConnectionId
-  )?.name || '';
 
   return (
     <FormModal
@@ -94,10 +93,7 @@ function MassListProductModalContent({
 
         {!submitting && (
           <>
-            <IntegrationAccountSummary
-              integrationName={selectedIntegration?.name}
-              connectionName={connectionName}
-            />
+            <IntegrationAccountSummary />
 
             {loading ? (
               <p className='text-sm text-gray-400'>Loading details...</p>
@@ -124,12 +120,29 @@ function MassListProductModalContent({
 }
 
 export function MassListProductModal(props: MassListProductModalProps): React.JSX.Element {
+  const {
+    integrationId,
+    connectionId,
+    productIds,
+    onClose,
+    onSuccess,
+  } = props;
   return (
     <ListingSettingsProvider
-      initialIntegrationId={props.integrationId}
-      initialConnectionId={props.connectionId}
+      initialIntegrationId={integrationId}
+      initialConnectionId={connectionId}
     >
-      <MassListProductModalContent {...props} />
+      <MassListProductModalViewProvider
+        value={{
+          productIds,
+          integrationId,
+          connectionId,
+          onClose,
+          onSuccess,
+        }}
+      >
+        <MassListProductModalContent />
+      </MassListProductModalViewProvider>
     </ListingSettingsProvider>
   );
 }

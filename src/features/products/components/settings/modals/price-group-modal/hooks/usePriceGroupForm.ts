@@ -1,8 +1,9 @@
 import React from 'react';
-import { useSavePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import { useToast } from '@/shared/ui';
+
 import { logClientError } from '@/features/observability';
+import { useSavePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { PriceGroup } from '@/features/products/types';
+import { useToast } from '@/shared/ui';
 
 interface PriceGroupFormState {
   name: string;

@@ -21,6 +21,13 @@ import type { BlockInstance } from '../../../types/page-builder';
 // ---------------------------------------------------------------------------
 
 export const BlockSettingsContext = createContext<Record<string, unknown> | null>(null);
+type BlockRenderContextValue = {
+  block: BlockInstance;
+  mediaStyles: React.CSSProperties | null;
+  stretch: boolean;
+};
+
+const BlockRenderContext = createContext<BlockRenderContextValue | null>(null);
 
 export function useBlockSettings(): Record<string, unknown> | null {
   return useContext(BlockSettingsContext);
@@ -30,6 +37,14 @@ function useRequiredBlockSettings(): Record<string, unknown> {
   const context = useContext(BlockSettingsContext);
   if (!context) {
     throw new Error('Block sub-components must be used within a BlockSettingsContext.Provider');
+  }
+  return context;
+}
+
+function useRequiredBlockRenderContext(): BlockRenderContextValue {
+  const context = useContext(BlockRenderContext);
+  if (!context) {
+    throw new Error('Block sub-components must be used within a BlockRenderContext.Provider');
   }
   return context;
 }
@@ -47,31 +62,26 @@ export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): Re
   const { stretch } = useSectionLayout();
 
   return (
-    <BlockSettingsContext.Provider value={block.settings}>
-      <GsapAnimationWrapper>
-        <CssAnimationWrapper>
-          <EventEffectsWrapper
-            settings={block.settings}
-            nodeId={block.id}
-            customCss={block.settings['customCss']}
-          >
-            <BlockContent block={block} mediaStyles={mediaStyles} stretch={stretch ?? false} />
-          </EventEffectsWrapper>
-        </CssAnimationWrapper>
-      </GsapAnimationWrapper>
-    </BlockSettingsContext.Provider>
+    <BlockRenderContext.Provider value={{ block, mediaStyles, stretch: stretch ?? false }}>
+      <BlockSettingsContext.Provider value={block.settings}>
+        <GsapAnimationWrapper>
+          <CssAnimationWrapper>
+            <EventEffectsWrapper
+              settings={block.settings}
+              nodeId={block.id}
+              customCss={block.settings['customCss']}
+            >
+              <BlockContent />
+            </EventEffectsWrapper>
+          </CssAnimationWrapper>
+        </GsapAnimationWrapper>
+      </BlockSettingsContext.Provider>
+    </BlockRenderContext.Provider>
   );
 }
 
-function BlockContent({
-  block,
-  mediaStyles,
-  stretch = false
-}: {
-  block: BlockInstance;
-  mediaStyles: React.CSSProperties | null;
-  stretch: boolean;
-}): React.ReactNode {
+function BlockContent(): React.ReactNode {
+  const { block } = useRequiredBlockRenderContext();
   switch (block.type) {
     case 'Heading':
       return <HeadingBlock />;
@@ -80,7 +90,7 @@ function BlockContent({
     case 'TextElement':
       return <TextElementBlock />;
     case 'TextAtom':
-      return <TextAtomBlock block={block} />;
+      return <TextAtomBlock />;
     case 'TextAtomLetter':
       return <TextAtomLetterBlock />;
     case 'Announcement':
@@ -90,13 +100,13 @@ function BlockContent({
     case 'RichText':
       return <RichTextBlock />;
     case 'ImageElement':
-      return <ImageElementBlock mediaStyles={mediaStyles} stretch={stretch} />;
+      return <ImageElementBlock />;
     case 'Image':
-      return <ImageBlock mediaStyles={mediaStyles} stretch={stretch} />;
+      return <ImageBlock />;
     case 'Model3D':
       return <Model3DBlock />;
     case 'VideoEmbed':
-      return <VideoEmbedBlock mediaStyles={mediaStyles} />;
+      return <VideoEmbedBlock />;
     case 'Divider':
       return <DividerBlock />;
     case 'SocialLinks':
@@ -146,7 +156,8 @@ function TextElementBlock(): React.ReactNode {
   return <p className='m-0 p-0 text-base leading-relaxed text-gray-200' style={typoStyles}>{text}</p>;
 }
 
-function TextAtomBlock({ block }: { block: BlockInstance }): React.ReactNode {
+function TextAtomBlock(): React.ReactNode {
+  const { block } = useRequiredBlockRenderContext();
   const settings = useRequiredBlockSettings();
   const text = (settings['text'] as string) || '';
   const alignment = (settings['alignment'] as string) || 'left';
@@ -374,13 +385,8 @@ function RichTextBlock(): React.ReactNode {
   );
 }
 
-function ImageElementBlock({
-  mediaStyles,
-  stretch = false,
-}: {
-  mediaStyles: React.CSSProperties | null;
-  stretch?: boolean;
-}): React.ReactNode {
+function ImageElementBlock(): React.ReactNode {
+  const { mediaStyles, stretch } = useRequiredBlockRenderContext();
   const settings = useRequiredBlockSettings();
   const src = (settings['src'] as string) || '';
   const alt = (settings['alt'] as string) || 'Image';
@@ -527,13 +533,8 @@ function ImageElementBlock({
   );
 }
 
-function ImageBlock({
-  mediaStyles,
-  stretch = false,
-}: {
-  mediaStyles: React.CSSProperties | null;
-  stretch?: boolean;
-}): React.ReactNode {
+function ImageBlock(): React.ReactNode {
+  const { mediaStyles, stretch } = useRequiredBlockRenderContext();
   const settings = useRequiredBlockSettings();
   const src = (settings['src'] as string) || '';
   const alt = (settings['alt'] as string) || '';
@@ -637,11 +638,8 @@ function buildTransparencyMaskStyles(
   };
 }
 
-function VideoEmbedBlock({
-  mediaStyles,
-}: {
-  mediaStyles: React.CSSProperties | null;
-}): React.ReactNode {
+function VideoEmbedBlock(): React.ReactNode {
+  const { mediaStyles } = useRequiredBlockRenderContext();
   const settings = useRequiredBlockSettings();
   const url = (settings['url'] as string) || '';
   const aspectRatio = (settings['aspectRatio'] as string) || '16:9';

@@ -112,12 +112,16 @@ export const resolveSegmentIdAfterReexplode = (args: {
     );
     return matched?.id ?? args.document.segments[0]?.id ?? null;
   }
-  if (!args.strategy.previousId) {
-    return args.document.segments[0]?.id ?? null;
+  if (args.strategy.kind === 'preserve_id') {
+    const { previousId } = args.strategy;
+    if (!previousId) {
+      return args.document.segments[0]?.id ?? null;
+    }
+    return args.document.segments.some(
+      (segment) => segment.id === previousId
+    )
+      ? previousId
+      : args.document.segments[0]?.id ?? null;
   }
-  return args.document.segments.some(
-    (segment) => segment.id === args.strategy.previousId
-  )
-    ? args.strategy.previousId
-    : args.document.segments[0]?.id ?? null;
+  return args.document.segments[0]?.id ?? null;
 };

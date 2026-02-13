@@ -1,6 +1,8 @@
 'use client';
 
 import { api } from '@/shared/lib/api-client';
+import { createMutationHook } from '@/shared/lib/api-hooks';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
   NoteWithRelations,
@@ -20,8 +22,6 @@ import type {
   ThemeUpdateInput,
 } from '@/shared/types/domain/notes';
 
-import { createMutationHook } from '@/shared/lib/api-hooks';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export const useCreateNote = createMutationHook({
   mutationFn: (payload: NoteCreateInput) => api.post<NoteWithRelations>('/api/notes', payload),

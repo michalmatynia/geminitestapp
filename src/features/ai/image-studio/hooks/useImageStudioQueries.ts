@@ -3,11 +3,11 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { studioKeys } from '@/shared/lib/query-key-exports';
 
 import type { StudioProjectsResponse, StudioSlotsResponse } from '../types';
 
-export const studioKeys = QUERY_KEYS.imageStudio;
+export { studioKeys };
 
 export type StudioImageModelsResponse = {
   models?: string[];

@@ -2,14 +2,15 @@
 
 import { Store } from 'lucide-react';
 import { memo, useMemo, useCallback } from 'react';
-import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
-import type { FilterField } from '@/shared/ui/templates/panels';
+
 import {
   useProductListFiltersContext,
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
 import type { ProductWithImages } from '@/features/products/types';
 import { SelectionBar, DropdownMenuItem } from '@/shared/ui';
+import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
+import type { FilterField } from '@/shared/ui/templates/panels';
 
 /**
  * REFACTORED: ProductFilters using FilterPanel template
@@ -95,7 +96,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
       filters={filterConfig}
       values={filterValues}
       search={search}
-      searchPlaceholder="Search by product name..."
+      searchPlaceholder='Search by product name...'
       onFilterChange={handleFilterChange}
       onSearchChange={setSearch}
       onReset={() => {

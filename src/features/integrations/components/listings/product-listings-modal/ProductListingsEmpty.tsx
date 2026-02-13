@@ -2,21 +2,17 @@
 
 import React from 'react';
 
-type ProductListingsEmptyProps = {
-  filterIntegrationSlug: string | null | undefined;
-  statusTargetLabel: string;
-  isBaseFilter: boolean;
-  showSync: boolean;
-  SyncPanel?: React.ComponentType<object>;
-};
+import { useProductListingsViewContext } from './context/ProductListingsViewContext';
+import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
 
-export function ProductListingsEmpty({
-  filterIntegrationSlug,
-  statusTargetLabel,
-  isBaseFilter,
-  showSync,
-  SyncPanel,
-}: ProductListingsEmptyProps): React.JSX.Element {
+export function ProductListingsEmpty(): React.JSX.Element {
+  const {
+    filterIntegrationSlug,
+    statusTargetLabel,
+    isBaseFilter,
+    showSync,
+  } = useProductListingsViewContext();
+
   return (
     <div className='rounded-md border bg-card/50 px-4 py-8 text-center'>
       {filterIntegrationSlug ? (
@@ -27,7 +23,7 @@ export function ProductListingsEmpty({
           <div className='rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-400'>
             Not connected.
           </div>
-          {showSync && isBaseFilter && SyncPanel && <SyncPanel />}
+          {showSync && isBaseFilter && <ProductListingsSyncPanel />}
         </div>
       ) : (
         <div className='space-y-4'>

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
+
 import { FormModal } from '../FormModal';
-import { Button } from '../button';
 
 export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'custom';
 
@@ -32,10 +32,10 @@ export interface SettingsField<T extends Record<string, any>> {
   options?: Array<{ label: string; value: string | number }>;
   
   /** Custom render function for advanced fields */
-  render?: (props: SettingsFieldRenderProps<T>) => ReactNode;
+  render?: (props: SettingsFieldRenderProps) => ReactNode;
 }
 
-export interface SettingsFieldRenderProps<T extends Record<string, any>> {
+export interface SettingsFieldRenderProps {
   value: any;
   onChange: (value: any) => void;
   error?: string;
@@ -59,32 +59,6 @@ export interface SettingsPanelBuilderProps<T extends Record<string, any>> {
 /**
  * Generic settings panel builder.
  * Consolidates Theme, Component, Menu, Viewer3D settings patterns.
- * 
- * @example
- * const fields: SettingsField<ThemeSettings>[] = [
- *   {
- *     key: 'primaryColor',
- *     label: 'Primary Color',
- *     type: 'text',
- *     placeholder: '#000000',
- *   },
- *   {
- *     key: 'theme',
- *     label: 'Theme',
- *     type: 'select',
- *     options: [{ label: 'Dark', value: 'dark' }],
- *   },
- * ];
- * 
- * <SettingsPanelBuilder
- *   open={true}
- *   onClose={handleClose}
- *   title="Theme Settings"
- *   fields={fields}
- *   values={settings}
- *   onChange={setSettings}
- *   onSave={handleSave}
- * />
  */
 export function SettingsPanelBuilder<T extends Record<string, any>>({
   open,
@@ -112,7 +86,7 @@ export function SettingsPanelBuilder<T extends Record<string, any>>({
       open={open}
       onClose={onClose}
       title={title}
-      subtitle={subtitle}
+      {...(subtitle !== undefined ? { subtitle } : {})}
       onSave={handleSave}
       isSaving={isSaving}
       size={size}
@@ -130,8 +104,8 @@ export function SettingsPanelBuilder<T extends Record<string, any>>({
               field.render({
                 value: values[field.key],
                 onChange: (value: any) => handleFieldChange(field.key, value),
-                error: errors[field.key],
                 disabled: field.disabled || isSaving,
+                ...(errors[field.key] !== undefined ? { error: errors[field.key] } : {}),
               })
             ) : field.type === 'textarea' ? (
               <textarea

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+ 
 
 import { dtoBaseSchema } from './base';
 

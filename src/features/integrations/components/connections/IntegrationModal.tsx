@@ -5,23 +5,23 @@ import { useMemo } from 'react';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { Tabs, TabsContent, AppModal } from '@/shared/ui';
 
+import { AllegroApiConsole } from './AllegroApiConsole';
+import { BaseApiConsole } from './BaseApiConsole';
 import { ConnectionManager } from './ConnectionManager';
-import { SessionModal } from './SessionModal';
-import { TestLogModal } from './TestLogModal';
-import { TestResultModal } from './TestResultModal';
-import { PlaywrightTabContent } from './PlaywrightTabContent';
 import { useIntegrationTabs } from './hooks/useIntegrationTabs';
 import { IntegrationModalHeader } from './integration-modal/IntegrationModalHeader';
-import { IntegrationModalSubtitle } from './integration-modal/IntegrationModalSubtitle';
 import { IntegrationModalHeaderActions } from './integration-modal/IntegrationModalHeaderActions';
-import { IntegrationTabsList } from './integration-modal/IntegrationTabsList';
-import { IntegrationSettingsContent } from './integration-modal/IntegrationSettingsContent';
+import { IntegrationModalSubtitle } from './integration-modal/IntegrationModalSubtitle';
 import {
   IntegrationModalViewProvider,
   type IntegrationModalViewContextValue,
 } from './integration-modal/IntegrationModalViewContext';
-import { AllegroApiConsole } from './AllegroApiConsole';
-import { BaseApiConsole } from './BaseApiConsole';
+import { IntegrationSettingsContent } from './integration-modal/IntegrationSettingsContent';
+import { IntegrationTabsList } from './integration-modal/IntegrationTabsList';
+import { PlaywrightTabContent } from './PlaywrightTabContent';
+import { SessionModal } from './SessionModal';
+import { TestLogModal } from './TestLogModal';
+import { TestResultModal } from './TestResultModal';
 
 export function IntegrationModal(): React.JSX.Element {
   const { activeIntegration, onCloseModal, showTestLogModal, selectedStep, showTestErrorModal, testError, showTestSuccessModal, testSuccessMessage, showSessionModal, showPlaywrightSaved, onOpenSessionModal } = useIntegrationsContext();
@@ -54,7 +54,7 @@ export function IntegrationModal(): React.JSX.Element {
       activeConnection,
       onOpenSessionModal,
       onSavePlaywrightSettings: () => {
-        void handleSavePlaywrightSettings();
+        handleSavePlaywrightSettings();
       },
     }),
     [

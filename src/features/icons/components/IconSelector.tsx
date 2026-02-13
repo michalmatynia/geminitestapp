@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import { usePickerSearch } from '@/shared/ui/templates/pickers/usePickerSearch';
 import { Button, Input, Tooltip } from '@/shared/ui';
+import { usePickerSearch } from '@/shared/ui/templates/pickers/usePickerSearch';
 import { cn } from '@/shared/utils';
 
 import { ICON_LIBRARY, type IconLibraryItem } from '../lib/icon-library';

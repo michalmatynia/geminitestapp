@@ -3,6 +3,7 @@ import {
   type PromptExploderRuleSegmentType,
   type PromptEngineSettings,
   type PromptValidationRule,
+  type PromptValidationScope,
 } from '@/features/prompt-engine/settings';
 
 const PROMPT_EXPLODER_SCOPE = ['prompt_exploder'] as const;
@@ -730,12 +731,12 @@ export function ensurePromptExploderPatternPack(
       !existingLaunchScopes.includes('prompt_exploder');
     const merged: PromptValidationRule = {
       ...existing,
-      appliesToScopes: missingPromptExploderScope
+      appliesToScopes: (missingPromptExploderScope
         ? [...new Set([...existingScopes, 'prompt_exploder'])]
-        : existing.appliesToScopes,
-      launchAppliesToScopes: missingPromptExploderLaunchScope
+        : existing.appliesToScopes) as PromptValidationScope[],
+      launchAppliesToScopes: (missingPromptExploderLaunchScope
         ? [...new Set([...existingLaunchScopes, 'prompt_exploder'])]
-        : existing.launchAppliesToScopes,
+        : existing.launchAppliesToScopes) as PromptValidationScope[],
       promptExploderSegmentType:
         existing.promptExploderSegmentType ??
         packRule.promptExploderSegmentType ??

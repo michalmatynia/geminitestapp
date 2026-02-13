@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -9,6 +10,7 @@ import {
   type RunStudioEnqueueResult,
   type RunStudioPayload,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { api } from '@/shared/lib/api-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
@@ -19,8 +21,6 @@ import { usePromptState, usePromptActions } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
 import { useSlotsState } from './SlotsContext';
 import { buildRunRequestPreview } from '../utils/run-request-preview';
-
-import type { UseMutationResult } from '@tanstack/react-query';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,6 +134,7 @@ const buildLandingSlotsFromRun = (run: PersistedImageStudioRunRecord): Generatio
 
 export function GenerationProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Cross-domain reads
   const { projectId } = useProjectsState();
@@ -228,6 +229,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           const outputs = Array.isArray(run.outputs) ? run.outputs : [];
 
           setRunOutputs(outputs);
+          void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
           setLandingSlots(buildLandingSlotsFromRun({
             ...run,
             expectedOutputs,
@@ -340,7 +342,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       settle();
       toast('Generation callback timed out.', { variant: 'error' });
     },
-    [cancelCurrentPoll, toast]
+    [cancelCurrentPoll, projectId, queryClient, toast]
   );
 
   const pollRunUntilFinishedRef = useRef(pollRunUntilFinished);

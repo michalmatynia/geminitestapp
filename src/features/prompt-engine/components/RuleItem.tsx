@@ -7,6 +7,7 @@ import {
   Button,
   Input,
   Label,
+  MultiSelect,
   SectionPanel,
   Select,
   SelectContent,
@@ -19,12 +20,18 @@ import {
 import { cn } from '@/shared/utils';
 
 import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
-
-import type {
-  PromptAutofixOperation,
-  PromptValidationChainMode,
-  PromptValidationLaunchOperator,
-  PromptValidationSeverity,
+import {
+  DEFAULT_PROMPT_VALIDATION_SCOPES,
+  PROMPT_VALIDATION_SCOPE_LABELS,
+  PROMPT_VALIDATION_SCOPE_VALUES,
+  type PromptValidationScope,
+  type PromptValidationSimilarPattern,
+  type PromptAutofixOperation,
+  type PromptValidationChainMode,
+  type PromptValidationLaunchScopeBehavior,
+  type PromptValidationLaunchOperator,
+  type PromptValidationSeverity,
+  type PromptValidationRule,
 } from '../settings';
 
 const formatSeverityLabel = (severity: PromptValidationSeverity): string => {
@@ -78,6 +85,29 @@ const LAUNCH_OPERATORS: Array<{ value: PromptValidationLaunchOperator; label: st
   { value: 'is_not_empty', label: 'Is Not Empty' },
 ];
 
+const SCOPE_OPTIONS = PROMPT_VALIDATION_SCOPE_VALUES.map((scope) => ({
+  value: scope,
+  label: PROMPT_VALIDATION_SCOPE_LABELS[scope],
+}));
+
+const normalizeRuleScopes = (
+  scopes: PromptValidationScope[] | null | undefined
+): PromptValidationScope[] => {
+  if (!Array.isArray(scopes) || scopes.length === 0) {
+    return [...DEFAULT_PROMPT_VALIDATION_SCOPES];
+  }
+  const known = new Set<PromptValidationScope>(PROMPT_VALIDATION_SCOPE_VALUES);
+  const deduped: PromptValidationScope[] = [];
+  for (const scope of scopes) {
+    if (!known.has(scope) || deduped.includes(scope)) continue;
+    deduped.push(scope);
+  }
+  return deduped.length > 0 ? deduped : [...DEFAULT_PROMPT_VALIDATION_SCOPES];
+};
+
+const normalizeRuleKind = (value: string): PromptValidationRule['kind'] =>
+  value === 'params_object' ? 'params_object' : 'regex';
+
 export function RuleItem({
   draft,
   draggableEnabled = false,
@@ -107,9 +137,102 @@ export function RuleItem({
       : 1;
   const passOutputToNext = rule?.passOutputToNext ?? true;
   const launchEnabled = rule?.launchEnabled ?? false;
+  const appliesToScopes = normalizeRuleScopes(rule?.appliesToScopes);
+  const launchAppliesToScopes = normalizeRuleScopes(rule?.launchAppliesToScopes);
+  const launchScopeBehavior: PromptValidationLaunchScopeBehavior =
+    rule?.launchScopeBehavior === 'bypass' ? 'bypass' : 'gate';
   const launchOperator = rule?.launchOperator ?? 'contains';
   const launchValue = rule?.launchValue ?? '';
   const launchFlags = rule?.launchFlags ?? '';
+
+  const patchRule = (patch: Partial<PromptValidationRule>): void => {
+    if (!rule) return;
+    handlePatchRule(draft.uid, patch);
+  };
+
+  const updateSimilar = (
+    index: number,
+    patch: Partial<PromptValidationSimilarPattern>
+  ): void => {
+    if (!rule) return;
+    const next = [...(rule.similar ?? [])];
+    const current = next[index];
+    if (!current) return;
+    next[index] = { ...current, ...patch };
+    patchRule({ similar: next });
+  };
+
+  const removeSimilar = (index: number): void => {
+    if (!rule) return;
+    const next = (rule.similar ?? []).filter((_item, idx) => idx !== index);
+    patchRule({ similar: next });
+  };
+
+  const addSimilar = (): void => {
+    if (!rule) return;
+    const next = [
+      ...(rule.similar ?? []),
+      {
+        pattern: '',
+        flags: '',
+        suggestion: '',
+        comment: null,
+      },
+    ];
+    patchRule({ similar: next });
+  };
+
+  const updateAutofixOperation = (
+    index: number,
+    operation: PromptAutofixOperation
+  ): void => {
+    if (!rule) return;
+    const currentOps = rule.autofix?.operations ?? [];
+    const next = [...currentOps];
+    if (!next[index]) return;
+    next[index] = operation;
+    patchRule({
+      autofix: {
+        enabled: rule.autofix?.enabled ?? true,
+        operations: next,
+      },
+    });
+  };
+
+  const removeAutofixOperation = (index: number): void => {
+    if (!rule) return;
+    const currentOps = rule.autofix?.operations ?? [];
+    const next = currentOps.filter((_item, idx) => idx !== index);
+    patchRule({
+      autofix: {
+        enabled: rule.autofix?.enabled ?? true,
+        operations: next,
+      },
+    });
+  };
+
+  const addAutofixOperation = (kind: PromptAutofixOperation['kind']): void => {
+    if (!rule) return;
+    const currentOps = rule.autofix?.operations ?? [];
+    let nextOperation: PromptAutofixOperation;
+    if (kind === 'params_json') {
+      nextOperation = { kind: 'params_json', comment: null };
+    } else {
+      nextOperation = {
+        kind: 'replace',
+        pattern: '',
+        flags: '',
+        replacement: '',
+        comment: null,
+      };
+    }
+    patchRule({
+      autofix: {
+        enabled: rule.autofix?.enabled ?? true,
+        operations: [...currentOps, nextOperation],
+      },
+    });
+  };
 
   return (
     <SectionPanel
@@ -185,226 +308,587 @@ export function RuleItem({
         </div>
       </div>
 
-      <div className='grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]'>
-        <div className='space-y-2'>
-          <Textarea
-            className='min-h-[180px] font-mono text-[12px]'
-            value={draft.text}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => handleRuleTextChange(draft.uid, event.target.value)}
-          />
-          {draft.error ? (
-            <div className='text-xs text-red-300'>{draft.error}</div>
-          ) : null}
-          {rule?.kind === 'regex' && regexStatus && !regexStatus.ok ? (
-            <div className='text-xs text-red-300'>Regex error: {regexStatus.error}</div>
-          ) : null}
-          {rule ? (
-            <div className='grid gap-2 rounded border border-border/40 bg-foreground/5 p-3 md:grid-cols-4'>
+      {rule ? (
+        <div className='space-y-4'>
+          <div className='grid gap-3 md:grid-cols-4'>
+            <div className='space-y-1 md:col-span-1'>
+              <Label className='text-[11px] text-slate-300'>Kind</Label>
+              <Select
+                value={rule.kind}
+                onValueChange={(value: string): void => {
+                  const nextKind = normalizeRuleKind(value);
+                  if (nextKind === rule.kind) return;
+                  if (nextKind === 'regex') {
+                    const nextRule: PromptValidationRule = {
+                      ...rule,
+                      kind: 'regex',
+                      pattern: '^$',
+                      flags: 'mi',
+                    };
+                    handleRuleTextChange(draft.uid, JSON.stringify(nextRule, null, 2));
+                    return;
+                  }
+                  const nextRuleRecord = {
+                    ...rule,
+                    kind: 'params_object',
+                  } as Record<string, unknown>;
+                  delete nextRuleRecord['pattern'];
+                  delete nextRuleRecord['flags'];
+                  const nextRule = nextRuleRecord as PromptValidationRule;
+                  handleRuleTextChange(draft.uid, JSON.stringify(nextRule, null, 2));
+                }}
+              >
+                <SelectTrigger className='h-8'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='regex'>Regex</SelectItem>
+                  <SelectItem value='params_object'>Params Object</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='space-y-1 md:col-span-1'>
+              <Label className='text-[11px] text-slate-300'>Severity</Label>
+              <Select
+                value={rule.severity}
+                onValueChange={(value: string): void => {
+                  if (value !== 'error' && value !== 'warning' && value !== 'info') return;
+                  patchRule({ severity: value });
+                }}
+              >
+                <SelectTrigger className='h-8'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='error'>Error</SelectItem>
+                  <SelectItem value='warning'>Warning</SelectItem>
+                  <SelectItem value='info'>Info</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='space-y-1 md:col-span-2'>
+              <Label className='text-[11px] text-slate-300'>Rule ID</Label>
+              <Input
+                className='h-8'
+                value={rule.id}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  patchRule({ id: event.target.value });
+                }}
+              />
+            </div>
+            <div className='space-y-1 md:col-span-2'>
+              <Label className='text-[11px] text-slate-300'>Title</Label>
+              <Input
+                className='h-8'
+                value={rule.title}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  patchRule({ title: event.target.value });
+                }}
+              />
+            </div>
+            <div className='space-y-1 md:col-span-2'>
+              <Label className='text-[11px] text-slate-300'>Description</Label>
+              <Input
+                className='h-8'
+                value={rule.description ?? ''}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  patchRule({ description: event.target.value.trim() || null });
+                }}
+              />
+            </div>
+            <div className='space-y-1 md:col-span-4'>
+              <Label className='text-[11px] text-slate-300'>Message</Label>
+              <Textarea
+                className='min-h-[72px] text-[12px]'
+                value={rule.message}
+                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                  patchRule({ message: event.target.value });
+                }}
+              />
+            </div>
+            {rule.kind === 'regex' ? (
+              <>
+                <div className='space-y-1 md:col-span-3'>
+                  <Label className='text-[11px] text-slate-300'>Pattern</Label>
+                  <Input
+                    className='h-8 font-mono'
+                    value={rule.pattern}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      patchRule({ pattern: event.target.value });
+                    }}
+                  />
+                </div>
+                <div className='space-y-1 md:col-span-1'>
+                  <Label className='text-[11px] text-slate-300'>Flags</Label>
+                  <Input
+                    className='h-8 font-mono'
+                    value={rule.flags}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      patchRule({ flags: event.target.value });
+                    }}
+                  />
+                </div>
+              </>
+            ) : null}
+            {rule.kind === 'regex' && regexStatus && !regexStatus.ok ? (
+              <div className='md:col-span-4 text-xs text-red-300'>
+                Regex error: {regexStatus.error}
+              </div>
+            ) : null}
+            <div className='space-y-1 md:col-span-4'>
+              <Label className='text-[11px] text-slate-300'>Validation Scopes</Label>
+              <MultiSelect
+                options={SCOPE_OPTIONS}
+                selected={appliesToScopes}
+                onChange={(values: string[]): void => {
+                  patchRule({
+                    appliesToScopes: normalizeRuleScopes(values as PromptValidationScope[]),
+                  });
+                }}
+                placeholder='All scopes'
+                searchPlaceholder='Search scope...'
+                emptyMessage='No scope found.'
+              />
+            </div>
+          </div>
+
+          <div className='grid gap-2 rounded border border-border/40 bg-foreground/5 p-3 md:grid-cols-4'>
+            <div className='space-y-1'>
+              <Label className='text-[11px] text-slate-300'>Sequence</Label>
+              <Input
+                type='number'
+                min={0}
+                className='h-8'
+                value={sequenceValue}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  const raw = event.target.value.trim();
+                  if (!raw) {
+                    patchRule({ sequence: null });
+                    return;
+                  }
+                  const parsed = Number(raw);
+                  if (!Number.isFinite(parsed)) return;
+                  patchRule({ sequence: Math.max(0, Math.floor(parsed)) });
+                }}
+              />
+            </div>
+            <div className='space-y-1'>
+              <Label className='text-[11px] text-slate-300'>Chain Mode</Label>
+              <Select
+                value={chainMode}
+                onValueChange={(value: string): void =>
+                  patchRule({
+                    chainMode:
+                      value === 'stop_on_match' || value === 'stop_on_replace'
+                        ? value
+                        : 'continue',
+                  })
+                }
+              >
+                <SelectTrigger className='h-8'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='continue'>Continue</SelectItem>
+                  <SelectItem value='stop_on_match'>Stop On Match</SelectItem>
+                  <SelectItem value='stop_on_replace'>Stop On Replace</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='space-y-1'>
+              <Label className='text-[11px] text-slate-300'>Max Executions</Label>
+              <Input
+                type='number'
+                min={1}
+                max={20}
+                className='h-8'
+                value={String(maxExecutions)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  const parsed = Number(event.target.value);
+                  if (!Number.isFinite(parsed)) return;
+                  patchRule({
+                    maxExecutions: Math.min(20, Math.max(1, Math.floor(parsed))),
+                  });
+                }}
+              />
+            </div>
+            <div className='space-y-1'>
+              <Label className='text-[11px] text-slate-300'>Pass Output To Next</Label>
+              <button
+                type='button'
+                className={cn(
+                  'h-8 w-full rounded border text-xs font-medium',
+                  passOutputToNext
+                    ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200'
+                    : 'border-red-500/50 bg-red-500/10 text-red-200'
+                )}
+                onClick={() => patchRule({ passOutputToNext: !passOutputToNext })}
+              >
+                {passOutputToNext ? 'ON' : 'OFF'}
+              </button>
+            </div>
+
+            <div className='md:col-span-4 mt-1 grid gap-2 md:grid-cols-4'>
               <div className='space-y-1'>
-                <Label className='text-[11px] text-slate-300'>Sequence</Label>
-                <Input
-                  type='number'
-                  min={0}
-                  className='h-8'
-                  value={sequenceValue}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    const raw = event.target.value.trim();
-                    if (!raw) {
-                      handlePatchRule(draft.uid, { sequence: null });
-                      return;
-                    }
-                    const parsed = Number(raw);
-                    if (!Number.isFinite(parsed)) return;
-                    handlePatchRule(draft.uid, { sequence: Math.max(0, Math.floor(parsed)) });
-                  }}
-                />
+                <Label className='text-[11px] text-slate-300'>Launch</Label>
+                <button
+                  type='button'
+                  className={cn(
+                    'h-8 w-full rounded border text-xs font-medium',
+                    launchEnabled
+                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200'
+                      : 'border-red-500/50 bg-red-500/10 text-red-200'
+                  )}
+                  onClick={() => patchRule({ launchEnabled: !launchEnabled })}
+                >
+                  {launchEnabled ? 'ON' : 'OFF'}
+                </button>
               </div>
               <div className='space-y-1'>
-                <Label className='text-[11px] text-slate-300'>Chain Mode</Label>
+                <Label className='text-[11px] text-slate-300'>Launch Scope Behavior</Label>
                 <Select
-                  value={chainMode}
-                  onValueChange={(value: string) =>
-                    handlePatchRule(draft.uid, {
-                      chainMode:
-                        value === 'stop_on_match' || value === 'stop_on_replace'
-                          ? value
-                          : 'continue',
-                    })
-                  }
+                  value={launchScopeBehavior}
+                  onValueChange={(value: string): void => {
+                    patchRule({
+                      launchScopeBehavior: value === 'bypass' ? 'bypass' : 'gate',
+                    });
+                  }}
                 >
                   <SelectTrigger className='h-8'>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='continue'>Continue</SelectItem>
-                    <SelectItem value='stop_on_match'>Stop On Match</SelectItem>
-                    <SelectItem value='stop_on_replace'>Stop On Replace</SelectItem>
+                    <SelectItem value='gate'>Gate outside scope</SelectItem>
+                    <SelectItem value='bypass'>Bypass outside scope</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-1 md:col-span-2'>
+                <Label className='text-[11px] text-slate-300'>Launch Scopes</Label>
+                <MultiSelect
+                  options={SCOPE_OPTIONS}
+                  selected={launchAppliesToScopes}
+                  onChange={(values: string[]): void => {
+                    patchRule({
+                      launchAppliesToScopes: normalizeRuleScopes(
+                        values as PromptValidationScope[]
+                      ),
+                    });
+                  }}
+                  placeholder='All scopes'
+                  searchPlaceholder='Search scope...'
+                  emptyMessage='No scope found.'
+                />
+              </div>
+              <div className='space-y-1 md:col-span-2'>
+                <Label className='text-[11px] text-slate-300'>Launch Operator</Label>
+                <Select
+                  value={launchOperator}
+                  onValueChange={(value: string): void => {
+                    const valid = LAUNCH_OPERATORS.some((op) => op.value === value);
+                    patchRule({
+                      launchOperator: valid
+                        ? (value as PromptValidationLaunchOperator)
+                        : 'contains',
+                    });
+                  }}
+                >
+                  <SelectTrigger className='h-8'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LAUNCH_OPERATORS.map((op) => (
+                      <SelectItem key={op.value} value={op.value}>
+                        {op.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className='space-y-1'>
-                <Label className='text-[11px] text-slate-300'>Max Executions</Label>
+                <Label className='text-[11px] text-slate-300'>Launch Flags</Label>
                 <Input
-                  type='number'
-                  min={1}
-                  max={20}
                   className='h-8'
-                  value={String(maxExecutions)}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    const parsed = Number(event.target.value);
-                    if (!Number.isFinite(parsed)) return;
-                    handlePatchRule(draft.uid, { maxExecutions: Math.min(20, Math.max(1, Math.floor(parsed))) });
-                  }}
+                  value={launchFlags}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    patchRule({ launchFlags: event.target.value.trim() || null })
+                  }
+                  placeholder='mi'
                 />
               </div>
               <div className='space-y-1'>
-                <Label className='text-[11px] text-slate-300'>Pass Output To Next</Label>
+                <Label className='text-[11px] text-slate-300'>Launch Value</Label>
+                <Input
+                  className='h-8'
+                  value={launchValue}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    patchRule({ launchValue: event.target.value || null })
+                  }
+                  placeholder='contains/equals target'
+                />
+              </div>
+            </div>
+
+            {rule.sequenceGroupId ? (
+              <div className='md:col-span-4 text-[11px] text-cyan-100/80'>
+                Group:
+                <span className='ml-1 font-mono'>
+                  {rule.sequenceGroupLabel?.trim() || 'Sequence / Group'}
+                </span>
+                <span className='ml-2 text-cyan-200/70'>({rule.sequenceGroupId})</span>
+              </div>
+            ) : null}
+          </div>
+
+          <div className='space-y-3 rounded border border-border/40 bg-foreground/5 p-3'>
+            <div className='flex items-center justify-between gap-2'>
+              <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                Similar Patterns
+              </div>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={addSimilar}
+              >
+                Add Similar
+              </Button>
+            </div>
+            {rule.similar.length === 0 ? (
+              <div className='text-xs text-gray-400'>No similar patterns configured.</div>
+            ) : null}
+            {rule.similar.map((sim, index) => (
+              <div
+                key={`${rule.id}-similar-${index}`}
+                className='grid gap-2 rounded border border-border/40 bg-background/40 p-2 md:grid-cols-6'
+              >
+                <div className='space-y-1 md:col-span-3'>
+                  <Label className='text-[11px] text-slate-300'>Pattern</Label>
+                  <Input
+                    className='h-8 font-mono'
+                    value={sim.pattern}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      updateSimilar(index, { pattern: event.target.value });
+                    }}
+                  />
+                </div>
+                <div className='space-y-1 md:col-span-1'>
+                  <Label className='text-[11px] text-slate-300'>Flags</Label>
+                  <Input
+                    className='h-8 font-mono'
+                    value={sim.flags ?? ''}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      updateSimilar(index, { flags: event.target.value.trim() || undefined });
+                    }}
+                  />
+                </div>
+                <div className='space-y-1 md:col-span-2'>
+                  <Label className='text-[11px] text-slate-300'>Suggestion</Label>
+                  <Input
+                    className='h-8'
+                    value={sim.suggestion}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      updateSimilar(index, { suggestion: event.target.value });
+                    }}
+                  />
+                </div>
+                <div className='space-y-1 md:col-span-5'>
+                  <Label className='text-[11px] text-slate-300'>Comment</Label>
+                  <Input
+                    className='h-8'
+                    value={sim.comment ?? ''}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      updateSimilar(index, {
+                        comment: event.target.value.trim() || null,
+                      });
+                    }}
+                  />
+                </div>
+                <div className='flex items-end md:col-span-1'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => removeSimilar(index)}
+                    className='w-full'
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className='space-y-3 rounded border border-border/40 bg-foreground/5 p-3'>
+            <div className='flex flex-wrap items-center justify-between gap-2'>
+              <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                Autofix Operations
+              </div>
+              <div className='flex items-center gap-2'>
                 <button
                   type='button'
                   className={cn(
-                    'h-8 w-full rounded border text-xs font-medium',
-                    passOutputToNext
-                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200'
-                      : 'border-red-500/50 bg-red-500/10 text-red-200'
+                    'rounded border px-2 py-1 text-[11px]',
+                    rule.autofix?.enabled !== false
+                      ? 'border-emerald-500/45 bg-emerald-500/10 text-emerald-200'
+                      : 'border-red-500/45 bg-red-500/10 text-red-200'
                   )}
-                  onClick={() => handlePatchRule(draft.uid, { passOutputToNext: !passOutputToNext })}
+                  onClick={() =>
+                    patchRule({
+                      autofix: {
+                        enabled: !(rule.autofix?.enabled ?? true),
+                        operations: rule.autofix?.operations ?? [],
+                      },
+                    })
+                  }
                 >
-                  {passOutputToNext ? 'ON' : 'OFF'}
+                  {rule.autofix?.enabled !== false ? 'Autofix ON' : 'Autofix OFF'}
                 </button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => addAutofixOperation('replace')}
+                >
+                  Add Replace
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => addAutofixOperation('params_json')}
+                >
+                  Add Params JSON
+                </Button>
               </div>
-              <div className='md:col-span-4'>
-                <div className='grid gap-2 md:grid-cols-[120px_minmax(0,1fr)_140px_auto]'>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-slate-300'>Launch</Label>
-                    <button
-                      type='button'
-                      className={cn(
-                        'h-8 w-full rounded border text-xs font-medium',
-                        launchEnabled
-                          ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200'
-                          : 'border-red-500/50 bg-red-500/10 text-red-200'
-                      )}
-                      onClick={() => handlePatchRule(draft.uid, { launchEnabled: !launchEnabled })}
-                    >
-                      {launchEnabled ? 'ON' : 'OFF'}
-                    </button>
-                  </div>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-slate-300'>Launch Operator</Label>
-                    <Select
-                      value={launchOperator}
-                      onValueChange={(value: string) => {
-                        const valid = LAUNCH_OPERATORS.some((op) => op.value === value);
-                        handlePatchRule(draft.uid, { launchOperator: valid ? (value as PromptValidationLaunchOperator) : 'contains' });
-                      }}
-                    >
-                      <SelectTrigger className='h-8'>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {LAUNCH_OPERATORS.map((op) => (
-                          <SelectItem key={op.value} value={op.value}>
-                            {op.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-slate-300'>Launch Flags</Label>
-                    <Input
-                      className='h-8'
-                      value={launchFlags}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        handlePatchRule(draft.uid, { launchFlags: event.target.value.trim() || null })
-                      }
-                      placeholder='mi'
-                    />
-                  </div>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-slate-300'>Launch Value</Label>
-                    <Input
-                      className='h-8'
-                      value={launchValue}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        handlePatchRule(draft.uid, { launchValue: event.target.value || null })
-                      }
-                      placeholder='contains/equals target'
-                    />
-                  </div>
-                </div>
-              </div>
-              {rule.sequenceGroupId ? (
-                <div className='md:col-span-4 text-[11px] text-cyan-100/80'>
-                  Group:
-                  <span className='ml-1 font-mono'>{rule.sequenceGroupLabel?.trim() || 'Sequence / Group'}</span>
-                  <span className='ml-2 text-cyan-200/70'>({rule.sequenceGroupId})</span>
-                </div>
-              ) : null}
             </div>
-          ) : null}
-        </div>
-
-        <div className='space-y-2 text-xs text-gray-300'>
-          {rule ? (
-            <>
-              <div>
-                <div className='text-[11px] uppercase text-gray-500'>Rule ID</div>
-                <div className='break-all'>{rule.id}</div>
-              </div>
-              <div>
-                <div className='text-[11px] uppercase text-gray-500'>Kind</div>
-                <div>{rule.kind}</div>
-              </div>
-              {rule.kind === 'regex' ? (
-                <div>
-                  <div className='text-[11px] uppercase text-gray-500'>Pattern</div>
-                  <div className='break-all'>/{rule.pattern}/{rule.flags}</div>
+            {(rule.autofix?.operations ?? []).length === 0 ? (
+              <div className='text-xs text-gray-400'>No autofix operations configured.</div>
+            ) : null}
+            {(rule.autofix?.operations ?? []).map((op, index) => (
+              <div
+                key={`${rule.id}-autofix-${index}`}
+                className='space-y-2 rounded border border-border/40 bg-background/40 p-2'
+              >
+                <div className='flex items-center justify-between gap-2'>
+                  <div className='text-xs text-gray-300'>{formatAutofixOperation(op)}</div>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => removeAutofixOperation(index)}
+                  >
+                    Remove
+                  </Button>
                 </div>
-              ) : null}
-              <div>
-                <div className='text-[11px] uppercase text-gray-500'>Enabled</div>
-                <div>{rule.enabled ? 'Yes' : 'No'}</div>
+                {op.kind === 'replace' ? (
+                  <div className='grid gap-2 md:grid-cols-4'>
+                    <div className='space-y-1 md:col-span-2'>
+                      <Label className='text-[11px] text-slate-300'>Pattern</Label>
+                      <Input
+                        className='h-8 font-mono'
+                        value={op.pattern}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateAutofixOperation(index, {
+                            ...op,
+                            pattern: event.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className='space-y-1 md:col-span-1'>
+                      <Label className='text-[11px] text-slate-300'>Flags</Label>
+                      <Input
+                        className='h-8 font-mono'
+                        value={op.flags ?? ''}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateAutofixOperation(index, {
+                            ...op,
+                            flags: event.target.value.trim() || undefined,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className='space-y-1 md:col-span-1'>
+                      <Label className='text-[11px] text-slate-300'>Replacement</Label>
+                      <Input
+                        className='h-8'
+                        value={op.replacement}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateAutofixOperation(index, {
+                            ...op,
+                            replacement: event.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className='space-y-1 md:col-span-4'>
+                      <Label className='text-[11px] text-slate-300'>Comment</Label>
+                      <Input
+                        className='h-8'
+                        value={op.comment ?? ''}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          updateAutofixOperation(index, {
+                            ...op,
+                            comment: event.target.value.trim() || null,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-slate-300'>Comment</Label>
+                    <Input
+                      className='h-8'
+                      value={op.comment ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateAutofixOperation(index, {
+                          ...op,
+                          comment: event.target.value.trim() || null,
+                        })
+                      }
+                    />
+                  </div>
+                )}
               </div>
-              <div>
-                <div className='text-[11px] uppercase text-gray-500'>Message</div>
-                <div className='whitespace-pre-wrap'>{rule.message}</div>
-              </div>
-            </>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className='space-y-2'>
+          <Textarea
+            className='min-h-[180px] font-mono text-[12px]'
+            value={draft.text}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+              handleRuleTextChange(draft.uid, event.target.value)
+            }
+          />
+          {draft.error ? (
+            <div className='text-xs text-red-300'>{draft.error}</div>
           ) : (
-            <div className='text-xs text-red-300'>Invalid JSON. Fix to see summary.</div>
+            <div className='text-xs text-gray-400'>Fix JSON to enable visual editing.</div>
           )}
         </div>
-      </div>
+      )}
 
-      {rule?.similar?.length ? (
-        <div className='space-y-1'>
-          <div className='text-[11px] uppercase text-gray-500'>Similar patterns</div>
-          <div className='space-y-2'>
-            {rule.similar.map((sim) => (
-              <div key={`${sim.pattern}-${sim.suggestion}`} className='rounded border border-gray-700/60 bg-gray-900/40 p-2 text-xs text-gray-300'>
-                <div className='font-mono'>/{sim.pattern}/{sim.flags ?? ''}</div>
-                <div className='text-[11px] text-gray-400'>{sim.suggestion}</div>
-                {sim.comment ? <div className='text-[11px] text-gray-500'>{sim.comment}</div> : null}
-              </div>
-            ))}
-          </div>
+      <details className='rounded border border-border/40 bg-foreground/5 p-3'>
+        <summary className='cursor-pointer text-xs font-medium text-gray-200'>
+          Raw JSON editor
+        </summary>
+        <div className='mt-3 space-y-2'>
+          <Textarea
+            className='min-h-[180px] font-mono text-[12px]'
+            value={draft.text}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+              handleRuleTextChange(draft.uid, event.target.value)
+            }
+          />
+          {draft.error ? (
+            <div className='text-xs text-red-300'>{draft.error}</div>
+          ) : null}
         </div>
-      ) : null}
-
-      {rule?.autofix?.operations?.length ? (
-        <div className='space-y-1'>
-          <div className='text-[11px] uppercase text-gray-500'>Autofix operations</div>
-          <div className='space-y-2'>
-            {rule.autofix.operations.map((op, index) => (
-              <div key={`${rule.id}-autofix-${index}`} className='rounded border border-gray-700/60 bg-gray-900/40 p-2 text-xs text-gray-300'>
-                <div>{formatAutofixOperation(op)}</div>
-                {op.comment ? <div className='text-[11px] text-gray-500'>{op.comment}</div> : null}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      </details>
     </SectionPanel>
   );
 }

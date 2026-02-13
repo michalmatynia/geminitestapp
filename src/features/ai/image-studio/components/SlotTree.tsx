@@ -1,6 +1,6 @@
 'use client';
 
-import { Folder, FolderOpen, GripVertical, LayoutGrid, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Folder, FolderOpen, GripVertical, LayoutGrid, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
@@ -9,7 +9,7 @@ import {
   MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
-import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
+import { TreeCaret, TreeContextMenu, TreeRow, UnifiedButton, useToast } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
@@ -48,6 +48,9 @@ type SlotTreeRevealRequest = {
   nonce: number;
 };
 
+const getMasterInstanceSettingsHref = (): string =>
+  '/admin/settings/folder-trees#folder-tree-instance-image_studio';
+
 const resolveExternalDraggedNodeId = (dataTransfer: DataTransfer): MasterTreeId | null => {
   const slotId = getFirstDragValue(dataTransfer, [DRAG_KEYS.ASSET_ID], null);
   if (slotId) return toSlotMasterNodeId(slotId);
@@ -70,8 +73,18 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     handleRenameFolder: onRenameFolder,
     handleDeleteFolder: onDeleteFolderPath,
   } = useSlotsActions();
-  const moveSlot = moveSlotMutation.mutateAsync;
-  const updateSlot = updateSlotMutation.mutateAsync;
+  const moveSlot = useCallback(
+    async (input: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<void> => {
+      await moveSlotMutation.mutateAsync(input);
+    },
+    [moveSlotMutation]
+  );
+  const updateSlot = useCallback(
+    async (input: { id: string; data: { name: string } }): Promise<void> => {
+      await updateSlotMutation.mutateAsync(input);
+    },
+    [updateSlotMutation]
+  );
   const masterNodes = useMemo(
     () => buildMasterNodesFromStudioTree(slots, folders),
     [slots, folders]
@@ -101,6 +114,8 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     profile,
     appearance: { placeholderClasses, rootDropUi, resolveIcon },
     controller,
+    panelCollapsed,
+    setPanelCollapsed,
   } = useMasterFolderTreeInstance({
     instance: 'image_studio',
     nodes: masterNodes,
@@ -269,6 +284,9 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
 
   useEffect(() => {
     if (!revealRequest?.slotId) return;
+    if (panelCollapsed) {
+      setPanelCollapsed(false);
+    }
     if (revealRequest.nonce === lastHandledRevealNonceRef.current) return;
 
     const targetNodeId = toSlotMasterNodeId(revealRequest.slotId);
@@ -287,7 +305,28 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
       const row = container.querySelector<HTMLElement>(`[data-slot-id="${revealRequest.slotId}"]`);
       row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
-  }, [controller.nodes, expandNode, revealRequest]);
+  }, [controller.nodes, expandNode, panelCollapsed, revealRequest, setPanelCollapsed]);
+
+  if (panelCollapsed) {
+    return (
+      <div className='relative h-full w-full min-w-0 overflow-hidden rounded border border-border bg-card/40 p-2'>
+        <div className='flex h-full items-center justify-center'>
+          <UnifiedButton
+            type='button'
+            variant='outline'
+            size='sm'
+            className='h-8 px-3 text-xs'
+            onClick={(): void => setPanelCollapsed(false)}
+            title='Show card tree'
+            aria-label='Show card tree'
+          >
+            <ChevronRight className='mr-1 size-4 -scale-x-100' />
+            Show Card Tree
+          </UnifiedButton>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -307,6 +346,24 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         clearSelection();
       }}
     >
+      <div className='absolute right-2 top-2 z-20' data-preserve-slot-selection='true'>
+        <UnifiedButton
+          type='button'
+          variant='outline'
+          size='icon'
+          className='size-6'
+          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+            event.preventDefault();
+            event.stopPropagation();
+            setPanelCollapsed(true);
+          }}
+          title='Collapse card tree'
+          aria-label='Collapse card tree'
+          data-preserve-slot-selection='true'
+        >
+          <ChevronLeft className='size-3.5' />
+        </UnifiedButton>
+      </div>
       <MasterFolderTree
         controller={controller}
         className='space-y-0.5'
@@ -769,6 +826,23 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           );
         }}
       />
+      <button
+        type='button'
+        className='absolute bottom-2 right-2 z-20 inline-flex size-6 items-center justify-center rounded-full border border-border bg-muted/80 text-[11px] font-semibold lowercase text-gray-300 shadow-sm transition hover:bg-muted hover:text-white'
+        title='Open master tree instance settings'
+        aria-label='Open master tree instance settings'
+        onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.stopPropagation();
+        }}
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (typeof window === 'undefined') return;
+          window.location.assign(getMasterInstanceSettingsHref());
+        }}
+      >
+        m
+      </button>
     </div>
   );
 }

@@ -1,51 +1,422 @@
-Backup MongoDB
+Versioning graph, detach node, flatten
+
+
+AI Prompt Patcher that will add new things
+
+---
+Prepare a plan for a new feature called prompt exploder that I want to be a separate feature, but I  also want it connected to my image studio. Prompt exploder takes a  text of a prompt and segments it using me Validator Engine to recognize patters. Each segment of the prompt is divided and assigned a type. We could have Assigned type, which basically is a title and below text, we can have a list , so for example a list is extracted from the prompt and then each point of this list can be reordered or edited. Another type will be parametrized section which usually is a set of parameters that can later be extracted into selectors. Another type is Metadata, which is usually some comment or name not included in the final prompt. Example work. Prompt Exploder is given the following prompt
+“
+=== PREMIUM E-COMMERCE IMAGE EDITING PROMPT WITH STUDIO RELIGHTING ver. 0.8 ===
+
+ROLE
+Use the image Edit Tool (NOT Python). Edit the provided RAW product photo into a premium, catalog-ready, photorealistic e-commerce image.
+
+NON-NEGOTIABLE GOAL (all must be true)
+1) Product integrity: the product must remain 100% truthful/unchanged.
+2) Background: pure white #FFFFFF (RGB 255,255,255) everywhere outside the product + ONE intended ground shadow.
+3) No extras: no props, no added text/graphics/callouts/watermarks.
+4) Shadow: one soft, realistic, neutral-gray ground shadow only (off-product), compact and under-base.
+
+PARAMS
+params = {
+  "apply_studio_relighting": true,
+
+  "relight": {
+    "require_visible_lighting_change": true,     // if apply_studio_relighting=true, lighting MUST change noticeably
+    "preset": "dramatic_softbox",               // dramatic_softbox|dramatic_rim|high_key|low_key|neutral_studio
+    "drama_strength": 0.65,                     // 0.0–1.0 (higher = more directional + more separation)
+    "key_light_direction": "top_left",          // top_left|top_right|left|right|top|front
+    "key_to_fill_ratio": 2.5,                   // >=1.5 for “more dramatic”; typical dramatic 2.0–4.0
+    "add_rim_light": true,                      // adds edge separation from background
+    "rim_intensity": 0.35,                      // 0.0–1.0 (keep realistic)
+    "preserve_material_response": true,         // do not change matte/gloss/texture behavior
+    "preserve_hue_no_shift": true,              // strict: no hue shift
+    "shadow_consistency_required": true         // ground shadow MUST match relit direction
+  },
+
+  "remove_photo_artifacts": true,
+  "remove_uncertain_marks": false,
+  "preserve_original_shadows": false,
+  "add_new_ground_shadow": true,
+  "shadow_style": "soft_studio",                // soft_studio|minimal|none
+
+  // PATCH: shorter, gentler, near-zero lateral offset shadow (prevents long “trail”)
+  "shadow_offset_px": 2,
+
+  "allow_micro_straighten": true,
+  "crop_mode": "auto_safe",                     // none|auto_safe|target_fill
+  "target_product_fill_ratio": 0.85,            // target 0.80–0.90; never crop product
+  "center_product": true,
+  "allow_intentional_offcenter": true,          // if true: keep premium intentional off-center framing
+  "background_rgb": [255,255,255],
+  "export": {
+    "format": "png",
+    "color_profile": "sRGB",
+    "flatten": true,
+    "target_size_px": [1536,1024],              // if null: longest side >= 2000
+    "longest_side_min_px": 2000,
+    "preserve_aspect_ratio": true,              // unless fixed canvas required
+    "allow_gentle_upscale": true
+  }
+}
+
+P0 — PRODUCT INTEGRITY (ABSOLUTE)
+* Do NOT redraw/regenerate/replace/repaint any part of the product.
+* Do NOT alter design/shape/components/patterns/logos/artwork/labels/text/stitching/texture/grain/finish.
+* Do NOT flip/mirror/warp/stretch/squash.
+* Color: NO hue shift. Allowed: exposure/contrast/neutral WB + subtle saturation if true-to-life.
+  Rule: if unsure whether a mark is real vs artifact => KEEP (unless remove_uncertain_marks=true).
+
+REQUIREMENTS
+
+A) BG (PURE WHITE)
+* Replace entire background with exact RGB(255,255,255). No gradients/seams/corners/horizon/table lines.
+* No halos/fringing/jagged cutout edges/color spill around product.
+* Outside product + intended shadow: pixels must be pure white.
+
+B) SHADOW (ONE ONLY, COMPACT UNDER-BASE)
+* If add_new_ground_shadow=true: add ONE neutral gray soft shadow under product base.
+* Shadow must touch product base (no floating), gentle falloff, no tint.
+* If preserve_original_shadows=false: remove/neutralize original BG shadows so only new shadow remains.
+
+  // PATCH: enforce compact “under-base” shadow (prevents long cast shadow)
+* The ground shadow must be compact and mostly directly under the base/brim: a short soft halo with gentle feathering.
+* Minimal lateral displacement (near-zero): do NOT create a long directional trail in any direction.
+* Shadow must not extend far beyond the product footprint; no double shadows; no ambient glow.
+
+C) COMPOSITION
+* Entire product visible; never crop product.
+* Fill ~80–90% of frame (target_product_fill_ratio). Center if enabled; if allow_intentional_offcenter=true, keep intentional premium off-center.
+* Preserve original perspective; micro-straighten only.
+
+D) TONE / COLOR
+* Bright clean premium; retain highlight/shadow detail (no crushed blacks / blown highlights).
+* Neutralize unwanted color cast without hue shift.
+* Lift overly dark functional areas slightly (interiors/ports/folds) but keep them naturally darker than outer surfaces.
+
+E) DETAILS
+* Remove only obvious photo/handling artifacts (dust/lint/sensor spots/smudges clearly not part of product) if enabled; avoid logos/text/patterns/stitching/texture.
+* Mild selective sharpening on product; light NR mainly on BG/flat areas; avoid crunchy halos/plasticky smoothing.
+
+F) NO EXTRAS
+* Do not add props, reflections, flares, decorative effects, badges, icons, feature callouts, text overlays, watermarks, or graphics.
+* Do not remove any real accessories/components visible in original.
+* Do not alter brand marks/label text/safety marks/certs/serials/packaging details.
+
+=== STUDIO RELIGHTING EXTENSION (COMPACT, PROGRAMMABLE) ===
+RELIGHTING RULES (ONLY ACTIVE WHEN apply_studio_relighting=true):
+
+RL0 (Mandatory): Produce a new studio lighting look that is clearly different from the original capture lighting.
+* This must look like a different studio setup (key/fill/rim), not just “brighter” or “higher contrast”.
+  // PATCH: force visible lighting change via new highlight placement + controlled contrast
+* The relighting MUST create noticeably different highlight placement and shadow modeling consistent with a TOP-LEFT softbox key, controlled fill (ratio 2.5), and subtle rim.
+* Do NOT merely apply global exposure/contrast; it must look like a new studio setup.
+
+RL1 (Dramatic but real): Increase dimensionality using directional key + controlled fill.
+* More highlight-to-shadow separation without crushing blacks or blowing highlights.
+* Keep micro-texture real; do not invent detail.
+
+RL2 (Color/material integrity): Relighting must NOT change:
+* perceived hue
+* logos/text/labels
+* surface texture/grain/weave
+* material class (matte must remain matte; gloss must remain gloss)
+  Allowed: natural-looking highlight placement changes consistent with the new light direction.
+
+RL3 (Specular control): If the product is reflective:
+* reduce harsh clipping hotspots
+* keep readable label text
+* keep reflections plausible (no “CG” look)
+
+RL4 (Shadow coherence): If new lighting direction is applied:
+* new ground shadow direction/offset MUST match relight.key_light_direction (and be grounded)
+* remove/neutralize original background shadows if preserve_original_shadows=false
+  // PATCH: even with top-left key, keep ground shadow compact (not a long cast)
+* Shadow direction may be subtly biased opposite the key, but MUST remain short and close to the base (compact under-base shadow, no trail).
+
+RL5 (Rim light use): If relight.add_rim_light=true:
+* subtle edge separation only
+* no glowing outline, no halos, no fake neon edge
+
+PIPELINE
+1. Mask product cleanly; refine edges (remove spill/halos).
+2. Set BG to pure white RGB(255,255,255) outside product+shadow.
+3. Artifact cleanup ONLY when clearly non-product.
+4. Step 4 — Tone/WB & (Conditional) Relighting
+   * Always: neutralize unwanted color cast; retain highlight/shadow detail; NO hue shift.
+   * If apply_studio_relighting=false:
+     * Preserve original lighting intent; only do exposure/contrast/WB/clarity adjustments.
+   * If apply_studio_relighting=true:
+     * Apply a new studio lighting setup per params.relight:
+       * directional key from relight.key_light_direction
+       * fill to achieve relight.key_to_fill_ratio
+       * optional rim with relight.rim_intensity
+     * Ensure visible lighting change (if relight.require_visible_lighting_change=true)
+     * Keep product integrity + hue unchanged; keep texture natural.
+5. Shadow: remove original (if needed) + add single soft grounded shadow (if enabled).
+6. Crop/center to target fill without cutting product; micro-straighten if needed.
+7. Selective sharpen + light NR; inspect at 100%.
+8. Export: sRGB, flattened on white, size per export; if upscaling needed and allow_gentle_upscale=true, use gentle HQ upscale preserving natural detail.
+
+FINAL QA (output PASS/FAIL; fix until all PASS)
+QA1 Integrity: no structural/design/logo/text/material changes
+QA2 Hue: no hue shift; true-to-life
+QA3 BG: pure #FFFFFF except shadow; no remnants/gradients
+QA4 Edges: no halos/fringe/jaggies/spill or leftover BG pixels
+QA5 Shadow: single soft neutral grounded shadow; no old shadow remnants (unless preserved)
+QA6 Composition: full product visible; 0.80–0.90 fill; no distortion/flip
+QA7 No Extras: none added; none removed
+QA8 No Repainting: no generative-looking texture repainting or invented detail
+QA9 Export: format/profile/flatten/size/aspect correct
+
+FINAL QA — ADD THESE RELIGHTING CHECKS (only if apply_studio_relighting=true)
+QA_R1 Relighting Applied:
+* PASS if lighting direction/contrast/highlight placement is noticeably different vs original AND remains photorealistic.
+* FAIL if it looks like only global exposure/contrast was changed.
+
+QA_R2 Relighting Coherence:
+* PASS if ground shadow direction/offset matches the new key light direction and looks grounded, while remaining compact under the base.
+* FAIL if shadow conflicts with highlights, becomes a long cast trail, or if rim looks like a halo.
+
+QA_R3 Material/Hue Preservation:
+* PASS if finish class (matte/gloss), texture realism, and hue remain consistent with original product.
+* FAIL if “CG/plastic” look, invented texture, or hue shift appears.
+END
+“
+
+And begins analyzing it’s segments with validation patterns (if necessary prepare the necessary validation Patterns or Pattern Sequences in the Validation Pattern UI).
+
+The First segment is 
+“=== PREMIUM E-COMMERCE IMAGE EDITING PROMPT WITH STUDIO RELIGHTING ver. 0.8 ===
+“ and it should be classified as Meta data and the field have the dropdown to include or omit (by default omit) it in the reassembled Prompt
+The next segment is “NON-NEGOTIABLE GOAL (all must be true)
+1) Product integrity: the product must remain 100% truthful/unchanged.
+2) Background: pure white #FFFFFF (RGB 255,255,255) everywhere outside the product + ONE intended ground shadow.
+3) No extras: no props, no added text/graphics/callouts/watermarks.
+4) Shadow: one soft, realistic, neutral-gray ground shadow only (off-product), compact and under-base.
+“
+Which is a list. The list gets a instruction Header “The next segment is “NON-NEGOTIABLE GOAL (all must be true)” and a list of four elements which can be resorted and new conditions can be added to the list
+Next segment to be discovered by the validator is
+“
+PARAMS
+params = {
+  "apply_studio_relighting": true,
+
+  "relight": {
+    "require_visible_lighting_change": true,     // if apply_studio_relighting=true, lighting MUST change noticeably
+    "preset": "dramatic_softbox",               // dramatic_softbox|dramatic_rim|high_key|low_key|neutral_studio
+    "drama_strength": 0.65,                     // 0.0–1.0 (higher = more directional + more separation)
+    "key_light_direction": "top_left",          // top_left|top_right|left|right|top|front
+    "key_to_fill_ratio": 2.5,                   // >=1.5 for “more dramatic”; typical dramatic 2.0–4.0
+    "add_rim_light": true,                      // adds edge separation from background
+    "rim_intensity": 0.35,                      // 0.0–1.0 (keep realistic)
+    "preserve_material_response": true,         // do not change matte/gloss/texture behavior
+    "preserve_hue_no_shift": true,              // strict: no hue shift
+    "shadow_consistency_required": true         // ground shadow MUST match relit direction
+  },
+
+  "remove_photo_artifacts": true,
+  "remove_uncertain_marks": false,
+  "preserve_original_shadows": false,
+  "add_new_ground_shadow": true,
+  "shadow_style": "soft_studio",                // soft_studio|minimal|none
+
+  // PATCH: shorter, gentler, near-zero lateral offset shadow (prevents long “trail”)
+  "shadow_offset_px": 2,
+
+  "allow_micro_straighten": true,
+  "crop_mode": "auto_safe",                     // none|auto_safe|target_fill
+  "target_product_fill_ratio": 0.85,            // target 0.80–0.90; never crop product
+  "center_product": true,
+  "allow_intentional_offcenter": true,          // if true: keep premium intentional off-center framing
+  "background_rgb": [255,255,255],
+  "export": {
+    "format": "png",
+    "color_profile": "sRGB",
+    "flatten": true,
+    "target_size_px": [1536,1024],              // if null: longest side >= 2000
+    "longest_side_min_px": 2000,
+    "preserve_aspect_ratio": true,              // unless fixed canvas required
+    "allow_gentle_upscale": true
+  }
+}
+”
+Which is a set of parameters which will be extracted and will later be assigned their “physical” selectors (this is what the extractor engine is doing at the moment”
+Then we have another segment which is a referential segment and a list. It’s referential, because it’s assigned a code that will be reference later of (P0), secondly it’s a list which should also be segmented and I should have the option to reorder it before reassembly “
+P0 — PRODUCT INTEGRITY (ABSOLUTE)
+* Do NOT redraw/regenerate/replace/repaint any part of the product.
+* Do NOT alter design/shape/components/patterns/logos/artwork/labels/text/stitching/texture/grain/finish.
+* Do NOT flip/mirror/warp/stretch/squash.
+* Color: NO hue shift. Allowed: exposure/contrast/neutral WB + subtle saturation if true-to-life.
+  Rule: if unsure whether a mark is real vs artifact => KEEP (unless remove_uncertain_marks=true).” Next we have a sequence, which is a set of lists 
+“REQUIREMENTS
+
+A) BG (PURE WHITE)
+* Replace entire background with exact RGB(255,255,255). No gradients/seams/corners/horizon/table lines.
+* No halos/fringing/jagged cutout edges/color spill around product.
+* Outside product + intended shadow: pixels must be pure white.
+
+B) SHADOW (ONE ONLY, COMPACT UNDER-BASE)
+* If add_new_ground_shadow=true: add ONE neutral gray soft shadow under product base.
+* Shadow must touch product base (no floating), gentle falloff, no tint.
+* If preserve_original_shadows=false: remove/neutralize original BG shadows so only new shadow remains.
+
+  // PATCH: enforce compact “under-base” shadow (prevents long cast shadow)
+* The ground shadow must be compact and mostly directly under the base/brim: a short soft halo with gentle feathering.
+* Minimal lateral displacement (near-zero): do NOT create a long directional trail in any direction.
+* Shadow must not extend far beyond the product footprint; no double shadows; no ambient glow.
+
+C) COMPOSITION
+* Entire product visible; never crop product.
+* Fill ~80–90% of frame (target_product_fill_ratio). Center if enabled; if allow_intentional_offcenter=true, keep intentional premium off-center.
+* Preserve original perspective; micro-straighten only.
+
+D) TONE / COLOR
+* Bright clean premium; retain highlight/shadow detail (no crushed blacks / blown highlights).
+* Neutralize unwanted color cast without hue shift.
+* Lift overly dark functional areas slightly (interiors/ports/folds) but keep them naturally darker than outer surfaces.
+
+E) DETAILS
+* Remove only obvious photo/handling artifacts (dust/lint/sensor spots/smudges clearly not part of product) if enabled; avoid logos/text/patterns/stitching/texture.
+* Mild selective sharpening on product; light NR mainly on BG/flat areas; avoid crunchy halos/plasticky smoothing.
+
+F) NO EXTRAS
+* Do not add props, reflections, flares, decorative effects, badges, icons, feature callouts, text overlays, watermarks, or graphics.
+* Do not remove any real accessories/components visible in original.
+* Do not alter brand marks/label text/safety marks/certs/serials/packaging details.
+” then we have another interesting segment which is a set of referential lists 
+“=== STUDIO RELIGHTING EXTENSION (COMPACT, PROGRAMMABLE) ===
+RELIGHTING RULES (ONLY ACTIVE WHEN apply_studio_relighting=true):
+
+RL0 (Mandatory): Produce a new studio lighting look that is clearly different from the original capture lighting.
+* This must look like a different studio setup (key/fill/rim), not just “brighter” or “higher contrast”.
+  // PATCH: force visible lighting change via new highlight placement + controlled contrast
+* The relighting MUST create noticeably different highlight placement and shadow modeling consistent with a TOP-LEFT softbox key, controlled fill (ratio 2.5), and subtle rim.
+* Do NOT merely apply global exposure/contrast; it must look like a new studio setup.
+
+RL1 (Dramatic but real): Increase dimensionality using directional key + controlled fill.
+* More highlight-to-shadow separation without crushing blacks or blowing highlights.
+* Keep micro-texture real; do not invent detail.
+
+RL2 (Color/material integrity): Relighting must NOT change:
+* perceived hue
+* logos/text/labels
+* surface texture/grain/weave
+* material class (matte must remain matte; gloss must remain gloss)
+  Allowed: natural-looking highlight placement changes consistent with the new light direction.
+
+RL3 (Specular control): If the product is reflective:
+* reduce harsh clipping hotspots
+* keep readable label text
+* keep reflections plausible (no “CG” look)
+
+RL4 (Shadow coherence): If new lighting direction is applied:
+* new ground shadow direction/offset MUST match relight.key_light_direction (and be grounded)
+* remove/neutralize original background shadows if preserve_original_shadows=false
+  // PATCH: even with top-left key, keep ground shadow compact (not a long cast)
+* Shadow direction may be subtly biased opposite the key, but MUST remain short and close to the base (compact under-base shadow, no trail).
+
+RL5 (Rim light use): If relight.add_rim_light=true:
+* subtle edge separation only
+* no glowing outline, no halos, no fake neon edge”
+Meaning these lists are all part of one sequence, but also their codes are referred / related later in the prompt and I should be able to do these bindings as well when working with the exploded prompt text Forms. The next segment is the Pipeline, which is a hierarchical list 
+“PIPELINE
+1. Mask product cleanly; refine edges (remove spill/halos).
+2. Set BG to pure white RGB(255,255,255) outside product+shadow.
+3. Artifact cleanup ONLY when clearly non-product.
+4. Step 4 — Tone/WB & (Conditional) Relighting
+   * Always: neutralize unwanted color cast; retain highlight/shadow detail; NO hue shift.
+   * If apply_studio_relighting=false:
+     * Preserve original lighting intent; only do exposure/contrast/WB/clarity adjustments.
+   * If apply_studio_relighting=true:
+     * Apply a new studio lighting setup per params.relight:
+       * directional key from relight.key_light_direction
+       * fill to achieve relight.key_to_fill_ratio
+       * optional rim with relight.rim_intensity
+     * Ensure visible lighting change (if relight.require_visible_lighting_change=true)
+     * Keep product integrity + hue unchanged; keep texture natural.
+5. Shadow: remove original (if needed) + add single soft grounded shadow (if enabled).
+6. Crop/center to target fill without cutting product; micro-straighten if needed.
+7. Selective sharpen + light NR; inspect at 100%.
+8. Export: sRGB, flattened on white, size per export; if upscaling needed and allow_gentle_upscale=true, use gentle HQ upscale preserving natural detail.
+" that also supports logical operators and conditional and is also referential, because it can refer to particular parameters. There is also Boolean fragments in the list.
+
+The next segment is 
+“FINAL QA (output PASS/FAIL; fix until all PASS)
+QA1 Integrity: no structural/design/logo/text/material changes
+QA2 Hue: no hue shift; true-to-life
+QA3 BG: pure #FFFFFF except shadow; no remnants/gradients
+QA4 Edges: no halos/fringe/jaggies/spill or leftover BG pixels
+QA5 Shadow: single soft neutral grounded shadow; no old shadow remnants (unless preserved)
+QA6 Composition: full product visible; 0.80–0.90 fill; no distortion/flip
+QA7 No Extras: none added; none removed
+QA8 No Repainting: no generative-looking texture repainting or invented detail
+QA9 Export: format/profile/flatten/size/aspect correct
+
+FINAL QA — ADD THESE RELIGHTING CHECKS (only if apply_studio_relighting=true)
+QA_R1 Relighting Applied:
+* PASS if lighting direction/contrast/highlight placement is noticeably different vs original AND remains photorealistic.
+* FAIL if it looks like only global exposure/contrast was changed.
+“ Which is a conditional list (fix until all PASS). 
+Finally we have a Quality Control, which takes each point of quality and adds to it to it Fail or Pass conditions and relates to elements RL0 RL1 which are Relight rules, here the last part “FINAL QA — ADD THESE RELIGHTING CHECKS (only if apply_studio_relighting=true)
+QA_R1 Relighting Applied:
+* PASS if lighting direction/contrast/highlight placement is noticeably different vs original AND remains photorealistic.
+* FAIL if it looks like only global exposure/contrast was changed.
+
+QA_R2 Relighting Coherence:
+* PASS if ground shadow direction/offset matches the new key light direction and looks grounded, while remaining compact under the base.
+* FAIL if shadow conflicts with highlights, becomes a long cast trail, or if rim looks like a halo.
+
+QA_R3 Material/Hue Preservation:
+* PASS if finish class (matte/gloss), texture realism, and hue remain consistent with original product.
+* FAIL if “CG/plastic” look, invented texture, or hue shift appears."
+
+
+---
+
+* Backup MongoDB
 
 Prompt Engine
 
-if folder tree comes from MAster folder tree componetn but a little circled m at the bottom right of the folder tree component. Clicking it will open instance settings for this folder tree
+* if folder tree comes from MAster folder tree componetn but a little circled m at the bottom right of the folder tree component. Clicking it will open instance settings for this folder tree
 
-Remove output to the right
 
-I am unable to save project
 
-Thumbnail loads to canvas just by clicking, Variant info comes up on hover.
+* I am unable to save project
 
-Regarding the structure of files in image Stduio.
+* Generated variants appear below the Canvas PReview in the form of Thumbnail. Clicking on Thumbnail loads variant into canvas. Hovering over the variant thumbnail brings up all sorts of information about the variant  (file size, resolution, token cost and actual cost) as well what model generated it.
+LATE- The generation thumbnails appear below, above them there is a set of button, one to load the variant into canvas. 
+
+* Regarding the structure of files in image Stduio.
 When I generate image, The image Slot is attached to the card with the image file. Also the image slot has all the information about the file, including file size including metadata, also ,  information about the request that created it and model that created it and the settings (if they are not already contained in the request information). I want all of this information to be saved along with the image file in the image slot. Each Card is a collection of such image slots linking with them through many to many relationships.
 
 
-Below image canvas, remove the "Generation Landing Slots" text and in it's place implement a search field that enable me to search through different generations by timestamp
+* Below image canvas, remove the "Generation Landing Slots" text and in it's place implement a search field that enable me to search through different generation variants by timestamp
 
-The generation thumbnails appear below, above them there is a set of button, one to load the variant into canvas. 
 
-The thumbnails are horizontally scrollable. make the height of the panel fit the thumbnail height.
+* In Image studio, the generated variants that appear with thumbnails under Canvas Preview, the whole strip is horizontally scrollable. make the height of the panel fit the variant thumbnail height.
 
-When I click a variant on the bottom left hand side two buttons appear, one to switch between the source image and the variant that has just been loaded into preview canvas. The other button splits the canvas into two. on the left hand side is the source and on the right is the generated variant.
+* When I click a variant on the bottom left hand side two buttons appear, one to switch between the source image and the variant that has just been loaded into preview canvas. The other button splits the canvas into two. on the left hand side is the source and on the right is the generated variant.
 
 remove convert All to Base Button and action 
-
-We need prompt structurer, which will take parts of the prompt and divide it into elements, sub lists, give side notes to particular elements, PAtch elements when new prompt is glued in, to create hybrids
 
 
 
 Cropping mechanism for image studio
 Crop mask retention
 
-Versioning graph, detach node, flatten
 
 Layered compositing with separate prompting capabilites
 
 
-shared validator button that applies globallu
+shared validator button that applies globally 
 fastcomet connection and tradera connection, 
 
 drag icon should stay in place
 
-Generation model should be decided per project
 Generations should contain information about which model generated what settings etc.
 ---
 
-Folder unification Category, Notes App, Image Studio and CMS Page Builder
 image studio move forward
 
  Use pre-prompts to incorporate different aspects

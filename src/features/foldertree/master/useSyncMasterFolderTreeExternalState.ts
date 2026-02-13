@@ -7,17 +7,22 @@ import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 import type { MasterFolderTreeController } from './types';
 
 type UseSyncMasterFolderTreeExternalStateOptions = {
-  controller: Pick<MasterFolderTreeController, 'replaceNodes' | 'selectNode'>;
+  controller: Pick<
+    MasterFolderTreeController,
+    'replaceNodes' | 'selectNode' | 'setExpandedNodeIds'
+  >;
   nodes: MasterTreeNode[];
   selectedNodeId?: MasterTreeId | null;
+  expandedNodeIds?: MasterTreeId[] | undefined;
 };
 
 export function useSyncMasterFolderTreeExternalState({
   controller,
   nodes,
   selectedNodeId,
+  expandedNodeIds,
 }: UseSyncMasterFolderTreeExternalStateOptions): void {
-  const { replaceNodes, selectNode } = controller;
+  const { replaceNodes, selectNode, setExpandedNodeIds } = controller;
 
   useEffect(() => {
     void replaceNodes(nodes, 'external_sync');
@@ -27,4 +32,9 @@ export function useSyncMasterFolderTreeExternalState({
     if (selectedNodeId === undefined) return;
     selectNode(selectedNodeId ?? null);
   }, [selectedNodeId, selectNode]);
+
+  useEffect(() => {
+    if (expandedNodeIds === undefined) return;
+    setExpandedNodeIds(expandedNodeIds);
+  }, [expandedNodeIds, setExpandedNodeIds]);
 }

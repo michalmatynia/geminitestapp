@@ -157,6 +157,28 @@ describe('useMasterFolderTree', () => {
     expect(result.current.nodes.find((node) => node.id === 'file-1')?.parentId).toBe('folder-a');
   });
 
+  it('allows external expanded node synchronization', () => {
+    const { result } = renderHook(() =>
+      useMasterFolderTree({
+        initialNodes: createNodes(),
+      })
+    );
+
+    act(() => {
+      result.current.setExpandedNodeIds(['folder-root', 'folder-a']);
+    });
+
+    expect(result.current.expandedNodeIds.has('folder-root')).toBe(true);
+    expect(result.current.expandedNodeIds.has('folder-a')).toBe(true);
+
+    act(() => {
+      result.current.setExpandedNodeIds(['folder-a']);
+    });
+
+    expect(result.current.expandedNodeIds.has('folder-root')).toBe(false);
+    expect(result.current.expandedNodeIds.has('folder-a')).toBe(true);
+  });
+
   it('drops nested nodes to root at a specific index', async () => {
     const { result } = renderHook(() =>
       useMasterFolderTree({

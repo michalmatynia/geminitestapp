@@ -1,9 +1,16 @@
 'use client';
 
 import React from 'react';
+
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
-import { usePromptEngine, type SeverityFilter } from '../context/PromptEngineContext';
+
+import {
+  usePromptEngine,
+  type ScopeFilter,
+  type SeverityFilter,
+} from '../context/PromptEngineContext';
+import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '../settings';
 
 /**
  * REFACTORED: PromptEngineFilters using FilterPanel template
@@ -13,7 +20,16 @@ import { usePromptEngine, type SeverityFilter } from '../context/PromptEngineCon
  * Savings: 56% reduction
  */
 export function PromptEngineFilters(): React.JSX.Element {
-  const { query, setQuery, severity, setSeverity, includeDisabled, setIncludeDisabled } = usePromptEngine();
+  const {
+    query,
+    setQuery,
+    severity,
+    setSeverity,
+    scope,
+    setScope,
+    includeDisabled,
+    setIncludeDisabled,
+  } = usePromptEngine();
 
   const filters: FilterField[] = [
     {
@@ -28,6 +44,18 @@ export function PromptEngineFilters(): React.JSX.Element {
       ],
     },
     {
+      key: 'scope',
+      label: 'Scope',
+      type: 'select',
+      options: [
+        { value: 'all', label: 'All scopes' },
+        ...PROMPT_VALIDATION_SCOPE_VALUES.map((value) => ({
+          value,
+          label: PROMPT_VALIDATION_SCOPE_LABELS[value],
+        })),
+      ],
+    },
+    {
       key: 'includeDisabled',
       label: 'Include Disabled',
       type: 'checkbox',
@@ -37,17 +65,19 @@ export function PromptEngineFilters(): React.JSX.Element {
   return (
     <FilterPanel
       filters={filters}
-      values={{ severity, includeDisabled }}
+      values={{ severity, scope, includeDisabled }}
       search={query}
-      searchPlaceholder="Search ids, patterns, suggestions..."
+      searchPlaceholder='Search ids, patterns, suggestions...'
       onFilterChange={(key, value) => {
         if (key === 'severity') setSeverity(value as SeverityFilter);
-        if (key === 'includeDisabled') setIncludeDisabled(value);
+        if (key === 'scope') setScope(value as ScopeFilter);
+        if (key === 'includeDisabled') setIncludeDisabled(Boolean(value));
       }}
       onSearchChange={setQuery}
       onReset={() => {
         setQuery('');
         setSeverity('all');
+        setScope('all');
         setIncludeDisabled(false);
       }}
       showHeader={false}

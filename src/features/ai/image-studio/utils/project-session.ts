@@ -2,6 +2,7 @@ import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json
 
 export const IMAGE_STUDIO_ACTIVE_PROJECT_KEY = 'image_studio_active_project';
 export const IMAGE_STUDIO_PROJECT_SESSION_KEY_PREFIX = 'image_studio_project_session_';
+export const IMAGE_STUDIO_PROJECT_SESSION_LOCAL_KEY_PREFIX = 'image_studio_project_session_local_';
 
 export type ImageStudioProjectSession = {
   version: 1;
@@ -18,11 +19,11 @@ export type ImageStudioProjectSession = {
   paramUiOverrides: Record<string, unknown>;
 };
 
-function sanitizeStudioProjectId(value: string): string {
+export function sanitizeStudioProjectId(value: string): string {
   return value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 }
 
-function normalizeProjectId(value: string): string {
+export function normalizeImageStudioProjectId(value: string): string {
   return value.trim();
 }
 
@@ -38,13 +39,19 @@ function asStringOrNull(value: unknown): string | null {
 }
 
 export function getImageStudioProjectSessionKey(projectId: string): string | null {
-  const normalized = normalizeProjectId(projectId);
+  const normalized = normalizeImageStudioProjectId(projectId);
   if (!normalized) return null;
   return `${IMAGE_STUDIO_PROJECT_SESSION_KEY_PREFIX}${sanitizeStudioProjectId(normalized)}`;
 }
 
+export function getImageStudioProjectSessionLocalKey(projectId: string): string | null {
+  const normalized = normalizeImageStudioProjectId(projectId);
+  if (!normalized) return null;
+  return `${IMAGE_STUDIO_PROJECT_SESSION_LOCAL_KEY_PREFIX}${sanitizeStudioProjectId(normalized)}`;
+}
+
 export function serializeImageStudioActiveProject(projectId: string): string {
-  const normalized = normalizeProjectId(projectId);
+  const normalized = normalizeImageStudioProjectId(projectId);
   return serializeSetting(normalized || null);
 }
 
@@ -71,7 +78,11 @@ export function parseImageStudioProjectSession(
   if (!projectId) return null;
 
   const expected = expectedProjectId?.trim();
-  if (expected && projectId !== expected) return null;
+  if (expected) {
+    const expectedSanitized = sanitizeStudioProjectId(expected);
+    const projectSanitized = sanitizeStudioProjectId(projectId);
+    if (projectId !== expected && projectSanitized !== expectedSanitized) return null;
+  }
 
   const compositeAssetIds = Array.isArray(objectValue['compositeAssetIds'])
     ? Array.from(
@@ -106,4 +117,24 @@ export function parseImageStudioProjectSession(
     paramSpecs: asRecord(objectValue['paramSpecs']),
     paramUiOverrides: asRecord(objectValue['paramUiOverrides']) ?? {},
   };
+}
+
+export function saveImageStudioProjectSessionLocal(
+  projectId: string,
+  session: ImageStudioProjectSession
+): void {
+  if (typeof window === 'undefined') return;
+  const key = getImageStudioProjectSessionLocalKey(projectId);
+  if (!key) return;
+  window.localStorage.setItem(key, serializeImageStudioProjectSession(session));
+}
+
+export function parseImageStudioProjectSessionLocal(
+  projectId: string
+): ImageStudioProjectSession | null {
+  if (typeof window === 'undefined') return null;
+  const key = getImageStudioProjectSessionLocalKey(projectId);
+  if (!key) return null;
+  const raw = window.localStorage.getItem(key);
+  return parseImageStudioProjectSession(raw, projectId);
 }

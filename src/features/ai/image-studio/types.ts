@@ -24,7 +24,35 @@ export interface SlotGenerationMetadata {
   sourceSlotId?: string | undefined;
   relationType?: 'generation:output' | 'merge:output' | undefined;
   generationFileId?: string | undefined;
+  generationRunId?: string | undefined;
+  generationOutputIndex?: number | undefined;
+  generationOutputCount?: number | undefined;
   sourceSlotIds?: string[] | undefined;
+  sourceReferenceIds?: string[] | undefined;
+  outputFile?: {
+    id: string;
+    filename: string;
+    filepath: string;
+    mimetype: string;
+    size: number;
+    width: number | null;
+    height: number | null;
+    tags: string[];
+  } | undefined;
+  generationRequest?: Record<string, unknown> | undefined;
+  generationSettings?: Record<string, unknown> | undefined;
+  generationCosts?: {
+    currency: 'USD';
+    estimated: true;
+    promptTokens: number;
+    promptCostUsdTotal: number;
+    promptCostUsdPerOutput: number;
+    imageCostUsdPerOutput: number;
+    totalCostUsdPerOutput: number;
+    outputCount: number;
+    actualCostUsd?: number | undefined;
+    tokenCostUsd?: number | undefined;
+  } | undefined;
   maskData?: {
     shapes: Array<{ type: string; points: Array<{ x: number; y: number }>; closed: boolean }>;
     invert: boolean;
@@ -35,6 +63,9 @@ export interface SlotGenerationMetadata {
     prompt?: string | undefined;
     model?: string | undefined;
     timestamp?: string | undefined;
+    runId?: string | undefined;
+    outputIndex?: number | undefined;
+    outputCount?: number | undefined;
   } | undefined;
   annotation?: string | undefined;
 }

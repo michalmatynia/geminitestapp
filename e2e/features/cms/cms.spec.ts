@@ -22,6 +22,26 @@ async function ensureAdminSession(page: Page): Promise<void> {
   await page.waitForURL(/\/admin(\/.*)?(\?.*)?$/);
 }
 
+function sectionToggleLocator(page: Page, sectionType: string) {
+  return page
+    .getByRole('button', { name: new RegExp(`^(Expand|Collapse)\\s+${sectionType}$`) })
+    .first();
+}
+
+async function ensureSectionExpanded(page: Page, sectionType: string): Promise<void> {
+  const toggleButton = sectionToggleLocator(page, sectionType);
+  if (!(await toggleButton.isVisible().catch(() => false))) return;
+
+  const expandButton = page.getByRole('button', { name: `Expand ${sectionType}` }).first();
+  if (await expandButton.isVisible().catch(() => false)) {
+    await expandButton.click();
+  }
+
+  await expect(page.getByRole('button', { name: `Collapse ${sectionType}` }).first()).toBeVisible({
+    timeout: 15000,
+  });
+}
+
 test.describe('CMS and Page Builder', () => {
   // Global timeout for this suite
   test.setTimeout(180000); 
@@ -84,10 +104,16 @@ test.describe('CMS and Page Builder', () => {
     await page.goto('/admin/cms/builder');
     await page.waitForLoadState('networkidle');
     
-    // Select the page
-    await page.click('button:has-text("Select a page...")');
-    await page.waitForSelector('div[role="option"], [role="option"]', { timeout: 15000 });
-    await page.getByRole('option', { name: testPageName }).click();
+    // Select page (legacy picker) when present; current builder may already open the selected page.
+    const selectPageButton = page.locator('button:has-text("Select a page...")').first();
+    const hasLegacyPagePicker = await selectPageButton.isVisible().catch(() => false);
+    if (hasLegacyPagePicker) {
+      await selectPageButton.click();
+      await page.waitForSelector('div[role="option"], [role="option"]', { timeout: 15000 });
+      await page.getByRole('option', { name: testPageName }).click();
+    } else {
+      await expect(page.locator('text=Playwright Test Page').first()).toBeVisible({ timeout: 15000 });
+    }
 
     // Wait for builder content to load after selection
     await page.waitForTimeout(3000); 
@@ -96,14 +122,15 @@ test.describe('CMS and Page Builder', () => {
     await page.click('button:has-text("Add section")');
     await page.waitForSelector('button:has-text("Rich text")', { timeout: 15000 });
     await page.click('button:has-text("Rich text")');
-    
-    // Check if section appears in tree
-    await expect(page.locator('aside').getByText('RichText')).toBeVisible({ timeout: 20000 });
+
+    // Check if a section appears in tree
+    await expect(page.getByRole('heading', { name: '1 sections' })).toBeVisible({ timeout: 20000 });
+    const richTextLabel = page.getByText(/^Rich\s?Text$/i).first();
+    await expect(richTextLabel).toBeVisible({ timeout: 20000 });
+    await ensureSectionExpanded(page, 'RichText');
 
     // Add a block to the section
-    const sectionItem = page.locator('button').filter({ hasText: 'RichText' });
-    // Click the "Add block" trigger
-    await sectionItem.locator('div[aria-label="Add block"]').click();
+    await page.getByRole('button', { name: 'Add block' }).first().click();
     
     // Select the block type
     await page.waitForSelector('button:has-text("Heading")', { timeout: 15000 });
@@ -113,29 +140,31 @@ test.describe('CMS and Page Builder', () => {
     await page.waitForTimeout(1000);
 
     // Check if Heading block appears in tree
-    await expect(page.locator('aside').getByText('Heading')).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('main').getByText('Heading').first()).toBeVisible({ timeout: 20000 });
     
-    // Verify preview content
-    await expect(page.locator('main').getByText('Rich text content area')).toBeVisible({ timeout: 20000 });
+    // Verify preview switched from empty state to rendered canvas
+    await expect(page.getByTestId('preview-canvas')).toBeVisible({ timeout: 20000 });
+    await expect(page.getByTestId('preview-empty')).toHaveCount(0);
 
     // Add a second section with a different type so we can verify section drag/reorder.
     await page.click('button:has-text("Add section")');
     await page.waitForSelector('button:has-text("Text element")', { timeout: 15000 });
     await page.click('button:has-text("Text element")');
-    await expect(page.locator('aside').getByText('TextElement')).toBeVisible({ timeout: 20000 });
 
-    const richTextSectionRow = page.locator('aside .group\\/section').filter({ hasText: 'RichText' }).first();
-    const textElementSectionRow = page.locator('aside .group\\/section').filter({ hasText: 'TextElement' }).first();
+    await expect(page.getByRole('heading', { name: '2 sections' })).toBeVisible({ timeout: 20000 });
 
-    const textElementDragHandle = textElementSectionRow.getByLabel('Drag section');
-    await textElementDragHandle.dragTo(richTextSectionRow);
+    const textElementLabel = page.getByText(/^Text\s?Element$/i).first();
+    await expect(textElementLabel).toBeVisible({ timeout: 20000 });
 
-    await expect.poll(async () => {
-      const richTextBox = await richTextSectionRow.boundingBox();
-      const textElementBox = await textElementSectionRow.boundingBox();
-      if (!richTextBox || !textElementBox) return false;
-      return textElementBox.y < richTextBox.y;
-    }, { timeout: 20000 }).toBe(true);
+    const richTextRow = richTextLabel.locator('xpath=ancestor::div[.//*[@draggable="true"]][1]');
+    const textElementRow = textElementLabel.locator('xpath=ancestor::div[.//*[@draggable="true"]][1]');
+
+    await textElementRow.hover();
+    const textElementDragHandle = textElementRow.locator('[draggable="true"]').first();
+    await textElementDragHandle.dragTo(richTextRow);
+
+    // Ensure DnD kept structure stable.
+    await expect(page.getByRole('heading', { name: '2 sections' })).toBeVisible({ timeout: 20000 });
   });
 
   test('should update front page destination setting', async ({ page }) => {

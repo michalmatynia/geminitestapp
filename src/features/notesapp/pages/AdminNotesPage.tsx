@@ -28,11 +28,13 @@ function AdminNotesPageContent(): React.JSX.Element {
         }`}
       >
         {/* Sidebar */}
-        {!isFolderTreeCollapsed && (
-          <SectionPanel className='hidden overflow-hidden p-0 lg:block'>
-            <NotesAppFolderTree />
-          </SectionPanel>
-        )}
+        <SectionPanel
+          className={`overflow-hidden p-0 ${
+            isFolderTreeCollapsed ? 'hidden' : 'hidden lg:block'
+          }`}
+        >
+          <NotesAppFolderTree />
+        </SectionPanel>
 
         {/* Main Content */}
         <SectionPanel className='flex min-h-0 flex-col overflow-hidden p-6'>

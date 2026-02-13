@@ -6,7 +6,12 @@ import { z } from 'zod';
 import { auth } from '@/features/auth/server';
 import { markDatabaseBackupJobQueued } from '@/features/database/services/database-backup-scheduler';
 import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
-import { enqueueProductAiJob, enqueueProductAiJobToQueue, startProductAiJobQueue } from '@/features/jobs/server';
+import {
+  enqueueProductAiJob,
+  enqueueProductAiJobToQueue,
+  processSingleJob,
+  startProductAiJobQueue,
+} from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
 import { authError, badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -52,6 +57,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const queued: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }> = [];
+  const inlineProcessed: Array<{ dbType: 'mongodb' | 'postgresql'; jobId: string }> = [];
   startProductAiJobQueue();
 
   for (const dbType of targets) {
@@ -68,23 +74,27 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       // Keep manual queue action resilient even if schedule metadata update fails.
     }
 
-    void enqueueProductAiJobToQueue(job.id, job.productId, job.type, job.payload).catch(
-      async (error: unknown) => {
-        await logSystemError({
-          message:
-            '[databases.engine.backup-scheduler.run-now] Failed to enqueue db backup job to runtime queue',
-          error,
-          source: 'api/databases/engine/backup-scheduler/run-now',
-          context: { jobId: job.id, dbType },
-        });
-      }
-    );
+    try {
+      await enqueueProductAiJobToQueue(job.id, job.productId, job.type, job.payload);
+    } catch (enqueueError: unknown) {
+      await logSystemError({
+        message:
+          '[databases.engine.backup-scheduler.run-now] Failed to enqueue db backup job to runtime queue, falling back to inline processing',
+        error: enqueueError,
+        source: 'api/databases/engine/backup-scheduler/run-now',
+        context: { jobId: job.id, dbType },
+      });
+
+      await processSingleJob(job.id);
+      inlineProcessed.push({ dbType, jobId: job.id });
+    }
   }
 
   return NextResponse.json(
     {
       success: true,
       queued,
+      inlineProcessed,
     },
     {
       headers: { 'Cache-Control': 'no-store' },

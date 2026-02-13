@@ -8,7 +8,7 @@ import {
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { FolderTreePanel, TreeHeader } from '@/shared/ui';
+import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
@@ -172,6 +172,8 @@ export function ComponentTreePanel(): React.ReactNode {
     profile: treeProfile,
     appearance: { placeholderClasses: treePlaceholderClasses, rootDropUi: treeRootDropUi },
     controller: structureController,
+    panelCollapsed,
+    setPanelCollapsed,
   } = useMasterFolderTreeInstance({
     instance: 'cms_page_builder',
     nodes: masterNodes,
@@ -267,15 +269,35 @@ export function ComponentTreePanel(): React.ReactNode {
         <FolderTreePanel
           className='flex-1 min-h-0'
           bodyClassName='flex-1 min-h-0 overflow-y-auto'
+          masterInstance='cms_page_builder'
           header={(
             <TreeHeader
               title='Structure'
               subtitle={state.currentPage ? `${sectionCount} sections` : 'No page loaded'}
+              actions={(
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  className='h-7 px-2 text-xs'
+                  onClick={(): void => setPanelCollapsed(!panelCollapsed)}
+                  title={panelCollapsed ? 'Show structure tree' : 'Collapse structure tree'}
+                  disabled={!state.currentPage}
+                >
+                  {panelCollapsed ? 'Show Tree' : 'Collapse'}
+                </Button>
+              )}
             />
           )}
         >
           {!state.currentPage ? (
             <div className='p-4' />
+          ) : panelCollapsed ? (
+            <div className='p-4'>
+              <div className='rounded border border-dashed border-border/70 bg-card/30 px-3 py-6 text-center text-xs text-gray-400'>
+                Structure tree is collapsed.
+              </div>
+            </div>
           ) : (
             <MasterFolderTree
               controller={structureController}

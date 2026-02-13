@@ -8,10 +8,12 @@ import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
+  DEFAULT_PROMPT_VALIDATION_SCOPES,
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
   parsePromptValidationRules,
   defaultPromptEngineSettings,
+  type PromptValidationScope,
   type PromptValidationRule,
   type PromptValidationSeverity,
   type PromptEngineSettings,
@@ -19,6 +21,7 @@ import {
 } from '../settings';
 
 export type SeverityFilter = PromptValidationSeverity | 'all';
+export type ScopeFilter = PromptValidationScope | 'all';
 
 export type RuleDraft = {
   uid: string;
@@ -34,6 +37,7 @@ interface PromptEngineContextType {
   promptEngineSettings: PromptEngineSettings;
   query: string;
   severity: SeverityFilter;
+  scope: ScopeFilter;
   includeDisabled: boolean;
   drafts: RuleDraft[];
   learnedDrafts: RuleDraft[];
@@ -50,6 +54,7 @@ interface PromptEngineContextType {
   // Actions
   setQuery: (query: string) => void;
   setSeverity: (severity: SeverityFilter) => void;
+  setScope: (scope: ScopeFilter) => void;
   setIncludeDisabled: (include: boolean) => void;
   handleRuleTextChange: (uid: string, nextText: string) => void;
   handlePatchRule: (uid: string, patch: RulePatch) => void;
@@ -142,6 +147,9 @@ const createNewRule = (): PromptValidationRule => ({
   message: 'Update this rule with the intended pattern and message.',
   similar: [],
   autofix: { enabled: true, operations: [] },
+  appliesToScopes: [...DEFAULT_PROMPT_VALIDATION_SCOPES],
+  launchAppliesToScopes: [...DEFAULT_PROMPT_VALIDATION_SCOPES],
+  launchScopeBehavior: 'gate',
 });
 
 const ruleSearchText = (rule: PromptValidationRule): string => {
@@ -153,6 +161,12 @@ const ruleSearchText = (rule: PromptValidationRule): string => {
     rule.message,
     rule.description ?? '',
   ];
+  (rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).forEach((scope) =>
+    parts.push(scope)
+  );
+  (rule.launchAppliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).forEach((scope) =>
+    parts.push(scope)
+  );
   if (rule.kind === 'regex') {
     parts.push(rule.pattern);
     parts.push(rule.flags);
@@ -193,6 +207,7 @@ export function PromptEngineProvider({
   
   const [query, setQuery] = useState<string>('');
   const [severity, setSeverity] = useState<SeverityFilter>('all');
+  const [scope, setScope] = useState<ScopeFilter>('all');
   const [includeDisabled, setIncludeDisabled] = useState<boolean>(true);
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);
   const [initializedAt, setInitializedAt] = useState<number | null>(null);
@@ -229,10 +244,16 @@ export function PromptEngineProvider({
       }
       if (!includeDisabled && !rule.enabled) return false;
       if (severity !== 'all' && rule.severity !== severity) return false;
+      if (
+        scope !== 'all' &&
+        !(rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).includes(scope)
+      ) {
+        return false;
+      }
       if (!term) return true;
       return ruleSearchText(rule).includes(term);
     });
-  }, [includeDisabled, query, severity, sortedDrafts]);
+  }, [includeDisabled, query, scope, severity, sortedDrafts]);
 
   const handleRuleTextChange = useCallback((uid: string, nextText: string): void => {
     setDrafts((prev: RuleDraft[]) =>
@@ -642,6 +663,7 @@ export function PromptEngineProvider({
       promptEngineSettings,
       query,
       severity,
+      scope,
       includeDisabled,
       drafts,
       learnedDrafts,
@@ -654,6 +676,7 @@ export function PromptEngineProvider({
       filteredDrafts,
       setQuery,
       setSeverity,
+      setScope,
       setIncludeDisabled,
       handleRuleTextChange,
       handlePatchRule,
@@ -679,6 +702,7 @@ export function PromptEngineProvider({
       promptEngineSettings,
       query,
       severity,
+      scope,
       includeDisabled,
       drafts,
       learnedDrafts,

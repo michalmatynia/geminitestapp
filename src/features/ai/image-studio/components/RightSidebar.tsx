@@ -1,6 +1,7 @@
 'use client';
 
 import { Eye, Filter, GitBranch, Loader2, Pentagon, Play, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -11,6 +12,7 @@ import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/features/prompt-engine/settings';
+import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge';
 import {
   VectorDrawingToolbar,
 } from '@/features/vector-drawing';
@@ -34,7 +36,6 @@ import { cn } from '@/shared/utils';
 import { GenerationHistoryPanel } from './GenerationHistoryPanel';
 import { GenerationToolbar } from './GenerationToolbar';
 import { LabeledSlider } from './LabeledSlider';
-import { OutputImageGrid, type OutputImage } from './OutputImageGrid';
 import { ParamRow } from './ParamRow';
 import { StudioCard } from './StudioCard';
 import { UIPresetsPanel } from './UIPresetsPanel';
@@ -88,6 +89,7 @@ const resolveModelCostProfile = (model: string): ModelCostProfile => {
 };
 
 export function RightSidebar(): React.JSX.Element {
+  const router = useRouter();
   const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
   const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
   const { projectId } = useProjectsState();
@@ -112,13 +114,12 @@ export function RightSidebar(): React.JSX.Element {
     slots,
     compositeAssetIds,
     compositeAssetOptions,
-    workingSlotId,
   } = useSlotsState();
-  const { setCompositeAssetIds, createSlots } = useSlotsActions();
+  const { setCompositeAssetIds } = useSlotsActions();
   const { promptText, paramsState } = usePromptState();
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
   const { studioSettings } = useSettingsState();
-  const { runMutation, isRunInFlight, activeRunStatus, runOutputs, generationHistory } = useGenerationState();
+  const { runMutation, isRunInFlight, activeRunStatus, generationHistory } = useGenerationState();
   const { handleRunGeneration } = useGenerationActions();
   const { setStudioSettings } = useSettingsActions();
 
@@ -224,7 +225,11 @@ export function RightSidebar(): React.JSX.Element {
 
     let nextPrompt = promptText;
     try {
-      const beforeIssues = validateProgrammaticPrompt(nextPrompt, promptValidationSettings);
+      const beforeIssues = validateProgrammaticPrompt(
+        nextPrompt,
+        promptValidationSettings,
+        { scope: 'image_studio_prompt' }
+      );
       if (!formatterEnabled) {
         if (beforeIssues.length === 0) {
           toast('Prompt validation passed.', { variant: 'success' });
@@ -234,7 +239,11 @@ export function RightSidebar(): React.JSX.Element {
         return nextPrompt;
       }
 
-      const result = formatProgrammaticPrompt(nextPrompt, promptValidationSettings);
+      const result = formatProgrammaticPrompt(
+        nextPrompt,
+        promptValidationSettings,
+        { scope: 'image_studio_prompt' }
+      );
       if (result.changed) {
         nextPrompt = result.prompt;
         setPromptText(result.prompt);
@@ -270,6 +279,17 @@ export function RightSidebar(): React.JSX.Element {
     const preparedPrompt = preparePromptForExtraction();
     setExtractDraftPrompt(preparedPrompt);
     setExtractReviewOpen(true);
+  };
+
+  const handleOpenPromptExploder = (): void => {
+    if (!promptText.trim()) {
+      toast('Enter prompt text first.', { variant: 'info' });
+      return;
+    }
+    savePromptExploderDraftPrompt(promptText);
+    router.push(
+      '/admin/prompt-exploder?source=image-studio&returnTo=%2Fadmin%2Fimage-studio'
+    );
   };
 
   return (
@@ -538,47 +558,6 @@ export function RightSidebar(): React.JSX.Element {
                 </div>
               </StudioCard>
 
-              {runOutputs.length > 0 ? (
-                <div className='space-y-1'>
-                  <Label className='text-xs text-gray-400'>Outputs ({runOutputs.length})</Label>
-                  <OutputImageGrid
-                    outputs={runOutputs}
-                    onSaveAsSlot={projectId ? (output: OutputImage) => {
-                      const eligibleMasks = maskShapes.filter((s) => s.visible && s.closed);
-                      const baseMeta: Record<string, unknown> = { role: 'generation' };
-                      if (workingSlotId) {
-                        baseMeta['sourceSlotId'] = workingSlotId;
-                        baseMeta['relationType'] = 'generation:output';
-                        baseMeta['generationFileId'] = output.id;
-                      }
-                      if (eligibleMasks.length > 0) {
-                        baseMeta['maskData'] = {
-                          shapes: eligibleMasks.map((s) => ({ type: s.type, points: s.points, closed: s.closed })),
-                          invert: maskInvert,
-                          feather: maskFeather,
-                          attachedAt: new Date().toISOString(),
-                        };
-                      }
-                      if (promptText.trim()) {
-                        baseMeta['generationParams'] = {
-                          prompt: promptText,
-                          timestamp: new Date().toISOString(),
-                        };
-                      }
-                      createSlots([
-                        {
-                          name: output.filename ?? 'Generated',
-                          imageFileId: output.id,
-                          metadata: baseMeta,
-                        },
-                      ])
-                        .then(() => toast('Saved to card history.', { variant: 'success' }))
-                        .catch(() => toast('Failed to save card history item.', { variant: 'error' }));
-                    } : undefined}
-                  />
-                </div>
-              ) : null}
-
               {generationHistory.length > 0 ? (
                 <StudioCard label='History' count={generationHistory.length}>
                   <GenerationHistoryPanel />
@@ -630,6 +609,19 @@ export function RightSidebar(): React.JSX.Element {
               onClick={() => setPromptControlOpen(false)}
             >
               Close
+            </UnifiedButton>
+            <UnifiedButton
+              variant='outline'
+              size='sm'
+              title='Open Prompt Exploder with current prompt'
+              aria-label='Open Prompt Exploder with current prompt'
+              disabled={!promptText.trim()}
+              onClick={() => {
+                setPromptControlOpen(false);
+                handleOpenPromptExploder();
+              }}
+            >
+              Prompt Exploder
             </UnifiedButton>
             <UnifiedButton
               variant='outline'

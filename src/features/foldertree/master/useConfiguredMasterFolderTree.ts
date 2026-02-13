@@ -13,11 +13,13 @@ export type UseConfiguredMasterFolderTreeOptions = Omit<
 > & {
   nodes: MasterTreeNode[];
   selectedNodeId?: MasterTreeId | null;
+  expandedNodeIds?: MasterTreeId[] | undefined;
 };
 
 export function useConfiguredMasterFolderTree({
   nodes,
   selectedNodeId,
+  expandedNodeIds,
   ...options
 }: UseConfiguredMasterFolderTreeOptions): MasterFolderTreeController {
   const controller = useMasterFolderTree({
@@ -30,6 +32,7 @@ export function useConfiguredMasterFolderTree({
     controller,
     nodes,
     ...(selectedNodeId !== undefined ? { selectedNodeId } : {}),
+    ...(expandedNodeIds !== undefined ? { expandedNodeIds } : {}),
   });
 
   return controller;

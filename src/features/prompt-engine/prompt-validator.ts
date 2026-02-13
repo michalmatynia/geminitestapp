@@ -1,6 +1,8 @@
 import { extractParamsFromPrompt } from './prompt-params';
+import { DEFAULT_PROMPT_VALIDATION_SCOPES } from './settings';
 
 import type {
+  PromptValidationScope,
   PromptValidationRule,
   PromptValidationSettings,
   PromptValidationSeverity,
@@ -21,6 +23,10 @@ export type PromptValidationIssue = {
   title: string;
   message: string;
   suggestions: PromptValidationSuggestion[];
+};
+
+export type PromptValidationExecutionContext = {
+  scope?: PromptValidationScope | null;
 };
 
 const DEFAULT_SEQUENCE_STEP = 10;
@@ -119,6 +125,29 @@ export const sortPromptValidationRules = (
     .map((entry) => entry.rule);
 };
 
+export const normalizePromptValidationScopes = (
+  scopes: PromptValidationScope[] | null | undefined
+): PromptValidationScope[] => {
+  if (!Array.isArray(scopes) || scopes.length === 0) {
+    return [...DEFAULT_PROMPT_VALIDATION_SCOPES];
+  }
+  const known = new Set<PromptValidationScope>(DEFAULT_PROMPT_VALIDATION_SCOPES);
+  const deduped: PromptValidationScope[] = [];
+  for (const scope of scopes) {
+    if (!known.has(scope) || deduped.includes(scope)) continue;
+    deduped.push(scope);
+  }
+  return deduped.length > 0 ? deduped : [...DEFAULT_PROMPT_VALIDATION_SCOPES];
+};
+
+export const doesPromptRuleApplyToScope = (
+  rule: PromptValidationRule,
+  scope: PromptValidationScope | null | undefined
+): boolean => {
+  if (!scope) return true;
+  return normalizePromptValidationScopes(rule.appliesToScopes).includes(scope);
+};
+
 const evaluateStringCondition = ({
   operator,
   value,
@@ -168,9 +197,18 @@ const evaluateStringCondition = ({
 
 export const shouldLaunchPromptRule = (
   rule: PromptValidationRule,
-  prompt: string
+  prompt: string,
+  context: PromptValidationExecutionContext = {}
 ): boolean => {
   if (!rule.launchEnabled) return true;
+  const scope = context.scope ?? null;
+  if (scope) {
+    const launchScopes = normalizePromptValidationScopes(rule.launchAppliesToScopes);
+    const scopeMatched = launchScopes.includes(scope);
+    if (!scopeMatched) {
+      return rule.launchScopeBehavior === 'bypass';
+    }
+  }
   return evaluateStringCondition({
     operator: rule.launchOperator ?? 'contains',
     value: prompt,
@@ -241,7 +279,8 @@ export const evaluatePromptValidationRule = (
 
 export function validateProgrammaticPrompt(
   prompt: string,
-  settings: PromptValidationSettings
+  settings: PromptValidationSettings,
+  context: PromptValidationExecutionContext = {}
 ): PromptValidationIssue[] {
   if (!settings.enabled) return [];
   if (!prompt.trim()) return [];
@@ -257,13 +296,14 @@ export function validateProgrammaticPrompt(
 
   for (const rule of orderedRules) {
     if (!rule.enabled) continue;
+    if (!doesPromptRuleApplyToScope(rule, context.scope)) continue;
 
     const inSequenceGroup = isPromptRuleInSequenceGroup(rule, sequenceGroupCounts);
     const maxExecutions = normalizePromptRuleMaxExecutions(rule);
     let matched = false;
 
     for (let execution = 0; execution < maxExecutions; execution += 1) {
-      if (!shouldLaunchPromptRule(rule, prompt)) break;
+      if (!shouldLaunchPromptRule(rule, prompt, context)) break;
       const issue = evaluatePromptValidationRule(prompt, rule);
       if (!issue) break;
       matched = true;
@@ -278,4 +318,3 @@ export function validateProgrammaticPrompt(
 
   return issues;
 }
-

@@ -3,7 +3,12 @@ import { z } from 'zod';
 
 import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
 import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
-import { enqueueProductAiJob, enqueueProductAiJobToQueue, startProductAiJobQueue } from '@/features/jobs/server';
+import {
+  enqueueProductAiJob,
+  enqueueProductAiJobToQueue,
+  processSingleJob,
+  startProductAiJobQueue,
+} from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -38,22 +43,28 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     source: 'db_backup',
   });
 
+  let processedInline = false;
   startProductAiJobQueue();
-  void enqueueProductAiJobToQueue(job.id, job.productId, job.type, job.payload).catch(
-    async (error: unknown) => {
-      await logSystemError({
-        message: '[databases.backup] Failed to enqueue db backup job to runtime queue',
-        error,
-        source: 'api/databases/backup',
-        context: { jobId: job.id, dbType },
-      });
-    }
-  );
+  try {
+    await enqueueProductAiJobToQueue(job.id, job.productId, job.type, job.payload);
+  } catch (enqueueError: unknown) {
+    await logSystemError({
+      message: '[databases.backup] Failed to enqueue db backup job to runtime queue, falling back to inline processing',
+      error: enqueueError,
+      source: 'api/databases/backup',
+      context: { jobId: job.id, dbType },
+    });
+
+    await processSingleJob(job.id);
+    processedInline = true;
+  }
 
   return NextResponse.json({
     success: true,
     jobId: job.id,
-    message: `Database backup job queued for ${dbType}.`,
+    message: processedInline
+      ? `Database backup executed inline for ${dbType}.`
+      : `Database backup job queued for ${dbType}.`,
   });
 }
 

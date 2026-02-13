@@ -357,7 +357,12 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
           const fileKinds = getRuleKinds(profile, 'file_to_folder');
 
           return (
-            <SectionPanel key={meta.id} variant='subtle' className='space-y-5 p-5'>
+            <SectionPanel
+              key={meta.id}
+              id={`folder-tree-instance-${meta.id}`}
+              variant='subtle'
+              className='scroll-mt-24 space-y-5 p-5'
+            >
               <div>
                 <h2 className='text-sm font-semibold text-white'>{meta.title}</h2>
                 <p className='mt-1 text-xs text-gray-400'>{meta.description}</p>

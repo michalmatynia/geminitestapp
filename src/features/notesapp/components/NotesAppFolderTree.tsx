@@ -14,7 +14,7 @@ import {
   Star,
   Trash2,
 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
   applyInternalMasterTreeDrop,
@@ -65,6 +65,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
     setSelectedFolderId,
     handleSelectNoteFromTree,
   } = useNotesAppContext();
+  const hasInitializedCollapseSyncRef = useRef(false);
 
   const masterNodes = useMemo(
     (): MasterTreeNode[] => buildMasterNodesFromNotesFolderTree(folderTree),
@@ -87,13 +88,30 @@ export function NotesAppFolderTree(): React.JSX.Element {
     () => createNotesMasterTreeAdapter(operations),
     [operations]
   );
-  const { appearance: { rootDropUi, resolveIcon }, controller } = useMasterFolderTreeInstance({
+  const {
+    appearance: { rootDropUi, resolveIcon },
+    controller,
+    panelCollapsed,
+    setPanelCollapsed,
+  } = useMasterFolderTreeInstance({
     instance: 'notes',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
     initiallyExpandedNodeIds: initialExpandedFolderNodeIds,
     adapter: notesAdapter,
   });
+
+  useEffect(() => {
+    setIsFolderTreeCollapsed(panelCollapsed);
+  }, [panelCollapsed, setIsFolderTreeCollapsed]);
+
+  useEffect(() => {
+    if (!hasInitializedCollapseSyncRef.current) {
+      hasInitializedCollapseSyncRef.current = true;
+      return;
+    }
+    setPanelCollapsed(isFolderTreeCollapsed);
+  }, [isFolderTreeCollapsed, setPanelCollapsed]);
 
 
   const selectedFolderForCreate = useMemo(
@@ -142,6 +160,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
     <FolderTreePanel
       className='bg-gray-900 border-r border-border'
       bodyClassName='flex min-h-0 flex-1 flex-col'
+      masterInstance='notes'
       header={(
         <TreeHeader
           title='Folders'
@@ -183,7 +202,10 @@ export function NotesAppFolderTree(): React.JSX.Element {
                 Undo
               </Button>
               <Button
-                onClick={(): void => setIsFolderTreeCollapsed(true)}
+                onClick={(): void => {
+                  setIsFolderTreeCollapsed(true);
+                  setPanelCollapsed(true);
+                }}
                 size='sm'
                 variant='outline'
                 className='h-7 w-7 p-0 border text-gray-300 hover:bg-muted/50'

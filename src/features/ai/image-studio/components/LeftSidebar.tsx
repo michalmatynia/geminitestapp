@@ -26,13 +26,13 @@ import { SlotTree } from './SlotTree';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
-import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import {
   IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
   getImageStudioProjectSessionKey,
+  saveImageStudioProjectSessionLocal,
   serializeImageStudioActiveProject,
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
@@ -43,7 +43,6 @@ export function LeftSidebar(): React.JSX.Element {
   const { isFocusMode } = useUiState();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
-  const { saveStudioSettings } = useSettingsActions();
   const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
   const { maskShapes } = useMaskingState();
   const {
@@ -85,11 +84,21 @@ export function LeftSidebar(): React.JSX.Element {
   const canLoadToCanvas = Boolean(projectId) && Boolean(temporaryObjectUpload || (selectedSlot?.id && selectedSlotImageSrc));
 
   const cloneSettingValue = <T,>(value: T): T => {
-    try {
-      return JSON.parse(JSON.stringify(value)) as T;
-    } catch {
+    const seen = new WeakSet<object>();
+    const serialized = JSON.stringify(value, (_key: string, candidate: unknown): unknown => {
+      if (typeof candidate === 'bigint') return candidate.toString();
+      if (typeof candidate === 'function' || typeof candidate === 'symbol') return undefined;
+      if (candidate instanceof Date) return candidate.toISOString();
+      if (candidate && typeof candidate === 'object') {
+        if (seen.has(candidate)) return undefined;
+        seen.add(candidate);
+      }
+      return candidate;
+    });
+    if (typeof serialized !== 'string') {
       return value;
     }
+    return JSON.parse(serialized) as T;
   };
 
   const handleLoadToCanvas = (): void => {
@@ -266,6 +275,11 @@ export function LeftSidebar(): React.JSX.Element {
             : 'Failed to serialize project session.'
         );
       }
+      try {
+        saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
+      } catch {
+        // Continue with cloud save; local cache is best-effort.
+      }
 
       await updateSetting.mutateAsync({
         key: projectSessionKey,
@@ -278,22 +292,20 @@ export function LeftSidebar(): React.JSX.Element {
         value: serializeImageStudioActiveProject(normalizedProjectId),
       }).catch(() => {});
 
-      try {
-        await saveStudioSettings({ silent: true });
-      } catch (error: unknown) {
-        toast(
-          `Project "${normalizedProjectId}" saved. Studio settings were not saved${
-            error instanceof Error ? `: ${error.message}` : '.'
-          }`,
-          { variant: 'warning' }
-        );
-        return;
-      }
-
       toast(`Project "${normalizedProjectId}" saved.`, { variant: 'success' });
     })()
       .catch((error: unknown) => {
-        toast(error instanceof Error ? error.message : 'Failed to save project.', { variant: 'error' });
+        try {
+          saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
+        } catch {
+          // Ignore local fallback failures and surface the original error.
+        }
+        toast(
+          error instanceof Error
+            ? `Cloud save failed. Local fallback saved: ${error.message}`
+            : 'Cloud save failed. Local fallback saved.',
+          { variant: 'warning' }
+        );
       })
       .finally(() => {
         setProjectSaveBusy(false);

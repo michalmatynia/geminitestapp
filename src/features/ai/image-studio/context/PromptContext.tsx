@@ -3,12 +3,17 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { extractParamsFromPrompt, inferParamSpecs, validateImageStudioParams, setDeepValue, type ParamIssue, type ParamSpec, type ExtractParamsResult } from '@/features/prompt-engine/prompt-params';
+import { consumePromptExploderApplyPrompt } from '@/features/prompt-exploder/bridge';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 
 import { useProjectsState } from './ProjectsContext';
 import { type ParamUiControl } from '../utils/param-ui';
-import { getImageStudioProjectSessionKey, parseImageStudioProjectSession } from '../utils/project-session';
+import {
+  getImageStudioProjectSessionKey,
+  parseImageStudioProjectSession,
+  parseImageStudioProjectSessionLocal,
+} from '../utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +77,9 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
     const signature = `${projectSessionKey}:${projectSessionRaw ?? ''}`;
     if (hydratedSessionSignatureRef.current === signature) return;
 
-    const session = parseImageStudioProjectSession(projectSessionRaw, projectId);
+    const session =
+      parseImageStudioProjectSession(projectSessionRaw, projectId) ??
+      parseImageStudioProjectSessionLocal(projectId);
     setPromptText(session?.promptText ?? '');
     setParamsState((session?.paramsState ?? null));
     setParamSpecs((session?.paramSpecs ?? null) as Record<string, ParamSpec> | null);
@@ -84,6 +91,12 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
     setExtractResult(null);
     hydratedSessionSignatureRef.current = signature;
   }, [projectId, projectSessionKey, projectSessionRaw, heavySettings.isLoading]);
+
+  useEffect(() => {
+    const explodedPrompt = consumePromptExploderApplyPrompt();
+    if (!explodedPrompt?.trim()) return;
+    setPromptText(explodedPrompt);
+  }, []);
 
   useEffect(() => {
     if (projectId) return;

@@ -4,6 +4,13 @@ export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
 
 export type PromptValidationSeverity = 'error' | 'warning' | 'info';
 export type PromptValidationChainMode = 'continue' | 'stop_on_match' | 'stop_on_replace';
+export type PromptValidationScope =
+  | 'image_studio_prompt'
+  | 'image_studio_extraction'
+  | 'image_studio_generation'
+  | 'prompt_exploder'
+  | 'global';
+export type PromptValidationLaunchScopeBehavior = 'gate' | 'bypass';
 export type PromptValidationLaunchOperator =
   | 'equals'
   | 'not_equals'
@@ -17,6 +24,26 @@ export type PromptValidationLaunchOperator =
   | 'lte'
   | 'is_empty'
   | 'is_not_empty';
+
+export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
+  'image_studio_prompt',
+  'image_studio_extraction',
+  'image_studio_generation',
+  'prompt_exploder',
+  'global',
+];
+
+export const DEFAULT_PROMPT_VALIDATION_SCOPES: PromptValidationScope[] = [
+  ...PROMPT_VALIDATION_SCOPE_VALUES,
+];
+
+export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, string> = {
+  image_studio_prompt: 'Image Studio Prompt',
+  image_studio_extraction: 'Image Studio Extraction',
+  image_studio_generation: 'Image Studio Generation',
+  prompt_exploder: 'Prompt Exploder',
+  global: 'Global',
+};
 
 export type PromptValidationSimilarPattern = {
   pattern: string;
@@ -63,7 +90,10 @@ export type PromptValidationRule =
       chainMode?: PromptValidationChainMode;
       maxExecutions?: number;
       passOutputToNext?: boolean;
+      appliesToScopes?: PromptValidationScope[];
       launchEnabled?: boolean;
+      launchAppliesToScopes?: PromptValidationScope[];
+      launchScopeBehavior?: PromptValidationLaunchScopeBehavior;
       launchOperator?: PromptValidationLaunchOperator;
       launchValue?: string | null;
       launchFlags?: string | null;
@@ -85,7 +115,10 @@ export type PromptValidationRule =
       chainMode?: PromptValidationChainMode;
       maxExecutions?: number;
       passOutputToNext?: boolean;
+      appliesToScopes?: PromptValidationScope[];
       launchEnabled?: boolean;
+      launchAppliesToScopes?: PromptValidationScope[];
+      launchScopeBehavior?: PromptValidationLaunchScopeBehavior;
       launchOperator?: PromptValidationLaunchOperator;
       launchValue?: string | null;
       launchFlags?: string | null;
@@ -281,6 +314,10 @@ export const defaultPromptEngineSettings: PromptEngineSettings = {
 
 const promptValidationSeveritySchema = z.enum(['error', 'warning', 'info']);
 const promptValidationChainModeSchema = z.enum(['continue', 'stop_on_match', 'stop_on_replace']);
+const promptValidationScopeSchema = z.enum(
+  PROMPT_VALIDATION_SCOPE_VALUES as [PromptValidationScope, ...PromptValidationScope[]]
+);
+const promptValidationLaunchScopeBehaviorSchema = z.enum(['gate', 'bypass']);
 const promptValidationLaunchOperatorSchema = z.enum([
   'equals',
   'not_equals',
@@ -338,7 +375,16 @@ const promptValidationSequenceFieldsSchema = z
     chainMode: promptValidationChainModeSchema.optional().default('continue'),
     maxExecutions: z.number().int().min(1).max(20).optional().default(1),
     passOutputToNext: z.boolean().optional().default(true),
+    appliesToScopes: z
+      .array(promptValidationScopeSchema)
+      .optional()
+      .default(DEFAULT_PROMPT_VALIDATION_SCOPES),
     launchEnabled: z.boolean().optional().default(false),
+    launchAppliesToScopes: z
+      .array(promptValidationScopeSchema)
+      .optional()
+      .default(DEFAULT_PROMPT_VALIDATION_SCOPES),
+    launchScopeBehavior: promptValidationLaunchScopeBehaviorSchema.optional().default('gate'),
     launchOperator: promptValidationLaunchOperatorSchema.optional().default('contains'),
     launchValue: z.string().nullable().optional().default(null),
     launchFlags: z.string().trim().nullable().optional().default(null),

@@ -1,11 +1,13 @@
 import {
   buildPromptSequenceGroupCounts,
+  doesPromptRuleApplyToScope,
   evaluatePromptValidationRule,
   isPromptRuleInSequenceGroup,
   normalizePromptRuleChainMode,
   normalizePromptRuleMaxExecutions,
   shouldLaunchPromptRule,
   sortPromptValidationRules,
+  type PromptValidationExecutionContext,
   validateProgrammaticPrompt,
 } from './prompt-validator';
 
@@ -325,13 +327,21 @@ function applySuggestionFix(prompt: string, suggestion: PromptValidationSimilarP
   }
 }
 
-export function formatProgrammaticPrompt(prompt: string, settings: PromptValidationSettings): FormatPromptResult {
+export function formatProgrammaticPrompt(
+  prompt: string,
+  settings: PromptValidationSettings,
+  context: PromptValidationExecutionContext = {}
+): FormatPromptResult {
   const mergedRules: PromptValidationRule[] = [
     ...settings.rules,
     ...(settings.learnedRules ?? []),
   ];
   const validationSettings = { ...settings, enabled: true, rules: mergedRules };
-  const issuesBefore = validateProgrammaticPrompt(prompt, validationSettings).length;
+  const issuesBefore = validateProgrammaticPrompt(
+    prompt,
+    validationSettings,
+    context
+  ).length;
   if (issuesBefore === 0) {
     return { prompt, changed: false, applied: [], issuesBefore, issuesAfter: 0 };
   }
@@ -344,6 +354,7 @@ export function formatProgrammaticPrompt(prompt: string, settings: PromptValidat
 
   for (const rule of orderedRules) {
     if (!rule.enabled) continue;
+    if (!doesPromptRuleApplyToScope(rule, context.scope)) continue;
 
     const inSequenceGroup = isPromptRuleInSequenceGroup(rule, sequenceGroupCounts);
     const maxExecutions = normalizePromptRuleMaxExecutions(rule);
@@ -352,7 +363,7 @@ export function formatProgrammaticPrompt(prompt: string, settings: PromptValidat
     let replaced = false;
 
     for (let execution = 0; execution < maxExecutions; execution += 1) {
-      if (!shouldLaunchPromptRule(rule, candidatePrompt)) break;
+      if (!shouldLaunchPromptRule(rule, candidatePrompt, context)) break;
       const issue = evaluatePromptValidationRule(candidatePrompt, rule);
       if (!issue) break;
 
@@ -403,7 +414,11 @@ export function formatProgrammaticPrompt(prompt: string, settings: PromptValidat
     }
   }
 
-  const issuesAfter = validateProgrammaticPrompt(nextPrompt, validationSettings).length;
+  const issuesAfter = validateProgrammaticPrompt(
+    nextPrompt,
+    validationSettings,
+    context
+  ).length;
   return {
     prompt: nextPrompt,
     changed: nextPrompt !== prompt,

@@ -87,7 +87,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\nerror:\n${message}`;
     await fs.writeFile(logPath, logContent);
 
-    const details = stderr.trim();
+    const details = stderr.trim() || message;
     const stat = await fs.stat(backupPath).catch(() => null);
     if (stat && stat.size > 0) {
       return {
@@ -101,7 +101,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
     throw operationFailedError(
       'Failed to create MongoDB backup',
       error,
-      details ? { details } : undefined
+      { details }
     );
   }
 };
@@ -149,7 +149,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
     const logContent = `command:\n${commandString}\n\nstdout:\n${stdout}\n\nstderr:\n${stderr}\n\nerror:\n${message}`;
     await fs.writeFile(logPath, logContent);
 
-    const details = stderr.trim();
+    const details = stderr.trim() || message;
     const stat = await fs.stat(backupPath).catch(() => null);
     if (stat && stat.size > 0) {
       return {
@@ -163,7 +163,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
     throw operationFailedError(
       'Failed to create Postgres backup',
       error,
-      details ? { details } : undefined
+      { details }
     );
   }
 };

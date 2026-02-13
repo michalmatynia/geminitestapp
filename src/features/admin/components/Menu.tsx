@@ -742,6 +742,7 @@ export const buildAdminNav = (handlers: {
           { id: 'ai/image-studio/studio', label: 'Studio', href: '/admin/image-studio' },
           { id: 'ai/image-studio/projects', label: 'Projects', href: '/admin/image-studio?tab=projects' },
           { id: 'ai/image-studio/settings', label: 'Settings', href: '/admin/image-studio?tab=settings' },
+          { id: 'ai/image-studio/prompt-exploder', label: 'Prompt Exploder', href: '/admin/prompt-exploder' },
           { id: 'ai/image-studio/ui-presets', label: 'UI Presets', href: '/admin/image-studio/ui-presets' },
         ],
       },

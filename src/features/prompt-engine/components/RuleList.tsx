@@ -99,6 +99,7 @@ export function RuleList(): React.JSX.Element {
     filteredDrafts,
     query,
     severity,
+    scope,
     includeDisabled,
     handleSequenceDrop,
     handleSaveSequenceGroup,
@@ -109,7 +110,11 @@ export function RuleList(): React.JSX.Element {
   const [groupDrafts, setGroupDrafts] = useState<Record<string, SequenceGroupDraft>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
 
-  const sequencingLocked = query.trim().length > 0 || severity !== 'all' || !includeDisabled;
+  const sequencingLocked =
+    query.trim().length > 0 ||
+    severity !== 'all' ||
+    scope !== 'all' ||
+    !includeDisabled;
   const orderedDrafts = useMemo(() => sortDraftsBySequence(filteredDrafts), [filteredDrafts]);
   const sequenceGroups = useMemo(() => buildSequenceGroups(orderedDrafts), [orderedDrafts]);
 
@@ -176,7 +181,9 @@ export function RuleList(): React.JSX.Element {
           <div className='text-xs text-amber-200'>
             Sequence drag-and-drop is disabled while filters are active. Clear search, set severity to
             <span className='mx-1 font-medium'>All</span>
-            and enable
+            and scope to
+            <span className='mx-1 font-medium'>All scopes</span>
+            , then enable
             <span className='mx-1 font-medium'>Include disabled</span>
             to reorder/group rules.
           </div>

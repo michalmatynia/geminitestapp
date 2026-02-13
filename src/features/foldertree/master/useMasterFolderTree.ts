@@ -428,6 +428,26 @@ export function useMasterFolderTree(
     [syncState]
   );
 
+  const setExpandedNodeIds = useCallback(
+    (nodeIds: MasterTreeId[]): void => {
+      syncState((prev: InternalMasterFolderTreeState) => {
+        const nodeIdSet = new Set(prev.nodes.map((node: MasterTreeNode) => node.id));
+        const nextExpanded = dedupeStringList(nodeIds).filter((id: string) => nodeIdSet.has(id));
+        if (
+          nextExpanded.length === prev.expandedNodeIds.length &&
+          nextExpanded.every((id: string, index: number) => id === prev.expandedNodeIds[index])
+        ) {
+          return prev;
+        }
+        return {
+          ...prev,
+          expandedNodeIds: nextExpanded,
+        };
+      });
+    },
+    [syncState]
+  );
+
   const toggleNodeExpanded = useCallback(
     (nodeId: MasterTreeId): void => {
       syncState((prev: InternalMasterFolderTreeState) => {
@@ -772,6 +792,7 @@ export function useMasterFolderTree(
     lastError: state.lastError,
     canDropNode,
     selectNode,
+    setExpandedNodeIds,
     toggleNodeExpanded,
     expandNode,
     collapseNode,

@@ -105,10 +105,14 @@ function runProgrammaticAttempt(
     enabled: true,
     rules: promptValidationSettings.rules,
     learnedRules: promptValidationSettings.learnedRules ?? [],
+  }, {
+    scope: 'image_studio_extraction',
   });
 
   const formatted = applyAutofix
-    ? formatProgrammaticPrompt(prompt, promptValidationSettings)
+    ? formatProgrammaticPrompt(prompt, promptValidationSettings, {
+      scope: 'image_studio_extraction',
+    })
     : { prompt, changed: false };
   const candidatePrompt = formatted.prompt;
   const direct = extractParamsFromPrompt(candidatePrompt);
@@ -118,6 +122,8 @@ function runProgrammaticAttempt(
       enabled: true,
       rules: promptValidationSettings.rules,
       learnedRules: promptValidationSettings.learnedRules ?? [],
+    }, {
+      scope: 'image_studio_extraction',
     });
     return {
       ok: true,
@@ -135,6 +141,8 @@ function runProgrammaticAttempt(
     enabled: true,
     rules: promptValidationSettings.rules,
     learnedRules: promptValidationSettings.learnedRules ?? [],
+  }, {
+    scope: 'image_studio_extraction',
   });
 
   return {

@@ -26,7 +26,11 @@ import {
 } from '@/shared/utils/tree-operations';
 
 import { useProjectsState } from './ProjectsContext';
-import { getImageStudioProjectSessionKey, parseImageStudioProjectSession } from '../utils/project-session';
+import {
+  getImageStudioProjectSessionKey,
+  parseImageStudioProjectSession,
+  parseImageStudioProjectSessionLocal,
+} from '../utils/project-session';
 import { expandFolderPath, normalizeFolderPaths, IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
@@ -222,7 +226,9 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     const signature = `${projectSessionKey}:${projectSessionRaw ?? ''}`;
     if (hydratedSessionSignatureRef.current === signature) return;
 
-    const session = parseImageStudioProjectSession(projectSessionRaw, projectId);
+    const session =
+      parseImageStudioProjectSession(projectSessionRaw, projectId) ??
+      parseImageStudioProjectSessionLocal(projectId);
     setSelectedSlotId(session?.selectedSlotId ?? null);
     setWorkingSlotId(session?.workingSlotId ?? null);
     setSelectedFolderRaw(session?.selectedFolder ?? '');

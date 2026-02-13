@@ -116,6 +116,7 @@ export type MasterFolderTreeController = {
     position?: MasterTreeDropPosition | undefined
   ) => MasterTreeCanDropResult;
   selectNode: (nodeId: MasterTreeId | null) => void;
+  setExpandedNodeIds: (nodeIds: MasterTreeId[]) => void;
   toggleNodeExpanded: (nodeId: MasterTreeId) => void;
   expandNode: (nodeId: MasterTreeId) => void;
   collapseNode: (nodeId: MasterTreeId) => void;

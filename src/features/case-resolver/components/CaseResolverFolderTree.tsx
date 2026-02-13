@@ -19,13 +19,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { palette, type NodeDefinition } from '@/features/ai/ai-paths/lib';
 import {
-  useMasterFolderTreeInstance,
-} from '@/features/foldertree/hooks/useMasterFolderTreeInstance';
-import {
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
-} from '@/features/foldertree/master/internal-drop';
-import { MasterFolderTree } from '@/features/foldertree/master/MasterFolderTree';
+  MasterFolderTree,
+  useMasterFolderTreeInstance,
+} from '@/features/foldertree';
 import { DRAG_KEYS, setDragData } from '@/shared/utils/drag-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { Button, FolderTreePanel, TreeHeader, useToast } from '@/shared/ui';
@@ -409,21 +407,21 @@ export function CaseResolverFolderTree({
           rootDropUi={rootDropUi}
           onNodeDragStart={({ node, event }): void => {
             const metadata = node.metadata as Record<string, unknown> | undefined;
-            if (metadata?.entity !== 'asset') return;
-            const assetId = parseString(metadata.rawId);
+            if (metadata?.['entity'] !== 'asset') return;
+            const assetId = parseString(metadata['rawId']);
             if (!assetId) return;
             const payload: CaseResolverTreeDragPayload = {
               source: 'case_resolver_tree',
               entity: 'asset',
               assetId,
-              assetKind: resolveAssetKind(metadata.assetKind),
+              assetKind: resolveAssetKind(metadata['assetKind']),
               name: node.name,
-              folder: parseString(metadata.folder),
-              filepath: parseNullableString(metadata.filepath),
-              mimeType: parseNullableString(metadata.mimeType),
-              size: parseNullableNumber(metadata.size),
-              textContent: parseString(metadata.textContent),
-              description: parseString(metadata.description),
+              folder: parseString(metadata['folder']),
+              filepath: parseNullableString(metadata['filepath']),
+              mimeType: parseNullableString(metadata['mimeType']),
+              size: parseNullableNumber(metadata['size']),
+              textContent: parseString(metadata['textContent']),
+              description: parseString(metadata['description']),
             };
 
             setDragData(

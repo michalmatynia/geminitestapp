@@ -154,6 +154,11 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
     controller.selectNode(null);
   };
 
+  const moveSelectedItemToRoot = (): void => {
+    if (!controller.selectedNodeId) return;
+    void controller.dropNodeToRoot(controller.selectedNodeId);
+  };
+
   return (
     <div className='space-y-2 rounded border border-border/50 bg-card/20 p-2'>
       <div className='flex items-center justify-between gap-2'>
@@ -180,6 +185,15 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
           >
             Remove
           </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={moveSelectedItemToRoot}
+            disabled={!selectedItemId}
+          >
+            Move to Root
+          </Button>
         </div>
       </div>
 
@@ -189,6 +203,12 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
           enableDnd
           className='space-y-0.5'
           emptyLabel={emptyLabel}
+          rootDropUi={{
+            enabled: true,
+            label: 'Move to Root',
+            idleClassName: 'border-blue-400/60 bg-blue-500/20 text-blue-100',
+            activeClassName: 'border-blue-200 bg-blue-500/40 text-white',
+          }}
         />
       </div>
 

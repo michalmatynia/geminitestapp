@@ -11,9 +11,11 @@ import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { 
   integrationSchema, 
   integrationConnectionSchema, 
-  templateSchema,
   baseInventorySchema
 } from '@/shared/contracts/integrations';
+import {
+  importExportTemplateSchema
+} from '@/shared/contracts/data-import-export';
 import { createQueryHook } from '@/shared/lib/api-hooks';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -63,7 +65,7 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
 export const useExportTemplates = createQueryHook({
   queryKeyFactory: () => QUERY_KEYS.integrations.exportTemplates(),
   endpoint: '/api/integrations/export-templates',
-  schema: z.array(templateSchema),
+  schema: z.array(importExportTemplateSchema),
 });
 
 export const useActiveExportTemplate = createQueryHook({

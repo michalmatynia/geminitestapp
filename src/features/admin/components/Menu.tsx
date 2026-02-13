@@ -636,6 +636,17 @@ export const buildAdminNav = (handlers: {
     keywords: ['ai', 'images', 'mask', 'studio', 'relight'],
   },
   {
+    id: 'prompt-exploder',
+    label: 'Prompt Exploder',
+    href: '/admin/prompt-exploder',
+    icon: <SparklesIcon className='size-4' />,
+    keywords: ['ai', 'prompt', 'exploder', 'projects', 'segmentation'],
+    children: [
+      { id: 'prompt-exploder/projects', label: 'Projects', href: '/admin/prompt-exploder' },
+      { id: 'prompt-exploder/settings', label: 'Settings', href: '/admin/prompt-exploder/settings' },
+    ],
+  },
+  {
     id: 'commerce',
     label: 'Commerce',
     href: '/admin/products',
@@ -715,16 +726,16 @@ export const buildAdminNav = (handlers: {
     href: '/admin/ai-paths',
     icon: <GitBranchIcon className='size-4' />,
     children: [
-          {
-            id: 'ai/ai-paths',
-            label: 'AI Paths',
-            href: '/admin/ai-paths',
-            children: [
-              { id: 'ai/ai-paths/canvas', label: 'Canvas', href: '/admin/ai-paths', exact: true },
-              { id: 'ai/ai-paths/trigger-buttons', label: 'Trigger Buttons', href: '/admin/ai-paths/trigger-buttons' },
-              { id: 'ai/ai-paths/case-resolver', label: 'Case Resolver', href: '/admin/case-resolver' },
-            ],
-          },
+      {
+        id: 'ai/ai-paths',
+        label: 'AI Paths',
+        href: '/admin/ai-paths',
+        children: [
+          { id: 'ai/ai-paths/canvas', label: 'Canvas', href: '/admin/ai-paths', exact: true },
+          { id: 'ai/ai-paths/trigger-buttons', label: 'Trigger Buttons', href: '/admin/ai-paths/trigger-buttons' },
+          { id: 'ai/ai-paths/case-resolver', label: 'Case Resolver', href: '/admin/case-resolver' },
+        ],
+      },
       {
         id: 'ai/prompt-engine',
         label: 'Global Validator',
@@ -743,8 +754,6 @@ export const buildAdminNav = (handlers: {
           { id: 'ai/image-studio/studio', label: 'Studio', href: '/admin/image-studio' },
           { id: 'ai/image-studio/projects', label: 'Projects', href: '/admin/image-studio?tab=projects' },
           { id: 'ai/image-studio/settings', label: 'Settings', href: '/admin/image-studio?tab=settings' },
-          { id: 'ai/image-studio/prompt-exploder', label: 'Prompt Exploder', href: '/admin/prompt-exploder' },
-          { id: 'ai/image-studio/prompt-exploder/settings', label: 'Prompt Exploder Settings', href: '/admin/prompt-exploder/settings' },
           { id: 'ai/image-studio/ui-presets', label: 'UI Presets', href: '/admin/image-studio/ui-presets' },
         ],
       },

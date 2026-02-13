@@ -81,6 +81,9 @@ export interface CreateProductDraftInput
   iconColor?: string | null;
   baseProductId?: string | null;
   parameters?: ProductParameterValue[];
+  catalogIds?: string[];
+  tagIds?: string[];
+  producerIds?: string[];
   defaultPriceGroupId?: string | null;
   ean?: string | null;
   gtin?: string | null;

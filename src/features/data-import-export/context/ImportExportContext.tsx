@@ -196,7 +196,11 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const hasHydratedExportActiveTemplatePref = useRef(false);
 
   // Queries
-  const { data: integrationsWithConnections = [], isLoading: checkingIntegration } = useIntegrationsWithConnections();
+  const { data: integrationsWithConnectionsData, isLoading: checkingIntegration } = useIntegrationsWithConnections();
+  const integrationsWithConnections = useMemo((): IntegrationWithConnections[] => 
+    Array.isArray(integrationsWithConnectionsData) ? integrationsWithConnectionsData as IntegrationWithConnections[] : [],
+    [integrationsWithConnectionsData]
+  );
   const catalogsQuery = useCatalogs();
   const catalogsData = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
   const loadingCatalogs = catalogsQuery.isLoading;

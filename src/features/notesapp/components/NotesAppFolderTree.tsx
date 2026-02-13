@@ -55,6 +55,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
     setSelectedNote,
     setIsEditing,
     setIsCreating,
+    isFolderTreeCollapsed,
     setIsFolderTreeCollapsed,
     draggedNoteId,
     operations,

@@ -620,6 +620,34 @@ Rejected when visual coherence does not hold.`;
     expect(qaR3?.items).toHaveLength(2);
   });
 
+  it('keeps indented list continuation lines under P0 even with aggressive heading rules', () => {
+    const document = explodePromptText({
+      prompt: PREMIUM_REGRESSION_PROMPT,
+      validationRules: [
+        ...PROMPT_EXPLODER_PATTERN_PACK,
+        createRegexRule({
+          id: 'segment.heading.overeager_colon_line',
+          pattern: '^\\s*[A-Za-z][^\\n]*:\\s+.+$',
+          title: 'Overeager Colon Heading',
+          message: 'Treat any colon line as heading',
+          segmentType: 'assigned_text',
+        }),
+      ],
+    });
+
+    const p0 = document.segments.find((segment) => segment.code === 'P0');
+    expect(p0?.type).toBe('referential_list');
+    expect(p0?.listItems).toHaveLength(1);
+    expect(p0?.listItems[0]?.text).toContain(
+      'Rule: if unsure whether a mark is real vs artifact => KEEP (unless remove_uncertain_marks=true).'
+    );
+
+    const reassembled = reassemblePromptSegments(document.segments);
+    expect(reassembled).toContain(
+      'Rule: if unsure whether a mark is real vs artifact => KEEP (unless remove_uncertain_marks=true).'
+    );
+  });
+
   it('allows boundary headings to be tuned via validation rules', () => {
     const document = explodePromptText({
       prompt: CUSTOM_BOUNDARY_PROMPT,

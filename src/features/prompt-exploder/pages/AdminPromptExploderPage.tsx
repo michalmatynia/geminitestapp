@@ -545,6 +545,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const [parserTuningDrafts, setParserTuningDrafts] = useState<
     PromptExploderParserTuningRuleDraft[]
   >([]);
+  const [isParserTuningOpen, setIsParserTuningOpen] = useState(false);
   const [dismissedBenchmarkSuggestionIds, setDismissedBenchmarkSuggestionIds] =
     useState<string[]>([]);
   const [snapshotDraftName, setSnapshotDraftName] = useState('');
@@ -576,6 +577,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const [draggingSegmentId, setDraggingSegmentId] = useState<string | null>(null);
   const [segmentDropTargetId, setSegmentDropTargetId] = useState<string | null>(null);
   const [segmentDropPosition, setSegmentDropPosition] = useState<'before' | 'after' | null>(null);
+  const [draggingListItemIndex, setDraggingListItemIndex] = useState<number | null>(null);
+  const [listItemDropTargetIndex, setListItemDropTargetIndex] = useState<number | null>(null);
+  const [listItemDropPosition, setListItemDropPosition] = useState<'before' | 'after' | null>(null);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
 
@@ -922,6 +926,20 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     setSegmentDropTargetId(null);
     setSegmentDropPosition(null);
   }, [documentState?.segments, draggingSegmentId]);
+
+  useEffect(() => {
+    if (!selectedSegment) {
+      setDraggingListItemIndex(null);
+      setListItemDropTargetIndex(null);
+      setListItemDropPosition(null);
+      return;
+    }
+    if (draggingListItemIndex === null) return;
+    if (draggingListItemIndex < selectedSegment.listItems.length) return;
+    setDraggingListItemIndex(null);
+    setListItemDropTargetIndex(null);
+    setListItemDropPosition(null);
+  }, [selectedSegment, draggingListItemIndex]);
 
   const segmentOptions = useMemo(() => {
     return (documentState?.segments ?? []).map((segment) => ({
@@ -1586,6 +1604,28 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     );
   };
 
+  const reorderListItemsForDrop = (
+    items: PromptExploderListItem[],
+    fromIndex: number,
+    toIndex: number,
+    position: 'before' | 'after'
+  ): PromptExploderListItem[] => {
+    if (fromIndex === toIndex) return items;
+    if (fromIndex < 0 || toIndex < 0) return items;
+    if (fromIndex >= items.length || toIndex >= items.length) return items;
+    const dragged = items[fromIndex];
+    if (!dragged) return items;
+    const remaining = items.filter((_, index) => index !== fromIndex);
+    const targetBaseIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+    const insertIndex =
+      position === 'after' ? Math.min(targetBaseIndex + 1, remaining.length) : targetBaseIndex;
+    return [
+      ...remaining.slice(0, insertIndex),
+      dragged,
+      ...remaining.slice(insertIndex),
+    ];
+  };
+
   const reorderSegmentsForDrop = (
     segments: PromptExploderSegment[],
     draggedId: string,
@@ -1612,6 +1652,65 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     const rect = event.currentTarget.getBoundingClientRect();
     const offsetY = event.clientY - rect.top;
     return offsetY >= rect.height / 2 ? 'after' : 'before';
+  };
+
+  const handleListItemDragStart = (
+    event: React.DragEvent<HTMLButtonElement>,
+    index: number
+  ): void => {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/prompt-exploder-list-item-index', String(index));
+    setDraggingListItemIndex(index);
+    setListItemDropTargetIndex(null);
+    setListItemDropPosition(null);
+  };
+
+  const handleListItemDragEnd = (): void => {
+    setDraggingListItemIndex(null);
+    setListItemDropTargetIndex(null);
+    setListItemDropPosition(null);
+  };
+
+  const handleListItemDragOver = (
+    event: React.DragEvent<HTMLDivElement>,
+    targetIndex: number
+  ): void => {
+    if (draggingListItemIndex === null) return;
+    if (draggingListItemIndex === targetIndex) {
+      setListItemDropTargetIndex(null);
+      setListItemDropPosition(null);
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const position = resolveSegmentDropPosition(event);
+    setListItemDropTargetIndex(targetIndex);
+    setListItemDropPosition(position);
+  };
+
+  const handleListItemDrop = (
+    event: React.DragEvent<HTMLDivElement>,
+    segmentId: string,
+    targetIndex: number
+  ): void => {
+    event.preventDefault();
+    const fallbackIndex = Number.parseInt(
+      event.dataTransfer.getData('text/prompt-exploder-list-item-index'),
+      10
+    );
+    const draggedIndex =
+      draggingListItemIndex ?? (Number.isNaN(fallbackIndex) ? null : fallbackIndex);
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      handleListItemDragEnd();
+      return;
+    }
+
+    const position = resolveSegmentDropPosition(event);
+    updateSegment(segmentId, (current) => ({
+      ...current,
+      listItems: reorderListItemsForDrop(current.listItems, draggedIndex, targetIndex, position),
+    }));
+    handleListItemDragEnd();
   };
 
   const handleSegmentDragStart = (
@@ -3017,30 +3116,46 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         description='Quick-edit boundary and subsection parser rules directly from Prompt Exploder (stored as Validation Patterns).'
         variant='subtle'
         className='p-4'
+        actions={(
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              setIsParserTuningOpen((previous) => !previous);
+            }}
+          >
+            {isParserTuningOpen ? 'Collapse' : 'Expand'}
+          </Button>
+        )}
       >
-        <PromptExploderParserTuningProvider
-          value={{
-            drafts: parserTuningDrafts,
-            onPatchDraft: patchParserTuningDraft,
-            onSave: () => {
-              void handleSaveParserTuningRules();
-            },
-            onResetToPackDefaults: handleResetParserTuningDrafts,
-            onOpenValidationPatterns: () => {
-              router.push('/admin/validator?scope=prompt-exploder');
-            },
-            isBusy: updateSetting.isPending,
-          }}
-        >
-          <PromptExploderParserTuningPanel />
-        </PromptExploderParserTuningProvider>
+        {isParserTuningOpen ? (
+          <PromptExploderParserTuningProvider
+            value={{
+              drafts: parserTuningDrafts,
+              onPatchDraft: patchParserTuningDraft,
+              onSave: () => {
+                void handleSaveParserTuningRules();
+              },
+              onResetToPackDefaults: handleResetParserTuningDrafts,
+              onOpenValidationPatterns: () => {
+                router.push('/admin/validator?scope=prompt-exploder');
+              },
+              isBusy: updateSetting.isPending,
+            }}
+          >
+            <PromptExploderParserTuningPanel />
+          </PromptExploderParserTuningProvider>
+        ) : (
+          <div className='text-xs text-gray-500'>Parser tuning is collapsed.</div>
+        )}
       </FormSection>
 
-      <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]'>
+      <div className='grid gap-4'>
         <div className='space-y-4'>
           <FormSection
-            title='Prompt Library'
-            description='Manage multiple prompts and their saved explosions.'
+            title='Prompt Exploder Projects'
+            description='Manage all Prompt Exploder projects and their saved explosions.'
             variant='subtle'
             className='p-4'
             actions={
@@ -3053,14 +3168,14 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                   }}
                   disabled={updateSetting.isPending}
                 >
-                  Save Current
+                  Save Project
                 </Button>
                 <Button
                   type='button'
                   variant='outline'
                   onClick={handleNewLibraryEntry}
                 >
-                  New Draft
+                  New Project
                 </Button>
                 <Button
                   type='button'
@@ -3071,17 +3186,17 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                   }}
                   disabled={!selectedLibraryItemId || updateSetting.isPending}
                 >
-                  Delete Selected
+                  Delete Project
                 </Button>
               </div>
             }
           >
             <div className='grid gap-3 lg:grid-cols-[320px_minmax(0,1fr)]'>
               <div className='space-y-1'>
-                <Label className='text-[11px] text-gray-400'>Saved Entries</Label>
+                <Label className='text-[11px] text-gray-400'>Projects</Label>
                 {promptLibraryItems.length === 0 ? (
                   <div className='rounded border border-border/50 bg-card/20 px-3 py-4 text-xs text-gray-500'>
-                    No entries saved yet.
+                    No projects saved yet.
                   </div>
                 ) : (
                   <div className='max-h-[280px] space-y-2 overflow-auto rounded border border-border/50 bg-card/20 p-2'>
@@ -3112,18 +3227,18 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               </div>
               <div className='space-y-2'>
                 <div className='space-y-1'>
-                  <Label className='text-[11px] text-gray-400'>Entry Name</Label>
+                  <Label className='text-[11px] text-gray-400'>Project Name</Label>
                   <Input
                     value={libraryNameDraft}
                     onChange={(event) => {
                       setLibraryNameDraft(event.target.value);
                     }}
-                    placeholder='Prompt entry name'
+                    placeholder='Project name'
                   />
                 </div>
                 <div className='rounded border border-border/50 bg-card/20 p-2 text-xs text-gray-500'>
                   <div>
-                    Active entry:{' '}
+                    Active project:{' '}
                     <span className='text-gray-300'>
                       {selectedLibraryItem?.name ?? 'Unsaved draft'}
                     </span>
@@ -3146,7 +3261,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                   </div>
                 </div>
                 <div className='text-[11px] text-gray-500'>
-                  Save Current stores both prompt text and the current exploded document.
+                  Save Project stores both prompt text and the current exploded document.
                 </div>
               </div>
             </div>
@@ -4136,39 +4251,47 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                             ) : null}
                             <div className='space-y-2'>
                               {selectedSegment.listItems.map((item, index) => (
-                                <div key={item.id} className='rounded border border-border/50 bg-card/20 p-2'>
+                                <div
+                                  key={item.id}
+                                  className={`relative rounded border border-border/50 bg-card/20 p-2 ${draggingListItemIndex === index ? 'opacity-60' : ''}`}
+                                  onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
+                                    handleListItemDragOver(event, index);
+                                  }}
+                                  onDrop={(event: React.DragEvent<HTMLDivElement>) => {
+                                    handleListItemDrop(event, selectedSegment.id, index);
+                                  }}
+                                >
+                                  {listItemDropTargetIndex === index && listItemDropPosition === 'before' ? (
+                                    <div className='pointer-events-none absolute inset-x-1 top-0 h-0.5 rounded bg-blue-400' />
+                                  ) : null}
+                                  {listItemDropTargetIndex === index && listItemDropPosition === 'after' ? (
+                                    <div className='pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded bg-blue-400' />
+                                  ) : null}
                                   {(() => {
                                     const rgbLiteral = extractRgbLiteral(item.text);
                                     return (
                                       <div className='flex items-center gap-1'>
-                                        <Button
+                                        <button
                                           type='button'
-                                          variant='ghost'
-                                          size='icon'
-                                          disabled={index === 0}
-                                          onClick={() => {
-                                            updateSegment(selectedSegment.id, (current) => ({
-                                              ...current,
-                                              listItems: moveByDelta(current.listItems, index, -1),
-                                            }));
+                                          className='inline-flex size-9 items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 transition-colors hover:bg-card/70 hover:text-gray-100 active:cursor-grabbing'
+                                          aria-label='Drag to reorder list item'
+                                          draggable
+                                          onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                            event.stopPropagation();
+                                          }}
+                                          onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                            event.stopPropagation();
+                                          }}
+                                          onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
+                                            event.stopPropagation();
+                                            handleListItemDragStart(event, index);
+                                          }}
+                                          onDragEnd={() => {
+                                            handleListItemDragEnd();
                                           }}
                                         >
-                                          <ArrowUp className='size-3.5' />
-                                        </Button>
-                                        <Button
-                                          type='button'
-                                          variant='ghost'
-                                          size='icon'
-                                          disabled={index === selectedSegment.listItems.length - 1}
-                                          onClick={() => {
-                                            updateSegment(selectedSegment.id, (current) => ({
-                                              ...current,
-                                              listItems: moveByDelta(current.listItems, index, 1),
-                                            }));
-                                          }}
-                                        >
-                                          <ArrowDown className='size-3.5' />
-                                        </Button>
+                                          <GripVertical className='size-3.5' />
+                                        </button>
                                         <Input
                                           value={item.text}
                                           onChange={(event) => {

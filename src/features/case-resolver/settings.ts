@@ -2,6 +2,7 @@ import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import {
+  DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type CaseResolverAssetFile,
@@ -10,6 +11,7 @@ import {
   type CaseResolverFile,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
+  type CaseResolverPdfExtractionPresetId,
   type CaseResolverWorkspace,
 } from './types';
 
@@ -99,8 +101,8 @@ const sanitizeEdgeMeta = (
 
 const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const graphRecord = graph && typeof graph === 'object' ? (graph as Record<string, unknown>) : {};
-  const nodes = Array.isArray(graphRecord.nodes) ? (graphRecord.nodes as AiNode[]) : [];
-  const edges = Array.isArray(graphRecord.edges) ? (graphRecord.edges as Edge[]) : [];
+  const nodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
+  const edges = Array.isArray(graphRecord['edges']) ? (graphRecord['edges'] as Edge[]) : [];
   const validNodeIds = new Set<string>(
     nodes
       .map((node: AiNode) => (typeof node?.id === 'string' ? node.id : ''))
@@ -115,15 +117,22 @@ const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
       validNodeIds.has(edge.to)
   );
 
+  const presetRaw = graphRecord['pdfExtractionPresetId'];
+  const pdfExtractionPresetId: CaseResolverPdfExtractionPresetId =
+    presetRaw === 'plain_text' || presetRaw === 'structured_sections' || presetRaw === 'facts_entities'
+      ? presetRaw
+      : DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID;
+
   return {
     nodes,
     edges: sanitizedEdges,
     nodeMeta: sanitizeNodeMeta(
-      graphRecord.nodeMeta as Record<string, CaseResolverNodeMeta> | null | undefined
+      graphRecord['nodeMeta'] as Record<string, CaseResolverNodeMeta> | null | undefined
     ),
     edgeMeta: sanitizeEdgeMeta(
-      graphRecord.edgeMeta as Record<string, CaseResolverEdgeMeta> | null | undefined
+      graphRecord['edgeMeta'] as Record<string, CaseResolverEdgeMeta> | null | undefined
     ),
+    pdfExtractionPresetId,
   };
 };
 
@@ -132,6 +141,7 @@ export const createEmptyCaseResolverGraph = (): CaseResolverGraph => ({
   edges: [],
   nodeMeta: {},
   edgeMeta: {},
+  pdfExtractionPresetId: DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
 });
 
 export const createCaseResolverFile = (input: {
@@ -154,6 +164,7 @@ export const createCaseResolverFile = (input: {
       edges: input.graph?.edges ?? [],
       nodeMeta: input.graph?.nodeMeta ?? {},
       edgeMeta: input.graph?.edgeMeta ?? {},
+      pdfExtractionPresetId: input.graph?.pdfExtractionPresetId,
     }),
   };
 };
@@ -277,8 +288,8 @@ export const normalizeCaseResolverWorkspace = (
 
   const normalizedFiles = files.length > 0 ? files : createDefaultCaseResolverWorkspace().files;
   const workspaceRecord = workspace as unknown as Record<string, unknown>;
-  const rawAssets = Array.isArray(workspaceRecord.assets)
-    ? (workspaceRecord.assets as CaseResolverAssetFile[])
+  const rawAssets = Array.isArray(workspaceRecord['assets'])
+    ? (workspaceRecord['assets'] as CaseResolverAssetFile[])
     : [];
   const assetIds = new Set<string>();
   const assets = rawAssets

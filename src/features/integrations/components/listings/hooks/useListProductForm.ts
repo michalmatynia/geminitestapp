@@ -111,8 +111,8 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         onSuccess();
       } else {
         await createListingMutation.mutateAsync({
-          integrationId: selectedIntegrationId,
-          connectionId: selectedConnectionId,
+          integrationId: selectedIntegrationId!,
+          connectionId: selectedConnectionId!,
         });
         onSuccess();
       }

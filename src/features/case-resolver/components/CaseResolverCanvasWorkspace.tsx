@@ -47,13 +47,17 @@ import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';
 import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
+  CASE_RESOLVER_PDF_EXTRACTION_PRESETS,
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
+  DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
+  resolveCaseResolverPdfExtractionTemplate,
   type CaseResolverEdgeMeta,
   type CaseResolverAssetFile,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
+  type CaseResolverPdfExtractionPresetId,
 } from '../types';
 
 const buildNode = (
@@ -179,6 +183,16 @@ const clampCanvasPosition = (position: { x: number; y: number }): { x: number; y
 });
 
 const createNodeId = (): string => `node-${Math.random().toString(36).slice(2, 10)}`;
+const createEdgeId = (): string => `edge-${Math.random().toString(36).slice(2, 10)}`;
+
+const MAX_PDF_EXTRACT_CHARS = 24_000;
+
+const normalizeExtractedPdfText = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (trimmed.length <= MAX_PDF_EXTRACT_CHARS) return trimmed;
+  return `${trimmed.slice(0, MAX_PDF_EXTRACT_CHARS)}\n\n[TRUNCATED ${trimmed.length - MAX_PDF_EXTRACT_CHARS} chars]`;
+};
 
 type CaseResolverDropMode = 'file_node' | 'text_node';
 
@@ -191,6 +205,11 @@ type CaseResolverDroppedAsset = {
   size: number | null;
   textContent: string;
   description: string;
+};
+
+type PdfExtractResponse = {
+  text?: unknown;
+  pageCount?: unknown;
 };
 
 type CaseResolverCanvasWorkspaceInnerProps = {
@@ -213,12 +232,15 @@ function CaseResolverCanvasWorkspaceInner({
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
   const { nodes, edges } = useGraphState();
-  const { addNode, updateNode } = useGraphActions();
+  const { addNode, addEdge, updateNode } = useGraphActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectNode } = useSelectionActions();
 
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database'>('prompt');
   const [fileDropMode, setFileDropMode] = useState<CaseResolverDropMode>('file_node');
+  const [pdfExtractionPresetId, setPdfExtractionPresetId] = useState<CaseResolverPdfExtractionPresetId>(
+    graph.pdfExtractionPresetId ?? DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID
+  );
   const [isDropImporting, setIsDropImporting] = useState(false);
 
   const normalizedNodeMeta = useMemo(
@@ -254,13 +276,21 @@ function CaseResolverCanvasWorkspaceInner({
           edges,
           nodeMeta: normalizedNodeMeta,
           edgeMeta: normalizedEdgeMeta,
+          pdfExtractionPresetId,
         },
         selectedNodeId
       ),
-    [edges, nodes, normalizedEdgeMeta, normalizedNodeMeta, selectedNodeId]
+    [edges, nodes, normalizedEdgeMeta, normalizedNodeMeta, selectedNodeId, pdfExtractionPresetId]
   );
 
   const lastEmittedHashRef = useRef<string>('');
+
+  useEffect(() => {
+    const incomingPreset = graph.pdfExtractionPresetId ?? DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID;
+    if (incomingPreset !== pdfExtractionPresetId) {
+      setPdfExtractionPresetId(incomingPreset);
+    }
+  }, [graph.pdfExtractionPresetId, pdfExtractionPresetId]);
 
   useEffect(() => {
     const nextGraph: CaseResolverGraph = {
@@ -268,12 +298,13 @@ function CaseResolverCanvasWorkspaceInner({
       edges,
       nodeMeta: normalizedNodeMeta,
       edgeMeta: normalizedEdgeMeta,
+      pdfExtractionPresetId,
     };
     const nextHash = stableStringify(nextGraph);
     if (nextHash === lastEmittedHashRef.current) return;
     lastEmittedHashRef.current = nextHash;
     onGraphChange(nextGraph);
-  }, [edges, nodes, normalizedEdgeMeta, normalizedNodeMeta, onGraphChange]);
+  }, [edges, nodes, normalizedEdgeMeta, normalizedNodeMeta, onGraphChange, pdfExtractionPresetId]);
 
   const placePosition = useMemo(() => {
     const index = nodes.length;
@@ -301,11 +332,211 @@ function CaseResolverCanvasWorkspaceInner({
     });
   };
 
-  const addDroppedAssetNode = (
+  const extractPdfText = async (filepath: string): Promise<string> => {
+    const response = await fetch('/api/case-resolver/assets/extract-pdf', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ filepath }),
+    });
+    if (!response.ok) {
+      const fallbackMessage = `Failed to extract PDF (${response.status})`;
+      let detail = fallbackMessage;
+      try {
+        const payload = (await response.json()) as { error?: string | { message?: string } };
+        if (typeof payload.error === 'string') {
+          detail = payload.error;
+        } else if (payload.error && typeof payload.error.message === 'string') {
+          detail = payload.error.message;
+        }
+      } catch {
+        detail = fallbackMessage;
+      }
+      throw new Error(detail);
+    }
+    const payload = (await response.json()) as PdfExtractResponse;
+    return typeof payload.text === 'string' ? payload.text : '';
+  };
+
+  const addPdfExtractionPipeline = async (
     asset: CaseResolverDroppedAsset,
     dropPosition: { x: number; y: number },
     indexOffset = 0
-  ): void => {
+  ): Promise<void> => {
+    const templateDefinition = palette.find((entry: NodeDefinition) => entry.type === 'template');
+    const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
+    const modelDefinition = palette.find((entry: NodeDefinition) => entry.type === 'model');
+    if (!templateDefinition || !promptDefinition || !modelDefinition) {
+      toast('Missing Template/Prompt/Model node definitions for PDF flow.', { variant: 'error' });
+      return;
+    }
+
+    let extractedText = normalizeExtractedPdfText(asset.textContent);
+    if (!extractedText && asset.filepath) {
+      try {
+        extractedText = normalizeExtractedPdfText(await extractPdfText(asset.filepath));
+      } catch (error: unknown) {
+        toast(
+          error instanceof Error
+            ? `${error.message}. PDF node will use file path only.`
+            : 'Failed to extract PDF text. PDF node will use file path only.',
+          { variant: 'warning' }
+        );
+      }
+    }
+
+    const basePosition = clampCanvasPosition({
+      x: dropPosition.x + indexOffset * 36,
+      y: dropPosition.y + indexOffset * 36,
+    });
+    const extractionPromptPosition = clampCanvasPosition({
+      x: basePosition.x + 380,
+      y: basePosition.y,
+    });
+    const modelPosition = clampCanvasPosition({
+      x: extractionPromptPosition.x + 380,
+      y: extractionPromptPosition.y,
+    });
+    const outputPosition = clampCanvasPosition({
+      x: modelPosition.x + 380,
+      y: modelPosition.y,
+    });
+
+    const pdfNodeId = createNodeId();
+    const extractionPromptId = createNodeId();
+    const modelNodeId = createNodeId();
+    const outputNodeId = createNodeId();
+
+    const pdfSourceTemplate = [
+      `PDF File: ${asset.name}`,
+      ...(asset.filepath ? [`Path: ${asset.filepath}`] : []),
+      ...(asset.mimeType ? [`MIME: ${asset.mimeType}`] : []),
+      '',
+      'PDF_TEXT_BEGIN',
+      extractedText || '(No extracted PDF text available. Use the PDF path above as reference.)',
+      'PDF_TEXT_END',
+    ].join('\n');
+
+    const pdfNodeBase = buildNode(templateDefinition, basePosition, pdfNodeId, `PDF Node: ${asset.name}`);
+    const pdfNodeTemplateConfig = resolveTemplateConfig(pdfNodeBase);
+    const pdfNode: AiNode = {
+      ...pdfNodeBase,
+      config: {
+        ...(pdfNodeBase.config ?? {}),
+        template: {
+          ...pdfNodeTemplateConfig,
+          template: pdfSourceTemplate,
+        },
+      },
+    };
+
+    const extractionPromptBase = buildNode(
+      promptDefinition,
+      extractionPromptPosition,
+      extractionPromptId,
+      `Prompt: Extract ${asset.name}`
+    );
+    const extractionPromptConfig = resolvePromptConfig(extractionPromptBase);
+    const extractionPromptNode: AiNode = {
+      ...extractionPromptBase,
+      config: {
+        ...(extractionPromptBase.config ?? {}),
+        prompt: {
+          ...extractionPromptConfig,
+          template: resolveCaseResolverPdfExtractionTemplate(pdfExtractionPresetId),
+        },
+      },
+    };
+
+    const modelNode = buildNode(modelDefinition, modelPosition, modelNodeId, `AI Model: ${asset.name}`);
+
+    const outputPromptBase = buildNode(promptDefinition, outputPosition, outputNodeId, `WYSIWYG Output: ${asset.name}`);
+    const outputPromptConfig = resolvePromptConfig(outputPromptBase);
+    const outputNode: AiNode = {
+      ...outputPromptBase,
+      config: {
+        ...(outputPromptBase.config ?? {}),
+        prompt: {
+          ...outputPromptConfig,
+          template: '<p>{{result}}</p>',
+        },
+      },
+    };
+
+    const edgePdfToPrompt: Edge = {
+      id: createEdgeId(),
+      from: pdfNodeId,
+      to: extractionPromptId,
+      fromPort: 'prompt',
+      toPort: 'result',
+    };
+    const edgePromptToModel: Edge = {
+      id: createEdgeId(),
+      from: extractionPromptId,
+      to: modelNodeId,
+      fromPort: 'prompt',
+      toPort: 'prompt',
+    };
+    const edgeModelToOutput: Edge = {
+      id: createEdgeId(),
+      from: modelNodeId,
+      to: outputNodeId,
+      fromPort: 'result',
+      toPort: 'result',
+    };
+
+    addNode(pdfNode);
+    addNode(extractionPromptNode);
+    addNode(modelNode);
+    addNode(outputNode);
+    addEdge(edgePdfToPrompt);
+    addEdge(edgePromptToModel);
+    addEdge(edgeModelToOutput);
+    selectNode(outputNodeId);
+
+    onGraphChange({
+      nodes: [...nodes, pdfNode, extractionPromptNode, modelNode, outputNode],
+      edges: [...edges, edgePdfToPrompt, edgePromptToModel, edgeModelToOutput],
+      nodeMeta: {
+        ...normalizedNodeMeta,
+        [extractionPromptId]: {
+          ...DEFAULT_CASE_RESOLVER_NODE_META,
+          role: 'ai_prompt',
+          includeInOutput: false,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+        [outputNodeId]: {
+          ...DEFAULT_CASE_RESOLVER_NODE_META,
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+      },
+      edgeMeta: {
+        ...normalizedEdgeMeta,
+        [edgePdfToPrompt.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
+        [edgePromptToModel.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
+        [edgeModelToOutput.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
+      },
+      pdfExtractionPresetId,
+    });
+  };
+
+  const addDroppedAssetNode = async (
+    asset: CaseResolverDroppedAsset,
+    dropPosition: { x: number; y: number },
+    indexOffset = 0
+  ): Promise<void> => {
+    if (asset.kind === 'pdf') {
+      await addPdfExtractionPipeline(asset, dropPosition, indexOffset);
+      return;
+    }
+
     const position = clampCanvasPosition({
       x: dropPosition.x + indexOffset * 28,
       y: dropPosition.y + indexOffset * 28,
@@ -346,6 +577,7 @@ function CaseResolverCanvasWorkspaceInner({
           },
         },
         edgeMeta: normalizedEdgeMeta,
+        pdfExtractionPresetId,
       });
       return;
     }
@@ -423,6 +655,7 @@ function CaseResolverCanvasWorkspaceInner({
       edges,
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
+      pdfExtractionPresetId,
     });
   };
 
@@ -464,6 +697,7 @@ function CaseResolverCanvasWorkspaceInner({
       edges,
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
+      pdfExtractionPresetId,
     });
   };
 
@@ -482,6 +716,7 @@ function CaseResolverCanvasWorkspaceInner({
       edges,
       nodeMeta: normalizedNodeMeta,
       edgeMeta: nextEdgeMeta,
+      pdfExtractionPresetId,
     });
   };
 
@@ -518,25 +753,35 @@ function CaseResolverCanvasWorkspaceInner({
     const dropPosition = resolveDropPosition(event);
 
     if (payload) {
-      addDroppedAssetNode(
-        {
-          id: payload.assetId,
-          name: payload.name,
-          kind: payload.assetKind,
-          filepath: payload.filepath,
-          mimeType: payload.mimeType,
-          size: payload.size,
-          textContent: payload.textContent,
-          description: payload.description,
-        },
-        dropPosition
-      );
-      toast(
-        fileDropMode === 'text_node'
-          ? `Created text node from ${payload.name}.`
-          : `Created file node from ${payload.name}.`,
-        { variant: 'success' }
-      );
+      const droppedAsset: CaseResolverDroppedAsset = {
+        id: payload.assetId,
+        name: payload.name,
+        kind: payload.assetKind,
+        filepath: payload.filepath,
+        mimeType: payload.mimeType,
+        size: payload.size,
+        textContent: payload.textContent,
+        description: payload.description,
+      };
+      const requiresPdfPipeline = droppedAsset.kind === 'pdf';
+      if (requiresPdfPipeline) {
+        setIsDropImporting(true);
+      }
+      try {
+        await addDroppedAssetNode(droppedAsset, dropPosition);
+        toast(
+          droppedAsset.kind === 'pdf'
+            ? `Created PDF extraction flow for ${payload.name}.`
+            : fileDropMode === 'text_node'
+              ? `Created text node from ${payload.name}.`
+              : `Created file node from ${payload.name}.`,
+          { variant: 'success' }
+        );
+      } finally {
+        if (requiresPdfPipeline) {
+          setIsDropImporting(false);
+        }
+      }
       return;
     }
 
@@ -546,12 +791,14 @@ function CaseResolverCanvasWorkspaceInner({
     setIsDropImporting(true);
     try {
       const uploadedAssets = await onUploadAssets(files, defaultDropFolder);
-      uploadedAssets.forEach((asset: CaseResolverAssetFile, index: number) => {
+      for (let index = 0; index < uploadedAssets.length; index += 1) {
+        const asset = uploadedAssets[index];
+        if (!asset) continue;
         const mappedKind =
           asset.kind === 'node_file' || asset.kind === 'image' || asset.kind === 'pdf'
             ? asset.kind
             : 'file';
-        addDroppedAssetNode(
+        await addDroppedAssetNode(
           {
             id: asset.id,
             name: asset.name,
@@ -565,11 +812,13 @@ function CaseResolverCanvasWorkspaceInner({
           dropPosition,
           index
         );
-      });
+      }
       toast(
-        fileDropMode === 'text_node'
-          ? `Imported ${uploadedAssets.length} file(s) as text nodes.`
-          : `Imported ${uploadedAssets.length} file(s) as file nodes.`,
+        uploadedAssets.some((asset: CaseResolverAssetFile) => asset.kind === 'pdf')
+          ? `Imported ${uploadedAssets.length} file(s), including PDF extraction flows.`
+          : fileDropMode === 'text_node'
+            ? `Imported ${uploadedAssets.length} file(s) as text nodes.`
+            : `Imported ${uploadedAssets.length} file(s) as file nodes.`,
         { variant: 'success' }
       );
     } catch (error: unknown) {
@@ -595,6 +844,14 @@ function CaseResolverCanvasWorkspaceInner({
   const selectedEdgeJoinMode = selectedEdge
     ? (normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
     : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
+
+  const selectedPdfExtractionPreset = useMemo(
+    () =>
+      CASE_RESOLVER_PDF_EXTRACTION_PRESETS.find(
+        (preset): boolean => preset.value === pdfExtractionPresetId
+      ) ?? CASE_RESOLVER_PDF_EXTRACTION_PRESETS[0],
+    [pdfExtractionPresetId]
+  );
 
   return (
     <div className='grid h-[calc(100vh-120px)] grid-cols-1 gap-4 xl:grid-cols-[1fr_420px]'>
@@ -672,10 +929,27 @@ function CaseResolverCanvasWorkspaceInner({
             className='w-[220px]'
             triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
           />
+          <UnifiedSelect
+            value={pdfExtractionPresetId}
+            onValueChange={(value: string): void => {
+              if (
+                value === 'plain_text' ||
+                value === 'structured_sections' ||
+                value === 'facts_entities'
+              ) {
+                setPdfExtractionPresetId(value);
+              }
+            }}
+            options={CASE_RESOLVER_PDF_EXTRACTION_PRESETS}
+            className='w-[220px]'
+            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+          />
           {isDropImporting ? (
             <span className='text-[11px] text-gray-400'>Importing dropped files...</span>
           ) : (
-            <span className='text-[11px] text-gray-500'>Applies to dropped files/assets</span>
+            <span className='text-[11px] text-gray-500'>
+              PDF preset: {selectedPdfExtractionPreset?.description ?? 'Applies to dropped PDFs'}
+            </span>
           )}
 
           <div className='ml-auto flex items-center gap-2'>
@@ -691,7 +965,15 @@ function CaseResolverCanvasWorkspaceInner({
             </Button>
             <Button
               type='button'
-              onClick={() => onGraphChange({ nodes, edges, nodeMeta: normalizedNodeMeta, edgeMeta: normalizedEdgeMeta })}
+              onClick={() =>
+                onGraphChange({
+                  nodes,
+                  edges,
+                  nodeMeta: normalizedNodeMeta,
+                  edgeMeta: normalizedEdgeMeta,
+                  pdfExtractionPresetId,
+                })
+              }
               className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
             >
               <Save className='mr-1 size-3.5' />

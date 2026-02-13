@@ -7,7 +7,6 @@ import { ConnectionManager } from './ConnectionManager';
 import { SessionModal } from './SessionModal';
 import { TestLogModal } from './TestLogModal';
 import { TestResultModal } from './TestResultModal';
-import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';
 import { PlaywrightTabContent } from './PlaywrightTabContent';
 import { useIntegrationTabs } from './hooks/useIntegrationTabs';
 import { IntegrationModalHeader } from './integration-modal/IntegrationModalHeader';
@@ -24,7 +23,6 @@ export function IntegrationModal(): React.JSX.Element {
   const {
     activeTab,
     setActiveTab,
-    integrationSlug,
     isTradera,
     isAllegro,
     isBaselinker,
@@ -64,8 +62,6 @@ export function IntegrationModal(): React.JSX.Element {
           showAllegroConsole={showAllegroConsole}
           showBaseConsole={showBaseConsole}
           showPlaywright={showPlaywright}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
         />
 
         <TabsContent value='connections' className='mt-4 space-y-6'>

@@ -1,39 +1,18 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { UnifiedButton } from '@/shared/ui';
 
-import { compareGenerationParams } from '../utils/version-graph-compare';
-
-import type { VersionNode } from '../context/VersionGraphContext';
-import type { ImageStudioSlotRecord } from '../types';
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface VersionGraphComparePanelProps {
-  compareNodes: readonly [VersionNode, VersionNode];
-  getSlotImageSrc: (slot: ImageStudioSlotRecord) => string | null;
-  onSwap: () => void;
-  onExit: () => void;
-}
+import { useVersionGraphCompareContext } from './VersionGraphCompareContext';
+import { readMeta } from '../utils/metadata';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function VersionGraphComparePanel({
-  compareNodes,
-  getSlotImageSrc,
-  onSwap,
-  onExit,
-}: VersionGraphComparePanelProps): React.JSX.Element {
-  const paramRows = useMemo(
-    () => compareGenerationParams(compareNodes[0].slot, compareNodes[1].slot),
-    [compareNodes],
-  );
-
+export function VersionGraphComparePanel(): React.JSX.Element {
+  const { compareNodes, getSlotImageSrc, onSwap, onExit } = useVersionGraphCompareContext();
   return (
     <div className='border-t border-border/40 p-3'>
-      {/* Image thumbnails */}
       <div className='flex gap-2'>
         {compareNodes.map((cNode) => (
           <div key={cNode.id} className='flex-1 space-y-1'>
@@ -54,29 +33,18 @@ export function VersionGraphComparePanel({
               {cNode.type === 'composite' ? 'Composite' : cNode.type === 'merge' ? 'Merge' : cNode.type === 'generation' ? 'Generation' : 'Base'}
               {cNode.hasMask ? ' · Mask' : ''}
             </div>
+            {(() => {
+              const meta = readMeta(cNode.slot);
+              return meta.generationParams?.prompt ? (
+                <div className='truncate text-[9px] text-gray-500' title={meta.generationParams.prompt}>
+                  {meta.generationParams.prompt.slice(0, 40)}{meta.generationParams.prompt.length > 40 ? '...' : ''}
+                </div>
+              ) : null;
+            })()}
           </div>
         ))}
       </div>
 
-      {/* Parameter diff table */}
-      {paramRows.length > 0 ? (
-        <div className='mt-2 space-y-0.5'>
-          <div className='text-[9px] font-medium uppercase tracking-wide text-gray-500'>Parameters</div>
-          {paramRows.map((row) => (
-            <div key={row.field} className='grid grid-cols-[60px_1fr_1fr] gap-1 text-[9px]'>
-              <span className='truncate text-gray-500'>{row.field}</span>
-              <span className={`truncate ${row.isDifferent ? 'text-amber-400' : 'text-gray-400'}`} title={row.valueA ?? undefined}>
-                {row.valueA ?? '—'}
-              </span>
-              <span className={`truncate ${row.isDifferent ? 'text-amber-400' : 'text-gray-400'}`} title={row.valueB ?? undefined}>
-                {row.valueB ?? '—'}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {/* Actions */}
       <div className='mt-2 flex gap-2'>
         <UnifiedButton
           variant='outline'

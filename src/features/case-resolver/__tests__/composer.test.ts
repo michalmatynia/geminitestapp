@@ -80,6 +80,7 @@ describe('case-resolver composer', () => {
         e1: { joinMode: 'newline' },
         e2: { joinMode: 'tab' },
       },
+      pdfExtractionPresetId: 'plain_text',
     };
 
     const compiled = compileCaseResolverPrompt(graph, 'a');
@@ -113,6 +114,7 @@ describe('case-resolver composer', () => {
         },
       },
       edgeMeta: {},
+      pdfExtractionPresetId: 'plain_text',
     };
 
     const compiled = compileCaseResolverPrompt(graph, 'focus');
@@ -122,4 +124,3 @@ describe('case-resolver composer', () => {
     expect(compiled.segments[0]?.text).toBe('<<\'Quoted text\'>>');
   });
 });
-

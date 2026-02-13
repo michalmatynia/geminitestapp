@@ -3,7 +3,6 @@
 import React from 'react';
 
 import type { ImageRetryPreset } from '@/features/data-import-export';
-import { isImageExportError } from '@/features/integrations/components/listings/utils';
 import { ImageRetryDropdown, Alert } from '@/shared/ui';
 
 type ProductListingsErrorProps = {

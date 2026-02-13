@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
-import { SectionPicker } from '@/features/cms/components/page-builder/SectionPicker.refactored';
+import { SectionPicker } from '@/features/cms/components/page-builder/SectionPicker';
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: () => ({

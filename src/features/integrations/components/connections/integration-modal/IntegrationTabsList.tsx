@@ -1,21 +1,15 @@
-import React from 'react';
-
 import { TabsList, TabsTrigger } from '@/shared/ui';
 
 type IntegrationTabsListProps = {
   showAllegroConsole: boolean;
   showBaseConsole: boolean;
   showPlaywright: boolean;
-  activeTab: string;
-  onTabChange: (value: string) => void;
 };
 
 export function IntegrationTabsList({
   showAllegroConsole,
   showBaseConsole,
   showPlaywright,
-  activeTab,
-  onTabChange,
 }: IntegrationTabsListProps): React.JSX.Element {
   const colsClass =
     showPlaywright || showAllegroConsole || showBaseConsole ? 'grid-cols-5' : 'grid-cols-4';

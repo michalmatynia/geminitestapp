@@ -4,6 +4,10 @@ export type CaseResolverNodeRole = 'text_note' | 'explanatory' | 'ai_prompt';
 export type CaseResolverQuoteMode = 'none' | 'double' | 'single';
 export type CaseResolverJoinMode = 'newline' | 'tab' | 'space' | 'none';
 export type CaseResolverAssetKind = 'node_file' | 'image' | 'pdf' | 'file';
+export type CaseResolverPdfExtractionPresetId =
+  | 'plain_text'
+  | 'structured_sections'
+  | 'facts_entities';
 
 export type CaseResolverNodeMeta = {
   role: CaseResolverNodeRole;
@@ -22,6 +26,7 @@ export type CaseResolverGraph = {
   edges: Edge[];
   nodeMeta: Record<string, CaseResolverNodeMeta>;
   edgeMeta: Record<string, CaseResolverEdgeMeta>;
+  pdfExtractionPresetId: CaseResolverPdfExtractionPresetId;
 };
 
 export type CaseResolverFile = {
@@ -83,6 +88,78 @@ export const CASE_RESOLVER_JOIN_MODE_OPTIONS: Array<{
   { value: 'space', label: 'Space' },
   { value: 'none', label: 'No Separator' },
 ];
+
+export type CaseResolverPdfExtractionPreset = {
+  value: CaseResolverPdfExtractionPresetId;
+  label: string;
+  description: string;
+  template: string;
+};
+
+export const CASE_RESOLVER_PDF_EXTRACTION_PRESETS: CaseResolverPdfExtractionPreset[] = [
+  {
+    value: 'plain_text',
+    label: 'Full Plain Text',
+    description: 'Extract full PDF text exactly, no formatting commentary.',
+    template: [
+      'Extract the complete text content from the provided PDF source.',
+      'Return clean plain text only (no markdown, no commentary).',
+      '',
+      '{{result}}',
+    ].join('\n'),
+  },
+  {
+    value: 'structured_sections',
+    label: 'Structured Sections',
+    description: 'Extract text grouped by headings and section hierarchy.',
+    template: [
+      'Extract text from the PDF and organize it into clear sections.',
+      'Output format:',
+      '- Section title',
+      '- Section body text',
+      '- Preserve list items under each section',
+      '',
+      'Do not invent content and do not summarize away key details.',
+      '',
+      '{{result}}',
+    ].join('\n'),
+  },
+  {
+    value: 'facts_entities',
+    label: 'Facts + Entities',
+    description: 'Extract key facts, entities, dates, numbers, and references.',
+    template: [
+      'Extract from this PDF source:',
+      '1) Key facts',
+      '2) Named entities (people, orgs, places)',
+      '3) Dates, amounts, identifiers, references',
+      '',
+      'Return concise, structured plain text with clear headings.',
+      '',
+      '{{result}}',
+    ].join('\n'),
+  },
+];
+
+export const DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID: CaseResolverPdfExtractionPresetId =
+  'plain_text';
+
+export const CASE_RESOLVER_PDF_EXTRACTION_PRESET_OPTIONS: Array<{
+  value: CaseResolverPdfExtractionPresetId;
+  label: string;
+}> = CASE_RESOLVER_PDF_EXTRACTION_PRESETS.map((preset: CaseResolverPdfExtractionPreset) => ({
+  value: preset.value,
+  label: preset.label,
+}));
+
+export const resolveCaseResolverPdfExtractionTemplate = (
+  presetId: CaseResolverPdfExtractionPresetId
+): string => {
+  const preset = CASE_RESOLVER_PDF_EXTRACTION_PRESETS.find(
+    (entry: CaseResolverPdfExtractionPreset): boolean => entry.value === presetId
+  );
+  return preset?.template ?? CASE_RESOLVER_PDF_EXTRACTION_PRESETS[0]?.template ?? '{{result}}';
+};
 
 export const DEFAULT_CASE_RESOLVER_NODE_META: CaseResolverNodeMeta = {
   role: 'text_note',

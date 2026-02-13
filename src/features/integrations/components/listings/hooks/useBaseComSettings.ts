@@ -46,8 +46,8 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
 
   const templates = templatesQuery.data ?? [];
   const inventories = useMemo(() => inventoriesQuery.data ?? [], [inventoriesQuery.data]);
-  const preferredTemplateId = activeTemplateQuery.data?.templateId ?? null;
-  const preferredInventoryId = defaultInventoryQuery.data?.inventoryId ?? null;
+  const preferredTemplateId = (activeTemplateQuery.data as { templateId?: string | null } | undefined)?.templateId ?? null;
+  const preferredInventoryId = (defaultInventoryQuery.data as { inventoryId?: string | null } | undefined)?.inventoryId ?? null;
 
   // Auto-select preferred template
   useEffect(() => {
@@ -101,7 +101,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   }, [isBaseComIntegration, selectedInventoryId, preferredInventoryId, connectionId, updatePreferredInventoryMutation]);
 
   return {
-    templates,
+    templates: templates as any[],
     selectedTemplateId,
     setSelectedTemplateId,
     inventories,

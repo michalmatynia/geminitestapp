@@ -67,8 +67,8 @@ export function useProductSelectionForm({
       setError(null);
       if (isBaseComIntegration) {
         const exportData: ExportToBaseVariables = {
-          connectionId: selectedConnectionId,
-          inventoryId: selectedInventoryId,
+          connectionId: selectedConnectionId!,
+          inventoryId: selectedInventoryId!,
           allowDuplicateSku,
         };
         if (selectedTemplateId && selectedTemplateId !== 'none') {
@@ -77,8 +77,8 @@ export function useProductSelectionForm({
         await exportToBaseMutation.mutateAsync(exportData);
       } else {
         await createListingMutation.mutateAsync({
-          integrationId: selectedIntegrationId,
-          connectionId: selectedConnectionId,
+          integrationId: selectedIntegrationId!,
+          connectionId: selectedConnectionId!,
         });
       }
       onSuccess();

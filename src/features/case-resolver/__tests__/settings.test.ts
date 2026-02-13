@@ -85,6 +85,7 @@ describe('case-resolver settings', () => {
       surroundPrefix: DEFAULT_CASE_RESOLVER_NODE_META.surroundPrefix,
       surroundSuffix: DEFAULT_CASE_RESOLVER_NODE_META.surroundSuffix,
     });
+    expect(workspace.files[0]?.graph.pdfExtractionPresetId).toBe('plain_text');
   });
 
   it('normalizes uploaded assets and infers asset kind', () => {
@@ -101,6 +102,7 @@ describe('case-resolver settings', () => {
             edges: [],
             nodeMeta: {},
             edgeMeta: {},
+            pdfExtractionPresetId: 'unknown_preset',
           },
         },
       ],
@@ -131,5 +133,6 @@ describe('case-resolver settings', () => {
     expect(workspace.assets[0]?.name).toBe('Render 01.png');
     expect(workspace.assets[0]?.kind).toBe('image');
     expect(workspace.assets[0]?.size).toBe(120);
+    expect(workspace.files[0]?.graph.pdfExtractionPresetId).toBe('plain_text');
   });
 });

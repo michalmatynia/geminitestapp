@@ -44,7 +44,7 @@ export function IntegrationSelection({
     <FormSection title='Integration Target' className='p-4 space-y-4'>
       <FormField label='Marketplace / Integration'>
         <UnifiedSelect
-          value={selectedIntegrationId}
+          value={selectedIntegrationId ?? undefined}
           onValueChange={onIntegrationChange}
           options={integrationsWithConnections
             .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
@@ -62,7 +62,7 @@ export function IntegrationSelection({
           description={`Choose which account to use for listing this product on ${selectedIntegration.name}.`}
         >
           <UnifiedSelect
-            value={selectedConnectionId}
+            value={selectedConnectionId ?? undefined}
             onValueChange={onConnectionChange}
             options={selectedIntegration.connections
               .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)

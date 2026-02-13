@@ -18,6 +18,17 @@ export function CmsDomainSelector({
   onChange,
 }: CmsDomainSelectorProps): React.ReactNode {
   const { domains, activeDomainId, hostDomainId, setActiveDomainId, zoningEnabled } = useCmsDomainSelection();
+  const options = useMemo(
+    () =>
+      domains.map((item: CmsDomain) => ({
+        value: item.id,
+        label: item.domain,
+        description: [hostDomainId === item.id ? 'current host' : null, item.aliasOf ? 'shared zone' : null]
+          .filter(Boolean)
+          .join(', '),
+      })),
+    [domains, hostDomainId]
+  );
 
   const handleChange = (domainId: string): void => {
     if (domainId === (activeDomainId ?? '')) return;
@@ -33,18 +44,6 @@ export function CmsDomainSelector({
       </div>
     );
   }
-
-  const options = useMemo(
-    () =>
-      domains.map((item: CmsDomain) => ({
-        value: item.id,
-        label: item.domain,
-        description: [hostDomainId === item.id ? 'current host' : null, item.aliasOf ? 'shared zone' : null]
-          .filter(Boolean)
-          .join(', '),
-      })),
-    [domains, hostDomainId]
-  );
 
   return (
     <div className='flex items-center gap-2'>

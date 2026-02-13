@@ -11,39 +11,24 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import type { VersionNode } from '../context/VersionGraphContext';
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface VersionGraphContextMenuProps {
-  menu: { nodeId: string; x: number; y: number };
-  node: VersionNode;
-  collapsedNodeIds: Set<string>;
-  compositeMode: boolean;
-  compareMode: boolean;
-  onClose: () => void;
-  onSetAsSource: (nodeId: string) => void;
-  onIsolateBranch: (nodeId: string) => void;
-  onToggleCollapse: (nodeId: string) => void;
-  onAddToComposite: (nodeId: string) => void;
-  onCompareWith: (nodeId: string) => void;
-  onCopyId: (nodeId: string) => void;
-}
+import { useVersionGraphContextMenuContext } from './VersionGraphContextMenuContext';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export function VersionGraphContextMenu({
-  menu,
-  node,
-  collapsedNodeIds,
-  onClose,
-  onSetAsSource,
-  onIsolateBranch,
-  onToggleCollapse,
-  onAddToComposite,
-  onCompareWith,
-  onCopyId,
-}: VersionGraphContextMenuProps): React.JSX.Element {
+export function VersionGraphContextMenu(): React.JSX.Element {
+  const {
+    menu,
+    node,
+    collapsedNodeIds,
+    onClose,
+    onSetAsSource,
+    onIsolateBranch,
+    onToggleCollapse,
+    onAddToComposite,
+    onCompareWith,
+    onCopyId,
+  } = useVersionGraphContextMenuContext();
+
   return (
     <>
       <div className='fixed inset-0 z-50' onClick={onClose} role='presentation' />

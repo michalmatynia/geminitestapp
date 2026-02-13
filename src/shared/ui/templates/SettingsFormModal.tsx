@@ -49,13 +49,13 @@ export function SettingsFormModal({
       onClose={onClose}
       onSave={handleSave}
       title={title}
-      subtitle={subtitle}
       isSaving={isSaving}
       saveText={isSaving ? 'Saving...' : 'Save'}
-      formRef={formRef}
       size={size}
       variant={variant}
       padding={padding}
+      {...(subtitle !== undefined ? { subtitle } : {})}
+      {...(formRef !== undefined ? { formRef } : {})}
     >
       <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
         {children}

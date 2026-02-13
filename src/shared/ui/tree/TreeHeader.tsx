@@ -1,5 +1,3 @@
-import { cn } from '@/shared/utils';
-
 import { SectionHeader } from '../section-header';
 
 import type { ReactNode } from 'react';

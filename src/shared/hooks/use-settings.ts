@@ -126,9 +126,16 @@ export function useUpdateSettingsBulk(): UseMutationResult<
     mutationFn: async (
       payloads: Array<{ key: string; value: string }>,
     ): Promise<SystemSetting[]> => {
-      const responses = await Promise.all(
-        payloads.map((payload) => api.post<SystemSetting>('/api/settings', payload)),
+      // Keep bulk writes sequential to avoid write-rate spikes and ordering races
+      // when multiple settings are persisted together.
+      const uniquePayloads = Array.from(
+        new Map(payloads.map((payload) => [payload.key, payload])).values()
       );
+      const responses: SystemSetting[] = [];
+      for (const payload of uniquePayloads) {
+        const response = await api.post<SystemSetting>('/api/settings', payload);
+        responses.push(response);
+      }
       invalidateSettingsCache();
       return responses;
     },

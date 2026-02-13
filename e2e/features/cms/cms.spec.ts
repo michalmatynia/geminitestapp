@@ -75,6 +75,25 @@ test.describe('CMS and Page Builder', () => {
     
     // Verify preview content
     await expect(page.locator('main').getByText('Rich text content area')).toBeVisible({ timeout: 20000 });
+
+    // Add a second section with a different type so we can verify section drag/reorder.
+    await page.click('button:has-text("Add section")');
+    await page.waitForSelector('button:has-text("Text element")', { timeout: 15000 });
+    await page.click('button:has-text("Text element")');
+    await expect(page.locator('aside').getByText('TextElement')).toBeVisible({ timeout: 20000 });
+
+    const richTextSectionRow = page.locator('aside .group\\/section').filter({ hasText: 'RichText' }).first();
+    const textElementSectionRow = page.locator('aside .group\\/section').filter({ hasText: 'TextElement' }).first();
+
+    const textElementDragHandle = textElementSectionRow.getByLabel('Drag section');
+    await textElementDragHandle.dragTo(richTextSectionRow);
+
+    await expect.poll(async () => {
+      const richTextBox = await richTextSectionRow.boundingBox();
+      const textElementBox = await textElementSectionRow.boundingBox();
+      if (!richTextBox || !textElementBox) return false;
+      return textElementBox.y < richTextBox.y;
+    }, { timeout: 20000 }).toBe(true);
   });
 
   test('should update front page destination setting', async ({ page }) => {

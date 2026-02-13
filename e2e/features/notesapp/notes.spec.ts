@@ -145,7 +145,15 @@ test.describe("Notes page", () => {
           })),
       }));
 
-    await page.route("**/api/settings", async (route) => {
+    await page.route("**/api/settings/lite**", async (route) => {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify([]),
+      });
+    });
+
+    await page.route("**/api/settings**", async (route) => {
       const request = route.request();
       if (request.method() === "GET") {
         return route.fulfill({

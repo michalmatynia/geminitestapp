@@ -6,6 +6,12 @@ import type {
 
 const CATEGORY_NODE_PREFIX = 'category:';
 
+export type CategoryMasterNodeRef = {
+  entity: 'category';
+  id: string;
+  nodeId: string;
+};
+
 export type CategoryDropTarget = {
   parentId: string | null;
   position: Extract<MasterTreeDropPosition, 'inside' | 'before' | 'after'>;
@@ -20,6 +26,16 @@ export const isCategoryMasterNodeId = (value: string): boolean =>
 
 export const fromCategoryMasterNodeId = (value: string): string | null =>
   isCategoryMasterNodeId(value) ? value.slice(CATEGORY_NODE_PREFIX.length) : null;
+
+export const decodeCategoryMasterNodeId = (value: string): CategoryMasterNodeRef | null => {
+  const categoryId = fromCategoryMasterNodeId(value);
+  if (!categoryId) return null;
+  return {
+    entity: 'category',
+    id: categoryId,
+    nodeId: value,
+  };
+};
 
 const buildPath = (parentPath: string, name: string): string => {
   const trimmedName = name.trim();

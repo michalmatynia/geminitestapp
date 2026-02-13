@@ -37,7 +37,8 @@ test.describe("Notes Advanced E2E", () => {
     await page.route(/\/api\/notes\/categories\/tree.*/, (route) => route.fulfill({ json: categories.map(c => ({ ...c, children: [], notes: [] })) }));
     await page.route(/\/api\/notes\/tags.*/, (route) => route.fulfill({ json: tags }));
     await page.route(/\/api\/notes\/themes.*/, (route) => route.fulfill({ json: themes }));
-    await page.route("**/api/settings", (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/settings/lite**", (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/settings**", (route) => route.fulfill({ json: [] }));
     
     // Note by ID mock
     await page.route(/\/api\/notes\/note-[^/?]+$/, async (route) => {

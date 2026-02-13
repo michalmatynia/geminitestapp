@@ -10,7 +10,7 @@ export interface ConfirmDialogConfig {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  description?: string;
+  description: string;
   onConfirm: () => Promise<void> | void;
   confirmText?: string;
   cancelText?: string;
@@ -60,10 +60,10 @@ export function ConfirmDialogBatch({
           title={dialog.title}
           description={dialog.description}
           onConfirm={handleConfirm(dialog.onConfirm)}
-          confirmText={dialog.confirmText}
-          cancelText={dialog.cancelText}
-          isDestructive={dialog.isDestructive}
-          isLoading={dialog.isLoading}
+          variant={dialog.isDestructive ? 'destructive' : 'default'}
+          {...(dialog.confirmText !== undefined ? { confirmText: dialog.confirmText } : {})}
+          {...(dialog.cancelText !== undefined ? { cancelText: dialog.cancelText } : {})}
+          {...(dialog.isLoading !== undefined ? { loading: dialog.isLoading } : {})}
         />
       ))}
     </>

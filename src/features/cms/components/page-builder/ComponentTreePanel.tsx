@@ -5,6 +5,7 @@ import React, { createContext, useContext, useMemo, useState } from 'react';
 
 import {
   MasterFolderTree,
+  createMasterFolderTreeAdapter,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -12,9 +13,9 @@ import { FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
+  type FolderTreePlaceholderClassSet,
   type MasterTreeNode,
 } from '@/shared/utils';
-import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles';
 
 import { SectionPicker } from './SectionPicker';
 import {
@@ -22,24 +23,23 @@ import {
   PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY,
 } from './settings/PageBuilderSettingsPage';
 import { SectionNodeItem } from './tree';
+import {
+  CMS_ZONE_LABELS,
+  CMS_ZONE_ORDER,
+  buildCmsMasterNodes,
+  decodeCmsMasterNodeId,
+  fromCmsSectionNodeId,
+  fromCmsZoneFooterNodeId,
+  fromCmsZoneNodeId,
+  toCmsSectionNodeId,
+  toCmsZoneNodeId,
+} from './utils/cms-master-tree';
 import { useDragState } from '../../hooks/useDragStateContext';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';
 import { readSectionDragData } from '../../utils/page-builder-dnd';
 
 import type { PageZone, SectionInstance } from '../../types/page-builder';
-
-const ZONE_LABELS: Record<PageZone, string> = {
-  header: 'Header',
-  template: 'Template',
-  footer: 'Footer',
-};
-
-const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
-
-const CMS_ZONE_NODE_PREFIX = 'cms-zone:';
-const CMS_SECTION_NODE_PREFIX = 'cms-section:';
-const CMS_ZONE_FOOTER_NODE_PREFIX = 'cms-zone-footer:';
 
 // Block types that can be promoted to standalone sections
 const PROMOTABLE_BLOCK_TYPES = [
@@ -64,6 +64,10 @@ type ComponentTreePanelContextValue = {
   treePlaceholderClasses: FolderTreePlaceholderClassSet;
   treeInlineDropLabel: string;
   treeRootDropLabel: string;
+  startSectionMasterDrag: (sectionId: string) => void;
+  endSectionMasterDrag: () => void;
+  draggedMasterSectionId: string | null;
+  moveSectionByMaster: (sectionId: string, zone: PageZone, toIndex: number) => Promise<boolean>;
 };
 
 const ComponentTreePanelContext = createContext<ComponentTreePanelContextValue | null>(null);
@@ -76,86 +80,8 @@ function useComponentTreePanelContext(): ComponentTreePanelContextValue {
   return context;
 }
 
-const toCmsZoneNodeId = (zone: PageZone): string => `${CMS_ZONE_NODE_PREFIX}${zone}`;
-const toCmsSectionNodeId = (sectionId: string): string => `${CMS_SECTION_NODE_PREFIX}${sectionId}`;
-const toCmsZoneFooterNodeId = (zone: PageZone): string => `${CMS_ZONE_FOOTER_NODE_PREFIX}${zone}`;
-
-const fromCmsSectionNodeId = (value: string): string | null =>
-  value.startsWith(CMS_SECTION_NODE_PREFIX) ? value.slice(CMS_SECTION_NODE_PREFIX.length) : null;
-
-const fromCmsZoneNodeId = (value: string): PageZone | null => {
-  if (!value.startsWith(CMS_ZONE_NODE_PREFIX)) return null;
-  const zone = value.slice(CMS_ZONE_NODE_PREFIX.length);
-  return ZONE_ORDER.includes(zone as PageZone) ? (zone as PageZone) : null;
-};
-
-const fromCmsZoneFooterNodeId = (value: string): PageZone | null => {
-  if (!value.startsWith(CMS_ZONE_FOOTER_NODE_PREFIX)) return null;
-  const zone = value.slice(CMS_ZONE_FOOTER_NODE_PREFIX.length);
-  return ZONE_ORDER.includes(zone as PageZone) ? (zone as PageZone) : null;
-};
-
-const getSectionNodeLabel = (section: SectionInstance): string => {
-  const settings =
-    section.settings && typeof section.settings === 'object'
-      ? section.settings
-      : null;
-  const customLabel = settings?.['label'];
-  if (typeof customLabel === 'string' && customLabel.trim().length > 0) {
-    return customLabel.trim();
-  }
-  return section.type;
-};
-
-const buildCmsMasterNodes = (sections: SectionInstance[]): MasterTreeNode[] => {
-  const nodes: MasterTreeNode[] = [];
-
-  ZONE_ORDER.forEach((zone: PageZone, zoneIndex: number) => {
-    const zoneNodeId = toCmsZoneNodeId(zone);
-    const zoneLabel = ZONE_LABELS[zone];
-    const zoneSections = sections.filter((section: SectionInstance) => section.zone === zone);
-
-    nodes.push({
-      id: zoneNodeId,
-      type: 'folder',
-      kind: 'zone',
-      parentId: null,
-      name: zoneLabel,
-      path: zone,
-      sortOrder: zoneIndex,
-      metadata: { entity: 'zone', zone },
-    });
-
-    zoneSections.forEach((section: SectionInstance, sectionIndex: number) => {
-      nodes.push({
-        id: toCmsSectionNodeId(section.id),
-        type: 'file',
-        kind: 'section',
-        parentId: zoneNodeId,
-        name: getSectionNodeLabel(section),
-        path: `${zone}/${section.id}`,
-        sortOrder: sectionIndex,
-        metadata: { entity: 'section', zone, sectionId: section.id },
-      });
-    });
-
-    nodes.push({
-      id: toCmsZoneFooterNodeId(zone),
-      type: 'file',
-      kind: 'zone_footer',
-      parentId: zoneNodeId,
-      name: `${zoneLabel} controls`,
-      path: `${zone}/controls`,
-      sortOrder: zoneSections.length,
-      metadata: { entity: 'zone_footer', zone },
-    });
-  });
-
-  return nodes;
-};
-
 export function ComponentTreePanel(): React.ReactNode {
-  const { state } = usePageBuilder();
+  const { state, dispatch } = usePageBuilder();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const settingsStore = useSettingsStore();
 
@@ -169,7 +95,7 @@ export function ComponentTreePanel(): React.ReactNode {
 
   const sectionsByZone = useMemo(
     () =>
-      ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
+      CMS_ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
         (acc, zone) => {
           acc[zone] = state.sections.filter((section: SectionInstance) => section.zone === zone);
           return acc;
@@ -189,7 +115,7 @@ export function ComponentTreePanel(): React.ReactNode {
 
   const sectionIndexById = useMemo(() => {
     const next = new Map<string, number>();
-    ZONE_ORDER.forEach((zone: PageZone) => {
+    CMS_ZONE_ORDER.forEach((zone: PageZone) => {
       sectionsByZone[zone].forEach((section: SectionInstance, index: number) => {
         next.set(section.id, index);
       });
@@ -213,8 +139,78 @@ export function ComponentTreePanel(): React.ReactNode {
     return sectionById.has(state.selectedNodeId) ? toCmsSectionNodeId(state.selectedNodeId) : null;
   }, [sectionById, state.selectedNodeId]);
   const initiallyExpandedZoneNodeIds = useMemo(
-    () => ZONE_ORDER.map((zone: PageZone) => toCmsZoneNodeId(zone)),
+    () => CMS_ZONE_ORDER.map((zone: PageZone) => toCmsZoneNodeId(zone)),
     []
+  );
+  const applySectionMoveByZoneIndex = React.useCallback(
+    (sectionId: string, zone: PageZone, toIndex: number): void => {
+      const section = state.sections.find((item: SectionInstance): boolean => item.id === sectionId);
+      if (!section) return;
+
+      if (section.zone === zone) {
+        const zoneSections = state.sections.filter(
+          (item: SectionInstance): boolean => item.zone === zone
+        );
+        const fromIndex = zoneSections.findIndex(
+          (item: SectionInstance): boolean => item.id === sectionId
+        );
+        if (fromIndex === -1 || fromIndex === toIndex) return;
+        dispatch({ type: 'REORDER_SECTIONS', zone, fromIndex, toIndex });
+        return;
+      }
+
+      dispatch({ type: 'MOVE_SECTION_TO_ZONE', sectionId, toZone: zone, toIndex });
+    },
+    [dispatch, state.sections]
+  );
+  const cmsTreeAdapter = useMemo(
+    () =>
+      createMasterFolderTreeAdapter({
+        decodeNodeId: decodeCmsMasterNodeId,
+        handlers: {
+          onMove: ({ operation, context, node, targetParent }): void => {
+            if (node.entity !== 'section' || targetParent?.entity !== 'zone') return;
+
+            const nextSections = context.nextNodes
+              .filter(
+                (entry: MasterTreeNode): boolean =>
+                  entry.parentId === targetParent.nodeId && entry.kind === 'section'
+              )
+              .sort((left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder);
+            const derivedIndex = nextSections.findIndex(
+              (entry: MasterTreeNode): boolean => entry.id === node.nodeId
+            );
+            const targetIndex = operation.targetIndex ?? derivedIndex;
+            if (targetIndex < 0) return;
+            const targetZone = fromCmsZoneNodeId(targetParent.nodeId);
+            if (!targetZone) return;
+            applySectionMoveByZoneIndex(node.id, targetZone, targetIndex);
+          },
+          onReorder: ({ operation, context, node, target }): void => {
+            if (node.entity !== 'section' || target.entity !== 'section') return;
+            const targetNode = context.nextNodes.find(
+              (entry: MasterTreeNode): boolean => entry.id === operation.targetId
+            );
+            const zone = targetNode?.parentId ? fromCmsZoneNodeId(targetNode.parentId) : null;
+            if (!zone || !targetNode?.parentId) return;
+
+            const nextSections = context.nextNodes
+              .filter(
+                (entry: MasterTreeNode): boolean =>
+                  entry.parentId === targetNode.parentId && entry.kind === 'section'
+              )
+              .sort((left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder);
+            const targetIndex = nextSections.findIndex(
+              (entry: MasterTreeNode): boolean => entry.id === target.nodeId
+            );
+            if (targetIndex < 0) return;
+
+            const dropIndex = operation.position === 'after' ? targetIndex + 1 : targetIndex;
+            applySectionMoveByZoneIndex(node.id, zone, dropIndex);
+          },
+        },
+      }),
+    [applySectionMoveByZoneIndex]
   );
 
   const {
@@ -227,7 +223,34 @@ export function ComponentTreePanel(): React.ReactNode {
     selectedNodeId: selectedMasterNodeId,
     initiallyExpandedNodeIds: initiallyExpandedZoneNodeIds,
     externalRevision: structureRevision,
+    adapter: cmsTreeAdapter,
   });
+  const { moveNode: moveMasterNode, startDrag: startMasterDrag, clearDrag: clearMasterDrag } = structureController;
+  const draggedMasterSectionId = useMemo((): string | null => {
+    const draggedNodeId = structureController.dragState?.draggedNodeId;
+    if (!draggedNodeId) return null;
+    return fromCmsSectionNodeId(draggedNodeId);
+  }, [structureController.dragState?.draggedNodeId]);
+  const startSectionMasterDrag = React.useCallback(
+    (sectionId: string): void => {
+      startMasterDrag(toCmsSectionNodeId(sectionId));
+    },
+    [startMasterDrag]
+  );
+  const endSectionMasterDrag = React.useCallback((): void => {
+    clearMasterDrag();
+  }, [clearMasterDrag]);
+  const moveSectionByMaster = React.useCallback(
+    async (sectionId: string, zone: PageZone, toIndex: number): Promise<boolean> => {
+      const result = await moveMasterNode(
+        toCmsSectionNodeId(sectionId),
+        toCmsZoneNodeId(zone),
+        toIndex
+      );
+      return result.ok;
+    },
+    [moveMasterNode]
+  );
   const canDropSectionsAtRoot = useMemo(
     () =>
       canNestTreeNodeV2({
@@ -261,6 +284,10 @@ export function ComponentTreePanel(): React.ReactNode {
       treePlaceholderClasses,
       treeInlineDropLabel: treeProfile.placeholders.inlineDropLabel,
       treeRootDropLabel: treeRootDropUi.label,
+      startSectionMasterDrag,
+      endSectionMasterDrag,
+      draggedMasterSectionId,
+      moveSectionByMaster,
     }),
     [
       state.currentPage,
@@ -272,6 +299,10 @@ export function ComponentTreePanel(): React.ReactNode {
       treePlaceholderClasses,
       treeProfile.placeholders.inlineDropLabel,
       treeRootDropUi.label,
+      startSectionMasterDrag,
+      endSectionMasterDrag,
+      draggedMasterSectionId,
+      moveSectionByMaster,
     ]
   );
 
@@ -311,7 +342,7 @@ export function ComponentTreePanel(): React.ReactNode {
                         ) : (
                           <ChevronRight className='size-3.5' />
                         )}
-                        <span>{ZONE_LABELS[zoneFromNode]}</span>
+                        <span>{CMS_ZONE_LABELS[zoneFromNode]}</span>
                         {zoneSections.length > 0 ? (
                           <span className='ml-1 text-[10px] text-gray-500'>({zoneSections.length})</span>
                         ) : null}
@@ -328,7 +359,13 @@ export function ComponentTreePanel(): React.ReactNode {
                   return (
                     <div className='px-2'>
                       <SectionDropTarget zone={section.zone} toIndex={sectionIndex} />
-                      <SectionNodeItem section={section} sectionIndex={sectionIndex} />
+                      <SectionNodeItem
+                        section={section}
+                        sectionIndex={sectionIndex}
+                        moveSectionByMaster={moveSectionByMaster}
+                        startSectionMasterDrag={startSectionMasterDrag}
+                        endSectionMasterDrag={endSectionMasterDrag}
+                      />
                     </div>
                   );
                 }
@@ -365,12 +402,14 @@ function ZoneFooterNode({
     canDropSectionsAtRoot,
     treePlaceholderClasses,
     treeRootDropLabel,
+    draggedMasterSectionId,
+    moveSectionByMaster,
   } = useComponentTreePanelContext();
   const [isZoneDragOver, setIsZoneDragOver] = useState(false);
   const { state: dragState, endSectionDrag } = useDragState();
   const { sectionActions } = useTreeActions();
 
-  const draggedSectionId = dragState.section.id;
+  const draggedSectionId = dragState.section.id ?? draggedMasterSectionId;
   const hasSections = sectionCount > 0;
 
   return (
@@ -395,8 +434,12 @@ function ZoneFooterNode({
             setIsZoneDragOver(false);
             if (!draggedSectionId) return;
             if (!canDropSectionsAtRoot) return;
-            sectionActions.dropInZone(draggedSectionId, zone, 0);
-            endSectionDrag();
+            void moveSectionByMaster(draggedSectionId, zone, 0).then((ok: boolean) => {
+              if (!ok) {
+                sectionActions.dropInZone(draggedSectionId, zone, 0);
+              }
+              endSectionDrag();
+            });
           }}
           className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
             isZoneDragOver
@@ -445,6 +488,8 @@ function SectionDropTarget({
     canDropBlocksAtRoot,
     treePlaceholderClasses,
     treeInlineDropLabel,
+    draggedMasterSectionId,
+    moveSectionByMaster,
   } = useComponentTreePanelContext();
   const [isOver, setIsOver] = useState(false);
   const { state: dragState, endBlockDrag, endSectionDrag } = useDragState();
@@ -455,7 +500,7 @@ function SectionDropTarget({
   const draggedFromSectionId = dragState.block.fromSectionId;
   const draggedFromColumnId = dragState.block.fromColumnId;
   const draggedFromParentBlockId = dragState.block.fromParentBlockId;
-  const draggedSectionId = dragState.section.id;
+  const draggedSectionId = dragState.section.id ?? draggedMasterSectionId;
   const draggedSectionZone = dragState.section.zone;
   const draggedSectionIndex = dragState.section.index;
 
@@ -517,8 +562,12 @@ function SectionDropTarget({
             dragIndex !== null &&
             (toIndex === dragIndex || toIndex === dragIndex + 1);
           if (isSamePosition) return;
-          sectionActions.dropInZone(dragSectionId, zone, toIndex);
-          endSectionDrag();
+          void moveSectionByMaster(dragSectionId, zone, toIndex).then((ok: boolean) => {
+            if (!ok) {
+              sectionActions.dropInZone(dragSectionId, zone, toIndex);
+            }
+            endSectionDrag();
+          });
           return;
         }
 

@@ -61,7 +61,7 @@ function ThemeEditor({ theme, id }: { theme: CmsTheme; id: string }): React.JSX.
     setColors((prev: CmsThemeColors) => ({ ...prev, [key]: value }));
   };
 
-  const colorKeys = Object.keys(colors);
+  const colorKeys = Object.keys(colors) as Array<keyof CmsThemeColors>;
 
   return (
     <div className='container mx-auto max-w-2xl py-10'>

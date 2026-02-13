@@ -18,6 +18,7 @@ import React, { useMemo } from 'react';
 
 import {
   MasterFolderTree,
+  createMasterFolderTreeAdapter,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
@@ -30,6 +31,7 @@ import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
 
 import {
   buildMasterNodesFromNotesFolderTree,
+  decodeNotesMasterNodeId,
   fromFolderMasterNodeId,
   fromNoteMasterNodeId,
   isFolderMasterNodeId,
@@ -88,65 +90,61 @@ export function NotesAppFolderTree(): React.JSX.Element {
   }, [selectedNote?.id, settings.selectedFolderId]);
 
   const notesAdapter = useMemo(
-    () => ({
-      applyOperation: async (
-        operation: { type: string; [key: string]: unknown },
-        context: { nextNodes: MasterTreeNode[] }
-      ): Promise<void> => {
-        if (operation.type === 'move') {
-          const nodeId = String(operation['nodeId'] ?? '');
-          const targetParentId = operation['targetParentId']
-            ? String(operation['targetParentId'])
-            : null;
-          const targetFolderId = resolveFolderTargetForNode(context.nextNodes, targetParentId);
+    () =>
+      createMasterFolderTreeAdapter({
+        decodeNodeId: decodeNotesMasterNodeId,
+        handlers: {
+          onMove: async ({ operation, context, node, targetParent }): Promise<void> => {
+            const targetFolderId =
+              targetParent?.entity === 'folder'
+                ? targetParent.id
+                : resolveFolderTargetForNode(context.nextNodes, operation.targetParentId);
 
-          const noteId = fromNoteMasterNodeId(nodeId);
-          if (noteId) {
-            await operations.handleMoveNoteToFolder(noteId, targetFolderId);
-            return;
-          }
-          const folderId = fromFolderMasterNodeId(nodeId);
-          if (folderId) {
-            await operations.handleMoveFolderToFolder(folderId, targetFolderId);
-          }
-          return;
-        }
+            if (node.entity === 'note') {
+              await operations.handleMoveNoteToFolder(node.id, targetFolderId);
+              return;
+            }
 
-        if (operation.type === 'reorder') {
-          const nodeId = String(operation['nodeId'] ?? '');
-          const targetId = String(operation['targetId'] ?? '');
-          const position = operation['position'] === 'after' ? 'after' : 'before';
-          const folderId = fromFolderMasterNodeId(nodeId);
-          const targetFolderId = fromFolderMasterNodeId(targetId);
-          if (folderId && targetFolderId) {
-            await operations.handleReorderFolder(folderId, targetFolderId, position);
-            return;
-          }
+            if (operation.targetParentId === null && operation.targetIndex === 0) {
+              const firstRootFolderId =
+                context.nextNodes
+                  .filter((entry: MasterTreeNode) => entry.type === 'folder' && entry.parentId === null)
+                  .sort((left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder)
+                  .map((entry: MasterTreeNode): string | null => fromFolderMasterNodeId(entry.id))
+                  .find(
+                    (folderId: string | null): boolean => Boolean(folderId) && folderId !== node.id
+                  ) ?? null;
+              if (firstRootFolderId) {
+                await operations.handleReorderFolder(node.id, firstRootFolderId, 'before');
+                return;
+              }
+            }
 
-          const noteId = fromNoteMasterNodeId(nodeId);
-          if (noteId) {
-            const targetFolderForNote = resolveFolderTargetForNode(context.nextNodes, targetId);
-            await operations.handleMoveNoteToFolder(noteId, targetFolderForNote);
-          }
-          return;
-        }
+            await operations.handleMoveFolderToFolder(node.id, targetFolderId);
+          },
+          onReorder: async ({ operation, context, node, target }): Promise<void> => {
+            if (node.entity === 'folder' && target.entity === 'folder') {
+              await operations.handleReorderFolder(node.id, target.id, operation.position);
+              return;
+            }
 
-        if (operation.type === 'rename') {
-          const nodeId = String(operation['nodeId'] ?? '');
-          const nextName = String(operation['name'] ?? '').trim();
-          if (!nextName) return;
-          const noteId = fromNoteMasterNodeId(nodeId);
-          if (noteId) {
-            await operations.handleRenameNote(noteId, nextName);
-            return;
-          }
-          const folderId = fromFolderMasterNodeId(nodeId);
-          if (folderId) {
-            await operations.handleRenameFolder(folderId, nextName);
-          }
-        }
-      },
-    }),
+            if (node.entity === 'note') {
+              const targetFolderId =
+                target.entity === 'folder'
+                  ? target.id
+                  : resolveFolderTargetForNode(context.nextNodes, operation.targetId);
+              await operations.handleMoveNoteToFolder(node.id, targetFolderId);
+            }
+          },
+          onRename: async ({ node, nextName }): Promise<void> => {
+            if (node.entity === 'note') {
+              await operations.handleRenameNote(node.id, nextName);
+              return;
+            }
+            await operations.handleRenameFolder(node.id, nextName);
+          },
+        },
+      }),
     [operations]
   );
   const { appearance: { rootDropUi, resolveIcon }, controller } = useMasterFolderTreeInstance({
@@ -332,34 +330,49 @@ export function NotesAppFolderTree(): React.JSX.Element {
             }
             return false;
           }}
-          onNodeDrop={async ({ draggedNodeId, targetId, rootDropZone }): Promise<void> => {
+          onNodeDrop={async ({ draggedNodeId, targetId, position, rootDropZone }, ctlr): Promise<void> => {
             const draggedNote = fromNoteMasterNodeId(draggedNodeId);
             const draggedFolder = fromFolderMasterNodeId(draggedNodeId);
             const targetNote = targetId ? fromNoteMasterNodeId(targetId) : null;
-            const targetFolder = resolveFolderTargetForNode(controller.nodes, targetId);
+            const targetFolder = resolveFolderTargetForNode(ctlr.nodes, targetId);
+            const isInternalDrag = ctlr.nodes.some((node: MasterTreeNode) => node.id === draggedNodeId);
 
             if (draggedNote && targetNote && draggedNote !== targetNote) {
               await operations.handleRelateNotes(draggedNote, targetNote);
               return;
             }
+
+            if (isInternalDrag) {
+              if (!targetId) {
+                await ctlr.dropNodeToRoot(draggedNodeId, rootDropZone === 'top' ? 0 : undefined);
+                return;
+              }
+              if (position === 'before' || position === 'after') {
+                await ctlr.reorderNode(draggedNodeId, targetId, position);
+                return;
+              }
+              await ctlr.moveNode(draggedNodeId, targetId);
+              return;
+            }
+
             if (draggedNote) {
               await operations.handleMoveNoteToFolder(draggedNote, targetFolder);
               return;
             }
-            if (draggedFolder) {
-              if (!targetId && rootDropZone === 'top') {
-                const firstRootFolderId =
-                  controller.roots
-                    .map((root: MasterTreeNode): string | null => fromFolderMasterNodeId(root.id))
-                    .find((folderId: string | null): boolean => Boolean(folderId) && folderId !== draggedFolder) ??
-                  null;
-                if (firstRootFolderId) {
-                  await operations.handleReorderFolder(draggedFolder, firstRootFolderId, 'before');
-                  return;
-                }
+
+            if (!draggedFolder) return;
+            if (!targetId && rootDropZone === 'top') {
+              const firstRootFolderId =
+                ctlr.roots
+                  .map((root: MasterTreeNode): string | null => fromFolderMasterNodeId(root.id))
+                  .find((folderId: string | null): boolean => Boolean(folderId) && folderId !== draggedFolder) ??
+                null;
+              if (firstRootFolderId) {
+                await operations.handleReorderFolder(draggedFolder, firstRootFolderId, 'before');
+                return;
               }
-              await operations.handleMoveFolderToFolder(draggedFolder, targetFolder);
             }
+            await operations.handleMoveFolderToFolder(draggedFolder, targetFolder);
           }}
           renderNode={({ node, depth, hasChildren, isExpanded, isSelected, isRenaming, select, toggleExpand, startRename }) => {
             const folderId = fromFolderMasterNodeId(node.id);

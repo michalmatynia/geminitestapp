@@ -29,6 +29,9 @@ import type { BlockInstance, PageZone } from '../../../types/page-builder';
 export function SectionNodeItem({
   section,
   sectionIndex,
+  moveSectionByMaster,
+  startSectionMasterDrag,
+  endSectionMasterDrag,
 }: SectionNodeItemProps): React.ReactNode {
   const { state: pbState } = usePageBuilder();
   const {
@@ -200,14 +203,31 @@ export function SectionNodeItem({
               const dragSectionId = sectionDrag.id;
               const dragSectionType = sectionDrag.type;
               if (dragSectionId && dragSectionId !== section.id) {
+                const moveSection = (targetZone: PageZone, targetIndex: number): void => {
+                  void moveSectionByMaster(dragSectionId, targetZone, targetIndex).then((ok: boolean) => {
+                    if (!ok) {
+                      sectionActions.dropInZone(dragSectionId, targetZone, targetIndex);
+                    }
+                    endSectionDrag();
+                  });
+                };
+
                 if (dragSectionType === 'TextElement' && targetAllowsTextElement) {
                   sectionActions.convertToBlock(dragSectionId, section.id, section.blocks.length);
+                  endSectionDrag();
+                  return;
                 } else if (dragSectionType === 'TextAtom' && targetAllowsTextAtom) {
                   sectionActions.convertToBlock(dragSectionId, section.id, section.blocks.length);
+                  endSectionDrag();
+                  return;
                 } else if (dragSectionType === 'ImageElement' && targetAllowsImageElement) {
                   sectionActions.convertToBlock(dragSectionId, section.id, section.blocks.length);
+                  endSectionDrag();
+                  return;
                 } else if (dragSectionType === 'ButtonElement' && targetAllowsButton) {
                   sectionActions.convertToBlock(dragSectionId, section.id, section.blocks.length);
+                  endSectionDrag();
+                  return;
                 } else if (section.type === 'Grid') {
                   if (CONVERTIBLE_SECTION_TYPES.includes(dragSectionType ?? '') && !dropPosition) {
                     const firstColumn =
@@ -215,16 +235,22 @@ export function SectionNodeItem({
                   gridColumns.find((b: BlockInstance) => b.type === 'Column');
                     if (firstColumn) {
                       sectionActions.dropToColumn(dragSectionId, section.id, firstColumn.id, (firstColumn.blocks ?? []).length);
+                      endSectionDrag();
+                      return;
                     }
                   } else {
                     const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
-                    sectionActions.dropInZone(dragSectionId, section.zone, targetIndex);
+                    moveSection(section.zone, targetIndex);
+                    return;
                   }
+                  const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
+                  moveSection(section.zone, targetIndex);
+                  return;
                 } else {
                   const targetIndex = dropPosition === 'below' ? sectionIndex + 1 : sectionIndex;
-                  sectionActions.dropInZone(dragSectionId, section.zone, targetIndex);
+                  moveSection(section.zone, targetIndex);
+                  return;
                 }
-                endSectionDrag();
               } else if (dragBlockId && !isFileSection) {
                 const fromSection = blockDrag.fromSectionId ?? '';
                 if (!fromSection) return;
@@ -306,10 +332,12 @@ export function SectionNodeItem({
                     index: sectionIndex,
                     zone: section.zone,
                   });
+                  startSectionMasterDrag(section.id);
                 }, 0);
               }}
               onDragEnd={() => {
                 endSectionDrag();
+                endSectionMasterDrag();
               }}
               onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
               onClick={(e: React.MouseEvent) => e.stopPropagation()}

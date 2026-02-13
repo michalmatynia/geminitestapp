@@ -36,6 +36,7 @@ export interface SlotGenerationMetadata {
     model?: string | undefined;
     timestamp?: string | undefined;
   } | undefined;
+  annotation?: string | undefined;
 }
 
 export type StudioProjectsResponse = { projects: string[] };

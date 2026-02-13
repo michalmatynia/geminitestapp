@@ -14,6 +14,7 @@ export const cmsThemeColorsSchema = z.object({
   text: z.string(),
   muted: z.string(),
 });
+export type CmsThemeColors = z.infer<typeof cmsThemeColorsSchema>;
 
 export const cmsThemeTypographySchema = z.object({
   headingFont: z.string(),
@@ -22,11 +23,13 @@ export const cmsThemeTypographySchema = z.object({
   headingWeight: z.number(),
   bodyWeight: z.number(),
 });
+export type CmsThemeTypography = z.infer<typeof cmsThemeTypographySchema>;
 
 export const cmsThemeSpacingSchema = z.object({
   sectionPadding: z.string(),
   containerMaxWidth: z.string(),
 });
+export type CmsThemeSpacing = z.infer<typeof cmsThemeSpacingSchema>;
 
 export const cmsThemeSchema = namedDtoSchema.extend({
   colors: cmsThemeColorsSchema,

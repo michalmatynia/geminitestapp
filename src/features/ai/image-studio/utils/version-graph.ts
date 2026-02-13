@@ -295,7 +295,8 @@ export function computeVersionGraph(slots: ImageStudioSlotRecord[]): VersionGrap
 
 /**
  * Re-layout nodes in chronological order as a timeline.
- * Uses slot array index as a time proxy (slots arrive in creation order).
+ * Uses actual timestamps from generationParams when available, otherwise falls
+ * back to depth ordering.
  */
 export function computeTimelineLayout(
   nodes: VersionNode[],
@@ -304,10 +305,30 @@ export function computeTimelineLayout(
 ): { nodes: VersionNode[]; edges: VersionEdge[] } {
   if (nodes.length === 0) return { nodes: [], edges };
 
-  // Sort by slot array index (creation order proxy), then by depth
+  // Try to extract timestamps for time-based positioning
+  const timestampMap = new Map<string, number>();
+  for (const node of nodes) {
+    const meta = readMetadata(node.slot);
+    const ts = meta.generationParams?.timestamp;
+    if (ts) {
+      const parsed = new Date(ts).getTime();
+      if (!isNaN(parsed)) {
+        timestampMap.set(node.id, parsed);
+      }
+    }
+  }
+
+  const hasTimestamps = timestampMap.size > nodes.length * 0.5;
+
+  // Sort by timestamp (if available) or by depth
   const sorted = [...nodes].sort((a, b) => {
+    if (hasTimestamps) {
+      const ta = timestampMap.get(a.id) ?? 0;
+      const tb = timestampMap.get(b.id) ?? 0;
+      if (ta !== tb) return ta - tb;
+    }
     if (a.depth !== b.depth) return a.depth - b.depth;
-    return 0; // preserve original order within same depth
+    return 0;
   });
 
   // Assign branch tracks: each root starts a new track, children follow parent track

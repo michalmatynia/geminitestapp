@@ -7,7 +7,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
-import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   UnifiedButton,
@@ -42,7 +42,7 @@ export function LeftSidebar(): React.JSX.Element {
   const { projectId } = useProjectsState();
   const { isFocusMode } = useUiState();
   const settingsStore = useSettingsStore();
-  const updateSettingsBulk = useUpdateSettingsBulk();
+  const updateSetting = useUpdateSetting();
   const { saveStudioSettings } = useSettingsActions();
   const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
   const { maskShapes } = useMaskingState();
@@ -227,19 +227,21 @@ export function LeftSidebar(): React.JSX.Element {
   };
 
   const handleSaveProject = (): void => {
-    if (!projectId.trim()) {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
       toast('Select a project first.', { variant: 'info' });
       return;
     }
-    const projectSessionKey = getImageStudioProjectSessionKey(projectId);
+    const projectSessionKey = getImageStudioProjectSessionKey(normalizedProjectId);
     if (!projectSessionKey) {
       toast('Invalid project id.', { variant: 'error' });
       return;
     }
+    if (projectSaveBusy) return;
 
     const projectSession: ImageStudioProjectSession = {
       version: 1,
-      projectId: projectId.trim(),
+      projectId: normalizedProjectId,
       savedAt: new Date().toISOString(),
       selectedFolder,
       selectedSlotId,
@@ -252,24 +254,44 @@ export function LeftSidebar(): React.JSX.Element {
       paramUiOverrides: cloneSettingValue((paramUiOverrides ?? {}) as Record<string, unknown>),
     };
 
-    if (projectSaveBusy) return;
     setProjectSaveBusy(true);
-    void Promise.all([
-      saveStudioSettings({ silent: true }),
-      updateSettingsBulk.mutateAsync([
-        {
-          key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
-          value: serializeImageStudioActiveProject(projectId),
-        },
-        {
-          key: projectSessionKey,
-          value: serializeImageStudioProjectSession(projectSession),
-        },
-      ]),
-    ])
-      .then(() => {
-        toast(`Project "${projectId}" saved.`, { variant: 'success' });
-      })
+    void (async (): Promise<void> => {
+      let serializedSession: string;
+      try {
+        serializedSession = serializeImageStudioProjectSession(projectSession);
+      } catch (error: unknown) {
+        throw new Error(
+          error instanceof Error
+            ? `Failed to serialize project session: ${error.message}`
+            : 'Failed to serialize project session.'
+        );
+      }
+
+      await updateSetting.mutateAsync({
+        key: projectSessionKey,
+        value: serializedSession,
+      });
+
+      // Persist active project as a best-effort write (primary project save already completed).
+      void updateSetting.mutateAsync({
+        key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+        value: serializeImageStudioActiveProject(normalizedProjectId),
+      }).catch(() => {});
+
+      try {
+        await saveStudioSettings({ silent: true });
+      } catch (error: unknown) {
+        toast(
+          `Project "${normalizedProjectId}" saved. Studio settings were not saved${
+            error instanceof Error ? `: ${error.message}` : '.'
+          }`,
+          { variant: 'warning' }
+        );
+        return;
+      }
+
+      toast(`Project "${normalizedProjectId}" saved.`, { variant: 'success' });
+    })()
       .catch((error: unknown) => {
         toast(error instanceof Error ? error.message : 'Failed to save project.', { variant: 'error' });
       })

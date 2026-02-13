@@ -1,5 +1,3 @@
-import { cn } from '@/shared/utils';
-
 import { Card, type CardProps } from './card';
 
 import type { HTMLAttributes, ReactNode } from 'react';

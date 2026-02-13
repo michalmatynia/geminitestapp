@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   MasterFolderTree,
+  createMasterFolderTreeAdapter,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
@@ -27,6 +28,7 @@ import {
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import {
   buildMasterNodesFromStudioTree,
+  decodeImageStudioMasterNodeId,
   findMasterNodeAncestorIds,
   fromFolderMasterNodeId,
   fromSlotMasterNodeId,
@@ -64,6 +66,8 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     handleRenameFolder: onRenameFolder,
     handleDeleteFolder: onDeleteFolderPath,
   } = useSlotsActions();
+  const moveSlot = moveSlotMutation.mutateAsync;
+  const updateSlot = updateSlotMutation.mutateAsync;
   const masterNodes = useMemo(
     () => buildMasterNodesFromStudioTree(slots, folders),
     [slots, folders]
@@ -74,6 +78,77 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     if (!normalizedSelectedFolder) return null;
     return toFolderMasterNodeId(normalizedSelectedFolder);
   }, [selectedFolder, selectedSlotId]);
+  const slotById = useMemo(
+    () => new Map<string, ImageStudioSlotRecord>(slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])),
+    [slots]
+  );
+  const slotTreeAdapter = useMemo(
+    () =>
+      createMasterFolderTreeAdapter({
+        decodeNodeId: decodeImageStudioMasterNodeId,
+        handlers: {
+          onMove: async ({ operation, context, node, targetParent }): Promise<void> => {
+            const targetFolder =
+              targetParent?.entity === 'folder'
+                ? targetParent.id
+                : resolveFolderTargetPathForMasterNode(context.nextNodes, operation.targetParentId);
+            if (targetFolder === null) return;
+
+            if (node.entity === 'card') {
+              const slot = slotById.get(node.id);
+              if (!slot) return;
+              await moveSlot({ slot, targetFolder });
+              return;
+            }
+
+            if (canMoveTreePath(node.id, targetFolder)) {
+              await onMoveFolder(node.id, targetFolder);
+            }
+          },
+          onReorder: async ({ operation, context, node }): Promise<void> => {
+            const targetNode = context.nextNodes.find(
+              (candidate: MasterTreeNode): boolean => candidate.id === operation.targetId
+            );
+            const targetFolder = resolveFolderTargetPathForMasterNode(
+              context.nextNodes,
+              targetNode?.parentId ?? null
+            );
+            if (targetFolder === null) return;
+
+            if (node.entity === 'card') {
+              const slot = slotById.get(node.id);
+              if (!slot) return;
+              await moveSlot({ slot, targetFolder });
+              return;
+            }
+
+            if (canMoveTreePath(node.id, targetFolder)) {
+              await onMoveFolder(node.id, targetFolder);
+            }
+          },
+          onRename: async ({ node, nextName }): Promise<void> => {
+            const normalizedName = nextName.replace(/[\\/]+/g, ' ').trim();
+            if (!normalizedName) return;
+
+            if (node.entity === 'card') {
+              await updateSlot({
+                id: node.id,
+                data: { name: normalizedName },
+              });
+              return;
+            }
+
+            const parentPath = node.id.includes('/')
+              ? node.id.slice(0, node.id.lastIndexOf('/'))
+              : '';
+            const nextPath = normalizeTreePath(parentPath ? `${parentPath}/${normalizedName}` : normalizedName);
+            if (!canMoveTreePath(node.id, nextPath)) return;
+            await onRenameFolder(node.id, nextPath);
+          },
+        },
+      }),
+    [moveSlot, onMoveFolder, onRenameFolder, slotById, updateSlot]
+  );
   const {
     profile,
     appearance: { placeholderClasses, rootDropUi, resolveIcon },
@@ -82,6 +157,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     instance: 'image_studio',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
+    adapter: slotTreeAdapter,
   });
   const { toast } = useToast();
   const { selectNode, expandNode } = controller;
@@ -117,18 +193,13 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     [resolveIcon]
   );
 
-  const slotById = useMemo(
-    () => new Map<string, ImageStudioSlotRecord>(slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])),
-    [slots]
-  );
-
   const onSelectSlot = useCallback((slot: ImageStudioSlotRecord): void => {
     setSelectedSlotId(slot.id);
   }, [setSelectedSlotId]);
 
   const onMoveSlot = useCallback((slot: ImageStudioSlotRecord, targetFolder: string): void => {
-    void moveSlotMutation.mutateAsync({ slot, targetFolder });
-  }, [moveSlotMutation]);
+    void moveSlot({ slot, targetFolder });
+  }, [moveSlot]);
 
   const onDeleteSlot = useCallback((slot: ImageStudioSlotRecord): void => {
     const cardLabel = slot.name?.trim() || slot.id;
@@ -264,13 +335,13 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     }
 
     controller.cancelRename();
-    void updateSlotMutation.mutateAsync({
+    void updateSlot({
       id: slot.id,
       data: { name: normalizedName },
     }).catch((error: unknown) => {
       toast(error instanceof Error ? error.message : 'Failed to rename card.', { variant: 'error' });
     });
-  }, [controller, toast, updateSlotMutation]);
+  }, [controller, toast, updateSlot]);
 
   useEffect(() => {
     if (!clearSelectionOnAwayClick) return;
@@ -344,15 +415,38 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           if (isInternalNode) return false;
           return canDropNodeToTarget(draggedNodeId, targetId, ctlr.nodes);
         }}
-        onNodeDrop={async ({ draggedNodeId, targetId }): Promise<void> => {
-          const targetFolder = resolveFolderTargetPathForMasterNode(controller.nodes, targetId);
+        onNodeDrop={async (
+          { draggedNodeId, targetId, position, rootDropZone },
+          ctlr
+        ): Promise<void> => {
+          const isInternalNode = ctlr.nodes.some((node: MasterTreeNode) => node.id === draggedNodeId);
+          if (isInternalNode) {
+            if (targetId === null) {
+              if (rootDropZone === 'top') {
+                await ctlr.dropNodeToRoot(draggedNodeId, 0);
+                return;
+              }
+              await ctlr.dropNodeToRoot(draggedNodeId);
+              return;
+            }
+
+            if (position === 'inside') {
+              await ctlr.moveNode(draggedNodeId, targetId);
+              return;
+            }
+
+            await ctlr.reorderNode(draggedNodeId, targetId, position);
+            return;
+          }
+
+          const targetFolder = resolveFolderTargetPathForMasterNode(ctlr.nodes, targetId);
           if (targetFolder === null) return;
 
           const slotId = fromSlotMasterNodeId(draggedNodeId);
           if (slotId) {
             const slot = slotById.get(slotId);
             if (!slot) return;
-            onMoveSlot(slot, targetFolder);
+            await moveSlot({ slot, targetFolder });
             return;
           }
 

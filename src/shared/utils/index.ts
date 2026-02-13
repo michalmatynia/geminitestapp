@@ -8,7 +8,6 @@ export * from './error-formatting';
 export * from './drag-drop';
 export * from './sanitization';
 export * from './tree-operations';
-export * from './folder-tree-profiles';
 export * from './folder-tree-profiles-v2';
 export * from './master-folder-tree-contract';
 export * from './master-folder-tree-engine';

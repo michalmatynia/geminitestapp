@@ -18,13 +18,11 @@ import {
   useToast,
 } from '@/shared/ui';
 import {
-  folderTreePlaceholderPresetOptions,
-} from '@/shared/utils/folder-tree-profiles';
-import {
   createDefaultFolderTreeProfilesV2,
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   type FolderTreeInstance,
   folderTreePlaceholderEmphasisValues,
+  folderTreePlaceholderPresetOptions,
   folderTreeSelectionBehaviorValues,
   folderTreePlaceholderStyleValues,
   parseFolderTreeProfilesV2,

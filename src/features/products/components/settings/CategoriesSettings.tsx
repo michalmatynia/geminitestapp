@@ -10,6 +10,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
 import {
   MasterFolderTree,
+  createMasterFolderTreeAdapter,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { logClientError } from '@/features/observability';
@@ -35,14 +36,13 @@ import {
 } from '@/shared/ui';
 import {
   cn,
-  type MasterTreeDropPosition,
   type MasterTreeNode,
 } from '@/shared/utils';
 
 import {
   buildMasterNodesFromCategoryTree,
+  decodeCategoryMasterNodeId,
   fromCategoryMasterNodeId,
-  type CategoryDropTarget,
 } from './category-master-tree';
 import { CategoryForm } from './CategoryForm';
 import { CategoryFormProvider, type CategoryFormData } from './CategoryFormContext';
@@ -63,76 +63,6 @@ const cloneCategoryTree = (
     ...node,
     children: cloneCategoryTree(node.children),
   }));
-
-const removeCategoryFromTree = (
-  nodes: ProductCategoryWithChildren[],
-  id: string
-): ProductCategoryWithChildren | null => {
-  for (let index = 0; index < nodes.length; index += 1) {
-    const node = nodes[index];
-    if (!node) continue;
-    if (node.id === id) {
-      const [removed] = nodes.splice(index, 1);
-      return removed ?? null;
-    }
-    const removedFromChildren = removeCategoryFromTree(node.children, id);
-    if (removedFromChildren) return removedFromChildren;
-  }
-  return null;
-};
-
-const findCategoryChildrenBucket = (
-  nodes: ProductCategoryWithChildren[],
-  parentId: string | null
-): ProductCategoryWithChildren[] | null => {
-  if (parentId === null) return nodes;
-  for (const node of nodes) {
-    if (node.id === parentId) return node.children;
-    const nested = findCategoryChildrenBucket(node.children, parentId);
-    if (nested) return nested;
-  }
-  return null;
-};
-
-const normalizeCategorySortIndices = (
-  nodes: ProductCategoryWithChildren[]
-): ProductCategoryWithChildren[] =>
-  nodes.map(
-    (node: ProductCategoryWithChildren, index: number): ProductCategoryWithChildren => ({
-      ...node,
-      sortIndex: index,
-      children: normalizeCategorySortIndices(node.children),
-    })
-  );
-
-const applyOptimisticCategoryDrop = (
-  tree: ProductCategoryWithChildren[],
-  draggedCatId: string,
-  target: CategoryDropTarget
-): ProductCategoryWithChildren[] | null => {
-  const nextTree = cloneCategoryTree(tree);
-  const draggedNode = removeCategoryFromTree(nextTree, draggedCatId);
-  if (!draggedNode) return null;
-
-  const targetBucket = findCategoryChildrenBucket(nextTree, target.parentId);
-  if (!targetBucket) return null;
-
-  draggedNode.parentId = target.parentId;
-  if (target.position === 'inside') {
-    targetBucket.push(draggedNode);
-    return normalizeCategorySortIndices(nextTree);
-  }
-
-  if (!target.targetId) return null;
-  const targetIndex = targetBucket.findIndex(
-    (entry: ProductCategoryWithChildren): boolean => entry.id === target.targetId
-  );
-  if (targetIndex < 0) return null;
-
-  const insertionIndex = target.position === 'before' ? targetIndex : targetIndex + 1;
-  targetBucket.splice(insertionIndex, 0, draggedNode);
-  return normalizeCategorySortIndices(nextTree);
-};
 
 export function CategoriesSettings({
   loading,
@@ -158,6 +88,7 @@ export function CategoriesSettings({
   const saveCategoryMutation = useSaveCategoryMutation();
   const deleteCategoryMutation = useDeleteCategoryMutation();
   const reorderCategoryMutation = useReorderCategoryMutation();
+  const reorderCategory = reorderCategoryMutation.mutateAsync;
 
   const [modalCatalogId, setModalCatalogId] = useState<string | null>(null);
   const [treeData, setTreeData] = useState<ProductCategoryWithChildren[]>(() => cloneCategoryTree(categories));
@@ -188,6 +119,103 @@ export function CategoriesSettings({
         .join('|'),
     [masterNodes]
   );
+  const categoryAdapter = useMemo(
+    () =>
+      createMasterFolderTreeAdapter({
+        decodeNodeId: decodeCategoryMasterNodeId,
+        handlers: {
+          onMove: async ({ operation, context, node, targetParent }): Promise<void> => {
+            const catalogPayload = selectedCatalogId ? { catalogId: selectedCatalogId } : {};
+            const targetParentId = targetParent?.id ?? null;
+
+            try {
+              if (targetParentId === null && operation.targetIndex === 0) {
+                const firstRootSiblingId =
+                  context.nextNodes
+                    .filter((entry: MasterTreeNode) => entry.parentId === null)
+                    .sort((left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder)
+                    .map((entry: MasterTreeNode): string | null => fromCategoryMasterNodeId(entry.id))
+                    .find(
+                      (categoryId: string | null): boolean => Boolean(categoryId) && categoryId !== node.id
+                    ) ?? null;
+
+                if (firstRootSiblingId) {
+                  await reorderCategory({
+                    categoryId: node.id,
+                    parentId: null,
+                    position: 'before',
+                    targetId: firstRootSiblingId,
+                    ...catalogPayload,
+                  });
+                  toast('Category moved successfully', { variant: 'success' });
+                  onRefresh();
+                  return;
+                }
+              }
+
+              await reorderCategory({
+                categoryId: node.id,
+                parentId: targetParentId,
+                position: 'inside',
+                targetId: targetParentId,
+                ...catalogPayload,
+              });
+              toast('Category moved successfully', { variant: 'success' });
+              onRefresh();
+            } catch (error) {
+              logClientError(error, {
+                context: {
+                  source: 'CategoriesSettings',
+                  action: 'moveCategory',
+                  categoryId: node.id,
+                  targetParentId,
+                },
+              });
+              const message: string =
+                error instanceof Error ? error.message : 'Failed to move category';
+              toast(message, { variant: 'error' });
+              throw error;
+            }
+          },
+          onReorder: async ({ operation, context, node, target }): Promise<void> => {
+            const catalogPayload = selectedCatalogId ? { catalogId: selectedCatalogId } : {};
+            const targetNode = context.nextNodes.find(
+              (entry: MasterTreeNode): boolean => entry.id === operation.targetId
+            );
+            const targetParentId = targetNode?.parentId
+              ? fromCategoryMasterNodeId(targetNode.parentId)
+              : null;
+
+            try {
+              await reorderCategory({
+                categoryId: node.id,
+                parentId: targetParentId,
+                position: operation.position,
+                targetId: target.id,
+                ...catalogPayload,
+              });
+              toast('Category moved successfully', { variant: 'success' });
+              onRefresh();
+            } catch (error) {
+              logClientError(error, {
+                context: {
+                  source: 'CategoriesSettings',
+                  action: 'reorderCategory',
+                  categoryId: node.id,
+                  targetCategoryId: target.id,
+                  position: operation.position,
+                },
+              });
+              const message: string =
+                error instanceof Error ? error.message : 'Failed to move category';
+              toast(message, { variant: 'error' });
+              throw error;
+            }
+          },
+        },
+      }),
+    [onRefresh, reorderCategory, selectedCatalogId, toast]
+  );
   const {
     appearance: { placeholderClasses, rootDropUi, resolveIcon },
     controller,
@@ -196,6 +224,7 @@ export function CategoriesSettings({
     nodes: masterNodes,
     initiallyExpandedNodeIds: initialExpandedNodeIds,
     externalRevision: masterRevision,
+    adapter: categoryAdapter,
   });
   const { expandAll } = controller;
 
@@ -296,37 +325,6 @@ export function CategoriesSettings({
     }
   };
 
-  const handleDrop = async (
-    draggedCatId: string,
-    target: CategoryDropTarget
-  ): Promise<void> => {
-    if (draggedCatId === target.parentId) return;
-    const previousTree = cloneCategoryTree(treeData);
-    const optimisticTree = applyOptimisticCategoryDrop(treeData, draggedCatId, target);
-    if (optimisticTree) {
-      setTreeData(optimisticTree);
-    }
-
-    try {
-      await reorderCategoryMutation.mutateAsync({
-        categoryId: draggedCatId,
-        parentId: target.parentId,
-        position: target.position,
-        targetId: target.targetId,
-        ...(selectedCatalogId ? { catalogId: selectedCatalogId } : {})
-      });
-
-      toast('Category moved successfully', { variant: 'success' });
-      onRefresh();
-    } catch (error) {
-      setTreeData(previousTree);
-      logClientError(error, { context: { source: 'CategoriesSettings', action: 'reorderCategory', categoryId: draggedCatId, target } });
-      const message: string =
-        error instanceof Error ? error.message : 'Failed to move category';
-      toast(message, { variant: 'error' });
-    }
-  };
-
   const selectedCatalog: Catalog | undefined = catalogs.find((c: Catalog): boolean => c.id === selectedCatalogId);
   const modalCatalog: Catalog | undefined = catalogs.find((c: Catalog): boolean => c.id === modalCatalogId);
 
@@ -359,40 +357,6 @@ export function CategoriesSettings({
     walk(treeData);
     return map;
   }, [treeData]);
-
-  const resolveCategoryDropTarget = useCallback(
-    (
-      targetMasterNodeId: string | null,
-      dropPosition: MasterTreeDropPosition
-    ): CategoryDropTarget | null => {
-      if (!targetMasterNodeId) {
-        return {
-          parentId: null,
-          position: 'inside',
-          targetId: null,
-        };
-      }
-
-      const targetCategoryId = fromCategoryMasterNodeId(targetMasterNodeId);
-      if (!targetCategoryId) return null;
-
-      if (dropPosition === 'inside') {
-        return {
-          parentId: targetCategoryId,
-          position: 'inside',
-          targetId: targetCategoryId,
-        };
-      }
-
-      const targetCategory = categoryById.get(targetCategoryId);
-      return {
-        parentId: targetCategory?.parentId ?? null,
-        position: dropPosition,
-        targetId: targetCategoryId,
-      };
-    },
-    [categoryById]
-  );
 
   const collectDescendantIds = useCallback((cat: ProductCategoryWithChildren): string[] => {
     const ids: string[] = [];
@@ -531,30 +495,6 @@ export function CategoriesSettings({
                   controller={controller}
                   className='space-y-0.5'
                   rootDropUi={rootDropUi}
-                  onNodeDrop={async ({ draggedNodeId, targetId, position, rootDropZone }): Promise<void> => {
-                    const draggedCategoryId = fromCategoryMasterNodeId(draggedNodeId);
-                    if (!draggedCategoryId) return;
-
-                    if (!targetId && rootDropZone === 'top') {
-                      const firstRootId =
-                        controller.roots
-                          .map((root: MasterTreeNode): string => root.id)
-                          .find((rootId: string): boolean => rootId !== draggedNodeId) ?? null;
-                      if (firstRootId) {
-                        const topDropTarget = resolveCategoryDropTarget(firstRootId, 'before');
-                        if (topDropTarget) {
-                          await handleDrop(draggedCategoryId, topDropTarget);
-                          return;
-                        }
-                      }
-                    }
-
-                    const normalizedPosition: MasterTreeDropPosition =
-                      position === 'before' || position === 'after' ? position : 'inside';
-                    const dropTarget = resolveCategoryDropTarget(targetId, normalizedPosition);
-                    if (!dropTarget) return;
-                    await handleDrop(draggedCategoryId, dropTarget);
-                  }}
                   renderNode={({
                     node,
                     depth,

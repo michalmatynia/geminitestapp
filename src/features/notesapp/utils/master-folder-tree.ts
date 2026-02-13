@@ -7,6 +7,10 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 const FOLDER_NODE_PREFIX = 'folder:';
 const NOTE_NODE_PREFIX = 'note:';
 
+export type NotesMasterNodeRef =
+  | { entity: 'folder'; id: string; nodeId: string }
+  | { entity: 'note'; id: string; nodeId: string };
+
 export const toFolderMasterNodeId = (folderId: string): string =>
   `${FOLDER_NODE_PREFIX}${folderId}`;
 
@@ -24,6 +28,14 @@ export const fromFolderMasterNodeId = (value: string): string | null =>
 
 export const fromNoteMasterNodeId = (value: string): string | null =>
   isNoteMasterNodeId(value) ? value.slice(NOTE_NODE_PREFIX.length) : null;
+
+export const decodeNotesMasterNodeId = (value: string): NotesMasterNodeRef | null => {
+  const folderId = fromFolderMasterNodeId(value);
+  if (folderId) return { entity: 'folder', id: folderId, nodeId: value };
+  const noteId = fromNoteMasterNodeId(value);
+  if (noteId) return { entity: 'note', id: noteId, nodeId: value };
+  return null;
+};
 
 const buildFolderPath = (parentPath: string, folderName: string): string => {
   const normalizedName = folderName.trim();

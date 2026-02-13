@@ -1,4 +1,4 @@
-import type { SectionInstance, BlockInstance } from '../../../types/page-builder';
+import type { SectionInstance, BlockInstance, PageZone } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Component Props Interfaces
@@ -7,6 +7,9 @@ import type { SectionInstance, BlockInstance } from '../../../types/page-builder
 export interface SectionNodeItemProps {
   section: SectionInstance;
   sectionIndex: number;
+  moveSectionByMaster: (sectionId: string, zone: PageZone, toIndex: number) => Promise<boolean>;
+  startSectionMasterDrag: (sectionId: string) => void;
+  endSectionMasterDrag: () => void;
 }
 
 export interface SlideshowFrameNodeItemProps {

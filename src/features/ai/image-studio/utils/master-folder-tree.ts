@@ -8,6 +8,10 @@ import type { ImageStudioSlotRecord } from '../types';
 const FOLDER_NODE_PREFIX = 'folder:';
 const SLOT_NODE_PREFIX = 'card:';
 
+export type ImageStudioMasterNodeRef =
+  | { entity: 'folder'; id: string; nodeId: string }
+  | { entity: 'card'; id: string; nodeId: string };
+
 type SlotTreeNode = {
   id: string;
   name: string;
@@ -38,6 +42,20 @@ export const fromFolderMasterNodeId = (value: string): string | null =>
 
 export const fromSlotMasterNodeId = (value: string): string | null =>
   isSlotMasterNodeId(value) ? value.slice(SLOT_NODE_PREFIX.length) : null;
+
+export const decodeImageStudioMasterNodeId = (value: string): ImageStudioMasterNodeRef | null => {
+  const folderPath = fromFolderMasterNodeId(value);
+  if (folderPath !== null && folderPath.length > 0) {
+    return { entity: 'folder', id: folderPath, nodeId: value };
+  }
+
+  const slotId = fromSlotMasterNodeId(value);
+  if (slotId) {
+    return { entity: 'card', id: slotId, nodeId: value };
+  }
+
+  return null;
+};
 
 const getSlotMetadata = (slot: ImageStudioSlotRecord): Record<string, unknown> | null => {
   if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) return null;

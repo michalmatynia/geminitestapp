@@ -5,24 +5,30 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  Columns2,
+  Copy,
   Crosshair,
   Download,
+  Focus,
   GitMerge,
+  Map,
   Maximize2,
   Minus,
   MousePointer2,
+  BarChart3,
   Network,
   Plus,
   Search,
   Shield,
   X,
 } from 'lucide-react';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { UnifiedButton, UnifiedInput } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { VersionNodeMapCanvas, type VersionNodeMapCanvasRef } from './VersionNodeMapCanvas';
+import { VersionNodeMapMinimap } from './VersionNodeMapMinimap';
 import { useSlotsActions } from '../context/SlotsContext';
 import { useVersionGraphActions, useVersionGraphState } from '../context/VersionGraphContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
@@ -68,6 +74,11 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
     filterHasMask,
     filteredNodeIds,
     layoutMode,
+    graphStats,
+    isolatedNodeId,
+    isolatedNodeIds,
+    compareMode,
+    compareNodeIds,
   } = useVersionGraphState();
   const {
     selectNode,
@@ -85,6 +96,10 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
     setFilterHasMask,
     clearFilters,
     setLayoutMode,
+    isolateBranch,
+    setAnnotation,
+    toggleCompareMode,
+    setCompareNodeIds,
   } = useVersionGraphActions();
   const { setWorkingSlotId } = useSlotsActions();
 
@@ -92,6 +107,12 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
   const [zoom, setZoom] = useState(1);
   const [mergeBusy, setMergeBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [showMinimap, setShowMinimap] = useState(false);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [contextMenu, setContextMenu] = useState<{ nodeId: string; x: number; y: number } | null>(null);
+  const [annotationDraft, setAnnotationDraft] = useState('');
+  const annotationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedNode = selectedNodeId
     ? nodes.find((n) => n.id === selectedNodeId) ?? null
@@ -138,6 +159,89 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
       setExporting(false);
     }
   }, [exporting]);
+
+  // Sync annotation draft when selected node changes
+  useEffect(() => {
+    if (selectedNode) {
+      const meta = readMeta(selectedNode.slot);
+      setAnnotationDraft(meta.annotation ?? '');
+    }
+  }, [selectedNode]);
+
+  const handleAnnotationBlur = useCallback(() => {
+    if (!selectedNodeId) return;
+    if (annotationTimerRef.current) clearTimeout(annotationTimerRef.current);
+    annotationTimerRef.current = setTimeout(() => {
+      void setAnnotation(selectedNodeId, annotationDraft);
+    }, 300);
+  }, [selectedNodeId, annotationDraft, setAnnotation]);
+
+  const handleContextMenu = useCallback((nodeId: string, clientX: number, clientY: number) => {
+    setContextMenu({ nodeId, x: clientX, y: clientY });
+  }, []);
+
+  const closeContextMenu = useCallback(() => {
+    setContextMenu(null);
+  }, []);
+
+  // Close context menu on Escape key
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setContextMenu(null);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [contextMenu]);
+
+  // Cleanup annotation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (annotationTimerRef.current) clearTimeout(annotationTimerRef.current);
+    };
+  }, []);
+
+  const handleCompareNodeClick = useCallback((nodeId: string) => {
+    if (!compareMode) return;
+    if (!compareNodeIds) {
+      // First node selected — store as first, second is pending
+      setCompareNodeIds([nodeId, '']);
+    } else if (!compareNodeIds[1] || compareNodeIds[0] === nodeId) {
+      // Replace second (or ignore if same as first)
+      if (compareNodeIds[0] !== nodeId) {
+        setCompareNodeIds([compareNodeIds[0], nodeId]);
+      }
+    } else {
+      // Both filled — start over with new first
+      setCompareNodeIds([nodeId, '']);
+    }
+  }, [compareMode, compareNodeIds, setCompareNodeIds]);
+
+  const handleCanvasSelectNode = useCallback((id: string | null) => {
+    if (compareMode && id) {
+      handleCompareNodeClick(id);
+    } else {
+      selectNode(id);
+    }
+    closeContextMenu();
+  }, [compareMode, handleCompareNodeClick, selectNode, closeContextMenu]);
+
+  const getSlotAnnotation = useCallback(
+    (slot: ImageStudioSlotRecord) => readMeta(slot).annotation,
+    [],
+  );
+
+  const contextMenuNode = contextMenu
+    ? nodes.find((n) => n.id === contextMenu.nodeId) ?? null
+    : null;
+
+  const compareNodes = compareNodeIds
+    ? [nodes.find((n) => n.id === compareNodeIds[0]) ?? null, nodes.find((n) => n.id === compareNodeIds[1]) ?? null] as const
+    : null;
+
+  const handleMinimapPan = useCallback((x: number, y: number) => {
+    canvasRef.current?.setPan({ x, y });
+  }, []);
 
   const hasActiveFilters = filterQuery || filterTypes.size > 0 || filterHasMask !== null;
 
@@ -260,12 +364,47 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             size='icon'
             className='size-6'
             title='Fit to view'
-            onClick={() => setZoom(1)}
+            onClick={() => canvasRef.current?.fitToView()}
           >
             <Maximize2 className='size-3' />
           </UnifiedButton>
 
           <div className='mx-1 h-4 w-px bg-border/40' />
+
+          {/* Stats toggle */}
+          <UnifiedButton
+            variant={showStats ? 'default' : 'ghost'}
+            size='icon'
+            className={cn('size-6', showStats && 'bg-accent')}
+            title={showStats ? 'Hide stats' : 'Show stats'}
+            onClick={() => setShowStats((v) => !v)}
+          >
+            <BarChart3 className='size-3' />
+          </UnifiedButton>
+
+          {/* Compare mode toggle */}
+          <UnifiedButton
+            variant={compareMode ? 'default' : 'ghost'}
+            size='icon'
+            className={cn('size-6', compareMode && 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30')}
+            title={compareMode ? 'Exit compare mode' : 'Compare two nodes'}
+            onClick={toggleCompareMode}
+          >
+            <Columns2 className='size-3' />
+          </UnifiedButton>
+
+          {/* Minimap toggle */}
+          {nodes.length > 8 ? (
+            <UnifiedButton
+              variant={showMinimap ? 'default' : 'ghost'}
+              size='icon'
+              className={cn('size-6', showMinimap && 'bg-accent')}
+              title={showMinimap ? 'Hide minimap' : 'Show minimap'}
+              onClick={() => setShowMinimap((v) => !v)}
+            >
+              <Map className='size-3' />
+            </UnifiedButton>
+          ) : null}
 
           {/* Export PNG */}
           <UnifiedButton
@@ -280,6 +419,13 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
           </UnifiedButton>
         </div>
       </div>
+
+      {/* Stats row */}
+      {showStats ? (
+        <div className='border-b border-border/40 px-3 py-1 text-[9px] text-gray-500'>
+          {graphStats.totalNodes} nodes · {graphStats.baseCount} base · {graphStats.generationCount} gen · {graphStats.mergeCount} merge · depth {graphStats.maxDepth} · {graphStats.maskedCount} masked
+        </div>
+      ) : null}
 
       {/* Search & Filter bar */}
       <div className='border-b border-border/40 px-3 py-1.5'>
@@ -364,8 +510,34 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
         </div>
       ) : null}
 
+      {/* Compare mode banner */}
+      {compareMode ? (
+        <div className='border-b border-cyan-400/20 bg-cyan-500/5 px-3 py-1 text-[10px] text-cyan-400'>
+          {compareNodeIds?.[0] && !compareNodeIds[1]
+            ? 'Now click a second node to compare.'
+            : 'Click two nodes to compare side by side.'}
+        </div>
+      ) : null}
+
+      {/* Isolation banner */}
+      {isolatedNodeId ? (
+        <div className='flex items-center justify-between border-b border-blue-400/20 bg-blue-500/5 px-3 py-1'>
+          <span className='text-[10px] text-blue-400'>
+            <Focus className='mr-1 inline size-2.5' />
+            Branch isolated
+          </span>
+          <button
+            type='button'
+            className='text-[10px] text-blue-400 hover:text-blue-300'
+            onClick={() => isolateBranch(null)}
+          >
+            Clear
+          </button>
+        </div>
+      ) : null}
+
       {/* Canvas */}
-      <div className='relative min-h-0 flex-1'>
+      <div ref={canvasContainerRef} className='relative min-h-0 flex-1'>
         <VersionNodeMapCanvas
           ref={canvasRef}
           nodes={nodes}
@@ -376,19 +548,160 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
           mergeSelectedIds={mergeSelectedIds}
           collapsedNodeIds={collapsedNodeIds}
           filteredNodeIds={filteredNodeIds}
-          onSelectNode={selectNode}
+          isolatedNodeIds={isolatedNodeIds}
+          compareMode={compareMode}
+          compareNodeIds={compareNodeIds}
+          onSelectNode={handleCanvasSelectNode}
           onHoverNode={hoverNode}
           onActivateNode={handleActivateNode}
           onToggleMergeSelection={toggleMergeSelection}
           onToggleCollapse={toggleCollapse}
+          onContextMenu={handleContextMenu}
           getSlotImageSrc={getSlotImageSrc}
+          getSlotAnnotation={getSlotAnnotation}
           zoom={zoom}
           onZoomChange={setZoom}
         />
+
+        {/* Minimap overlay */}
+        {showMinimap && nodes.length > 8 ? (
+          <div className='absolute bottom-2 right-2 z-10'>
+            <VersionNodeMapMinimap
+              nodes={nodes}
+              edges={edges}
+              selectedNodeId={selectedNodeId}
+              pan={canvasRef.current?.getPanZoom().pan ?? { x: 0, y: 0 }}
+              zoom={zoom}
+              viewportWidth={canvasContainerRef.current?.clientWidth ?? 300}
+              viewportHeight={canvasContainerRef.current?.clientHeight ?? 200}
+              onPanTo={handleMinimapPan}
+            />
+          </div>
+        ) : null}
       </div>
 
+      {/* Context menu overlay */}
+      {contextMenu && contextMenuNode ? (
+        <>
+          {/* Backdrop to close (Escape key handled via useEffect) */}
+          <div className='fixed inset-0 z-50' onClick={closeContextMenu} role='presentation' />
+          <div
+            className='fixed z-50 min-w-[140px] rounded border border-border/60 bg-card py-1 shadow-lg'
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+          >
+            <button
+              type='button'
+              className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
+              onClick={() => {
+                setWorkingSlotId(contextMenu.nodeId);
+                onSwitchToControls?.();
+                closeContextMenu();
+              }}
+            >
+              <Crosshair className='size-3' />
+              Set as Source
+            </button>
+            <button
+              type='button'
+              className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
+              onClick={() => {
+                isolateBranch(contextMenu.nodeId);
+                closeContextMenu();
+              }}
+            >
+              <Focus className='size-3' />
+              Isolate Branch
+            </button>
+            {contextMenuNode.childIds.length > 0 ? (
+              <button
+                type='button'
+                className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
+                onClick={() => {
+                  toggleCollapse(contextMenu.nodeId);
+                  closeContextMenu();
+                }}
+              >
+                {collapsedNodeIds.has(contextMenu.nodeId) ? (
+                  <><ChevronDown className='size-3' /> Expand</>
+                ) : (
+                  <><ChevronUp className='size-3' /> Collapse</>
+                )}
+              </button>
+            ) : null}
+            <button
+              type='button'
+              className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
+              onClick={() => {
+                void navigator.clipboard.writeText(contextMenu.nodeId);
+                closeContextMenu();
+              }}
+            >
+              <Copy className='size-3' />
+              Copy ID
+            </button>
+          </div>
+        </>
+      ) : null}
+
+      {/* Compare view */}
+      {compareMode && compareNodes?.[0] && compareNodes[1] ? (
+        <div className='border-t border-border/40 p-3'>
+          <div className='flex gap-2'>
+            {compareNodes.map((cNode) => cNode ? (
+              <div key={cNode.id} className='flex-1 space-y-1'>
+                <div className='truncate text-[10px] font-medium text-gray-300'>{cNode.label}</div>
+                <div className='aspect-square overflow-hidden rounded border border-border/60 bg-card/30'>
+                  {getSlotImageSrc(cNode.slot) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={getSlotImageSrc(cNode.slot)!}
+                      alt={cNode.label}
+                      className='h-full w-full object-cover'
+                    />
+                  ) : (
+                    <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>No image</div>
+                  )}
+                </div>
+                <div className='text-[9px] text-gray-500'>
+                  {cNode.type === 'merge' ? 'Merge' : cNode.type === 'generation' ? 'Generation' : 'Base'}
+                  {cNode.hasMask ? ' · Mask' : ''}
+                </div>
+                {(() => {
+                  const meta = readMeta(cNode.slot);
+                  return meta.generationParams?.prompt ? (
+                    <div className='truncate text-[9px] text-gray-500' title={meta.generationParams.prompt}>
+                      {meta.generationParams.prompt.slice(0, 40)}{meta.generationParams.prompt.length > 40 ? '...' : ''}
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+            ) : null)}
+          </div>
+          <div className='mt-2 flex gap-2'>
+            <UnifiedButton
+              variant='outline'
+              size='sm'
+              className='flex-1 text-[10px]'
+              onClick={() => {
+                if (compareNodeIds) setCompareNodeIds([compareNodeIds[1], compareNodeIds[0]]);
+              }}
+            >
+              Swap
+            </UnifiedButton>
+            <UnifiedButton
+              variant='outline'
+              size='sm'
+              className='flex-1 text-[10px]'
+              onClick={toggleCompareMode}
+            >
+              Exit Compare
+            </UnifiedButton>
+          </div>
+        </div>
+      ) : null}
+
       {/* Inspector */}
-      {selectedNode && !mergeMode ? (
+      {selectedNode && !mergeMode && !compareMode ? (
         <div className='border-t border-border/40 p-3'>
           <div className='flex gap-3'>
             {/* Thumbnail */}
@@ -467,8 +780,20 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
               Set as Source
             </UnifiedButton>
           </div>
+
+          {/* Annotation */}
+          <div className='mt-2'>
+            <textarea
+              value={annotationDraft}
+              onChange={(e) => setAnnotationDraft(e.target.value)}
+              onBlur={handleAnnotationBlur}
+              placeholder='Add note...'
+              rows={2}
+              className='w-full resize-none rounded border border-border/40 bg-transparent px-2 py-1 text-[10px] text-gray-300 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none'
+            />
+          </div>
         </div>
-      ) : !mergeMode ? (
+      ) : !mergeMode && !compareMode ? (
         <div className='border-t border-border/40 px-3 py-2 text-[10px] text-gray-500'>
           Click a node to inspect. Double-click to set as source.
         </div>

@@ -44,18 +44,26 @@ export interface VersionNodeMapCanvasProps {
   mergeSelectedIds: string[];
   collapsedNodeIds: Set<string>;
   filteredNodeIds: Set<string> | null;
+  isolatedNodeIds: Set<string> | null;
+  compareMode: boolean;
+  compareNodeIds: [string, string] | null;
   onSelectNode: (id: string | null) => void;
   onHoverNode: (id: string | null) => void;
   onActivateNode: (id: string) => void;
   onToggleMergeSelection: (id: string) => void;
   onToggleCollapse: (id: string) => void;
+  onContextMenu?: ((nodeId: string, clientX: number, clientY: number) => void) | undefined;
   getSlotImageSrc: (slot: VersionNode['slot']) => string | null;
+  getSlotAnnotation?: ((slot: VersionNode['slot']) => string | undefined) | undefined;
   zoom: number;
   onZoomChange: (z: number) => void;
 }
 
 export interface VersionNodeMapCanvasRef {
   svgElement: SVGSVGElement | null;
+  fitToView: () => void;
+  getPanZoom: () => { pan: { x: number; y: number }; zoom: number };
+  setPan: (pan: { x: number; y: number }) => void;
 }
 
 // ── Edge path ────────────────────────────────────────────────────────────────
@@ -109,7 +117,9 @@ function getNodeStrokeClass(
   node: VersionNode,
   isSelected: boolean,
   isMergeSelected: boolean,
+  isCompareSelected: boolean,
 ): string {
+  if (isCompareSelected) return 'fill-card/80 stroke-cyan-400';
   if (isMergeSelected) return 'fill-card/80 stroke-orange-400';
   if (isSelected) return 'fill-card/80 stroke-yellow-400';
   if (node.type === 'merge') return 'fill-card/80 stroke-purple-400/60';
@@ -130,12 +140,17 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       mergeSelectedIds,
       collapsedNodeIds,
       filteredNodeIds,
+      isolatedNodeIds,
+      compareMode,
+      compareNodeIds,
       onSelectNode,
       onHoverNode,
       onActivateNode,
       onToggleMergeSelection,
       onToggleCollapse,
+      onContextMenu,
       getSlotImageSrc,
+      getSlotAnnotation,
       zoom,
       onZoomChange,
     },
@@ -147,12 +162,57 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
     const zoomRef = useRef<number>(zoom);
     const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
 
-    // Expose SVG ref for PNG export
+    // Expose SVG ref + fitToView + pan/zoom access
     useImperativeHandle(ref, () => ({
       get svgElement() {
         return svgRef.current;
       },
-    }), []);
+      fitToView() {
+        const svg = svgRef.current;
+        if (!svg || nodes.length === 0) return;
+        const rect = svg.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+
+        // Graph content offset (matches the inner <g> translate)
+        const offsetX = 200;
+        const offsetY = 40;
+
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const n of nodes) {
+          const nx = n.x + offsetX - NODE_WIDTH / 2;
+          const ny = n.y + offsetY - NODE_HEIGHT / 2;
+          if (nx < minX) minX = nx;
+          if (ny < minY) minY = ny;
+          if (nx + NODE_WIDTH > maxX) maxX = nx + NODE_WIDTH;
+          if (ny + NODE_HEIGHT > maxY) maxY = ny + NODE_HEIGHT;
+        }
+
+        const graphW = maxX - minX;
+        const graphH = maxY - minY;
+        if (graphW <= 0 || graphH <= 0) return;
+
+        const newZoom = Math.min(rect.width / graphW, rect.height / graphH) * 0.85;
+        const clampedZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const newPan = {
+          x: rect.width / 2 - centerX * clampedZoom,
+          y: rect.height / 2 - centerY * clampedZoom,
+        };
+
+        panRef.current = newPan;
+        zoomRef.current = clampedZoom;
+        setPan(newPan);
+        onZoomChange(clampedZoom);
+      },
+      getPanZoom() {
+        return { pan: panRef.current, zoom: zoomRef.current };
+      },
+      setPan(newPan: { x: number; y: number }) {
+        panRef.current = newPan;
+        setPan(newPan);
+      },
+    }), [nodes, onZoomChange]);
 
     // Track previous node/edge IDs for new-item animations
     const prevNodeIdsRef = useRef<Set<string>>(new Set());
@@ -292,6 +352,25 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       [mergeMode, onToggleMergeSelection, onSelectNode],
     );
 
+    // ── Viewport culling ──
+    // Compute visible bounds for culling off-screen nodes (performance optimization)
+    const svgRect = svgRef.current?.getBoundingClientRect();
+    const cullMargin = 200; // extra margin in world-space units
+    const viewBounds = svgRect ? {
+      minX: (-pan.x / zoom) - cullMargin - 200, // -200 for content offset
+      minY: (-pan.y / zoom) - cullMargin - 40,
+      maxX: (-pan.x + svgRect.width) / zoom + cullMargin - 200,
+      maxY: (-pan.y + svgRect.height) / zoom + cullMargin - 40,
+    } : null;
+
+    const isNodeVisible = (node: VersionNode): boolean => {
+      if (!viewBounds || nodes.length < 50) return true;
+      return node.x + NODE_WIDTH / 2 >= viewBounds.minX
+        && node.x - NODE_WIDTH / 2 <= viewBounds.maxX
+        && node.y + NODE_HEIGHT / 2 >= viewBounds.minY
+        && node.y - NODE_HEIGHT / 2 <= viewBounds.maxY;
+    };
+
     if (nodes.length === 0) {
       return (
         <div className='flex h-full items-center justify-center text-xs text-gray-500'>
@@ -318,31 +397,50 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
               const sourceNode = nodeById.get(edge.source);
               const targetNode = nodeById.get(edge.target);
               if (!sourceNode || !targetNode) return null;
+              // Viewport culling: skip if both endpoints are off-screen
+              if (!isNodeVisible(sourceNode) && !isNodeVisible(targetNode)) return null;
 
               const isMergeEdge = edge.type === 'merge';
               const isNewEdge = newEdgeIdsRef.current.has(edge.id);
 
+              const midX = (sourceNode.x + targetNode.x) / 2;
+              const midY = (sourceNode.y + NODE_HEIGHT / 2 + targetNode.y - NODE_HEIGHT / 2 + 8) / 2;
+
               return (
-                <path
-                  key={edge.id}
-                  d={buildEdgePath(sourceNode, targetNode)}
-                  fill='none'
-                  strokeWidth={1.5}
-                  markerEnd={isMergeEdge ? 'url(#vgraph-arrow-merge)' : 'url(#vgraph-arrow)'}
-                  stroke={isMergeEdge ? '#a855f7' : '#6b7280'}
-                  strokeOpacity={isMergeEdge ? 0.6 : 0.5}
-                  strokeDasharray={isMergeEdge ? '4 3' : undefined}
-                  style={isNewEdge ? {
-                    strokeDasharray: 1000,
-                    strokeDashoffset: 1000,
-                    animation: 'vgraph-edge-draw 0.6s ease forwards 0.2s',
-                  } : undefined}
-                />
+                <React.Fragment key={edge.id}>
+                  <path
+                    d={buildEdgePath(sourceNode, targetNode)}
+                    fill='none'
+                    strokeWidth={1.5}
+                    markerEnd={isMergeEdge ? 'url(#vgraph-arrow-merge)' : 'url(#vgraph-arrow)'}
+                    stroke={isMergeEdge ? '#a855f7' : '#6b7280'}
+                    strokeOpacity={isMergeEdge ? 0.6 : 0.5}
+                    strokeDasharray={isMergeEdge ? '4 3' : undefined}
+                    style={isNewEdge ? {
+                      strokeDasharray: 1000,
+                      strokeDashoffset: 1000,
+                      animation: 'vgraph-edge-draw 0.6s ease forwards 0.2s',
+                    } : undefined}
+                  />
+                  {zoom > 0.7 ? (
+                    <text
+                      x={midX + 4}
+                      y={midY}
+                      fontSize={7}
+                      fill={isMergeEdge ? '#a855f7' : '#6b7280'}
+                      fillOpacity={0.7}
+                      textAnchor='start'
+                    >
+                      {isMergeEdge ? 'merge' : 'gen'}
+                    </text>
+                  ) : null}
+                </React.Fragment>
               );
             })}
 
             {/* Nodes */}
             {nodes.map((node) => {
+              if (!isNodeVisible(node)) return null;
               const isSelected = node.id === selectedNodeId;
               const isHovered = node.id === hoveredNodeId;
               const isMergeSelected = mergeSelectedSet.has(node.id);
@@ -353,8 +451,12 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
               const nx = node.x - NODE_WIDTH / 2;
               const ny = node.y - NODE_HEIGHT / 2;
 
-              const dimmed = (mergeMode && !isMergeSelected && !isHovered) || isFilteredOut;
+              const isIsolatedOut = isolatedNodeIds !== null && !isolatedNodeIds.has(node.id);
+              const isCompareSelected = compareMode && compareNodeIds !== null
+                && (compareNodeIds[0] === node.id || compareNodeIds[1] === node.id);
+              const dimmed = (mergeMode && !isMergeSelected && !isHovered) || isFilteredOut || isIsolatedOut;
               const hasChildren = node.childIds.length > 0;
+              const annotation = getSlotAnnotation?.(node.slot);
 
               return (
                 <g
@@ -365,6 +467,13 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                   onDoubleClick={(e) => {
                     e.stopPropagation();
                     if (!mergeMode) onActivateNode(node.id);
+                  }}
+                  onContextMenu={(e) => {
+                    if (onContextMenu) {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onContextMenu(node.id, e.clientX, e.clientY);
+                    }
                   }}
                   onPointerEnter={() => onHoverNode(node.id)}
                   onPointerLeave={() => onHoverNode(null)}
@@ -390,7 +499,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                     ry={8}
                     strokeWidth={isSelected || isMergeSelected ? 2 : 1}
                     strokeDasharray={isMergeSelected ? '4 3' : undefined}
-                    className={getNodeStrokeClass(node, isSelected, isMergeSelected)}
+                    className={getNodeStrokeClass(node, isSelected, isMergeSelected, isCompareSelected)}
                   />
 
                   {/* Thumbnail */}
@@ -435,6 +544,17 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                       cy={8}
                       r={4}
                       fill='#a855f7'
+                    />
+                  ) : null}
+
+                  {/* Annotation badge */}
+                  {annotation ? (
+                    <circle
+                      cx={6}
+                      cy={NODE_HEIGHT - 8}
+                      r={3}
+                      fill='#facc15'
+                      fillOpacity={0.8}
                     />
                   ) : null}
 

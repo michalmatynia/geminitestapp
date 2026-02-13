@@ -1,6 +1,16 @@
-Remove out put to the right
+Prompt Engine
 
-When I generate image, The image Slot is attached to the card, withing the image slot there is all the infomration about the file size including metadata, also , there is informatoin about the request that created it and model that created it and the settings. I want all of this information to be saved along with the image file in the image slot. Card is a collection of such image slots linking with them on many to many relationships.
+if folder tree comes from MAster folder tree componetn but a little circled m at the bottom right of the folder tree component. Clicking it will open instance settings for this folder tree
+
+Remove output to the right
+
+I am unable to save project
+
+Thumbnail loads to canvas just by clicking, Variant info comes up on hover.
+
+Regarding the structure of files in image Stduio.
+When I generate image, The image Slot is attached to the card with the image file. Also the image slot has all the information about the file, including file size including metadata, also ,  information about the request that created it and model that created it and the settings (if they are not already contained in the request information). I want all of this information to be saved along with the image file in the image slot. Each Card is a collection of such image slots linking with them through many to many relationships.
+
 
 Below image canvas, remove the "Generation Landing Slots" text and in it's place implement a search field that enable me to search through different generations by timestamp
 
@@ -12,6 +22,7 @@ When I click a variant on the bottom left hand side two buttons appear, one to s
 
 remove convert All to Base Button and action 
 
+We need prompt structurer, which will take parts of the prompt and divide it into elements, sub lists, give side notes to particular elements, PAtch elements when new prompt is glued in, to create hybrids
 
 
 

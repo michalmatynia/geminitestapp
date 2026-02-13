@@ -40,6 +40,21 @@ export interface VersionGraphState {
   filteredNodeIds: Set<string> | null;
   /** Layout */
   layoutMode: LayoutMode;
+  /** Stats */
+  graphStats: {
+    totalNodes: number;
+    baseCount: number;
+    generationCount: number;
+    mergeCount: number;
+    maxDepth: number;
+    maskedCount: number;
+  };
+  /** Isolate branch */
+  isolatedNodeId: string | null;
+  isolatedNodeIds: Set<string> | null;
+  /** Compare mode */
+  compareMode: boolean;
+  compareNodeIds: [string, string] | null;
 }
 
 export interface VersionGraphActions {
@@ -61,6 +76,13 @@ export interface VersionGraphActions {
   clearFilters: () => void;
   /** Layout */
   setLayoutMode: (mode: LayoutMode) => void;
+  /** Isolate branch */
+  isolateBranch: (nodeId: string | null) => void;
+  /** Annotations */
+  setAnnotation: (nodeId: string, text: string) => Promise<void>;
+  /** Compare mode */
+  toggleCompareMode: () => void;
+  setCompareNodeIds: (ids: [string, string] | null) => void;
 }
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
@@ -153,7 +175,7 @@ function matchesFilter(
 
 export function VersionGraphProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { slots, selectedSlotId, workingSlotId } = useSlotsState();
-  const { setSelectedSlotId, setWorkingSlotId, createSlots } = useSlotsActions();
+  const { setSelectedSlotId, setWorkingSlotId, createSlots, updateSlotMutation } = useSlotsActions();
   const { toast } = useToast();
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -171,6 +193,13 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
 
   // Layout state
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('dag');
+
+  // Isolate branch state
+  const [isolatedNodeId, setIsolatedNodeId] = useState<string | null>(null);
+
+  // Compare mode state
+  const [compareMode, setCompareMode] = useState(false);
+  const [compareNodeIds, setCompareNodeIds] = useState<[string, string] | null>(null);
 
   const activeSlotId = useMemo(
     () => workingSlotId ?? selectedSlotId ?? null,
@@ -229,6 +258,9 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     setMergeMode(false);
     setMergeSelectedIds([]);
     setCollapsedNodeIds(new Set());
+    setIsolatedNodeId(null);
+    setCompareMode(false);
+    setCompareNodeIds(null);
   }, [activeSlotId]);
 
   // Apply layout mode
@@ -268,6 +300,62 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     }
     return matched;
   }, [visibleNodes, filterQuery, filterTypes, filterHasMask]);
+
+  // Compute graph stats
+  const graphStats = useMemo(() => {
+    const all = layoutGraph.nodes;
+    let baseCount = 0;
+    let generationCount = 0;
+    let mergeCount = 0;
+    let maxDepth = 0;
+    let maskedCount = 0;
+    for (const node of all) {
+      if (node.type === 'base') baseCount += 1;
+      else if (node.type === 'generation') generationCount += 1;
+      else mergeCount += 1;
+      if (node.depth > maxDepth) maxDepth = node.depth;
+      if (node.hasMask) maskedCount += 1;
+    }
+    return { totalNodes: all.length, baseCount, generationCount, mergeCount, maxDepth, maskedCount };
+  }, [layoutGraph.nodes]);
+
+  // Compute isolated node IDs (ancestors + descendants + self)
+  const isolatedNodeIds = useMemo<Set<string> | null>(() => {
+    if (!isolatedNodeId) return null;
+    const nodeById = new Map(layoutGraph.nodes.map((n) => [n.id, n]));
+    const result = new Set<string>();
+    result.add(isolatedNodeId);
+
+    // Walk up through parents
+    const upQueue = [isolatedNodeId];
+    while (upQueue.length > 0) {
+      const id = upQueue.shift()!;
+      const node = nodeById.get(id);
+      if (!node) continue;
+      for (const parentId of node.parentIds) {
+        if (!result.has(parentId)) {
+          result.add(parentId);
+          upQueue.push(parentId);
+        }
+      }
+    }
+
+    // Walk down through children
+    const downQueue = [isolatedNodeId];
+    while (downQueue.length > 0) {
+      const id = downQueue.shift()!;
+      const node = nodeById.get(id);
+      if (!node) continue;
+      for (const childId of node.childIds) {
+        if (!result.has(childId)) {
+          result.add(childId);
+          downQueue.push(childId);
+        }
+      }
+    }
+
+    return result;
+  }, [isolatedNodeId, layoutGraph.nodes]);
 
   // ── Actions ──
 
@@ -415,6 +503,38 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     setLayoutMode(mode);
   }, []);
 
+  // Isolate branch action
+  const isolateBranch = useCallback((nodeId: string | null) => {
+    setIsolatedNodeId(nodeId);
+  }, []);
+
+  // Annotation action
+  const setAnnotation = useCallback(async (nodeId: string, text: string) => {
+    const slot = slots.find((s) => s.id === nodeId);
+    if (!slot) return;
+    const existingMeta = readMeta(slot);
+    await updateSlotMutation.mutateAsync({
+      id: nodeId,
+      data: {
+        metadata: { ...existingMeta, annotation: text || undefined } as Record<string, unknown>,
+      },
+    });
+  }, [slots, updateSlotMutation]);
+
+  // Compare mode actions
+  const toggleCompareMode = useCallback(() => {
+    setCompareMode((prev) => {
+      if (prev) {
+        setCompareNodeIds(null);
+      }
+      return !prev;
+    });
+  }, []);
+
+  const setCompareNodeIdsAction = useCallback((ids: [string, string] | null) => {
+    setCompareNodeIds(ids);
+  }, []);
+
   const state = useMemo<VersionGraphState>(
     () => ({
       nodes: visibleNodes,
@@ -431,12 +551,17 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       filterHasMask,
       filteredNodeIds,
       layoutMode,
+      graphStats,
+      isolatedNodeId,
+      isolatedNodeIds,
+      compareMode,
+      compareNodeIds,
     }),
     [
       visibleNodes, visibleEdges, layoutGraph.nodes, layoutGraph.rootNodes,
       selectedNodeId, hoveredNodeId, mergeMode, mergeSelectedIds,
       collapsedNodeIds, filterQuery, filterTypes, filterHasMask, filteredNodeIds,
-      layoutMode,
+      layoutMode, graphStats, isolatedNodeId, isolatedNodeIds, compareMode, compareNodeIds,
     ],
   );
 
@@ -457,13 +582,17 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       setFilterHasMask: setFilterHasMaskAction,
       clearFilters,
       setLayoutMode: setLayoutModeAction,
+      isolateBranch,
+      setAnnotation,
+      toggleCompareMode,
+      setCompareNodeIds: setCompareNodeIdsAction,
     }),
     [
       selectNode, hoverNode, activateNode,
       toggleMergeMode, toggleMergeSelection, clearMergeSelection, executeMerge,
       toggleCollapse, expandAll, collapseAll,
       setFilterQueryAction, toggleFilterType, setFilterHasMaskAction, clearFilters,
-      setLayoutModeAction,
+      setLayoutModeAction, isolateBranch, setAnnotation, toggleCompareMode, setCompareNodeIdsAction,
     ],
   );
 

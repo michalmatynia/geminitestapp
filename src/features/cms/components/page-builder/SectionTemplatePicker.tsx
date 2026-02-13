@@ -1,10 +1,14 @@
 'use client';
 
 import { useMemo } from 'react';
+
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
+
 import { getTemplatesByCategory } from './section-templates';
+
 import type { SectionTemplate } from './section-templates';
+import type { PageZone } from '../../types/page-builder';
 
 /**
  * REFACTORED: SectionTemplatePicker using GenericGridPicker
@@ -25,13 +29,17 @@ interface SectionTemplatePickerProps {
   selectedTemplateId?: string;
 }
 
+const isPageZone = (value: string): value is PageZone =>
+  value === 'header' || value === 'template' || value === 'footer';
+
 export function SectionTemplatePicker({
   zone,
   onSelect,
   selectedTemplateId,
 }: SectionTemplatePickerProps): React.ReactElement {
   const templates = useMemo(() => {
-    return getTemplatesByCategory(zone);
+    const grouped = getTemplatesByCategory(isPageZone(zone) ? zone : undefined);
+    return Object.values(grouped).flat();
   }, [zone]);
 
   const items: GridPickerItem<SectionTemplate>[] = useMemo(() => {
@@ -61,7 +69,7 @@ export function SectionTemplatePicker({
   return (
     <GenericGridPicker
       items={items}
-      selectedId={selectedTemplateId}
+      {...(typeof selectedTemplateId === 'string' ? { selectedId: selectedTemplateId } : {})}
       onSelect={(item) => onSelect(item.value as SectionTemplate)}
       renderItem={(item, selected) => (
         <div
@@ -71,21 +79,21 @@ export function SectionTemplatePicker({
               : 'border-border/40 hover:border-border/60'
           }`}
         >
-          <div className="text-xs font-semibold text-gray-200">
+          <div className='text-xs font-semibold text-gray-200'>
             {(item.value as SectionTemplate).name}
           </div>
           {(item.value as SectionTemplate).description && (
-            <div className="text-[10px] text-gray-400 mt-1">
+            <div className='text-[10px] text-gray-400 mt-1'>
               {(item.value as SectionTemplate).description}
             </div>
           )}
         </div>
       )}
       columns={3}
-      gap="12px"
+      gap='12px'
       searchable
       searchMatcher={searchMatcher}
-      searchPlaceholder="Search templates..."
+      searchPlaceholder='Search templates...'
     />
   );
 }

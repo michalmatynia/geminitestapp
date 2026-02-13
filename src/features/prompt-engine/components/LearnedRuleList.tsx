@@ -8,24 +8,25 @@ import { LearnedRuleItem } from './LearnedRuleItem';
 import { usePromptEngine } from '../context/PromptEngineContext';
 
 export function LearnedRuleList(): React.JSX.Element {
-  const { learnedDrafts } = usePromptEngine();
+  const { filteredLearnedDrafts, patternTab } = usePromptEngine();
+  const tabLabel = patternTab === 'prompt_exploder' ? 'Prompt Exploder' : 'Core';
 
   return (
     <div className='space-y-4'>
       <SectionPanel>
-        <div className='text-xs uppercase text-gray-500'>Learned Rules</div>
+        <div className='text-xs uppercase text-gray-500'>{tabLabel} Learned Rules</div>
         <div className='mt-1 text-xs text-gray-400'>
-          Auto-generated patterns from prompts. Review and edit before saving.
+          Auto-generated patterns from prompts for the selected list. Review and edit before saving.
         </div>
       </SectionPanel>
 
-      {learnedDrafts.length === 0 ? (
+      {filteredLearnedDrafts.length === 0 ? (
         <SectionPanel>
           <div className='text-sm text-gray-400'>No learned patterns yet.</div>
         </SectionPanel>
       ) : null}
 
-      {learnedDrafts.map((draft) => (
+      {filteredLearnedDrafts.map((draft) => (
         <LearnedRuleItem key={draft.uid} draft={draft} />
       ))}
 

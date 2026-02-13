@@ -22,8 +22,10 @@ import { cn } from '@/shared/utils';
 import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
 import {
   DEFAULT_PROMPT_VALIDATION_SCOPES,
+  PROMPT_EXPLODER_RULE_SEGMENT_TYPE_VALUES,
   PROMPT_VALIDATION_SCOPE_LABELS,
   PROMPT_VALIDATION_SCOPE_VALUES,
+  type PromptExploderRuleSegmentType,
   type PromptValidationScope,
   type PromptValidationSimilarPattern,
   type PromptAutofixOperation,
@@ -89,6 +91,13 @@ const SCOPE_OPTIONS = PROMPT_VALIDATION_SCOPE_VALUES.map((scope) => ({
   value: scope,
   label: PROMPT_VALIDATION_SCOPE_LABELS[scope],
 }));
+const PROMPT_EXPLODER_SEGMENT_OPTIONS: Array<{
+  value: PromptExploderRuleSegmentType;
+  label: string;
+}> = PROMPT_EXPLODER_RULE_SEGMENT_TYPE_VALUES.map((type) => ({
+  value: type,
+  label: type.replaceAll('_', ' '),
+}));
 
 const normalizeRuleScopes = (
   scopes: PromptValidationScope[] | null | undefined
@@ -144,6 +153,17 @@ export function RuleItem({
   const launchOperator = rule?.launchOperator ?? 'contains';
   const launchValue = rule?.launchValue ?? '';
   const launchFlags = rule?.launchFlags ?? '';
+  const promptExploderSegmentType = rule?.promptExploderSegmentType ?? null;
+  const promptExploderConfidenceBoost = Number.isFinite(rule?.promptExploderConfidenceBoost)
+    ? Math.min(0.5, Math.max(0, rule?.promptExploderConfidenceBoost ?? 0))
+    : 0;
+  const promptExploderPriority = Number.isFinite(rule?.promptExploderPriority)
+    ? Math.min(50, Math.max(-50, Math.floor(rule?.promptExploderPriority ?? 0)))
+    : 0;
+  const promptExploderTreatAsHeading = rule?.promptExploderTreatAsHeading ?? false;
+  const hasPromptExploderScope = appliesToScopes.some(
+    (scope) => scope === 'prompt_exploder' || scope === 'global'
+  );
 
   const patchRule = (patch: Partial<PromptValidationRule>): void => {
     if (!rule) return;
@@ -450,6 +470,95 @@ export function RuleItem({
                 emptyMessage='No scope found.'
               />
             </div>
+            {hasPromptExploderScope ? (
+              <>
+                <div className='space-y-1 md:col-span-2'>
+                  <Label className='text-[11px] text-slate-300'>Exploder Segment Type Hint</Label>
+                  <Select
+                    value={promptExploderSegmentType ?? 'none'}
+                    onValueChange={(value: string): void => {
+                      if (value === 'none') {
+                        patchRule({ promptExploderSegmentType: null });
+                        return;
+                      }
+                      const valid = PROMPT_EXPLODER_SEGMENT_OPTIONS.some(
+                        (option) => option.value === value
+                      );
+                      if (!valid) return;
+                      patchRule({
+                        promptExploderSegmentType: value as PromptExploderRuleSegmentType,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className='h-8'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='none'>No type override</SelectItem>
+                      {PROMPT_EXPLODER_SEGMENT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-1 md:col-span-1'>
+                  <Label className='text-[11px] text-slate-300'>Exploder Priority</Label>
+                  <Input
+                    type='number'
+                    min={-50}
+                    max={50}
+                    className='h-8'
+                    value={String(promptExploderPriority)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      const parsed = Number(event.target.value);
+                      if (!Number.isFinite(parsed)) return;
+                      patchRule({
+                        promptExploderPriority: Math.min(50, Math.max(-50, Math.floor(parsed))),
+                      });
+                    }}
+                  />
+                </div>
+                <div className='space-y-1 md:col-span-1'>
+                  <Label className='text-[11px] text-slate-300'>Exploder Confidence Boost</Label>
+                  <Input
+                    type='number'
+                    min={0}
+                    max={0.5}
+                    step={0.05}
+                    className='h-8'
+                    value={promptExploderConfidenceBoost.toFixed(2)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      const parsed = Number(event.target.value);
+                      if (!Number.isFinite(parsed)) return;
+                      patchRule({
+                        promptExploderConfidenceBoost: Math.min(0.5, Math.max(0, parsed)),
+                      });
+                    }}
+                  />
+                </div>
+                <div className='space-y-1 md:col-span-4'>
+                  <Label className='text-[11px] text-slate-300'>Exploder: Treat Match As Heading</Label>
+                  <button
+                    type='button'
+                    className={cn(
+                      'h-8 w-full rounded border text-xs font-medium',
+                      promptExploderTreatAsHeading
+                        ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200'
+                        : 'border-red-500/50 bg-red-500/10 text-red-200'
+                    )}
+                    onClick={() =>
+                      patchRule({
+                        promptExploderTreatAsHeading: !promptExploderTreatAsHeading,
+                      })
+                    }
+                  >
+                    {promptExploderTreatAsHeading ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+              </>
+            ) : null}
           </div>
 
           <div className='grid gap-2 rounded border border-border/40 bg-foreground/5 p-3 md:grid-cols-4'>

@@ -1,9 +1,13 @@
 import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type {
+  PromptExploderRuleSegmentType,
+  PromptValidationRule,
+} from '@/features/prompt-engine/settings';
 
 import type {
   PromptExploderBinding,
   PromptExploderDocument,
+  PromptExploderLearnedTemplate,
   PromptExploderListItem,
   PromptExploderSegment,
   PromptExploderSegmentType,
@@ -12,6 +16,18 @@ import type {
 
 const REFERENCE_CODE_RE = /\b(P\d+|RL\d+|QA(?:_R)?\d+)\b/g;
 const PARAM_REFERENCE_RE = /\b([a-z_]+(?:\.[a-z_]+)+)\b/g;
+
+const SEGMENT_TYPE_VALUES: PromptExploderSegmentType[] = [
+  'metadata',
+  'assigned_text',
+  'list',
+  'parameter_block',
+  'referential_list',
+  'sequence',
+  'hierarchical_list',
+  'conditional_list',
+  'qa_matrix',
+];
 
 const DEFAULT_PATTERN_IDS: Record<string, RegExp> = {
   'segment.metadata.banner': /^\s*={3,}.+={3,}\s*$/,
@@ -25,10 +41,22 @@ const DEFAULT_PATTERN_IDS: Record<string, RegExp> = {
   'segment.conditional.fix_until': /\bfix\s+until\b/i,
   'segment.comment.patch': /^\s*\/\/\s*PATCH\b/i,
 };
+const BRACKET_SECTION_HEADING_RE = /^\s*\[[A-Z0-9 _()\-/:&+.,]{2,}]$/i;
 
 type PatternRuntime = {
   byId: Map<string, RegExp>;
   scopedRules: PromptValidationRule[];
+  regexRules: RuntimeRegexRule[];
+  headingRules: RuntimeRegexRule[];
+};
+
+type RuntimeRegexRule = {
+  id: string;
+  regex: RegExp;
+  segmentTypeHint: PromptExploderSegmentType | null;
+  confidenceBoost: number;
+  priority: number;
+  treatAsHeading: boolean;
 };
 
 type ParseCursor = {
@@ -81,6 +109,13 @@ const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\
 
 const toLine = (line: string | undefined): string => (line ?? '').replace(/\r/g, '');
 
+const normalizeHeadingLabel = (line: string): string =>
+  line
+    .trim()
+    .replace(/^#{1,6}\s+/, '')
+    .replace(/^\[(.+)]$/, '$1')
+    .trim();
+
 const parseCodeFromLine = (line: string): ParsedTitleLine => {
   const trimmed = line.trim();
   const match = /^(P\d+|RL\d+|QA(?:_R)?\d+)\s*[—:-]?\s*(.*)$/i.exec(trimmed);
@@ -96,10 +131,15 @@ const parseCodeFromLine = (line: string): ParsedTitleLine => {
   };
 };
 
-const isLikelyHeading = (line: string): boolean => {
+const isLikelyHeading = (line: string, runtime?: PatternRuntime): boolean => {
   const trimmed = line.trim();
   if (!trimmed) return false;
+  if (/^`{3,}/.test(trimmed)) return false;
   if (/^={3,}.+={3,}$/.test(trimmed)) return true;
+  if (/^#{1,6}\s+\S+/.test(trimmed)) return true;
+  if (/^\[[A-Z0-9 _()\-/:&+.,]{2,}]$/i.test(trimmed)) return true;
+  if (/^[^|\n]+(?:\s*\|\s*[^|\n]+){2,}$/.test(trimmed)) return true;
+  if (runtime?.headingRules.some((rule) => rule.regex.test(trimmed))) return true;
   if (/^\d+[.)]\s+/.test(trimmed)) return false;
   if (/^[*-]\s+/.test(trimmed)) return false;
   if (/^[A-Z]\)\s+/.test(trimmed)) return false;
@@ -108,10 +148,251 @@ const isLikelyHeading = (line: string): boolean => {
   return /^(ROLE|PARAMS|REQUIREMENTS|PIPELINE|FINAL QA)\b/i.test(trimmed);
 };
 
+const isPromptExploderSegmentType = (
+  value: string | null | undefined
+): value is PromptExploderSegmentType =>
+  Boolean(value && SEGMENT_TYPE_VALUES.includes(value as PromptExploderSegmentType));
+
+const toSegmentTypeHint = (
+  value: PromptExploderRuleSegmentType | PromptExploderSegmentType | string | null | undefined
+): PromptExploderSegmentType | null => {
+  if (!value) return null;
+  return isPromptExploderSegmentType(String(value)) ? (String(value) as PromptExploderSegmentType) : null;
+};
+
+const typeFromPatternId = (patternId: string): PromptExploderSegmentType | null => {
+  const match =
+    /^segment\.(?:infer|learned)\.([a-z_]+)\b/i.exec(patternId) ??
+    /^segment\.type\.([a-z_]+)\b/i.exec(patternId);
+  if (!match) return null;
+  const candidate = (match[1] ?? '').toLowerCase();
+  if (!isPromptExploderSegmentType(candidate)) return null;
+  return candidate;
+};
+
+const normalizedSimilarityText = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const tokenSet = (value: string): Set<string> => {
+  const tokens = normalizedSimilarityText(value)
+    .split(' ')
+    .filter((token) => token.length > 1);
+  return new Set(tokens);
+};
+
+const jaccardSimilarity = (left: string, right: string): number => {
+  const leftSet = tokenSet(left);
+  const rightSet = tokenSet(right);
+  if (leftSet.size === 0 && rightSet.size === 0) return 1;
+  if (leftSet.size === 0 || rightSet.size === 0) return 0;
+  let intersection = 0;
+  leftSet.forEach((token) => {
+    if (rightSet.has(token)) intersection += 1;
+  });
+  const union = leftSet.size + rightSet.size - intersection;
+  if (union <= 0) return 0;
+  return intersection / union;
+};
+
+const toBigrams = (value: string): Set<string> => {
+  const normalized = normalizedSimilarityText(value).replace(/\s/g, '');
+  if (!normalized) return new Set();
+  if (normalized.length === 1) return new Set([normalized]);
+  const out = new Set<string>();
+  for (let i = 0; i < normalized.length - 1; i += 1) {
+    out.add(normalized.slice(i, i + 2));
+  }
+  return out;
+};
+
+const diceSimilarity = (left: string, right: string): number => {
+  const leftBigrams = toBigrams(left);
+  const rightBigrams = toBigrams(right);
+  if (leftBigrams.size === 0 && rightBigrams.size === 0) return 1;
+  if (leftBigrams.size === 0 || rightBigrams.size === 0) return 0;
+  let overlap = 0;
+  leftBigrams.forEach((token) => {
+    if (rightBigrams.has(token)) overlap += 1;
+  });
+  return (2 * overlap) / (leftBigrams.size + rightBigrams.size);
+};
+
+const anchorCoverageScore = (
+  segmentText: string,
+  anchorTokens: string[]
+): number => {
+  const anchors = anchorTokens
+    .map((token) => normalizedSimilarityText(token))
+    .filter(Boolean);
+  if (anchors.length === 0) return 0;
+  const normalized = normalizedSimilarityText(segmentText);
+  let hits = 0;
+  anchors.forEach((token) => {
+    if (normalized.includes(token)) hits += 1;
+  });
+  return hits / anchors.length;
+};
+
+const segmentSimilaritySource = (segment: PromptExploderSegment): string => {
+  const lines: string[] = [segment.title];
+  if (segment.listItems.length > 0) {
+    lines.push(segment.listItems.slice(0, 3).map((item) => item.text).join(' '));
+  }
+  if (segment.subsections.length > 0) {
+    const subsection = segment.subsections[0];
+    if (subsection) {
+      lines.push(subsection.title);
+      if (subsection.items.length > 0) {
+        lines.push(subsection.items.slice(0, 2).map((item) => item.text).join(' '));
+      }
+    }
+  }
+  if (segment.text) {
+    lines.push(segment.text.slice(0, 180));
+  }
+  return lines.join(' ');
+};
+
+const inferTypeFromPatternIds = (
+  matchedPatternIds: string[],
+  fallbackType: PromptExploderSegmentType
+): PromptExploderSegmentType => {
+  for (const patternId of matchedPatternIds) {
+    const inferred = typeFromPatternId(patternId);
+    if (inferred) return inferred;
+  }
+  return fallbackType;
+};
+
+const normalizeRegexFlags = (flags: string | null | undefined): string | undefined => {
+  const cleaned = (flags ?? '').replace(/[gy]/g, '');
+  return cleaned.trim() || undefined;
+};
+
+const compileSafeRegex = (
+  pattern: string,
+  flags: string | null | undefined
+): RegExp | null => {
+  try {
+    return new RegExp(pattern, normalizeRegexFlags(flags));
+  } catch {
+    return null;
+  }
+};
+
+const inferTypeFromRuleHints = (
+  matchedRules: RuntimeRegexRule[],
+  fallbackType: PromptExploderSegmentType
+): PromptExploderSegmentType => {
+  const typedMatches = matchedRules
+    .filter((rule) => rule.segmentTypeHint)
+    .sort((left, right) => {
+      if (right.priority !== left.priority) return right.priority - left.priority;
+      if (right.confidenceBoost !== left.confidenceBoost) {
+        return right.confidenceBoost - left.confidenceBoost;
+      }
+      return left.id.localeCompare(right.id);
+    });
+
+  const preferred = typedMatches[0]?.segmentTypeHint;
+  if (preferred) return preferred;
+
+  return inferTypeFromPatternIds(
+    matchedRules.map((rule) => rule.id),
+    fallbackType
+  );
+};
+
+const inferTypeFromLearnedTemplates = (
+  segment: PromptExploderSegment,
+  templates: PromptExploderLearnedTemplate[],
+  similarityThreshold: number
+): {
+  type: PromptExploderSegmentType;
+  confidence: number;
+  matchedTemplateId: string | null;
+} => {
+  if (templates.length === 0) {
+    return {
+      type: segment.type,
+      confidence: segment.confidence,
+      matchedTemplateId: null,
+    };
+  }
+
+  if (segment.type === 'metadata' || segment.type === 'parameter_block') {
+    return {
+      type: segment.type,
+      confidence: segment.confidence,
+      matchedTemplateId: null,
+    };
+  }
+
+  const sourceText = segmentSimilaritySource(segment);
+  let bestTemplate: PromptExploderLearnedTemplate | null = null;
+  let bestScore = 0;
+
+  templates.forEach((template) => {
+    const titleScore = Math.max(
+      diceSimilarity(sourceText, template.normalizedTitle || template.title),
+      jaccardSimilarity(sourceText, template.normalizedTitle || template.title)
+    );
+    const sampleScore = template.sampleText
+      ? Math.max(
+        diceSimilarity(sourceText, template.sampleText),
+        jaccardSimilarity(sourceText, template.sampleText)
+      )
+      : 0;
+    const anchorScore = anchorCoverageScore(sourceText, template.anchorTokens);
+    const totalScore = Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
+
+    if (totalScore > bestScore) {
+      bestScore = totalScore;
+      bestTemplate = template;
+    }
+  });
+
+  if (!bestTemplate || bestScore < similarityThreshold) {
+    return {
+      type: segment.type,
+      confidence: segment.confidence,
+      matchedTemplateId: null,
+    };
+  }
+
+  const matchedTemplate = bestTemplate as PromptExploderLearnedTemplate;
+  const matchedTypeCandidate = matchedTemplate.segmentType as string;
+  const matchedType = isPromptExploderSegmentType(matchedTypeCandidate)
+    ? matchedTypeCandidate
+    : segment.type;
+  const matchedTemplateId =
+    typeof matchedTemplate.id === 'string' ? matchedTemplate.id : null;
+
+  return {
+    type: matchedType,
+    confidence: Math.max(segment.confidence, bestScore),
+    matchedTemplateId,
+  };
+};
+
 const compileRuntimePatterns = (rules: PromptValidationRule[] | null | undefined): PatternRuntime => {
   const byId = new Map<string, RegExp>();
+  const runtimeRulesById = new Map<string, RuntimeRegexRule>();
+
   Object.entries(DEFAULT_PATTERN_IDS).forEach(([id, regex]) => {
     byId.set(id, regex);
+    runtimeRulesById.set(id, {
+      id,
+      regex,
+      segmentTypeHint: typeFromPatternId(id),
+      confidenceBoost: 0,
+      priority: 0,
+      treatAsHeading: false,
+    });
   });
 
   const scopedRules = (rules ?? []).filter((rule) => {
@@ -123,19 +404,34 @@ const compileRuntimePatterns = (rules: PromptValidationRule[] | null | undefined
 
   scopedRules.forEach((rule) => {
     if (rule.kind !== 'regex') return;
-    try {
-      byId.set(rule.id, new RegExp(rule.pattern, rule.flags || undefined));
-      if (DEFAULT_PATTERN_IDS[rule.id]) {
-        byId.set(rule.id, new RegExp(rule.pattern, rule.flags || undefined));
-      }
-    } catch {
-      // Keep default/fallback regex when a custom rule is invalid.
-    }
+    const compiled = compileSafeRegex(rule.pattern, rule.flags);
+    if (!compiled) return;
+    byId.set(rule.id, compiled);
+    runtimeRulesById.set(rule.id, {
+      id: rule.id,
+      regex: compiled,
+      segmentTypeHint:
+        toSegmentTypeHint(rule.promptExploderSegmentType) ?? typeFromPatternId(rule.id),
+      confidenceBoost: Math.min(
+        0.5,
+        Math.max(0, Number(rule.promptExploderConfidenceBoost ?? 0))
+      ),
+      priority: Math.min(
+        50,
+        Math.max(-50, Math.floor(Number(rule.promptExploderPriority ?? 0)))
+      ),
+      treatAsHeading: Boolean(rule.promptExploderTreatAsHeading),
+    });
   });
+
+  const regexRules = [...runtimeRulesById.values()];
+  const headingRules = regexRules.filter((rule) => rule.treatAsHeading);
 
   return {
     byId,
     scopedRules,
+    regexRules,
+    headingRules,
   };
 };
 
@@ -145,29 +441,11 @@ const testPattern = (runtime: PatternRuntime, patternId: string, value: string):
   return regex.test(value);
 };
 
-const collectMatchedPatternIds = (
+const collectMatchedRules = (
   runtime: PatternRuntime,
-  text: string,
-  defaults: string[] = []
-): string[] => {
-  const matched = new Set<string>(defaults);
-  runtime.scopedRules.forEach((rule) => {
-    if (rule.kind !== 'regex') return;
-    try {
-      const regex = new RegExp(rule.pattern, rule.flags || undefined);
-      if (regex.test(text)) {
-        matched.add(rule.id);
-      }
-    } catch {
-      // Ignore invalid regex.
-    }
-  });
-  Object.entries(DEFAULT_PATTERN_IDS).forEach(([id, regex]) => {
-    if (regex.test(text)) {
-      matched.add(id);
-    }
-  });
-  return [...matched];
+  text: string
+): RuntimeRegexRule[] => {
+  return runtime.regexRules.filter((rule) => rule.regex.test(text));
 };
 
 const extractReferenceCodes = (value: string): string[] => {
@@ -258,7 +536,8 @@ const flattenItemsToTextLines = (
 const findNextHeadingIndex = (
   lines: string[],
   startIndex: number,
-  boundaryHeadings: RegExp[] = []
+  boundaryHeadings: RegExp[] = [],
+  runtime?: PatternRuntime
 ): number => {
   for (let i = startIndex; i < lines.length; i += 1) {
     const line = toLine(lines[i]);
@@ -267,7 +546,7 @@ const findNextHeadingIndex = (
     if (boundaryHeadings.some((pattern) => pattern.test(trimmed))) {
       return i;
     }
-    if (isLikelyHeading(trimmed)) {
+    if (isLikelyHeading(trimmed, runtime)) {
       return i;
     }
   }
@@ -276,10 +555,11 @@ const findNextHeadingIndex = (
 
 const consumeParagraphBlock = (
   cursor: ParseCursor,
-  boundaryHeadings: RegExp[] = []
+  boundaryHeadings: RegExp[] = [],
+  runtime?: PatternRuntime
 ): string[] => {
   const start = cursor.index;
-  const end = findNextHeadingIndex(cursor.lines, start + 1, boundaryHeadings);
+  const end = findNextHeadingIndex(cursor.lines, start + 1, boundaryHeadings, runtime);
   cursor.index = end;
   return cursor.lines.slice(start, end);
 };
@@ -290,14 +570,57 @@ const consumeTailBlock = (cursor: ParseCursor): string[] => {
   return cursor.lines.slice(start);
 };
 
-const consumeParamsBlock = (cursor: ParseCursor): string[] => {
+const consumeQaBlock = (
+  cursor: ParseCursor,
+  runtime?: PatternRuntime
+): string[] => {
+  const start = cursor.index;
+  for (let i = start + 1; i < cursor.lines.length; i += 1) {
+    const trimmed = toLine(cursor.lines[i]).trim();
+    if (!trimmed) continue;
+
+    if (/^(QA(?:_R)?\d+)\b/i.test(normalizeHeadingLabel(trimmed))) {
+      continue;
+    }
+    if (/^FINAL\s+QA\b/i.test(normalizeHeadingLabel(trimmed))) {
+      continue;
+    }
+    if (/^\s*(\d+[.)]|[*-])\s+/.test(trimmed)) {
+      continue;
+    }
+    if (isLikelyHeading(trimmed, runtime)) {
+      cursor.index = i;
+      return cursor.lines.slice(start, i);
+    }
+  }
+  return consumeTailBlock(cursor);
+};
+
+const consumeBlockUntilBoundary = (
+  cursor: ParseCursor,
+  boundaryHeadings: RegExp[]
+): string[] => {
+  const start = cursor.index;
+  for (let i = start + 1; i < cursor.lines.length; i += 1) {
+    const trimmed = toLine(cursor.lines[i]).trim();
+    if (!trimmed) continue;
+    if (boundaryHeadings.some((pattern) => pattern.test(trimmed))) {
+      cursor.index = i;
+      return cursor.lines.slice(start, i);
+    }
+  }
+  cursor.index = cursor.lines.length;
+  return cursor.lines.slice(start);
+};
+
+const consumeParamsBlock = (cursor: ParseCursor, runtime?: PatternRuntime): string[] => {
   const start = cursor.index;
   let i = start;
   while (i < cursor.lines.length && !/^\s*params\s*=\s*\{/i.test(toLine(cursor.lines[i]))) {
     i += 1;
   }
   if (i >= cursor.lines.length) {
-    const fallback = consumeParagraphBlock(cursor);
+    const fallback = consumeParagraphBlock(cursor, [], runtime);
     return fallback;
   }
 
@@ -355,8 +678,12 @@ const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] =
   lines.forEach((line) => {
     const trimmed = line.trim();
     if (!trimmed) return;
+    const normalizedHeading = normalizeHeadingLabel(trimmed);
     const alphaMatch = /^([A-Z])\)\s+(.+)$/.exec(trimmed);
     const refMatch = /^(RL\d+|P\d+|QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i.exec(trimmed);
+    const numericBracketHeadingMatch = /^\d+\.\s+\[([A-Z0-9 _()\-/:&+.,]{2,})]$/.exec(trimmed);
+    const bracketHeadingMatch = /^\[([A-Z0-9 _()\-/:&+.,]{2,})]$/.exec(trimmed);
+    const markdownHeadingMatch = /^#{1,6}\s+(.+)$/.exec(trimmed);
 
     if (alphaMatch) {
       flush();
@@ -369,6 +696,27 @@ const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] =
       flush();
       currentCode = (refMatch[1] ?? '').toUpperCase();
       currentTitle = (refMatch[2] ?? '').trim() || currentCode;
+      return;
+    }
+
+    if (numericBracketHeadingMatch) {
+      flush();
+      currentTitle = `[${(numericBracketHeadingMatch[1] ?? '').trim()}]`;
+      currentCode = null;
+      return;
+    }
+
+    if (bracketHeadingMatch) {
+      flush();
+      currentTitle = `[${(bracketHeadingMatch[1] ?? '').trim()}]`;
+      currentCode = null;
+      return;
+    }
+
+    if (markdownHeadingMatch) {
+      flush();
+      currentTitle = normalizeHeadingLabel(markdownHeadingMatch[0] ?? '') || normalizedHeading;
+      currentCode = null;
       return;
     }
 
@@ -407,6 +755,7 @@ const parseQaSubsections = (lines: string[]): PromptExploderSubsection[] => {
   lines.forEach((line) => {
     const trimmed = line.trim();
     if (!trimmed) return;
+    const normalizedHeading = normalizeHeadingLabel(trimmed);
 
     const qaMatch = /^(QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i.exec(trimmed);
     if (qaMatch) {
@@ -416,9 +765,9 @@ const parseQaSubsections = (lines: string[]): PromptExploderSubsection[] => {
       return;
     }
 
-    if (/^FINAL\s+QA\b/i.test(trimmed)) {
+    if (/^FINAL\s+QA\b/i.test(normalizedHeading)) {
       flush();
-      currentTitle = trimmed;
+      currentTitle = normalizedHeading;
       currentCode = null;
       return;
     }
@@ -436,17 +785,41 @@ const parseQaSubsections = (lines: string[]): PromptExploderSubsection[] => {
 };
 
 const inferSegmentType = (title: string, raw: string): PromptExploderSegmentType => {
-  const normalizedTitle = title.trim().toLowerCase();
+  const normalizedTitle = normalizeHeadingLabel(title).toLowerCase();
   const normalizedRaw = raw.trim().toLowerCase();
+  const trimmedTitle = title.trim();
 
-  if (/^={3,}.+={3,}$/.test(title.trim())) return 'metadata';
-  if (/\bparams\b/.test(normalizedTitle) && /\bparams\s*=\s*\{/.test(normalizedRaw)) {
+  if (/^={3,}.+={3,}$/.test(trimmedTitle)) return 'metadata';
+  if (/^\s*[^|\n]+(?:\s*\|\s*[^|\n]+){2,}\s*$/.test(trimmedTitle)) return 'metadata';
+  if (
+    /\b(params|parameters|config|global settings|global_settings)\b/.test(normalizedTitle) &&
+    /\bparams\s*=\s*\{/.test(normalizedRaw)
+  ) {
     return 'parameter_block';
   }
-  if (/^(p\d+|rl\d+|qa(?:_r)?\d+)/i.test(title.trim())) return 'referential_list';
-  if (/\bfinal qa\b/.test(normalizedTitle)) return 'qa_matrix';
-  if (/\bpipeline\b/.test(normalizedTitle)) return 'hierarchical_list';
-  if (/\brequirements\b/.test(normalizedTitle)) return 'sequence';
+  if (/^(p\d+|rl\d+|qa(?:_r)?\d+)/i.test(trimmedTitle)) return 'referential_list';
+  if (
+    /\b(final qa|quality gate|quality checks?|validation module)\b/.test(normalizedTitle) ||
+    /\bpass\b[^\n]{0,80}\bfail\b/i.test(raw)
+  ) {
+    return 'qa_matrix';
+  }
+  if (
+    /\b(pipeline|workflow|execution template|run report)\b/.test(normalizedTitle) ||
+    (/^\s*\d+\.\s+/m.test(raw) &&
+      /\b(step|module|parse|run|export|validate|execute)\b/.test(normalizedRaw))
+  ) {
+    return 'hierarchical_list';
+  }
+  if (
+    /\b(requirements|guidelines|constraints|ruleset|modules|data model|logging and audit|error handling|security notes|dry_run_behavior)\b/.test(
+      normalizedTitle
+    ) ||
+    /^\s*[A-Z]\)\s+.+$/m.test(raw) ||
+    /(?:^|\n)\s*(RL\d+|QA(?:_R)?\d+)\b/i.test(raw)
+  ) {
+    return 'sequence';
+  }
   if (/\bonly if\b|\bif\b|\buntil\b/.test(normalizedRaw)) return 'conditional_list';
   if (/^\s*(\d+[.)]|[*-]|[A-Z]\))\s+/m.test(raw)) return 'list';
   return 'assigned_text';
@@ -464,25 +837,46 @@ const createSegment = (args: {
   subsections?: PromptExploderSubsection[];
   paramsText?: string;
   paramsObject?: Record<string, unknown> | null;
+  lockType?: boolean;
 }): PromptExploderSegment => {
-  const type = args.type ?? inferSegmentType(args.title, args.raw);
-  const matchedPatternIds = collectMatchedPatternIds(args.runtime, args.raw);
+  const inferredType = args.type ?? inferSegmentType(args.title, args.raw);
+  const matchedRules = collectMatchedRules(args.runtime, args.raw);
+  const matchedPatternIds = matchedRules.map((rule) => rule.id);
+  const hintedType = inferTypeFromRuleHints(matchedRules, inferredType);
+  const type = args.lockType ? inferredType : hintedType;
+  const normalizedRaw = trimTrailingBlankLines(args.raw);
+  const shouldParseParams = type === 'parameter_block';
+  const extractedParams =
+    shouldParseParams && !args.paramsObject ? extractParamsFromPrompt(normalizedRaw) : null;
+  const resolvedParamsObject = args.paramsObject
+    ?? (extractedParams?.ok ? extractedParams.params : null);
+  const resolvedParamsText =
+    shouldParseParams
+      ? (args.paramsText && args.paramsText.trim().length > 0 ? args.paramsText : normalizedRaw)
+      : (args.paramsText ?? '');
   const confidenceBase = 0.45;
-  const confidence = Math.min(0.99, confidenceBase + matchedPatternIds.length * 0.06);
+  const confidenceBoost = matchedRules.reduce(
+    (total, rule) => total + Math.max(0, rule.confidenceBoost),
+    0
+  );
+  const confidence = Math.min(
+    0.99,
+    confidenceBase + matchedPatternIds.length * 0.06 + confidenceBoost
+  );
 
   return {
     id: segmentId(),
     type,
     title: args.title.trim() || 'Untitled Segment',
     includeInOutput: args.includeInOutput ?? (type !== 'metadata'),
-    text: trimTrailingBlankLines(args.raw),
-    raw: trimTrailingBlankLines(args.raw),
+    text: normalizedRaw,
+    raw: normalizedRaw,
     code: args.code ?? null,
     condition: args.condition ?? null,
     listItems: args.listItems ?? [],
     subsections: args.subsections ?? [],
-    paramsText: args.paramsText ?? '',
-    paramsObject: args.paramsObject ?? null,
+    paramsText: resolvedParamsText,
+    paramsObject: resolvedParamsObject,
     matchedPatternIds,
     confidence,
   };
@@ -744,9 +1138,34 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
   while (cursor.index < lines.length) {
     const line = toLine(lines[cursor.index]);
     const trimmed = line.trim();
+    const normalizedHeading = normalizeHeadingLabel(trimmed);
 
     if (!trimmed) {
       cursor.index += 1;
+      continue;
+    }
+
+    if (
+      /^===\s*STUDIO\s+RELIGHTING/i.test(trimmed) ||
+      /^STUDIO\s+RELIGHTING\b/i.test(normalizedHeading)
+    ) {
+      const blockLines = consumeBlockUntilBoundary(cursor, [
+        /^PIPELINE\b/i,
+        /^FINAL\s+QA\b/i,
+      ]);
+      const segmentTitle = blockLines[0]?.trim() || 'STUDIO RELIGHTING EXTENSION';
+      const subsections = parseSequenceSubsections(blockLines.slice(1));
+      segments.push(
+        createSegment({
+          runtime,
+          type: 'sequence',
+          lockType: true,
+          title: segmentTitle,
+          raw: trimTrailingBlankLines(blockLines.join('\n')),
+          subsections,
+          includeInOutput: true,
+        })
+      );
       continue;
     }
 
@@ -755,6 +1174,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
         createSegment({
           runtime,
           type: 'metadata',
+          lockType: true,
           title: trimmed,
           raw: trimmed,
           includeInOutput: false,
@@ -764,15 +1184,22 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       continue;
     }
 
-    if (/^PARAMS\b/i.test(trimmed) || testPattern(runtime, 'segment.params.block', trimmed)) {
-      const blockLines = consumeParamsBlock(cursor);
+    if (
+      /^PARAMS\b/i.test(normalizedHeading) ||
+      /^PARAMETERS\b/i.test(normalizedHeading) ||
+      /^GLOBAL[_\s]SETTINGS\b/i.test(normalizedHeading) ||
+      testPattern(runtime, 'segment.params.block', trimmed)
+    ) {
+      const blockLines = consumeParamsBlock(cursor, runtime);
       const raw = trimTrailingBlankLines(blockLines.join('\n'));
       const extracted = extractParamsFromPrompt(raw);
+      const headingTitle = normalizeHeadingLabel(blockLines[0] ?? '') || 'PARAMS';
       segments.push(
         createSegment({
           runtime,
           type: 'parameter_block',
-          title: 'PARAMS',
+          lockType: true,
+          title: headingTitle,
           raw,
           paramsText: raw,
           paramsObject: extracted.ok ? extracted.params : null,
@@ -781,49 +1208,18 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       continue;
     }
 
-    if (/^REQUIREMENTS\b/i.test(trimmed)) {
-      const blockLines = consumeParagraphBlock(cursor, [/^===\s*STUDIO\s+RELIGHTING/i, /^PIPELINE\b/i, /^FINAL\s+QA\b/i]);
-      const body = blockLines.slice(1);
-      const subsections = parseSequenceSubsections(body);
-      segments.push(
-        createSegment({
-          runtime,
-          type: 'sequence',
-          title: 'REQUIREMENTS',
-          raw: trimTrailingBlankLines(blockLines.join('\n')),
-          subsections,
-        })
-      );
-      continue;
-    }
-
-    if (/^PIPELINE\b/i.test(trimmed)) {
-      const blockLines = consumeParagraphBlock(cursor, [/^FINAL\s+QA\b/i]);
-      const title = blockLines[0]?.trim() || 'PIPELINE';
-      const body = blockLines.slice(1);
-      segments.push(
-        createSegment({
-          runtime,
-          type: 'hierarchical_list',
-          title,
-          raw: trimTrailingBlankLines(blockLines.join('\n')),
-          listItems: parseListLines(body),
-          condition: body.some((value) => /\bif\b|\bonly if\b/i.test(value))
-            ? 'conditional'
-            : null,
-        })
-      );
-      continue;
-    }
-
-    if (/^FINAL\s+QA\b/i.test(trimmed)) {
-      const blockLines = consumeTailBlock(cursor);
+    if (/^VALIDATION(?:_MODULE|\s+MODULE)\b/i.test(normalizedHeading)) {
+      const blockLines = consumeBlockUntilBoundary(cursor, [
+        BRACKET_SECTION_HEADING_RE,
+        /^END\b/i,
+      ]);
       const body = blockLines.slice(1);
       segments.push(
         createSegment({
           runtime,
           type: 'qa_matrix',
-          title: blockLines[0]?.trim() || 'FINAL QA',
+          lockType: true,
+          title: normalizeHeadingLabel(blockLines[0] ?? '') || 'VALIDATION_MODULE',
           raw: trimTrailingBlankLines(blockLines.join('\n')),
           listItems: parseListLines(body),
           subsections: parseQaSubsections(body),
@@ -835,31 +1231,113 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       continue;
     }
 
-    if (/^===\s*STUDIO\s+RELIGHTING/i.test(trimmed)) {
-      const blockLines = consumeParagraphBlock(cursor, [/^PIPELINE\b/i, /^FINAL\s+QA\b/i]);
-      const segmentTitle = blockLines[0]?.trim() || 'STUDIO RELIGHTING EXTENSION';
-      const subsections = parseSequenceSubsections(blockLines.slice(2));
+    if (/^DRY[_\s]RUN[_\s]BEHAVIOR\b/i.test(normalizedHeading)) {
+      const blockLines = consumeBlockUntilBoundary(cursor, [
+        BRACKET_SECTION_HEADING_RE,
+        /^END\b/i,
+      ]);
+      const body = blockLines.slice(1);
       segments.push(
         createSegment({
           runtime,
-          type: 'sequence',
-          title: segmentTitle,
+          type: 'conditional_list',
+          lockType: true,
+          title: normalizeHeadingLabel(blockLines[0] ?? '') || 'DRY_RUN_BEHAVIOR',
           raw: trimTrailingBlankLines(blockLines.join('\n')),
-          subsections,
-          includeInOutput: true,
+          listItems: parseListLines(body),
+          condition: /\bDRY[_\s]RUN\b/i.test(blockLines.join('\n'))
+            ? 'dry_run_branching'
+            : null,
         })
       );
       continue;
     }
 
-    const parsedTitle = parseCodeFromLine(trimmed);
+    if (
+      /^REQUIREMENTS\b/i.test(normalizedHeading) ||
+      /^COMPOSITING\s+REQUIREMENTS\b/i.test(normalizedHeading) ||
+      /^PARSING\s*&\s*EXECUTION\s+RULES\b/i.test(normalizedHeading) ||
+      /^MODULES\b/i.test(normalizedHeading) ||
+      /^DATA\s+MODEL\b/i.test(normalizedHeading) ||
+      /^LOGGING(?:_AND_AUDIT|\s+AND\s+AUDIT)\b/i.test(normalizedHeading) ||
+      /^ERROR(?:_HANDLING|\s+HANDLING)\b/i.test(normalizedHeading) ||
+      /^SECURITY(?:_NOTES|\s+NOTES)\b/i.test(normalizedHeading)
+    ) {
+      const blockLines = consumeParagraphBlock(
+        cursor,
+        [/^===\s*STUDIO\s+RELIGHTING/i, /^PIPELINE\b/i, /^FINAL\s+QA\b/i],
+        runtime
+      );
+      const body = blockLines.slice(1);
+      const subsections = parseSequenceSubsections(body);
+      segments.push(
+        createSegment({
+          runtime,
+          type: 'sequence',
+          lockType: true,
+          title: normalizeHeadingLabel(blockLines[0] ?? '') || 'REQUIREMENTS',
+          raw: trimTrailingBlankLines(blockLines.join('\n')),
+          subsections,
+        })
+      );
+      continue;
+    }
+
+    if (
+      /^PIPELINE\b/i.test(normalizedHeading) ||
+      /^WORKFLOW\b/i.test(normalizedHeading) ||
+      /^PROCESS\b/i.test(normalizedHeading) ||
+      /^EXECUTION\s+TEMPLATE\b/i.test(normalizedHeading)
+    ) {
+      const blockLines = consumeParagraphBlock(cursor, [/^FINAL\s+QA\b/i], runtime);
+      const title = normalizeHeadingLabel(blockLines[0] ?? '') || 'PIPELINE';
+      const body = blockLines.slice(1);
+      segments.push(
+        createSegment({
+          runtime,
+          type: 'hierarchical_list',
+          lockType: true,
+          title,
+          raw: trimTrailingBlankLines(blockLines.join('\n')),
+          listItems: parseListLines(body),
+          condition: body.some((value) => /\bif\b|\bonly if\b/i.test(value))
+            ? 'conditional'
+            : null,
+        })
+      );
+      continue;
+    }
+
+    if (/^FINAL\s+QA\b/i.test(normalizedHeading)) {
+      const blockLines = consumeQaBlock(cursor, runtime);
+      const body = blockLines.slice(1);
+      segments.push(
+        createSegment({
+          runtime,
+          type: 'qa_matrix',
+          lockType: true,
+          title: normalizeHeadingLabel(blockLines[0] ?? '') || 'FINAL QA',
+          raw: trimTrailingBlankLines(blockLines.join('\n')),
+          listItems: parseListLines(body),
+          subsections: parseQaSubsections(body),
+          condition: /\bfix\s+until\b/i.test(blockLines.join('\n'))
+            ? 'fix_until_all_pass'
+            : null,
+        })
+      );
+      continue;
+    }
+
+    const parsedTitle = parseCodeFromLine(normalizedHeading);
     if (parsedTitle.code) {
-      const blockLines = consumeParagraphBlock(cursor);
-      const title = blockLines[0]?.trim() || parsedTitle.title;
+      const blockLines = consumeParagraphBlock(cursor, [], runtime);
+      const title =
+        normalizeHeadingLabel(blockLines[0] ?? '') || parsedTitle.title;
       segments.push(
         createSegment({
           runtime,
           type: 'referential_list',
+          lockType: true,
           title,
           raw: trimTrailingBlankLines(blockLines.join('\n')),
           code: parsedTitle.code,
@@ -869,13 +1347,18 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       continue;
     }
 
-    if (/^NON-NEGOTIABLE\s+GOAL\b/i.test(trimmed)) {
-      const blockLines = consumeParagraphBlock(cursor, [/^PARAMS\b/i]);
+    if (/^NON-NEGOTIABLE\s+GOAL\b/i.test(normalizedHeading)) {
+      const blockLines = consumeParagraphBlock(
+        cursor,
+        [/^PARAMS\b/i, /^PARAMETERS\b/i, /^GLOBAL[_\s]SETTINGS\b/i],
+        runtime
+      );
       segments.push(
         createSegment({
           runtime,
           type: 'list',
-          title: blockLines[0]?.trim() || 'NON-NEGOTIABLE GOAL',
+          lockType: true,
+          title: normalizeHeadingLabel(blockLines[0] ?? '') || 'NON-NEGOTIABLE GOAL',
           raw: trimTrailingBlankLines(blockLines.join('\n')),
           listItems: parseListLines(blockLines.slice(1)),
         })
@@ -883,8 +1366,23 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       continue;
     }
 
-    if (isLikelyHeading(trimmed)) {
-      const blockLines = consumeParagraphBlock(cursor);
+    if (cursor.index === 0 && /^\s*[^|\n]+(?:\s*\|\s*[^|\n]+){2,}\s*$/.test(trimmed)) {
+      segments.push(
+        createSegment({
+          runtime,
+          type: 'metadata',
+          lockType: true,
+          title: trimmed,
+          raw: trimmed,
+          includeInOutput: false,
+        })
+      );
+      cursor.index += 1;
+      continue;
+    }
+
+    if (isLikelyHeading(trimmed, runtime)) {
+      const blockLines = consumeParagraphBlock(cursor, [], runtime);
       const raw = trimTrailingBlankLines(blockLines.join('\n'));
       const body = blockLines.slice(1);
       const hasList = body.some((value) => /^\s*(\d+[.)]|[*-]|[A-Z]\))\s+/.test(value));
@@ -892,7 +1390,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
         createSegment({
           runtime,
           type: hasList ? 'list' : 'assigned_text',
-          title: blockLines[0]?.trim() || 'Section',
+          title: normalizeHeadingLabel(blockLines[0] ?? '') || 'Section',
           raw,
           listItems: hasList ? parseListLines(body) : [],
         })
@@ -900,12 +1398,12 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       continue;
     }
 
-    const blockLines = consumeParagraphBlock(cursor);
+    const blockLines = consumeParagraphBlock(cursor, [], runtime);
     segments.push(
       createSegment({
         runtime,
         type: 'assigned_text',
-        title: blockLines[0]?.trim() || 'Section',
+        title: normalizeHeadingLabel(blockLines[0] ?? '') || 'Section',
         raw: trimTrailingBlankLines(blockLines.join('\n')),
       })
     );
@@ -914,13 +1412,53 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
   return segments;
 };
 
+const applyLearnedTemplateTypes = (
+  segments: PromptExploderSegment[],
+  templates: PromptExploderLearnedTemplate[],
+  similarityThreshold: number
+): PromptExploderSegment[] => {
+  if (templates.length === 0) return segments;
+
+  return segments.map((segment) => {
+    const inferred = inferTypeFromLearnedTemplates(
+      segment,
+      templates,
+      similarityThreshold
+    );
+    if (!inferred.matchedTemplateId && inferred.type === segment.type) {
+      return segment;
+    }
+    const nextPatternIds = inferred.matchedTemplateId
+      ? [
+        ...new Set([
+          ...segment.matchedPatternIds,
+          `segment.learned.${inferred.type}.${inferred.matchedTemplateId}`,
+        ]),
+      ]
+      : segment.matchedPatternIds;
+    return {
+      ...segment,
+      type: inferred.type,
+      confidence: inferred.confidence,
+      matchedPatternIds: nextPatternIds,
+    };
+  });
+};
+
 export function explodePromptText(args: {
   prompt: string;
   validationRules?: PromptValidationRule[] | null;
+  learnedTemplates?: PromptExploderLearnedTemplate[] | null;
+  similarityThreshold?: number;
 }): PromptExploderDocument {
   const prompt = normalizeMultiline(args.prompt);
   const runtime = compileRuntimePatterns(args.validationRules);
-  const segments = parseSegments(prompt, runtime);
+  const parsedSegments = parseSegments(prompt, runtime);
+  const segments = applyLearnedTemplateTypes(
+    parsedSegments,
+    args.learnedTemplates ?? [],
+    Math.min(0.95, Math.max(0.3, args.similarityThreshold ?? 0.68))
+  );
   const bindings = buildBindings(segments);
   const warnings: string[] = [];
 

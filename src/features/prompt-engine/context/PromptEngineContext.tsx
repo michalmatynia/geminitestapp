@@ -22,6 +22,7 @@ import {
 
 export type SeverityFilter = PromptValidationSeverity | 'all';
 export type ScopeFilter = PromptValidationScope | 'all';
+export type PatternCollectionTab = 'core' | 'prompt_exploder';
 
 export type RuleDraft = {
   uid: string;
@@ -38,6 +39,7 @@ interface PromptEngineContextType {
   query: string;
   severity: SeverityFilter;
   scope: ScopeFilter;
+  patternTab: PatternCollectionTab;
   includeDisabled: boolean;
   drafts: RuleDraft[];
   learnedDrafts: RuleDraft[];
@@ -50,11 +52,13 @@ interface PromptEngineContextType {
   
   // Derived state
   filteredDrafts: RuleDraft[];
+  filteredLearnedDrafts: RuleDraft[];
   
   // Actions
   setQuery: (query: string) => void;
   setSeverity: (severity: SeverityFilter) => void;
   setScope: (scope: ScopeFilter) => void;
+  setPatternTab: (tab: PatternCollectionTab) => void;
   setIncludeDisabled: (include: boolean) => void;
   handleRuleTextChange: (uid: string, nextText: string) => void;
   handlePatchRule: (uid: string, patch: RulePatch) => void;
@@ -191,6 +195,33 @@ const ruleSearchText = (rule: PromptValidationRule): string => {
   return parts.filter(Boolean).join(' ').toLowerCase();
 };
 
+const isPromptExploderRule = (rule: PromptValidationRule): boolean => {
+  const id = rule.id.toLowerCase();
+  if (id.includes('prompt_exploder') || id.includes('exploder') || id.startsWith('segment.')) {
+    return true;
+  }
+
+  const appliesToScopes = rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES;
+  const launchScopes = rule.launchAppliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES;
+
+  const hasPromptScope = appliesToScopes.includes('prompt_exploder');
+  const hasOnlyPromptOrGlobal =
+    hasPromptScope &&
+    appliesToScopes.every(
+      (scope: PromptValidationScope) => scope === 'prompt_exploder' || scope === 'global'
+    );
+  if (hasOnlyPromptOrGlobal) return true;
+
+  const hasPromptLaunchScope = launchScopes.includes('prompt_exploder');
+  const hasOnlyPromptLaunchOrGlobal =
+    hasPromptLaunchScope &&
+    launchScopes.every(
+      (scope: PromptValidationScope) => scope === 'prompt_exploder' || scope === 'global'
+    );
+
+  return hasOnlyPromptLaunchOrGlobal;
+};
+
 export function PromptEngineProvider({
   children,
   onSaved,
@@ -208,6 +239,7 @@ export function PromptEngineProvider({
   const [query, setQuery] = useState<string>('');
   const [severity, setSeverity] = useState<SeverityFilter>('all');
   const [scope, setScope] = useState<ScopeFilter>('all');
+  const [patternTab, setPatternTab] = useState<PatternCollectionTab>('core');
   const [includeDisabled, setIncludeDisabled] = useState<boolean>(true);
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);
   const [initializedAt, setInitializedAt] = useState<number | null>(null);
@@ -242,6 +274,8 @@ export function PromptEngineProvider({
         if (!term) return true;
         return draft.text.toLowerCase().includes(term);
       }
+      if (patternTab === 'prompt_exploder' && !isPromptExploderRule(rule)) return false;
+      if (patternTab === 'core' && isPromptExploderRule(rule)) return false;
       if (!includeDisabled && !rule.enabled) return false;
       if (severity !== 'all' && rule.severity !== severity) return false;
       if (
@@ -253,7 +287,31 @@ export function PromptEngineProvider({
       if (!term) return true;
       return ruleSearchText(rule).includes(term);
     });
-  }, [includeDisabled, query, scope, severity, sortedDrafts]);
+  }, [includeDisabled, patternTab, query, scope, severity, sortedDrafts]);
+
+  const filteredLearnedDrafts = useMemo((): RuleDraft[] => {
+    const term = query.trim().toLowerCase();
+    return learnedDrafts.filter((draft: RuleDraft): boolean => {
+      const rule = draft.parsed;
+      if (!rule) {
+        if (severity !== 'all') return false;
+        if (!term) return true;
+        return draft.text.toLowerCase().includes(term);
+      }
+      if (patternTab === 'prompt_exploder' && !isPromptExploderRule(rule)) return false;
+      if (patternTab === 'core' && isPromptExploderRule(rule)) return false;
+      if (!includeDisabled && !rule.enabled) return false;
+      if (severity !== 'all' && rule.severity !== severity) return false;
+      if (
+        scope !== 'all' &&
+        !(rule.appliesToScopes ?? DEFAULT_PROMPT_VALIDATION_SCOPES).includes(scope)
+      ) {
+        return false;
+      }
+      if (!term) return true;
+      return ruleSearchText(rule).includes(term);
+    });
+  }, [includeDisabled, learnedDrafts, patternTab, query, scope, severity]);
 
   const handleRuleTextChange = useCallback((uid: string, nextText: string): void => {
     setDrafts((prev: RuleDraft[]) =>
@@ -664,6 +722,7 @@ export function PromptEngineProvider({
       query,
       severity,
       scope,
+      patternTab,
       includeDisabled,
       drafts,
       learnedDrafts,
@@ -674,9 +733,11 @@ export function PromptEngineProvider({
       isSaving: updateSetting.isPending,
       isUsingDefaults: !rawSettings,
       filteredDrafts,
+      filteredLearnedDrafts,
       setQuery,
       setSeverity,
       setScope,
+      setPatternTab,
       setIncludeDisabled,
       handleRuleTextChange,
       handlePatchRule,
@@ -703,6 +764,7 @@ export function PromptEngineProvider({
       query,
       severity,
       scope,
+      patternTab,
       includeDisabled,
       drafts,
       learnedDrafts,
@@ -713,6 +775,7 @@ export function PromptEngineProvider({
       updateSetting.isPending,
       rawSettings,
       filteredDrafts,
+      filteredLearnedDrafts,
       handleRuleTextChange,
       handlePatchRule,
       handleToggleRuleEnabled,

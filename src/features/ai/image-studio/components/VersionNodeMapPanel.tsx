@@ -11,6 +11,7 @@ import {
   Download,
   Focus,
   GitMerge,
+  Layers,
   Map,
   Maximize2,
   Minus,
@@ -75,6 +76,9 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
     filteredNodeIds,
     layoutMode,
     graphStats,
+    compositeMode,
+    compositeSelectedIds,
+    compositeLoading,
     isolatedNodeId,
     isolatedNodeIds,
     compareMode,
@@ -91,6 +95,12 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
     toggleCollapse,
     expandAll,
     collapseAll,
+    toggleCompositeMode,
+    toggleCompositeSelection,
+    clearCompositeSelection,
+    executeComposite,
+    reorderCompositeLayer,
+    flattenComposite,
     setFilterQuery,
     toggleFilterType,
     setFilterHasMask,
@@ -106,6 +116,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
   const canvasRef = useRef<VersionNodeMapCanvasRef>(null);
   const [zoom, setZoom] = useState(1);
   const [mergeBusy, setMergeBusy] = useState(false);
+  const [compositeBusy, setCompositeBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showMinimap, setShowMinimap] = useState(false);
@@ -146,6 +157,26 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
       setMergeBusy(false);
     }
   }, [executeMerge, mergeBusy]);
+
+  const handleExecuteComposite = useCallback(async () => {
+    if (compositeBusy) return;
+    setCompositeBusy(true);
+    try {
+      await executeComposite();
+    } finally {
+      setCompositeBusy(false);
+    }
+  }, [executeComposite, compositeBusy]);
+
+  const handleFlattenComposite = useCallback(async (slotId: string) => {
+    if (compositeBusy) return;
+    setCompositeBusy(true);
+    try {
+      await flattenComposite(slotId);
+    } finally {
+      setCompositeBusy(false);
+    }
+  }, [flattenComposite, compositeBusy]);
 
   const handleExportPng = useCallback(async () => {
     const svg = canvasRef.current?.svgElement;
@@ -290,6 +321,43 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             </UnifiedButton>
           ) : null}
 
+          {/* Composite mode toggle */}
+          <UnifiedButton
+            variant={compositeMode ? 'default' : 'ghost'}
+            size='icon'
+            className={cn('size-6', compositeMode && 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30')}
+            title={compositeMode ? 'Exit composite mode' : 'Enter composite mode'}
+            onClick={toggleCompositeMode}
+          >
+            <Layers className='size-3' />
+          </UnifiedButton>
+
+          {/* Composite execute button */}
+          {compositeMode && compositeSelectedIds.length >= 2 ? (
+            <UnifiedButton
+              variant='outline'
+              size='sm'
+              className='h-6 border-teal-400/40 px-2 text-[10px] text-teal-400 hover:bg-teal-500/10'
+              disabled={compositeBusy}
+              onClick={() => void handleExecuteComposite()}
+            >
+              Composite ({compositeSelectedIds.length})
+            </UnifiedButton>
+          ) : null}
+
+          {/* Clear composite selection */}
+          {compositeMode && compositeSelectedIds.length > 0 ? (
+            <UnifiedButton
+              variant='ghost'
+              size='icon'
+              className='size-6 text-gray-400'
+              title='Clear selection'
+              onClick={clearCompositeSelection}
+            >
+              <X className='size-3' />
+            </UnifiedButton>
+          ) : null}
+
           <div className='mx-1 h-4 w-px bg-border/40' />
 
           {/* Collapse controls */}
@@ -423,7 +491,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
       {/* Stats row */}
       {showStats ? (
         <div className='border-b border-border/40 px-3 py-1 text-[9px] text-gray-500'>
-          {graphStats.totalNodes} nodes · {graphStats.baseCount} base · {graphStats.generationCount} gen · {graphStats.mergeCount} merge · depth {graphStats.maxDepth} · {graphStats.maskedCount} masked
+          {graphStats.totalNodes} nodes · {graphStats.baseCount} base · {graphStats.generationCount} gen · {graphStats.mergeCount} merge{graphStats.compositeCount > 0 ? ` · ${graphStats.compositeCount} comp` : ''} · depth {graphStats.maxDepth} · {graphStats.maskedCount} masked
         </div>
       ) : null}
 
@@ -442,7 +510,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
           </div>
 
           {/* Type filter chips */}
-          {(['base', 'generation', 'merge'] as const).map((t) => (
+          {(['base', 'generation', 'merge', 'composite'] as const).map((t) => (
             <button
               key={t}
               type='button'
@@ -453,13 +521,15 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
                     ? 'bg-blue-500/20 text-blue-400'
                     : t === 'generation'
                       ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-purple-500/20 text-purple-400'
+                      : t === 'composite'
+                        ? 'bg-teal-500/20 text-teal-400'
+                        : 'bg-purple-500/20 text-purple-400'
                   : 'text-gray-500 hover:text-gray-400',
               )}
               title={`Filter: ${t}`}
               onClick={() => toggleFilterType(t)}
             >
-              {t === 'base' ? 'Base' : t === 'generation' ? 'Gen' : 'Merge'}
+              {t === 'base' ? 'Base' : t === 'generation' ? 'Gen' : t === 'composite' ? 'Comp' : 'Merge'}
             </button>
           ))}
 
@@ -510,6 +580,13 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
         </div>
       ) : null}
 
+      {/* Composite mode banner */}
+      {compositeMode ? (
+        <div className='border-b border-teal-400/20 bg-teal-500/5 px-3 py-1 text-[10px] text-teal-400'>
+          Click nodes to select for compositing. Select 2+ nodes, then click Composite.
+        </div>
+      ) : null}
+
       {/* Compare mode banner */}
       {compareMode ? (
         <div className='border-b border-cyan-400/20 bg-cyan-500/5 px-3 py-1 text-[10px] text-cyan-400'>
@@ -546,6 +623,8 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
           hoveredNodeId={hoveredNodeId}
           mergeMode={mergeMode}
           mergeSelectedIds={mergeSelectedIds}
+          compositeMode={compositeMode}
+          compositeSelectedIds={compositeSelectedIds}
           collapsedNodeIds={collapsedNodeIds}
           filteredNodeIds={filteredNodeIds}
           isolatedNodeIds={isolatedNodeIds}
@@ -555,7 +634,9 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
           onHoverNode={hoverNode}
           onActivateNode={handleActivateNode}
           onToggleMergeSelection={toggleMergeSelection}
+          onToggleCompositeSelection={toggleCompositeSelection}
           onToggleCollapse={toggleCollapse}
+          onReorderCompositeLayer={(slotId, from, to) => void reorderCompositeLayer(slotId, from, to)}
           onContextMenu={handleContextMenu}
           getSlotImageSrc={getSlotImageSrc}
           getSlotAnnotation={getSlotAnnotation}
@@ -663,7 +744,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
                   )}
                 </div>
                 <div className='text-[9px] text-gray-500'>
-                  {cNode.type === 'merge' ? 'Merge' : cNode.type === 'generation' ? 'Generation' : 'Base'}
+                  {cNode.type === 'composite' ? 'Composite' : cNode.type === 'merge' ? 'Merge' : cNode.type === 'generation' ? 'Generation' : 'Base'}
                   {cNode.hasMask ? ' · Mask' : ''}
                 </div>
                 {(() => {
@@ -701,7 +782,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
       ) : null}
 
       {/* Inspector */}
-      {selectedNode && !mergeMode && !compareMode ? (
+      {selectedNode && !mergeMode && !compositeMode && !compareMode ? (
         <div className='border-t border-border/40 p-3'>
           <div className='flex gap-3'>
             {/* Thumbnail */}
@@ -726,13 +807,26 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
                 {selectedNode.label}
               </div>
               <div className='text-[10px] text-gray-500'>
-                {selectedNode.type === 'merge'
-                  ? 'Merge'
-                  : selectedNode.type === 'generation'
-                    ? 'Generation'
-                    : 'Base'}{' '}
+                {selectedNode.type === 'composite'
+                  ? 'Composite'
+                  : selectedNode.type === 'merge'
+                    ? 'Merge'
+                    : selectedNode.type === 'generation'
+                      ? 'Generation'
+                      : 'Base'}{' '}
                 {selectedNode.hasMask ? '· Has mask' : ''}
               </div>
+              {selectedNode.type === 'composite' ? (() => {
+                const meta = readMeta(selectedNode.slot);
+                const layerCount = meta.compositeConfig?.layers?.length ?? 0;
+                return layerCount > 0 ? (
+                  <div className='text-[10px] text-teal-400'>
+                    <Layers className='mr-0.5 inline size-2.5' />
+                    {layerCount} layers
+                    {compositeLoading ? ' · Loading...' : ''}
+                  </div>
+                ) : null;
+              })() : null}
               {selectedNode.parentIds.length > 0 ? (
                 <div className='text-[10px] text-gray-500'>
                   {selectedNode.parentIds.length} parent{selectedNode.parentIds.length !== 1 ? 's' : ''}
@@ -779,6 +873,18 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
               <Crosshair className='mr-1.5 size-3' />
               Set as Source
             </UnifiedButton>
+            {selectedNode.type === 'composite' ? (
+              <UnifiedButton
+                variant='outline'
+                size='sm'
+                className='flex-1 border-teal-400/40 text-xs text-teal-400 hover:bg-teal-500/10'
+                disabled={compositeBusy || compositeLoading}
+                onClick={() => void handleFlattenComposite(selectedNode.id)}
+              >
+                <Layers className='mr-1.5 size-3' />
+                Flatten
+              </UnifiedButton>
+            ) : null}
           </div>
 
           {/* Annotation */}
@@ -793,7 +899,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             />
           </div>
         </div>
-      ) : !mergeMode && !compareMode ? (
+      ) : !mergeMode && !compositeMode && !compareMode ? (
         <div className='border-t border-border/40 px-3 py-2 text-[10px] text-gray-500'>
           Click a node to inspect. Double-click to set as source.
         </div>

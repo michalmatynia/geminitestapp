@@ -100,6 +100,7 @@ export function RuleList(): React.JSX.Element {
     query,
     severity,
     scope,
+    patternTab,
     includeDisabled,
     handleSequenceDrop,
     handleSaveSequenceGroup,
@@ -173,7 +174,9 @@ export function RuleList(): React.JSX.Element {
     <div className='space-y-4'>
       {filteredDrafts.length === 0 ? (
         <SectionPanel>
-          <div className='text-sm text-gray-400'>No rules match this filter.</div>
+          <div className='text-sm text-gray-400'>
+            No rules match this filter in the {patternTab === 'prompt_exploder' ? 'Prompt Exploder' : 'Core'} list.
+          </div>
         </SectionPanel>
       ) : null}
       {sequencingLocked ? (

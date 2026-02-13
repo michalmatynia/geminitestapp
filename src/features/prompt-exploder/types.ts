@@ -70,3 +70,53 @@ export type PromptExploderPatternRuleMap = {
   allRules: PromptValidationRule[];
   scopedRules: PromptValidationRule[];
 };
+
+export type PromptExploderLearnedTemplate = {
+  id: string;
+  segmentType: PromptExploderSegmentType;
+  state: 'draft' | 'candidate' | 'active' | 'disabled';
+  title: string;
+  normalizedTitle: string;
+  anchorTokens: string[];
+  sampleText: string;
+  approvals: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PromptExploderPatternSnapshot = {
+  id: string;
+  name: string;
+  createdAt: string;
+  ruleCount: number;
+  rulesJson: string;
+};
+
+export type PromptExploderBenchmarkSuite = 'default' | 'extended' | 'custom';
+
+export type PromptExploderBenchmarkCaseConfig = {
+  id: string;
+  prompt: string;
+  expectedTypes: PromptExploderSegmentType[];
+  minSegments: number;
+};
+
+export type PromptExploderSettings = {
+  version: 1;
+  runtime: {
+    ruleProfile: 'all' | 'pattern_pack' | 'learned_only';
+    benchmarkSuite: PromptExploderBenchmarkSuite;
+    benchmarkLowConfidenceThreshold: number;
+    benchmarkSuggestionLimit: number;
+    customBenchmarkCases: PromptExploderBenchmarkCaseConfig[];
+  };
+  learning: {
+    enabled: boolean;
+    similarityThreshold: number;
+    minApprovalsForMatching: number;
+    maxTemplates: number;
+    autoActivateLearnedTemplates: boolean;
+    templates: PromptExploderLearnedTemplate[];
+  };
+  patternSnapshots: PromptExploderPatternSnapshot[];
+};

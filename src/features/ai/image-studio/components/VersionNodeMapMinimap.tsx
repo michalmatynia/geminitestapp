@@ -132,11 +132,13 @@ export function VersionNodeMapMinimap({
         const cy = toMiniY(n.y + offsetY);
         const fill = n.id === selectedNodeId
           ? '#facc15'
-          : n.type === 'merge'
-            ? '#a855f7'
-            : n.type === 'generation'
-              ? '#34d399'
-              : '#60a5fa';
+          : n.type === 'composite'
+            ? '#14b8a6'
+            : n.type === 'merge'
+              ? '#a855f7'
+              : n.type === 'generation'
+                ? '#34d399'
+                : '#60a5fa';
         return (
           <circle
             key={n.id}

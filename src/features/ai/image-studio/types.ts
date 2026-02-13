@@ -20,9 +20,9 @@ export type ImageStudioSlotRecord = {
 
 /** Typed overlay for the slot `metadata` field for generation lineage tracking. */
 export interface SlotGenerationMetadata {
-  role?: 'generation' | 'merge' | 'base' | 'import' | undefined;
+  role?: 'generation' | 'merge' | 'base' | 'import' | 'composite' | undefined;
   sourceSlotId?: string | undefined;
-  relationType?: 'generation:output' | 'merge:output' | undefined;
+  relationType?: 'generation:output' | 'merge:output' | 'composite:output' | 'composite:flatten' | undefined;
   generationFileId?: string | undefined;
   generationRunId?: string | undefined;
   generationOutputIndex?: number | undefined;
@@ -68,6 +68,17 @@ export interface SlotGenerationMetadata {
     outputCount?: number | undefined;
   } | undefined;
   annotation?: string | undefined;
+  compositeConfig?: {
+    layers: CompositeLayerConfig[];
+    flattenedSlotId?: string | undefined;
+  } | undefined;
+}
+
+export interface CompositeLayerConfig {
+  slotId: string;
+  order: number;
+  opacity?: number | undefined;
+  blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | undefined;
 }
 
 export type StudioProjectsResponse = { projects: string[] };

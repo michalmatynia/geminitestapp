@@ -24,6 +24,16 @@ export type PromptValidationLaunchOperator =
   | 'lte'
   | 'is_empty'
   | 'is_not_empty';
+export type PromptExploderRuleSegmentType =
+  | 'metadata'
+  | 'assigned_text'
+  | 'list'
+  | 'parameter_block'
+  | 'referential_list'
+  | 'sequence'
+  | 'hierarchical_list'
+  | 'conditional_list'
+  | 'qa_matrix';
 
 export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
   'image_studio_prompt',
@@ -35,6 +45,17 @@ export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
 
 export const DEFAULT_PROMPT_VALIDATION_SCOPES: PromptValidationScope[] = [
   ...PROMPT_VALIDATION_SCOPE_VALUES,
+];
+export const PROMPT_EXPLODER_RULE_SEGMENT_TYPE_VALUES: PromptExploderRuleSegmentType[] = [
+  'metadata',
+  'assigned_text',
+  'list',
+  'parameter_block',
+  'referential_list',
+  'sequence',
+  'hierarchical_list',
+  'conditional_list',
+  'qa_matrix',
 ];
 
 export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, string> = {
@@ -97,6 +118,10 @@ export type PromptValidationRule =
       launchOperator?: PromptValidationLaunchOperator;
       launchValue?: string | null;
       launchFlags?: string | null;
+      promptExploderSegmentType?: PromptExploderRuleSegmentType | null;
+      promptExploderConfidenceBoost?: number;
+      promptExploderPriority?: number;
+      promptExploderTreatAsHeading?: boolean;
     }
   | {
       kind: 'params_object';
@@ -122,6 +147,10 @@ export type PromptValidationRule =
       launchOperator?: PromptValidationLaunchOperator;
       launchValue?: string | null;
       launchFlags?: string | null;
+      promptExploderSegmentType?: PromptExploderRuleSegmentType | null;
+      promptExploderConfidenceBoost?: number;
+      promptExploderPriority?: number;
+      promptExploderTreatAsHeading?: boolean;
     };
 
 export type PromptValidationSettings = {
@@ -332,6 +361,12 @@ const promptValidationLaunchOperatorSchema = z.enum([
   'is_empty',
   'is_not_empty',
 ]);
+const promptExploderRuleSegmentTypeSchema = z.enum(
+  PROMPT_EXPLODER_RULE_SEGMENT_TYPE_VALUES as [
+    PromptExploderRuleSegmentType,
+    ...PromptExploderRuleSegmentType[],
+  ]
+);
 const promptValidationSimilarSchema: z.ZodType<PromptValidationSimilarPattern> = z
   .object({
     pattern: z.string().trim().min(1),
@@ -388,6 +423,13 @@ const promptValidationSequenceFieldsSchema = z
     launchOperator: promptValidationLaunchOperatorSchema.optional().default('contains'),
     launchValue: z.string().nullable().optional().default(null),
     launchFlags: z.string().trim().nullable().optional().default(null),
+    promptExploderSegmentType: promptExploderRuleSegmentTypeSchema
+      .nullable()
+      .optional()
+      .default(null),
+    promptExploderConfidenceBoost: z.number().min(0).max(0.5).optional().default(0),
+    promptExploderPriority: z.number().int().min(-50).max(50).optional().default(0),
+    promptExploderTreatAsHeading: z.boolean().optional().default(false),
   })
   .strict();
 

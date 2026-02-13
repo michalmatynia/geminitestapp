@@ -9,15 +9,16 @@ import { isImageExportError } from '@/features/integrations/components/listings/
 import { ProductListingsProvider, useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import type { ProductWithImages } from '@/features/products/types';
-import { AppModal } from '@/shared/ui';
+import {
+  AppModal,
+  ImageRetryDropdown,
+  Alert,
+} from '@/shared/ui';
 
+import { ProductListingItem } from './product-listings-modal/ProductListingItem';
 import { ProductListingsConfirmDialogs } from './product-listings-modal/ProductListingsConfirmDialogs';
 import { ProductListingsStartPanel } from './product-listings-modal/ProductListingsStartPanel';
 import { ProductListingsSyncPanel } from './product-listings-modal/ProductListingsSyncPanel';
-import { ProductListingsLoading } from './product-listings-modal/ProductListingsLoading';
-import { ProductListingsError } from './product-listings-modal/ProductListingsError';
-import { ProductListingsContent } from './product-listings-modal/ProductListingsContent';
-import { ProductListingsEmpty } from './product-listings-modal/ProductListingsEmpty';
 
 type ProductListingsModalProps = {
   product: ProductWithImages;
@@ -76,7 +77,12 @@ function ProductListingsModalContent(): React.JSX.Element {
   }, [listings, filterIntegrationSlug]);
 
   const isBaseFilter = BASE_INTEGRATION_SLUGS.has(normalizeSlug(filterIntegrationSlug));
-  const statusTargetLabel: string = isBaseFilter ? 'Base.com' : filterIntegrationSlug ?? 'integration';
+
+  const statusTargetLabel: string =
+    isBaseFilter
+      ? 'Base.com'
+      : filterIntegrationSlug ?? 'integration';
+
   const canStartListing: boolean = Boolean(onStartListing) && !filterIntegrationSlug;
 
   return (
@@ -89,37 +95,66 @@ function ProductListingsModalContent(): React.JSX.Element {
       
       <div className='space-y-4'>
         {isLoading ? (
-          <ProductListingsLoading />
+          <p className='text-sm text-gray-400'>Loading listings...</p>
         ) : error ? (
-          <ProductListingsError
-            error={error}
-            isImageExportError={isImageExportError(error)}
-            lastExportListingId={lastExportListingId}
-            imageRetryPresets={imageRetryPresets}
-            onImageRetry={handleImageRetry}
-            exportingListing={exportingListing}
-          />
+          <Alert variant='error'>
+            <div className='flex flex-col gap-3'>
+              <span>{error}</span>
+              {isImageExportError(error) && lastExportListingId ? (
+                <div className='flex flex-wrap items-center gap-2'>
+                  <ImageRetryDropdown
+                    presets={imageRetryPresets}
+                    onRetry={(preset: ImageRetryPreset) => void handleImageRetry(preset)}
+                    disabled={Boolean(exportingListing)}
+                  />
+                  <span className='text-xs text-red-200/80'>
+                    Applies JPEG resize/compression and retries automatically.
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          </Alert>
         ) : (
           <div className='space-y-3'>
             {canStartListing && <ProductListingsStartPanel />}
             
             {filteredListings.length === 0 ? (
-              <ProductListingsEmpty
-                filterIntegrationSlug={filterIntegrationSlug}
-                statusTargetLabel={statusTargetLabel}
-                isBaseFilter={isBaseFilter}
-                showSync={filterIntegrationSlug ? true : false}
-                SyncPanel={ProductListingsSyncPanel}
-              />
+              <div className='rounded-md border bg-card/50 px-4 py-8 text-center'>
+                {filterIntegrationSlug ? (
+                  <div className='space-y-3'>
+                    <div className='text-sm text-gray-300'>
+                      {statusTargetLabel} status
+                    </div>
+                    <div className='rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-400'>
+                      Not connected.
+                    </div>
+                    {isBaseFilter && <ProductListingsSyncPanel />}
+                  </div>
+                ) : (
+                  <div className='space-y-4'>
+                    <div className='border-t border-border pt-3'>
+                      <p className='text-sm text-gray-400'>
+                        This product is not listed on any marketplace yet.
+                      </p>
+                      <p className='mt-2 text-xs text-gray-500'>
+                        Use the + button in the header to list products on a marketplace.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
-              <ProductListingsContent
-                filteredListings={filteredListings}
-                statusTargetLabel={statusTargetLabel}
-                filterIntegrationSlug={filterIntegrationSlug}
-                isBaseFilter={isBaseFilter}
-                showSync={filterIntegrationSlug ? true : false}
-                SyncPanel={ProductListingsSyncPanel}
-              />
+              <div className='space-y-3'>
+                {filterIntegrationSlug && (
+                  <div className='rounded-md border border-border bg-card/60 px-3 py-2 text-xs text-gray-300'>
+                    {statusTargetLabel} status: {filteredListings[0]?.status ?? 'Unknown'}
+                  </div>
+                )}
+                {isBaseFilter && <ProductListingsSyncPanel />}
+                {filteredListings.map((listing: ProductListingWithDetails) => (
+                  <ProductListingItem key={listing.id} listing={listing} />
+                ))}
+              </div>
             )}
           </div>
         )}

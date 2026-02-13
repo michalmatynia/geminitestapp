@@ -2,10 +2,12 @@
 
 import React from 'react';
 
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
 import {
+  type PatternCollectionTab,
   usePromptEngine,
   type ScopeFilter,
   type SeverityFilter,
@@ -27,8 +29,11 @@ export function PromptEngineFilters(): React.JSX.Element {
     setSeverity,
     scope,
     setScope,
+    patternTab,
+    setPatternTab,
     includeDisabled,
     setIncludeDisabled,
+    filteredDrafts,
   } = usePromptEngine();
 
   const filters: FilterField[] = [
@@ -63,25 +68,52 @@ export function PromptEngineFilters(): React.JSX.Element {
   ];
 
   return (
-    <FilterPanel
-      filters={filters}
-      values={{ severity, scope, includeDisabled }}
-      search={query}
-      searchPlaceholder='Search ids, patterns, suggestions...'
-      onFilterChange={(key, value) => {
-        if (key === 'severity') setSeverity(value as SeverityFilter);
-        if (key === 'scope') setScope(value as ScopeFilter);
-        if (key === 'includeDisabled') setIncludeDisabled(Boolean(value));
-      }}
-      onSearchChange={setQuery}
-      onReset={() => {
-        setQuery('');
-        setSeverity('all');
-        setScope('all');
-        setIncludeDisabled(false);
-      }}
-      showHeader={false}
-      compact={false}
-    />
+    <div className='space-y-3'>
+      <Tabs
+        value={patternTab}
+        onValueChange={(value: string) => {
+          setPatternTab(value as PatternCollectionTab);
+        }}
+      >
+        <TabsList className='grid w-full max-w-md grid-cols-2'>
+          <TabsTrigger value='core'>
+            Core Patterns
+          </TabsTrigger>
+          <TabsTrigger value='prompt_exploder'>
+            Prompt Exploder
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className='text-xs text-gray-400'>
+        Showing <span className='text-gray-200'>{filteredDrafts.length}</span> pattern(s) in{' '}
+        <span className='text-gray-200'>
+          {patternTab === 'prompt_exploder' ? 'Prompt Exploder' : 'Core'}
+        </span>{' '}
+        list.
+      </div>
+
+      <FilterPanel
+        filters={filters}
+        values={{ severity, scope, includeDisabled }}
+        search={query}
+        searchPlaceholder='Search ids, patterns, suggestions...'
+        onFilterChange={(key, value) => {
+          if (key === 'severity') setSeverity(value as SeverityFilter);
+          if (key === 'scope') setScope(value as ScopeFilter);
+          if (key === 'includeDisabled') setIncludeDisabled(Boolean(value));
+        }}
+        onSearchChange={setQuery}
+        onReset={() => {
+          setQuery('');
+          setSeverity('all');
+          setScope('all');
+          setPatternTab('core');
+          setIncludeDisabled(false);
+        }}
+        showHeader={false}
+        compact={false}
+      />
+    </div>
   );
 }

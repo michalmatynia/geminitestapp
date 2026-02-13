@@ -22,6 +22,7 @@ import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
+import { useVersionGraphState } from '../context/VersionGraphContext';
 import { estimateGenerationCost } from '../utils/generation-cost';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 
@@ -148,6 +149,10 @@ export function CenterPreview(): React.JSX.Element {
     [workingSlot?.metadata]
   );
 
+  // Composite preview override
+  const { compositeResultImage, compositeLoading } = useVersionGraphState();
+  const isCompositeSlot = workingSlotMetadata?.role === 'composite';
+
   const sourceSlotId = useMemo(() => {
     const primarySourceSlotId =
       typeof workingSlotMetadata?.sourceSlotId === 'string'
@@ -185,9 +190,11 @@ export function CenterPreview(): React.JSX.Element {
   );
 
   const activeCanvasImageSrc = useMemo(() => {
+    // Composite preview: use composited result image when available
+    if (isCompositeSlot && compositeResultImage) return compositeResultImage;
     if (canCompareWithSource && singleVariantView === 'source') return sourceSlotImageSrc;
     return workingSlotImageSrc;
-  }, [canCompareWithSource, singleVariantView, sourceSlotImageSrc, workingSlotImageSrc]);
+  }, [isCompositeSlot, compositeResultImage, canCompareWithSource, singleVariantView, sourceSlotImageSrc, workingSlotImageSrc]);
 
   const eligibleMaskShapes = useMemo(
     () =>
@@ -569,6 +576,15 @@ export function CenterPreview(): React.JSX.Element {
                 />
               )}
             </VectorDrawingProvider>
+            {/* Composite loading overlay */}
+            {isCompositeSlot && compositeLoading ? (
+              <div className='absolute inset-0 z-30 flex items-center justify-center bg-black/40 backdrop-blur-sm'>
+                <div className='flex items-center gap-2 rounded-lg bg-card/90 px-4 py-2 shadow-lg'>
+                  <Loader2 className='size-4 animate-spin text-teal-400' />
+                  <span className='text-xs text-teal-400'>Compositing layers...</span>
+                </div>
+              </div>
+            ) : null}
             {canCompareWithSource ? (
               <div className='absolute bottom-2 left-2 z-20 flex items-center gap-2'>
                 <UnifiedButton

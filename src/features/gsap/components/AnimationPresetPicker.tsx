@@ -1,61 +1,52 @@
 'use client';
 
 import { useMemo } from 'react';
+
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
-import { ANIMATION_PRESETS } from '../lib/animation-presets';
-import { PresetCard } from './PresetCard';
 
-/**
- * REFACTORED: AnimationPresetPicker using GenericGridPicker
- *
- * Before: 56 LOC
- * After: 25 LOC
- * Savings: 55% reduction
- *
- * Changes:
- * - Removed custom grid rendering
- * - Uses GenericGridPicker<T> for grid layout
- * - Search functionality included
- * - Custom item rendering via PresetCard
- */
+import { AnimationPreviewIcon } from './AnimationPreviewIcon';
+import { ANIMATION_PRESETS, type AnimationPreset } from '../types/animation';
+
 interface AnimationPresetPickerProps {
-  onSelect: (presetId: string) => void;
-  selectedPresetId?: string;
+  value: AnimationPreset;
+  onChange: (preset: AnimationPreset) => void;
   columns?: number;
 }
 
+type AnimationPresetGridItem = GridPickerItem<AnimationPreset> & {
+  value: AnimationPreset;
+};
+
 export function AnimationPresetPicker({
-  onSelect,
-  selectedPresetId,
+  value,
+  onChange,
   columns = 3,
 }: AnimationPresetPickerProps): React.ReactElement {
-  const items: GridPickerItem[] = useMemo(() => {
-    return ANIMATION_PRESETS.map((preset) => ({
-      id: preset.id,
-      label: preset.name,
-      value: preset,
-      metadata: {
-        category: preset.category,
-        description: preset.description,
-      },
-    }));
-  }, []);
+  const items = useMemo<AnimationPresetGridItem[]>(
+    () =>
+      ANIMATION_PRESETS.map((preset) => ({
+        id: preset.value,
+        label: preset.label,
+        value: preset.value,
+      })),
+    []
+  );
 
   return (
-    <GenericGridPicker
+    <GenericGridPicker<AnimationPresetGridItem>
       items={items}
-      selectedId={selectedPresetId}
-      onSelect={(item) => onSelect(item.id)}
-      renderItem={(item, selected) => (
-        <PresetCard
-          preset={item.value as any}
-          selected={selected}
-        />
-      )}
+      selectedId={value}
+      onSelect={(item): void => onChange(item.value)}
       columns={columns}
       searchable
-      searchPlaceholder="Search presets..."
+      searchPlaceholder='Search presets...'
+      renderItem={(item, selected) => (
+        <div className='flex h-full min-h-[64px] flex-col items-center justify-center gap-1 rounded bg-card/40 p-2 text-center'>
+          <AnimationPreviewIcon preset={item.value} active={selected} />
+          <span className='line-clamp-2 text-[10px] leading-tight text-gray-200'>{item.label}</span>
+        </div>
+      )}
     />
   );
 }

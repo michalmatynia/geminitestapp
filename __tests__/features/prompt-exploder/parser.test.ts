@@ -50,6 +50,85 @@ QA_R2 Relighting Coherence:
 * FAIL if shadow conflicts with highlights.
 * Related rule: RL4 must pass.`;
 
+const COMPLEX_MODULE_PROMPT = `Relic Shield | 4 cm | Metal | Pin | Warhammer 40k
+
+[PURPOSE]
+Composite product image onto environment and keep product truthful.
+
+[GLOBAL_SETTINGS]
+- [DRY_RUN] = true
+- [MAX_RETRY] = 3
+
+## [PARSING & EXECUTION RULES — IMPORTANT]
+1. Non-interactive policy.
+2. Safety-first & DRY_RUN.
+
+[MODULES]
+1. [BASELINKER_IMPORT_MODULE]
+Goal: fetch zero-stock products.
+
+2. [MARKETPLACE_MATCHING_MODULE]
+Goal: locate active marketplace listings.
+
+[EXECUTION_TEMPLATE]
+1. Run import module.
+2. Run matching module.
+3. Run validation module.
+
+[VALIDATION_MODULE]
+FINAL QA (PASS/FAIL)
+QA1 Integrity: PASS when product stays unchanged.
+QA2 Scope: FAIL when marketplaces are out of scope.
+
+[DRY_RUN_BEHAVIOR]
+If [DRY_RUN] = true:
+- perform discovery only
+If [DRY_RUN] = false:
+- perform destructive actions`;
+
+const NUMBERED_SECTIONS_PROMPT = `Perform a professional post-production edit on the raw wallet product photo.
+
+1. Preserve the Product Exactly
+Goal: keep the wallet design and hue unchanged.
+- No design changes.
+- No AI regeneration of the product.
+
+2. Clean Up Only Image Artifacts
+Goal: remove dust and sensor spots only.
+- Keep real stitches and texture.
+
+3. Background Replacement with Pure White
+Goal: set #FFFFFF background with one realistic shadow.
+- No halos, no cutout artifacts.`;
+
+const VALIDATION_AND_DRY_RUN_PROMPT = `Relic Shield | 4 cm | Metal | Pin | Warhammer 40k
+
+[VALIDATION_MODULE]
+Sanity checks:
+- Confirm ZeroStockProducts is non-empty.
+- Verify each planned end_listing has a performed status.
+FINAL QA (PASS/FAIL)
+QA1 Integrity: PASS
+
+[DRY_RUN_BEHAVIOR]
+If [DRY_RUN] = true:
+- plan actions only
+If [DRY_RUN] = false:
+- apply actions`;
+
+const OPS_HEADINGS_PROMPT = `# Automation Governance
+
+[LOGGING_AND_AUDIT]
+- Emit JSON run report.
+- Track product-level errors.
+
+[ERROR_HANDLING]
+- Retry transient network failures.
+- Stop on auth_error escalation.
+
+[SECURITY_NOTES]
+- Never log credentials or session tokens.`;
+
 describe('prompt exploder parser', () => {
   it('detects typed segments and defaults metadata to omitted', () => {
     const document = explodePromptText({
@@ -172,5 +251,113 @@ describe('prompt exploder parser', () => {
           binding.toSubsectionId === relightSubsection!.id
       )
     ).toBe(true);
+  });
+
+  it('learns similar-but-not-identical segments via approved templates', () => {
+    const prompt = `DELIVERY ACCEPTANCE MATRIX
+Accepted when product integrity, color and shadows are compliant.
+Rejected when visual coherence does not hold.`;
+
+    const document = explodePromptText({
+      prompt,
+      validationRules: PROMPT_EXPLODER_PATTERN_PACK,
+      learnedTemplates: [
+        {
+          id: 'template_qa_matrix_demo',
+          segmentType: 'qa_matrix',
+          title: 'FINAL QA ACCEPTANCE MATRIX',
+          normalizedTitle: 'final qa acceptance matrix',
+          anchorTokens: ['acceptance', 'accepted', 'rejected'],
+          sampleText: 'Accepted when ... Rejected when ...',
+          approvals: 2,
+          createdAt: '2026-02-13T00:00:00.000Z',
+          updatedAt: '2026-02-13T00:00:00.000Z',
+        },
+      ],
+      similarityThreshold: 0.4,
+    });
+
+    expect(document.segments[0]?.type).toBe('qa_matrix');
+    expect(
+      document.segments[0]?.matchedPatternIds.some((patternId) =>
+        patternId.includes('segment.learned.qa_matrix.template_qa_matrix_demo')
+      )
+    ).toBe(true);
+  });
+
+  it('detects bracket, markdown and module sections from complex prompts', () => {
+    const document = explodePromptText({
+      prompt: COMPLEX_MODULE_PROMPT,
+      validationRules: PROMPT_EXPLODER_PATTERN_PACK,
+    });
+
+    expect(document.segments.length).toBeGreaterThanOrEqual(6);
+    expect(document.segments[0]?.type).toBe('metadata');
+    expect(document.segments[0]?.includeInOutput).toBe(false);
+
+    expect(document.segments.some((segment) => segment.type === 'parameter_block')).toBe(true);
+    expect(document.segments.some((segment) => segment.type === 'sequence')).toBe(true);
+    expect(document.segments.some((segment) => segment.type === 'hierarchical_list')).toBe(true);
+    expect(document.segments.some((segment) => segment.type === 'qa_matrix')).toBe(true);
+    expect(document.segments.some((segment) => segment.type === 'conditional_list')).toBe(true);
+
+    const headings = document.segments.map((segment) => segment.title);
+    expect(headings.some((title) => title.includes('GLOBAL_SETTINGS'))).toBe(true);
+    expect(headings.some((title) => title.includes('EXECUTION_TEMPLATE'))).toBe(true);
+    expect(headings.some((title) => title.includes('VALIDATION_MODULE'))).toBe(true);
+  });
+
+  it('splits numbered section prompts into multiple heading-driven segments', () => {
+    const document = explodePromptText({
+      prompt: NUMBERED_SECTIONS_PROMPT,
+      validationRules: PROMPT_EXPLODER_PATTERN_PACK,
+    });
+
+    expect(document.segments.length).toBeGreaterThanOrEqual(4);
+    expect(
+      document.segments.some(
+        (segment) =>
+          segment.title.includes('Preserve the Product Exactly') &&
+          (segment.type === 'sequence' || segment.type === 'list')
+      )
+    ).toBe(true);
+    expect(
+      document.segments.some((segment) => segment.title.includes('Background Replacement'))
+    ).toBe(true);
+  });
+
+  it('classifies validation module and dry-run behavior blocks with locked types', () => {
+    const document = explodePromptText({
+      prompt: VALIDATION_AND_DRY_RUN_PROMPT,
+      validationRules: PROMPT_EXPLODER_PATTERN_PACK,
+    });
+
+    const validationSegment = document.segments.find(
+      (segment) => segment.title === 'VALIDATION_MODULE'
+    );
+    const dryRunSegment = document.segments.find(
+      (segment) => segment.title === 'DRY_RUN_BEHAVIOR'
+    );
+
+    expect(validationSegment?.type).toBe('qa_matrix');
+    expect(validationSegment?.subsections.some((subsection) => subsection.code === 'QA1')).toBe(
+      true
+    );
+    expect(dryRunSegment?.type).toBe('conditional_list');
+    expect(dryRunSegment?.condition).toBe('dry_run_branching');
+  });
+
+  it('treats logging/error/security governance headings as sequence segments', () => {
+    const document = explodePromptText({
+      prompt: OPS_HEADINGS_PROMPT,
+      validationRules: PROMPT_EXPLODER_PATTERN_PACK,
+    });
+
+    const headingTitles = ['LOGGING_AND_AUDIT', 'ERROR_HANDLING', 'SECURITY_NOTES'];
+    headingTitles.forEach((title) => {
+      const segment = document.segments.find((candidate) => candidate.title === title);
+      expect(segment?.type).toBe('sequence');
+      expect(segment?.subsections.length).toBeGreaterThanOrEqual(1);
+    });
   });
 });

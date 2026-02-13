@@ -2,9 +2,11 @@
 
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
-import { NODE_HEIGHT, NODE_WIDTH } from '../utils/version-graph';
+import { CompositeStackNode } from './CompositeStackNode';
+import { NODE_HEIGHT, NODE_WIDTH, getCompositeNodeHeight } from '../utils/version-graph';
 
 import type { VersionEdge, VersionNode } from '../context/VersionGraphContext';
+import type { CompositeLayerConfig, SlotGenerationMetadata } from '../types';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -45,13 +47,17 @@ export interface VersionNodeMapCanvasProps {
   collapsedNodeIds: Set<string>;
   filteredNodeIds: Set<string> | null;
   isolatedNodeIds: Set<string> | null;
+  compositeMode: boolean;
+  compositeSelectedIds: string[];
   compareMode: boolean;
   compareNodeIds: [string, string] | null;
   onSelectNode: (id: string | null) => void;
   onHoverNode: (id: string | null) => void;
   onActivateNode: (id: string) => void;
   onToggleMergeSelection: (id: string) => void;
+  onToggleCompositeSelection: (id: string) => void;
   onToggleCollapse: (id: string) => void;
+  onReorderCompositeLayer: (compositeSlotId: string, fromIndex: number, toIndex: number) => void;
   onContextMenu?: ((nodeId: string, clientX: number, clientY: number) => void) | undefined;
   getSlotImageSrc: (slot: VersionNode['slot']) => string | null;
   getSlotAnnotation?: ((slot: VersionNode['slot']) => string | undefined) | undefined;
@@ -107,6 +113,17 @@ function SvgDefs(): React.JSX.Element {
       >
         <path d='M 0 0 L 10 5 L 0 10 z' fill='#a855f7' />
       </marker>
+      <marker
+        id='vgraph-arrow-composite'
+        viewBox='0 0 10 10'
+        refX='10'
+        refY='5'
+        markerWidth='6'
+        markerHeight='6'
+        orient='auto-start-reverse'
+      >
+        <path d='M 0 0 L 10 5 L 0 10 z' fill='#14b8a6' />
+      </marker>
     </defs>
   );
 }
@@ -118,13 +135,21 @@ function getNodeStrokeClass(
   isSelected: boolean,
   isMergeSelected: boolean,
   isCompareSelected: boolean,
+  isCompositeSelected: boolean,
 ): string {
   if (isCompareSelected) return 'fill-card/80 stroke-cyan-400';
+  if (isCompositeSelected) return 'fill-card/80 stroke-teal-400';
   if (isMergeSelected) return 'fill-card/80 stroke-orange-400';
   if (isSelected) return 'fill-card/80 stroke-yellow-400';
+  if (node.type === 'composite') return 'fill-card/80 stroke-teal-400/60';
   if (node.type === 'merge') return 'fill-card/80 stroke-purple-400/60';
   if (node.type === 'generation') return 'fill-card/80 stroke-emerald-400/60';
   return 'fill-card/80 stroke-blue-400/60';
+}
+
+function readMeta(slot: { metadata?: Record<string, unknown> | null }): SlotGenerationMetadata {
+  if (!slot.metadata || typeof slot.metadata !== 'object') return {};
+  return slot.metadata as SlotGenerationMetadata;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -138,6 +163,8 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       hoveredNodeId,
       mergeMode,
       mergeSelectedIds,
+      compositeMode,
+      compositeSelectedIds,
       collapsedNodeIds,
       filteredNodeIds,
       isolatedNodeIds,
@@ -147,7 +174,9 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       onHoverNode,
       onActivateNode,
       onToggleMergeSelection,
+      onToggleCompositeSelection,
       onToggleCollapse,
+      onReorderCompositeLayer,
       onContextMenu,
       getSlotImageSrc,
       getSlotAnnotation,
@@ -243,6 +272,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
 
     const nodeById = new Map(nodes.map((n) => [n.id, n]));
     const mergeSelectedSet = new Set(mergeSelectedIds);
+    const compositeSelectedSet = new Set(compositeSelectedIds);
 
     // ── Pan handlers ──
 
@@ -343,13 +373,15 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
     const handleNodeClick = useCallback(
       (e: React.MouseEvent, nodeId: string) => {
         e.stopPropagation();
-        if (mergeMode) {
+        if (compositeMode) {
+          onToggleCompositeSelection(nodeId);
+        } else if (mergeMode) {
           onToggleMergeSelection(nodeId);
         } else {
           onSelectNode(nodeId);
         }
       },
-      [mergeMode, onToggleMergeSelection, onSelectNode],
+      [compositeMode, mergeMode, onToggleCompositeSelection, onToggleMergeSelection, onSelectNode],
     );
 
     // ── Viewport culling ──
@@ -401,10 +433,16 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
               if (!isNodeVisible(sourceNode) && !isNodeVisible(targetNode)) return null;
 
               const isMergeEdge = edge.type === 'merge';
+              const isCompositeEdge = edge.type === 'composite';
               const isNewEdge = newEdgeIdsRef.current.has(edge.id);
 
               const midX = (sourceNode.x + targetNode.x) / 2;
               const midY = (sourceNode.y + NODE_HEIGHT / 2 + targetNode.y - NODE_HEIGHT / 2 + 8) / 2;
+
+              const edgeStroke = isCompositeEdge ? '#14b8a6' : isMergeEdge ? '#a855f7' : '#6b7280';
+              const edgeMarker = isCompositeEdge
+                ? 'url(#vgraph-arrow-composite)'
+                : isMergeEdge ? 'url(#vgraph-arrow-merge)' : 'url(#vgraph-arrow)';
 
               return (
                 <React.Fragment key={edge.id}>
@@ -412,10 +450,10 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                     d={buildEdgePath(sourceNode, targetNode)}
                     fill='none'
                     strokeWidth={1.5}
-                    markerEnd={isMergeEdge ? 'url(#vgraph-arrow-merge)' : 'url(#vgraph-arrow)'}
-                    stroke={isMergeEdge ? '#a855f7' : '#6b7280'}
-                    strokeOpacity={isMergeEdge ? 0.6 : 0.5}
-                    strokeDasharray={isMergeEdge ? '4 3' : undefined}
+                    markerEnd={edgeMarker}
+                    stroke={edgeStroke}
+                    strokeOpacity={isCompositeEdge || isMergeEdge ? 0.6 : 0.5}
+                    strokeDasharray={isCompositeEdge ? '6 3' : isMergeEdge ? '4 3' : undefined}
                     style={isNewEdge ? {
                       strokeDasharray: 1000,
                       strokeDashoffset: 1000,
@@ -427,11 +465,11 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                       x={midX + 4}
                       y={midY}
                       fontSize={7}
-                      fill={isMergeEdge ? '#a855f7' : '#6b7280'}
+                      fill={edgeStroke}
                       fillOpacity={0.7}
                       textAnchor='start'
                     >
-                      {isMergeEdge ? 'merge' : 'gen'}
+                      {isCompositeEdge ? 'comp' : isMergeEdge ? 'merge' : 'gen'}
                     </text>
                   ) : null}
                 </React.Fragment>
@@ -451,12 +489,19 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
               const nx = node.x - NODE_WIDTH / 2;
               const ny = node.y - NODE_HEIGHT / 2;
 
+              const isCompositeSelected = compositeSelectedSet.has(node.id);
               const isIsolatedOut = isolatedNodeIds !== null && !isolatedNodeIds.has(node.id);
               const isCompareSelected = compareMode && compareNodeIds !== null
                 && (compareNodeIds[0] === node.id || compareNodeIds[1] === node.id);
-              const dimmed = (mergeMode && !isMergeSelected && !isHovered) || isFilteredOut || isIsolatedOut;
+              const dimmed = (mergeMode && !isMergeSelected && !isHovered)
+                || (compositeMode && !isCompositeSelected && !isHovered)
+                || isFilteredOut || isIsolatedOut;
               const hasChildren = node.childIds.length > 0;
               const annotation = getSlotAnnotation?.(node.slot);
+              const isCompositeNode = node.type === 'composite';
+              const compositeMeta = isCompositeNode ? readMeta(node.slot) : null;
+              const compositeLayers: CompositeLayerConfig[] = compositeMeta?.compositeConfig?.layers ?? [];
+              const compositeHeight = isCompositeNode ? getCompositeNodeHeight(compositeLayers.length) : NODE_HEIGHT;
 
               return (
                 <g
@@ -466,7 +511,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                   onClick={(e) => handleNodeClick(e, node.id)}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
-                    if (!mergeMode) onActivateNode(node.id);
+                    if (!mergeMode && !compositeMode) onActivateNode(node.id);
                   }}
                   onContextMenu={(e) => {
                     if (onContextMenu) {
@@ -478,8 +523,8 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                   onPointerEnter={() => onHoverNode(node.id)}
                   onPointerLeave={() => onHoverNode(null)}
                   style={{
-                    transform: `translate(${nx}px, ${ny}px) scale(${isHovered && !mergeMode ? 1.08 : 1})`,
-                    transformOrigin: `${nx + NODE_WIDTH / 2}px ${ny + NODE_HEIGHT / 2}px`,
+                    transform: `translate(${nx}px, ${ny}px) scale(${isHovered && !mergeMode && !compositeMode ? 1.08 : 1})`,
+                    transformOrigin: `${nx + NODE_WIDTH / 2}px ${ny + compositeHeight / 2}px`,
                     transition: 'transform 0.3s ease-out, opacity 0.2s ease',
                     opacity: dimmed ? (isFilteredOut ? 0.2 : 0.4) : isHovered ? 1 : 0.85,
                     animation: isNewNode
@@ -489,120 +534,140 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                         : undefined,
                   }}
                 >
-                  {/* Background */}
-                  <rect
-                    x={0}
-                    y={0}
-                    width={NODE_WIDTH}
-                    height={NODE_HEIGHT}
-                    rx={8}
-                    ry={8}
-                    strokeWidth={isSelected || isMergeSelected ? 2 : 1}
-                    strokeDasharray={isMergeSelected ? '4 3' : undefined}
-                    className={getNodeStrokeClass(node, isSelected, isMergeSelected, isCompareSelected)}
-                  />
-
-                  {/* Thumbnail */}
-                  {imageSrc ? (
-                    <image
-                      href={imageSrc}
-                      x={(NODE_WIDTH - THUMB_SIZE) / 2}
-                      y={6}
-                      width={THUMB_SIZE}
-                      height={THUMB_SIZE}
-                      preserveAspectRatio='xMidYMid slice'
-                      clipPath='inset(0 round 4px)'
+                  {isCompositeNode && compositeLayers.length > 0 ? (
+                    <CompositeStackNode
+                      node={node}
+                      isSelected={isSelected}
+                      isHovered={isHovered}
+                      layers={compositeLayers}
+                      getSlotLabel={(slotId) => {
+                        const n = nodeById.get(slotId);
+                        return n ? n.label : slotId.slice(0, 8);
+                      }}
+                      getSlotImageSrc={(slotId) => {
+                        const n = nodeById.get(slotId);
+                        return n ? getSlotImageSrc(n.slot) : null;
+                      }}
+                      onReorderLayer={(from, to) => onReorderCompositeLayer(node.id, from, to)}
                     />
                   ) : (
-                    <rect
-                      x={(NODE_WIDTH - THUMB_SIZE) / 2}
-                      y={6}
-                      width={THUMB_SIZE}
-                      height={THUMB_SIZE}
-                      rx={4}
-                      ry={4}
-                      fill='#374151'
-                      fillOpacity={0.4}
-                    />
-                  )}
-
-                  {/* Label */}
-                  <text
-                    x={NODE_WIDTH / 2}
-                    y={THUMB_SIZE + 6 + LABEL_OFFSET_Y}
-                    textAnchor='middle'
-                    fill='#d1d5db'
-                    fontSize={9}
-                  >
-                    {node.label.length > 10 ? `${node.label.slice(0, 9)}...` : node.label}
-                  </text>
-
-                  {/* Mask badge */}
-                  {node.hasMask ? (
-                    <circle
-                      cx={NODE_WIDTH - 6}
-                      cy={8}
-                      r={4}
-                      fill='#a855f7'
-                    />
-                  ) : null}
-
-                  {/* Annotation badge */}
-                  {annotation ? (
-                    <circle
-                      cx={6}
-                      cy={NODE_HEIGHT - 8}
-                      r={3}
-                      fill='#facc15'
-                      fillOpacity={0.8}
-                    />
-                  ) : null}
-
-                  {/* Merge type badge */}
-                  {node.type === 'merge' ? (
-                    <text
-                      x={6}
-                      y={12}
-                      fontSize={8}
-                      fill='#a855f7'
-                      fontWeight='bold'
-                    >
-                      M
-                    </text>
-                  ) : null}
-
-                  {/* Collapse toggle button */}
-                  {hasChildren && !mergeMode ? (
-                    <g
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleCollapse(node.id);
-                      }}
-                      className='cursor-pointer'
-                    >
+                    <>
+                      {/* Background */}
                       <rect
-                        x={NODE_WIDTH / 2 - 10}
-                        y={NODE_HEIGHT - 4}
-                        width={20}
-                        height={14}
-                        rx={3}
-                        ry={3}
-                        fill='#1f2937'
-                        stroke='#4b5563'
-                        strokeWidth={0.5}
+                        x={0}
+                        y={0}
+                        width={NODE_WIDTH}
+                        height={NODE_HEIGHT}
+                        rx={8}
+                        ry={8}
+                        strokeWidth={isSelected || isMergeSelected || isCompositeSelected ? 2 : 1}
+                        strokeDasharray={isMergeSelected ? '4 3' : isCompositeSelected ? '6 3' : undefined}
+                        className={getNodeStrokeClass(node, isSelected, isMergeSelected, isCompareSelected, isCompositeSelected)}
                       />
+
+                      {/* Thumbnail */}
+                      {imageSrc ? (
+                        <image
+                          href={imageSrc}
+                          x={(NODE_WIDTH - THUMB_SIZE) / 2}
+                          y={6}
+                          width={THUMB_SIZE}
+                          height={THUMB_SIZE}
+                          preserveAspectRatio='xMidYMid slice'
+                          clipPath='inset(0 round 4px)'
+                        />
+                      ) : (
+                        <rect
+                          x={(NODE_WIDTH - THUMB_SIZE) / 2}
+                          y={6}
+                          width={THUMB_SIZE}
+                          height={THUMB_SIZE}
+                          rx={4}
+                          ry={4}
+                          fill='#374151'
+                          fillOpacity={0.4}
+                        />
+                      )}
+
+                      {/* Label */}
                       <text
                         x={NODE_WIDTH / 2}
-                        y={NODE_HEIGHT + 7}
+                        y={THUMB_SIZE + 6 + LABEL_OFFSET_Y}
                         textAnchor='middle'
-                        fill={isCollapsed ? '#facc15' : '#9ca3af'}
-                        fontSize={8}
-                        fontWeight='bold'
+                        fill='#d1d5db'
+                        fontSize={9}
                       >
-                        {isCollapsed ? `+${node.descendantCount}` : '\u2212'}
+                        {node.label.length > 10 ? `${node.label.slice(0, 9)}...` : node.label}
                       </text>
-                    </g>
-                  ) : null}
+
+                      {/* Mask badge */}
+                      {node.hasMask ? (
+                        <circle
+                          cx={NODE_WIDTH - 6}
+                          cy={8}
+                          r={4}
+                          fill='#a855f7'
+                        />
+                      ) : null}
+
+                      {/* Annotation badge */}
+                      {annotation ? (
+                        <circle
+                          cx={6}
+                          cy={NODE_HEIGHT - 8}
+                          r={3}
+                          fill='#facc15'
+                          fillOpacity={0.8}
+                        />
+                      ) : null}
+
+                      {/* Merge type badge */}
+                      {node.type === 'merge' ? (
+                        <text
+                          x={6}
+                          y={12}
+                          fontSize={8}
+                          fill='#a855f7'
+                          fontWeight='bold'
+                        >
+                          M
+                        </text>
+                      ) : null}
+
+                      {/* Collapse toggle button */}
+                      {hasChildren && !mergeMode && !compositeMode ? (
+                        <g
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleCollapse(node.id);
+                          }}
+                          className='cursor-pointer'
+                        >
+                          <rect
+                            x={NODE_WIDTH / 2 - 10}
+                            y={NODE_HEIGHT - 4}
+                            width={20}
+                            height={14}
+                            rx={3}
+                            ry={3}
+                            fill='#1f2937'
+                            stroke='#4b5563'
+                            strokeWidth={0.5}
+                          />
+                          <text
+                            x={NODE_WIDTH / 2}
+                            y={NODE_HEIGHT + 7}
+                            textAnchor='middle'
+                            fill={isCollapsed ? '#facc15' : '#9ca3af'}
+                            fontSize={8}
+                            fontWeight='bold'
+                          >
+                            {isCollapsed ? `+${node.descendantCount}` : '\u2212'}
+                          </text>
+                        </g>
+                      ) : null}
+                    </>
+                  )}
                 </g>
               );
             })}

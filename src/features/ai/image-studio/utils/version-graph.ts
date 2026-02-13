@@ -7,7 +7,7 @@ export type LayoutMode = 'dag' | 'timeline-h' | 'timeline-v';
 export interface VersionNode {
   id: string;
   label: string;
-  type: 'base' | 'generation' | 'merge';
+  type: 'base' | 'generation' | 'merge' | 'composite';
   parentIds: string[];
   childIds: string[];
   hasMask: boolean;
@@ -22,7 +22,7 @@ export interface VersionEdge {
   id: string;
   source: string;
   target: string;
-  type: 'generation' | 'merge';
+  type: 'generation' | 'merge' | 'composite';
 }
 
 export interface VersionGraph {
@@ -250,7 +250,9 @@ export function computeVersionGraph(slots: ImageStudioSlotRecord[]): VersionGrap
     const pos = positionMap.get(slot.id) ?? { x: 0, y: 0 };
 
     let nodeType: VersionNode['type'] = 'base';
-    if (meta.role === 'merge' || pids.length > 1) {
+    if (meta.role === 'composite') {
+      nodeType = 'composite';
+    } else if (meta.role === 'merge' || pids.length > 1) {
       nodeType = 'merge';
     } else if (pids.length === 1) {
       nodeType = 'generation';
@@ -275,13 +277,14 @@ export function computeVersionGraph(slots: ImageStudioSlotRecord[]): VersionGrap
   const edges: VersionEdge[] = [];
   for (const [childId, pids] of parentIdsMap) {
     const childMeta = readMetadata(slotById.get(childId)!);
+    const isComposite = childMeta.role === 'composite';
     const isMerge = childMeta.role === 'merge' || pids.length > 1;
     for (const pid of pids) {
       edges.push({
         id: `${pid}→${childId}`,
         source: pid,
         target: childId,
-        type: isMerge ? 'merge' : 'generation',
+        type: isComposite ? 'composite' : isMerge ? 'merge' : 'generation',
       });
     }
   }
@@ -460,4 +463,12 @@ export async function exportSvgAsPng(svgElement: SVGSVGElement): Promise<void> {
   });
 }
 
-export { NODE_WIDTH, NODE_HEIGHT };
+// ── Composite helpers ─────────────────────────────────────────────────────────
+
+const COMPOSITE_LAYER_ROW_HEIGHT = 24;
+
+function getCompositeNodeHeight(layerCount: number): number {
+  return NODE_HEIGHT + COMPOSITE_LAYER_ROW_HEIGHT * Math.max(layerCount - 1, 0);
+}
+
+export { NODE_WIDTH, NODE_HEIGHT, COMPOSITE_LAYER_ROW_HEIGHT, getCompositeNodeHeight };

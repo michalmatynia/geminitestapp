@@ -200,6 +200,8 @@ const toProductRecord = (product: {
   sizeWidth: number | null;
   weight: number | null;
   length: number | null;
+  published?: boolean | null;
+  catalogId?: string | null;
   parameters?: Prisma.JsonValue | null;
   imageLinks: string[];
   imageBase64s: string[];
@@ -214,6 +216,8 @@ const toProductRecord = (product: {
   ean: product.ean ?? null,
   gtin: product.gtin ?? null,
   asin: product.asin ?? null,
+  name: { en: product.name_en ?? '', pl: product.name_pl ?? null, de: product.name_de ?? null },
+  description: { en: product.description_en ?? '', pl: product.description_pl ?? null, de: product.description_de ?? null },
   name_en: product.name_en ?? null,
   name_pl: product.name_pl ?? null,
   name_de: product.name_de ?? null,
@@ -229,6 +233,8 @@ const toProductRecord = (product: {
   sizeWidth: product.sizeWidth ?? null,
   weight: product.weight ?? null,
   length: product.length ?? null,
+  published: product.published ?? true,
+  catalogId: product.catalogId ?? (product as any).catalogs?.[0]?.catalogId ?? '',
   parameters: Array.isArray(product.parameters) ? (product.parameters as unknown as ProductParameterValue[]) : [],
   imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
   imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
@@ -236,6 +242,8 @@ const toProductRecord = (product: {
   createdAt: product.createdAt.toISOString(),
   updatedAt: product.updatedAt.toISOString(),
   categoryId: (product as unknown as { categories?: { categoryId: string } | null }).categories?.categoryId ?? null,
+  tags: (product as unknown as { tags?: any[] }).tags ?? [],
+  images: (product as unknown as { images?: any[] }).images ?? [],
 });
 
 // Helper function to create a ProductRepository instance that uses a Prisma TransactionClient
@@ -287,10 +295,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt,
+        assignedAt: entry.assignedAt.toISOString(),
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categoryId: (product.categories as unknown as { categoryId: string } | null)?.categoryId ?? null,
       tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
       producers: (product.producers || []).map((p: { producerId: string }) => ({
         producerId: p.producerId,
@@ -337,10 +344,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt,
+        assignedAt: entry.assignedAt.toISOString(),
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categoryId: (product.categories as unknown as { categoryId: string } | null)?.categoryId ?? null,
       tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
       producers: (product.producers || []).map((p: { producerId: string }) => ({
         producerId: p.producerId,
@@ -633,10 +639,9 @@ export const prismaProductRepository: ProductRepository = {
       catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt,
+        assignedAt: entry.assignedAt.toISOString(),
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categoryId: product.categories?.categoryId ?? null,
       tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
       producers: (product.producers || []).map((p: { producerId: string }) => ({
         producerId: p.producerId,
@@ -690,10 +695,9 @@ export const prismaProductRepository: ProductRepository = {
       catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
         productId: entry.productId,
         catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt,
+        assignedAt: entry.assignedAt.toISOString(),
         catalog: toCatalogRecord(entry.catalog),
       })),
-      categoryId: product.categories?.categoryId ?? null,
       tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
       producers: (product.producers || []).map((p: { producerId: string }) => ({
         producerId: p.producerId,

@@ -1,20 +1,20 @@
 'use client';
 
-import type { ProductWithImages } from '@/features/products/types';
 import {
   ListingSettingsProvider,
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/features/integrations/types/listings';
+import type { ProductWithImages } from '@/features/products/types';
 import { FormModal } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';
 import { ExportLogViewer } from './ExportLogViewer';
-import { IntegrationAccountSummary } from './IntegrationAccountSummary';
-import { useImageRetryPresets } from './useImageRetryPresets';
 import { useListProductForm } from './hooks/useListProductForm';
-import { ListProductErrorPanel } from './list-product-modal/ListProductErrorPanel';
+import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { IntegrationSelection } from './list-product-modal/IntegrationSelection';
+import { ListProductErrorPanel } from './list-product-modal/ListProductErrorPanel';
+import { useImageRetryPresets } from './useImageRetryPresets';
 
 type ListProductModalProps = {
   product: ProductWithImages;
@@ -38,8 +38,6 @@ function ListProductModalContent({
     selectedConnectionId,
     selectedIntegration,
     isBaseComIntegration,
-    setSelectedIntegrationId,
-    setSelectedConnectionId,
   } = useListingSettingsContext();
 
   const {
@@ -111,15 +109,7 @@ function ListProductModalContent({
             {hasPresetSelection ? (
               <IntegrationAccountSummary integrationName={selectedIntegration?.name} connectionName={connectionName} />
             ) : (
-              <IntegrationSelection
-                integrations={integrationsWithConnections}
-                loading={loading}
-                selectedIntegrationId={selectedIntegrationId}
-                selectedConnectionId={selectedConnectionId}
-                selectedIntegration={selectedIntegration}
-                onIntegrationChange={setSelectedIntegrationId}
-                onConnectionChange={setSelectedConnectionId}
-              />
+              <IntegrationSelection />
             )}
 
             {isBaseComIntegration && selectedConnectionId && (
@@ -129,15 +119,7 @@ function ListProductModalContent({
             )}
           </div>
         ) : (
-          <IntegrationSelection
-            integrations={integrationsWithConnections}
-            loading={loading}
-            selectedIntegrationId={selectedIntegrationId}
-            selectedConnectionId={selectedConnectionId}
-            selectedIntegration={selectedIntegration}
-            onIntegrationChange={setSelectedIntegrationId}
-            onConnectionChange={setSelectedConnectionId}
-          />
+          <IntegrationSelection />
         )}
 
         {exportLogs.length > 0 && (

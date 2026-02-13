@@ -24,7 +24,8 @@ type CatalogModalContextValue = {
   availableLanguages: Language[];
   getLanguage: (id: string) => Language | undefined;
   languagesLoading: boolean;
-  languagesError?: string | undefined;
+  languagesError?: string | null | undefined;
+  error: string | null;
   catalogPriceGroupIds: string[];
   togglePriceGroup: (id: string) => void;
   catalogDefaultPriceGroupId: string;

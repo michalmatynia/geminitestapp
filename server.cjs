@@ -4,6 +4,30 @@ const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 
+const dev = process.env.NODE_ENV !== 'production';
+const nodeVersion = process.versions.node || '';
+const nodeMajor = Number((nodeVersion.split('.')[0] || '').trim());
+
+if (!Number.isFinite(nodeMajor)) {
+  console.error(`[runtime] Unable to parse Node version: "${nodeVersion}"`);
+  process.exit(1);
+}
+
+if (nodeMajor < 20) {
+  console.error(
+    `[runtime] Node ${process.version} is too old. Use Node 20.9+ (recommended: Node 22 LTS).`
+  );
+  process.exit(1);
+}
+
+if (dev && nodeMajor >= 24) {
+  console.error(
+    `[runtime] Node ${process.version} is not supported for dev mode (Next/SWC/Turbopack instability). ` +
+    'Use Node 22 LTS: `nvm use 22`.'
+  );
+  process.exit(1);
+}
+
 // Dynamic import for ESM modules from src/features
 let loggingToolsCache = null;
 async function getLoggingTools() {
@@ -43,7 +67,6 @@ async function getLoggingTools() {
   return loggingToolsCache;
 }
 
-const dev = process.env.NODE_ENV !== 'production';
 // Keep fast/default dev tooling unless explicitly opting into legacy polling watchers.
 if (dev && process.env.FORCE_LEGACY_DEV_WATCHERS === 'true') {
   if (!process.env.WATCHPACK_POLLING) {

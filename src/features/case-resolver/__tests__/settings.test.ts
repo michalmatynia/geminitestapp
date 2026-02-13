@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
-import { parseCaseResolverWorkspace } from '@/features/case-resolver/settings';
+import {
+  inferCaseResolverAssetKind,
+  parseCaseResolverWorkspace,
+  resolveCaseResolverUploadFolder,
+} from '@/features/case-resolver/settings';
 import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/features/case-resolver/types';
 
 const createPromptNode = (id: string): AiNode => ({
@@ -25,6 +29,8 @@ describe('case-resolver settings', () => {
           id: 'dup-file',
           name: 'Case One',
           folder: 'Root A/Sub *',
+          addresser: { kind: 'person', id: 'p-1' },
+          addressee: { kind: 'invalid', id: 'x-1' },
           graph: {
             nodes: [createPromptNode('n1'), createPromptNode('n2')],
             edges: [],
@@ -68,6 +74,8 @@ describe('case-resolver settings', () => {
     expect(workspace.assets).toEqual([]);
     expect(workspace.files[0]?.id).toBe('dup-file');
     expect(workspace.files[0]?.folder).toBe('Root_A/Sub__');
+    expect(workspace.files[0]?.addresser).toEqual({ kind: 'person', id: 'p-1' });
+    expect(workspace.files[0]?.addressee).toBeNull();
     expect(workspace.folders).toEqual(['Root_A', 'Root_A/Sub__']);
     expect(workspace.activeFileId).toBe('dup-file');
 
@@ -134,5 +142,48 @@ describe('case-resolver settings', () => {
     expect(workspace.assets[0]?.kind).toBe('image');
     expect(workspace.assets[0]?.size).toBe(120);
     expect(workspace.files[0]?.graph.pdfExtractionPresetId).toBe('plain_text');
+  });
+
+  it('categorizes upload folders by inferred file kind', () => {
+    expect(
+      resolveCaseResolverUploadFolder({
+        baseFolder: 'Evidence',
+        mimeType: 'image/png',
+        name: 'render.png',
+      })
+    ).toBe('Evidence/images');
+    expect(
+      resolveCaseResolverUploadFolder({
+        baseFolder: 'Evidence',
+        mimeType: 'application/pdf',
+        name: 'report.pdf',
+      })
+    ).toBe('Evidence/pdfs');
+    expect(
+      resolveCaseResolverUploadFolder({
+        baseFolder: 'Evidence',
+        mimeType: 'text/plain',
+        name: 'notes.txt',
+      })
+    ).toBe('Evidence/files');
+    expect(
+      resolveCaseResolverUploadFolder({
+        baseFolder: '',
+        mimeType: 'application/pdf',
+        name: 'root-report.pdf',
+      })
+    ).toBe('pdfs');
+    expect(
+      inferCaseResolverAssetKind({
+        mimeType: 'image/jpeg',
+        name: 'report.pdf',
+      })
+    ).toBe('image');
+    expect(
+      inferCaseResolverAssetKind({
+        mimeType: '',
+        name: 'scan-01.png',
+      })
+    ).toBe('image');
   });
 });

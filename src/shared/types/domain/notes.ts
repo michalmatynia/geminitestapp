@@ -51,19 +51,19 @@ export type CategoryRecord = NoteCategoryDto;
 export type NoteTagRecord = {
   noteId: string;
   tagId: string;
-  assignedAt: Date;
+  assignedAt: string;
 };
 
 export type NoteCategoryRecord = {
   noteId: string;
   categoryId: string;
-  assignedAt: Date;
+  assignedAt: string;
 };
 
 export type NoteRelationRecord = {
   sourceNoteId: string;
   targetNoteId: string;
-  assignedAt: Date;
+  assignedAt: string;
 };
 
 // Simple note type for related notes (without nested relations to avoid circular references)
@@ -71,7 +71,7 @@ export type RelatedNote = {
   id: string;
   title: string;
   color: string | null;
-  content?: string;
+  content?: string | undefined;
 };
 
 export type NoteRelationWithTarget = NoteRelationRecord & {
@@ -132,8 +132,8 @@ export type NoteFileRecord = {
   size: number;
   width: number | null;
   height: number | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type NoteFileCreateInput = {

@@ -26,7 +26,8 @@ import type {
   RedisOverviewDto as RedisOverviewResponse,
 } from '@/shared/dtos/database';
 import { ApiError } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { dbKeys } from '@/shared/lib/query-key-exports';
+import { resolvePayloadErrorMessage, unwrapMutationResult } from '@/shared/lib/mutation-error-handler';
 
 import {
   cancelDatabaseEngineOperationJob,
@@ -62,7 +63,6 @@ import type {
   SqlQueryResult,
 } from '../types';
 
-const dbKeys = QUERY_KEYS.system.databases;
 
 type DatabasePreviewQueryInput = {
   backupName?: string | undefined;
@@ -70,29 +70,6 @@ type DatabasePreviewQueryInput = {
   type?: DatabaseType | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
-};
-
-const resolvePayloadErrorMessage = (payload: unknown, fallback: string): string => {
-  if (!payload || typeof payload !== 'object') return fallback;
-  const record = payload as Record<string, unknown>;
-  if (typeof record['error'] === 'string' && record['error'].trim()) {
-    return record['error'];
-  }
-  if (typeof record['message'] === 'string' && record['message'].trim()) {
-    return record['message'];
-  }
-  return fallback;
-};
-
-const unwrapMutationResult = <TPayload>(
-  result: ApiPayloadResult<TPayload>,
-  fallbackMessage: string
-): TPayload => {
-  if (!result.ok) {
-    const message = resolvePayloadErrorMessage(result.payload, fallbackMessage);
-    throw new ApiError(message, 400);
-  }
-  return result.payload;
 };
 
 const invalidateBackups = (queryClient: QueryClient, dbType: DatabaseType): void => {

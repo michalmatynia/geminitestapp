@@ -11,6 +11,7 @@ import {
   type CaseResolverFile,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
+  type CaseResolverPartyReference,
   type CaseResolverPdfExtractionPresetId,
   type CaseResolverWorkspace,
 } from './types';
@@ -99,6 +100,43 @@ const sanitizeEdgeMeta = (
   return next;
 };
 
+const sanitizeDocumentFileLinksByNode = (
+  source: unknown,
+  validNodeIds: Set<string>
+): Record<string, string[]> => {
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
+    return {};
+  }
+  const result: Record<string, string[]> = {};
+  Object.entries(source as Record<string, unknown>).forEach(([nodeId, rawLinks]: [string, unknown]) => {
+    if (!validNodeIds.has(nodeId)) return;
+    if (!Array.isArray(rawLinks)) return;
+    const unique = new Set<string>();
+    rawLinks.forEach((entry: unknown) => {
+      if (typeof entry !== 'string') return;
+      const normalized = entry.trim();
+      if (!normalized) return;
+      unique.add(normalized);
+    });
+    result[nodeId] = Array.from(unique);
+  });
+  return result;
+};
+
+const sanitizePartyReference = (value: unknown): CaseResolverPartyReference | null => {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, unknown>;
+  const kindRaw = typeof record['kind'] === 'string' ? record['kind'].trim() : '';
+  const id = typeof record['id'] === 'string' ? record['id'].trim() : '';
+  if (!id) return null;
+  if (kindRaw !== 'person' && kindRaw !== 'organization') return null;
+  const kind: CaseResolverPartyReference['kind'] = kindRaw;
+  return {
+    kind,
+    id,
+  };
+};
+
 const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const graphRecord = graph && typeof graph === 'object' ? (graph as Record<string, unknown>) : {};
   const nodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
@@ -122,6 +160,17 @@ const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     presetRaw === 'plain_text' || presetRaw === 'structured_sections' || presetRaw === 'facts_entities'
       ? presetRaw
       : DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID;
+  const documentFileLinksByNode = sanitizeDocumentFileLinksByNode(
+    graphRecord['documentFileLinksByNode'],
+    validNodeIds
+  );
+  const rawDocumentDropNodeId = graphRecord['documentDropNodeId'];
+  const documentDropNodeId =
+    typeof rawDocumentDropNodeId === 'string' &&
+      rawDocumentDropNodeId.trim().length > 0 &&
+      validNodeIds.has(rawDocumentDropNodeId)
+      ? rawDocumentDropNodeId
+      : null;
 
   return {
     nodes,
@@ -133,6 +182,8 @@ const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
       graphRecord['edgeMeta'] as Record<string, CaseResolverEdgeMeta> | null | undefined
     ),
     pdfExtractionPresetId,
+    documentFileLinksByNode,
+    documentDropNodeId,
   };
 };
 
@@ -142,13 +193,19 @@ export const createEmptyCaseResolverGraph = (): CaseResolverGraph => ({
   nodeMeta: {},
   edgeMeta: {},
   pdfExtractionPresetId: DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
+  documentFileLinksByNode: {},
+  documentDropNodeId: null,
 });
 
 export const createCaseResolverFile = (input: {
   id: string;
   name: string;
   folder?: string;
+  documentContent?: string | null | undefined;
+  isLocked?: boolean | null | undefined;
   graph?: Partial<CaseResolverGraph> | null;
+  addresser?: CaseResolverPartyReference | null | undefined;
+  addressee?: CaseResolverPartyReference | null | undefined;
   createdAt?: string;
   updatedAt?: string;
 }): CaseResolverFile => {
@@ -157,6 +214,13 @@ export const createCaseResolverFile = (input: {
     id: input.id,
     name: input.name.trim() || 'Untitled Case',
     folder: normalizeFolderPath(input.folder ?? ''),
+    documentContent:
+      typeof input.documentContent === 'string'
+        ? input.documentContent
+        : '',
+    isLocked: input.isLocked === true,
+    addresser: sanitizePartyReference(input.addresser),
+    addressee: sanitizePartyReference(input.addressee),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
     graph: sanitizeGraph({
@@ -165,15 +229,21 @@ export const createCaseResolverFile = (input: {
       nodeMeta: input.graph?.nodeMeta ?? {},
       edgeMeta: input.graph?.edgeMeta ?? {},
       pdfExtractionPresetId: input.graph?.pdfExtractionPresetId,
+      documentFileLinksByNode: input.graph?.documentFileLinksByNode ?? {},
+      documentDropNodeId: input.graph?.documentDropNodeId ?? null,
     }),
   };
 };
 
-const normalizeAssetKind = (
-  kind: string | null | undefined,
-  mimeType: string | null | undefined,
-  name: string | null | undefined
-): CaseResolverAssetKind => {
+export const inferCaseResolverAssetKind = ({
+  kind,
+  mimeType,
+  name,
+}: {
+  kind?: string | null | undefined;
+  mimeType?: string | null | undefined;
+  name?: string | null | undefined;
+}): CaseResolverAssetKind => {
   const normalizedKind = (kind ?? '').trim().toLowerCase();
   if (
     normalizedKind === 'node_file' ||
@@ -189,8 +259,54 @@ const normalizeAssetKind = (
   if (normalizedMime === 'application/pdf') return 'pdf';
 
   const normalizedName = (name ?? '').trim().toLowerCase();
+  if (
+    normalizedName.endsWith('.jpg') ||
+    normalizedName.endsWith('.jpeg') ||
+    normalizedName.endsWith('.png') ||
+    normalizedName.endsWith('.webp') ||
+    normalizedName.endsWith('.gif') ||
+    normalizedName.endsWith('.bmp') ||
+    normalizedName.endsWith('.avif') ||
+    normalizedName.endsWith('.heic') ||
+    normalizedName.endsWith('.heif') ||
+    normalizedName.endsWith('.tif') ||
+    normalizedName.endsWith('.tiff') ||
+    normalizedName.endsWith('.svg')
+  ) {
+    return 'image';
+  }
   if (normalizedName.endsWith('.pdf')) return 'pdf';
   return 'file';
+};
+
+const resolveUploadBucketForAssetKind = (
+  kind: CaseResolverAssetKind
+): 'images' | 'pdfs' | 'files' => {
+  if (kind === 'image') return 'images';
+  if (kind === 'pdf') return 'pdfs';
+  return 'files';
+};
+
+export const resolveCaseResolverUploadFolder = ({
+  baseFolder,
+  kind,
+  mimeType,
+  name,
+}: {
+  baseFolder?: string | null | undefined;
+  kind?: string | null | undefined;
+  mimeType?: string | null | undefined;
+  name?: string | null | undefined;
+}): string => {
+  const base = normalizeFolderPath(baseFolder ?? '');
+  const inferredKind = inferCaseResolverAssetKind({ kind, mimeType, name });
+
+  if (inferredKind === 'node_file') {
+    return base;
+  }
+
+  const bucket = resolveUploadBucketForAssetKind(inferredKind);
+  return normalizeFolderPath(base ? `${base}/${bucket}` : bucket);
 };
 
 export const createCaseResolverAssetFile = (input: {
@@ -212,7 +328,7 @@ export const createCaseResolverAssetFile = (input: {
     id: input.id,
     name: input.name.trim() || 'Untitled File',
     folder: normalizeFolderPath(input.folder ?? ''),
-    kind: normalizeAssetKind(input.kind, input.mimeType, input.name),
+    kind: inferCaseResolverAssetKind({ kind: input.kind, mimeType: input.mimeType, name: input.name }),
     filepath:
       typeof input.filepath === 'string' && input.filepath.trim().length > 0
         ? input.filepath.trim()
@@ -279,7 +395,11 @@ export const normalizeCaseResolverWorkspace = (
         id,
         name: file.name,
         folder: file.folder,
+        documentContent: file.documentContent,
+        isLocked: file.isLocked,
         graph: file.graph,
+        addresser: file.addresser,
+        addressee: file.addressee,
         createdAt: file.createdAt,
         updatedAt: file.updatedAt,
       });

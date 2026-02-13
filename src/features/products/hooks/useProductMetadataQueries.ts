@@ -20,10 +20,11 @@ import type {
 } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { productMetadataKeys } from '@/shared/lib/query-key-exports';
+
+export { productMetadataKeys };
 import type { Language } from '@/shared/types/domain/internationalization';
 
-export const productMetadataKeys = QUERY_KEYS.products.metadata;
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({

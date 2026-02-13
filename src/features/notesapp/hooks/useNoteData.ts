@@ -90,7 +90,7 @@ export const useNotes = (
   options?: QueryOptions
 ): UseQueryResult<NoteWithRelations[], Error> => {
   const debouncedFilters = useDebounce(filters, NOTES_QUERY_DEBOUNCE_MS);
-  return useNotesQuery(toFetchNotesParams(debouncedFilters), options);
+  return useNotesQuery(toFetchNotesParams(debouncedFilters), options) as UseQueryResult<NoteWithRelations[], Error>;
 };
 
 export const useNote = (
@@ -101,22 +101,22 @@ export const useNote = (
 };
 
 export const useNoteTree = (options?: QueryOptions): UseQueryResult<NotebookRecord[], Error> => {
-  return useNotebooksQuery(options);
+  return useNotebooksQuery(undefined, options) as UseQueryResult<NotebookRecord[], Error>;
 };
 
 export const useNoteTags = (options?: QueryOptions): UseQueryResult<TagRecord[], Error> => {
-  return useNoteTagsQuery(undefined, options);
+  return useNoteTagsQuery(undefined, options) as UseQueryResult<TagRecord[], Error>;
 };
 
 export const useNoteCategories = (
   notebookId?: string | null,
   options?: QueryOptions
 ): UseQueryResult<CategoryRecord[], Error> => {
-  return useNoteCategoriesQuery(notebookId, options);
+  return useNoteCategoriesQuery(notebookId, options) as UseQueryResult<CategoryRecord[], Error>;
 };
 
 export const useNoteThemes = (options?: QueryOptions): UseQueryResult<ThemeRecord[], Error> => {
-  return useNoteThemesQuery(undefined, options);
+  return useNoteThemesQuery(undefined, options) as UseQueryResult<ThemeRecord[], Error>;
 };
 
 // --- Mutations ---

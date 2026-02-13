@@ -11,87 +11,26 @@ Prisma schema loaded from prisma/schema.prisma.
 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
 
 
-⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
- We detected multiple lockfiles and selected the directory of /Users/michalmatynia/package-lock.json as the root directory.
- To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
-   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
- Detected additional lockfiles: 
-   * /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/package-lock.json
-
 ▲ Next.js 16.1.6 (Turbopack)
 - Environments: .env
 - Experiments (use with caution):
   · proxyClientMaxBodySize: "50mb"
 
   Creating an optimized production build ...
-Turbopack build encountered 3 warnings:
-./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:39:26
-Ecmascript file had an error
-[0m [90m 37 |[39m         }
- [90m 38 |[39m         [90m// Give some time for logging to complete before exiting[39m
-[31m[1m>[22m[39m[90m 39 |[39m         setTimeout(() [33m=>[39m process[33m.[39mexit([35m1[39m)[33m,[39m [35m1000[39m)[33m;[39m
- [90m    |[39m                          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 40 |[39m       })()[33m;[39m
- [90m 41 |[39m     })[33m;[39m
- [90m 42 |[39m   }[0m
-
-A Node.js API is used (process.exit at line: 39) which is not supported in the Edge Runtime.
-Learn more: https://nextjs.org/docs/api-reference/edge-runtime
-
-Import trace:
-  App Route:
-    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts
-    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
-
-
-./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:10:5
-Ecmascript file had an error
-[0m [90m  8 |[39m
- [90m  9 |[39m     [90m// Set up global error handlers for the Node.js process[39m
-[31m[1m>[22m[39m[90m 10 |[39m     process[33m.[39mon([32m'unhandledRejection'[39m[33m,[39m (reason[33m:[39m unknown) [33m=>[39m {
- [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 11 |[39m       [36mvoid[39m ([36masync[39m () [33m=>[39m {
- [90m 12 |[39m         [36mtry[39m {
- [90m 13 |[39m           [36mconst[39m { logSystemError } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/features/observability/server'[39m)[33m;[39m[0m
-
-A Node.js API is used (process.on at line: 10) which is not supported in the Edge Runtime.
-Learn more: https://nextjs.org/docs/api-reference/edge-runtime
-
-Import trace:
-  App Route:
-    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts
-    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
-
-
-./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts:25:5
-Ecmascript file had an error
-[0m [90m 23 |[39m     })[33m;[39m
- [90m 24 |[39m
-[31m[1m>[22m[39m[90m 25 |[39m     process[33m.[39mon([32m'uncaughtException'[39m[33m,[39m (error[33m:[39m [33mError[39m) [33m=>[39m {
- [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
- [90m 26 |[39m       [36mvoid[39m ([36masync[39m () [33m=>[39m {
- [90m 27 |[39m         [36mtry[39m {
- [90m 28 |[39m           [36mconst[39m { logSystemError } [33m=[39m [36mawait[39m [36mimport[39m([32m'@/features/observability/server'[39m)[33m;[39m[0m
-
-A Node.js API is used (process.on at line: 25) which is not supported in the Edge Runtime.
-Learn more: https://nextjs.org/docs/api-reference/edge-runtime
-
-Import trace:
-  App Route:
-    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/instrumentation.ts
-    ./Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/databases/restore/route.ts
-
-
-✓ Compiled successfully in 14.8s
+✓ Compiled successfully in 16.8s
   Running TypeScript ...
 Failed to compile.
 
-./src/features/cms/components/page-builder/SettingsFieldRenderer.tsx:1:10
-Type error: 'Link2' is declared but its value is never read.
+./src/features/prompt-exploder/hierarchy-master-tree.ts:119:3
+Type error: Type '({ id: string; paramPath: string; comparator: PromptExploderLogicalComparator; value: {} | null; joinWithPrevious: PromptExploderLogicalJoin | null; } | null)[]' is not assignable to type 'PromptExploderLogicalCondition[]'.
+  Type '{ id: string; paramPath: string; comparator: PromptExploderLogicalComparator; value: {} | null; joinWithPrevious: PromptExploderLogicalJoin | null; } | null' is not assignable to type 'PromptExploderLogicalCondition'.
+    Type 'null' is not assignable to type 'PromptExploderLogicalCondition'.
 
-[0m[31m[1m>[22m[39m[90m 1 |[39m [36mimport[39m { [33mLink2[39m[33m,[39m [33mSearch[39m[33m,[39m [33mPalette[39m } [36mfrom[39m [32m'lucide-react'[39m[33m;[39m
- [90m   |[39m          [31m[1m^[22m[39m
- [90m 2 |[39m [36mimport[39m [33mReact[39m[33m,[39m { useCallback[33m,[39m useMemo[33m,[39m useState } [36mfrom[39m [32m'react'[39m[33m;[39m
- [90m 3 |[39m
- [90m 4 |[39m [36mimport[39m type { [33mColorScheme[39m } [36mfrom[39m [32m'@/features/cms/types/theme-settings'[39m[33m;[39m[0m
+[0m [90m 117 |[39m )[33m:[39m [33mPromptExploderLogicalCondition[39m[] [33m=>[39m {
+ [90m 118 |[39m   [36mif[39m ([33m![39m[33mArray[39m[33m.[39misArray(conditions)) [36mreturn[39m [][33m;[39m
+[31m[1m>[22m[39m[90m 119 |[39m   [36mreturn[39m conditions
+ [90m     |[39m   [31m[1m^[22m[39m
+ [90m 120 |[39m     [33m.[39mmap((condition[33m,[39m index) [33m=>[39m {
+ [90m 121 |[39m       [36mif[39m ([33m![39mcondition [33m||[39m [36mtypeof[39m condition [33m!==[39m [32m'object'[39m) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m 122 |[39m       [36mconst[39m paramPath [33m=[39m [36mtypeof[39m condition[33m.[39mparamPath [33m===[39m [32m'string'[39m [33m?[39m condition[33m.[39mparamPath[33m.[39mtrim() [33m:[39m [32m''[39m[33m;[39m[0m
 Next.js build worker exited with code: 1 and signal: null

@@ -34,16 +34,27 @@ export const getAllCategories = async (
 ): Promise<CategoryRecord[]> => {
   const resolvedNotebookId =
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
-  return prisma.category.findMany({
+  const categories = await prisma.category.findMany({
     where: { notebookId: resolvedNotebookId },
     orderBy: [{ sortIndex: 'asc' }, { name: 'asc' }],
   });
+  return categories.map((cat) => ({
+    ...cat,
+    createdAt: cat.createdAt.toISOString(),
+    updatedAt: cat.updatedAt.toISOString(),
+  }));
 };
 
 export const getCategoryById = async (
   id: string
 ): Promise<CategoryRecord | null> => {
-  return prisma.category.findUnique({ where: { id } });
+  const cat = await prisma.category.findUnique({ where: { id } });
+  if (!cat) return null;
+  return {
+    ...cat,
+    createdAt: cat.createdAt.toISOString(),
+    updatedAt: cat.updatedAt.toISOString(),
+  };
 };
 
 export const getCategoryTree = async (
@@ -62,10 +73,16 @@ export const getCategoryTree = async (
       .filter((cat: CategoryTreeRecord) => cat.parentId === parentId)
       .map((cat: CategoryTreeRecord): CategoryWithChildren => ({
         ...cat,
+        createdAt: cat.createdAt.toISOString(),
+        updatedAt: cat.updatedAt.toISOString(),
         notes: cat.notes.map((nc: CategoryTreeRecord['notes'][number]) => ({
           ...nc.note,
+          editorType: nc.note.editorType as 'markdown' | 'wysiwyg' | 'code',
           createdAt: nc.note.createdAt.toISOString(),
           updatedAt: nc.note.updatedAt.toISOString(),
+          tagIds: nc.note.tags.map((t) => t.tagId),
+          categoryIds: nc.note.categories.map((c) => c.categoryId),
+          relatedNoteIds: [], // Add if needed, or omit if optional
           tags: nc.note.tags.map((t: CategoryTreeRecord['notes'][number]['note']['tags'][number]) => ({
             ...t,
             assignedAt: t.assignedAt,
@@ -80,12 +97,13 @@ export const getCategoryTree = async (
             assignedAt: c.assignedAt,
             category: {
               ...c.category,
-              createdAt: c.category.createdAt,
-              updatedAt: c.category.updatedAt,
+              createdAt: c.category.createdAt.toISOString(),
+              updatedAt: c.category.updatedAt.toISOString(),
             },
           })),
         })),
         children: buildTree(cat.id),
+        _count: { notes: cat.notes.length },
       }));
   };
 
@@ -113,7 +131,12 @@ export const createCategory = async (
   if (data.parentId) createData.parent = { connect: { id: data.parentId } };
   if (data.themeId) createData.theme = { connect: { id: data.themeId } };
 
-  return prisma.category.create({ data: createData });
+  const cat = await prisma.category.create({ data: createData });
+  return {
+    ...cat,
+    createdAt: cat.createdAt.toISOString(),
+    updatedAt: cat.updatedAt.toISOString(),
+  };
 };
 
 export const updateCategory = async (
@@ -153,7 +176,12 @@ export const updateCategory = async (
         ? { connect: { id: data.themeId } }
         : { disconnect: true };
     }
-    return await prisma.category.update({ where: { id }, data: updateData });
+    const cat = await prisma.category.update({ where: { id }, data: updateData });
+    return {
+      ...cat,
+      createdAt: cat.createdAt.toISOString(),
+      updatedAt: cat.updatedAt.toISOString(),
+    };
   } catch {
     return null;
   }

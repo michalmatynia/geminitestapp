@@ -1,7 +1,7 @@
 import React from 'react';
 import { useToast } from '@/shared/ui';
 import { useSaveCatalogMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { Catalog, PriceGroup } from '@/features/products/types';
+import type { Catalog } from '@/features/products/types';
 import type { Language } from '@/shared/types/domain/internationalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -12,9 +12,8 @@ interface CatalogFormState {
 }
 
 interface UseCatalogFormProps {
-  catalog?: Catalog | null;
+  catalog?: Catalog | null | undefined;
   languages: Language[];
-  priceGroups: PriceGroup[];
   defaultGroupId: string;
 }
 
@@ -43,7 +42,6 @@ interface UseCatalogFormReturn {
 export function useCatalogForm({
   catalog,
   languages,
-  priceGroups,
   defaultGroupId,
 }: UseCatalogFormProps): UseCatalogFormReturn {
   const [error, setError] = React.useState<string | null>(null);

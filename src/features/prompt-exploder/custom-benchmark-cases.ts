@@ -70,11 +70,11 @@ export const parseCustomBenchmarkCasesDraft = (
       return { ok: false, error: `Case #${index + 1} must be an object.` };
     }
     const value = item as Record<string, unknown>;
-    const rawExpectedTypes: unknown[] = Array.isArray(value.expectedTypes)
-      ? (value.expectedTypes as unknown[])
+    const rawExpectedTypes: unknown[] = Array.isArray(value['expectedTypes'])
+      ? (value['expectedTypes'] as unknown[])
       : [];
-    const id = typeof value.id === 'string' ? value.id.trim() : '';
-    const prompt = typeof value.prompt === 'string' ? value.prompt.trim() : '';
+    const id = typeof value['id'] === 'string' ? value['id'].trim() : '';
+    const prompt = typeof value['prompt'] === 'string' ? value['prompt'].trim() : '';
     const expectedTypes = rawExpectedTypes.filter(
       (type): type is PromptExploderSegmentType => {
         return (
@@ -84,8 +84,8 @@ export const parseCustomBenchmarkCasesDraft = (
       }
     );
     const minSegments =
-      typeof value.minSegments === 'number' && Number.isFinite(value.minSegments)
-        ? clampNumber(Math.floor(value.minSegments), 1, 200)
+      typeof value['minSegments'] === 'number' && Number.isFinite(value['minSegments'])
+        ? clampNumber(Math.floor(value['minSegments'] as number), 1, 200)
         : 1;
 
     if (!id) {

@@ -1,15 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-
 import { api } from '@/shared/lib/api-client';
-import {
-  invalidateNoteDetail,
-  invalidateNotebooks,
-  invalidateNotes,
-  invalidateNoteTags,
-  invalidateNoteThemes,
-} from '@/shared/lib/query-invalidation';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
   NoteWithRelations,

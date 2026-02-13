@@ -2,7 +2,6 @@
 
 import {
   Download,
-  X,
   RotateCcw,
   Settings2,
   ChevronDown,
@@ -27,10 +26,8 @@ interface Asset3DPreviewModalProps {
 }
 
 function Asset3DPreviewModalContent({
-  onClose,
   asset,
 }: {
-  onClose: () => void;
   asset: Asset3DRecord;
 }): React.JSX.Element {
   const { resetSettings } = useViewer3D();
@@ -43,60 +40,12 @@ function Asset3DPreviewModalContent({
   const isValidAsset = !!asset?.filepath && !!asset?.id;
   const modelUrl = isValidAsset ? `/api/assets3d/${asset.id}/file` : null;
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-  };
-
   return (
-    <div className='bg-gray-900 rounded-lg shadow-2xl w-[95vw] max-w-6xl border border-gray-700 flex flex-col max-h-[90vh]'>
-      {/* Header */}
-      <div className='flex items-center justify-between p-4 border-b border-gray-700 flex-shrink-0'>
-        <div className='flex-1 min-w-0'>
-          <h2 className='text-lg font-semibold text-white truncate'>
-            {asset.name || asset.filename}
-          </h2>
-          <p className='text-xs text-gray-400'>{formatFileSize(asset.size)}</p>
-        </div>
-        <div className='flex items-center gap-2'>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={resetSettings}
-            title='Reset settings'
-          >
-            <RotateCcw className='h-4 w-4' />
-          </Button>
-          <Button
-            variant={showSettings ? 'default' : 'ghost'}
-            size='sm'
-            onClick={() => setShowSettings(!showSettings)}
-          >
-            <Settings2 className='h-4 w-4 mr-1' />
-            Settings
-            {showSettings ? (
-              <ChevronUp className='h-4 w-4 ml-1' />
-            ) : (
-              <ChevronDown className='h-4 w-4 ml-1' />
-            )}
-          </Button>
-          <a href={`/api/assets3d/${asset.id}/file`} download={asset.filename}>
-            <Button variant='secondary' size='sm'>
-              <Download className='h-4 w-4 mr-1' />
-              Download
-            </Button>
-          </a>
-          <Button variant='ghost' size='icon' onClick={onClose}>
-            <X className='h-4 w-4' />
-          </Button>
-        </div>
-      </div>
-
+    <div className='flex flex-col min-h-0 h-full'>
       {/* Main Content */}
       <div className='flex flex-1 min-h-0'>
         {/* Viewer */}
-        <div className={cn('flex-1 bg-gray-950', showSettings ? 'lg:w-2/3' : 'w-full')}>
+        <div className={cn('flex-1 bg-black/40', showSettings ? 'lg:w-2/3' : 'w-full')}>
           {!isValidAsset ? (
             <div className='flex items-center justify-center h-full'>
               <div className='text-center text-gray-400'>
@@ -118,20 +67,55 @@ function Asset3DPreviewModalContent({
               onError={(error: Error) => {
                 setModelError(error.message);
               }}
-              className='w-full h-[60vh]'
+              className='w-full h-full'
             />
           )}
         </div>
 
         {/* Settings Panel */}
         {showSettings && (
-          <div className='w-full lg:w-1/3 border-l border-gray-700 bg-gray-900/50'>
+          <div className='w-full lg:w-1/3 border-l border-border/60 bg-card/30'>
             <Viewer3DSettingsPanel />
           </div>
         )}
       </div>
 
-      {/* Quick Actions Bar */}
+      {/* Footer / Status */}
+      <div className='border-t border-border/60 bg-muted/10 p-2 flex items-center justify-between'>
+        <div className='flex items-center gap-2'>
+          <Button
+            variant='ghost'
+            size='sm'
+            onClick={resetSettings}
+            title='Reset settings'
+            className='h-8 w-8 p-0'
+          >
+            <RotateCcw className='h-4 w-4' />
+          </Button>
+          <Button
+            variant={showSettings ? 'secondary' : 'ghost'}
+            size='sm'
+            onClick={() => setShowSettings(!showSettings)}
+            className='h-8 text-xs'
+          >
+            <Settings2 className='h-3.5 w-3.5 mr-1.5' />
+            Settings
+            {showSettings ? (
+              <ChevronUp className='h-3.5 w-3.5 ml-1.5' />
+            ) : (
+              <ChevronDown className='h-3.5 w-3.5 ml-1.5' />
+            )}
+          </Button>
+        </div>
+        <div className='flex items-center gap-2'>
+          <a href={`/api/assets3d/${asset.id}/file`} download={asset.filename}>
+            <Button variant='outline' size='sm' className='h-8 text-xs'>
+              <Download className='h-3.5 w-3.5 mr-1.5' />
+              Download
+            </Button>
+          </a>
+        </div>
+      </div>
       <Viewer3DStatusInfo />
     </div>
   );
@@ -142,10 +126,23 @@ export function Asset3DPreviewModal({
   onClose,
   asset,
 }: Asset3DPreviewModalProps): React.JSX.Element {
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  };
+
   return (
-    <AppModal open={open} onClose={onClose} title={asset.filename}>
+    <AppModal 
+      open={open} 
+      onClose={onClose} 
+      title={asset.name || asset.filename}
+      subtitle={formatFileSize(asset.size)}
+      size='xl'
+      padding='none'
+    >
       <Viewer3DProvider>
-        <Asset3DPreviewModalContent onClose={onClose} asset={asset} />
+        <Asset3DPreviewModalContent asset={asset} />
       </Viewer3DProvider>
     </AppModal>
   );

@@ -5,7 +5,9 @@ import React from 'react';
 
 import { Button, Label, Textarea } from '@/shared/ui';
 
-import type { CaseResolverAssetFile, CaseResolverFile } from '../types';
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+
+import type { CaseResolverAssetFile } from '../types';
 
 const formatFileSize = (size: number | null): string => {
   if (size === null || size < 0 || !Number.isFinite(size)) return 'Unknown';
@@ -21,19 +23,14 @@ const resolveAssetSubtitle = (asset: CaseResolverAssetFile): string => {
   return 'Node file';
 };
 
-export type CaseResolverFileViewerProps = {
-  selectedAsset: CaseResolverAssetFile | null;
-  selectedFolderPath: string | null;
-  activeFile: CaseResolverFile | null;
-  onUpdateDescription: (nextDescription: string) => void;
-};
+export function CaseResolverFileViewer(): React.JSX.Element {
+  const {
+    selectedAsset,
+    selectedFolderPath,
+    activeFile,
+    onUpdateSelectedAsset,
+  } = useCaseResolverPageContext();
 
-export function CaseResolverFileViewer({
-  selectedAsset,
-  selectedFolderPath,
-  activeFile,
-  onUpdateDescription,
-}: CaseResolverFileViewerProps): React.JSX.Element {
   if (!selectedAsset) {
     return (
       <div className='flex h-[calc(100vh-120px)] flex-col rounded-lg border border-border/60 bg-card/35 p-6'>
@@ -98,7 +95,7 @@ export function CaseResolverFileViewer({
           <Textarea
             value={selectedAsset.description}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-              onUpdateDescription(event.target.value);
+              onUpdateSelectedAsset({ description: event.target.value });
             }}
             className='min-h-[72px] border-border bg-card/60 text-xs text-white'
             placeholder='Optional description for this file...'

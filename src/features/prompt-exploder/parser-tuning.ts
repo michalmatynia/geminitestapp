@@ -3,6 +3,7 @@ import {
   type PromptEngineSettings,
   type PromptExploderRuleSegmentType,
   type PromptValidationRule,
+  type PromptValidationScope,
 } from '@/features/prompt-engine/settings';
 
 export const PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS = [
@@ -10,6 +11,7 @@ export const PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS = [
   'segment.boundary.studio_relighting',
   'segment.boundary.pipeline',
   'segment.boundary.final_qa',
+  'segment.not_heading.rule_line',
   'segment.subsection.alpha_heading',
   'segment.subsection.reference_named',
   'segment.subsection.reference_plain',
@@ -27,6 +29,7 @@ const PARSER_TUNING_RULE_LABELS: Record<PromptExploderParserTuningRuleId, string
   'segment.boundary.studio_relighting': 'Boundary · Studio Relighting',
   'segment.boundary.pipeline': 'Boundary · Pipeline',
   'segment.boundary.final_qa': 'Boundary · Final QA',
+  'segment.not_heading.rule_line': 'Guard · Rule Continuation (Not Heading)',
   'segment.subsection.alpha_heading': 'Subsection · Alpha Heading',
   'segment.subsection.reference_named': 'Subsection · Named Reference',
   'segment.subsection.reference_plain': 'Subsection · Plain Reference',
@@ -66,50 +69,89 @@ const coerceRuleId = (value: string): PromptExploderParserTuningRuleId | null =>
 
 const buildFallbackRegexRule = (
   id: PromptExploderParserTuningRuleId
-): Extract<PromptValidationRule, { kind: 'regex' }> => ({
-  kind: 'regex',
-  id,
-  enabled: true,
-  severity: 'info',
-  title: PARSER_TUNING_RULE_LABELS[id],
-  description: null,
-  pattern: '\\bUNCONFIGURED\\b',
-  flags: 'mi',
-  message: PARSER_TUNING_RULE_LABELS[id],
-  similar: [],
-  autofix: {
-    enabled: false,
-    operations: [],
-  },
-  sequenceGroupId: 'exploder_structure',
-  sequenceGroupLabel: 'Exploder Structure',
-  sequenceGroupDebounceMs: 0,
-  sequence: 1,
-  chainMode: 'continue',
-  maxExecutions: 1,
-  passOutputToNext: true,
-  appliesToScopes: ['prompt_exploder'],
-  launchEnabled: false,
-  launchAppliesToScopes: ['prompt_exploder'],
-  launchScopeBehavior: 'gate',
-  launchOperator: 'contains',
-  launchValue: null,
-  launchFlags: null,
-  promptExploderSegmentType: 'sequence',
-  promptExploderConfidenceBoost: 0.1,
-  promptExploderPriority: 20,
-  promptExploderTreatAsHeading: true,
-});
+): Extract<PromptValidationRule, { kind: 'regex' }> => {
+  if (id === 'segment.not_heading.rule_line') {
+    return {
+      kind: 'regex',
+      id,
+      enabled: true,
+      severity: 'info',
+      title: PARSER_TUNING_RULE_LABELS[id],
+      description: null,
+      pattern: '^\\s*Rule\\s*:\\s+.+$',
+      flags: 'mi',
+      message: PARSER_TUNING_RULE_LABELS[id],
+      similar: [],
+      autofix: {
+        enabled: false,
+        operations: [],
+      },
+      sequenceGroupId: 'exploder_structure',
+      sequenceGroupLabel: 'Exploder Structure',
+      sequenceGroupDebounceMs: 0,
+      sequence: 1,
+      chainMode: 'continue',
+      maxExecutions: 1,
+      passOutputToNext: true,
+      appliesToScopes: ['prompt_exploder'],
+      launchEnabled: false,
+      launchAppliesToScopes: ['prompt_exploder'],
+      launchScopeBehavior: 'gate',
+      launchOperator: 'contains',
+      launchValue: null,
+      launchFlags: null,
+      promptExploderSegmentType: null,
+      promptExploderConfidenceBoost: 0.05,
+      promptExploderPriority: 35,
+      promptExploderTreatAsHeading: false,
+    };
+  }
+
+  return {
+    kind: 'regex',
+    id,
+    enabled: true,
+    severity: 'info',
+    title: PARSER_TUNING_RULE_LABELS[id],
+    description: null,
+    pattern: '\\bUNCONFIGURED\\b',
+    flags: 'mi',
+    message: PARSER_TUNING_RULE_LABELS[id],
+    similar: [],
+    autofix: {
+      enabled: false,
+      operations: [],
+    },
+    sequenceGroupId: 'exploder_structure',
+    sequenceGroupLabel: 'Exploder Structure',
+    sequenceGroupDebounceMs: 0,
+    sequence: 1,
+    chainMode: 'continue',
+    maxExecutions: 1,
+    passOutputToNext: true,
+    appliesToScopes: ['prompt_exploder'],
+    launchEnabled: false,
+    launchAppliesToScopes: ['prompt_exploder'],
+    launchScopeBehavior: 'gate',
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
+    promptExploderSegmentType: 'sequence',
+    promptExploderConfidenceBoost: 0.1,
+    promptExploderPriority: 20,
+    promptExploderTreatAsHeading: true,
+  };
+};
 
 const normalizeRuleFlags = (flags: string | null | undefined): string => {
   const normalized = (flags ?? '').trim();
   return normalized || 'mi';
 };
 
-const normalizeScopes = (scopes: string[] | null | undefined): string[] => {
+const normalizeScopes = (scopes: string[] | null | undefined): PromptValidationScope[] => {
   const next = new Set<string>((scopes ?? []).filter(Boolean));
   next.add('prompt_exploder');
-  return [...next];
+  return Array.from(next) as PromptValidationScope[];
 };
 
 export const buildPromptExploderParserTuningDrafts = (args: {

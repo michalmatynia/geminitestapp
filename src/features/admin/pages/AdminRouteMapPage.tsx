@@ -33,6 +33,12 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/ai-paths': 'Design, test, and run AI Paths workflows.',
   '/admin/case-resolver':
     'Build case flows with folder-organized files, WYSIWYG prompt nodes, and node-map composition.',
+  '/admin/case-resolver/cases':
+    'List, add, open, edit, and remove Case Resolver cases.',
+  '/admin/filemaker':
+    'Manage persons and organizations used as addresser/addressee in Case Resolver documents.',
+  '/admin/filemaker/list':
+    'Search and review the Filemaker person and organization registry.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',
   '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
   '/admin/validator':

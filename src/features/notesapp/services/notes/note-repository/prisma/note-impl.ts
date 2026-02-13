@@ -6,6 +6,7 @@ import type {
   NoteWithRelations,
   NoteCreateInput,
   NoteUpdateInput,
+  NoteEditorType,
 } from '@/shared/types/domain/notes';
 
 import { getOrCreateDefaultNotebook } from './notebook-impl';
@@ -36,7 +37,7 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
   id: note.id,
   title: note.title,
   content: note.content,
-  editorType: note.editorType,
+  editorType: note.editorType as NoteEditorType,
   color: note.color,
   isPinned: note.isPinned,
   isArchived: note.isArchived,
@@ -44,10 +45,13 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
   notebookId: note.notebookId,
   createdAt: note.createdAt.toISOString(),
   updatedAt: note.updatedAt.toISOString(),
+  tagIds: note.tags.map((t) => t.tagId),
+  categoryIds: note.categories.map((c) => c.categoryId),
+  relatedNoteIds: note.relationsFrom.map((r) => r.targetNoteId),
   tags: note.tags.map((t: NotePrismaResult['tags'][number]) => ({
     noteId: t.noteId,
     tagId: t.tagId,
-    assignedAt: t.assignedAt,
+    assignedAt: t.assignedAt.toISOString(),
     tag: {
       id: t.tag.id,
       name: t.tag.name,
@@ -60,7 +64,7 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
   categories: note.categories.map((c: NotePrismaResult['categories'][number]) => ({
     noteId: c.noteId,
     categoryId: c.categoryId,
-    assignedAt: c.assignedAt,
+    assignedAt: c.assignedAt.toISOString(),
     category: {
       id: c.category.id,
       name: c.category.name,
@@ -70,20 +74,20 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
       notebookId: c.category.notebookId,
       themeId: c.category.themeId,
       sortIndex: c.category.sortIndex,
-      createdAt: c.category.createdAt,
-      updatedAt: c.category.updatedAt,
+      createdAt: c.category.createdAt.toISOString(),
+      updatedAt: c.category.updatedAt.toISOString(),
     },
   })),
   relationsFrom: note.relationsFrom.map((r: NotePrismaResult['relationsFrom'][number]) => ({
     sourceNoteId: r.sourceNoteId,
     targetNoteId: r.targetNoteId,
-    assignedAt: r.assignedAt,
+    assignedAt: r.assignedAt.toISOString(),
     targetNote: r.targetNote,
   })),
   relationsTo: note.relationsTo.map((r: NotePrismaResult['relationsTo'][number]) => ({
     sourceNoteId: r.sourceNoteId,
     targetNoteId: r.targetNoteId,
-    assignedAt: r.assignedAt,
+    assignedAt: r.assignedAt.toISOString(),
     sourceNote: r.sourceNote,
   })),
   files: note.files.map((f: NotePrismaResult['files'][number]) => ({
@@ -96,8 +100,8 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
     size: f.size,
     width: f.width,
     height: f.height,
-    createdAt: f.createdAt,
-    updatedAt: f.updatedAt,
+    createdAt: f.createdAt.toISOString(),
+    updatedAt: f.updatedAt.toISOString(),
   })),
 });
 

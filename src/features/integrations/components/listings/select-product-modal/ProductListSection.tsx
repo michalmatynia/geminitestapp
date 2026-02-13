@@ -3,34 +3,29 @@ import React from 'react';
 import type { ProductWithImages } from '@/features/products/types';
 import { FormSection, SearchInput } from '@/shared/ui';
 
-type ProductListProps = {
-  isLoading: boolean;
-  products: ProductWithImages[] | null | undefined;
-  selectedProductId: string | null;
-  onProductSelect: (productId: string) => void;
-  productSearch: string;
-  onSearchChange: (value: string) => void;
-};
+import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';
 
-export function ProductListSection({
-  isLoading,
-  products,
-  selectedProductId,
-  onProductSelect,
-  productSearch,
-  onSearchChange,
-}: ProductListProps): React.JSX.Element {
+export function ProductListSection(): React.JSX.Element {
+  const {
+    isLoadingProducts,
+    products,
+    selectedProductId,
+    setSelectedProductId,
+    productSearch,
+    setProductSearch,
+  } = useSelectProductForListingModalContext();
+
   return (
     <FormSection title='1. Select Product' variant='subtle' className='p-4 space-y-4'>
       <SearchInput
         placeholder='Search products...'
         value={productSearch}
-        onChange={(e) => onSearchChange(e.target.value)}
-        onClear={() => onSearchChange('')}
+        onChange={(e) => setProductSearch(e.target.value)}
+        onClear={() => setProductSearch('')}
       />
 
       <div className='space-y-2 max-h-[400px] overflow-y-auto rounded-md border border-border mt-4'>
-        {isLoading ? (
+        {isLoadingProducts ? (
           <p className='p-4 text-center text-xs text-gray-500'>Loading products...</p>
         ) : (products || []).length === 0 ? (
           <p className='p-4 text-center text-xs text-gray-500'>No products found.</p>
@@ -39,7 +34,7 @@ export function ProductListSection({
             <button
               key={product.id}
               type='button'
-              onClick={() => onProductSelect(product.id)}
+              onClick={() => setSelectedProductId(product.id)}
               className={`w-full flex items-center justify-between p-3 text-left transition-colors border-b border-border last:border-0 ${
                 selectedProductId === product.id ? 'bg-primary/10 border-l-2 border-l-primary' : 'hover:bg-muted/50'
               }`}

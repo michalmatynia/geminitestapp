@@ -6,13 +6,13 @@ import {
   ListingSettingsProvider,
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
 import { FormModal } from '@/shared/ui';
 
 import { useProductSelectionForm } from './hooks/useProductSelectionForm';
-import { ProductListSection } from './select-product-modal/ProductListSection';
+import { SelectProductForListingModalProvider } from './select-product-modal/context/SelectProductForListingModalContext';
 import { IntegrationSettingsSection } from './select-product-modal/IntegrationSettingsSection';
+import { ProductListSection } from './select-product-modal/ProductListSection';
 
 type SelectProductForListingModalProps = {
   onClose: () => void;
@@ -26,14 +26,9 @@ function SelectProductForListingModalContent({
   onSuccess,
 }: SelectProductForListingModalProps): React.JSX.Element {
   const {
-    integrations,
-    loadingIntegrations,
     selectedIntegrationId,
     selectedConnectionId,
-    selectedIntegration,
     isBaseComIntegration,
-    setSelectedIntegrationId,
-    setSelectedConnectionId,
     selectedInventoryId,
     selectedTemplateId,
     allowDuplicateSku,
@@ -61,10 +56,6 @@ function SelectProductForListingModalContent({
     search: productSearch,
   });
 
-  const integrationsWithConnections = integrations.filter(
-    (i: IntegrationWithConnections) => i.connections.length > 0
-  );
-
   return (
     <FormModal
       open={true}
@@ -77,30 +68,23 @@ function SelectProductForListingModalContent({
       saveText='List Product'
       size='xl'
     >
-      <div className='grid gap-6 md:grid-cols-2'>
-        <div className='space-y-4'>
-          <ProductListSection
-            isLoading={productsQuery.isLoading}
-            products={productsQuery.products}
-            selectedProductId={selectedProductId}
-            onProductSelect={setSelectedProductId}
-            productSearch={productSearch}
-            onSearchChange={setProductSearch}
-          />
-        </div>
+      <SelectProductForListingModalProvider
+        isLoadingProducts={productsQuery.isLoading}
+        products={productsQuery.products}
+        selectedProductId={selectedProductId}
+        setSelectedProductId={setSelectedProductId}
+        productSearch={productSearch}
+        setProductSearch={setProductSearch}
+        error={error}
+      >
+        <div className='grid gap-6 md:grid-cols-2'>
+          <div className='space-y-4'>
+            <ProductListSection />
+          </div>
 
-        <IntegrationSettingsSection
-          loadingIntegrations={loadingIntegrations}
-          integrations={integrationsWithConnections}
-          selectedIntegrationId={selectedIntegrationId}
-          selectedConnectionId={selectedConnectionId}
-          selectedIntegration={selectedIntegration}
-          isBaseComIntegration={isBaseComIntegration}
-          error={error}
-          onIntegrationChange={setSelectedIntegrationId}
-          onConnectionChange={setSelectedConnectionId}
-        />
-      </div>
+          <IntegrationSettingsSection />
+        </div>
+      </SelectProductForListingModalProvider>
     </FormModal>
   );
 }

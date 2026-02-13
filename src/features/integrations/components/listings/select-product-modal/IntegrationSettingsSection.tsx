@@ -1,33 +1,24 @@
 import React from 'react';
 
+import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations/types/listings';
-import { FormField, FormSection,  UnifiedSelect } from '@/shared/ui';
+import { FormField, FormSection, UnifiedSelect } from '@/shared/ui';
 
 import { BaseListingSettings } from '../BaseListingSettings';
+import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';
 
-type IntegrationSettingsSectionProps = {
-  loadingIntegrations: boolean;
-  integrations: IntegrationWithConnections[];
-  selectedIntegrationId: string | null;
-  selectedConnectionId: string | null;
-  selectedIntegration: IntegrationWithConnections | null;
-  isBaseComIntegration: boolean;
-  error: string | null;
-  onIntegrationChange: (value: string) => void;
-  onConnectionChange: (value: string) => void;
-};
-
-export function IntegrationSettingsSection({
-  loadingIntegrations,
-  integrations,
-  selectedIntegrationId,
-  selectedConnectionId,
-  selectedIntegration,
-  isBaseComIntegration,
-  error,
-  onIntegrationChange,
-  onConnectionChange,
-}: IntegrationSettingsSectionProps): React.JSX.Element {
+export function IntegrationSettingsSection(): React.JSX.Element {
+  const {
+    integrations,
+    loadingIntegrations,
+    selectedIntegrationId,
+    selectedConnectionId,
+    selectedIntegration,
+    isBaseComIntegration,
+    setSelectedIntegrationId,
+    setSelectedConnectionId,
+  } = useListingSettingsContext();
+  const { error } = useSelectProductForListingModalContext();
   const integrationsWithConnections = integrations.filter((i: IntegrationWithConnections) => i.connections.length > 0);
 
   return (
@@ -39,8 +30,8 @@ export function IntegrationSettingsSection({
           <>
             <FormField label='Marketplace'>
               <UnifiedSelect
-                value={selectedIntegrationId}
-                onValueChange={onIntegrationChange}
+                value={selectedIntegrationId ?? undefined}
+                onValueChange={setSelectedIntegrationId}
                 options={integrationsWithConnections.map((i) => ({ value: i.id, label: i.name }))}
                 placeholder='Select marketplace...'
               />
@@ -49,8 +40,8 @@ export function IntegrationSettingsSection({
             {selectedIntegration && (
               <FormField label='Account'>
                 <UnifiedSelect
-                  value={selectedConnectionId}
-                  onValueChange={onConnectionChange}
+                  value={selectedConnectionId ?? undefined}
+                  onValueChange={setSelectedConnectionId}
                   options={selectedIntegration.connections.map((c: IntegrationConnectionBasic) => ({
                     value: c.id,
                     label: c.name,

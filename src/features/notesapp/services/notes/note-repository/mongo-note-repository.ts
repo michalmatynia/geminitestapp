@@ -60,23 +60,33 @@ const toIsoUpdatedAt = (value: unknown): string | null => {
   return null;
 };
 
-const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
-  id: doc.id ?? doc._id,
-  title: doc.title,
-  content: doc.content,
-  editorType: doc.editorType ?? 'markdown',
-  color: doc.color ?? null,
-  isPinned: doc.isPinned ?? false,
-  isArchived: doc.isArchived ?? false,
-  isFavorite: doc.isFavorite ?? false,
-  notebookId: doc.notebookId ?? null,
-  createdAt: toIsoCreatedAt(doc.createdAt),
-  updatedAt: toIsoUpdatedAt(doc.updatedAt),
-  tags: Array.isArray(doc.tags) ? doc.tags : [],
-  categories: Array.isArray(doc.categories) ? doc.categories : [],
-  relationsFrom: Array.isArray(doc.relationsFrom) ? doc.relationsFrom : [],
-  relationsTo: Array.isArray(doc.relationsTo) ? doc.relationsTo : [],
-});
+const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
+  const id = doc.id ?? doc._id;
+  const tags = Array.isArray(doc.tags) ? doc.tags : [];
+  const categories = Array.isArray(doc.categories) ? doc.categories : [];
+  const relationsFrom = Array.isArray(doc.relationsFrom) ? doc.relationsFrom : [];
+
+  return {
+    id,
+    title: doc.title,
+    content: doc.content,
+    editorType: doc.editorType ?? 'markdown',
+    color: doc.color ?? null,
+    isPinned: doc.isPinned ?? false,
+    isArchived: doc.isArchived ?? false,
+    isFavorite: doc.isFavorite ?? false,
+    notebookId: doc.notebookId ?? null,
+    createdAt: toIsoCreatedAt(doc.createdAt),
+    updatedAt: toIsoUpdatedAt(doc.updatedAt),
+    tags,
+    categories,
+    relationsFrom,
+    relationsTo: Array.isArray(doc.relationsTo) ? doc.relationsTo : [],
+    tagIds: tags.map((t) => t.tagId),
+    categoryIds: categories.map((c) => c.categoryId),
+    relatedNoteIds: relationsFrom.map((r) => r.targetNoteId),
+  };
+};
 
 const toTagResponse = (doc: WithId<TagDocument>): TagRecord => ({
   id: doc.id ?? doc._id,
@@ -96,8 +106,8 @@ const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecord => ({
   notebookId: doc.notebookId ?? null,
   themeId: doc.themeId ?? null,
   sortIndex: doc.sortIndex ?? null,
-  createdAt: doc.createdAt ?? new Date(),
-  updatedAt: typeof doc.updatedAt === "string" ? new Date(doc.updatedAt) : doc.updatedAt ?? new Date(),
+  createdAt: toIsoCreatedAt(doc.createdAt),
+  updatedAt: toIsoUpdatedAt(doc.updatedAt),
 });
 
 const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecord => ({
@@ -123,8 +133,8 @@ const toThemeResponse = (doc: WithId<ThemeDocument>): ThemeRecord => ({
   relatedNoteBorderColor: doc.relatedNoteBorderColor,
   relatedNoteBackgroundColor: doc.relatedNoteBackgroundColor,
   relatedNoteTextColor: doc.relatedNoteTextColor,
-  createdAt: doc.createdAt ? new Date(doc.createdAt).toISOString() : new Date().toISOString(),
-  updatedAt: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : null,
+  createdAt: toIsoCreatedAt(doc.createdAt),
+  updatedAt: toIsoUpdatedAt(doc.updatedAt),
 });
 
 const toNoteFileResponse = (doc: WithId<NoteFileDocument>): NoteFileRecord => ({
@@ -137,8 +147,8 @@ const toNoteFileResponse = (doc: WithId<NoteFileDocument>): NoteFileRecord => ({
   size: doc.size,
   width: doc.width ?? null,
   height: doc.height ?? null,
-  createdAt: doc.createdAt ?? new Date(),
-  updatedAt: typeof doc.updatedAt === "string" ? new Date(doc.updatedAt) : doc.updatedAt ?? new Date(),
+  createdAt: toIsoCreatedAt(doc.createdAt),
+  updatedAt: toIsoUpdatedAt(doc.updatedAt) ?? toIsoCreatedAt(doc.createdAt),
 });
 
 const buildTree = (
@@ -198,7 +208,7 @@ const buildIncomingRelationsMap = (
       const relation: NoteRelationToEmbedded = {
         sourceNoteId: sourceId,
         targetNoteId: targetId,
-        assignedAt: rel.assignedAt ?? new Date(),
+        assignedAt: toIsoCreatedAt(rel.assignedAt),
         sourceNote: {
           id: sourceId,
           title: incomingDoc.title,
@@ -375,7 +385,7 @@ export const mongoNoteRepository: NoteRepository = {
         return {
           sourceNoteId: sourceId,
           targetNoteId: note.id,
-          assignedAt: relation.assignedAt ?? new Date(),
+          assignedAt: toIsoCreatedAt(relation.assignedAt),
           sourceNote: {
             id: sourceId,
             title: incoming.title,
@@ -409,7 +419,7 @@ export const mongoNoteRepository: NoteRepository = {
       tags = tagDocs.map((tag: WithId<TagDocument>): NoteTagEmbedded => ({
         noteId: id,
         tagId: tag.id ?? tag._id,
-        assignedAt: now,
+        assignedAt: now.toISOString(),
         tag: toTagResponse(tag),
       }));
     }
@@ -427,7 +437,7 @@ export const mongoNoteRepository: NoteRepository = {
       categories = categoryDocs.map((cat: WithId<CategoryDocument>): NoteCategoryEmbedded => ({
         noteId: id,
         categoryId: cat.id ?? cat._id,
-        assignedAt: now,
+        assignedAt: now.toISOString(),
         category: toCategoryResponse(cat),
       }));
     }
@@ -446,7 +456,7 @@ export const mongoNoteRepository: NoteRepository = {
         return {
           sourceNoteId: id,
           targetNoteId: targetId,
-          assignedAt: now,
+          assignedAt: now.toISOString(),
           targetNote: {
             id: targetId,
             title: note.title,
@@ -473,6 +483,9 @@ export const mongoNoteRepository: NoteRepository = {
       categories,
       relationsFrom,
       relationsTo: [],
+      tagIds: tags.map((t) => t.tagId),
+      categoryIds: categories.map((c) => c.categoryId),
+      relatedNoteIds: relationsFrom.map((r) => r.targetNoteId),
     };
 
     await collection.insertOne(doc);
@@ -519,11 +532,12 @@ export const mongoNoteRepository: NoteRepository = {
         tags = tagDocs.map((tag: WithId<TagDocument>): NoteTagEmbedded => ({
           noteId: id,
           tagId: tag.id ?? tag._id,
-          assignedAt: now,
+          assignedAt: now.toISOString(),
           tag: toTagResponse(tag),
         }));
       }
       setFields.tags = tags;
+      setFields.tagIds = tags.map((t) => t.tagId);
     }
 
     // Handle categories update
@@ -546,11 +560,12 @@ export const mongoNoteRepository: NoteRepository = {
         categories = categoryDocs.map((cat: WithId<CategoryDocument>): NoteCategoryEmbedded => ({
           noteId: id,
           categoryId: cat.id ?? cat._id,
-          assignedAt: now,
+          assignedAt: now.toISOString(),
           category: toCategoryResponse(cat),
         }));
       }
       setFields.categories = categories;
+      setFields.categoryIds = categories.map((c) => c.categoryId);
     }
 
     // Handle related notes update
@@ -572,7 +587,7 @@ export const mongoNoteRepository: NoteRepository = {
           return {
             sourceNoteId: id,
             targetNoteId: targetId,
-            assignedAt: now,
+            assignedAt: now.toISOString(),
             targetNote: {
               id: targetId,
               title: note.title,
@@ -582,6 +597,7 @@ export const mongoNoteRepository: NoteRepository = {
         });
       }
       setFields.relationsFrom = relationsFrom;
+      setFields.relatedNoteIds = relationsFrom.map((r) => r.targetNoteId);
     }
 
     const updateDoc: UpdateFilter<NoteDocument> = {
@@ -753,8 +769,8 @@ export const mongoNoteRepository: NoteRepository = {
       themeId: data.themeId ?? null,
       notebookId: resolvedNotebookId,
       sortIndex: data.sortIndex ?? nextSortIndex,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
 
     await collection.insertOne(doc);
@@ -782,7 +798,7 @@ export const mongoNoteRepository: NoteRepository = {
 
     const updateDoc: UpdateFilter<CategoryDocument> = {
       $set: {
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString(),
         ...(data.name !== undefined && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.color !== undefined && { color: data.color }),
@@ -1040,8 +1056,8 @@ export const mongoNoteRepository: NoteRepository = {
       size: _data.size,
       width: _data.width ?? null,
       height: _data.height ?? null,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
     return toNoteFileResponse(doc as WithId<NoteFileDocument>);

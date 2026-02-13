@@ -93,8 +93,13 @@ export function NoteDetailView(): React.JSX.Element | null {
 
   const relatedPreviewNotes = useMemo(() => {
     const map: Record<string, RelatedNote> = {};
-    linkedDetails?.forEach((n: RelatedNote) => {
-      map[n.id] = n;
+    (linkedDetails ?? []).forEach((n) => {
+      map[n.id] = {
+        id: n.id,
+        title: n.title,
+        color: n.color,
+        content: n.content ?? undefined,
+      };
     });
     return map;
   }, [linkedDetails]);

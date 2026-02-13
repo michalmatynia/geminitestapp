@@ -43,10 +43,9 @@ import {
   invalidateCmsThemeDetail,
   invalidateFiles,
 } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { cmsKeys } from '@/shared/lib/query-key-exports';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
-const cmsKeys = QUERY_KEYS.cms;
 
 export function useCmsPages(domainId?: string | null): UseQueryResult<PageSummary[], Error> {
   return useQuery({

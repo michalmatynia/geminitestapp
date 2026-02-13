@@ -66,7 +66,7 @@ export function CategoryMapperPageProvider({
   }, [integrationsQuery.error, integrationsQuery.isError, toast]);
 
   const integrations = useMemo<IntegrationWithConnections[]>((): IntegrationWithConnections[] => {
-    const data = integrationsQuery.data ?? [];
+    const data = (integrationsQuery.data ?? []) as any[];
     return data.filter((integration: IntegrationWithConnections) =>
       BASE_MARKETPLACE_SLUGS.has(integration.slug.toLowerCase())
     );

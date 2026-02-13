@@ -6,6 +6,7 @@ import { useConfiguredMasterFolderTree } from '@/features/foldertree/master/useC
 import type { UseConfiguredMasterFolderTreeOptions } from '@/features/foldertree/master/useConfiguredMasterFolderTree';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useToast } from '@/shared/ui';
 import {
   FOLDER_TREE_UI_STATE_V1_SETTING_KEY,
   parseFolderTreeUiStateV1,
@@ -26,6 +27,22 @@ export type UseMasterFolderTreeInstanceOptions = Omit<
 };
 
 const EXPANDED_STATE_PERSIST_DEBOUNCE_MS = 220;
+
+const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, string> = {
+  notes: 'Folder tree changes saved.',
+  image_studio: 'Image Studio tree changes saved.',
+  product_categories: 'Category tree changes saved.',
+  cms_page_builder: 'Page builder tree changes saved.',
+  case_resolver: 'Case Resolver tree changes saved.',
+};
+
+const shouldNotifyMasterTreePersistByInstance: Record<FolderTreeInstance, boolean> = {
+  notes: false,
+  image_studio: true,
+  product_categories: false,
+  cms_page_builder: true,
+  case_resolver: false,
+};
 
 const normalizeExpandedNodeIds = (values: Iterable<MasterTreeId>): MasterTreeId[] => {
   const normalized = new Set<string>();
@@ -55,6 +72,7 @@ export function useMasterFolderTreeInstance({
   panelCollapsed: boolean;
   setPanelCollapsed: (collapsed: boolean) => void;
 } {
+  const { toast } = useToast();
   const {
     initiallyExpandedNodeIds: fallbackInitiallyExpandedNodeIds,
     expandedNodeIds: fallbackExpandedNodeIds,
@@ -99,6 +117,8 @@ export function useMasterFolderTreeInstance({
   const expandedHydratedFromSettingsRef = useRef<boolean>(
     normalizedPersistedExpandedNodeIds === undefined
   );
+  const previousApplyingRef = useRef<boolean>(false);
+  const lastNotifiedErrorAtRef = useRef<string | null>(null);
 
   useEffect(() => {
     uiStateRef.current = parsedUiState;
@@ -220,6 +240,26 @@ export function useMasterFolderTreeInstance({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!shouldNotifyMasterTreePersistByInstance[instance]) {
+      previousApplyingRef.current = controller.isApplying;
+      return;
+    }
+
+    const wasApplying = previousApplyingRef.current;
+    const isApplying = controller.isApplying;
+    const lastError = controller.lastError;
+
+    if (lastError && lastError.at !== lastNotifiedErrorAtRef.current) {
+      lastNotifiedErrorAtRef.current = lastError.at;
+      toast(lastError.message || 'Failed to persist folder tree changes.', { variant: 'error' });
+    } else if (wasApplying && !isApplying && !lastError) {
+      toast(masterTreePersistSuccessMessageByInstance[instance], { variant: 'success' });
+    }
+
+    previousApplyingRef.current = isApplying;
+  }, [controller.isApplying, controller.lastError, instance, toast]);
 
   return {
     profile,

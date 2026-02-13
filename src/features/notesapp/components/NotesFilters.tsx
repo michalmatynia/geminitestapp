@@ -108,10 +108,10 @@ export function NotesFilters(): React.JSX.Element {
       <FilterPanel
         filters={filterConfig}
         values={filterValues}
-        onChange={handleFilterChange}
+        onFilterChange={handleFilterChange}
         onReset={handleReset}
         showHeader={true}
-        title='Note Filters'
+        headerTitle='Note Filters'
       />
 
       <div className='flex flex-wrap items-center gap-4 border-t border-border/40 pt-3 px-4'>

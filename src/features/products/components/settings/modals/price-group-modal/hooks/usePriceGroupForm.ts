@@ -11,7 +11,7 @@ interface PriceGroupFormState {
 }
 
 interface UsePriceGroupFormProps {
-  priceGroup?: PriceGroup | null;
+  priceGroup?: PriceGroup | null | undefined;
 }
 
 interface UsePriceGroupFormReturn {

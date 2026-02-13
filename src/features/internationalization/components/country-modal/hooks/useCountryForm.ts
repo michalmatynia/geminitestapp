@@ -2,7 +2,7 @@ import React from 'react';
 import { useSaveCountryMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/features/observability';
-import type { Country, Currency } from '@/shared/types/domain/internationalization';
+import type { CountryOption, CurrencyOption } from '@/shared/types/domain/internationalization';
 
 interface CountryFormState {
   code: string;
@@ -10,7 +10,7 @@ interface CountryFormState {
 }
 
 interface UseCountryFormProps {
-  country?: Country | null;
+  country?: CountryOption | null;
   defaultCountryCode: string;
   defaultCountryName: string;
 }
@@ -21,7 +21,7 @@ interface UseCountryFormReturn {
   selectedCurrencyIds: string[];
   setSelectedCurrencyIds: React.Dispatch<React.SetStateAction<string[]>>;
   saveMutation: ReturnType<typeof useSaveCountryMutation>;
-  handleSubmit: (currencies: Currency[]) => Promise<void>;
+  handleSubmit: (currencies: CurrencyOption[]) => Promise<void>;
 }
 
 export function useCountryForm({
@@ -52,7 +52,7 @@ export function useCountryForm({
     }
   }, [country, defaultCountryCode, defaultCountryName]);
 
-  const handleSubmit = async (currencies: Currency[]): Promise<void> => {
+  const handleSubmit = async (_currencies: CurrencyOption[]): Promise<void> => {
     if (!form.code.trim() || !form.name.trim()) {
       toast('Required fields missing.', { variant: 'error' });
       return;

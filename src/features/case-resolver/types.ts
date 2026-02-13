@@ -8,6 +8,10 @@ export type CaseResolverPdfExtractionPresetId =
   | 'plain_text'
   | 'structured_sections'
   | 'facts_entities';
+export type CaseResolverPartyReference = {
+  kind: 'person' | 'organization';
+  id: string;
+};
 
 export type CaseResolverNodeMeta = {
   role: CaseResolverNodeRole;
@@ -27,13 +31,19 @@ export type CaseResolverGraph = {
   nodeMeta: Record<string, CaseResolverNodeMeta>;
   edgeMeta: Record<string, CaseResolverEdgeMeta>;
   pdfExtractionPresetId: CaseResolverPdfExtractionPresetId;
+  documentFileLinksByNode: Record<string, string[]>;
+  documentDropNodeId: string | null;
 };
 
 export type CaseResolverFile = {
   id: string;
   name: string;
   folder: string;
+  documentContent: string;
+  isLocked: boolean;
   graph: CaseResolverGraph;
+  addresser: CaseResolverPartyReference | null;
+  addressee: CaseResolverPartyReference | null;
   createdAt: string;
   updatedAt: string;
 };

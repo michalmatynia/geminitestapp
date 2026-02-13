@@ -20,10 +20,17 @@ import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import type { Prisma } from '@prisma/client';
 
-type ProductDocument = Omit<ProductRecord, 'createdAt' | 'updatedAt'> & {
+type ProductDocument = Omit<
+  ProductRecord,
+  'createdAt' | 'updatedAt' | 'name' | 'description' | 'published' | 'catalogId' | 'tags' | 'images' | 'catalogs'
+> & {
   _id: string;
   createdAt: Date;
   updatedAt: Date;
+  name?: ProductRecord['name'];
+  description?: ProductRecord['description'];
+  published?: boolean;
+  catalogId?: string;
   images?: ProductWithImages['images'];
   catalogs?: ProductWithImages['catalogs'];
   categories?: Array<{ categoryId: string; assignedAt?: Date }>;
@@ -163,77 +170,99 @@ const normalizeProducerRefs = (
   return normalized;
 };
 
-const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => ({
-  id: doc.id ?? doc._id,
-  sku: doc.sku ?? null,
-  baseProductId: doc.baseProductId ?? null,
-  defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
-  ean: doc.ean ?? null,
-  gtin: doc.gtin ?? null,
-  asin: doc.asin ?? null,
-  name_en: doc.name_en ?? null,
-  name_pl: doc.name_pl ?? null,
-  name_de: doc.name_de ?? null,
-  description_en: doc.description_en ?? null,
-  description_pl: doc.description_pl ?? null,
-  description_de: doc.description_de ?? null,
-  supplierName: doc.supplierName ?? null,
-  supplierLink: doc.supplierLink ?? null,
-  priceComment: doc.priceComment ?? null,
-  stock: doc.stock ?? null,
-  price: doc.price ?? null,
-  sizeLength: doc.sizeLength ?? null,
-  sizeWidth: doc.sizeWidth ?? null,
-  weight: doc.weight ?? null,
-  length: doc.length ?? null,
-  parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
-  imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
-  imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
-  noteIds: Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
+const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => {
+  const images = Array.isArray(doc.images) ? doc.images : [];
+  const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
+  const tags = Array.isArray(doc.tags) ? doc.tags : [];
+  const producers = normalizeProducerRefs(doc.producers);
+  const noteIds = Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
     ? ((doc as unknown as { noteIds: string[] }).noteIds)
-    : [],
-  createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
-  updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
-  images: Array.isArray(doc.images) ? doc.images : [],
-  catalogs: Array.isArray(doc.catalogs) ? doc.catalogs : [],
-  categoryId: resolveCategoryId(doc),
-  tags: Array.isArray(doc.tags) ? doc.tags : [],
-  producers: normalizeProducerRefs(doc.producers),
-});
+    : [];
 
-const toProductBase = (doc: ProductDocument): ProductRecord => ({
-  id: doc.id ?? doc._id,
-  sku: doc.sku ?? null,
-  baseProductId: doc.baseProductId ?? null,
-  defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
-  ean: doc.ean ?? null,
-  gtin: doc.gtin ?? null,
-  asin: doc.asin ?? null,
-  name_en: doc.name_en ?? null,
-  name_pl: doc.name_pl ?? null,
-  name_de: doc.name_de ?? null,
-  description_en: doc.description_en ?? null,
-  description_pl: doc.description_pl ?? null,
-  description_de: doc.description_de ?? null,
-  supplierName: doc.supplierName ?? null,
-  supplierLink: doc.supplierLink ?? null,
-  priceComment: doc.priceComment ?? null,
-  stock: doc.stock ?? null,
-  price: doc.price ?? null,
-  sizeLength: doc.sizeLength ?? null,
-  sizeWidth: doc.sizeWidth ?? null,
-  weight: doc.weight ?? null,
-  length: doc.length ?? null,
-  parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
-  imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
-  imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
-  noteIds: Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
+  return {
+    id: doc.id ?? doc._id,
+    sku: doc.sku ?? null,
+    baseProductId: doc.baseProductId ?? null,
+    defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
+    ean: doc.ean ?? null,
+    gtin: doc.gtin ?? null,
+    asin: doc.asin ?? null,
+    name: doc.name || { en: doc.name_en ?? '', pl: doc.name_pl ?? null, de: doc.name_de ?? null },
+    description: doc.description || { en: doc.description_en ?? '', pl: doc.description_pl ?? null, de: doc.description_de ?? null },
+    name_en: doc.name_en ?? null,
+    name_pl: doc.name_pl ?? null,
+    name_de: doc.name_de ?? null,
+    description_en: doc.description_en ?? null,
+    description_pl: doc.description_pl ?? null,
+    description_de: doc.description_de ?? null,
+    supplierName: doc.supplierName ?? null,
+    supplierLink: doc.supplierLink ?? null,
+    priceComment: doc.priceComment ?? null,
+    stock: doc.stock ?? null,
+    price: doc.price ?? null,
+    sizeLength: doc.sizeLength ?? null,
+    sizeWidth: doc.sizeWidth ?? null,
+    weight: doc.weight ?? null,
+    length: doc.length ?? null,
+    published: doc.published ?? false,
+    catalogId: doc.catalogId ?? '',
+    parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
+    imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
+    imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
+    noteIds,
+    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
+    updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
+    images: images.map(img => ({ ...img, assignedAt: img.assignedAt instanceof Date ? img.assignedAt.toISOString() : img.assignedAt })),
+    catalogs: catalogs.map(cat => ({ ...cat, assignedAt: cat.assignedAt instanceof Date ? cat.assignedAt.toISOString() : cat.assignedAt })),
+    categoryId: resolveCategoryId(doc),
+    tags,
+    producers,
+  };
+};
+
+const toProductBase = (doc: ProductDocument): ProductRecord => {
+  const noteIds = Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
     ? ((doc as unknown as { noteIds: string[] }).noteIds)
-    : [],
-  createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
-  updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
-  categoryId: resolveCategoryId(doc),
-});
+    : [];
+
+  return {
+    id: doc.id ?? doc._id,
+    sku: doc.sku ?? null,
+    baseProductId: doc.baseProductId ?? null,
+    defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
+    ean: doc.ean ?? null,
+    gtin: doc.gtin ?? null,
+    asin: doc.asin ?? null,
+    name: doc.name || { en: doc.name_en ?? '', pl: doc.name_pl ?? null, de: doc.name_de ?? null },
+    description: doc.description || { en: doc.description_en ?? '', pl: doc.description_pl ?? null, de: doc.description_de ?? null },
+    name_en: doc.name_en ?? null,
+    name_pl: doc.name_pl ?? null,
+    name_de: doc.name_de ?? null,
+    description_en: doc.description_en ?? null,
+    description_pl: doc.description_pl ?? null,
+    description_de: doc.description_de ?? null,
+    supplierName: doc.supplierName ?? null,
+    supplierLink: doc.supplierLink ?? null,
+    priceComment: doc.priceComment ?? null,
+    stock: doc.stock ?? null,
+    price: doc.price ?? null,
+    sizeLength: doc.sizeLength ?? null,
+    sizeWidth: doc.sizeWidth ?? null,
+    weight: doc.weight ?? null,
+    length: doc.length ?? null,
+    published: doc.published ?? false,
+    catalogId: doc.catalogId ?? '',
+    parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
+    imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
+    imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
+    noteIds,
+    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
+    updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
+    categoryId: resolveCategoryId(doc),
+    tags: Array.isArray(doc.tags) ? doc.tags : [],
+    images: Array.isArray(doc.images) ? doc.images : [],
+  };
+};
 
 const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => {
   const filter: Filter<ProductDocument> = {};

@@ -59,7 +59,6 @@ export function CatalogModal({
   } = useCatalogForm({
     catalog,
     languages,
-    priceGroups,
     defaultGroupId,
   });
 
@@ -142,6 +141,7 @@ export function CatalogModal({
       getLanguage,
       languagesLoading,
       languagesError,
+      error,
       catalogPriceGroupIds,
       togglePriceGroup: handleTogglePriceGroup,
       catalogDefaultPriceGroupId,

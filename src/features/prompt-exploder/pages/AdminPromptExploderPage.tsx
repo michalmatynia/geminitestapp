@@ -702,9 +702,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     return buildPromptExploderParamEntries({
       paramsObject: selectedSegment.paramsObject,
       paramsText: selectedSegment.paramsText || selectedSegment.text,
-      paramUiControls: selectedSegment.paramUiControls,
-      paramComments: selectedSegment.paramComments,
-      paramDescriptions: selectedSegment.paramDescriptions,
+      paramUiControls: selectedSegment.paramUiControls ?? null,
+      paramComments: selectedSegment.paramComments ?? null,
+      paramDescriptions: selectedSegment.paramDescriptions ?? null,
     });
   }, [selectedSegment]);
   const listParamEntriesState = useMemo<PromptExploderParamEntriesState | null>(() => {
@@ -716,9 +716,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     return buildPromptExploderParamEntries({
       paramsObject: paramsSegment.paramsObject,
       paramsText: paramsSegment.paramsText || paramsSegment.text,
-      paramUiControls: paramsSegment.paramUiControls,
-      paramComments: paramsSegment.paramComments,
-      paramDescriptions: paramsSegment.paramDescriptions,
+      paramUiControls: paramsSegment.paramUiControls ?? null,
+      paramComments: paramsSegment.paramComments ?? null,
+      paramDescriptions: paramsSegment.paramDescriptions ?? null,
     });
   }, [documentState]);
   const listParamOptions = useMemo(
@@ -1076,9 +1076,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     const nextParamState = buildPromptExploderParamEntries({
       paramsObject: nextParamsObject,
       paramsText: segment.paramsText || segment.text,
-      paramUiControls: overrides?.paramUiControls ?? segment.paramUiControls,
-      paramComments: overrides?.paramComments ?? segment.paramComments,
-      paramDescriptions: overrides?.paramDescriptions ?? segment.paramDescriptions,
+      paramUiControls: (overrides?.paramUiControls ?? segment.paramUiControls) ?? null,
+      paramComments: (overrides?.paramComments ?? segment.paramComments) ?? null,
+      paramDescriptions: (overrides?.paramDescriptions ?? segment.paramDescriptions) ?? null,
     });
     const nextParamsText = overrides?.preserveCurrentText
       ? segment.paramsText || segment.text
@@ -4018,14 +4018,14 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                                     <div className='text-[10px] text-gray-500'>{label}</div>
                                                     <Input
                                                       type='number'
-                                                      value={String(entry.value[index] ?? '')}
+                                                      value={String((entry.value as any[])[index] ?? '')}
                                                       min={entry.spec?.min ?? 0}
                                                       max={entry.spec?.max ?? 255}
                                                       step={entry.spec?.step ?? 1}
                                                       onChange={(event) => {
                                                         const next = Number(event.target.value);
                                                         if (!Number.isFinite(next)) return;
-                                                        const nextRgb = [...entry.value];
+                                                        const nextRgb = [...(entry.value as any[])];
                                                         nextRgb[index] = next;
                                                         updateParameterValue(
                                                           selectedSegment.id,
@@ -4048,14 +4048,14 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                                     <div className='text-[10px] text-gray-500'>{label}</div>
                                                     <Input
                                                       type='number'
-                                                      value={String(entry.value[index] ?? '')}
+                                                      value={String((entry.value as any[])[index] ?? '')}
                                                       min={entry.spec?.min}
                                                       max={entry.spec?.max}
                                                       step={entry.spec?.step ?? 1}
                                                       onChange={(event) => {
                                                         const next = Number(event.target.value);
                                                         if (!Number.isFinite(next)) return;
-                                                        const nextTuple = [...entry.value];
+                                                        const nextTuple = [...(entry.value as any[])];
                                                         nextTuple[index] = next;
                                                         updateParameterValue(
                                                           selectedSegment.id,
@@ -4204,9 +4204,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                   const nextParamState = buildPromptExploderParamEntries({
                                     paramsObject: extracted.params,
                                     paramsText: nextText,
-                                    paramUiControls: current.paramUiControls,
-                                    paramComments: current.paramComments,
-                                    paramDescriptions: current.paramDescriptions,
+                                    paramUiControls: current.paramUiControls ?? null,
+                                    paramComments: current.paramComments ?? null,
+                                    paramDescriptions: current.paramDescriptions ?? null,
                                   });
                                   return {
                                     ...current,

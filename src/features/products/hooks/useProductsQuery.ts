@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  useQuery,
   useQueries,
   useQueryClient,
   type UseQueryResult,
@@ -41,10 +40,14 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { z } from 'zod';
 import { productSchema } from '@/shared/contracts/products';
 
-export const useProducts = createQueryHook({
+export const useProducts = (filters: UseProductsFilters, options?: UseProductsOptions): UseQueryResult<ProductWithImages[], Error> => {
+  return _useProducts(filters, options) as UseQueryResult<ProductWithImages[], Error>;
+};
+
+const _useProducts = createQueryHook({
   queryKeyFactory: (filters: UseProductsFilters) => QUERY_KEYS.products.list(filters),
   endpoint: '/api/products',
-  schema: z.array(productSchema), // This might need a more specific schema if it includes images
+  schema: z.array(productSchema), 
   staleTime: PRODUCTS_STALE_MS,
   apiOptions: { cache: 'no-store' },
 });

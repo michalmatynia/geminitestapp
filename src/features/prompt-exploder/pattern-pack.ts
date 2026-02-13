@@ -140,6 +140,21 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     promptExploderTreatAsHeading: true,
   }),
   createRegexRule({
+    id: 'segment.not_heading.rule_line',
+    title: 'Not Heading: Rule Continuation',
+    description:
+      'Prevents indented/list continuation lines that begin with "Rule:" from being interpreted as headings.',
+    pattern: '^\\s*Rule\\s*:\\s+.+$',
+    flags: 'mi',
+    message: 'Rule continuation line detected (not a heading).',
+    sequence: 26,
+    sequenceGroupId: 'exploder_structure',
+    sequenceGroupLabel: 'Exploder Structure',
+    promptExploderPriority: 35,
+    promptExploderConfidenceBoost: 0.05,
+    promptExploderTreatAsHeading: false,
+  }),
+  createRegexRule({
     id: 'segment.subsection.alpha_heading',
     title: 'Subsection: Alpha Heading',
     description: 'Detects A) / B) style subsection headings inside sequence segments.',

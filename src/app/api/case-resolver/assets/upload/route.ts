@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import {
+  inferCaseResolverAssetKind,
+  resolveCaseResolverUploadFolder,
+} from '@/features/case-resolver/settings';
 import { uploadFile } from '@/features/files/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
@@ -35,21 +39,32 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const uploads = await Promise.all(
-    files.map((file) =>
-      uploadFile(file, {
+    files.map(async (file) => {
+      const inferredKind = inferCaseResolverAssetKind({
+        mimeType: file.type,
+        name: file.name,
+      });
+      const targetFolder = resolveCaseResolverUploadFolder({
+        baseFolder: folder,
+        kind: inferredKind,
+        mimeType: file.type,
+        name: file.name,
+      });
+      const entry = await uploadFile(file, {
         category: 'case_resolver',
-        folder,
+        folder: targetFolder,
         allowOrphanRecord: true,
-      })
-    )
+      });
+      return {
+        ...entry,
+        originalName: file.name || entry.filename,
+        folder: targetFolder,
+        kind: inferredKind,
+      };
+    })
   );
 
-  const payload = uploads.map((entry, index) => ({
-    ...entry,
-    originalName: files[index]?.name ?? entry.filename,
-  }));
-
-  return NextResponse.json(payload.length === 1 ? payload[0] : payload, { status: 201 });
+  return NextResponse.json(uploads.length === 1 ? uploads[0] : uploads, { status: 201 });
 }
 
 export const POST = apiHandler(

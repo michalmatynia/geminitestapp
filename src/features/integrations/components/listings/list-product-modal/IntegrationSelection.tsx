@@ -1,28 +1,20 @@
 import React from 'react';
 
+import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/features/integrations/types/listings';
 import { FormField, FormSection } from '@/shared/ui';
 import { UnifiedSelect } from '@/shared/ui';
 
-type IntegrationSelectionProps = {
-  integrations: IntegrationWithConnections[];
-  loading: boolean;
-  selectedIntegrationId: string | null;
-  selectedConnectionId: string | null;
-  selectedIntegration: IntegrationWithConnections | null;
-  onIntegrationChange: (value: string) => void;
-  onConnectionChange: (value: string) => void;
-};
-
-export function IntegrationSelection({
-  integrations,
-  loading,
-  selectedIntegrationId,
-  selectedConnectionId,
-  selectedIntegration,
-  onIntegrationChange,
-  onConnectionChange,
-}: IntegrationSelectionProps): React.JSX.Element {
+export function IntegrationSelection(): React.JSX.Element {
+  const {
+    integrations,
+    loadingIntegrations: loading,
+    selectedIntegrationId,
+    selectedConnectionId,
+    selectedIntegration,
+    setSelectedIntegrationId,
+    setSelectedConnectionId,
+  } = useListingSettingsContext();
   const integrationsWithConnections = integrations.filter((i: IntegrationWithConnections) => i.connections.length > 0);
 
   if (loading) {
@@ -44,8 +36,8 @@ export function IntegrationSelection({
     <FormSection title='Integration Target' className='p-4 space-y-4'>
       <FormField label='Marketplace / Integration'>
         <UnifiedSelect
-          value={selectedIntegrationId ?? undefined}
-          onValueChange={onIntegrationChange}
+          value={selectedIntegrationId || undefined}
+          onValueChange={setSelectedIntegrationId}
           options={integrationsWithConnections
             .filter((integration: IntegrationWithConnections): boolean => !!integration.id)
             .map((integration: IntegrationWithConnections) => ({
@@ -62,8 +54,8 @@ export function IntegrationSelection({
           description={`Choose which account to use for listing this product on ${selectedIntegration.name}.`}
         >
           <UnifiedSelect
-            value={selectedConnectionId ?? undefined}
-            onValueChange={onConnectionChange}
+            value={selectedConnectionId || undefined}
+            onValueChange={setSelectedConnectionId}
             options={selectedIntegration.connections
               .filter((connection: IntegrationConnectionBasic): boolean => !!connection.id)
               .map((connection: IntegrationConnectionBasic) => ({

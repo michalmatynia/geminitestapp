@@ -66,15 +66,20 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
   workspace: CaseResolverWorkspace
 ): MasterTreeNode[] => {
   const nodes: MasterTreeNode[] = [];
+  const resolveParentKey = (parentId: string | null): string => parentId ?? '__root__';
+  const folderSortIndexByParent = new Map<string, number>();
 
   const sortedFolders = [...workspace.folders].sort((left: string, right: string) =>
     left.localeCompare(right)
   );
 
-  sortedFolders.forEach((folderPath: string, index: number) => {
+  sortedFolders.forEach((folderPath: string) => {
     const folderNodeId = toCaseResolverFolderNodeId(folderPath);
     const parentPath = parentFolderPath(folderPath);
     const parentNodeId = parentPath ? toCaseResolverFolderNodeId(parentPath) : null;
+    const parentKey = resolveParentKey(parentNodeId);
+    const folderSortOrder = folderSortIndexByParent.get(parentKey) ?? 0;
+    folderSortIndexByParent.set(parentKey, folderSortOrder + 1);
     const folderName = folderPath.includes('/')
       ? folderPath.slice(folderPath.lastIndexOf('/') + 1)
       : folderPath;
@@ -86,7 +91,7 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
       parentId: parentNodeId,
       name: folderName,
       path: folderPath,
-      sortOrder: index,
+      sortOrder: folderSortOrder,
       metadata: {
         entity: 'folder',
         rawPath: folderPath,
@@ -94,82 +99,103 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
     });
   });
 
-  const filesByFolder = new Map<string, CaseResolverFile[]>();
+  type FolderFileEntry = {
+    id: string;
+    name: string;
+    kindSortKey: string;
+    toNode: (sortOrder: number, parentNodeId: string | null) => MasterTreeNode;
+  };
+  const fileEntriesByFolder = new Map<string, FolderFileEntry[]>();
+  const appendFileEntry = (folderPath: string, entry: FolderFileEntry): void => {
+    const current = fileEntriesByFolder.get(folderPath) ?? [];
+    current.push(entry);
+    fileEntriesByFolder.set(folderPath, current);
+  };
+
   workspace.files.forEach((file: CaseResolverFile) => {
-    const list = filesByFolder.get(file.folder) ?? [];
-    list.push(file);
-    filesByFolder.set(file.folder, list);
-  });
-
-  Array.from(filesByFolder.entries()).forEach(([folderPath, files]: [string, CaseResolverFile[]]) => {
-    const sortedFiles = [...files].sort((left: CaseResolverFile, right: CaseResolverFile) =>
-      left.name.localeCompare(right.name)
-    );
-    const parentNodeId = folderPath ? toCaseResolverFolderNodeId(folderPath) : null;
-
-    sortedFiles.forEach((file: CaseResolverFile, fileIndex: number) => {
-      const filePath = folderPath ? `${folderPath}/${file.name}` : file.name;
-      nodes.push({
-        id: toCaseResolverFileNodeId(file.id),
-        type: 'file',
-        kind: 'case_file',
-        parentId: parentNodeId,
-        name: file.name,
-        path: filePath,
-        sortOrder: fileIndex,
-        metadata: {
-          entity: 'file',
-          rawId: file.id,
-          folder: file.folder,
-        },
-      });
+    appendFileEntry(file.folder, {
+      id: file.id,
+      name: file.name,
+      kindSortKey: 'case_file',
+      toNode: (sortOrder: number, parentNodeId: string | null): MasterTreeNode => {
+        const filePath = file.folder ? `${file.folder}/${file.name}` : file.name;
+        return {
+          id: toCaseResolverFileNodeId(file.id),
+          type: 'file',
+          kind: 'case_file',
+          parentId: parentNodeId,
+          name: file.name,
+          path: filePath,
+          sortOrder,
+          metadata: {
+            entity: 'file',
+            rawId: file.id,
+            folder: file.folder,
+            isLocked: file.isLocked,
+          },
+        };
+      },
     });
   });
-
-  const assetsByFolder = new Map<string, CaseResolverAssetFile[]>();
   workspace.assets.forEach((asset: CaseResolverAssetFile) => {
-    const list = assetsByFolder.get(asset.folder) ?? [];
-    list.push(asset);
-    assetsByFolder.set(asset.folder, list);
-  });
-
-  Array.from(assetsByFolder.entries()).forEach(([folderPath, assets]: [string, CaseResolverAssetFile[]]) => {
-    const sortedAssets = [...assets].sort((left: CaseResolverAssetFile, right: CaseResolverAssetFile) =>
-      left.name.localeCompare(right.name)
-    );
-    const parentNodeId = folderPath ? toCaseResolverFolderNodeId(folderPath) : null;
-
-    sortedAssets.forEach((asset: CaseResolverAssetFile, assetIndex: number) => {
-      const assetPath = folderPath ? `${folderPath}/${asset.name}` : asset.name;
-      const kind =
+    appendFileEntry(asset.folder, {
+      id: asset.id,
+      name: asset.name,
+      kindSortKey:
         asset.kind === 'node_file'
           ? 'node_file'
           : asset.kind === 'image'
             ? 'asset_image'
             : asset.kind === 'pdf'
               ? 'asset_pdf'
-              : 'asset_file';
+              : 'asset_file',
+      toNode: (sortOrder: number, parentNodeId: string | null): MasterTreeNode => {
+        const assetPath = asset.folder ? `${asset.folder}/${asset.name}` : asset.name;
+        const kind =
+          asset.kind === 'node_file'
+            ? 'node_file'
+            : asset.kind === 'image'
+              ? 'asset_image'
+              : asset.kind === 'pdf'
+                ? 'asset_pdf'
+                : 'asset_file';
 
-      nodes.push({
-        id: toCaseResolverAssetNodeId(asset.id),
-        type: 'file',
-        kind,
-        parentId: parentNodeId,
-        name: asset.name,
-        path: assetPath,
-        sortOrder: 10000 + assetIndex,
-        metadata: {
-          entity: 'asset',
-          rawId: asset.id,
-          folder: asset.folder,
-          assetKind: asset.kind,
-          filepath: asset.filepath,
-          mimeType: asset.mimeType,
-          size: asset.size,
-          textContent: asset.textContent,
-          description: asset.description,
-        },
-      });
+        return {
+          id: toCaseResolverAssetNodeId(asset.id),
+          type: 'file',
+          kind,
+          parentId: parentNodeId,
+          name: asset.name,
+          path: assetPath,
+          sortOrder,
+          metadata: {
+            entity: 'asset',
+            rawId: asset.id,
+            folder: asset.folder,
+            assetKind: asset.kind,
+            filepath: asset.filepath,
+            mimeType: asset.mimeType,
+            size: asset.size,
+            textContent: asset.textContent,
+            description: asset.description,
+          },
+        };
+      },
+    });
+  });
+
+  fileEntriesByFolder.forEach((entries: FolderFileEntry[], folderPath: string) => {
+    const parentNodeId = folderPath ? toCaseResolverFolderNodeId(folderPath) : null;
+    const sortedEntries = [...entries].sort((left: FolderFileEntry, right: FolderFileEntry) => {
+      const nameDelta = left.name.localeCompare(right.name);
+      if (nameDelta !== 0) return nameDelta;
+      const kindDelta = left.kindSortKey.localeCompare(right.kindSortKey);
+      if (kindDelta !== 0) return kindDelta;
+      return left.id.localeCompare(right.id);
+    });
+
+    sortedEntries.forEach((entry: FolderFileEntry, index: number) => {
+      nodes.push(entry.toNode(10000 + index, parentNodeId));
     });
   });
 

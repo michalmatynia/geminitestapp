@@ -18,18 +18,28 @@ export const createNoteFile = async (
     ...(data.width !== undefined && { width: data.width }),
     ...(data.height !== undefined && { height: data.height }),
   };
-  return prisma.noteFile.create({
+  const file = await prisma.noteFile.create({
     data: createData,
   });
+  return {
+    ...file,
+    createdAt: file.createdAt.toISOString(),
+    updatedAt: file.updatedAt.toISOString(),
+  };
 };
 
 export const getNoteFiles = async (
   noteId: string
 ): Promise<NoteFileRecord[]> => {
-  return prisma.noteFile.findMany({
+  const files = await prisma.noteFile.findMany({
     where: { noteId },
     orderBy: { slotIndex: 'asc' },
   });
+  return files.map(file => ({
+    ...file,
+    createdAt: file.createdAt.toISOString(),
+    updatedAt: file.updatedAt.toISOString(),
+  }));
 };
 
 export const deleteNoteFile = async (

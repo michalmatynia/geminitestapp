@@ -33,6 +33,7 @@ import {
   type NodeDefinition,
 } from '@/features/ai/ai-paths/lib';
 import {
+  AppModal,
   Button,
   Checkbox,
   Input,
@@ -55,6 +56,7 @@ import {
   resolveCaseResolverPdfExtractionTemplate,
   type CaseResolverEdgeMeta,
   type CaseResolverAssetFile,
+  type CaseResolverFile,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverPdfExtractionPresetId,
@@ -134,6 +136,59 @@ const ensureEdgeMeta = (
   return next;
 };
 
+const ensureDocumentLinksByNode = (
+  nodes: AiNode[],
+  existing: Record<string, string[]>,
+  validFileIds: Set<string>
+): Record<string, string[]> => {
+  const nodeIds = new Set(nodes.map((node: AiNode) => node.id));
+  const next: Record<string, string[]> = {};
+
+  Object.entries(existing).forEach(([nodeId, links]: [string, string[]]) => {
+    if (!nodeIds.has(nodeId)) return;
+    if (!Array.isArray(links)) return;
+    const unique = new Set<string>();
+    links.forEach((fileId: string) => {
+      if (typeof fileId !== 'string') return;
+      const normalized = fileId.trim();
+      if (!normalized) return;
+      if (!validFileIds.has(normalized)) return;
+      unique.add(normalized);
+    });
+    next[nodeId] = Array.from(unique);
+  });
+
+  return next;
+};
+
+const resolveDocumentDropNodeId = (
+  candidate: string | null,
+  nodes: AiNode[]
+): string | null => {
+  if (!candidate) return null;
+  return nodes.some((node: AiNode) => node.id === candidate) ? candidate : null;
+};
+
+const buildCanvasNodeFileTemplate = (
+  linkedFileIds: string[],
+  availableFilesById: Map<string, CaseResolverFile>
+): string => {
+  const lines = ['Canvas Node File', 'Linked Documents:'];
+  if (linkedFileIds.length === 0) {
+    lines.push('- (none)');
+    return lines.join('\n');
+  }
+
+  linkedFileIds.forEach((fileId: string, index: number) => {
+    const file = availableFilesById.get(fileId);
+    const label = file ? file.name : fileId;
+    const folderLabel = file ? (file.folder || '(root)') : '(unknown)';
+    lines.push(`${index + 1}. ${label} [${folderLabel}]`);
+  });
+
+  return lines.join('\n');
+};
+
 const resolvePromptConfig = (node: AiNode): { template: string } => {
   const template = node.config?.prompt?.template;
   return {
@@ -207,6 +262,12 @@ type CaseResolverDroppedAsset = {
   description: string;
 };
 
+type CaseResolverDroppedDocument = {
+  id: string;
+  name: string;
+  folder: string;
+};
+
 type PdfExtractResponse = {
   text?: unknown;
   pageCount?: unknown;
@@ -215,6 +276,7 @@ type PdfExtractResponse = {
 type CaseResolverCanvasWorkspaceInnerProps = {
   graph: CaseResolverGraph;
   defaultDropFolder: string;
+  availableFiles: CaseResolverFile[];
   onUploadAssets: (
     files: File[],
     targetFolderPath: string | null
@@ -225,6 +287,7 @@ type CaseResolverCanvasWorkspaceInnerProps = {
 function CaseResolverCanvasWorkspaceInner({
   graph,
   defaultDropFolder,
+  availableFiles,
   onUploadAssets,
   onGraphChange,
 }: CaseResolverCanvasWorkspaceInnerProps): React.JSX.Element {
@@ -242,6 +305,8 @@ function CaseResolverCanvasWorkspaceInner({
     graph.pdfExtractionPresetId ?? DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID
   );
   const [isDropImporting, setIsDropImporting] = useState(false);
+  const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
+  const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
 
   const normalizedNodeMeta = useMemo(
     () => ensureNodeMeta(nodes, graph.nodeMeta),
@@ -250,6 +315,30 @@ function CaseResolverCanvasWorkspaceInner({
   const normalizedEdgeMeta = useMemo(
     () => ensureEdgeMeta(edges, graph.edgeMeta),
     [edges, graph.edgeMeta]
+  );
+  const availableFilesById = useMemo(
+    () =>
+      new Map<string, CaseResolverFile>(
+        availableFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+      ),
+    [availableFiles]
+  );
+  const availableFileIds = useMemo(
+    () => new Set<string>(availableFiles.map((file: CaseResolverFile) => file.id)),
+    [availableFiles]
+  );
+  const normalizedDocumentFileLinksByNode = useMemo(
+    () =>
+      ensureDocumentLinksByNode(
+        nodes,
+        graph.documentFileLinksByNode ?? {},
+        availableFileIds
+      ),
+    [availableFileIds, graph.documentFileLinksByNode, nodes]
+  );
+  const normalizedDocumentDropNodeId = useMemo(
+    () => resolveDocumentDropNodeId(graph.documentDropNodeId ?? null, nodes),
+    [graph.documentDropNodeId, nodes]
   );
 
   const selectedNode = useMemo(
@@ -277,10 +366,21 @@ function CaseResolverCanvasWorkspaceInner({
           nodeMeta: normalizedNodeMeta,
           edgeMeta: normalizedEdgeMeta,
           pdfExtractionPresetId,
+          documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+          documentDropNodeId: normalizedDocumentDropNodeId,
         },
         selectedNodeId
       ),
-    [edges, nodes, normalizedEdgeMeta, normalizedNodeMeta, selectedNodeId, pdfExtractionPresetId]
+    [
+      edges,
+      nodes,
+      normalizedDocumentDropNodeId,
+      normalizedDocumentFileLinksByNode,
+      normalizedEdgeMeta,
+      normalizedNodeMeta,
+      selectedNodeId,
+      pdfExtractionPresetId,
+    ]
   );
 
   const lastEmittedHashRef = useRef<string>('');
@@ -299,12 +399,23 @@ function CaseResolverCanvasWorkspaceInner({
       nodeMeta: normalizedNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
+      documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+      documentDropNodeId: normalizedDocumentDropNodeId,
     };
     const nextHash = stableStringify(nextGraph);
     if (nextHash === lastEmittedHashRef.current) return;
     lastEmittedHashRef.current = nextHash;
     onGraphChange(nextGraph);
-  }, [edges, nodes, normalizedEdgeMeta, normalizedNodeMeta, onGraphChange, pdfExtractionPresetId]);
+  }, [
+    edges,
+    nodes,
+    normalizedDocumentDropNodeId,
+    normalizedDocumentFileLinksByNode,
+    normalizedEdgeMeta,
+    normalizedNodeMeta,
+    onGraphChange,
+    pdfExtractionPresetId,
+  ]);
 
   const placePosition = useMemo(() => {
     const index = nodes.length;
@@ -524,6 +635,8 @@ function CaseResolverCanvasWorkspaceInner({
         [edgeModelToOutput.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
       },
       pdfExtractionPresetId,
+      documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+      documentDropNodeId: normalizedDocumentDropNodeId,
     });
   };
 
@@ -578,6 +691,8 @@ function CaseResolverCanvasWorkspaceInner({
         },
         edgeMeta: normalizedEdgeMeta,
         pdfExtractionPresetId,
+        documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+        documentDropNodeId: normalizedDocumentDropNodeId,
       });
       return;
     }
@@ -605,6 +720,97 @@ function CaseResolverCanvasWorkspaceInner({
       },
     });
     selectNode(id);
+  };
+
+  const handleDroppedDocuments = (
+    droppedDocuments: CaseResolverDroppedDocument[],
+    dropPosition: { x: number; y: number }
+  ): void => {
+    if (droppedDocuments.length === 0) return;
+
+    const normalizedFileIds = Array.from(
+      new Set(
+        droppedDocuments
+          .map((entry: CaseResolverDroppedDocument) => entry.id.trim())
+          .filter((fileId: string) => fileId.length > 0 && availableFileIds.has(fileId))
+      )
+    );
+    if (normalizedFileIds.length === 0) {
+      toast('Dropped document is not available in this workspace.', { variant: 'warning' });
+      return;
+    }
+
+    const templateDefinition = palette.find((entry: NodeDefinition) => entry.type === 'template');
+    if (!templateDefinition) {
+      toast('Template node definition is missing.', { variant: 'error' });
+      return;
+    }
+
+    let nextNodes = nodes;
+    let targetNodeId = normalizedDocumentDropNodeId;
+
+    if (!targetNodeId) {
+      const id = createNodeId();
+      const node = buildNode(
+        templateDefinition,
+        clampCanvasPosition(dropPosition),
+        id,
+        'Canvas Node File'
+      );
+      targetNodeId = id;
+      nextNodes = [...nextNodes, node];
+      addNode(node);
+      selectNode(id);
+    }
+
+    const existingLinkedFileIds = normalizedDocumentFileLinksByNode[targetNodeId] ?? [];
+    const nextLinkedFileIds = Array.from(new Set([...existingLinkedFileIds, ...normalizedFileIds]));
+    const nextDocumentFileLinksByNode = {
+      ...normalizedDocumentFileLinksByNode,
+      [targetNodeId]: nextLinkedFileIds,
+    };
+
+    const targetNode = nextNodes.find((node: AiNode) => node.id === targetNodeId);
+    if (!targetNode) {
+      toast('Failed to resolve Canvas Node File target.', { variant: 'error' });
+      return;
+    }
+    const templateConfig = resolveTemplateConfig(targetNode);
+    const nextTemplate = buildCanvasNodeFileTemplate(nextLinkedFileIds, availableFilesById);
+
+    const nextTargetNode: AiNode = {
+      ...targetNode,
+      title: 'Canvas Node File',
+      config: {
+        ...(targetNode.config ?? {}),
+        template: {
+          ...templateConfig,
+          template: nextTemplate,
+        },
+      },
+    };
+    nextNodes = nextNodes.map((node: AiNode) => (node.id === targetNodeId ? nextTargetNode : node));
+    updateNode(targetNodeId, {
+      title: 'Canvas Node File',
+      config: nextTargetNode.config,
+    });
+
+    onGraphChange({
+      nodes: nextNodes,
+      edges,
+      nodeMeta: normalizedNodeMeta,
+      edgeMeta: normalizedEdgeMeta,
+      pdfExtractionPresetId,
+      documentFileLinksByNode: nextDocumentFileLinksByNode,
+      documentDropNodeId: targetNodeId,
+    });
+
+    toast(
+      normalizedFileIds.length === 1
+        ? 'Document linked to Canvas Node File.'
+        : `${normalizedFileIds.length} documents linked to Canvas Node File.`,
+      { variant: 'success' }
+    );
   };
 
   const addPromptNode = (kind: 'text' | 'explanatory' | 'ai_prompt'): void => {
@@ -656,6 +862,8 @@ function CaseResolverCanvasWorkspaceInner({
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
+      documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+      documentDropNodeId: normalizedDocumentDropNodeId,
     });
   };
 
@@ -698,6 +906,8 @@ function CaseResolverCanvasWorkspaceInner({
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
+      documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+      documentDropNodeId: normalizedDocumentDropNodeId,
     });
   };
 
@@ -717,6 +927,8 @@ function CaseResolverCanvasWorkspaceInner({
       nodeMeta: normalizedNodeMeta,
       edgeMeta: nextEdgeMeta,
       pdfExtractionPresetId,
+      documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+      documentDropNodeId: normalizedDocumentDropNodeId,
     });
   };
 
@@ -752,7 +964,21 @@ function CaseResolverCanvasWorkspaceInner({
 
     const dropPosition = resolveDropPosition(event);
 
-    if (payload) {
+    if (payload?.entity === 'file') {
+      handleDroppedDocuments(
+        [
+          {
+            id: payload.fileId,
+            name: payload.name,
+            folder: payload.folder,
+          },
+        ],
+        dropPosition
+      );
+      return;
+    }
+
+    if (payload?.entity === 'asset') {
       const droppedAsset: CaseResolverDroppedAsset = {
         id: payload.assetId,
         name: payload.name,
@@ -854,7 +1080,7 @@ function CaseResolverCanvasWorkspaceInner({
   );
 
   return (
-    <div className='grid h-[calc(100vh-120px)] grid-cols-1 gap-4 xl:grid-cols-[1fr_420px]'>
+    <div className='h-[calc(100vh-120px)] w-full'>
       <div className='flex min-h-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
         <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
           <Button
@@ -956,6 +1182,24 @@ function CaseResolverCanvasWorkspaceInner({
             <Button
               type='button'
               onClick={(): void => {
+                setIsNodeInspectorOpen(true);
+              }}
+              className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
+            >
+              Node Inspector
+            </Button>
+            <Button
+              type='button'
+              onClick={(): void => {
+                setIsLinkedPreviewOpen(true);
+              }}
+              className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
+            >
+              Linked Preview
+            </Button>
+            <Button
+              type='button'
+              onClick={(): void => {
                 void copyCompiledPrompt();
               }}
               className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15'
@@ -972,6 +1216,8 @@ function CaseResolverCanvasWorkspaceInner({
                   nodeMeta: normalizedNodeMeta,
                   edgeMeta: normalizedEdgeMeta,
                   pdfExtractionPresetId,
+                  documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+                  documentDropNodeId: normalizedDocumentDropNodeId,
                 })
               }
               className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
@@ -993,10 +1239,16 @@ function CaseResolverCanvasWorkspaceInner({
         </div>
       </div>
 
-      <div className='flex min-h-0 flex-col gap-4'>
-        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-4'>
-          <div className='text-sm font-semibold text-white'>Node Inspector</div>
-
+      <AppModal
+        open={isNodeInspectorOpen}
+        onOpenChange={(open: boolean): void => {
+          setIsNodeInspectorOpen(open);
+        }}
+        title='Node Inspector'
+        subtitle='Inspect and edit selected node/edge settings.'
+        size='xl'
+      >
+        <div className='space-y-3'>
           {selectedNode ? (
             <>
               <div className='rounded border border-border/60 bg-card/40 p-3 text-xs text-gray-300'>
@@ -1124,13 +1376,19 @@ function CaseResolverCanvasWorkspaceInner({
             </div>
           )}
         </div>
+      </AppModal>
 
-        <div className='flex min-h-0 flex-1 flex-col rounded-lg border border-border/60 bg-card/40 p-4'>
-          <div className='mb-2 text-sm font-semibold text-white'>Linked Nodes Preview</div>
-          <div className='mb-2 text-[11px] text-gray-500'>
-            Compilation starts from the selected node. If no node is selected, it starts from graph roots.
-          </div>
-          <div className='mb-3 max-h-40 overflow-auto rounded border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
+      <AppModal
+        open={isLinkedPreviewOpen}
+        onOpenChange={(open: boolean): void => {
+          setIsLinkedPreviewOpen(open);
+        }}
+        title='Linked Nodes Preview'
+        subtitle='Compilation starts from the selected node. If no node is selected, it starts from graph roots.'
+        size='xl'
+      >
+        <div className='flex h-full min-h-0 flex-col'>
+          <div className='mb-3 max-h-56 overflow-auto rounded border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
             {compiled.segments.length > 0 ? (
               compiled.segments.map((segment) => (
                 <div key={segment.nodeId} className='mb-2 rounded border border-border/40 bg-card/30 p-2 last:mb-0'>
@@ -1152,7 +1410,7 @@ function CaseResolverCanvasWorkspaceInner({
             {compiled.prompt || 'Compiled prompt output will appear here.'}
           </div>
         </div>
-      </div>
+      </AppModal>
     </div>
   );
 }
@@ -1161,6 +1419,7 @@ export type CaseResolverCanvasWorkspaceProps = {
   fileId: string;
   graph: CaseResolverGraph;
   defaultDropFolder: string;
+  availableFiles: CaseResolverFile[];
   onUploadAssets: (
     files: File[],
     targetFolderPath: string | null
@@ -1172,6 +1431,7 @@ export function CaseResolverCanvasWorkspace({
   fileId,
   graph,
   defaultDropFolder,
+  availableFiles,
   onUploadAssets,
   onGraphChange,
 }: CaseResolverCanvasWorkspaceProps): React.JSX.Element {
@@ -1189,6 +1449,7 @@ export function CaseResolverCanvasWorkspace({
     >
       <CaseResolverCanvasWorkspaceInner
         graph={graph}
+        availableFiles={availableFiles}
         defaultDropFolder={defaultDropFolder}
         onUploadAssets={onUploadAssets}
         onGraphChange={onGraphChange}

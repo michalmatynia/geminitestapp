@@ -65,6 +65,7 @@ type PatternRuntime = {
   scopedRules: PromptValidationRule[];
   regexRules: RuntimeRegexRule[];
   headingRules: RuntimeRegexRule[];
+  nonHeadingRules: RuntimeRegexRule[];
 };
 
 type RuntimeRegexRule = {
@@ -158,27 +159,6 @@ const parseCodeFromLine = (line: string): ParsedTitleLine => {
 
 const LIST_ITEM_MARKER_RE = /^\s*(\d+[.)]|[A-Z]\)|[*-])\s+/;
 
-const isListItemMarkerLine = (line: string): boolean => LIST_ITEM_MARKER_RE.test(line);
-
-const hasListContinuationParent = (lines: string[], index: number): boolean => {
-  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
-    const previous = toLine(lines[cursor]);
-    if (!previous.trim()) continue;
-    if (isListItemMarkerLine(previous)) return true;
-    if (/^\s+/.test(previous) && !isListItemMarkerLine(previous)) continue;
-    return false;
-  }
-  return false;
-};
-
-const isIndentedListContinuationLine = (lines: string[], index: number): boolean => {
-  const line = toLine(lines[index]);
-  if (!line.trim()) return false;
-  if (!/^\s+/.test(line)) return false;
-  if (isListItemMarkerLine(line)) return false;
-  return hasListContinuationParent(lines, index);
-};
-
 const isLikelyHeading = (line: string, runtime?: PatternRuntime): boolean => {
   const trimmed = line.trim();
   if (!trimmed) return false;
@@ -189,6 +169,7 @@ const isLikelyHeading = (line: string, runtime?: PatternRuntime): boolean => {
   if (/^[^|\n]+(?:\s*\|\s*[^|\n]+){2,}$/.test(trimmed)) return true;
   if (/^[*-]\s+/.test(trimmed)) return false;
   if (/^[A-Z]\)\s+/.test(trimmed)) return false;
+  if (runtime?.nonHeadingRules.some((rule) => rule.regex.test(trimmed))) return false;
   if (runtime?.headingRules.some((rule) => rule.regex.test(trimmed))) return true;
   if (/^\d+[.)]\s+/.test(trimmed)) return false;
   if (/^(P\d+|RL\d+|QA(?:_R)?\d+)\b/i.test(trimmed)) return true;
@@ -474,12 +455,16 @@ const compileRuntimePatterns = (rules: PromptValidationRule[] | null | undefined
 
   const regexRules = [...runtimeRulesById.values()];
   const headingRules = regexRules.filter((rule) => rule.treatAsHeading);
+  const nonHeadingRules = regexRules.filter(
+    (rule) => !rule.treatAsHeading && /^segment\.not_heading\./i.test(rule.id)
+  );
 
   return {
     byId,
     scopedRules,
     regexRules,
     headingRules,
+    nonHeadingRules,
   };
 };
 
@@ -933,7 +918,6 @@ const findNextHeadingIndex = (
     const line = toLine(lines[i]);
     const trimmed = line.trim();
     if (!trimmed) continue;
-    if (isIndentedListContinuationLine(lines, i)) continue;
     if (boundaryHeadings.some((pattern) => pattern.test(trimmed))) {
       return i;
     }
@@ -969,9 +953,6 @@ const consumeQaBlock = (
   for (let i = start + 1; i < cursor.lines.length; i += 1) {
     const trimmed = toLine(cursor.lines[i]).trim();
     if (!trimmed) continue;
-    if (isIndentedListContinuationLine(cursor.lines, i)) {
-      continue;
-    }
 
     if (/^(QA(?:_R)?\d+)\b/i.test(normalizeHeadingLabel(trimmed))) {
       continue;

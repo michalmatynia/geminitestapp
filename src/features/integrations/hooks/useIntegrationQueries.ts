@@ -3,15 +3,14 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import type { Template, BaseInventory } from '@/features/data-import-export';
+import type { BaseInventory } from '@/features/data-import-export';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
 import type { PlaywrightPersona } from '@/features/playwright/types';
 import { normalizePlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import { 
   integrationSchema, 
-  integrationConnectionSchema, 
-  baseInventorySchema
+  integrationConnectionSchema
 } from '@/shared/contracts/integrations';
 import {
   importExportTemplateSchema
@@ -19,7 +18,6 @@ import {
 import { createQueryHook } from '@/shared/lib/api-hooks';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { Integration, IntegrationConnection } from '@/shared/types/domain/integrations';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';

@@ -81,6 +81,8 @@ describe('case-resolver composer', () => {
         e2: { joinMode: 'tab' },
       },
       pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
     };
 
     const compiled = compileCaseResolverPrompt(graph, 'a');
@@ -115,6 +117,8 @@ describe('case-resolver composer', () => {
       },
       edgeMeta: {},
       pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
     };
 
     const compiled = compileCaseResolverPrompt(graph, 'focus');

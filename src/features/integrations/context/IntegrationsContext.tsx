@@ -311,7 +311,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       setEditingConnectionId(connection.id);
       setConnectionForm({
         name: connection.name,
-        username: connection.username,
+        username: connection.username ?? '',
         password: '',
       });
       setPlaywrightSettings({

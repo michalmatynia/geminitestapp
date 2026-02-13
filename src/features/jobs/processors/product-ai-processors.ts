@@ -30,7 +30,7 @@ import {
   getSettingValue,
   translateProduct,
 } from '@/features/products/server';
-import { buildImageBase64Slots } from '@/features/products/services/image-base64';
+import { buildImageBase64Slots, type ProductImageBase64Source } from '@/features/products/services/image-base64';
 import type { ProductFormData } from '@/features/products/types/forms';
 import {
   badRequestError,
@@ -282,7 +282,7 @@ export async function processBase64ConvertAll(job: Job): Promise<Record<string, 
 
     for (const product of products) {
       try {
-        const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
+        const { imageBase64s, imageLinks } = await buildImageBase64Slots(product as unknown as ProductImageBase64Source);
         await productRepo.updateProduct(product.id, { imageBase64s, imageLinks });
         succeeded += 1;
       } catch {

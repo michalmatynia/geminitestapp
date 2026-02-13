@@ -4,6 +4,7 @@ import type {
   PromptExploderListItem,
   PromptExploderLogicalComparator,
   PromptExploderLogicalCondition,
+  PromptExploderLogicalJoin,
   PromptExploderLogicalOperator,
 } from './types';
 
@@ -113,38 +114,40 @@ const readNodeMetadata = (node: MasterTreeNode): PromptExploderNodeMetadata | nu
 };
 
 const coerceLogicalConditions = (
-  conditions: PromptExploderLogicalCondition[] | null | undefined
+  conditions: any[] | null | undefined
 ): PromptExploderLogicalCondition[] => {
   if (!Array.isArray(conditions)) return [];
-  return conditions
-    .map((condition, index) => {
-      if (!condition || typeof condition !== 'object') return null;
-      const paramPath = typeof condition.paramPath === 'string' ? condition.paramPath.trim() : '';
-      const comparator =
-        typeof condition.comparator === 'string' &&
-          LOGICAL_COMPARATOR_VALUES.has(condition.comparator)
-          ? condition.comparator
-          : null;
-      if (!paramPath || !comparator) return null;
-      const joinWithPrevious =
-        typeof condition.joinWithPrevious === 'string' &&
-          LOGICAL_JOIN_VALUES.has(condition.joinWithPrevious)
-          ? condition.joinWithPrevious
-          : index === 0
-            ? null
-            : 'and';
-      return {
-        id:
-          typeof condition.id === 'string' && condition.id.trim()
-            ? condition.id
-            : `${Date.now().toString(36)}_${index + 1}`,
-        paramPath,
-        comparator,
-        value: condition.value ?? null,
-        joinWithPrevious,
-      } satisfies PromptExploderLogicalCondition;
-    })
-    .filter((condition): condition is PromptExploderLogicalCondition => Boolean(condition));
+  const results: PromptExploderLogicalCondition[] = [];
+
+  conditions.forEach((condition, index) => {
+    if (!condition || typeof condition !== 'object') return;
+    const paramPath = typeof condition.paramPath === 'string' ? condition.paramPath.trim() : '';
+    const comparator =
+      typeof condition.comparator === 'string' &&
+        LOGICAL_COMPARATOR_VALUES.has(condition.comparator)
+        ? (condition.comparator as PromptExploderLogicalComparator)
+        : null;
+    if (!paramPath || !comparator) return;
+    const joinWithPrevious =
+      typeof condition.joinWithPrevious === 'string' &&
+        LOGICAL_JOIN_VALUES.has(condition.joinWithPrevious)
+        ? (condition.joinWithPrevious as PromptExploderLogicalJoin)
+        : index === 0
+          ? null
+          : 'and';
+    results.push({
+      id:
+        typeof condition.id === 'string' && condition.id.trim()
+          ? condition.id
+          : `${Date.now().toString(36)}_${index + 1}`,
+      paramPath,
+      comparator,
+      value: condition.value ?? null,
+      joinWithPrevious,
+    });
+  });
+
+  return results;
 };
 
 export const toPromptExploderMasterNodeId = (itemId: string): string =>

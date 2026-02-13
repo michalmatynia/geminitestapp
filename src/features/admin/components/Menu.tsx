@@ -629,6 +629,17 @@ export const buildAdminNav = (handlers: {
     ],
   },
   {
+    id: 'filemaker',
+    label: 'Filemaker',
+    href: '/admin/filemaker',
+    icon: <BookOpenIcon className='size-4' />,
+    keywords: ['database', 'persons', 'organizations', 'addressing', 'case resolver'],
+    children: [
+      { id: 'filemaker/database', label: 'Database', href: '/admin/filemaker', exact: true },
+      { id: 'filemaker/list', label: 'List', href: '/admin/filemaker/list' },
+    ],
+  },
+  {
     id: 'image-studio',
     label: 'Image Studio',
     href: '/admin/image-studio',
@@ -733,7 +744,15 @@ export const buildAdminNav = (handlers: {
         children: [
           { id: 'ai/ai-paths/canvas', label: 'Canvas', href: '/admin/ai-paths', exact: true },
           { id: 'ai/ai-paths/trigger-buttons', label: 'Trigger Buttons', href: '/admin/ai-paths/trigger-buttons' },
-          { id: 'ai/ai-paths/case-resolver', label: 'Case Resolver', href: '/admin/case-resolver' },
+          {
+            id: 'ai/ai-paths/case-resolver',
+            label: 'Case Resolver',
+            href: '/admin/case-resolver',
+            children: [
+              { id: 'ai/ai-paths/case-resolver/studio', label: 'Studio', href: '/admin/case-resolver', exact: true },
+              { id: 'ai/ai-paths/case-resolver/cases', label: 'Cases', href: '/admin/case-resolver/cases' },
+            ],
+          },
         ],
       },
       {

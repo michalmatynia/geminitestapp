@@ -6,7 +6,8 @@ import {
   invalidateProductSettingsCatalogs,
   invalidateValidatorConfig,
 } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { productSettingsKeys } from '@/shared/lib/query-key-exports';
+export { productSettingsKeys };
 import type {
   ProductValidationPattern,
   ProductValidatorConfig,
@@ -30,7 +31,6 @@ import {
   useTags as useMetadataTags,
 } from './useProductMetadataQueries';
 
-export const productSettingsKeys = QUERY_KEYS.products.settings;
 
 export function usePriceGroups(): UseQueryResult<PriceGroup[], Error> {
   return useMetadataPriceGroups() as UseQueryResult<PriceGroup[], Error>;

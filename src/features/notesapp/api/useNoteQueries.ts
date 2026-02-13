@@ -1,23 +1,10 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { z } from 'zod';
 
 export * from './useNotebookResource';
 
-
-import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { 
-  NoteWithRelations, 
-  TagRecord, 
-  CategoryRecord,
-  CategoryWithChildren, 
-  ThemeRecord, 
-  NotebookRecord,
-  RelatedNote
-} from '@/shared/types/domain/notes';
-
 import { createQueryHook } from '@/shared/lib/api-hooks';
 import { 
   notebookSchema, 
@@ -30,10 +17,6 @@ import {
 } from '@/shared/contracts/notes';
 
 const NOTES_STALE_MS = 10_000;
-
-interface QueryOptions {
-  enabled?: boolean;
-}
 
 export const useNotebooks = createQueryHook({
   queryKeyFactory: () => QUERY_KEYS.notes.notebooks,

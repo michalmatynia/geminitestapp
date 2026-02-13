@@ -493,7 +493,7 @@ export function runPromptExploderBenchmark(args: {
       prompt: benchmarkCase.prompt,
       validationRules: args.validationRules,
       learnedTemplates: args.learnedTemplates ?? [],
-      similarityThreshold: args.similarityThreshold,
+      ...(args.similarityThreshold !== undefined ? { similarityThreshold: args.similarityThreshold } : {}),
     });
 
     const predictedTypeSet = new Set(

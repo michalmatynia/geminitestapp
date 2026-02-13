@@ -2,7 +2,7 @@ import React from 'react';
 import { useSaveCurrencyMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/features/observability';
-import type { Currency } from '@/shared/types/domain/internationalization';
+import type { CurrencyOption } from '@/shared/types/domain/internationalization';
 
 interface CurrencyFormState {
   code: string;
@@ -11,7 +11,7 @@ interface CurrencyFormState {
 }
 
 interface UseCurrencyFormProps {
-  currency?: Currency | null;
+  currency?: CurrencyOption | null;
 }
 
 interface UseCurrencyFormReturn {

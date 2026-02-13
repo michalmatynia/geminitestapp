@@ -18,7 +18,7 @@ export function MarketplaceSelector(): React.JSX.Element {
         label: integration.name,
         icon: <Store className='h-3 w-3' />,
         options: integration.connections.map((connection) => ({
-          value: connection.id,
+          key: connection.id,
           label: connection.name,
           description: `From ${integration.name}`,
         })),
@@ -61,8 +61,8 @@ export function MarketplaceSelector(): React.JSX.Element {
       <h2 className='text-sm font-semibold text-gray-300'>Connections</h2>
       <GenericPickerDropdown
         groups={groups}
-        selectedValue={selectedConnectionId ?? ''}
-        onSelect={(opt: PickerOption) => setSelectedConnectionId(opt.value)}
+        selectedKey={selectedConnectionId ?? ''}
+        onSelect={(opt: PickerOption) => setSelectedConnectionId(opt.key)}
         searchable
         searchPlaceholder='Search connections...'
       />

@@ -12,7 +12,11 @@ import {
   FolderOpen,
   FolderPlus,
   GripVertical,
+  Lock,
+  Pencil,
   Sparkles,
+  Trash2,
+  Unlock,
   Upload,
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -24,14 +28,15 @@ import {
   MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
-import { DRAG_KEYS, setDragData } from '@/shared/utils/drag-drop';
-import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { Button, FolderTreePanel, TreeHeader, useToast } from '@/shared/ui';
+import { DRAG_KEYS, resolveVerticalDropPosition, setDragData } from '@/shared/utils/drag-drop';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { createCaseResolverMasterTreeAdapter } from '../adapter';
-import type { CaseResolverTreeDragPayload } from '../drag';
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   buildMasterNodesFromCaseResolverWorkspace,
+  decodeCaseResolverMasterNodeId,
   fromCaseResolverAssetNodeId,
   fromCaseResolverFileNodeId,
   fromCaseResolverFolderNodeId,
@@ -40,7 +45,7 @@ import {
   toCaseResolverFolderNodeId,
 } from '../master-tree';
 
-import type { CaseResolverAssetFile, CaseResolverWorkspace } from '../types';
+import type { CaseResolverTreeDragPayload } from '../drag';
 
 type PaletteEntry = {
   id: string;
@@ -86,49 +91,31 @@ const CASE_RESOLVER_PALETTE: PaletteEntry[] = [
   },
 ];
 
-export type CaseResolverFolderTreeProps = {
-  workspace: CaseResolverWorkspace;
-  selectedFileId: string | null;
-  selectedAssetId: string | null;
-  selectedFolderPath: string | null;
-  panelCollapsed: boolean;
-  onPanelCollapsedChange: (collapsed: boolean) => void;
-  onSelectFile: (fileId: string) => void;
-  onSelectAsset: (assetId: string) => void;
-  onSelectFolder: (folderPath: string | null) => void;
-  onCreateFolder: (targetFolderPath: string | null) => void;
-  onCreateFile: (targetFolderPath: string | null) => void;
-  onCreateNodeFile: (targetFolderPath: string | null) => void;
-  onUploadAssets: (files: File[], targetFolderPath: string | null) => Promise<CaseResolverAssetFile[]>;
-  onMoveFile: (fileId: string, targetFolder: string) => Promise<void>;
-  onMoveAsset: (assetId: string, targetFolder: string) => Promise<void>;
-  onMoveFolder: (folderPath: string, targetFolder: string) => Promise<void>;
-  onRenameFile: (fileId: string, nextName: string) => Promise<void>;
-  onRenameAsset: (assetId: string, nextName: string) => Promise<void>;
-  onRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
-};
-
-export function CaseResolverFolderTree({
-  workspace,
-  selectedFileId,
-  selectedAssetId,
-  selectedFolderPath,
-  panelCollapsed,
-  onPanelCollapsedChange,
-  onSelectFile,
-  onSelectAsset,
-  onSelectFolder,
-  onCreateFolder,
-  onCreateFile,
-  onCreateNodeFile,
-  onUploadAssets,
-  onMoveFile,
-  onMoveAsset,
-  onMoveFolder,
-  onRenameFile,
-  onRenameAsset,
-  onRenameFolder,
-}: CaseResolverFolderTreeProps): React.JSX.Element {
+export function CaseResolverFolderTree(): React.JSX.Element {
+  const {
+    workspace,
+    selectedFileId,
+    selectedAssetId,
+    selectedFolderPath,
+    panelCollapsed,
+    onPanelCollapsedChange,
+    onSelectFile,
+    onSelectAsset,
+    onSelectFolder,
+    onCreateFolder,
+    onCreateFile,
+    onCreateNodeFile,
+    onUploadAssets,
+    onMoveFile,
+    onMoveAsset,
+    onMoveFolder,
+    onRenameFile,
+    onRenameAsset,
+    onRenameFolder,
+    onDeleteFile,
+    onToggleFileLock,
+    onEditFile,
+  } = useCaseResolverPageContext();
   const { toast } = useToast();
   const [isUploadingAssets, setIsUploadingAssets] = useState(false);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
@@ -203,6 +190,12 @@ export function CaseResolverFolderTree({
     if (!selectedNode?.parentId) return '';
     return fromCaseResolverFolderNodeId(selectedNode.parentId);
   }, [controller.nodes, controller.selectedNodeId, selectedFolderPath]);
+
+  const fileLockById = useMemo((): Map<string, boolean> => {
+    return new Map(
+      workspace.files.map((file): [string, boolean] => [file.id, file.isLocked])
+    );
+  }, [workspace.files]);
 
   const {
     RootIcon,
@@ -307,7 +300,6 @@ export function CaseResolverFolderTree({
       masterInstance='case_resolver'
       header={(
         <TreeHeader
-          title='Case Resolver'
           actions={(
             <>
               <Button
@@ -401,28 +393,105 @@ export function CaseResolverFolderTree({
         }}
       />
 
+      <div className='border-b border-border/60 p-2'>
+        <div className='mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-gray-400'>
+          Node Palette
+        </div>
+        <div className='space-y-2'>
+          {CASE_RESOLVER_PALETTE.map((entry: PaletteEntry) => (
+            <div
+              key={entry.id}
+              draggable={Boolean(entry.definition)}
+              onDragStart={(event): void => {
+                handleNodePaletteDragStart(event, entry.definition);
+              }}
+              className={`rounded border bg-card/35 px-3 py-2 text-xs transition ${
+                entry.definition
+                  ? `cursor-grab active:cursor-grabbing ${entry.toneClassName}`
+                  : 'border-border/60 text-gray-500'
+              }`}
+            >
+              <div className='flex items-center gap-2'>
+                <entry.Icon className='size-3.5' />
+                <div className='font-semibold'>{entry.label}</div>
+              </div>
+              <div className='mt-1 text-[11px] text-gray-400'>{entry.description}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className='min-h-0 flex-1 overflow-auto p-2'>
         <MasterFolderTree
           controller={controller}
           rootDropUi={rootDropUi}
+          canDrop={(
+            { draggedNodeId, targetId, position, defaultAllowed }
+          ): boolean => {
+            if (defaultAllowed) return true;
+            const dragged = decodeCaseResolverMasterNodeId(draggedNodeId);
+            if (!dragged) return false;
+            if (dragged.entity !== 'file' && dragged.entity !== 'asset') return false;
+
+            if (position === 'inside') {
+              if (targetId === null) return true;
+              return fromCaseResolverFolderNodeId(targetId) !== null;
+            }
+
+            return targetId !== null;
+          }}
+          resolveDropPosition={(event, { targetId }, ctlr) => {
+            const targetNode = ctlr.nodes.find(
+              (candidate: MasterTreeNode): boolean => candidate.id === targetId
+            );
+            if (targetNode?.type === 'folder') {
+              return 'inside';
+            }
+            const targetRect = event.currentTarget.getBoundingClientRect();
+            const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
+              thresholdRatio: 0.34,
+            });
+            if (edgePosition === 'before' || edgePosition === 'after') {
+              return edgePosition;
+            }
+            return 'after';
+          }}
           onNodeDragStart={({ node, event }): void => {
-            const metadata = node.metadata as Record<string, unknown> | undefined;
-            if (metadata?.['entity'] !== 'asset') return;
-            const assetId = parseString(metadata['rawId']);
-            if (!assetId) return;
-            const payload: CaseResolverTreeDragPayload = {
-              source: 'case_resolver_tree',
-              entity: 'asset',
-              assetId,
-              assetKind: resolveAssetKind(metadata['assetKind']),
-              name: node.name,
-              folder: parseString(metadata['folder']),
-              filepath: parseNullableString(metadata['filepath']),
-              mimeType: parseNullableString(metadata['mimeType']),
-              size: parseNullableNumber(metadata['size']),
-              textContent: parseString(metadata['textContent']),
-              description: parseString(metadata['description']),
-            };
+            const metadata = node.metadata;
+            if (!metadata || typeof metadata !== 'object') return;
+
+            let payload: CaseResolverTreeDragPayload | null = null;
+            if (metadata['entity'] === 'asset') {
+              const assetId = parseString(metadata['rawId']);
+              if (!assetId) return;
+              payload = {
+                source: 'case_resolver_tree',
+                entity: 'asset',
+                assetId,
+                assetKind: resolveAssetKind(metadata['assetKind']),
+                name: node.name,
+                folder: parseString(metadata['folder']),
+                filepath: parseNullableString(metadata['filepath']),
+                mimeType: parseNullableString(metadata['mimeType']),
+                size: parseNullableNumber(metadata['size']),
+                textContent: parseString(metadata['textContent']),
+                description: parseString(metadata['description']),
+              };
+            }
+
+            if (metadata['entity'] === 'file') {
+              const fileId = parseString(metadata['rawId']);
+              if (!fileId) return;
+              payload = {
+                source: 'case_resolver_tree',
+                entity: 'file',
+                fileId,
+                name: node.name,
+                folder: parseString(metadata['folder']),
+              };
+            }
+
+            if (!payload) return;
 
             setDragData(
               event.dataTransfer,
@@ -462,6 +531,8 @@ export function CaseResolverFolderTree({
             const folderPath = fromCaseResolverFolderNodeId(node.id);
             const fileId = fromCaseResolverFileNodeId(node.id);
             const assetId = fromCaseResolverAssetNodeId(node.id);
+            const isCaseFile = Boolean(fileId) && node.kind === 'case_file';
+            const isFileLocked = fileId ? fileLockById.get(fileId) === true : false;
             const isFolder = folderPath !== null;
             const canToggle = isFolder && hasChildren;
             const Icon = isFolder
@@ -495,7 +566,9 @@ export function CaseResolverFolderTree({
                 role='button'
                 tabIndex={0}
                 onClick={(): void => {
-                  select();
+                  if (!isSelected) {
+                    select();
+                  }
                   if (folderPath !== null) {
                     onSelectFolder(folderPath);
                     return;
@@ -514,7 +587,9 @@ export function CaseResolverFolderTree({
                 onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    select();
+                    if (!isSelected) {
+                      select();
+                    }
                     if (folderPath !== null) {
                       onSelectFolder(folderPath);
                       return;
@@ -529,6 +604,7 @@ export function CaseResolverFolderTree({
                   }
                 }}
               >
+                <DragHandleIcon className='size-3 shrink-0 text-gray-500' />
                 {canToggle ? (
                   <button
                     type='button'
@@ -550,40 +626,62 @@ export function CaseResolverFolderTree({
                   <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
                 )}
                 <Icon className='size-4 shrink-0' />
+                {isCaseFile && isFileLocked ? (
+                  <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
+                ) : null}
                 <span className='min-w-0 flex-1 truncate'>{node.name}</span>
-                <DragHandleIcon className='size-4 shrink-0 opacity-0 transition group-hover:opacity-60' />
+                {isCaseFile && fileId ? (
+                  <div className='flex shrink-0 items-center gap-1'>
+                    <button
+                      type='button'
+                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white'
+                      title='Edit document'
+                      aria-label='Edit document'
+                      onClick={(event): void => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onEditFile(fileId);
+                      }}
+                    >
+                      <Pencil className='size-3.5' />
+                    </button>
+                    <button
+                      type='button'
+                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white'
+                      title={isFileLocked ? 'Unlock file' : 'Lock file'}
+                      aria-label={isFileLocked ? 'Unlock file' : 'Lock file'}
+                      onClick={(event): void => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onToggleFileLock(fileId);
+                      }}
+                    >
+                      {isFileLocked ? (
+                        <Unlock className='size-3.5' />
+                      ) : (
+                        <Lock className='size-3.5' />
+                      )}
+                    </button>
+                    <button
+                      type='button'
+                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50'
+                      title={isFileLocked ? 'Unlock file before removing' : 'Remove file'}
+                      aria-label='Remove file'
+                      disabled={isFileLocked}
+                      onClick={(event): void => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onDeleteFile(fileId);
+                      }}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </button>
+                  </div>
+                ) : null}
               </div>
             );
           }}
         />
-      </div>
-
-      <div className='border-t border-border/60 p-2'>
-        <div className='mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-gray-400'>
-          Node Palette
-        </div>
-        <div className='space-y-2'>
-          {CASE_RESOLVER_PALETTE.map((entry: PaletteEntry) => (
-            <div
-              key={entry.id}
-              draggable={Boolean(entry.definition)}
-              onDragStart={(event): void => {
-                handleNodePaletteDragStart(event, entry.definition);
-              }}
-              className={`rounded border bg-card/35 px-3 py-2 text-xs transition ${
-                entry.definition
-                  ? `cursor-grab active:cursor-grabbing ${entry.toneClassName}`
-                  : 'border-border/60 text-gray-500'
-              }`}
-            >
-              <div className='flex items-center gap-2'>
-                <entry.Icon className='size-3.5' />
-                <div className='font-semibold'>{entry.label}</div>
-              </div>
-              <div className='mt-1 text-[11px] text-gray-400'>{entry.description}</div>
-            </div>
-          ))}
-        </div>
       </div>
     </FolderTreePanel>
   );

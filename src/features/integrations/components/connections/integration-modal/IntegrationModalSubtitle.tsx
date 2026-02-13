@@ -1,17 +1,15 @@
-type IntegrationModalSubtitleProps = {
-  isBaselinker: boolean;
-  isTradera: boolean;
-};
+import React from 'react';
 
-export function IntegrationModalSubtitle({
-  isBaselinker,
-  isTradera,
-}: IntegrationModalSubtitleProps): string {
+import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
+
+export function IntegrationModalSubtitle(): React.JSX.Element {
+  const { isBaselinker, isTradera } = useIntegrationModalViewContext();
+
   if (isBaselinker) {
-    return 'Manage connections and warehouse sync settings.';
+    return <>Manage connections and warehouse sync settings.</>;
   }
   if (isTradera) {
-    return 'Manage connections via browser automation (Playwright).';
+    return <>Manage connections via browser automation (Playwright).</>;
   }
-  return 'Manage connections and marketplace API settings.';
+  return <>Manage connections and marketplace API settings.</>;
 }

@@ -1,18 +1,15 @@
 import React from 'react';
 
-type IntegrationModalHeaderProps = {
-  integrationName: string;
-  isTradera: boolean;
-  isAllegro: boolean;
-  isBaselinker: boolean;
-};
+import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 
-export function IntegrationModalHeader({
-  integrationName,
-  isTradera,
-  isAllegro,
-  isBaselinker,
-}: IntegrationModalHeaderProps): React.JSX.Element {
+export function IntegrationModalHeader(): React.JSX.Element {
+  const {
+    integrationName,
+    isTradera,
+    isAllegro,
+    isBaselinker,
+  } = useIntegrationModalViewContext();
+
   return (
     <div className='flex items-center'>
       {integrationName} Integration

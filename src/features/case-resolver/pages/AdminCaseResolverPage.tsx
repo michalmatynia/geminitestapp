@@ -840,6 +840,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     activeFile,
     selectedAsset,
     onUpdateSelectedAsset: handleUpdateSelectedAsset,
+    onGraphChange: handleGraphChange,
   };
 
   return (
@@ -958,14 +959,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             {shouldShowPreviewPage ? (
               <CaseResolverFileViewer />
             ) : activeFile ? (
-              <CaseResolverCanvasWorkspace
-                fileId={activeFile.id}
-                graph={activeFile.graph}
-                defaultDropFolder={activeFile.folder}
-                availableFiles={workspace.files}
-                onUploadAssets={handleUploadAssets}
-                onGraphChange={handleGraphChange}
-              />
+              <CaseResolverCanvasWorkspace />
             ) : (
               <CaseResolverFileViewer />
             )}

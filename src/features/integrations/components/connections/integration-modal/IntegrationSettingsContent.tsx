@@ -4,22 +4,47 @@ import { Button } from '@/shared/ui';
 
 import { AllegroSettings } from '../AllegroSettings';
 import { BaselinkerSettings } from '../BaselinkerSettings';
+import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 
-type IntegrationSettingsContentProps = {
-  isAllegro: boolean;
-  isBaselinker: boolean;
-  isTradera: boolean;
-  activeConnection: unknown;
-  onOpenSessionModal: () => void;
+type SessionMeta = {
+  hasPlaywrightStorageState: boolean;
+  playwrightStorageStateUpdatedAt: string | number | Date | null;
 };
 
-export function IntegrationSettingsContent({
-  isAllegro,
-  isBaselinker,
-  isTradera,
-  activeConnection,
-  onOpenSessionModal,
-}: IntegrationSettingsContentProps): React.JSX.Element {
+const resolveSessionMeta = (connection: unknown): SessionMeta => {
+  if (!connection || typeof connection !== 'object') {
+    return {
+      hasPlaywrightStorageState: false,
+      playwrightStorageStateUpdatedAt: null,
+    };
+  }
+
+  const record = connection as Record<string, unknown>;
+  const hasPlaywrightStorageState = record['hasPlaywrightStorageState'] === true;
+  const updatedAtValue = record['playwrightStorageStateUpdatedAt'];
+  const playwrightStorageStateUpdatedAt =
+    typeof updatedAtValue === 'string' ||
+    typeof updatedAtValue === 'number' ||
+    updatedAtValue instanceof Date
+      ? updatedAtValue
+      : null;
+
+  return {
+    hasPlaywrightStorageState,
+    playwrightStorageStateUpdatedAt,
+  };
+};
+
+export function IntegrationSettingsContent(): React.JSX.Element {
+  const {
+    isAllegro,
+    isBaselinker,
+    isTradera,
+    activeConnection,
+    onOpenSessionModal,
+  } = useIntegrationModalViewContext();
+  const sessionMeta = resolveSessionMeta(activeConnection);
+
   return (
     <div>
       {isAllegro ? (
@@ -35,12 +60,12 @@ export function IntegrationSettingsContent({
           <div className='flex items-center justify-between gap-3'>
             <p>
               <span className='text-gray-400'>Session cookie:</span>{' '}
-              {(activeConnection as any).hasPlaywrightStorageState ? 'Retained' : 'Not stored'}
+              {sessionMeta.hasPlaywrightStorageState ? 'Retained' : 'Not stored'}
             </p>
             <Button
               type='button'
               onClick={onOpenSessionModal}
-              disabled={!(activeConnection as any).hasPlaywrightStorageState}
+              disabled={!sessionMeta.hasPlaywrightStorageState}
               className='text-xs text-emerald-200 hover:text-emerald-100 disabled:cursor-not-allowed disabled:text-gray-600'
             >
               View details
@@ -48,8 +73,8 @@ export function IntegrationSettingsContent({
           </div>
           <p className='mt-1'>
             <span className='text-gray-400'>Obtained:</span>{' '}
-            {(activeConnection as any).playwrightStorageStateUpdatedAt
-              ? new Date((activeConnection as any).playwrightStorageStateUpdatedAt).toLocaleString()
+            {sessionMeta.playwrightStorageStateUpdatedAt
+              ? new Date(sessionMeta.playwrightStorageStateUpdatedAt).toLocaleString()
               : '—'}
           </p>
         </div>

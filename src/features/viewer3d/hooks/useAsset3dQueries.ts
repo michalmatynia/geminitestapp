@@ -9,9 +9,9 @@ import {
   invalidateAsset3d,
   invalidateAsset3dDetail,
 } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { viewer3dKeys as asset3dKeys } from '@/shared/lib/query-key-exports';
+export { asset3dKeys };
 
-export const asset3dKeys = QUERY_KEYS.viewer3d;
 
 export function useAssets3D(filters: Asset3DListFilters): UseQueryResult<Asset3DRecord[], Error> {
   return useQuery({

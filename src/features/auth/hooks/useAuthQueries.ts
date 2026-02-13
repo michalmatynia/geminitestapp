@@ -19,18 +19,17 @@ import {
   invalidateAuthSecurity,
   invalidateUsers,
 } from '@/shared/lib/query-invalidation';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { authKeys } from '@/shared/lib/query-key-exports';
 
 import type { AuthUserSummary } from '../types';
 
-const authKeys = QUERY_KEYS.auth.users;
 
 const AUTH_USERS_STALE_MS = 10_000;
 const AUTH_SECURITY_STALE_MS = 10_000;
 
 export function useAuthUsers(enabled: boolean = true): UseQueryResult<AuthUsersResponse, Error> {
   return useQuery({
-    queryKey: authKeys.all,
+    queryKey: authKeys.users.all,
     queryFn: fetchAuthUsers,
     enabled,
     staleTime: AUTH_USERS_STALE_MS,
@@ -39,7 +38,7 @@ export function useAuthUsers(enabled: boolean = true): UseQueryResult<AuthUsersR
 
 export function useAuthUserSecurity(userId?: string | null): UseQueryResult<AuthUserSecurityProfile, Error> {
   return useQuery({
-    queryKey: userId ? authKeys.security(userId) : authKeys.security(''),
+    queryKey: userId ? authKeys.users.security(userId) : authKeys.users.security(''),
     queryFn: (): Promise<AuthUserSecurityProfile> => fetchAuthUserSecurity(userId as string),
     enabled: Boolean(userId),
     staleTime: AUTH_SECURITY_STALE_MS,

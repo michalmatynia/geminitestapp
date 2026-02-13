@@ -2,13 +2,12 @@
 
 import { useQuery, type UseQueryResult, type Query } from '@tanstack/react-query';
 
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { jobKeys } from '@/shared/lib/query-key-exports';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
 
 import { getIntegrationJobs, getProductAiJobs, getChatbotJobs } from '../api';
 
-export const jobKeys = QUERY_KEYS.jobs;
 
 export function useIntegrationJobs(): UseQueryResult<ProductJob[]> {
   return useQuery({
@@ -44,6 +43,8 @@ const hasScheduledMarker = (payload: unknown): boolean => {
   }
   return false;
 };
+
+export { jobKeys };
 
 export function useChatbotJobs(scope: string = 'all'): UseQueryResult<{ jobs: unknown[] }> {
   return useQuery({

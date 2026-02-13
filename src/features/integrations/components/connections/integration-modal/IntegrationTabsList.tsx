@@ -1,16 +1,14 @@
 import { TabsList, TabsTrigger } from '@/shared/ui';
 
-type IntegrationTabsListProps = {
-  showAllegroConsole: boolean;
-  showBaseConsole: boolean;
-  showPlaywright: boolean;
-};
+import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 
-export function IntegrationTabsList({
-  showAllegroConsole,
-  showBaseConsole,
-  showPlaywright,
-}: IntegrationTabsListProps): React.JSX.Element {
+export function IntegrationTabsList(): React.JSX.Element {
+  const {
+    showAllegroConsole,
+    showBaseConsole,
+    showPlaywright,
+  } = useIntegrationModalViewContext();
+
   const colsClass =
     showPlaywright || showAllegroConsole || showBaseConsole ? 'grid-cols-5' : 'grid-cols-4';
 

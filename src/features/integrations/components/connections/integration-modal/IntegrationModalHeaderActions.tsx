@@ -2,15 +2,11 @@ import React from 'react';
 
 import { Button } from '@/shared/ui';
 
-type IntegrationModalHeaderActionsProps = {
-  activeTab: string;
-  onSave: () => void;
-};
+import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 
-export function IntegrationModalHeaderActions({
-  activeTab,
-  onSave,
-}: IntegrationModalHeaderActionsProps): React.JSX.Element | null {
+export function IntegrationModalHeaderActions(): React.JSX.Element | null {
+  const { activeTab, onSavePlaywrightSettings } = useIntegrationModalViewContext();
+
   if (activeTab !== 'playwright') {
     return null;
   }
@@ -18,7 +14,7 @@ export function IntegrationModalHeaderActions({
   return (
     <Button
       variant='primary'
-      onClick={onSave}
+      onClick={onSavePlaywrightSettings}
       className='min-w-[100px]'
     >
       Save

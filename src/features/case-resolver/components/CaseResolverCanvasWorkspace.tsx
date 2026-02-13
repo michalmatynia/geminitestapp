@@ -43,6 +43,7 @@ import {
 } from '@/shared/ui';
 
 import { compileCaseResolverPrompt } from '../composer';
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { parseCaseResolverTreeDropPayload } from '../drag';
 import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';
 import {
@@ -1415,31 +1416,27 @@ function CaseResolverCanvasWorkspaceInner({
   );
 }
 
-export type CaseResolverCanvasWorkspaceProps = {
-  fileId: string;
-  graph: CaseResolverGraph;
-  defaultDropFolder: string;
-  availableFiles: CaseResolverFile[];
-  onUploadAssets: (
-    files: File[],
-    targetFolderPath: string | null
-  ) => Promise<CaseResolverAssetFile[]>;
-  onGraphChange: (nextGraph: CaseResolverGraph) => void;
-};
+export function CaseResolverCanvasWorkspace(): React.JSX.Element {
+  const {
+    activeFile,
+    workspace,
+    onUploadAssets,
+    onGraphChange,
+  } = useCaseResolverPageContext();
 
-export function CaseResolverCanvasWorkspace({
-  fileId,
-  graph,
-  defaultDropFolder,
-  availableFiles,
-  onUploadAssets,
-  onGraphChange,
-}: CaseResolverCanvasWorkspaceProps): React.JSX.Element {
+  if (!activeFile) {
+    return (
+      <div className='flex h-[420px] items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 text-sm text-gray-400'>
+        Create a case file to start mapping nodes.
+      </div>
+    );
+  }
+
   return (
     <AiPathsProvider
-      key={fileId}
-      initialNodes={graph.nodes}
-      initialEdges={graph.edges}
+      key={activeFile.id}
+      initialNodes={activeFile.graph.nodes}
+      initialEdges={activeFile.graph.edges}
       initialLoading={false}
       initialRuntimeState={{
         inputs: {},
@@ -1448,9 +1445,9 @@ export function CaseResolverCanvasWorkspace({
       }}
     >
       <CaseResolverCanvasWorkspaceInner
-        graph={graph}
-        availableFiles={availableFiles}
-        defaultDropFolder={defaultDropFolder}
+        graph={activeFile.graph}
+        availableFiles={workspace.files}
+        defaultDropFolder={activeFile.folder}
         onUploadAssets={onUploadAssets}
         onGraphChange={onGraphChange}
       />

@@ -815,9 +815,9 @@ const resolveLogicalConditions = (item: PromptExploderListItem): PromptExploderL
             : condition.value ?? null,
         joinWithPrevious:
           index === 0 ? null : (condition.joinWithPrevious === 'or' ? 'or' : 'and'),
-      } satisfies PromptExploderLogicalCondition;
+      } as PromptExploderLogicalCondition;
     })
-    .filter((condition): condition is PromptExploderLogicalCondition => Boolean(condition));
+    .filter((condition): condition is PromptExploderLogicalCondition => condition !== null);
   if (fromItem.length > 0) return fromItem;
   return buildLogicalConditionsFromLegacyFields(item);
 };

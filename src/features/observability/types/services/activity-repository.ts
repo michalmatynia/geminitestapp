@@ -1,4 +1,4 @@
-import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/dtos/system';
+import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/contracts/system';
 
 export type ActivityFilters = {
   userId?: string;

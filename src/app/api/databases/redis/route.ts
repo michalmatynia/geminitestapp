@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { RedisOverviewDto } from '@/shared/dtos/database';
+import type { RedisOverviewDto } from '@/shared/contracts/database';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getRedisClient } from '@/shared/lib/redis';
 import type { ApiHandlerContext } from '@/shared/types/api/api';

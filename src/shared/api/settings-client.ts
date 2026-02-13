@@ -3,7 +3,7 @@
 import type {
   SettingRecordDto,
   SettingsScopeDto,
-} from '@/shared/dtos/settings';
+} from '@/shared/contracts/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type SettingRecord = SettingRecordDto;

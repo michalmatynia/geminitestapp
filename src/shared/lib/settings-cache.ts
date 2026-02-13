@@ -5,7 +5,7 @@ import { LRUCache } from 'lru-cache';
 import type {
   SettingRecordDto,
   SettingsScopeDto,
-} from '@/shared/dtos/settings';
+} from '@/shared/contracts/settings';
 
 export type SettingRecord = SettingRecordDto;
 export type SettingsScope = SettingsScopeDto;

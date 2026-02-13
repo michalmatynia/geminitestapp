@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
-import type { UpdateCmsThemeDto } from '@/shared/dtos/cms';
+import type { UpdateCmsThemeDto } from '@/shared/contracts/cms';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';

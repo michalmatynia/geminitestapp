@@ -10,6 +10,6 @@ export type {
   UpdateUserDto,
   LoginDto,
   RegisterDto
-} from '@/shared/dtos';
+} from '@/shared/contracts/auth';
 
 export type AuthUserRoleMap = Record<string, string>;

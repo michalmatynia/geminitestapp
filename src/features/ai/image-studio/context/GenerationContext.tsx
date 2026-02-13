@@ -10,8 +10,8 @@ import {
   type RunStudioEnqueueResult,
   type RunStudioPayload,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
-import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { api } from '@/shared/lib/api-client';
+import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
 
@@ -229,7 +229,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           const outputs = Array.isArray(run.outputs) ? run.outputs : [];
 
           setRunOutputs(outputs);
-          void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+          void invalidateImageStudioSlots(queryClient, projectId);
           setLandingSlots(buildLandingSlotsFromRun({
             ...run,
             expectedOutputs,

@@ -2,7 +2,7 @@ import type {
   CollectionSchemaDto,
   FieldInfoDto,
   SchemaProviderDto,
-} from '@/shared/dtos/database';
+} from '@/shared/contracts/database';
 import type { DbSchemaSnapshot } from '@/shared/types/domain/ai-paths';
 
 export type FieldSchema = Pick<FieldInfoDto, 'name' | 'type'>;

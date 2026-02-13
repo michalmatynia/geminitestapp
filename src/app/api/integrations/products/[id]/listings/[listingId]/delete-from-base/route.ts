@@ -111,7 +111,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     runId = createdRun.id;
     await runRepository.updateRun(runId, {
       status: 'running',
-      startedAt: new Date(),
+      startedAt: new Date().toISOString(),
       meta: baseRunMeta,
     });
     await runRepository.createRunEvent({
@@ -201,7 +201,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       await runRepository
         .updateRun(runId, {
           status: 'completed',
-          finishedAt: new Date(),
+          finishedAt: new Date().toISOString(),
           meta: {
             ...baseRunMeta,
             completedAt: new Date().toISOString(),
@@ -244,7 +244,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       await runRepository
         .updateRun(runId, {
           status: 'failed',
-          finishedAt: new Date(),
+          finishedAt: new Date().toISOString(),
           errorMessage,
           meta: {
             ...baseRunMeta,

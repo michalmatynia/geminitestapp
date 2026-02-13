@@ -1,8 +1,8 @@
 import { NextRequest } from 'next/server';
 
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
-import type { ChatMessageDto as ChatMessage } from '@/shared/dtos/chatbot';
-import type { CmsCssAiRequestDto as CssAiRequest } from '@/shared/dtos/cms';
+import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type { CmsCssAiRequestDto as CssAiRequest } from '@/shared/contracts/cms';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';

@@ -3,18 +3,25 @@
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { useMediaStyles } from '../media-styles-context';
-import { SectionDataProvider } from './SectionDataContext';
 import { useCmsPageContext } from '../CmsPageContext';
+import { useMediaStyles } from '../media-styles-context';
+import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { SectionDataProvider } from './SectionDataContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendHeroSectionProps {
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
+  settings?: Record<string, unknown>;
+  blocks?: BlockInstance[];
 }
 
-export function FrontendHeroSection({ settings, blocks }: FrontendHeroSectionProps): React.ReactNode {
+export function FrontendHeroSection({
+  settings: propSettings,
+  blocks: propBlocks,
+}: FrontendHeroSectionProps): React.ReactNode {
+  const sectionBlockData = useOptionalSectionBlockData();
+  const settings = propSettings ?? sectionBlockData?.settings ?? {};
+  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const image = settings['image'] as string | undefined;

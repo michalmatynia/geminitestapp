@@ -7,6 +7,6 @@ export type {
 } from '../../dtos/ai-trigger-buttons';
 
 /**
- * @deprecated Use AiTriggerButtonDto from @/shared/dtos instead
+ * @deprecated Use AiTriggerButtonDto from @/shared/contracts/ai-trigger-buttons instead
  */
 export type AiTriggerButtonRecord = AiTriggerButtonDto;

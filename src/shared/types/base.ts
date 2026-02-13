@@ -2,7 +2,7 @@
 import type {
   ApiEnvelopeDto,
   LegacyPaginatedResponseDto,
-} from '@/shared/dtos/http';
+} from '@/shared/contracts/http';
 
 import type { BaseRecord } from './common';
 

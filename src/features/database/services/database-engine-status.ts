@@ -15,7 +15,7 @@ import type {
   DatabaseEngineServiceStatusDto,
   DatabaseEngineServiceDto,
   DatabaseEngineStatusDto,
-} from '@/shared/dtos/database';
+} from '@/shared/contracts/database';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {
   getDatabaseEngineCollectionRouteMap,

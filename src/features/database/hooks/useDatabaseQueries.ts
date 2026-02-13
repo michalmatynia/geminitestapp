@@ -24,7 +24,7 @@ import type {
   DatabaseRestoreOperationResponseDto as DatabaseRestoreResponse,
   MultiSchemaResponseDto as MultiSchemaResponse,
   RedisOverviewDto as RedisOverviewResponse,
-} from '@/shared/dtos/database';
+} from '@/shared/contracts/database';
 import { ApiError } from '@/shared/lib/api-client';
 import { resolvePayloadErrorMessage, unwrapMutationResult } from '@/shared/lib/mutation-error-handler';
 import { dbKeys } from '@/shared/lib/query-key-exports';

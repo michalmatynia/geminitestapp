@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { JSX, useState } from 'react';
 
 import { useSystemActivity } from '@/features/observability/hooks/useLogQueries';
-import type { ActivityLogDto } from '@/shared/dtos/system';
+import type { ActivityLogDto } from '@/shared/contracts/system';
 import { useHealthStatus } from '@/shared/hooks/useHealthStatus';
 import { Button } from '@/shared/ui';
 

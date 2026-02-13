@@ -120,6 +120,10 @@ type EventDocument = {
   createdAt: Date;
 };
 
+const toIsoString = (date: Date | null | undefined): string | null => {
+  return date ? date.toISOString() : null;
+};
+
 const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   id: doc.id || doc._id,
   userId: doc.userId ?? null,
@@ -129,21 +133,23 @@ const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   status: doc.status as AiPathRunRecord['status'],
   triggerEvent: doc.triggerEvent ?? null,
   triggerNodeId: doc.triggerNodeId ?? null,
-  triggerContext: doc.triggerContext ?? null,
+  triggerContext: doc.triggerContext ?? undefined,
   graph: (doc.graph as AiPathRunRecord['graph']) ?? null,
   runtimeState: (doc.runtimeState as AiPathRunRecord['runtimeState']) ?? null,
   meta: doc.meta ?? null,
+  context: undefined, // Or map if present in doc
+  result: undefined, // Or map if present in doc
   entityId: doc.entityId ?? null,
   entityType: doc.entityType ?? null,
   errorMessage: doc.errorMessage ?? null,
   retryCount: doc.retryCount ?? 0,
   maxAttempts: doc.maxAttempts ?? 3,
-  nextRetryAt: doc.nextRetryAt ?? null,
-  deadLetteredAt: doc.deadLetteredAt ?? null,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt ?? null,
-  startedAt: doc.startedAt ?? null,
-  finishedAt: doc.finishedAt ?? null,
+  nextRetryAt: toIsoString(doc.nextRetryAt),
+  deadLetteredAt: toIsoString(doc.deadLetteredAt),
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: toIsoString(doc.updatedAt),
+  startedAt: toIsoString(doc.startedAt),
+  finishedAt: toIsoString(doc.finishedAt),
 });
 
 const toNodeRecord = (doc: NodeDocument): AiPathRunNodeRecord => ({
@@ -154,13 +160,13 @@ const toNodeRecord = (doc: NodeDocument): AiPathRunNodeRecord => ({
   nodeTitle: doc.nodeTitle ?? null,
   status: doc.status as AiPathRunNodeRecord['status'],
   attempt: doc.attempt ?? 0,
-  inputs: (doc.inputs as AiPathRunNodeRecord['inputs']) ?? null,
-  outputs: (doc.outputs as AiPathRunNodeRecord['outputs']) ?? null,
+  inputs: (doc.inputs as AiPathRunNodeRecord['inputs']) ?? undefined,
+  outputs: (doc.outputs as AiPathRunNodeRecord['outputs']) ?? undefined,
   errorMessage: doc.errorMessage ?? null,
-  createdAt: doc.createdAt,
-  updatedAt: doc.updatedAt ?? null,
-  startedAt: doc.startedAt ?? null,
-  finishedAt: doc.finishedAt ?? null,
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: toIsoString(doc.updatedAt),
+  startedAt: toIsoString(doc.startedAt),
+  finishedAt: toIsoString(doc.finishedAt),
 });
 
 const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
@@ -169,7 +175,7 @@ const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
   level: doc.level as AiPathRunEventRecord['level'],
   message: doc.message,
   metadata: doc.metadata ?? null,
-  createdAt: doc.createdAt,
+  createdAt: doc.createdAt.toISOString(),
 });
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

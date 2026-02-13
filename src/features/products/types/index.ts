@@ -10,7 +10,7 @@ export type {
   UpdateProductCategoryDto as UpdateCategoryDto,
   ProductCategoryDto,
   ProductCategoryDto as ProductCategory
-} from '@/shared/dtos';
+} from '@/shared/contracts/products';
 
 export type {
   PriceGroupType,

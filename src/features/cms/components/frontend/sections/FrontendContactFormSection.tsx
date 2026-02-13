@@ -3,12 +3,15 @@
 
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
+import { useOptionalSectionBlockData } from './SectionBlockContext';
 
 interface FrontendContactFormSectionProps {
-  settings: Record<string, unknown>;
+  settings?: Record<string, unknown>;
 }
 
-export function FrontendContactFormSection({ settings }: FrontendContactFormSectionProps): React.ReactNode {
+export function FrontendContactFormSection({ settings: propSettings }: FrontendContactFormSectionProps): React.ReactNode {
+  const sectionBlockData = useOptionalSectionBlockData();
+  const settings = propSettings ?? sectionBlockData?.settings ?? {};
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const fields = ((settings['fields'] as string) || 'name,email,message')

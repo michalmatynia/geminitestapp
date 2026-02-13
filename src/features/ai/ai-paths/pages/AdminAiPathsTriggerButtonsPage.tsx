@@ -15,7 +15,8 @@ import type {
   AiTriggerButtonLocation,
   AiTriggerButtonMode,
   AiTriggerButtonDto,
-} from '@/shared/dtos/ai-trigger-buttons';
+} from '@/shared/contracts/ai-trigger-buttons';
+import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { 
   Button, 
@@ -91,7 +92,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       return result.data;
     },
     onSuccess: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons() });
+      await invalidateAiPathTriggerButtons(queryClient);
       toast('Trigger button created.', { variant: 'success' });
       setEditorOpen(false);
     },
@@ -120,7 +121,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       return result.data;
     },
     onSuccess: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons() });
+      await invalidateAiPathTriggerButtons(queryClient);
       toast('Trigger button updated.', { variant: 'success' });
       setEditorOpen(false);
     },
@@ -136,7 +137,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       if (!result.ok) throw new Error(result.error);
     },
     onSuccess: async (): Promise<void> => {
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons() });
+      await invalidateAiPathTriggerButtons(queryClient);
       toast('Trigger button deleted.', { variant: 'success' });
     },
     onError: (error: unknown): void => {

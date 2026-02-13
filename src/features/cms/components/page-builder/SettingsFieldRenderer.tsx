@@ -1,5 +1,5 @@
 import { Link2, Search, Palette } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import type { ColorScheme } from '@/features/cms/types/theme-settings';
 import {
@@ -105,6 +105,42 @@ interface SettingsFieldRendererProps {
   field: SettingsField;
   value: unknown;
   onChange: (key: string, value: unknown) => void;
+}
+
+type CompositeFieldContextValue = {
+  value: unknown;
+  onChange: (value: unknown) => void;
+};
+
+const CompositeFieldContext = createContext<CompositeFieldContextValue | null>(null);
+
+function CompositeFieldProvider({
+  value,
+  onChange,
+  children,
+}: {
+  value: unknown;
+  onChange: (value: unknown) => void;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const contextValue = useMemo(
+    (): CompositeFieldContextValue => ({ value, onChange }),
+    [onChange, value]
+  );
+
+  return (
+    <CompositeFieldContext.Provider value={contextValue}>
+      {children}
+    </CompositeFieldContext.Provider>
+  );
+}
+
+function useCompositeFieldContext(): CompositeFieldContextValue {
+  const context = useContext(CompositeFieldContext);
+  if (!context) {
+    throw new Error('Composite field must be used inside CompositeFieldProvider');
+  }
+  return context;
 }
 
 export function SettingsFieldRenderer({
@@ -339,7 +375,9 @@ export function SettingsFieldRenderer({
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <SpacingField value={value} onChange={handleChange} fieldKey={field.key} />
+          <CompositeFieldProvider value={value} onChange={handleChange}>
+            <SpacingField />
+          </CompositeFieldProvider>
         </>
       )}
 
@@ -348,7 +386,9 @@ export function SettingsFieldRenderer({
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <BorderField value={value} onChange={handleChange} fieldKey={field.key} />
+          <CompositeFieldProvider value={value} onChange={handleChange}>
+            <BorderField />
+          </CompositeFieldProvider>
         </>
       )}
 
@@ -357,7 +397,9 @@ export function SettingsFieldRenderer({
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <ShadowField value={value} onChange={handleChange} fieldKey={field.key} />
+          <CompositeFieldProvider value={value} onChange={handleChange}>
+            <ShadowField />
+          </CompositeFieldProvider>
         </>
       )}
 
@@ -366,7 +408,9 @@ export function SettingsFieldRenderer({
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <BackgroundField value={value} onChange={handleChange} fieldKey={field.key} />
+          <CompositeFieldProvider value={value} onChange={handleChange}>
+            <BackgroundField />
+          </CompositeFieldProvider>
         </>
       )}
 
@@ -375,7 +419,9 @@ export function SettingsFieldRenderer({
           <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             {field.label}
           </Label>
-          <TypographyField value={value} onChange={handleChange} fieldKey={field.key} />
+          <CompositeFieldProvider value={value} onChange={handleChange}>
+            <TypographyField />
+          </CompositeFieldProvider>
         </>
       )}
     </div>
@@ -386,13 +432,8 @@ export function SettingsFieldRenderer({
 // Composite field components
 // ---------------------------------------------------------------------------
 
-interface CompositeFieldProps {
-  value: unknown;
-  onChange: (value: unknown) => void;
-  fieldKey: string;
-}
-
-function SpacingField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+function SpacingField(): React.ReactNode {
+  const { value, onChange } = useCompositeFieldContext();
   const spacing = (value as Record<string, number>) ?? { top: 0, right: 0, bottom: 0, left: 0 };
   const update = (side: string, v: number): void => {
     onChange({ ...spacing, [side]: v });
@@ -414,7 +455,8 @@ function SpacingField({ value, onChange }: CompositeFieldProps): React.ReactNode
   );
 }
 
-function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+function BorderField(): React.ReactNode {
+  const { value, onChange } = useCompositeFieldContext();
   const border = (value as Record<string, unknown>) ?? { width: 0, style: 'solid', color: '#4b5563', radius: 0 };
   const update = (key: string, v: unknown): void => {
     onChange({ ...border, [key]: v });
@@ -475,7 +517,8 @@ function BorderField({ value, onChange }: CompositeFieldProps): React.ReactNode 
   );
 }
 
-function ShadowField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+function ShadowField(): React.ReactNode {
+  const { value, onChange } = useCompositeFieldContext();
   const shadow = (value as Record<string, unknown>) ?? { x: 0, y: 2, blur: 4, spread: 0, color: '#00000040' };
   const update = (key: string, v: unknown): void => {
     onChange({ ...shadow, [key]: v });
@@ -513,7 +556,8 @@ function ShadowField({ value, onChange }: CompositeFieldProps): React.ReactNode 
   );
 }
 
-function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+function BackgroundField(): React.ReactNode {
+  const { value, onChange } = useCompositeFieldContext();
   const isRecord = (input: unknown): input is Record<string, unknown> =>
     Boolean(input) && typeof input === 'object' && !Array.isArray(input);
   const bg: Record<string, unknown> = isRecord(value) ? value : { type: 'none' };
@@ -659,7 +703,8 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
   );
 }
 
-function TypographyField({ value, onChange }: CompositeFieldProps): React.ReactNode {
+function TypographyField(): React.ReactNode {
+  const { value, onChange } = useCompositeFieldContext();
   const typo = (value as Record<string, unknown>) ?? {};
   const update = (key: string, v: unknown): void => {
     onChange({ ...typo, [key]: v });

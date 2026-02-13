@@ -1,7 +1,7 @@
 import { ObjectId, Filter } from 'mongodb';
 
 import type { ActivityRepository, ActivityFilters } from '@/features/observability/types/services/activity-repository';
-import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/dtos/system';
+import type { ActivityLogDto, CreateActivityLogDto } from '@/shared/contracts/system';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const COLLECTION = 'activity_logs';

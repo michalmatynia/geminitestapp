@@ -13,12 +13,12 @@ import {
 import type {
   DatabaseBrowseDto,
   SchemaResponsePayloadDto,
-} from '@/shared/dtos/database';
-import type { HttpResult } from '@/shared/dtos/http';
+} from '@/shared/contracts/database';
+import type { HttpResult } from '@/shared/contracts/http';
 import type {
   SettingRecordDto,
   SettingsScopeDto,
-} from '@/shared/dtos/settings';
+} from '@/shared/contracts/settings';
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';

@@ -5,6 +5,7 @@ import React, { createContext, useContext } from 'react';
 import type { BlockInstance } from '../../../types/page-builder';
 
 type SectionBlockData = {
+  sectionId?: string | undefined;
   settings: Record<string, unknown>;
   blocks: BlockInstance[];
 };
@@ -12,12 +13,13 @@ type SectionBlockData = {
 const SectionBlockContext = createContext<SectionBlockData | null>(null);
 
 export function SectionBlockProvider({
+  sectionId,
   settings,
   blocks,
   children,
 }: SectionBlockData & { children: React.ReactNode }): React.ReactNode {
   return (
-    <SectionBlockContext.Provider value={{ settings, blocks }}>
+    <SectionBlockContext.Provider value={{ sectionId, settings, blocks }}>
       {children}
     </SectionBlockContext.Provider>
   );

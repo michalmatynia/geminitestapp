@@ -7,7 +7,7 @@ export type {
   CreateAiPathDto,
   UpdateAiPathDto,
   ExecuteAiPathDto
-} from '@/shared/dtos';
+} from '@/shared/contracts/ai-paths';
 
 import type {
   AiNode,

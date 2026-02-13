@@ -26,7 +26,7 @@ export function registerPreviewBlockItem(component: React.ComponentType<PreviewB
   _PreviewBlockItem = component;
 }
 
-function PreviewBlockItemProxy(props: Omit<PreviewBlockItemProps, 'isSelected' | 'isInspecting' | 'inspectorSettings' | 'hoveredNodeId' | 'onSelect' | 'onHoverNode' | 'onOpenMedia' | 'sectionId' | 'sectionType' | 'sectionZone' | 'columnId' | 'parentBlockId' | 'mediaStyles'>): React.ReactNode {
+function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
   if (!_PreviewBlockItem) {
     throw new Error('PreviewBlockItem has not been registered. Call registerPreviewBlockItem first.');
   }

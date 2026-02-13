@@ -13,7 +13,7 @@ import { FrontendCarousel } from './FrontendCarousel';
 import { FrontendHeroBlock } from './FrontendHeroBlock';
 import { FrontendImageWithTextBlock } from './FrontendImageWithTextBlock';
 import { FrontendSlideshowSection } from './FrontendSlideshowSection';
-import { SectionBlockProvider } from './SectionBlockContext';
+import { SectionBlockProvider, useOptionalSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider, useSectionData } from './SectionDataContext';
 import { SectionLayoutProvider, useSectionLayout } from './SectionLayoutContext';
 import { useCmsPageContext } from '../CmsPageContext';
@@ -28,8 +28,8 @@ const SECTION_BLOCK_TYPES = new Set(['ImageWithText', 'Hero', 'RichText', 'Block
 
 interface FrontendGridSectionProps {
   sectionId?: string | undefined;
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
+  settings?: Record<string, unknown>;
+  blocks?: BlockInstance[];
 }
 
 const getGapClass = (gap?: string): string => {
@@ -254,7 +254,15 @@ function collectBackgroundImages(blocks: BlockInstance[], target: 'grid' | 'row'
   return result;
 }
 
-export function FrontendGridSection({ sectionId, settings, blocks }: FrontendGridSectionProps): React.ReactNode {
+export function FrontendGridSection({
+  sectionId: propSectionId,
+  settings: propSettings,
+  blocks: propBlocks,
+}: FrontendGridSectionProps): React.ReactNode {
+  const sectionBlockData = useOptionalSectionBlockData();
+  const sectionId = propSectionId ?? sectionBlockData?.sectionId;
+  const settings = propSettings ?? sectionBlockData?.settings ?? {};
+  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const sectionSelector = sectionId ? getCustomCssSelector(sectionId) : null;

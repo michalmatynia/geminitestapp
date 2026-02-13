@@ -14,7 +14,7 @@ import type {
   AppProviderSourceDto as ProviderSource,
   AppProviderServiceStatusDto as ProviderServiceStatus,
   AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
-} from '@/shared/dtos/system';
+} from '@/shared/contracts/system';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import {
   APP_DB_PROVIDER_SETTING_KEY,

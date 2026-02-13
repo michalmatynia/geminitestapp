@@ -13,6 +13,7 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { useToast } from '@/shared/ui';
@@ -316,7 +317,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       }
     },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: slotsQueryKey });
+      void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
 
@@ -370,8 +371,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       );
     }
 
-    void queryClient.invalidateQueries({ queryKey: slotsQueryKey });
-  }, [virtualFolders, persistFolders, slots, updateSlotMutation, queryClient, slotsQueryKey]);
+    void invalidateImageStudioSlots(queryClient, projectId);
+  }, [virtualFolders, persistFolders, slots, updateSlotMutation, queryClient, slotsQueryKey, projectId]);
 
   const handleRenameFolder = useCallback(async (folderPath: string, nextFolderPath: string) => {
     const source = normalizeTreePath(folderPath);
@@ -426,7 +427,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       setSelectedFolderRaw(rebasePath(normalizedSelectedFolder));
     }
 
-    void queryClient.invalidateQueries({ queryKey: slotsQueryKey });
+    void invalidateImageStudioSlots(queryClient, projectId);
   }, [
     virtualFolders,
     persistFolders,
@@ -434,6 +435,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     updateSlotMutation,
     queryClient,
     slotsQueryKey,
+    projectId,
     selectedFolder,
   ]);
 
@@ -469,7 +471,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       setSelectedFolderRaw('');
     }
 
-    void queryClient.invalidateQueries({ queryKey: slotsQueryKey });
+    void invalidateImageStudioSlots(queryClient, projectId);
   }, [
     virtualFolders,
     persistFolders,
@@ -479,6 +481,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     deleteSlotMutation,
     queryClient,
     slotsQueryKey,
+    projectId,
   ]);
 
   const createFolderMutation = useMutation({

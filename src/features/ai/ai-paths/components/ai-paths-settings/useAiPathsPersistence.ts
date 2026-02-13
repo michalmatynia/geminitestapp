@@ -51,7 +51,7 @@ import {
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { invalidateAiPathSettings } from '@/shared/lib/query-invalidation';
 
 import {
   buildPersistedRuntimeState,
@@ -236,9 +236,7 @@ export function useAiPathsPersistence({
     ): Promise<Array<{ key: string; value: string }>> =>
       await updateAiPathsSettingsBulk(payloads),
     onSuccess: (): void => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.ai.aiPaths.settings(),
-      });
+      void invalidateAiPathSettings(queryClient);
     },
   });
   const [saving, setSaving] = useState(false);

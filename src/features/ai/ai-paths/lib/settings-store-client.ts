@@ -1,7 +1,7 @@
 'use client';
 
 import { logClientError } from '@/features/observability';
-import type { SettingRecordDto } from '@/shared/dtos/settings';
+import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
 
 export type AiPathsSettingRecord = SettingRecordDto;

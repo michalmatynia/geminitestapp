@@ -60,6 +60,54 @@ import {
   upsertCustomBenchmarkCase,
 } from '../custom-benchmark-cases';
 import {
+  reorderListItemsForDrop,
+  reorderSegmentsForDrop,
+  resolveDropPosition,
+} from '../helpers/drag-reorder';
+import {
+  promptExploderClampNumber,
+  promptExploderFormatTimestamp,
+  promptExploderBenchmarkSuiteLabel,
+  promptExploderSafeJsonStringify,
+  promptExploderIsFiniteNumber,
+  promptExploderInferParamTypeLabel,
+} from '../helpers/formatting';
+import {
+  createLogicalConditionId,
+  createLogicalCondition,
+  PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS,
+  PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS,
+  PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS,
+  isLogicalComparator,
+  isLogicalJoin,
+  normalizeLogicalOperatorText,
+  normalizeLogicalComparatorText,
+  parseLogicalValueText,
+  formatLogicalValueText,
+  parseSubsectionConditionText,
+  buildSubsectionConditionText,
+} from '../helpers/logical-conditions';
+import {
+  PROMPT_EXPLODER_RGB_LITERAL_RE,
+  clampRgb,
+  extractRgbLiteral,
+  rgbToHex,
+  hexToRgb,
+  replaceRgbLiteral,
+} from '../helpers/rgb';
+import {
+  promptExploderCreateListItem,
+  promptExploderAddBlankListItem,
+  promptExploderCreateSubsection,
+  promptExploderCreateManualBindingId,
+  formatSubsectionLabel,
+  buildSegmentSampleText,
+  buildLearnedRulePattern,
+  createApprovalDraftFromSegment,
+  isPromptExploderManagedRule,
+  type ApprovalDraft,
+} from '../helpers/segment-helpers';
+import {
   buildManualBindingFromDraft,
   resolveManualBindingSegmentIds,
   resolveManualBindingSubsectionIds,
@@ -134,54 +182,6 @@ import {
   type TemplateMergeMode,
 } from '../template-learning';
 
-import {
-  reorderListItemsForDrop,
-  reorderSegmentsForDrop,
-  resolveDropPosition,
-} from '../helpers/drag-reorder';
-import {
-  clampNumber,
-  formatTimestamp,
-  benchmarkSuiteLabel,
-  safeJsonStringify,
-  isFiniteNumber,
-  inferParamTypeLabel,
-} from '../helpers/formatting';
-import {
-  createLogicalConditionId,
-  createLogicalCondition,
-  LOGICAL_OPERATOR_OPTIONS,
-  LOGICAL_COMPARATOR_OPTIONS,
-  LOGICAL_JOIN_OPTIONS,
-  isLogicalComparator,
-  isLogicalJoin,
-  normalizeLogicalOperatorText,
-  normalizeLogicalComparatorText,
-  parseLogicalValueText,
-  formatLogicalValueText,
-  parseSubsectionConditionText,
-  buildSubsectionConditionText,
-} from '../helpers/logical-conditions';
-import {
-  RGB_LITERAL_RE,
-  clampRgb,
-  extractRgbLiteral,
-  rgbToHex,
-  hexToRgb,
-  replaceRgbLiteral,
-} from '../helpers/rgb';
-import {
-  createListItem,
-  addBlankListItem,
-  createSubsection,
-  createManualBindingId,
-  formatSubsectionLabel,
-  buildSegmentSampleText,
-  buildLearnedRulePattern,
-  createApprovalDraftFromSegment,
-  isPromptExploderManagedRule,
-  type ApprovalDraft,
-} from '../helpers/segment-helpers';
 
 import type { PromptExploderLibraryItem } from '../prompt-library';
 import type {
@@ -440,7 +440,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   }, [listParamEntriesState]);
   const explosionMetrics = useMemo(() => {
     if (!documentState) return null;
-    const lowConfidenceThreshold = clampNumber(
+    const lowConfidenceThreshold = promptExploderClampNumber(
       benchmarkLowConfidenceThresholdDraft,
       0.3,
       0.9
@@ -519,7 +519,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     () => parseCustomBenchmarkCasesDraft(customBenchmarkCasesDraft),
     [customBenchmarkCasesDraft]
   );
-  const templateMergeThreshold = clampNumber(
+  const templateMergeThreshold = promptExploderClampNumber(
     learningDraft.templateMergeThreshold,
     0.3,
     0.95
@@ -564,7 +564,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       })
       .filter(
         (candidate) =>
-          candidate.score >= clampNumber(templateMergeThreshold - 0.1, 0.3, 0.95) ||
+          candidate.score >= promptExploderClampNumber(templateMergeThreshold - 0.1, 0.3, 0.95) ||
           candidate.normalizedTitle === normalizedSelectedTitle
       )
       .sort((left, right) => {
@@ -1081,7 +1081,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 logicalOperator: nextOperator,
               });
             }}
-            options={LOGICAL_OPERATOR_OPTIONS.map((option) => ({
+            options={PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS.map((option) => ({
               value: option.value,
               label: option.label,
             }))}
@@ -1127,7 +1127,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                             joinWithPrevious: next,
                           });
                         }}
-                        options={LOGICAL_JOIN_OPTIONS.map((option) => ({
+                        options={PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS.map((option) => ({
                           value: option.value,
                           label: option.label,
                         }))}
@@ -1166,7 +1166,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                               : condition.value ?? null,
                         });
                       }}
-                      options={LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
+                      options={PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
                         value: option.value,
                         label: option.label,
                       }))}
@@ -1220,7 +1220,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                             value={
                               typeof condition.value === 'string'
                                 ? condition.value
-                                : safeJsonStringify(condition.value ?? '')
+                                : promptExploderSafeJsonStringify(condition.value ?? '')
                             }
                             onChange={(event) => {
                               const rawValue = event.target.value;
@@ -1442,7 +1442,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       prompt: trimmed,
       validationRules: runtimeValidationRules,
       learnedTemplates: runtimeLearnedTemplates,
-      similarityThreshold: clampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
+      similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
     });
 
     setManualBindings([]);
@@ -1547,12 +1547,12 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       customCases = parsedCustomBenchmarkCases.cases;
     }
 
-    const benchmarkLowConfidenceThreshold = clampNumber(
+    const benchmarkLowConfidenceThreshold = promptExploderClampNumber(
       benchmarkLowConfidenceThresholdDraft,
       0.3,
       0.9
     );
-    const benchmarkSuggestionLimit = clampNumber(
+    const benchmarkSuggestionLimit = promptExploderClampNumber(
       Math.floor(benchmarkSuggestionLimitDraft),
       1,
       20
@@ -1560,7 +1560,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     const report = runPromptExploderBenchmark({
       validationRules: runtimeValidationRules,
       learnedTemplates: runtimeLearnedTemplates,
-      similarityThreshold: clampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
+      similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
       suite: benchmarkSuiteDraft === 'extended' ? 'extended' : 'default',
       lowConfidenceThreshold: benchmarkLowConfidenceThreshold,
       suggestionLimit: benchmarkSuggestionLimit,
@@ -1570,7 +1570,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     setDismissedBenchmarkSuggestionIds([]);
     const recallPercent = (report.aggregate.expectedTypeRecall * 100).toFixed(1);
     toast(
-      `Benchmark (${benchmarkSuiteLabel(report.suite)}) completed. Expected-type recall: ${recallPercent}%`,
+      `Benchmark (${promptExploderBenchmarkSuiteLabel(report.suite)}) completed. Expected-type recall: ${recallPercent}%`,
       {
         variant:
           report.aggregate.expectedTypeRecall >= PROMPT_EXPLODER_BENCHMARK_RECALL_TARGET
@@ -1682,12 +1682,12 @@ export function AdminPromptExploderPage(): React.JSX.Element {
           ...promptExploderSettings.runtime,
           ruleProfile: learningDraft.runtimeRuleProfile,
           benchmarkSuite: benchmarkSuiteDraft,
-          benchmarkLowConfidenceThreshold: clampNumber(
+          benchmarkLowConfidenceThreshold: promptExploderClampNumber(
             benchmarkLowConfidenceThresholdDraft,
             0.3,
             0.9
           ),
-          benchmarkSuggestionLimit: clampNumber(
+          benchmarkSuggestionLimit: promptExploderClampNumber(
             Math.floor(benchmarkSuggestionLimitDraft),
             1,
             20
@@ -1697,20 +1697,20 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         learning: {
           ...promptExploderSettings.learning,
           enabled: learningDraft.enabled,
-          similarityThreshold: clampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
-          templateMergeThreshold: clampNumber(
+          similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
+          templateMergeThreshold: promptExploderClampNumber(
             learningDraft.templateMergeThreshold,
             0.3,
             0.95
           ),
           benchmarkSuggestionUpsertTemplates:
             learningDraft.benchmarkSuggestionUpsertTemplates,
-          minApprovalsForMatching: clampNumber(
+          minApprovalsForMatching: promptExploderClampNumber(
             Math.floor(learningDraft.minApprovalsForMatching),
             1,
             20
           ),
-          maxTemplates: clampNumber(Math.floor(learningDraft.maxTemplates), 50, 5000),
+          maxTemplates: promptExploderClampNumber(Math.floor(learningDraft.maxTemplates), 50, 5000),
           autoActivateLearnedTemplates: learningDraft.autoActivateLearnedTemplates,
         },
       };
@@ -2052,7 +2052,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     const builtBinding = buildManualBindingFromDraft({
       segments: documentState.segments,
       draft: bindingDraft,
-      createManualBindingId,
+      promptExploderCreateManualBindingId,
       formatSubsectionLabel,
     });
     if (!builtBinding.ok) {
@@ -2475,11 +2475,11 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             <span className='text-gray-200'>{benchmarkSuiteDraft}</span>
             {' '}· low conf:{' '}
             <span className='text-gray-200'>
-              {clampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
+              {promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
             </span>
             {' '}· suggestion cap:{' '}
             <span className='text-gray-200'>
-              {clampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)}
+              {promptExploderClampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)}
             </span>
           </div>
         }
@@ -2544,7 +2544,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 if (!Number.isFinite(value)) return;
                 setLearningDraft((previous) => ({
                   ...previous,
-                  similarityThreshold: clampNumber(value, 0.3, 0.95),
+                  similarityThreshold: promptExploderClampNumber(value, 0.3, 0.95),
                 }));
               }}
             />
@@ -2562,7 +2562,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 if (!Number.isFinite(value)) return;
                 setLearningDraft((previous) => ({
                   ...previous,
-                  templateMergeThreshold: clampNumber(value, 0.3, 0.95),
+                  templateMergeThreshold: promptExploderClampNumber(value, 0.3, 0.95),
                 }));
               }}
             />
@@ -2580,7 +2580,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 if (!Number.isFinite(value)) return;
                 setLearningDraft((previous) => ({
                   ...previous,
-                  minApprovalsForMatching: clampNumber(Math.floor(value), 1, 20),
+                  minApprovalsForMatching: promptExploderClampNumber(Math.floor(value), 1, 20),
                 }));
               }}
             />
@@ -2598,7 +2598,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 if (!Number.isFinite(value)) return;
                 setLearningDraft((previous) => ({
                   ...previous,
-                  maxTemplates: clampNumber(Math.floor(value), 50, 5000),
+                  maxTemplates: promptExploderClampNumber(Math.floor(value), 50, 5000),
                 }));
               }}
             />
@@ -2873,7 +2873,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                         >
                           <div className='truncate font-medium'>{item.name}</div>
                           <div className='mt-1 text-[10px] text-gray-500'>
-                            segments {segmentCount} · updated {formatTimestamp(item.updatedAt)}
+                            segments {segmentCount} · updated {promptExploderFormatTimestamp(item.updatedAt)}
                           </div>
                           <div className='mt-1 line-clamp-2 text-[10px] text-gray-500'>
                             {item.prompt}
@@ -3038,11 +3038,11 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                     min={0.3}
                     max={0.9}
                     step={0.01}
-                    value={clampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
+                    value={promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
                     onChange={(event) => {
                       const value = Number(event.target.value);
                       if (!Number.isFinite(value)) return;
-                      setBenchmarkLowConfidenceThresholdDraft(clampNumber(value, 0.3, 0.9));
+                      setBenchmarkLowConfidenceThresholdDraft(promptExploderClampNumber(value, 0.3, 0.9));
                     }}
                   />
                 </div>
@@ -3054,13 +3054,13 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                     max={20}
                     step={1}
                     value={String(
-                      clampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)
+                      promptExploderClampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)
                     )}
                     onChange={(event) => {
                       const value = Number(event.target.value);
                       if (!Number.isFinite(value)) return;
                       setBenchmarkSuggestionLimitDraft(
-                        clampNumber(Math.floor(value), 1, 20)
+                        promptExploderClampNumber(Math.floor(value), 1, 20)
                       );
                     }}
                   />
@@ -3499,7 +3499,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                           {entry.path}
                                         </div>
                                         <div className='text-[10px] uppercase text-gray-500'>
-                                          {inferParamTypeLabel(entry)}
+                                          {promptExploderInferParamTypeLabel(entry)}
                                         </div>
                                       </div>
 
@@ -3626,7 +3626,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                             ) : null}
 
                                           {entry.recommendation.baseKind === 'number' &&
-                                          isFiniteNumber(entry.value) &&
+                                          promptExploderIsFiniteNumber(entry.value) &&
                                           entry.resolvedSelector !== 'json' ? (
                                               <div className='space-y-2'>
                                                 {entry.resolvedSelector === 'slider' &&
@@ -3764,7 +3764,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                             (entry.recommendation.baseKind === 'enum' &&
                                               typeof entry.value === 'string') ||
                                             (entry.recommendation.baseKind === 'number' &&
-                                              isFiniteNumber(entry.value)) ||
+                                              promptExploderIsFiniteNumber(entry.value)) ||
                                             (entry.recommendation.baseKind === 'rgb' &&
                                               isParamArrayTupleLength(entry.value, 3)) ||
                                             (entry.recommendation.baseKind === 'tuple2' &&
@@ -3774,7 +3774,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                           ) ? (
                                               <Textarea
                                                 className='min-h-[86px] font-mono text-[11px]'
-                                                value={safeJsonStringify(entry.value)}
+                                                value={promptExploderSafeJsonStringify(entry.value)}
                                                 onChange={(event) => {
                                                   updateParameterValue(
                                                     selectedSegment.id,
@@ -3897,7 +3897,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                 onClick={() => {
                                   updateSegment(selectedSegment.id, (current) => ({
                                     ...current,
-                                    listItems: addBlankListItem(current.listItems),
+                                    listItems: promptExploderAddBlankListItem(current.listItems),
                                   }));
                                 }}
                               >
@@ -4026,7 +4026,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                               onClick={() => {
                                 updateSegment(selectedSegment.id, (current) => ({
                                   ...current,
-                                  subsections: [...current.subsections, createSubsection()],
+                                  subsections: [...current.subsections, promptExploderCreateSubsection()],
                                 }));
                               }}
                             >
@@ -4238,7 +4238,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                             operator: next as PromptExploderLogicalOperator,
                                           });
                                         }}
-                                        options={LOGICAL_OPERATOR_OPTIONS.map((option) => ({
+                                        options={PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS.map((option) => ({
                                           value: option.value,
                                           label: option.label,
                                         }))}
@@ -4276,7 +4276,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                                 : parsedCondition?.value ?? null,
                                           });
                                         }}
-                                        options={LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
+                                        options={PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
                                           value: option.value,
                                           label: option.label,
                                         }))}
@@ -4599,7 +4599,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                   if (!Number.isFinite(value)) return;
                                   setApprovalDraft((previous) => ({
                                     ...previous,
-                                    rulePriority: clampNumber(Math.floor(value), -50, 50),
+                                    rulePriority: promptExploderClampNumber(Math.floor(value), -50, 50),
                                   }));
                                 }}
                               />
@@ -4617,7 +4617,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                   if (!Number.isFinite(value)) return;
                                   setApprovalDraft((previous) => ({
                                     ...previous,
-                                    ruleConfidenceBoost: clampNumber(value, 0, 0.5),
+                                    ruleConfidenceBoost: promptExploderClampNumber(value, 0, 0.5),
                                   }));
                                 }}
                               />

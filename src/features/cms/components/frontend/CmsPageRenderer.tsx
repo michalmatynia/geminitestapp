@@ -24,6 +24,7 @@ import { FrontendTestimonialsSection } from './sections/FrontendTestimonialsSect
 import { FrontendTextAtomSection } from './sections/FrontendTextAtomSection';
 import { FrontendTextElementSection } from './sections/FrontendTextElementSection';
 import { FrontendVideoSection } from './sections/FrontendVideoSection';
+import { SectionBlockProvider } from './sections/SectionBlockContext';
 import { getHoverEffectVars } from './theme-styles';
 
 import type { PageComponent } from '../../types';
@@ -122,41 +123,53 @@ interface SectionRendererProps {
 }
 
 function SectionRenderer({ type, sectionId, settings, blocks }: SectionRendererProps): React.ReactNode {
+  return (
+    <SectionBlockProvider sectionId={sectionId} settings={settings} blocks={blocks}>
+      <SectionRendererInner type={type} />
+    </SectionBlockProvider>
+  );
+}
+
+interface SectionRendererInnerProps {
+  type: string;
+}
+
+function SectionRendererInner({ type }: SectionRendererInnerProps): React.ReactNode {
   switch (type) {
     case 'AnnouncementBar':
-      return <FrontendAnnouncementBarSection settings={settings} blocks={blocks} />;
+      return <FrontendAnnouncementBarSection />;
     case 'Block':
-      return <FrontendBlockSection sectionId={sectionId} settings={settings} blocks={blocks} />;
+      return <FrontendBlockSection />;
     case 'TextElement':
-      return <FrontendTextElementSection settings={settings} />;
+      return <FrontendTextElementSection />;
     case 'TextAtom':
-      return <FrontendTextAtomSection settings={settings} blocks={blocks} />;
+      return <FrontendTextAtomSection />;
     case 'ImageElement':
-      return <FrontendImageElementSection settings={settings} />;
+      return <FrontendImageElementSection />;
     case 'Model3DElement':
-      return <FrontendModel3DElementSection settings={settings} />;
+      return <FrontendModel3DElementSection />;
     case 'ButtonElement':
-      return <FrontendButtonElementSection settings={settings} />;
+      return <FrontendButtonElementSection />;
     case 'Hero':
-      return <FrontendHeroSection settings={settings} blocks={blocks} />;
+      return <FrontendHeroSection />;
     case 'ImageWithText':
-      return <FrontendImageWithTextSection settings={settings} blocks={blocks} />;
+      return <FrontendImageWithTextSection />;
     case 'RichText':
-      return <FrontendRichTextSection settings={settings} blocks={blocks} />;
+      return <FrontendRichTextSection />;
     case 'Grid':
-      return <FrontendGridSection sectionId={sectionId} settings={settings} blocks={blocks} />;
+      return <FrontendGridSection />;
     case 'Accordion':
-      return <FrontendAccordionSection settings={settings} blocks={blocks} />;
+      return <FrontendAccordionSection />;
     case 'Testimonials':
-      return <FrontendTestimonialsSection settings={settings} blocks={blocks} />;
+      return <FrontendTestimonialsSection />;
     case 'Video':
-      return <FrontendVideoSection settings={settings} />;
+      return <FrontendVideoSection />;
     case 'Slideshow':
-      return <FrontendSlideshowSection settings={settings} blocks={blocks} />;
+      return <FrontendSlideshowSection />;
     case 'Newsletter':
-      return <FrontendNewsletterSection settings={settings} blocks={blocks} />;
+      return <FrontendNewsletterSection />;
     case 'ContactForm':
-      return <FrontendContactFormSection settings={settings} />;
+      return <FrontendContactFormSection />;
     default:
       return null;
   }

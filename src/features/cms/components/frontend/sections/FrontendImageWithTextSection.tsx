@@ -8,16 +8,23 @@ import Image from 'next/image';
 import { useMediaStyles } from '../media-styles-context';
 import { getSectionContainerClass, getSectionStyles, getVerticalAlign } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendImageWithTextSectionProps {
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
+  settings?: Record<string, unknown>;
+  blocks?: BlockInstance[];
 }
 
-export function FrontendImageWithTextSection({ settings, blocks }: FrontendImageWithTextSectionProps): React.ReactNode {
+export function FrontendImageWithTextSection({
+  settings: propSettings,
+  blocks: propBlocks,
+}: FrontendImageWithTextSectionProps): React.ReactNode {
+  const sectionBlockData = useOptionalSectionBlockData();
+  const settings = propSettings ?? sectionBlockData?.settings ?? {};
+  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const image = settings['image'] as string | undefined;

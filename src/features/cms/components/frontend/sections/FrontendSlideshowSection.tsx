@@ -18,12 +18,13 @@ interface FrontendSlideshowSectionProps {
 }
 
 export function FrontendSlideshowSection({
-  sectionId,
+  sectionId: propSectionId,
   settings: propSettings,
   blocks: propBlocks,
   layout: propLayout,
 }: FrontendSlideshowSectionProps): React.ReactNode {
   const sectionBlockData = useOptionalSectionBlockData();
+  const sectionId = propSectionId ?? sectionBlockData?.sectionId;
   const settings = propSettings ?? sectionBlockData?.settings ?? {};
   const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
   const { colorSchemes, layout: contextLayout } = useCmsPageContext();

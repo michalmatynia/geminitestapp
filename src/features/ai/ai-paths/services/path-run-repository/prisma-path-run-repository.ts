@@ -46,6 +46,12 @@ const prismaAny = prisma as unknown as {
   };
 };
 
+const toIsoString = (date: Date | null | undefined): string | null => {
+  if (date instanceof Date) return date.toISOString();
+  if (typeof date === 'string') return date;
+  return null;
+};
+
 const mapRun = (run: unknown): AiPathRunRecord => {
   const r = run as Record<string, unknown>;
   return {
@@ -57,21 +63,23 @@ const mapRun = (run: unknown): AiPathRunRecord => {
     status: r['status'] as AiPathRunRecord['status'],
     triggerEvent: (r['triggerEvent'] as string) ?? null,
     triggerNodeId: (r['triggerNodeId'] as string) ?? null,
-    triggerContext: (r['triggerContext'] as AiPathRunRecord['triggerContext']) ?? null,
-    graph: (r['graph'] as AiPathRunRecord['graph']) ?? null,
-    runtimeState: (r['runtimeState'] as AiPathRunRecord['runtimeState']) ?? null,
-    meta: (r['meta'] as AiPathRunRecord['meta']) ?? null,
+    triggerContext: (r['triggerContext'] as AiPathRunRecord['triggerContext']) ?? undefined,
+    graph: (r['graph'] as AiPathRunRecord['graph']) ?? undefined,
+    runtimeState: (r['runtimeState'] as AiPathRunRecord['runtimeState']) ?? undefined,
+    meta: (r['meta'] as AiPathRunRecord['meta']) ?? undefined,
+    context: undefined,
+    result: undefined,
     entityId: (r['entityId'] as string) ?? null,
     entityType: (r['entityType'] as string) ?? null,
     errorMessage: (r['errorMessage'] as string) ?? null,
     retryCount: (r['retryCount'] as number) ?? 0,
     maxAttempts: (r['maxAttempts'] as number) ?? 3,
-    nextRetryAt: (r['nextRetryAt'] as Date) ?? null,
-    deadLetteredAt: (r['deadLetteredAt'] as Date) ?? null,
-    createdAt: r['createdAt'] as Date,
-    updatedAt: (r['updatedAt'] as Date) ?? null,
-    startedAt: (r['startedAt'] as Date) ?? null,
-    finishedAt: (r['finishedAt'] as Date) ?? null,
+    nextRetryAt: toIsoString(r['nextRetryAt'] as Date),
+    deadLetteredAt: toIsoString(r['deadLetteredAt'] as Date),
+    createdAt: (r['createdAt'] as Date).toISOString(),
+    updatedAt: toIsoString(r['updatedAt'] as Date),
+    startedAt: toIsoString(r['startedAt'] as Date),
+    finishedAt: toIsoString(r['finishedAt'] as Date),
   };
 };
 
@@ -85,13 +93,13 @@ const mapNode = (node: unknown): AiPathRunNodeRecord => {
     nodeTitle: (n['nodeTitle'] as string) ?? null,
     status: n['status'] as AiPathRunNodeRecord['status'],
     attempt: (n['attempt'] as number) ?? 0,
-    inputs: (n['inputs'] as AiPathRunNodeRecord['inputs']) ?? null,
-    outputs: (n['outputs'] as AiPathRunNodeRecord['outputs']) ?? null,
+    inputs: (n['inputs'] as Record<string, unknown> | null | undefined) ?? undefined,
+    outputs: (n['outputs'] as Record<string, unknown> | null | undefined) ?? undefined,
     errorMessage: (n['errorMessage'] as string) ?? null,
-    createdAt: n['createdAt'] as Date,
-    updatedAt: (n['updatedAt'] as Date) ?? null,
-    startedAt: (n['startedAt'] as Date) ?? null,
-    finishedAt: (n['finishedAt'] as Date) ?? null,
+    createdAt: (n['createdAt'] as Date).toISOString(),
+    updatedAt: toIsoString(n['updatedAt'] as Date),
+    startedAt: toIsoString(n['startedAt'] as Date),
+    finishedAt: toIsoString(n['finishedAt'] as Date),
   };
 };
 
@@ -103,7 +111,7 @@ const mapEvent = (event: unknown): AiPathRunEventRecord => {
     level: e['level'] as AiPathRunEventRecord['level'],
     message: String(e['message']),
     metadata: (e['metadata'] as AiPathRunEventRecord['metadata']) ?? null,
-    createdAt: e['createdAt'] as Date,
+    createdAt: (e['createdAt'] as Date).toISOString(),
   };
 };
 

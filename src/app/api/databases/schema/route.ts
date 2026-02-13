@@ -12,7 +12,7 @@ import type {
   SchemaProviderDto as SchemaProvider,
   SchemaResponseDto as SchemaResponse,
   SchemaResponsePayloadDto as SchemaResponsePayload
-} from '@/shared/dtos/database';
+} from '@/shared/contracts/database';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

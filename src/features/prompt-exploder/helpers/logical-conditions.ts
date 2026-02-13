@@ -1,3 +1,5 @@
+import { safeJsonStringify } from './formatting';
+
 import type {
   PromptExploderLogicalComparator,
   PromptExploderLogicalCondition,
@@ -5,7 +7,6 @@ import type {
   PromptExploderLogicalOperator,
 } from '../types';
 
-import { safeJsonStringify } from './formatting';
 
 // ── ID generation ───────────────────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ export const createLogicalCondition = (
 
 // ── Option constants ────────────────────────────────────────────────────────
 
-export const LOGICAL_OPERATOR_OPTIONS: Array<{
+export const PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS: Array<{
   value: PromptExploderLogicalOperator | 'none';
   label: string;
 }> = [
@@ -35,7 +36,7 @@ export const LOGICAL_OPERATOR_OPTIONS: Array<{
   { value: 'when', label: 'When' },
 ];
 
-export const LOGICAL_COMPARATOR_OPTIONS: Array<{
+export const PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS: Array<{
   value: PromptExploderLogicalComparator;
   label: string;
 }> = [
@@ -50,7 +51,7 @@ export const LOGICAL_COMPARATOR_OPTIONS: Array<{
   { value: 'contains', label: 'contains' },
 ];
 
-export const LOGICAL_JOIN_OPTIONS: Array<{
+export const PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS: Array<{
   value: PromptExploderLogicalJoin;
   label: string;
 }> = [
@@ -61,11 +62,11 @@ export const LOGICAL_JOIN_OPTIONS: Array<{
 // ── Type guards ─────────────────────────────────────────────────────────────
 
 export const isLogicalComparator = (value: string): value is PromptExploderLogicalComparator => {
-  return LOGICAL_COMPARATOR_OPTIONS.some((option) => option.value === value);
+  return PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS.some((option) => option.value === value);
 };
 
 export const isLogicalJoin = (value: string): value is PromptExploderLogicalJoin => {
-  return LOGICAL_JOIN_OPTIONS.some((option) => option.value === value);
+  return PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS.some((option) => option.value === value);
 };
 
 // ── Normalization ───────────────────────────────────────────────────────────

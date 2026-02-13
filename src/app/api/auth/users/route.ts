@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/features/auth/server';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
 import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
-import type { AuthUserDto } from '@/shared/dtos/auth';
+import type { AuthUserDto } from '@/shared/contracts/auth';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

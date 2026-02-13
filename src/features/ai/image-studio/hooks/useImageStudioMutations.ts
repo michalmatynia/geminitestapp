@@ -3,9 +3,11 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import {
+  invalidateImageStudioProjects,
+  invalidateImageStudioSlots,
+} from '@/shared/lib/query-invalidation';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
-
-import { studioKeys } from './useImageStudioQueries';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
@@ -59,7 +61,7 @@ export function useCreateStudioProject(): UseMutationResult<string, Error, strin
       return data.projectId;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: studioKeys.projects() });
+      void invalidateImageStudioProjects(queryClient);
     },
   });
 }
@@ -75,8 +77,8 @@ export function useDeleteStudioProject(): UseMutationResult<string, Error, strin
       return id;
     },
     onSuccess: (id: string) => {
-      void queryClient.invalidateQueries({ queryKey: studioKeys.projects() });
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(id) });
+      void invalidateImageStudioProjects(queryClient);
+      void invalidateImageStudioSlots(queryClient, id);
     },
   });
 }
@@ -87,7 +89,7 @@ export function useCreateStudioSlots(projectId: string) {
     mutationFn: (slots: Array<Partial<ImageStudioSlotRecord>>) => 
       api.post<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, { slots }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+      void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
 }
@@ -103,7 +105,7 @@ export function useUpdateStudioSlot(projectId: string) {
       return response.slot;
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+      void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
 }
@@ -113,7 +115,7 @@ export function useDeleteStudioSlot(projectId: string) {
   return useMutation({
     mutationFn: (id: string) => api.delete<void>(`/api/image-studio/slots/${encodeURIComponent(id)}`),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+      void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
 }
@@ -130,7 +132,7 @@ export function useUploadStudioAssets(projectId: string) {
       return api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, formData);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+      void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
 }
@@ -141,7 +143,7 @@ export function useImportStudioAssetsFromDrive(projectId: string) {
     mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) =>
       api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, { files, folder }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+      void invalidateImageStudioSlots(queryClient, projectId);
     },
   });
 }

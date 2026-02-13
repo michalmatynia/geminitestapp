@@ -1,7 +1,7 @@
 import type { 
   CreateProductCategoryDto, 
   UpdateProductCategoryDto 
-} from '@/shared/dtos';
+} from '@/shared/contracts/products';
 import type { 
   ProductCategory, 
   ProductCategoryWithChildren 

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import type { SettingRecordDto } from '@/shared/dtos/settings';
+import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 export type AiPathsSettingRecord = SettingRecordDto;

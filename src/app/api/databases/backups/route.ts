@@ -13,7 +13,7 @@ import {
   ensureMongoBackupsDir,
 } from '@/features/database/server';
 import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
-import type { DatabaseBackupFileDto as DatabaseInfo } from '@/shared/dtos/database';
+import type { DatabaseBackupFileDto as DatabaseInfo } from '@/shared/contracts/database';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 

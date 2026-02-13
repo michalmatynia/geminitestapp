@@ -33,9 +33,7 @@ const ACTIVE_RUN_STATUSES = new Set(['queued', 'running']);
 
 const resolveRunStartedAt = (run: AiPathRunRecord): string | null => {
   if (!run.startedAt) return null;
-  if (typeof run.startedAt === 'string') return run.startedAt;
-  if (run.startedAt instanceof Date) return run.startedAt.toISOString();
-  return null;
+  return run.startedAt;
 };
 
 const dispatchRun = async (
@@ -225,8 +223,8 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
       nodeTitle: nodeInfo?.title ?? null,
       status: 'pending',
       attempt: 0,
-      inputs: null,
-      outputs: null,
+      inputs: undefined,
+      outputs: undefined,
       errorMessage: null,
       startedAt: null,
       finishedAt: null,
@@ -287,15 +285,13 @@ export const cancelPathRunWithRepository = async (
     const startedAtMs =
       typeof run.startedAt === 'string'
         ? Date.parse(run.startedAt)
-        : run.startedAt instanceof Date
-          ? run.startedAt.getTime()
-          : Number.NaN;
+        : Number.NaN;
     const durationMs = Number.isFinite(startedAtMs)
       ? Math.max(0, finishedAt.getTime() - startedAtMs)
       : null;
     const updated = await repo.updateRunIfStatus(runId, [run.status], {
       status: 'canceled',
-      finishedAt,
+      finishedAt: finishedAt.toISOString(),
     });
     if (!updated) {
       const latest = await repo.findRunById(runId);

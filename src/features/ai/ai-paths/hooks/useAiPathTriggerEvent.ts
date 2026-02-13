@@ -30,6 +30,7 @@ import { api } from '@/shared/lib/api-client';
 import {
   invalidateAiPathSettings,
   invalidateNotes,
+  invalidateProductsCountsAndDetail,
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -524,11 +525,10 @@ export function useAiPathTriggerEvent(): {
           ? crypto.randomUUID()
           : `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
       const invalidateProductQueries = (productId?: string | null): void => {
-        void invalidateProductsAndCounts(queryClient);
         if (productId) {
-          void queryClient.invalidateQueries({
-            queryKey: QUERY_KEYS.products.detail(productId),
-          });
+          void invalidateProductsCountsAndDetail(queryClient, productId);
+        } else {
+          void invalidateProductsAndCounts(queryClient);
         }
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.jobs.productAi('all') });
       };

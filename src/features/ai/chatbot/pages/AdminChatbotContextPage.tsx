@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useRef, useState } from 'react';
 
-import type { ChatbotContextSegmentDto } from '@/shared/dtos/chatbot';
+import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Input, Textarea, FormModal, useToast, Label, Checkbox, SectionHeader,  Tag, FileUploadTrigger, type FileUploadHelpers, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, FormField } from '@/shared/ui';
 

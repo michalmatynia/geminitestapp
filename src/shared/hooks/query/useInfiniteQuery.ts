@@ -4,7 +4,7 @@ import type {
   LegacyPaginatedResponseDto,
   PaginatedResponseDto,
   PaginationDto,
-} from '@/shared/dtos/http';
+} from '@/shared/contracts/http';
 
 export type PaginatedResponse<T> = PaginatedResponseDto<T> | LegacyPaginatedResponseDto<T>;
 

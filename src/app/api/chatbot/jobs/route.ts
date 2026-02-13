@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
 import { startChatbotJobQueue } from '@/features/jobs/server';
-import type { EnqueueChatbotJobRequestDto as EnqueueJobRequest } from '@/shared/dtos/chatbot';
+import type { EnqueueChatbotJobRequestDto as EnqueueJobRequest } from '@/shared/contracts/chatbot';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

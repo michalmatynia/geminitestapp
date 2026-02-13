@@ -267,9 +267,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const runStartedAt =
     typeof run.startedAt === 'string'
       ? run.startedAt
-      : run.startedAt instanceof Date
-        ? run.startedAt.toISOString()
-        : new Date().toISOString();
+      : new Date().toISOString();
   
   const graph = run.graph;
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
@@ -278,7 +276,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       await updateRunSnapshot({
         status: 'failed',
         errorMessage: errorMsg,
-        finishedAt: new Date(),
+        finishedAt: new Date().toISOString(),
       });
       if (!dbRunMissing) {
         await repo.createRunEvent({
@@ -446,7 +444,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               attempt: nextAttempt,
               inputs: safeInputs,
               outputs: safePrevOutputs,
-              startedAt: new Date(),
+              startedAt: new Date().toISOString(),
               errorMessage: null,
             }),
             repo.createRunEvent({
@@ -521,7 +519,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                   attempt: nodeAttemptMap.get(node.id) ?? 0,
                   inputs: safeInputs,
                   outputs: safeOutputs,
-                  finishedAt: new Date(),
+                  finishedAt: new Date().toISOString(),
                   errorMessage: null,
                 }),
                 repo.createRunEvent({
@@ -565,7 +563,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               attempt: nodeAttemptMap.get(node.id) ?? 0,
               inputs: safeInputs,
               outputs: safeOutputs,
-              finishedAt: new Date(),
+              finishedAt: new Date().toISOString(),
               errorMessage: null,
             }),
             repo.createRunEvent({
@@ -634,7 +632,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               attempt: nodeAttemptMap.get(node.id) ?? 0,
               inputs: safeInputs,
               outputs: safePrevOutputs,
-              finishedAt: new Date(),
+              finishedAt: new Date().toISOString(),
               errorMessage: error instanceof Error ? error.message : String(error),
             }),
             repo.createRunEvent({
@@ -737,7 +735,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         const updated = await updateRunSnapshot({
           status: 'completed',
           runtimeState: sanitizeRuntimeState(resultState),
-          finishedAt,
+          finishedAt: finishedAt.toISOString(),
           errorMessage: null,
           meta: {
             ...(run.meta ?? {}),
@@ -806,7 +804,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     try {
       await updateRunSnapshot({
         status: 'failed',
-        finishedAt,
+        finishedAt: finishedAt.toISOString(),
         errorMessage,
       });
     } catch (dbUpdateError) {

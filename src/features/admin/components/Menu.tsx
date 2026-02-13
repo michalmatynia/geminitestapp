@@ -39,7 +39,7 @@ import type {
   AdminNavItemDto, 
   AdminMenuCustomNodeDto,
   AdminNavLeafDto
-} from '@/shared/dtos/admin';
+} from '@/shared/contracts/admin';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeContextMenu, TreeHeader } from '@/shared/ui';
 import { cn } from '@/shared/utils';

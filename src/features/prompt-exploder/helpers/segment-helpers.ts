@@ -1,6 +1,7 @@
 import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 
 import { learningTokens, type TemplateMergeMode } from '../template-learning';
+
 import type {
   PromptExploderListItem,
   PromptExploderSegment,
@@ -9,12 +10,12 @@ import type {
 
 // ── ID generation ───────────────────────────────────────────────────────────
 
-export const createManualBindingId = (): string =>
+export const promptExploderCreateManualBindingId = (): string =>
   `manual_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
 // ── Factory functions ───────────────────────────────────────────────────────
 
-export const createListItem = (text = 'New item'): PromptExploderListItem => ({
+export const promptExploderCreateListItem = (text = 'New item'): PromptExploderListItem => ({
   id: `item_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
   text,
   logicalOperator: null,
@@ -25,22 +26,22 @@ export const createListItem = (text = 'New item'): PromptExploderListItem => ({
   children: [],
 });
 
-export const addBlankListItem = (items: PromptExploderListItem[]): PromptExploderListItem[] => {
-  return [...items, createListItem()];
+export const promptExploderAddBlankListItem = (items: PromptExploderListItem[]): PromptExploderListItem[] => {
+  return [...items, promptExploderCreateListItem()];
 };
 
-export const createSubsection = (): PromptExploderSubsection => ({
+export const promptExploderCreateSubsection = (): PromptExploderSubsection => ({
   id: `subsection_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
   title: 'New subsection',
   code: null,
   condition: null,
   guidance: null,
-  items: [createListItem()],
+  items: [promptExploderCreateListItem()],
 });
 
 // ── Label formatting ────────────────────────────────────────────────────────
 
-export const formatSubsectionLabel = (subsection: PromptExploderSubsection): string => {
+export const promptExploderFormatSubsectionLabel = (subsection: PromptExploderSubsection): string => {
   const title = subsection.title.trim() || 'Untitled subsection';
   if (subsection.code) {
     return `[${subsection.code}] ${title}`;
@@ -50,7 +51,7 @@ export const formatSubsectionLabel = (subsection: PromptExploderSubsection): str
 
 // ── Segment helpers ─────────────────────────────────────────────────────────
 
-export const buildSegmentSampleText = (segment: PromptExploderSegment): string => {
+export const promptExploderBuildSegmentSampleText = (segment: PromptExploderSegment): string => {
   if (segment.listItems.length > 0) {
     return segment.listItems.slice(0, 4).map((item) => item.text).join(' ');
   }
@@ -63,8 +64,8 @@ export const buildSegmentSampleText = (segment: PromptExploderSegment): string =
   return segment.text.slice(0, 220);
 };
 
-export const buildLearnedRulePattern = (segment: PromptExploderSegment): string => {
-  const tokens = learningTokens(`${segment.title} ${buildSegmentSampleText(segment)}`);
+export const promptExploderBuildLearnedRulePattern = (segment: PromptExploderSegment): string => {
+  const tokens = learningTokens(`${segment.title} ${promptExploderBuildSegmentSampleText(segment)}`);
   if (tokens.length === 0) {
     const escaped = segment.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return `^\\s*${escaped}\\s*$`;
@@ -84,7 +85,7 @@ export type ApprovalDraft = {
   templateTargetId: string;
 };
 
-export const createApprovalDraftFromSegment = (
+export const promptExploderCreateApprovalDraftFromSegment = (
   segment: PromptExploderSegment | null
 ): ApprovalDraft => {
   if (!segment) {
@@ -102,7 +103,7 @@ export const createApprovalDraftFromSegment = (
 
   return {
     ruleTitle: `Learned ${segment.type} pattern`,
-    rulePattern: buildLearnedRulePattern(segment),
+    rulePattern: promptExploderBuildLearnedRulePattern(segment),
     ruleSegmentType: segment.type,
     rulePriority: 30,
     ruleConfidenceBoost: 0.2,
@@ -116,7 +117,7 @@ export const createApprovalDraftFromSegment = (
 
 // ── Rule detection ──────────────────────────────────────────────────────────
 
-export const isPromptExploderManagedRule = (rule: PromptValidationRule): boolean => {
+export const promptExploderIsPromptExploderManagedRule = (rule: PromptValidationRule): boolean => {
   const scopes = rule.appliesToScopes ?? [];
   const hasPromptExploderScope = scopes.includes('prompt_exploder');
   if (hasPromptExploderScope) return true;

@@ -13,6 +13,7 @@ import {
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { api } from '@/shared/lib/api-client';
+import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { UnifiedButton, UnifiedInput, useToast } from '@/shared/ui';
 
@@ -634,7 +635,7 @@ export function CenterPreview(): React.JSX.Element {
         dataUrl,
         filename: `${baseName}-${Date.now()}.png`,
       });
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+      void invalidateImageStudioSlots(queryClient, projectId);
       toast('Screenshot saved and attached to slot.', { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to save screenshot.', { variant: 'error' });

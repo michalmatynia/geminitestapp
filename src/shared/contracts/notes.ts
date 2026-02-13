@@ -25,6 +25,15 @@ export const noteSchema = dtoBaseSchema.extend({
 
 export type NoteDto = z.infer<typeof noteSchema>;
 
+export const relatedNoteSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  color: z.string().nullable(),
+  content: z.string().optional(),
+});
+
+export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
+
 /**
  * Note Tag Relation Contract
  */
@@ -72,15 +81,6 @@ export const noteWithRelationsSchema = noteSchema.extend({
 });
 
 export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;
-
-export const relatedNoteSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  color: z.string().nullable(),
-  content: z.string().optional(),
-});
-
-export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
 
 export const createNoteSchema = noteSchema.omit({
   id: true,

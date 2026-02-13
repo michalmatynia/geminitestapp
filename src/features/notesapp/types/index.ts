@@ -8,7 +8,7 @@ export type {
   UpdateNoteDto,
   CreateNotebookDto,
   UpdateNotebookDto
-} from '@/shared/dtos';
+} from '@/shared/contracts/notes';
 
 export * from '@/shared/types/domain/notes';
 export * from './notes-hooks';

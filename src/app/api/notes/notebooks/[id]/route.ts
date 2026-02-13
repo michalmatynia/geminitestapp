@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { notebookUpdateSchema } from '@/features/notesapp';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { UpdateNotebookDto } from '@/shared/dtos/notesapp';
+import type { UpdateNotebookDto } from '@/shared/contracts/notes';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { removeUndefined } from '@/shared/utils';

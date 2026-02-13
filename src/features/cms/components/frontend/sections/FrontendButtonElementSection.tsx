@@ -3,16 +3,19 @@
 import React, { useMemo } from 'react';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
+import { useOptionalSectionBlockData } from './SectionBlockContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendButtonElementSectionProps {
-  settings: Record<string, unknown>;
+  settings?: Record<string, unknown>;
 }
 
 export function FrontendButtonElementSection({
-  settings,
+  settings: propSettings,
 }: FrontendButtonElementSectionProps): React.ReactNode {
+  const sectionBlockData = useOptionalSectionBlockData();
+  const settings = propSettings ?? sectionBlockData?.settings ?? {};
   const blockSettings = useMemo(() => {
     const { gsapAnimation: _gsapAnimation, ...rest } = settings;
     return rest;

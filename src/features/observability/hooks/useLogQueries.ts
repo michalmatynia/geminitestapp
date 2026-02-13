@@ -2,7 +2,7 @@
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
-import type { ActivityLogDto } from '@/shared/dtos/system';
+import type { ActivityLogDto } from '@/shared/contracts/system';
 import { api } from '@/shared/lib/api-client';
 import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';

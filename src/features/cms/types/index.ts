@@ -8,7 +8,7 @@ export type {
   UpdateCmsPageDto as UpdatePageDto,
   CreateCmsThemeDto as CreateThemeDto,
   UpdateCmsThemeDto as UpdateThemeDto
-} from '@/shared/dtos';
+} from '@/shared/contracts/cms';
 
 export type {
   PageStatus,

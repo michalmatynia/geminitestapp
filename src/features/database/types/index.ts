@@ -2,7 +2,7 @@ import type {
   DatabaseBackupFileDto,
   DatabaseBackupOperationResponseDto,
   DatabaseRestoreOperationResponseDto,
-} from '@/shared/dtos/database';
+} from '@/shared/contracts/database';
 
 export type DatabaseType = 'postgresql' | 'mongodb';
 export type DatabasePreviewMode = 'backup' | 'current';

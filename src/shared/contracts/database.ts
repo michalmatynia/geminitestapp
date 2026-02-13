@@ -243,6 +243,36 @@ export const databaseEngineBackupSchedulerTickResultSchema = z.object({
 
 export type DatabaseEngineBackupSchedulerTickResultDto = z.infer<typeof databaseEngineBackupSchedulerTickResultSchema>;
 
+export const databaseEngineBackupRunNowResponseSchema = z.object({
+  success: z.boolean(),
+  queued: z.array(
+    z.object({
+      dbType: z.enum(['mongodb', 'postgresql']),
+      jobId: z.string(),
+    })
+  ),
+  inlineProcessed: z.array(
+    z.object({
+      dbType: z.enum(['mongodb', 'postgresql']),
+      jobId: z.string(),
+    })
+  ),
+});
+
+export type DatabaseEngineBackupRunNowResponseDto = z.infer<
+  typeof databaseEngineBackupRunNowResponseSchema
+>;
+
+export const databaseEngineBackupSchedulerTickResponseSchema = z.object({
+  success: z.boolean(),
+  tick: databaseEngineBackupSchedulerTickResultSchema,
+  status: databaseEngineBackupSchedulerStatusSchema,
+});
+
+export type DatabaseEngineBackupSchedulerTickResponseDto = z.infer<
+  typeof databaseEngineBackupSchedulerTickResponseSchema
+>;
+
 /**
  * Database Engine Policy DTOs
  */
@@ -352,4 +382,3 @@ export const databaseCollectionCopyResultSchema = z.object({
 });
 
 export type DatabaseCollectionCopyResultDto = z.infer<typeof databaseCollectionCopyResultSchema>;
-

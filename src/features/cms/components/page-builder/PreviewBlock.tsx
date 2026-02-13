@@ -2481,15 +2481,6 @@ export function PreviewSection({
 
 function PreviewBlockItem({
   block,
-  isSelected: propIsSelected,
-  contained: propContained,
-  sectionId: propSectionId,
-  sectionType: propSectionType,
-  sectionZone: propSectionZone,
-  columnId: propColumnId,
-  parentBlockId: propParentBlockId,
-  mediaStyles: propMediaStyles,
-  stretch: propStretch,
 }: PreviewBlockItemProps): React.ReactNode {
   const {
     selectedNodeId,
@@ -2501,17 +2492,15 @@ function PreviewBlockItem({
   } = usePreviewEditor();
   
   const blockContext = useBlockContext();
-  const sectionId = propSectionId ?? blockContext.sectionId;
-  const sectionType = propSectionType ?? blockContext.sectionType;
-  const sectionZone = propSectionZone ?? blockContext.sectionZone;
-  const columnId = propColumnId ?? blockContext.columnId;
-  const parentBlockId = propParentBlockId ?? blockContext.parentBlockId;
-  const mediaStyles = propMediaStyles ?? blockContext.mediaStyles;
-  const contained = propContained ?? blockContext.contained ?? false;
-  const stretch = propStretch ?? blockContext.stretch ?? false;
-  const isSelected = typeof propIsSelected === 'boolean'
-    ? propIsSelected
-    : selectedNodeId === block.id;
+  const sectionId = blockContext.sectionId;
+  const sectionType = blockContext.sectionType;
+  const sectionZone = blockContext.sectionZone;
+  const columnId = blockContext.columnId;
+  const parentBlockId = blockContext.parentBlockId;
+  const mediaStyles = blockContext.mediaStyles;
+  const contained = blockContext.contained ?? false;
+  const stretch = blockContext.stretch ?? false;
+  const isSelected = selectedNodeId === block.id;
 
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);
   const showEditorChrome = inspectorSettings?.showEditorChrome ?? false;

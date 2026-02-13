@@ -1,12 +1,6 @@
-import { NamedDto, CreateDto, UpdateDto } from '../types/base';
+/**
+ * Compatibility layer for App Embed DTOs.
+ * Types are now defined in src/shared/contracts/app-embeds.ts using Zod.
+ */
 
-// App Embeds DTOs
-export interface AppEmbedDto extends NamedDto {
-  type: 'iframe' | 'widget' | 'script';
-  config: Record<string, unknown>;
-  embedCode: string;
-  enabled: boolean;
-}
-
-export type CreateAppEmbedDto = CreateDto<AppEmbedDto>;
-export type UpdateAppEmbedDto = UpdateDto<AppEmbedDto>;
+export * from '../contracts/app-embeds';

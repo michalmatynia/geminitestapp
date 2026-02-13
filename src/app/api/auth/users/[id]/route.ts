@@ -10,7 +10,7 @@ import { invalidateAuthSecurityProfileCache } from '@/features/auth/services/aut
 import { invalidateUserPreferencesCache } from '@/features/auth/services/user-preferences-repository';
 import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/utils/auth-management';
 import { logAuthEvent } from '@/features/auth/utils/auth-request-logger';
-import type { AuthUserDto } from '@/shared/dtos/auth';
+import type { AuthUserDto } from '@/shared/contracts/auth';
 import { authError, badRequestError, conflictError, forbiddenError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

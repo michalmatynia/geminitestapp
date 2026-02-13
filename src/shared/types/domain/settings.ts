@@ -1,8 +1,7 @@
-import type { SettingRecordDto } from '@/shared/dtos/settings';
+import type { AdminSettingsDto, UpdateAdminSettingsDto } from '@/shared/contracts/admin';
+import type { SettingRecordDto } from '@/shared/contracts/settings';
 
 import { Entity } from '../core/base-types';
-
-import type { AdminSettingsDto, UpdateAdminSettingsDto } from '../dtos';
 
 export type { AdminSettingsDto, UpdateAdminSettingsDto };
 

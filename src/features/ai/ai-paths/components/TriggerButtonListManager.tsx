@@ -6,7 +6,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import {
   AiTriggerButtonDto,
-} from '@/shared/dtos/ai-trigger-buttons';
+} from '@/shared/contracts/ai-trigger-buttons';
 import {
   Table,
   TableBody,

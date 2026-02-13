@@ -1,4 +1,4 @@
-import type { TemplateMappingDto } from '@/shared/dtos';
+import type { TemplateMappingDto } from '@/shared/contracts/integrations';
 
 // DTO type exports
 export type {
@@ -15,7 +15,7 @@ export type {
   BaseInventoryDto as BaseInventory,
   BaseWarehouseDto as BaseWarehouse,
   BaseCategoryDto as BaseCategory,
-} from '@/shared/dtos';
+} from '@/shared/contracts/integrations';
 
 // Integration domain record types
 export type IntegrationRecord = {

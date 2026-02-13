@@ -124,39 +124,23 @@ export const cmsPageSeoSchema = z.object({
 export type CmsPageSeoDto = z.infer<typeof cmsPageSeoSchema>;
 
 /**
- * CMS Component Contract
- */
-export const cmsPageComponentSchema = dtoBaseSchema.extend({
-  type: z.string(),
-  order: z.number(),
-  content: z.record(z.string(), z.unknown()),
-  pageId: z.string(),
-});
-
-export type CmsPageComponentDto = z.infer<typeof cmsPageComponentSchema>;
-
-/**
- * CMS Slug Contract
- */
-export const cmsSlugSchema = dtoBaseSchema.extend({
-  slug: z.string(),
-  pageId: z.string().nullable(),
-  isDefault: z.boolean(),
-});
-
-export type CmsSlugDto = z.infer<typeof cmsSlugSchema>;
-
-/**
  * CMS Page Builder Contracts
  */
-export const cmsBlockInstanceSchema: z.ZodType<any> = z.lazy(() => z.object({
-  id: z.string(),
-  type: z.string(),
-  settings: z.record(z.string(), z.unknown()),
-  blocks: z.array(cmsBlockInstanceSchema).optional(),
-}));
+export interface CmsBlockInstanceDto {
+  id: string;
+  type: string;
+  settings: Record<string, unknown>;
+  blocks?: CmsBlockInstanceDto[];
+}
 
-export type CmsBlockInstanceDto = z.infer<typeof cmsBlockInstanceSchema>;
+export const cmsBlockInstanceSchema: z.ZodType<CmsBlockInstanceDto> = z.lazy(() =>
+  z.object({
+    id: z.string(),
+    type: z.string(),
+    settings: z.record(z.string(), z.unknown()),
+    blocks: z.array(cmsBlockInstanceSchema).optional(),
+  })
+);
 
 export const cmsSectionInstanceSchema = z.object({
   id: z.string(),

@@ -3,7 +3,7 @@
 
 import { useEffect } from 'react';
 
-import type { ProductDto, ProductCategoryDto, ProductTagDto } from '@/shared/dtos';
+import type { ProductDto, ProductCategoryDto, ProductTagDto } from '@/shared/contracts/products';
 import { useAdaptiveQuery } from '@/shared/hooks/query/useSmartCache';
 import { useNormalizedQuery, useComposedQuery } from '@/shared/hooks/useQueryComposition';
 import { useQueryScheduler, useBackgroundQueries } from '@/shared/hooks/useQueryScheduler';

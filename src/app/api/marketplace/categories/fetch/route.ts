@@ -7,7 +7,7 @@ import { fetchBaseCategories } from '@/features/integrations/server';
 import { getExternalCategoryRepository } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
-import type { FetchMarketplaceCategoriesRequestDto as FetchCategoriesRequest } from '@/shared/dtos/integrations';
+import type { FetchMarketplaceCategoriesRequestDto as FetchCategoriesRequest } from '@/shared/contracts/integrations';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';

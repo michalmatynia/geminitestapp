@@ -13,7 +13,6 @@ import type {
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
 import {
-  productSettingsKeys,
   useCreateValidationPatternMutation,
   useDeleteValidationPatternMutation,
   useUpdateValidatorSettingsMutation,
@@ -35,6 +34,7 @@ import {
   parseDynamicReplacementRecipe,
 } from '@/features/products/utils/validator-replacement-recipe';
 import { api } from '@/shared/lib/api-client';
+import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
@@ -1162,17 +1162,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
         {},
         { logError: false }
       );
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: productSettingsKeys.validatorPatterns(),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: productSettingsKeys.validatorConfig(true),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: productSettingsKeys.validatorConfig(false),
-        }),
-      ]);
+      await invalidateValidatorConfig(queryClient);
       const createdCount = (templateResult.outcomes ?? []).filter(
         (item) => item.action === 'created'
       ).length;
@@ -1232,17 +1222,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
         {},
         { logError: false }
       );
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: productSettingsKeys.validatorPatterns(),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: productSettingsKeys.validatorConfig(true),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: productSettingsKeys.validatorConfig(false),
-        }),
-      ]);
+      await invalidateValidatorConfig(queryClient);
       const createdCount = (templateResult.outcomes ?? []).filter(
         (item) => item.action === 'created'
       ).length;

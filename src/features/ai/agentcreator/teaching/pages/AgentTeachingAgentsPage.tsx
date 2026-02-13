@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';

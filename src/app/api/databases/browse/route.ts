@@ -5,7 +5,7 @@ import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { ErrorSystem } from '@/features/observability/server';
-import type { DatabaseBrowseParamsDto as BrowseParams, DatabaseBrowseDto as BrowseResponse } from '@/shared/dtos/database';
+import type { DatabaseBrowseParamsDto as BrowseParams, DatabaseBrowseDto as BrowseResponse } from '@/shared/contracts/database';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';

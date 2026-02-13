@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { JsonValue, UserPreferencesDto } from '@/shared/dtos/auth';
+import type { JsonValue, UserPreferencesDto } from '@/shared/contracts/auth';
 
 export const USER_PREFERENCES_HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 

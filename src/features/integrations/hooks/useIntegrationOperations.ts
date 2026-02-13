@@ -5,6 +5,7 @@ import { Dispatch, SetStateAction } from 'react';
 
 import type { ProductWithImages } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
+import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 
 import { listingBadgesQueryKey } from './listingCache';
 
@@ -56,8 +57,8 @@ export function useIntegrationOperations(): {
   const integrationBadgeIds = new Set(entries.map(([productId]: [string, string]) => productId));
 
   const refreshListingBadges = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: listingBadgesQueryKey });
-  }, [queryClient, listingBadgesQueryKey]);
+    await invalidateListingBadges(queryClient);
+  }, [queryClient]);
 
   const handleListProductSuccess = (): void => {
     setShowListProductModal(false);

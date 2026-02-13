@@ -1,5 +1,5 @@
 import type { ProductParameterValue } from '@/features/products/types';
-import type { CreateProductDto } from '@/shared/dtos';
+import type { CreateProductDto } from '@/shared/contracts/products';
 
 export type ProductDraft = {
   id: string;

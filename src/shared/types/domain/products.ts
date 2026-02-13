@@ -14,7 +14,7 @@ import type {
   ProductImageDto,
   ProductCatalogDto,
   ProductParameterValueDto
-} from '../../dtos/index';
+} from '../../contracts/products';
 
 export type {
   ProductDto, 

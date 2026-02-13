@@ -2,7 +2,7 @@
 
 import { mutationOptions, queryOptions, useMutation, useQuery, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
-import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/dtos/system';
+import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {

@@ -20,6 +20,7 @@ import type { ProductWithImages } from '@/features/products/types';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
 import { api } from '@/shared/lib/api-client';
+import { invalidateProductListings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Badge,
@@ -53,6 +54,12 @@ const getProductDisplayName = (product: ProductWithImages): string =>
   getProductNameValue(product, 'name_pl') ??
   getProductNameValue(product, 'name_de') ??
   'Product';
+
+const getImageFilepath = (imageFile: unknown): string | undefined => {
+  if (!imageFile || typeof imageFile !== 'object') return undefined;
+  const filepath = (imageFile as { filepath?: unknown }).filepath;
+  return typeof filepath === 'string' && filepath.trim().length > 0 ? filepath : undefined;
+};
 
 type CircleIconButtonProps = {
   onClick?: () => void;
@@ -225,7 +232,7 @@ const BaseQuickExportButton = ({
       try {
         await quickExportMutation.mutateAsync(payload);
         prefetchListings();
-        void queryClient.invalidateQueries({ queryKey: productListingsQueryKey(product.id) });
+        void invalidateProductListings(queryClient, product.id);
         toast('Base.com export started.', { variant: 'success' });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to export to Base.com.';
@@ -394,9 +401,9 @@ export const getProductColumns = (
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
       
-      const firstFileImage: string | undefined = product.images?.find(
-        (img: { imageFile?: { filepath: string } }) => img.imageFile?.filepath
-      )?.imageFile?.filepath;
+      const firstFileImage: string | undefined = product.images
+        ?.map((img) => getImageFilepath(img.imageFile))
+        .find((filepath): filepath is string => typeof filepath === 'string');
 
       const firstLinkImage: string | undefined = product.imageLinks?.find(
         (link: string) => link && link.trim().length > 0

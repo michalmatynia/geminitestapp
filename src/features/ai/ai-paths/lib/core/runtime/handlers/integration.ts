@@ -1,4 +1,4 @@
-import type { CollectionSchemaDto } from '@/shared/dtos/database';
+import type { CollectionSchemaDto } from '@/shared/contracts/database';
 import type {
   DbSchemaConfig,
   DatabaseConfig,

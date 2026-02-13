@@ -8,7 +8,7 @@ import { getProductAiJobs, getQueueStatus } from '@/features/jobs/server';
 import type {
   DatabaseEngineOperationJobDto,
   DatabaseEngineOperationsJobsDto,
-} from '@/shared/dtos/database';
+} from '@/shared/contracts/database';
 import { authError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -27,11 +27,11 @@ const isDatabaseEngineOperationJob = (job: DatabaseEngineOperationJobRecord): bo
 const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOperationJobDto => {
   const payload =
     job.payload && typeof job.payload === 'object'
-      ? (job.payload as Record<string, unknown>)
+      ? job.payload
       : null;
   const result =
     job.result && typeof job.result === 'object'
-      ? (job.result as Record<string, unknown>)
+      ? job.result
       : null;
 
   const rawDbType = payload?.['dbType'];

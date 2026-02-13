@@ -1,11 +1,14 @@
 
 import { getBlockTypographyStyles } from '../theme-styles';
+import { useOptionalSectionBlockData } from './SectionBlockContext';
 
 interface FrontendTextElementSectionProps {
-  settings: Record<string, unknown>;
+  settings?: Record<string, unknown>;
 }
 
-export function FrontendTextElementSection({ settings }: FrontendTextElementSectionProps): React.ReactNode {
+export function FrontendTextElementSection({ settings: propSettings }: FrontendTextElementSectionProps): React.ReactNode {
+  const sectionBlockData = useOptionalSectionBlockData();
+  const settings = propSettings ?? sectionBlockData?.settings ?? {};
   const text = (settings['textContent'] as string) || '';
   if (!text) return null;
   const typoStyles = getBlockTypographyStyles(settings);

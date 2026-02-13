@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { CreateActivityLogDto, ActivityLogDto } from '@/shared/dtos/system';
+import type { CreateActivityLogDto, ActivityLogDto } from '@/shared/contracts/system';
 
 import { getActivityRepository } from './activity-repository';
 import { logSystemEvent } from '../lib/system-logger';

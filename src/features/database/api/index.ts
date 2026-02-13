@@ -11,8 +11,8 @@ import type {
   DatabaseRestoreOperationResponseDto as DatabaseRestoreResponse,
   MultiSchemaResponseDto as MultiSchemaResponse,
   RedisOverviewDto as RedisOverviewResponse,
-} from '@/shared/dtos/database';
-import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/dtos/system';
+} from '@/shared/contracts/database';
+import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { apiClient, ApiError } from '@/shared/lib/api-client';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 

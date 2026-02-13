@@ -4,7 +4,7 @@ import {
   fetchSettingsCached,
   invalidateSettingsCache,
 } from '@/shared/api/settings-client';
-import type { SettingRecordDto } from '@/shared/dtos/settings';
+import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';

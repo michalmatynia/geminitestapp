@@ -4,12 +4,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Play } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
 import { api } from '@/shared/lib/api-client';
+import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   UnifiedButton,
@@ -271,7 +271,7 @@ export function GenerationToolbar(): React.JSX.Element {
         masks: payloadMasks,
       });
 
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+      void invalidateImageStudioSlots(queryClient, projectId);
 
       const createdCount = Array.isArray(response.masks) ? response.masks.length : 0;
       if (createdCount === 0) {

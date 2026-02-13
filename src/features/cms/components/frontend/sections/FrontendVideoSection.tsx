@@ -3,10 +3,11 @@
 
 import { useCmsPageContext } from '../CmsPageContext';
 import { useMediaStyles } from '../media-styles-context';
+import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
 interface FrontendVideoSectionProps {
-  settings: Record<string, unknown>;
+  settings?: Record<string, unknown>;
 }
 
 function getEmbedUrl(url: string): string | null {
@@ -37,7 +38,9 @@ function getAspectPadding(ratio: string): string {
   }
 }
 
-export function FrontendVideoSection({ settings }: FrontendVideoSectionProps): React.ReactNode {
+export function FrontendVideoSection({ settings: propSettings }: FrontendVideoSectionProps): React.ReactNode {
+  const sectionBlockData = useOptionalSectionBlockData();
+  const settings = propSettings ?? sectionBlockData?.settings ?? {};
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const videoUrl = (settings['videoUrl'] as string) || '';

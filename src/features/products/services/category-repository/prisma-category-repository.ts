@@ -7,7 +7,7 @@ import type {
 import type { 
   CreateProductCategoryDto, 
   UpdateProductCategoryDto 
-} from '@/shared/dtos';
+} from '@/shared/contracts/products';
 import { notFoundError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type { 

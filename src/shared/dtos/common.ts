@@ -1,27 +1,6 @@
-// Central DTO imports for easy access across the application
-// This file provides a single import point for all DTOs
+/**
+ * Foundation DTOs used across all domains.
+ * Types are now defined in src/shared/contracts/base.ts using Zod.
+ */
 
-export * from './auth';
-export * from './products';
-export * from './settings';
-export * from './chatbot';
-export * from './cms';
-export * from './files';
-export * from './integrations';
-export * from './notesapp';
-export * from './database';
-export * from './jobs';
-export * from './ai-paths';
-export * from './ai-trigger-buttons';
-export * from './agentcreator';
-export * from './viewer3d';
-export * from './admin';
-export * from './drafter';
-export * from './gsap';
-export * from './playwright';
-export * from './observability';
-export * from './data-import-export';
-export * from './foldertree';
-export * from './app-embeds';
-export * from './agent-runtime';
-export * from './agent-teaching';
+export * from '../contracts/base';

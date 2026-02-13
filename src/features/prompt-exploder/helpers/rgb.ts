@@ -1,9 +1,9 @@
-export const RGB_LITERAL_RE = /RGB\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i;
+export const PROMPT_EXPLODER_RGB_LITERAL_RE = /RGB\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i;
 
 export const clampRgb = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
 
 export const extractRgbLiteral = (text: string): [number, number, number] | null => {
-  const match = RGB_LITERAL_RE.exec(text);
+  const match = PROMPT_EXPLODER_RGB_LITERAL_RE.exec(text);
   if (!match) return null;
   const red = Number(match[1]);
   const green = Number(match[2]);
@@ -34,7 +34,7 @@ export const replaceRgbLiteral = (
   rgb: [number, number, number]
 ): string => {
   return text.replace(
-    RGB_LITERAL_RE,
+    PROMPT_EXPLODER_RGB_LITERAL_RE,
     `RGB(${clampRgb(rgb[0])},${clampRgb(rgb[1])},${clampRgb(rgb[2])})`
   );
 };

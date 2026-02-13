@@ -5,13 +5,9 @@ import React, { useCallback, useState } from 'react';
 
 import type { VectorShape, VectorShapeRole } from '@/shared/types/domain/vector';
 import {
-  Button,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedButton,
+  UnifiedInput,
+  UnifiedSelect,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -110,7 +106,7 @@ export function ShapeListPanel({
             {/* Name / rename */}
             <div className='min-w-0 flex-1'>
               {editingId === shape.id ? (
-                <Input
+                <UnifiedInput
                   value={editName}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
                   onBlur={commitRename}
@@ -141,30 +137,23 @@ export function ShapeListPanel({
 
             {/* Role selector */}
             {isActive && (
-              <Select
-                value={shape.role ?? ''}
-                onValueChange={(v: string) =>
-                  handleUpdateShape(shape.id, { role: (v || undefined) as VectorShapeRole | undefined })
-                }
-              >
-                <SelectTrigger
-                  className='h-5 w-[72px] text-[10px] px-1'
-                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                >
-                  <SelectValue placeholder='Role' />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value} className='text-xs'>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                <UnifiedSelect
+                  className='w-[72px]'
+                  value={shape.role ?? undefined}
+                  onValueChange={(value: string) =>
+                    handleUpdateShape(shape.id, { role: value as VectorShapeRole })
+                  }
+                  options={ROLE_OPTIONS}
+                  placeholder='Role'
+                  triggerClassName='h-5 px-1 text-[10px]'
+                  ariaLabel='Shape role'
+                />
+              </div>
             )}
 
             {/* Visibility toggle */}
-            <Button
+            <UnifiedButton
               type='button'
               variant='ghost'
               size='icon'
@@ -176,10 +165,10 @@ export function ShapeListPanel({
               title={shape.visible ? 'Hide shape' : 'Show shape'}
             >
               {shape.visible ? <Eye className='size-3' /> : <EyeOff className='size-3' />}
-            </Button>
+            </UnifiedButton>
 
             {/* Delete */}
-            <Button
+            <UnifiedButton
               type='button'
               variant='ghost'
               size='icon'
@@ -191,7 +180,7 @@ export function ShapeListPanel({
               title='Delete shape'
             >
               <Trash2 className='size-3' />
-            </Button>
+            </UnifiedButton>
           </div>
         );
       })}

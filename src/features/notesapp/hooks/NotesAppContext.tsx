@@ -167,7 +167,9 @@ export function NotesAppProvider({
         return a.title.localeCompare(b.title);
       }
       if (settings.sortBy === 'updated') {
-        return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+        const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return aTime - bTime;
       }
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     });

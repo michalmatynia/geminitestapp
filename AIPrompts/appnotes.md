@@ -1,12 +1,44 @@
+Remove out put to the right
+
+When I generate image, The image Slot is attached to the card, withing the image slot there is all the infomration about the file size including metadata, also , there is informatoin about the request that created it and model that created it and the settings. I want all of this information to be saved along with the image file in the image slot. Card is a collection of such image slots linking with them on many to many relationships.
+
+Below image canvas, remove the "Generation Landing Slots" text and in it's place implement a search field that enable me to search through different generations by timestamp
+
+The generation thumbnails appear below, above them there is a set of button, one to load the variant into canvas. 
+
+The thumbnails are horizontally scrollable. make the height of the panel fit the thumbnail height.
+
+When I click a variant on the bottom left hand side two buttons appear, one to switch between the source image and the variant that has just been loaded into preview canvas. The other button splits the canvas into two. on the left hand side is the source and on the right is the generated variant.
+
 remove convert All to Base Button and action 
-Producer and Categories are not going through , long refresh on the button
+
+
+
+
+Cropping mechanism for image studio
+Crop mask retention
+
+Versioning graph, detach node, flatten
+
+Layered compositing with separate prompting capabilites
+
 
 shared validator button that applies globallu
 fastcomet connection and tradera connection, 
+
+drag icon should stay in place
+
+Generation model should be decided per project
+Generations should contain information about which model generated what settings etc.
+---
+
+Folder unification Category, Notes App, Image Studio and CMS Page Builder
 image studio move forward
 
  Use pre-prompts to incorporate different aspects
 
+
+Versioning mind map
 
  Send Image to OpenAI 
 

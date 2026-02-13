@@ -15,9 +15,7 @@ import { useMemo, useState } from 'react';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
 import {
   Button,
-  SectionHeader,
   SectionPanel,
-  Label,
   ListPanel,
   Table,
   TableBody,
@@ -32,8 +30,8 @@ import {
   RefreshButton,
   FormSection,
   FormField,
+  EmptyState,
 } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
 import { Asset3DCard } from '../components/Asset3DCard';
 import { Asset3DEditModal } from '../components/Asset3DEditModal';

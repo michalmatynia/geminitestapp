@@ -4,7 +4,7 @@ import { Repeat2 } from 'lucide-react';
 import React from 'react';
 
 import { type ParamLeaf, type ParamSpec, type ParamIssue } from '@/features/prompt-engine/prompt-params';
-import { Button, Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@/shared/ui';
+import { UnifiedButton, Checkbox, UnifiedInput, UnifiedTextarea, UnifiedSelect } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { usePrompt } from '../context/PromptContext';
@@ -64,6 +64,11 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
   const requestedControl = selectedUiControl === 'auto' ? recommendation.recommended : selectedUiControl;
   const autoLabel = `Auto (${paramUiControlLabel(recommendation.recommended)})`;
   const canSlider = recommendation.canSlider;
+  const uiControlOptions = recommendation.options.map((opt: ParamUiControl) => ({
+    value: opt,
+    label: opt === 'auto' ? autoLabel : paramUiControlLabel(opt),
+  }));
+  const enumOptions = spec?.enumOptions?.map((opt: string) => ({ value: opt, label: opt })) ?? [];
 
   return (
     <div className={cn('rounded border bg-card/60 p-2', borderClass)}>
@@ -75,7 +80,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
           <div className='text-[11px] text-gray-400'>
             {Array.isArray(value) ? 'array' : value === null ? 'null' : typeof value}
           </div>
-          <Button
+          <UnifiedButton
             type='button'
             size='icon'
             variant='ghost'
@@ -83,7 +88,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
             onClick={onFlip}
           >
             <Repeat2 className='size-4' />
-          </Button>
+          </UnifiedButton>
         </div>
       </div>
 
@@ -91,24 +96,17 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
         <div className='space-y-2'>
           <div className='flex items-center gap-2'>
             <div className='text-[11px] text-gray-400'>Selector</div>
-            <Select
+            <UnifiedSelect
+              className='w-[140px]'
               value={selectedUiControl}
               onValueChange={(next: string) => {
                 if (!isParamUiControl(next)) return;
                 onUiControlChange(next);
               }}
-            >
-              <SelectTrigger className='h-7 w-[140px] px-2'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {recommendation.options.map((opt: ParamUiControl) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt === 'auto' ? autoLabel : paramUiControlLabel(opt)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={uiControlOptions}
+              triggerClassName='h-7 px-2'
+              ariaLabel='Parameter control selector'
+            />
           </div>
 
           {spec?.hint ? (
@@ -143,22 +141,22 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
           {requestedControl !== 'json' && uiKind === 'boolean' && isBool ? (
             requestedControl === 'buttons' ? (
               <div className='flex items-center gap-2'>
-                <Button
+                <UnifiedButton
                   type='button'
                   size='sm'
                   variant={value ? 'secondary' : 'outline'}
                   onClick={() => onChange(true)}
                 >
                   true
-                </Button>
-                <Button
+                </UnifiedButton>
+                <UnifiedButton
                   type='button'
                   size='sm'
                   variant={!value ? 'secondary' : 'outline'}
                   onClick={() => onChange(false)}
                 >
                   false
-                </Button>
+                </UnifiedButton>
               </div>
             ) : (
               <label className='flex cursor-pointer items-center gap-2 text-xs text-gray-200'>
@@ -175,7 +173,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
             requestedControl === 'buttons' ? (
               <div className='flex flex-wrap gap-2'>
                 {spec.enumOptions.map((opt: string) => (
-                  <Button
+                  <UnifiedButton
                     key={opt}
                     type='button'
                     size='sm'
@@ -183,24 +181,19 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                     onClick={() => onChange(opt)}
                   >
                     {opt}
-                  </Button>
+                  </UnifiedButton>
                 ))}
               </div>
             ) : requestedControl === 'text' ? (
-              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className='h-8' />
+              <UnifiedInput value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className='h-8' />
             ) : (
-              <Select value={value} onValueChange={(v: string) => onChange(v)}>
-                <SelectTrigger className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {spec.enumOptions.map((opt: string) => (
-                    <SelectItem key={opt} value={opt}>
-                      {opt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <UnifiedSelect
+                value={value}
+                onValueChange={(next: string) => onChange(next)}
+                options={enumOptions}
+                triggerClassName='h-8'
+                ariaLabel='Enum parameter value'
+              />
             )
           ) : null}
 
@@ -221,7 +214,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                   className='w-full'
                 />
               ) : null}
-              <Input
+              <UnifiedInput
                 type='number'
                 value={String(value)}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -242,7 +235,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
               {['R', 'G', 'B'].map((label: string, index: number) => (
                 <div key={label} className='space-y-1'>
                   <div className='text-[10px] text-gray-500'>{label}</div>
-                  <Input
+                  <UnifiedInput
                     type='number'
                     value={String(value[index] ?? '')}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,7 +260,7 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
               {['X', 'Y'].map((label: string, index: number) => (
                 <div key={label} className='space-y-1'>
                   <div className='text-[10px] text-gray-500'>{label}</div>
-                  <Input
+                  <UnifiedInput
                     type='number'
                     value={String(value[index] ?? '')}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -289,14 +282,14 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
 
           {requestedControl !== 'json' && uiKind === 'string' && isString ? (
             requestedControl === 'textarea' ? (
-              <Textarea value={value} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)} className='h-24 font-mono text-[11px]' />
+              <UnifiedTextarea value={value} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)} className='h-24 font-mono text-[11px]' />
             ) : (
-              <Input value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className='h-8' />
+              <UnifiedInput value={value} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)} className='h-8' />
             )
           ) : null}
 
           {uiKind === 'json' || requestedControl === 'json' ? (
-            <Textarea
+            <UnifiedTextarea
               value={safeJsonStringify(value)}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                 const raw = e.target.value;

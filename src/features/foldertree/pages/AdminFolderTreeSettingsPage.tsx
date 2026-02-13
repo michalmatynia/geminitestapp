@@ -25,6 +25,7 @@ import {
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   type FolderTreeInstance,
   folderTreePlaceholderEmphasisValues,
+  folderTreeSelectionBehaviorValues,
   folderTreePlaceholderStyleValues,
   parseFolderTreeProfilesV2,
   type FolderTreeNestingRuleV2,
@@ -245,6 +246,11 @@ const TREE_ICON_ITEMS: ReadonlyArray<IconLibraryItem> = ICON_LIBRARY.filter(
   (item: IconLibraryItem): boolean => TREE_ICON_IDS.has(item.id)
 );
 
+const folderTreeSelectionBehaviorOptions = folderTreeSelectionBehaviorValues.map((value) => ({
+  value,
+  label: value === 'click_away' ? 'Click Away Clears' : 'Re-click Clears (Sticky)',
+}));
+
 export function AdminFolderTreeSettingsPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
@@ -414,6 +420,23 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                         placeholders: {
                           ...current.placeholders,
                           emphasis: value as FolderTreeProfileV2['placeholders']['emphasis'],
+                        },
+                      }));
+                    }}
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label className='text-xs text-gray-300'>Selection Behavior</Label>
+                  <UnifiedSelect
+                    value={profile.interactions.selectionBehavior}
+                    options={folderTreeSelectionBehaviorOptions}
+                    onValueChange={(value: string): void => {
+                      updateProfile(meta.id, (current) => ({
+                        ...current,
+                        interactions: {
+                          ...current.interactions,
+                          selectionBehavior: value as FolderTreeProfileV2['interactions']['selectionBehavior'],
                         },
                       }));
                     }}

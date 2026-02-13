@@ -201,7 +201,7 @@ export const prismaCategoryRepository: CategoryRepository = {
         category.id,
         category.catalogId,
         category.parentId ?? null,
-        data.sortIndex
+        data.sortIndex ?? undefined
       );
       return toCategoryDomain(category);
     });
@@ -230,9 +230,9 @@ export const prismaCategoryRepository: CategoryRepository = {
           ...(data.name !== undefined && { name: data.name }),
           ...(data.description !== undefined && { description: data.description }),
           ...(data.color !== undefined && { color: data.color }),
-          ...(data.parentId !== undefined && { parentId: data.parentId }),
+          ...(data.parentId !== undefined && data.parentId !== null && { parentId: data.parentId }),
           ...(data.catalogId !== undefined && { catalogId: data.catalogId }),
-          ...(data.sortIndex !== undefined ? { sortIndex: data.sortIndex } : {}),
+          ...(data.sortIndex !== undefined && data.sortIndex !== null ? { sortIndex: data.sortIndex } : {}),
         },
       });
 
@@ -250,7 +250,7 @@ export const prismaCategoryRepository: CategoryRepository = {
           category.id,
           nextCatalogId,
           nextParentId,
-          data.sortIndex
+          data.sortIndex ?? undefined
         );
       }
 

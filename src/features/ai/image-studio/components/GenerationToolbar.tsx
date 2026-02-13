@@ -12,12 +12,7 @@ import {
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedButton,
   Switch,
   UnifiedSelect,
   vectorShapeToPathWithBounds,
@@ -244,6 +239,19 @@ ${filterBlock}
     () => quickSwitchModels.map((modelId) => ({ value: modelId, label: modelId })),
     [quickSwitchModels]
   );
+  const imageCountOptions = useMemo(
+    () => ['1', '2', '4'].map((value: string) => ({ value, label: value })),
+    []
+  );
+  const maskModeOptions = useMemo(
+    () => ([
+      { value: 'ai-polygon', label: 'AI Polygon' },
+      { value: 'ai-bbox', label: 'AI Bounding Box' },
+      { value: 'threshold', label: 'Threshold' },
+      { value: 'edges', label: 'Edge Detection' },
+    ]),
+    []
+  );
 
   return (
     <div className='flex flex-wrap items-center gap-2'>
@@ -268,31 +276,26 @@ ${filterBlock}
         triggerClassName='h-8 w-full text-xs'
         ariaLabel='Generation model'
       />
-      <Select
+      <UnifiedSelect
+        className='w-[60px]'
         value={String(studioSettings.targetAi.openai.image.n ?? 1)}
-        onValueChange={(v: string) => {
+        onValueChange={(value: string) => {
           setStudioSettings((prev) => ({
             ...prev,
             targetAi: {
               ...prev.targetAi,
               openai: {
                 ...prev.targetAi.openai,
-                image: { ...prev.targetAi.openai.image, n: Number(v) },
+                image: { ...prev.targetAi.openai.image, n: Number(value) },
               },
             },
           }));
         }}
-      >
-        <SelectTrigger className='h-8 w-[60px] text-xs'>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value='1'>1</SelectItem>
-          <SelectItem value='2'>2</SelectItem>
-          <SelectItem value='4'>4</SelectItem>
-        </SelectContent>
-      </Select>
-      <Button
+        options={imageCountOptions}
+        triggerClassName='h-8 text-xs'
+        ariaLabel='Generation image count'
+      />
+      <UnifiedButton
         onClick={handleRunGeneration}
         disabled={!workingSlot || !promptText.trim() || generationBusy}
         size='sm'
@@ -304,8 +307,8 @@ ${filterBlock}
           <Play className='mr-2 size-4' />
         )}
         {generationLabel}
-      </Button>
-      <Button
+      </UnifiedButton>
+      <UnifiedButton
         type='button'
         variant='outline'
         size='sm'
@@ -316,8 +319,8 @@ ${filterBlock}
         title='Create and attach white/black masks and their inverted variants'
       >
         Attach Masks
-      </Button>
-      <Button
+      </UnifiedButton>
+      <UnifiedButton
         type='button'
         variant='outline'
         size='sm'
@@ -328,7 +331,7 @@ ${filterBlock}
         title='Generate and enable mask preview'
       >
         Generate Mask
-      </Button>
+      </UnifiedButton>
       <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
         <span>Mask Preview</span>
         <Switch
@@ -347,24 +350,20 @@ ${filterBlock}
           aria-label='Toggle mask inversion'
         />
       </label>
-      <Select
+      <UnifiedSelect
+        className='w-[130px]'
         value={maskGenMode}
-        onValueChange={(v: string) => {
-          const mode = v as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
+        onValueChange={(value: string) => {
+          const mode = value as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
           setMaskGenMode(mode);
           handleAiMaskGeneration(mode);
         }}
-      >
-        <SelectTrigger className='h-8 w-[130px] text-xs' disabled={maskGenLoading || !workingSlot}>
-          <SelectValue placeholder={maskGenLoading ? 'Detecting...' : 'Smart Mask'} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value='ai-polygon'>AI Polygon</SelectItem>
-          <SelectItem value='ai-bbox'>AI Bounding Box</SelectItem>
-          <SelectItem value='threshold'>Threshold</SelectItem>
-          <SelectItem value='edges'>Edge Detection</SelectItem>
-        </SelectContent>
-      </Select>
+        options={maskModeOptions}
+        placeholder={maskGenLoading ? 'Detecting...' : 'Smart Mask'}
+        triggerClassName='h-8 text-xs'
+        disabled={maskGenLoading || !workingSlot}
+        ariaLabel='Smart mask mode'
+      />
       {maskGenLoading && <Loader2 className='size-4 animate-spin text-muted-foreground' />}
       <span className='text-[11px] text-gray-400 whitespace-nowrap'>
         {exportMaskCount > 0

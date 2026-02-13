@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button } from '@/shared/ui';
+import { UnifiedButton } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 interface ToggleButtonGroupProps<T extends string> {
@@ -28,14 +28,14 @@ export function ToggleButtonGroup<T extends string>({
       )}
     >
       {options.map((option) => (
-        <Button
+        <UnifiedButton
           key={option.value}
           size={size}
           variant={value === option.value ? 'secondary' : 'ghost'}
           onClick={() => onChange(option.value)}
         >
           {option.label}
-        </Button>
+        </UnifiedButton>
       ))}
     </div>
   );

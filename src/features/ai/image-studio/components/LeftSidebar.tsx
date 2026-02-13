@@ -7,12 +7,10 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  Button,
-  FormModal,
-  Input,
-  Label,
+  UnifiedButton,
   SectionPanel,
   Tooltip,
   useToast,
@@ -27,18 +25,40 @@ import { ShapeListPanel } from './ShapeListPanel';
 import { SlotTree } from './SlotTree';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
+import { usePromptState } from '../context/PromptContext';
+import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
+import {
+  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+  getImageStudioProjectSessionKey,
+  serializeImageStudioActiveProject,
+  serializeImageStudioProjectSession,
+  type ImageStudioProjectSession,
+} from '../utils/project-session';
 
 export function LeftSidebar(): React.JSX.Element {
   const { projectId } = useProjectsState();
   const { isFocusMode } = useUiState();
   const settingsStore = useSettingsStore();
+  const updateSettingsBulk = useUpdateSettingsBulk();
+  const { saveStudioSettings } = useSettingsActions();
+  const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
   const { maskShapes } = useMaskingState();
-  const { slots, selectedSlot, selectedFolder, workingSlot } = useSlotsState();
   const {
-    setSlotCreateOpen,
+    slots,
+    virtualFolders,
+    selectedSlot,
+    selectedSlotId,
+    selectedFolder,
+    workingSlot,
+    workingSlotId,
+    previewMode,
+    compositeAssetIds,
+    temporaryObjectUpload,
+  } = useSlotsState();
+  const {
     setSlotInlineEditOpen,
     setSelectedSlotId,
     setWorkingSlotId,
@@ -53,13 +73,24 @@ export function LeftSidebar(): React.JSX.Element {
   } = useMaskingActions();
 
   const { toast } = useToast();
-  const [folderCreateOpen, setFolderCreateOpen] = useState(false);
-  const [folderDraft, setFolderDraft] = useState('');
   const [revealRequest, setRevealRequest] = useState<{ slotId: string; nonce: number } | null>(null);
+  const [projectSaveBusy, setProjectSaveBusy] = useState(false);
   const singleSlotManagerRef = useRef<ImageStudioSingleSlotManagerHandle | null>(null);
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+  const selectedSlotImageSrc = selectedSlot
+    ? getImageStudioSlotImageSrc(selectedSlot, productImagesExternalBaseUrl)
+    : null;
+  const canLoadToCanvas = Boolean(projectId) && Boolean(temporaryObjectUpload || (selectedSlot?.id && selectedSlotImageSrc));
+
+  const cloneSettingValue = <T,>(value: T): T => {
+    try {
+      return JSON.parse(JSON.stringify(value)) as T;
+    } catch {
+      return value;
+    }
+  };
 
   const handleLoadToCanvas = (): void => {
     void (async (): Promise<void> => {
@@ -67,31 +98,12 @@ export function LeftSidebar(): React.JSX.Element {
         (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: true })) ?? false;
       if (consumedTemporaryUpload) return;
 
-      if (selectedSlot?.id) {
+      if (selectedSlot?.id && selectedSlotImageSrc) {
         setPreviewMode('image');
         setWorkingSlotId(selectedSlot.id);
-        if (!getImageStudioSlotImageSrc(selectedSlot, productImagesExternalBaseUrl)) {
-          toast('Selected card has no image source yet.', { variant: 'info' });
-        }
         return;
       }
-      const normalizedFolder = selectedFolder.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
-      const slotFromSelectedFolder = normalizedFolder
-        ? slots.find((slot) => (slot.folderPath ?? '').replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') === normalizedFolder) ?? null
-        : null;
-      const slotWithImage =
-        slots.find((slot) => Boolean(getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl))) ?? null;
-      const fallbackSlot = slotFromSelectedFolder ?? slotWithImage ?? slots[0] ?? null;
-      if (fallbackSlot) {
-        setSelectedSlotId(fallbackSlot.id);
-        setPreviewMode('image');
-        setWorkingSlotId(fallbackSlot.id);
-        if (!getImageStudioSlotImageSrc(fallbackSlot, productImagesExternalBaseUrl)) {
-          toast('Selected card has no image source yet.', { variant: 'info' });
-        }
-        return;
-      }
-      setSlotCreateOpen(true);
+      toast('Load to canvas is only available for Object slot upload or a card with an image.', { variant: 'info' });
     })();
   };
 
@@ -116,12 +128,39 @@ export function LeftSidebar(): React.JSX.Element {
   };
 
   const handleCreateFolder = (): void => {
-    const normalized = folderDraft.trim();
-    if (!normalized) return;
-    void createFolderMutation.mutateAsync(normalized).then(() => {
-      setFolderCreateOpen(false);
-      setFolderDraft('');
-    }).catch((error: unknown) => {
+    const normalizePath = (value: string): string =>
+      value.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+
+    const selectedParent = normalizePath(selectedFolder);
+    const allFolderPaths = new Set<string>();
+    virtualFolders.forEach((folderPath: string) => {
+      const normalized = normalizePath(folderPath);
+      if (normalized) allFolderPaths.add(normalized);
+    });
+    slots.forEach((slot) => {
+      const normalized = normalizePath(slot.folderPath ?? '');
+      if (normalized) allFolderPaths.add(normalized);
+    });
+
+    const siblingFolderNames = new Set<string>();
+    allFolderPaths.forEach((folderPath: string) => {
+      const parent = folderPath.includes('/') ? folderPath.slice(0, folderPath.lastIndexOf('/')) : '';
+      if (parent !== selectedParent) return;
+      const leaf = folderPath.includes('/') ? folderPath.slice(folderPath.lastIndexOf('/') + 1) : folderPath;
+      if (!leaf) return;
+      siblingFolderNames.add(leaf.toLowerCase());
+    });
+
+    const baseName = 'New Folder';
+    let suffix = 1;
+    let nextLeaf = baseName;
+    while (siblingFolderNames.has(nextLeaf.toLowerCase())) {
+      suffix += 1;
+      nextLeaf = `${baseName} ${suffix}`;
+    }
+
+    const nextPath = selectedParent ? `${selectedParent}/${nextLeaf}` : nextLeaf;
+    void createFolderMutation.mutateAsync(nextPath).catch((error: unknown) => {
       toast(error instanceof Error ? error.message : 'Failed to create folder', { variant: 'error' });
     });
   };
@@ -170,9 +209,9 @@ export function LeftSidebar(): React.JSX.Element {
     });
   };
 
-  const handleCopyActiveCardId = (): void => {
-    const slotId = selectedSlot?.id ?? null;
-    if (!slotId) {
+  const handleCopyActiveCardName = (): void => {
+    const cardLabel = selectedSlot?.name?.trim() || selectedSlot?.id || null;
+    if (!cardLabel) {
       toast('Select a card first.', { variant: 'info' });
       return;
     }
@@ -180,11 +219,63 @@ export function LeftSidebar(): React.JSX.Element {
       toast('Clipboard is not available in this browser.', { variant: 'error' });
       return;
     }
-    void navigator.clipboard.writeText(slotId).then(() => {
-      toast('Card ID copied.', { variant: 'success' });
+    void navigator.clipboard.writeText(cardLabel).then(() => {
+      toast('Card name copied.', { variant: 'success' });
     }).catch(() => {
-      toast('Failed to copy card ID.', { variant: 'error' });
+      toast('Failed to copy card name.', { variant: 'error' });
     });
+  };
+
+  const handleSaveProject = (): void => {
+    if (!projectId.trim()) {
+      toast('Select a project first.', { variant: 'info' });
+      return;
+    }
+    const projectSessionKey = getImageStudioProjectSessionKey(projectId);
+    if (!projectSessionKey) {
+      toast('Invalid project id.', { variant: 'error' });
+      return;
+    }
+
+    const projectSession: ImageStudioProjectSession = {
+      version: 1,
+      projectId: projectId.trim(),
+      savedAt: new Date().toISOString(),
+      selectedFolder,
+      selectedSlotId,
+      workingSlotId,
+      compositeAssetIds: cloneSettingValue(compositeAssetIds),
+      previewMode,
+      promptText,
+      paramsState: cloneSettingValue(paramsState),
+      paramSpecs: cloneSettingValue((paramSpecs ?? null) as Record<string, unknown> | null),
+      paramUiOverrides: cloneSettingValue((paramUiOverrides ?? {}) as Record<string, unknown>),
+    };
+
+    if (projectSaveBusy) return;
+    setProjectSaveBusy(true);
+    void Promise.all([
+      saveStudioSettings({ silent: true }),
+      updateSettingsBulk.mutateAsync([
+        {
+          key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+          value: serializeImageStudioActiveProject(projectId),
+        },
+        {
+          key: projectSessionKey,
+          value: serializeImageStudioProjectSession(projectSession),
+        },
+      ]),
+    ])
+      .then(() => {
+        toast(`Project "${projectId}" saved.`, { variant: 'success' });
+      })
+      .catch((error: unknown) => {
+        toast(error instanceof Error ? error.message : 'Failed to save project.', { variant: 'error' });
+      })
+      .finally(() => {
+        setProjectSaveBusy(false);
+      });
   };
 
   useEffect(() => {
@@ -201,51 +292,66 @@ export function LeftSidebar(): React.JSX.Element {
         variant='subtle'
         aria-hidden={isFocusMode}
       >
-        <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
+        <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
+          <div className='flex items-center justify-start px-1 py-1' data-preserve-slot-selection='true'>
+            <UnifiedButton
+              type='button'
+              variant='outline'
+              size='sm'
+              className='h-7 px-2 text-[11px]'
+              title='Save current Image Studio project state'
+              aria-label='Save current Image Studio project state'
+              disabled={projectSaveBusy || !projectId.trim()}
+              onClick={handleSaveProject}
+              data-preserve-slot-selection='true'
+            >
+              {projectSaveBusy ? 'Saving...' : 'Save Project'}
+            </UnifiedButton>
+          </div>
           <div
-            className='flex items-center gap-2 rounded border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-400'
+            className='flex items-center gap-2 px-1 py-1 text-[11px] text-gray-400'
             data-preserve-slot-selection='true'
           >
             <span className='min-w-0 flex-1 truncate'>
               {selectedSlot
-                ? `Active card: ${selectedSlot.name || selectedSlot.id}`
+                ? selectedSlot.name || selectedSlot.id
                 : 'No active card selected. Pick a card from the tree.'}
             </span>
-            <Tooltip content={selectedSlot ? 'Copy active card ID' : 'Select a card first'}>
-              <Button
+            <Tooltip content={selectedSlot ? 'Copy card name' : 'Select a card first'}>
+              <UnifiedButton
                 type='button'
                 size='icon'
                 variant='ghost'
                 className='size-5 shrink-0'
-                onClick={handleCopyActiveCardId}
+                onClick={handleCopyActiveCardName}
                 disabled={!selectedSlot?.id}
-                title='Copy active card ID'
-                aria-label='Copy active card ID'
+                title='Copy card name'
+                aria-label='Copy card name'
                 data-preserve-slot-selection='true'
               >
                 <Copy className='size-3' />
-              </Button>
+              </UnifiedButton>
             </Tooltip>
           </div>
 
           <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
 
-          <div className='flex items-center justify-end gap-2' data-preserve-slot-selection='true'>
+          <div className='flex flex-wrap items-center justify-start gap-2' data-preserve-slot-selection='true'>
             <Tooltip content='Load to canvas'>
-              <Button
+              <UnifiedButton
                 type='button'
                 size='icon'
                 variant='outline'
                 title='Load to canvas'
                 onClick={handleLoadToCanvas}
-                disabled={!projectId}
+                disabled={!canLoadToCanvas}
                 aria-label='Load to canvas'
               >
                 <ImagePlus className='size-4' />
-              </Button>
+              </UnifiedButton>
             </Tooltip>
             <Tooltip content='De-canvas'>
-              <Button
+              <UnifiedButton
                 type='button'
                 size='icon'
                 variant='outline'
@@ -255,10 +361,10 @@ export function LeftSidebar(): React.JSX.Element {
                 aria-label='De-canvas'
               >
                 <ImageOff className='size-4' />
-              </Button>
+              </UnifiedButton>
             </Tooltip>
             <Tooltip content='Reveal in tree'>
-              <Button
+              <UnifiedButton
                 type='button'
                 size='icon'
                 variant='outline'
@@ -268,10 +374,10 @@ export function LeftSidebar(): React.JSX.Element {
                 aria-label='Reveal in tree'
               >
                 <Locate className='size-4' />
-              </Button>
+              </UnifiedButton>
             </Tooltip>
             <Tooltip content='New Card'>
-              <Button
+              <UnifiedButton
                 type='button'
                 size='icon'
                 variant='outline'
@@ -281,27 +387,24 @@ export function LeftSidebar(): React.JSX.Element {
                 aria-label='New Card'
               >
                 <Plus className='size-4' />
-              </Button>
+              </UnifiedButton>
             </Tooltip>
             <Tooltip content='New folder'>
-              <Button
+              <UnifiedButton
                 type='button'
                 size='icon'
                 variant='outline'
                 title='New folder'
-                onClick={() => {
-                  setFolderDraft(selectedFolder || '');
-                  setFolderCreateOpen(true);
-                }}
+                onClick={handleCreateFolder}
                 disabled={!projectId || createFolderMutation.isPending}
                 aria-label='New folder'
               >
                 <FolderPlus className='size-4' />
-              </Button>
+              </UnifiedButton>
             </Tooltip>
             {selectedSlot ? (
               <Tooltip content='Edit card'>
-                <Button
+                <UnifiedButton
                   type='button'
                   size='icon'
                   variant='outline'
@@ -310,7 +413,7 @@ export function LeftSidebar(): React.JSX.Element {
                   aria-label='Edit card'
                 >
                   <Settings2 className='size-4' />
-                </Button>
+                </UnifiedButton>
               </Tooltip>
             ) : null}
           </div>
@@ -334,33 +437,6 @@ export function LeftSidebar(): React.JSX.Element {
           </div>
         </div>
       </SectionPanel>
-
-      <FormModal
-        open={folderCreateOpen}
-        onClose={() => setFolderCreateOpen(false)}
-        title='Create Folder'
-        onSave={handleCreateFolder}
-        isSaving={createFolderMutation.isPending}
-        saveText='Create Folder'
-        cancelText='Cancel'
-        size='md'
-      >
-        <div className='space-y-3'>
-          <Label className='text-xs text-gray-400'>Folder Path</Label>
-          <Input
-            value={folderDraft}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setFolderDraft(event.target.value)}
-            placeholder='e.g. variants/red'
-            className='h-9'
-            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-              if (event.key === 'Enter') {
-                event.preventDefault();
-                handleCreateFolder();
-              }
-            }}
-          />
-        </div>
-      </FormModal>
     </>
   );
 }

@@ -290,7 +290,7 @@ export const mongoCategoryRepository: CategoryRepository = {
       created.id,
       created.catalogId,
       created.parentId ?? null,
-      data.sortIndex
+      data.sortIndex ?? undefined
     );
     return created;
   },
@@ -317,7 +317,7 @@ export const mongoCategoryRepository: CategoryRepository = {
     if (data.catalogId !== undefined) {
       set.catalogId = data.catalogId;
     }
-    if (data.sortIndex !== undefined) {
+    if (data.sortIndex !== undefined && data.sortIndex !== null) {
       set.sortIndex = data.sortIndex;
     }
 
@@ -342,7 +342,7 @@ export const mongoCategoryRepository: CategoryRepository = {
       );
     }
     if (data.sortIndex !== undefined || movedBucket) {
-      await reorderSiblingsForCategory(id, nextCatalogId, nextParentId, data.sortIndex);
+      await reorderSiblingsForCategory(id, nextCatalogId, nextParentId, data.sortIndex ?? undefined);
     }
     
     const updated = await this.getCategoryById(id);

@@ -97,7 +97,7 @@ export interface AdminNavItemDto {
   children?: AdminNavItemDto[];
 }
 
-export const adminNavItemSchema: z.ZodType<AdminNavItemDto> = z.lazy(() =>
+export const adminNavItemSchema = z.lazy(() =>
   z.object({
     id: z.string(),
     label: z.string(),
@@ -107,7 +107,7 @@ export const adminNavItemSchema: z.ZodType<AdminNavItemDto> = z.lazy(() =>
     sectionColor: z.string().optional(),
     children: z.array(adminNavItemSchema).optional(),
   })
-);
+) as z.ZodType<AdminNavItemDto>;
 
 export interface AdminMenuCustomNodeDto {
   id: string;
@@ -116,14 +116,14 @@ export interface AdminMenuCustomNodeDto {
   children?: AdminMenuCustomNodeDto[];
 }
 
-export const adminMenuCustomNodeSchema: z.ZodType<AdminMenuCustomNodeDto> = z.lazy(() =>
+export const adminMenuCustomNodeSchema = z.lazy(() =>
   z.object({
     id: z.string(),
     label: z.string().optional(),
     href: z.string().optional(),
     children: z.array(adminMenuCustomNodeSchema).optional(),
   })
-);
+) as z.ZodType<AdminMenuCustomNodeDto>;
 
 export const adminNavLeafSchema = z.object({
   id: z.string(),

@@ -21,7 +21,7 @@ export interface BaseEntity extends BaseRecord {
 export interface DtoBase {
   id: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt: string | null;
 }
 
 /**

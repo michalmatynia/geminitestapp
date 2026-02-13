@@ -1,24 +1,16 @@
 'use client';
 
-import { Plus } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
-  Button,
   ClientOnly,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  useToast,
+  UnifiedSelect,
 } from '@/shared/ui';
 
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
@@ -35,15 +27,13 @@ import { useUiState } from '../context/UiContext';
 type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'docs';
 
 function AdminImageStudioPageContent(): React.JSX.Element {
-  const { toast } = useToast();
   const { handleRefreshSettings } = useSettingsActions();
   const { projectId, projectsQuery } = useProjectsState();
-  const { setProjectId, createProjectMutation } = useProjectsActions();
+  const { setProjectId } = useProjectsActions();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<StudioTab>('studio');
-  const [newProjectId, setNewProjectId] = useState('');
   const { isFocusMode } = useUiState();
   const { setIsMenuHidden } = useAdminLayout();
   const hideTopBar = activeTab === 'studio' && isFocusMode;
@@ -83,16 +73,10 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     router.replace(query ? `${pathname}?${query}` : pathname);
   }, [pathname, router, searchParams]);
 
-  const handleCreateProject = useCallback((): void => {
-    const id = newProjectId.trim();
-    if (!id) return;
-    void createProjectMutation.mutateAsync(id).then(() => {
-      setNewProjectId('');
-      setProjectId(id);
-    }).catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to create project', { variant: 'error' });
-    });
-  }, [createProjectMutation, newProjectId, setProjectId, toast]);
+  const projectSelectOptions = useMemo(
+    () => (projectsQuery.data ?? []).map((id: string) => ({ value: id, label: id })),
+    [projectsQuery.data]
+  );
 
   return (
     <div className='container mx-auto max-w-none flex min-h-[calc(100vh-4.25rem)] flex-col gap-3 py-3'>
@@ -113,46 +97,16 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='validation'>Validation</TabsTrigger>
                   <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
-                <div className='ml-auto flex w-full max-w-[620px] items-center gap-2'>
-                  <Input
-                    placeholder='New project ID...'
-                    value={newProjectId}
-                    onChange={(event) => setNewProjectId(event.target.value)}
-                    className='h-8 flex-1 min-w-[180px] text-xs bg-card'
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        handleCreateProject();
-                      }
-                    }}
+                <div className='ml-auto flex w-full max-w-[320px] items-center gap-2'>
+                  <UnifiedSelect
+                    className='w-full max-w-[320px]'
+                    value={projectId || undefined}
+                    onValueChange={(value: string) => setProjectId(value)}
+                    options={projectSelectOptions}
+                    placeholder={projectsQuery.isLoading ? 'Loading projects...' : 'Select project'}
+                    triggerClassName='h-8 bg-card text-xs'
+                    ariaLabel='Select project'
                   />
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='icon'
-                    className='size-8 bg-card'
-                    disabled={!newProjectId.trim() || createProjectMutation.isPending}
-                    onClick={handleCreateProject}
-                    title='Create project'
-                  >
-                    <Plus className='size-4' />
-                  </Button>
-                  <Select
-                    value={projectId || '__none__'}
-                    onValueChange={(value) => setProjectId(value === '__none__' ? '' : value)}
-                  >
-                    <SelectTrigger className='h-8 w-full max-w-[320px] bg-card'>
-                      <SelectValue placeholder={projectsQuery.isLoading ? 'Loading projects...' : 'Select project'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='__none__'>No project</SelectItem>
-                      {(projectsQuery.data ?? []).map((id) => (
-                        <SelectItem key={id} value={id}>
-                          {id}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             </div>

@@ -4,7 +4,7 @@ import { Upload, Loader2, Plus, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, FileUploadTrigger, Textarea, Checkbox, Tag, FormField, FormSection } from '@/shared/ui';
+import { Button, Input, FileUploadTrigger, Textarea, Checkbox, Tag, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { uploadAsset3DFile } from '../api';
@@ -261,9 +261,8 @@ export function Asset3DUploader({
                     <Tag
                       key={tag}
                       label={tag}
-                      onRemove={() => handleRemoveTag(tag)}
+                      onRemove={() => !isUploading && handleRemoveTag(tag)}
                       className='bg-gray-700 text-gray-300 border-none'
-                      disabled={isUploading}
                     />
                   ))}
                 </div>

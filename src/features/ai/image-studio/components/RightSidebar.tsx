@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Filter, GitBranch, Loader2, Pentagon, Play, Save, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Eye, Filter, GitBranch, Loader2, Pentagon, Play, SlidersHorizontal, Sparkles } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -14,10 +14,9 @@ import {
 import {
   VectorDrawingToolbar,
 } from '@/features/vector-drawing';
-import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  Button,
+  UnifiedButton,
   AppModal,
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +24,7 @@ import {
   Label,
   MultiSelect,
   SectionPanel,
-  Textarea,
+  UnifiedTextarea,
   UnifiedSelect,
   ValidatorFormatterToggle,
   useToast,
@@ -47,13 +46,6 @@ import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
-import {
-  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
-  type ImageStudioProjectSession,
-  getImageStudioProjectSessionKey,
-  serializeImageStudioActiveProject,
-  serializeImageStudioProjectSession,
-} from '../utils/project-session';
 import { buildRunRequestPreview } from '../utils/run-request-preview';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
@@ -120,23 +112,18 @@ export function RightSidebar(): React.JSX.Element {
     slots,
     compositeAssetIds,
     compositeAssetOptions,
-    selectedSlotId,
     workingSlotId,
-    selectedFolder,
-    previewMode,
   } = useSlotsState();
   const { setCompositeAssetIds, createSlots } = useSlotsActions();
-  const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
+  const { promptText, paramsState } = usePromptState();
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
   const { studioSettings } = useSettingsState();
   const { runMutation, isRunInFlight, activeRunStatus, runOutputs, generationHistory } = useGenerationState();
   const { handleRunGeneration } = useGenerationActions();
-  const { saveStudioSettings, setStudioSettings } = useSettingsActions();
-  const updateSettingsBulk = useUpdateSettingsBulk();
+  const { setStudioSettings } = useSettingsActions();
 
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
-  const [projectSaveBusy, setProjectSaveBusy] = useState(false);
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -230,14 +217,6 @@ export function RightSidebar(): React.JSX.Element {
     [requestPreview]
   );
 
-  const cloneSettingValue = <T,>(value: T): T => {
-    try {
-      return JSON.parse(JSON.stringify(value)) as T;
-    } catch {
-      return value;
-    }
-  };
-
   const preparePromptForExtraction = (): string => {
     const trimmedPrompt = promptText.trim();
     if (!trimmedPrompt) return promptText;
@@ -293,58 +272,6 @@ export function RightSidebar(): React.JSX.Element {
     setExtractReviewOpen(true);
   };
 
-  const handleSaveProject = (): void => {
-    if (!projectId.trim()) {
-      toast('Select a project first.', { variant: 'info' });
-      return;
-    }
-    const projectSessionKey = getImageStudioProjectSessionKey(projectId);
-    if (!projectSessionKey) {
-      toast('Invalid project id.', { variant: 'error' });
-      return;
-    }
-
-    const projectSession: ImageStudioProjectSession = {
-      version: 1,
-      projectId: projectId.trim(),
-      savedAt: new Date().toISOString(),
-      selectedFolder,
-      selectedSlotId,
-      workingSlotId,
-      compositeAssetIds: cloneSettingValue(compositeAssetIds),
-      previewMode,
-      promptText,
-      paramsState: cloneSettingValue(paramsState),
-      paramSpecs: cloneSettingValue((paramSpecs ?? null) as Record<string, unknown> | null),
-      paramUiOverrides: cloneSettingValue((paramUiOverrides ?? {}) as Record<string, unknown>),
-    };
-
-    if (projectSaveBusy) return;
-    setProjectSaveBusy(true);
-    void Promise.all([
-      saveStudioSettings({ silent: true }),
-      updateSettingsBulk.mutateAsync([
-        {
-          key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
-          value: serializeImageStudioActiveProject(projectId),
-        },
-        {
-          key: projectSessionKey,
-          value: serializeImageStudioProjectSession(projectSession),
-        },
-      ]),
-    ])
-      .then(() => {
-        toast(`Project "${projectId}" saved.`, { variant: 'success' });
-      })
-      .catch((error: unknown) => {
-        toast(error instanceof Error ? error.message : 'Failed to save project.', { variant: 'error' });
-      })
-      .finally(() => {
-        setProjectSaveBusy(false);
-      });
-  };
-
   return (
     <>
       <SectionPanel
@@ -357,31 +284,35 @@ export function RightSidebar(): React.JSX.Element {
       >
         {/* Tab toggle */}
         <div className='flex border-b border-border/40'>
-          <button
+          <UnifiedButton
             type='button'
+            variant='ghost'
+            size='sm'
             className={cn(
-              'flex-1 px-3 py-1.5 text-[11px] font-medium transition-colors',
+              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
               sidebarTab === 'controls'
-                ? 'border-b-2 border-blue-400 text-gray-200'
+                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
                 : 'text-gray-500 hover:text-gray-300'
             )}
             onClick={() => setSidebarTab('controls')}
           >
             Controls
-          </button>
-          <button
+          </UnifiedButton>
+          <UnifiedButton
             type='button'
+            variant='ghost'
+            size='sm'
             className={cn(
-              'flex-1 px-3 py-1.5 text-[11px] font-medium transition-colors',
+              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
               sidebarTab === 'graph'
-                ? 'border-b-2 border-blue-400 text-gray-200'
+                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
                 : 'text-gray-500 hover:text-gray-300'
             )}
             onClick={() => setSidebarTab('graph')}
           >
             <GitBranch className='mr-1 inline size-3' />
             Version Graph
-          </button>
+          </UnifiedButton>
         </div>
 
         {sidebarTab === 'graph' ? (
@@ -411,7 +342,7 @@ export function RightSidebar(): React.JSX.Element {
                     triggerClassName='h-8 text-xs'
                     ariaLabel='Quick generation model'
                   />
-                  <Button
+                  <UnifiedButton
                     onClick={handleRunGeneration}
                     disabled={!workingSlot || !promptText.trim() || generationBusy}
                     size='sm'
@@ -423,7 +354,7 @@ export function RightSidebar(): React.JSX.Element {
                       <Play className='mr-2 size-4' />
                     )}
                     {generationLabel}
-                  </Button>
+                  </UnifiedButton>
                 </div>
                 <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px]'>
                   <span className='rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'>
@@ -439,7 +370,7 @@ export function RightSidebar(): React.JSX.Element {
               </div>
 
               <div className='flex flex-wrap items-center justify-end gap-2'>
-                <Button
+                <UnifiedButton
                   variant='outline'
                   size='sm'
                   title='Open prompt controls'
@@ -448,8 +379,8 @@ export function RightSidebar(): React.JSX.Element {
                 >
                   <Sparkles className='mr-2 size-4' />
             Control Prompt
-                </Button>
-                <Button
+                </UnifiedButton>
+                <UnifiedButton
                   variant='outline'
                   size='sm'
                   title='Preview generation request payload and input images'
@@ -458,8 +389,8 @@ export function RightSidebar(): React.JSX.Element {
                 >
                   <Eye className='mr-2 size-4' />
             Preview Request
-                </Button>
-                <Button
+                </UnifiedButton>
+                <UnifiedButton
                   variant='outline'
                   size='sm'
                   title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
@@ -469,18 +400,7 @@ export function RightSidebar(): React.JSX.Element {
                 >
                   <SlidersHorizontal className='mr-2 size-4' />
               Controls
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  title='Save current Image Studio project state'
-                  aria-label='Save current Image Studio project state'
-                  disabled={projectSaveBusy || !projectId.trim()}
-                  onClick={handleSaveProject}
-                >
-                  {projectSaveBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Save className='mr-2 size-4' />}
-            Save Project
-                </Button>
+                </UnifiedButton>
               </div>
 
               <div className='rounded border border-border/60 bg-card/30 px-2 py-2'>
@@ -488,7 +408,7 @@ export function RightSidebar(): React.JSX.Element {
                 <div className='flex flex-wrap justify-end gap-2'>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
+                      <UnifiedButton
                         variant='outline'
                         size='sm'
                         title='Open tools popup'
@@ -496,7 +416,7 @@ export function RightSidebar(): React.JSX.Element {
                       >
                         <Pentagon className='mr-2 size-4' />
                     Tools
-                      </Button>
+                      </UnifiedButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align='end'
@@ -538,7 +458,7 @@ export function RightSidebar(): React.JSX.Element {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
+                      <UnifiedButton
                         variant='outline'
                         size='sm'
                         title='Open mask generation popup'
@@ -546,7 +466,7 @@ export function RightSidebar(): React.JSX.Element {
                       >
                         <Play className='mr-2 size-4' />
                     Mask Generation
-                      </Button>
+                      </UnifiedButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align='end'
@@ -559,7 +479,7 @@ export function RightSidebar(): React.JSX.Element {
 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button
+                      <UnifiedButton
                         variant='outline'
                         size='sm'
                         title='Open masking tools popup'
@@ -567,7 +487,7 @@ export function RightSidebar(): React.JSX.Element {
                       >
                         <Filter className='mr-2 size-4' />
                     Masking Tools
-                      </Button>
+                      </UnifiedButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align='end'
@@ -682,7 +602,7 @@ export function RightSidebar(): React.JSX.Element {
 
           <div className='space-y-2'>
             <Label className='text-xs text-gray-400'>Prompt</Label>
-            <Textarea
+            <UnifiedTextarea
               value={promptText}
               onChange={(event) => setPromptText(event.target.value)}
               className='h-44 font-mono text-[11px]'
@@ -704,14 +624,14 @@ export function RightSidebar(): React.JSX.Element {
           </div>
 
           <div className='flex items-center justify-end gap-2'>
-            <Button
+            <UnifiedButton
               variant='outline'
               size='sm'
               onClick={() => setPromptControlOpen(false)}
             >
               Close
-            </Button>
-            <Button
+            </UnifiedButton>
+            <UnifiedButton
               variant='outline'
               size='sm'
               title='Extract functions and selectors from prompt'
@@ -724,7 +644,7 @@ export function RightSidebar(): React.JSX.Element {
             >
               <Sparkles className='mr-2 size-4' />
               Extract
-            </Button>
+            </UnifiedButton>
           </div>
         </div>
       </AppModal>

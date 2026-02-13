@@ -1,17 +1,21 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   useCreateStudioProject,
   useDeleteStudioProject,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
-import { IMAGE_STUDIO_ACTIVE_PROJECT_KEY, parseImageStudioActiveProject } from '../utils/project-session';
+import {
+  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+  parseImageStudioActiveProject,
+  serializeImageStudioActiveProject,
+} from '../utils/project-session';
 
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 
@@ -45,9 +49,11 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
   const projectsQuery = useStudioProjects();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
+  const updateSetting = useUpdateSetting();
   const createProjectMutation = useCreateStudioProject();
   const deleteProjectMutation = useDeleteStudioProject();
   const heavyMap = heavySettings.data ?? new Map<string, string>();
+  const lastPersistedProjectRef = useRef<string | null>(null);
 
   const activeProjectId = useMemo(
     () => parseImageStudioActiveProject(heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)),
@@ -71,6 +77,27 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       setProjectId(preferred);
     }
   }, [projectId, projectsQuery.data, activeProjectId, heavySettings.isLoading]);
+
+  // Persist the active project immediately on selection change so refresh restores workflow.
+  useEffect(() => {
+    if (heavySettings.isLoading) return;
+    if (projectId === activeProjectId) {
+      lastPersistedProjectRef.current = projectId;
+      return;
+    }
+    if (lastPersistedProjectRef.current === projectId) return;
+
+    lastPersistedProjectRef.current = projectId;
+    void updateSetting.mutateAsync({
+      key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+      value: serializeImageStudioActiveProject(projectId),
+    }).catch(() => {
+      // Allow retry on next render/change if persistence fails.
+      if (lastPersistedProjectRef.current === projectId) {
+        lastPersistedProjectRef.current = null;
+      }
+    });
+  }, [activeProjectId, heavySettings.isLoading, projectId, updateSetting]);
 
   const handleDeleteProject = useCallback(async (id: string): Promise<void> => {
     if (!window.confirm(`Delete project "${id}" and all its slots?`)) return;

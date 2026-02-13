@@ -8,7 +8,7 @@ import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries
 import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/features/products/types';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
-import { Button, Label, UnifiedSelect, Input, useToast, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
+import { Button, UnifiedSelect, Input, useToast, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',

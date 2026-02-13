@@ -1,9 +1,8 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { logClientError } from '@/features/observability';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
@@ -51,39 +50,6 @@ async function updateUserPreference(
   await api.patch('/api/user/preferences', payload);
 }
 
-function getLocalStorageFallback(): Partial<ProductListPreferences> {
-  if (typeof window === 'undefined') return {};
-
-  const storedLocale = window.localStorage.getItem('productListNameLocale');
-  const storedCatalogFilter = window.localStorage.getItem(
-    'productListCatalogFilter',
-  );
-  const storedCurrencyCode = window.localStorage.getItem(
-    'productListCurrencyCode',
-  );
-  const storedPageSize = window.localStorage.getItem('productListPageSize');
-  const storedThumbnailSource = window.localStorage.getItem(
-    'productListThumbnailSource',
-  );
-
-  return {
-    ...(storedLocale === 'name_en' ||
-    storedLocale === 'name_pl' ||
-    storedLocale === 'name_de'
-      ? { nameLocale: storedLocale }
-      : {}),
-    ...(storedCatalogFilter ? { catalogFilter: storedCatalogFilter } : {}),
-    ...(storedCurrencyCode ? { currencyCode: storedCurrencyCode } : {}),
-    ...(storedPageSize && !Number.isNaN(Number(storedPageSize))
-      ? { pageSize: Number(storedPageSize) }
-      : {}),
-    ...(storedThumbnailSource === 'file' ||
-    storedThumbnailSource === 'link' ||
-    storedThumbnailSource === 'base64'
-      ? { thumbnailSource: storedThumbnailSource }
-      : {}),
-  };
-}
 
 function updateLocalStorage(
   key: keyof ProductListPreferences,
@@ -106,54 +72,81 @@ async function updateUserPreferences(
 
 export function useUpdateUserPreferencesMutation(): UseMutationResult<void, Error, Partial<ProductListPreferences>> {
   const queryClient = useQueryClient();
-  const offlineMutation = useOfflineMutation(
+  return useOfflineMutation(
+    updateUserPreferences,
     {
-      mutationFn: updateUserPreferences,
-      onSuccess: () => {
+      queryKey: userPreferencesQueryKey,
+      onQueued: () => {
+        // Handle queued state
+      },
+      onProcessed: () => {
         void invalidateUserPreferences(queryClient);
       },
-      onError: (error) => {
-        logClientError(error, {
-          context: { source: 'useUpdateUserPreferencesMutation', action: 'updatePreferences' },
-        });
-      },
-    },
-    {
-      cacheKey: 'productListPreferences',
-      retryDelay: 5000,
-    },
-  );
-
-  return useMutation({
-    mutationFn: offlineMutation.mutationFn as (data: Partial<ProductListPreferences>) => Promise<void>,
-    onSuccess: offlineMutation.options?.onSuccess,
-    onError: offlineMutation.options?.onError,
-  });
+      errorMessage: 'Failed to update preferences',
+    }
+  ) as UseMutationResult<void, Error, Partial<ProductListPreferences>>;
 }
 
-export interface UserPreferencesHookResult extends UseQueryResult<ProductListPreferences> {
-  updatePreference: (key: keyof ProductListPreferences, value: unknown) => Promise<void>;
+export interface UserPreferencesHookResult {
+  preferences: ProductListPreferences;
+  loading: boolean;
+  setNameLocale: (locale: 'name_en' | 'name_pl' | 'name_de') => Promise<void>;
+  setCatalogFilter: (filter: string) => Promise<void>;
+  setCurrencyCode: (code: string) => Promise<void>;
+  setPageSize: (size: number) => Promise<void>;
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {
-  const query = useQuery({
+  const queryClient = useQueryClient();
+  const { data = DEFAULT_PREFERENCES, isLoading } = useQuery({
     queryKey: [userPreferencesQueryKey],
     queryFn: fetchUserPreferences,
     staleTime: 1000 * 60 * 60,
     placeholderData: DEFAULT_PREFERENCES,
   });
 
-  const updatePreference = useCallback(
-    async (key: keyof ProductListPreferences, value: unknown) => {
-      await updateUserPreference(key, value);
-      updateLocalStorage(key, value);
-      await invalidateUserPreferences(useQueryClient());
+  const setNameLocale = useCallback(
+    async (locale: 'name_en' | 'name_pl' | 'name_de') => {
+      await updateUserPreference('nameLocale', locale);
+      updateLocalStorage('nameLocale', locale);
+      invalidateUserPreferences(queryClient);
     },
-    [],
+    [queryClient],
+  );
+
+  const setCatalogFilter = useCallback(
+    async (filter: string) => {
+      await updateUserPreference('catalogFilter', filter);
+      updateLocalStorage('catalogFilter', filter);
+      invalidateUserPreferences(queryClient);
+    },
+    [queryClient],
+  );
+
+  const setCurrencyCode = useCallback(
+    async (code: string) => {
+      await updateUserPreference('currencyCode', code);
+      updateLocalStorage('currencyCode', code);
+      invalidateUserPreferences(queryClient);
+    },
+    [queryClient],
+  );
+
+  const setPageSize = useCallback(
+    async (size: number) => {
+      await updateUserPreference('pageSize', size);
+      updateLocalStorage('pageSize', size);
+      invalidateUserPreferences(queryClient);
+    },
+    [queryClient],
   );
 
   return {
-    ...query,
-    updatePreference,
+    preferences: data,
+    loading: isLoading,
+    setNameLocale,
+    setCatalogFilter,
+    setCurrencyCode,
+    setPageSize,
   };
 }

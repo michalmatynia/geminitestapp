@@ -15,21 +15,16 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  Button,
-  Input,
+  UnifiedButton,
+  UnifiedInput,
   Label,
   SectionHeader,
   SectionPanel,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  Textarea,
+  UnifiedTextarea,
   UnifiedSelect,
   useToast,
 } from '@/shared/ui';
@@ -76,6 +71,29 @@ type CardBackfillResponse = {
 };
 
 type StudioSettingsTab = 'pipeline' | 'prompt' | 'generation' | 'validation' | 'maintenance';
+
+const PROMPT_EXTRACTION_MODE_OPTIONS = [
+  { value: 'programmatic', label: 'Programmatic' },
+  { value: 'gpt', label: 'GPT (AI)' },
+  { value: 'hybrid', label: 'Hybrid (Auto Fallback)' },
+];
+
+const UI_EXTRACTOR_MODE_OPTIONS = [
+  { value: 'heuristic', label: 'Heuristic' },
+  { value: 'ai', label: 'AI' },
+  { value: 'both', label: 'Both' },
+];
+
+const BACKFILL_EXECUTION_MODE_OPTIONS = [
+  { value: 'dry', label: 'Dry-run (no writes)' },
+  { value: 'write', label: 'Write updates' },
+];
+
+const MODERATION_OPTIONS = [
+  { value: '__null__', label: 'Default' },
+  { value: 'auto', label: 'auto' },
+  { value: 'low', label: 'low' },
+];
 
 export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: boolean | undefined } = {}): React.JSX.Element {
   const { toast } = useToast();
@@ -439,6 +457,34 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     if (modelCapabilities.formatOptions.includes(value)) return value;
     return modelCapabilities.formatOptions[0] ?? 'png';
   }, [modelCapabilities.formatOptions, studioSettings.targetAi.openai.image.format]);
+  const modelAwareSizeOptions = useMemo(
+    () => ([
+      { value: '__null__', label: 'Default' },
+      ...modelCapabilities.sizeOptions.map((option: string) => ({ value: option, label: option })),
+    ]),
+    [modelCapabilities.sizeOptions]
+  );
+  const modelAwareQualityOptions = useMemo(
+    () => ([
+      { value: '__null__', label: 'Default' },
+      ...modelCapabilities.qualityOptions.map((option: string) => ({ value: option, label: option })),
+    ]),
+    [modelCapabilities.qualityOptions]
+  );
+  const modelAwareBackgroundOptions = useMemo(
+    () => ([
+      { value: '__null__', label: 'Default' },
+      ...modelCapabilities.backgroundOptions.map((option: string) => ({
+        value: option,
+        label: option === 'white' ? 'white (legacy)' : option,
+      })),
+    ]),
+    [modelCapabilities.backgroundOptions]
+  );
+  const modelAwareFormatOptions = useMemo(
+    () => modelCapabilities.formatOptions.map((option: string) => ({ value: option, label: option })),
+    [modelCapabilities.formatOptions]
+  );
 
   return (
     <div className={cn('space-y-4', embedded ? '' : 'container mx-auto max-w-5xl py-6')}>
@@ -449,14 +495,14 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
         actions={
           <>
             {!embedded ? (
-              <Button type='button' variant='outline' asChild>
+              <UnifiedButton type='button' variant='outline' asChild>
                 <Link href='/admin/image-studio'>Back to Studio</Link>
-              </Button>
+              </UnifiedButton>
             ) : null}
-            <Button type='button' variant='outline' asChild>
+            <UnifiedButton type='button' variant='outline' asChild>
               <Link href='/admin/validator'>Global Validation Patterns</Link>
-            </Button>
-            <Button
+            </UnifiedButton>
+            <UnifiedButton
               type='button'
               variant='outline'
               onClick={() => { void handleRefresh(); }}
@@ -465,7 +511,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
             >
               <RefreshCcw className={cn('mr-2 size-4', settingsStore.isFetching ? 'animate-spin' : '')} />
               Refresh
-            </Button>
+            </UnifiedButton>
           </>
         }
       />
@@ -474,21 +520,21 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='text-xs text-gray-300'>Studio Settings</div>
           <div className='flex items-center gap-2'>
-            <Button
+            <UnifiedButton
               variant='outline'
               size='sm'
               onClick={resetStudioSettings}
               disabled={updateSetting.isPending}
             >
               Reset
-            </Button>
-            <Button
+            </UnifiedButton>
+            <UnifiedButton
               size='sm'
               onClick={() => { saveStudioSettings().catch(() => {}); }}
               disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
             >
               {updateSetting.isPending ? 'Saving...' : 'Save'}
-            </Button>
+            </UnifiedButton>
           </div>
         </div>
 
@@ -553,7 +599,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Mode</div>
-                  <Select
+                  <UnifiedSelect
                     value={studioSettings.promptExtraction.mode}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -564,20 +610,14 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                         },
                       }))
                     }
-                  >
-                    <SelectTrigger className='h-8'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='programmatic'>Programmatic</SelectItem>
-                      <SelectItem value='gpt'>GPT (AI)</SelectItem>
-                      <SelectItem value='hybrid'>Hybrid (Auto Fallback)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    options={PROMPT_EXTRACTION_MODE_OPTIONS}
+                    triggerClassName='h-8'
+                    ariaLabel='Prompt extraction mode'
+                  />
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Model</div>
-                  <Input
+                  <UnifiedInput
                     value={studioSettings.promptExtraction.gpt.model}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -597,7 +637,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Temperature</div>
-                  <Input
+                  <UnifiedInput
                     type='number'
                     value={studioSettings.promptExtraction.gpt.temperature ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -620,7 +660,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Top P</div>
-                  <Input
+                  <UnifiedInput
                     type='number'
                     value={studioSettings.promptExtraction.gpt.top_p ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -646,7 +686,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Max Output Tokens</div>
-                  <Input
+                  <UnifiedInput
                     type='number'
                     value={studioSettings.promptExtraction.gpt.max_output_tokens ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -728,7 +768,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Mode</div>
-                  <Select
+                  <UnifiedSelect
                     value={studioSettings.uiExtractor.mode}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -739,20 +779,14 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                         },
                       }))
                     }
-                  >
-                    <SelectTrigger className='h-8'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='heuristic'>Heuristic</SelectItem>
-                      <SelectItem value='ai'>AI</SelectItem>
-                      <SelectItem value='both'>Both</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    options={UI_EXTRACTOR_MODE_OPTIONS}
+                    triggerClassName='h-8'
+                    ariaLabel='UI extractor mode'
+                  />
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Model</div>
-                  <Input
+                  <UnifiedInput
                     value={studioSettings.uiExtractor.model}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -771,7 +805,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Temperature</div>
-                  <Input
+                  <UnifiedInput
                     type='number'
                     value={studioSettings.uiExtractor.temperature ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -794,7 +828,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Max Output Tokens</div>
-                  <Input
+                  <UnifiedInput
                     type='number'
                     value={studioSettings.uiExtractor.max_output_tokens ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -845,7 +879,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                   triggerClassName='h-8 text-xs'
                   ariaLabel='Generation model'
                 />
-                <Button
+                <UnifiedButton
                   type='button'
                   variant='outline'
                   size='sm'
@@ -853,7 +887,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                   disabled={imageModelsQuery.isFetching}
                 >
                   {imageModelsQuery.isFetching ? 'Refreshing…' : 'Refresh Models'}
-                </Button>
+                </UnifiedButton>
               </div>
               <div className='rounded border border-border/60 bg-card/40 p-2'>
                 <div className='mb-2 text-[11px] text-gray-500'>Quick-switch model list</div>
@@ -869,7 +903,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                     disabled={addableGenerationModelOptions.length === 0}
                     ariaLabel='Add model to quick-switch list'
                   />
-                  <Button
+                  <UnifiedButton
                     type='button'
                     variant='outline'
                     size='sm'
@@ -893,7 +927,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                     }}
                   >
                     Add Model
-                  </Button>
+                  </UnifiedButton>
                 </div>
                 <div className='mt-2 flex flex-wrap gap-2'>
                   {quickSwitchModels.map((modelId) => {
@@ -908,9 +942,11 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                             : 'border-border/60 bg-card/30 text-gray-300'
                         )}
                       >
-                        <button
+                        <UnifiedButton
                           type='button'
-                          className='hover:underline'
+                          variant='ghost'
+                          size='sm'
+                          className='h-auto rounded-none border-0 bg-transparent p-0 text-[11px] hover:bg-transparent hover:underline'
                           onClick={() =>
                             setStudioSettings((prev: ImageStudioSettings) => ({
                               ...prev,
@@ -926,10 +962,12 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                           }
                         >
                           {modelId}
-                        </button>
-                        <button
+                        </UnifiedButton>
+                        <UnifiedButton
                           type='button'
-                          className='text-gray-400 hover:text-red-300'
+                          variant='ghost'
+                          size='sm'
+                          className='h-auto rounded-none border-0 bg-transparent p-0 text-[11px] text-gray-400 hover:bg-transparent hover:text-red-300'
                           title='Remove from quick-switch list'
                           onClick={() =>
                             setStudioSettings((prev: ImageStudioSettings) => {
@@ -955,7 +993,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                           }
                         >
                           Remove
-                        </button>
+                        </UnifiedButton>
                       </div>
                     );
                   })}
@@ -982,7 +1020,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
             <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
               <div className='space-y-1'>
                 <div className='text-[11px] text-gray-500'>OpenAI API Key</div>
-                <Input
+                <UnifiedInput
                   type='password'
                   value={imageStudioApiKey}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageStudioApiKey(e.target.value)}
@@ -997,7 +1035,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               {modelCapabilities.supportsUser ? (
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>User (optional)</div>
-                  <Input
+                  <UnifiedInput
                     value={studioSettings.targetAi.openai.user ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1023,7 +1061,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Size</div>
-                  <Select
+                  <UnifiedSelect
                     value={modelAwareSizeValue}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1040,23 +1078,14 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                         },
                       }))
                     }
-                  >
-                    <SelectTrigger className='h-8'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='__null__'>Default</SelectItem>
-                      {modelCapabilities.sizeOptions.map((option: string) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={modelAwareSizeOptions}
+                    triggerClassName='h-8'
+                    ariaLabel='Image size'
+                  />
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Quality</div>
-                  <Select
+                  <UnifiedSelect
                     value={modelAwareQualityValue}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1075,26 +1104,17 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                         },
                       }))
                     }
-                  >
-                    <SelectTrigger className='h-8'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='__null__'>Default</SelectItem>
-                      {modelCapabilities.qualityOptions.map((option: string) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={modelAwareQualityOptions}
+                    triggerClassName='h-8'
+                    ariaLabel='Image quality'
+                  />
                 </div>
               </div>
 
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Background</div>
-                  <Select
+                  <UnifiedSelect
                     value={modelAwareBackgroundValue}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1113,24 +1133,15 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                         },
                       }))
                     }
-                  >
-                    <SelectTrigger className='h-8'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='__null__'>Default</SelectItem>
-                      {modelCapabilities.backgroundOptions.map((option: string) => (
-                        <SelectItem key={option} value={option}>
-                          {option === 'white' ? 'white (legacy)' : option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    options={modelAwareBackgroundOptions}
+                    triggerClassName='h-8'
+                    ariaLabel='Image background'
+                  />
                 </div>
                 {modelCapabilities.supportsOutputFormat ? (
                   <div className='space-y-1'>
                     <div className='text-[11px] text-gray-500'>Format</div>
-                    <Select
+                    <UnifiedSelect
                       value={modelAwareFormatValue}
                       onValueChange={(value: string) =>
                         setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1147,24 +1158,16 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                           },
                         }))
                       }
-                    >
-                      <SelectTrigger className='h-8'>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {modelCapabilities.formatOptions.map((option: string) => (
-                          <SelectItem key={option} value={option}>
-                            {option}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={modelAwareFormatOptions}
+                      triggerClassName='h-8'
+                      ariaLabel='Image format'
+                    />
                   </div>
                 ) : null}
                 {modelCapabilities.supportsCount ? (
                   <div className='space-y-1'>
                     <div className='text-[11px] text-gray-500'>N</div>
-                    <Input
+                    <UnifiedInput
                       type='number'
                       value={studioSettings.targetAi.openai.image.n ?? ''}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1196,7 +1199,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                   {modelCapabilities.supportsModeration ? (
                     <div className='space-y-1'>
                       <div className='text-[11px] text-gray-500'>Moderation</div>
-                      <Select
+                      <UnifiedSelect
                         value={studioSettings.targetAi.openai.image.moderation ?? '__null__'}
                         onValueChange={(value: string) =>
                           setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1215,23 +1218,17 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                             },
                           }))
                         }
-                      >
-                        <SelectTrigger className='h-8'>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='__null__'>Default</SelectItem>
-                          <SelectItem value='auto'>auto</SelectItem>
-                          <SelectItem value='low'>low</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        options={MODERATION_OPTIONS}
+                        triggerClassName='h-8'
+                        ariaLabel='Moderation level'
+                      />
                     </div>
                   ) : null}
 
                   {modelCapabilities.supportsOutputCompression ? (
                     <div className='space-y-1'>
                       <div className='text-[11px] text-gray-500'>Output Compression</div>
-                      <Input
+                      <UnifiedInput
                         type='number'
                         value={studioSettings.targetAi.openai.image.output_compression ?? ''}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1263,7 +1260,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
                   {modelCapabilities.supportsPartialImages ? (
                     <div className='space-y-1'>
                       <div className='text-[11px] text-gray-500'>Partial Images</div>
-                      <Input
+                      <UnifiedInput
                         type='number'
                         value={studioSettings.targetAi.openai.image.partial_images ?? ''}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1320,7 +1317,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
 
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Advanced Overrides (JSON)</div>
-              <Textarea
+              <UnifiedTextarea
                 value={advancedOverridesText}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
                 className='h-28 font-mono text-[11px]'
@@ -1349,7 +1346,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
             <div className='text-[11px] text-gray-500'>
               Validates programmatic prompts and suggests fixes when patterns look almost correct. Auto format uses each rule’s <span className='text-gray-300'>autofix</span> operations.
             </div>
-            <Textarea
+            <UnifiedTextarea
               value={promptValidationRulesText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handlePromptValidationRulesChange(e.target.value)}
               className='h-56 font-mono text-[11px]'
@@ -1363,14 +1360,14 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
           <TabsContent value='maintenance' className='mt-4 space-y-3'>
             <div className='flex flex-wrap items-center justify-between gap-2'>
               <div className='text-xs text-gray-300'>Card Metadata Backfill</div>
-              <Button
+              <UnifiedButton
                 type='button'
                 size='sm'
                 onClick={() => { void runCardBackfill(); }}
                 disabled={backfillRunning}
               >
                 {backfillRunning ? 'Running...' : backfillDryRun ? 'Run Dry-Run' : 'Run Backfill'}
-              </Button>
+              </UnifiedButton>
             </div>
 
             <div className='text-[11px] text-gray-500'>
@@ -1381,7 +1378,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
             <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Project ID (optional)</Label>
-                <Input
+                <UnifiedInput
                   value={backfillProjectId}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => setBackfillProjectId(event.target.value)}
                   className='h-8'
@@ -1390,18 +1387,13 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
               </div>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Execution Mode</Label>
-                <Select
+                <UnifiedSelect
                   value={backfillDryRun ? 'dry' : 'write'}
                   onValueChange={(value: string) => setBackfillDryRun(value !== 'write')}
-                >
-                  <SelectTrigger className='h-8'>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='dry'>Dry-run (no writes)</SelectItem>
-                    <SelectItem value='write'>Write updates</SelectItem>
-                  </SelectContent>
-                </Select>
+                  options={BACKFILL_EXECUTION_MODE_OPTIONS}
+                  triggerClassName='h-8'
+                  ariaLabel='Backfill execution mode'
+                />
               </div>
             </div>
 

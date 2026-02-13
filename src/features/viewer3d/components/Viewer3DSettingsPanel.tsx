@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button, Label, UnifiedSelect, Input, SectionPanel, FormSection, FormField, Checkbox } from '@/shared/ui';
+import { Button, UnifiedSelect, Input, FormSection, FormField, Checkbox } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useViewer3D, orderedDitheringPresets, type OrderedDitheringPresetKey } from '../context/Viewer3DContext';

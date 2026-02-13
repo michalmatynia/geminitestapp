@@ -4,14 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
-  Button,
-  Input,
+  UnifiedButton,
+  UnifiedInput,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  UnifiedSelect,
   useToast,
 } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -50,6 +46,13 @@ export function UIPresetsPanel(): React.JSX.Element {
   const activePreset = useMemo(
     () => uiPresets.find((preset: ImageStudioUiPreset) => preset.id === activePresetId) ?? null,
     [uiPresets, activePresetId]
+  );
+  const presetOptions = useMemo(
+    () => ([
+      { value: '__none__', label: 'Choose preset' },
+      ...uiPresets.map((preset: ImageStudioUiPreset) => ({ value: preset.id, label: preset.name })),
+    ]),
+    [uiPresets]
   );
 
   useEffect(() => {
@@ -162,23 +165,15 @@ export function UIPresetsPanel(): React.JSX.Element {
         </span>
       </div>
       <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_120px]'>
-        <Select
+        <UnifiedSelect
           value={selectedPresetId || '__none__'}
           onValueChange={(value: string) => setSelectedPresetId(value === '__none__' ? '' : value)}
-        >
-          <SelectTrigger className='h-8 text-xs'>
-            <SelectValue placeholder='Choose preset' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='__none__'>Choose preset</SelectItem>
-            {uiPresets.map((preset: ImageStudioUiPreset) => (
-              <SelectItem key={preset.id} value={preset.id}>
-                {preset.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button
+          options={presetOptions}
+          placeholder='Choose preset'
+          triggerClassName='h-8 text-xs'
+          ariaLabel='Choose UI preset'
+        />
+        <UnifiedButton
           type='button'
           variant='outline'
           size='sm'
@@ -189,16 +184,16 @@ export function UIPresetsPanel(): React.JSX.Element {
           disabled={!selectedPresetId}
         >
           Apply
-        </Button>
+        </UnifiedButton>
       </div>
       <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
-        <Input
+        <UnifiedInput
           value={uiPresetNameDraft}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUiPresetNameDraft(event.target.value)}
           placeholder='Preset name'
           className='h-8 text-xs'
         />
-        <Input
+        <UnifiedInput
           value={uiPresetDescriptionDraft}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUiPresetDescriptionDraft(event.target.value)}
           placeholder='Description (optional)'
@@ -206,7 +201,7 @@ export function UIPresetsPanel(): React.JSX.Element {
         />
       </div>
       <div className='flex flex-wrap items-center gap-2'>
-        <Button
+        <UnifiedButton
           type='button'
           variant='outline'
           size='sm'
@@ -214,8 +209,8 @@ export function UIPresetsPanel(): React.JSX.Element {
           disabled={updateSetting.isPending}
         >
           {selectedPresetId ? 'Update Preset' : 'Save Preset'}
-        </Button>
-        <Button
+        </UnifiedButton>
+        <UnifiedButton
           type='button'
           variant='outline'
           size='sm'
@@ -230,8 +225,8 @@ export function UIPresetsPanel(): React.JSX.Element {
           disabled={!selectedPresetId || updateSetting.isPending}
         >
           Set Active
-        </Button>
-        <Button
+        </UnifiedButton>
+        <UnifiedButton
           type='button'
           variant='ghost'
           size='sm'
@@ -239,7 +234,7 @@ export function UIPresetsPanel(): React.JSX.Element {
           disabled={!selectedPresetId || updateSetting.isPending}
         >
           Delete
-        </Button>
+        </UnifiedButton>
       </div>
     </div>
   );

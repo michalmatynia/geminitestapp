@@ -27,10 +27,10 @@ function AdminPromptEngineValidationPatternsContent({
 }: Omit<AdminPromptEngineValidationPatternsPageProps, 'onSaved'>): React.JSX.Element {
   const { promptEngineSettings, saveError } = usePromptEngine();
   const pageChrome = React.useMemo(() => ({
-    embedded,
-    eyebrow,
-    backLinkHref,
-    backLinkLabel,
+    ...(embedded !== undefined && { embedded }),
+    ...(eyebrow !== undefined && { eyebrow }),
+    ...(backLinkHref !== undefined && { backLinkHref }),
+    ...(backLinkLabel !== undefined && { backLinkLabel }),
   }), [backLinkHref, backLinkLabel, embedded, eyebrow]);
 
   return (

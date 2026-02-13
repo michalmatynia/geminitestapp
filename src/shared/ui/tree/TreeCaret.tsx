@@ -63,6 +63,10 @@ export function TreeCaret({
         event.stopPropagation();
         onToggle(event);
       }}
+      onDoubleClick={(event: React.MouseEvent): void => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
       onMouseDown={(event: React.MouseEvent): void => event.stopPropagation()}
       onKeyDown={(event: React.KeyboardEvent): void => {
         if (event.key === 'Enter' || event.key === ' ') {

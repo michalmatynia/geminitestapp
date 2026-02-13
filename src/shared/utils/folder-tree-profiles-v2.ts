@@ -19,6 +19,9 @@ export type FolderTreePlaceholderStyle = (typeof folderTreePlaceholderStyleValue
 export const folderTreePlaceholderEmphasisValues = ['subtle', 'balanced', 'bold'] as const;
 export type FolderTreePlaceholderEmphasis = (typeof folderTreePlaceholderEmphasisValues)[number];
 
+export const folderTreeSelectionBehaviorValues = ['click_away', 'toggle_only'] as const;
+export type FolderTreeSelectionBehavior = (typeof folderTreeSelectionBehaviorValues)[number];
+
 export const folderTreeIconSlotValues = [
   'folderClosed',
   'folderOpen',
@@ -54,6 +57,9 @@ export type FolderTreeProfileV2 = {
     blockedTargetKinds: string[];
     rules: FolderTreeNestingRuleV2[];
   };
+  interactions: {
+    selectionBehavior: FolderTreeSelectionBehavior;
+  };
 };
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
@@ -70,6 +76,7 @@ export type CanNestTreeNodeV2Input = {
 const placeholderPresetSchema = z.enum(folderTreePlaceholderPresetValues);
 const placeholderStyleSchema = z.enum(folderTreePlaceholderStyleValues);
 const placeholderEmphasisSchema = z.enum(folderTreePlaceholderEmphasisValues);
+const selectionBehaviorSchema = z.enum(folderTreeSelectionBehaviorValues);
 const nodeTypeSchema = z.enum(['folder', 'file']);
 const targetTypeSchema = z.enum(['folder', 'root']);
 const iconSlotSchema = z.string().trim().min(1).nullable();
@@ -142,6 +149,14 @@ const profileV2Schema: z.ZodType<FolderTreeProfileV2> = z.object({
       blockedTargetKinds: [],
       rules: [],
     }),
+  interactions: z
+    .object({
+      selectionBehavior: selectionBehaviorSchema.optional().default('click_away'),
+    })
+    .optional()
+    .default({
+      selectionBehavior: 'click_away',
+    }),
 });
 
 const normalizeKindList = (values: string[] | null | undefined, fallback: string[]): string[] => {
@@ -172,6 +187,9 @@ const cloneProfileV2 = (profile: FolderTreeProfileV2): FolderTreeProfileV2 => ({
       targetKinds: [...rule.targetKinds],
       allow: rule.allow,
     })),
+  },
+  interactions: {
+    selectionBehavior: profile.interactions.selectionBehavior,
   },
 });
 
@@ -229,6 +247,9 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
         },
       ],
     },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
   },
   image_studio: {
     version: 2,
@@ -243,11 +264,13 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       slots: {
         folderClosed: 'Folder',
         folderOpen: 'FolderOpen',
-        file: 'Image',
+        file: 'LayoutGrid',
         root: 'Folder',
         dragHandle: 'GripVertical',
       },
-      byKind: {},
+      byKind: {
+        card: 'LayoutGrid',
+      },
     },
     nesting: {
       defaultAllow: false,
@@ -282,6 +305,9 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
           allow: true,
         },
       ],
+    },
+    interactions: {
+      selectionBehavior: 'toggle_only',
     },
   },
   product_categories: {
@@ -337,6 +363,9 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
         },
       ],
     },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
   },
   cms_page_builder: {
     version: 2,
@@ -391,6 +420,9 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
         },
       ],
     },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
   },
 };
 
@@ -419,6 +451,11 @@ const coerceProfileV2 = (candidate: unknown, fallback: FolderTreeProfileV2): Fol
   if (!parsed.success) {
     return cloneProfileV2(fallback);
   }
+  const sourceRecord =
+    candidate && typeof candidate === 'object' && !Array.isArray(candidate)
+      ? (candidate as Record<string, unknown>)
+      : null;
+  const hasInteractionSettings = Boolean(sourceRecord && 'interactions' in sourceRecord);
 
   return {
     version: 2,
@@ -449,6 +486,11 @@ const coerceProfileV2 = (candidate: unknown, fallback: FolderTreeProfileV2): Fol
         targetKinds: normalizeKindList(rule.targetKinds, ['*']),
         allow: rule.allow,
       })),
+    },
+    interactions: {
+      selectionBehavior: hasInteractionSettings
+        ? parsed.data.interactions.selectionBehavior
+        : fallback.interactions.selectionBehavior,
     },
   };
 };

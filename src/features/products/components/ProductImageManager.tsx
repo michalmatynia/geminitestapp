@@ -474,7 +474,7 @@ export default function ProductImageManager({
         </Alert>
       ) : null}
 
-      <div className={minimalUi ? 'ml-auto grid w-fit grid-cols-2 gap-2 justify-end' : 'grid grid-cols-5 gap-2'}>
+      <div className={minimalUi ? 'grid w-full grid-cols-2 justify-items-start gap-2 overflow-x-hidden' : 'grid grid-cols-5 gap-2'}>
         {imageSlots.map((slot: ProductImageSlot | null, index: number) => {
           const isDragging = draggedIndex === index;
           const isDragOver = dragOverIndex === index;

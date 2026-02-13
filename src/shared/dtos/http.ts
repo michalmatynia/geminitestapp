@@ -33,4 +33,9 @@ export interface PaginatedResponseDto<T> {
   limit?: number;
 }
 
-export type LegacyPaginatedResponseDto<T> = PaginatedResponseDto<T>;
+export interface LegacyPaginatedResponseDto<T> {
+  data: T[];
+  total?: number;
+  page?: number;
+  limit?: number;
+}

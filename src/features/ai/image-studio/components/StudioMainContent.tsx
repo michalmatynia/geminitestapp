@@ -17,7 +17,7 @@ export function StudioMainContent(): React.JSX.Element {
           'grid h-full min-h-0 flex-1 items-stretch overflow-hidden transition-[grid-template-columns] duration-300 ease-in-out',
           isFocusMode
             ? 'grid-cols-[0px_1fr_0px] gap-0'
-            : 'grid-cols-[300px_1fr_420px] gap-4'
+            : 'grid-cols-[340px_1fr_420px] gap-4'
         )}
       >
         <div className='min-h-0 h-full overflow-hidden'>

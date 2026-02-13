@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, SectionPanel, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, useToast } from '@/shared/ui';
+import { UnifiedButton, Label, SectionPanel, UnifiedTextarea, UnifiedSelect, useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { IMAGE_STUDIO_UI_ACTIVE_KEY, IMAGE_STUDIO_UI_PRESETS_KEY, parseImageStudioUiPresets, type ImageStudioUiPreset } from '../utils/ui-presets';
@@ -67,6 +67,13 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
 
   const empty = presets.length === 0;
   const activePreset = presets.find((preset: ImageStudioUiPreset) => preset.id === activeId) ?? null;
+  const activePresetOptions = useMemo(
+    () => ([
+      { value: '__none__', label: 'Select an active preset' },
+      ...presets.map((preset: ImageStudioUiPreset) => ({ value: preset.id, label: preset.name })),
+    ]),
+    [presets]
+  );
 
   return (
     <div className='container mx-auto max-w-5xl py-6'>
@@ -88,25 +95,18 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
       <SectionPanel variant='subtle' className='space-y-4'>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Active UI preset</Label>
-          <Select
+          <UnifiedSelect
             value={activeId || '__none__'}
             onValueChange={(value: string) => {
               if (value === '__none__') return;
               void handleSetActive(value);
             }}
-          >
-            <SelectTrigger className='h-9 max-w-md'>
-              <SelectValue placeholder='Select an active preset' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='__none__'>Select an active preset</SelectItem>
-              {presets.map((preset: ImageStudioUiPreset) => (
-                <SelectItem key={preset.id} value={preset.id}>
-                  {preset.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={activePresetOptions}
+            className='max-w-md'
+            placeholder='Select an active preset'
+            triggerClassName='h-9'
+            ariaLabel='Active UI preset'
+          />
           {activePreset ? (
             <div className='text-[11px] text-gray-500'>
               Active: <span className='text-gray-300'>{activePreset.name}</span>
@@ -134,21 +134,21 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
                     <div className='text-[11px] text-gray-500'>Updated: {preset.updatedAt}</div>
                   </div>
                   <div className='flex flex-col gap-2'>
-                    <Button
+                    <UnifiedButton
                       size='sm'
                       variant={activeId === preset.id ? 'default' : 'outline'}
                       onClick={() => void handleSetActive(preset.id)}
                     >
                       {activeId === preset.id ? 'Active' : 'Set active'}
-                    </Button>
-                    <Button size='sm' variant='outline' onClick={() => void handleDelete(preset.id)}>
+                    </UnifiedButton>
+                    <UnifiedButton size='sm' variant='outline' onClick={() => void handleDelete(preset.id)}>
                       Delete
-                    </Button>
+                    </UnifiedButton>
                   </div>
                 </div>
                 <div className='mt-3 rounded border border-border bg-card/60 p-2'>
                   <div className='text-[11px] text-gray-400'>Param UI overrides</div>
-                  <Textarea
+                  <UnifiedTextarea
                     readOnly
                     className='mt-1 h-20 font-mono text-[10px]'
                     value={JSON.stringify(preset.paramUiOverrides ?? {}, null, 2)}

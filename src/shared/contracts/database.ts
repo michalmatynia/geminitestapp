@@ -54,7 +54,7 @@ export type SchemaResponseDto = z.infer<typeof schemaResponseSchema>;
 export const multiSchemaResponseSchema = z.object({
   provider: z.literal('multi'),
   collections: z.array(collectionSchemaSchema.extend({ provider: schemaProviderSchema })),
-  sources: z.record(schemaProviderSchema, schemaResponseSchema).partial() as unknown,
+  sources: z.record(schemaProviderSchema, schemaResponseSchema) as unknown,
 });
 
 export type MultiSchemaResponseDto = z.infer<typeof multiSchemaResponseSchema>;

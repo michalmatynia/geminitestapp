@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Input, Label } from '@/shared/ui';
+import { UnifiedInput, Label } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 interface LabeledSliderProps {
@@ -32,7 +32,7 @@ export function LabeledSlider({
     <div className={cn('contents', className)}>
       <Label className='text-[11px] text-gray-300'>{label}</Label>
       <div className='flex items-center gap-2'>
-        <Input
+        <UnifiedInput
           type='range'
           min={min}
           max={max}

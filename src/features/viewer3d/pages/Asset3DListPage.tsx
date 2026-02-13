@@ -26,7 +26,6 @@ import {
   EmptyState,
   RefreshButton,
 } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags, useReindexAssets3DMutation } from '../hooks/useAsset3dQueries';

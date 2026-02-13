@@ -128,7 +128,7 @@ export const currencySchema = namedDtoSchema.extend({
   symbol: z.string().nullable(),
 });
 
-export type CurrencyDto = z.infer<typeof currencySchema>;
+export type ProductCurrencyDto = z.infer<typeof currencySchema>;
 
 /**
  * Product Contract

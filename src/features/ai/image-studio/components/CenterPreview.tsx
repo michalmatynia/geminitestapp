@@ -14,7 +14,7 @@ import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-dr
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SectionPanel, useToast } from '@/shared/ui';
+import { UnifiedButton, SectionPanel, useToast } from '@/shared/ui';
 
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { useGenerationState } from '../context/GenerationContext';
@@ -164,7 +164,7 @@ export function CenterPreview(): React.JSX.Element {
 
   const focusToggleButton = typeof document !== 'undefined'
     ? createPortal(
-      <Button
+      <UnifiedButton
         type='button'
         variant='outline'
         size='sm'
@@ -174,7 +174,7 @@ export function CenterPreview(): React.JSX.Element {
         className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
       >
         {isFocusMode ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
-      </Button>,
+      </UnifiedButton>,
       document.body
     )
     : null;
@@ -192,7 +192,7 @@ export function CenterPreview(): React.JSX.Element {
             />
           ) : null}
           {previewMode === '3d' && workingSlot ? (
-            <Button
+            <UnifiedButton
               variant='outline'
               size='sm'
               onClick={() => { void handleSaveScreenshot(); }}
@@ -201,7 +201,7 @@ export function CenterPreview(): React.JSX.Element {
             >
               {screenshotBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Camera className='mr-2 size-4' />}
               Save Shot
-            </Button>
+            </UnifiedButton>
           ) : null}
         </div>
         <div />

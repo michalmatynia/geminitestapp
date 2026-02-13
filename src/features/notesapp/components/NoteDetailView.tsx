@@ -447,7 +447,7 @@ export function NoteDetailView(): React.JSX.Element | null {
           )}
           <div className='mt-8 pt-4 border-t border-border flex gap-6 text-sm text-gray-500'>
             <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
-            <span>Modified: {new Date(selectedNote.updatedAt).toLocaleString()}</span>
+            <span>Modified: {selectedNote.updatedAt ? new Date(selectedNote.updatedAt).toLocaleString() : "Never"}</span>
           </div>
         </SectionPanel>
       )}

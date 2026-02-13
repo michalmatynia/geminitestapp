@@ -4,16 +4,12 @@ import { RefreshCcw } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
-  Button,
-  Input,
+  UnifiedButton,
+  UnifiedInput,
   Label,
   SectionHeader,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Textarea,
+  UnifiedTextarea,
+  UnifiedSelect,
 } from '@/shared/ui';
 
 import { useSettings } from '../context/SettingsContext';
@@ -70,7 +66,7 @@ export function StudioSettingsContent(): React.JSX.Element {
         className='p-3 border-b border-border'
         actions={(
           <div className='flex items-center gap-2'>
-            <Button
+            <UnifiedButton
               variant='outline'
               size='sm'
               onClick={handleRefreshSettings}
@@ -78,15 +74,15 @@ export function StudioSettingsContent(): React.JSX.Element {
             >
               <RefreshCcw className='mr-2 size-4' />
               Refresh
-            </Button>
-            <Button
+            </UnifiedButton>
+            <UnifiedButton
               variant='outline'
               size='sm'
               onClick={resetStudioSettings}
             >
               Reset
-            </Button>
-            <Button
+            </UnifiedButton>
+            <UnifiedButton
               size='sm'
               variant='primary'
               onClick={() => void saveStudioSettings()}
@@ -94,7 +90,7 @@ export function StudioSettingsContent(): React.JSX.Element {
               className='min-w-[80px]'
             >
               Save
-            </Button>
+            </UnifiedButton>
           </div>
         )}
       />
@@ -109,7 +105,7 @@ export function StudioSettingsContent(): React.JSX.Element {
           <div className='grid grid-cols-2 gap-2'>
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Mode</div>
-              <Select
+              <UnifiedSelect
                 value={studioSettings.promptExtraction.mode}
                 onValueChange={(value: string) =>
                   setStudioSettings((prev) => ({
@@ -120,21 +116,19 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
-              >
-                <SelectTrigger className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='programmatic'>Programmatic</SelectItem>
-                  <SelectItem value='gpt'>GPT (AI)</SelectItem>
-                  <SelectItem value='hybrid'>Hybrid (Auto Fallback)</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'programmatic', label: 'Programmatic' },
+                  { value: 'gpt', label: 'GPT (AI)' },
+                  { value: 'hybrid', label: 'Hybrid (Auto Fallback)' },
+                ]}
+                triggerClassName='h-8'
+                ariaLabel='Prompt extraction mode'
+              />
             </div>
 
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
-              <Input
+              <UnifiedInput
                 value={studioSettings.promptExtraction.gpt.model}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setStudioSettings((prev) => ({
@@ -211,7 +205,7 @@ export function StudioSettingsContent(): React.JSX.Element {
           <div className='grid grid-cols-2 gap-2'>
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Mode</div>
-              <Select
+              <UnifiedSelect
                 value={studioSettings.uiExtractor.mode}
                 onValueChange={(value: string) =>
                   setStudioSettings((prev) => ({
@@ -222,20 +216,18 @@ export function StudioSettingsContent(): React.JSX.Element {
                     },
                   }))
                 }
-              >
-                <SelectTrigger className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='heuristic'>Heuristic</SelectItem>
-                  <SelectItem value='ai'>AI</SelectItem>
-                  <SelectItem value='both'>Both</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'heuristic', label: 'Heuristic' },
+                  { value: 'ai', label: 'AI' },
+                  { value: 'both', label: 'Both' },
+                ]}
+                triggerClassName='h-8'
+                ariaLabel='UI extractor mode'
+              />
             </div>
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
-              <Input
+              <UnifiedInput
                 value={studioSettings.uiExtractor.model}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setStudioSettings((prev) => ({
@@ -256,7 +248,7 @@ export function StudioSettingsContent(): React.JSX.Element {
           <div className='grid grid-cols-2 gap-2'>
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>API</div>
-              <Select
+              <UnifiedSelect
                 value={studioSettings.targetAi.openai.api}
                 onValueChange={(value: string) =>
                   setStudioSettings((prev) => ({
@@ -264,19 +256,17 @@ export function StudioSettingsContent(): React.JSX.Element {
                     targetAi: { ...prev.targetAi, openai: { ...prev.targetAi.openai, api: value === 'responses' ? 'responses' : 'images' } },
                   }))
                 }
-              >
-                <SelectTrigger className='h-8'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='images'>Images</SelectItem>
-                  <SelectItem value='responses'>Responses</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'images', label: 'Images' },
+                  { value: 'responses', label: 'Responses' },
+                ]}
+                triggerClassName='h-8'
+                ariaLabel='OpenAI API mode'
+              />
             </div>
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Model</div>
-              <Input
+              <UnifiedInput
                 value={studioSettings.targetAi.openai.model}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setStudioSettings((prev) => ({
@@ -292,7 +282,7 @@ export function StudioSettingsContent(): React.JSX.Element {
 
         <div className='space-y-1'>
           <div className='text-[11px] text-gray-500'>Advanced Overrides (JSON)</div>
-          <Textarea
+          <UnifiedTextarea
             value={advancedOverridesText}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
             className='h-28 font-mono text-[11px]'

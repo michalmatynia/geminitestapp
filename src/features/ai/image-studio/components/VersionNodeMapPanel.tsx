@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 
-import { Button } from '@/shared/ui';
+import { UnifiedButton, UnifiedInput } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { VersionNodeMapCanvas, type VersionNodeMapCanvasRef } from './VersionNodeMapCanvas';
@@ -150,7 +150,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
         </div>
         <div className='flex items-center gap-1'>
           {/* Merge mode toggle */}
-          <Button
+          <UnifiedButton
             variant={mergeMode ? 'default' : 'ghost'}
             size='icon'
             className={cn('size-6', mergeMode && 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30')}
@@ -158,11 +158,11 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             onClick={toggleMergeMode}
           >
             <GitMerge className='size-3' />
-          </Button>
+          </UnifiedButton>
 
           {/* Merge execute button */}
           {mergeMode && mergeSelectedIds.length >= 2 ? (
-            <Button
+            <UnifiedButton
               variant='outline'
               size='sm'
               className='h-6 border-orange-400/40 px-2 text-[10px] text-orange-400 hover:bg-orange-500/10'
@@ -170,12 +170,12 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
               onClick={() => void handleExecuteMerge()}
             >
               Merge ({mergeSelectedIds.length})
-            </Button>
+            </UnifiedButton>
           ) : null}
 
           {/* Clear merge selection */}
           {mergeMode && mergeSelectedIds.length > 0 ? (
-            <Button
+            <UnifiedButton
               variant='ghost'
               size='icon'
               className='size-6 text-gray-400'
@@ -183,13 +183,13 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
               onClick={clearMergeSelection}
             >
               <X className='size-3' />
-            </Button>
+            </UnifiedButton>
           ) : null}
 
           <div className='mx-1 h-4 w-px bg-border/40' />
 
           {/* Collapse controls */}
-          <Button
+          <UnifiedButton
             variant='ghost'
             size='icon'
             className='size-6'
@@ -197,8 +197,8 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             onClick={collapseAll}
           >
             <ChevronUp className='size-3' />
-          </Button>
-          <Button
+          </UnifiedButton>
+          <UnifiedButton
             variant='ghost'
             size='icon'
             className='size-6'
@@ -206,7 +206,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             onClick={expandAll}
           >
             <ChevronDown className='size-3' />
-          </Button>
+          </UnifiedButton>
 
           <div className='mx-1 h-4 w-px bg-border/40' />
 
@@ -234,7 +234,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
           <div className='mx-1 h-4 w-px bg-border/40' />
 
           {/* Zoom controls */}
-          <Button
+          <UnifiedButton
             variant='ghost'
             size='icon'
             className='size-6'
@@ -242,11 +242,11 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             onClick={() => setZoom((z) => Math.max(0.25, z - ZOOM_BUTTON_STEP))}
           >
             <Minus className='size-3' />
-          </Button>
+          </UnifiedButton>
           <span className='min-w-[36px] text-center text-[10px] text-gray-400'>
             {Math.round(zoom * 100)}%
           </span>
-          <Button
+          <UnifiedButton
             variant='ghost'
             size='icon'
             className='size-6'
@@ -254,8 +254,8 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             onClick={() => setZoom((z) => Math.min(3, z + ZOOM_BUTTON_STEP))}
           >
             <Plus className='size-3' />
-          </Button>
-          <Button
+          </UnifiedButton>
+          <UnifiedButton
             variant='ghost'
             size='icon'
             className='size-6'
@@ -263,12 +263,12 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             onClick={() => setZoom(1)}
           >
             <Maximize2 className='size-3' />
-          </Button>
+          </UnifiedButton>
 
           <div className='mx-1 h-4 w-px bg-border/40' />
 
           {/* Export PNG */}
-          <Button
+          <UnifiedButton
             variant='ghost'
             size='icon'
             className='size-6'
@@ -277,7 +277,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             onClick={() => void handleExportPng()}
           >
             <Download className='size-3' />
-          </Button>
+          </UnifiedButton>
         </div>
       </div>
 
@@ -286,7 +286,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
         <div className='flex items-center gap-1.5'>
           <div className='relative flex-1'>
             <Search className='absolute left-1.5 top-1/2 size-3 -translate-y-1/2 text-gray-500' />
-            <input
+            <UnifiedInput
               type='text'
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
@@ -457,7 +457,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
           </div>
 
           <div className='mt-2 flex gap-2'>
-            <Button
+            <UnifiedButton
               variant='outline'
               size='sm'
               className='flex-1 text-xs'
@@ -465,7 +465,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
             >
               <Crosshair className='mr-1.5 size-3' />
               Set as Source
-            </Button>
+            </UnifiedButton>
           </div>
         </div>
       ) : !mergeMode ? (

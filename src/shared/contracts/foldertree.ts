@@ -19,7 +19,7 @@ export interface FolderTreeNodeDto {
   children: FolderTreeNodeDto[];
 }
 
-export const folderTreeNodeSchema: z.ZodType<FolderTreeNodeDto> = dtoBaseSchema.extend({
+export const folderTreeNodeSchema = dtoBaseSchema.extend({
   name: z.string(),
   type: z.enum(['folder', 'file']),
   parentId: z.string().nullable(),
@@ -27,7 +27,7 @@ export const folderTreeNodeSchema: z.ZodType<FolderTreeNodeDto> = dtoBaseSchema.
   size: z.number().nullable(),
   mimeType: z.string().nullable(),
   children: z.array(z.lazy(() => folderTreeNodeSchema)),
-});
+}) as z.ZodType<FolderTreeNodeDto>;
 
 export const createFolderSchema = z.object({
   name: z.string(),

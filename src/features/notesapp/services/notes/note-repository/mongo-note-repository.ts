@@ -48,6 +48,18 @@ const notebookCollectionName = 'notebooks';
 const noteFileCollectionName = 'noteFiles';
 const themeCollectionName = 'themes';
 
+const toIsoCreatedAt = (value: unknown): string => {
+  if (typeof value === 'string' && value.length > 0) return value;
+  if (value instanceof Date) return value.toISOString();
+  return new Date().toISOString();
+};
+
+const toIsoUpdatedAt = (value: unknown): string | null => {
+  if (typeof value === 'string' && value.length > 0) return value;
+  if (value instanceof Date) return value.toISOString();
+  return null;
+};
+
 const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   id: doc.id ?? doc._id,
   title: doc.title,
@@ -58,8 +70,8 @@ const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => ({
   isArchived: doc.isArchived ?? false,
   isFavorite: doc.isFavorite ?? false,
   notebookId: doc.notebookId ?? null,
-  createdAt: doc.createdAt ?? new Date(),
-  updatedAt: doc.updatedAt ?? new Date(),
+  createdAt: toIsoCreatedAt(doc.createdAt),
+  updatedAt: toIsoUpdatedAt(doc.updatedAt),
   tags: Array.isArray(doc.tags) ? doc.tags : [],
   categories: Array.isArray(doc.categories) ? doc.categories : [],
   relationsFrom: Array.isArray(doc.relationsFrom) ? doc.relationsFrom : [],
@@ -71,8 +83,8 @@ const toTagResponse = (doc: WithId<TagDocument>): TagRecord => ({
   name: doc.name,
   color: doc.color ?? null,
   notebookId: doc.notebookId ?? null,
-  createdAt: doc.createdAt ?? new Date(),
-  updatedAt: doc.updatedAt ?? new Date(),
+  createdAt: toIsoCreatedAt(doc.createdAt),
+  updatedAt: toIsoUpdatedAt(doc.updatedAt),
 });
 
 const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecord => ({
@@ -85,7 +97,7 @@ const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecord => ({
   themeId: doc.themeId ?? null,
   sortIndex: doc.sortIndex ?? null,
   createdAt: doc.createdAt ?? new Date(),
-  updatedAt: doc.updatedAt ?? new Date(),
+  updatedAt: typeof doc.updatedAt === "string" ? new Date(doc.updatedAt) : doc.updatedAt ?? new Date(),
 });
 
 const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecord => ({
@@ -93,8 +105,8 @@ const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecord => ({
   name: doc.name,
   color: doc.color ?? null,
   defaultThemeId: doc.defaultThemeId ?? null,
-  createdAt: doc.createdAt ?? new Date(),
-  updatedAt: doc.updatedAt ?? new Date(),
+  createdAt: toIsoCreatedAt(doc.createdAt),
+  updatedAt: toIsoUpdatedAt(doc.updatedAt),
 });
 
 const toThemeResponse = (doc: WithId<ThemeDocument>): ThemeRecord => ({
@@ -126,7 +138,7 @@ const toNoteFileResponse = (doc: WithId<NoteFileDocument>): NoteFileRecord => ({
   width: doc.width ?? null,
   height: doc.height ?? null,
   createdAt: doc.createdAt ?? new Date(),
-  updatedAt: doc.updatedAt ?? new Date(),
+  updatedAt: typeof doc.updatedAt === "string" ? new Date(doc.updatedAt) : doc.updatedAt ?? new Date(),
 });
 
 const buildTree = (

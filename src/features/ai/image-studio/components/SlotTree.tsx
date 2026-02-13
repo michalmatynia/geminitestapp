@@ -192,6 +192,20 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     selectNode(null);
   }, [onSelectFolder, selectNode, setSelectedSlotId]);
 
+  const canDropInternalNodeToRoot = useCallback((draggedNodeId: MasterTreeId): boolean => {
+    const folderPath = fromFolderMasterNodeId(draggedNodeId);
+    if (folderPath !== null) {
+      const normalizedFolderPath = normalizeTreePath(folderPath);
+      return normalizedFolderPath.includes('/');
+    }
+
+    const slotId = fromSlotMasterNodeId(draggedNodeId);
+    if (!slotId) return false;
+    const slot = slotById.get(slotId);
+    if (!slot) return false;
+    return normalizeTreePath(slot.folderPath ?? '').length > 0;
+  }, [slotById]);
+
   const treeRef = useRef<HTMLDivElement | null>(null);
   const lastHandledRevealNonceRef = useRef<number>(-1);
 
@@ -375,6 +389,9 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         }
         canDrop={({ draggedNodeId, targetId }, ctlr): boolean => {
           const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
+          if (isInternalNode && targetId === null) {
+            return canDropInternalNodeToRoot(draggedNodeId);
+          }
           if (isInternalNode) return false;
           return canDropImageStudioExternalNode({
             draggedNodeId,
@@ -389,6 +406,26 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         ): Promise<void> => {
           const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
           if (isInternalNode) {
+            if (targetId === null) {
+              const folderPath = fromFolderMasterNodeId(draggedNodeId);
+              if (folderPath !== null) {
+                const normalizedFolderPath = normalizeTreePath(folderPath);
+                if (normalizedFolderPath.includes('/')) {
+                  await onMoveFolder(normalizedFolderPath, '');
+                }
+                return;
+              }
+
+              const slotId = fromSlotMasterNodeId(draggedNodeId);
+              if (slotId) {
+                const slot = slotById.get(slotId);
+                if (!slot) return;
+                if (!normalizeTreePath(slot.folderPath ?? '')) return;
+                await moveSlot({ slot, targetFolder: '' });
+                return;
+              }
+            }
+
             await applyInternalMasterTreeDrop({
               controller: ctlr,
               draggedNodeId,

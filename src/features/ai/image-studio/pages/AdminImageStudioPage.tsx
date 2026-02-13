@@ -125,7 +125,10 @@ function AdminImageStudioPageContent(): React.JSX.Element {
             </TabsContent>
 
             <TabsContent value='settings' className='h-full m-0 overflow-y-auto p-4'>
-              <AdminImageStudioSettingsPage embedded />
+              <AdminImageStudioSettingsPage
+                embedded
+                onSaved={handleRefreshSettings}
+              />
             </TabsContent>
 
             <TabsContent value='validation' className='h-full m-0 overflow-y-auto p-4'>

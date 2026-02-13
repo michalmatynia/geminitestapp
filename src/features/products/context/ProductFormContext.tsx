@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createContext,
   useContext,
+  useEffect,
+  useRef,
   useState,
   BaseSyntheticEvent,
 } from 'react';
@@ -29,6 +31,11 @@ import type {
 } from '@/features/products/types';
 import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue, Producer } from '@/features/products/types';
 import {
+  DEFAULT_PRODUCT_STUDIO_SEQUENCING,
+  normalizeProductStudioSequencing,
+  type ProductStudioSequencingConfig,
+} from '@/features/products/types/product-studio';
+import {
   ProductImageSlot,
 } from '@/features/products/types/products-ui';
 import {
@@ -36,8 +43,10 @@ import {
   productUpdateSchema,
 } from '@/features/products/validations/schemas';
 import { internalError } from '@/shared/errors/app-error';
+import { api } from '@/shared/lib/api-client';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import type { Language } from '@/shared/types/domain/internationalization';
+import { useToast } from '@/shared/ui';
 
 export interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
@@ -93,6 +102,15 @@ export interface ProductFormContextType {
   filteredPriceGroups: PriceGroupWithDetails[];
   generationError: string | null;
   setGenerationError: (error: string | null) => void;
+  studioProjectId: string | null;
+  setStudioProjectId: (projectId: string | null) => void;
+  studioSequencing: ProductStudioSequencingConfig;
+  setStudioSequencing: (
+    patch: Partial<ProductStudioSequencingConfig>
+  ) => void;
+  studioConfigLoading: boolean;
+  studioConfigSaving: boolean;
+  refreshImagesFromProduct: (savedProduct: ProductWithImages) => void;
   product?: ProductWithImages | undefined;
   draft?: ProductDraft | null | undefined;
 }
@@ -166,6 +184,183 @@ export function ProductFormProvider({
   } = methods;
 
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [studioProjectId, setStudioProjectIdState] = useState<string | null>(
+    null
+  );
+  const [studioSequencing, setStudioSequencingState] =
+    useState<ProductStudioSequencingConfig>({
+      ...DEFAULT_PRODUCT_STUDIO_SEQUENCING,
+    });
+  const [studioConfigLoading, setStudioConfigLoading] = useState<boolean>(
+    Boolean(product?.id)
+  );
+  const [studioConfigSaving, setStudioConfigSaving] = useState<boolean>(false);
+  const studioConfigSaveRequestRef = useRef(0);
+  const persistedStudioProjectRef = useRef<string | null>(null);
+  const persistedStudioSequencingRef = useRef<ProductStudioSequencingConfig>({
+    ...DEFAULT_PRODUCT_STUDIO_SEQUENCING,
+  });
+  const currentStudioProjectRef = useRef<string | null>(null);
+  const currentStudioSequencingRef = useRef<ProductStudioSequencingConfig>({
+    ...DEFAULT_PRODUCT_STUDIO_SEQUENCING,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    const productId = product?.id?.trim() ?? '';
+
+    if (!productId) {
+      setStudioProjectIdState(null);
+      setStudioSequencingState({ ...DEFAULT_PRODUCT_STUDIO_SEQUENCING });
+      setStudioConfigLoading(false);
+      setStudioConfigSaving(false);
+      persistedStudioProjectRef.current = null;
+      persistedStudioSequencingRef.current = {
+        ...DEFAULT_PRODUCT_STUDIO_SEQUENCING,
+      };
+      currentStudioProjectRef.current = null;
+      currentStudioSequencingRef.current = {
+        ...DEFAULT_PRODUCT_STUDIO_SEQUENCING,
+      };
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setStudioConfigLoading(true);
+    void api
+      .get<{
+        config?: {
+          projectId?: string | null;
+          sequencing?: unknown;
+        };
+      }>(
+        `/api/products/${encodeURIComponent(productId)}/studio`,
+        {
+          cache: 'no-store',
+          logError: false,
+        }
+      )
+      .then((response) => {
+        if (cancelled) return;
+        const nextProjectId =
+          typeof response.config?.projectId === 'string'
+            ? response.config.projectId.trim()
+            : '';
+        const normalized = nextProjectId || null;
+        const nextSequencing = normalizeProductStudioSequencing(
+          response.config?.sequencing
+        );
+        setStudioProjectIdState(normalized);
+        setStudioSequencingState(nextSequencing);
+        persistedStudioProjectRef.current = normalized;
+        persistedStudioSequencingRef.current = nextSequencing;
+        currentStudioProjectRef.current = normalized;
+        currentStudioSequencingRef.current = nextSequencing;
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setStudioProjectIdState(null);
+        setStudioSequencingState({ ...DEFAULT_PRODUCT_STUDIO_SEQUENCING });
+        persistedStudioProjectRef.current = null;
+        persistedStudioSequencingRef.current = {
+          ...DEFAULT_PRODUCT_STUDIO_SEQUENCING,
+        };
+        currentStudioProjectRef.current = null;
+        currentStudioSequencingRef.current = {
+          ...DEFAULT_PRODUCT_STUDIO_SEQUENCING,
+        };
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setStudioConfigLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [product?.id]);
+
+  const persistStudioConfig = (
+    nextProjectId: string | null,
+    nextSequencing: ProductStudioSequencingConfig
+  ): void => {
+    const productId = product?.id?.trim() ?? '';
+    if (!productId) return;
+
+    const requestId = ++studioConfigSaveRequestRef.current;
+    setStudioConfigSaving(true);
+
+    void api
+      .put<{
+        config?: {
+          projectId?: string | null;
+          sequencing?: unknown;
+        };
+      }>(
+        `/api/products/${encodeURIComponent(productId)}/studio`,
+        {
+          projectId: nextProjectId,
+          sequencing: nextSequencing,
+        },
+        { logError: false }
+      )
+      .then((response) => {
+        if (studioConfigSaveRequestRef.current !== requestId) return;
+        const persistedRaw =
+          typeof response.config?.projectId === 'string'
+            ? response.config.projectId.trim()
+            : '';
+        const persistedProjectId = persistedRaw || null;
+        const persistedSequencing = normalizeProductStudioSequencing(
+          response.config?.sequencing
+        );
+        persistedStudioProjectRef.current = persistedProjectId;
+        persistedStudioSequencingRef.current = persistedSequencing;
+        currentStudioProjectRef.current = persistedProjectId;
+        currentStudioSequencingRef.current = persistedSequencing;
+        setStudioProjectIdState(persistedProjectId);
+        setStudioSequencingState(persistedSequencing);
+      })
+      .catch(() => {
+        if (studioConfigSaveRequestRef.current !== requestId) return;
+        const fallbackProjectId = persistedStudioProjectRef.current;
+        const fallbackSequencing = persistedStudioSequencingRef.current;
+        currentStudioProjectRef.current = fallbackProjectId;
+        currentStudioSequencingRef.current = fallbackSequencing;
+        setStudioProjectIdState(fallbackProjectId);
+        setStudioSequencingState(fallbackSequencing);
+        toast('Failed to autosave Product Studio settings.', {
+          variant: 'error',
+        });
+      })
+      .finally(() => {
+        if (studioConfigSaveRequestRef.current !== requestId) return;
+        setStudioConfigSaving(false);
+      });
+  };
+
+  const setStudioProjectId = (projectId: string | null): void => {
+    const normalized =
+      typeof projectId === 'string' ? projectId.trim() : '';
+    const nextProjectId = normalized || null;
+    currentStudioProjectRef.current = nextProjectId;
+    setStudioProjectIdState(nextProjectId);
+    persistStudioConfig(nextProjectId, currentStudioSequencingRef.current);
+  };
+
+  const setStudioSequencing = (
+    patch: Partial<ProductStudioSequencingConfig>
+  ): void => {
+    const nextSequencing = normalizeProductStudioSequencing({
+      ...currentStudioSequencingRef.current,
+      ...patch,
+    });
+    currentStudioSequencingRef.current = nextSequencing;
+    setStudioSequencingState(nextSequencing);
+    persistStudioConfig(currentStudioProjectRef.current, nextSequencing);
+  };
 
   const {
     imageSlots,
@@ -267,6 +462,7 @@ export function ProductFormProvider({
     selectedProducerIds,
     selectedNoteIds,
     parameterValues,
+    studioProjectId,
     refreshImages,
     onSuccess,
     onEditSave,
@@ -343,6 +539,13 @@ export function ProductFormProvider({
           filteredPriceGroups,
           generationError,
           setGenerationError,
+          studioProjectId,
+          setStudioProjectId,
+          studioSequencing,
+          setStudioSequencing,
+          studioConfigLoading,
+          studioConfigSaving,
+          refreshImagesFromProduct: refreshImages,
           product,
           draft,
         }}

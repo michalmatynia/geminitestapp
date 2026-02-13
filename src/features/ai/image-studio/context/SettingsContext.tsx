@@ -8,7 +8,12 @@ import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
+  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+  parseImageStudioActiveProject,
+} from '../utils/project-session';
+import {
   IMAGE_STUDIO_SETTINGS_KEY,
+  getImageStudioProjectSettingsKey,
   parseImageStudioSettings,
   type ImageStudioSettings,
   defaultImageStudioSettings,
@@ -46,7 +51,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
 
   const heavyMap = heavySettings.data ?? new Map<string, string>();
-  const studioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
+  const activeProjectId = parseImageStudioActiveProject(
+    heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)
+  );
+  const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
+  const studioProjectSettingsRaw =
+    projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
+  const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
+  const studioSettingsRaw = studioProjectSettingsRaw ?? globalStudioSettingsRaw;
   const openaiModelFallback = settingsStore.get('openai_model');
 
   useEffect(() => {
@@ -54,7 +66,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     if (settingsStore.isLoading || heavySettings.isLoading) return;
 
     const stored = parseImageStudioSettings(studioSettingsRaw);
-    const hasStoredStudioSettings = Boolean(studioSettingsRaw && studioSettingsRaw.trim().length > 0);
+    const hasStoredStudioSettings = Boolean(
+      studioSettingsRaw && studioSettingsRaw.trim().length > 0
+    );
     const hydrated: ImageStudioSettings =
       openaiModelFallback && !hasStoredStudioSettings
         ? {
@@ -75,17 +89,24 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
     setStudioSettings(hydrated);
     setSettingsLoaded(true);
-  }, [settingsLoaded, settingsStore.isLoading, heavySettings.isLoading, studioSettingsRaw, openaiModelFallback]);
+  }, [
+    settingsLoaded,
+    settingsStore.isLoading,
+    heavySettings.isLoading,
+    studioSettingsRaw,
+    openaiModelFallback,
+  ]);
 
   const saveStudioSettings = useCallback(async (options?: { silent?: boolean }) => {
+    const targetKey = projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
     await updateSetting.mutateAsync({
-      key: IMAGE_STUDIO_SETTINGS_KEY,
+      key: targetKey,
       value: serializeSetting(studioSettings),
     });
     if (options?.silent === false) {
       toast('Settings saved.', { variant: 'success' });
     }
-  }, [studioSettings, updateSetting, toast]);
+  }, [projectSettingsKey, studioSettings, updateSetting, toast]);
 
   const resetStudioSettings = useCallback(() => {
     setStudioSettings(defaultImageStudioSettings);

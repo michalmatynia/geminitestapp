@@ -34,6 +34,7 @@ export interface UseProductFormSubmitProps {
   selectedProducerIds: string[];
   selectedNoteIds: string[];
   parameterValues: ProductParameterValue[];
+  studioProjectId: string | null;
   refreshImages: (savedProduct: ProductWithImages) => void;
   onSuccess?: ((info?: { queued?: boolean }) => void) | undefined;
   onEditSave?: ((saved: ProductWithImages) => void) | undefined;
@@ -57,6 +58,7 @@ function buildFormData(
   selectedProducerIds: string[],
   selectedNoteIds: string[],
   parameterValues: ProductParameterValue[],
+  studioProjectId: string | null,
 ): FormData {
   const formData = new FormData();
 
@@ -118,6 +120,7 @@ function buildFormData(
     }))
     .filter((entry: { parameterId: string | undefined; value: string }): boolean => !!entry.parameterId);
   formData.append('parameters', JSON.stringify(normalizedParameters));
+  formData.append('studioProjectId', studioProjectId ?? '');
 
   return formData;
 }
@@ -134,6 +137,7 @@ export function useProductFormSubmit({
   selectedProducerIds,
   selectedNoteIds,
   parameterValues,
+  studioProjectId,
   refreshImages,
   onSuccess,
   onEditSave,
@@ -187,6 +191,7 @@ export function useProductFormSubmit({
         selectedProducerIds,
         selectedNoteIds,
         parameterValues,
+        studioProjectId,
       );
 
       const savedProduct = product
@@ -235,7 +240,7 @@ export function useProductFormSubmit({
         setUploadError('An unknown error occurred');
       }
     }
-  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast]);
+  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, studioProjectId, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast]);
 
   const submitHandler = useCallback(
     (e?: BaseSyntheticEvent): Promise<void> => methods.handleSubmit(onSubmit)(e),

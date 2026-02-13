@@ -32,14 +32,16 @@ import {
   ConfirmDialog,
 } from '@/shared/ui';
 
-const PAGE_SIZES = [10, 25, 50];
-const SEARCH_DEBOUNCE_MS = 300;
-
-type RunDetail = {
-  run: AiPathRunRecord;
-  nodes: AiPathRunNodeRecord[];
-  events: AiPathRunEventRecord[];
-} | null;
+import {
+  PAGE_SIZES,
+  SEARCH_DEBOUNCE_MS,
+  calculateNodeStatusSummary,
+  formatTimestamp,
+  getHeaderCheckboxState,
+  getLatestEventTimestamp,
+  showRequeueResultToast,
+  type RunDetail,
+} from './dead-letter-utils';
 
 export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -233,14 +235,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     [runs, selectedIds]
   );
   const allVisibleSelected = runs.length > 0 && visibleSelectedCount === runs.length;
-  const headerCheckboxState =
-    runs.length === 0
-      ? false
-      : allVisibleSelected
-        ? true
-        : visibleSelectedCount > 0
-          ? 'indeterminate'
-          : false;
+  const headerCheckboxState = getHeaderCheckboxState(runs.length, allVisibleSelected, visibleSelectedCount);
 
   const toggleSelected = (runId: string): void => {
     setSelectedIds((prev: Set<string>) => {
@@ -274,18 +269,6 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     setDebouncedSearchQuery('');
   };
 
-  const handleRequeueResult = (data: {
-    requeued: number;
-    errors?: Array<{ runId: string; error: string }>;
-  }): void => {
-    const modeLabel = requeueMode === 'resume' ? 'resume' : 'replay';
-    toast(`Requeued ${data.requeued} run(s) (${modeLabel}).`, { variant: 'success' });
-    const errorCount = data.errors?.length ?? 0;
-    if (errorCount > 0) {
-      toast(`${errorCount} run(s) failed to requeue.`, { variant: 'error' });
-    }
-  };
-
   const requeueSelectedMutation = useMutation<
     { requeued: number; errors?: Array<{ runId: string; error: string }> },
     Error
@@ -301,7 +284,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
     },
     onSuccess: (data: { requeued: number; errors?: Array<{ runId: string; error: string }> }): void => {
-      handleRequeueResult(data);
+      showRequeueResultToast(toast, requeueMode, data);
       clearSelection();
       void runsQuery.refetch();
     },
@@ -329,7 +312,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
       return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
     },
     onSuccess: (data: { requeued: number; errors?: Array<{ runId: string; error: string }> }): void => {
-      handleRequeueResult(data);
+      showRequeueResultToast(toast, requeueMode, data);
       clearSelection();
       void runsQuery.refetch();
     },
@@ -375,17 +358,6 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     return `${start}-${end} of ${total}`;
   }, [offset, pageSize, total]);
 
-  const getLatestEventTimestamp = (events: AiPathRunEventRecord[]): string | null => {
-    let max = 0;
-    events.forEach((event: AiPathRunEventRecord) => {
-      const time = new Date(event.createdAt).getTime();
-      if (Number.isFinite(time) && time > max) {
-        max = time;
-      }
-    });
-    return max > 0 ? new Date(max).toISOString() : null;
-  };
-
   const toggleNodeExpanded = (nodeId: string): void => {
     setExpandedNodeIds((prev: Set<string>) => {
       const next = new Set(prev);
@@ -398,24 +370,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     });
   };
 
-  const formatTimestamp = (value?: Date | string | null): string => {
-    if (!value) return '-';
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleString();
-  };
-
-  const nodeStatusSummary = useMemo((): { counts: Record<string, number>; totalNodes: number; completed: number; progress: number } | null => {
-    if (!detail) return null;
-    const counts: Record<string, number> = {};
-    detail.nodes.forEach((node: AiPathRunNodeRecord) => {
-      counts[node.status] = (counts[node.status] ?? 0) + 1;
-    });
-    const totalNodes = detail.nodes.length;
-    const completed = counts['completed'] ?? 0;
-    const progress = totalNodes > 0 ? Math.round((completed / totalNodes) * 100) : 0;
-    return { counts, totalNodes, completed, progress };
-  }, [detail]);
+  const nodeStatusSummary = useMemo(() => calculateNodeStatusSummary(detail), [detail]);
 
   const handleRequeueSingle = async (runId: string): Promise<void> => {
     const response = await runsApi.resume(runId, requeueMode);

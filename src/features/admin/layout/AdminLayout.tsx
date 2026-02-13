@@ -83,7 +83,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   };
 
   return (
-    <div className='dark flex h-screen bg-gray-900 text-white'>
+    <div className='dark flex h-screen overflow-hidden bg-gray-900 text-white'>
       <aside
         className={`flex h-full flex-col transition-all duration-300 bg-gray-800 ${
           isMenuHidden ? 'w-0 p-0 opacity-0 pointer-events-none overflow-hidden' : isMenuCollapsed ? 'w-20 p-4' : 'w-64 p-4'
@@ -119,7 +119,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
             </div>
           </div>
         </header>
-        <main className='flex-1 p-4 overflow-y-auto'>
+        <main className='flex-1 overflow-auto p-4'>
           <QueryErrorBoundary>{children}</QueryErrorBoundary>
         </main>
         <AiInsightsNotificationsDrawer />

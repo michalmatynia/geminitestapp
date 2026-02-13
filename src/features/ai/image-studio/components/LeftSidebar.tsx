@@ -1,7 +1,7 @@
 'use client';
 
-import { Copy, FolderPlus, ImageOff, ImagePlus, Locate, Plus, Settings2 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { Copy, FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -37,6 +37,8 @@ import {
   serializeImageStudioProjectSession,
   type ImageStudioProjectSession,
 } from '../utils/project-session';
+
+const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
 export function LeftSidebar(): React.JSX.Element {
   const { projectId } = useProjectsState();
@@ -123,8 +125,7 @@ export function LeftSidebar(): React.JSX.Element {
     setSelectedPointIndex(null);
   };
 
-  const handleRevealInTree = (): void => {
-    const targetSlotId = workingSlot?.id ?? null;
+  const queueRevealInTree = useCallback((targetSlotId: string | null): void => {
     if (!targetSlotId) {
       toast('No card is currently loaded in the preview.', { variant: 'info' });
       return;
@@ -134,7 +135,7 @@ export function LeftSidebar(): React.JSX.Element {
       slotId: targetSlotId,
       nonce: (prev?.nonce ?? 0) + 1,
     }));
-  };
+  }, [setSelectedSlotId, toast]);
 
   const handleCreateFolder = (): void => {
     const normalizePath = (value: string): string =>
@@ -316,6 +317,23 @@ export function LeftSidebar(): React.JSX.Element {
     setRevealRequest(null);
   }, [projectId]);
 
+  useEffect((): (() => void) => {
+    if (typeof window === 'undefined') return () => {};
+    const handleRevealEvent = (event: Event): void => {
+      const customEvent = event as CustomEvent<{ slotId?: unknown }>;
+      const detail = customEvent.detail;
+      const eventSlotId =
+        detail && typeof detail.slotId === 'string' && detail.slotId.trim().length > 0
+          ? detail.slotId.trim()
+          : null;
+      queueRevealInTree(eventSlotId ?? workingSlot?.id ?? null);
+    };
+    window.addEventListener(REVEAL_IN_TREE_EVENT, handleRevealEvent as EventListener);
+    return (): void => {
+      window.removeEventListener(REVEAL_IN_TREE_EVENT, handleRevealEvent as EventListener);
+    };
+  }, [queueRevealInTree, workingSlot?.id]);
+
   return (
     <>
       <div
@@ -367,7 +385,9 @@ export function LeftSidebar(): React.JSX.Element {
             </Tooltip>
           </div>
 
-          <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
+          <div data-preserve-slot-selection='true'>
+            <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
+          </div>
 
           <div className='flex flex-wrap items-center justify-start gap-2' data-preserve-slot-selection='true'>
             <Tooltip content='Load to canvas'>
@@ -394,19 +414,6 @@ export function LeftSidebar(): React.JSX.Element {
                 aria-label='De-canvas'
               >
                 <ImageOff className='size-4' />
-              </UnifiedButton>
-            </Tooltip>
-            <Tooltip content='Reveal in tree'>
-              <UnifiedButton
-                type='button'
-                size='icon'
-                variant='outline'
-                title='Reveal in tree'
-                onClick={handleRevealInTree}
-                disabled={!workingSlot}
-                aria-label='Reveal in tree'
-              >
-                <Locate className='size-4' />
               </UnifiedButton>
             </Tooltip>
             <Tooltip content='New Card'>

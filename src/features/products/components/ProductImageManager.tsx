@@ -413,7 +413,7 @@ export default function ProductImageManager({
   };
 
   return (
-    <div>
+    <div data-preserve-slot-selection='true'>
       {!minimalUi ? (
         <div className='mb-3 flex items-center justify-between'>
           <div className='flex flex-col gap-1'>
@@ -586,7 +586,7 @@ export default function ProductImageManager({
                         View: {modeLabel}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
+                    <DropdownMenuContent align='end' data-preserve-slot-selection='true'>
                       <DropdownMenuItem
                         disabled={!hasUpload}
                         onClick={() =>
@@ -631,7 +631,7 @@ export default function ProductImageManager({
                         <MoreVertical className='h-3.5 w-3.5' />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
+                    <DropdownMenuContent align='end' data-preserve-slot-selection='true'>
                       <DropdownMenuItem onClick={() => openSlotFilePicker(index)}>
                         Upload image
                       </DropdownMenuItem>

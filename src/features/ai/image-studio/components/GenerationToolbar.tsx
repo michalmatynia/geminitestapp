@@ -19,7 +19,7 @@ import {
 } from '@/shared/ui';
 
 import { useGenerationState, useGenerationActions } from '../context/GenerationContext';
-import { useMaskingState, useMaskingActions } from '../context/MaskingContext';
+import { useMaskingState, useMaskingActions, type MaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
@@ -29,6 +29,15 @@ import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
 type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
+type UpscaleMode = 'client_canvas' | 'server_sharp';
+type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
+type MaskShapeForExport = {
+  id: string;
+  type: string;
+  points: Array<{ x: number; y: number }>;
+  closed: boolean;
+  visible: boolean;
+};
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
@@ -114,7 +123,7 @@ export function GenerationToolbar(): React.JSX.Element {
     maskInvert,
     maskGenLoading,
     maskGenMode,
-  } = useMaskingState();
+  }: Pick<MaskingState, 'maskShapes' | 'activeMaskId' | 'maskInvert' | 'maskGenLoading' | 'maskGenMode'> = useMaskingState();
   const { setMaskInvert, setMaskGenMode, handleAiMaskGeneration } = useMaskingActions();
   const { promptText } = usePromptState();
   const { runMutation, isRunInFlight, activeRunStatus } = useGenerationState();
@@ -124,10 +133,14 @@ export function GenerationToolbar(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [maskAttachMode, setMaskAttachMode] = useState<MaskAttachMode>('client_canvas_polygon');
+  const [upscaleMode, setUpscaleMode] = useState<UpscaleMode>('client_canvas');
+  const [upscaleScale, setUpscaleScale] = useState('2');
+  const [upscaleSmoothingQuality, setUpscaleSmoothingQuality] = useState<UpscaleSmoothingQuality>('high');
+  const [upscaleBusy, setUpscaleBusy] = useState(false);
 
-  const eligibleMaskShapes = useMemo(
+  const eligibleMaskShapes = useMemo<MaskShapeForExport[]>(
     () =>
-      maskShapes.filter(
+      (maskShapes as MaskShapeForExport[]).filter(
         (shape) =>
           shape.visible &&
           ((shape.type === 'rect' || shape.type === 'ellipse')
@@ -137,7 +150,7 @@ export function GenerationToolbar(): React.JSX.Element {
     [maskShapes]
   );
 
-  const selectedEligibleMaskShapes = useMemo(
+  const selectedEligibleMaskShapes = useMemo<MaskShapeForExport[]>(
     () =>
       eligibleMaskShapes.filter(
         (shape) => activeMaskId && shape.id === activeMaskId
@@ -159,15 +172,58 @@ export function GenerationToolbar(): React.JSX.Element {
     return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
   }, [workingSlot, productImagesExternalBaseUrl]);
 
-  const loadImageElement = (src: string): Promise<HTMLImageElement> =>
+  const loadImageElement = (
+    src: string,
+    options?: { crossOrigin?: 'anonymous' | 'use-credentials' }
+  ): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
       const img = new Image();
+      if (options?.crossOrigin) {
+        img.crossOrigin = options.crossOrigin;
+      }
       img.onload = (): void => resolve(img);
       img.onerror = (): void => reject(new Error('Failed to load working image for mask export.'));
       img.src = src;
     });
 
-  const polygonsFromShapes = (shapes: typeof exportMaskShapes): Array<Array<{ x: number; y: number }>> =>
+  const upscaleCanvasImage = async (
+    src: string,
+    scale: number,
+    smoothingQuality: UpscaleSmoothingQuality
+  ): Promise<string> => {
+    const image = await loadImageElement(src, { crossOrigin: 'anonymous' });
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      throw new Error('Source image dimensions are invalid.');
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(sourceWidth * scale));
+    canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+
+    const context2d = canvas.getContext('2d');
+    if (!context2d) {
+      throw new Error('Canvas context is unavailable.');
+    }
+
+    context2d.imageSmoothingEnabled = true;
+    // `imageSmoothingQuality` is not fully baseline, so this assignment is best-effort.
+    try {
+      (context2d as CanvasRenderingContext2D & { imageSmoothingQuality?: UpscaleSmoothingQuality }).imageSmoothingQuality = smoothingQuality;
+    } catch {
+      // ignore browser incompatibility and continue with default smoothing
+    }
+    context2d.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    try {
+      return canvas.toDataURL('image/png');
+    } catch {
+      throw new Error('Client upscale failed due to cross-origin restrictions. Use "Upscale Server: Sharp".');
+    }
+  };
+
+  const polygonsFromShapes = (shapes: MaskShapeForExport[]): Array<Array<{ x: number; y: number }>> =>
     shapes.flatMap((shape) => normalizeShapeToPolygons(shape));
 
   const renderMaskDataUrlFromPolygons = (
@@ -290,6 +346,55 @@ export function GenerationToolbar(): React.JSX.Element {
     }
   };
 
+  const handleUpscale = async (): Promise<void> => {
+    if (!workingSlot?.id) {
+      toast('No active source slot selected.', { variant: 'info' });
+      return;
+    }
+    if (!workingSlotImageSrc) {
+      toast('Select a slot image before upscaling.', { variant: 'info' });
+      return;
+    }
+
+    const scale = Number(upscaleScale);
+    if (!Number.isFinite(scale) || scale <= 1 || scale > 8) {
+      toast('Upscale scale must be greater than 1 and at most 8.', { variant: 'info' });
+      return;
+    }
+
+    setUpscaleBusy(true);
+    try {
+      const mode = upscaleMode === 'client_canvas' ? 'client_data_url' : 'server_sharp';
+      const payload: Record<string, unknown> = {
+        mode,
+        scale,
+      };
+
+      if (mode === 'client_data_url') {
+        payload['smoothingQuality'] = upscaleSmoothingQuality;
+        payload['dataUrl'] = await upscaleCanvasImage(
+          workingSlotImageSrc,
+          scale,
+          upscaleSmoothingQuality
+        );
+      }
+
+      const response = await api.post<{ slot?: { id: string; name: string | null } }>(
+        `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
+        payload
+      );
+      void invalidateImageStudioSlots(queryClient, projectId);
+
+      const scaleLabel = `${Number(scale.toFixed(2))}x`;
+      const createdLabel = response.slot?.name?.trim() || `Upscale ${scaleLabel}`;
+      toast(`Created ${createdLabel}.`, { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to upscale image.', { variant: 'error' });
+    } finally {
+      setUpscaleBusy(false);
+    }
+  };
+
   const generationBusy = runMutation.isPending || isRunInFlight;
   const generationLabel = generationBusy
     ? activeRunStatus === 'queued'
@@ -326,6 +431,25 @@ export function GenerationToolbar(): React.JSX.Element {
     () => ([
       { value: 'client_canvas_polygon', label: 'Option A: Canvas Polygon' },
       { value: 'server_polygon', label: 'Option C: Server Polygon' },
+    ]),
+    []
+  );
+  const upscaleModeOptions = useMemo(
+    () => ([
+      { value: 'client_canvas', label: 'Upscale A: Canvas' },
+      { value: 'server_sharp', label: 'Upscale Server: Sharp' },
+    ]),
+    []
+  );
+  const upscaleScaleOptions = useMemo(
+    () => ['1.5', '2', '3', '4'].map((value: string) => ({ value, label: `${value}x` })),
+    []
+  );
+  const upscaleSmoothingOptions = useMemo(
+    () => ([
+      { value: 'high', label: 'Smoothing High' },
+      { value: 'medium', label: 'Smoothing Medium' },
+      { value: 'low', label: 'Smoothing Low' },
     ]),
     []
   );
@@ -384,6 +508,51 @@ export function GenerationToolbar(): React.JSX.Element {
           <Play className='mr-2 size-4' />
         )}
         {generationLabel}
+      </UnifiedButton>
+      <UnifiedSelect
+        className='w-[190px]'
+        value={upscaleMode}
+        onValueChange={(value: string) => {
+          setUpscaleMode(value as UpscaleMode);
+        }}
+        options={upscaleModeOptions}
+        triggerClassName='h-8 text-xs'
+        ariaLabel='Upscale mode'
+      />
+      <UnifiedSelect
+        className='w-[85px]'
+        value={upscaleScale}
+        onValueChange={(value: string) => {
+          setUpscaleScale(value);
+        }}
+        options={upscaleScaleOptions}
+        triggerClassName='h-8 text-xs'
+        ariaLabel='Upscale scale'
+      />
+      {upscaleMode === 'client_canvas' ? (
+        <UnifiedSelect
+          className='w-[150px]'
+          value={upscaleSmoothingQuality}
+          onValueChange={(value: string) => {
+            setUpscaleSmoothingQuality(value as UpscaleSmoothingQuality);
+          }}
+          options={upscaleSmoothingOptions}
+          triggerClassName='h-8 text-xs'
+          ariaLabel='Upscale smoothing quality'
+        />
+      ) : null}
+      <UnifiedButton
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={() => {
+          void handleUpscale();
+        }}
+        disabled={!workingSlot || !workingSlotImageSrc || upscaleBusy}
+        title='Create an upscaled linked variant from the active slot'
+      >
+        {upscaleBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+        Upscale
       </UnifiedButton>
       <UnifiedButton
         type='button'

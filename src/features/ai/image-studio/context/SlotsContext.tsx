@@ -13,6 +13,7 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
@@ -53,6 +54,82 @@ function parseSlotFoldersSetting(raw: string | null | undefined): string[] {
 
 function serializeSlotFoldersSetting(folders: string[]): string {
   return serializeSetting({ version: 1, folders: normalizeFolderPaths(folders) });
+}
+
+function readSlotMetadata(slot: ImageStudioSlotRecord): Record<string, unknown> | null {
+  if (!slot.metadata || typeof slot.metadata !== 'object' || Array.isArray(slot.metadata)) {
+    return null;
+  }
+  return slot.metadata;
+}
+
+function getSlotSourceIds(slot: ImageStudioSlotRecord): string[] {
+  const metadata = readSlotMetadata(slot);
+  if (!metadata) return [];
+
+  const sourceIds: string[] = [];
+  const sourceSlotId = metadata['sourceSlotId'];
+  if (typeof sourceSlotId === 'string' && sourceSlotId.trim()) {
+    sourceIds.push(sourceSlotId.trim());
+  }
+
+  const nestedSourceIds = metadata['sourceSlotIds'];
+  if (Array.isArray(nestedSourceIds)) {
+    nestedSourceIds.forEach((value: unknown) => {
+      if (typeof value !== 'string') return;
+      const normalized = value.trim();
+      if (!normalized) return;
+      sourceIds.push(normalized);
+    });
+  }
+
+  return sourceIds;
+}
+
+function collectSlotsToDeleteForFolder(
+  allSlots: ImageStudioSlotRecord[],
+  folderPath: string
+): ImageStudioSlotRecord[] {
+  const normalizedFolder = normalizeTreePath(folderPath);
+  if (!normalizedFolder) return [];
+
+  const slotsById = new Map<string, ImageStudioSlotRecord>(
+    allSlots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
+  );
+  const childIdsBySource = new Map<string, Set<string>>();
+
+  allSlots.forEach((slot: ImageStudioSlotRecord) => {
+    getSlotSourceIds(slot).forEach((sourceId: string) => {
+      const current = childIdsBySource.get(sourceId) ?? new Set<string>();
+      current.add(slot.id);
+      childIdsBySource.set(sourceId, current);
+    });
+  });
+
+  const deleteIds = new Set<string>();
+  const queue: string[] = [];
+  allSlots.forEach((slot: ImageStudioSlotRecord) => {
+    if (!isTreePathWithin(slot.folderPath ?? '', normalizedFolder)) return;
+    if (deleteIds.has(slot.id)) return;
+    deleteIds.add(slot.id);
+    queue.push(slot.id);
+  });
+
+  while (queue.length > 0) {
+    const sourceId = queue.shift();
+    if (!sourceId) continue;
+    const childIds = childIdsBySource.get(sourceId);
+    if (!childIds || childIds.size === 0) continue;
+    childIds.forEach((childId: string) => {
+      if (deleteIds.has(childId)) return;
+      deleteIds.add(childId);
+      queue.push(childId);
+    });
+  }
+
+  return Array.from(deleteIds)
+    .map((slotId: string) => slotsById.get(slotId))
+    .filter((slot: ImageStudioSlotRecord | undefined): slot is ImageStudioSlotRecord => Boolean(slot));
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -360,19 +437,21 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
         };
       });
 
-      await Promise.allSettled(
+      void Promise.allSettled(
         affectedSlots.map((slot: ImageStudioSlotRecord) => {
           const next = optimisticNextById.get(slot.id) ?? '';
-          return updateSlotMutation.mutateAsync({
-            id: slot.id,
-            data: { folderPath: next },
+          return api.patch(`/api/image-studio/slots/${encodeURIComponent(slot.id)}`, {
+            folderPath: next,
           });
         })
-      );
+      ).then(() => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      });
+      return;
     }
 
     void invalidateImageStudioSlots(queryClient, projectId);
-  }, [virtualFolders, persistFolders, slots, updateSlotMutation, queryClient, slotsQueryKey, projectId]);
+  }, [virtualFolders, persistFolders, slots, queryClient, slotsQueryKey, projectId]);
 
   const handleRenameFolder = useCallback(async (folderPath: string, nextFolderPath: string) => {
     const source = normalizeTreePath(folderPath);
@@ -414,9 +493,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       await Promise.allSettled(
         affectedSlots.map((slot: ImageStudioSlotRecord) => {
           const next = optimisticNextById.get(slot.id) ?? '';
-          return updateSlotMutation.mutateAsync({
-            id: slot.id,
-            data: { folderPath: next },
+          return api.patch(`/api/image-studio/slots/${encodeURIComponent(slot.id)}`, {
+            folderPath: next,
           });
         })
       );
@@ -432,7 +510,6 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     virtualFolders,
     persistFolders,
     slots,
-    updateSlotMutation,
     queryClient,
     slotsQueryKey,
     projectId,
@@ -452,31 +529,55 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     setVirtualFolders(nextFolders);
     void persistFolders(nextFolders);
 
-    const slotsToDelete = slots.filter((slot: ImageStudioSlotRecord) =>
-      isWithinSource(slot.folderPath ?? '')
-    );
+    const slotsToDelete = collectSlotsToDeleteForFolder(slots, source);
+    let deleteFailureMessage: string | null = null;
     if (slotsToDelete.length > 0) {
       const deletingSlotIds = new Set(slotsToDelete.map((slot: ImageStudioSlotRecord) => slot.id));
       if (selectedSlotId && deletingSlotIds.has(selectedSlotId)) {
         setSelectedSlotId(null);
+      }
+      if (workingSlotId && deletingSlotIds.has(workingSlotId)) {
         setWorkingSlotId(null);
       }
-      await Promise.allSettled(
-        slotsToDelete.map((slot: ImageStudioSlotRecord) => deleteSlotMutation.mutateAsync(slot.id))
-      );
+
+      queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          slots: current.slots.filter((slot: ImageStudioSlotRecord) => !deletingSlotIds.has(slot.id)),
+        };
+      });
+
+      const failedDeleteIds: string[] = [];
+      for (const slot of slotsToDelete) {
+        try {
+          await deleteSlotMutation.mutateAsync(slot.id);
+        } catch {
+          failedDeleteIds.push(slot.id);
+        }
+      }
+
+      if (failedDeleteIds.length > 0) {
+        const noun = failedDeleteIds.length === 1 ? 'card' : 'cards';
+        deleteFailureMessage = `Failed to delete ${failedDeleteIds.length} ${noun} in folder "${source}".`;
+      }
     }
 
     const normalizedSelectedFolder = normalizeTreePath(selectedFolder);
-    if (normalizedSelectedFolder && isWithinSource(normalizedSelectedFolder)) {
+    if (!deleteFailureMessage && normalizedSelectedFolder && isWithinSource(normalizedSelectedFolder)) {
       setSelectedFolderRaw('');
     }
 
     void invalidateImageStudioSlots(queryClient, projectId);
+    if (deleteFailureMessage) {
+      throw new Error(deleteFailureMessage);
+    }
   }, [
     virtualFolders,
     persistFolders,
     slots,
     selectedSlotId,
+    workingSlotId,
     selectedFolder,
     deleteSlotMutation,
     queryClient,

@@ -43,10 +43,10 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
 
   // Filter configuration
   const filterConfig: FilterField[] = useMemo(() => [
-    { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...' },
-    { key: 'minPrice', label: 'Min Price', type: 'number', placeholder: 'Min price' },
-    { key: 'maxPrice', label: 'Max Price', type: 'number', placeholder: 'Max price' },
-    { key: 'createdAt', label: 'Date Range', type: 'dateRange' },
+    { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
+    { key: 'minPrice', label: 'Min Price', type: 'number', placeholder: 'Min price', width: '9rem' },
+    { key: 'maxPrice', label: 'Max Price', type: 'number', placeholder: 'Max price', width: '9rem' },
+    { key: 'createdAt', label: 'Date Range', type: 'dateRange', width: '22rem' },
   ], []);
 
   // Filter values (combined date range into single object)
@@ -78,21 +78,6 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     }
   };
 
-  // Presets (optional)
-  const presets = useMemo(() => [
-    {
-      label: 'Under $100',
-      values: { maxPrice: 100 },
-    },
-    {
-      label: 'Last 30 Days',
-      values: { createdAt: { 
-        from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        to: new Date().toISOString().split('T')[0],
-      }},
-    },
-  ], []);
-
   return (
     <FilterPanel
       filters={filterConfig}
@@ -109,12 +94,8 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         setStartDate('');
         setEndDate('');
       }}
-      presets={presets}
-      onApplyPreset={(values) => {
-        Object.entries(values).forEach(([key, val]) => {
-          handleFilterChange(key, val);
-        });
-      }}
+      collapsible
+      defaultExpanded
       showHeader={false}
     />
   );

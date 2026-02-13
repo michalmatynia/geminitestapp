@@ -33,9 +33,14 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { useStudioImageModels } from '../hooks/useImageStudioQueries';
 import { getImageModelCapabilities, isGpt52ImageModel, uniqueSortedModelIds } from '../utils/image-models';
 import {
+  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+  parseImageStudioActiveProject,
+} from '../utils/project-session';
+import {
   defaultImageStudioSettings,
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   IMAGE_STUDIO_SETTINGS_KEY,
+  getImageStudioProjectSettingsKey,
   normalizeImageStudioModelPresets,
   parseImageStudioSettings,
   type ImageStudioSettings,
@@ -94,7 +99,9 @@ const MODERATION_OPTIONS = [
   { value: 'low', label: 'low' },
 ];
 
-export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: boolean | undefined } = {}): React.JSX.Element {
+export function AdminImageStudioSettingsPage(
+  { embedded = false, onSaved }: { embedded?: boolean | undefined; onSaved?: (() => void) | undefined } = {}
+): React.JSX.Element {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
@@ -131,6 +138,14 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     [promptEngineRaw]
   );
   const heavyMap = heavySettings.data ?? new Map<string, string>();
+  const activeProjectId = parseImageStudioActiveProject(
+    heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)
+  );
+  const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
+  const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
+  const projectStudioSettingsRaw =
+    projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
+  const studioSettingsRaw = projectStudioSettingsRaw ?? globalStudioSettingsRaw;
 
   useEffect(() => {
     if (!heavySettings.data || settingsLoaded) return;
@@ -138,7 +153,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
 
     setPrevSettingsData(heavySettings.data);
 
-    const storedRaw = heavySettings.data.get(IMAGE_STUDIO_SETTINGS_KEY);
+    const storedRaw = studioSettingsRaw;
     const stored = parseImageStudioSettings(storedRaw);
     const promptEngineStored = parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY));
     const openaiModelFallback = settingsStore.get('openai_model');
@@ -171,7 +186,13 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     setPromptValidationRulesError(null);
     setModelToAdd('');
     setSettingsLoaded(true);
-  }, [heavySettings.data, prevSettingsData, settingsLoaded, settingsStore]);
+  }, [
+    heavySettings.data,
+    prevSettingsData,
+    settingsLoaded,
+    settingsStore,
+    studioSettingsRaw,
+  ]);
 
   const handleRefresh = useCallback(async (): Promise<void> => {
     setSettingsLoaded(false);
@@ -269,8 +290,9 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     };
 
     try {
+      const targetSettingsKey = projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
       await updateSetting.mutateAsync({
-        key: IMAGE_STUDIO_SETTINGS_KEY,
+        key: targetSettingsKey,
         value: serializeSetting(nextStudioSettings),
       });
       await updateSetting.mutateAsync({
@@ -293,6 +315,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
         }),
       });
       toast('Image Studio settings saved.', { variant: 'success' });
+      onSaved?.();
     } catch (error) {
       logClientError(error, { context: { source: 'AdminImageStudioSettingsPage', action: 'saveSettings' } });
       toast('Failed to save Image Studio settings.', { variant: 'error' });
@@ -307,6 +330,8 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     promptEngineSettings,
     toast,
     updateSetting,
+    onSaved,
+    projectSettingsKey,
   ]);
 
   const resetStudioSettings = useCallback((): void => {
@@ -378,11 +403,25 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
     toast,
   ]);
 
-  const studioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
-
   const settingsSource = useMemo(() => {
-    return studioSettingsRaw ? 'saved settings' : 'defaults';
-  }, [studioSettingsRaw]);
+    const hasProjectSpecificSettings = Boolean(
+      projectSettingsKey &&
+      projectStudioSettingsRaw &&
+      projectStudioSettingsRaw.trim().length > 0
+    );
+    if (hasProjectSpecificSettings && activeProjectId) {
+      return `project (${activeProjectId})`;
+    }
+    if (activeProjectId && projectSettingsKey) {
+      return globalStudioSettingsRaw ? `global fallback (${activeProjectId})` : 'defaults';
+    }
+    return globalStudioSettingsRaw ? 'global settings' : 'defaults';
+  }, [
+    activeProjectId,
+    globalStudioSettingsRaw,
+    projectSettingsKey,
+    projectStudioSettingsRaw,
+  ]);
 
   const quickSwitchModels = useMemo(() => {
     return normalizeImageStudioModelPresets(

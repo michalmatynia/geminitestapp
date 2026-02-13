@@ -13,132 +13,25 @@ import { api } from '@/shared/lib/api-client';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { UnifiedButton, UnifiedInput, Label, AppModal, UnifiedTextarea, useToast } from '@/shared/ui';
 
+import {
+  buildHeuristicControls,
+  buildPromptDiffLines,
+  getPromptRunKindLabel,
+  getPromptSourceLabel,
+  type PromptDiffLine,
+  type PromptExtractApiResponse,
+  type PromptExtractHistoryEntry,
+  type PromptExtractRunKind,
+  type PromptExtractValidationIssue,
+  toSlotName,
+  type UiExtractorSuggestion,
+} from './studio-modals/prompt-extract-utils';
+import { PromptExtractionHistoryPanel } from './studio-modals/PromptExtractionHistoryPanel';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
-import { isParamUiControl, recommendParamUiControl, type ParamUiControl } from '../utils/param-ui';
-
-type UiExtractorSuggestion = {
-  path: string;
-  control: ParamUiControl;
-};
-
-type PromptExtractValidationIssue = {
-  ruleId?: string;
-  severity?: string;
-  title?: string;
-  message?: string;
-  suggestions?: Array<{
-    suggestion?: string;
-    found?: string;
-    comment?: string | null;
-  }>;
-};
-
-type PromptExtractApiResponse = {
-  params?: Record<string, unknown>;
-  source?: 'programmatic' | 'programmatic_autofix' | 'gpt';
-  modeRequested?: 'programmatic' | 'gpt' | 'hybrid';
-  fallbackUsed?: boolean;
-  formattedPrompt?: string | null;
-  validation?: {
-    before?: PromptExtractValidationIssue[];
-    after?: PromptExtractValidationIssue[];
-  };
-  diagnostics?: {
-    programmaticError?: string | null;
-    aiError?: string | null;
-    model?: string | null;
-    autofixApplied?: boolean;
-  };
-};
-
-type PromptExtractRunKind = 'programmatic' | 'smart' | 'ai';
-
-type PromptExtractHistoryEntry = {
-  id: string;
-  createdAt: number;
-  runKind: PromptExtractRunKind;
-  source: 'programmatic' | 'programmatic_autofix' | 'gpt' | null;
-  modeRequested: 'programmatic' | 'gpt' | 'hybrid' | null;
-  fallbackUsed: boolean;
-  autofixApplied: boolean;
-  promptBefore: string;
-  promptAfter: string;
-  validationBeforeCount: number;
-  validationAfterCount: number;
-};
-
-type PromptDiffLine = {
-  before: string | null;
-  after: string | null;
-  changed: boolean;
-};
-
-const getPromptSourceLabel = (
-  source: PromptExtractHistoryEntry['source']
-): string => {
-  if (source === 'programmatic_autofix') return 'Programmatic + Autofix';
-  if (source === 'programmatic') return 'Programmatic';
-  if (source === 'gpt') return 'AI';
-  return 'Unknown';
-};
-
-const getPromptRunKindLabel = (runKind: PromptExtractRunKind): string => {
-  if (runKind === 'programmatic') return 'Programmatic Extract';
-  if (runKind === 'ai') return 'AI Extract';
-  return 'Smart Extract';
-};
-
-const formatHistoryTime = (timestamp: number): string =>
-  new Date(timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-
-const buildPromptDiffLines = (
-  beforePrompt: string,
-  afterPrompt: string,
-): PromptDiffLine[] => {
-  const beforeLines = beforePrompt.split(/\r?\n/);
-  const afterLines = afterPrompt.split(/\r?\n/);
-  const maxLines = Math.max(beforeLines.length, afterLines.length);
-  const rows: PromptDiffLine[] = [];
-  for (let index = 0; index < maxLines; index += 1) {
-    const before = beforeLines[index] ?? null;
-    const after = afterLines[index] ?? null;
-    rows.push({
-      before,
-      after,
-      changed: before !== after,
-    });
-  }
-  return rows;
-};
-
-function toSlotName(filename: string, index: number): string {
-  const clean = filename.trim();
-  if (!clean) return `Card ${index + 1}`;
-  const dotIndex = clean.lastIndexOf('.');
-  if (dotIndex <= 0) return clean;
-  return clean.slice(0, dotIndex);
-}
-
-function buildHeuristicControls(
-  params: Record<string, unknown>,
-  specs: Record<string, ParamSpec> | null
-): Record<string, ParamUiControl> {
-  const next: Record<string, ParamUiControl> = {};
-  const leaves = flattenParams(params).filter((leaf) => Boolean(leaf.path));
-  leaves.forEach((leaf) => {
-    const spec = specs?.[leaf.path];
-    const recommendation = recommendParamUiControl(leaf.value, spec);
-    next[leaf.path] = recommendation.recommended;
-  });
-  return next;
-}
+import { isParamUiControl, type ParamUiControl } from '../utils/param-ui';
 
 export function StudioModals(): React.JSX.Element {
   const { toast } = useToast();
@@ -1017,109 +910,17 @@ export function StudioModals(): React.JSX.Element {
           ) : null}
 
           {extractHistory.length > 0 ? (
-            <div className='space-y-2 rounded border border-indigo-500/30 bg-indigo-500/5 p-3'>
-              <div className='flex flex-wrap items-center justify-between gap-2'>
-                <div className='text-xs font-semibold text-indigo-100'>Extraction History</div>
-                <UnifiedButton
-                  type='button'
-                  variant='ghost'
-                  className='h-7 px-2 text-xs text-indigo-100 hover:bg-indigo-500/20'
-                  onClick={() => {
-                    setExtractHistory([]);
-                    setSelectedExtractHistoryId(null);
-                  }}
-                >
-                  Clear History
-                </UnifiedButton>
-              </div>
-              <div className='grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]'>
-                <div className='max-h-60 space-y-1 overflow-auto pr-1'>
-                  {extractHistory.map((entry: PromptExtractHistoryEntry) => {
-                    const isSelected = selectedExtractHistory?.id === entry.id;
-                    const changed = entry.promptBefore !== entry.promptAfter;
-                    return (
-                      <button
-                        key={entry.id}
-                        type='button'
-                        onClick={() => setSelectedExtractHistoryId(entry.id)}
-                        className={`w-full rounded border px-2 py-1.5 text-left text-[11px] transition-colors ${
-                          isSelected
-                            ? 'border-indigo-400/60 bg-indigo-500/20 text-indigo-100'
-                            : 'border-indigo-500/25 bg-indigo-500/5 text-indigo-100/80 hover:bg-indigo-500/15'
-                        }`}
-                      >
-                        <div className='font-medium'>{getPromptRunKindLabel(entry.runKind)}</div>
-                        <div className='text-[10px] text-indigo-100/70'>
-                          {formatHistoryTime(entry.createdAt)} | {getPromptSourceLabel(entry.source)}
-                        </div>
-                        <div className='text-[10px] text-indigo-100/70'>
-                          {changed ? 'Prompt changed' : 'No prompt change'} | Validation {entry.validationBeforeCount}
-                          {' -> '}
-                          {entry.validationAfterCount}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className='space-y-2'>
-                  {selectedExtractHistory ? (
-                    <>
-                      <div className='rounded border border-indigo-500/30 bg-indigo-500/10 p-2 text-[11px] text-indigo-100/90'>
-                        <div>
-                          <span className='font-semibold'>Run:</span>{' '}
-                          {getPromptRunKindLabel(selectedExtractHistory.runKind)}
-                        </div>
-                        <div>
-                          <span className='font-semibold'>Mode:</span>{' '}
-                          {selectedExtractHistory.modeRequested ?? 'n/a'}
-                          {' | '}
-                          <span className='font-semibold'>Source:</span>{' '}
-                          {getPromptSourceLabel(selectedExtractHistory.source)}
-                          {' | '}
-                          <span className='font-semibold'>Autofix:</span>{' '}
-                          {selectedExtractHistory.autofixApplied ? 'ON' : 'OFF'}
-                          {' | '}
-                          <span className='font-semibold'>Fallback:</span>{' '}
-                          {selectedExtractHistory.fallbackUsed ? 'YES' : 'NO'}
-                        </div>
-                      </div>
-                      {selectedExtractChanged ? (
-                        <div className='max-h-60 overflow-auto rounded border border-indigo-500/30 bg-gray-950/30'>
-                          <div className='grid grid-cols-2 border-b border-indigo-500/25 text-[10px] uppercase tracking-wide text-indigo-200/80'>
-                            <div className='px-2 py-1'>Before Autofix</div>
-                            <div className='px-2 py-1'>After Autofix</div>
-                          </div>
-                          <div className='divide-y divide-indigo-500/10 font-mono text-[11px]'>
-                            {selectedExtractDiffLines.map((line: PromptDiffLine, index: number) => (
-                              <div key={`diff-${index}`} className='grid grid-cols-2'>
-                                <div
-                                  className={`whitespace-pre-wrap break-words px-2 py-1 ${
-                                    line.changed ? 'bg-red-500/10 text-red-100' : 'text-gray-300'
-                                  }`}
-                                >
-                                  {line.before ?? '\u2205'}
-                                </div>
-                                <div
-                                  className={`whitespace-pre-wrap break-words px-2 py-1 ${
-                                    line.changed ? 'bg-emerald-500/10 text-emerald-100' : 'text-gray-300'
-                                  }`}
-                                >
-                                  {line.after ?? '\u2205'}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className='rounded border border-indigo-500/25 bg-indigo-500/5 p-2 text-xs text-indigo-100/80'>
-                          No prompt formatting differences for this extraction.
-                        </div>
-                      )}
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            </div>
+            <PromptExtractionHistoryPanel
+              extractHistory={extractHistory}
+              selectedExtractHistory={selectedExtractHistory}
+              selectedExtractDiffLines={selectedExtractDiffLines}
+              selectedExtractChanged={selectedExtractChanged}
+              onSelectExtractHistory={setSelectedExtractHistoryId}
+              onClearHistory={() => {
+                setExtractHistory([]);
+                setSelectedExtractHistoryId(null);
+              }}
+            />
           ) : null}
 
           {studioSettings.promptExtraction.showValidationSummary && previewValidation ? (

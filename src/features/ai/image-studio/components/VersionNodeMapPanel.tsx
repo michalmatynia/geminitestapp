@@ -238,11 +238,13 @@ export function VersionNodeMapPanel(): React.JSX.Element {
   const handleCanvasSelectNode = useCallback((id: string | null) => {
     if (compareMode && id) {
       handleCompareNodeClick(id);
+    } else if (id) {
+      activateNode(id);
     } else {
       selectNode(id);
     }
     closeContextMenu();
-  }, [compareMode, handleCompareNodeClick, selectNode, closeContextMenu]);
+  }, [compareMode, handleCompareNodeClick, activateNode, selectNode, closeContextMenu]);
 
   const getSlotAnnotation = useCallback(
     (slot: ImageStudioSlotRecord) => readMeta(slot).annotation,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Camera, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
+import { Camera, Eye, EyeOff, Loader2, Locate, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -17,6 +17,8 @@ import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { UnifiedButton, UnifiedInput, useToast } from '@/shared/ui';
 
+import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
+import { SplitViewControls } from './center-preview/SplitViewControls';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
@@ -26,6 +28,18 @@ import { useUiActions, useUiState } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
 import { estimateGenerationCost } from '../utils/generation-cost';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
+import {
+  asFiniteNumber,
+  asObjectRecord,
+  buildTimestampSearchText,
+  clampSplitZoom,
+  formatBytes,
+  formatTimestamp,
+  formatUsd,
+  normalizeImagePath,
+  type VariantThumbnailInfo,
+  wait,
+} from './center-preview/preview-utils';
 
 import type { SlotGenerationMetadata } from '../types';
 
@@ -33,96 +47,21 @@ const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },
   { value: '3d', label: '3D' },
 ] as const;
-
-type VariantThumbnailInfo = {
-  id: string;
-  index: number;
-  status: 'pending' | 'completed' | 'failed';
-  imageSrc: string | null;
-  output: {
-    id: string;
-    filepath: string;
-    filename: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-  } | null;
-  slotId: string | null;
-  model: string | null;
-  timestamp: string | null;
-  timestampLabel: string;
-  timestampSearchText: string;
-  tokenCostUsd: number | null;
-  actualCostUsd: number | null;
-  costEstimated: boolean;
-};
-
-const asObjectRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
-};
-
-const asFiniteNumber = (value: unknown): number | null => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
-  return value;
-};
-
-const formatBytes = (value: number | null): string => {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 'n/a';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let size = value;
-  let unitIndex = 0;
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex += 1;
-  }
-  const precision = unitIndex === 0 ? 0 : size >= 10 ? 1 : 2;
-  return `${size.toFixed(precision)} ${units[unitIndex]}`;
-};
-
-const formatUsd = (value: number | null): string => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 'n/a';
-  return `$${value.toFixed(4)}`;
-};
-
-const formatTimestamp = (value: string | null): string => {
-  if (!value) return 'n/a';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleString();
-};
-
-const buildTimestampSearchText = (value: string | null): string => {
-  if (!value) return '';
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value.toLowerCase();
-  return `${value} ${parsed.toISOString()} ${parsed.toLocaleDateString()} ${parsed.toLocaleTimeString()} ${parsed.toLocaleString()}`.toLowerCase();
-};
-
-const wait = async (ms: number): Promise<void> =>
-  await new Promise((resolve) => setTimeout(resolve, ms));
-
-const normalizeImagePath = (value: string | null | undefined): string => {
-  if (typeof value !== 'string') return '';
-  const trimmed = value.trim();
-  if (!trimmed) return '';
-  if (/^https?:\/\//i.test(trimmed)) {
-    try {
-      const parsed = new URL(trimmed);
-      return parsed.pathname.replace(/\\/g, '/');
-    } catch {
-      return trimmed.replace(/\\/g, '/');
-    }
-  }
-  return trimmed.split('?')[0]?.replace(/\\/g, '/') ?? '';
-};
+const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
 export function CenterPreview(): React.JSX.Element {
   const { isFocusMode, maskPreviewEnabled } = useUiState();
   const { toggleFocusMode } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot, previewMode, captureRef, slots } = useSlotsState();
-  const { setPreviewMode, setSelectedSlotId, setWorkingSlotId, deleteSlotMutation, createSlots } = useSlotsActions();
+  const {
+    setPreviewMode,
+    setSelectedSlotId,
+    setWorkingSlotId,
+    setTemporaryObjectUpload,
+    deleteSlotMutation,
+    createSlots,
+  } = useSlotsActions();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -149,6 +88,8 @@ export function CenterPreview(): React.JSX.Element {
   const [variantTimestampQuery, setVariantTimestampQuery] = useState('');
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
+  const [leftSplitZoom, setLeftSplitZoom] = useState(1);
+  const [rightSplitZoom, setRightSplitZoom] = useState(1);
   const [dismissedVariantIds, setDismissedVariantIds] = useState<Set<string>>(new Set());
   const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
   const [variantTooltip, setVariantTooltip] = useState<{
@@ -297,63 +238,13 @@ export function CenterPreview(): React.JSX.Element {
   }, [activeRunId]);
 
   const variantThumbnails = useMemo((): VariantThumbnailInfo[] => {
-    return landingSlots.map((landingSlot): VariantThumbnailInfo => {
-      const output = landingSlot.output ?? null;
-      if (!output) {
-        return {
-          id: landingSlot.id,
-          index: landingSlot.index,
-          status: landingSlot.status,
-          imageSrc: null,
-          output: null,
-          slotId: null,
-          model: null,
-          timestamp: null,
-          timestampLabel: 'n/a',
-          timestampSearchText: '',
-          tokenCostUsd: null,
-          actualCostUsd: null,
-          costEstimated: true,
-        };
-      }
+    const rootSourceSlotId = sourceSlotId ?? workingSlot?.id ?? null;
 
-      const normalizedOutputPath = normalizeImagePath(output.filepath);
-      const matchingSlots = slots.filter((slot) => {
-        const metadata = asObjectRecord(slot.metadata);
-        const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
-        const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
-          ? metadata['generationOutputIndex']
-          : null;
-
-        if (activeRunId && runId === activeRunId && outputIndex === landingSlot.index) {
-          return true;
-        }
-        if (slot.imageFileId === output.id) {
-          return true;
-        }
-        if (normalizedOutputPath) {
-          if (normalizeImagePath(slot.imageFile?.filepath) === normalizedOutputPath) {
-            return true;
-          }
-          if (normalizeImagePath(slot.imageUrl) === normalizedOutputPath) {
-            return true;
-          }
-        }
-        return false;
-      });
-      const matchedSlot = matchingSlots.find((slot) => {
-        const metadata = asObjectRecord(slot.metadata);
-        const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
-        const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
-          ? metadata['generationOutputIndex']
-          : null;
-        return Boolean(activeRunId && runId === activeRunId && outputIndex === landingSlot.index);
-      }) ?? matchingSlots[0] ?? null;
-      const imageSrc =
-        getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ||
-        output.filepath;
-
-      const metadata = asObjectRecord(matchedSlot?.metadata) as SlotGenerationMetadata | null;
+    const buildVariantFromSlot = (
+      slot: (typeof slots)[number],
+      fallbackIndex: number
+    ): VariantThumbnailInfo => {
+      const metadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
       const generationParams = asObjectRecord(metadata?.generationParams);
       const generationRequest = asObjectRecord(metadata?.generationRequest);
       const generationCosts = asObjectRecord(metadata?.generationCosts);
@@ -373,7 +264,7 @@ export function CenterPreview(): React.JSX.Element {
       const outputCountCandidate =
         asFiniteNumber(metadata?.generationOutputCount) ??
         asFiniteNumber(generationParams?.['outputCount']) ??
-        (landingSlots.length > 0 ? landingSlots.length : null);
+        null;
       const outputCount = outputCountCandidate ?? 1;
 
       let tokenCostUsd = asFiniteNumber(generationCosts?.['tokenCostUsd']);
@@ -391,20 +282,40 @@ export function CenterPreview(): React.JSX.Element {
         costEstimated = true;
       }
 
+      const output = slot.imageFile
+        ? {
+          id: slot.imageFile.id,
+          filepath: slot.imageFile.filepath,
+          filename: slot.imageFile.filename || slot.name || `Generated ${fallbackIndex}`,
+          size: slot.imageFile.size,
+          width: slot.imageFile.width,
+          height: slot.imageFile.height,
+        }
+        : slot.imageFileId || slot.imageUrl
+          ? {
+            id: slot.imageFileId ?? `slot:${slot.id}`,
+            filepath: slot.imageUrl ?? '',
+            filename: slot.name || `Generated ${fallbackIndex}`,
+            size: slot.imageFile?.size ?? 0,
+            width: slot.imageFile?.width ?? null,
+            height: slot.imageFile?.height ?? null,
+          }
+          : null;
+
+      const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl) || output?.filepath || null;
+      const rawIndex =
+        asFiniteNumber(metadata?.generationOutputIndex) ??
+        asFiniteNumber(generationParams?.['outputIndex']) ??
+        fallbackIndex;
+      const index = Math.max(1, Math.floor(rawIndex));
+
       return {
-        id: landingSlot.id,
-        index: landingSlot.index,
-        status: landingSlot.status,
+        id: `slot:${slot.id}`,
+        index,
+        status: output ? 'completed' : 'failed',
         imageSrc,
-        output: {
-          id: output.id,
-          filepath: output.filepath,
-          filename: output.filename || `Generated ${landingSlot.index}`,
-          size: output.size,
-          width: output.width,
-          height: output.height,
-        },
-        slotId: matchedSlot?.id ?? null,
+        output,
+        slotId: slot.id,
         model,
         timestamp,
         timestampLabel: formatTimestamp(timestamp),
@@ -413,8 +324,183 @@ export function CenterPreview(): React.JSX.Element {
         actualCostUsd,
         costEstimated,
       };
+    };
+
+    const historicalVariants: VariantThumbnailInfo[] = rootSourceSlotId
+      ? slots
+        .filter((slot) => {
+          const metadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
+          if (!metadata) return false;
+          const relationType = typeof metadata.relationType === 'string' ? metadata.relationType : '';
+          const source = typeof metadata.sourceSlotId === 'string' ? metadata.sourceSlotId.trim() : '';
+          const sourceIds = Array.isArray(metadata.sourceSlotIds)
+            ? metadata.sourceSlotIds.filter(
+              (value): value is string => typeof value === 'string' && value.trim().length > 0
+            )
+            : [];
+          const linkedToSource = source === rootSourceSlotId || sourceIds.includes(rootSourceSlotId);
+          const isGeneration = metadata.role === 'generation' || relationType === 'generation:output';
+          const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
+          return linkedToSource && isGeneration && Boolean(imageSrc || slot.imageFileId || slot.imageUrl);
+        })
+        .map((slot, index) => buildVariantFromSlot(slot, index + 1))
+        .sort((a, b) => {
+          const aTs = a.timestamp ? Date.parse(a.timestamp) : Number.NaN;
+          const bTs = b.timestamp ? Date.parse(b.timestamp) : Number.NaN;
+          if (Number.isFinite(aTs) && Number.isFinite(bTs) && aTs !== bTs) {
+            return bTs - aTs;
+          }
+          return b.index - a.index;
+        })
+      : [];
+
+    const historicalSlotIds = new Set<string>(
+      historicalVariants
+        .map((variant) => variant.slotId)
+        .filter((slotId): slotId is string => typeof slotId === 'string' && slotId.length > 0)
+    );
+
+    const transientVariants = landingSlots
+      .map((landingSlot): VariantThumbnailInfo | null => {
+        const output = landingSlot.output ?? null;
+        if (!output) {
+          return {
+            id: `landing:${landingSlot.id}`,
+            index: landingSlot.index,
+            status: landingSlot.status,
+            imageSrc: null,
+            output: null,
+            slotId: null,
+            model: null,
+            timestamp: null,
+            timestampLabel: 'n/a',
+            timestampSearchText: '',
+            tokenCostUsd: null,
+            actualCostUsd: null,
+            costEstimated: true,
+          };
+        }
+
+        const normalizedOutputPath = normalizeImagePath(output.filepath);
+        const matchingSlots = slots.filter((slot) => {
+          const metadata = asObjectRecord(slot.metadata);
+          const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
+          const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
+            ? metadata['generationOutputIndex']
+            : null;
+
+          if (activeRunId && runId === activeRunId && outputIndex === landingSlot.index) {
+            return true;
+          }
+          if (slot.imageFileId === output.id) {
+            return true;
+          }
+          if (normalizedOutputPath) {
+            if (normalizeImagePath(slot.imageFile?.filepath) === normalizedOutputPath) {
+              return true;
+            }
+            if (normalizeImagePath(slot.imageUrl) === normalizedOutputPath) {
+              return true;
+            }
+          }
+          return false;
+        });
+        const matchedSlot = matchingSlots.find((slot) => {
+          const metadata = asObjectRecord(slot.metadata);
+          const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
+          const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
+            ? metadata['generationOutputIndex']
+            : null;
+          return Boolean(activeRunId && runId === activeRunId && outputIndex === landingSlot.index);
+        }) ?? matchingSlots[0] ?? null;
+
+        if (matchedSlot?.id && historicalSlotIds.has(matchedSlot.id)) {
+          return null;
+        }
+
+        const imageSrc =
+          getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ||
+          output.filepath;
+
+        const metadata = asObjectRecord(matchedSlot?.metadata) as SlotGenerationMetadata | null;
+        const generationParams = asObjectRecord(metadata?.generationParams);
+        const generationRequest = asObjectRecord(metadata?.generationRequest);
+        const generationCosts = asObjectRecord(metadata?.generationCosts);
+
+        const model =
+          (typeof generationParams?.['model'] === 'string' ? generationParams['model'] : null) ??
+          (typeof generationRequest?.['model'] === 'string' ? generationRequest['model'] : null) ??
+          null;
+        const timestamp =
+          (typeof generationParams?.['timestamp'] === 'string' ? generationParams['timestamp'] : null) ??
+          (typeof generationRequest?.['timestamp'] === 'string' ? generationRequest['timestamp'] : null) ??
+          null;
+        const prompt =
+          (typeof generationParams?.['prompt'] === 'string' ? generationParams['prompt'] : null) ??
+          (typeof generationRequest?.['prompt'] === 'string' ? generationRequest['prompt'] : null) ??
+          '';
+        const outputCountCandidate =
+          asFiniteNumber(metadata?.generationOutputCount) ??
+          asFiniteNumber(generationParams?.['outputCount']) ??
+          (landingSlots.length > 0 ? landingSlots.length : null);
+        const outputCount = outputCountCandidate ?? 1;
+
+        let tokenCostUsd = asFiniteNumber(generationCosts?.['tokenCostUsd']);
+        let actualCostUsd = asFiniteNumber(generationCosts?.['actualCostUsd']);
+        let costEstimated = generationCosts?.['estimated'] !== false;
+
+        if ((tokenCostUsd === null || actualCostUsd === null) && model) {
+          const estimate = estimateGenerationCost({
+            prompt,
+            model,
+            outputCount,
+          });
+          if (tokenCostUsd === null) tokenCostUsd = estimate.promptCostUsdPerOutput;
+          if (actualCostUsd === null) actualCostUsd = estimate.totalCostUsdPerOutput;
+          costEstimated = true;
+        }
+
+        return {
+          id: matchedSlot ? `slot:${matchedSlot.id}` : `landing:${landingSlot.id}`,
+          index: landingSlot.index,
+          status: landingSlot.status,
+          imageSrc,
+          output: {
+            id: output.id,
+            filepath: output.filepath,
+            filename: output.filename || `Generated ${landingSlot.index}`,
+            size: output.size,
+            width: output.width,
+            height: output.height,
+          },
+          slotId: matchedSlot?.id ?? null,
+          model,
+          timestamp,
+          timestampLabel: formatTimestamp(timestamp),
+          timestampSearchText: buildTimestampSearchText(timestamp),
+          tokenCostUsd,
+          actualCostUsd,
+          costEstimated,
+        };
+      })
+      .filter((variant): variant is VariantThumbnailInfo => Boolean(variant));
+
+    const deduped = new Map<string, VariantThumbnailInfo>();
+    [...transientVariants, ...historicalVariants].forEach((variant) => {
+      if (!deduped.has(variant.id)) {
+        deduped.set(variant.id, variant);
+      }
     });
-  }, [activeRunId, landingSlots, productImagesExternalBaseUrl, slots]);
+
+    return Array.from(deduped.values());
+  }, [
+    activeRunId,
+    landingSlots,
+    productImagesExternalBaseUrl,
+    slots,
+    sourceSlotId,
+    workingSlot?.id,
+  ]);
 
   const visibleVariantThumbnails = useMemo(
     () => variantThumbnails.filter((variant) => !dismissedVariantIds.has(variant.id)),
@@ -428,6 +514,37 @@ export function CenterPreview(): React.JSX.Element {
       variant.timestampSearchText.includes(normalizedVariantTimestampQuery)
     );
   }, [normalizedVariantTimestampQuery, visibleVariantThumbnails]);
+
+  const activeVariantId = useMemo((): string | null => {
+    if (!workingSlot) return null;
+
+    const workingOutputId = workingSlot.imageFileId?.trim() ?? '';
+    const workingImagePath = normalizeImagePath(
+      workingSlot.imageFile?.filepath ?? workingSlot.imageUrl ?? null
+    );
+
+    for (const variant of visibleVariantThumbnails) {
+      if (variant.slotId && variant.slotId === workingSlot.id) {
+        return variant.id;
+      }
+      if (workingOutputId && variant.output?.id === workingOutputId) {
+        return variant.id;
+      }
+      const variantPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
+      if (workingImagePath && variantPath && workingImagePath === variantPath) {
+        return variant.id;
+      }
+    }
+
+    return null;
+  }, [
+    visibleVariantThumbnails,
+    workingSlot,
+    workingSlot?.id,
+    workingSlot?.imageFile?.filepath,
+    workingSlot?.imageFileId,
+    workingSlot?.imageUrl,
+  ]);
 
   const variantTooltipPosition = useMemo(() => {
     if (!variantTooltip || typeof window === 'undefined') return null;
@@ -533,6 +650,14 @@ export function CenterPreview(): React.JSX.Element {
         return;
       }
 
+      if (variant.output) {
+        setTemporaryObjectUpload({
+          id: variant.output.id,
+          filepath: variant.output.filepath,
+          filename: variant.output.filename,
+        });
+      }
+
       setSingleVariantView('variant');
       setSplitVariantView(false);
       setSelectedSlotId(resolvedSlotId);
@@ -552,6 +677,7 @@ export function CenterPreview(): React.JSX.Element {
     queryClient,
     setPreviewMode,
     setSelectedSlotId,
+    setTemporaryObjectUpload,
     setWorkingSlotId,
     slots,
     toast,
@@ -566,8 +692,43 @@ export function CenterPreview(): React.JSX.Element {
   }, []);
 
   const handleToggleSplitVariantView = useCallback((): void => {
-    setSplitVariantView((current) => !current);
+    setSplitVariantView((current) => {
+      const next = !current;
+      if (next) {
+        setLeftSplitZoom(1);
+        setRightSplitZoom(1);
+      }
+      return next;
+    });
     setSingleVariantView('variant');
+  }, []);
+
+  const handleRevealInTreeFromCanvas = useCallback((): void => {
+    const targetSlotId = workingSlot?.id ?? null;
+    if (!targetSlotId) {
+      toast('No card is currently loaded in the preview.', { variant: 'info' });
+      return;
+    }
+    setSelectedSlotId(targetSlotId);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: targetSlotId } }));
+    }
+  }, [setSelectedSlotId, toast, workingSlot?.id]);
+
+  const adjustSplitZoom = useCallback((pane: 'left' | 'right', delta: number): void => {
+    if (pane === 'left') {
+      setLeftSplitZoom((current) => clampSplitZoom(current + delta));
+      return;
+    }
+    setRightSplitZoom((current) => clampSplitZoom(current + delta));
+  }, []);
+
+  const resetSplitZoom = useCallback((pane: 'left' | 'right'): void => {
+    if (pane === 'left') {
+      setLeftSplitZoom(1);
+      return;
+    }
+    setRightSplitZoom(1);
   }, []);
 
   const handleVariantTooltipMove = useCallback((
@@ -728,30 +889,14 @@ export function CenterPreview(): React.JSX.Element {
                   className='h-full w-full'
                 />
               ) : splitVariantView && canCompareWithSource && sourceSlotImageSrc && workingSlotImageSrc ? (
-                <div className='grid h-full grid-cols-2 gap-2 rounded border border-border/60 bg-background/20 p-2'>
-                  <div className='relative min-h-0 overflow-hidden rounded border border-border/60 bg-card/30'>
-                    <div className='absolute left-1 top-1 z-10 rounded bg-black/65 px-1.5 py-0.5 text-[10px] text-gray-100'>
-                      Source
-                    </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={sourceSlotImageSrc}
-                      alt='Source image'
-                      className='h-full w-full object-contain'
-                    />
-                  </div>
-                  <div className='relative min-h-0 overflow-hidden rounded border border-border/60 bg-card/30'>
-                    <div className='absolute left-1 top-1 z-10 rounded bg-black/65 px-1.5 py-0.5 text-[10px] text-gray-100'>
-                      Variant
-                    </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={workingSlotImageSrc}
-                      alt='Generated variant'
-                      className='h-full w-full object-contain'
-                    />
-                  </div>
-                </div>
+                <SplitVariantPreview
+                  sourceSlotImageSrc={sourceSlotImageSrc}
+                  workingSlotImageSrc={workingSlotImageSrc}
+                  leftSplitZoom={leftSplitZoom}
+                  rightSplitZoom={rightSplitZoom}
+                  onAdjustSplitZoom={adjustSplitZoom}
+                  onResetSplitZoom={resetSplitZoom}
+                />
               ) : (
                 <VectorDrawingCanvas
                   key={workingSlot?.id ?? 'canvas-empty'}
@@ -773,30 +918,28 @@ export function CenterPreview(): React.JSX.Element {
               </div>
             ) : null}
             {canCompareWithSource ? (
-              <div className='absolute bottom-2 left-2 z-20 flex items-center gap-2'>
-                <UnifiedButton
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  onClick={handleToggleSourceVariantView}
-                  disabled={splitVariantView}
-                  className='h-7 bg-background/90 px-2 text-[11px] backdrop-blur'
-                  title='Switch between source image and generated variant'
-                >
-                  {singleVariantView === 'variant' ? 'Show Source' : 'Show Variant'}
-                </UnifiedButton>
-                <UnifiedButton
-                  type='button'
-                  size='sm'
-                  variant='outline'
-                  onClick={handleToggleSplitVariantView}
-                  className='h-7 bg-background/90 px-2 text-[11px] backdrop-blur'
-                  title='Split canvas: source on left, variant on right'
-                >
-                  {splitVariantView ? 'Single View' : 'Split View'}
-                </UnifiedButton>
-              </div>
+              <SplitViewControls
+                singleVariantView={singleVariantView}
+                splitVariantView={splitVariantView}
+                onToggleSourceVariantView={handleToggleSourceVariantView}
+                onToggleSplitVariantView={handleToggleSplitVariantView}
+              />
             ) : null}
+            <div className='absolute bottom-2 left-2 z-20'>
+              <UnifiedButton
+                type='button'
+                size='sm'
+                variant='outline'
+                onClick={handleRevealInTreeFromCanvas}
+                disabled={!workingSlot?.id}
+                title='Reveal loaded card in tree'
+                aria-label='Reveal loaded card in tree'
+                className='h-7 bg-black/70 px-2 text-[11px] text-gray-100 backdrop-blur-sm disabled:opacity-60'
+              >
+                <Locate className='mr-1.5 size-3.5' />
+                Reveal in tree
+              </UnifiedButton>
+            </div>
           </div>
           <div className='shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
             <div className='mb-2 flex items-center gap-2'>
@@ -816,63 +959,71 @@ export function CenterPreview(): React.JSX.Element {
             <div className='overflow-x-auto overflow-y-hidden pb-1 pr-1'>
               {filteredVariantThumbnails.length > 0 ? (
                 <div className='flex w-max min-w-full gap-2'>
-                  {filteredVariantThumbnails.map((variant) => (
-                    <div key={variant.id} className='relative w-28 shrink-0'>
-                      <button
-                        type='button'
-                        onClick={(): void => {
-                          void handleLoadVariantToCanvas(variant);
-                        }}
-                        onMouseEnter={(event): void => handleVariantTooltipMove(event, variant)}
-                        onMouseMove={(event): void => handleVariantTooltipMove(event, variant)}
-                        onMouseLeave={(): void => setVariantTooltip(null)}
-                        onBlur={(): void => setVariantTooltip(null)}
-                        disabled={!variant.output || variantLoadingId === variant.id}
-                        className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${
-                          variant.status === 'completed'
-                            ? 'border-emerald-400/40 bg-emerald-500/5'
-                            : variant.status === 'failed'
-                              ? 'border-red-400/40 bg-red-500/5'
-                              : 'border-border/60 bg-card/30'
-                        }`}
-                      >
-                        <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
-                        {variant.output ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={variant.imageSrc || variant.output.filepath}
-                            alt={variant.output.filename || `Generated ${variant.index}`}
-                            className='h-20 w-full rounded object-cover'
-                          />
-                        ) : (
-                          <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
-                            {variant.status === 'pending' ? (
-                              <span className='inline-flex items-center gap-1'>
-                                {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
-                                Waiting
-                              </span>
-                            ) : (
-                              <span>Failed</span>
-                            )}
-                          </div>
-                        )}
-                      </button>
-                      {variant.output && variant.slotId ? (
-                        <UnifiedButton
+                  {filteredVariantThumbnails.map((variant) => {
+                    const isActive = activeVariantId === variant.id;
+                    const statusClasses =
+                      variant.status === 'completed'
+                        ? 'border-emerald-400/40 bg-emerald-500/5'
+                        : variant.status === 'failed'
+                          ? 'border-red-400/40 bg-red-500/5'
+                          : 'border-border/60 bg-card/30';
+                    const activeClasses = isActive
+                      ? 'border-sky-400/80 bg-sky-500/15 ring-2 ring-sky-400/70'
+                      : '';
+
+                    return (
+                      <div key={variant.id} className='relative w-28 shrink-0'>
+                        <button
                           type='button'
-                          size='icon'
-                          variant='ghost'
-                          onClick={(): void => handleDeleteVariant(variant)}
-                          disabled={deleteSlotMutation.isPending}
-                          aria-label={`Delete variant ${variant.index}`}
-                          title='Delete variant'
-                          className='absolute right-1 top-1 z-10 size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
+                          onClick={(): void => {
+                            void handleLoadVariantToCanvas(variant);
+                          }}
+                          onMouseEnter={(event): void => handleVariantTooltipMove(event, variant)}
+                          onMouseMove={(event): void => handleVariantTooltipMove(event, variant)}
+                          onMouseLeave={(): void => setVariantTooltip(null)}
+                          onBlur={(): void => setVariantTooltip(null)}
+                          disabled={!variant.output || variantLoadingId === variant.id}
+                          aria-pressed={isActive}
+                          className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${statusClasses} ${activeClasses}`}
                         >
-                          <Trash2 className='size-3.5' />
-                        </UnifiedButton>
-                      ) : null}
-                    </div>
-                  ))}
+                          <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
+                          {variant.output ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={variant.imageSrc || variant.output.filepath}
+                              alt={variant.output.filename || `Generated ${variant.index}`}
+                              className='h-20 w-full rounded object-cover'
+                            />
+                          ) : (
+                            <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
+                              {variant.status === 'pending' ? (
+                                <span className='inline-flex items-center gap-1'>
+                                  {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
+                                  Waiting
+                                </span>
+                              ) : (
+                                <span>Failed</span>
+                              )}
+                            </div>
+                          )}
+                        </button>
+                        {variant.output && variant.slotId ? (
+                          <UnifiedButton
+                            type='button'
+                            size='icon'
+                            variant='ghost'
+                            onClick={(): void => handleDeleteVariant(variant)}
+                            disabled={deleteSlotMutation.isPending}
+                            aria-label={`Delete variant ${variant.index}`}
+                            title='Delete variant'
+                            className='absolute right-1 top-1 z-10 size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
+                          >
+                            <Trash2 className='size-3.5' />
+                          </UnifiedButton>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : visibleVariantThumbnails.length > 0 ? (
                 <div className='px-2 py-3 text-xs text-gray-500'>

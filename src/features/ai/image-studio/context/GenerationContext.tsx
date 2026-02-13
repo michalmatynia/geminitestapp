@@ -19,8 +19,10 @@ import { useMaskingState, useMaskingActions } from './MaskingContext';
 import { useProjectsState } from './ProjectsContext';
 import { usePromptState, usePromptActions } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
-import { useSlotsState } from './SlotsContext';
+import { useSlotsActions, useSlotsState } from './SlotsContext';
 import { buildRunRequestPreview } from '../utils/run-request-preview';
+
+import type { ImageStudioSlotRecord, SlotGenerationMetadata, StudioSlotsResponse } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,6 +86,68 @@ const normalizeExpectedOutputs = (value: unknown, fallback = 1): number => {
   return Math.max(1, Math.min(10, Math.floor(parsed)));
 };
 
+const buildSlotsQueryKey = (projectId: string): readonly [string, string, string] => {
+  return ['image-studio', 'slots', projectId];
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const normalizeImagePath = (value: string | null | undefined): string => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.pathname.replace(/\\/g, '/');
+    } catch {
+      return trimmed.replace(/\\/g, '/');
+    }
+  }
+  return trimmed.split('?')[0]?.replace(/\\/g, '/') ?? '';
+};
+
+const getRunMetadataValue = (slot: ImageStudioSlotRecord, key: 'generationRunId' | 'generationOutputIndex'): string | number | null => {
+  const metadata = asRecord(slot.metadata);
+  if (!metadata) return null;
+  const raw = metadata[key];
+  if (key === 'generationRunId') {
+    return typeof raw === 'string' ? raw : null;
+  }
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : null;
+};
+
+const findMatchingGenerationSlot = (
+  candidateSlots: ImageStudioSlotRecord[],
+  params: { runId: string; outputIndex: number; output: ImageFileRecord }
+): ImageStudioSlotRecord | null => {
+  const matchedByMetadata = candidateSlots.find((slot) => {
+    const runId = getRunMetadataValue(slot, 'generationRunId');
+    const outputIndex = getRunMetadataValue(slot, 'generationOutputIndex');
+    return runId === params.runId && outputIndex === params.outputIndex;
+  });
+  if (matchedByMetadata) return matchedByMetadata;
+
+  const matchedByFileId = candidateSlots.find((slot) => {
+    return slot.imageFileId === params.output.id || slot.imageFile?.id === params.output.id;
+  });
+  if (matchedByFileId) return matchedByFileId;
+
+  const outputPath = normalizeImagePath(params.output.filepath);
+  if (!outputPath) return null;
+
+  const matchedByPath = candidateSlots.find((slot) => {
+    const slotFilePath = normalizeImagePath(slot.imageFile?.filepath);
+    if (slotFilePath && slotFilePath === outputPath) return true;
+    const slotImageUrlPath = normalizeImagePath(slot.imageUrl);
+    return Boolean(slotImageUrlPath && slotImageUrlPath === outputPath);
+  });
+  return matchedByPath ?? null;
+};
+
 const buildPendingLandingSlots = (runId: string, expectedOutputs: number): GenerationLandingSlot[] => {
   const count = normalizeExpectedOutputs(expectedOutputs, 1);
   return Array.from({ length: count }, (_value, index) => ({
@@ -139,6 +203,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   // Cross-domain reads
   const { projectId } = useProjectsState();
   const { workingSlot, slots, compositeAssetIds } = useSlotsState();
+  const { createSlots } = useSlotsActions();
   const { maskShapes, maskInvert, maskFeather } = useMaskingState();
   const { setMaskInvert, setMaskFeather } = useMaskingActions();
   const { promptText, paramsState } = usePromptState();
@@ -188,6 +253,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       submittedMaskFeather: number;
       submittedSlotId: string;
       submittedSlotName: string;
+      submittedSlotFolderPath: string;
       expectedOutputs: number;
     }): Promise<void> => {
       const token: PollToken = {
@@ -217,6 +283,91 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         }
       };
 
+      const getSlotsFromCache = (): ImageStudioSlotRecord[] => {
+        if (!projectId) return [];
+        const cached = queryClient.getQueryData<StudioSlotsResponse>(buildSlotsQueryKey(projectId));
+        return Array.isArray(cached?.slots) ? cached.slots : [];
+      };
+
+      const ensureRunOutputsMaterializedAsSlots = async (
+        run: ImageStudioRunRecord,
+        outputs: ImageFileRecord[],
+        expectedOutputsForRun: number
+      ): Promise<void> => {
+        if (!projectId || outputs.length === 0) return;
+
+        const sourceSlotId = params.submittedSlotId.trim();
+        const normalizedExpected = normalizeExpectedOutputs(expectedOutputsForRun, outputs.length || 1);
+
+        let candidateSlots = getSlotsFromCache();
+        if (candidateSlots.length === 0) {
+          await queryClient.refetchQueries({
+            queryKey: buildSlotsQueryKey(projectId),
+            exact: true,
+            type: 'active',
+          });
+          candidateSlots = getSlotsFromCache();
+        }
+
+        const toCreate: Array<Partial<ImageStudioSlotRecord>> = [];
+
+        for (let index = 0; index < outputs.length; index += 1) {
+          const output = outputs[index];
+          if (!output) continue;
+          const outputIndex = index + 1;
+          const existing = findMatchingGenerationSlot(candidateSlots, {
+            runId: run.id,
+            outputIndex,
+            output,
+          });
+          if (existing) continue;
+
+          const sourceSlot = sourceSlotId
+            ? candidateSlots.find((slot) => slot.id === sourceSlotId) ?? null
+            : null;
+          const folderPath = sourceSlot?.folderPath ?? params.submittedSlotFolderPath ?? '';
+          const metadata: SlotGenerationMetadata = {
+            role: 'generation',
+            ...(sourceSlotId
+              ? {
+                sourceSlotId,
+                sourceSlotIds: [sourceSlotId],
+              }
+              : {}),
+            relationType: 'generation:output',
+            generationFileId: output.id,
+            generationRunId: run.id,
+            generationOutputIndex: outputIndex,
+            generationOutputCount: normalizedExpected,
+            generationParams: {
+              prompt: params.resolvedPrompt,
+              timestamp: run.finishedAt ?? run.updatedAt ?? new Date().toISOString(),
+              runId: run.id,
+              outputIndex,
+              outputCount: normalizedExpected,
+            },
+          };
+
+          toCreate.push({
+            name: output.filename || `${params.submittedSlotName || 'Generated'} • Gen ${outputIndex}`,
+            folderPath,
+            imageFileId: output.id,
+            imageUrl: output.filepath,
+            imageBase64: null,
+            metadata: metadata as unknown as Record<string, unknown>,
+          });
+        }
+
+        if (toCreate.length === 0) return;
+
+        await createSlots(toCreate);
+        await queryClient.refetchQueries({
+          queryKey: buildSlotsQueryKey(projectId),
+          exact: true,
+          type: 'active',
+        });
+      };
+
       const applyRunSnapshot = (run: ImageStudioRunRecord): boolean => {
         if (token.cancelled || token.settled || pollTokenRef.current !== token) return true;
 
@@ -230,6 +381,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
           setRunOutputs(outputs);
           void invalidateImageStudioSlots(queryClient, projectId);
+          void ensureRunOutputsMaterializedAsSlots(run, outputs, expectedOutputs).catch((error: unknown) => {
+            if (token.cancelled || token.settled || pollTokenRef.current !== token) return;
+            toast(error instanceof Error ? error.message : 'Failed to create generation version nodes.', {
+              variant: 'error',
+            });
+          });
           setLandingSlots(buildLandingSlotsFromRun({
             ...run,
             expectedOutputs,
@@ -342,7 +499,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       settle();
       toast('Generation callback timed out.', { variant: 'error' });
     },
-    [cancelCurrentPoll, projectId, queryClient, toast]
+    [cancelCurrentPoll, createSlots, projectId, queryClient, toast]
   );
 
   const pollRunUntilFinishedRef = useRef(pollRunUntilFinished);
@@ -416,6 +573,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
             latestRun.request?.asset?.id ??
             latestRun.request?.asset?.filepath ??
             latestRun.id,
+          submittedSlotFolderPath: '',
           expectedOutputs: normalizeExpectedOutputs(latestRun.expectedOutputs, 1),
         });
       } catch {
@@ -466,6 +624,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     const resolvedPrompt = requestPreview.resolvedPrompt;
     const submittedSlotId = workingSlot?.id ?? '';
     const submittedSlotName = workingSlot?.name ?? workingSlot?.id ?? '';
+    const submittedSlotFolderPath = workingSlot?.folderPath ?? '';
     const submittedMaskInvert = maskInvert;
     const submittedMaskFeather = maskFeather;
     const expectedOutputs = normalizeExpectedOutputs(studioSettings.targetAi.openai.image.n, 1);
@@ -496,6 +655,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           submittedMaskFeather,
           submittedSlotId,
           submittedSlotName,
+          submittedSlotFolderPath,
           expectedOutputs: queuedExpected,
         });
       },
@@ -516,6 +676,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     maskInvert,
     maskFeather,
     studioSettings,
+    workingSlot?.folderPath,
     runMutation,
     toast,
     compositeAssetIds,

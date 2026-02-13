@@ -49,3 +49,4 @@ export type {
   CreateProductDraftInput,
   UpdateProductDraftInput,
 } from './drafts';
+export type { ProductStudioSequencingConfig } from './product-studio';

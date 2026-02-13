@@ -2,6 +2,23 @@ import { z } from 'zod';
 
 export const IMAGE_STUDIO_SETTINGS_KEY = 'image_studio_settings';
 export const IMAGE_STUDIO_OPENAI_API_KEY_KEY = 'image_studio_openai_api_key';
+export const IMAGE_STUDIO_PROJECT_SETTINGS_KEY_PREFIX =
+  'image_studio_project_settings_';
+
+export function sanitizeImageStudioProjectIdForSettings(value: string): string {
+  return value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+}
+
+export function getImageStudioProjectSettingsKey(
+  projectId: string | null | undefined
+): string | null {
+  if (typeof projectId !== 'string') return null;
+  const normalized = projectId.trim();
+  if (!normalized) return null;
+  const safeProjectId = sanitizeImageStudioProjectIdForSettings(normalized);
+  if (!safeProjectId) return null;
+  return `${IMAGE_STUDIO_PROJECT_SETTINGS_KEY_PREFIX}${safeProjectId}`;
+}
 
 export function normalizeImageStudioModelPresets(
   presets: string[] | null | undefined,

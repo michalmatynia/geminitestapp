@@ -1137,6 +1137,11 @@ export function VectorCanvas({
     setViewTransform({ scale: 1, panX: 0, panY: 0 });
   }, []);
 
+  const handleFitToScreen = useCallback((): void => {
+    stopPan();
+    setViewTransform({ scale: 1, panX: 0, panY: 0 });
+  }, [stopPan]);
+
   const handleMouseUp = useCallback((): void => {
     if (panningRef.current || isPanning) {
       stopPan();
@@ -1154,6 +1159,11 @@ export function VectorCanvas({
     dragShapeRef.current = null;
     drawingRef.current = null;
   }, [isPanning, onChange, shapes, stopPan]);
+
+  const showViewTransformHud =
+    viewTransform.scale !== 1 ||
+    viewTransform.panX !== 0 ||
+    viewTransform.panY !== 0;
 
   return (
     <div
@@ -1274,11 +1284,6 @@ export function VectorCanvas({
               })}
             </svg>
           </div>
-          {viewTransform.scale !== 1 && (
-            <div className='absolute bottom-2 right-2 z-10 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90 pointer-events-none'>
-              {Math.round(viewTransform.scale * 100)}%
-            </div>
-          )}
         </>
       ) : (
         <>
@@ -1362,13 +1367,26 @@ export function VectorCanvas({
           {showEmptyState && !allowWithoutImage ? (
             <div className='text-sm text-gray-400'>{emptyStateLabel}</div>
           ) : null}
-          {viewTransform.scale !== 1 && (
-            <div className='absolute bottom-2 right-2 z-10 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90 pointer-events-none'>
-              {Math.round(viewTransform.scale * 100)}%
-            </div>
-          )}
         </>
       )}
+      {showViewTransformHud ? (
+        <div className='absolute bottom-2 right-2 z-10 flex items-center gap-1'>
+          <div className='rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90'>
+            {Math.round(viewTransform.scale * 100)}%
+          </div>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            className='h-6 bg-black/60 px-2 text-[11px] text-white/90 hover:bg-black/70'
+            onClick={handleFitToScreen}
+            title='Fit to screen'
+            aria-label='Fit to screen'
+          >
+            Fit
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -37,6 +37,8 @@ export interface FilterPanelProps {
 
   // Layout
   compact?: boolean;
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
   showHeader?: boolean;
   headerTitle?: string;
   headerAction?: ReactNode;
@@ -56,6 +58,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   presets = [],
   onApplyPreset,
   compact = false,
+  collapsible = false,
+  defaultExpanded,
   showHeader = true,
   headerTitle = 'Filters',
   headerAction,
@@ -89,6 +93,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         {...(onSearchChange !== undefined ? { onSearchChange } : {})}
         {...(onReset !== undefined ? { onReset } : {})}
         compact={compact}
+        collapsible={collapsible}
+        {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
       />
 
       {/* Presets (if provided) */}

@@ -29,6 +29,26 @@ import {
 } from '@/shared/ui';
 
 import { PATTERN_SCOPE_OPTIONS } from './constants';
+import {
+  CHAIN_MODE_OPTIONS,
+  DENY_BEHAVIOR_OVERRIDE_OPTIONS,
+  LAUNCH_OPERATOR_OPTIONS,
+  LAUNCH_SCOPE_BEHAVIOR_OPTIONS,
+  LOCALE_OPTIONS,
+  LOGIC_ACTION_OPTIONS,
+  LOGIC_OPERATOR_OPTIONS,
+  MATH_OPERATION_OPTIONS,
+  POST_ACCEPT_BEHAVIOR_OPTIONS,
+  REPLACEMENT_MODE_OPTIONS,
+  RESULT_ASSEMBLY_OPTIONS,
+  ROUND_MODE_OPTIONS,
+  RUNTIME_TYPE_OPTIONS,
+  SEVERITY_OPTIONS,
+  SOURCE_FIELD_PLACEHOLDER_OPTION,
+  SOURCE_MODE_OPTIONS,
+  TARGET_APPLY_OPTIONS,
+  TARGET_OPTIONS,
+} from './validator-pattern-modal-options';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
 import type { PatternFormData, ReplacementMode } from './types';
@@ -98,18 +118,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   };
                 })
               }
-              options={[
-                { value: 'name', label: 'Name' },
-                { value: 'description', label: 'Description' },
-                { value: 'sku', label: 'SKU' },
-                { value: 'price', label: 'Price' },
-                { value: 'stock', label: 'Stock' },
-                { value: 'category', label: 'Category' },
-                { value: 'weight', label: 'Weight' },
-                { value: 'size_length', label: 'Length (sizeLength)' },
-                { value: 'size_width', label: 'Width (sizeWidth)' },
-                { value: 'length', label: 'Height (length)' },
-              ]}
+              options={TARGET_OPTIONS}
             />
           </FormField>
 
@@ -123,12 +132,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 }))
               }
               disabled={!isLocaleTarget(formData.target)}
-              options={[
-                { value: 'any', label: 'Any locale' },
-                { value: 'en', label: 'English (en)' },
-                { value: 'pl', label: 'Polish (pl)' },
-                { value: 'de', label: 'German (de)' },
-              ]}
+              options={LOCALE_OPTIONS}
             />
           </FormField>
         </div>
@@ -162,10 +166,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   severity: value as 'error' | 'warning',
                 }))
               }
-              options={[
-                { value: 'error', label: 'Error' },
-                { value: 'warning', label: 'Warning' },
-              ]}
+              options={SEVERITY_OPTIONS}
             />
           </FormField>
           <FormField label='Replacer Mode'>
@@ -177,10 +178,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   replacementMode: value as ReplacementMode,
                 }))
               }
-              options={[
-                { value: 'static', label: 'Static replacer' },
-                { value: 'dynamic', label: 'Dynamic replacer' },
-              ]}
+              options={REPLACEMENT_MODE_OPTIONS}
             />
           </FormField>
           <div>
@@ -208,11 +206,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                       sourceMode: value as DynamicReplacementSourceMode,
                     }))
                   }
-                  options={[
-                    { value: 'current_field', label: 'Current field' },
-                    { value: 'form_field', label: 'Other form field' },
-                    { value: 'latest_product_field', label: 'Latest product field' },
-                  ]}
+                  options={SOURCE_MODE_OPTIONS}
                 />
               </FormField>
             )}
@@ -242,11 +236,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   chainMode: value as PatternFormData['chainMode'],
                 }))
               }
-              options={[
-                { value: 'continue', label: 'Continue' },
-                { value: 'stop_on_match', label: 'Stop on match' },
-                { value: 'stop_on_replace', label: 'Stop on replace' },
-              ]}
+              options={CHAIN_MODE_OPTIONS}
             />
           </FormField>
           <FormField label='Max Executions'>
@@ -337,10 +327,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                           : 'gate',
                     }))
                   }
-                  options={[
-                    { value: 'gate', label: 'Gate Pattern By Scope' },
-                    { value: 'condition_only', label: 'Condition Only In Scope' },
-                  ]}
+                  options={LAUNCH_SCOPE_BEHAVIOR_OPTIONS}
                 />
               </FormField>
 
@@ -354,11 +341,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                         launchSourceMode: value as DynamicReplacementSourceMode,
                       }))
                     }
-                    options={[
-                      { value: 'current_field', label: 'Current field' },
-                      { value: 'form_field', label: 'Other form field' },
-                      { value: 'latest_product_field', label: 'Latest product field' },
-                    ]}
+                    options={SOURCE_MODE_OPTIONS}
                   />
                 </FormField>
                 <FormField label='Launch Operator'>
@@ -370,20 +353,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                         launchOperator: value as ProductValidationLaunchOperator,
                       }))
                     }
-                    options={[
-                      { value: 'equals', label: 'Equals' },
-                      { value: 'not_equals', label: 'Not equals' },
-                      { value: 'contains', label: 'Contains' },
-                      { value: 'starts_with', label: 'Starts with' },
-                      { value: 'ends_with', label: 'Ends with' },
-                      { value: 'regex', label: 'Regex test' },
-                      { value: 'gt', label: 'Greater than' },
-                      { value: 'gte', label: 'Greater than or equal' },
-                      { value: 'lt', label: 'Less than' },
-                      { value: 'lte', label: 'Less than or equal' },
-                      { value: 'is_empty', label: 'Is empty' },
-                      { value: 'is_not_empty', label: 'Is not empty' },
-                    ]}
+                    options={LAUNCH_OPERATOR_OPTIONS}
                   />
                 </FormField>
                 <FormField label='Launch Value'>
@@ -413,7 +383,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                       }))
                     }
                     options={[
-                      { value: '__none__', label: 'Select source field' },
+                      SOURCE_FIELD_PLACEHOLDER_OPTION,
                       ...sourceFieldOptions,
                     ]}
                   />
@@ -472,10 +442,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                       runtimeType: value as ProductValidationRuntimeType,
                     }))
                   }
-                  options={[
-                    { value: 'database_query', label: 'Database Query / Action' },
-                    { value: 'ai_prompt', label: 'AI Prompt Segment' },
-                  ]}
+                  options={RUNTIME_TYPE_OPTIONS}
                 />
               </FormField>
               <FormField label='Runtime Config (JSON)'>
@@ -513,7 +480,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                       }))
                     }
                     options={[
-                      { value: '__none__', label: 'Select source field' },
+                      SOURCE_FIELD_PLACEHOLDER_OPTION,
                       ...sourceFieldOptions,
                     ]}
                   />
@@ -572,13 +539,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                         mathOperation: value as DynamicReplacementMathOperation,
                       }))
                     }
-                    options={[
-                      { value: 'none', label: 'None' },
-                      { value: 'add', label: 'Add' },
-                      { value: 'subtract', label: 'Subtract' },
-                      { value: 'multiply', label: 'Multiply' },
-                      { value: 'divide', label: 'Divide' },
-                    ]}
+                    options={MATH_OPERATION_OPTIONS}
                   />
                 </FormField>
                 <FormField label='Math Operand'>
@@ -603,12 +564,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                         roundMode: value as DynamicReplacementRoundMode,
                       }))
                     }
-                    options={[
-                      { value: 'none', label: 'None' },
-                      { value: 'round', label: 'Round' },
-                      { value: 'floor', label: 'Floor' },
-                      { value: 'ceil', label: 'Ceil' },
-                    ]}
+                    options={ROUND_MODE_OPTIONS}
                   />
                 </FormField>
               </div>
@@ -622,21 +578,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                       logicOperator: value as DynamicReplacementLogicOperator,
                     }))
                   }
-                  options={[
-                    { value: 'none', label: 'None' },
-                    { value: 'equals', label: 'Equals' },
-                    { value: 'not_equals', label: 'Not equals' },
-                    { value: 'contains', label: 'Contains' },
-                    { value: 'starts_with', label: 'Starts with' },
-                    { value: 'ends_with', label: 'Ends with' },
-                    { value: 'regex', label: 'Regex test' },
-                    { value: 'gt', label: 'Greater than' },
-                    { value: 'gte', label: 'Greater than or equal' },
-                    { value: 'lt', label: 'Less than' },
-                    { value: 'lte', label: 'Less than or equal' },
-                    { value: 'is_empty', label: 'Is empty' },
-                    { value: 'is_not_empty', label: 'Is not empty' },
-                  ]}
+                  options={LOGIC_OPERATOR_OPTIONS}
                 />
               </FormField>
 
@@ -683,12 +625,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                             logicWhenTrueAction: value as DynamicReplacementLogicAction,
                           }))
                         }
-                        options={[
-                          { value: 'keep', label: 'Keep current value' },
-                          { value: 'set_value', label: 'Set custom value' },
-                          { value: 'clear', label: 'Clear value' },
-                          { value: 'abort', label: 'Abort replacement' },
-                        ]}
+                        options={LOGIC_ACTION_OPTIONS}
                       />
                       {formData.logicWhenTrueAction === 'set_value' && (
                         <Input
@@ -716,12 +653,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                             logicWhenFalseAction: value as DynamicReplacementLogicAction,
                           }))
                         }
-                        options={[
-                          { value: 'keep', label: 'Keep current value' },
-                          { value: 'set_value', label: 'Set custom value' },
-                          { value: 'clear', label: 'Clear value' },
-                          { value: 'abort', label: 'Abort replacement' },
-                        ]}
+                        options={LOGIC_ACTION_OPTIONS}
                       />
                       {formData.logicWhenFalseAction === 'set_value' && (
                         <Input
@@ -751,10 +683,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                         resultAssembly: value as PatternFormData['resultAssembly'],
                       }))
                     }
-                    options={[
-                      { value: 'segment_only', label: 'Use transformed segment' },
-                      { value: 'source_replace_match', label: 'Inject into source value' },
-                    ]}
+                    options={RESULT_ASSEMBLY_OPTIONS}
                   />
                 </FormField>
                 <FormField label='Apply To Target'>
@@ -766,10 +695,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                         targetApply: value as PatternFormData['targetApply'],
                       }))
                     }
-                    options={[
-                      { value: 'replace_matched_segment', label: 'Replace matched segment' },
-                      { value: 'replace_whole_field', label: 'Replace whole field' },
-                    ]}
+                    options={TARGET_APPLY_OPTIONS}
                   />
                 </FormField>
               </div>
@@ -910,10 +836,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   value === 'stop_after_accept' ? 'stop_after_accept' : 'revalidate',
               }))
             }
-            options={[
-              { value: 'revalidate', label: 'Revalidate Continuously' },
-              { value: 'stop_after_accept', label: 'Stop After First Accept' },
-            ]}
+            options={POST_ACCEPT_BEHAVIOR_OPTIONS}
           />
         </FormField>
 
@@ -932,11 +855,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                     : 'inherit',
               }))
             }
-            options={[
-              { value: 'inherit', label: 'Inherit Form Policy' },
-              { value: 'mute_session', label: 'Stop For This Session' },
-              { value: 'ask_again', label: 'Ask Again Next Validation' },
-            ]}
+            options={DENY_BEHAVIOR_OVERRIDE_OPTIONS}
           />
         </FormField>
 

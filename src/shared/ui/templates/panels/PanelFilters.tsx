@@ -27,6 +27,8 @@ interface PanelFiltersProps {
   onSearchChange?: (search: string) => void;
   onReset?: () => void;
   compact?: boolean;
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
   className?: string;
 }
 
@@ -43,9 +45,11 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   onSearchChange,
   onReset,
   compact = false,
+  collapsible = false,
+  defaultExpanded,
   className,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(!compact);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
 
   const handleReset = useCallback(() => {
     onReset?.();
@@ -53,6 +57,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   }, [onReset]);
 
   const hasActiveFilters = Object.values(values).some((v) => v !== undefined && v !== null && v !== '');
+  const activeFilterCount = Object.values(values).filter((v) => v !== undefined && v !== null && v !== '').length;
 
   const filterFieldsToRender = filters.filter((f) => f.type !== 'text');
 
@@ -84,8 +89,8 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
       {/* Filter Controls */}
       {filterFieldsToRender.length > 0 && (
         <>
-          {/* Compact Toggle or Expanded Filters */}
-          {compact ? (
+          {/* Toggle button (compact or explicit collapsible mode) */}
+          {compact || collapsible ? (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
@@ -95,7 +100,8 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
                   : 'border-gray-200 text-gray-600 hover:bg-gray-50'
               )}
             >
-              Filters {hasActiveFilters && <span>({Object.keys(values).length})</span>}
+              {isExpanded ? 'Hide Filters' : 'Show Filters'}
+              {hasActiveFilters && <span> ({activeFilterCount})</span>}
             </button>
           ) : null}
 

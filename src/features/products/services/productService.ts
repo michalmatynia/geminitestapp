@@ -21,6 +21,7 @@ import { performanceMonitor } from '@/features/products/performance';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
 import { getProductRepository } from '@/features/products/services/product-repository';
+import { setProductStudioProject } from '@/features/products/services/product-studio-config';
 import type {
   ProductWithImages,
   ProductImageRecord,
@@ -55,6 +56,7 @@ type ParsedProductForm = {
   tagIds: string[];
   producerIds: string[];
   noteIds: string[];
+  studioProjectId: string | null;
 };
 
 /**
@@ -69,6 +71,7 @@ function parseProductForm(formData: FormData): ParsedProductForm {
   const tagIds = normalizeTagIds(formData.getAll('tagIds'));
   const producerIds = normalizeProducerIds(formData.getAll('producerIds'));
   const noteIds = normalizeNoteIds(formData.getAll('noteIds'));
+  const studioProjectId = normalizeStudioProjectId(formData);
 
   return {
     rawData,
@@ -79,8 +82,22 @@ function parseProductForm(formData: FormData): ParsedProductForm {
     tagIds,
     producerIds,
     noteIds,
+    studioProjectId,
   };
 }
+
+const getProductImageFilepath = (
+  image: ProductImageRecord
+): string | null => {
+  const imageFile = image.imageFile as unknown;
+  if (!imageFile || typeof imageFile !== 'object' || Array.isArray(imageFile)) {
+    return null;
+  }
+  const filepath = (imageFile as { filepath?: unknown }).filepath;
+  if (typeof filepath !== 'string') return null;
+  const normalized = filepath.trim();
+  return normalized.length > 0 ? normalized : null;
+};
 
 /**
  * Retrieves a list of products based on the provided filters.
@@ -186,8 +203,7 @@ async function getProducts(
     return {
       ...product,
       images: product.images.filter((image: ProductImageRecord) => {
-        const filepath = image.imageFile?.filepath;
-        return Boolean(filepath);
+        return Boolean(getProductImageFilepath(image));
       }),
     };
   });
@@ -319,7 +335,8 @@ async function createProduct(
       categoryId, 
       tagIds, 
       producerIds, 
-      noteIds 
+      noteIds,
+      studioProjectId,
     } = parseProductForm(formData);
 
     const validationResult = await validateProductCreate(rawData, true);
@@ -357,6 +374,21 @@ async function createProduct(
     await updateProductTags(product.id, tagIds);
     await updateProductProducers(product.id, producerIds);
     await updateProductNotes(product.id, noteIds);
+    await setProductStudioProject(product.id, studioProjectId).catch(
+      async (configError: unknown): Promise<void> => {
+        await ErrorSystem.logWarning(
+          'Failed to persist Product Studio project configuration during create.',
+          {
+            productId: product.id,
+            studioProjectId,
+            error:
+              configError instanceof Error
+                ? configError.message
+                : String(configError),
+          }
+        );
+      }
+    );
 
     const fullProduct = await getProductById(product.id);
     
@@ -418,7 +450,8 @@ async function updateProduct(
       categoryId, 
       tagIds, 
       producerIds, 
-      noteIds 
+      noteIds,
+      studioProjectId,
     } = parseProductForm(formData);
 
     const validationResult = await validateProductUpdate(rawData, true);
@@ -460,6 +493,23 @@ async function updateProduct(
     }
     if (formData.has('noteIds')) {
       await updateProductNotes(id, noteIds);
+    }
+    if (formData.has('studioProjectId')) {
+      await setProductStudioProject(id, studioProjectId).catch(
+        async (configError: unknown): Promise<void> => {
+          await ErrorSystem.logWarning(
+            'Failed to persist Product Studio project configuration during update.',
+            {
+              productId: id,
+              studioProjectId,
+              error:
+                configError instanceof Error
+                  ? configError.message
+                  : String(configError),
+            }
+          );
+        }
+      );
     }
 
     const fullProduct = await getProductById(updatedProduct.id);
@@ -746,6 +796,13 @@ function normalizeNoteIds(entries: FormDataEntryValue[]): string[] {
     .filter((entry: string): boolean => entry.length > 0);
 }
 
+function normalizeStudioProjectId(formData: FormData): string | null {
+  const raw = formData.get('studioProjectId');
+  if (typeof raw !== 'string') return null;
+  const normalized = raw.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
 async function updateProductCatalogs(
   productId: string,
   catalogIds: string[],
@@ -869,7 +926,7 @@ async function moveLinkedTempImagesToSku(
   const imageFileIds =
     product?.images
       .filter((image: ProductImageRecord): boolean =>
-        image.imageFile.filepath.startsWith(tempProductPathPrefix),
+        (getProductImageFilepath(image) ?? '').startsWith(tempProductPathPrefix),
       )
       .map((image: ProductImageRecord): string => image.imageFileId) ?? [];
   if (imageFileIds.length > 0) {

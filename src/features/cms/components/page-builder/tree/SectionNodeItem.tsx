@@ -204,10 +204,7 @@ export function SectionNodeItem({
               const dragSectionType = sectionDrag.type;
               if (dragSectionId && dragSectionId !== section.id) {
                 const moveSection = (targetZone: PageZone, targetIndex: number): void => {
-                  void moveSectionByMaster(dragSectionId, targetZone, targetIndex).then((ok: boolean) => {
-                    if (!ok) {
-                      sectionActions.dropInZone(dragSectionId, targetZone, targetIndex);
-                    }
+                  void moveSectionByMaster(dragSectionId, targetZone, targetIndex).finally(() => {
                     endSectionDrag();
                   });
                 };

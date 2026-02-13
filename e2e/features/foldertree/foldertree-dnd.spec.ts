@@ -16,11 +16,11 @@ const E2E_ADMIN_PASSWORD =
 
 async function dragAndDrop(page: Page, source: Locator, target: Locator): Promise<void> {
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+  await source.dispatchEvent('dragstart', { dataTransfer });
+  await target.waitFor({ state: 'visible', timeout: 5_000 });
   const box = await target.boundingBox();
   const clientX = box ? box.x + box.width / 2 : 8;
   const clientY = box ? box.y + box.height / 2 : 8;
-  await source.dispatchEvent('dragstart', { dataTransfer });
-  await target.waitFor({ state: 'visible', timeout: 5_000 });
   await target.dispatchEvent('dragenter', { dataTransfer, clientX, clientY });
   await target.dispatchEvent('dragover', { dataTransfer, clientX, clientY });
   await target.dispatchEvent('drop', { dataTransfer, clientX, clientY });
@@ -140,6 +140,11 @@ test.describe('Master Folder Tree drag and drop', () => {
         updatedAt: now,
       },
     ];
+    const noteCategoryTree = noteCategories.map((category) => ({
+      ...category,
+      children: [],
+      notes: [],
+    }));
 
     await page.route('**/api/notes/notebooks**', async (route) => {
       await route.fulfill({
@@ -170,6 +175,13 @@ test.describe('Master Folder Tree drag and drop', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify(noteCategories),
+      });
+    });
+    await page.route(/\/api\/notes\/categories\/tree(\?.*)?$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(noteCategoryTree),
       });
     });
 
@@ -444,5 +456,102 @@ test.describe('Master Folder Tree drag and drop', () => {
     await expect.poll(() => slotPatchPayload, { timeout: 10_000 }).not.toBeNull();
     const folderPath = slotPatchPayload?.['folderPath'];
     expect(folderPath).toBe('folder-b/folder-a');
+  });
+
+  test('Image Studio: dragging a card from folder to root persists empty folder path', async ({ page }) => {
+    await ensureAdminSession(page);
+    await mockAuthAndSettings(page);
+
+    let slotPatchPayload: Record<string, unknown> | null = null;
+    let patchedSlotId: string | null = null;
+    const slots = [
+      {
+        id: 'slot-1',
+        projectId: 'proj-1',
+        name: 'Card One',
+        folderPath: 'folder-a',
+        imageFileId: null,
+        imageUrl: null,
+        imageBase64: null,
+        metadata: {},
+      },
+      {
+        id: 'slot-2',
+        projectId: 'proj-1',
+        name: 'Card Two',
+        folderPath: null,
+        imageFileId: null,
+        imageUrl: null,
+        imageBase64: null,
+        metadata: {},
+      },
+    ];
+
+    await page.route('**/api/image-studio/projects', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ projects: ['proj-1'] }),
+      });
+    });
+
+    await page.route('**/api/image-studio/models', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ models: ['gpt-image-1'], source: 'fallback' }),
+      });
+    });
+
+    await page.route(/\/api\/image-studio\/projects\/proj-1\/slots(\?.*)?$/, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ slots }),
+      });
+    });
+
+    await page.route(/\/api\/image-studio\/slots\/[^/?]+(\?.*)?$/, async (route) => {
+      const request = route.request();
+      if (request.method() === 'PATCH') {
+        const slotId = new URL(request.url()).pathname.split('/').pop() ?? '';
+        patchedSlotId = slotId || null;
+        slotPatchPayload = JSON.parse(request.postData() || '{}') as Record<string, unknown>;
+        const sourceSlot = slots.find((slot) => slot.id === slotId) ?? slots[0];
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            slot: {
+              ...sourceSlot,
+              ...slotPatchPayload,
+            },
+          }),
+        });
+        return;
+      }
+
+      await route.fallback();
+    });
+
+    await page.goto('/admin/image-studio', { waitUntil: 'networkidle' });
+
+    const expandFolderButton = page.getByRole('button', { name: 'Expand folder-a' }).first();
+    await expect(expandFolderButton).toBeVisible();
+    await expandFolderButton.click();
+
+    const sourceCardButton = page.locator('[data-slot-id]').first();
+    await expect(sourceCardButton).toBeVisible();
+    const sourceSlotId = await sourceCardButton.getAttribute('data-slot-id');
+    expect(sourceSlotId).toBeTruthy();
+    const sourceCard = page.locator(`[data-master-tree-node-id="card:${sourceSlotId}"]`).first();
+    await expect(sourceCard).toBeVisible();
+
+    const rootDropTarget = page.locator('[data-master-tree-root-drop="top"]').first();
+    await dragAndDrop(page, sourceCard, rootDropTarget);
+
+    await expect.poll(() => slotPatchPayload, { timeout: 10_000 }).not.toBeNull();
+    expect(patchedSlotId).toBe(sourceSlotId);
+    expect(slotPatchPayload).toMatchObject({ folderPath: '' });
   });
 });

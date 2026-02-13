@@ -10,10 +10,10 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
 import {
   MasterFolderTree,
-  createMasterFolderTreeAdapter,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { logClientError } from '@/features/observability';
+import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {
   useSaveCategoryMutation,
@@ -41,9 +41,9 @@ import {
 
 import {
   buildMasterNodesFromCategoryTree,
-  decodeCategoryMasterNodeId,
   fromCategoryMasterNodeId,
 } from './category-master-tree';
+import { createCategoryMasterTreeAdapter } from './category-master-tree-adapter';
 import { CategoryForm } from './CategoryForm';
 import { CategoryFormProvider, type CategoryFormData } from './CategoryFormContext';
 
@@ -119,102 +119,35 @@ export function CategoriesSettings({
         .join('|'),
     [masterNodes]
   );
+  const applyCategoryReorderPayload = useCallback(
+    async (payload: ReorderCategoryPayload): Promise<void> => {
+      try {
+        await reorderCategory(payload);
+        toast('Category moved successfully', { variant: 'success' });
+        onRefresh();
+      } catch (error) {
+        logClientError(error, {
+          context: {
+            source: 'CategoriesSettings',
+            action: 'applyCategoryReorderPayload',
+            payload,
+          },
+        });
+        const message: string =
+          error instanceof Error ? error.message : 'Failed to move category';
+        toast(message, { variant: 'error' });
+        throw error;
+      }
+    },
+    [onRefresh, reorderCategory, toast]
+  );
   const categoryAdapter = useMemo(
     () =>
-      createMasterFolderTreeAdapter({
-        decodeNodeId: decodeCategoryMasterNodeId,
-        handlers: {
-          onMove: async ({ operation, context, node, targetParent }): Promise<void> => {
-            const catalogPayload = selectedCatalogId ? { catalogId: selectedCatalogId } : {};
-            const targetParentId = targetParent?.id ?? null;
-
-            try {
-              if (targetParentId === null && operation.targetIndex === 0) {
-                const firstRootSiblingId =
-                  context.nextNodes
-                    .filter((entry: MasterTreeNode) => entry.parentId === null)
-                    .sort((left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder)
-                    .map((entry: MasterTreeNode): string | null => fromCategoryMasterNodeId(entry.id))
-                    .find(
-                      (categoryId: string | null): boolean => Boolean(categoryId) && categoryId !== node.id
-                    ) ?? null;
-
-                if (firstRootSiblingId) {
-                  await reorderCategory({
-                    categoryId: node.id,
-                    parentId: null,
-                    position: 'before',
-                    targetId: firstRootSiblingId,
-                    ...catalogPayload,
-                  });
-                  toast('Category moved successfully', { variant: 'success' });
-                  onRefresh();
-                  return;
-                }
-              }
-
-              await reorderCategory({
-                categoryId: node.id,
-                parentId: targetParentId,
-                position: 'inside',
-                targetId: targetParentId,
-                ...catalogPayload,
-              });
-              toast('Category moved successfully', { variant: 'success' });
-              onRefresh();
-            } catch (error) {
-              logClientError(error, {
-                context: {
-                  source: 'CategoriesSettings',
-                  action: 'moveCategory',
-                  categoryId: node.id,
-                  targetParentId,
-                },
-              });
-              const message: string =
-                error instanceof Error ? error.message : 'Failed to move category';
-              toast(message, { variant: 'error' });
-              throw error;
-            }
-          },
-          onReorder: async ({ operation, context, node, target }): Promise<void> => {
-            const catalogPayload = selectedCatalogId ? { catalogId: selectedCatalogId } : {};
-            const targetNode = context.nextNodes.find(
-              (entry: MasterTreeNode): boolean => entry.id === operation.targetId
-            );
-            const targetParentId = targetNode?.parentId
-              ? fromCategoryMasterNodeId(targetNode.parentId)
-              : null;
-
-            try {
-              await reorderCategory({
-                categoryId: node.id,
-                parentId: targetParentId,
-                position: operation.position,
-                targetId: target.id,
-                ...catalogPayload,
-              });
-              toast('Category moved successfully', { variant: 'success' });
-              onRefresh();
-            } catch (error) {
-              logClientError(error, {
-                context: {
-                  source: 'CategoriesSettings',
-                  action: 'reorderCategory',
-                  categoryId: node.id,
-                  targetCategoryId: target.id,
-                  position: operation.position,
-                },
-              });
-              const message: string =
-                error instanceof Error ? error.message : 'Failed to move category';
-              toast(message, { variant: 'error' });
-              throw error;
-            }
-          },
-        },
+      createCategoryMasterTreeAdapter({
+        selectedCatalogId,
+        applyReorderPayload: applyCategoryReorderPayload,
       }),
-    [onRefresh, reorderCategory, selectedCatalogId, toast]
+    [applyCategoryReorderPayload, selectedCatalogId]
   );
   const {
     appearance: { placeholderClasses, rootDropUi, resolveIcon },

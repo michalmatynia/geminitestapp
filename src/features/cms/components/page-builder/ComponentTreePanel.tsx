@@ -5,7 +5,6 @@ import React, { createContext, useContext, useMemo, useState } from 'react';
 
 import {
   MasterFolderTree,
-  createMasterFolderTreeAdapter,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -27,13 +26,13 @@ import {
   CMS_ZONE_LABELS,
   CMS_ZONE_ORDER,
   buildCmsMasterNodes,
-  decodeCmsMasterNodeId,
   fromCmsSectionNodeId,
   fromCmsZoneFooterNodeId,
   fromCmsZoneNodeId,
   toCmsSectionNodeId,
   toCmsZoneNodeId,
 } from './utils/cms-master-tree';
+import { createCmsMasterTreeAdapter } from './utils/cms-master-tree-adapter';
 import { useDragState } from '../../hooks/useDragStateContext';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';
@@ -164,52 +163,7 @@ export function ComponentTreePanel(): React.ReactNode {
     [dispatch, state.sections]
   );
   const cmsTreeAdapter = useMemo(
-    () =>
-      createMasterFolderTreeAdapter({
-        decodeNodeId: decodeCmsMasterNodeId,
-        handlers: {
-          onMove: ({ operation, context, node, targetParent }): void => {
-            if (node.entity !== 'section' || targetParent?.entity !== 'zone') return;
-
-            const nextSections = context.nextNodes
-              .filter(
-                (entry: MasterTreeNode): boolean =>
-                  entry.parentId === targetParent.nodeId && entry.kind === 'section'
-              )
-              .sort((left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder);
-            const derivedIndex = nextSections.findIndex(
-              (entry: MasterTreeNode): boolean => entry.id === node.nodeId
-            );
-            const targetIndex = operation.targetIndex ?? derivedIndex;
-            if (targetIndex < 0) return;
-            const targetZone = fromCmsZoneNodeId(targetParent.nodeId);
-            if (!targetZone) return;
-            applySectionMoveByZoneIndex(node.id, targetZone, targetIndex);
-          },
-          onReorder: ({ operation, context, node, target }): void => {
-            if (node.entity !== 'section' || target.entity !== 'section') return;
-            const targetNode = context.nextNodes.find(
-              (entry: MasterTreeNode): boolean => entry.id === operation.targetId
-            );
-            const zone = targetNode?.parentId ? fromCmsZoneNodeId(targetNode.parentId) : null;
-            if (!zone || !targetNode?.parentId) return;
-
-            const nextSections = context.nextNodes
-              .filter(
-                (entry: MasterTreeNode): boolean =>
-                  entry.parentId === targetNode.parentId && entry.kind === 'section'
-              )
-              .sort((left: MasterTreeNode, right: MasterTreeNode) => left.sortOrder - right.sortOrder);
-            const targetIndex = nextSections.findIndex(
-              (entry: MasterTreeNode): boolean => entry.id === target.nodeId
-            );
-            if (targetIndex < 0) return;
-
-            const dropIndex = operation.position === 'after' ? targetIndex + 1 : targetIndex;
-            applySectionMoveByZoneIndex(node.id, zone, dropIndex);
-          },
-        },
-      }),
+    () => createCmsMasterTreeAdapter(applySectionMoveByZoneIndex),
     [applySectionMoveByZoneIndex]
   );
 
@@ -434,10 +388,7 @@ function ZoneFooterNode({
             setIsZoneDragOver(false);
             if (!draggedSectionId) return;
             if (!canDropSectionsAtRoot) return;
-            void moveSectionByMaster(draggedSectionId, zone, 0).then((ok: boolean) => {
-              if (!ok) {
-                sectionActions.dropInZone(draggedSectionId, zone, 0);
-              }
+            void moveSectionByMaster(draggedSectionId, zone, 0).finally(() => {
               endSectionDrag();
             });
           }}
@@ -562,10 +513,7 @@ function SectionDropTarget({
             dragIndex !== null &&
             (toIndex === dragIndex || toIndex === dragIndex + 1);
           if (isSamePosition) return;
-          void moveSectionByMaster(dragSectionId, zone, toIndex).then((ok: boolean) => {
-            if (!ok) {
-              sectionActions.dropInZone(dragSectionId, zone, toIndex);
-            }
+          void moveSectionByMaster(dragSectionId, zone, toIndex).finally(() => {
             endSectionDrag();
           });
           return;

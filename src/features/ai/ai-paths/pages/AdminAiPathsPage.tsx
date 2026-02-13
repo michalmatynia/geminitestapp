@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
 

@@ -158,6 +158,21 @@ const toHtmlParagraph = (value: string): string => {
   return `<p>${escapeHtml(trimmed).replace(/\n/g, '<br/>')}</p>`;
 };
 
+const hasHtmlMarkup = (value: string): boolean => /<\/?[a-z][^>]*>/i.test(value);
+
+const buildPromptTemplateFromDroppedAsset = (asset: CaseResolverDroppedAsset): string => {
+  if (asset.kind === 'node_file') {
+    const nodeFileText = asset.textContent.trim();
+    if (nodeFileText.length > 0) {
+      return hasHtmlMarkup(nodeFileText) ? nodeFileText : toHtmlParagraph(nodeFileText);
+    }
+  }
+
+  return toHtmlParagraph(
+    `Reference file: ${asset.name}${asset.filepath ? `\n${asset.filepath}` : ''}`
+  );
+};
+
 const clampCanvasPosition = (position: { x: number; y: number }): { x: number; y: number } => ({
   x: Math.min(Math.max(position.x, 16), CANVAS_WIDTH - NODE_WIDTH - 16),
   y: Math.min(Math.max(position.y, 16), CANVAS_HEIGHT - NODE_MIN_HEIGHT - 16),
@@ -302,10 +317,6 @@ function CaseResolverCanvasWorkspaceInner({
       if (!promptDefinition) return;
       const id = createNodeId();
       const node = buildNode(promptDefinition, position, id, `Text: ${asset.name}`);
-      const defaultPromptText =
-        asset.kind === 'node_file' && asset.textContent.trim().length > 0
-          ? asset.textContent
-          : `Reference file: ${asset.name}${asset.filepath ? `\n${asset.filepath}` : ''}`;
       const promptConfig = resolvePromptConfig(node);
       const promptNode: AiNode = {
         ...node,
@@ -313,7 +324,7 @@ function CaseResolverCanvasWorkspaceInner({
           ...(node.config ?? {}),
           prompt: {
             ...promptConfig,
-            template: toHtmlParagraph(defaultPromptText),
+            template: buildPromptTemplateFromDroppedAsset(asset),
           },
         },
       };

@@ -74,6 +74,6 @@ export function FileUploadEventsTable(): React.JSX.Element {
           )}
         </TableBody>
       </Table>
-    </>
+    </div>
   );
 }

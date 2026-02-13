@@ -1,19 +1,3 @@
-/**
- * Query Factory Utilities
- * 
- * Provides factory functions and hooks for creating standardized TanStack Query
- * hooks with reduced boilerplate. These factories handle common patterns:
- * - List queries (with pagination support)
- * - Single item queries
- * - CRUD mutations (create, read, update, delete)
- * 
- * Benefits:
- * - 70-80% boilerplate reduction
- * - Consistent error handling and invalidation
- * - Type-safe configuration
- * - Built-in retry/backoff logic
- */
-
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions, type UseMutationOptions } from '@tanstack/react-query';
 import type { ListQuery, SingleQuery, PagedQuery, CreateMutation, UpdateMutation, DeleteMutation, SaveMutation } from '@/shared/types';
 
@@ -59,6 +43,16 @@ export interface CreateSaveMutationConfig<T, TInput> {
   options?: Partial<UseMutationOptions<T, Error, TInput>>;
 }
 
+function mergeOnSuccess<T, TInput>(
+  baseOnSuccess: ((data: T, variables: TInput, context: unknown) => void) | undefined,
+  customOnSuccess: ((data: T, variables: TInput, context: unknown) => unknown) | undefined,
+) {
+  return (data: T, variables: TInput, context: unknown) => {
+    baseOnSuccess?.(data, variables, context);
+    customOnSuccess?.(data, variables, context);
+  };
+}
+
 export function createListQuery<T>(config: CreateListQueryConfig<T>): ListQuery<T> {
   return useQuery({
     queryKey: config.queryKey,
@@ -88,14 +82,17 @@ export function createCreateMutation<T, TInput>(config: CreateCreateMutationConf
 
   return useMutation({
     mutationFn: config.mutationFn,
-    onSuccess: () => {
-      if (config.invalidateKeys) {
-        config.invalidateKeys.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: key as any });
-        });
-      }
-    },
     ...config.options,
+    onSuccess: mergeOnSuccess(
+      (data: T, variables: TInput) => {
+        if (config.invalidateKeys) {
+          config.invalidateKeys.forEach((key) => {
+            queryClient.invalidateQueries({ queryKey: key as any });
+          });
+        }
+      },
+      config.options?.onSuccess as any,
+    ) as any,
   });
 }
 
@@ -104,14 +101,17 @@ export function createUpdateMutation<T, TInput>(config: CreateUpdateMutationConf
 
   return useMutation({
     mutationFn: config.mutationFn,
-    onSuccess: () => {
-      if (config.invalidateKeys) {
-        config.invalidateKeys.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: key as any });
-        });
-      }
-    },
     ...config.options,
+    onSuccess: mergeOnSuccess(
+      (data: T, variables: TInput) => {
+        if (config.invalidateKeys) {
+          config.invalidateKeys.forEach((key) => {
+            queryClient.invalidateQueries({ queryKey: key as any });
+          });
+        }
+      },
+      config.options?.onSuccess as any,
+    ) as any,
   });
 }
 
@@ -120,14 +120,17 @@ export function createDeleteMutation(config: CreateDeleteMutationConfig): Delete
 
   return useMutation({
     mutationFn: config.mutationFn,
-    onSuccess: () => {
-      if (config.invalidateKeys) {
-        config.invalidateKeys.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: key as any });
-        });
-      }
-    },
     ...config.options,
+    onSuccess: mergeOnSuccess(
+      () => {
+        if (config.invalidateKeys) {
+          config.invalidateKeys.forEach((key) => {
+            queryClient.invalidateQueries({ queryKey: key as any });
+          });
+        }
+      },
+      config.options?.onSuccess as any,
+    ) as any,
   });
 }
 
@@ -136,13 +139,16 @@ export function createSaveMutation<T, TInput>(config: CreateSaveMutationConfig<T
 
   return useMutation({
     mutationFn: config.mutationFn,
-    onSuccess: () => {
-      if (config.invalidateKeys) {
-        config.invalidateKeys.forEach((key) => {
-          queryClient.invalidateQueries({ queryKey: key as any });
-        });
-      }
-    },
     ...config.options,
+    onSuccess: mergeOnSuccess(
+      (data: T, variables: TInput) => {
+        if (config.invalidateKeys) {
+          config.invalidateKeys.forEach((key) => {
+            queryClient.invalidateQueries({ queryKey: key as any });
+          });
+        }
+      },
+      config.options?.onSuccess as any,
+    ) as any,
   });
 }

@@ -6,10 +6,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SectionHeader, useToast } from '@/shared/ui';
+import { Button, Label, SectionHeader, Textarea, useToast } from '@/shared/ui';
 
 import { CaseResolverCanvasWorkspace } from '@/features/case-resolver/components/CaseResolverCanvasWorkspace';
+import { CaseResolverFileViewer } from '@/features/case-resolver/components/CaseResolverFileViewer';
 import { CaseResolverFolderTree } from '@/features/case-resolver/components/CaseResolverFolderTree';
+import { CaseResolverRichTextEditor } from '@/features/case-resolver/components/CaseResolverRichTextEditor';
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverAssetFile,
@@ -106,6 +108,14 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         : null,
     [workspace.activeFileId, workspace.files]
   );
+  const selectedAsset = useMemo(
+    (): CaseResolverAssetFile | null =>
+      selectedAssetId
+        ? workspace.assets.find((asset: CaseResolverAssetFile) => asset.id === selectedAssetId) ?? null
+        : null,
+    [selectedAssetId, workspace.assets]
+  );
+  const isNodeFileSelected = selectedAsset?.kind === 'node_file';
 
   const serializedWorkspace = useMemo(
     () => JSON.stringify(workspace),
@@ -474,6 +484,26 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     [updateWorkspace]
   );
 
+  const handleUpdateSelectedAsset = useCallback(
+    (patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>): void => {
+      if (!selectedAssetId) return;
+      updateWorkspace((current: CaseResolverWorkspace) => ({
+        ...current,
+        assets: current.assets.map((asset: CaseResolverAssetFile) =>
+          asset.id === selectedAssetId
+            ? {
+              ...asset,
+              ...(typeof patch.textContent === 'string' ? { textContent: patch.textContent } : {}),
+              ...(typeof patch.description === 'string' ? { description: patch.description } : {}),
+              updatedAt: new Date().toISOString(),
+            }
+            : asset
+        ),
+      }));
+    },
+    [selectedAssetId, updateWorkspace]
+  );
+
   const handleGraphChange = useCallback(
     (nextGraph: CaseResolverGraph): void => {
       if (!activeFile) return;
@@ -548,18 +578,80 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             </div>
           ) : null}
 
-          {activeFile ? (
-            <CaseResolverCanvasWorkspace
-              fileId={activeFile.id}
-              graph={activeFile.graph}
-              defaultDropFolder={activeFile.folder}
-              onUploadAssets={handleUploadAssets}
-              onGraphChange={handleGraphChange}
-            />
-          ) : (
-            <div className='flex h-[420px] items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 text-sm text-gray-400'>
-              Create a case file to start mapping nodes.
+          {selectedAsset && isNodeFileSelected ? (
+            <div className='mb-3 space-y-3 rounded-lg border border-border/60 bg-card/35 p-4'>
+              <div className='space-y-1'>
+                <div className='text-sm font-semibold text-white'>Asset Editor</div>
+                <div className='text-[11px] text-gray-400'>
+                  Edit reusable node-file text. Dropping this asset as WYSIWYG Text Node will use this content.
+                </div>
+              </div>
+
+              <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
+                <div className='flex items-center justify-between gap-2'>
+                  <span className='text-gray-500'>Asset</span>
+                  <span className='font-medium text-gray-100'>{selectedAsset.name}</span>
+                </div>
+                <div className='mt-1 flex items-center justify-between gap-2'>
+                  <span className='text-gray-500'>Kind</span>
+                  <span className='uppercase text-[10px] text-gray-200'>{selectedAsset.kind}</span>
+                </div>
+                <div className='mt-1 flex items-center justify-between gap-2'>
+                  <span className='text-gray-500'>Folder</span>
+                  <span className='font-mono text-[10px] text-gray-300'>
+                    {selectedAsset.folder || '(root)'}
+                  </span>
+                </div>
+              </div>
+
+              <div className='space-y-2'>
+                <Label className='text-xs text-gray-400'>Description</Label>
+                <Textarea
+                  value={selectedAsset.description}
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                    handleUpdateSelectedAsset({ description: event.target.value });
+                  }}
+                  className='min-h-[72px] border-border bg-card/60 text-xs text-white'
+                  placeholder='Optional description to keep file context.'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <Label className='text-xs text-gray-400'>Node File Text (WYSIWYG)</Label>
+                <CaseResolverRichTextEditor
+                  value={selectedAsset.textContent}
+                  onChange={(nextValue: string): void => {
+                    handleUpdateSelectedAsset({ textContent: nextValue });
+                  }}
+                  placeholder='Write reusable prompt fragments in this node file...'
+                />
+              </div>
             </div>
+          ) : null}
+
+          {isNodeFileSelected ? (
+            activeFile ? (
+              <CaseResolverCanvasWorkspace
+                fileId={activeFile.id}
+                graph={activeFile.graph}
+                defaultDropFolder={activeFile.folder}
+                onUploadAssets={handleUploadAssets}
+                onGraphChange={handleGraphChange}
+              />
+            ) : (
+              <div className='flex h-[420px] items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 text-sm text-gray-400'>
+                Create a case file to start mapping nodes.
+              </div>
+            )
+          ) : (
+            <CaseResolverFileViewer
+              selectedAsset={selectedAsset}
+              selectedFolderPath={selectedFolderPath}
+              activeFile={activeFile}
+              onUpdateDescription={(nextDescription: string): void => {
+                handleUpdateSelectedAsset({ description: nextDescription });
+              }}
+            />
           )}
         </div>
       </div>

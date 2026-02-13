@@ -61,6 +61,6 @@ export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Elem
           <div>Enabled: {rule.enabled ? 'Yes' : 'No'}</div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

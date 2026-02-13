@@ -221,7 +221,7 @@ export function ImportTab(): React.JSX.Element {
             </Button>
           </div>
         </div>
-      </>
+      </div>
 
       <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -441,7 +441,7 @@ export function ImportTab(): React.JSX.Element {
                 </span>
               </div>
             ))}
-          </>
+          </div>
         ) : (
           <p className='mt-3 text-xs text-gray-500'>
             {importList.length > 0
@@ -449,7 +449,7 @@ export function ImportTab(): React.JSX.Element {
               : 'No items loaded yet.'}
           </p>
         )}
-      </>
+      </div>
 
       {lastResult ? (
         <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
@@ -474,7 +474,7 @@ export function ImportTab(): React.JSX.Element {
               ))}
             </div>
           ) : null}
-        </>
+        </div>
       ) : null}
     </div>
   );

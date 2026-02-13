@@ -255,7 +255,7 @@ export function CenterPreview(): React.JSX.Element {
     activeCanvasImageSrc,
     setMaskShapes,
     setTool,
-    setActiveShapeId,
+    setActiveMaskId,
     setSelectedPointIndex,
     maskShapes.length,
   ]);

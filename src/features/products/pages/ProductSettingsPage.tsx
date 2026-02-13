@@ -136,6 +136,24 @@ export function ProductSettingsPage(): React.JSX.Element {
     onDeletePriceGroup: (group: PriceGroup): void => {
       void handleDeleteGroup(group);
     },
+    loadingCategories,
+    categories: productCategories,
+    selectedCategoryCatalogId,
+    onCategoryCatalogChange: (id: string | null): void => {
+      setSelectedCategoryCatalogId(id);
+    },
+    onRefreshCategories: (): void => {
+      void refetchCategories();
+    },
+    loadingTags,
+    tags: productTags,
+    selectedTagCatalogId,
+    onTagCatalogChange: (id: string | null): void => {
+      setSelectedTagCatalogId(id);
+    },
+    onRefreshTags: (): void => {
+      void refetchTags();
+    },
   };
 
   return (
@@ -166,26 +184,8 @@ export function ProductSettingsPage(): React.JSX.Element {
           </div>
           <ProductSettingsProvider value={sharedSettingsContextValue}>
             <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
-              {activeSection === 'Categories' && (
-                <CategoriesSettings
-                  loading={loadingCategories}
-                  categories={productCategories}
-                  catalogs={catalogs}
-                  selectedCatalogId={selectedCategoryCatalogId}
-                  onCatalogChange={(id: string | null): void => { setSelectedCategoryCatalogId(id); }}
-                  onRefresh={() => void refetchCategories()}
-                />
-              )}
-              {activeSection === 'Tags' && (
-                <TagsSettings
-                  loading={loadingTags}
-                  tags={productTags}
-                  catalogs={catalogs}
-                  selectedCatalogId={selectedTagCatalogId}
-                  onCatalogChange={(id: string | null): void => { setSelectedTagCatalogId(id); }}
-                  onRefresh={() => void refetchTags()}
-                />
-              )}
+              {activeSection === 'Categories' && <CategoriesSettings />}
+              {activeSection === 'Tags' && <TagsSettings />}
               {activeSection === 'Price Groups' && (
                 <PriceGroupsSettings />
               )}

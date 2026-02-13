@@ -8,14 +8,7 @@ import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/ho
 import type { Catalog, ProductTag } from '@/features/products/types';
 import { useToast, Button, UnifiedSelect, Input, FormModal, EmptyState, ConfirmDialog, Tag as UiTag, Skeleton, FormSection, FormField } from '@/shared/ui';
 
-type TagsSettingsProps = {
-  loading: boolean;
-  tags: ProductTag[];
-  catalogs: Catalog[];
-  selectedCatalogId: string | null;
-  onCatalogChange: (catalogId: string) => void;
-  onRefresh: () => void;
-};
+import { useProductSettingsContext } from './ProductSettingsContext';
 
 type TagFormData = {
   name: string;
@@ -23,14 +16,16 @@ type TagFormData = {
   catalogId: string;
 };
 
-export function TagsSettings({
-  loading,
-  tags,
-  catalogs,
-  selectedCatalogId,
-  onCatalogChange,
-  onRefresh,
-}: TagsSettingsProps): React.JSX.Element {
+export function TagsSettings(): React.JSX.Element {
+  const {
+    loadingTags: loading,
+    tags,
+    catalogs,
+    selectedTagCatalogId: selectedCatalogId,
+    onTagCatalogChange: onCatalogChange,
+    onRefreshTags: onRefresh,
+  } = useProductSettingsContext();
+
   const { toast } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [editingTag, setEditingTag] = useState<ProductTag | null>(null);

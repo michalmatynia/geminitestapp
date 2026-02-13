@@ -1020,6 +1020,6 @@ export function RuleItem({
           ) : null}
         </div>
       </details>
-    </>
+    </div>
   );
 }

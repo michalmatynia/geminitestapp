@@ -48,15 +48,7 @@ import {
 import { createCategoryMasterTreeAdapter } from './category-master-tree-adapter';
 import { CategoryForm } from './CategoryForm';
 import { CategoryFormProvider, type CategoryFormData } from './CategoryFormContext';
-
-type CategoriesSettingsProps = {
-  loading: boolean;
-  categories: ProductCategoryWithChildren[];
-  catalogs: Catalog[];
-  selectedCatalogId: string | null;
-  onCatalogChange: (catalogId: string) => void;
-  onRefresh: () => void;
-};
+import { useProductSettingsContext } from './ProductSettingsContext';
 
 const cloneCategoryTree = (
   nodes: ProductCategoryWithChildren[]
@@ -66,14 +58,16 @@ const cloneCategoryTree = (
     children: cloneCategoryTree(node.children),
   }));
 
-export function CategoriesSettings({
-  loading,
-  categories,
-  catalogs,
-  selectedCatalogId,
-  onCatalogChange,
-  onRefresh,
-}: CategoriesSettingsProps): React.JSX.Element {
+export function CategoriesSettings(): React.JSX.Element {
+  const {
+    loadingCategories: loading,
+    categories,
+    catalogs,
+    selectedCategoryCatalogId: selectedCatalogId,
+    onCategoryCatalogChange: onCatalogChange,
+    onRefreshCategories: onRefresh,
+  } = useProductSettingsContext();
+
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
   const [editingCategory, setEditingCategory] =

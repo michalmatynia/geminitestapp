@@ -166,7 +166,7 @@ function ChatbotJobsPageContent(): React.JSX.Element {
             ))}
           </div>
         )}
-      </>
+      </div>
     </div>
   );
 }

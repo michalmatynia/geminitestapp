@@ -9,7 +9,8 @@ import { SectionPanel } from './section-panel';
 import type { ReactNode } from 'react';
 
 interface FormSectionProps {
-  title?: string | undefined;
+  title?: ReactNode | undefined;
+  titleIcon?: ReactNode | undefined;
   description?: string | undefined;
   actions?: ReactNode | undefined;
   children?: ReactNode | undefined;
@@ -20,6 +21,7 @@ interface FormSectionProps {
 
 export function FormSection({
   title,
+  titleIcon,
   description,
   actions,
   children,
@@ -32,6 +34,7 @@ export function FormSection({
       {(title || description || actions) && (
         <SectionHeader
           title={title ?? ''}
+          icon={titleIcon}
           description={description}
           actions={actions}
           size='xs'

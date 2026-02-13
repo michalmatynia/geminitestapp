@@ -37,6 +37,7 @@ import { GenerationHistoryPanel } from './GenerationHistoryPanel';
 import { GenerationToolbar } from './GenerationToolbar';
 import { LabeledSlider } from './LabeledSlider';
 import { ParamRow } from './ParamRow';
+import { RightSidebarProvider } from './RightSidebarContext';
 import { StudioCard } from './StudioCard';
 import { UIPresetsPanel } from './UIPresetsPanel';
 import { VersionNodeMapPanel } from './VersionNodeMapPanel';
@@ -294,160 +295,226 @@ export function RightSidebar(): React.JSX.Element {
 
   return (
     <>
-      <div
-        className={cn(
-          'order-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 transition-all duration-300 ease-in-out',
-          isFocusMode && 'pointer-events-none opacity-0 translate-x-2'
-        )}
-        aria-hidden={isFocusMode}
-      >
-        {/* Tab toggle */}
-        <div className='flex border-b border-border/40'>
-          <UnifiedButton
-            type='button'
-            variant='ghost'
-            size='sm'
-            className={cn(
-              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
-              sidebarTab === 'controls'
-                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
-                : 'text-gray-500 hover:text-gray-300'
-            )}
-            onClick={() => setSidebarTab('controls')}
-          >
+      <RightSidebarProvider value={{ switchToControls }}>
+        <div
+          className={cn(
+            'order-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 transition-all duration-300 ease-in-out',
+            isFocusMode && 'pointer-events-none opacity-0 translate-x-2'
+          )}
+          aria-hidden={isFocusMode}
+        >
+          {/* Tab toggle */}
+          <div className='flex border-b border-border/40'>
+            <UnifiedButton
+              type='button'
+              variant='ghost'
+              size='sm'
+              className={cn(
+                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+                sidebarTab === 'controls'
+                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                  : 'text-gray-500 hover:text-gray-300'
+              )}
+              onClick={() => setSidebarTab('controls')}
+            >
             Controls
-          </UnifiedButton>
-          <UnifiedButton
-            type='button'
-            variant='ghost'
-            size='sm'
-            className={cn(
-              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
-              sidebarTab === 'graph'
-                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
-                : 'text-gray-500 hover:text-gray-300'
-            )}
-            onClick={() => setSidebarTab('graph')}
-          >
-            <GitBranch className='mr-1 inline size-3' />
+            </UnifiedButton>
+            <UnifiedButton
+              type='button'
+              variant='ghost'
+              size='sm'
+              className={cn(
+                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+                sidebarTab === 'graph'
+                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                  : 'text-gray-500 hover:text-gray-300'
+              )}
+              onClick={() => setSidebarTab('graph')}
+            >
+              <GitBranch className='mr-1 inline size-3' />
             Version Graph
-          </UnifiedButton>
-        </div>
+            </UnifiedButton>
+          </div>
 
-        {sidebarTab === 'graph' ? (
-          <VersionNodeMapPanel onSwitchToControls={switchToControls} />
-        ) : (
-          <>
-            <div className='space-y-2 px-4 py-2'>
-              <div className='rounded border border-border/60 bg-card/30 p-2'>
-                <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
-                  <UnifiedSelect
-                    value={studioSettings.targetAi.openai.model}
-                    onValueChange={(value: string) => {
-                      setStudioSettings((prev) => ({
-                        ...prev,
-                        targetAi: {
-                          ...prev.targetAi,
-                          openai: {
-                            ...prev.targetAi.openai,
-                            api: 'images',
-                            model: value,
+          {sidebarTab === 'graph' ? (
+            <VersionNodeMapPanel />
+          ) : (
+            <>
+              <div className='space-y-2 px-4 py-2'>
+                <div className='rounded border border-border/60 bg-card/30 p-2'>
+                  <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+                    <UnifiedSelect
+                      value={studioSettings.targetAi.openai.model}
+                      onValueChange={(value: string) => {
+                        setStudioSettings((prev) => ({
+                          ...prev,
+                          targetAi: {
+                            ...prev.targetAi,
+                            openai: {
+                              ...prev.targetAi.openai,
+                              api: 'images',
+                              model: value,
+                            },
                           },
-                        },
-                      }));
-                    }}
-                    options={quickModelOptions}
-                    placeholder='Select model'
-                    triggerClassName='h-8 text-xs'
-                    ariaLabel='Quick generation model'
-                  />
+                        }));
+                      }}
+                      options={quickModelOptions}
+                      placeholder='Select model'
+                      triggerClassName='h-8 text-xs'
+                      ariaLabel='Quick generation model'
+                    />
+                    <UnifiedButton
+                      onClick={handleRunGeneration}
+                      disabled={!workingSlot || !promptText.trim() || generationBusy}
+                      size='sm'
+                      className='sm:min-w-[140px]'
+                    >
+                      {generationBusy ? (
+                        <Loader2 className='mr-2 size-4 animate-spin' />
+                      ) : (
+                        <Play className='mr-2 size-4' />
+                      )}
+                      {generationLabel}
+                    </UnifiedButton>
+                  </div>
+                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px]'>
+                    <span className='rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'>
+                    Tokens ~{estimatedPromptTokens.toLocaleString()}
+                    </span>
+                    <span
+                      className='max-w-full truncate rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'
+                      title={`Estimated generation cost for ${selectedModelId}`}
+                    >
+                    Est. Cost ({selectedModelId}) ${estimatedGenerationCost.toFixed(3)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className='flex flex-wrap items-center justify-end gap-2'>
                   <UnifiedButton
-                    onClick={handleRunGeneration}
-                    disabled={!workingSlot || !promptText.trim() || generationBusy}
+                    variant='outline'
                     size='sm'
-                    className='sm:min-w-[140px]'
+                    title='Open prompt controls'
+                    aria-label='Open prompt controls'
+                    onClick={() => setPromptControlOpen(true)}
                   >
-                    {generationBusy ? (
-                      <Loader2 className='mr-2 size-4 animate-spin' />
-                    ) : (
-                      <Play className='mr-2 size-4' />
-                    )}
-                    {generationLabel}
+                    <Sparkles className='mr-2 size-4' />
+            Control Prompt
+                  </UnifiedButton>
+                  <UnifiedButton
+                    variant='outline'
+                    size='sm'
+                    title='Preview generation request payload and input images'
+                    aria-label='Preview generation request payload and input images'
+                    onClick={() => setRequestPreviewOpen(true)}
+                  >
+                    <Eye className='mr-2 size-4' />
+            Preview Request
+                  </UnifiedButton>
+                  <UnifiedButton
+                    variant='outline'
+                    size='sm'
+                    title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
+                    aria-label='Open extracted controls'
+                    disabled={!hasExtractedControls}
+                    onClick={() => setControlsOpen(true)}
+                  >
+                    <SlidersHorizontal className='mr-2 size-4' />
+              Controls
                   </UnifiedButton>
                 </div>
-                <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px]'>
-                  <span className='rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'>
-                    Tokens ~{estimatedPromptTokens.toLocaleString()}
-                  </span>
-                  <span
-                    className='max-w-full truncate rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'
-                    title={`Estimated generation cost for ${selectedModelId}`}
-                  >
-                    Est. Cost ({selectedModelId}) ${estimatedGenerationCost.toFixed(3)}
-                  </span>
-                </div>
-              </div>
 
-              <div className='flex flex-wrap items-center justify-end gap-2'>
-                <UnifiedButton
-                  variant='outline'
-                  size='sm'
-                  title='Open prompt controls'
-                  aria-label='Open prompt controls'
-                  onClick={() => setPromptControlOpen(true)}
-                >
-                  <Sparkles className='mr-2 size-4' />
-            Control Prompt
-                </UnifiedButton>
-                <UnifiedButton
-                  variant='outline'
-                  size='sm'
-                  title='Preview generation request payload and input images'
-                  aria-label='Preview generation request payload and input images'
-                  onClick={() => setRequestPreviewOpen(true)}
-                >
-                  <Eye className='mr-2 size-4' />
-            Preview Request
-                </UnifiedButton>
-                <UnifiedButton
-                  variant='outline'
-                  size='sm'
-                  title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
-                  aria-label='Open extracted controls'
-                  disabled={!hasExtractedControls}
-                  onClick={() => setControlsOpen(true)}
-                >
-                  <SlidersHorizontal className='mr-2 size-4' />
-              Controls
-                </UnifiedButton>
-              </div>
-
-              <div className='rounded border border-border/60 bg-card/30 px-2 py-2'>
-                <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Toolbar</div>
-                <div className='flex flex-wrap justify-end gap-2'>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <UnifiedButton
-                        variant='outline'
-                        size='sm'
-                        title='Open tools popup'
-                        aria-label='Open tools popup'
-                      >
-                        <Pentagon className='mr-2 size-4' />
+                <div className='rounded border border-border/60 bg-card/30 px-2 py-2'>
+                  <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Toolbar</div>
+                  <div className='flex flex-wrap justify-end gap-2'>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <UnifiedButton
+                          variant='outline'
+                          size='sm'
+                          title='Open tools popup'
+                          aria-label='Open tools popup'
+                        >
+                          <Pentagon className='mr-2 size-4' />
                     Tools
-                      </UnifiedButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align='end'
-                      className='w-[min(92vw,460px)] min-h-[230px] !overflow-visible space-y-3 p-3 pb-4'
-                      sideOffset={8}
-                    >
-                      <VectorDrawingToolbar
-                        tool={tool}
-                        onSelectTool={setTool}
-                        className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
-                      />
-                      {tool !== 'select' ? (
+                        </UnifiedButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align='end'
+                        className='w-[min(92vw,460px)] min-h-[230px] !overflow-visible space-y-3 p-3 pb-4'
+                        sideOffset={8}
+                      >
+                        <VectorDrawingToolbar
+                          tool={tool}
+                          onSelectTool={setTool}
+                          className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
+                        />
+                        {tool !== 'select' ? (
+                          <div className='rounded border border-border/60 bg-card/30 p-3'>
+                            <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
+                              <LabeledSlider
+                                label='Mask Feather'
+                                value={maskFeather}
+                                onChange={setMaskFeather}
+                              />
+                              {tool === 'brush' ? (
+                                <LabeledSlider
+                                  label='Brush Radius'
+                                  value={brushRadius}
+                                  onChange={setBrushRadius}
+                                  min={1}
+                                  max={64}
+                                  fallbackValue={8}
+                                />
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className='text-[11px] text-gray-500'>
+                      Select a drawing tool to see contextual settings.
+                          </div>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <UnifiedButton
+                          variant='outline'
+                          size='sm'
+                          title='Open mask generation popup'
+                          aria-label='Open mask generation popup'
+                        >
+                          <Play className='mr-2 size-4' />
+                    Mask Generation
+                        </UnifiedButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align='end'
+                        className='w-[min(96vw,720px)] space-y-3 p-3'
+                        sideOffset={8}
+                      >
+                        <GenerationToolbar />
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <UnifiedButton
+                          variant='outline'
+                          size='sm'
+                          title='Open masking tools popup'
+                          aria-label='Open masking tools popup'
+                        >
+                          <Filter className='mr-2 size-4' />
+                    Masking Tools
+                        </UnifiedButton>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align='end'
+                        className='w-[min(92vw,420px)] space-y-3 p-3'
+                        sideOffset={8}
+                      >
                         <div className='rounded border border-border/60 bg-card/30 p-3'>
                           <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
                             <LabeledSlider
@@ -455,117 +522,53 @@ export function RightSidebar(): React.JSX.Element {
                               value={maskFeather}
                               onChange={setMaskFeather}
                             />
-                            {tool === 'brush' ? (
-                              <LabeledSlider
-                                label='Brush Radius'
-                                value={brushRadius}
-                                onChange={setBrushRadius}
-                                min={1}
-                                max={64}
-                                fallbackValue={8}
-                              />
-                            ) : null}
+                            <LabeledSlider
+                              label='Threshold Sensitivity'
+                              value={maskThresholdSensitivity}
+                              onChange={setMaskThresholdSensitivity}
+                              fallbackValue={55}
+                              disabled={!workingSlot}
+                            />
+                            <LabeledSlider
+                              label='Edge Sensitivity'
+                              value={maskEdgeSensitivity}
+                              onChange={setMaskEdgeSensitivity}
+                              fallbackValue={55}
+                              disabled={!workingSlot}
+                            />
                           </div>
                         </div>
-                      ) : (
-                        <div className='text-[11px] text-gray-500'>
-                      Select a drawing tool to see contextual settings.
-                        </div>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <UnifiedButton
-                        variant='outline'
-                        size='sm'
-                        title='Open mask generation popup'
-                        aria-label='Open mask generation popup'
-                      >
-                        <Play className='mr-2 size-4' />
-                    Mask Generation
-                      </UnifiedButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align='end'
-                      className='w-[min(96vw,720px)] space-y-3 p-3'
-                      sideOffset={8}
-                    >
-                      <GenerationToolbar />
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <UnifiedButton
-                        variant='outline'
-                        size='sm'
-                        title='Open masking tools popup'
-                        aria-label='Open masking tools popup'
-                      >
-                        <Filter className='mr-2 size-4' />
-                    Masking Tools
-                      </UnifiedButton>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align='end'
-                      className='w-[min(92vw,420px)] space-y-3 p-3'
-                      sideOffset={8}
-                    >
-                      <div className='rounded border border-border/60 bg-card/30 p-3'>
-                        <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
-                          <LabeledSlider
-                            label='Mask Feather'
-                            value={maskFeather}
-                            onChange={setMaskFeather}
-                          />
-                          <LabeledSlider
-                            label='Threshold Sensitivity'
-                            value={maskThresholdSensitivity}
-                            onChange={setMaskThresholdSensitivity}
-                            fallbackValue={55}
-                            disabled={!workingSlot}
-                          />
-                          <LabeledSlider
-                            label='Edge Sensitivity'
-                            value={maskEdgeSensitivity}
-                            onChange={setMaskEdgeSensitivity}
-                            fallbackValue={55}
-                            disabled={!workingSlot}
-                          />
-                        </div>
-                      </div>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
-              <StudioCard label='Composite References'>
-                <MultiSelect
-                  options={compositeAssetOptions}
-                  selected={compositeAssetIds}
-                  onChange={setCompositeAssetIds}
-                  placeholder='Select additional reference cards'
-                  searchPlaceholder='Search cards...'
-                  emptyMessage='No cards available.'
-                  className='w-full'
-                />
-                <div className='text-[10px] text-gray-500'>
+              <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
+                <StudioCard label='Composite References'>
+                  <MultiSelect
+                    options={compositeAssetOptions}
+                    selected={compositeAssetIds}
+                    onChange={setCompositeAssetIds}
+                    placeholder='Select additional reference cards'
+                    searchPlaceholder='Search cards...'
+                    emptyMessage='No cards available.'
+                    className='w-full'
+                  />
+                  <div className='text-[10px] text-gray-500'>
             Selected references are sent with the base image for multi-image generation.
-                </div>
-              </StudioCard>
-
-              {generationHistory.length > 0 ? (
-                <StudioCard label='History' count={generationHistory.length}>
-                  <GenerationHistoryPanel />
+                  </div>
                 </StudioCard>
-              ) : null}
-            </div>
-          </>
-        )}
-      </div>
+
+                {generationHistory.length > 0 ? (
+                  <StudioCard label='History' count={generationHistory.length}>
+                    <GenerationHistoryPanel />
+                  </StudioCard>
+                ) : null}
+              </div>
+            </>
+          )}
+        </div>
+      </RightSidebarProvider>
 
       <AppModal
         open={promptControlOpen}

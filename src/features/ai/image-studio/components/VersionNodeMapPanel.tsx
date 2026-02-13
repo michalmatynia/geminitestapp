@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { UnifiedButton } from '@/shared/ui';
 
+import { useRightSidebarContext } from './RightSidebarContext';
 import { VersionGraphContextMenu } from './VersionGraphContextMenu';
 import { VersionGraphControlsProvider } from './VersionGraphControlsContext';
 import { VersionGraphFilterBar } from './VersionGraphFilterBar';
@@ -16,20 +17,17 @@ import { VersionNodeMapProvider } from './VersionNodeMapContext';
 import { VersionNodeMapMinimap } from './VersionNodeMapMinimap';
 import { useSlotsActions } from '../context/SlotsContext';
 import { useVersionGraphActions, useVersionGraphState } from '../context/VersionGraphContext';
+import { useVersionGraphShortcuts } from '../hooks/useVersionGraphShortcuts';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import { readMeta } from '../utils/metadata';
-import { useVersionGraphShortcuts } from '../hooks/useVersionGraphShortcuts';
 import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, exportSvgAsPng } from '../utils/version-graph';
 
 import type { ImageStudioSlotRecord } from '../types';
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export interface VersionNodeMapPanelProps {
-  onSwitchToControls?: (() => void) | undefined;
-}
-
-export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelProps): React.JSX.Element {
+export function VersionNodeMapPanel(): React.JSX.Element {
+  const { switchToControls } = useRightSidebarContext();
   const {
     nodes,
     edges,
@@ -109,15 +107,15 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
   const handleSetAsSource = useCallback(() => {
     if (!selectedNodeId) return;
     setWorkingSlotId(selectedNodeId);
-    onSwitchToControls?.();
-  }, [selectedNodeId, setWorkingSlotId, onSwitchToControls]);
+    switchToControls();
+  }, [selectedNodeId, setWorkingSlotId, switchToControls]);
 
   const handleActivateNode = useCallback(
     (id: string) => {
       activateNode(id);
-      onSwitchToControls?.();
+      switchToControls();
     },
-    [activateNode, onSwitchToControls],
+    [activateNode, switchToControls],
   );
 
   const handleExecuteMerge = useCallback(async () => {
@@ -189,8 +187,8 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
 
   const handleCtxSetAsSource = useCallback((nodeId: string) => {
     setWorkingSlotId(nodeId);
-    onSwitchToControls?.();
-  }, [setWorkingSlotId, onSwitchToControls]);
+    switchToControls();
+  }, [setWorkingSlotId, switchToControls]);
 
   const handleCtxAddToComposite = useCallback((nodeId: string) => {
     if (!compositeMode) toggleCompositeMode();

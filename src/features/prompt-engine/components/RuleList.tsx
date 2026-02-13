@@ -386,7 +386,7 @@ export function RuleList(): React.JSX.Element {
                   </div>
                 </div>
               ) : null}
-            </>
+            </div>
 
             {!isCollapsed ? (
               <div className='ml-6 space-y-2'>

@@ -1,0 +1,88 @@
+import { useState } from 'react';
+
+import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
+import type { PlaywrightPersona } from '@/features/playwright';
+
+type UseIntegrationTabsResult = {
+  activeTab: string;
+  setActiveTab: (value: string) => void;
+  integrationSlug: string;
+  isTradera: boolean;
+  isAllegro: boolean;
+  isBaselinker: boolean;
+  showPlaywright: boolean;
+  showAllegroConsole: boolean;
+  showBaseConsole: boolean;
+  activeConnection: unknown;
+  selectedPersona: PlaywrightPersona | null;
+  playwrightPersonas: PlaywrightPersona[];
+  playwrightPersonasLoading: boolean;
+  playwrightPersonaId: string | null;
+  handleSelectPlaywrightPersona: (id: string | null) => void;
+  handleSavePlaywrightSettings: () => void;
+};
+
+export function useIntegrationTabs(): UseIntegrationTabsResult {
+  const {
+    activeIntegration,
+    connections,
+    playwrightPersonas,
+    playwrightPersonasLoading,
+    playwrightPersonaId,
+    handleSelectPlaywrightPersona,
+    handleSavePlaywrightSettings,
+  } = useIntegrationsContext();
+
+  const [activeTab, setActiveTab] = useState('connections');
+
+  if (!activeIntegration) {
+    return {
+      activeTab,
+      setActiveTab,
+      integrationSlug: '',
+      isTradera: false,
+      isAllegro: false,
+      isBaselinker: false,
+      showPlaywright: false,
+      showAllegroConsole: false,
+      showBaseConsole: false,
+      activeConnection: null,
+      selectedPersona: null,
+      playwrightPersonas: [],
+      playwrightPersonasLoading: false,
+      playwrightPersonaId: null,
+      handleSelectPlaywrightPersona,
+      handleSavePlaywrightSettings,
+    };
+  }
+
+  const integrationSlug = activeIntegration.slug;
+  const isTradera = integrationSlug === 'tradera';
+  const isAllegro = integrationSlug === 'allegro';
+  const isBaselinker = integrationSlug === 'baselinker';
+  const showPlaywright = isTradera;
+  const showAllegroConsole = isAllegro;
+  const showBaseConsole = isBaselinker;
+  const activeConnection = connections[0] || null;
+  const selectedPersona =
+    playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ?? null;
+
+  return {
+    activeTab,
+    setActiveTab,
+    integrationSlug,
+    isTradera,
+    isAllegro,
+    isBaselinker,
+    showPlaywright,
+    showAllegroConsole,
+    showBaseConsole,
+    activeConnection,
+    selectedPersona,
+    playwrightPersonas,
+    playwrightPersonasLoading,
+    playwrightPersonaId,
+    handleSelectPlaywrightPersona,
+    handleSavePlaywrightSettings,
+  };
+}

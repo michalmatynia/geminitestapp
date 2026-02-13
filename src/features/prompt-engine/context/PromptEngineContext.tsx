@@ -23,6 +23,7 @@ import {
 export type SeverityFilter = PromptValidationSeverity | 'all';
 export type ScopeFilter = PromptValidationScope | 'all';
 export type PatternCollectionTab = 'core' | 'prompt_exploder';
+export type ExploderPatternSubTab = 'prompt_exploder_rules' | 'image_studio_rules';
 
 export type RuleDraft = {
   uid: string;
@@ -40,6 +41,7 @@ interface PromptEngineContextType {
   severity: SeverityFilter;
   scope: ScopeFilter;
   patternTab: PatternCollectionTab;
+  exploderSubTab: ExploderPatternSubTab;
   includeDisabled: boolean;
   drafts: RuleDraft[];
   learnedDrafts: RuleDraft[];
@@ -59,6 +61,7 @@ interface PromptEngineContextType {
   setSeverity: (severity: SeverityFilter) => void;
   setScope: (scope: ScopeFilter) => void;
   setPatternTab: (tab: PatternCollectionTab) => void;
+  setExploderSubTab: (subTab: ExploderPatternSubTab) => void;
   setIncludeDisabled: (include: boolean) => void;
   handleRuleTextChange: (uid: string, nextText: string) => void;
   handlePatchRule: (uid: string, patch: RulePatch) => void;
@@ -91,6 +94,14 @@ const createRuleDraft = (rule: PromptValidationRule, uid: string = rule.id): Rul
 });
 
 const DEFAULT_SEQUENCE_STEP = 10;
+const IMAGE_STUDIO_SCOPE_VALUES: PromptValidationScope[] = [
+  'image_studio_prompt',
+  'image_studio_extraction',
+  'image_studio_generation',
+];
+const IMAGE_STUDIO_SCOPE_SET = new Set<PromptValidationScope>(
+  IMAGE_STUDIO_SCOPE_VALUES
+);
 
 const createSequenceGroupId = (): string => {
   const random = Math.random().toString(36).slice(2, 8);
@@ -112,6 +123,36 @@ const getRuleSequence = (rule: PromptValidationRule, fallbackIndex: number): num
     return Math.max(0, Math.floor(rule.sequence));
   }
   return (fallbackIndex + 1) * DEFAULT_SEQUENCE_STEP;
+};
+
+const normalizeRuleScopes = (
+  scopes: PromptValidationScope[] | null | undefined
+): PromptValidationScope[] => {
+  if (!Array.isArray(scopes) || scopes.length === 0) {
+    return [...DEFAULT_PROMPT_VALIDATION_SCOPES];
+  }
+  const known = [...DEFAULT_PROMPT_VALIDATION_SCOPES];
+  const deduped: PromptValidationScope[] = [];
+  for (const scope of scopes) {
+    if (!known.includes(scope) || deduped.includes(scope)) continue;
+    deduped.push(scope);
+  }
+  return deduped.length > 0 ? deduped : [...DEFAULT_PROMPT_VALIDATION_SCOPES];
+};
+
+const hasOnlyImageStudioScopes = (scopes: PromptValidationScope[]): boolean =>
+  scopes.some((scope) => IMAGE_STUDIO_SCOPE_SET.has(scope)) &&
+  scopes.every((scope) => IMAGE_STUDIO_SCOPE_SET.has(scope) || scope === 'global');
+
+const isImageStudioRule = (rule: PromptValidationRule): boolean => {
+  const id = rule.id.toLowerCase();
+  if (id.includes('image_studio') || id.includes('image-studio')) {
+    return true;
+  }
+
+  const appliesToScopes = normalizeRuleScopes(rule.appliesToScopes);
+  const launchScopes = normalizeRuleScopes(rule.launchAppliesToScopes);
+  return hasOnlyImageStudioScopes(appliesToScopes) || hasOnlyImageStudioScopes(launchScopes);
 };
 
 const sortRuleDraftsBySequence = (drafts: RuleDraft[]): RuleDraft[] =>
@@ -139,22 +180,51 @@ const applyRulePatch = (draft: RuleDraft, patch: RulePatch): RuleDraft => {
   };
 };
 
-const createNewRule = (): PromptValidationRule => ({
-  kind: 'regex',
-  id: `custom.rule.${Date.now()}`,
-  enabled: true,
-  severity: 'warning',
-  title: 'New validation rule',
-  description: null,
-  pattern: '^$',
-  flags: 'mi',
-  message: 'Update this rule with the intended pattern and message.',
-  similar: [],
-  autofix: { enabled: true, operations: [] },
-  appliesToScopes: [...DEFAULT_PROMPT_VALIDATION_SCOPES],
-  launchAppliesToScopes: [...DEFAULT_PROMPT_VALIDATION_SCOPES],
-  launchScopeBehavior: 'gate',
-});
+const createNewRule = (
+  preset: 'core' | 'prompt_exploder' | 'image_studio' = 'core'
+): PromptValidationRule => {
+  const now = Date.now();
+  const baseRule: PromptValidationRule = {
+    kind: 'regex',
+    id: `custom.rule.${now}`,
+    enabled: true,
+    severity: 'warning',
+    title: 'New validation rule',
+    description: null,
+    pattern: '^$',
+    flags: 'mi',
+    message: 'Update this rule with the intended pattern and message.',
+    similar: [],
+    autofix: { enabled: true, operations: [] },
+    appliesToScopes: [...DEFAULT_PROMPT_VALIDATION_SCOPES],
+    launchAppliesToScopes: [...DEFAULT_PROMPT_VALIDATION_SCOPES],
+    launchScopeBehavior: 'gate',
+  };
+
+  if (preset === 'prompt_exploder') {
+    return {
+      ...baseRule,
+      id: `prompt_exploder.rule.${now}`,
+      title: 'Prompt Exploder rule',
+      description: 'Rule scoped to Prompt Exploder.',
+      appliesToScopes: ['prompt_exploder'],
+      launchAppliesToScopes: ['prompt_exploder'],
+    };
+  }
+
+  if (preset === 'image_studio') {
+    return {
+      ...baseRule,
+      id: `image_studio.rule.${now}`,
+      title: 'Image Studio rule',
+      description: 'Rule scoped to Image Studio prompt, extraction, and generation.',
+      appliesToScopes: [...IMAGE_STUDIO_SCOPE_VALUES],
+      launchAppliesToScopes: [...IMAGE_STUDIO_SCOPE_VALUES],
+    };
+  }
+
+  return baseRule;
+};
 
 const ruleSearchText = (rule: PromptValidationRule): string => {
   const parts: string[] = [
@@ -240,6 +310,8 @@ export function PromptEngineProvider({
   const [severity, setSeverity] = useState<SeverityFilter>('all');
   const [scope, setScope] = useState<ScopeFilter>('all');
   const [patternTab, setPatternTab] = useState<PatternCollectionTab>('core');
+  const [exploderSubTab, setExploderSubTab] =
+    useState<ExploderPatternSubTab>('prompt_exploder_rules');
   const [includeDisabled, setIncludeDisabled] = useState<boolean>(true);
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);
   const [initializedAt, setInitializedAt] = useState<number | null>(null);
@@ -274,8 +346,26 @@ export function PromptEngineProvider({
         if (!term) return true;
         return draft.text.toLowerCase().includes(term);
       }
-      if (patternTab === 'prompt_exploder' && !isPromptExploderRule(rule)) return false;
-      if (patternTab === 'core' && isPromptExploderRule(rule)) return false;
+      if (patternTab === 'prompt_exploder') {
+        if (
+          exploderSubTab === 'image_studio_rules' &&
+          !isImageStudioRule(rule)
+        ) {
+          return false;
+        }
+        if (
+          exploderSubTab === 'prompt_exploder_rules' &&
+          !isPromptExploderRule(rule)
+        ) {
+          return false;
+        }
+      }
+      if (
+        patternTab === 'core' &&
+        (isPromptExploderRule(rule) || isImageStudioRule(rule))
+      ) {
+        return false;
+      }
       if (!includeDisabled && !rule.enabled) return false;
       if (severity !== 'all' && rule.severity !== severity) return false;
       if (
@@ -287,7 +377,15 @@ export function PromptEngineProvider({
       if (!term) return true;
       return ruleSearchText(rule).includes(term);
     });
-  }, [includeDisabled, patternTab, query, scope, severity, sortedDrafts]);
+  }, [
+    exploderSubTab,
+    includeDisabled,
+    patternTab,
+    query,
+    scope,
+    severity,
+    sortedDrafts,
+  ]);
 
   const filteredLearnedDrafts = useMemo((): RuleDraft[] => {
     const term = query.trim().toLowerCase();
@@ -298,8 +396,26 @@ export function PromptEngineProvider({
         if (!term) return true;
         return draft.text.toLowerCase().includes(term);
       }
-      if (patternTab === 'prompt_exploder' && !isPromptExploderRule(rule)) return false;
-      if (patternTab === 'core' && isPromptExploderRule(rule)) return false;
+      if (patternTab === 'prompt_exploder') {
+        if (
+          exploderSubTab === 'image_studio_rules' &&
+          !isImageStudioRule(rule)
+        ) {
+          return false;
+        }
+        if (
+          exploderSubTab === 'prompt_exploder_rules' &&
+          !isPromptExploderRule(rule)
+        ) {
+          return false;
+        }
+      }
+      if (
+        patternTab === 'core' &&
+        (isPromptExploderRule(rule) || isImageStudioRule(rule))
+      ) {
+        return false;
+      }
       if (!includeDisabled && !rule.enabled) return false;
       if (severity !== 'all' && rule.severity !== severity) return false;
       if (
@@ -311,7 +427,15 @@ export function PromptEngineProvider({
       if (!term) return true;
       return ruleSearchText(rule).includes(term);
     });
-  }, [includeDisabled, learnedDrafts, patternTab, query, scope, severity]);
+  }, [
+    exploderSubTab,
+    includeDisabled,
+    learnedDrafts,
+    patternTab,
+    query,
+    scope,
+    severity,
+  ]);
 
   const handleRuleTextChange = useCallback((uid: string, nextText: string): void => {
     setDrafts((prev: RuleDraft[]) =>
@@ -529,11 +653,17 @@ export function PromptEngineProvider({
   }, []);
 
   const handleAddRule = useCallback((): void => {
-    const newRule = createNewRule();
+    const preset =
+      patternTab === 'prompt_exploder'
+        ? exploderSubTab === 'image_studio_rules'
+          ? 'image_studio'
+          : 'prompt_exploder'
+        : 'core';
+    const newRule = createNewRule(preset);
     setDrafts((prev: RuleDraft[]) => [createRuleDraft(newRule), ...prev]);
     setIsDirty(true);
     setSaveError(null);
-  }, []);
+  }, [exploderSubTab, patternTab]);
 
   const handleAddLearnedRule = useCallback((): void => {
     const newRule: PromptValidationRule = {
@@ -723,6 +853,7 @@ export function PromptEngineProvider({
       severity,
       scope,
       patternTab,
+      exploderSubTab,
       includeDisabled,
       drafts,
       learnedDrafts,
@@ -738,6 +869,7 @@ export function PromptEngineProvider({
       setSeverity,
       setScope,
       setPatternTab,
+      setExploderSubTab,
       setIncludeDisabled,
       handleRuleTextChange,
       handlePatchRule,
@@ -765,6 +897,7 @@ export function PromptEngineProvider({
       severity,
       scope,
       patternTab,
+      exploderSubTab,
       includeDisabled,
       drafts,
       learnedDrafts,

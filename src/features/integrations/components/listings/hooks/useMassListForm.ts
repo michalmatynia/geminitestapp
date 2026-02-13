@@ -1,9 +1,14 @@
 import { useState, useCallback } from 'react';
+
+import {
+  useGenericExportToBaseMutation,
+  useGenericCreateListingMutation,
+  type ExportToBaseVariables,
+} from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { massListProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
 import { validateFormData } from '@/shared/validations/form-validation';
-import { useGenericExportToBaseMutation, useGenericCreateListingMutation, type ExportToBaseVariables } from '../../hooks/useProductListingMutations';
 
 export interface UseMassListFormProps {
   productIds: string[];

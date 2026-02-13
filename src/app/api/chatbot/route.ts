@@ -204,31 +204,50 @@ const cleanupChatbotTemp = async (): Promise<void> => {
 
 async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const requestStart = Date.now();
+  const [ollamaModels, fallbackModels] = await Promise.all([
+    fetchOllamaModels(ctx, requestStart),
+    buildProviderFallbackModels(),
+  ]);
 
-  const ollamaModels = await fetchOllamaModels(ctx, requestStart);
-  if (ollamaModels && ollamaModels.length > 0) {
-    if (DEBUG_CHATBOT) {
-      await logSystemEvent({
-        level: 'info',
-        message: '[chatbot][models] Loaded',
-        context: {
-          count: ollamaModels.length,
-          durationMs: Date.now() - requestStart,
-          requestId: ctx.requestId,
-        },
-      });
-    }
-    return NextResponse.json({ models: ollamaModels });
+  const mergedModels = Array.from(
+    new Set([...(ollamaModels ?? []), ...fallbackModels])
+  );
+
+  if (DEBUG_CHATBOT) {
+    await logSystemEvent({
+      level: 'info',
+      message: '[chatbot][models] Loaded',
+      context: {
+        ollamaCount: ollamaModels?.length ?? 0,
+        providerCount: fallbackModels.length,
+        mergedCount: mergedModels.length,
+        durationMs: Date.now() - requestStart,
+        requestId: ctx.requestId,
+      },
+    });
   }
 
-  const fallbackModels = await buildProviderFallbackModels();
-  return NextResponse.json({
-    models: fallbackModels,
-    warning: {
-      code: 'OLLAMA_UNAVAILABLE',
-      message: 'Ollama models unavailable. Returned provider presets instead.',
-    },
-  });
+  if (mergedModels.length === 0) {
+    return NextResponse.json({
+      models: [],
+      warning: {
+        code: 'MODELS_UNAVAILABLE',
+        message: 'No models discovered from Ollama or configured providers.',
+      },
+    });
+  }
+
+  if (!ollamaModels || ollamaModels.length === 0) {
+    return NextResponse.json({
+      models: mergedModels,
+      warning: {
+        code: 'OLLAMA_UNAVAILABLE',
+        message: 'Ollama models unavailable. Returned configured provider models.',
+      },
+    });
+  }
+
+  return NextResponse.json({ models: mergedModels });
 }
 
 async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

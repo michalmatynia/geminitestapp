@@ -186,6 +186,28 @@ describe('prompt exploder parser', () => {
     ).toBe(true);
   });
 
+  it('extracts logical operators and referenced params from list statements', () => {
+    const document = explodePromptText({
+      prompt: SAMPLE_PROMPT,
+      validationRules: PROMPT_EXPLODER_PATTERN_PACK,
+    });
+
+    const allItems = document.segments.flatMap((segment) => [
+      ...segment.listItems,
+      ...segment.subsections.flatMap((subsection) => subsection.items),
+    ]);
+    const conditionalItem = allItems.find(
+      (item) =>
+        item.logicalOperator === 'if' &&
+        item.referencedParamPath === 'add_new_ground_shadow'
+    );
+
+    expect(conditionalItem).toBeTruthy();
+    expect(conditionalItem?.referencedComparator).toBe('equals');
+    expect(conditionalItem?.referencedValue).toBe(true);
+    expect(conditionalItem?.text.toLowerCase()).toContain('add one neutral gray soft shadow');
+  });
+
   it('merges manual bindings with auto bindings', () => {
     const document = explodePromptText({
       prompt: SAMPLE_PROMPT,

@@ -114,6 +114,16 @@ const normalizeRuleScopes = (
   return deduped.length > 0 ? deduped : [...DEFAULT_PROMPT_VALIDATION_SCOPES];
 };
 
+const IMAGE_STUDIO_SCOPE_SET = new Set<PromptValidationScope>([
+  'image_studio_prompt',
+  'image_studio_extraction',
+  'image_studio_generation',
+]);
+
+const hasOnlyImageStudioScopes = (scopes: PromptValidationScope[]): boolean =>
+  scopes.some((scope) => IMAGE_STUDIO_SCOPE_SET.has(scope)) &&
+  scopes.every((scope) => IMAGE_STUDIO_SCOPE_SET.has(scope) || scope === 'global');
+
 const normalizeRuleKind = (value: string): PromptValidationRule['kind'] =>
   value === 'params_object' ? 'params_object' : 'regex';
 
@@ -163,6 +173,13 @@ export function RuleItem({
   const promptExploderTreatAsHeading = rule?.promptExploderTreatAsHeading ?? false;
   const hasPromptExploderScope = appliesToScopes.some(
     (scope) => scope === 'prompt_exploder' || scope === 'global'
+  );
+  const isImageStudioRule = Boolean(
+    rule &&
+      (rule.id.toLowerCase().includes('image_studio') ||
+        rule.id.toLowerCase().includes('image-studio') ||
+        hasOnlyImageStudioScopes(appliesToScopes) ||
+        hasOnlyImageStudioScopes(launchAppliesToScopes))
   );
 
   const patchRule = (patch: Partial<PromptValidationRule>): void => {
@@ -303,6 +320,11 @@ export function RuleItem({
             >
               {rule.enabled ? 'Enabled' : 'Disabled'}
             </button>
+          ) : null}
+          {isImageStudioRule ? (
+            <span className='rounded border border-teal-500/45 bg-teal-500/10 px-2 py-0.5 text-[10px] uppercase text-teal-200'>
+              Image Studio Rule
+            </span>
           ) : null}
           <span className='text-sm font-medium text-gray-100'>
             {rule?.title ?? 'Invalid rule'}

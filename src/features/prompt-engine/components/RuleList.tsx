@@ -101,6 +101,7 @@ export function RuleList(): React.JSX.Element {
     severity,
     scope,
     patternTab,
+    exploderSubTab,
     includeDisabled,
     handleSequenceDrop,
     handleSaveSequenceGroup,
@@ -110,6 +111,12 @@ export function RuleList(): React.JSX.Element {
   const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const [groupDrafts, setGroupDrafts] = useState<Record<string, SequenceGroupDraft>>({});
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+  const activeTabLabel =
+    patternTab === 'core'
+      ? 'Core'
+      : exploderSubTab === 'image_studio_rules'
+        ? 'Image Studio Rules'
+        : 'Prompt Exploder Rules';
 
   const sequencingLocked =
     query.trim().length > 0 ||
@@ -175,7 +182,7 @@ export function RuleList(): React.JSX.Element {
       {filteredDrafts.length === 0 ? (
         <SectionPanel>
           <div className='text-sm text-gray-400'>
-            No rules match this filter in the {patternTab === 'prompt_exploder' ? 'Prompt Exploder' : 'Core'} list.
+            No rules match this filter in the {activeTabLabel} list.
           </div>
         </SectionPanel>
       ) : null}

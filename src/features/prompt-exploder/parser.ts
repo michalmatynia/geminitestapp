@@ -9,6 +9,7 @@ import type {
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
   PromptExploderListItem,
+  PromptExploderParamUiControl,
   PromptExploderSegment,
   PromptExploderSegmentType,
   PromptExploderSubsection,
@@ -474,6 +475,100 @@ const collectParamPaths = (
   return out;
 };
 
+const parseLogicalReferenceValue = (rawValue: string | null | undefined): unknown => {
+  const trimmed = (rawValue ?? '').trim();
+  if (!trimmed) return null;
+  if (/^(true|false)$/i.test(trimmed)) return /^true$/i.test(trimmed);
+  if (/^null$/i.test(trimmed)) return null;
+  if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  if (
+    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']'))
+  ) {
+    try {
+      return JSON.parse(trimmed) as unknown;
+    } catch {
+      return trimmed;
+    }
+  }
+  return trimmed;
+};
+
+const normalizeLogicalOperator = (
+  raw: string
+): PromptExploderListItem['logicalOperator'] => {
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'only if') return 'only_if';
+  if (normalized === 'if') return 'if';
+  if (normalized === 'unless') return 'unless';
+  if (normalized === 'when') return 'when';
+  return null;
+};
+
+const normalizeLogicalComparator = (
+  raw: string | null | undefined
+): PromptExploderListItem['referencedComparator'] => {
+  if (!raw) return null;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '=' || normalized === '==') return 'equals';
+  if (normalized === '!=') return 'not_equals';
+  if (normalized === '>') return 'gt';
+  if (normalized === '>=') return 'gte';
+  if (normalized === '<') return 'lt';
+  if (normalized === '<=') return 'lte';
+  if (normalized === 'contains') return 'contains';
+  return null;
+};
+
+const normalizeLogicalParamPath = (raw: string): string => {
+  return raw.trim().replace(/^\[(.+)]$/i, '$1').replace(/^params\./i, '');
+};
+
+const parseLogicalListItemPrefix = (text: string): {
+  text: string;
+  logicalOperator: PromptExploderListItem['logicalOperator'];
+  referencedParamPath: string;
+  referencedComparator: PromptExploderListItem['referencedComparator'];
+  referencedValue: unknown;
+} | null => {
+  const trimmed = text.trim();
+  const prefixMatch = /^(if|only if|unless|when)\s+(.+?)(?::|,\s+)(.+)$/i.exec(trimmed);
+  if (!prefixMatch) return null;
+
+  const operator = normalizeLogicalOperator(prefixMatch[1] ?? '');
+  const expression = (prefixMatch[2] ?? '').trim();
+  const statement = (prefixMatch[3] ?? '').trim();
+  if (!operator || !expression || !statement) return null;
+
+  const expressionMatch = /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(
+    expression
+  );
+  if (!expressionMatch) return null;
+
+  const paramPath = normalizeLogicalParamPath(expressionMatch[1] ?? '');
+  if (!paramPath) return null;
+  const rawComparator = expressionMatch[2] ?? null;
+  const comparator = normalizeLogicalComparator(rawComparator);
+  const referencedComparator: PromptExploderListItem['referencedComparator'] =
+    comparator ?? (operator === 'unless' ? 'falsy' : 'truthy');
+  const referencedValue =
+    comparator ? parseLogicalReferenceValue(expressionMatch[3]) : null;
+
+  return {
+    text: statement,
+    logicalOperator: operator,
+    referencedParamPath: paramPath,
+    referencedComparator,
+    referencedValue,
+  };
+};
+
 const parseListLines = (lines: string[]): PromptExploderListItem[] => {
   const normalized = lines
     .map((line) => line.replace(/\r/g, ''))
@@ -492,9 +587,14 @@ const parseListLines = (lines: string[]): PromptExploderListItem[] => {
 
     if (!cleaned) return;
 
+    const logicalPrefix = parseLogicalListItemPrefix(cleaned);
     const item: PromptExploderListItem = {
       id: listItemId(),
-      text: cleaned,
+      text: logicalPrefix?.text ?? cleaned,
+      logicalOperator: logicalPrefix?.logicalOperator ?? null,
+      referencedParamPath: logicalPrefix?.referencedParamPath ?? null,
+      referencedComparator: logicalPrefix?.referencedComparator ?? null,
+      referencedValue: logicalPrefix?.referencedValue ?? null,
       children: [],
     };
 
@@ -515,6 +615,42 @@ const parseListLines = (lines: string[]): PromptExploderListItem[] => {
   return root;
 };
 
+const formatLogicalReferenceValue = (value: unknown): string => {
+  if (typeof value === 'string') {
+    return /^[A-Za-z0-9_.-]+$/.test(value) ? value : JSON.stringify(value);
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value === null || value === undefined) return 'null';
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const formatLogicalListItemPrefix = (item: PromptExploderListItem): string | null => {
+  const operator = item.logicalOperator ?? null;
+  const paramPath = (item.referencedParamPath ?? '').trim();
+  if (!operator || !paramPath) return null;
+
+  const operatorLabel =
+    operator === 'only_if' ? 'Only if' : `${operator.slice(0, 1).toUpperCase()}${operator.slice(1)}`;
+  const comparator = item.referencedComparator ?? (operator === 'unless' ? 'falsy' : 'truthy');
+
+  if (comparator === 'truthy') return `${operatorLabel} ${paramPath}`;
+  if (comparator === 'falsy') return `${operatorLabel} ${paramPath}=false`;
+  if (comparator === 'equals') return `${operatorLabel} ${paramPath}=${formatLogicalReferenceValue(item.referencedValue)}`;
+  if (comparator === 'not_equals') return `${operatorLabel} ${paramPath}!=${formatLogicalReferenceValue(item.referencedValue)}`;
+  if (comparator === 'gt') return `${operatorLabel} ${paramPath}>${formatLogicalReferenceValue(item.referencedValue)}`;
+  if (comparator === 'gte') return `${operatorLabel} ${paramPath}>=${formatLogicalReferenceValue(item.referencedValue)}`;
+  if (comparator === 'lt') return `${operatorLabel} ${paramPath}<${formatLogicalReferenceValue(item.referencedValue)}`;
+  if (comparator === 'lte') return `${operatorLabel} ${paramPath}<=${formatLogicalReferenceValue(item.referencedValue)}`;
+  if (comparator === 'contains') {
+    return `${operatorLabel} ${paramPath} contains ${formatLogicalReferenceValue(item.referencedValue)}`;
+  }
+  return `${operatorLabel} ${paramPath}`;
+};
+
 const flattenItemsToTextLines = (
   items: PromptExploderListItem[],
   options?: { ordered?: boolean; level?: number }
@@ -526,11 +662,29 @@ const flattenItemsToTextLines = (
   items.forEach((item, index) => {
     const indent = '  '.repeat(level);
     const marker = ordered && level === 0 ? `${index + 1}.` : '*';
-    lines.push(`${indent}${marker} ${item.text}`);
+    const logicalPrefix = formatLogicalListItemPrefix(item);
+    const bodyText = item.text.trim();
+    const renderedText = logicalPrefix
+      ? (bodyText ? `${logicalPrefix}: ${bodyText}` : logicalPrefix)
+      : bodyText;
+    lines.push(`${indent}${marker} ${renderedText}`);
     lines.push(...flattenItemsToTextLines(item.children, { ordered: false, level: level + 1 }));
   });
 
   return lines;
+};
+
+const collectReferencedParamsFromItems = (items: PromptExploderListItem[]): string[] => {
+  const out = new Set<string>();
+  const walk = (nodes: PromptExploderListItem[]): void => {
+    nodes.forEach((item) => {
+      const path = (item.referencedParamPath ?? '').trim();
+      if (path) out.add(path);
+      if (item.children.length > 0) walk(item.children);
+    });
+  };
+  walk(items);
+  return [...out];
 };
 
 const findNextHeadingIndex = (
@@ -837,6 +991,9 @@ const createSegment = (args: {
   subsections?: PromptExploderSubsection[];
   paramsText?: string;
   paramsObject?: Record<string, unknown> | null;
+  paramUiControls?: Record<string, PromptExploderParamUiControl>;
+  paramComments?: Record<string, string>;
+  paramDescriptions?: Record<string, string>;
   lockType?: boolean;
 }): PromptExploderSegment => {
   const inferredType = args.type ?? inferSegmentType(args.title, args.raw);
@@ -877,6 +1034,9 @@ const createSegment = (args: {
     subsections: args.subsections ?? [],
     paramsText: resolvedParamsText,
     paramsObject: resolvedParamsObject,
+    paramUiControls: args.paramUiControls ?? {},
+    paramComments: args.paramComments ?? {},
+    paramDescriptions: args.paramDescriptions ?? {},
     matchedPatternIds,
     confidence,
   };
@@ -1053,6 +1213,8 @@ const detectAutoBindings = (segments: PromptExploderSegment[]): PromptExploderBi
   const codeTargets = buildBindingCodeTargets(segments);
   const paramsSegment = segments.find((segment) => segment.type === 'parameter_block') ?? null;
   const paramPaths = collectParamPaths(paramsSegment?.paramsObject ?? null);
+  const isKnownParamPath = (candidate: string): boolean =>
+    paramPaths.some((path) => path === candidate || path.endsWith(`.${candidate}`));
 
   segments.forEach((segment) => {
     const rendered = renderSegment(segment);
@@ -1079,12 +1241,24 @@ const detectAutoBindings = (segments: PromptExploderSegment[]): PromptExploderBi
       return;
     }
 
+    const referencedParams = new Set<string>();
     for (const match of rendered.matchAll(PARAM_REFERENCE_RE)) {
       const paramPath = (match[1] ?? '').trim();
-      if (!paramPath) continue;
-      if (!paramPaths.some((path) => path === paramPath || path.endsWith(paramPath))) {
-        continue;
-      }
+      if (!paramPath || !isKnownParamPath(paramPath)) continue;
+      referencedParams.add(paramPath);
+    }
+    collectReferencedParamsFromItems(segment.listItems).forEach((paramPath) => {
+      if (!isKnownParamPath(paramPath)) return;
+      referencedParams.add(paramPath);
+    });
+    segment.subsections.forEach((subsection) => {
+      collectReferencedParamsFromItems(subsection.items).forEach((paramPath) => {
+        if (!isKnownParamPath(paramPath)) return;
+        referencedParams.add(paramPath);
+      });
+    });
+
+    referencedParams.forEach((paramPath) => {
       bindings.push({
         id: bindingId(),
         type: 'uses_param',
@@ -1096,7 +1270,7 @@ const detectAutoBindings = (segments: PromptExploderSegment[]): PromptExploderBi
         targetLabel: `params.${paramPath}`,
         origin: 'auto',
       });
-    }
+    });
   });
 
   return bindings;

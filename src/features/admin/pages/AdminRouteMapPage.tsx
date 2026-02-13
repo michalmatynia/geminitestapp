@@ -35,6 +35,7 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
   '/admin/validator': 'Manage validator pattern lists for Products and Image Studio.',
   '/admin/prompt-exploder': 'Explode long prompts into editable typed segments and reassemble them.',
+  '/admin/prompt-exploder/settings': 'Configure Prompt Exploder runtime, learning, and AI model settings.',
   '/admin/products': 'Browse and manage all products in the catalog.',
   '/admin/cms/builder': 'Visual page builder for CMS layouts.',
   '/admin/settings': 'System settings overview and quick access cards.',

@@ -33,6 +33,8 @@ export function PromptEngineToolbar({
   const resolvedBackLinkHref = pageChrome?.backLinkHref ?? backLinkHref;
   const resolvedBackLinkLabel = pageChrome?.backLinkLabel ?? backLinkLabel;
   const {
+    patternTab,
+    exploderSubTab,
     isSaving,
     isDirty,
     learnedDirty,
@@ -46,6 +48,12 @@ export function PromptEngineToolbar({
     handleSave,
     handleRefresh,
   } = usePromptEngine();
+  const addRuleLabel =
+    patternTab === 'prompt_exploder'
+      ? exploderSubTab === 'image_studio_rules'
+        ? 'Add Image Studio Rule'
+        : 'Add Exploder Rule'
+      : 'Add rule';
 
   return (
     <SectionHeader
@@ -88,7 +96,7 @@ export function PromptEngineToolbar({
             Import learned
           </FileUploadButton>
           <Button type='button' variant='outline' onClick={handleAddRule}>
-            Add rule
+            {addRuleLabel}
           </Button>
           <Button type='button' variant='outline' onClick={handleAddLearnedRule}>
             Add learned

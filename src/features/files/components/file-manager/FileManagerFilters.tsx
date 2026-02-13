@@ -3,7 +3,6 @@
 import { memo, useMemo } from 'react';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
-import { Button } from '@/shared/ui';
 import { useFileManager } from '../../contexts/FileManagerContext';
 
 /**
@@ -22,7 +21,6 @@ export const FileManagerFilters = memo(function FileManagerFilters(): React.JSX.
     productNameSearch, setProductNameSearch,
     showTagSearch, tagSearch, setTagSearch,
     activeTab, showFolderFilter, folderFilter, setLocalFolderFilter, folderOptions,
-    tagOptions,
   } = useFileManager();
 
   const enableTagSearch = showTagSearch;
@@ -84,10 +82,6 @@ export const FileManagerFilters = memo(function FileManagerFilters(): React.JSX.
     setTagSearch('');
     setLocalFolderFilter('all');
   };
-
-  const hasActiveFilters = Boolean(
-    filenameSearch || productNameSearch || tagSearch || folderFilter !== 'all'
-  );
 
   return (
     <FilterPanel

@@ -1,10 +1,10 @@
 'use client';
 
-import { ArrowDown, ArrowUp, Link2, Plus, RefreshCcw, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, GripVertical, Link2, Plus, RefreshCcw, Settings2, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
+import { extractParamsFromPrompt, setDeepValue } from '@/features/prompt-engine/prompt-params';
 import {
   defaultPromptEngineSettings,
   parsePromptEngineSettings,
@@ -42,11 +42,36 @@ import {
   type PromptExploderBenchmarkSuggestion,
   runPromptExploderBenchmark,
 } from '../benchmark';
+import { applyBenchmarkSuggestions } from '../benchmark-apply';
+import { prepareBenchmarkSuggestionsForApply } from '../benchmark-suggestions';
 import {
   consumePromptExploderDraftPrompt,
   readPromptExploderDraftPrompt,
   savePromptExploderApplyPrompt,
 } from '../bridge';
+import {
+  defaultCustomBenchmarkCaseIdFromPrompt,
+  mergeCustomBenchmarkCases,
+  parseCustomBenchmarkCasesDraft,
+  upsertCustomBenchmarkCase,
+} from '../custom-benchmark-cases';
+import {
+  buildManualBindingFromDraft,
+  resolveManualBindingSegmentIds,
+  resolveManualBindingSubsectionIds,
+} from '../manual-bindings';
+import {
+  buildPromptExploderParamEntries,
+  isParamArrayTupleLength,
+  isPromptExploderParamUiControl,
+  promptExploderParamUiControlLabel,
+  renderPromptExploderParamsText,
+  sanitizeParamJsonValue,
+  setParamTextMetaForPath,
+  setParamUiControlForPath,
+  type PromptExploderParamEntry,
+  type PromptExploderParamEntriesState,
+} from '../params-editor';
 import {
   ensureSegmentTitle,
   explodePromptText,
@@ -61,16 +86,55 @@ import {
   PROMPT_EXPLODER_PATTERN_PACK_IDS,
 } from '../pattern-pack';
 import {
+  buildPatternSnapshot,
+  mergeRestoredPromptExploderRules,
+  prependPatternSnapshot,
+  removePatternSnapshotById,
+} from '../pattern-snapshots';
+import {
+  buildPromptExploderLibraryItem,
+  createPromptExploderLibraryItemId,
+  getManualBindingsFromDocument,
+  hydratePromptExploderLibraryDocument,
+  parsePromptExploderLibrary,
+  PROMPT_EXPLODER_LIBRARY_KEY,
+  removePromptExploderLibraryItemById,
+  sortPromptExploderLibraryItemsByUpdated,
+  upsertPromptExploderLibraryItems,
+} from '../prompt-library';
+import {
+  buildManualLearnedRegexRuleDraft,
+} from '../rule-drafts';
+import { upsertRegexLearnedRule } from '../rule-learning';
+import {
+  buildRuntimeRulesForReexplode,
+  buildRuntimeTemplatesForReexplode,
+  filterTemplatesForRuntime,
+  reexplodePromptWithRuntime,
+  resolveSegmentIdAfterReexplode,
+} from '../runtime-refresh';
+import {
   parsePromptExploderSettings,
   PROMPT_EXPLODER_SETTINGS_KEY,
 } from '../settings';
+import {
+  learningTokens,
+  normalizeLearningText,
+  templateSimilarityScore,
+  upsertLearnedTemplate,
+  type TemplateMergeMode,
+} from '../template-learning';
 
+import type { PromptExploderLibraryItem } from '../prompt-library';
 import type {
   PromptExploderBenchmarkSuite,
   PromptExploderBinding,
   PromptExploderBindingType,
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
+  PromptExploderLogicalComparator,
+  PromptExploderLogicalOperator,
+  PromptExploderParamUiControl,
   PromptExploderPatternSnapshot,
   PromptExploderListItem,
   PromptExploderSegment,
@@ -79,18 +143,13 @@ import type {
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
+type ApprovalTemplateMergeMode = TemplateMergeMode;
 
-const PROMPT_EXPLODER_SEGMENT_TYPES: PromptExploderSegment['type'][] = [
-  'metadata',
-  'assigned_text',
-  'list',
-  'parameter_block',
-  'referential_list',
-  'sequence',
-  'hierarchical_list',
-  'conditional_list',
-  'qa_matrix',
-];
+const formatTimestamp = (value: string): string => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+};
 
 const isPromptExploderManagedRule = (rule: PromptValidationRule): boolean => {
   const scopes = rule.appliesToScopes ?? [];
@@ -102,34 +161,13 @@ const isPromptExploderManagedRule = (rule: PromptValidationRule): boolean => {
   return false;
 };
 
-const filterTemplatesForRuntime = (
-  templates: PromptExploderLearnedTemplate[],
-  options: { minApprovalsForMatching: number; maxTemplates: number }
-): PromptExploderLearnedTemplate[] => {
-  const minApprovals = clampNumber(
-    Math.floor(options.minApprovalsForMatching),
-    1,
-    20
-  );
-  const maxTemplates = clampNumber(Math.floor(options.maxTemplates), 50, 5000);
-  const sorted = [...templates].sort((left, right) => {
-    if (right.approvals !== left.approvals) {
-      return right.approvals - left.approvals;
-    }
-    return right.updatedAt.localeCompare(left.updatedAt);
-  });
-  return sorted
-    .filter(
-      (template) =>
-        template.state === 'active' &&
-        template.approvals >= minApprovals
-    )
-    .slice(0, maxTemplates);
-};
-
 const createListItem = (text = 'New item'): PromptExploderListItem => ({
   id: `item_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
   text,
+  logicalOperator: null,
+  referencedParamPath: null,
+  referencedComparator: null,
+  referencedValue: null,
   children: [],
 });
 
@@ -154,170 +192,6 @@ const formatSubsectionLabel = (subsection: PromptExploderSubsection): string => 
     return `[${subsection.code}] ${title}`;
   }
   return title;
-};
-
-const normalizeLearningText = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const learningTokens = (value: string): string[] => {
-  return normalizeLearningText(value)
-    .split(' ')
-    .filter((token) => token.length > 2)
-    .slice(0, 8);
-};
-
-const learningTokenSet = (value: string): Set<string> => {
-  const tokens = normalizeLearningText(value)
-    .split(' ')
-    .filter((token) => token.length > 1);
-  return new Set(tokens);
-};
-
-const learningJaccardSimilarity = (left: string, right: string): number => {
-  const leftSet = learningTokenSet(left);
-  const rightSet = learningTokenSet(right);
-  if (leftSet.size === 0 && rightSet.size === 0) return 1;
-  if (leftSet.size === 0 || rightSet.size === 0) return 0;
-  let intersection = 0;
-  leftSet.forEach((token) => {
-    if (rightSet.has(token)) intersection += 1;
-  });
-  const union = leftSet.size + rightSet.size - intersection;
-  if (union <= 0) return 0;
-  return intersection / union;
-};
-
-const learningBigrams = (value: string): Set<string> => {
-  const normalized = normalizeLearningText(value).replace(/\s+/g, '');
-  if (!normalized) return new Set();
-  if (normalized.length === 1) return new Set([normalized]);
-  const out = new Set<string>();
-  for (let index = 0; index < normalized.length - 1; index += 1) {
-    out.add(normalized.slice(index, index + 2));
-  }
-  return out;
-};
-
-const learningDiceSimilarity = (left: string, right: string): number => {
-  const leftBigrams = learningBigrams(left);
-  const rightBigrams = learningBigrams(right);
-  if (leftBigrams.size === 0 && rightBigrams.size === 0) return 1;
-  if (leftBigrams.size === 0 || rightBigrams.size === 0) return 0;
-  let overlap = 0;
-  leftBigrams.forEach((token) => {
-    if (rightBigrams.has(token)) overlap += 1;
-  });
-  return (2 * overlap) / (leftBigrams.size + rightBigrams.size);
-};
-
-const learningAnchorCoverageScore = (
-  sourceText: string,
-  anchorTokens: string[]
-): number => {
-  const normalizedSource = normalizeLearningText(sourceText);
-  const anchors = anchorTokens
-    .map((token) => normalizeLearningText(token))
-    .filter(Boolean);
-  if (anchors.length === 0) return 0;
-  let hits = 0;
-  anchors.forEach((token) => {
-    if (normalizedSource.includes(token)) hits += 1;
-  });
-  return hits / anchors.length;
-};
-
-const templateSimilarityScore = (
-  sourceText: string,
-  template: PromptExploderLearnedTemplate
-): number => {
-  const titleReference = template.normalizedTitle || template.title;
-  const titleScore = Math.max(
-    learningDiceSimilarity(sourceText, titleReference),
-    learningJaccardSimilarity(sourceText, titleReference)
-  );
-  const sampleScore = template.sampleText
-    ? Math.max(
-      learningDiceSimilarity(sourceText, template.sampleText),
-      learningJaccardSimilarity(sourceText, template.sampleText)
-    )
-    : 0;
-  const anchorScore = learningAnchorCoverageScore(sourceText, template.anchorTokens);
-  return Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
-};
-
-const mergeTemplateAnchorTokens = (
-  existingTokens: string[],
-  incomingTokens: string[]
-): string[] => {
-  const deduped: string[] = [];
-  [...existingTokens, ...incomingTokens].forEach((token) => {
-    const normalized = normalizeLearningText(token);
-    if (!normalized) return;
-    if (deduped.includes(normalized)) return;
-    deduped.push(normalized);
-  });
-  return deduped.slice(0, 20);
-};
-
-const mergeTemplateSampleText = (existing: string, incoming: string): string => {
-  const existingText = existing.trim();
-  const incomingText = incoming.trim();
-  if (!existingText) return incomingText;
-  if (!incomingText) return existingText;
-  const normalizedExisting = normalizeLearningText(existingText);
-  const normalizedIncoming = normalizeLearningText(incomingText);
-  if (!normalizedExisting) return incomingText;
-  if (!normalizedIncoming) return existingText;
-  if (normalizedExisting.includes(normalizedIncoming)) return existingText;
-  if (normalizedIncoming.includes(normalizedExisting)) return incomingText;
-  return `${existingText}\n${incomingText}`.slice(0, 1200);
-};
-
-const findSimilarTemplateMatch = (args: {
-  templates: PromptExploderLearnedTemplate[];
-  segmentType: PromptExploderLearnedTemplate['segmentType'];
-  sourceText: string;
-  similarityThreshold: number;
-}): { template: PromptExploderLearnedTemplate; score: number } | null => {
-  const mergeThreshold = clampNumber(args.similarityThreshold - 0.05, 0.3, 0.95);
-  const candidates = args.templates
-    .filter((template) => template.segmentType === args.segmentType)
-    .map((template) => ({
-      template,
-      score: templateSimilarityScore(args.sourceText, template),
-    }))
-    .filter((candidate) => candidate.score >= mergeThreshold)
-    .sort((left, right) => {
-      if (right.score !== left.score) return right.score - left.score;
-      if (right.template.approvals !== left.template.approvals) {
-        return right.template.approvals - left.template.approvals;
-      }
-      return right.template.updatedAt.localeCompare(left.template.updatedAt);
-    });
-  return candidates[0] ?? null;
-};
-
-const deriveTemplateStateAfterApproval = (args: {
-  existingState: PromptExploderLearnedTemplate['state'] | null;
-  nextApprovals: number;
-  minApprovalsForMatching: number;
-  autoActivateLearnedTemplates: boolean;
-}): PromptExploderLearnedTemplate['state'] => {
-  const approvalThreshold = clampNumber(
-    args.minApprovalsForMatching,
-    1,
-    20
-  );
-  if (args.autoActivateLearnedTemplates && args.nextApprovals >= approvalThreshold) {
-    return 'active';
-  }
-  if (args.existingState === 'active') return 'active';
-  if (args.existingState === 'draft') return 'draft';
-  return 'candidate';
 };
 
 const buildSegmentSampleText = (segment: PromptExploderSegment): string => {
@@ -352,6 +226,8 @@ const createApprovalDraftFromSegment = (
   rulePriority: number;
   ruleConfidenceBoost: number;
   ruleTreatAsHeading: boolean;
+  templateMergeMode: ApprovalTemplateMergeMode;
+  templateTargetId: string;
 } => {
   if (!segment) {
     return {
@@ -361,6 +237,8 @@ const createApprovalDraftFromSegment = (
       rulePriority: 30,
       ruleConfidenceBoost: 0.2,
       ruleTreatAsHeading: false,
+      templateMergeMode: 'auto',
+      templateTargetId: '',
     };
   }
 
@@ -373,88 +251,9 @@ const createApprovalDraftFromSegment = (
     ruleTreatAsHeading: /^[A-Z0-9 _()[\]\\,:&+.-]{3,}$/.test(
       segment.title.trim()
     ),
+    templateMergeMode: 'auto',
+    templateTargetId: '',
   };
-};
-
-const parseCustomBenchmarkCasesDraft = (
-  rawValue: string
-): { ok: true; cases: PromptExploderBenchmarkCase[] } | { ok: false; error: string } => {
-  const trimmed = rawValue.trim();
-  if (!trimmed) {
-    return { ok: true, cases: [] };
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(trimmed);
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : 'Invalid JSON.',
-    };
-  }
-
-  if (!Array.isArray(parsed)) {
-    return { ok: false, error: 'Custom benchmark cases must be an array.' };
-  }
-  const parsedArray = parsed as unknown[];
-
-  const allowedTypes = new Set<PromptExploderSegment['type']>(
-    PROMPT_EXPLODER_SEGMENT_TYPES
-  );
-  const knownIds = new Set<string>();
-
-  const cases: PromptExploderBenchmarkCase[] = [];
-  for (let index = 0; index < parsedArray.length; index += 1) {
-    const item: unknown = parsedArray[index];
-    if (!item || typeof item !== 'object') {
-      return { ok: false, error: `Case #${index + 1} must be an object.` };
-    }
-    const value = item as Record<string, unknown>;
-    const rawExpectedTypes: unknown[] = Array.isArray(value.expectedTypes)
-      ? (value.expectedTypes as unknown[])
-      : [];
-    const id = typeof value.id === 'string' ? value.id.trim() : '';
-    const prompt = typeof value.prompt === 'string' ? value.prompt.trim() : '';
-    const expectedTypes = rawExpectedTypes.filter(
-      (type): type is PromptExploderSegment['type'] => {
-        return (
-          typeof type === 'string' &&
-          allowedTypes.has(type as PromptExploderSegment['type'])
-        );
-      }
-    );
-    const minSegments =
-      typeof value.minSegments === 'number' && Number.isFinite(value.minSegments)
-        ? clampNumber(Math.floor(value.minSegments), 1, 200)
-        : 1;
-
-    if (!id) {
-      return { ok: false, error: `Case #${index + 1} is missing a valid id.` };
-    }
-    if (knownIds.has(id)) {
-      return { ok: false, error: `Duplicate custom case id: "${id}".` };
-    }
-    knownIds.add(id);
-    if (!prompt) {
-      return { ok: false, error: `Case #${index + 1} is missing a prompt.` };
-    }
-    if (expectedTypes.length === 0) {
-      return {
-        ok: false,
-        error: `Case "${id}" must include at least one valid expected type.`,
-      };
-    }
-
-    cases.push({
-      id,
-      prompt,
-      expectedTypes,
-      minSegments,
-    });
-  }
-
-  return { ok: true, cases };
 };
 
 const benchmarkSuiteLabel = (suite: PromptExploderBenchmarkSuite | 'custom'): string => {
@@ -463,28 +262,61 @@ const benchmarkSuiteLabel = (suite: PromptExploderBenchmarkSuite | 'custom'): st
   return 'default';
 };
 
-const suggestionRuleId = (suggestion: PromptExploderBenchmarkSuggestion): string => {
-  const slug = `${suggestion.caseId}_${suggestion.segmentTitle}`
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 64);
-  return `segment.benchmark.${suggestion.suggestedSegmentType}.${slug || 'segment'}`;
+const safeJsonStringify = (value: unknown): string => {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
 };
 
-const toSlug = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 48) || 'case';
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const inferParamTypeLabel = (entry: PromptExploderParamEntry): string => {
+  if (entry.spec?.kind) return entry.spec.kind;
+  const value = entry.value;
+  if (Array.isArray(value)) return 'array';
+  if (value === null) return 'null';
+  return typeof value;
+};
+
+const LOGICAL_OPERATOR_OPTIONS: Array<{
+  value: PromptExploderLogicalOperator | 'none';
+  label: string;
+}> = [
+  { value: 'none', label: 'No condition' },
+  { value: 'if', label: 'If' },
+  { value: 'only_if', label: 'Only if' },
+  { value: 'unless', label: 'Unless' },
+  { value: 'when', label: 'When' },
+];
+
+const LOGICAL_COMPARATOR_OPTIONS: Array<{
+  value: PromptExploderLogicalComparator;
+  label: string;
+}> = [
+  { value: 'truthy', label: 'is true' },
+  { value: 'falsy', label: 'is false' },
+  { value: 'equals', label: '=' },
+  { value: 'not_equals', label: '!=' },
+  { value: 'gt', label: '>' },
+  { value: 'gte', label: '>=' },
+  { value: 'lt', label: '<' },
+  { value: 'lte', label: '<=' },
+  { value: 'contains', label: 'contains' },
+];
+
+const isLogicalComparator = (value: string): value is PromptExploderLogicalComparator => {
+  return LOGICAL_COMPARATOR_OPTIONS.some((option) => option.value === value);
+};
 
 export function AdminPromptExploderPage(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
 
-  const settingsQuery = useSettingsMap();
+  const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
 
   const [promptText, setPromptText] = useState('');
@@ -499,6 +331,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     runtimeRuleProfile: 'all' | 'pattern_pack' | 'learned_only';
     enabled: boolean;
     similarityThreshold: number;
+    templateMergeThreshold: number;
+    benchmarkSuggestionUpsertTemplates: boolean;
     minApprovalsForMatching: number;
     maxTemplates: number;
     autoActivateLearnedTemplates: boolean;
@@ -506,6 +340,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     runtimeRuleProfile: 'all',
     enabled: true,
     similarityThreshold: 0.68,
+    templateMergeThreshold: 0.63,
+    benchmarkSuggestionUpsertTemplates: true,
     minApprovalsForMatching: 1,
     maxTemplates: 1000,
     autoActivateLearnedTemplates: true,
@@ -542,11 +378,20 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     sourceLabel: '',
     targetLabel: '',
   });
+  const [selectedLibraryItemId, setSelectedLibraryItemId] = useState<string | null>(
+    null
+  );
+  const [libraryNameDraft, setLibraryNameDraft] = useState('');
+  const [draggingSegmentId, setDraggingSegmentId] = useState<string | null>(null);
+  const [segmentDropTargetId, setSegmentDropTargetId] = useState<string | null>(null);
+  const [segmentDropPosition, setSegmentDropPosition] = useState<'before' | 'after' | null>(null);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
 
   const rawPromptSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const rawExploderSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
+  const rawPromptLibrary =
+    settingsQuery.data?.get(PROMPT_EXPLODER_LIBRARY_KEY) ?? null;
   const promptSettings = useMemo(
     () => parsePromptEngineSettings(rawPromptSettings),
     [rawPromptSettings]
@@ -555,12 +400,30 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     () => parsePromptExploderSettings(rawExploderSettings),
     [rawExploderSettings]
   );
+  const promptLibraryState = useMemo(
+    () => parsePromptExploderLibrary(rawPromptLibrary),
+    [rawPromptLibrary]
+  );
+  const promptLibraryItems = useMemo(
+    () =>
+      sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
+    [promptLibraryState.items]
+  );
+  const selectedLibraryItem = useMemo(() => {
+    if (!selectedLibraryItemId) return null;
+    return (
+      promptLibraryItems.find((item) => item.id === selectedLibraryItemId) ?? null
+    );
+  }, [promptLibraryItems, selectedLibraryItemId]);
 
   useEffect(() => {
     setLearningDraft({
       runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile,
       enabled: promptExploderSettings.learning.enabled,
       similarityThreshold: promptExploderSettings.learning.similarityThreshold,
+      templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
+      benchmarkSuggestionUpsertTemplates:
+        promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates,
       minApprovalsForMatching: promptExploderSettings.learning.minApprovalsForMatching,
       maxTemplates: promptExploderSettings.learning.maxTemplates,
       autoActivateLearnedTemplates:
@@ -583,9 +446,11 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     promptExploderSettings.runtime.customBenchmarkCases,
     promptExploderSettings.runtime.ruleProfile,
     promptExploderSettings.learning.autoActivateLearnedTemplates,
+    promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates,
     promptExploderSettings.learning.enabled,
     promptExploderSettings.learning.maxTemplates,
     promptExploderSettings.learning.minApprovalsForMatching,
+    promptExploderSettings.learning.templateMergeThreshold,
     promptExploderSettings.learning.similarityThreshold,
   ]);
 
@@ -625,6 +490,46 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       documentState.segments.find((segment) => segment.id === selectedSegmentId) ?? null
     );
   }, [documentState, selectedSegmentId]);
+  const selectedParamEntriesState = useMemo<PromptExploderParamEntriesState | null>(() => {
+    if (selectedSegment?.type !== 'parameter_block') return null;
+    if (!selectedSegment.paramsObject) return null;
+    return buildPromptExploderParamEntries({
+      paramsObject: selectedSegment.paramsObject,
+      paramsText: selectedSegment.paramsText || selectedSegment.text,
+      paramUiControls: selectedSegment.paramUiControls,
+      paramComments: selectedSegment.paramComments,
+      paramDescriptions: selectedSegment.paramDescriptions,
+    });
+  }, [selectedSegment]);
+  const listParamEntriesState = useMemo<PromptExploderParamEntriesState | null>(() => {
+    if (!documentState) return null;
+    const paramsSegment = documentState.segments.find(
+      (segment) => segment.type === 'parameter_block' && Boolean(segment.paramsObject)
+    );
+    if (!paramsSegment?.paramsObject) return null;
+    return buildPromptExploderParamEntries({
+      paramsObject: paramsSegment.paramsObject,
+      paramsText: paramsSegment.paramsText || paramsSegment.text,
+      paramUiControls: paramsSegment.paramUiControls,
+      paramComments: paramsSegment.paramComments,
+      paramDescriptions: paramsSegment.paramDescriptions,
+    });
+  }, [documentState]);
+  const listParamOptions = useMemo(
+    () =>
+      (listParamEntriesState?.entries ?? []).map((entry) => ({
+        value: entry.path,
+        label: entry.path,
+      })),
+    [listParamEntriesState]
+  );
+  const listParamEntryByPath = useMemo(() => {
+    const map = new Map<string, PromptExploderParamEntry>();
+    (listParamEntriesState?.entries ?? []).forEach((entry) => {
+      map.set(entry.path, entry);
+    });
+    return map;
+  }, [listParamEntriesState]);
   const explosionMetrics = useMemo(() => {
     if (!documentState) return null;
     const lowConfidenceThreshold = clampNumber(
@@ -707,7 +612,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     [customBenchmarkCasesDraft]
   );
   const templateMergeThreshold = clampNumber(
-    learningDraft.similarityThreshold - 0.05,
+    learningDraft.templateMergeThreshold,
     0.3,
     0.95
   );
@@ -770,6 +675,21 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     selectedSegment,
     templateMergeThreshold,
   ]);
+  const templateTargetOptions = useMemo(() => {
+    return effectiveLearnedTemplates
+      .filter((template) => template.segmentType === approvalDraft.ruleSegmentType)
+      .sort((left, right) => {
+        if (right.approvals !== left.approvals) {
+          return right.approvals - left.approvals;
+        }
+        return right.updatedAt.localeCompare(left.updatedAt);
+      })
+      .slice(0, 80)
+      .map((template) => ({
+        value: template.id,
+        label: `${template.title} (${template.state}, ${template.approvals})`,
+      }));
+  }, [approvalDraft.ruleSegmentType, effectiveLearnedTemplates]);
 
   useEffect(() => {
     setApprovalDraft(createApprovalDraftFromSegment(selectedSegment));
@@ -785,6 +705,21 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }
     setSelectedSnapshotId(availableSnapshots[0]?.id ?? '');
   }, [availableSnapshots, selectedSnapshotId]);
+
+  useEffect(() => {
+    if (!selectedLibraryItemId) return;
+    if (promptLibraryItems.some((item) => item.id === selectedLibraryItemId)) return;
+    setSelectedLibraryItemId(null);
+  }, [promptLibraryItems, selectedLibraryItemId]);
+
+  useEffect(() => {
+    if (!draggingSegmentId) return;
+    const segmentIds = new Set((documentState?.segments ?? []).map((segment) => segment.id));
+    if (segmentIds.has(draggingSegmentId)) return;
+    setDraggingSegmentId(null);
+    setSegmentDropTargetId(null);
+    setSegmentDropPosition(null);
+  }, [documentState?.segments, draggingSegmentId]);
 
   const segmentOptions = useMemo(() => {
     return (documentState?.segments ?? []).map((segment) => ({
@@ -837,55 +772,49 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
   useEffect(() => {
     const segments = documentState?.segments ?? [];
-    if (segments.length === 0) {
-      setBindingDraft((previous) => ({
-        ...previous,
-        fromSegmentId: '',
-        toSegmentId: '',
-        fromSubsectionId: '',
-        toSubsectionId: '',
-      }));
+    const resolved = resolveManualBindingSegmentIds({
+      segments,
+      fromSegmentId: bindingDraft.fromSegmentId,
+      toSegmentId: bindingDraft.toSegmentId,
+    });
+    if (
+      resolved.fromSegmentId === bindingDraft.fromSegmentId &&
+      resolved.toSegmentId === bindingDraft.toSegmentId &&
+      (segments.length > 0 ||
+        (!bindingDraft.fromSubsectionId && !bindingDraft.toSubsectionId))
+    ) {
       return;
     }
 
-    const firstId = segments[0]?.id ?? '';
-    const secondId = segments[1]?.id ?? firstId;
-    const hasFrom = segments.some((segment) => segment.id === bindingDraft.fromSegmentId);
-    const hasTo = segments.some((segment) => segment.id === bindingDraft.toSegmentId);
-
-    if (hasFrom && hasTo) return;
-
     setBindingDraft((previous) => ({
       ...previous,
-      fromSegmentId: hasFrom ? previous.fromSegmentId : firstId,
-      toSegmentId: hasTo ? previous.toSegmentId : secondId,
+      fromSegmentId: resolved.fromSegmentId,
+      toSegmentId: resolved.toSegmentId,
+      fromSubsectionId: segments.length === 0 ? '' : previous.fromSubsectionId,
+      toSubsectionId: segments.length === 0 ? '' : previous.toSubsectionId,
     }));
   }, [bindingDraft.fromSegmentId, bindingDraft.toSegmentId, documentState?.segments]);
 
   useEffect(() => {
     if (!documentState) return;
-
-    const fromSegment = segmentById.get(bindingDraft.fromSegmentId);
-    const toSegment = segmentById.get(bindingDraft.toSegmentId);
-
-    const fromSubsectionValid = Boolean(
-      !bindingDraft.fromSubsectionId ||
-      fromSegment?.subsections.some(
-        (subsection) => subsection.id === bindingDraft.fromSubsectionId
-      )
-    );
-    const toSubsectionValid = Boolean(
-      !bindingDraft.toSubsectionId ||
-      toSegment?.subsections.some(
-        (subsection) => subsection.id === bindingDraft.toSubsectionId
-      )
-    );
-    if (fromSubsectionValid && toSubsectionValid) return;
+    const resolved = resolveManualBindingSubsectionIds({
+      segmentById,
+      fromSegmentId: bindingDraft.fromSegmentId,
+      toSegmentId: bindingDraft.toSegmentId,
+      fromSubsectionId: bindingDraft.fromSubsectionId,
+      toSubsectionId: bindingDraft.toSubsectionId,
+    });
+    if (
+      resolved.fromSubsectionId === bindingDraft.fromSubsectionId &&
+      resolved.toSubsectionId === bindingDraft.toSubsectionId
+    ) {
+      return;
+    }
 
     setBindingDraft((previous) => ({
       ...previous,
-      fromSubsectionId: fromSubsectionValid ? previous.fromSubsectionId : '',
-      toSubsectionId: toSubsectionValid ? previous.toSubsectionId : '',
+      fromSubsectionId: resolved.fromSubsectionId,
+      toSubsectionId: resolved.toSubsectionId,
     }));
   }, [
     bindingDraft.fromSegmentId,
@@ -914,6 +843,363 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     });
   };
 
+  const rebuildParameterSegment = (
+    segment: PromptExploderSegment,
+    nextParamsObject: Record<string, unknown>,
+    overrides?: {
+      paramUiControls?: Record<string, PromptExploderParamUiControl>;
+      paramComments?: Record<string, string>;
+      paramDescriptions?: Record<string, string>;
+      preserveCurrentText?: boolean;
+    }
+  ): PromptExploderSegment => {
+    const nextParamState = buildPromptExploderParamEntries({
+      paramsObject: nextParamsObject,
+      paramsText: segment.paramsText || segment.text,
+      paramUiControls: overrides?.paramUiControls ?? segment.paramUiControls,
+      paramComments: overrides?.paramComments ?? segment.paramComments,
+      paramDescriptions: overrides?.paramDescriptions ?? segment.paramDescriptions,
+    });
+    const nextParamsText = overrides?.preserveCurrentText
+      ? segment.paramsText || segment.text
+      : renderPromptExploderParamsText({
+        paramsObject: nextParamsObject,
+        paramComments: nextParamState.paramComments,
+        paramDescriptions: nextParamState.paramDescriptions,
+        fallbackText: segment.paramsText || segment.text,
+      });
+
+    return {
+      ...segment,
+      paramsObject: nextParamsObject,
+      paramsText: nextParamsText,
+      text: nextParamsText,
+      raw: nextParamsText,
+      paramUiControls: nextParamState.paramUiControls,
+      paramComments: nextParamState.paramComments,
+      paramDescriptions: nextParamState.paramDescriptions,
+    };
+  };
+
+  const updateParameterValue = (
+    segmentId: string,
+    path: string,
+    nextValue: unknown
+  ): void => {
+    updateSegment(segmentId, (current) => {
+      if (!current.paramsObject) return current;
+      const nextParamsObject = setDeepValue(current.paramsObject, path, nextValue);
+      return rebuildParameterSegment(current, nextParamsObject);
+    });
+  };
+
+  const updateParameterSelector = (
+    segmentId: string,
+    path: string,
+    selector: string
+  ): void => {
+    if (!isPromptExploderParamUiControl(selector)) return;
+    updateSegment(segmentId, (current) => {
+      const nextParamUiControls = setParamUiControlForPath(current.paramUiControls, path, selector);
+      if (!current.paramsObject) {
+        return {
+          ...current,
+          paramUiControls: nextParamUiControls,
+        };
+      }
+      return rebuildParameterSegment(current, current.paramsObject, {
+        paramUiControls: nextParamUiControls,
+      });
+    });
+  };
+
+  const updateParameterComment = (
+    segmentId: string,
+    path: string,
+    comment: string
+  ): void => {
+    updateSegment(segmentId, (current) => {
+      const nextParamComments = setParamTextMetaForPath(current.paramComments, path, comment);
+      if (!current.paramsObject) {
+        return {
+          ...current,
+          paramComments: nextParamComments,
+        };
+      }
+      return rebuildParameterSegment(current, current.paramsObject, {
+        paramComments: nextParamComments,
+      });
+    });
+  };
+
+  const updateParameterDescription = (
+    segmentId: string,
+    path: string,
+    description: string
+  ): void => {
+    updateSegment(segmentId, (current) => {
+      const nextParamDescriptions = setParamTextMetaForPath(
+        current.paramDescriptions,
+        path,
+        description
+      );
+      if (!current.paramsObject) {
+        return {
+          ...current,
+          paramDescriptions: nextParamDescriptions,
+        };
+      }
+      return rebuildParameterSegment(current, current.paramsObject, {
+        paramDescriptions: nextParamDescriptions,
+      });
+    });
+  };
+
+  const normalizeListItemLogicalState = (
+    item: PromptExploderListItem,
+    override: Partial<PromptExploderListItem>
+  ): PromptExploderListItem => {
+    const next = {
+      ...item,
+      ...override,
+    };
+    const hasOperator = Boolean(next.logicalOperator);
+    const hasParamPath = Boolean((next.referencedParamPath ?? '').trim());
+    if (!hasOperator || !hasParamPath) {
+      return {
+        ...next,
+        logicalOperator: hasOperator ? next.logicalOperator : null,
+        referencedParamPath: hasParamPath ? next.referencedParamPath : null,
+        referencedComparator: null,
+        referencedValue: null,
+      };
+    }
+    if (!next.referencedComparator) {
+      return {
+        ...next,
+        referencedComparator:
+          next.logicalOperator === 'unless' ? 'falsy' : 'truthy',
+      };
+    }
+    if (
+      next.referencedComparator === 'truthy' ||
+      next.referencedComparator === 'falsy'
+    ) {
+      return {
+        ...next,
+        referencedValue: null,
+      };
+    }
+    return next;
+  };
+
+  const updateTopLevelListItem = (
+    segmentId: string,
+    index: number,
+    updater: (item: PromptExploderListItem) => PromptExploderListItem
+  ): void => {
+    updateSegment(segmentId, (current) => ({
+      ...current,
+      listItems: updateListItemAt(current.listItems, index, updater),
+    }));
+  };
+
+  const updateSubsectionListItem = (
+    segmentId: string,
+    subsectionIndex: number,
+    itemIndex: number,
+    updater: (item: PromptExploderListItem) => PromptExploderListItem
+  ): void => {
+    updateSegment(segmentId, (current) => {
+      const nextSubsections = current.subsections.map((subsection, candidateIndex) => {
+        if (candidateIndex !== subsectionIndex) return subsection;
+        return {
+          ...subsection,
+          items: updateListItemAt(subsection.items, itemIndex, updater),
+        };
+      });
+      return {
+        ...current,
+        subsections: nextSubsections,
+      };
+    });
+  };
+
+  const renderListItemLogicalEditor = (args: {
+    item: PromptExploderListItem;
+    onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
+  }): React.JSX.Element => {
+    const { item, onChange } = args;
+    const selectedParamPath = (item.referencedParamPath ?? '').trim();
+    const selectedParamEntry = selectedParamPath
+      ? (listParamEntryByPath.get(selectedParamPath) ?? null)
+      : null;
+    const operatorValue = item.logicalOperator ?? 'none';
+    const comparatorValue =
+      item.referencedComparator ?? (item.logicalOperator === 'unless' ? 'falsy' : 'truthy');
+    const needsValue =
+      operatorValue !== 'none' &&
+      selectedParamPath.length > 0 &&
+      comparatorValue !== 'truthy' &&
+      comparatorValue !== 'falsy';
+    const paramOptions =
+      selectedParamPath && !listParamOptions.some((option) => option.value === selectedParamPath)
+        ? [{ value: selectedParamPath, label: selectedParamPath }, ...listParamOptions]
+        : listParamOptions;
+
+    const applyPatch = (patch: Partial<PromptExploderListItem>): void => {
+      onChange((current) => normalizeListItemLogicalState(current, patch));
+    };
+
+    return (
+      <div className='mt-2 grid gap-2 md:grid-cols-4'>
+        <div className='space-y-1'>
+          <Label className='text-[10px] text-gray-500'>Logical Operator</Label>
+          <UnifiedSelect
+            value={operatorValue}
+            onValueChange={(next: string) => {
+              if (next === 'none') {
+                applyPatch({
+                  logicalOperator: null,
+                  referencedParamPath: null,
+                  referencedComparator: null,
+                  referencedValue: null,
+                });
+                return;
+              }
+              const nextOperator = next as PromptExploderLogicalOperator;
+              applyPatch({
+                logicalOperator: nextOperator,
+                referencedComparator:
+                  item.referencedComparator ??
+                  (nextOperator === 'unless' ? 'falsy' : 'truthy'),
+              });
+            }}
+            options={LOGICAL_OPERATOR_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+          />
+        </div>
+
+        <div className='space-y-1'>
+          <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
+          <UnifiedSelect
+            value={selectedParamPath}
+            onValueChange={(next: string) => {
+              applyPatch({
+                referencedParamPath: next.trim() || null,
+              });
+            }}
+            options={
+              paramOptions.length > 0
+                ? paramOptions
+                : [{ value: '', label: 'No parameters available' }]
+            }
+          />
+        </div>
+
+        <div className='space-y-1'>
+          <Label className='text-[10px] text-gray-500'>Comparator</Label>
+          <UnifiedSelect
+            value={comparatorValue}
+            onValueChange={(next: string) => {
+              if (!isLogicalComparator(next)) return;
+              applyPatch({
+                referencedComparator: next,
+              });
+            }}
+            options={LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+          />
+        </div>
+
+        <div className='space-y-1'>
+          <Label className='text-[10px] text-gray-500'>Value</Label>
+          {needsValue ? (
+            selectedParamEntry?.spec?.kind === 'boolean' ? (
+              <UnifiedSelect
+                value={String(Boolean(item.referencedValue))}
+                onValueChange={(next: string) => {
+                  applyPatch({
+                    referencedValue: next === 'true',
+                  });
+                }}
+                options={[
+                  { value: 'true', label: 'true' },
+                  { value: 'false', label: 'false' },
+                ]}
+              />
+            ) : selectedParamEntry?.spec?.kind === 'enum' &&
+              selectedParamEntry.spec.enumOptions ? (
+                <UnifiedSelect
+                  value={String(item.referencedValue ?? selectedParamEntry.spec.enumOptions[0] ?? '')}
+                  onValueChange={(next: string) => {
+                    applyPatch({
+                      referencedValue: next,
+                    });
+                  }}
+                  options={selectedParamEntry.spec.enumOptions.map((value) => ({
+                    value,
+                    label: value,
+                  }))}
+                />
+              ) : selectedParamEntry?.spec?.kind === 'number' ? (
+                <Input
+                  type='number'
+                  value={String(item.referencedValue ?? '')}
+                  onChange={(event) => {
+                    const next = Number(event.target.value);
+                    if (!Number.isFinite(next)) return;
+                    applyPatch({
+                      referencedValue: next,
+                    });
+                  }}
+                />
+              ) : (
+                <Input
+                  value={
+                    typeof item.referencedValue === 'string'
+                      ? item.referencedValue
+                      : safeJsonStringify(item.referencedValue ?? '')
+                  }
+                  onChange={(event) => {
+                    const rawValue = event.target.value;
+                    if (
+                      selectedParamEntry?.spec?.kind === 'rgb' ||
+                      selectedParamEntry?.spec?.kind === 'tuple2' ||
+                      selectedParamEntry?.spec?.kind === 'json'
+                    ) {
+                      applyPatch({
+                        referencedValue: sanitizeParamJsonValue(
+                          rawValue,
+                          item.referencedValue
+                        ),
+                      });
+                      return;
+                    }
+                    applyPatch({
+                      referencedValue: rawValue,
+                    });
+                  }}
+                />
+              )
+          ) : (
+            <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+              {operatorValue === 'none'
+                ? 'No condition'
+                : (selectedParamPath
+                  ? 'Value not needed'
+                  : 'Select parameter')}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const syncManualBindings = (nextManualBindings: PromptExploderBinding[]): void => {
     setManualBindings(nextManualBindings);
     setDocumentState((current) => {
@@ -922,19 +1208,101 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     });
   };
 
-  const updateListItemText = (
+  const updateListItemAt = (
     items: PromptExploderListItem[],
     index: number,
-    text: string
+    updater: (item: PromptExploderListItem) => PromptExploderListItem
   ): PromptExploderListItem[] => {
     return items.map((item, itemIndex) =>
-      itemIndex === index
-        ? {
-          ...item,
-          text,
-        }
-        : item
+      itemIndex === index ? updater(item) : item
     );
+  };
+
+  const reorderSegmentsForDrop = (
+    segments: PromptExploderSegment[],
+    draggedId: string,
+    targetId: string,
+    position: 'before' | 'after'
+  ): PromptExploderSegment[] => {
+    if (!draggedId || !targetId || draggedId === targetId) return segments;
+    const dragged = segments.find((segment) => segment.id === draggedId);
+    if (!dragged) return segments;
+    const remaining = segments.filter((segment) => segment.id !== draggedId);
+    const targetIndex = remaining.findIndex((segment) => segment.id === targetId);
+    if (targetIndex < 0) return segments;
+    const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
+    return [
+      ...remaining.slice(0, insertIndex),
+      dragged,
+      ...remaining.slice(insertIndex),
+    ];
+  };
+
+  const resolveSegmentDropPosition = (
+    event: React.DragEvent<HTMLDivElement>
+  ): 'before' | 'after' => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offsetY = event.clientY - rect.top;
+    return offsetY >= rect.height / 2 ? 'after' : 'before';
+  };
+
+  const handleSegmentDragStart = (
+    event: React.DragEvent<HTMLButtonElement>,
+    segmentId: string
+  ): void => {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', segmentId);
+    setDraggingSegmentId(segmentId);
+    setSegmentDropTargetId(null);
+    setSegmentDropPosition(null);
+  };
+
+  const handleSegmentDragEnd = (): void => {
+    setDraggingSegmentId(null);
+    setSegmentDropTargetId(null);
+    setSegmentDropPosition(null);
+  };
+
+  const handleSegmentDragOver = (
+    event: React.DragEvent<HTMLDivElement>,
+    targetId: string
+  ): void => {
+    if (!draggingSegmentId) return;
+    if (draggingSegmentId === targetId) {
+      setSegmentDropTargetId(null);
+      setSegmentDropPosition(null);
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const position = resolveSegmentDropPosition(event);
+    setSegmentDropTargetId(targetId);
+    setSegmentDropPosition(position);
+  };
+
+  const handleSegmentDrop = (
+    event: React.DragEvent<HTMLDivElement>,
+    targetId: string
+  ): void => {
+    event.preventDefault();
+    const draggedId =
+      draggingSegmentId || event.dataTransfer.getData('text/plain');
+    if (!draggedId || !documentState || draggedId === targetId) {
+      handleSegmentDragEnd();
+      return;
+    }
+
+    const position = resolveSegmentDropPosition(event);
+    const nextSegments = reorderSegmentsForDrop(
+      documentState.segments,
+      draggedId,
+      targetId,
+      position
+    );
+    if (nextSegments !== documentState.segments) {
+      replaceSegments(nextSegments);
+    }
+    handleSegmentDragEnd();
   };
 
   const handleExplode = (): void => {
@@ -966,10 +1334,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       toast(`Custom benchmark JSON is invalid: ${parsed.error}`, { variant: 'error' });
       return;
     }
-    const nextCases = [
-      ...parsed.cases.filter((benchmarkCase) => benchmarkCase.id !== nextCase.id),
-      nextCase,
-    ];
+    const nextCases = upsertCustomBenchmarkCase(parsed.cases, nextCase);
     setCustomBenchmarkCasesDraft(JSON.stringify(nextCases, null, 2));
     setBenchmarkSuiteDraft('custom');
     toast(`Custom benchmark case upserted: ${nextCase.id}`, { variant: 'success' });
@@ -981,12 +1346,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       toast('Source prompt is empty.', { variant: 'info' });
       return;
     }
-    const firstLine =
-      prompt
-        .split('\n')
-        .map((line) => line.trim())
-        .find((line) => line.length > 0) ?? 'custom_case';
-    const defaultCaseId = `custom_${toSlug(firstLine)}`;
+    const defaultCaseId = defaultCustomBenchmarkCaseIdFromPrompt(prompt);
     const caseId = customCaseDraftId.trim() || defaultCaseId;
 
     const expectedTypes = (documentState?.segments.length
@@ -1034,11 +1394,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       suite === 'extended'
         ? EXTENDED_PROMPT_EXPLODER_BENCHMARK_CASES
         : DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES;
-    const nextById = new Map<string, PromptExploderBenchmarkCase>();
-    [...parsed.cases, ...templateCases].forEach((benchmarkCase) => {
-      nextById.set(benchmarkCase.id, benchmarkCase);
-    });
-    const nextCases = [...nextById.values()];
+    const nextCases = mergeCustomBenchmarkCases(parsed.cases, templateCases);
     setCustomBenchmarkCasesDraft(JSON.stringify(nextCases, null, 2));
     setBenchmarkSuiteDraft('custom');
     toast(
@@ -1163,6 +1519,13 @@ export function AdminPromptExploderPage(): React.JSX.Element {
           ...promptExploderSettings.learning,
           enabled: learningDraft.enabled,
           similarityThreshold: clampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
+          templateMergeThreshold: clampNumber(
+            learningDraft.templateMergeThreshold,
+            0.3,
+            0.95
+          ),
+          benchmarkSuggestionUpsertTemplates:
+            learningDraft.benchmarkSuggestionUpsertTemplates,
           minApprovalsForMatching: clampNumber(
             Math.floor(learningDraft.minApprovalsForMatching),
             1,
@@ -1193,18 +1556,18 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         isPromptExploderManagedRule(rule)
       );
       const now = new Date().toISOString();
-      const snapshotName =
-        snapshotDraftName.trim() || `Prompt Exploder Snapshot ${now.slice(0, 19)}`;
-      const snapshot: PromptExploderPatternSnapshot = {
-        id: `snapshot_${Date.now().toString(36)}`,
-        name: snapshotName,
-        createdAt: now,
-        ruleCount: scopedPromptRules.length,
-        rulesJson: JSON.stringify(scopedPromptRules, null, 2),
-      };
+      const snapshot = buildPatternSnapshot({
+        rules: scopedPromptRules,
+        snapshotDraftName,
+        now,
+      });
       const nextSettings = {
         ...promptExploderSettings,
-        patternSnapshots: [snapshot, ...promptExploderSettings.patternSnapshots].slice(0, 40),
+        patternSnapshots: prependPatternSnapshot(
+          promptExploderSettings.patternSnapshots,
+          snapshot,
+          40
+        ),
       };
       await updateSetting.mutateAsync({
         key: PROMPT_EXPLODER_SETTINGS_KEY,
@@ -1237,20 +1600,16 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       const basePromptSettings = promptSettings.promptValidation
         ? promptSettings
         : defaultPromptEngineSettings;
-      const keptRules = basePromptSettings.promptValidation.rules.filter(
-        (rule) => !isPromptExploderManagedRule(rule)
-      );
-      const restoredRules = parsed.rules.map((rule) => ({
-        ...rule,
-        appliesToScopes: [
-          ...new Set([...(rule.appliesToScopes ?? []), 'prompt_exploder']),
-        ],
-      }));
+      const restoredRules = mergeRestoredPromptExploderRules({
+        existingRules: basePromptSettings.promptValidation.rules,
+        restoredRules: parsed.rules,
+        isPromptExploderManagedRule: isPromptExploderManagedRule,
+      });
       const nextPromptSettings = {
         ...basePromptSettings,
         promptValidation: {
           ...basePromptSettings.promptValidation,
-          rules: [...keptRules, ...restoredRules],
+          rules: restoredRules,
         },
       };
       await updateSetting.mutateAsync({
@@ -1258,7 +1617,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         value: serializeSetting(nextPromptSettings),
       });
       toast(
-        `Snapshot restored: ${selectedSnapshot.name} (${restoredRules.length} rules).`,
+        `Snapshot restored: ${selectedSnapshot.name} (${parsed.rules.length} rules).`,
         { variant: 'success' }
       );
     } catch (error) {
@@ -1279,8 +1638,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     try {
       const nextSettings = {
         ...promptExploderSettings,
-        patternSnapshots: promptExploderSettings.patternSnapshots.filter(
-          (snapshot) => snapshot.id !== selectedSnapshot.id
+        patternSnapshots: removePatternSnapshotById(
+          promptExploderSettings.patternSnapshots,
+          selectedSnapshot.id
         ),
       };
       await updateSetting.mutateAsync({
@@ -1395,74 +1755,133 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     toast('Loaded latest prompt draft from Image Studio.', { variant: 'success' });
   };
 
+  const persistPromptLibraryItems = async (
+    items: PromptExploderLibraryItem[]
+  ): Promise<void> => {
+    await updateSetting.mutateAsync({
+      key: PROMPT_EXPLODER_LIBRARY_KEY,
+      value: serializeSetting({
+        version: 1,
+        items,
+      }),
+    });
+  };
+
+  const handleNewLibraryEntry = (): void => {
+    setSelectedLibraryItemId(null);
+    setLibraryNameDraft('');
+    setPromptText('');
+    setDocumentState(null);
+    setSelectedSegmentId(null);
+    setManualBindings([]);
+    setBenchmarkReport(null);
+    setDismissedBenchmarkSuggestionIds([]);
+    toast('Started a new prompt draft.', { variant: 'info' });
+  };
+
+  const handleSaveLibraryItem = async (): Promise<void> => {
+    const prompt = promptText.trim();
+    if (!prompt) {
+      toast('Enter a prompt before saving to the library.', { variant: 'info' });
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const nextItem = buildPromptExploderLibraryItem({
+      prompt,
+      libraryNameDraft,
+      existingItem: selectedLibraryItem,
+      documentState,
+      now,
+      createItemId: createPromptExploderLibraryItemId,
+    });
+
+    const nextItems = upsertPromptExploderLibraryItems({
+      items: promptLibraryState.items,
+      nextItem,
+      maxItems: 200,
+    });
+
+    try {
+      await persistPromptLibraryItems(nextItems);
+      setSelectedLibraryItemId(nextItem.id);
+      setLibraryNameDraft(nextItem.name);
+      toast(`Saved library entry: ${nextItem.name}`, { variant: 'success' });
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save Prompt Exploder library entry.',
+        { variant: 'error' }
+      );
+    }
+  };
+
+  const handleLoadLibraryItem = (itemId: string): void => {
+    const item = promptLibraryItems.find((candidate) => candidate.id === itemId);
+    if (!item) {
+      toast('Library entry no longer exists.', { variant: 'error' });
+      return;
+    }
+
+    const hydratedDocument = hydratePromptExploderLibraryDocument(item);
+
+    setSelectedLibraryItemId(item.id);
+    setLibraryNameDraft(item.name);
+    setPromptText(item.prompt);
+    setDocumentState(hydratedDocument);
+    setSelectedSegmentId(hydratedDocument?.segments[0]?.id ?? null);
+    setManualBindings(getManualBindingsFromDocument(hydratedDocument));
+    setBenchmarkReport(null);
+    setDismissedBenchmarkSuggestionIds([]);
+    toast(`Loaded library entry: ${item.name}`, { variant: 'success' });
+  };
+
+  const handleDeleteLibraryItem = async (itemId: string): Promise<void> => {
+    const target = promptLibraryState.items.find((item) => item.id === itemId);
+    if (!target) {
+      toast('Library entry no longer exists.', { variant: 'info' });
+      return;
+    }
+
+    const nextItems = removePromptExploderLibraryItemById(
+      promptLibraryState.items,
+      itemId
+    );
+    try {
+      await persistPromptLibraryItems(nextItems);
+      if (selectedLibraryItemId === itemId) {
+        setSelectedLibraryItemId(null);
+      }
+      toast(`Deleted library entry: ${target.name}`, { variant: 'success' });
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to delete Prompt Exploder library entry.',
+        { variant: 'error' }
+      );
+    }
+  };
+
   const handleAddManualBinding = (): void => {
     if (!documentState) {
       toast('Explode a prompt before adding bindings.', { variant: 'info' });
       return;
     }
 
-    const fromSegment = documentState.segments.find(
-      (segment) => segment.id === bindingDraft.fromSegmentId
-    );
-    const toSegment = documentState.segments.find(
-      (segment) => segment.id === bindingDraft.toSegmentId
-    );
-    if (!fromSegment || !toSegment) {
-      toast('Select valid source and target segments.', { variant: 'error' });
+    const builtBinding = buildManualBindingFromDraft({
+      segments: documentState.segments,
+      draft: bindingDraft,
+      createManualBindingId,
+      formatSubsectionLabel,
+    });
+    if (!builtBinding.ok) {
+      toast(builtBinding.message, { variant: builtBinding.variant });
       return;
     }
 
-    const fromSubsection = bindingDraft.fromSubsectionId
-      ? fromSegment.subsections.find(
-        (subsection) => subsection.id === bindingDraft.fromSubsectionId
-      ) ?? null
-      : null;
-    const toSubsection = bindingDraft.toSubsectionId
-      ? toSegment.subsections.find(
-        (subsection) => subsection.id === bindingDraft.toSubsectionId
-      ) ?? null
-      : null;
-
-    if (bindingDraft.fromSubsectionId && !fromSubsection) {
-      toast('Selected source subsection no longer exists.', { variant: 'error' });
-      return;
-    }
-    if (bindingDraft.toSubsectionId && !toSubsection) {
-      toast('Selected target subsection no longer exists.', { variant: 'error' });
-      return;
-    }
-
-    if (
-      bindingDraft.type === 'depends_on' &&
-      fromSegment.id === toSegment.id &&
-      (fromSubsection?.id ?? null) === (toSubsection?.id ?? null)
-    ) {
-      toast('Source and target cannot be the exact same endpoint for depends_on bindings.', {
-        variant: 'info',
-      });
-      return;
-    }
-
-    const defaultSourceLabel = fromSubsection
-      ? formatSubsectionLabel(fromSubsection)
-      : fromSegment.title;
-    const defaultTargetLabel = toSubsection
-      ? formatSubsectionLabel(toSubsection)
-      : toSegment.title;
-
-    const nextBinding: PromptExploderBinding = {
-      id: createManualBindingId(),
-      type: bindingDraft.type,
-      fromSegmentId: fromSegment.id,
-      toSegmentId: toSegment.id,
-      fromSubsectionId: fromSubsection?.id ?? null,
-      toSubsectionId: toSubsection?.id ?? null,
-      sourceLabel: bindingDraft.sourceLabel.trim() || defaultSourceLabel,
-      targetLabel: bindingDraft.targetLabel.trim() || defaultTargetLabel,
-      origin: 'manual',
-    };
-
-    syncManualBindings([...manualBindings, nextBinding]);
+    syncManualBindings([...manualBindings, builtBinding.binding]);
     setBindingDraft((previous) => ({
       ...previous,
       sourceLabel: '',
@@ -1501,116 +1920,55 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       const now = new Date().toISOString();
       const segmentSampleText = buildSegmentSampleText(selectedSegment);
       const segmentLearningSource = `${selectedSegment.title} ${segmentSampleText}`.trim();
-      const normalizedTitle = normalizeLearningText(selectedSegment.title);
-      const exactTemplate = effectiveLearnedTemplates.find((template) => {
-        return (
-          template.segmentType === approvalDraft.ruleSegmentType &&
-          template.normalizedTitle === normalizedTitle
-        );
-      });
-      const similarTemplateMatch = !exactTemplate
-        ? findSimilarTemplateMatch({
-          templates: effectiveLearnedTemplates,
-          segmentType: approvalDraft.ruleSegmentType,
-          sourceText: segmentLearningSource,
-          similarityThreshold: templateMergeThreshold,
-        })
-        : null;
-      const existingTemplate = exactTemplate ?? similarTemplateMatch?.template ?? null;
-
-      const templateId =
-        existingTemplate?.id ??
-        `template_${approvalDraft.ruleSegmentType}_${Date.now().toString(36)}`;
-      const nextApprovals = (existingTemplate?.approvals ?? 0) + 1;
-      const derivedState = deriveTemplateStateAfterApproval({
-        existingState: existingTemplate?.state ?? null,
-        nextApprovals,
+      const templateUpsert = upsertLearnedTemplate({
+        templates: effectiveLearnedTemplates,
+        segmentType: approvalDraft.ruleSegmentType,
+        title: selectedSegment.title,
+        sourceText: segmentLearningSource,
+        sampleText: segmentSampleText,
+        similarityThreshold: templateMergeThreshold,
         minApprovalsForMatching: learningDraft.minApprovalsForMatching,
         autoActivateLearnedTemplates: learningDraft.autoActivateLearnedTemplates,
+        mergeMode: approvalDraft.templateMergeMode,
+        targetTemplateId: approvalDraft.templateTargetId,
+        now,
+        createTemplateId: ({ segmentType, existingTemplateIds }) => {
+          let nextId = `template_${segmentType}_${Date.now().toString(36)}`;
+          while (existingTemplateIds.has(nextId)) {
+            nextId = `${nextId}_x`;
+          }
+          return nextId;
+        },
       });
-      const nextTemplate: PromptExploderLearnedTemplate = existingTemplate
-        ? {
-          ...existingTemplate,
-          approvals: nextApprovals,
-          state: derivedState,
-          updatedAt: now,
-          anchorTokens: mergeTemplateAnchorTokens(
-            existingTemplate.anchorTokens,
-            learningTokens(segmentLearningSource)
-          ),
-          sampleText: mergeTemplateSampleText(
-            existingTemplate.sampleText,
-            segmentSampleText
-          ),
-        }
-        : {
-          id: templateId,
-          segmentType: approvalDraft.ruleSegmentType,
-          state: derivedState,
-          title: selectedSegment.title,
-          normalizedTitle,
-          anchorTokens: learningTokens(segmentLearningSource),
-          sampleText: segmentSampleText,
-          approvals: 1,
-          createdAt: now,
-          updatedAt: now,
-        };
+      if (!templateUpsert.ok) {
+        toast(templateUpsert.errorMessage, { variant: 'error' });
+        return;
+      }
+      const { nextTemplate, nextTemplates, mergeMessage } = templateUpsert;
 
-      const nextTemplates = existingTemplate
-        ? effectiveLearnedTemplates.map((template) =>
-          template.id === existingTemplate.id ? nextTemplate : template
-        )
-        : [...effectiveLearnedTemplates, nextTemplate];
-
-      const learnedRuleId = `segment.learned.${approvalDraft.ruleSegmentType}.${templateId}`;
-      const learnedRule: PromptValidationRule = {
-        kind: 'regex',
+      const learnedRuleId = `segment.learned.${approvalDraft.ruleSegmentType}.${nextTemplate.id}`;
+      const learnedRuleDraft = buildManualLearnedRegexRuleDraft({
         id: learnedRuleId,
-        enabled: true,
-        severity: 'info',
-        title: approvalDraft.ruleTitle.trim() || `Learned ${approvalDraft.ruleSegmentType} pattern`,
-        description: `Approved from Prompt Exploder segment: ${selectedSegment.title}`,
-        pattern: approvalDraft.rulePattern.trim(),
-        flags: 'mi',
-        message: `Learned pattern matched a ${approvalDraft.ruleSegmentType} segment.`,
-        similar: [],
-        autofix: { enabled: false, operations: [] },
-        sequenceGroupId: 'exploder_learned',
-        sequenceGroupLabel: 'Exploder Learned',
-        sequenceGroupDebounceMs: 0,
+        segmentTitle: selectedSegment.title,
+        segmentType: approvalDraft.ruleSegmentType,
         sequence: 1000 + nextTemplates.length,
-        chainMode: 'continue',
-        maxExecutions: 1,
-        passOutputToNext: true,
-        appliesToScopes: ['prompt_exploder'],
-        launchEnabled: false,
-        launchAppliesToScopes: ['prompt_exploder'],
-        launchScopeBehavior: 'gate',
-        launchOperator: 'contains',
-        launchValue: null,
-        launchFlags: null,
-        promptExploderSegmentType: approvalDraft.ruleSegmentType,
-        promptExploderPriority: clampNumber(
-          Math.floor(approvalDraft.rulePriority),
-          -50,
-          50
-        ),
-        promptExploderConfidenceBoost: clampNumber(
-          approvalDraft.ruleConfidenceBoost,
-          0,
-          0.5
-        ),
-        promptExploderTreatAsHeading: approvalDraft.ruleTreatAsHeading,
-      };
+        ruleTitle: approvalDraft.ruleTitle,
+        rulePattern: approvalDraft.rulePattern,
+        priority: approvalDraft.rulePriority,
+        confidenceBoost: approvalDraft.ruleConfidenceBoost,
+        treatAsHeading: approvalDraft.ruleTreatAsHeading,
+      });
 
       const basePromptSettings = promptSettings.promptValidation
         ? promptSettings
         : defaultPromptEngineSettings;
       const learnedRules = basePromptSettings.promptValidation.learnedRules ?? [];
-      const nextLearnedRules = [
-        ...learnedRules.filter((rule) => rule.id !== learnedRule.id),
-        learnedRule,
-      ];
+      const learnedRuleUpsert = upsertRegexLearnedRule({
+        rules: learnedRules,
+        incomingRule: learnedRuleDraft,
+      });
+      const learnedRule = learnedRuleUpsert.nextRule;
+      const nextLearnedRules = learnedRuleUpsert.nextRules;
 
       const nextPromptSettings = {
         ...basePromptSettings,
@@ -1656,14 +2014,12 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
       const sourcePrompt = promptText.trim() || documentState?.sourcePrompt || '';
       if (sourcePrompt) {
-        const nextRuntimeRulesBase = runtimeValidationRules.filter(
-          (rule) => rule.id !== learnedRule.id
-        );
-        const nextRuntimeRules =
-          learningDraft.runtimeRuleProfile === 'pattern_pack'
-            ? nextRuntimeRulesBase
-            : [...nextRuntimeRulesBase, learnedRule];
-        const refreshed = explodePromptText({
+        const nextRuntimeRules = buildRuntimeRulesForReexplode({
+          runtimeValidationRules,
+          runtimeRuleProfile: learningDraft.runtimeRuleProfile,
+          appliedRules: [learnedRule],
+        });
+        const refreshed = reexplodePromptWithRuntime({
           prompt: sourcePrompt,
           validationRules: nextRuntimeRules,
           learnedTemplates: runtimeTemplatesAfterApproval,
@@ -1671,18 +2027,17 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         });
         setManualBindings([]);
         setDocumentState(refreshed);
-        const preferredSegment = refreshed.segments.find(
-          (segment) =>
-            normalizeLearningText(segment.title) === normalizeLearningText(selectedSegment.title)
+        setSelectedSegmentId(
+          resolveSegmentIdAfterReexplode({
+            document: refreshed,
+            strategy: {
+              kind: 'match_title',
+              title: selectedSegment.title,
+            },
+          })
         );
-        setSelectedSegmentId(preferredSegment?.id ?? refreshed.segments[0]?.id ?? null);
       }
 
-      const mergeMessage = exactTemplate
-        ? 'updated existing template'
-        : similarTemplateMatch
-          ? `merged into similar template (${(similarTemplateMatch.score * 100).toFixed(1)}% match)`
-          : 'created new template';
       toast(`Pattern approved. Prompt Exploder learned and re-applied it (${mergeMessage}).`, {
         variant: 'success',
       });
@@ -1696,81 +2051,18 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }
   };
 
-  const buildBenchmarkSuggestionRule = (
-    suggestion: PromptExploderBenchmarkSuggestion,
-    sequence: number
-  ): PromptValidationRule => {
-    const id = suggestionRuleId(suggestion);
-    return {
-      kind: 'regex',
-      id,
-      enabled: true,
-      severity: 'info',
-      title:
-        suggestion.suggestedRuleTitle.trim() ||
-        `Benchmark ${suggestion.suggestedSegmentType} pattern`,
-      description: `Benchmark suggestion from case "${suggestion.caseId}" and segment "${suggestion.segmentTitle}".`,
-      pattern: suggestion.suggestedRulePattern.trim(),
-      flags: 'mi',
-      message: `Benchmark learned pattern matched ${suggestion.suggestedSegmentType}.`,
-      similar: [],
-      autofix: { enabled: false, operations: [] },
-      sequenceGroupId: 'exploder_benchmark_suggestions',
-      sequenceGroupLabel: 'Exploder Benchmark Suggestions',
-      sequenceGroupDebounceMs: 0,
-      sequence,
-      chainMode: 'continue',
-      maxExecutions: 1,
-      passOutputToNext: true,
-      appliesToScopes: ['prompt_exploder'],
-      launchEnabled: false,
-      launchAppliesToScopes: ['prompt_exploder'],
-      launchScopeBehavior: 'gate',
-      launchOperator: 'contains',
-      launchValue: null,
-      launchFlags: null,
-      promptExploderSegmentType: suggestion.suggestedSegmentType,
-      promptExploderPriority: clampNumber(
-        Math.floor(suggestion.suggestedPriority),
-        -50,
-        50
-      ),
-      promptExploderConfidenceBoost: clampNumber(
-        suggestion.suggestedConfidenceBoost,
-        0,
-        0.5
-      ),
-      promptExploderTreatAsHeading: suggestion.suggestedTreatAsHeading,
-    };
-  };
-
   const handleAddBenchmarkSuggestionRules = async (
     suggestions: PromptExploderBenchmarkSuggestion[]
   ): Promise<void> => {
-    const uniqueSuggestions = suggestions.filter(
-      (suggestion, index, allSuggestions) =>
-        allSuggestions.findIndex((candidate) => candidate.id === suggestion.id) === index
-    );
+    const preparedSuggestions = prepareBenchmarkSuggestionsForApply(suggestions);
+    const uniqueSuggestions = preparedSuggestions.uniqueSuggestions;
     if (uniqueSuggestions.length === 0) {
       toast('No benchmark suggestions selected.', { variant: 'info' });
       return;
     }
 
-    const invalidSuggestions: string[] = [];
-    const validSuggestions = uniqueSuggestions.filter((suggestion) => {
-      const pattern = suggestion.suggestedRulePattern.trim();
-      if (!pattern) {
-        invalidSuggestions.push(suggestion.segmentTitle);
-        return false;
-      }
-      try {
-        void new RegExp(pattern, 'mi');
-        return true;
-      } catch {
-        invalidSuggestions.push(suggestion.segmentTitle);
-        return false;
-      }
-    });
+    const invalidSuggestions = [...preparedSuggestions.invalidSegmentTitles];
+    const validSuggestions = preparedSuggestions.validSuggestions;
 
     if (validSuggestions.length === 0) {
       toast('No valid benchmark suggestions to add.', { variant: 'error' });
@@ -1781,99 +2073,23 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       const basePromptSettings = promptSettings.promptValidation
         ? promptSettings
         : defaultPromptEngineSettings;
-      const learnedById = new Map<string, PromptValidationRule>();
-      [
-        ...(basePromptSettings.promptValidation.learnedRules ?? []),
-        ...sessionLearnedRules,
-      ].forEach((rule) => {
-        learnedById.set(rule.id, rule);
+      const shouldUpsertTemplates = learningDraft.benchmarkSuggestionUpsertTemplates;
+      const benchmarkApply = applyBenchmarkSuggestions({
+        suggestions: validSuggestions,
+        initialRules: [
+          ...(basePromptSettings.promptValidation.learnedRules ?? []),
+          ...sessionLearnedRules,
+        ],
+        initialTemplates: effectiveLearnedTemplates,
+        shouldUpsertTemplates,
+        templateMergeThreshold,
+        minApprovalsForMatching: learningDraft.minApprovalsForMatching,
+        autoActivateLearnedTemplates: learningDraft.autoActivateLearnedTemplates,
       });
+      invalidSuggestions.push(...benchmarkApply.invalidSegmentTitles);
 
-      let addedCount = 0;
-      let updatedCount = 0;
-      const appliedRules: PromptValidationRule[] = [];
-      const templateById = new Map<string, PromptExploderLearnedTemplate>(
-        effectiveLearnedTemplates.map((template) => [template.id, template])
-      );
-      const touchedTemplateIds = new Set<string>();
-
-      validSuggestions.forEach((suggestion, index) => {
-        const ruleId = suggestionRuleId(suggestion);
-        if (learnedById.has(ruleId)) {
-          updatedCount += 1;
-        } else {
-          addedCount += 1;
-        }
-        const nextSequence = 1200 + learnedById.size + index;
-        const suggestedRule = buildBenchmarkSuggestionRule(suggestion, nextSequence);
-        learnedById.set(ruleId, suggestedRule);
-        appliedRules.push(suggestedRule);
-
-        const sourceText = `${suggestion.segmentTitle} ${suggestion.sampleText}`.trim();
-        const normalizedTitle = normalizeLearningText(suggestion.segmentTitle);
-        const templates = [...templateById.values()];
-        const exactTemplate = templates.find(
-          (template) =>
-            template.segmentType === suggestion.suggestedSegmentType &&
-            template.normalizedTitle === normalizedTitle
-        );
-        const similarTemplate = !exactTemplate
-          ? findSimilarTemplateMatch({
-            templates,
-            segmentType: suggestion.suggestedSegmentType,
-            sourceText,
-            similarityThreshold: templateMergeThreshold,
-          })
-          : null;
-        const existingTemplate = exactTemplate ?? similarTemplate?.template ?? null;
-        const nextApprovals = (existingTemplate?.approvals ?? 0) + 1;
-        const nextState = deriveTemplateStateAfterApproval({
-          existingState: existingTemplate?.state ?? null,
-          nextApprovals,
-          minApprovalsForMatching: learningDraft.minApprovalsForMatching,
-          autoActivateLearnedTemplates: learningDraft.autoActivateLearnedTemplates,
-        });
-        let nextTemplateId =
-          existingTemplate?.id ??
-          `template_benchmark_${suggestion.suggestedSegmentType}_${toSlug(
-            suggestion.segmentTitle
-          )}_${Date.now().toString(36)}_${index + 1}`;
-        while (!existingTemplate && templateById.has(nextTemplateId)) {
-          nextTemplateId = `${nextTemplateId}_x`;
-        }
-        const nextTemplate: PromptExploderLearnedTemplate = existingTemplate
-          ? {
-            ...existingTemplate,
-            approvals: nextApprovals,
-            state: nextState,
-            updatedAt: new Date().toISOString(),
-            anchorTokens: mergeTemplateAnchorTokens(
-              existingTemplate.anchorTokens,
-              learningTokens(sourceText)
-            ),
-            sampleText: mergeTemplateSampleText(
-              existingTemplate.sampleText,
-              suggestion.sampleText
-            ),
-          }
-          : {
-            id: nextTemplateId,
-            segmentType: suggestion.suggestedSegmentType,
-            state: nextState,
-            title: suggestion.segmentTitle,
-            normalizedTitle,
-            anchorTokens: learningTokens(sourceText),
-            sampleText: suggestion.sampleText,
-            approvals: 1,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-        templateById.set(nextTemplate.id, nextTemplate);
-        touchedTemplateIds.add(nextTemplate.id);
-      });
-
-      const nextLearnedRules = [...learnedById.values()];
-      const nextTemplates = [...templateById.values()];
+      const nextLearnedRules = benchmarkApply.nextLearnedRules;
+      const nextTemplates = benchmarkApply.nextTemplates;
       const nextPromptSettings = {
         ...basePromptSettings,
         promptValidation: {
@@ -1893,51 +2109,56 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextPromptSettings),
       });
-      await updateSetting.mutateAsync({
-        key: PROMPT_EXPLODER_SETTINGS_KEY,
-        value: serializeSetting(nextExploderSettings),
-      });
+      if (shouldUpsertTemplates) {
+        await updateSetting.mutateAsync({
+          key: PROMPT_EXPLODER_SETTINGS_KEY,
+          value: serializeSetting(nextExploderSettings),
+        });
+      }
 
       setSessionLearnedRules((previous) => {
         const byId = new Map(previous.map((rule) => [rule.id, rule]));
-        appliedRules.forEach((rule) => {
+        benchmarkApply.appliedRules.forEach((rule) => {
           byId.set(rule.id, rule);
         });
         return [...byId.values()];
       });
-      setSessionLearnedTemplates((previous) => {
-        const byId = new Map(previous.map((template) => [template.id, template]));
-        nextTemplates.forEach((template) => {
-          if (!touchedTemplateIds.has(template.id) && !byId.has(template.id)) {
-            return;
-          }
-          byId.set(template.id, template);
+      if (shouldUpsertTemplates) {
+        setSessionLearnedTemplates((previous) => {
+          const byId = new Map(previous.map((template) => [template.id, template]));
+          nextTemplates.forEach((template) => {
+            if (
+              !benchmarkApply.touchedTemplateIds.includes(template.id) &&
+              !byId.has(template.id)
+            ) {
+              return;
+            }
+            byId.set(template.id, template);
+          });
+          return [...byId.values()];
         });
-        return [...byId.values()];
-      });
+      }
       setDismissedBenchmarkSuggestionIds((previous) => [
         ...new Set([...previous, ...validSuggestions.map((suggestion) => suggestion.id)]),
       ]);
 
       const sourcePrompt = promptText.trim() || documentState?.sourcePrompt || '';
       if (sourcePrompt) {
-        const appliedRuleIds = new Set(appliedRules.map((rule) => rule.id));
-        const nextRuntimeRulesBase = runtimeValidationRules.filter(
-          (rule) => !appliedRuleIds.has(rule.id)
-        );
-        const nextRuntimeRules =
-          learningDraft.runtimeRuleProfile === 'pattern_pack'
-            ? nextRuntimeRulesBase
-            : [...nextRuntimeRulesBase, ...appliedRules];
-        const nextRuntimeTemplates =
-          nextExploderSettings.learning.enabled
-            ? filterTemplatesForRuntime(nextTemplates, {
-              minApprovalsForMatching:
-                nextExploderSettings.learning.minApprovalsForMatching,
-              maxTemplates: nextExploderSettings.learning.maxTemplates,
-            })
-            : [];
-        const refreshed = explodePromptText({
+        const nextRuntimeRules = buildRuntimeRulesForReexplode({
+          runtimeValidationRules,
+          runtimeRuleProfile: learningDraft.runtimeRuleProfile,
+          appliedRules: benchmarkApply.appliedRules,
+        });
+        const nextRuntimeTemplates = buildRuntimeTemplatesForReexplode({
+          useUpdatedTemplates: shouldUpsertTemplates,
+          runtimeLearnedTemplates,
+          nextTemplates,
+          learningEnabled: nextExploderSettings.learning.enabled,
+          minApprovalsForMatching:
+            nextExploderSettings.learning.minApprovalsForMatching,
+          maxTemplates: nextExploderSettings.learning.maxTemplates,
+        });
+        const refreshed = reexplodePromptWithRuntime({
           prompt: sourcePrompt,
           validationRules: nextRuntimeRules,
           learnedTemplates: nextRuntimeTemplates,
@@ -1946,15 +2167,17 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         setManualBindings([]);
         setDocumentState(refreshed);
         setSelectedSegmentId((previous) => {
-          if (!previous) return refreshed.segments[0]?.id ?? null;
-          return refreshed.segments.some((segment) => segment.id === previous)
-            ? previous
-            : refreshed.segments[0]?.id ?? null;
+          return resolveSegmentIdAfterReexplode({
+            document: refreshed,
+            strategy: { kind: 'preserve_id', previousId: previous ?? null },
+          });
         });
       }
 
-      const summary = `Benchmark suggestions applied: added ${addedCount}, updated ${updatedCount}.`;
-      const templateSummary = `learned templates touched ${touchedTemplateIds.size}.`;
+      const summary = `Benchmark suggestions applied: added ${benchmarkApply.addedCount}, updated ${benchmarkApply.updatedCount}.`;
+      const templateSummary = shouldUpsertTemplates
+        ? `learned templates touched ${benchmarkApply.touchedTemplateIds.length}.`
+        : 'learned-template upsert is disabled.';
       if (invalidSuggestions.length > 0) {
         toast(`${summary} ${templateSummary} Skipped invalid ${invalidSuggestions.length}.`, {
           variant: 'warning',
@@ -2030,6 +2253,16 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               variant='outline'
               size='sm'
               onClick={() => {
+                router.push('/admin/prompt-exploder/settings');
+              }}
+            >
+              <Settings2 className='mr-2 size-4' />
+              Settings
+            </UnifiedButton>
+            <UnifiedButton
+              variant='outline'
+              size='sm'
+              onClick={() => {
                 router.push(returnTo);
               }}
             >
@@ -2053,6 +2286,12 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             <span className='text-gray-200'>{runtimeLearnedTemplates.length}</span>
             {' '}· profile:{' '}
             <span className='text-gray-200'>{learningDraft.runtimeRuleProfile}</span>
+            {' '}· merge:{' '}
+            <span className='text-gray-200'>{templateMergeThreshold.toFixed(2)}</span>
+            {' '}· bench template upsert:{' '}
+            <span className='text-gray-200'>
+              {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
+            </span>
             {' '}· benchmark:{' '}
             <span className='text-gray-200'>{benchmarkSuiteDraft}</span>
             {' '}· low conf:{' '}
@@ -2081,7 +2320,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             Advanced pack includes {PROMPT_EXPLODER_PATTERN_PACK.length} segmentation patterns.
           </div>
         </div>
-        <div className='mt-3 grid gap-2 md:grid-cols-6'>
+        <div className='mt-3 grid gap-2 md:grid-cols-8'>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
             <UnifiedSelect
@@ -2127,6 +2366,24 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 setLearningDraft((previous) => ({
                   ...previous,
                   similarityThreshold: clampNumber(value, 0.3, 0.95),
+                }));
+              }}
+            />
+          </div>
+          <div className='space-y-1'>
+            <Label className='text-[11px] text-gray-400'>Template Merge Threshold</Label>
+            <Input
+              type='number'
+              min={0.3}
+              max={0.95}
+              step={0.01}
+              value={learningDraft.templateMergeThreshold.toFixed(2)}
+              onChange={(event) => {
+                const value = Number(event.target.value);
+                if (!Number.isFinite(value)) return;
+                setLearningDraft((previous) => ({
+                  ...previous,
+                  templateMergeThreshold: clampNumber(value, 0.3, 0.95),
                 }));
               }}
             />
@@ -2181,6 +2438,21 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               />
             </div>
           </div>
+          <div className='space-y-1'>
+            <Label className='text-[11px] text-gray-400'>Benchmark Template Upsert</Label>
+            <div className='flex h-9 items-center rounded border border-border/60 bg-card/30 px-3'>
+              <StatusToggle
+                enabled={learningDraft.benchmarkSuggestionUpsertTemplates}
+                onToggle={() => {
+                  setLearningDraft((previous) => ({
+                    ...previous,
+                    benchmarkSuggestionUpsertTemplates:
+                      !previous.benchmarkSuggestionUpsertTemplates,
+                  }));
+                }}
+              />
+            </div>
+          </div>
         </div>
         <div className='mt-2 flex flex-wrap items-center gap-2'>
           <Button
@@ -2194,7 +2466,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             Save Learning Settings
           </Button>
           <div className='text-xs text-gray-500'>
-            Current runtime: threshold {learningDraft.similarityThreshold.toFixed(2)}, min approvals {learningDraft.minApprovalsForMatching}, cap {learningDraft.maxTemplates}, auto-activate {learningDraft.autoActivateLearnedTemplates ? 'on' : 'off'}.
+            Current runtime: similarity {learningDraft.similarityThreshold.toFixed(2)}, merge {learningDraft.templateMergeThreshold.toFixed(2)}, min approvals {learningDraft.minApprovalsForMatching}, cap {learningDraft.maxTemplates}, auto-activate {learningDraft.autoActivateLearnedTemplates ? 'on' : 'off'}, benchmark template upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}.
             {' '}Benchmark suite {benchmarkSuiteDraft}
             {benchmarkSuiteDraft === 'custom' && parsedCustomBenchmarkCases.ok
               ? ` (${parsedCustomBenchmarkCases.cases.length} custom case(s))`
@@ -2321,6 +2593,120 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
       <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]'>
         <div className='space-y-4'>
+          <FormSection
+            title='Prompt Library'
+            description='Manage multiple prompts and their saved explosions.'
+            variant='subtle'
+            className='p-4'
+            actions={
+              <div className='flex flex-wrap items-center gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    void handleSaveLibraryItem();
+                  }}
+                  disabled={updateSetting.isPending}
+                >
+                  Save Current
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={handleNewLibraryEntry}
+                >
+                  New Draft
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    if (!selectedLibraryItemId) return;
+                    void handleDeleteLibraryItem(selectedLibraryItemId);
+                  }}
+                  disabled={!selectedLibraryItemId || updateSetting.isPending}
+                >
+                  Delete Selected
+                </Button>
+              </div>
+            }
+          >
+            <div className='grid gap-3 lg:grid-cols-[320px_minmax(0,1fr)]'>
+              <div className='space-y-1'>
+                <Label className='text-[11px] text-gray-400'>Saved Entries</Label>
+                {promptLibraryItems.length === 0 ? (
+                  <div className='rounded border border-border/50 bg-card/20 px-3 py-4 text-xs text-gray-500'>
+                    No entries saved yet.
+                  </div>
+                ) : (
+                  <div className='max-h-[280px] space-y-2 overflow-auto rounded border border-border/50 bg-card/20 p-2'>
+                    {promptLibraryItems.map((item) => {
+                      const isSelected = selectedLibraryItemId === item.id;
+                      const segmentCount = item.document?.segments.length ?? 0;
+                      return (
+                        <button
+                          key={item.id}
+                          type='button'
+                          className={`w-full rounded border px-2 py-2 text-left text-xs transition-colors ${isSelected ? 'border-blue-400 bg-blue-500/10 text-gray-100' : 'border-border/50 bg-card/30 text-gray-300 hover:border-blue-300/50'}`}
+                          onClick={() => {
+                            handleLoadLibraryItem(item.id);
+                          }}
+                        >
+                          <div className='truncate font-medium'>{item.name}</div>
+                          <div className='mt-1 text-[10px] text-gray-500'>
+                            segments {segmentCount} · updated {formatTimestamp(item.updatedAt)}
+                          </div>
+                          <div className='mt-1 line-clamp-2 text-[10px] text-gray-500'>
+                            {item.prompt}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <div className='space-y-2'>
+                <div className='space-y-1'>
+                  <Label className='text-[11px] text-gray-400'>Entry Name</Label>
+                  <Input
+                    value={libraryNameDraft}
+                    onChange={(event) => {
+                      setLibraryNameDraft(event.target.value);
+                    }}
+                    placeholder='Prompt entry name'
+                  />
+                </div>
+                <div className='rounded border border-border/50 bg-card/20 p-2 text-xs text-gray-500'>
+                  <div>
+                    Active entry:{' '}
+                    <span className='text-gray-300'>
+                      {selectedLibraryItem?.name ?? 'Unsaved draft'}
+                    </span>
+                  </div>
+                  <div>
+                    Prompt length:{' '}
+                    <span className='text-gray-300'>{promptText.length}</span>
+                  </div>
+                  <div>
+                    Saved segments:{' '}
+                    <span className='text-gray-300'>
+                      {selectedLibraryItem?.document?.segments.length ?? 0}
+                    </span>
+                  </div>
+                  <div>
+                    Current segments:{' '}
+                    <span className='text-gray-300'>
+                      {documentState?.segments.length ?? 0}
+                    </span>
+                  </div>
+                </div>
+                <div className='text-[11px] text-gray-500'>
+                  Save Current stores both prompt text and the current exploded document.
+                </div>
+              </div>
+            </div>
+          </FormSection>
+
           <FormSection
             title='Source Prompt'
             description='Paste a prompt and explode it into structured segments.'
@@ -2725,51 +3111,71 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             ) : (
               <div className='mt-3 grid gap-3 lg:grid-cols-[280px_minmax(0,1fr)]'>
                 <div className='max-h-[65vh] space-y-2 overflow-auto rounded border border-border/60 bg-card/20 p-2'>
-                  {documentState.segments.map((segment, index) => (
-                    <button
-                      key={segment.id}
-                      type='button'
-                      className={`w-full rounded border px-2 py-2 text-left text-xs transition-colors ${selectedSegmentId === segment.id ? 'border-blue-400 bg-blue-500/10 text-gray-100' : 'border-border/50 bg-card/30 text-gray-300 hover:border-blue-300/50'}`}
-                      onClick={() => setSelectedSegmentId(segment.id)}
-                    >
-                      <div className='flex items-center justify-between gap-2'>
-                        <span className='truncate font-medium'>{segment.title}</span>
-                        <span className='rounded border border-border/50 bg-card/50 px-1 py-0.5 text-[10px] uppercase'>
-                          {segment.type.replaceAll('_', ' ')}
-                        </span>
+                  {documentState.segments.map((segment) => {
+                    const isDropTarget = segmentDropTargetId === segment.id;
+                    const isDropBefore = isDropTarget && segmentDropPosition === 'before';
+                    const isDropAfter = isDropTarget && segmentDropPosition === 'after';
+                    return (
+                      <div
+                        key={segment.id}
+                        role='button'
+                        tabIndex={0}
+                        className={`relative w-full rounded border px-2 py-2 text-left text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${selectedSegmentId === segment.id ? 'border-blue-400 bg-blue-500/10 text-gray-100' : 'border-border/50 bg-card/30 text-gray-300 hover:border-blue-300/50'} ${draggingSegmentId === segment.id ? 'opacity-60' : ''}`}
+                        onClick={() => setSelectedSegmentId(segment.id)}
+                        onKeyDown={(event) => {
+                          if (event.key !== 'Enter' && event.key !== ' ') return;
+                          event.preventDefault();
+                          setSelectedSegmentId(segment.id);
+                        }}
+                        onDragOver={(event: React.DragEvent<HTMLDivElement>) => {
+                          handleSegmentDragOver(event, segment.id);
+                        }}
+                        onDrop={(event: React.DragEvent<HTMLDivElement>) => {
+                          handleSegmentDrop(event, segment.id);
+                        }}
+                      >
+                        {isDropBefore ? (
+                          <div className='pointer-events-none absolute inset-x-1 top-0 h-0.5 rounded bg-blue-400' />
+                        ) : null}
+                        {isDropAfter ? (
+                          <div className='pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded bg-blue-400' />
+                        ) : null}
+                        <div className='flex items-center justify-between gap-2'>
+                          <div className='flex min-w-0 items-center gap-2'>
+                            <button
+                              type='button'
+                              className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/50 text-gray-300 transition-colors hover:bg-card/70 hover:text-gray-100 active:cursor-grabbing'
+                              aria-label='Drag to reorder segment'
+                              draggable
+                              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                              }}
+                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                              }}
+                              onDragStart={(event: React.DragEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                                handleSegmentDragStart(event, segment.id);
+                              }}
+                              onDragEnd={() => {
+                                handleSegmentDragEnd();
+                              }}
+                            >
+                              <GripVertical className='size-3.5' />
+                            </button>
+                            <span className='truncate font-medium'>{segment.title}</span>
+                          </div>
+                          <span className='rounded border border-border/50 bg-card/50 px-1 py-0.5 text-[10px] uppercase'>
+                            {segment.type.replaceAll('_', ' ')}
+                          </span>
+                        </div>
+                        <div className='mt-1 flex items-center justify-between text-[10px] text-gray-500'>
+                          <span>Confidence {(segment.confidence * 100).toFixed(0)}%</span>
+                          <span>{segment.includeInOutput ? 'Included' : 'Omitted'}</span>
+                        </div>
                       </div>
-                      <div className='mt-1 flex items-center justify-between text-[10px] text-gray-500'>
-                        <span>Confidence {(segment.confidence * 100).toFixed(0)}%</span>
-                        <span>{segment.includeInOutput ? 'Included' : 'Omitted'}</span>
-                      </div>
-                      <div className='mt-2 flex items-center gap-1'>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='icon'
-                          disabled={index === 0}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            replaceSegments(moveByDelta(documentState.segments, index, -1));
-                          }}
-                        >
-                          <ArrowUp className='size-3.5' />
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='icon'
-                          disabled={index === documentState.segments.length - 1}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            replaceSegments(moveByDelta(documentState.segments, index, 1));
-                          }}
-                        >
-                          <ArrowDown className='size-3.5' />
-                        </Button>
-                      </div>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className='max-h-[65vh] space-y-3 overflow-auto rounded border border-border/60 bg-card/20 p-3'>
@@ -2850,24 +3256,412 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                       ) : null}
 
                       {selectedSegment.type === 'parameter_block' ? (
-                        <div className='space-y-2'>
-                          <Label className='text-[11px] text-gray-400'>Parameters Text</Label>
-                          <Textarea
-                            className='min-h-[220px] font-mono text-[12px]'
-                            value={selectedSegment.paramsText || selectedSegment.text}
-                            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
-                              const nextText = event.target.value;
-                              updateSegment(selectedSegment.id, (current) => {
-                                const extracted = extractParamsFromPrompt(nextText);
-                                return {
-                                  ...current,
-                                  paramsText: nextText,
-                                  text: nextText,
-                                  paramsObject: extracted.ok ? extracted.params : null,
-                                };
-                              });
-                            }}
-                          />
+                        <div className='space-y-3'>
+                          <div className='space-y-2 rounded border border-border/50 bg-card/20 p-3'>
+                            <div className='flex items-center justify-between'>
+                              <Label className='text-[11px] uppercase tracking-wide text-gray-400'>
+                                Parameters
+                              </Label>
+                              <span className='text-[10px] text-gray-500'>
+                                {selectedParamEntriesState?.entries.length ?? 0} extracted
+                              </span>
+                            </div>
+
+                            {selectedSegment.paramsObject && selectedParamEntriesState ? (
+                              selectedParamEntriesState.entries.length > 0 ? (
+                                <div className='max-h-[42vh] space-y-2 overflow-auto pr-1'>
+                                  {selectedParamEntriesState.entries.map((entry) => (
+                                    <div
+                                      key={entry.path}
+                                      className='space-y-2 rounded border border-border/50 bg-card/20 p-2'
+                                    >
+                                      <div className='flex items-center justify-between gap-2'>
+                                        <div className='truncate font-mono text-[11px] text-gray-200'>
+                                          {entry.path}
+                                        </div>
+                                        <div className='text-[10px] uppercase text-gray-500'>
+                                          {inferParamTypeLabel(entry)}
+                                        </div>
+                                      </div>
+
+                                      <div className='grid gap-2 lg:grid-cols-[220px_minmax(0,1fr)]'>
+                                        <div className='space-y-1'>
+                                          <Label className='text-[10px] text-gray-500'>Selector</Label>
+                                          <UnifiedSelect
+                                            value={entry.selector}
+                                            onValueChange={(next: string) => {
+                                              updateParameterSelector(selectedSegment.id, entry.path, next);
+                                            }}
+                                            options={entry.selectorOptions.map((control) => ({
+                                              value: control,
+                                              label:
+                                                control === 'auto'
+                                                  ? `Auto (${promptExploderParamUiControlLabel(
+                                                    entry.recommendation.recommended
+                                                  )})`
+                                                  : promptExploderParamUiControlLabel(control),
+                                            }))}
+                                          />
+                                        </div>
+
+                                        <div className='space-y-1'>
+                                          <Label className='text-[10px] text-gray-500'>Value</Label>
+
+                                          {entry.recommendation.baseKind === 'boolean' &&
+                                          typeof entry.value === 'boolean' &&
+                                          entry.resolvedSelector !== 'json' ? (
+                                              entry.resolvedSelector === 'buttons' ? (
+                                                <div className='flex items-center gap-2'>
+                                                  <Button
+                                                    type='button'
+                                                    variant={entry.value ? 'secondary' : 'outline'}
+                                                    size='sm'
+                                                    onClick={() => {
+                                                      updateParameterValue(selectedSegment.id, entry.path, true);
+                                                    }}
+                                                  >
+                                                  true
+                                                  </Button>
+                                                  <Button
+                                                    type='button'
+                                                    variant={!entry.value ? 'secondary' : 'outline'}
+                                                    size='sm'
+                                                    onClick={() => {
+                                                      updateParameterValue(selectedSegment.id, entry.path, false);
+                                                    }}
+                                                  >
+                                                  false
+                                                  </Button>
+                                                </div>
+                                              ) : (
+                                                <UnifiedSelect
+                                                  value={entry.value ? 'true' : 'false'}
+                                                  onValueChange={(next: string) => {
+                                                    updateParameterValue(
+                                                      selectedSegment.id,
+                                                      entry.path,
+                                                      next === 'true'
+                                                    );
+                                                  }}
+                                                  options={[
+                                                    { value: 'true', label: 'true' },
+                                                    { value: 'false', label: 'false' },
+                                                  ]}
+                                                />
+                                              )
+                                            ) : null}
+
+                                          {entry.recommendation.baseKind === 'enum' &&
+                                          typeof entry.value === 'string' &&
+                                          entry.spec?.enumOptions &&
+                                          entry.resolvedSelector !== 'json' ? (
+                                              entry.resolvedSelector === 'buttons' ? (
+                                                <div className='flex flex-wrap gap-2'>
+                                                  {entry.spec.enumOptions.map((option) => (
+                                                    <Button
+                                                      key={option}
+                                                      type='button'
+                                                      variant={
+                                                        option === entry.value ? 'secondary' : 'outline'
+                                                      }
+                                                      size='sm'
+                                                      onClick={() => {
+                                                        updateParameterValue(
+                                                          selectedSegment.id,
+                                                          entry.path,
+                                                          option
+                                                        );
+                                                      }}
+                                                    >
+                                                      {option}
+                                                    </Button>
+                                                  ))}
+                                                </div>
+                                              ) : entry.resolvedSelector === 'text' ? (
+                                                <Input
+                                                  value={entry.value}
+                                                  onChange={(event) => {
+                                                    updateParameterValue(
+                                                      selectedSegment.id,
+                                                      entry.path,
+                                                      event.target.value
+                                                    );
+                                                  }}
+                                                />
+                                              ) : (
+                                                <UnifiedSelect
+                                                  value={entry.value}
+                                                  onValueChange={(next: string) => {
+                                                    updateParameterValue(
+                                                      selectedSegment.id,
+                                                      entry.path,
+                                                      next
+                                                    );
+                                                  }}
+                                                  options={entry.spec.enumOptions.map((option) => ({
+                                                    value: option,
+                                                    label: option,
+                                                  }))}
+                                                />
+                                              )
+                                            ) : null}
+
+                                          {entry.recommendation.baseKind === 'number' &&
+                                          isFiniteNumber(entry.value) &&
+                                          entry.resolvedSelector !== 'json' ? (
+                                              <div className='space-y-2'>
+                                                {entry.resolvedSelector === 'slider' &&
+                                              entry.recommendation.canSlider ? (
+                                                    <input
+                                                      type='range'
+                                                      min={entry.spec?.min ?? 0}
+                                                      max={entry.spec?.max ?? 1}
+                                                      step={entry.spec?.step ?? 0.01}
+                                                      value={entry.value}
+                                                      onChange={(event) => {
+                                                        const next = Number(event.target.value);
+                                                        if (!Number.isFinite(next)) return;
+                                                        updateParameterValue(
+                                                          selectedSegment.id,
+                                                          entry.path,
+                                                          next
+                                                        );
+                                                      }}
+                                                      className='w-full'
+                                                    />
+                                                  ) : null}
+                                                <Input
+                                                  type='number'
+                                                  value={String(entry.value)}
+                                                  min={entry.spec?.min}
+                                                  max={entry.spec?.max}
+                                                  step={entry.spec?.step}
+                                                  onChange={(event) => {
+                                                    const next = Number(event.target.value);
+                                                    if (!Number.isFinite(next)) return;
+                                                    updateParameterValue(
+                                                      selectedSegment.id,
+                                                      entry.path,
+                                                      next
+                                                    );
+                                                  }}
+                                                />
+                                              </div>
+                                            ) : null}
+
+                                          {entry.recommendation.baseKind === 'rgb' &&
+                                          isParamArrayTupleLength(entry.value, 3) &&
+                                          entry.resolvedSelector !== 'json' ? (
+                                              <div className='grid grid-cols-3 gap-2'>
+                                                {['R', 'G', 'B'].map((label, index) => (
+                                                  <div key={label} className='space-y-1'>
+                                                    <div className='text-[10px] text-gray-500'>{label}</div>
+                                                    <Input
+                                                      type='number'
+                                                      value={String(entry.value[index] ?? '')}
+                                                      min={entry.spec?.min ?? 0}
+                                                      max={entry.spec?.max ?? 255}
+                                                      step={entry.spec?.step ?? 1}
+                                                      onChange={(event) => {
+                                                        const next = Number(event.target.value);
+                                                        if (!Number.isFinite(next)) return;
+                                                        const nextRgb = [...entry.value];
+                                                        nextRgb[index] = next;
+                                                        updateParameterValue(
+                                                          selectedSegment.id,
+                                                          entry.path,
+                                                          nextRgb
+                                                        );
+                                                      }}
+                                                    />
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : null}
+
+                                          {entry.recommendation.baseKind === 'tuple2' &&
+                                          isParamArrayTupleLength(entry.value, 2) &&
+                                          entry.resolvedSelector !== 'json' ? (
+                                              <div className='grid grid-cols-2 gap-2'>
+                                                {['X', 'Y'].map((label, index) => (
+                                                  <div key={label} className='space-y-1'>
+                                                    <div className='text-[10px] text-gray-500'>{label}</div>
+                                                    <Input
+                                                      type='number'
+                                                      value={String(entry.value[index] ?? '')}
+                                                      min={entry.spec?.min}
+                                                      max={entry.spec?.max}
+                                                      step={entry.spec?.step ?? 1}
+                                                      onChange={(event) => {
+                                                        const next = Number(event.target.value);
+                                                        if (!Number.isFinite(next)) return;
+                                                        const nextTuple = [...entry.value];
+                                                        nextTuple[index] = next;
+                                                        updateParameterValue(
+                                                          selectedSegment.id,
+                                                          entry.path,
+                                                          nextTuple
+                                                        );
+                                                      }}
+                                                    />
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : null}
+
+                                          {entry.recommendation.baseKind === 'string' &&
+                                          typeof entry.value === 'string' &&
+                                          entry.resolvedSelector !== 'json' ? (
+                                              entry.resolvedSelector === 'textarea' ? (
+                                                <Textarea
+                                                  className='min-h-[86px] font-mono text-[11px]'
+                                                  value={entry.value}
+                                                  onChange={(event) => {
+                                                    updateParameterValue(
+                                                      selectedSegment.id,
+                                                      entry.path,
+                                                      event.target.value
+                                                    );
+                                                  }}
+                                                />
+                                              ) : (
+                                                <Input
+                                                  value={entry.value}
+                                                  onChange={(event) => {
+                                                    updateParameterValue(
+                                                      selectedSegment.id,
+                                                      entry.path,
+                                                      event.target.value
+                                                    );
+                                                  }}
+                                                />
+                                              )
+                                            ) : null}
+
+                                          {entry.resolvedSelector === 'json' ||
+                                          !(
+                                            (entry.recommendation.baseKind === 'boolean' &&
+                                              typeof entry.value === 'boolean') ||
+                                            (entry.recommendation.baseKind === 'enum' &&
+                                              typeof entry.value === 'string') ||
+                                            (entry.recommendation.baseKind === 'number' &&
+                                              isFiniteNumber(entry.value)) ||
+                                            (entry.recommendation.baseKind === 'rgb' &&
+                                              isParamArrayTupleLength(entry.value, 3)) ||
+                                            (entry.recommendation.baseKind === 'tuple2' &&
+                                              isParamArrayTupleLength(entry.value, 2)) ||
+                                            (entry.recommendation.baseKind === 'string' &&
+                                              typeof entry.value === 'string')
+                                          ) ? (
+                                              <Textarea
+                                                className='min-h-[86px] font-mono text-[11px]'
+                                                value={safeJsonStringify(entry.value)}
+                                                onChange={(event) => {
+                                                  updateParameterValue(
+                                                    selectedSegment.id,
+                                                    entry.path,
+                                                    sanitizeParamJsonValue(event.target.value, entry.value)
+                                                  );
+                                                }}
+                                              />
+                                            ) : null}
+                                        </div>
+                                      </div>
+
+                                      <div className='grid gap-2 md:grid-cols-2'>
+                                        <div className='space-y-1'>
+                                          <Label className='text-[10px] text-gray-500'>Comment</Label>
+                                          <Input
+                                            value={entry.comment}
+                                            placeholder='Inline comment'
+                                            onChange={(event) => {
+                                              updateParameterComment(
+                                                selectedSegment.id,
+                                                entry.path,
+                                                event.target.value
+                                              );
+                                            }}
+                                          />
+                                        </div>
+                                        <div className='space-y-1'>
+                                          <Label className='text-[10px] text-gray-500'>Description</Label>
+                                          <Textarea
+                                            className='min-h-[72px] text-[11px]'
+                                            value={entry.description}
+                                            placeholder='Description above this parameter'
+                                            onChange={(event) => {
+                                              updateParameterDescription(
+                                                selectedSegment.id,
+                                                entry.path,
+                                                event.target.value
+                                              );
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {entry.selector === 'auto' && entry.recommendation.reason ? (
+                                        <div className='text-[10px] text-gray-500'>
+                                          Auto selector note: {entry.recommendation.reason}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className='text-xs text-gray-500'>
+                                  No leaf parameters detected in the current params object.
+                                </div>
+                              )
+                            ) : (
+                              <div className='text-xs text-gray-500'>
+                                {'No parseable `params = { ... }` object detected yet.'}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className='space-y-2'>
+                            <Label className='text-[11px] text-gray-400'>Parameters Text</Label>
+                            <Textarea
+                              className='min-h-[220px] font-mono text-[12px]'
+                              value={selectedSegment.paramsText || selectedSegment.text}
+                              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                const nextText = event.target.value;
+                                updateSegment(selectedSegment.id, (current) => {
+                                  const extracted = extractParamsFromPrompt(nextText);
+                                  if (!extracted.ok) {
+                                    return {
+                                      ...current,
+                                      paramsText: nextText,
+                                      text: nextText,
+                                      raw: nextText,
+                                      paramsObject: null,
+                                      paramUiControls: {},
+                                      paramComments: {},
+                                      paramDescriptions: {},
+                                    };
+                                  }
+                                  const nextParamState = buildPromptExploderParamEntries({
+                                    paramsObject: extracted.params,
+                                    paramsText: nextText,
+                                    paramUiControls: current.paramUiControls,
+                                    paramComments: current.paramComments,
+                                    paramDescriptions: current.paramDescriptions,
+                                  });
+                                  return {
+                                    ...current,
+                                    paramsText: nextText,
+                                    text: nextText,
+                                    raw: nextText,
+                                    paramsObject: extracted.params,
+                                    paramUiControls: nextParamState.paramUiControls,
+                                    paramComments: nextParamState.paramComments,
+                                    paramDescriptions: nextParamState.paramDescriptions,
+                                  };
+                                });
+                              }}
+                            />
+                          </div>
                         </div>
                       ) : null}
 
@@ -2930,13 +3724,19 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                     <Input
                                       value={item.text}
                                       onChange={(event) => {
-                                        updateSegment(selectedSegment.id, (current) => ({
-                                          ...current,
-                                          listItems: updateListItemText(current.listItems, index, event.target.value),
+                                        updateTopLevelListItem(selectedSegment.id, index, (currentItem) => ({
+                                          ...currentItem,
+                                          text: event.target.value,
                                         }));
                                       }}
                                     />
                                   </div>
+                                  {renderListItemLogicalEditor({
+                                    item,
+                                    onChange: (updater) => {
+                                      updateTopLevelListItem(selectedSegment.id, index, updater);
+                                    },
+                                  })}
                                 </div>
                               ))}
                             </div>
@@ -3109,71 +3909,83 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                   </Button>
                                 </div>
                                 {subsection.items.map((item, itemIndex) => (
-                                  <div key={item.id} className='flex items-center gap-1'>
-                                    <Button
-                                      type='button'
-                                      variant='ghost'
-                                      size='icon'
-                                      disabled={itemIndex === 0}
-                                      onClick={() => {
-                                        updateSegment(selectedSegment.id, (current) => {
-                                          const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
-                                            if (candidateIndex !== subsectionIndex) return candidate;
+                                  <div
+                                    key={item.id}
+                                    className='rounded border border-border/50 bg-card/20 p-2'
+                                  >
+                                    <div className='flex items-center gap-1'>
+                                      <Button
+                                        type='button'
+                                        variant='ghost'
+                                        size='icon'
+                                        disabled={itemIndex === 0}
+                                        onClick={() => {
+                                          updateSegment(selectedSegment.id, (current) => {
+                                            const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
+                                              if (candidateIndex !== subsectionIndex) return candidate;
+                                              return {
+                                                ...candidate,
+                                                items: moveByDelta(candidate.items, itemIndex, -1),
+                                              };
+                                            });
                                             return {
-                                              ...candidate,
-                                              items: moveByDelta(candidate.items, itemIndex, -1),
+                                              ...current,
+                                              subsections: nextSubsections,
                                             };
                                           });
-                                          return {
-                                            ...current,
-                                            subsections: nextSubsections,
-                                          };
-                                        });
-                                      }}
-                                    >
-                                      <ArrowUp className='size-3.5' />
-                                    </Button>
-                                    <Button
-                                      type='button'
-                                      variant='ghost'
-                                      size='icon'
-                                      disabled={itemIndex === subsection.items.length - 1}
-                                      onClick={() => {
-                                        updateSegment(selectedSegment.id, (current) => {
-                                          const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
-                                            if (candidateIndex !== subsectionIndex) return candidate;
+                                        }}
+                                      >
+                                        <ArrowUp className='size-3.5' />
+                                      </Button>
+                                      <Button
+                                        type='button'
+                                        variant='ghost'
+                                        size='icon'
+                                        disabled={itemIndex === subsection.items.length - 1}
+                                        onClick={() => {
+                                          updateSegment(selectedSegment.id, (current) => {
+                                            const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
+                                              if (candidateIndex !== subsectionIndex) return candidate;
+                                              return {
+                                                ...candidate,
+                                                items: moveByDelta(candidate.items, itemIndex, 1),
+                                              };
+                                            });
                                             return {
-                                              ...candidate,
-                                              items: moveByDelta(candidate.items, itemIndex, 1),
+                                              ...current,
+                                              subsections: nextSubsections,
                                             };
                                           });
-                                          return {
-                                            ...current,
-                                            subsections: nextSubsections,
-                                          };
-                                        });
-                                      }}
-                                    >
-                                      <ArrowDown className='size-3.5' />
-                                    </Button>
-                                    <Input
-                                      value={item.text}
-                                      onChange={(event) => {
-                                        updateSegment(selectedSegment.id, (current) => {
-                                          const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
-                                            if (candidateIndex !== subsectionIndex) return candidate;
-                                            return {
-                                              ...candidate,
-                                              items: updateListItemText(candidate.items, itemIndex, event.target.value),
-                                            } as PromptExploderSubsection;
-                                          });
-                                          return {
-                                            ...current,
-                                            subsections: nextSubsections,
-                                          };
-                                        });
-                                      }}
-                                    />
+                                        }}
+                                      >
+                                        <ArrowDown className='size-3.5' />
+                                      </Button>
+                                      <Input
+                                        value={item.text}
+                                        onChange={(event) => {
+                                          updateSubsectionListItem(
+                                            selectedSegment.id,
+                                            subsectionIndex,
+                                            itemIndex,
+                                            (currentItem) => ({
+                                              ...currentItem,
+                                              text: event.target.value,
+                                            })
+                                          );
+                                        }}
+                                      />
+                                    </div>
+                                    {renderListItemLogicalEditor({
+                                      item,
+                                      onChange: (updater) => {
+                                        updateSubsectionListItem(
+                                          selectedSegment.id,
+                                          subsectionIndex,
+                                          itemIndex,
+                                          updater
+                                        );
+                                      },
+                                    })}
                                   </div>
                                 ))}
                               </div>
@@ -3236,6 +4048,51 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                           <div className='mb-1 text-[11px] uppercase tracking-wide text-gray-400'>
                             Similar Learned Templates
                           </div>
+                          <div className='grid gap-2 md:grid-cols-2'>
+                            <div className='space-y-1'>
+                              <Label className='text-[11px] text-gray-400'>Template Merge Mode</Label>
+                              <UnifiedSelect
+                                value={approvalDraft.templateMergeMode}
+                                onValueChange={(value: string) => {
+                                  const nextMode = value as ApprovalTemplateMergeMode;
+                                  setApprovalDraft((previous) => ({
+                                    ...previous,
+                                    templateMergeMode: nextMode,
+                                    templateTargetId:
+                                      nextMode === 'target'
+                                        ? (previous.templateTargetId ||
+                                          templateTargetOptions[0]?.value ||
+                                          '')
+                                        : '',
+                                  }));
+                                }}
+                                options={[
+                                  { value: 'auto', label: 'Auto (exact/similar)' },
+                                  { value: 'new', label: 'Force New Template' },
+                                  { value: 'target', label: 'Merge Into Selected Template' },
+                                ]}
+                              />
+                            </div>
+                            {approvalDraft.templateMergeMode === 'target' ? (
+                              <div className='space-y-1'>
+                                <Label className='text-[11px] text-gray-400'>Merge Target Template</Label>
+                                <UnifiedSelect
+                                  value={approvalDraft.templateTargetId}
+                                  onValueChange={(value: string) => {
+                                    setApprovalDraft((previous) => ({
+                                      ...previous,
+                                      templateTargetId: value,
+                                    }));
+                                  }}
+                                  options={
+                                    templateTargetOptions.length > 0
+                                      ? templateTargetOptions
+                                      : [{ value: '', label: 'No templates for this type' }]
+                                  }
+                                />
+                              </div>
+                            ) : null}
+                          </div>
                           <div className='mb-2 text-[10px] text-gray-500'>
                             Merge eligibility: same segment type + score &gt;=
                             {' '}{templateMergeThreshold.toFixed(2)}
@@ -3269,6 +4126,22 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                     score {(candidate.score * 100).toFixed(1)}% ·
                                     {' '}type {candidate.segmentType} ·
                                     {' '}state {candidate.state} · approvals {candidate.approvals}
+                                  </div>
+                                  <div className='mt-1 flex justify-end'>
+                                    <Button
+                                      type='button'
+                                      variant='outline'
+                                      size='sm'
+                                      onClick={() => {
+                                        setApprovalDraft((previous) => ({
+                                          ...previous,
+                                          templateMergeMode: 'target',
+                                          templateTargetId: candidate.id,
+                                        }));
+                                      }}
+                                    >
+                                      Use Target
+                                    </Button>
                                   </div>
                                 </div>
                               ))}
@@ -3311,9 +4184,36 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                               <UnifiedSelect
                                 value={approvalDraft.ruleSegmentType}
                                 onValueChange={(value: string) => {
+                                  const nextSegmentType = value as PromptExploderSegment['type'];
                                   setApprovalDraft((previous) => ({
                                     ...previous,
-                                    ruleSegmentType: value as PromptExploderSegment['type'],
+                                    ruleSegmentType: nextSegmentType,
+                                    templateTargetId:
+                                      previous.templateMergeMode === 'target'
+                                        ? (effectiveLearnedTemplates.find(
+                                          (template) =>
+                                            template.id === previous.templateTargetId &&
+                                            template.segmentType === nextSegmentType
+                                        )?.id ??
+                                          effectiveLearnedTemplates.find(
+                                            (template) =>
+                                              template.segmentType === nextSegmentType
+                                          )?.id ??
+                                          '')
+                                        : previous.templateTargetId,
+                                    templateMergeMode:
+                                      previous.templateMergeMode === 'target' &&
+                                      !effectiveLearnedTemplates.some(
+                                        (template) =>
+                                          template.id === previous.templateTargetId &&
+                                          template.segmentType === nextSegmentType
+                                      ) &&
+                                      !effectiveLearnedTemplates.some(
+                                        (template) =>
+                                          template.segmentType === nextSegmentType
+                                      )
+                                        ? 'auto'
+                                        : previous.templateMergeMode,
                                   }));
                                 }}
                                 options={[

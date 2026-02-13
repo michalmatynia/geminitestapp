@@ -8,8 +8,13 @@ import { LearnedRuleItem } from './LearnedRuleItem';
 import { usePromptEngine } from '../context/PromptEngineContext';
 
 export function LearnedRuleList(): React.JSX.Element {
-  const { filteredLearnedDrafts, patternTab } = usePromptEngine();
-  const tabLabel = patternTab === 'prompt_exploder' ? 'Prompt Exploder' : 'Core';
+  const { filteredLearnedDrafts, patternTab, exploderSubTab } = usePromptEngine();
+  const tabLabel =
+    patternTab === 'core'
+      ? 'Core'
+      : exploderSubTab === 'image_studio_rules'
+        ? 'Image Studio Rules'
+        : 'Prompt Exploder Rules';
 
   return (
     <div className='space-y-4'>

@@ -7,6 +7,7 @@ import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
 import {
+  type ExploderPatternSubTab,
   type PatternCollectionTab,
   usePromptEngine,
   type ScopeFilter,
@@ -31,10 +32,18 @@ export function PromptEngineFilters(): React.JSX.Element {
     setScope,
     patternTab,
     setPatternTab,
+    exploderSubTab,
+    setExploderSubTab,
     includeDisabled,
     setIncludeDisabled,
     filteredDrafts,
   } = usePromptEngine();
+  const activeTabLabel =
+    patternTab === 'core'
+      ? 'Core'
+      : exploderSubTab === 'image_studio_rules'
+        ? 'Image Studio Rules'
+        : 'Prompt Exploder Rules';
 
   const filters: FilterField[] = [
     {
@@ -80,16 +89,31 @@ export function PromptEngineFilters(): React.JSX.Element {
             Core Patterns
           </TabsTrigger>
           <TabsTrigger value='prompt_exploder'>
-            Prompt Exploder
+            Exploder
           </TabsTrigger>
         </TabsList>
       </Tabs>
+      {patternTab === 'prompt_exploder' ? (
+        <Tabs
+          value={exploderSubTab}
+          onValueChange={(value: string) => {
+            setExploderSubTab(value as ExploderPatternSubTab);
+          }}
+        >
+          <TabsList className='grid w-full max-w-md grid-cols-2'>
+            <TabsTrigger value='prompt_exploder_rules'>
+              Prompt Exploder
+            </TabsTrigger>
+            <TabsTrigger value='image_studio_rules'>
+              Image Studio
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      ) : null}
 
       <div className='text-xs text-gray-400'>
         Showing <span className='text-gray-200'>{filteredDrafts.length}</span> pattern(s) in{' '}
-        <span className='text-gray-200'>
-          {patternTab === 'prompt_exploder' ? 'Prompt Exploder' : 'Core'}
-        </span>{' '}
+        <span className='text-gray-200'>{activeTabLabel}</span>{' '}
         list.
       </div>
 
@@ -109,6 +133,7 @@ export function PromptEngineFilters(): React.JSX.Element {
           setSeverity('all');
           setScope('all');
           setPatternTab('core');
+          setExploderSubTab('prompt_exploder_rules');
           setIncludeDisabled(false);
         }}
         showHeader={false}

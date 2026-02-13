@@ -14,7 +14,39 @@ export type PromptExploderSegmentType =
 export type PromptExploderListItem = {
   id: string;
   text: string;
+  logicalOperator?: PromptExploderLogicalOperator | null;
+  logicalConditions?: PromptExploderLogicalCondition[];
+  referencedParamPath?: string | null;
+  referencedComparator?: PromptExploderLogicalComparator | null;
+  referencedValue?: unknown;
   children: PromptExploderListItem[];
+};
+
+export type PromptExploderLogicalOperator =
+  | 'if'
+  | 'only_if'
+  | 'unless'
+  | 'when';
+
+export type PromptExploderLogicalComparator =
+  | 'truthy'
+  | 'falsy'
+  | 'equals'
+  | 'not_equals'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'contains';
+
+export type PromptExploderLogicalJoin = 'and' | 'or';
+
+export type PromptExploderLogicalCondition = {
+  id: string;
+  paramPath: string;
+  comparator: PromptExploderLogicalComparator;
+  value: unknown;
+  joinWithPrevious?: PromptExploderLogicalJoin | null;
 };
 
 export type PromptExploderSubsection = {
@@ -27,6 +59,19 @@ export type PromptExploderSubsection = {
 
 export type PromptExploderBindingType = 'references' | 'depends_on' | 'uses_param';
 export type PromptExploderBindingOrigin = 'auto' | 'manual';
+
+export type PromptExploderParamUiControl =
+  | 'auto'
+  | 'checkbox'
+  | 'buttons'
+  | 'select'
+  | 'slider'
+  | 'number'
+  | 'text'
+  | 'textarea'
+  | 'json'
+  | 'rgb'
+  | 'tuple2';
 
 export type PromptExploderBinding = {
   id: string;
@@ -53,6 +98,9 @@ export type PromptExploderSegment = {
   subsections: PromptExploderSubsection[];
   paramsText: string;
   paramsObject: Record<string, unknown> | null;
+  paramUiControls?: Record<string, PromptExploderParamUiControl>;
+  paramComments?: Record<string, string>;
+  paramDescriptions?: Record<string, string>;
   matchedPatternIds: string[];
   confidence: number;
 };
@@ -101,6 +149,18 @@ export type PromptExploderBenchmarkCaseConfig = {
   minSegments: number;
 };
 
+export type PromptExploderOperationMode =
+  | 'rules_only'
+  | 'hybrid'
+  | 'ai_assisted';
+
+export type PromptExploderAiProvider =
+  | 'auto'
+  | 'ollama'
+  | 'openai'
+  | 'anthropic'
+  | 'gemini';
+
 export type PromptExploderSettings = {
   version: 1;
   runtime: {
@@ -113,10 +173,20 @@ export type PromptExploderSettings = {
   learning: {
     enabled: boolean;
     similarityThreshold: number;
+    templateMergeThreshold: number;
+    benchmarkSuggestionUpsertTemplates: boolean;
     minApprovalsForMatching: number;
     maxTemplates: number;
     autoActivateLearnedTemplates: boolean;
     templates: PromptExploderLearnedTemplate[];
+  };
+  ai: {
+    operationMode: PromptExploderOperationMode;
+    provider: PromptExploderAiProvider;
+    modelId: string;
+    fallbackModelId: string;
+    temperature: number;
+    maxTokens: number;
   };
   patternSnapshots: PromptExploderPatternSnapshot[];
 };

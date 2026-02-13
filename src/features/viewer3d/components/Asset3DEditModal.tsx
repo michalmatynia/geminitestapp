@@ -1,9 +1,7 @@
 'use client';
 
 import { Plus } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
-import { logClientError } from '@/features/observability';
 import {
   Button,
   Input,
@@ -16,10 +14,9 @@ import {
   FormField,
 } from '@/shared/ui';
 
-import { updateAsset3D } from '../api';
+import { useAsset3DForm } from '../hooks/useAsset3DForm';
 
-import type { Asset3DRecord, Asset3DUpdateInput } from '../types';
-
+import type { Asset3DRecord } from '../types';
 
 interface Asset3DEditModalProps {
   open: boolean;
@@ -30,6 +27,12 @@ interface Asset3DEditModalProps {
   existingTags?: string[];
 }
 
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+};
+
 export function Asset3DEditModal({
   open,
   onClose,
@@ -38,65 +41,24 @@ export function Asset3DEditModal({
   existingCategories = [],
   existingTags = [],
 }: Asset3DEditModalProps): React.JSX.Element {
-  const [name, setName] = useState(asset.name ?? '');
-  const [description, setDescription] = useState(asset.description ?? '');
-  const [category, setCategory] = useState(asset.category ?? '');
-  const [tags, setTags] = useState<string[]>(asset.tags);
-  const [newTag, setNewTag] = useState('');
-  const [isPublic, setIsPublic] = useState(asset.isPublic);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setName(asset.name ?? '');
-    setDescription(asset.description ?? '');
-    setCategory(asset.category ?? '');
-    setTags(asset.tags);
-    setIsPublic(asset.isPublic);
-    setError(null);
-  }, [asset]);
-
-  const handleAddTag = (): void => {
-    const trimmed = newTag.trim().toLowerCase();
-    if (trimmed && !tags.includes(trimmed)) {
-      setTags([...tags, trimmed]);
-      setNewTag('');
-    }
-  };
-
-  const handleRemoveTag = (tag: string): void => {
-    setTags(tags.filter((t: string) => t !== tag));
-  };
-
-  const handleSave = async (): Promise<void> => {
-    setIsSaving(true);
-    setError(null);
-
-    try {
-      const data: Asset3DUpdateInput = {
-        name: name.trim() || null,
-        description: description.trim() || null,
-        category: category.trim() || null,
-        tags,
-        isPublic,
-      };
-
-      const updated = await updateAsset3D(asset.id, data);
-      onSave(updated);
-      onClose();
-    } catch (err) {
-      logClientError(err, { context: { source: 'Asset3DEditModal', action: 'saveAsset', assetId: asset.id } });
-      setError(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-  };
+  const {
+    name,
+    setName,
+    description,
+    setDescription,
+    category,
+    setCategory,
+    tags,
+    newTag,
+    setNewTag,
+    isPublic,
+    setIsPublic,
+    isSaving,
+    error,
+    handleAddTag,
+    handleRemoveTag,
+    handleSave,
+  } = useAsset3DForm(asset, onSave, onClose);
 
   return (
     <FormModal
@@ -108,19 +70,15 @@ export function Asset3DEditModal({
       size='md'
     >
       <div className='space-y-4 max-h-[60vh] overflow-y-auto pr-1'>
-        {/* File Info (read-only) */}
         <FormSection variant='subtle-compact' className='p-3 text-sm'>
           <p className='text-gray-400'>
-            <span className='text-gray-500'>File:</span>{' '}
-            <span className='text-white font-mono text-xs'>{asset.filename}</span>
+            <span className='text-gray-500'>File:</span> <span className='text-white font-mono text-xs'>{asset.filename}</span>
           </p>
           <p className='text-gray-400 mt-1'>
-            <span className='text-gray-500'>Size:</span>{' '}
-            {formatFileSize(asset.size)}
+            <span className='text-gray-500'>Size:</span> {formatFileSize(asset.size)}
           </p>
         </FormSection>
 
-        {/* Name */}
         <FormField label='Name'>
           <Input
             id='name'
@@ -131,7 +89,6 @@ export function Asset3DEditModal({
           />
         </FormField>
 
-        {/* Description */}
         <FormField label='Description'>
           <Textarea
             id='description'
@@ -142,7 +99,6 @@ export function Asset3DEditModal({
           />
         </FormField>
 
-        {/* Category */}
         <FormField label='Category'>
           <div className='flex gap-2'>
             <Input
@@ -161,7 +117,6 @@ export function Asset3DEditModal({
           </div>
         </FormField>
 
-        {/* Tags */}
         <FormField label='Tags'>
           <div className='space-y-2 mt-1'>
             <div className='flex gap-2'>
@@ -210,7 +165,6 @@ export function Asset3DEditModal({
           </div>
         </FormField>
 
-        {/* Visibility */}
         <div className='flex items-center gap-3 p-3 rounded-md border border-border/40 bg-gray-900/40'>
           <Checkbox
             id='is-public'
@@ -219,13 +173,10 @@ export function Asset3DEditModal({
           />
           <label htmlFor='is-public' className='cursor-pointer flex-1'>
             <span className='text-sm text-white font-medium'>Public visibility</span>
-            <p className='text-[11px] text-gray-500'>
-              Make this asset accessible publicly
-            </p>
+            <p className='text-[11px] text-gray-500'>Make this asset accessible publicly</p>
           </label>
         </div>
 
-        {/* Error */}
         {error && (
           <Alert variant='error' className='mt-2'>
             {error}

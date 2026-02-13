@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
 import type {
+  PromptExploderAiProvider,
   PromptExploderBenchmarkCaseConfig,
   PromptExploderLearnedTemplate,
+  PromptExploderOperationMode,
   PromptExploderPatternSnapshot,
   PromptExploderSegmentType,
   PromptExploderSettings,
@@ -20,6 +22,20 @@ const segmentTypeValues: PromptExploderSegmentType[] = [
   'hierarchical_list',
   'conditional_list',
   'qa_matrix',
+];
+
+const operationModeValues: PromptExploderOperationMode[] = [
+  'rules_only',
+  'hybrid',
+  'ai_assisted',
+];
+
+const aiProviderValues: PromptExploderAiProvider[] = [
+  'auto',
+  'ollama',
+  'openai',
+  'anthropic',
+  'gemini',
 ];
 
 const learnedTemplateSchema: z.ZodType<PromptExploderLearnedTemplate> = z.object({
@@ -80,11 +96,31 @@ const promptExploderSettingsSchema: z.ZodType<PromptExploderSettings> = z.object
   learning: z.object({
     enabled: z.boolean().default(true),
     similarityThreshold: z.number().min(0.3).max(0.95).default(0.68),
+    templateMergeThreshold: z.number().min(0.3).max(0.95).default(0.63),
+    benchmarkSuggestionUpsertTemplates: z.boolean().default(true),
     minApprovalsForMatching: z.number().int().min(1).max(20).default(1),
     maxTemplates: z.number().int().min(50).max(5000).default(1000),
     autoActivateLearnedTemplates: z.boolean().default(true),
     templates: z.array(learnedTemplateSchema).default([]),
   }),
+  ai: z
+    .object({
+      operationMode: z.enum(operationModeValues as [PromptExploderOperationMode, ...PromptExploderOperationMode[]]).default('rules_only'),
+      provider: z.enum(aiProviderValues as [PromptExploderAiProvider, ...PromptExploderAiProvider[]]).default('auto'),
+      modelId: z.string().trim().max(200).default(''),
+      fallbackModelId: z.string().trim().max(200).default(''),
+      temperature: z.number().min(0).max(2).default(0.2),
+      maxTokens: z.number().int().min(1).max(8192).default(1200),
+    })
+    .optional()
+    .default({
+      operationMode: 'rules_only',
+      provider: 'auto',
+      modelId: '',
+      fallbackModelId: '',
+      temperature: 0.2,
+      maxTokens: 1200,
+    }),
   patternSnapshots: z.array(patternSnapshotSchema).optional().default([]),
 });
 
@@ -100,10 +136,20 @@ export const defaultPromptExploderSettings: PromptExploderSettings = {
   learning: {
     enabled: true,
     similarityThreshold: 0.68,
+    templateMergeThreshold: 0.63,
+    benchmarkSuggestionUpsertTemplates: true,
     minApprovalsForMatching: 1,
     maxTemplates: 1000,
     autoActivateLearnedTemplates: true,
     templates: [],
+  },
+  ai: {
+    operationMode: 'rules_only',
+    provider: 'auto',
+    modelId: '',
+    fallbackModelId: '',
+    temperature: 0.2,
+    maxTokens: 1200,
   },
   patternSnapshots: [],
 };

@@ -3,10 +3,12 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 import { CompositeStackNode } from './CompositeStackNode';
-import { NODE_HEIGHT, NODE_WIDTH, getCompositeNodeHeight } from '../utils/version-graph';
+import { useVersionNodeMapContext } from './VersionNodeMapContext';
+import { readMeta } from '../utils/metadata';
+import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, NODE_HEIGHT, NODE_WIDTH, getCompositeNodeHeight } from '../utils/version-graph';
 
-import type { VersionEdge, VersionNode } from '../context/VersionGraphContext';
-import type { CompositeLayerConfig, SlotGenerationMetadata } from '../types';
+import type { VersionNode } from '../context/VersionGraphContext';
+import type { CompositeLayerConfig } from '../types';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -38,31 +40,7 @@ const SVG_STYLES = `
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface VersionNodeMapCanvasProps {
-  nodes: VersionNode[];
-  edges: VersionEdge[];
-  selectedNodeId: string | null;
-  hoveredNodeId: string | null;
-  mergeMode: boolean;
-  mergeSelectedIds: string[];
-  collapsedNodeIds: Set<string>;
-  filteredNodeIds: Set<string> | null;
-  isolatedNodeIds: Set<string> | null;
-  compositeMode: boolean;
-  compositeSelectedIds: string[];
-  compareMode: boolean;
-  compareNodeIds: [string, string] | null;
-  onSelectNode: (id: string | null) => void;
-  onHoverNode: (id: string | null) => void;
-  onActivateNode: (id: string) => void;
-  onToggleMergeSelection: (id: string) => void;
-  onToggleCompositeSelection: (id: string) => void;
-  onToggleCollapse: (id: string) => void;
-  onReorderCompositeLayer: (compositeSlotId: string, fromIndex: number, toIndex: number) => void;
-  onContextMenu?: ((nodeId: string, clientX: number, clientY: number) => void) | undefined;
-  getSlotImageSrc: (slot: VersionNode['slot']) => string | null;
-  getSlotAnnotation?: ((slot: VersionNode['slot']) => string | undefined) | undefined;
-  zoom: number;
-  onZoomChange: (z: number) => void;
+  _unused?: never;
 }
 
 export interface VersionNodeMapCanvasRef {
@@ -147,16 +125,15 @@ function getNodeStrokeClass(
   return 'fill-card/80 stroke-blue-400/60';
 }
 
-function readMeta(slot: { metadata?: Record<string, unknown> | null }): SlotGenerationMetadata {
-  if (!slot.metadata || typeof slot.metadata !== 'object') return {};
-  return slot.metadata as SlotGenerationMetadata;
-}
 
 // ── Component ────────────────────────────────────────────────────────────────
 
 export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, VersionNodeMapCanvasProps>(
   function VersionNodeMapCanvas(
-    {
+    _props,
+    ref,
+  ) {
+    const {
       nodes,
       edges,
       selectedNodeId,
@@ -182,14 +159,15 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       getSlotAnnotation,
       zoom,
       onZoomChange,
-    },
-    ref,
-  ) {
+    } = useVersionNodeMapContext();
+
     const svgRef = useRef<SVGSVGElement>(null);
     const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const panRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
     const zoomRef = useRef<number>(zoom);
     const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
+    const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
+    const [smoothTransition, setSmoothTransition] = useState(false);
 
     // Expose SVG ref + fitToView + pan/zoom access
     useImperativeHandle(ref, () => ({
@@ -203,8 +181,8 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
         if (rect.width === 0 || rect.height === 0) return;
 
         // Graph content offset (matches the inner <g> translate)
-        const offsetX = 200;
-        const offsetY = 40;
+        const offsetX = CONTENT_OFFSET_X;
+        const offsetY = CONTENT_OFFSET_Y;
 
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         for (const n of nodes) {
@@ -229,17 +207,21 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
           y: rect.height / 2 - centerY * clampedZoom,
         };
 
+        setSmoothTransition(true);
         panRef.current = newPan;
         zoomRef.current = clampedZoom;
         setPan(newPan);
         onZoomChange(clampedZoom);
+        setTimeout(() => setSmoothTransition(false), 200);
       },
       getPanZoom() {
         return { pan: panRef.current, zoom: zoomRef.current };
       },
       setPan(newPan: { x: number; y: number }) {
+        setSmoothTransition(true);
         panRef.current = newPan;
         setPan(newPan);
+        setTimeout(() => setSmoothTransition(false), 200);
       },
     }), [nodes, onZoomChange]);
 
@@ -389,10 +371,10 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
     const svgRect = svgRef.current?.getBoundingClientRect();
     const cullMargin = 200; // extra margin in world-space units
     const viewBounds = svgRect ? {
-      minX: (-pan.x / zoom) - cullMargin - 200, // -200 for content offset
-      minY: (-pan.y / zoom) - cullMargin - 40,
-      maxX: (-pan.x + svgRect.width) / zoom + cullMargin - 200,
-      maxY: (-pan.y + svgRect.height) / zoom + cullMargin - 40,
+      minX: (-pan.x / zoom) - cullMargin - CONTENT_OFFSET_X,
+      minY: (-pan.y / zoom) - cullMargin - CONTENT_OFFSET_Y,
+      maxX: (-pan.x + svgRect.width) / zoom + cullMargin - CONTENT_OFFSET_X,
+      maxY: (-pan.y + svgRect.height) / zoom + cullMargin - CONTENT_OFFSET_Y,
     } : null;
 
     const isNodeVisible = (node: VersionNode): boolean => {
@@ -414,6 +396,8 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
     return (
       <svg
         ref={svgRef}
+        role='img'
+        aria-label={`Version graph with ${nodes.length} nodes and ${edges.length} edges`}
         className='h-full w-full cursor-grab overscroll-none active:cursor-grabbing'
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -422,8 +406,11 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       >
         <style>{SVG_STYLES}</style>
         <SvgDefs />
-        <g transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}>
-          <g transform={`translate(${nodes.length > 0 ? 200 : 0}, 40)`}>
+        <g
+          transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
+          style={smoothTransition ? { transition: 'transform 0.15s ease-out' } : undefined}
+        >
+          <g transform={`translate(${nodes.length > 0 ? CONTENT_OFFSET_X : 0}, ${CONTENT_OFFSET_Y})`}>
             {/* Edges */}
             {edges.map((edge) => {
               const sourceNode = nodeById.get(edge.source);
@@ -439,6 +426,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
               const midX = (sourceNode.x + targetNode.x) / 2;
               const midY = (sourceNode.y + NODE_HEIGHT / 2 + targetNode.y - NODE_HEIGHT / 2 + 8) / 2;
 
+              const isEdgeHovered = hoveredEdgeId === edge.id;
               const edgeStroke = isCompositeEdge ? '#14b8a6' : isMergeEdge ? '#a855f7' : '#6b7280';
               const edgeMarker = isCompositeEdge
                 ? 'url(#vgraph-arrow-composite)'
@@ -446,21 +434,35 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
 
               return (
                 <React.Fragment key={edge.id}>
+                  {/* Invisible wider hit area for hover */}
                   <path
                     d={buildEdgePath(sourceNode, targetNode)}
                     fill='none'
-                    strokeWidth={1.5}
+                    stroke='transparent'
+                    strokeWidth={10}
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={() => setHoveredEdgeId(edge.id)}
+                    onMouseLeave={() => setHoveredEdgeId(null)}
+                  />
+                  <path
+                    d={buildEdgePath(sourceNode, targetNode)}
+                    fill='none'
+                    strokeWidth={isEdgeHovered ? 2.5 : 1.5}
                     markerEnd={edgeMarker}
                     stroke={edgeStroke}
-                    strokeOpacity={isCompositeEdge || isMergeEdge ? 0.6 : 0.5}
+                    strokeOpacity={isEdgeHovered ? 0.9 : isCompositeEdge || isMergeEdge ? 0.6 : 0.5}
                     strokeDasharray={isCompositeEdge ? '6 3' : isMergeEdge ? '4 3' : undefined}
-                    style={isNewEdge ? {
-                      strokeDasharray: 1000,
-                      strokeDashoffset: 1000,
-                      animation: 'vgraph-edge-draw 0.6s ease forwards 0.2s',
-                    } : undefined}
+                    style={{
+                      pointerEvents: 'none',
+                      transition: 'stroke-width 0.15s ease, stroke-opacity 0.15s ease',
+                      ...(isNewEdge ? {
+                        strokeDasharray: 1000,
+                        strokeDashoffset: 1000,
+                        animation: 'vgraph-edge-draw 0.6s ease forwards 0.2s',
+                      } : {}),
+                    }}
                   />
-                  {zoom > 0.7 ? (
+                  {zoom > 0.7 || isEdgeHovered ? (
                     <text
                       x={midX + 4}
                       y={midY}
@@ -534,12 +536,16 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                         : undefined,
                   }}
                 >
+                  {/* Accessible title */}
+                  <title>{node.label} ({node.type})</title>
+
                   {isCompositeNode && compositeLayers.length > 0 ? (
                     <CompositeStackNode
                       node={node}
                       isSelected={isSelected}
                       isHovered={isHovered}
                       layers={compositeLayers}
+                      zoom={zoom}
                       getSlotLabel={(slotId) => {
                         const n = nodeById.get(slotId);
                         return n ? n.label : slotId.slice(0, 8);
@@ -610,27 +616,36 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                         />
                       ) : null}
 
-                      {/* Annotation badge */}
+                      {/* Annotation badge with tooltip */}
                       {annotation ? (
-                        <circle
-                          cx={6}
-                          cy={NODE_HEIGHT - 8}
-                          r={3}
-                          fill='#facc15'
-                          fillOpacity={0.8}
-                        />
+                        <g>
+                          <circle
+                            cx={6}
+                            cy={NODE_HEIGHT - 8}
+                            r={3}
+                            fill='#facc15'
+                            fillOpacity={0.8}
+                          />
+                          <title>{annotation}</title>
+                        </g>
                       ) : null}
 
-                      {/* Merge type badge */}
-                      {node.type === 'merge' ? (
+                      {/* Type badge */}
+                      {node.type !== 'composite' ? (
                         <text
                           x={6}
                           y={12}
                           fontSize={8}
-                          fill='#a855f7'
+                          fill={
+                            node.type === 'merge'
+                              ? '#a855f7'
+                              : node.type === 'generation'
+                                ? '#34d399'
+                                : '#60a5fa'
+                          }
                           fontWeight='bold'
                         >
-                          M
+                          {node.type === 'merge' ? 'M' : node.type === 'generation' ? 'G' : 'B'}
                         </text>
                       ) : null}
 

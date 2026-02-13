@@ -584,7 +584,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       }
       
       const payload = validationResult.data;
-      const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
+      const created = (await productRepository.createProduct(payload)) as unknown as ProductWithImages | null;
       if (!created && payload.sku) {
         throw internalError('Failed to create product.');
       }
@@ -666,7 +666,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           }
           
           const payload = validationResult.data;
-          const created = (await productRepository.createProduct(payload)) as ProductWithImages | null;
+          const created = (await productRepository.createProduct(payload)) as unknown as ProductWithImages | null;
           if (created) {
             await productRepository.replaceProductCatalogs(created.id, [
               targetCatalog.id

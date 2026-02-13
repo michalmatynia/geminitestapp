@@ -5,6 +5,8 @@ import {
   type FolderTreeInstance,
 } from './folder-tree-profiles-v2';
 
+export { type FolderTreeInstance };
+
 export const FOLDER_TREE_UI_STATE_V1_SETTING_KEY = 'folder_tree_ui_state_v1';
 
 export type FolderTreeUiStateV1Entry = {
@@ -35,6 +37,7 @@ const mapSchema: z.ZodType<FolderTreeUiStateV1Map> = z.object({
   image_studio: entrySchema,
   product_categories: entrySchema,
   cms_page_builder: entrySchema,
+  case_resolver: entrySchema,
 });
 
 const createDefaultEntry = (): FolderTreeUiStateV1Entry => ({
@@ -47,6 +50,7 @@ export const createDefaultFolderTreeUiStateV1 = (): FolderTreeUiStateV1Map => ({
   image_studio: createDefaultEntry(),
   product_categories: createDefaultEntry(),
   cms_page_builder: createDefaultEntry(),
+  case_resolver: createDefaultEntry(),
 });
 
 const coerceEntry = (
@@ -95,4 +99,3 @@ export const parseFolderTreeUiStateV1 = (
 
 export const serializeFolderTreeUiStateV1 = (value: FolderTreeUiStateV1Map): string =>
   JSON.stringify(value);
-

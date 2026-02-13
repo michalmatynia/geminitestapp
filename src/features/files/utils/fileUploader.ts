@@ -16,6 +16,7 @@ const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const productsRoot = path.join(uploadsRoot, 'products');
 const notesRoot = path.join(uploadsRoot, 'notes');
 const studioRoot = path.join(uploadsRoot, 'studio');
+const caseResolverRoot = path.join(uploadsRoot, 'case-resolver');
 const tempFolderName = 'temp';
 
 const publicRoot = path.resolve(process.cwd(), 'public');
@@ -91,7 +92,7 @@ function getUploadTarget({
   projectId,
   folder,
 }: {
-  category?: 'products' | 'notes' | 'cms' | 'studio' | undefined;
+  category?: 'products' | 'notes' | 'cms' | 'studio' | 'case_resolver' | undefined;
   sku?: string | null | undefined;
   noteId?: string | null | undefined;
   projectId?: string | null | undefined;
@@ -131,13 +132,24 @@ function getUploadTarget({
     return { diskDir, publicDir };
   }
 
+  if (category === 'case_resolver') {
+    const safeFolder = folder?.trim() ? sanitizeFolderPath(folder) : '';
+    const diskDir = safeFolder
+      ? path.join(caseResolverRoot, safeFolder)
+      : caseResolverRoot;
+    const publicDir = safeFolder
+      ? `/uploads/case-resolver/${safeFolder}`
+      : '/uploads/case-resolver';
+    return { diskDir, publicDir };
+  }
+
   return { diskDir: uploadsRoot, publicDir: '/uploads' };
 }
 
 export async function uploadFile(
   file: File,
   options?: {
-    category?: 'products' | 'notes' | 'cms' | 'studio' | undefined;
+    category?: 'products' | 'notes' | 'cms' | 'studio' | 'case_resolver' | undefined;
     sku?: string | null | undefined;
     noteId?: string | null | undefined;
     projectId?: string | null | undefined;

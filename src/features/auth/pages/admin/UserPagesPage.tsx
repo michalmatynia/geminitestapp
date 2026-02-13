@@ -10,7 +10,7 @@ import {
 } from '@/features/auth/utils/auth-user-pages';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Label, Switch, useToast, SectionPanel, FormSection } from '@/shared/ui';
+import { Button, Label, Switch, useToast,  FormSection } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export default function AuthUserPagesPage(): React.JSX.Element {
@@ -23,9 +23,11 @@ export default function AuthUserPagesPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <SectionPanel className='p-6 text-sm text-gray-400'>
-        Loading user page settings...
-      </SectionPanel>
+      <div className='container mx-auto py-10'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
+          Loading user page settings...
+        </div>
+      </div>
     );
   }
 

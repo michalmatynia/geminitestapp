@@ -1,12 +1,15 @@
 'use client';
 
 import React from 'react';
+
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
-import { SettingsFormModal } from '@/shared/ui';
-import { useCountryForm } from './hooks/useCountryForm';
-import { CountryFormFields } from './CountryFormFields';
-import { CountryCurrencySection } from './CountryCurrencySection';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
+import { SettingsFormModal } from '@/shared/ui';
+
+import { CountryCurrencySection } from './CountryCurrencySection';
+import { CountryFormFields } from './CountryFormFields';
+import { CountryModalProvider } from './CountryModalContext';
+import { useCountryForm } from './hooks/useCountryForm';
 
 export function CountryModal(): React.JSX.Element {
   const {
@@ -49,18 +52,19 @@ export function CountryModal(): React.JSX.Element {
       size='md'
     >
       <div className='space-y-4'>
-        <CountryFormFields
-          code={form.code}
-          onCodeChange={(code, name) => setForm({ code, name })}
-          name={form.name}
-          onNameChange={(name) => setForm((p) => ({ ...p, name }))}
-        />
-        <CountryCurrencySection
-          currencyOptions={currencyOptions}
-          selectedCurrencyIds={selectedCurrencyIds}
-          onToggleCurrency={toggleCurrency}
-          loadingCurrencies={loadingCurrencies}
-        />
+        <CountryModalProvider
+          value={{
+            form,
+            setForm,
+            currencyOptions,
+            selectedCurrencyIds,
+            toggleCurrency,
+            loadingCurrencies,
+          }}
+        >
+          <CountryFormFields />
+          <CountryCurrencySection />
+        </CountryModalProvider>
       </div>
     </SettingsFormModal>
   );

@@ -6,7 +6,7 @@ import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import { Button, ConfirmDialog, Input, SectionHeader, SectionPanel, FormModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect, FormField, FormSection } from '@/shared/ui';
+import { Button, ConfirmDialog, Input, SectionHeader,  FormModal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, UnifiedSelect, FormField, FormSection } from '@/shared/ui';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
@@ -105,7 +105,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <SectionPanel variant='subtle' className='p-0 overflow-hidden'>
+      <div className='overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
         <Table>
           <TableHeader>
             <TableRow className='border-border/60'>
@@ -175,7 +175,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             )}
           </TableBody>
         </Table>
-      </SectionPanel>
+      </div>
 
       <ConfirmDialog
         open={!!itemToDelete}

@@ -1,58 +1,27 @@
 'use client';
 
-import {
-  ArrowDown,
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
-  Columns2,
-  Copy,
-  Crosshair,
-  Download,
-  Focus,
-  GitMerge,
-  Layers,
-  Map,
-  Maximize2,
-  Minus,
-  MousePointer2,
-  BarChart3,
-  Network,
-  Plus,
-  Search,
-  Shield,
-  X,
-} from 'lucide-react';
+import { Focus } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { UnifiedButton, UnifiedInput } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+import { UnifiedButton } from '@/shared/ui';
 
+import { VersionGraphContextMenu } from './VersionGraphContextMenu';
+import { VersionGraphControlsProvider } from './VersionGraphControlsContext';
+import { VersionGraphFilterBar } from './VersionGraphFilterBar';
+import { VersionGraphInspector } from './VersionGraphInspector';
+import { VersionGraphInspectorProvider } from './VersionGraphInspectorContext';
+import { VersionGraphToolbar } from './VersionGraphToolbar';
 import { VersionNodeMapCanvas, type VersionNodeMapCanvasRef } from './VersionNodeMapCanvas';
+import { VersionNodeMapProvider } from './VersionNodeMapContext';
 import { VersionNodeMapMinimap } from './VersionNodeMapMinimap';
 import { useSlotsActions } from '../context/SlotsContext';
 import { useVersionGraphActions, useVersionGraphState } from '../context/VersionGraphContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
-import { exportSvgAsPng, type LayoutMode } from '../utils/version-graph';
+import { readMeta } from '../utils/metadata';
+import { useVersionGraphShortcuts } from '../hooks/useVersionGraphShortcuts';
+import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, exportSvgAsPng } from '../utils/version-graph';
 
-import type { SlotGenerationMetadata } from '../types';
 import type { ImageStudioSlotRecord } from '../types';
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function readMeta(slot: ImageStudioSlotRecord): SlotGenerationMetadata {
-  if (!slot.metadata || typeof slot.metadata !== 'object') return {};
-  return slot.metadata as SlotGenerationMetadata;
-}
-
-// ── Layout mode config ──────────────────────────────────────────────────────
-
-const LAYOUT_MODES: { mode: LayoutMode; label: string; Icon: typeof Network }[] = [
-  { mode: 'dag', label: 'DAG', Icon: Network },
-  { mode: 'timeline-h', label: 'H', Icon: ArrowRight },
-  { mode: 'timeline-v', label: 'V', Icon: ArrowDown },
-];
-const ZOOM_BUTTON_STEP = 0.07;
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -74,6 +43,7 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
     filterTypes,
     filterHasMask,
     filteredNodeIds,
+    filterLeafOnly,
     layoutMode,
     graphStats,
     compositeMode,
@@ -101,9 +71,11 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
     executeComposite,
     reorderCompositeLayer,
     flattenComposite,
+    refreshCompositePreview,
     setFilterQuery,
     toggleFilterType,
     setFilterHasMask,
+    toggleFilterLeafOnly,
     clearFilters,
     setLayoutMode,
     isolateBranch,
@@ -215,6 +187,25 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
     setContextMenu(null);
   }, []);
 
+  const handleCtxSetAsSource = useCallback((nodeId: string) => {
+    setWorkingSlotId(nodeId);
+    onSwitchToControls?.();
+  }, [setWorkingSlotId, onSwitchToControls]);
+
+  const handleCtxAddToComposite = useCallback((nodeId: string) => {
+    if (!compositeMode) toggleCompositeMode();
+    toggleCompositeSelection(nodeId);
+  }, [compositeMode, toggleCompositeMode, toggleCompositeSelection]);
+
+  const handleCtxCompareWith = useCallback((nodeId: string) => {
+    if (!compareMode) toggleCompareMode();
+    setCompareNodeIds([nodeId, '']);
+  }, [compareMode, toggleCompareMode, setCompareNodeIds]);
+
+  const handleCtxCopyId = useCallback((nodeId: string) => {
+    void navigator.clipboard.writeText(nodeId);
+  }, []);
+
   // Close context menu on Escape key
   useEffect(() => {
     if (!contextMenu) return;
@@ -235,15 +226,12 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
   const handleCompareNodeClick = useCallback((nodeId: string) => {
     if (!compareMode) return;
     if (!compareNodeIds) {
-      // First node selected — store as first, second is pending
       setCompareNodeIds([nodeId, '']);
     } else if (!compareNodeIds[1] || compareNodeIds[0] === nodeId) {
-      // Replace second (or ignore if same as first)
       if (compareNodeIds[0] !== nodeId) {
         setCompareNodeIds([compareNodeIds[0], nodeId]);
       }
     } else {
-      // Both filled — start over with new first
       setCompareNodeIds([nodeId, '']);
     }
   }, [compareMode, compareNodeIds, setCompareNodeIds]);
@@ -274,636 +262,288 @@ export function VersionNodeMapPanel({ onSwitchToControls }: VersionNodeMapPanelP
     canvasRef.current?.setPan({ x, y });
   }, []);
 
-  const hasActiveFilters = filterQuery || filterTypes.size > 0 || filterHasMask !== null;
+  const handleFocusNode = useCallback((nodeId: string) => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node) return;
+    const containerW = canvasContainerRef.current?.clientWidth ?? 300;
+    const containerH = canvasContainerRef.current?.clientHeight ?? 200;
+    // Center canvas on the node (account for content offset)
+    const worldX = node.x + CONTENT_OFFSET_X;
+    const worldY = node.y + CONTENT_OFFSET_Y;
+    canvasRef.current?.setPan({
+      x: containerW / 2 - worldX * zoom,
+      y: containerH / 2 - worldY * zoom,
+    });
+  }, [nodes, zoom]);
+
+  const hasActiveFilters = filterQuery || filterTypes.size > 0 || filterHasMask !== null || filterLeafOnly;
+
+  const canvasContextValue = {
+    nodes,
+    edges,
+    selectedNodeId,
+    hoveredNodeId,
+    mergeMode,
+    mergeSelectedIds,
+    collapsedNodeIds,
+    filteredNodeIds,
+    isolatedNodeIds,
+    compositeMode,
+    compositeSelectedIds,
+    compareMode,
+    compareNodeIds,
+    onSelectNode: handleCanvasSelectNode,
+    onHoverNode: hoverNode,
+    onActivateNode: handleActivateNode,
+    onToggleMergeSelection: toggleMergeSelection,
+    onToggleCompositeSelection: toggleCompositeSelection,
+    onToggleCollapse: toggleCollapse,
+    onReorderCompositeLayer: (slotId: string, from: number, to: number): void => {
+      void reorderCompositeLayer(slotId, from, to);
+    },
+    onContextMenu: handleContextMenu,
+    getSlotImageSrc,
+    getSlotAnnotation,
+    zoom,
+    onZoomChange: setZoom,
+    pan: canvasRef.current?.getPanZoom().pan ?? { x: 0, y: 0 },
+    viewportWidth: canvasContainerRef.current?.clientWidth ?? 0,
+    viewportHeight: canvasContainerRef.current?.clientHeight ?? 0,
+    onPanTo: handleMinimapPan,
+  };
+  const inspectorContextValue = {
+    selectedNode,
+    compositeLoading,
+    compositeBusy,
+    getSlotImageSrc,
+    onSetAsSource: handleSetAsSource,
+    onFlattenComposite: (slotId: string): void => {
+      void handleFlattenComposite(slotId);
+    },
+    onRefreshCompositePreview: (slotId: string): void => {
+      void refreshCompositePreview(slotId);
+    },
+    onSelectNode: selectNode,
+    onFocusNode: handleFocusNode,
+    onIsolateBranch: isolateBranch,
+    annotationDraft,
+    onAnnotationChange: setAnnotationDraft,
+    onAnnotationBlur: handleAnnotationBlur,
+  };
+  const controlsContextValue = {
+    nodeCount: nodes.length,
+    allNodeCount: allNodes.length,
+    mergeMode,
+    mergeSelectedIds,
+    mergeBusy,
+    onToggleMergeMode: toggleMergeMode,
+    onClearMergeSelection: clearMergeSelection,
+    onExecuteMerge: () => {
+      void handleExecuteMerge();
+    },
+    compositeMode,
+    compositeSelectedIds,
+    compositeBusy,
+    onToggleCompositeMode: toggleCompositeMode,
+    onClearCompositeSelection: clearCompositeSelection,
+    onExecuteComposite: () => {
+      void handleExecuteComposite();
+    },
+    onCollapseAll: collapseAll,
+    onExpandAll: expandAll,
+    layoutMode,
+    onSetLayoutMode: setLayoutMode,
+    zoom,
+    onSetZoom: setZoom,
+    onFitToView: () => canvasRef.current?.fitToView(),
+    showStats,
+    onToggleStats: () => setShowStats((v) => !v),
+    compareMode,
+    onToggleCompareMode: toggleCompareMode,
+    showMinimap,
+    onToggleMinimap: () => setShowMinimap((v) => !v),
+    showMinimapButton: nodes.length > 8,
+    exporting,
+    onExportPng: () => {
+      void handleExportPng();
+    },
+    filterQuery,
+    filterTypes,
+    filterHasMask,
+    filterLeafOnly,
+    hasActiveFilters: !!hasActiveFilters,
+    onSetFilterQuery: setFilterQuery,
+    onToggleFilterType: toggleFilterType,
+    onSetFilterHasMask: setFilterHasMask,
+    onToggleLeafOnly: toggleFilterLeafOnly,
+    onClearFilters: clearFilters,
+  };
+
+  // ── Keyboard shortcuts ──
+  const handleKeyDown = useVersionGraphShortcuts({
+    mergeMode,
+    compositeMode,
+    compareMode,
+    isolatedNodeId,
+    selectedNodeId,
+    nodes,
+    toggleMergeMode,
+    toggleCompositeMode,
+    toggleCompareMode,
+    isolateBranch,
+    selectNode,
+    setAnnotation,
+    setAnnotationDraft,
+    fitToView: () => canvasRef.current?.fitToView(),
+    focusNode: handleFocusNode,
+  });
 
   return (
-    <div className='flex h-full min-h-0 flex-col'>
-      {/* Toolbar */}
-      <div className='flex items-center justify-between border-b border-border/40 px-3 py-1.5'>
-        <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-          Version Graph ({nodes.length}{allNodes.length !== nodes.length ? `/${allNodes.length}` : ''})
-        </div>
-        <div className='flex items-center gap-1'>
-          {/* Merge mode toggle */}
-          <UnifiedButton
-            variant={mergeMode ? 'default' : 'ghost'}
-            size='icon'
-            className={cn('size-6', mergeMode && 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30')}
-            title={mergeMode ? 'Exit merge mode' : 'Enter merge mode'}
-            onClick={toggleMergeMode}
-          >
-            <GitMerge className='size-3' />
-          </UnifiedButton>
+    <VersionGraphControlsProvider value={controlsContextValue}>
+      <div className='flex h-full min-h-0 flex-col' tabIndex={-1} onKeyDown={handleKeyDown}>
+        {/* Toolbar */}
+        <VersionGraphToolbar />
 
-          {/* Merge execute button */}
-          {mergeMode && mergeSelectedIds.length >= 2 ? (
-            <UnifiedButton
-              variant='outline'
-              size='sm'
-              className='h-6 border-orange-400/40 px-2 text-[10px] text-orange-400 hover:bg-orange-500/10'
-              disabled={mergeBusy}
-              onClick={() => void handleExecuteMerge()}
-            >
-              Merge ({mergeSelectedIds.length})
-            </UnifiedButton>
-          ) : null}
-
-          {/* Clear merge selection */}
-          {mergeMode && mergeSelectedIds.length > 0 ? (
-            <UnifiedButton
-              variant='ghost'
-              size='icon'
-              className='size-6 text-gray-400'
-              title='Clear selection'
-              onClick={clearMergeSelection}
-            >
-              <X className='size-3' />
-            </UnifiedButton>
-          ) : null}
-
-          {/* Composite mode toggle */}
-          <UnifiedButton
-            variant={compositeMode ? 'default' : 'ghost'}
-            size='icon'
-            className={cn('size-6', compositeMode && 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30')}
-            title={compositeMode ? 'Exit composite mode' : 'Enter composite mode'}
-            onClick={toggleCompositeMode}
-          >
-            <Layers className='size-3' />
-          </UnifiedButton>
-
-          {/* Composite execute button */}
-          {compositeMode && compositeSelectedIds.length >= 2 ? (
-            <UnifiedButton
-              variant='outline'
-              size='sm'
-              className='h-6 border-teal-400/40 px-2 text-[10px] text-teal-400 hover:bg-teal-500/10'
-              disabled={compositeBusy}
-              onClick={() => void handleExecuteComposite()}
-            >
-              Composite ({compositeSelectedIds.length})
-            </UnifiedButton>
-          ) : null}
-
-          {/* Clear composite selection */}
-          {compositeMode && compositeSelectedIds.length > 0 ? (
-            <UnifiedButton
-              variant='ghost'
-              size='icon'
-              className='size-6 text-gray-400'
-              title='Clear selection'
-              onClick={clearCompositeSelection}
-            >
-              <X className='size-3' />
-            </UnifiedButton>
-          ) : null}
-
-          <div className='mx-1 h-4 w-px bg-border/40' />
-
-          {/* Collapse controls */}
-          <UnifiedButton
-            variant='ghost'
-            size='icon'
-            className='size-6'
-            title='Collapse all'
-            onClick={collapseAll}
-          >
-            <ChevronUp className='size-3' />
-          </UnifiedButton>
-          <UnifiedButton
-            variant='ghost'
-            size='icon'
-            className='size-6'
-            title='Expand all'
-            onClick={expandAll}
-          >
-            <ChevronDown className='size-3' />
-          </UnifiedButton>
-
-          <div className='mx-1 h-4 w-px bg-border/40' />
-
-          {/* Layout mode selector */}
-          <div className='flex items-center rounded border border-border/40'>
-            {LAYOUT_MODES.map(({ mode, label, Icon }) => (
-              <button
-                key={mode}
-                type='button'
-                className={cn(
-                  'flex items-center gap-0.5 px-1.5 py-0.5 text-[9px]',
-                  layoutMode === mode
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-gray-500 hover:text-gray-300',
-                )}
-                title={`Layout: ${label}`}
-                onClick={() => setLayoutMode(mode)}
-              >
-                <Icon className='size-2.5' />
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className='mx-1 h-4 w-px bg-border/40' />
-
-          {/* Zoom controls */}
-          <UnifiedButton
-            variant='ghost'
-            size='icon'
-            className='size-6'
-            title='Zoom out'
-            onClick={() => setZoom((z) => Math.max(0.25, z - ZOOM_BUTTON_STEP))}
-          >
-            <Minus className='size-3' />
-          </UnifiedButton>
-          <span className='min-w-[36px] text-center text-[10px] text-gray-400'>
-            {Math.round(zoom * 100)}%
-          </span>
-          <UnifiedButton
-            variant='ghost'
-            size='icon'
-            className='size-6'
-            title='Zoom in'
-            onClick={() => setZoom((z) => Math.min(3, z + ZOOM_BUTTON_STEP))}
-          >
-            <Plus className='size-3' />
-          </UnifiedButton>
-          <UnifiedButton
-            variant='ghost'
-            size='icon'
-            className='size-6'
-            title='Fit to view'
-            onClick={() => canvasRef.current?.fitToView()}
-          >
-            <Maximize2 className='size-3' />
-          </UnifiedButton>
-
-          <div className='mx-1 h-4 w-px bg-border/40' />
-
-          {/* Stats toggle */}
-          <UnifiedButton
-            variant={showStats ? 'default' : 'ghost'}
-            size='icon'
-            className={cn('size-6', showStats && 'bg-accent')}
-            title={showStats ? 'Hide stats' : 'Show stats'}
-            onClick={() => setShowStats((v) => !v)}
-          >
-            <BarChart3 className='size-3' />
-          </UnifiedButton>
-
-          {/* Compare mode toggle */}
-          <UnifiedButton
-            variant={compareMode ? 'default' : 'ghost'}
-            size='icon'
-            className={cn('size-6', compareMode && 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30')}
-            title={compareMode ? 'Exit compare mode' : 'Compare two nodes'}
-            onClick={toggleCompareMode}
-          >
-            <Columns2 className='size-3' />
-          </UnifiedButton>
-
-          {/* Minimap toggle */}
-          {nodes.length > 8 ? (
-            <UnifiedButton
-              variant={showMinimap ? 'default' : 'ghost'}
-              size='icon'
-              className={cn('size-6', showMinimap && 'bg-accent')}
-              title={showMinimap ? 'Hide minimap' : 'Show minimap'}
-              onClick={() => setShowMinimap((v) => !v)}
-            >
-              <Map className='size-3' />
-            </UnifiedButton>
-          ) : null}
-
-          {/* Export PNG */}
-          <UnifiedButton
-            variant='ghost'
-            size='icon'
-            className='size-6'
-            title='Export as PNG'
-            disabled={exporting || nodes.length === 0}
-            onClick={() => void handleExportPng()}
-          >
-            <Download className='size-3' />
-          </UnifiedButton>
-        </div>
-      </div>
-
-      {/* Stats row */}
-      {showStats ? (
-        <div className='border-b border-border/40 px-3 py-1 text-[9px] text-gray-500'>
-          {graphStats.totalNodes} nodes · {graphStats.baseCount} base · {graphStats.generationCount} gen · {graphStats.mergeCount} merge{graphStats.compositeCount > 0 ? ` · ${graphStats.compositeCount} comp` : ''} · depth {graphStats.maxDepth} · {graphStats.maskedCount} masked
-        </div>
-      ) : null}
-
-      {/* Search & Filter bar */}
-      <div className='border-b border-border/40 px-3 py-1.5'>
-        <div className='flex items-center gap-1.5'>
-          <div className='relative flex-1'>
-            <Search className='absolute left-1.5 top-1/2 size-3 -translate-y-1/2 text-gray-500' />
-            <UnifiedInput
-              type='text'
-              value={filterQuery}
-              onChange={(e) => setFilterQuery(e.target.value)}
-              placeholder='Search nodes...'
-              className='h-6 w-full rounded border border-border/40 bg-transparent pl-5 pr-2 text-[10px] text-gray-300 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none'
-            />
-          </div>
-
-          {/* Type filter chips */}
-          {(['base', 'generation', 'merge', 'composite'] as const).map((t) => (
-            <button
-              key={t}
-              type='button'
-              className={cn(
-                'rounded px-1.5 py-0.5 text-[9px] font-medium',
-                filterTypes.has(t)
-                  ? t === 'base'
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : t === 'generation'
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : t === 'composite'
-                        ? 'bg-teal-500/20 text-teal-400'
-                        : 'bg-purple-500/20 text-purple-400'
-                  : 'text-gray-500 hover:text-gray-400',
-              )}
-              title={`Filter: ${t}`}
-              onClick={() => toggleFilterType(t)}
-            >
-              {t === 'base' ? 'Base' : t === 'generation' ? 'Gen' : t === 'composite' ? 'Comp' : 'Merge'}
-            </button>
-          ))}
-
-          {/* Mask filter */}
-          <button
-            type='button'
-            className={cn(
-              'rounded px-1.5 py-0.5 text-[9px] font-medium',
-              filterHasMask !== null
-                ? 'bg-purple-500/20 text-purple-400'
-                : 'text-gray-500 hover:text-gray-400',
-            )}
-            title={
-              filterHasMask === null
-                ? 'Filter: masks (any)'
-                : filterHasMask
-                  ? 'Filter: has mask'
-                  : 'Filter: no mask'
-            }
-            onClick={() => {
-              // Cycle: null → true → false → null
-              if (filterHasMask === null) setFilterHasMask(true);
-              else if (filterHasMask === true) setFilterHasMask(false);
-              else setFilterHasMask(null);
-            }}
-          >
-            <Shield className='inline size-2.5' />
-          </button>
-
-          {/* Clear filters */}
-          {hasActiveFilters ? (
-            <button
-              type='button'
-              className='rounded px-1 py-0.5 text-[9px] text-gray-500 hover:text-gray-400'
-              title='Clear all filters'
-              onClick={clearFilters}
-            >
-              <X className='size-3' />
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Merge mode banner */}
-      {mergeMode ? (
-        <div className='border-b border-orange-400/20 bg-orange-500/5 px-3 py-1 text-[10px] text-orange-400'>
-          Click nodes to select for merge. Select 2+ nodes, then click Merge.
-        </div>
-      ) : null}
-
-      {/* Composite mode banner */}
-      {compositeMode ? (
-        <div className='border-b border-teal-400/20 bg-teal-500/5 px-3 py-1 text-[10px] text-teal-400'>
-          Click nodes to select for compositing. Select 2+ nodes, then click Composite.
-        </div>
-      ) : null}
-
-      {/* Compare mode banner */}
-      {compareMode ? (
-        <div className='border-b border-cyan-400/20 bg-cyan-500/5 px-3 py-1 text-[10px] text-cyan-400'>
-          {compareNodeIds?.[0] && !compareNodeIds[1]
-            ? 'Now click a second node to compare.'
-            : 'Click two nodes to compare side by side.'}
-        </div>
-      ) : null}
-
-      {/* Isolation banner */}
-      {isolatedNodeId ? (
-        <div className='flex items-center justify-between border-b border-blue-400/20 bg-blue-500/5 px-3 py-1'>
-          <span className='text-[10px] text-blue-400'>
-            <Focus className='mr-1 inline size-2.5' />
-            Branch isolated
-          </span>
-          <button
-            type='button'
-            className='text-[10px] text-blue-400 hover:text-blue-300'
-            onClick={() => isolateBranch(null)}
-          >
-            Clear
-          </button>
-        </div>
-      ) : null}
-
-      {/* Canvas */}
-      <div ref={canvasContainerRef} className='relative min-h-0 flex-1'>
-        <VersionNodeMapCanvas
-          ref={canvasRef}
-          nodes={nodes}
-          edges={edges}
-          selectedNodeId={selectedNodeId}
-          hoveredNodeId={hoveredNodeId}
-          mergeMode={mergeMode}
-          mergeSelectedIds={mergeSelectedIds}
-          compositeMode={compositeMode}
-          compositeSelectedIds={compositeSelectedIds}
-          collapsedNodeIds={collapsedNodeIds}
-          filteredNodeIds={filteredNodeIds}
-          isolatedNodeIds={isolatedNodeIds}
-          compareMode={compareMode}
-          compareNodeIds={compareNodeIds}
-          onSelectNode={handleCanvasSelectNode}
-          onHoverNode={hoverNode}
-          onActivateNode={handleActivateNode}
-          onToggleMergeSelection={toggleMergeSelection}
-          onToggleCompositeSelection={toggleCompositeSelection}
-          onToggleCollapse={toggleCollapse}
-          onReorderCompositeLayer={(slotId, from, to) => void reorderCompositeLayer(slotId, from, to)}
-          onContextMenu={handleContextMenu}
-          getSlotImageSrc={getSlotImageSrc}
-          getSlotAnnotation={getSlotAnnotation}
-          zoom={zoom}
-          onZoomChange={setZoom}
-        />
-
-        {/* Minimap overlay */}
-        {showMinimap && nodes.length > 8 ? (
-          <div className='absolute bottom-2 right-2 z-10'>
-            <VersionNodeMapMinimap
-              nodes={nodes}
-              edges={edges}
-              selectedNodeId={selectedNodeId}
-              pan={canvasRef.current?.getPanZoom().pan ?? { x: 0, y: 0 }}
-              zoom={zoom}
-              viewportWidth={canvasContainerRef.current?.clientWidth ?? 300}
-              viewportHeight={canvasContainerRef.current?.clientHeight ?? 200}
-              onPanTo={handleMinimapPan}
-            />
+        {/* Stats row */}
+        {showStats ? (
+          <div className='border-b border-border/40 px-3 py-1 text-[9px] text-gray-500'>
+            {graphStats.totalNodes} nodes · {graphStats.baseCount} base · {graphStats.generationCount} gen · {graphStats.mergeCount} merge{graphStats.compositeCount > 0 ? ` · ${graphStats.compositeCount} comp` : ''} · depth {graphStats.maxDepth} · {graphStats.maskedCount} masked
           </div>
         ) : null}
-      </div>
 
-      {/* Context menu overlay */}
-      {contextMenu && contextMenuNode ? (
-        <>
-          {/* Backdrop to close (Escape key handled via useEffect) */}
-          <div className='fixed inset-0 z-50' onClick={closeContextMenu} role='presentation' />
-          <div
-            className='fixed z-50 min-w-[140px] rounded border border-border/60 bg-card py-1 shadow-lg'
-            style={{ left: contextMenu.x, top: contextMenu.y }}
-          >
+        {/* Filter bar */}
+        <VersionGraphFilterBar />
+
+        {/* Mode banners */}
+        {mergeMode ? (
+          <div className='border-b border-orange-400/20 bg-orange-500/5 px-3 py-1 text-[10px] text-orange-400'>
+          Click nodes to select for merge. Select 2+ nodes, then click Merge.
+          </div>
+        ) : null}
+        {compositeMode ? (
+          <div className='border-b border-teal-400/20 bg-teal-500/5 px-3 py-1 text-[10px] text-teal-400'>
+          Click nodes to select for compositing. Select 2+ nodes, then click Composite.
+          </div>
+        ) : null}
+        {compareMode ? (
+          <div className='border-b border-cyan-400/20 bg-cyan-500/5 px-3 py-1 text-[10px] text-cyan-400'>
+            {compareNodeIds?.[0] && !compareNodeIds[1]
+              ? 'Now click a second node to compare.'
+              : 'Click two nodes to compare side by side.'}
+          </div>
+        ) : null}
+        {isolatedNodeId ? (
+          <div className='flex items-center justify-between border-b border-blue-400/20 bg-blue-500/5 px-3 py-1'>
+            <span className='text-[10px] text-blue-400'>
+              <Focus className='mr-1 inline size-2.5' />
+            Branch isolated
+            </span>
             <button
               type='button'
-              className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
-              onClick={() => {
-                setWorkingSlotId(contextMenu.nodeId);
-                onSwitchToControls?.();
-                closeContextMenu();
-              }}
+              className='text-[10px] text-blue-400 hover:text-blue-300'
+              onClick={() => isolateBranch(null)}
             >
-              <Crosshair className='size-3' />
-              Set as Source
+            Clear
             </button>
-            <button
-              type='button'
-              className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
-              onClick={() => {
-                isolateBranch(contextMenu.nodeId);
-                closeContextMenu();
-              }}
-            >
-              <Focus className='size-3' />
-              Isolate Branch
-            </button>
-            {contextMenuNode.childIds.length > 0 ? (
-              <button
-                type='button'
-                className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
-                onClick={() => {
-                  toggleCollapse(contextMenu.nodeId);
-                  closeContextMenu();
-                }}
-              >
-                {collapsedNodeIds.has(contextMenu.nodeId) ? (
-                  <><ChevronDown className='size-3' /> Expand</>
-                ) : (
-                  <><ChevronUp className='size-3' /> Collapse</>
-                )}
-              </button>
+          </div>
+        ) : null}
+
+        {/* Canvas */}
+        <div ref={canvasContainerRef} className='relative min-h-0 flex-1'>
+          <VersionNodeMapProvider value={canvasContextValue}>
+            <VersionNodeMapCanvas ref={canvasRef} />
+
+            {/* Minimap overlay */}
+            {showMinimap && nodes.length > 8 ? (
+              <div className='absolute bottom-2 right-2 z-10'>
+                <VersionNodeMapMinimap />
+              </div>
             ) : null}
-            <button
-              type='button'
-              className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
-              onClick={() => {
-                void navigator.clipboard.writeText(contextMenu.nodeId);
-                closeContextMenu();
-              }}
-            >
-              <Copy className='size-3' />
-              Copy ID
-            </button>
-          </div>
-        </>
-      ) : null}
-
-      {/* Compare view */}
-      {compareMode && compareNodes?.[0] && compareNodes[1] ? (
-        <div className='border-t border-border/40 p-3'>
-          <div className='flex gap-2'>
-            {compareNodes.map((cNode) => cNode ? (
-              <div key={cNode.id} className='flex-1 space-y-1'>
-                <div className='truncate text-[10px] font-medium text-gray-300'>{cNode.label}</div>
-                <div className='aspect-square overflow-hidden rounded border border-border/60 bg-card/30'>
-                  {getSlotImageSrc(cNode.slot) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={getSlotImageSrc(cNode.slot)!}
-                      alt={cNode.label}
-                      className='h-full w-full object-cover'
-                    />
-                  ) : (
-                    <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>No image</div>
-                  )}
-                </div>
-                <div className='text-[9px] text-gray-500'>
-                  {cNode.type === 'composite' ? 'Composite' : cNode.type === 'merge' ? 'Merge' : cNode.type === 'generation' ? 'Generation' : 'Base'}
-                  {cNode.hasMask ? ' · Mask' : ''}
-                </div>
-                {(() => {
-                  const meta = readMeta(cNode.slot);
-                  return meta.generationParams?.prompt ? (
-                    <div className='truncate text-[9px] text-gray-500' title={meta.generationParams.prompt}>
-                      {meta.generationParams.prompt.slice(0, 40)}{meta.generationParams.prompt.length > 40 ? '...' : ''}
-                    </div>
-                  ) : null;
-                })()}
-              </div>
-            ) : null)}
-          </div>
-          <div className='mt-2 flex gap-2'>
-            <UnifiedButton
-              variant='outline'
-              size='sm'
-              className='flex-1 text-[10px]'
-              onClick={() => {
-                if (compareNodeIds) setCompareNodeIds([compareNodeIds[1], compareNodeIds[0]]);
-              }}
-            >
-              Swap
-            </UnifiedButton>
-            <UnifiedButton
-              variant='outline'
-              size='sm'
-              className='flex-1 text-[10px]'
-              onClick={toggleCompareMode}
-            >
-              Exit Compare
-            </UnifiedButton>
-          </div>
+          </VersionNodeMapProvider>
         </div>
-      ) : null}
 
-      {/* Inspector */}
-      {selectedNode && !mergeMode && !compositeMode && !compareMode ? (
-        <div className='border-t border-border/40 p-3'>
-          <div className='flex gap-3'>
-            {/* Thumbnail */}
-            <div className='size-[72px] flex-shrink-0 overflow-hidden rounded border border-border/60 bg-card/30'>
-              {getSlotImageSrc(selectedNode.slot) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={getSlotImageSrc(selectedNode.slot)!}
-                  alt={selectedNode.label}
-                  className='h-full w-full object-cover'
-                />
-              ) : (
-                <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
-                  No image
-                </div>
-              )}
-            </div>
+        {/* Context menu overlay */}
+        {contextMenu && contextMenuNode ? (
+          <VersionGraphContextMenu
+            menu={contextMenu}
+            node={contextMenuNode}
+            collapsedNodeIds={collapsedNodeIds}
+            compositeMode={compositeMode}
+            compareMode={compareMode}
+            onClose={closeContextMenu}
+            onSetAsSource={handleCtxSetAsSource}
+            onIsolateBranch={isolateBranch}
+            onToggleCollapse={toggleCollapse}
+            onAddToComposite={handleCtxAddToComposite}
+            onCompareWith={handleCtxCompareWith}
+            onCopyId={handleCtxCopyId}
+          />
+        ) : null}
 
-            {/* Details */}
-            <div className='min-w-0 flex-1 space-y-1'>
-              <div className='truncate text-xs font-medium text-gray-200'>
-                {selectedNode.label}
-              </div>
-              <div className='text-[10px] text-gray-500'>
-                {selectedNode.type === 'composite'
-                  ? 'Composite'
-                  : selectedNode.type === 'merge'
-                    ? 'Merge'
-                    : selectedNode.type === 'generation'
-                      ? 'Generation'
-                      : 'Base'}{' '}
-                {selectedNode.hasMask ? '· Has mask' : ''}
-              </div>
-              {selectedNode.type === 'composite' ? (() => {
-                const meta = readMeta(selectedNode.slot);
-                const layerCount = meta.compositeConfig?.layers?.length ?? 0;
-                return layerCount > 0 ? (
-                  <div className='text-[10px] text-teal-400'>
-                    <Layers className='mr-0.5 inline size-2.5' />
-                    {layerCount} layers
-                    {compositeLoading ? ' · Loading...' : ''}
+        {/* Compare view */}
+        {compareMode && compareNodes?.[0] && compareNodes[1] ? (
+          <div className='border-t border-border/40 p-3'>
+            <div className='flex gap-2'>
+              {compareNodes.map((cNode) => cNode ? (
+                <div key={cNode.id} className='flex-1 space-y-1'>
+                  <div className='truncate text-[10px] font-medium text-gray-300'>{cNode.label}</div>
+                  <div className='aspect-square overflow-hidden rounded border border-border/60 bg-card/30'>
+                    {getSlotImageSrc(cNode.slot) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={getSlotImageSrc(cNode.slot)!}
+                        alt={cNode.label}
+                        className='h-full w-full object-cover'
+                      />
+                    ) : (
+                      <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>No image</div>
+                    )}
                   </div>
-                ) : null;
-              })() : null}
-              {selectedNode.parentIds.length > 0 ? (
-                <div className='text-[10px] text-gray-500'>
-                  {selectedNode.parentIds.length} parent{selectedNode.parentIds.length !== 1 ? 's' : ''}
-                </div>
-              ) : null}
-              {selectedNode.childIds.length > 0 ? (
-                <div className='text-[10px] text-gray-500'>
-                  {selectedNode.childIds.length} child{selectedNode.childIds.length !== 1 ? 'ren' : ''}
-                  {selectedNode.descendantCount > selectedNode.childIds.length
-                    ? ` (${selectedNode.descendantCount} total)`
-                    : ''}
-                </div>
-              ) : null}
-              {(() => {
-                const meta = readMeta(selectedNode.slot);
-                if (!meta.generationParams?.prompt) return null;
-                return (
-                  <div className='truncate text-[10px] text-gray-500' title={meta.generationParams.prompt}>
-                    Prompt: {meta.generationParams.prompt.slice(0, 60)}
-                    {meta.generationParams.prompt.length > 60 ? '...' : ''}
+                  <div className='text-[9px] text-gray-500'>
+                    {cNode.type === 'composite' ? 'Composite' : cNode.type === 'merge' ? 'Merge' : cNode.type === 'generation' ? 'Generation' : 'Base'}
+                    {cNode.hasMask ? ' · Mask' : ''}
                   </div>
-                );
-              })()}
-              {selectedNode.parentIds.length > 0 ? (
-                <button
-                  type='button'
-                  className='text-[10px] text-blue-400 hover:underline'
-                  onClick={() => selectNode(selectedNode.parentIds[0] ?? null)}
-                >
-                  <MousePointer2 className='mr-0.5 inline size-2.5' />
-                  Go to parent
-                </button>
-              ) : null}
+                  {(() => {
+                    const meta = readMeta(cNode.slot);
+                    return meta.generationParams?.prompt ? (
+                      <div className='truncate text-[9px] text-gray-500' title={meta.generationParams.prompt}>
+                        {meta.generationParams.prompt.slice(0, 40)}{meta.generationParams.prompt.length > 40 ? '...' : ''}
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              ) : null)}
             </div>
-          </div>
-
-          <div className='mt-2 flex gap-2'>
-            <UnifiedButton
-              variant='outline'
-              size='sm'
-              className='flex-1 text-xs'
-              onClick={handleSetAsSource}
-            >
-              <Crosshair className='mr-1.5 size-3' />
-              Set as Source
-            </UnifiedButton>
-            {selectedNode.type === 'composite' ? (
+            <div className='mt-2 flex gap-2'>
               <UnifiedButton
                 variant='outline'
                 size='sm'
-                className='flex-1 border-teal-400/40 text-xs text-teal-400 hover:bg-teal-500/10'
-                disabled={compositeBusy || compositeLoading}
-                onClick={() => void handleFlattenComposite(selectedNode.id)}
+                className='flex-1 text-[10px]'
+                onClick={() => {
+                  if (compareNodeIds) setCompareNodeIds([compareNodeIds[1], compareNodeIds[0]]);
+                }}
               >
-                <Layers className='mr-1.5 size-3' />
-                Flatten
+              Swap
               </UnifiedButton>
-            ) : null}
+              <UnifiedButton
+                variant='outline'
+                size='sm'
+                className='flex-1 text-[10px]'
+                onClick={toggleCompareMode}
+              >
+              Exit Compare
+              </UnifiedButton>
+            </div>
           </div>
+        ) : null}
 
-          {/* Annotation */}
-          <div className='mt-2'>
-            <textarea
-              value={annotationDraft}
-              onChange={(e) => setAnnotationDraft(e.target.value)}
-              onBlur={handleAnnotationBlur}
-              placeholder='Add note...'
-              rows={2}
-              className='w-full resize-none rounded border border-border/40 bg-transparent px-2 py-1 text-[10px] text-gray-300 placeholder:text-gray-600 focus:border-gray-500 focus:outline-none'
-            />
-          </div>
-        </div>
-      ) : !mergeMode && !compositeMode && !compareMode ? (
-        <div className='border-t border-border/40 px-3 py-2 text-[10px] text-gray-500'>
-          Click a node to inspect. Double-click to set as source.
-        </div>
-      ) : null}
-    </div>
+        {/* Inspector — always visible */}
+        {!compareMode ? (
+          <VersionGraphInspectorProvider value={inspectorContextValue}>
+            <VersionGraphInspector />
+          </VersionGraphInspectorProvider>
+        ) : null}
+      </div>
+    </VersionGraphControlsProvider>
   );
 }

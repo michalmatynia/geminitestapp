@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const revalidate = 60;
 
-import { buildImageBase64Slots } from '@/features/products/services/image-base64';
+import { buildImageBase64Slots, type ProductImageBase64Source } from '@/features/products/services/image-base64';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -26,7 +26,7 @@ async function POST_handler(
     throw notFoundError('Product not found', { productId });
   }
 
-  const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
+  const { imageBase64s, imageLinks } = await buildImageBase64Slots(product as unknown as ProductImageBase64Source);
   await productRepo.updateProduct(productId, { imageBase64s, imageLinks });
 
   return NextResponse.json({

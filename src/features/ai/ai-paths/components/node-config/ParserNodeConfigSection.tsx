@@ -23,7 +23,7 @@ import {
   inferImageMappingPath,
   safeParseJson,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Button, Input, Label, Textarea, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -376,10 +376,10 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <SectionPanel variant='subtle-compact' className='px-3 py-2 text-[11px] text-gray-300'>
+      <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2 text-[11px] text-gray-300'>
         <div className='text-gray-400'>Input source</div>
         <div className='mt-1 text-sm text-gray-200'>{parserSourceLabel}</div>
-      </SectionPanel>
+      </div>
       <div>
         <Label className='text-xs text-gray-400'>Preset</Label>
         <UnifiedSelect
@@ -735,7 +735,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         </Button>
       </div>
       {imageEntryIndex >= 0 && (
-        <SectionPanel variant='subtle-compact' className='p-3 text-[11px] text-gray-400'>
+        <div className='rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-400'>
           <div className='text-gray-300'>Image helpers</div>
           <div className='mt-2 flex flex-wrap gap-2'>
             <Button
@@ -762,14 +762,13 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               onClick={() =>
                 updateMappingPath(imageEntryIndex, '$.media')
               }
-            >
-              Use $.media
-            </Button>
-          </div>
-        </SectionPanel>
-      )}
-      <p className='text-[11px] text-gray-500'>
-        Use JSON paths like{' '}
+                          >
+                            Use $.media
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <p className='text-[11px] text-gray-500'>        Use JSON paths like{' '}
         <span className='text-gray-300'>{'$.images'}</span>,{' '}
         <span className='text-gray-300'>{'$.imageLinks'}</span>, or{' '}
         <span className='text-gray-300'>{'$.media'}</span> for image arrays.

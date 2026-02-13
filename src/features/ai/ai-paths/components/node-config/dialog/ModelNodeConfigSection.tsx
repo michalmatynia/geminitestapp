@@ -6,7 +6,7 @@ import type { AiNode, Edge, ModelConfig } from '@/features/ai/ai-paths/lib';
 import { DEFAULT_MODELS, toNumber } from '@/features/ai/ai-paths/lib';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Button, Input, Label, UnifiedSelect } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -144,7 +144,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
           />
         </div>
       </div>
-      <SectionPanel variant='subtle-compact' className='flex items-center justify-between p-2 text-xs text-gray-300'>
+      <div className='flex items-center justify-between rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
         <span>Accepts Images</span>
         <Button
           type='button'
@@ -161,8 +161,8 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
         >
           {modelConfig.vision ? 'Enabled' : 'Disabled'}
         </Button>
-      </SectionPanel>
-      <SectionPanel variant='subtle-compact' className='flex items-center justify-between p-2 text-xs text-gray-300'>
+      </div>
+      <div className='flex items-center justify-between rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
         <span>Wait for result</span>
         <Button
           type='button'
@@ -182,13 +182,13 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
         >
           {modelConfig.waitForResult === false ? 'Disabled' : 'Enabled'}
         </Button>
-      </SectionPanel>
+      </div>
       {hasPollConsumer && (
-        <SectionPanel variant='subtle-compact' className='border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-100'>
+        <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-100'>
           {modelConfig.waitForResult === false
             ? 'Poll is connected to this Model\'s jobId. The Model will emit only jobId, so use Poll.result for your Viewer.'
             : 'Poll is connected to this Model\'s jobId. Wait for result is enabled, so the Model will still emit result; Poll will also fetch the job.'}
-        </SectionPanel>
+        </div>
       )}
       <p className='text-[11px] text-gray-500'>
         When enabled, the Model node polls the job until completion and emits

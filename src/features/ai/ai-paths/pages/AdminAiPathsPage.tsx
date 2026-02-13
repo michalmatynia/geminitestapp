@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
-import { Tabs, TabsList, TabsTrigger, SectionPanel } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { AiPathsSettings } from '../components/AiPathsSettings';
 
@@ -49,7 +49,10 @@ export function AdminAiPathsPage(): React.JSX.Element {
         )}
         <div id='ai-paths-name' className='text-sm text-gray-300' />
       </div>
-      <SectionPanel className={isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-6'}>
+      <div className={cn(
+        'overflow-hidden rounded-lg border border-border/60 bg-card/40 transition-all duration-300 ease-in-out',
+        isFocusMode ? 'h-full p-0 border-0 rounded-none' : 'p-6'
+      )}>
         <div className={`mb-4 flex items-center ${isFocusMode ? 'hidden' : ''}`}>
           <div id='ai-paths-actions' className='flex w-full items-center' />
         </div>
@@ -62,7 +65,7 @@ export function AdminAiPathsPage(): React.JSX.Element {
           isFocusMode={isFocusMode}
           onFocusModeChange={setIsFocusMode}
         />
-      </SectionPanel>
+      </div>
     </div>
   );
 }

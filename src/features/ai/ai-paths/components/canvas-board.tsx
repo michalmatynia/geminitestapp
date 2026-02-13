@@ -26,7 +26,7 @@ import {
   type PortDataType,
   hashRuntimeValue,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Tooltip, SectionPanel } from '@/shared/ui';
+import { Button, Tooltip } from '@/shared/ui';
 
 import {
   useCanvasState,
@@ -803,12 +803,12 @@ export function CanvasBoard({
       onPointerUp={handlePanEnd}
       onPointerLeave={handlePanEnd}
     >
-      <SectionPanel variant='subtle-compact' className='absolute bottom-3 left-3 z-10 p-2 text-[11px] text-gray-400'>
+      <div className='absolute bottom-3 left-3 z-10 rounded-md border border-border/60 bg-card/30 p-2 text-[11px] text-gray-400'>
         Nodes: {nodes.length}
         {lastDrop ? ` • Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}` : ''}
         {` • View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`}
-      </SectionPanel>
-      <SectionPanel variant='subtle-compact' className='absolute bottom-4 right-4 z-10 p-2 text-xs text-gray-300'>
+      </div>
+      <div className='absolute bottom-4 right-4 z-10 rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
         <div className='mb-2 text-[11px] uppercase text-gray-500'>View Controls</div>
         <div className='flex items-center gap-2'>
           <Button
@@ -843,7 +843,7 @@ export function CanvasBoard({
             Reset
           </Button>
         </div>
-      </SectionPanel>
+      </div>
       <div
         ref={canvasRef}
         className='absolute left-0 top-0'

@@ -22,7 +22,6 @@ import {
   Input,
   UnifiedSelect,
   SectionHeader,
-  SectionPanel,
   Table,
   TableBody,
   TableCell,
@@ -167,7 +166,6 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
           return aTime - bTime;
         });
         return { ...prev, events: merged };
-        
       });
     };
 
@@ -534,7 +532,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         }
       />
 
-      <SectionPanel className='mt-6 space-y-4 p-6'>
+      <div className='mt-6 space-y-4 rounded-lg border border-border/60 bg-card/40 p-6'>
         <div className='flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400'>
           <div className='flex flex-wrap items-center gap-3'>
             <span>{paginationLabel}</span>
@@ -702,7 +700,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             </Button>
           </div>
         </div>
-      </SectionPanel>
+      </div>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className='max-w-4xl border border-border bg-card text-white'>
@@ -806,7 +804,6 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                           </span>
                         ))}
                       </div>
-                      
                     </div>
                   ) : null}
                 </div>
@@ -853,7 +850,6 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                                               )
                       }
                     >
-                    
                       {retryFailedPending ? 'Retrying...' : 'Retry failed only'}
                     </Button>
                   </div>

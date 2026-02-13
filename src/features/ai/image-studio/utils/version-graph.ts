@@ -1,3 +1,5 @@
+import { readMeta } from './metadata';
+
 import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -38,12 +40,13 @@ const NODE_HEIGHT = 88;
 const H_GAP = 24;
 const V_GAP = 40;
 
+/** Horizontal offset applied to graph content inside the SVG viewport. */
+export const CONTENT_OFFSET_X = 200;
+/** Vertical offset applied to graph content inside the SVG viewport. */
+export const CONTENT_OFFSET_Y = 40;
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function readMetadata(slot: ImageStudioSlotRecord): SlotGenerationMetadata {
-  if (!slot.metadata || typeof slot.metadata !== 'object') return {};
-  return slot.metadata as SlotGenerationMetadata;
-}
 
 /** Resolve parent IDs from metadata — supports both single and multi-parent. */
 function resolveParentIds(
@@ -99,7 +102,7 @@ export function computeVersionGraph(slots: ImageStudioSlotRecord[]): VersionGrap
   const parentIdsMap = new Map<string, string[]>();
 
   for (const slot of slots) {
-    const meta = readMetadata(slot);
+    const meta = readMeta(slot);
     const pids = resolveParentIds(meta, slotById);
     if (pids.length > 0) {
       parentIdsMap.set(slot.id, pids);
@@ -245,7 +248,7 @@ export function computeVersionGraph(slots: ImageStudioSlotRecord[]): VersionGrap
 
   // Build nodes
   const nodes: VersionNode[] = slots.map((slot) => {
-    const meta = readMetadata(slot);
+    const meta = readMeta(slot);
     const pids = parentIdsMap.get(slot.id) ?? [];
     const pos = positionMap.get(slot.id) ?? { x: 0, y: 0 };
 
@@ -276,7 +279,7 @@ export function computeVersionGraph(slots: ImageStudioSlotRecord[]): VersionGrap
   // Build edges
   const edges: VersionEdge[] = [];
   for (const [childId, pids] of parentIdsMap) {
-    const childMeta = readMetadata(slotById.get(childId)!);
+    const childMeta = readMeta(slotById.get(childId)!);
     const isComposite = childMeta.role === 'composite';
     const isMerge = childMeta.role === 'merge' || pids.length > 1;
     for (const pid of pids) {
@@ -311,7 +314,7 @@ export function computeTimelineLayout(
   // Try to extract timestamps for time-based positioning
   const timestampMap = new Map<string, number>();
   for (const node of nodes) {
-    const meta = readMetadata(node.slot);
+    const meta = readMeta(node.slot);
     const ts = meta.generationParams?.timestamp;
     if (ts) {
       const parsed = new Date(ts).getTime();

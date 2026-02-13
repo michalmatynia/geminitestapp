@@ -3,7 +3,7 @@
 import { Plus, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { UnifiedButton, UnifiedInput, SectionPanel, useToast } from '@/shared/ui';
+import { UnifiedButton, UnifiedInput,  useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useProjects } from '../context/ProjectsContext';
@@ -43,7 +43,7 @@ export function StudioProjectsList(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <SectionPanel className='flex items-center gap-2 p-3'>
+      <div className='flex items-center gap-2 rounded-lg border border-border/60 bg-card/40 p-3'>
         <UnifiedInput
           placeholder='New project ID...'
           value={newProjectId}
@@ -58,10 +58,10 @@ export function StudioProjectsList(): React.JSX.Element {
           <Plus className='mr-2 size-4' />
           Create
         </UnifiedButton>
-      </SectionPanel>
+      </div>
 
-      <SectionPanel className='p-0 overflow-hidden'>
-        <div className='border-b bg-muted/30 p-2'>
+      <div className='overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
+        <div className='border-b border-border/60 bg-muted/30 p-2'>
           <UnifiedInput
             placeholder='Search projects...'
             value={projectSearch}
@@ -102,7 +102,7 @@ export function StudioProjectsList(): React.JSX.Element {
             </div>
           )}
         </div>
-      </SectionPanel>
+      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { Activity, Radar } from 'lucide-react';
 
 import { type AiInsightRecord } from '@/shared/types';
-import { Button, SectionPanel } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useBrain } from '../context/BrainContext';
@@ -52,7 +52,7 @@ export function MetricsTab(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <SectionPanel className='flex flex-wrap items-center justify-between gap-3'>
+      <div className='flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/40 p-4'>
         <div>
           <div className='text-sm font-semibold text-white'>Deep Metrics</div>
           <div className='text-xs text-gray-400'>
@@ -71,34 +71,34 @@ export function MetricsTab(): React.JSX.Element {
         >
           Refresh now
         </Button>
-      </SectionPanel>
+      </div>
 
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        <SectionPanel variant='subtle-compact'>
+        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
           <div className='text-[11px] uppercase text-gray-500'>Analytics Events (24h)</div>
           <div className='mt-1 text-2xl font-semibold text-white'>
             {formatNumber(analyticsSummaryQuery.data?.totals.events)}
           </div>
-        </SectionPanel>
-        <SectionPanel variant='subtle-compact'>
+        </div>
+        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
           <div className='text-[11px] uppercase text-gray-500'>Visitors (24h)</div>
           <div className='mt-1 text-2xl font-semibold text-white'>
             {formatNumber(analyticsSummaryQuery.data?.visitors)}
           </div>
-        </SectionPanel>
-        <SectionPanel variant='subtle-compact'>
+        </div>
+        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
           <div className='text-[11px] uppercase text-gray-500'>Error Logs (24h)</div>
           <div className='mt-1 text-2xl font-semibold text-white'>
             {formatNumber(logMetricsQuery.data?.last24Hours)}
           </div>
-        </SectionPanel>
-        <SectionPanel variant='subtle-compact'>
+        </div>
+        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
           <div className='text-[11px] uppercase text-gray-500'>Error Logs (7d)</div>
           <div className='mt-1 text-2xl font-semibold text-white'>
             {formatNumber(logMetricsQuery.data?.last7Days)}
           </div>
-        </SectionPanel>
-        <SectionPanel variant='subtle-compact'>
+        </div>
+        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
           <div className='text-[11px] uppercase text-gray-500'>Runtime Runs (24h)</div>
           <div className='mt-1 text-2xl font-semibold text-white'>
             {formatNumber(runtimeAnalyticsQuery.data?.runs.total)}
@@ -106,8 +106,8 @@ export function MetricsTab(): React.JSX.Element {
           <div className='mt-1 text-[11px] text-gray-400'>
             Success {formatPercent(runtimeAnalyticsQuery.data?.runs.successRate)}
           </div>
-        </SectionPanel>
-        <SectionPanel variant='subtle-compact'>
+        </div>
+        <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
           <div className='text-[11px] uppercase text-gray-500'>Brain Reports (24h)</div>
           <div className='mt-1 text-2xl font-semibold text-white'>
             {formatNumber(runtimeAnalyticsQuery.data?.brain.totalReports)}
@@ -115,11 +115,11 @@ export function MetricsTab(): React.JSX.Element {
           <div className='mt-1 text-[11px] text-gray-400'>
             Warn {formatNumber(runtimeAnalyticsQuery.data?.brain.warningReports)} · Err {formatNumber(runtimeAnalyticsQuery.data?.brain.errorReports)}
           </div>
-        </SectionPanel>
+        </div>
       </div>
 
       <div className='grid gap-4 lg:grid-cols-2'>
-        <SectionPanel>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='flex items-center gap-2 text-sm font-semibold text-white'>
             <Activity className='size-4 text-cyan-300' />
             Top Analytics Pages (24h)
@@ -135,9 +135,9 @@ export function MetricsTab(): React.JSX.Element {
               <div className='text-xs text-gray-500'>No analytics page data available.</div>
             ) : null}
           </div>
-        </SectionPanel>
+        </div>
 
-        <SectionPanel>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='flex items-center gap-2 text-sm font-semibold text-white'>
             <Radar className='size-4 text-amber-300' />
             Top Error Sources (logs)
@@ -153,11 +153,11 @@ export function MetricsTab(): React.JSX.Element {
               <div className='text-xs text-gray-500'>No log source data available.</div>
             ) : null}
           </div>
-        </SectionPanel>
+        </div>
       </div>
 
       <div className='grid gap-4 lg:grid-cols-2'>
-        <SectionPanel>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='text-sm font-semibold text-white'>Latest Analytics Insight</div>
           {latestAnalyticsInsight ? (
             <div className='mt-3 space-y-2'>
@@ -172,9 +172,9 @@ export function MetricsTab(): React.JSX.Element {
           ) : (
             <div className='mt-3 text-xs text-gray-500'>No analytics insights yet.</div>
           )}
-        </SectionPanel>
+        </div>
 
-        <SectionPanel>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='text-sm font-semibold text-white'>Latest Log Insight</div>
           {latestLogsInsight ? (
             <div className='mt-3 space-y-2'>
@@ -189,10 +189,10 @@ export function MetricsTab(): React.JSX.Element {
           ) : (
             <div className='mt-3 text-xs text-gray-500'>No log insights yet.</div>
           )}
-        </SectionPanel>
+        </div>
       </div>
 
-      <SectionPanel>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='text-sm font-semibold text-white'>Runtime Analysis (Redis)</div>
         <div className='mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4'>
           <div className='rounded border border-border/60 bg-card/60 p-3'>
@@ -223,10 +223,10 @@ export function MetricsTab(): React.JSX.Element {
         <div className='mt-3 text-[11px] text-gray-500'>
           Storage: {runtimeAnalyticsQuery.data?.storage ?? '—'} · Updated {runtimeAnalyticsQuery.data?.generatedAt ? formatDate(runtimeAnalyticsQuery.data.generatedAt) : '—'}
         </div>
-      </SectionPanel>
+      </div>
 
       {analyticsSummaryQuery.error || logMetricsQuery.error || insightsQuery.error || runtimeAnalyticsQuery.error ? (
-        <SectionPanel variant='danger'>
+        <div className='rounded-lg border border-rose-500/40 bg-rose-500/10 p-4'>
           <div className='text-sm text-rose-200'>
             {(analyticsSummaryQuery.error)?.message ??
               (logMetricsQuery.error)?.message ??
@@ -234,7 +234,7 @@ export function MetricsTab(): React.JSX.Element {
               (runtimeAnalyticsQuery.error)?.message ??
               'Failed to load metrics.'}
           </div>
-        </SectionPanel>
+        </div>
       ) : null}
     </div>
   );

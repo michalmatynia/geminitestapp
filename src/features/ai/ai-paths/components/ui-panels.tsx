@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
-import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SectionPanel } from '@/shared/ui';
+import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useGraphState } from '../context';
@@ -67,7 +67,7 @@ export function PathsTabPanel({
         </div>
       </div>
 
-      <SectionPanel variant='subtle' className='p-0 overflow-hidden'>
+      <div className='overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
         <Table>
           <TableHeader>
             <TableRow className='border-border/60'>
@@ -135,7 +135,7 @@ export function PathsTabPanel({
             )}
           </TableBody>
         </Table>
-      </SectionPanel>
+      </div>
     </div>
   );
 }
@@ -303,16 +303,16 @@ export function DocsTabPanel(): React.JSX.Element {
           </div>
         </div>
       </div>
-      <SectionPanel variant='subtle' className='p-5'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
         <h2 className='text-lg font-semibold text-white'>AI Paths Docs</h2>
         <p className='mt-2 text-gray-400'>
           Modular workflows are built by connecting node outputs (right) to matching
           node inputs (left). Connections are strict: port names must match.
         </p>
-      </SectionPanel>
+      </div>
 
       {showHowItWorks ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>How AI Paths Works</h3>
           <ul className='mt-3 space-y-2 text-gray-400'>
             {overviewLines.map((line: string, index: number) => (
@@ -321,11 +321,11 @@ export function DocsTabPanel(): React.JSX.Element {
               </li>
             ))}
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showSystemOverview ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>System Overview</h3>
           <ul className='mt-3 space-y-2 text-gray-400'>
             <li>
@@ -346,11 +346,11 @@ export function DocsTabPanel(): React.JSX.Element {
               files), and the Model node converts URLs to base64 when calling the model.
             </li>
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showExecutionState ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Execution & State</h3>
           <ul className='mt-3 space-y-2 text-gray-400'>
             <li>
@@ -369,11 +369,11 @@ export function DocsTabPanel(): React.JSX.Element {
               in settings so you can resume where you left off.
             </li>
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showExecutionControls ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Execution Controls</h3>
           <ul className='mt-3 space-y-2 text-gray-400'>
             <li>
@@ -390,12 +390,12 @@ export function DocsTabPanel(): React.JSX.Element {
               trigger clicks while a run is active; Queue enqueues them to run sequentially.
             </li>
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       <div className='grid gap-4 lg:grid-cols-2'>
         {showCoreFlow ? (
-          <SectionPanel variant='subtle' className='p-5'>
+          <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
             <h3 className='text-base font-semibold text-white'>Core Flow</h3>
             <ul className='mt-3 space-y-2 text-gray-400'>
               <li>
@@ -421,11 +421,11 @@ export function DocsTabPanel(): React.JSX.Element {
                 <span className='text-amber-200'> triggerName</span> into Result Viewer.
               </li>
             </ul>
-          </SectionPanel>
+          </div>
         ) : null}
 
         {showPortRules ? (
-          <SectionPanel variant='subtle' className='p-5'>
+          <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
             <h3 className='text-base font-semibold text-white'>Port Rules</h3>
             <ul className='mt-3 space-y-2 text-gray-400'>
               <li>Ports must match exactly (e.g. result → result).</li>
@@ -436,22 +436,22 @@ export function DocsTabPanel(): React.JSX.Element {
               <li>Multiple wires into the same input are collected as arrays.</li>
               <li>Gate expects valid from a Validator node.</li>
             </ul>
-          </SectionPanel>
+          </div>
         ) : null}
       </div>
 
       {showContextPresets ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Context Presets</h3>
           <p className='mt-2 text-gray-400'>
             Use Light/Medium/Full presets on Context Filter nodes to quickly scope the entity
             payload. Target Fields lets you toggle exact fields to include.
           </p>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showDescriptionFlow ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>AI Description Flow</h3>
           <ol className='mt-3 space-y-2 text-gray-400'>
             <li>Context Filter.entityJson → Parser.entityJson</li>
@@ -460,11 +460,11 @@ export function DocsTabPanel(): React.JSX.Element {
             <li>Parser.productId → Database.entityId</li>
             <li>(Optional) Database.result → Result Viewer.result</li>
           </ol>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showJobQueue ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>AI Job Queue (AI Paths)</h3>
           <ul className='mt-3 space-y-2 text-gray-400'>
             <li>
@@ -480,11 +480,11 @@ export function DocsTabPanel(): React.JSX.Element {
               or Database Update to save outputs.
             </li>
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showClusterPresets ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Cluster Presets</h3>
           <p className='mt-2 text-gray-400'>
             Use Cluster Presets to save reusable Bundle + Template pairs. Apply them to
@@ -496,11 +496,11 @@ export function DocsTabPanel(): React.JSX.Element {
             <li>Apply the preset to drop a Bundle + Template pair onto the canvas.</li>
             <li>Select a Template or Bundle node connected together and click “From Selection”.</li>
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showQuickWiring ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <h3 className='text-base font-semibold text-white'>Quick Wiring</h3>
             <Button
@@ -514,11 +514,11 @@ export function DocsTabPanel(): React.JSX.Element {
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
             {resolvedDocsWiringSnippet}
           </pre>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showDescriptionFlow ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <h3 className='text-base font-semibold text-white'>
               AI Description Wiring
@@ -534,11 +534,11 @@ export function DocsTabPanel(): React.JSX.Element {
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
             {resolvedDocsDescriptionSnippet}
           </pre>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showJobsWiring ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <h3 className='text-base font-semibold text-white'>AI Job Wiring</h3>
             <Button
@@ -552,11 +552,11 @@ export function DocsTabPanel(): React.JSX.Element {
           <pre className='mt-4 whitespace-pre-wrap rounded-md border border-border bg-card/60 p-3 text-[11px] text-gray-200'>
             {resolvedDocsJobsSnippet}
           </pre>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showNodeDocs ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <h3 className='text-base font-semibold text-white'>Node Documentation</h3>
           </div>
@@ -577,7 +577,7 @@ export function DocsTabPanel(): React.JSX.Element {
                   <p className='text-gray-400'>{doc.purpose}</p>
 
                   <div className='mt-4 grid gap-4 md:grid-cols-2'>
-                    <SectionPanel variant='subtle-compact' className='p-3'>
+                    <div className='rounded-md border border-border/60 bg-card/30 p-3'>
                       <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
                       Inputs
                       </div>
@@ -595,9 +595,9 @@ export function DocsTabPanel(): React.JSX.Element {
                       ) : (
                         <div className='mt-2 text-xs text-gray-500'>No inputs.</div>
                       )}
-                    </SectionPanel>
+                    </div>
 
-                    <SectionPanel variant='subtle-compact' className='p-3'>
+                    <div className='rounded-md border border-border/60 bg-card/30 p-3'>
                       <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
                       Outputs
                       </div>
@@ -615,7 +615,7 @@ export function DocsTabPanel(): React.JSX.Element {
                       ) : (
                         <div className='mt-2 text-xs text-gray-500'>No outputs.</div>
                       )}
-                    </SectionPanel>
+                    </div>
                   </div>
 
                   <div className='mt-4 rounded-md border border-border/60 bg-card/60'>
@@ -651,7 +651,7 @@ export function DocsTabPanel(): React.JSX.Element {
                   </div>
 
                   {doc.notes?.length ? (
-                    <SectionPanel variant='subtle-compact' className='mt-4 p-3'>
+                    <div className='mt-4 rounded-md border border-border/60 bg-card/30 p-3'>
                       <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
                       Notes
                       </div>
@@ -660,7 +660,7 @@ export function DocsTabPanel(): React.JSX.Element {
                           <li key={note}>{note}</li>
                         ))}
                       </ul>
-                    </SectionPanel>
+                    </div>
                   ) : null}
                 </div>
               </details>
@@ -671,22 +671,22 @@ export function DocsTabPanel(): React.JSX.Element {
               </div>
             ) : null}
           </div>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showSavingDebugging ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Saving & Debugging</h3>
           <ul className='mt-3 space-y-2 text-gray-400'>
             <li>Use “Save Path” to persist the canvas.</li>
             <li>Errors are logged to System Logs with an AI Paths badge.</li>
             <li>The “Last error” badge links directly to filtered logs.</li>
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {showTroubleshooting ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Troubleshooting</h3>
           <ul className='mt-3 space-y-2 text-gray-400'>
             <li>
@@ -714,15 +714,15 @@ export function DocsTabPanel(): React.JSX.Element {
               exactly and node types must be compatible.
             </li>
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {!hasAnyResults ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='text-sm text-gray-400'>
             No documentation sections match your search.
           </div>
-        </SectionPanel>
+        </div>
       ) : null}
     </div>
   );

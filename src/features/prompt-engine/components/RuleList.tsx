@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { Button, Input, Label, SectionPanel } from '@/shared/ui';
+import { Button, Input, Label } from '@/shared/ui';
 
 import { RuleItem } from './RuleItem';
 import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
@@ -180,14 +180,14 @@ export function RuleList(): React.JSX.Element {
   return (
     <div className='space-y-4'>
       {filteredDrafts.length === 0 ? (
-        <SectionPanel>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
           <div className='text-sm text-gray-400'>
             No rules match this filter in the {activeTabLabel} list.
           </div>
-        </SectionPanel>
+        </div>
       ) : null}
       {sequencingLocked ? (
-        <SectionPanel variant='subtle'>
+        <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-4'>
           <div className='text-xs text-amber-200'>
             Sequence drag-and-drop is disabled while filters are active. Clear search, set severity to
             <span className='mx-1 font-medium'>All</span>
@@ -197,7 +197,7 @@ export function RuleList(): React.JSX.Element {
             <span className='mx-1 font-medium'>Include disabled</span>
             to reorder/group rules.
           </div>
-        </SectionPanel>
+        </div>
       ) : null}
       {entries.map((entry) => {
         if (entry.kind === 'rule') {
@@ -263,9 +263,8 @@ export function RuleList(): React.JSX.Element {
         const isGroupDropTarget = dragOverKey === groupDropKey && draggedUid !== null;
         return (
           <div key={group.id} className='space-y-2'>
-            <SectionPanel
-              variant='subtle-compact'
-              className={`border p-3 ${isGroupDropTarget ? 'border-cyan-200/60 bg-cyan-500/12' : 'border-cyan-500/35 bg-cyan-500/8'}`}
+            <div
+              className={`rounded-md border p-3 ${isGroupDropTarget ? 'border-cyan-200/60 bg-cyan-500/12' : 'border-cyan-500/35 bg-cyan-500/8'}`}
               onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
                 if (sequencingLocked) return;
                 event.preventDefault();
@@ -387,7 +386,7 @@ export function RuleList(): React.JSX.Element {
                   </div>
                 </div>
               ) : null}
-            </SectionPanel>
+            </>
 
             {!isCollapsed ? (
               <div className='ml-6 space-y-2'>

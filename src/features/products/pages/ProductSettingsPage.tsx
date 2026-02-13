@@ -13,11 +13,12 @@ import { LanguageModal } from '@/features/products/components/settings/modals/La
 import { PriceGroupModal } from '@/features/products/components/settings/modals/PriceGroupModal';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
+import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
 import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/features/products/types';
-import { Button, SectionHeader, SectionPanel, useToast } from '@/shared/ui';
+import { Button, SectionHeader,  useToast } from '@/shared/ui';
 
 import {
   settingSections,
@@ -103,84 +104,105 @@ export function ProductSettingsPage(): React.JSX.Element {
       logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteGroup', groupId: group.id } });
     }
   };
+  const sharedSettingsContextValue = {
+    loadingCatalogs,
+    catalogs,
+    onOpenCatalogModal: (): void => {
+      setEditingCatalog(null);
+      setShowCatalogModal(true);
+    },
+    onEditCatalog: (catalog: Catalog): void => {
+      setEditingCatalog(catalog);
+      setShowCatalogModal(true);
+    },
+    onDeleteCatalog: (catalog: Catalog): void => {
+      void handleDeleteCatalog(catalog);
+    },
+    loadingGroups,
+    priceGroups,
+    defaultGroupId,
+    onDefaultGroupChange: (id: string): void => {
+      void handleSetDefaultGroup(id);
+    },
+    defaultGroupSaving: updatePriceGroupMutation.isPending,
+    onOpenPriceGroupCreate: (): void => {
+      setEditingPriceGroup(null);
+      setShowPriceGroupModal(true);
+    },
+    onEditPriceGroup: (group: PriceGroup): void => {
+      setEditingPriceGroup(group);
+      setShowPriceGroupModal(true);
+    },
+    onDeletePriceGroup: (group: PriceGroup): void => {
+      void handleDeleteGroup(group);
+    },
+  };
 
   return (
     <InternationalizationProvider>
-      <SectionPanel className='p-6'>
+      <div className='container mx-auto py-10'>
         <SectionHeader
           title='Product Settings'
           className='mb-6'
         />
         <div className='grid gap-6 md:grid-cols-[240px_1fr]'>
-          <SectionPanel className='p-4'>
+          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
             <div className='flex flex-col gap-2'>
               {settingSections.map((section: typeof settingSections[number]) => (
                 <Button
                   key={section}
+                  variant='ghost'
                   onClick={() => setActiveSection(section)}
                   className={`justify-start rounded px-3 py-2 text-left text-sm transition ${
                     activeSection === section
-                      ? 'bg-gray-800 text-white'
-                      : 'text-gray-300 hover:bg-muted/50/60'
+                      ? 'bg-gray-800 text-white hover:bg-gray-800'
+                      : 'text-gray-300 hover:bg-muted/50'
                   }`}
                 >
                   {section}
                 </Button>
               ))}
             </div>
-          </SectionPanel>
-          <SectionPanel className='p-6'>
-            {activeSection === 'Categories' && (
-              <CategoriesSettings
-                loading={loadingCategories}
-                categories={productCategories}
-                catalogs={catalogs}
-                selectedCatalogId={selectedCategoryCatalogId}
-                onCatalogChange={(id: string | null): void => { setSelectedCategoryCatalogId(id); }}
-                onRefresh={() => void refetchCategories()}
-              />
-            )}
-            {activeSection === 'Tags' && (
-              <TagsSettings
-                loading={loadingTags}
-                tags={productTags}
-                catalogs={catalogs}
-                selectedCatalogId={selectedTagCatalogId}
-                onCatalogChange={(id: string | null): void => { setSelectedTagCatalogId(id); }}
-                onRefresh={() => void refetchTags()}
-              />
-            )}
-            {activeSection === 'Price Groups' && (
-              <PriceGroupsSettings
-                loadingGroups={loadingGroups}
-                priceGroups={priceGroups}
-                defaultGroupId={defaultGroupId}
-                onDefaultGroupChange={(id: string): void => { void handleSetDefaultGroup(id); }}
-                defaultGroupSaving={updatePriceGroupMutation.isPending}
-                handleOpenCreate={(): void => { setEditingPriceGroup(null); setShowPriceGroupModal(true); }}
-                handleEditGroup={(g: PriceGroup): void => { setEditingPriceGroup(g); setShowPriceGroupModal(true); }}
-                handleDeleteGroup={(g: PriceGroup): void => { void handleDeleteGroup(g); }}
-              />
-            )}
-            {activeSection === 'Catalogs' && (
-              <CatalogsSettings
-                loadingCatalogs={loadingCatalogs}
-                catalogs={catalogs}
-                handleOpenCatalogModal={(): void => { setEditingCatalog(null); setShowCatalogModal(true); }}
-                handleEditCatalog={(c: Catalog): void => { setEditingCatalog(c); setShowCatalogModal(true); }}
-                handleDeleteCatalog={(c: Catalog): void => { void handleDeleteCatalog(c); }}
-              />
-            )}
-            {activeSection === 'Images' && (
-              <ProductImageRoutingSettings />
-            )}
-            {activeSection === 'Validator' && (
-              <ValidatorSettings />
-            )}
-            {activeSection === 'Internationalization' && (
-              <InternationalizationSettings />
-            )}
-          </SectionPanel>
+          </div>
+          <ProductSettingsProvider value={sharedSettingsContextValue}>
+            <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
+              {activeSection === 'Categories' && (
+                <CategoriesSettings
+                  loading={loadingCategories}
+                  categories={productCategories}
+                  catalogs={catalogs}
+                  selectedCatalogId={selectedCategoryCatalogId}
+                  onCatalogChange={(id: string | null): void => { setSelectedCategoryCatalogId(id); }}
+                  onRefresh={() => void refetchCategories()}
+                />
+              )}
+              {activeSection === 'Tags' && (
+                <TagsSettings
+                  loading={loadingTags}
+                  tags={productTags}
+                  catalogs={catalogs}
+                  selectedCatalogId={selectedTagCatalogId}
+                  onCatalogChange={(id: string | null): void => { setSelectedTagCatalogId(id); }}
+                  onRefresh={() => void refetchTags()}
+                />
+              )}
+              {activeSection === 'Price Groups' && (
+                <PriceGroupsSettings />
+              )}
+              {activeSection === 'Catalogs' && (
+                <CatalogsSettings />
+              )}
+              {activeSection === 'Images' && (
+                <ProductImageRoutingSettings />
+              )}
+              {activeSection === 'Validator' && (
+                <ValidatorSettings />
+              )}
+              {activeSection === 'Internationalization' && (
+                <InternationalizationSettings />
+              )}
+            </div>
+          </ProductSettingsProvider>
         </div>
 
         {/* Modals */}
@@ -207,7 +229,7 @@ export function ProductSettingsPage(): React.JSX.Element {
         <CurrencyModal />
 
         <CountryModal />
-      </SectionPanel>
+      </div>
     </InternationalizationProvider>
   );
 }

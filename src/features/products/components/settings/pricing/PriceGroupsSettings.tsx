@@ -3,28 +3,20 @@ import React from 'react';
 import { PriceGroup } from '@/features/products/types';
 import { Badge, Button, FormSection, UnifiedSelect } from '@/shared/ui';
 
+import { useProductSettingsContext } from '../ProductSettingsContext';
 
-type PriceGroupsSettingsProps = {
-  loadingGroups: boolean;
-  priceGroups: PriceGroup[];
-  defaultGroupId: string;
-  onDefaultGroupChange: (groupId: string) => void;
-  defaultGroupSaving: boolean;
-  handleOpenCreate: () => void;
-  handleEditGroup: (group: PriceGroup) => void;
-  handleDeleteGroup: (group: PriceGroup) => void;
-};
+export function PriceGroupsSettings(): React.JSX.Element {
+  const {
+    loadingGroups,
+    priceGroups,
+    defaultGroupId,
+    onDefaultGroupChange,
+    defaultGroupSaving,
+    onOpenPriceGroupCreate,
+    onEditPriceGroup,
+    onDeletePriceGroup,
+  } = useProductSettingsContext();
 
-export function PriceGroupsSettings({
-  loadingGroups,
-  priceGroups,
-  defaultGroupId,
-  onDefaultGroupChange,
-  defaultGroupSaving,
-  handleOpenCreate,
-  handleEditGroup,
-  handleDeleteGroup,
-}: PriceGroupsSettingsProps): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <FormSection
@@ -34,7 +26,7 @@ export function PriceGroupsSettings({
           <Button
             className='min-w-[100px]'
             type='button'
-            onClick={handleOpenCreate}
+            onClick={onOpenPriceGroupCreate}
           >
             Add Price Group
           </Button>
@@ -82,7 +74,7 @@ export function PriceGroupsSettings({
                         variant='outline'
                         size='sm'
                         type='button'
-                        onClick={() => handleEditGroup(group)}
+                        onClick={() => onEditPriceGroup(group)}
                       >
                         Edit
                       </Button>
@@ -91,7 +83,7 @@ export function PriceGroupsSettings({
                         size='sm'
                         className='text-red-400 border-red-500/20 hover:bg-red-500/10'
                         type='button'
-                        onClick={() => handleDeleteGroup(group)}
+                        onClick={() => onDeletePriceGroup(group)}
                       >
                         Delete
                       </Button>

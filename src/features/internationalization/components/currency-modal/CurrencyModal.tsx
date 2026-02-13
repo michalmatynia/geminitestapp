@@ -1,10 +1,14 @@
 'use client';
 
 import React from 'react';
+
+
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { SettingsFormModal } from '@/shared/ui';
-import { useCurrencyForm } from './hooks/useCurrencyForm';
+
 import { CurrencyFormFields } from './CurrencyFormFields';
+import { CurrencyModalProvider } from './CurrencyModalContext';
+import { useCurrencyForm } from './hooks/useCurrencyForm';
 
 export function CurrencyModal(): React.JSX.Element {
   const {
@@ -34,14 +38,9 @@ export function CurrencyModal(): React.JSX.Element {
       size='md'
     >
       <div className='space-y-4'>
-        <CurrencyFormFields
-          code={form.code}
-          onCodeChange={(code) => setForm((p) => ({ ...p, code }))}
-          name={form.name}
-          onNameChange={(name) => setForm((p) => ({ ...p, name }))}
-          symbol={form.symbol}
-          onSymbolChange={(symbol) => setForm((p) => ({ ...p, symbol }))}
-        />
+        <CurrencyModalProvider value={{ form, setForm }}>
+          <CurrencyFormFields />
+        </CurrencyModalProvider>
       </div>
     </SettingsFormModal>
   );

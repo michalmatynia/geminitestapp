@@ -5,7 +5,7 @@ import React from 'react';
 
 import {
   Button,
-  SectionPanel,
+  
   Textarea,
   Tooltip,
 } from '@/shared/ui';
@@ -28,7 +28,7 @@ export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Elem
   const rule = draft.parsed;
 
   return (
-    <SectionPanel className='space-y-3'>
+    <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-4'>
       <div className='flex items-start justify-between gap-2'>
         <div className='text-sm font-medium text-gray-100'>{rule?.title ?? 'Invalid rule'}</div>
         <div className='flex items-center gap-2'>
@@ -61,6 +61,6 @@ export function LearnedRuleItem({ draft }: LearnedRuleItemProps): React.JSX.Elem
           <div>Enabled: {rule.enabled ? 'Yes' : 'No'}</div>
         </div>
       ) : null}
-    </SectionPanel>
+    </>
   );
 }

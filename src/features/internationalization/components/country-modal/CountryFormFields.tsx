@@ -1,31 +1,24 @@
 import React from 'react';
-import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
 import { countryCodeOptions } from '@/shared/constants/internationalization';
+import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
-interface CountryFormFieldsProps {
-  code: string;
-  onCodeChange: (code: string, name: string) => void;
-  name: string;
-  onNameChange: (name: string) => void;
-}
+import { useCountryModalContext } from './CountryModalContext';
 
-export function CountryFormFields({
-  code,
-  onCodeChange,
-  name,
-  onNameChange,
-}: CountryFormFieldsProps): React.JSX.Element {
+export function CountryFormFields(): React.JSX.Element {
+  const { form, setForm } = useCountryModalContext();
+
   return (
     <>
       <div className='space-y-2'>
         <Label htmlFor='country-code'>Code</Label>
         <Select
-          value={code}
+          value={form.code}
           onValueChange={(value: string) => {
             const sel = countryCodeOptions.find(
               (o) => o.code === value,
             );
-            onCodeChange(value, sel?.name ?? '');
+            setForm({ code: value, name: sel?.name ?? '' });
           }}
         >
           <SelectTrigger className='w-full bg-gray-900 border-border text-white'>
@@ -44,8 +37,8 @@ export function CountryFormFields({
         <Label htmlFor='country-name'>Name</Label>
         <Input
           id='country-name'
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
+          value={form.name}
+          onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
         />
       </div>
     </>

@@ -6,6 +6,7 @@ import { MasterFolderTree } from '@/features/foldertree';
 import { useMasterFolderTree } from '@/features/foldertree/master/useMasterFolderTree';
 import { Button, Input, Label } from '@/shared/ui';
 
+import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';
 import {
   buildPromptExploderMasterNodes,
   fromPromptExploderMasterNodeId,
@@ -14,9 +15,7 @@ import {
   updatePromptExploderListItemById,
 } from '../hierarchy-master-tree';
 
-import type {
-  PromptExploderListItem,
-} from '../types';
+import type { PromptExploderListItem } from '../types';
 
 const RGB_LITERAL_RE = /RGB\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i;
 
@@ -65,22 +64,9 @@ const createListItem = (text = 'New item'): PromptExploderListItem => ({
   children: [],
 });
 
-type PromptExploderHierarchyTreeEditorProps = {
-  items: PromptExploderListItem[];
-  onChange: (nextItems: PromptExploderListItem[]) => void;
-  emptyLabel?: string;
-  renderLogicalEditor?: (args: {
-    item: PromptExploderListItem;
-    onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
-  }) => React.ReactNode;
-};
+export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
+  const { items, onChange, emptyLabel, renderLogicalEditor } = usePromptExploderHierarchyTreeContext();
 
-export function PromptExploderHierarchyTreeEditor({
-  items,
-  onChange,
-  emptyLabel = 'No items detected.',
-  renderLogicalEditor,
-}: PromptExploderHierarchyTreeEditorProps): React.JSX.Element {
   const itemsRef = useRef(items);
   useEffect(() => {
     itemsRef.current = items;

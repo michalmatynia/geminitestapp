@@ -29,7 +29,7 @@ import {
   type DatabaseEngineServiceRoute,
 } from '@/shared/lib/db/database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
-import { PageLayout, Button, ConfirmDialog, SectionPanel, RefreshButton, useToast, FormSection, FormField, Input, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, Badge, UnifiedSelect, Checkbox, Switch } from '@/shared/ui';
+import { PageLayout, Button, ConfirmDialog,  RefreshButton, useToast, FormSection, FormField, Input, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, Badge, UnifiedSelect, Checkbox, Switch } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -778,31 +778,29 @@ export default function DatabaseEnginePage(): React.JSX.Element {
         ) : null
       }
     >
-      <SectionPanel className='mb-6 p-3'>
-        <div className='flex flex-wrap gap-2'>
-          <Button
-            variant={workspaceView === 'engine' ? 'default' : 'outline'}
-            size='sm'
-            onClick={(): void => setWorkspaceViewWithUrl('engine')}
-          >
-            Engine
-          </Button>
-          <Button
-            variant={workspaceView === 'backups' ? 'default' : 'outline'}
-            size='sm'
-            onClick={(): void => setWorkspaceViewWithUrl('backups')}
-          >
-            Backups
-          </Button>
-          <Button
-            variant={workspaceView === 'operations' ? 'default' : 'outline'}
-            size='sm'
-            onClick={(): void => setWorkspaceViewWithUrl('operations')}
-          >
-            Operations
-          </Button>
-        </div>
-      </SectionPanel>
+      <div className='mb-6 flex flex-wrap gap-2 rounded-lg border border-border/60 bg-card/50 p-3'>
+        <Button
+          variant={workspaceView === 'engine' ? 'default' : 'outline'}
+          size='sm'
+          onClick={(): void => setWorkspaceViewWithUrl('engine')}
+        >
+          Engine
+        </Button>
+        <Button
+          variant={workspaceView === 'backups' ? 'default' : 'outline'}
+          size='sm'
+          onClick={(): void => setWorkspaceViewWithUrl('backups')}
+        >
+          Backups
+        </Button>
+        <Button
+          variant={workspaceView === 'operations' ? 'default' : 'outline'}
+          size='sm'
+          onClick={(): void => setWorkspaceViewWithUrl('operations')}
+        >
+          Operations
+        </Button>
+      </div>
 
       {workspaceView === 'engine' ? (
         <>
@@ -1164,13 +1162,11 @@ export default function DatabaseEnginePage(): React.JSX.Element {
           </FormSection>
 
           <div className='mt-6 grid gap-4 lg:grid-cols-3'>
-            <SectionPanel className='p-5'>
-              <div className='flex items-center gap-2'>
-                <DatabaseIcon className='size-4 text-emerald-300' />
-                <h3 className='text-base font-semibold text-white'>
-              MongoDB Collections ({mongoCollections.length})
-                </h3>
-              </div>
+            <FormSection
+              title={`MongoDB Collections (${mongoCollections.length})`}
+              titleIcon={<DatabaseIcon className='size-4 text-emerald-300' />}
+              className='p-5'
+            >
               <div className='mt-3 max-h-72 space-y-1 overflow-auto text-xs'>
                 {mongoCollections.length === 0 && (
                   <p className='text-gray-500'>No MongoDB collections detected.</p>
@@ -1184,15 +1180,13 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                   </div>
                 ))}
               </div>
-            </SectionPanel>
+            </FormSection>
 
-            <SectionPanel className='p-5'>
-              <div className='flex items-center gap-2'>
-                <DatabaseIcon className='size-4 text-blue-300' />
-                <h3 className='text-base font-semibold text-white'>
-              Prisma Collections ({prismaCollections.length})
-                </h3>
-              </div>
+            <FormSection
+              title={`Prisma Collections (${prismaCollections.length})`}
+              titleIcon={<DatabaseIcon className='size-4 text-blue-300' />}
+              className='p-5'
+            >
               <div className='mt-3 max-h-72 space-y-1 overflow-auto text-xs'>
                 {prismaCollections.length === 0 && (
                   <p className='text-gray-500'>No Prisma collections detected.</p>
@@ -1206,13 +1200,13 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                   </div>
                 ))}
               </div>
-            </SectionPanel>
+            </FormSection>
 
-            <SectionPanel className='p-5'>
-              <div className='flex items-center gap-2'>
-                <HardDriveIcon className='size-4 text-orange-300' />
-                <h3 className='text-base font-semibold text-white'>Redis</h3>
-              </div>
+            <FormSection
+              title='Redis'
+              titleIcon={<HardDriveIcon className='size-4 text-orange-300' />}
+              className='p-5'
+            >
               <div className='mt-3 text-xs text-gray-300'>
                 <div>Status: {redisQuery.data?.enabled ? (redisQuery.data.connected ? 'Connected' : 'Disconnected') : 'Disabled'}</div>
                 <div>DB Size: {redisQuery.data?.dbSize ?? 0}</div>
@@ -1230,7 +1224,7 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                   </div>
                 ))}
               </div>
-            </SectionPanel>
+            </FormSection>
           </div>
 
           <FormSection
@@ -1610,26 +1604,22 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                     </div>
 
                     <div className='mt-3 grid gap-3 sm:grid-cols-2'>
-                      <div>
-                        <label className='mb-1 block text-xs text-gray-400'>Cadence</label>
-                        <select
+                      <FormField label='Cadence'>
+                        <UnifiedSelect
                           value={draftTarget.cadence}
-                          onChange={(event): void => {
-                            const cadence = event.target.value as DatabaseEngineBackupSchedule['mongodb']['cadence'];
+                          onValueChange={(value: string): void => {
+                            const cadence = value as DatabaseEngineBackupSchedule['mongodb']['cadence'];
                             updateBackupTargetDraft(dbType, (target) => ({ ...target, cadence }));
                           }}
-                          className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-                        >
-                          {Object.entries(backupCadenceLabels).map(([value, label]) => (
-                            <option key={value} value={value}>
-                              {label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className='mb-1 block text-xs text-gray-400'>UTC Time</label>
-                        <input
+                          options={Object.entries(backupCadenceLabels).map(([value, label]) => ({
+                            value,
+                            label,
+                          }))}
+                          triggerClassName='h-9 text-xs'
+                        />
+                      </FormField>
+                      <FormField label='UTC Time'>
+                        <Input
                           type='time'
                           step={60}
                           value={draftTarget.timeUtc}
@@ -1637,13 +1627,12 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                             const value = event.target.value;
                             updateBackupTargetDraft(dbType, (target) => ({ ...target, timeUtc: value }));
                           }}
-                          className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                          className='h-9 text-xs'
                         />
-                      </div>
+                      </FormField>
                       {draftTarget.cadence === 'every_n_days' && (
-                        <div>
-                          <label className='mb-1 block text-xs text-gray-400'>Interval Days</label>
-                          <input
+                        <FormField label='Interval Days'>
+                          <Input
                             type='number'
                             min={1}
                             max={365}
@@ -1656,32 +1645,29 @@ export default function DatabaseEnginePage(): React.JSX.Element {
                                 intervalDays: Math.min(365, Math.max(1, parsed)),
                               }));
                             }}
-                            className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
+                            className='h-9 text-xs'
                           />
-                        </div>
+                        </FormField>
                       )}
                       {draftTarget.cadence === 'weekly' && (
-                        <div>
-                          <label className='mb-1 block text-xs text-gray-400'>Weekday</label>
-                          <select
-                            value={draftTarget.weekday}
-                            onChange={(event): void => {
-                              const parsed = Number.parseInt(event.target.value, 10);
+                        <FormField label='Weekday'>
+                          <UnifiedSelect
+                            value={String(draftTarget.weekday)}
+                            onValueChange={(value: string): void => {
+                              const parsed = Number.parseInt(value, 10);
                               if (!Number.isFinite(parsed)) return;
                               updateBackupTargetDraft(dbType, (target) => ({
                                 ...target,
                                 weekday: Math.min(6, Math.max(0, parsed)),
                               }));
                             }}
-                            className='w-full rounded-md border border-gray-700 bg-gray-900 px-2 py-2 text-xs text-gray-200'
-                          >
-                            {DATABASE_ENGINE_BACKUP_WEEKDAYS.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                            options={DATABASE_ENGINE_BACKUP_WEEKDAYS.map((option) => ({
+                              value: String(option.value),
+                              label: option.label,
+                            }))}
+                            triggerClassName='h-9 text-xs'
+                          />
+                        </FormField>
                       )}
                     </div>
 

@@ -11,7 +11,7 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   UnifiedButton,
-  SectionPanel,
+  
   Tooltip,
   useToast,
 } from '@/shared/ui';
@@ -318,12 +318,11 @@ export function LeftSidebar(): React.JSX.Element {
 
   return (
     <>
-      <SectionPanel
+      <div
         className={cn(
-          'order-1 flex h-full min-h-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out p-0',
+          'order-1 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 transition-all duration-300 ease-in-out p-0',
           isFocusMode && 'pointer-events-none opacity-0 -translate-x-2'
         )}
-        variant='subtle'
         aria-hidden={isFocusMode}
       >
         <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
@@ -470,7 +469,7 @@ export function LeftSidebar(): React.JSX.Element {
             </div>
           </div>
         </div>
-      </SectionPanel>
+      </div>
     </>
   );
 }

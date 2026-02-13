@@ -12,7 +12,6 @@ import {
   Input,
   Label,
   SectionHeader,
-  SectionPanel,
   Textarea,
   UnifiedSelect,
   useToast,
@@ -65,6 +64,13 @@ const INSTANCE_META: Array<{
     description: 'Controls drop placeholders in the CMS structure tree.',
     fileHint: 'Example: section, block',
     folderHint: 'Example: zone, section',
+  },
+  {
+    id: 'case_resolver',
+    title: 'Case Resolver',
+    description: 'Controls folder/case nesting and placeholders in Case Resolver.',
+    fileHint: 'Example: case_file, node_file, asset_image, asset_pdf',
+    folderHint: 'Example: folder',
   },
 ];
 
@@ -357,11 +363,10 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
           const fileKinds = getRuleKinds(profile, 'file_to_folder');
 
           return (
-            <SectionPanel
+            <div
               key={meta.id}
               id={`folder-tree-instance-${meta.id}`}
-              variant='subtle'
-              className='scroll-mt-24 space-y-5 p-5'
+              className='scroll-mt-24 space-y-5 rounded-lg border border-border/60 bg-card/40 p-5'
             >
               <div>
                 <h2 className='text-sm font-semibold text-white'>{meta.title}</h2>
@@ -738,7 +743,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
                   placeholder='note=FileText'
                 />
               </div>
-            </SectionPanel>
+            </div>
           );
         })}
       </div>

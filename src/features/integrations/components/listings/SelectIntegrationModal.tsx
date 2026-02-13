@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { AppModal, Button, SectionPanel, IntegrationSelector } from '@/shared/ui';
+import { AppModal, Button,  IntegrationSelector } from '@/shared/ui';
 
 import { useIntegrationSelection } from './hooks/useIntegrationSelection';
 
@@ -41,14 +41,14 @@ export default function SelectIntegrationModal({
         {loading ? (
           <p className='text-sm text-gray-400'>Loading integrations...</p>
         ) : integrations.length === 0 ? (
-          <SectionPanel variant='subtle' className='border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
+          <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
             <p className='text-sm text-yellow-200'>No connected integrations</p>
             <p className='mt-2 text-xs text-yellow-300/70'>
               <Link href='/admin/integrations' className='underline hover:text-yellow-100'>
                 Set up an integration first
               </Link>
             </p>
-          </SectionPanel>
+          </div>
         ) : (
           <>
             <IntegrationSelector

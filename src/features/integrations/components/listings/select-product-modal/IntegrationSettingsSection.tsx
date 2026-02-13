@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations/types/listings';
-import { FormField, FormSection, SectionPanel, UnifiedSelect } from '@/shared/ui';
+import { FormField, FormSection,  UnifiedSelect } from '@/shared/ui';
 
 import { BaseListingSettings } from '../BaseListingSettings';
 
@@ -70,9 +70,9 @@ export function IntegrationSettingsSection({
       </FormSection>
 
       {error && (
-        <SectionPanel variant='subtle-compact' className='border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200'>
+        <div className='rounded-md border border-red-500/40 bg-red-500/10 p-3 text-xs text-red-200'>
           {error}
-        </SectionPanel>
+        </div>
       )}
     </div>
   );

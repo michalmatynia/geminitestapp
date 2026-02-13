@@ -36,39 +36,26 @@ export interface UseProductsOptions {
 
 const PRODUCTS_STALE_MS = 10_000;
 
-export function useProducts(
-  filters: UseProductsFilters,
-  options: UseProductsOptions = {},
-): UseQueryResult<ProductWithImages[], Error> {
-  const { enabled = true } = options;
+import { createQueryHook } from '@/shared/lib/api-hooks';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { z } from 'zod';
+import { productSchema } from '@/shared/contracts/products';
 
-  return useQuery({
-    queryKey: getProductListQueryKey(filters),
-    queryFn: () => getProducts(filters),
-    enabled,
-    staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: false,
-    refetchOnWindowFocus: true,
-    networkMode: 'always',
-  });
-}
+export const useProducts = createQueryHook({
+  queryKeyFactory: (filters: UseProductsFilters) => QUERY_KEYS.products.list(filters),
+  endpoint: '/api/products',
+  schema: z.array(productSchema), // This might need a more specific schema if it includes images
+  staleTime: PRODUCTS_STALE_MS,
+  apiOptions: { cache: 'no-store' },
+});
 
-export function useProductsCount(
-  filters: UseProductsFilters,
-  options: UseProductsOptions = {},
-): UseQueryResult<number, Error> {
-  const { enabled = true } = options;
-
-  return useQuery({
-    queryKey: getProductCountQueryKey(filters),
-    queryFn: () => countProducts(filters),
-    enabled,
-    staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: false,
-    refetchOnWindowFocus: true,
-    networkMode: 'always',
-  });
-}
+export const useProductsCount = createQueryHook({
+  queryKeyFactory: (filters: UseProductsFilters) => QUERY_KEYS.products.count(filters),
+  endpoint: '/api/products/count',
+  schema: z.object({ count: z.number() }).transform(d => d.count),
+  staleTime: PRODUCTS_STALE_MS,
+  apiOptions: { cache: 'no-store' },
+});
 
 export function useProductsWithCount(
   filters: UseProductsFilters,

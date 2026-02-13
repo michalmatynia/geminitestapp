@@ -14,6 +14,7 @@ describe('folder-tree-profiles-v2', () => {
     expect(parsed.image_studio.version).toBe(2);
     expect(parsed.product_categories.version).toBe(2);
     expect(parsed.cms_page_builder.version).toBe(2);
+    expect(parsed.case_resolver.version).toBe(2);
   });
 
   it('normalizes nesting kinds to lowercase and applies them in canNest rules', () => {
@@ -94,5 +95,69 @@ describe('folder-tree-profiles-v2', () => {
 
     expect(resolveFolderTreeIconV2(profile, 'file', 'card')).toBe('Image');
     expect(resolveFolderTreeIconV2(profile, 'file', 'unknown-kind')).toBe(profile.icons.slots.file);
+  });
+
+  it('allows case resolver folder and case file nesting on folder and root', () => {
+    const profile = defaultFolderTreeProfilesV2.case_resolver;
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'folder',
+        nodeKind: 'folder',
+        targetType: 'folder',
+        targetFolderKind: 'folder',
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'case_file',
+        targetType: 'folder',
+        targetFolderKind: 'folder',
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'folder',
+        nodeKind: 'folder',
+        targetType: 'root',
+        targetFolderKind: 'root',
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'case_file',
+        targetType: 'root',
+        targetFolderKind: 'root',
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'node_file',
+        targetType: 'folder',
+        targetFolderKind: 'folder',
+      })
+    ).toBe(true);
+
+    expect(
+      canNestTreeNodeV2({
+        profile,
+        nodeType: 'file',
+        nodeKind: 'asset_image',
+        targetType: 'root',
+        targetFolderKind: 'root',
+      })
+    ).toBe(true);
   });
 });

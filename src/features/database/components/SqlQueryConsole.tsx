@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Badge, Button, SectionPanel, Textarea, UnifiedSelect, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
+import { Badge, Button,  Textarea, UnifiedSelect, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
@@ -199,7 +199,7 @@ export function SqlQueryConsole({
 
       {/* Results */}
       {result && (
-        <SectionPanel className='p-4'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           {/* Info bar */}
           <div className='flex flex-wrap items-center gap-3 mb-3'>
             {result.command && (
@@ -279,7 +279,7 @@ export function SqlQueryConsole({
               {result.command} completed successfully. {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected.
             </p>
           )}
-        </SectionPanel>
+        </div>
       )}
     </div>
   );

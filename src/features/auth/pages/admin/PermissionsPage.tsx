@@ -24,7 +24,6 @@ import {
   Label,
   useToast,
   SectionHeader,
-  SectionPanel,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -45,9 +44,11 @@ export default function AuthPermissionsPage(): React.JSX.Element {
 
   if (isLoading) {
     return (
-      <SectionPanel className='p-6 text-sm text-gray-400'>
-        Loading permission settings...
-      </SectionPanel>
+      <div className='container mx-auto py-10'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
+          Loading permission settings...
+        </div>
+      </div>
     );
   }
 
@@ -229,13 +230,13 @@ function AuthPermissionsForm({
   };
 
   return (
-    <div className='space-y-6'>
-      <SectionPanel className='p-6'>
+    <div className='container mx-auto max-w-5xl py-10 space-y-6'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <SectionHeader
           title='Permissions'
           description='Define roles and the permissions they include. Enforcement is handled by the application logic you wire up later.'
         />
-      </SectionPanel>
+      </div>
 
       <div className='grid gap-6 lg:grid-cols-2'>
         <Card className='bg-card border-border'>

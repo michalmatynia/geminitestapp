@@ -23,7 +23,7 @@ import {
   Input, 
   Label, 
   SectionHeader, 
-  SectionPanel, 
+   
   UnifiedSelect, 
   AppModal, 
   useToast 
@@ -217,38 +217,36 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   }, [triggerButtonsQuery.data]);
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionPanel className='p-6'>
-        <SectionHeader
-          title='Trigger Buttons'
-          actions={
-            <div className='flex items-center gap-2'>
-              <Button
-                variant='outline'
-                onClick={() => {
-                  void triggerButtonsQuery.refetch();
-                }}
-              >
-                Refresh
-              </Button>
-              <Button onClick={openCreate}>New Trigger Button</Button>
-            </div>
-          }
-        />
-
-        <div className='mt-6'>
-          <TriggerButtonListManager
-            data={rows}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onOrderChange={handleOrderChange}
-            isLoading={triggerButtonsQuery.isLoading}
-          />
-          <div className='mt-2 text-[11px] text-gray-500'>
-            Drag the handle on the left to reorder. The same order is used in modals and lists.
+    <div className='container mx-auto max-w-5xl py-10'>
+      <SectionHeader
+        title='Trigger Buttons'
+        actions={
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              onClick={() => {
+                void triggerButtonsQuery.refetch();
+              }}
+            >
+              Refresh
+            </Button>
+            <Button onClick={openCreate}>New Trigger Button</Button>
           </div>
+        }
+      />
+
+      <div className='mt-6 rounded-lg border border-border/60 bg-card/40 p-6'>
+        <TriggerButtonListManager
+          data={rows}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onOrderChange={handleOrderChange}
+          isLoading={triggerButtonsQuery.isLoading}
+        />
+        <div className='mt-2 text-[11px] text-gray-500'>
+          Drag the handle on the left to reorder. The same order is used in modals and lists.
         </div>
-      </SectionPanel>
+      </div>
 
       <AppModal
         open={editorOpen}

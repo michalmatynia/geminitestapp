@@ -27,7 +27,7 @@ import {
   Input,
   Pagination,
   SectionHeader,
-  SectionPanel,
+  
   FormSection,
   Tabs,
   TabsContent,
@@ -478,15 +478,15 @@ function DatabasePreviewContent(): React.JSX.Element {
 
       {/* Error display */}
       {error && (
-        <SectionPanel className='mb-6 p-5'>
+        <div className='mb-6 rounded-lg border border-red-500/40 bg-red-500/10 p-5'>
           <p className='text-xs text-red-300'>{error}</p>
-        </SectionPanel>
+        </div>
       )}
 
       {loading && (
-        <SectionPanel className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/50 p-5'>
           <p className='text-xs text-gray-400'>Loading preview... This may take a moment for backup restores.</p>
-        </SectionPanel>
+        </div>
       )}
 
       {!loading && !error && (

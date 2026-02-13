@@ -12,7 +12,7 @@ import {
   type SystemLogFilterFormValues,
 } from '@/features/observability/lib/log-triage-presets';
 import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
-import { Button, DynamicFilters, ListPanel, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, PageLayout, FormSection } from '@/shared/ui';
+import { Button, DynamicFilters, ListPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, PageLayout, FormSection } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const formatTimestamp = (value: Date | string): string => {
@@ -261,23 +261,23 @@ function LogMetrics(): React.JSX.Element {
         </div>
       ) : (
         <div className='mt-4 grid gap-4 md:grid-cols-3'>
-          <SectionPanel variant='subtle-compact' className='p-3'>
+          <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
             <div className='text-xs text-gray-400'>Totals</div>
             <div className='mt-2 space-y-1 text-sm text-gray-200'>
               <div>Total: {metrics.total}</div>
               <div>Last 24h: {metrics.last24Hours}</div>
               <div>Last 7d: {metrics.last7Days}</div>
             </div>
-          </SectionPanel>
-          <SectionPanel variant='subtle-compact' className='p-3'>
+          </div>
+          <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
             <div className='text-xs text-gray-400'>By level</div>
             <div className='mt-2 space-y-1 text-sm text-gray-200'>
               <div className='text-red-300'>Errors: {levels.error}</div>
               <div className='text-yellow-300'>Warnings: {levels.warn}</div>
               <div className='text-blue-300'>Info: {levels.info}</div>
             </div>
-          </SectionPanel>
-          <SectionPanel variant='subtle-compact' className='p-3'>
+          </div>
+          <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
             <div className='text-xs text-gray-400'>Top sources</div>
             {metrics.topSources.length === 0 ? (
               <div className='mt-2 text-xs text-gray-500'>No sources yet.</div>
@@ -304,7 +304,7 @@ function LogMetrics(): React.JSX.Element {
                 ))}
               </div>
             )}
-          </SectionPanel>
+          </div>
         </div>
       )}
     </FormSection>
@@ -334,7 +334,7 @@ function AiLogInterpreter(): React.JSX.Element {
       {insightsQuery.isLoading ? (
         <div className='text-xs text-gray-400'>Loading AI insights...</div>
       ) : insightsQuery.error ? (
-        <div className='text-xs text-red-400'>{(insightsQuery.error).message}</div>
+        <div className='text-xs text-red-400'>{(insightsQuery.error as Error).message}</div>
       ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
         <div className='text-xs text-gray-500'>No AI insights yet.</div>
       ) : (
@@ -379,7 +379,7 @@ function LogList(): React.JSX.Element {
   } = useSystemLogsContext();
 
   return (
-    <SectionPanel variant='subtle' className='p-0'>
+    <div className='rounded-lg border border-border/60 bg-card/40 p-0 overflow-hidden'>
       <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400'>
         <span>
           Showing {logs.length} of {total} logs
@@ -466,7 +466,7 @@ function LogList(): React.JSX.Element {
                     Details
                   </summary>
                   {logInterpretations[log.id] ? (
-                    <SectionPanel variant='subtle-compact' className='mt-2 p-2 text-[11px] text-gray-300'>
+                    <div className='mt-2 rounded border border-border/60 bg-gray-900/40 p-2 text-[11px] text-gray-300'>
                       <div className='font-semibold text-gray-200'>AI Interpretation</div>
                       <div className='mt-2 text-gray-300'>
                         {logInterpretations[log.id]?.summary}
@@ -478,10 +478,10 @@ function LogList(): React.JSX.Element {
                           ))}
                         </ul>
                       ) : null}
-                    </SectionPanel>
+                    </div>
                   ) : null}
                   {log.source === 'client' && log.context ? (
-                    <SectionPanel variant='subtle-compact' className='mt-2 p-2 text-[11px] text-gray-300'>
+                    <div className='mt-2 rounded border border-border/60 bg-gray-900/40 p-2 text-[11px] text-gray-300'>
                       <div className='font-semibold text-gray-200'>Client context</div>
                       <div className='mt-2 grid gap-2 md:grid-cols-2'>
                         <div>
@@ -517,7 +517,7 @@ function LogList(): React.JSX.Element {
                           <div>{String((getContextValue(log.context, 'network.rtt') as string | number | null) ?? '—')}</div>
                         </div>
                       </div>
-                    </SectionPanel>
+                    </div>
                   ) : null}
                   {log.stack && (
                     <pre className='mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300'>
@@ -535,7 +535,7 @@ function LogList(): React.JSX.Element {
           ))}
         </div>
       )}
-    </SectionPanel>
+    </div>
   );
 }
 

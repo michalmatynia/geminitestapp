@@ -68,6 +68,15 @@ export type MasterFolderTreeProps = {
         controller: MasterFolderTreeController
       ) => MasterTreeDropPosition)
     | undefined;
+  onNodeDragStart?:
+    | ((
+        input: {
+          node: MasterTreeViewNode;
+          event: React.DragEvent<HTMLDivElement>;
+        },
+        controller: MasterFolderTreeController
+      ) => void)
+    | undefined;
   rootDropUi?:
     | {
         enabled?: boolean | undefined;
@@ -140,6 +149,7 @@ export function MasterFolderTree({
   canDrop,
   onNodeDrop,
   resolveDropPosition,
+  onNodeDragStart,
   rootDropUi,
 }: MasterFolderTreeProps): React.JSX.Element {
   const [externalDraggedNodeId, setExternalDraggedNodeId] = React.useState<MasterTreeId | null>(null);
@@ -269,6 +279,13 @@ export function MasterFolderTree({
                 enableDnd
                   ? (event: React.DragEvent<HTMLDivElement>): void => {
                     controller.startDrag(node.id);
+                    onNodeDragStart?.(
+                      {
+                        node,
+                        event,
+                      },
+                      controller
+                    );
                     event.dataTransfer.effectAllowed = 'move';
                   }
                   : undefined

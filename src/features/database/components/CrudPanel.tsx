@@ -16,7 +16,7 @@ import {
   Button,
   Input,
   Pagination,
-  SectionPanel,
+  
   Table,
   TableBody,
   TableCell,
@@ -424,7 +424,7 @@ export function CrudPanel({
 
       {/* Data browser */}
       {selectedTable && (
-        <SectionPanel className='p-0'>
+        <div className='rounded-lg border border-border/60 bg-card/40'>
           {isLoadingRows && <p className='p-4 text-xs text-gray-400'>Loading rows...</p>}
 
           {!isLoadingRows && rows.length === 0 && (
@@ -503,7 +503,7 @@ export function CrudPanel({
               </div>
             </>
           )}
-        </SectionPanel>
+        </div>
       )}
 
       {/* Modals */}

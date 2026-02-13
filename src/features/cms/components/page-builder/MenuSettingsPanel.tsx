@@ -24,7 +24,7 @@ import {
   Checkbox,
   Button,
   SectionHeader,
-  SectionPanel,
+  
   FormSection,
   FormField,
 } from '@/shared/ui';
@@ -482,10 +482,9 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           return (
             <div className='space-y-2'>
               {settings.items.map((item: MenuItem) => (
-                <SectionPanel
+                <div
                   key={item.id}
-                  variant='subtle-compact'
-                  className='flex items-start gap-1.5 p-2'
+                  className='flex items-start gap-1.5 rounded-md border border-border/60 bg-card/30 p-2'
                 >
                   <div className='flex-1 space-y-1.5'>
                     <Input
@@ -523,7 +522,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
                   >
                     <Trash2 className='size-3.5' />
                   </button>
-                </SectionPanel>
+                </div>
               ))}
               <Button
                 size='sm'

@@ -16,7 +16,7 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { IntegrationConnectionBasic } from '@/features/integrations';
 import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { Button, Input, Checkbox, Label, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Button, Input, Checkbox, Label, UnifiedSelect } from '@/shared/ui';
 
 export function ExportTab(): React.JSX.Element {
   const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
@@ -121,7 +121,7 @@ export function ExportTab(): React.JSX.Element {
   };
 
   return (
-    <SectionPanel variant='subtle' className='p-4'>
+    <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-lg font-semibold text-white'>
@@ -213,7 +213,7 @@ export function ExportTab(): React.JSX.Element {
           </div>
         </div>
 
-        <SectionPanel variant='subtle' className='border border-border/70 p-3'>
+        <div className='rounded-md border border-border/60 bg-card/30 p-3'>
           <div className='flex items-center justify-between gap-3'>
             <div>
               <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
@@ -272,7 +272,7 @@ export function ExportTab(): React.JSX.Element {
               </span>
             )}
           </div>
-        </SectionPanel>
+        </div>
 
         <div>
           <Label className='text-xs text-gray-400'>Default Warehouse ID</Label>
@@ -329,7 +329,7 @@ export function ExportTab(): React.JSX.Element {
             ) : null}
         </div>
 
-        <SectionPanel variant='subtle' className='p-4'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='flex flex-wrap items-center justify-between gap-3'>
             <div>
               <h3 className='text-sm font-semibold text-white'>
@@ -355,10 +355,9 @@ export function ExportTab(): React.JSX.Element {
           ) : (
             <div className='mt-3 space-y-3'>
               {imageRetryPresets.map((preset: ImageRetryPreset) => (
-                <SectionPanel
+                <div
                   key={preset.id}
-                  variant='subtle-compact'
-                  className='p-3'
+                  className='rounded-md border border-border/60 bg-card/30 p-3'
                 >
                   <div className='text-xs font-semibold text-gray-200'>
                     {preset.label}
@@ -421,13 +420,13 @@ export function ExportTab(): React.JSX.Element {
                     />
                     <span>Force JPEG conversion</span>
                   </div>
-                </SectionPanel>
+                </div>
               ))}
             </div>
           )}
-        </SectionPanel>
+        </div>
 
-        <SectionPanel variant='subtle-compact' className='border-blue-900/50 bg-blue-900/20 p-4'>
+        <div className='rounded-lg border border-blue-900/50 bg-blue-900/20 p-4'>
           <h3 className='text-sm font-semibold text-blue-200'>
             Export Guidelines
           </h3>
@@ -459,9 +458,9 @@ export function ExportTab(): React.JSX.Element {
               tab
             </li>
           </ul>
-        </SectionPanel>
+        </div>
 
-        <SectionPanel variant='subtle' className='p-4'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <h3 className='text-sm font-semibold text-white mb-3'>
             Quick Actions
           </h3>
@@ -532,7 +531,7 @@ export function ExportTab(): React.JSX.Element {
               </Button>
             </Link>
           </div>
-        </SectionPanel>
+        </div>
         {debugWarehouses ? (
           <div className='rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300'>
             <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -635,6 +634,6 @@ export function ExportTab(): React.JSX.Element {
           </div>
         ) : null}
       </div>
-    </SectionPanel>
+    </>
   );
 }

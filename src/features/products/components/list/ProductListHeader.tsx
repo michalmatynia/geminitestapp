@@ -15,7 +15,7 @@ import {
 import { useConvertAllImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import type { Catalog } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
-import { Button, UnifiedSelect, useToast, Pagination, ConfirmDialog, SectionPanel, SectionHeader } from '@/shared/ui';
+import { Button, UnifiedSelect, useToast, Pagination, ConfirmDialog,  SectionHeader } from '@/shared/ui';
 
 interface ProductListHeaderProps {
   showHeader?: boolean;
@@ -130,7 +130,7 @@ export const ProductListHeader = memo(function ProductListHeader({
       )}
 
       {/* Controls section */}
-      <SectionPanel className='flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between'>
+      <div className='flex flex-col gap-4 rounded-lg border border-border/60 bg-card/40 p-4 sm:flex-row sm:items-center sm:justify-between'>
         <Pagination
           page={page}
           totalPages={totalPages}
@@ -176,7 +176,7 @@ export const ProductListHeader = memo(function ProductListHeader({
             ariaLabel='Filter by catalog'
           />
         </div>
-      </SectionPanel>
+      </div>
 
       <ConfirmDialog
         open={showBase64AllConfirm}

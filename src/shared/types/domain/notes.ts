@@ -38,43 +38,15 @@ export type {
   NoteEditorType
 };
 
-export type NotebookRecord = Entity & {
-  name: string;
-  color: string | null;
-  defaultThemeId?: string | null;
-};
+export type NotebookRecord = NotebookDto;
 
 export type ThemeRecord = NoteThemeDto;
 
-export type NoteRecord = Entity & {
-  title: string;
-  content: string;
-  editorType: string;
-  color: string | null;
-  isPinned: boolean;
-  isArchived: boolean;
-  isFavorite: boolean;
-  notebookId: string | null;
-};
+export type NoteRecord = NoteDto;
 
-export type TagRecord = Entity & {
-  name: string;
-  color: string | null;
-  notebookId: string | null;
-};
+export type TagRecord = NoteTagDto;
 
-export type CategoryRecord = {
-  id: string;
-  name: string;
-  description?: string | null;
-  color?: string | null;
-  parentId?: string | null;
-  notebookId?: string | null;
-  themeId?: string | null;
-  sortIndex?: number | null;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+export type CategoryRecord = NoteCategoryDto;
 
 export type NoteTagRecord = {
   noteId: string;

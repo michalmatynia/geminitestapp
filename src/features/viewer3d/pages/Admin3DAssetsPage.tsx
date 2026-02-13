@@ -15,7 +15,7 @@ import { useMemo, useState } from 'react';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
 import {
   Button,
-  SectionPanel,
+  
   ListPanel,
   Table,
   TableBody,
@@ -195,16 +195,15 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         ) : null
       }
       filters={
-        <SectionPanel>
-          <div className='flex flex-wrap items-center gap-3'>
-            <SearchInput
-              value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
-              onClear={() => setSearchQuery('')}
-              placeholder='Search assets...'
-              className='h-8'
-              containerClassName='flex-1 min-w-[200px] max-w-md'
-            />
+        <div className='flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card/50 p-3'>
+          <SearchInput
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
+            onClear={() => setSearchQuery('')}
+            placeholder='Search assets...'
+            className='h-8'
+            containerClassName='flex-1 min-w-[200px] max-w-md'
+          />
 
             <Button
               variant={showFilters ? 'default' : 'outline'}
@@ -247,7 +246,6 @@ export function Admin3DAssetsPage(): React.JSX.Element {
               </Button>
             </div>
           </div>
-        </SectionPanel>
       }
       footer={stats}
     >

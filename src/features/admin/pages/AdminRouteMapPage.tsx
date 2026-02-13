@@ -19,7 +19,7 @@ import {
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Card, SectionHeader, SectionPanel, SearchInput, Badge, FormSection } from '@/shared/ui';
+import { Badge, Card, FormSection, SearchInput, SectionHeader } from '@/shared/ui';
 
 type RouteMapEntry = FlattenedNavItem & {
   description: string;
@@ -31,6 +31,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin': 'Admin home dashboard with quick links and global status.',
   '/admin/routes': 'Reference map of admin routes with descriptions.',
   '/admin/ai-paths': 'Design, test, and run AI Paths workflows.',
+  '/admin/case-resolver':
+    'Build case flows with folder-organized files, WYSIWYG prompt nodes, and node-map composition.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',
   '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
   '/admin/validator':
@@ -187,7 +189,7 @@ export function AdminRouteMapPage(): React.JSX.Element {
         description='Reference of admin routes with clear descriptions for each destination.'
       />
 
-      <SectionPanel className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+      <div className='flex flex-col gap-4 rounded-lg border border-border/60 bg-card/40 p-4 md:flex-row md:items-center md:justify-between'>
         <div className='flex flex-col gap-1'>
           <div className='text-sm text-gray-200'>Routes indexed</div>
           <div className='text-xs text-gray-400'>
@@ -201,10 +203,12 @@ export function AdminRouteMapPage(): React.JSX.Element {
             placeholder='Search routes, labels, keywords...'
           />
         </div>
-      </SectionPanel>
+      </div>
 
       {grouped.length === 0 ? (
-        <SectionPanel className='text-sm text-gray-400'>No routes match your search.</SectionPanel>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
+          No routes match your search.
+        </div>
       ) : (
         grouped.map(([section, sectionEntries]: [string, RouteMapEntry[]]) => (
           <FormSection

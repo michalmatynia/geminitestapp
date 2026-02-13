@@ -16,6 +16,7 @@ export const DRAG_KEYS = {
   FROM_SECTION_ID: 'fromSectionId',
   FROM_COLUMN_ID: 'fromColumnId',
   FROM_PARENT_BLOCK_ID: 'fromParentBlockId',
+  CASE_RESOLVER_ITEM: 'application/x-case-resolver-item',
 } as const;
 
 export type DragDataRecord = Record<string, string | number | null | undefined>;

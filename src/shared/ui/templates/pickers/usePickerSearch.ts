@@ -19,7 +19,7 @@ import type { UsePickerSearchOptions, UsePickerSearchReturn } from './types';
  * );
  */
 export function usePickerSearch<T>(
-  items: T[],
+  items: T[] | readonly T[],
   options: UsePickerSearchOptions<T> = {}
 ): UsePickerSearchReturn<T> {
   const { initialQuery = '', matcher } = options;

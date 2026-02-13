@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
   Label,
   MultiSelect,
-  SectionPanel,
+  
   UnifiedTextarea,
   UnifiedSelect,
   ValidatorFormatterToggle,
@@ -294,12 +294,11 @@ export function RightSidebar(): React.JSX.Element {
 
   return (
     <>
-      <SectionPanel
+      <div
         className={cn(
-          'order-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden p-0 transition-all duration-300 ease-in-out',
+          'order-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 transition-all duration-300 ease-in-out',
           isFocusMode && 'pointer-events-none opacity-0 translate-x-2'
         )}
-        variant='subtle'
         aria-hidden={isFocusMode}
       >
         {/* Tab toggle */}
@@ -566,7 +565,7 @@ export function RightSidebar(): React.JSX.Element {
             </div>
           </>
         )}
-      </SectionPanel>
+      </div>
 
       <AppModal
         open={promptControlOpen}

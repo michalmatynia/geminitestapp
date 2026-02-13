@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 
-import { Button, SectionHeader, SectionPanel, useToast, ConfirmDialog } from '@/shared/ui';
+import { Button, SectionHeader,  useToast, ConfirmDialog } from '@/shared/ui';
 
 import { useSyncAllBaseImagesMutation } from '../../hooks/useIntegrationMutations';
 
@@ -43,7 +43,7 @@ export default function MarketplacesPage(): React.JSX.Element {
   };
 
   return (
-    <SectionPanel className='p-6'>
+    <div className='container mx-auto max-w-5xl py-10'>
       <SectionHeader
         title='Marketplaces'
         description='Configure and manage external marketplaces for product listings.'
@@ -96,6 +96,6 @@ export default function MarketplacesPage(): React.JSX.Element {
         variant='success'
         loading={syncMutation.isPending}
       />
-    </SectionPanel>
+    </div>
   );
 }

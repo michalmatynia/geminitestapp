@@ -13,7 +13,7 @@ import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, SectionPanel, PageLayout, FormSection, FormField, RefreshButton } from '@/shared/ui';
+import { Button, useToast, Input,  PageLayout, FormSection, FormField, RefreshButton } from '@/shared/ui';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -169,10 +169,9 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                 const isEditing = editingId === notebook.id;
                 const isActive = selectedNotebookId === notebook.id;
                 return (
-                  <SectionPanel
+                  <div
                     key={notebook.id}
-                    variant='subtle'
-                    className='flex cursor-pointer items-center justify-between gap-3 px-4 py-3 transition hover:border-border/60'
+                    className='flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/30 px-4 py-3 transition hover:border-border/80'
                     onClick={(): void => {
                       updateSettings({ selectedNotebookId: notebook.id });
                       router.push('/admin/notes');
@@ -296,7 +295,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                         </div>
                       )}
                     </div>
-                  </SectionPanel>
+                  </div>
                 );
               })}
             </div>

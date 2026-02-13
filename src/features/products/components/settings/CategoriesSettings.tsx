@@ -28,7 +28,7 @@ import {
   ConfirmDialog,
   EmptyState,
   FolderTreePanel,
-  SectionPanel,
+  
   Skeleton,
   TreeActionButton,
   TreeActionSlot,
@@ -370,7 +370,7 @@ export function CategoriesSettings({
   return (
     <div className='space-y-5'>
       {/* Catalog Selector */}
-      <SectionPanel variant='subtle' className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <p className='text-sm font-semibold text-white mb-3'>Select Catalog</p>
         <p className='text-xs text-gray-400 mb-3'>
           Each catalog has its own category tree. Select a catalog to manage its categories.
@@ -386,7 +386,7 @@ export function CategoriesSettings({
             placeholder='Select a catalog...'
           />
         </div>
-      </SectionPanel>
+      </div>
 
       {/* Category Tree */}
       {selectedCatalogId && (
@@ -401,7 +401,7 @@ export function CategoriesSettings({
             </Button>
           </div>
 
-          <SectionPanel variant='subtle' className='p-4'>
+          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
             <p className='text-sm font-semibold text-white mb-4'>
               Category Tree for &quot;{selectedCatalog?.name}&quot;
             </p>
@@ -565,7 +565,7 @@ export function CategoriesSettings({
                 )}
               </FolderTreePanel>
             )}
-          </SectionPanel>
+          </div>
         </>
       )}
 

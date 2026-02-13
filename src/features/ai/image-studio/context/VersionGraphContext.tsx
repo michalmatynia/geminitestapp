@@ -5,6 +5,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useToast } from '@/shared/ui';
 
 import { useSlotsState, useSlotsActions } from './SlotsContext';
+import { readMeta } from '../utils/metadata';
 import {
   computeVersionGraph,
   computeTimelineLayout,
@@ -53,11 +54,13 @@ export interface VersionGraphState {
   /** Composite mode */
   compositeMode: boolean;
   compositeSelectedIds: string[];
-  compositeResultImage: string | null;
+  compositeResultCache: Map<string, string>;
   compositeLoading: boolean;
   /** Isolate branch */
   isolatedNodeId: string | null;
   isolatedNodeIds: Set<string> | null;
+  /** Leaf filter */
+  filterLeafOnly: boolean;
   /** Compare mode */
   compareMode: boolean;
   compareNodeIds: [string, string] | null;
@@ -94,6 +97,8 @@ export interface VersionGraphActions {
   isolateBranch: (nodeId: string | null) => void;
   /** Annotations */
   setAnnotation: (nodeId: string, text: string) => Promise<void>;
+  /** Leaf filter */
+  toggleFilterLeafOnly: () => void;
   /** Compare mode */
   toggleCompareMode: () => void;
   setCompareNodeIds: (ids: [string, string] | null) => void;
@@ -106,10 +111,6 @@ const VersionGraphActionsContext = createContext<VersionGraphActions | null>(nul
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function readMeta(slot: { metadata?: Record<string, unknown> | null }): SlotGenerationMetadata {
-  if (!slot.metadata || typeof slot.metadata !== 'object') return {};
-  return slot.metadata as SlotGenerationMetadata;
-}
 
 function resolveSourceIds(
   meta: SlotGenerationMetadata,
@@ -203,13 +204,14 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
   // Composite mode state
   const [compositeMode, setCompositeMode] = useState(false);
   const [compositeSelectedIds, setCompositeSelectedIds] = useState<string[]>([]);
-  const [compositeResultImage, setCompositeResultImage] = useState<string | null>(null);
+  const [compositeResultCache, setCompositeResultCache] = useState<Map<string, string>>(new Map());
   const [compositeLoading, setCompositeLoading] = useState(false);
 
   // Filter state
   const [filterQuery, setFilterQuery] = useState('');
   const [filterTypes, setFilterTypes] = useState<Set<'base' | 'generation' | 'merge' | 'composite'>>(new Set());
   const [filterHasMask, setFilterHasMask] = useState<boolean | null>(null);
+  const [filterLeafOnly, setFilterLeafOnly] = useState(false);
 
   // Layout state
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('dag');
@@ -279,7 +281,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     setMergeSelectedIds([]);
     setCompositeMode(false);
     setCompositeSelectedIds([]);
-    setCompositeResultImage(null);
+    setCompositeResultCache(new Map());
     setCompositeLoading(false);
     setCollapsedNodeIds(new Set());
     setIsolatedNodeId(null);
@@ -313,17 +315,17 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
 
   // Compute filtered node IDs (for dimming, not hiding)
   const filteredNodeIds = useMemo<Set<string> | null>(() => {
-    const hasFilter = filterQuery || filterTypes.size > 0 || filterHasMask !== null;
+    const hasFilter = filterQuery || filterTypes.size > 0 || filterHasMask !== null || filterLeafOnly;
     if (!hasFilter) return null;
 
     const matched = new Set<string>();
     for (const node of visibleNodes) {
-      if (matchesFilter(node, filterQuery, filterTypes, filterHasMask)) {
-        matched.add(node.id);
-      }
+      if (!matchesFilter(node, filterQuery, filterTypes, filterHasMask)) continue;
+      if (filterLeafOnly && node.childIds.length > 0) continue;
+      matched.add(node.id);
     }
     return matched;
-  }, [visibleNodes, filterQuery, filterTypes, filterHasMask]);
+  }, [visibleNodes, filterQuery, filterTypes, filterHasMask, filterLeafOnly]);
 
   // Compute graph stats
   const graphStats = useMemo(() => {
@@ -506,7 +508,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     setCompositeMode((prev) => {
       if (prev) {
         setCompositeSelectedIds([]);
-        setCompositeResultImage(null);
+        setCompositeResultCache(new Map());
       } else {
         // Exit merge mode when entering composite mode
         setMergeMode(false);
@@ -538,7 +540,11 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       });
       if (!res.ok) throw new Error('Composite API failed');
       const data = (await res.json()) as { resultImageBase64: string };
-      setCompositeResultImage(data.resultImageBase64);
+      setCompositeResultCache((prev) => {
+        const next = new Map(prev);
+        next.set(slotId, data.resultImageBase64);
+        return next;
+      });
       // Persist the composited image on the slot
       await updateSlotMutation.mutateAsync({
         id: slotId,
@@ -623,6 +629,13 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     reordered.splice(toIndex, 0, moved);
     // Re-assign order indices
     const updated = reordered.map((l, i) => ({ ...l, order: i }));
+
+    // Clear cached result for this slot before re-fetching
+    setCompositeResultCache((prev) => {
+      const next = new Map(prev);
+      next.delete(compositeSlotId);
+      return next;
+    });
 
     await updateSlotMutation.mutateAsync({
       id: compositeSlotId,
@@ -715,6 +728,11 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     setFilterQuery('');
     setFilterTypes(new Set());
     setFilterHasMask(null);
+    setFilterLeafOnly(false);
+  }, []);
+
+  const toggleFilterLeafOnly = useCallback(() => {
+    setFilterLeafOnly((prev) => !prev);
   }, []);
 
   // Layout action
@@ -769,11 +787,12 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       filterTypes,
       filterHasMask,
       filteredNodeIds,
+      filterLeafOnly,
       layoutMode,
       graphStats,
       compositeMode,
       compositeSelectedIds,
-      compositeResultImage,
+      compositeResultCache,
       compositeLoading,
       isolatedNodeId,
       isolatedNodeIds,
@@ -783,8 +802,8 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     [
       visibleNodes, visibleEdges, layoutGraph.nodes, layoutGraph.rootNodes,
       selectedNodeId, hoveredNodeId, mergeMode, mergeSelectedIds,
-      collapsedNodeIds, filterQuery, filterTypes, filterHasMask, filteredNodeIds,
-      layoutMode, graphStats, compositeMode, compositeSelectedIds, compositeResultImage, compositeLoading,
+      collapsedNodeIds, filterQuery, filterTypes, filterHasMask, filteredNodeIds, filterLeafOnly,
+      layoutMode, graphStats, compositeMode, compositeSelectedIds, compositeResultCache, compositeLoading,
       isolatedNodeId, isolatedNodeIds, compareMode, compareNodeIds,
     ],
   );
@@ -811,6 +830,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       setFilterQuery: setFilterQueryAction,
       toggleFilterType,
       setFilterHasMask: setFilterHasMaskAction,
+      toggleFilterLeafOnly,
       clearFilters,
       setLayoutMode: setLayoutModeAction,
       isolateBranch,
@@ -824,7 +844,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       toggleCollapse, expandAll, collapseAll,
       toggleCompositeMode, toggleCompositeSelection, clearCompositeSelection,
       executeComposite, reorderCompositeLayer, flattenComposite, refreshCompositePreview,
-      setFilterQueryAction, toggleFilterType, setFilterHasMaskAction, clearFilters,
+      setFilterQueryAction, toggleFilterType, setFilterHasMaskAction, toggleFilterLeafOnly, clearFilters,
       setLayoutModeAction, isolateBranch, setAnnotation, toggleCompareMode, setCompareNodeIdsAction,
     ],
   );

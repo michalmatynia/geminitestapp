@@ -13,7 +13,7 @@ import {
   Button,
   ListPanel,
   SectionHeader,
-  SectionPanel,
+  
   Table,
   TableBody,
   TableCell,
@@ -108,16 +108,15 @@ export function Asset3DListPage(): React.JSX.Element {
         ) : null
       }
       filters={
-        <SectionPanel>
-          <div className='flex flex-wrap items-center gap-3'>
-            <SearchInput
-              value={searchQuery}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
-              onClear={() => setSearchQuery('')}
-              placeholder='Search assets...'
-              className='h-8'
-              containerClassName='flex-1 min-w-[200px] max-w-md'
-            />
+        <div className='flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card/50 p-3'>
+          <SearchInput
+            value={searchQuery}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
+            onClear={() => setSearchQuery('')}
+            placeholder='Search assets...'
+            className='h-8'
+            containerClassName='flex-1 min-w-[200px] max-w-md'
+          />
 
             {categories.length > 0 && (
               <div className='w-[180px]'>
@@ -176,7 +175,6 @@ export function Asset3DListPage(): React.JSX.Element {
               </Button>
             </div>
           </div>
-        </SectionPanel>
       }
       footer={stats}
     >

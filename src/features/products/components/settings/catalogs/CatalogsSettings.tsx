@@ -5,22 +5,16 @@ import { Catalog } from '@/features/products/types';
 import type { Language } from '@/shared/types/domain/internationalization';
 import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, Badge } from '@/shared/ui';
 
+import { useProductSettingsContext } from '../ProductSettingsContext';
 
-type CatalogsSettingsProps = {
-  loadingCatalogs: boolean;
-  catalogs: Catalog[];
-  handleOpenCatalogModal: () => void;
-  handleEditCatalog: (catalog: Catalog) => void;
-  handleDeleteCatalog: (catalog: Catalog) => void;
-};
-
-export function CatalogsSettings({
-  loadingCatalogs,
-  catalogs,
-  handleOpenCatalogModal,
-  handleEditCatalog,
-  handleDeleteCatalog,
-}: CatalogsSettingsProps): React.JSX.Element {
+export function CatalogsSettings(): React.JSX.Element {
+  const {
+    loadingCatalogs,
+    catalogs,
+    onOpenCatalogModal,
+    onEditCatalog,
+    onDeleteCatalog,
+  } = useProductSettingsContext();
   const { languages } = useInternationalizationContext();
   const getLanguageDisplay = (languageId: string): string => {
     const language = languages.find((l: Language) => l.id === languageId);
@@ -46,7 +40,7 @@ export function CatalogsSettings({
         <Button
           className='min-w-[100px] border border-white/20 hover:border-white/40'
           type='button'
-          onClick={(): void => handleOpenCatalogModal()}
+          onClick={onOpenCatalogModal}
         >
           Add Catalog
         </Button>
@@ -108,14 +102,14 @@ export function CatalogsSettings({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='end'>
                       <DropdownMenuItem
-                        onClick={(): void => handleEditCatalog(catalog)}
+                        onClick={(): void => onEditCatalog(catalog)}
                         className='cursor-pointer'
                       >
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className='text-red-400 focus:text-red-400 cursor-pointer'
-                        onClick={(): void => handleDeleteCatalog(catalog)}
+                        onClick={(): void => onDeleteCatalog(catalog)}
                       >
                         Delete
                       </DropdownMenuItem>

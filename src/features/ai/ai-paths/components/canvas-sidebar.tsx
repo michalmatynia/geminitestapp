@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, SectionPanel } from '@/shared/ui';
+import { Button, Input, Label, Textarea } from '@/shared/ui';
 
 import {
   useGraphState,
@@ -107,9 +107,8 @@ export function CanvasSidebar(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <SectionPanel
-        variant='subtle'
-        className='p-4'
+      <div
+        className='rounded-lg border border-border/60 bg-card/40 p-4'
         data-edge-panel
       >
         <div className='mb-3 flex items-center justify-between'>
@@ -184,12 +183,11 @@ export function CanvasSidebar(): React.JSX.Element {
                   {isExpanded && (
                     <div className='space-y-2 px-3 pb-3'>
                       {items.map((node) => (
-                        <SectionPanel
+                        <div
                           key={node.title}
-                          variant='subtle-compact'
                           draggable
                           onDragStart={(event) => handleDragStart(event, node)}
-                          className='cursor-grab text-xs text-gray-300 transition hover:border-border/60 hover:bg-muted/50 active:cursor-grabbing'
+                          className='cursor-grab rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300 transition hover:border-border/80 hover:bg-muted/50 active:cursor-grabbing'
                         >
                           {((): React.JSX.Element => {
                             const isScheduledTrigger =
@@ -215,7 +213,7 @@ export function CanvasSidebar(): React.JSX.Element {
                           <p className='mt-1 text-[11px] text-gray-400'>
                             {node.description}
                           </p>
-                        </SectionPanel>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -224,14 +222,14 @@ export function CanvasSidebar(): React.JSX.Element {
             })}
           </div>
         )}
-      </SectionPanel>
+      </div>
 
       {!selectedEdgeId && (
-        <SectionPanel variant='subtle' className='p-4'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='mb-3 text-sm font-semibold text-white'>Inspector</div>
           {selectedNode ? (
             <div className='space-y-3 text-xs text-gray-300'>
-              <SectionPanel variant='subtle-compact' className='bg-card/50 px-3 py-2 text-[11px] text-gray-400'>
+              <div className='rounded-md border border-border/60 bg-card/50 px-3 py-2 text-[11px] text-gray-400'>
                 <div className='flex items-center justify-between'>
                   <span className='uppercase text-gray-500'>Type</span>
                   <div className='flex items-center gap-1'>
@@ -245,7 +243,7 @@ export function CanvasSidebar(): React.JSX.Element {
                     </span>
                   </div>
                 </div>
-              </SectionPanel>
+              </div>
               {selectedNode.type === 'trigger' && (
                 <div className='space-y-2'>
                   <Button
@@ -303,7 +301,7 @@ export function CanvasSidebar(): React.JSX.Element {
                   }}
                 />
               </div>
-              <SectionPanel variant='subtle-compact' className='bg-card/50 p-3 text-[11px] text-gray-400'>
+              <div className='rounded-md border border-border/60 bg-card/50 p-3 text-[11px] text-gray-400'>
                 Inputs:{' '}
                 {selectedNode.inputs.map((port) => formatPortLabel(port)).join(', ') ||
                   'None'}{' '}
@@ -311,7 +309,7 @@ export function CanvasSidebar(): React.JSX.Element {
                 Outputs:{' '}
                 {selectedNode.outputs.map((port) => formatPortLabel(port)).join(', ') ||
                   'None'}
-              </SectionPanel>
+              </div>
               {selectedNode.type === 'prompt' && ((): React.JSX.Element | null => {
                 const incomingEdges = edges.filter((edge) => edge.to === selectedNode.id);
                 const inputPorts = incomingEdges
@@ -350,7 +348,7 @@ export function CanvasSidebar(): React.JSX.Element {
                 const directPlaceholders = inputPorts.filter((port) => port !== 'bundle');
                 if (bundleKeys.size === 0 && directPlaceholders.length === 0) return null;
                 return (
-                  <SectionPanel variant='subtle-compact' className='bg-card/50 p-3 text-[11px] text-gray-400'>
+                  <div className='rounded-md border border-border/60 bg-card/50 p-3 text-[11px] text-gray-400'>
                     <div className='text-gray-300'>Prompt placeholders</div>
                     {bundleKeys.size > 0 && (
                       <div className='mt-2 flex flex-wrap gap-2'>
@@ -372,7 +370,7 @@ export function CanvasSidebar(): React.JSX.Element {
                           .join(', ')}
                       </div>
                     )}
-                  </SectionPanel>
+                  </div>
                 );
               })()}
               <Button
@@ -394,11 +392,11 @@ export function CanvasSidebar(): React.JSX.Element {
               Select a node to inspect inputs, outputs, and configuration.
             </div>
           )}
-        </SectionPanel>
+        </div>
       )}
 
       {showRunControls && (
-        <SectionPanel variant='subtle' className='p-4'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='mb-3 flex items-center justify-between'>
             <span className='text-sm font-semibold text-white'>Run Controls</span>
             <span className='rounded border border-border/60 px-2 py-0.5 text-[10px] uppercase text-gray-400'>
@@ -463,10 +461,10 @@ export function CanvasSidebar(): React.JSX.Element {
               </Button>
             )}
           </div>
-        </SectionPanel>
+        </div>
       )}
 
-      <SectionPanel variant='subtle' className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='mb-3 text-sm font-semibold text-white'>Connections</div>
         <div className='space-y-2 text-xs text-gray-400'>
           <div>Active wires: {edges.length}</div>
@@ -475,10 +473,10 @@ export function CanvasSidebar(): React.JSX.Element {
             const fromNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.from) : null;
             const toNode = selectedEdge ? nodes.find((n) => n.id === selectedEdge.to) : null;
             return selectedEdge ? (
-              <SectionPanel variant='subtle-compact' className='space-y-3 border-blue-500/30 bg-blue-500/5 p-3'>
+              <div className='space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3'>
                 <div className='text-xs font-medium text-blue-300'>Selected Wire</div>
                 <div className='space-y-2'>
-                  <div className='rounded border bg-card/50 p-2'>
+                  <div className='rounded border border-border/60 bg-card/50 p-2'>
                     <div className='text-[10px] uppercase text-gray-500'>From</div>
                     <div className='text-sm text-white'>
                       {fromNode?.title ?? selectedEdge.from}
@@ -497,7 +495,7 @@ export function CanvasSidebar(): React.JSX.Element {
                     </div>
                   </div>
                   <div className='flex justify-center text-gray-500'>↓</div>
-                  <div className='rounded border bg-card/50 p-2'>
+                  <div className='rounded border border-border/60 bg-card/50 p-2'>
                     <div className='text-[10px] uppercase text-gray-500'>To</div>
                     <div className='text-sm text-white'>
                       {toNode?.title ?? selectedEdge.to}
@@ -518,7 +516,7 @@ export function CanvasSidebar(): React.JSX.Element {
                 </div>
                 <div className='flex gap-2'>
                   <Button
-                    className='flex-1 rounded-md border text-xs text-muted-foreground hover:bg-muted/50'
+                    className='flex-1 rounded-md border border-border text-xs text-muted-foreground hover:bg-muted/50'
                     type='button'
                     onClick={() => selectEdge(null)}
                   >
@@ -532,7 +530,7 @@ export function CanvasSidebar(): React.JSX.Element {
                     Remove
                   </Button>
                 </div>
-              </SectionPanel>
+              </div>
             ) : null;
           })() : (
             <div className='text-[11px] text-gray-500'>Click a wire to select it.</div>
@@ -553,29 +551,28 @@ export function CanvasSidebar(): React.JSX.Element {
               const label = `${fromNode?.title ?? edge.from}.${edge.fromPort ?? '?'} → ${toNode?.title ?? edge.to}.${edge.toPort ?? '?'}`;
               const isSelected = edge.id === selectedEdgeId;
               return (
-                <SectionPanel
+                <div
                   key={edge.id}
-                  variant='subtle-compact'
-                  className={`flex items-center justify-between gap-2 border px-2 py-1 ${
+                  className={`flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-[11px] ${
                     isSelected
                       ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
-                      : 'bg-card/40'
+                      : 'border-border/60 bg-card/40'
                   }`}
                 >
                   <span className='truncate'>{label}</span>
                   <button
                     type='button'
-                    className='rounded border px-1.5 py-0.5 text-[9px] text-gray-400 hover:bg-muted/50'
+                    className='rounded border border-border/60 px-1.5 py-0.5 text-[9px] text-gray-400 hover:bg-muted/50'
                     onClick={() => selectEdge(edge.id)}
                   >
                     Select
                   </button>
-                </SectionPanel>
+                </div>
               );
             })}
           </div>
         )}
-      </SectionPanel>
+      </div>
     </div>
   );
 }

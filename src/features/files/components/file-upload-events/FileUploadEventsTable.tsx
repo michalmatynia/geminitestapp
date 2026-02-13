@@ -4,7 +4,7 @@ import React from 'react';
 
 import { FileUploadEventRecord } from '@/features/files/hooks/useFileUploadEvents';
 import {
-  SectionPanel,
+  
   StatusBadge,
   Table,
   TableBody,
@@ -26,7 +26,7 @@ export function FileUploadEventsTable(): React.JSX.Element {
   const { events } = useFileUploadEventsContext();
 
   return (
-    <SectionPanel className='mt-4 overflow-hidden p-0'>
+    <div className='mt-4 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
       <Table>
         <TableHeader>
           <TableRow>
@@ -74,6 +74,6 @@ export function FileUploadEventsTable(): React.JSX.Element {
           )}
         </TableBody>
       </Table>
-    </SectionPanel>
+    </>
   );
 }

@@ -49,7 +49,9 @@ import {
   readPromptExploderDraftPrompt,
   savePromptExploderApplyPrompt,
 } from '../bridge';
+import { PromptExploderHierarchyTreeProvider } from '../components/PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from '../components/PromptExploderHierarchyTreeEditor';
+import { PromptExploderParserTuningProvider } from '../components/PromptExploderParserTuningContext';
 import { PromptExploderParserTuningPanel } from '../components/PromptExploderParserTuningPanel';
 import {
   defaultCustomBenchmarkCaseIdFromPrompt,
@@ -3016,18 +3018,22 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         variant='subtle'
         className='p-4'
       >
-        <PromptExploderParserTuningPanel
-          drafts={parserTuningDrafts}
-          onPatchDraft={patchParserTuningDraft}
-          onSave={() => {
-            void handleSaveParserTuningRules();
+        <PromptExploderParserTuningProvider
+          value={{
+            drafts: parserTuningDrafts,
+            onPatchDraft: patchParserTuningDraft,
+            onSave: () => {
+              void handleSaveParserTuningRules();
+            },
+            onResetToPackDefaults: handleResetParserTuningDrafts,
+            onOpenValidationPatterns: () => {
+              router.push('/admin/validator?scope=prompt-exploder');
+            },
+            isBusy: updateSetting.isPending,
           }}
-          onResetToPackDefaults={handleResetParserTuningDrafts}
-          onOpenValidationPatterns={() => {
-            router.push('/admin/validator?scope=prompt-exploder');
-          }}
-          isBusy={updateSetting.isPending}
-        />
+        >
+          <PromptExploderParserTuningPanel />
+        </PromptExploderParserTuningProvider>
       </FormSection>
 
       <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]'>
@@ -4204,22 +4210,25 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                         ) : null}
 
                       {selectedSegment.type === 'hierarchical_list' ? (
-                        <PromptExploderHierarchyTreeEditor
-                          items={selectedSegment.listItems}
-                          onChange={(nextItems) => {
-                            updateSegment(selectedSegment.id, (current) => ({
-                              ...current,
-                              listItems: nextItems,
-                            }));
+                        <PromptExploderHierarchyTreeProvider
+                          value={{
+                            items: selectedSegment.listItems,
+                            onChange: (nextItems) => {
+                              updateSegment(selectedSegment.id, (current) => ({
+                                ...current,
+                                listItems: nextItems,
+                              }));
+                            },
+                            renderLogicalEditor: ({ item, onChange }) =>
+                              renderListItemLogicalEditor({
+                                item,
+                                onChange,
+                              }),
+                            emptyLabel: 'No hierarchy items detected.',
                           }}
-                          renderLogicalEditor={({ item, onChange }) =>
-                            renderListItemLogicalEditor({
-                              item,
-                              onChange,
-                            })
-                          }
-                          emptyLabel='No hierarchy items detected.'
-                        />
+                        >
+                          <PromptExploderHierarchyTreeEditor />
+                        </PromptExploderHierarchyTreeProvider>
                       ) : null}
 
                       {selectedSegment.type === 'sequence' || selectedSegment.type === 'qa_matrix' ? (
@@ -4527,31 +4536,34 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                   </div>
                                 );
                               })()}
-                              <PromptExploderHierarchyTreeEditor
-                                items={subsection.items}
-                                onChange={(nextItems) => {
-                                  updateSegment(selectedSegment.id, (current) => {
-                                    const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
-                                      if (candidateIndex !== subsectionIndex) return candidate;
+                              <PromptExploderHierarchyTreeProvider
+                                value={{
+                                  items: subsection.items,
+                                  onChange: (nextItems) => {
+                                    updateSegment(selectedSegment.id, (current) => {
+                                      const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
+                                        if (candidateIndex !== subsectionIndex) return candidate;
+                                        return {
+                                          ...candidate,
+                                          items: nextItems,
+                                        };
+                                      });
                                       return {
-                                        ...candidate,
-                                        items: nextItems,
+                                        ...current,
+                                        subsections: nextSubsections,
                                       };
                                     });
-                                    return {
-                                      ...current,
-                                      subsections: nextSubsections,
-                                    };
-                                  });
+                                  },
+                                  renderLogicalEditor: ({ item, onChange }) =>
+                                    renderListItemLogicalEditor({
+                                      item,
+                                      onChange,
+                                    }),
+                                  emptyLabel: 'No subsection items detected.',
                                 }}
-                                renderLogicalEditor={({ item, onChange }) =>
-                                  renderListItemLogicalEditor({
-                                    item,
-                                    onChange,
-                                  })
-                                }
-                                emptyLabel='No subsection items detected.'
-                              />
+                              >
+                                <PromptExploderHierarchyTreeEditor />
+                              </PromptExploderHierarchyTreeProvider>
                             </div>
                           ))}
                         </div>

@@ -7,7 +7,7 @@ import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthUserSummary } from '@/features/auth/types';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import { logClientError } from '@/features/observability';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader } from '@/shared/ui';
 
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -54,29 +54,33 @@ export default function AuthDashboardPage(): React.JSX.Element {
 
   if (!canReadUsers) {
     return (
-      <SectionPanel className='p-6 text-sm text-amber-300'>
-        You don&apos;t have permission to view auth metrics. Ask an admin to grant
-        `auth.users.read` or elevate your account.
-      </SectionPanel>
+      <div className='container mx-auto py-10'>
+        <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-6 text-sm text-amber-300'>
+          You don&apos;t have permission to view auth metrics. Ask an admin to grant
+          `auth.users.read` or elevate your account.
+        </div>
+      </div>
     );
   }
 
   if (authUsersQuery.isPending || authLoading) {
     return (
-      <SectionPanel className='p-6 text-sm text-gray-400'>
-        Loading auth metrics...
-      </SectionPanel>
+      <div className='container mx-auto py-10'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
+          Loading auth metrics...
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className='space-y-6'>
-      <SectionPanel className='p-6'>
+    <div className='container mx-auto max-w-5xl py-10 space-y-6'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <SectionHeader
           title='Auth Dashboard'
           description={`Overview of user accounts and role assignments (provider: ${provider}).`}
         />
-      </SectionPanel>
+      </div>
 
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
         <Card className='bg-card border-border'>

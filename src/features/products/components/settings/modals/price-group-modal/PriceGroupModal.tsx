@@ -1,11 +1,14 @@
 'use client';
 
 import React from 'react';
+
 import { useInternationalizationContext } from '@/features/internationalization';
+import type { PriceGroup } from '@/features/products/types';
 import { SettingsFormModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+
 import { usePriceGroupForm } from './hooks/usePriceGroupForm';
 import { PriceGroupFormFields } from './PriceGroupFormFields';
-import type { PriceGroup } from '@/features/products/types';
+import { PriceGroupModalProvider } from './PriceGroupModalContext';
 
 interface PriceGroupModalProps {
   isOpen: boolean;
@@ -20,7 +23,7 @@ export function PriceGroupModal({
   onClose,
   onSuccess,
   priceGroup,
-  priceGroups,
+  priceGroups: _priceGroups,
 }: PriceGroupModalProps): React.JSX.Element {
   const {
     currencies: currencyOptions,
@@ -45,43 +48,34 @@ export function PriceGroupModal({
       size='md'
     >
       <div className='space-y-4'>
-        <PriceGroupFormFields
-          name={form.name}
-          onNameChange={(name) => setForm((p) => ({ ...p, name }))}
-          currencyCode={form.currencyCode}
-          onCurrencyCodeChange={(currencyCode) =>
-            setForm((p) => ({ ...p, currencyCode }))
-          }
-          isDefault={form.isDefault}
-          onIsDefaultChange={(isDefault) =>
-            setForm((p) => ({ ...p, isDefault }))
-          }
-        />
+        <PriceGroupModalProvider value={{ form, setForm }}>
+          <PriceGroupFormFields />
 
-        <div className='space-y-2'>
-          <label className='text-sm font-medium text-white'>Select Currency</label>
-          {loadingCurrencies ? (
-            <p className='text-xs text-gray-500'>Loading currencies...</p>
-          ) : (
-            <Select
-              value={form.currencyCode}
-              onValueChange={(value: string) =>
-                setForm((p) => ({ ...p, currencyCode: value }))
-              }
-            >
-              <SelectTrigger className='w-full bg-gray-900 border-border text-white'>
-                <SelectValue placeholder='Select currency' />
-              </SelectTrigger>
-              <SelectContent>
-                {currencyOptions.map((curr) => (
-                  <SelectItem key={curr.id} value={curr.code}>
-                    {curr.code} - {curr.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+          <div className='space-y-2'>
+            <label className='text-sm font-medium text-white'>Select Currency</label>
+            {loadingCurrencies ? (
+              <p className='text-xs text-gray-500'>Loading currencies...</p>
+            ) : (
+              <Select
+                value={form.currencyCode}
+                onValueChange={(value: string) =>
+                  setForm((p) => ({ ...p, currencyCode: value }))
+                }
+              >
+                <SelectTrigger className='w-full bg-gray-900 border-border text-white'>
+                  <SelectValue placeholder='Select currency' />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencyOptions.map((curr) => (
+                    <SelectItem key={curr.id} value={curr.code}>
+                      {curr.code} - {curr.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </PriceGroupModalProvider>
       </div>
     </SettingsFormModal>
   );

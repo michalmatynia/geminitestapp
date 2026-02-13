@@ -7,7 +7,7 @@ import { useProductListingsContext } from '@/features/integrations/context/Produ
 import { SyncDirection } from '@/features/products/types';
 import {
   Button,
-  SectionPanel,
+  
 } from '@/shared/ui';
 
 const normalizeIntegrationSlug = (value: string | null | undefined): string =>
@@ -106,7 +106,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
   const uploadCount = Array.isArray(product.images) ? product.images.length : 0;
 
   return (
-    <SectionPanel variant='subtle' className='p-3'>
+    <div className='rounded-lg border border-border/60 bg-card/40 p-3'>
       <div className='mb-3 flex items-center justify-between'>
         <h4 className='text-xs font-medium uppercase tracking-wide text-gray-400'>
           Sync Configuration
@@ -117,21 +117,20 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
         </div>
       </div>
 
-      <SectionPanel variant='subtle-compact' className='mb-3 border-blue-500/20 bg-blue-500/5 px-2 py-1.5'>
+      <div className='mb-3 rounded-md border border-blue-500/20 bg-blue-500/5 px-2 py-1.5'>
         <div className='flex items-center gap-2 text-xs text-blue-300'>
           <ArrowRight className='size-3' />
           <span>
             Currently configured for <strong>one-way export</strong> (Product &rarr; Base.com)
           </span>
         </div>
-      </SectionPanel>
+      </div>
 
       <div className='space-y-1'>
         {syncFields.map((field) => (
-          <SectionPanel
+          <div
             key={field.name}
-            variant='subtle-compact'
-            className={`flex items-center justify-between px-2 py-1.5 text-xs ${
+            className={`flex items-center justify-between rounded-md border border-border/40 px-2 py-1.5 text-xs ${
               field.hasValue
                 ? 'bg-card/50'
                 : 'bg-gray-900/20 opacity-50 border-none'
@@ -155,7 +154,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
                 {getSyncDirectionIcon(field.hasValue ? field.syncDirection : 'none')}
               </div>
             </div>
-          </SectionPanel>
+          </div>
         ))}
       </div>
 
@@ -179,7 +178,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
         </div>
       </div>
 
-      <SectionPanel variant='subtle-compact' className='mt-4 border border-border bg-card/50 p-3'>
+      <div className='mt-4 rounded-md border border-border bg-card/50 p-3'>
         <div className='mb-2 flex items-center justify-between'>
           <h5 className='text-xs font-medium uppercase tracking-wide text-gray-400'>
             Images
@@ -206,7 +205,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
             Connect this product to Base.com to enable image sync.
           </p>
         )}
-      </SectionPanel>
-    </SectionPanel>
+      </div>
+    </div>
   );
 }

@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import React, { Suspense } from 'react';
 
 import { AgentCreatorSettingsProvider } from '@/features/ai/agentcreator';
-import { Tabs, TabsContent, TabsList, TabsTrigger, SectionPanel } from '@/shared/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { ChatInterface } from '../components/ChatInterface';
 import { DebugPanel } from '../components/DebugPanel';
@@ -33,36 +33,36 @@ function ChatbotPageInner(): React.JSX.Element | null {
     <div className='container mx-auto h-[calc(100vh-120px)] py-6'>
       <div className='grid h-full grid-cols-1 gap-6 lg:grid-cols-5'>
         {/* Session Sidebar */}
-        <SectionPanel className='hidden overflow-hidden p-0 lg:block'>
+        <div className='hidden overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 lg:block'>
           <SessionSidebar />
-        </SectionPanel>
+        </div>
 
         {/* Main Chat Area */}
-        <SectionPanel className='flex flex-col overflow-hidden p-0 lg:col-span-3'>
+        <div className='flex flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 lg:col-span-3'>
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className='flex h-full flex-col'
           >
-            <div className='border-b bg-muted/40 px-4 py-2'>
+            <div className='border-b border-border/60 bg-muted/40 px-4 py-2'>
               <TabsList className='bg-card'>
                 <TabsTrigger value='chat'>Chat</TabsTrigger>
                 <TabsTrigger value='settings'>Settings</TabsTrigger>
               </TabsList>
             </div>
             <div className='flex-1 overflow-hidden'>
-              <TabsContent value='chat' className='h-full m-0 p-0'>
+              <TabsContent value='chat' className='h-full m-0 p-0 outline-none'>
                 <ChatInterface />
               </TabsContent>
-              <TabsContent value='settings' className='h-full m-0 overflow-y-auto'>
+              <TabsContent value='settings' className='h-full m-0 overflow-y-auto outline-none'>
                 <SettingsTab />
               </TabsContent>
             </div>
           </Tabs>
-        </SectionPanel>
-        <SectionPanel className='hidden overflow-hidden p-0 lg:block'>
+        </div>
+        <div className='hidden overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 lg:block'>
           <DebugPanel />
-        </SectionPanel>
+        </div>
       </div>
     </div>
   );

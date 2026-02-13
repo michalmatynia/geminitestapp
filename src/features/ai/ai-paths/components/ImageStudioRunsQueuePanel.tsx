@@ -14,6 +14,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
 } from '@/shared/ui';
 
 type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
@@ -144,58 +150,58 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='overflow-x-auto rounded-md border border-border/60'>
-        <table className='min-w-full divide-y divide-border/60 text-xs'>
-          <thead className='bg-card/70 text-[11px] uppercase tracking-wide text-gray-400'>
-            <tr>
-              <th className='px-3 py-2 text-left'>Run</th>
-              <th className='px-3 py-2 text-left'>Project</th>
-              <th className='px-3 py-2 text-left'>Status</th>
-              <th className='px-3 py-2 text-left'>Outputs</th>
-              <th className='px-3 py-2 text-left'>Created</th>
-              <th className='px-3 py-2 text-left'>Started</th>
-              <th className='px-3 py-2 text-left'>Finished</th>
-              <th className='px-3 py-2 text-left'>Error</th>
-            </tr>
-          </thead>
-          <tbody className='divide-y divide-border/40 bg-card/30'>
+      <div className='overflow-x-auto rounded-md border border-border/60 bg-card/30'>
+        <Table>
+          <TableHeader className='bg-card/70'>
+            <TableRow className='border-border/60 hover:bg-transparent'>
+              <TableHead className='px-3 py-2 text-[11px] uppercase tracking-wide text-gray-400'>Run</TableHead>
+              <TableHead className='px-3 py-2 text-[11px] uppercase tracking-wide text-gray-400'>Project</TableHead>
+              <TableHead className='px-3 py-2 text-[11px] uppercase tracking-wide text-gray-400'>Status</TableHead>
+              <TableHead className='px-3 py-2 text-[11px] uppercase tracking-wide text-gray-400'>Outputs</TableHead>
+              <TableHead className='px-3 py-2 text-[11px] uppercase tracking-wide text-gray-400'>Created</TableHead>
+              <TableHead className='px-3 py-2 text-[11px] uppercase tracking-wide text-gray-400'>Started</TableHead>
+              <TableHead className='px-3 py-2 text-[11px] uppercase tracking-wide text-gray-400'>Finished</TableHead>
+              <TableHead className='px-3 py-2 text-[11px] uppercase tracking-wide text-gray-400'>Error</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {runsQuery.isLoading ? (
-              <tr>
-                <td colSpan={8} className='px-3 py-6 text-center text-gray-400'>
+              <TableRow className='border-border/40'>
+                <TableCell colSpan={8} className='px-3 py-6 text-center text-gray-400'>
                   <span className='inline-flex items-center gap-2'>
                     <Loader2 className='size-4 animate-spin' />
                     Loading image studio runs...
                   </span>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : runs.length === 0 ? (
-              <tr>
-                <td colSpan={8} className='px-3 py-6 text-center text-gray-500'>
+              <TableRow className='border-border/40'>
+                <TableCell colSpan={8} className='px-3 py-6 text-center text-gray-500'>
                   No image studio runs found.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               runs.map((run) => (
-                <tr key={run.id} className='text-gray-200'>
-                  <td className='px-3 py-2 font-mono text-[11px]'>{run.id.slice(0, 12)}...</td>
-                  <td className='px-3 py-2'>{run.projectId}</td>
-                  <td className='px-3 py-2'>
+                <TableRow key={run.id} className='border-border/40 text-gray-200'>
+                  <TableCell className='px-3 py-2 font-mono text-[11px]'>{run.id.slice(0, 12)}...</TableCell>
+                  <TableCell className='px-3 py-2'>{run.projectId}</TableCell>
+                  <TableCell className='px-3 py-2'>
                     <span className={`inline-flex rounded-full border px-2 py-[1px] text-[10px] ${getStatusClassName(run.status)}`}>
                       {run.status}
                     </span>
-                  </td>
-                  <td className='px-3 py-2'>
+                  </TableCell>
+                  <TableCell className='px-3 py-2'>
                     {run.outputs.length}/{run.expectedOutputs}
-                  </td>
-                  <td className='px-3 py-2'>{toDateLabel(run.createdAt)}</td>
-                  <td className='px-3 py-2'>{toDateLabel(run.startedAt)}</td>
-                  <td className='px-3 py-2'>{toDateLabel(run.finishedAt)}</td>
-                  <td className='px-3 py-2 text-rose-200'>{run.errorMessage ?? '—'}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className='px-3 py-2'>{toDateLabel(run.createdAt)}</TableCell>
+                  <TableCell className='px-3 py-2'>{toDateLabel(run.startedAt)}</TableCell>
+                  <TableCell className='px-3 py-2'>{toDateLabel(run.finishedAt)}</TableCell>
+                  <TableCell className='px-3 py-2 text-rose-200'>{run.errorMessage ?? '—'}</TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

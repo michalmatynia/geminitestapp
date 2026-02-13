@@ -13,7 +13,7 @@ import type {
   NoteFileRecord,
   NoteWithRelations,
 } from '@/shared/types/domain/notes';
-import { BreadcrumbScroller, Button, CopyButton, Tag, Badge, SectionPanel } from '@/shared/ui';
+import { BreadcrumbScroller, Button, CopyButton, Tag, Badge } from '@/shared/ui';
 import { cn, setNoteDragData, sanitizeHtml } from '@/shared/utils';
 
 
@@ -151,7 +151,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
   );
 
   return (
-    <SectionPanel
+    <div
       key={note.id}
       draggable={enableDrag}
       onDragStart={
@@ -187,7 +187,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
           effectiveTheme.markdownCodeBackground ?? 'rgba(15, 23, 42, 0.12)',
       }}
       className={cn(
-        'p-4 transition',
+        'rounded-lg border border-border/60 p-4 transition',
         enableDrag
           ? 'cursor-grab active:cursor-grabbing hover:shadow-md'
           : 'cursor-pointer hover:shadow-md hover:brightness-90',
@@ -315,7 +315,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
           )}
         </div>
       )}
-    </SectionPanel>
+    </div>
   );
 }
 

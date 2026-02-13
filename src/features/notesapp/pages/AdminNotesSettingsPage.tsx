@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
-import { Button, UnifiedSelect, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
+import { Button, UnifiedSelect, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader,  FormSection, FormField } from '@/shared/ui';
 
 
 
@@ -263,7 +263,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         </div>
 
         {/* Current Settings Summary */}
-        <SectionPanel className='p-4'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <h3 className='mb-2 text-sm font-medium text-gray-400'>
             Current Settings Summary
           </h3>
@@ -298,7 +298,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
               {editorModeOptions.find((o: { value: string }) => o.value === settings.editorMode)?.label}
             </span>
           </div>
-        </SectionPanel>
+        </div>
       </div>
     </div>
   );

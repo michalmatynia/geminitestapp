@@ -28,7 +28,7 @@ import {
   TabsTrigger,
   Label,
   SectionHeader,
-  SectionPanel,
+  
 } from '@/shared/ui';
 
 function ImportsPageContent(): React.JSX.Element {
@@ -89,11 +89,27 @@ function ImportsPageContent(): React.JSX.Element {
     setMappings((prev: TemplateMapping[]) => prev.length === 1 ? [{ sourceKey: '', targetField: '' }] : prev.filter((_: TemplateMapping, i: number) => i !== index));
   };
 
-  if (checkingIntegration) return <SectionPanel className='p-6'>Checking integration...</SectionPanel>;
-  if (!isBaseConnected) return <SectionPanel className='p-6'>Base.com integration required.</SectionPanel>;
+  if (checkingIntegration) {
+    return (
+      <div className='container mx-auto py-10'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
+          Checking integration...
+        </div>
+      </div>
+    );
+  }
+  if (!isBaseConnected) {
+    return (
+      <div className='container mx-auto py-10'>
+        <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-6 text-sm text-amber-300'>
+          Base.com integration required.
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <SectionPanel className='p-6'>
+    <div className='container mx-auto max-w-5xl py-10'>
       <SectionHeader title='Product Import/Export' description='Import products from Base.com or export your products to Base.com' className='mb-6' />
       <Tabs defaultValue='imports'>
         <TabsList className='bg-card/70'>
@@ -222,7 +238,7 @@ function ImportsPageContent(): React.JSX.Element {
         }}
         onCancel={() => setDeleteDialogOpen(false)}
       />
-    </SectionPanel>
+    </div>
   );
 }
 

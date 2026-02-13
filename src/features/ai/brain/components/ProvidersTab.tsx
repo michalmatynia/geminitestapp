@@ -2,7 +2,7 @@
 
 import { KeyRound } from 'lucide-react';
 
-import { Button, Input, Label, SectionPanel, FormSection } from '@/shared/ui';
+import { Button, Input, Label, FormSection } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { type AiBrainProviderCatalog } from '../settings';
@@ -69,12 +69,12 @@ export function ProvidersTab(): React.JSX.Element {
         ) : null}
       </FormSection>
 
-      <SectionPanel>
-        <div className='flex items-center gap-2 text-sm font-semibold text-white'>
-          <KeyRound className='size-4 text-emerald-300' />
-          Cloud API keys
-        </div>
-        <div className='mt-3 grid gap-3 md:grid-cols-3'>
+      <FormSection
+        title='Cloud API keys'
+        titleIcon={<KeyRound className='size-4 text-emerald-300' />}
+        className='p-4'
+      >
+        <div className='grid gap-3 md:grid-cols-3 mt-3'>
           <div className='space-y-1'>
             <Label className='text-xs text-gray-400'>OpenAI API key</Label>
             <Input
@@ -103,21 +103,18 @@ export function ProvidersTab(): React.JSX.Element {
             />
           </div>
         </div>
-      </SectionPanel>
+      </FormSection>
 
-      <SectionPanel>
-        <div className='flex items-center justify-between gap-3'>
-          <div>
-            <div className='text-sm font-semibold text-white'>Model and Agent Catalog</div>
-            <div className='text-xs text-gray-400'>
-              Define pools for agent models, deepthinking agents, paid models, Ollama, and Playwright personas.
-            </div>
-          </div>
+      <FormSection
+        title='Model and Agent Catalog'
+        description='Define pools for agent models, deepthinking agents, paid models, Ollama, and Playwright personas.'
+        actions={(
           <Button variant='outline' size='sm' onClick={syncPlaywrightPersonas}>
             Sync Playwright Personas
           </Button>
-        </div>
-
+        )}
+        className='p-4'
+      >
         <div className='mt-4 grid gap-4 lg:grid-cols-2'>
           <CatalogEditorField
             label='Core model presets'
@@ -162,7 +159,7 @@ export function ProvidersTab(): React.JSX.Element {
             placeholder='persona_checkout_bot&#10;persona_scraper'
           />
         </div>
-      </SectionPanel>
+      </FormSection>
     </div>
   );
 }

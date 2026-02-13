@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { FileUploadEventsPanel } from '@/features/files/components/FileUploadEventsPanel';
 import ProductListingJobsPanel from '@/features/jobs/components/ProductListingJobsPanel';
-import { SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { SectionHeader,  Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
 
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
@@ -28,8 +28,8 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
   }, [defaultTab]);
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionPanel className='p-6'>
+    <div className='container mx-auto max-w-5xl py-10'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <SectionHeader
           title='Job Queue'
           description='Monitor node-system runs, external runs, image studio runs, export jobs, and file uploads.'
@@ -78,7 +78,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
 
           </Tabs>
         </div>
-      </SectionPanel>
+      </div>
     </div>
   );
 }

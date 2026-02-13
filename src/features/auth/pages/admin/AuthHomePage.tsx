@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 
-import { SectionHeader, SectionPanel } from '@/shared/ui';
+import { SectionHeader } from '@/shared/ui';
 
 
 const cards = [
@@ -36,7 +36,7 @@ const cards = [
 
 export default function AuthPage(): React.JSX.Element {
   return (
-    <SectionPanel className='p-6'>
+    <div className='container mx-auto max-w-5xl py-10'>
       <SectionHeader
         title='Auth'
         description='Start building your authentication system.'
@@ -55,6 +55,6 @@ export default function AuthPage(): React.JSX.Element {
           </Link>
         ))}
       </div>
-    </SectionPanel>
+    </div>
   );
 }

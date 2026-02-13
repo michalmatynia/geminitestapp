@@ -1,14 +1,17 @@
 'use client';
 
 import React from 'react';
+
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import type { Catalog, PriceGroup } from '@/features/products/types';
 import { Alert, SettingsFormModal } from '@/shared/ui';
-import { useCatalogForm } from './hooks/useCatalogForm';
+
 import { CatalogFormFields } from './CatalogFormFields';
 import { CatalogLanguagesSection } from './CatalogLanguagesSection';
 import { CatalogPriceGroupsSection } from './CatalogPriceGroupsSection';
+import { CatalogModalProvider } from './context/CatalogModalContext';
+import { useCatalogForm } from './hooks/useCatalogForm';
 import { toggleLanguage, moveLanguage, togglePriceGroup } from './utils/catalogModalUtils';
-import type { Catalog, PriceGroup } from '@/features/products/types';
 
 interface CatalogModalProps {
   isOpen: boolean;
@@ -49,7 +52,6 @@ export function CatalogModal({
     languageQuery,
     setLanguageQuery,
     error,
-    languageIdByAnyValue,
     canonicalizeLanguageId,
     getLanguage,
     saveMutation,
@@ -80,6 +82,96 @@ export function CatalogModal({
     [languages, selectedLanguageIds, languageQuery, canonicalizeLanguageId]
   );
 
+  const handleToggleLanguage = React.useCallback(
+    (id: string): void => {
+      setSelectedLanguageIds(
+        toggleLanguage(
+          selectedLanguageIds,
+          id,
+          defaultLanguageId,
+          setDefaultLanguageId
+        )
+      );
+    },
+    [
+      defaultLanguageId,
+      selectedLanguageIds,
+      setDefaultLanguageId,
+      setSelectedLanguageIds,
+    ]
+  );
+
+  const handleMoveLanguage = React.useCallback(
+    (id: string, direction: 'up' | 'down'): void => {
+      setSelectedLanguageIds(moveLanguage(selectedLanguageIds, id, direction));
+    },
+    [selectedLanguageIds, setSelectedLanguageIds]
+  );
+
+  const handleTogglePriceGroup = React.useCallback(
+    (id: string): void => {
+      setCatalogPriceGroupIds(
+        togglePriceGroup(
+          catalogPriceGroupIds,
+          id,
+          catalogDefaultPriceGroupId,
+          setCatalogDefaultPriceGroupId
+        )
+      );
+    },
+    [
+      catalogDefaultPriceGroupId,
+      catalogPriceGroupIds,
+      setCatalogDefaultPriceGroupId,
+      setCatalogPriceGroupIds,
+    ]
+  );
+
+  const contextValue = React.useMemo(
+    () => ({
+      form,
+      setForm,
+      selectedLanguageIds,
+      toggleLanguage: handleToggleLanguage,
+      moveLanguage: handleMoveLanguage,
+      defaultLanguageId,
+      setDefaultLanguageId,
+      languageQuery,
+      setLanguageQuery,
+      availableLanguages,
+      getLanguage,
+      languagesLoading,
+      languagesError,
+      catalogPriceGroupIds,
+      togglePriceGroup: handleTogglePriceGroup,
+      catalogDefaultPriceGroupId,
+      setCatalogDefaultPriceGroupId,
+      priceGroups,
+      loadingGroups,
+    }),
+    [
+      availableLanguages,
+      catalogDefaultPriceGroupId,
+      catalogPriceGroupIds,
+      defaultLanguageId,
+      form,
+      getLanguage,
+      handleMoveLanguage,
+      handleToggleLanguage,
+      handleTogglePriceGroup,
+      languageQuery,
+      languagesError,
+      languagesLoading,
+      loadingGroups,
+      priceGroups,
+      selectedLanguageIds,
+      setCatalogDefaultPriceGroupId,
+      setDefaultLanguageId,
+      setForm,
+      setLanguageQuery,
+    ]
+  );
+
   const handleSubmit = async (): Promise<void> => {
     await handleFormSubmit();
     if (!error) {
@@ -96,69 +188,19 @@ export function CatalogModal({
       isSaving={saveMutation.isPending}
       size='lg'
     >
-      <div className='space-y-6'>
-        {error && (
-          <Alert variant='error' className='p-3 text-xs'>
-            {error}
-          </Alert>
-        )}
+      <CatalogModalProvider value={contextValue}>
+        <div className='space-y-6'>
+          {error && (
+            <Alert variant='error' className='p-3 text-xs'>
+              {error}
+            </Alert>
+          )}
 
-        <CatalogFormFields
-          name={form.name}
-          onNameChange={(name) => setForm((p) => ({ ...p, name }))}
-          description={form.description}
-          onDescriptionChange={(description) =>
-            setForm((p) => ({ ...p, description }))
-          }
-          isDefault={form.isDefault}
-          onIsDefaultChange={(isDefault) =>
-            setForm((p) => ({ ...p, isDefault }))
-          }
-        />
-
-        <CatalogLanguagesSection
-          selectedLanguageIds={selectedLanguageIds}
-          onToggleLanguage={(id) =>
-            setSelectedLanguageIds(
-              toggleLanguage(
-                selectedLanguageIds,
-                id,
-                defaultLanguageId,
-                setDefaultLanguageId
-              )
-            )
-          }
-          onMoveLanguage={(id, direction) =>
-            setSelectedLanguageIds(moveLanguage(selectedLanguageIds, id, direction))
-          }
-          defaultLanguageId={defaultLanguageId}
-          onSetDefaultLanguageId={setDefaultLanguageId}
-          languageQuery={languageQuery}
-          onLanguageQueryChange={setLanguageQuery}
-          availableLanguages={availableLanguages}
-          getLanguage={getLanguage}
-          languagesLoading={languagesLoading}
-          languagesError={languagesError}
-        />
-
-        <CatalogPriceGroupsSection
-          catalogPriceGroupIds={catalogPriceGroupIds}
-          onTogglePriceGroup={(id) =>
-            setCatalogPriceGroupIds(
-              togglePriceGroup(
-                catalogPriceGroupIds,
-                id,
-                catalogDefaultPriceGroupId,
-                setCatalogDefaultPriceGroupId
-              )
-            )
-          }
-          catalogDefaultPriceGroupId={catalogDefaultPriceGroupId}
-          onSetDefaultPriceGroupId={setCatalogDefaultPriceGroupId}
-          priceGroups={priceGroups}
-          loadingGroups={loadingGroups}
-        />
-      </div>
+          <CatalogFormFields />
+          <CatalogLanguagesSection />
+          <CatalogPriceGroupsSection />
+        </div>
+      </CatalogModalProvider>
     </SettingsFormModal>
   );
 }

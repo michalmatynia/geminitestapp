@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { SectionPanel } from '@/shared/ui';
+import {  } from '@/shared/ui';
 
 import { LearnedRuleList } from '../components/LearnedRuleList';
 import { PromptEngineFilters } from '../components/PromptEngineFilters';
@@ -47,7 +47,7 @@ function AdminPromptEngineValidationPatternsContent({
       <div className='space-y-4'>
         <PromptEngineToolbar />
 
-        <SectionPanel variant='subtle'>
+        <div className='rounded-lg border border-border/60 bg-card/30 p-4'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <div className='text-sm text-gray-200'>
               {promptEngineSettings.promptValidation.enabled ? (
@@ -64,12 +64,12 @@ function AdminPromptEngineValidationPatternsContent({
               Source: {usePromptEngine().isUsingDefaults ? 'defaults' : 'saved settings'}
             </div>
           </div>
-        </SectionPanel>
+        </div>
 
         {saveError ? (
-          <SectionPanel variant='danger'>
+          <div className='rounded-lg border border-red-500/40 bg-red-500/10 p-4'>
             <div className='text-xs text-red-200'>{saveError}</div>
-          </SectionPanel>
+          </div>
         ) : null}
 
         <PromptEngineFilters />

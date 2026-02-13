@@ -1,7 +1,7 @@
 'use client';
 
 import type { AiInsightRecord } from '@/shared/types';
-import { Button, SectionPanel } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 
@@ -9,7 +9,7 @@ export function AnalyticsAiInsights(): React.JSX.Element {
   const { insightsQuery, runInsightMutation } = useAnalytics();
 
   return (
-    <SectionPanel className='mb-6 p-4'>
+    <div className='mb-6 rounded-lg border border-border/60 bg-card/40 p-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
           <h2 className='text-sm font-semibold text-white'>AI Insights</h2>
@@ -64,6 +64,6 @@ export function AnalyticsAiInsights(): React.JSX.Element {
           ))}
         </div>
       )}
-    </SectionPanel>
+    </div>
   );
 }

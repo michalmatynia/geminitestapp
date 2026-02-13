@@ -51,9 +51,8 @@ export type CurrencyRecord = Entity & {
 
 /**
  * Domain record for a price group.
- * Extends PriceGroupDto with strict Entity base.
  */
-export type PriceGroupRecord = Entity & Omit<PriceGroupDto, 'id' | 'createdAt' | 'updatedAt'>;
+export type PriceGroupRecord = PriceGroupDto;
 
 export type PriceGroupWithDetails = PriceGroupRecord & {
   currency: CurrencyRecord;
@@ -75,23 +74,16 @@ export type PriceGroupForCalculation = {
 
 /**
  * Domain record for a catalog.
- * Extends CatalogDto with strict Entity base.
  */
-export type CatalogRecord = Entity & Omit<CatalogDto, 'id' | 'createdAt' | 'updatedAt'>;
+export type CatalogRecord = CatalogDto;
 
 export type Catalog = CatalogRecord;
 
 /**
  * Domain record for a product.
- * Extends ProductDto with strict Entity base and extra domain-only fields.
+ * Extends ProductDto with domain-only fields.
  */
-export type ProductRecord = Entity & Omit<ProductDto, 'id' | 'createdAt' | 'updatedAt' | 'images' | 'tags' | 'catalogId' | 'published' | 'name' | 'description'> & {
-  name_en: string | null;
-  name_pl: string | null;
-  name_de: string | null;
-  description_en: string | null;
-  description_pl: string | null;
-  description_de: string | null;
+export type ProductRecord = ProductDto & {
   parameters?: ProductParameterValue[];
   noteIds: string[];
 };
@@ -110,7 +102,7 @@ export type ProductCatalogRecord = {
   catalog: CatalogRecord;
 };
 
-export type ProductWithImages = ProductRecord & {
+export type ProductWithImages = Omit<ProductRecord, 'images' | 'catalogs' | 'tags' | 'producers'> & {
   images: ProductImageRecord[];
   catalogs: ProductCatalogRecord[];
   categoryId?: string | null;
@@ -129,9 +121,8 @@ export type ProductCategoryWithChildren = ProductCategory & {
 
 /**
  * Domain record for a product tag.
- * Extends ProductTagDto.
  */
-export type ProductTag = Entity & Omit<ProductTagDto, 'id' | 'createdAt' | 'updatedAt'>;
+export type ProductTag = ProductTagDto;
 
 export type Producer = Entity & {
   name: string;

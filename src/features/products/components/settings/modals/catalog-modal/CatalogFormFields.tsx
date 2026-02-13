@@ -1,31 +1,19 @@
 import React from 'react';
+
 import { Input, Label, Textarea, Checkbox } from '@/shared/ui';
 
-interface CatalogFormFieldsProps {
-  name: string;
-  onNameChange: (value: string) => void;
-  description: string;
-  onDescriptionChange: (value: string) => void;
-  isDefault: boolean;
-  onIsDefaultChange: (value: boolean) => void;
-}
+import { useCatalogModalContext } from './context/CatalogModalContext';
 
-export function CatalogFormFields({
-  name,
-  onNameChange,
-  description,
-  onDescriptionChange,
-  isDefault,
-  onIsDefaultChange,
-}: CatalogFormFieldsProps): React.JSX.Element {
+export function CatalogFormFields(): React.JSX.Element {
+  const { form, setForm } = useCatalogModalContext();
   return (
     <div className='grid gap-4'>
       <div className='space-y-2'>
         <Label htmlFor='catalog-name'>Name</Label>
         <Input
           id='catalog-name'
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
+          value={form.name}
+          onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
           placeholder='e.g. Main Store'
         />
       </div>
@@ -33,16 +21,18 @@ export function CatalogFormFields({
         <Label htmlFor='catalog-desc'>Description</Label>
         <Textarea
           id='catalog-desc'
-          value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
+          value={form.description}
+          onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
           placeholder='Optional description...'
           rows={2}
         />
       </div>
       <Label className='flex items-center gap-2 text-gray-300'>
         <Checkbox
-          checked={isDefault}
-          onCheckedChange={(v) => onIsDefaultChange(Boolean(v))}
+          checked={form.isDefault}
+          onCheckedChange={(v) => {
+            setForm((p) => ({ ...p, isDefault: Boolean(v) }));
+          }}
         />
         Set as default catalog
       </Label>

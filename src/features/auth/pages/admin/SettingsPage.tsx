@@ -27,7 +27,7 @@ import {
   SelectValue,
   useToast,
   SectionHeader,
-  SectionPanel,
+  
   Checkbox,
 } from '@/shared/ui';
 
@@ -194,18 +194,17 @@ export default function AuthSettingsPage(): React.JSX.Element {
   };
 
   return (
-    <SectionPanel className='p-6 space-y-6'>
+    <div className='container mx-auto max-w-5xl py-10 space-y-6'>
       <SectionHeader
         title='Auth Settings'
         description='Authentication data source is managed globally.'
       />
 
-      <div className='rounded-md border border-border bg-card p-4'>
-        <h2 className='text-lg font-semibold text-white'>Default role</h2>
-        <p className='mt-1 text-xs text-gray-400'>
-          Users without an explicit role will receive this role. To avoid
-          unintended access, set this to a low-privilege role.
-        </p>
+      <FormSection
+        title='Default role'
+        description='Users without an explicit role will receive this role. To avoid unintended access, set this to a low-privilege role.'
+        className='p-4'
+      >
         <div className='mt-4 flex flex-wrap items-center gap-3'>
           <Select
             value={defaultRole}
@@ -233,18 +232,23 @@ export default function AuthSettingsPage(): React.JSX.Element {
             {updateSetting.isPending ? 'Saving...' : 'Save'}
           </Button>
         </div>
-      </div>
+      </FormSection>
 
-      <div className='rounded-md border border-border bg-card p-4 space-y-4'>
-        <div>
-          <h2 className='text-lg font-semibold text-white'>Security policy</h2>
-          <p className='mt-1 text-xs text-gray-400'>
-            Control password strength and login protection rules.
-          </p>
-        </div>
-        <div className='grid gap-4 md:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>Minimum password length</Label>
+      <FormSection
+        title='Security policy'
+        description='Control password strength and login protection rules.'
+        className='p-4'
+        actions={(
+          <Button
+            onClick={() => void saveSecurityPolicy()}
+            disabled={!securityDirty || updateSetting.isPending}
+          >
+            {updateSetting.isPending ? 'Saving...' : 'Save security policy'}
+          </Button>
+        )}
+      >
+        <div className='grid gap-4 md:grid-cols-2 mt-4'>
+          <FormField label='Minimum password length'>
             <Input
               type='number'
               min={6}
@@ -259,26 +263,20 @@ export default function AuthSettingsPage(): React.JSX.Element {
               }}
               className='bg-gray-900 border text-white'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>Require strong password</Label>
-            <div className='flex items-center gap-3'>
-              <Checkbox
-                checked={securityPolicy.requireStrongPassword}
-                onCheckedChange={(checked: boolean | 'indeterminate') => {
-                  setSecurityPolicy((prev: AuthSecurityPolicy) => ({
-                    ...prev,
-                    requireStrongPassword: Boolean(checked),
-                  }));
-                  setSecurityDirty(true);
-                }}
-                className='h-4 w-4 rounded border bg-gray-900'
-              />
-              <span className='text-xs text-gray-400'>
-                Enforce uppercase, lowercase, number, and symbol.
-              </span>
-            </div>
-          </div>
+          </FormField>
+          <FormField label='Require strong password' description='Enforce uppercase, lowercase, number, and symbol.'>
+            <Checkbox
+              checked={securityPolicy.requireStrongPassword}
+              onCheckedChange={(checked: boolean | 'indeterminate') => {
+                setSecurityPolicy((prev: AuthSecurityPolicy) => ({
+                  ...prev,
+                  requireStrongPassword: Boolean(checked),
+                }));
+                setSecurityDirty(true);
+              }}
+              className='h-4 w-4 rounded border bg-gray-900'
+            />
+          </FormField>
           <div className='space-y-2 md:col-span-2'>
             <Label className='text-xs text-gray-300'>Password rules</Label>
             <div className='flex flex-wrap gap-4 text-xs text-gray-400'>
@@ -312,8 +310,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
               )}
             </div>
           </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>Email lockout attempts</Label>
+          <FormField label='Email lockout attempts'>
             <Input
               type='number'
               min={1}
@@ -328,9 +325,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
               }}
               className='bg-gray-900 border text-white'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>Email lockout window (minutes)</Label>
+          </FormField>
+          <FormField label='Email lockout window (minutes)'>
             <Input
               type='number'
               min={1}
@@ -345,9 +341,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
               }}
               className='bg-gray-900 border text-white'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>Email lockout duration (minutes)</Label>
+          </FormField>
+          <FormField label='Email lockout duration (minutes)'>
             <Input
               type='number'
               min={1}
@@ -362,9 +357,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
               }}
               className='bg-gray-900 border text-white'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>IP rate limit attempts</Label>
+          </FormField>
+          <FormField label='IP rate limit attempts'>
             <Input
               type='number'
               min={1}
@@ -379,9 +373,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
               }}
               className='bg-gray-900 border text-white'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>IP rate limit window (minutes)</Label>
+          </FormField>
+          <FormField label='IP rate limit window (minutes)'>
             <Input
               type='number'
               min={1}
@@ -396,9 +389,8 @@ export default function AuthSettingsPage(): React.JSX.Element {
               }}
               className='bg-gray-900 border text-white'
             />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>IP rate limit duration (minutes)</Label>
+          </FormField>
+          <FormField label='IP rate limit duration (minutes)'>
             <Input
               type='number'
               min={1}
@@ -413,85 +405,79 @@ export default function AuthSettingsPage(): React.JSX.Element {
               }}
               className='bg-gray-900 border text-white'
             />
-          </div>
+          </FormField>
         </div>
-        <div className='flex justify-end'>
-          <Button
-            onClick={() => void saveSecurityPolicy()}
-            disabled={!securityDirty || updateSetting.isPending}
-          >
-            {updateSetting.isPending ? 'Saving...' : 'Save security policy'}
-          </Button>
-        </div>
-      </div>
+      </FormSection>
 
-      <div className='rounded-md border border-border bg-card p-4 space-y-4'>
-        <div>
-          <h2 className='text-lg font-semibold text-white'>Multi-factor authentication</h2>
-          <p className='mt-1 text-xs text-gray-400'>
-            Enable MFA for your account and store recovery codes securely.
-          </p>
-        </div>
-        <div className='text-xs text-gray-400'>Status: {mfaEnabled ? 'Enabled' : 'Disabled'}</div>
-        {!mfaEnabled ? (
-          <div className='space-y-3'>
-            <Button onClick={() => void handleMfaSetup()} disabled={mfaSetupMutation.isPending}>
-              {mfaSetupMutation.isPending ? 'Starting...' : 'Start MFA setup'}
-            </Button>
-            {mfaSecret ? (
-              <div className='rounded-md border border-border bg-card/40 p-3 text-xs text-gray-300 space-y-2'>
-                <div>Secret: {mfaSecret}</div>
-                {mfaOtpAuth ? <div>OTP URL: {mfaOtpAuth}</div> : null}
-              </div>
-            ) : null}
-            {mfaSecret ? (
-              <div className='space-y-2'>
-                <Label className='text-xs text-gray-300'>Enter MFA code</Label>
-                <Input
-                  value={mfaToken}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setMfaToken(event.target.value)
-                  }
-                  className='bg-gray-900 border text-white'
-                  placeholder='123456'
-                />
-                <Button onClick={() => void handleMfaVerify()} disabled={mfaVerifyMutation.isPending}>
-                  {mfaVerifyMutation.isPending ? 'Verifying...' : 'Verify & enable'}
-                </Button>
-              </div>
-            ) : null}
-            {recoveryCodes.length > 0 ? (
-              <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
-                <div className='font-semibold'>Recovery codes (save these now)</div>
-                <div className='mt-2 grid gap-1'>
-                  {recoveryCodes.map((code: string) => (
-                    <div key={code}>{code}</div>
-                  ))}
+      <FormSection
+        title='Multi-factor authentication'
+        description='Enable MFA for your account and store recovery codes securely.'
+        className='p-4'
+      >
+        <div className='mt-4 space-y-4'>
+          <div className='text-xs text-gray-400'>Status: {mfaEnabled ? 'Enabled' : 'Disabled'}</div>
+          {!mfaEnabled ? (
+            <div className='space-y-3'>
+              <Button onClick={() => void handleMfaSetup()} disabled={mfaSetupMutation.isPending}>
+                {mfaSetupMutation.isPending ? 'Starting...' : 'Start MFA setup'}
+              </Button>
+              {mfaSecret ? (
+                <div className='rounded-md border border-border bg-card/40 p-3 text-xs text-gray-300 space-y-2'>
+                  <div>Secret: {mfaSecret}</div>
+                  {mfaOtpAuth ? <div>OTP URL: {mfaOtpAuth}</div> : null}
                 </div>
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-300'>Disable MFA (enter code)</Label>
-            <Input
-              value={mfaDisableCode}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setMfaDisableCode(event.target.value)
-              }
-              className='bg-gray-900 border text-white'
-              placeholder='MFA code or recovery code'
-            />
-            <Button
-              variant='outline'
-              onClick={() => void handleMfaDisable()}
-              disabled={mfaDisableMutation.isPending}
-            >
-              {mfaDisableMutation.isPending ? 'Disabling...' : 'Disable MFA'}
-            </Button>
-          </div>
-        )}
-      </div>
+              ) : null}
+              {mfaSecret ? (
+                <div className='space-y-2'>
+                  <FormField label='Enter MFA code'>
+                    <Input
+                      value={mfaToken}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                        setMfaToken(event.target.value)
+                      }
+                      className='bg-gray-900 border text-white w-full'
+                      placeholder='123456'
+                    />
+                  </FormField>
+                  <Button onClick={() => void handleMfaVerify()} disabled={mfaVerifyMutation.isPending}>
+                    {mfaVerifyMutation.isPending ? 'Verifying...' : 'Verify & enable'}
+                  </Button>
+                </div>
+              ) : null}
+              {recoveryCodes.length > 0 ? (
+                <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+                  <div className='font-semibold'>Recovery codes (save these now)</div>
+                  <div className='mt-2 grid gap-1'>
+                    {recoveryCodes.map((code: string) => (
+                      <div key={code}>{code}</div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className='space-y-2'>
+              <FormField label='Disable MFA (enter code)'>
+                <Input
+                  value={mfaDisableCode}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setMfaDisableCode(event.target.value)
+                  }
+                  className='bg-gray-900 border text-white w-full'
+                  placeholder='MFA code or recovery code'
+                />
+              </FormField>
+              <Button
+                variant='outline'
+                onClick={() => void handleMfaDisable()}
+                disabled={mfaDisableMutation.isPending}
+              >
+                {mfaDisableMutation.isPending ? 'Disabling...' : 'Disable MFA'}
+              </Button>
+            </div>
+          )}
+        </div>
+      </FormSection>
 
       <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100'>
         Go to Workflow Database -&gt; Database Engine to configure provider routing and strict fallback policy.
@@ -504,6 +490,6 @@ export default function AuthSettingsPage(): React.JSX.Element {
           Open Database Engine
         </Link>
       </div>
-    </SectionPanel>
+    </div>
   );
 }

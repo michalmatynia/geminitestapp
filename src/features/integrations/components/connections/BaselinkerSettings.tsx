@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { useSettings, useUpdateSetting } from '@/shared/hooks/useSettings';
-import { Button, Input, SectionPanel, StatusBadge, FormSection, FormField } from '@/shared/ui';
+import { Button, Input,  StatusBadge, FormSection, FormField } from '@/shared/ui';
 
 export function BaselinkerSettings(): React.JSX.Element {
   const { connections, handleBaselinkerTest, isTesting } = useIntegrationsContext();
@@ -205,33 +205,20 @@ export function BaselinkerSettings(): React.JSX.Element {
 
           </div>
 
-          <SectionPanel variant='subtle' className='p-3 text-xs text-gray-400'>
-
+          <div className='rounded-md border border-border/60 bg-card/30 p-3 text-xs text-gray-400'>
             <p>
-
                 To get your API token, log in to{' '}
-
               <a
-
                 href='https://baselinker.com'
-
                 target='_blank'
-
                 rel='noopener noreferrer'
-
                 className='text-purple-300 hover:text-purple-200'
-
               >
-
                   Baselinker
-
               </a>{' '}
-
                 → My Account → API.
-
             </p>
-
-          </SectionPanel>
+          </div>
 
         </div>
 

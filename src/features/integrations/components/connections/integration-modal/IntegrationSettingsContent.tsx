@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button, SectionPanel } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
 import { AllegroSettings } from '../AllegroSettings';
 import { BaselinkerSettings } from '../BaselinkerSettings';
@@ -31,10 +31,7 @@ export function IntegrationSettingsContent({
       )}
 
       {isTradera && activeConnection && (
-        <SectionPanel
-          variant='subtle-compact'
-          className='mt-4 text-xs text-gray-300'
-        >
+        <div className='mt-4 rounded-md border border-border/60 bg-card/30 p-3 text-xs text-gray-300'>
           <div className='flex items-center justify-between gap-3'>
             <p>
               <span className='text-gray-400'>Session cookie:</span>{' '}
@@ -55,7 +52,7 @@ export function IntegrationSettingsContent({
               ? new Date((activeConnection as any).playwrightStorageStateUpdatedAt).toLocaleString()
               : '—'}
           </p>
-        </SectionPanel>
+        </div>
       )}
     </div>
   );

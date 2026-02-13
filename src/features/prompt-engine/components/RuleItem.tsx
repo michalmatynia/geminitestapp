@@ -8,7 +8,7 @@ import {
   Input,
   Label,
   MultiSelect,
-  SectionPanel,
+  
   Select,
   SelectContent,
   SelectItem,
@@ -272,9 +272,9 @@ export function RuleItem({
   };
 
   return (
-    <SectionPanel
+    <div
       className={cn(
-        'space-y-3 transition-opacity',
+        'space-y-3 rounded-lg border border-border/60 bg-card/40 p-4 transition-opacity',
         isDragging ? 'opacity-50' : 'opacity-100',
         isDragTarget ? 'ring-1 ring-cyan-300/55' : '',
         rule?.sequenceGroupId ? 'border-l-2 border-cyan-400/35' : ''
@@ -1020,6 +1020,6 @@ export function RuleItem({
           ) : null}
         </div>
       </details>
-    </SectionPanel>
+    </>
   );
 }

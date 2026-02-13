@@ -19,7 +19,6 @@ import {
   UnifiedInput,
   Label,
   SectionHeader,
-  SectionPanel,
   Tabs,
   TabsContent,
   TabsList,
@@ -516,7 +515,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
         }
       />
 
-      <SectionPanel variant='subtle'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='text-xs text-gray-300'>Studio Settings</div>
           <div className='flex items-center gap-2'>
@@ -1416,7 +1415,7 @@ export function AdminImageStudioSettingsPage({ embedded = false }: { embedded?: 
             ) : null}
           </TabsContent>
         </Tabs>
-      </SectionPanel>
+      </div>
     </div>
   );
 }

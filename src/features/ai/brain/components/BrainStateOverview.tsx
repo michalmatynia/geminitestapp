@@ -1,7 +1,7 @@
 'use client';
 
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import { SectionPanel } from '@/shared/ui';
+import {  } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { AI_BRAIN_SETTINGS_KEY } from '../settings';
@@ -28,7 +28,7 @@ export function BrainStateOverview(): React.JSX.Element {
   const latestLogsInsight = insightsQuery.data?.logs?.[0] ?? null;
 
   return (
-    <SectionPanel className='bg-gradient-to-r from-emerald-500/10 via-cyan-500/5 to-blue-500/10'>
+    <div className='rounded-lg border border-border/60 bg-gradient-to-r from-emerald-500/10 via-cyan-500/5 to-blue-500/10 p-4'>
       <div className='grid gap-3 text-xs md:grid-cols-3'>
         <div>
           <div className='text-[11px] uppercase tracking-wide text-emerald-300'>Brain state</div>
@@ -49,6 +49,6 @@ export function BrainStateOverview(): React.JSX.Element {
           </div>
         </div>
       </div>
-    </SectionPanel>
+    </div>
   );
 }

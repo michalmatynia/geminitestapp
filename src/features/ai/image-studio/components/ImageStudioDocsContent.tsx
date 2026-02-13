@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { CopyButton, UnifiedInput, SectionPanel, FormSection } from '@/shared/ui';
+import { CopyButton, UnifiedInput,  FormSection } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { useGenerationState } from '../context/GenerationContext';
@@ -615,7 +615,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       />
 
       {includeByQuery(['runtime state', 'project', 'slot', 'prompt', 'mask', 'generation']) ? (
-        <SectionPanel variant='subtle' className='space-y-3 p-5'>
+        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Current Runtime State</h3>
           <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
             <MetricCard label='Project' value={projectId || 'none'} hint={`${projectsQuery.data?.length ?? 0} total`} />
@@ -639,11 +639,11 @@ export function ImageStudioDocsContent(): React.JSX.Element {
             <MetricCard label='Extraction Review' value={metricValue(extractReviewOpen)} hint={`draft length: ${extractDraftPrompt.length}`} />
             <MetricCard label='Slot UI Drafts' value={`url=${slotImageUrlDraft.trim().length}`} hint={`base64=${slotBase64Draft.trim().length}`} />
           </div>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {filteredSettingsRows.length > 0 ? (
-        <SectionPanel variant='subtle' className='space-y-3 p-5'>
+        <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Settings Reference</h3>
           <div className='grid gap-2'>
             {filteredSettingsRows.map((row) => (
@@ -654,11 +654,11 @@ export function ImageStudioDocsContent(): React.JSX.Element {
               </div>
             ))}
           </div>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {includeByQuery(['runtime snapshot', 'json', 'state']) ? (
-        <SectionPanel variant='subtle' className='space-y-2 p-5'>
+        <div className='space-y-2 rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='flex items-center justify-between gap-2'>
             <h3 className='text-base font-semibold text-white'>Runtime Snapshot JSON</h3>
             <CopyButton value={runtimeSnapshotJson} variant='outline' size='sm' showText />
@@ -666,11 +666,11 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <pre className='max-h-[360px] overflow-auto rounded-md border border-border/60 bg-black/30 p-3 text-xs text-gray-200'>
             {runtimeSnapshotJson}
           </pre>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {includeByQuery(['settings snapshot', 'json', 'config']) ? (
-        <SectionPanel variant='subtle' className='space-y-2 p-5'>
+        <div className='space-y-2 rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='flex items-center justify-between gap-2'>
             <h3 className='text-base font-semibold text-white'>Settings Snapshot JSON</h3>
             <CopyButton value={settingsSnapshotJson} variant='outline' size='sm' showText />
@@ -678,24 +678,24 @@ export function ImageStudioDocsContent(): React.JSX.Element {
           <pre className='max-h-[420px] overflow-auto rounded-md border border-border/60 bg-black/30 p-3 text-xs text-gray-200'>
             {settingsSnapshotJson}
           </pre>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {noResults ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <div className='text-sm text-gray-400'>No documentation sections match "{docsQuery}".</div>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {heavySettings.error ? (
-        <SectionPanel variant='danger' className='space-y-1'>
+        <div className='space-y-1 rounded-lg border border-red-500/40 bg-red-500/10 p-5'>
           <div className='font-medium text-red-100'>Failed to load heavy settings snapshot</div>
           <div className='text-xs text-red-200/80'>{heavySettings.error.message}</div>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {includeByQuery(['docs coverage', 'what is included']) ? (
-        <SectionPanel variant='subtle' className='p-5'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Docs Coverage</h3>
           <ul className='mt-2 list-disc space-y-1 pl-5 text-sm text-gray-400'>
             <li>Live runtime state for projects, slots, prompt, masks, and generation.</li>
@@ -703,13 +703,13 @@ export function ImageStudioDocsContent(): React.JSX.Element {
             <li>API key status, UI preset state, prompt validation rule summary, and folder-tree persistence.</li>
             <li>Raw JSON snapshots so you can audit exactly what the application is currently using.</li>
           </ul>
-        </SectionPanel>
+        </div>
       ) : null}
 
       {slotsQuery.isLoading || projectsQuery.isLoading || heavySettings.isLoading ? (
-        <SectionPanel variant='subtle' className='p-4'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='text-xs text-gray-500'>Refreshing live state…</div>
-        </SectionPanel>
+        </div>
       ) : null}
     </div>
   );

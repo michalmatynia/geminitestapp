@@ -1,6 +1,6 @@
 'use client';
 
-import { SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui';
+import {  Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 
@@ -50,7 +50,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
 
   return (
     <div className='mt-6 grid gap-6 lg:grid-cols-2'>
-      <SectionPanel className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>Top Pages</h2>
         <MiniTable
           rows={(summary?.topPages ?? []).map((item) => ({
@@ -60,9 +60,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No pageviews yet.'
         />
-      </SectionPanel>
+      </div>
 
-      <SectionPanel className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Referrers
         </h2>
@@ -74,9 +74,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No referrers yet.'
         />
-      </SectionPanel>
+      </div>
 
-      <SectionPanel className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Languages
         </h2>
@@ -88,9 +88,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No language data yet.'
         />
-      </SectionPanel>
+      </div>
 
-      <SectionPanel className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Countries
         </h2>
@@ -102,7 +102,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No geo data yet.'
         />
-      </SectionPanel>
+      </div>
     </div>
   );
 }

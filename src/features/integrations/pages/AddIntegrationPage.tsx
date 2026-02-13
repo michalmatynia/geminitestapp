@@ -8,7 +8,7 @@ import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrati
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Integration } from '@/features/integrations/types/integrations-ui';
 import { logClientError } from '@/features/observability';
-import { useToast, Button, SectionHeader, SectionPanel } from '@/shared/ui';
+import { useToast, Button, SectionHeader } from '@/shared/ui';
 
 const AVAILABLE_INTEGRATIONS = [
   {
@@ -74,20 +74,19 @@ export default function AddIntegrationPage(): React.JSX.Element {
   }, [integrationsQuery.data]);
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionPanel className='p-6'>
-        <SectionHeader
-          title='Add Integrations'
-          description='Select a marketplace connection to add to your map.'
-          eyebrow={(
-            <Link href='/admin/integrations' className='text-blue-300 hover:text-blue-200'>
-              ← Back to integrations
-            </Link>
-          )}
-          className='mb-6'
-        />
+    <div className='container mx-auto max-w-5xl py-10'>
+      <SectionHeader
+        title='Add Integrations'
+        description='Select a marketplace connection to add to your map.'
+        eyebrow={(
+          <Link href='/admin/integrations' className='text-blue-300 hover:text-blue-200'>
+            ← Back to integrations
+          </Link>
+        )}
+        className='mb-6'
+      />
 
-        <div className='grid gap-6 md:grid-cols-2'>
+      <div className='grid gap-6 md:grid-cols-2'>
           {AVAILABLE_INTEGRATIONS.map((integration: (typeof AVAILABLE_INTEGRATIONS)[number]) => (
             <div
               key={integration.slug}
@@ -139,7 +138,6 @@ export default function AddIntegrationPage(): React.JSX.Element {
             </div>
           ))}
         </div>
-      </SectionPanel>
     </div>
   );
 }

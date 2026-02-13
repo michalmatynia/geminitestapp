@@ -4,7 +4,7 @@ import React from 'react';
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, ThemeRecord } from '@/shared/types/domain/notes';
-import { Button, ListPanel, EmptyState, Pagination, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Button, ListPanel, EmptyState, Pagination, UnifiedSelect } from '@/shared/ui';
 
 import { NoteCard } from './NoteCard';
 import { NotesFilters } from './NotesFilters';
@@ -140,7 +140,7 @@ export function NoteListView(): React.JSX.Element {
     >
       {/* Breadcrumb */}
       {settings.selectedFolderId && (
-        <SectionPanel variant='subtle-compact' className='mb-6 flex items-center gap-2 text-sm text-gray-400 bg-transparent border-none p-0'>
+        <div className='mb-6 flex items-center gap-2 text-sm text-gray-400'>
           {buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
             <React.Fragment key={index}>
               <Button
@@ -158,7 +158,7 @@ export function NoteListView(): React.JSX.Element {
               )}
             </React.Fragment>
           ))}
-        </SectionPanel>
+        </div>
       )}
 
       {/* Notes Grid */}

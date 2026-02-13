@@ -1,59 +1,49 @@
 'use client';
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { z } from 'zod';
 
 import type { Template, BaseInventory } from '@/features/data-import-export';
-import type { Integration, IntegrationConnection } from '@/features/integrations/types/integrations-ui';
-import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
 import type { PlaywrightPersona } from '@/features/playwright/types';
 import { normalizePlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
+import { 
+  integrationSchema, 
+  integrationConnectionSchema, 
+  templateSchema,
+  baseInventorySchema
+} from '@/shared/contracts/integrations';
+import { createQueryHook } from '@/shared/lib/api-hooks';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { Integration, IntegrationConnection } from '@/shared/types/domain/integrations';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';
 
-export function useIntegrations(): UseQueryResult<Integration[]> {
-  return useQuery({
-    queryKey: QUERY_KEYS.integrations.all,
-    queryFn: () => api.get<Integration[]>('/api/integrations'),
-  });
-}
+export const useIntegrations = createQueryHook({
+  queryKeyFactory: () => QUERY_KEYS.integrations.all,
+  endpoint: '/api/integrations',
+  schema: z.array(integrationSchema),
+});
 
-export function useIntegrationConnections(integrationId?: string): UseQueryResult<IntegrationConnection[]> {
-  return useQuery({
-    queryKey: getIntegrationConnectionsQueryKey(integrationId),
-    queryFn: () => 
-      integrationId 
-        ? api.get<IntegrationConnection[]>(`/api/integrations/${integrationId}/connections`)
-        : Promise.resolve([] as IntegrationConnection[]),
-    enabled: !!integrationId,
-  });
-}
+export const useIntegrationConnections = createQueryHook({
+  queryKeyFactory: (integrationId?: string) => getIntegrationConnectionsQueryKey(integrationId),
+  endpoint: (integrationId?: string) => `/api/integrations/${integrationId}/connections`,
+  schema: z.array(integrationConnectionSchema),
+});
 
-export function useConnectionSession(
-  connectionId?: string,
-  options?: { enabled?: boolean }
-): UseQueryResult<Record<string, unknown> | null> {
-  return useQuery({
-    queryKey: QUERY_KEYS.integrations.connectionSession(connectionId),
-    queryFn: () => 
-      connectionId 
-        ? api.get<Record<string, unknown>>(`/api/integrations/connections/${connectionId}/session`)
-        : Promise.resolve(null),
-    enabled: !!connectionId && (options?.enabled ?? true),
-    staleTime: 0, // Session cookies might change frequently during testing
-  });
-}
+export const useConnectionSession = createQueryHook({
+  queryKeyFactory: (connectionId?: string) => QUERY_KEYS.integrations.connectionSession(connectionId),
+  endpoint: (connectionId?: string) => `/api/integrations/connections/${connectionId}/session`,
+  staleTime: 0,
+});
 
-export function useIntegrationsWithConnections(): UseQueryResult<IntegrationWithConnections[]> {
-  return useQuery({
-    queryKey: QUERY_KEYS.integrations.withConnections(),
-    queryFn: () => api.get<IntegrationWithConnections[]>('/api/integrations/with-connections'),
-  });
-}
+export const useIntegrationsWithConnections = createQueryHook({
+  queryKeyFactory: () => QUERY_KEYS.integrations.withConnections(),
+  endpoint: '/api/integrations/with-connections',
+});
 
 export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
   return useQuery({
@@ -70,26 +60,21 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
   });
 }
 
-export function useExportTemplates(): UseQueryResult<Template[]> {
-  return useQuery({
-    queryKey: QUERY_KEYS.integrations.exportTemplates(),
-    queryFn: () => api.get<Template[]>('/api/integrations/export-templates'),
-  });
-}
+export const useExportTemplates = createQueryHook({
+  queryKeyFactory: () => QUERY_KEYS.integrations.exportTemplates(),
+  endpoint: '/api/integrations/export-templates',
+  schema: z.array(templateSchema),
+});
 
-export function useActiveExportTemplate(): UseQueryResult<{ templateId?: string | null }> {
-  return useQuery({
-    queryKey: QUERY_KEYS.integrations.activeExportTemplate(),
-    queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
-  });
-}
+export const useActiveExportTemplate = createQueryHook({
+  queryKeyFactory: () => QUERY_KEYS.integrations.activeExportTemplate(),
+  endpoint: '/api/integrations/exports/base/active-template',
+});
 
-export function useDefaultExportInventory(): UseQueryResult<{ inventoryId?: string | null }> {
-  return useQuery({
-    queryKey: QUERY_KEYS.integrations.defaultExportInventory(),
-    queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
-  });
-}
+export const useDefaultExportInventory = createQueryHook({
+  queryKeyFactory: () => QUERY_KEYS.integrations.defaultExportInventory(),
+  endpoint: '/api/integrations/exports/base/default-inventory',
+});
 
 export function useBaseInventories(connectionId: string, enabled: boolean = true): UseQueryResult<BaseInventory[]> {
   return useQuery({

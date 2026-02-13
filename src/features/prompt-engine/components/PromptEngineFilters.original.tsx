@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Input, Label, SectionPanel, UnifiedSelect, Checkbox } from '@/shared/ui';
+import { Input, Label,  UnifiedSelect, Checkbox } from '@/shared/ui';
 
 import { usePromptEngine, type SeverityFilter } from '../context/PromptEngineContext';
 
@@ -10,7 +10,7 @@ export function PromptEngineFilters(): React.JSX.Element {
   const { query, setQuery, severity, setSeverity, includeDisabled, setIncludeDisabled } = usePromptEngine();
 
   return (
-    <SectionPanel>
+    <>
       <div className='flex flex-wrap items-end gap-4'>
         <div className='flex-1'>
           <Label className='text-xs text-gray-400 mb-1.5 block'>Search rules</Label>
@@ -44,6 +44,6 @@ export function PromptEngineFilters(): React.JSX.Element {
           </label>
         </div>
       </div>
-    </SectionPanel>
+    </>
   );
 }

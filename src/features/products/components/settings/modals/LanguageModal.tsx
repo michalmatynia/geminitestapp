@@ -2,9 +2,10 @@
 
 import React from 'react';
 
+import { LanguageFormFields } from '@/features/internationalization/components/language-modal/LanguageFormFields';
+import { LanguageModalProvider } from '@/features/internationalization/components/language-modal/LanguageModalContext';
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { useLanguageForm } from '@/features/internationalization/hooks/useLanguageForm';
-import { LanguageFormFields } from '@/features/internationalization/components/language-modal/LanguageFormFields';
 import { SettingsFormModal } from '@/shared/ui';
 
 export function LanguageModal(): React.JSX.Element {
@@ -41,23 +42,17 @@ export function LanguageModal(): React.JSX.Element {
       isSaving={isSaving}
       size='md'
     >
-      <LanguageFormFields
-        code={form.code}
-        onCodeChange={(value: string) =>
-          setForm({ ...form, code: value })
-        }
-        name={form.name}
-        onNameChange={(value: string) =>
-          setForm({ ...form, name: value })
-        }
-        nativeName={form.nativeName}
-        onNativeNameChange={(value: string) =>
-          setForm({ ...form, nativeName: value })
-        }
-        countries={countries}
-        selectedCountryIds={selectedCountryIds}
-        onCountryToggle={toggleCountry}
-      />
+      <LanguageModalProvider
+        value={{
+          form,
+          setForm,
+          countries,
+          selectedCountryIds,
+          toggleCountry,
+        }}
+      >
+        <LanguageFormFields />
+      </LanguageModalProvider>
     </SettingsFormModal>
   );
 }

@@ -1,20 +1,12 @@
 import React from 'react';
+
 import { Label, Checkbox } from '@/shared/ui';
-import type { Currency } from '@/shared/types/domain/internationalization';
 
-interface CountryCurrencySectionProps {
-  currencyOptions: Currency[];
-  selectedCurrencyIds: string[];
-  onToggleCurrency: (id: string) => void;
-  loadingCurrencies: boolean;
-}
+import { useCountryModalContext } from './CountryModalContext';
 
-export function CountryCurrencySection({
-  currencyOptions,
-  selectedCurrencyIds,
-  onToggleCurrency,
-  loadingCurrencies,
-}: CountryCurrencySectionProps): React.JSX.Element {
+export function CountryCurrencySection(): React.JSX.Element {
+  const { currencyOptions, selectedCurrencyIds, toggleCurrency, loadingCurrencies } = useCountryModalContext();
+
   return (
     <div className='space-y-2'>
       <Label>Associated Currencies</Label>
@@ -29,7 +21,7 @@ export function CountryCurrencySection({
             >
               <Checkbox
                 checked={selectedCurrencyIds.includes(curr.id)}
-                onCheckedChange={() => onToggleCurrency(curr.id)}
+                onCheckedChange={() => toggleCurrency(curr.id)}
               />
               <span className='text-xs text-gray-200'>
                 {curr.code} ({curr.name})

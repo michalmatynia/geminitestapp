@@ -11,7 +11,7 @@ import { ICON_LIBRARY, type IconLibraryItem } from '../lib/icon-library';
 const normalize = (value: string): string =>
   value.toLowerCase().replace(/[_/\\-]+/g, ' ').replace(/\s+/g, ' ').trim();
 
-const matchIcon = (icon: IconLibraryItem, query: string): boolean => {
+const matchIcon = (query: string, icon: IconLibraryItem): boolean => {
   const trimmed = normalize(query);
   if (!trimmed) return true;
   const haystack = `${icon.label} ${icon.id}`;

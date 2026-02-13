@@ -2,7 +2,7 @@
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { IntegrationConnection, TestLogEntry } from '@/features/integrations/types/integrations-ui';
-import { Button, Input, SectionPanel, StatusBadge, FormSection, FormField } from '@/shared/ui';
+import { Button, Input,  StatusBadge, FormSection, FormField } from '@/shared/ui';
 
 export function ConnectionManager(): React.JSX.Element {
   const {
@@ -125,10 +125,9 @@ export function ConnectionManager(): React.JSX.Element {
         ) : (
           <div className='mt-3 space-y-3'>
             {connections.slice(0, 1).map((connection: IntegrationConnection) => (
-              <SectionPanel
+              <div
                 key={connection.id}
-                variant='subtle-compact'
-                className='flex items-center justify-between p-3'
+                className='flex items-center justify-between rounded-md border border-border/60 bg-card/30 p-3'
               >
                 <div>
                   <p className='text-sm font-semibold text-white'>
@@ -163,7 +162,7 @@ export function ConnectionManager(): React.JSX.Element {
                     Remove
                   </Button>
                 </div>
-              </SectionPanel>
+              </div>
             ))}
           </div>
         )}

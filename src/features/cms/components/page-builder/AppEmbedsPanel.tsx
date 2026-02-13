@@ -5,7 +5,7 @@ import React from 'react';
 
 import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
 import { AppEmbedsProvider, useAppEmbeds } from '@/features/app-embeds/providers/AppEmbedsProvider';
-import { Button, Checkbox, SectionHeader, SectionPanel } from '@/shared/ui';
+import { Button, Checkbox, SectionHeader } from '@/shared/ui';
 
 export function AppEmbedsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.ReactNode {
   return (
@@ -41,10 +41,9 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
           {APP_EMBED_OPTIONS.map((option: { id: AppEmbedId; label: string; description: string; settingsRoute: string }) => {
             const isEnabled = enabled.has(option.id);
             return (
-              <SectionPanel
+              <div
                 key={option.id}
-                variant='subtle'
-                className='p-3'
+                className='rounded-lg border border-border/60 bg-card/30 p-3'
               >
                 <div className='flex items-start justify-between gap-3'>
                   <div>
@@ -67,7 +66,7 @@ function AppEmbedsPanelContent({ showHeader }: { showHeader: boolean }): React.R
                     Open settings
                   </Link>
                 </div>
-              </SectionPanel>
+              </div>
             );
           })}
         </div>

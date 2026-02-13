@@ -160,15 +160,12 @@ export const productSchema = dtoBaseSchema.extend({
   published: z.boolean(),
   categoryId: z.string().nullable(),
   catalogId: z.string(),
-  tags: z.array(z.string()),
-  images: z.array(z.string()),
-  imageLinks: z.array(z.string()),
-  imageBase64s: z.array(z.string()),
-  noteIds: z.array(z.string()),
-  // Transient fields for creation/update
-  catalogIds: z.array(z.string()).optional(),
-  tagIds: z.array(z.string()).optional(),
-  producerIds: z.array(z.string()).optional(),
+  tags: z.array(z.any()),
+  images: z.array(z.any()),
+  catalogs: z.array(z.any()).optional(),
+  imageLinks: z.array(z.string()).optional(),
+  imageBase64s: z.array(z.string()).optional(),
+  noteIds: z.array(z.string()).optional(),
 });
 
 export type ProductDto = z.infer<typeof productSchema>;

@@ -1,24 +1,19 @@
 import React from 'react';
+
 import { Button, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
-import type { PriceGroup } from '@/features/products/types';
 
-interface CatalogPriceGroupsSectionProps {
-  catalogPriceGroupIds: string[];
-  onTogglePriceGroup: (id: string) => void;
-  catalogDefaultPriceGroupId: string;
-  onSetDefaultPriceGroupId: (id: string) => void;
-  priceGroups: PriceGroup[];
-  loadingGroups: boolean;
-}
+import { useCatalogModalContext } from './context/CatalogModalContext';
 
-export function CatalogPriceGroupsSection({
-  catalogPriceGroupIds,
-  onTogglePriceGroup,
-  catalogDefaultPriceGroupId,
-  onSetDefaultPriceGroupId,
-  priceGroups,
-  loadingGroups,
-}: CatalogPriceGroupsSectionProps): React.JSX.Element {
+export function CatalogPriceGroupsSection(): React.JSX.Element {
+  const {
+    catalogPriceGroupIds,
+    togglePriceGroup,
+    catalogDefaultPriceGroupId,
+    setCatalogDefaultPriceGroupId,
+    priceGroups,
+    loadingGroups,
+  } = useCatalogModalContext();
+
   return (
     <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
       <Label className='text-sm font-semibold text-white'>
@@ -36,7 +31,7 @@ export function CatalogPriceGroupsSection({
                   key={id}
                   variant='secondary'
                   className='h-7 rounded-full px-3 text-xs'
-                  onClick={() => onTogglePriceGroup(id)}
+                  onClick={() => togglePriceGroup(id)}
                 >
                   {group?.name ?? id}{' '}
                   <span className='ml-1 text-gray-500'>×</span>
@@ -51,7 +46,7 @@ export function CatalogPriceGroupsSection({
                 key={group.id}
                 variant='ghost'
                 className='w-full justify-between h-8 px-2'
-                onClick={() => onTogglePriceGroup(group.id)}
+                onClick={() => togglePriceGroup(group.id)}
               >
                 <span>
                   {group.name} ({group.currencyCode})
@@ -71,7 +66,7 @@ export function CatalogPriceGroupsSection({
             </Label>
             <Select
               value={catalogDefaultPriceGroupId}
-              onValueChange={onSetDefaultPriceGroupId}
+              onValueChange={setCatalogDefaultPriceGroupId}
               disabled={catalogPriceGroupIds.length === 0}
             >
               <SelectTrigger className='w-full bg-gray-900 border-border text-xs text-white'>

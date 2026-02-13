@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { ImageRetryPreset } from '@/features/data-import-export';
-import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, SectionPanel } from '@/shared/ui';
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/ui';
 
 type ListProductErrorPanelProps = {
   error: string;
@@ -23,7 +23,7 @@ export function ListProductErrorPanel({
   onRetry,
 }: ListProductErrorPanelProps): React.JSX.Element {
   return (
-    <SectionPanel variant='subtle-compact' className='border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200'>
+    <div className='rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200'>
       <div className='flex flex-col gap-3'>
         <span>{error}</span>
         {isBaseComIntegration && isImageExportError(error) ? (
@@ -60,6 +60,6 @@ export function ListProductErrorPanel({
           </div>
         ) : null}
       </div>
-    </SectionPanel>
+    </div>
   );
 }

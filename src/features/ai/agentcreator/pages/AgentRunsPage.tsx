@@ -9,7 +9,7 @@ import {
   AgentAuditLog,
   AgentBrowserLog,
 } from '@/shared/types/domain/chatbot';
-import { Button, SectionHeader, SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger, AppModal, Input } from '@/shared/ui';
+import { Button, SectionHeader,  Tabs, TabsContent, TabsList, TabsTrigger, AppModal, Input } from '@/shared/ui';
 
 import { useAgentRunContext } from '../context/AgentRunContext';
 
@@ -158,7 +158,7 @@ export default function AgentRunsPage(): React.ReactElement {
         )}
         className='mb-6'
       />
-      <SectionPanel className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
           <Input
             className='max-w-sm h-8 text-sm'
@@ -238,7 +238,7 @@ export default function AgentRunsPage(): React.ReactElement {
             ))}
           </div>
         )}
-      </SectionPanel>
+      </div>
 
       {selectedAgentRunId ? (
         <AppModal

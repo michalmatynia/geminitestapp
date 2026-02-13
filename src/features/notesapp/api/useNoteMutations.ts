@@ -29,169 +29,101 @@ import type {
   ThemeUpdateInput,
 } from '@/shared/types/domain/notes';
 
-export function useCreateNote(): UseMutationResult<NoteWithRelations, Error, NoteCreateInput> {
-  const queryClient = useQueryClient();
+import { createMutationHook } from '@/shared/lib/api-hooks';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-  return useMutation({
-    mutationFn: (payload: NoteCreateInput) => api.post<NoteWithRelations>('/api/notes', payload),
-    onSuccess: (): void => {
-      void invalidateNotes(queryClient);
-    },
-  });
-}
+export const useCreateNote = createMutationHook({
+  mutationFn: (payload: NoteCreateInput) => api.post<NoteWithRelations>('/api/notes', payload),
+  invalidateKeys: [QUERY_KEYS.notes.all],
+});
 
-export function useUpdateNote(): UseMutationResult<NoteWithRelations, Error, NoteUpdateInput & { id: string }> {
-  const queryClient = useQueryClient();
+export const useUpdateNote = createMutationHook({
+  mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) =>
+    api.patch<NoteWithRelations>(`/api/notes/${id}`, data),
+  invalidateKeys: (_data, variables) => [
+    QUERY_KEYS.notes.all,
+    QUERY_KEYS.notes.detail(variables.id),
+  ],
+});
 
-  return useMutation({
-    mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) =>
-      api.patch<NoteWithRelations>(`/api/notes/${id}`, data),
-    onSuccess: (_data: NoteWithRelations, variables): void => {
-      void invalidateNotes(queryClient);
-      void invalidateNoteDetail(queryClient, variables.id);
-    },
-  });
-}
+export const useDeleteNote = createMutationHook({
+  mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
+  invalidateKeys: [QUERY_KEYS.notes.all],
+});
 
-export function useDeleteNote(): UseMutationResult<DeleteResponse, Error, string> {
-  const queryClient = useQueryClient();
+export const useCreateNoteFolder = createMutationHook({
+  mutationFn: (payload: CategoryCreateInput) =>
+    api.post<CategoryRecord>('/api/notes/categories', payload),
+  invalidateKeys: [QUERY_KEYS.notes.all],
+});
 
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
-    onSuccess: (): void => {
-      void invalidateNotes(queryClient);
-    },
-  });
-}
+export const useUpdateNoteFolder = createMutationHook({
+  mutationFn: ({ id, ...data }: CategoryUpdateInput & { id: string }) =>
+    api.patch<CategoryRecord>(`/api/notes/categories/${id}`, data),
+  invalidateKeys: [QUERY_KEYS.notes.all],
+});
 
-export function useCreateNoteFolder(): UseMutationResult<CategoryRecord, Error, CategoryCreateInput> {
-  const queryClient = useQueryClient();
+export const useDeleteNoteFolder = createMutationHook({
+  mutationFn: (folderId: string) =>
+    api.delete<DeleteResponse>(`/api/notes/categories/${folderId}`),
+  invalidateKeys: [QUERY_KEYS.notes.all],
+});
 
-  return useMutation({
-    mutationFn: (payload: CategoryCreateInput) =>
-      api.post<CategoryRecord>('/api/notes/categories', payload),
-    onSuccess: (): void => {
-      void invalidateNotes(queryClient);
-    },
-  });
-}
+export const useCreateNotebook = createMutationHook({
+  mutationFn: (payload: NotebookCreateInput) => api.post<NotebookRecord>('/api/notes/notebooks', payload),
+  invalidateKeys: [QUERY_KEYS.notes.notebooks],
+});
 
-export function useUpdateNoteFolder(): UseMutationResult<CategoryRecord, Error, CategoryUpdateInput & { id: string }> {
-  const queryClient = useQueryClient();
+export const useUpdateNotebook = createMutationHook({
+  mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) =>
+    api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, data),
+  invalidateKeys: (_data, variables) => [
+    QUERY_KEYS.notes.notebooks,
+    QUERY_KEYS.notes.detail(variables.id),
+  ],
+});
 
-  return useMutation({
-    mutationFn: ({ id, ...data }: CategoryUpdateInput & { id: string }) =>
-      api.patch<CategoryRecord>(`/api/notes/categories/${id}`, data),
-    onSuccess: (): void => {
-      void invalidateNotes(queryClient);
-    },
-  });
-}
+export const useDeleteNotebook = createMutationHook({
+  mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
+  invalidateKeys: [QUERY_KEYS.notes.all],
+});
 
-export function useDeleteNoteFolder(): UseMutationResult<DeleteResponse, Error, string> {
-  const queryClient = useQueryClient();
+export const useCreateNoteTag = createMutationHook({
+  mutationFn: (payload: TagCreateInput) =>
+    api.post<TagRecord>('/api/notes/tags', payload),
+  invalidateKeys: (_data, variables) => [
+    QUERY_KEYS.notes.tags(),
+    QUERY_KEYS.notes.tags(variables.notebookId ?? undefined),
+  ],
+});
 
-  return useMutation({
-    mutationFn: (folderId: string) =>
-      api.delete<DeleteResponse>(`/api/notes/categories/${folderId}`),
-    onSuccess: (): void => {
-      void invalidateNotes(queryClient);
-    },
-  });
-}
+export const useUpdateNoteTag = createMutationHook({
+  mutationFn: ({ id, ...data }: TagUpdateInput & { id: string }) =>
+    api.patch<TagRecord>(`/api/notes/tags/${id}`, data),
+  invalidateKeys: [QUERY_KEYS.notes.tags()],
+});
 
-export function useCreateNotebook(): UseMutationResult<NotebookRecord, Error, NotebookCreateInput> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: NotebookCreateInput) => api.post<NotebookRecord>('/api/notes/notebooks', payload),
-    onSuccess: (): void => {
-      void invalidateNotebooks(queryClient);
-    },
-  });
-}
+export const useDeleteNoteTag = createMutationHook({
+  mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
+  invalidateKeys: [QUERY_KEYS.notes.tags()],
+});
 
-export function useUpdateNotebook(): UseMutationResult<NotebookRecord, Error, NotebookUpdateInput & { id: string }> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) =>
-      api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, data),
-    onSuccess: (_data, variables): void => {
-      void invalidateNotebooks(queryClient);
-      void invalidateNoteDetail(queryClient, variables.id);
-    },
-  });
-}
+export const useCreateNoteTheme = createMutationHook({
+  mutationFn: (payload: ThemeCreateInput) =>
+    api.post<ThemeRecord>('/api/notes/themes', payload),
+  invalidateKeys: (_data, variables) => [
+    QUERY_KEYS.notes.themes(),
+    QUERY_KEYS.notes.themes(variables.notebookId ?? undefined),
+  ],
+});
 
-export function useDeleteNotebook(): UseMutationResult<DeleteResponse, Error, string> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
-    onSuccess: (): void => {
-      void invalidateNotes(queryClient);
-    },
-  });
-}
+export const useUpdateNoteTheme = createMutationHook({
+  mutationFn: ({ id, ...data }: ThemeUpdateInput & { id: string }) =>
+    api.patch<ThemeRecord>(`/api/notes/themes/${id}`, data),
+  invalidateKeys: [QUERY_KEYS.notes.themes()],
+});
 
-export function useCreateNoteTag(): UseMutationResult<TagRecord, Error, TagCreateInput> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: TagCreateInput) =>
-      api.post<TagRecord>('/api/notes/tags', payload),
-    onSuccess: (_data: TagRecord, variables: TagCreateInput): void => {
-      void invalidateNoteTags(queryClient, variables.notebookId ?? undefined);
-    },
-  });
-}
-
-export function useUpdateNoteTag(): UseMutationResult<TagRecord, Error, TagUpdateInput & { id: string }> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, ...data }: TagUpdateInput & { id: string }) =>
-      api.patch<TagRecord>(`/api/notes/tags/${id}`, data),
-    onSuccess: (): void => {
-      void invalidateNoteTags(queryClient);
-    },
-  });
-}
-
-export function useDeleteNoteTag(): UseMutationResult<DeleteResponse, Error, string> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
-    onSuccess: (): void => {
-      void invalidateNoteTags(queryClient);
-    },
-  });
-}
-
-export function useCreateNoteTheme(): UseMutationResult<ThemeRecord, Error, ThemeCreateInput> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (payload: ThemeCreateInput) =>
-      api.post<ThemeRecord>('/api/notes/themes', payload),
-    onSuccess: (_data: ThemeRecord, variables: ThemeCreateInput): void => {
-      void invalidateNoteThemes(queryClient, variables.notebookId ?? undefined);
-    },
-  });
-}
-
-export function useUpdateNoteTheme(): UseMutationResult<ThemeRecord, Error, ThemeUpdateInput & { id: string }> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, ...data }: ThemeUpdateInput & { id: string }) =>
-      api.patch<ThemeRecord>(`/api/notes/themes/${id}`, data),
-    onSuccess: (): void => {
-      void invalidateNoteThemes(queryClient);
-    },
-  });
-}
-
-export function useDeleteNoteTheme(): UseMutationResult<DeleteResponse, Error, string> {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
-    onSuccess: (): void => {
-      void invalidateNoteThemes(queryClient);
-    },
-  });
-}
+export const useDeleteNoteTheme = createMutationHook({
+  mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
+  invalidateKeys: [QUERY_KEYS.notes.themes()],
+});

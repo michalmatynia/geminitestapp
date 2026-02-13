@@ -2,7 +2,12 @@
 export * from './core/base-types';
 export * from './core/errors';
 
-// Domain types
+// DTO utilities and query result types
+export * from './dto-utils';
+export * from './query-result-types';
+
+// Modal props types
+export * from './modal-props';
 export * from './domain/notes';
 export * from './domain/files';
 export * from './domain/settings';

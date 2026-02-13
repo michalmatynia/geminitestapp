@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { Button, Input, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
+import { Button, Input, SectionHeader,  FormSection, FormField } from '@/shared/ui';
 
 import { useChatbotMemory } from '../hooks/useChatbotMemory';
 
@@ -45,17 +45,17 @@ export default function AgentMemoryPage(): React.JSX.Element {
   const { data: items = [], isLoading: loading, error } = useChatbotMemory(queryString);
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionPanel className='p-6'>
-        <SectionHeader
-          title='Agent Long-Term Memory'
-          actions={
-            <Button asChild type='button' variant='outline' size='sm'>
-              <Link href='/admin/chatbot'>Back to chatbot</Link>
-            </Button>
-          }
-          className='mb-4'
-        />
+    <div className='container mx-auto max-w-5xl py-10'>
+      <SectionHeader
+        title='Agent Long-Term Memory'
+        actions={
+          <Button asChild type='button' variant='outline' size='sm'>
+            <Link href='/admin/chatbot'>Back to chatbot</Link>
+          </Button>
+        }
+        className='mb-4'
+      />
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <FormSection title='Filters' className='p-4'>
           <div className='grid gap-3 md:grid-cols-4'>
             <FormField label='Memory key'>
@@ -176,7 +176,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
             </div>
           )}
         </div>
-      </SectionPanel>
+      </div>
     </div>
   );
 }

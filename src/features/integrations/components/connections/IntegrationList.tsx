@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { Integration, integrationDefinitions } from '@/features/integrations/types/integrations-ui';
-import { Button, ListPanel, SectionPanel } from '@/shared/ui';
+import { Button, ListPanel } from '@/shared/ui';
 
 
 export function IntegrationList(): React.JSX.Element {
@@ -26,7 +26,7 @@ export function IntegrationList(): React.JSX.Element {
         </Button>
       }
     >
-      <SectionPanel variant='subtle' className='relative overflow-hidden rounded-xl p-6'>
+      <div className='relative overflow-hidden rounded-xl border border-border/60 bg-card/40 p-6'>
         <div className='absolute -left-20 -top-20 size-64 rounded-full bg-emerald-500/10 blur-3xl' />
         <div className='absolute -bottom-24 right-10 size-72 rounded-full bg-sky-500/10 blur-3xl' />
         <div className='absolute -right-16 top-20 size-48 rounded-full bg-purple-500/10 blur-3xl' />
@@ -98,17 +98,17 @@ export function IntegrationList(): React.JSX.Element {
         </div>
 
         <div className='mt-6 grid gap-3 text-xs text-gray-500 md:grid-cols-3'>
-          <SectionPanel variant='subtle-compact' className='text-xs text-muted-foreground'>
+          <div className='rounded-md border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground'>
             Connect marketplaces and automate listings.
-          </SectionPanel>
-          <SectionPanel variant='subtle-compact' className='text-xs text-muted-foreground'>
+          </div>
+          <div className='rounded-md border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground'>
             Monitor sync status and data flow.
-          </SectionPanel>
-          <SectionPanel variant='subtle-compact' className='text-xs text-muted-foreground'>
+          </div>
+          <div className='rounded-md border border-border/40 bg-card/30 p-3 text-xs text-muted-foreground'>
             Add new nodes to expand your stack.
-          </SectionPanel>
+          </div>
         </div>
-      </SectionPanel>
+      </div>
     </ListPanel>
   );
 }

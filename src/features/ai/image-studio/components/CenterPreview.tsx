@@ -14,7 +14,7 @@ import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-dr
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { SectionPanel, UnifiedButton, UnifiedInput, useToast } from '@/shared/ui';
+import { UnifiedButton, UnifiedInput, useToast } from '@/shared/ui';
 
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { useGenerationState } from '../context/GenerationContext';
@@ -150,8 +150,9 @@ export function CenterPreview(): React.JSX.Element {
   );
 
   // Composite preview override
-  const { compositeResultImage, compositeLoading } = useVersionGraphState();
+  const { compositeResultCache, compositeLoading } = useVersionGraphState();
   const isCompositeSlot = workingSlotMetadata?.role === 'composite';
+  const compositeResultImage = workingSlot?.id ? compositeResultCache.get(workingSlot.id) ?? null : null;
 
   const sourceSlotId = useMemo(() => {
     const primarySourceSlotId =
@@ -254,7 +255,7 @@ export function CenterPreview(): React.JSX.Element {
     activeCanvasImageSrc,
     setMaskShapes,
     setTool,
-    setActiveMaskId,
+    setActiveShapeId,
     setSelectedPointIndex,
     maskShapes.length,
   ]);
@@ -500,7 +501,7 @@ export function CenterPreview(): React.JSX.Element {
     : null;
 
   return (
-    <SectionPanel className='order-2 relative flex h-full min-h-0 flex-1 flex-col overflow-hidden p-0' variant='subtle'>
+    <div className='order-2 relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
       <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>
         <div className='flex items-center gap-2'>
           {workingSlot?.asset3dId ? (
@@ -611,7 +612,7 @@ export function CenterPreview(): React.JSX.Element {
               </div>
             ) : null}
           </div>
-          <SectionPanel variant='subtle' className='shrink-0 overflow-hidden border-border/60 bg-card/40 p-2'>
+          <div className='shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
             <div className='mb-2 flex items-center gap-2'>
               <UnifiedInput
                 value={variantTimestampQuery}
@@ -683,9 +684,9 @@ export function CenterPreview(): React.JSX.Element {
                 <div className='mt-2 text-[11px] text-red-300'>{activeRunError}</div>
               ) : null}
             </div>
-          </SectionPanel>
+          </div>
         </div>
       </div>
-    </SectionPanel>
+    </div>
   );
 }

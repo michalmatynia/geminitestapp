@@ -715,15 +715,16 @@ export const buildAdminNav = (handlers: {
     href: '/admin/ai-paths',
     icon: <GitBranchIcon className='size-4' />,
     children: [
-      {
-        id: 'ai/ai-paths',
-        label: 'AI Paths',
-        href: '/admin/ai-paths',
-        children: [
-          { id: 'ai/ai-paths/canvas', label: 'Canvas', href: '/admin/ai-paths', exact: true },
-          { id: 'ai/ai-paths/trigger-buttons', label: 'Trigger Buttons', href: '/admin/ai-paths/trigger-buttons' },
-        ],
-      },
+          {
+            id: 'ai/ai-paths',
+            label: 'AI Paths',
+            href: '/admin/ai-paths',
+            children: [
+              { id: 'ai/ai-paths/canvas', label: 'Canvas', href: '/admin/ai-paths', exact: true },
+              { id: 'ai/ai-paths/trigger-buttons', label: 'Trigger Buttons', href: '/admin/ai-paths/trigger-buttons' },
+              { id: 'ai/ai-paths/case-resolver', label: 'Case Resolver', href: '/admin/case-resolver' },
+            ],
+          },
       {
         id: 'ai/prompt-engine',
         label: 'Global Validator',

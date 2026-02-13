@@ -9,7 +9,7 @@ import {
   DataTable,
   Button,
   useToast,
-  SectionPanel,
+  
   ConfirmDialog,
   FileUploadButton,
   type FileUploadHelpers,
@@ -287,7 +287,7 @@ function DatabasesContent(): React.JSX.Element {
           Backups are disabled in production. Create or upload backups in a non-production environment.
         </div>
       ) : null}
-      <SectionPanel className='p-6'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <DataTable
           columns={getDatabaseColumns({
             onPreview: handlePreview,
@@ -298,7 +298,7 @@ function DatabasesContent(): React.JSX.Element {
           initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
           sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         />
-      </SectionPanel>
+      </div>
     </PageLayout>
   );
 }

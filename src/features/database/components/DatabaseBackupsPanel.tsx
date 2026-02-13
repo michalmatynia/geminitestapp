@@ -16,7 +16,7 @@ import {
   ConfirmDialog,
   DataTable,
   FileUploadButton,
-  SectionPanel,
+  
   type FileUploadHelpers,
   useToast,
 } from '@/shared/ui';
@@ -310,7 +310,7 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         </div>
       ) : null}
 
-      <SectionPanel className='p-6'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <DataTable
           columns={getDatabaseColumns({
             onPreview: handlePreview,
@@ -328,7 +328,7 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
           sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
           isLoading={backupsQuery.isFetching}
         />
-      </SectionPanel>
+      </div>
     </div>
   );
 }

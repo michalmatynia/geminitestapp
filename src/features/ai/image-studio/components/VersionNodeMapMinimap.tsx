@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
-import { NODE_HEIGHT, NODE_WIDTH } from '../utils/version-graph';
+import { useVersionNodeMapContext } from './VersionNodeMapContext';
+import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, NODE_HEIGHT, NODE_WIDTH } from '../utils/version-graph';
 
-import type { VersionEdge, VersionNode } from '../context/VersionGraphContext';
+import type { VersionEdge } from '../context/VersionGraphContext';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -13,34 +14,32 @@ const MINIMAP_H = 80;
 const DOT_R = 3;
 const PADDING = 8;
 
-// ── Component ────────────────────────────────────────────────────────────────
+// ── Edge color by type ───────────────────────────────────────────────────────
 
-export interface VersionNodeMapMinimapProps {
-  nodes: VersionNode[];
-  edges: VersionEdge[];
-  selectedNodeId: string | null;
-  pan: { x: number; y: number };
-  zoom: number;
-  viewportWidth: number;
-  viewportHeight: number;
-  onPanTo: (x: number, y: number) => void;
-}
+const EDGE_COLORS: Record<VersionEdge['type'], string> = {
+  generation: '#34d399',
+  merge: '#a855f7',
+  composite: '#14b8a6',
+};
 
-export function VersionNodeMapMinimap({
-  nodes,
-  edges,
-  selectedNodeId,
-  pan,
-  zoom,
-  viewportWidth,
-  viewportHeight,
-  onPanTo,
-}: VersionNodeMapMinimapProps): React.JSX.Element | null {
+export function VersionNodeMapMinimap(): React.JSX.Element | null {
+  const {
+    nodes,
+    edges,
+    selectedNodeId,
+    pan,
+    zoom,
+    viewportWidth,
+    viewportHeight,
+    onPanTo,
+  } = useVersionNodeMapContext();
+
   const svgRef = useRef<SVGSVGElement>(null);
+  const [dragging, setDragging] = useState(false);
 
   // Compute graph bounds
-  const offsetX = 200;
-  const offsetY = 40;
+  const offsetX = CONTENT_OFFSET_X;
+  const offsetY = CONTENT_OFFSET_Y;
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const n of nodes) {
@@ -79,25 +78,52 @@ export function VersionNodeMapMinimap({
 
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent<SVGSVGElement>) => {
-      const rect = svgRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const clickMiniX = e.clientX - rect.left;
-      const clickMiniY = e.clientY - rect.top;
-
-      // Convert back to world coords
-      const worldX = (clickMiniX - PADDING) / scale + minX;
-      const worldY = (clickMiniY - PADDING) / scale + minY;
-
-      // Center viewport on this point
+  // Convert minimap coords to pan values and center viewport
+  const panFromMiniCoords = useCallback(
+    (miniX: number, miniY: number) => {
+      const worldX = (miniX - PADDING) / scale + minX;
+      const worldY = (miniY - PADDING) / scale + minY;
       const newPanX = viewportWidth / 2 - worldX * zoom;
       const newPanY = viewportHeight / 2 - worldY * zoom;
       onPanTo(newPanX, newPanY);
     },
     [scale, minX, minY, viewportWidth, viewportHeight, zoom, onPanTo],
   );
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<SVGSVGElement>) => {
+      if (dragging) return;
+      const rect = svgRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      panFromMiniCoords(e.clientX - rect.left, e.clientY - rect.top);
+    },
+    [dragging, panFromMiniCoords],
+  );
+
+  // Drag-to-pan on viewport rect
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<SVGRectElement>) => {
+      e.stopPropagation();
+      e.preventDefault();
+      setDragging(true);
+      (e.target as SVGRectElement).setPointerCapture(e.pointerId);
+    },
+    [],
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<SVGRectElement>) => {
+      if (!dragging) return;
+      const rect = svgRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      panFromMiniCoords(e.clientX - rect.left, e.clientY - rect.top);
+    },
+    [dragging, panFromMiniCoords],
+  );
+
+  const handlePointerUp = useCallback(() => {
+    setDragging(false);
+  }, []);
 
   return (
     <svg
@@ -107,7 +133,7 @@ export function VersionNodeMapMinimap({
       className='cursor-crosshair rounded border border-border/40 bg-card/90 backdrop-blur-sm'
       onClick={handleClick}
     >
-      {/* Edges */}
+      {/* Edges — colored by type */}
       {edges.map((edge) => {
         const source = nodeById.get(edge.source);
         const target = nodeById.get(edge.target);
@@ -119,7 +145,7 @@ export function VersionNodeMapMinimap({
             y1={toMiniY(source.y + offsetY)}
             x2={toMiniX(target.x + offsetX)}
             y2={toMiniY(target.y + offsetY)}
-            stroke='#4b5563'
+            stroke={EDGE_COLORS[edge.type] ?? '#4b5563'}
             strokeWidth={0.5}
             strokeOpacity={0.6}
           />
@@ -151,7 +177,7 @@ export function VersionNodeMapMinimap({
         );
       })}
 
-      {/* Viewport indicator */}
+      {/* Viewport indicator — draggable */}
       <rect
         x={vpMiniX}
         y={vpMiniY}
@@ -160,9 +186,13 @@ export function VersionNodeMapMinimap({
         fill='white'
         fillOpacity={0.08}
         stroke='white'
-        strokeOpacity={0.3}
-        strokeWidth={1}
+        strokeOpacity={dragging ? 0.6 : 0.3}
+        strokeWidth={dragging ? 1.5 : 1}
         rx={1}
+        style={{ cursor: 'grab' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
       />
     </svg>
   );

@@ -2,7 +2,7 @@
 
 import { AlertTriangleIcon } from 'lucide-react';
 
-import { SectionPanel, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui';
+import { FormSection, Tabs, TabsContent, TabsList, TabsTrigger, UnifiedSelect } from '@/shared/ui';
 
 import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
@@ -17,25 +17,24 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <div className='flex items-center gap-2'>
-        <select
+        <UnifiedSelect
           value={dbType}
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>): void =>
-            setDbType(event.target.value as DatabaseType)
+          onValueChange={(value: string): void =>
+            setDbType(value as DatabaseType)
           }
-          className='h-8 rounded-md border border-border bg-card px-2 text-xs text-gray-200'
-        >
-          <option value='postgresql'>PostgreSQL</option>
-          <option value='mongodb'>MongoDB</option>
-        </select>
+          options={[
+            { value: 'postgresql', label: 'PostgreSQL' },
+            { value: 'mongodb', label: 'MongoDB' },
+          ]}
+          triggerClassName='h-8 text-xs w-[120px]'
+        />
       </div>
 
       {isProduction && (
-        <SectionPanel className='p-4'>
-          <div className='flex items-center gap-2 text-xs text-yellow-300'>
-            <AlertTriangleIcon className='size-4' />
-            Database operations are disabled in production environments.
-          </div>
-        </SectionPanel>
+        <div className='flex items-center gap-2 rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-4 text-xs text-yellow-300'>
+          <AlertTriangleIcon className='size-4' />
+          Database operations are disabled in production environments.
+        </div>
       )}
 
       <Tabs defaultValue='sql' className='w-full'>
@@ -49,25 +48,25 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
         </TabsList>
 
         <TabsContent value='sql'>
-          <SectionPanel className='p-5'>
+          <FormSection title='Query Console' className='p-5'>
             <SqlQueryConsole />
-          </SectionPanel>
+          </FormSection>
         </TabsContent>
 
         <TabsContent value='crud'>
           {previewLoading && (
-            <SectionPanel className='p-5'>
+            <div className='rounded-lg border border-border/60 bg-card/50 p-5'>
               <p className='text-xs text-gray-400'>Loading table metadata...</p>
-            </SectionPanel>
+            </div>
           )}
           {!previewLoading && tableDetails.length === 0 && (
-            <SectionPanel className='p-5'>
+            <div className='rounded-lg border border-border/60 bg-card/50 p-5'>
               <p className='text-xs text-gray-500'>
                 {dbType === 'mongodb'
                   ? 'Table metadata is not available for MongoDB. Use the SQL Console tab for MongoDB operations.'
                   : 'No tables found in the database.'}
               </p>
-            </SectionPanel>
+            </div>
           )}
           {!previewLoading && tableDetails.length > 0 && <CrudPanel />}
         </TabsContent>

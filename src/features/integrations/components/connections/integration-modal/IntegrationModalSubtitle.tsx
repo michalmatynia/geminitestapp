@@ -1,5 +1,3 @@
-import React from 'react';
-
 type IntegrationModalSubtitleProps = {
   isBaselinker: boolean;
   isTradera: boolean;

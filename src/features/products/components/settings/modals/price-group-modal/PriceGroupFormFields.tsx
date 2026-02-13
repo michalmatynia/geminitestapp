@@ -1,31 +1,20 @@
 import React from 'react';
+
 import { Input, Label, Checkbox } from '@/shared/ui';
 
-interface PriceGroupFormFieldsProps {
-  name: string;
-  onNameChange: (name: string) => void;
-  currencyCode: string;
-  onCurrencyCodeChange: (code: string) => void;
-  isDefault: boolean;
-  onIsDefaultChange: (value: boolean) => void;
-}
+import { usePriceGroupModalContext } from './PriceGroupModalContext';
 
-export function PriceGroupFormFields({
-  name,
-  onNameChange,
-  currencyCode,
-  onCurrencyCodeChange,
-  isDefault,
-  onIsDefaultChange,
-}: PriceGroupFormFieldsProps): React.JSX.Element {
+export function PriceGroupFormFields(): React.JSX.Element {
+  const { form, setForm } = usePriceGroupModalContext();
+
   return (
     <>
       <div className='space-y-2'>
         <Label htmlFor='price-group-name'>Name</Label>
         <Input
           id='price-group-name'
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
+          value={form.name}
+          onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
           placeholder='e.g. Standard'
         />
       </div>
@@ -33,16 +22,16 @@ export function PriceGroupFormFields({
         <Label htmlFor='price-group-currency'>Currency Code</Label>
         <Input
           id='price-group-currency'
-          value={currencyCode}
-          onChange={(e) => onCurrencyCodeChange(e.target.value.toUpperCase())}
+          value={form.currencyCode}
+          onChange={(e) => setForm((prev) => ({ ...prev, currencyCode: e.target.value.toUpperCase() }))}
           placeholder='e.g. PLN'
           maxLength={3}
         />
       </div>
       <Label className='flex items-center gap-2 text-gray-300'>
         <Checkbox
-          checked={isDefault}
-          onCheckedChange={(v) => onIsDefaultChange(Boolean(v))}
+          checked={form.isDefault}
+          onCheckedChange={(v) => setForm((prev) => ({ ...prev, isDefault: Boolean(v) }))}
         />
         Set as default price group
       </Label>

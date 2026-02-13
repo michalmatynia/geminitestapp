@@ -22,6 +22,7 @@ export interface CompositeStackNodeProps {
   isSelected: boolean;
   isHovered: boolean;
   layers: CompositeLayerConfig[];
+  zoom?: number | undefined;
   getSlotLabel: (slotId: string) => string;
   getSlotImageSrc: (slotId: string) => string | null;
   onReorderLayer: (fromIndex: number, toIndex: number) => void;
@@ -34,6 +35,7 @@ export function CompositeStackNode({
   isSelected,
   isHovered,
   layers,
+  zoom = 1,
   getSlotLabel,
   getSlotImageSrc,
   onReorderLayer,
@@ -58,12 +60,13 @@ export function CompositeStackNode({
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (dragIndex === null) return;
-      const deltaY = e.clientY - dragStartY.current;
+      // Divide by zoom to compensate for canvas scale
+      const deltaY = (e.clientY - dragStartY.current) / zoom;
       const rawTarget = dragIndex + Math.round(deltaY / COMPOSITE_LAYER_ROW_HEIGHT);
       const clampedTarget = Math.max(0, Math.min(layers.length - 1, rawTarget));
       setDropIndex(clampedTarget);
     },
-    [dragIndex, layers.length],
+    [dragIndex, layers.length, zoom],
   );
 
   const handlePointerUp = useCallback(() => {

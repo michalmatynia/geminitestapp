@@ -23,7 +23,7 @@ import { DEFAULT_AUTH_SECURITY_POLICY } from '@/features/auth/utils/auth-securit
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
 import { invalidateUsers } from '@/shared/lib/query-invalidation';
-import { Badge, Button, Checkbox, ConfirmDialog, EmptyState, Input, Label, ListPanel, SectionHeader, SectionPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, UnifiedSelect, useToast, FormSection, FormModal, FormField } from '@/shared/ui';
+import { Badge, Button, Checkbox, ConfirmDialog, EmptyState, Input, Label, ListPanel, SectionHeader,  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, UnifiedSelect, useToast, FormSection, FormModal, FormField } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 type CreateUserForm = typeof EMPTY_CREATE;
@@ -371,10 +371,10 @@ export default function AuthUsersPage(): React.JSX.Element {
 
   if (!canReadUsers) {
     return (
-      <SectionPanel className='p-6 text-sm text-amber-300'>
+      <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-6 text-sm text-amber-300'>
         You don&apos;t have permission to view user accounts. Ask an admin to grant
         `auth.users.read` or elevate your account.
-      </SectionPanel>
+      </div>
     );
   }
 

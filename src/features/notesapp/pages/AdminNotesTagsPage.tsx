@@ -8,7 +8,7 @@ import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQuerie
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { TagRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, SectionHeader, SectionPanel, SearchInput, FormSection, FormField, RefreshButton } from '@/shared/ui';
+import { Button, useToast, Input, SectionHeader,  SearchInput, FormSection, FormField, RefreshButton } from '@/shared/ui';
 
 
 
@@ -167,10 +167,9 @@ export function AdminNotesTagsPage(): React.JSX.Element {
               {filteredTags.map((tag: TagRecord) => {
                 const isEditing = editingId === tag.id;
                 return (
-                  <SectionPanel
+                  <div
                     key={tag.id}
-                    variant='subtle'
-                    className='flex items-center justify-between gap-3 px-4 py-3'
+                    className='flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/30 px-4 py-3'
                   >
                     <div className='flex flex-1 items-center gap-3'>
                       <span
@@ -233,7 +232,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                         <Trash2 size={16} />
                       </Button>
                     </div>
-                  </SectionPanel>
+                  </div>
                 );
               })}
             </div>

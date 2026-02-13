@@ -13,7 +13,7 @@ import {
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, ConfirmDialog, useToast } from '@/shared/ui';
+import { Button, ConfirmDialog, useToast, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 const formatDate = (value?: string | null): string => {
@@ -239,32 +239,32 @@ export function LocalRunsPanel({
           No local runs recorded yet.
         </div>
       ) : (
-        <div className='overflow-hidden rounded-md border border-border bg-card/40'>
-          <table className='w-full text-sm'>
-            <thead className='bg-card/60 text-xs uppercase text-gray-400'>
-              <tr>
-                <th className='px-4 py-3 text-left'>Started</th>
-                <th className='px-4 py-3 text-left'>Path</th>
-                <th className='px-4 py-3 text-left'>Trigger</th>
-                <th className='px-4 py-3 text-left'>Entity</th>
-                <th className='px-4 py-3 text-left'>Status</th>
-                <th className='px-4 py-3 text-left'>Duration</th>
-              </tr>
-            </thead>
-            <tbody className='divide-y divide-border text-gray-200'>
+        <div className='overflow-hidden rounded-md border border-border/60 bg-card/40'>
+          <Table>
+            <TableHeader className='bg-muted/40'>
+              <TableRow className='border-border/60 hover:bg-transparent'>
+                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Started</TableHead>
+                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Path</TableHead>
+                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Trigger</TableHead>
+                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Entity</TableHead>
+                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Status</TableHead>
+                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Duration</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {runs.map((run: AiPathLocalRunRecord) => (
-                <tr key={run.id} className='hover:bg-card/60'>
-                  <td className='px-4 py-3 text-xs text-gray-300'>{formatDate(run.startedAt)}</td>
-                  <td className='px-4 py-3 text-xs'>
+                <TableRow key={run.id} className='border-border/40 hover:bg-card/60'>
+                  <TableCell className='px-4 py-3 text-xs text-gray-300'>{formatDate(run.startedAt)}</TableCell>
+                  <TableCell className='px-4 py-3 text-xs'>
                     <div className='font-medium text-gray-100'>{run.pathName ?? 'Untitled path'}</div>
                     <div className='text-[10px] text-gray-500'>{run.pathId ?? '-'}</div>
-                  </td>
-                  <td className='px-4 py-3 text-xs'>
+                  </TableCell>
+                  <TableCell className='px-4 py-3 text-xs'>
                     <div className='font-medium text-gray-100'>{run.triggerLabel ?? run.triggerEvent ?? '-'}</div>
                     <div className='text-[10px] text-gray-500'>{run.triggerEvent ?? '-'}</div>
-                  </td>
-                  <td className='px-4 py-3 text-xs text-gray-300'>{formatEntity(run)}</td>
-                  <td className='px-4 py-3 text-xs'>
+                  </TableCell>
+                  <TableCell className='px-4 py-3 text-xs text-gray-300'>{formatEntity(run)}</TableCell>
+                  <TableCell className='px-4 py-3 text-xs'>
                     <span
                       className={`rounded-full border px-2 py-1 text-[10px] uppercase ${
                         run.status === 'success'
@@ -275,12 +275,12 @@ export function LocalRunsPanel({
                     >
                       {run.status}
                     </span>
-                  </td>
-                  <td className='px-4 py-3 text-xs text-gray-300'>{formatDuration(run.durationMs)}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className='px-4 py-3 text-xs text-gray-300'>{formatDuration(run.durationMs)}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

@@ -1,34 +1,24 @@
 import React from 'react';
+
 import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Button } from '@/shared/ui';
-import type { Language } from '@/shared/types/domain/internationalization';
 
-interface CatalogLanguagesSectionProps {
-  selectedLanguageIds: string[];
-  onToggleLanguage: (id: string) => void;
-  onMoveLanguage: (id: string, direction: 'up' | 'down') => void;
-  defaultLanguageId: string;
-  onSetDefaultLanguageId: (id: string) => void;
-  languageQuery: string;
-  onLanguageQueryChange: (query: string) => void;
-  availableLanguages: Language[];
-  getLanguage: (id: string) => Language | undefined;
-  languagesLoading: boolean;
-  languagesError?: string;
-}
+import { useCatalogModalContext } from './context/CatalogModalContext';
 
-export function CatalogLanguagesSection({
-  selectedLanguageIds,
-  onToggleLanguage,
-  onMoveLanguage,
-  defaultLanguageId,
-  onSetDefaultLanguageId,
-  languageQuery,
-  onLanguageQueryChange,
-  availableLanguages,
-  getLanguage,
-  languagesLoading,
-  languagesError,
-}: CatalogLanguagesSectionProps): React.JSX.Element {
+export function CatalogLanguagesSection(): React.JSX.Element {
+  const {
+    selectedLanguageIds,
+    toggleLanguage,
+    moveLanguage,
+    defaultLanguageId,
+    setDefaultLanguageId,
+    languageQuery,
+    setLanguageQuery,
+    availableLanguages,
+    getLanguage,
+    languagesLoading,
+    languagesError,
+  } = useCatalogModalContext();
+
   return (
     <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
       <Label className='text-sm font-semibold text-white'>
@@ -43,7 +33,7 @@ export function CatalogLanguagesSection({
           <Input
             placeholder='Search languages...'
             value={languageQuery}
-            onChange={(e) => onLanguageQueryChange(e.target.value)}
+            onChange={(e) => setLanguageQuery(e.target.value)}
           />
 
           <div className='space-y-1'>
@@ -78,7 +68,7 @@ export function CatalogLanguagesSection({
                         variant='ghost'
                         size='icon'
                         className='h-6 w-6'
-                        onClick={() => onMoveLanguage(id, 'up')}
+                        onClick={() => moveLanguage(id, 'up')}
                         disabled={index === 0}
                       >
                         ↑
@@ -87,7 +77,7 @@ export function CatalogLanguagesSection({
                         variant='ghost'
                         size='icon'
                         className='h-6 w-6'
-                        onClick={() => onMoveLanguage(id, 'down')}
+                        onClick={() => moveLanguage(id, 'down')}
                         disabled={
                           index === selectedLanguageIds.length - 1
                         }
@@ -97,7 +87,7 @@ export function CatalogLanguagesSection({
                       <Button
                         variant='ghost'
                         className='h-6 px-2 text-red-400 hover:text-red-300'
-                        onClick={() => onToggleLanguage(id)}
+                        onClick={() => toggleLanguage(id)}
                       >
                         Remove
                       </Button>
@@ -114,7 +104,7 @@ export function CatalogLanguagesSection({
                 key={lang.id}
                 variant='ghost'
                 className='w-full justify-between h-8 px-2'
-                onClick={() => onToggleLanguage(lang.id)}
+                onClick={() => toggleLanguage(lang.id)}
               >
                 <span>
                   {lang.name} ({lang.code})
@@ -130,7 +120,7 @@ export function CatalogLanguagesSection({
             </Label>
             <Select
               value={defaultLanguageId}
-              onValueChange={onSetDefaultLanguageId}
+              onValueChange={setDefaultLanguageId}
               disabled={selectedLanguageIds.length === 0}
             >
               <SelectTrigger className='w-full bg-gray-900 border-border text-xs text-white'>

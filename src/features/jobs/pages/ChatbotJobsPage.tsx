@@ -8,7 +8,7 @@ import {
   useJobsContext,
   type ChatbotJob
 } from '@/features/jobs/context/JobsContext';
-import { Button, SectionHeader, SectionPanel, Input } from '@/shared/ui';
+import { Button, SectionHeader,  Input } from '@/shared/ui';
 
 function ChatbotJobsPageContent(): React.JSX.Element {
   const {
@@ -65,7 +65,7 @@ function ChatbotJobsPageContent(): React.JSX.Element {
         )}
         className='mb-6'
       />
-      <SectionPanel className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
           <Input
             className='max-w-sm h-8 text-sm'
@@ -166,7 +166,7 @@ function ChatbotJobsPageContent(): React.JSX.Element {
             ))}
           </div>
         )}
-      </SectionPanel>
+      </>
     </div>
   );
 }

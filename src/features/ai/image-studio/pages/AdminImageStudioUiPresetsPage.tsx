@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { UnifiedButton, Label, SectionPanel, UnifiedTextarea, UnifiedSelect, useToast } from '@/shared/ui';
+import { UnifiedButton, Label,  UnifiedTextarea, UnifiedSelect, useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { IMAGE_STUDIO_UI_ACTIVE_KEY, IMAGE_STUDIO_UI_PRESETS_KEY, parseImageStudioUiPresets, type ImageStudioUiPreset } from '../utils/ui-presets';
@@ -92,7 +92,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
         </div>
       </div>
 
-      <SectionPanel variant='subtle' className='space-y-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6 space-y-4'>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Active UI preset</Label>
           <UnifiedSelect
@@ -158,7 +158,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
             ))}
           </div>
         )}
-      </SectionPanel>
+      </div>
     </div>
   );
 }

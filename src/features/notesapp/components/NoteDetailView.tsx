@@ -7,7 +7,7 @@ import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-butt
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from '@/shared/types/domain/notes';
-import { Button, useToast, SectionPanel } from '@/shared/ui';
+import { Button, useToast } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
 import { NoteForm } from './NoteForm';
@@ -336,8 +336,8 @@ export function NoteDetailView(): React.JSX.Element | null {
           />
         </div>
       ) : (
-        <SectionPanel
-          className='flex-1 overflow-y-auto p-6 cursor-text'
+        <div
+          className='flex-1 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-6 cursor-text'
           onDoubleClick={() => setIsEditing(true)}
           style={previewStyle}
         >
@@ -406,10 +406,9 @@ export function NoteDetailView(): React.JSX.Element | null {
                     .map((related: RelatedNote) => {
                       const relatedNote = relatedPreviewNotes[related.id];
                       return (
-                        <SectionPanel
+                        <div
                           key={related.id}
-                          variant='subtle-compact'
-                          className='relative w-40 cursor-pointer text-left text-xs transition'
+                          className='relative w-40 cursor-pointer rounded-md border border-border/60 bg-card/30 p-2 text-left text-xs transition hover:bg-muted/40'
                           style={relatedPreviewStyle}
                           role='button'
                           tabIndex={0}
@@ -438,7 +437,7 @@ export function NoteDetailView(): React.JSX.Element | null {
                           >
                             <X size={12} />
                           </Button>
-                        </SectionPanel>
+                        </div>
                       );
                     })}
                 </div>
@@ -449,7 +448,7 @@ export function NoteDetailView(): React.JSX.Element | null {
             <span>Created: {new Date(selectedNote.createdAt).toLocaleString()}</span>
             <span>Modified: {selectedNote.updatedAt ? new Date(selectedNote.updatedAt).toLocaleString() : "Never"}</span>
           </div>
-        </SectionPanel>
+        </div>
       )}
     </div>
   );

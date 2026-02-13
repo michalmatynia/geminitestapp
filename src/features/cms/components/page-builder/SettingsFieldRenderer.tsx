@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
   UnifiedSelect,
-  SectionPanel,
+  
 } from '@/shared/ui';
 
 import {
@@ -544,9 +544,9 @@ function BackgroundField({ value, onChange }: CompositeFieldProps): React.ReactN
       />
 
       {bgType === 'none' && (
-        <SectionPanel variant='subtle-compact' className='px-3 py-2 text-[11px] text-gray-400'>
+        <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2 text-[11px] text-gray-400'>
           No background override (uses color scheme / inherited background).
-        </SectionPanel>
+        </div>
       )}
 
       {bgType === 'solid' && (

@@ -3,8 +3,9 @@
 import React from 'react';
 
 import type { PromptExploderRuleSegmentType } from '@/features/prompt-engine/settings';
-import type { PromptExploderParserTuningRuleDraft } from '@/features/prompt-exploder/parser-tuning';
 import { Button, Input, Label, StatusToggle, Textarea, UnifiedSelect } from '@/shared/ui';
+
+import { usePromptExploderParserTuningContext } from './PromptExploderParserTuningContext';
 
 const SEGMENT_TYPE_OPTIONS: Array<{
   value: PromptExploderRuleSegmentType | 'none';
@@ -22,26 +23,16 @@ const SEGMENT_TYPE_OPTIONS: Array<{
   { value: 'qa_matrix', label: 'QA Matrix' },
 ];
 
-type PromptExploderParserTuningPanelProps = {
-  drafts: PromptExploderParserTuningRuleDraft[];
-  onPatchDraft: (
-    ruleId: PromptExploderParserTuningRuleDraft['id'],
-    patch: Partial<PromptExploderParserTuningRuleDraft>
-  ) => void;
-  onSave: () => void;
-  onResetToPackDefaults: () => void;
-  onOpenValidationPatterns: () => void;
-  isBusy: boolean;
-};
+export function PromptExploderParserTuningPanel(): React.JSX.Element {
+  const {
+    drafts,
+    onPatchDraft,
+    onSave,
+    onResetToPackDefaults,
+    onOpenValidationPatterns,
+    isBusy,
+  } = usePromptExploderParserTuningContext();
 
-export function PromptExploderParserTuningPanel({
-  drafts,
-  onPatchDraft,
-  onSave,
-  onResetToPackDefaults,
-  onOpenValidationPatterns,
-  isBusy,
-}: PromptExploderParserTuningPanelProps): React.JSX.Element {
   return (
     <div className='space-y-3'>
       <div className='flex flex-wrap items-center gap-2'>

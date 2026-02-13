@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { SectionPanel } from '@/shared/ui';
+import {  } from '@/shared/ui';
 
 import { FileUploadEventsProvider } from '../contexts/FileUploadEventsContext';
 import { FileUploadEventsFilters } from './file-upload-events/FileUploadEventsFilters';
@@ -16,17 +16,31 @@ type FileUploadEventsPanelProps = {
 };
 
 export function FileUploadEventsPanel({
+
   title = 'File Uploads Runtime',
+
   description = 'Track upload successes and failures across services.',
+
 }: FileUploadEventsPanelProps): React.JSX.Element {
+
   return (
+
     <FileUploadEventsProvider>
-      <SectionPanel className='p-4 bg-gray-900 border-gray-800'>
+
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+
         <FileUploadEventsHeader title={title} description={description} />
+
         <FileUploadEventsFilters />
+
         <FileUploadEventsTable />
+
         <FileUploadEventsPagination />
-      </SectionPanel>
+
+      </div>
+
     </FileUploadEventsProvider>
+
   );
+
 }

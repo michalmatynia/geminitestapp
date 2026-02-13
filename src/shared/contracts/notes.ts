@@ -25,6 +25,24 @@ export const noteSchema = dtoBaseSchema.extend({
 
 export type NoteDto = z.infer<typeof noteSchema>;
 
+export const noteWithRelationsSchema = noteSchema.extend({
+  tags: z.array(z.any()),
+  categories: z.array(z.any()),
+  relations: z.array(z.any()).optional(),
+  files: z.array(z.any()).optional(),
+});
+
+export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;
+
+export const relatedNoteSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  color: z.string().nullable(),
+  content: z.string().optional(),
+});
+
+export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
+
 export const createNoteSchema = noteSchema.omit({
   id: true,
   createdAt: true,
@@ -59,6 +77,14 @@ export const noteCategorySchema = namedDtoSchema.extend({
 });
 
 export type NoteCategoryDto = z.infer<typeof noteCategorySchema>;
+
+export interface NoteCategoryWithChildrenDto extends NoteCategoryDto {
+  children: NoteCategoryWithChildrenDto[];
+}
+
+export const noteCategoryWithChildrenSchema: z.ZodType<NoteCategoryWithChildrenDto> = noteCategorySchema.extend({
+  children: z.lazy(() => z.array(noteCategoryWithChildrenSchema)),
+});
 
 export const createNoteCategorySchema = noteCategorySchema.omit({
   id: true,

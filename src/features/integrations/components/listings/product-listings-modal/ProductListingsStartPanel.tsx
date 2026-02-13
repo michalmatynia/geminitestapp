@@ -7,7 +7,7 @@ import { useIntegrationSelection } from '@/features/integrations/components/list
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import {
   Button,
-  SectionPanel,
+  
   IntegrationSelector,
 } from '@/shared/ui';
 
@@ -28,18 +28,18 @@ export function ProductListingsStartPanel(): React.JSX.Element {
 
   if (integrations.length === 0) {
     return (
-      <SectionPanel variant='subtle-compact' className='border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200'>
+      <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200'>
         No connected integrations.{' '}
         <Link href='/admin/integrations' className='underline hover:text-yellow-100'>
           Set up an integration
         </Link>
         .
-      </SectionPanel>
+      </div>
     );
   }
 
   return (
-    <SectionPanel variant='subtle' className='px-4 py-4'>
+    <div className='rounded-lg border border-border/60 bg-card/40 px-4 py-4'>
       <div className='space-y-4'>
         <IntegrationSelector
           integrations={integrations}
@@ -62,6 +62,6 @@ export function ProductListingsStartPanel(): React.JSX.Element {
           </Button>
         </div>
       </div>
-    </SectionPanel>
+    </div>
   );
 }

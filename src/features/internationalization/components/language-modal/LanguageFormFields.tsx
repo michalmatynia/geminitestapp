@@ -1,39 +1,20 @@
 import React from 'react';
 
-import type { Country } from '@/features/internationalization/types';
 import { Input, Label, Checkbox } from '@/shared/ui';
 
-type LanguageFormFieldsProps = {
-  code: string;
-  onCodeChange: (value: string) => void;
-  name: string;
-  onNameChange: (value: string) => void;
-  nativeName: string;
-  onNativeNameChange: (value: string) => void;
-  countries: Country[];
-  selectedCountryIds: string[];
-  onCountryToggle: (id: string) => void;
-};
+import { useLanguageModalContext } from './LanguageModalContext';
 
-export function LanguageFormFields({
-  code,
-  onCodeChange,
-  name,
-  onNameChange,
-  nativeName,
-  onNativeNameChange,
-  countries,
-  selectedCountryIds,
-  onCountryToggle,
-}: LanguageFormFieldsProps): React.JSX.Element {
+export function LanguageFormFields(): React.JSX.Element {
+  const { form, setForm, countries, selectedCountryIds, toggleCountry } = useLanguageModalContext();
+
   return (
     <div className='space-y-4'>
       <div className='space-y-2'>
         <Label htmlFor='lang-code'>Code</Label>
         <Input
           id='lang-code'
-          value={code}
-          onChange={(e) => onCodeChange(e.target.value.toUpperCase())}
+          value={form.code}
+          onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value.toUpperCase() }))}
           placeholder='e.g. EN'
         />
       </div>
@@ -41,8 +22,8 @@ export function LanguageFormFields({
         <Label htmlFor='lang-name'>Name</Label>
         <Input
           id='lang-name'
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
+          value={form.name}
+          onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
           placeholder='e.g. English'
         />
       </div>
@@ -50,8 +31,8 @@ export function LanguageFormFields({
         <Label htmlFor='lang-native'>Native Name</Label>
         <Input
           id='lang-native'
-          value={nativeName}
-          onChange={(e) => onNativeNameChange(e.target.value)}
+          value={form.nativeName}
+          onChange={(e) => setForm((prev) => ({ ...prev, nativeName: e.target.value }))}
           placeholder='e.g. English'
         />
       </div>
@@ -65,7 +46,7 @@ export function LanguageFormFields({
             >
               <Checkbox
                 checked={selectedCountryIds.includes(country.id)}
-                onCheckedChange={() => onCountryToggle(country.id)}
+                onCheckedChange={() => toggleCountry(country.id)}
               />
               <span className='text-xs text-gray-200'>
                 {country.name} ({country.code})

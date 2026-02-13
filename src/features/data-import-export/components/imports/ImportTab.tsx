@@ -9,7 +9,7 @@ import type {
   InventoryOption,
   Template,
 } from '@/features/data-import-export/types/imports';
-import { Button, Input, Label, Checkbox, Pagination, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, Pagination, UnifiedSelect } from '@/shared/ui';
 
 export function ImportTab(): React.JSX.Element {
   const {
@@ -60,7 +60,7 @@ export function ImportTab(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <SectionPanel variant='subtle' className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='flex items-center justify-between'>
           <div>
             <h2 className='text-lg font-semibold text-white'>Base.com</h2>
@@ -221,9 +221,9 @@ export function ImportTab(): React.JSX.Element {
             </Button>
           </div>
         </div>
-      </SectionPanel>
+      </>
 
-      <SectionPanel variant='subtle' className='p-4'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div>
             <h3 className='text-sm font-semibold text-white'>
@@ -316,8 +316,8 @@ export function ImportTab(): React.JSX.Element {
         ) : null}
 
         {importList.length > 0 ? (
-          <SectionPanel variant='subtle-compact' className='mt-3 max-h-96 overflow-auto p-0'>
-            <div className='grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-border px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-card z-10'>
+          <div className='mt-3 max-h-96 overflow-auto rounded-md border border-border/60 bg-card/20 p-0'>
+            <div className='grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-border/60 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-card z-10'>
               <span className='flex items-center'>
                 <Checkbox
                   aria-label='Select all visible products'
@@ -441,7 +441,7 @@ export function ImportTab(): React.JSX.Element {
                 </span>
               </div>
             ))}
-          </SectionPanel>
+          </>
         ) : (
           <p className='mt-3 text-xs text-gray-500'>
             {importList.length > 0
@@ -449,10 +449,10 @@ export function ImportTab(): React.JSX.Element {
               : 'No items loaded yet.'}
           </p>
         )}
-      </SectionPanel>
+      </>
 
       {lastResult ? (
-        <SectionPanel variant='subtle' className='p-4'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <h3 className='text-sm font-semibold text-white'>
             Last import summary
           </h3>
@@ -474,7 +474,7 @@ export function ImportTab(): React.JSX.Element {
               ))}
             </div>
           ) : null}
-        </SectionPanel>
+        </>
       ) : null}
     </div>
   );

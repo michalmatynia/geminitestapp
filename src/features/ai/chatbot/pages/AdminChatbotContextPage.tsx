@@ -8,7 +8,7 @@ import React, { Suspense, useEffect, useRef, useState } from 'react';
 
 import type { ChatbotContextSegmentDto } from '@/shared/dtos/chatbot';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, Input, Textarea, FormModal, useToast, Label, Checkbox, SectionHeader, SectionPanel, Tag, FileUploadTrigger, type FileUploadHelpers, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, FormField } from '@/shared/ui';
+import { Button, Input, Textarea, FormModal, useToast, Label, Checkbox, SectionHeader,  Tag, FileUploadTrigger, type FileUploadHelpers, Table, TableHeader, TableRow, TableHead, TableBody, TableCell, FormField } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
 
@@ -305,7 +305,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         )}
         className='mb-6'
       />
-      <SectionPanel className='p-6'>
+      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <SectionHeader
           title='Global Contexts'
           size='md'
@@ -488,7 +488,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
             {saving ? 'Saving...' : 'Save'}
           </Button>
         </div>
-      </SectionPanel>
+      </div>
       {isModalOpen && modalDraft ? (
         <FormModal
           open={isModalOpen}

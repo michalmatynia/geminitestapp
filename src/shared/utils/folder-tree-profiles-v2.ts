@@ -13,6 +13,7 @@ export const folderTreeInstanceValues = [
   'image_studio',
   'product_categories',
   'cms_page_builder',
+  'case_resolver',
 ] as const;
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
@@ -479,6 +480,69 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  case_resolver: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop case',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'FileText',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {
+        case_file: 'FileText',
+        node_file: 'FileCode2',
+        asset_image: 'FileImage',
+        asset_pdf: 'FileText',
+        asset_file: 'FileText',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['case_file', 'node_file', 'asset_image', 'asset_pdf', 'asset_file'],
+          targetType: 'folder',
+          targetKinds: ['*'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['folder'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+        {
+          childType: 'file',
+          childKinds: ['case_file', 'node_file', 'asset_image', 'asset_pdf', 'asset_file'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 };
 
 export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map => ({
@@ -486,6 +550,7 @@ export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map => 
   image_studio: cloneProfileV2(defaultFolderTreeProfilesV2.image_studio),
   product_categories: cloneProfileV2(defaultFolderTreeProfilesV2.product_categories),
   cms_page_builder: cloneProfileV2(defaultFolderTreeProfilesV2.cms_page_builder),
+  case_resolver: cloneProfileV2(defaultFolderTreeProfilesV2.case_resolver),
 });
 
 const normalizeByKindIcons = (
@@ -577,6 +642,10 @@ export const parseFolderTreeProfilesV2 = (
     cms_page_builder: coerceProfileV2(
       candidate.cms_page_builder,
       defaultFolderTreeProfilesV2.cms_page_builder
+    ),
+    case_resolver: coerceProfileV2(
+      candidate.case_resolver,
+      defaultFolderTreeProfilesV2.case_resolver
     ),
   };
 };

@@ -1,6 +1,7 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
+
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 
 describe('FilterPanel', () => {
@@ -19,7 +20,7 @@ describe('FilterPanel', () => {
   });
 
   it('renders search input', () => {
-    render(<FilterPanel {...defaultProps} searchPlaceholder="Find items..." />);
+    render(<FilterPanel {...defaultProps} searchPlaceholder='Find items...' />);
     expect(screen.getByPlaceholderText('Find items...')).toBeInTheDocument();
   });
 
@@ -57,7 +58,7 @@ describe('FilterPanel', () => {
   });
 
   it('uses custom header title', () => {
-    render(<FilterPanel {...defaultProps} headerTitle="Advanced Filters" />);
+    render(<FilterPanel {...defaultProps} headerTitle='Advanced Filters' />);
     expect(screen.getByText('Advanced Filters')).toBeInTheDocument();
   });
 });

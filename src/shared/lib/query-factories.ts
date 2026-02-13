@@ -101,12 +101,12 @@ export function createCreateMutation<T, TInput>(config: CreateCreateMutationConf
       (_data: T, _variables: TInput) => {
         if (config.invalidateKeys) {
           config.invalidateKeys.forEach((key) => {
-            void queryClient.invalidateQueries({ queryKey: key as any });
+            void queryClient.invalidateQueries({ queryKey: key as unknown as readonly unknown[] });
           });
         }
       },
-      config.options?.onSuccess as any,
-    ) as any,
+      config.options?.onSuccess as ((data: T, variables: TInput, context: unknown) => unknown) | undefined,
+    ) as (data: T, variables: TInput, context: unknown) => void,
   });
 }
 
@@ -120,12 +120,12 @@ export function createUpdateMutation<T, TInput>(config: CreateUpdateMutationConf
       (_data: T, _variables: TInput) => {
         if (config.invalidateKeys) {
           config.invalidateKeys.forEach((key) => {
-            void queryClient.invalidateQueries({ queryKey: key as any });
+            void queryClient.invalidateQueries({ queryKey: key as unknown as readonly unknown[] });
           });
         }
       },
-      config.options?.onSuccess as any,
-    ) as any,
+      config.options?.onSuccess as ((data: T, variables: TInput, context: unknown) => unknown) | undefined,
+    ) as (data: T, variables: TInput, context: unknown) => void,
   });
 }
 
@@ -139,12 +139,12 @@ export function createDeleteMutation(config: CreateDeleteMutationConfig): Delete
       () => {
         if (config.invalidateKeys) {
           config.invalidateKeys.forEach((key) => {
-            void queryClient.invalidateQueries({ queryKey: key as any });
+            void queryClient.invalidateQueries({ queryKey: key as unknown as readonly unknown[] });
           });
         }
       },
-      config.options?.onSuccess as any,
-    ) as any,
+      config.options?.onSuccess as ((data: void, variables: string, context: unknown) => unknown) | undefined,
+    ) as (data: void, variables: string, context: unknown) => void,
   });
 }
 
@@ -158,11 +158,11 @@ export function createSaveMutation<T, TInput>(config: CreateSaveMutationConfig<T
       (_data: T, _variables: TInput) => {
         if (config.invalidateKeys) {
           config.invalidateKeys.forEach((key) => {
-            void queryClient.invalidateQueries({ queryKey: key as any });
+            void queryClient.invalidateQueries({ queryKey: key as unknown as readonly unknown[] });
           });
         }
       },
-      config.options?.onSuccess as any,
-    ) as any,
+      config.options?.onSuccess as ((data: T, variables: TInput, context: unknown) => unknown) | undefined,
+    ) as (data: T, variables: TInput, context: unknown) => void,
   });
 }

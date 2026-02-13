@@ -81,13 +81,13 @@ export function NotesFilters(): React.JSX.Element {
     [searchQuery, filterTagIds, sortBy, searchScope]
   );
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     switch (key) {
       case 'search':
-        setSearchQuery(value || '');
+        setSearchQuery(typeof value === 'string' ? value : '');
         break;
       case 'tags':
-        setFilterTagIds(Array.isArray(value) ? value : []);
+        setFilterTagIds(Array.isArray(value) ? (value as string[]) : []);
         break;
       case 'sortBy':
         updateSettings({ sortBy: value as 'created' | 'updated' | 'name' });

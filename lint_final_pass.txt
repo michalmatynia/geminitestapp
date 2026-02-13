@@ -1,0 +1,142 @@
+
+> libapp2@0.1.0 lint
+> eslint src __tests__
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/cms/components/page-builder/SectionPicker.refactored.test.tsx
+  26:34  warning  'zone' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/panels/PanelHeader.test.tsx
+  1:26  warning  'fireEvent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/shared/ui/templates/panels/PanelPagination.test.tsx
+  1:26  warning  'fireEvent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/case-resolver/components/CaseResolverFileViewer.tsx
+  109:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/listings/hooks/useBaseComSettings.ts
+  104:5   error  Unsafe assignment of type `any[]` to a variable of type `{ id: string; createdAt: string; updatedAt: string | null; name: string; mappings: { sourceKey: string; targetField: string; }[]; description?: string | null | undefined; exportImagesAsBase64?: boolean | undefined; }[]`  @typescript-eslint/no-unsafe-assignment
+  104:29  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/context/CategoryMapperPageContext.tsx
+  69:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  70:5   error  Unsafe return of a value of type `any[]`  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useProductMetadataQueries.ts
+  23:1  error  There should be no empty line within import group  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts
+  237:3   error  Unsafe assignment of an `any` value               @typescript-eslint/no-unsafe-assignment
+  237:47  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  237:52  error  Unsafe member access .catalogs on an `any` value  @typescript-eslint/no-unsafe-member-access
+  245:41  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  246:45  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/hierarchy-master-tree.ts
+  117:15  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  124:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  124:40  error  Unsafe member access .paramPath on an `any` value                       @typescript-eslint/no-unsafe-member-access
+  124:65  error  Unsafe call of an `any` typed value                                     @typescript-eslint/no-unsafe-call
+  124:75  error  Unsafe member access .paramPath on an `any` value                       @typescript-eslint/no-unsafe-member-access
+  126:24  error  Unsafe member access .comparator on an `any` value                      @typescript-eslint/no-unsafe-member-access
+  127:39  error  Unsafe argument of type `any` assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  127:49  error  Unsafe member access .comparator on an `any` value                      @typescript-eslint/no-unsafe-member-access
+  128:22  error  Unsafe member access .comparator on an `any` value                      @typescript-eslint/no-unsafe-member-access
+  132:24  error  Unsafe member access .joinWithPrevious on an `any` value                @typescript-eslint/no-unsafe-member-access
+  133:33  error  Unsafe argument of type `any` assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  133:43  error  Unsafe member access .joinWithPrevious on an `any` value                @typescript-eslint/no-unsafe-member-access
+  134:22  error  Unsafe member access .joinWithPrevious on an `any` value                @typescript-eslint/no-unsafe-member-access
+  139:7   error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  140:26  error  Unsafe member access .id on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  140:45  error  Unsafe call of an `any` typed value                                     @typescript-eslint/no-unsafe-call
+  140:55  error  Unsafe member access .id on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  141:23  error  Unsafe member access .id on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  143:7   error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  145:24  error  Unsafe member access .value on an `any` value                           @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx
+  4021:85  error  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  4028:74  error  Unsafe spread of an `any` value in an array  @typescript-eslint/no-unsafe-assignment
+  4028:93  error  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  4051:85  error  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+  4058:76  error  Unsafe spread of an `any` value in an array  @typescript-eslint/no-unsafe-assignment
+  4058:95  error  Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/hooks/useFormState.ts
+   10:60  error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+   42:53  error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+   50:55  error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+   51:37  error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+   59:33  error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+   79:55  error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+  100:56  error  Unexpected any. Specify a different type                                 @typescript-eslint/no-explicit-any
+  101:35  error  Unsafe assignment of an `any` value                                      @typescript-eslint/no-unsafe-assignment
+  162:52  error  Unsafe return of type `any` from function with return type `T[keyof T]`  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/types/modal-props.ts
+  152:58   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:63   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:107  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:60   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:65   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:100  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/templates/FilterPanel.tsx
+  20:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/templates/SettingsPanelBuilder.tsx
+    9:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   39:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   76:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   77:16  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  106:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/templates/panels/PanelFilters.tsx
+   23:26  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   26:40  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  108:26  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  134:10  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  135:21  error  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  151:26  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  157:34  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  171:22  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  187:20  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  200:20  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  215:22  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  215:29  error  Unsafe member access .from on an `any` value  @typescript-eslint/no-unsafe-member-access
+  227:22  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+  227:29  error  Unsafe member access .to on an `any` value    @typescript-eslint/no-unsafe-member-access
+  248:20  error  Unsafe assignment of an `any` value           @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/templates/panels/types.ts
+   13:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   58:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   65:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  112:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  154:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/templates/panels/usePanelState.ts
+  57:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:11  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  71:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/templates/pickers/types.ts
+   29:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 99 problems (95 errors, 4 warnings)
+

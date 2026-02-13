@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Play } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
@@ -15,7 +15,6 @@ import {
   UnifiedButton,
   Switch,
   UnifiedSelect,
-  vectorShapeToPathWithBounds,
   useToast,
 } from '@/shared/ui';
 
@@ -29,6 +28,80 @@ import { useUiActions, useUiState } from '../context/UiContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
+type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
+
+const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
+
+const normalizeShapeToPolygons = (
+  shape: {
+    type: string;
+    points: Array<{ x: number; y: number }>;
+    closed: boolean;
+  }
+): Array<Array<{ x: number; y: number }>> => {
+  if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
+    if (!shape.closed || shape.points.length < 3) return [];
+    return [shape.points.map((point) => ({ x: clamp01(point.x), y: clamp01(point.y) }))];
+  }
+
+  if (shape.type === 'rect') {
+    if (shape.points.length < 2) return [];
+    const xs = shape.points.map((point) => point.x);
+    const ys = shape.points.map((point) => point.y);
+    const minX = clamp01(Math.min(...xs));
+    const maxX = clamp01(Math.max(...xs));
+    const minY = clamp01(Math.min(...ys));
+    const maxY = clamp01(Math.max(...ys));
+    if (maxX <= minX || maxY <= minY) return [];
+    return [[
+      { x: minX, y: minY },
+      { x: maxX, y: minY },
+      { x: maxX, y: maxY },
+      { x: minX, y: maxY },
+    ]];
+  }
+
+  if (shape.type === 'ellipse') {
+    if (shape.points.length < 2) return [];
+    const xs = shape.points.map((point) => point.x);
+    const ys = shape.points.map((point) => point.y);
+    const minX = clamp01(Math.min(...xs));
+    const maxX = clamp01(Math.max(...xs));
+    const minY = clamp01(Math.min(...ys));
+    const maxY = clamp01(Math.max(...ys));
+    if (maxX <= minX || maxY <= minY) return [];
+
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const rx = (maxX - minX) / 2;
+    const ry = (maxY - minY) / 2;
+    const steps = 24;
+    const polygon = Array.from({ length: steps }, (_, index) => {
+      const theta = (index / steps) * Math.PI * 2;
+      return {
+        x: clamp01(cx + rx * Math.cos(theta)),
+        y: clamp01(cy + ry * Math.sin(theta)),
+      };
+    });
+    return [polygon];
+  }
+
+  return [];
+};
+
+const resolveMaskColors = (
+  variant: 'white' | 'black',
+  inverted: boolean
+): { background: '#000000' | '#ffffff'; fill: '#000000' | '#ffffff' } => {
+  const preferWhite = variant === 'white';
+  const background =
+    (preferWhite && !inverted) || (!preferWhite && inverted)
+      ? '#000000'
+      : '#ffffff';
+  const fill = background === '#000000' ? '#ffffff' : '#000000';
+  return { background, fill };
+};
+
 export function GenerationToolbar(): React.JSX.Element {
   const { maskPreviewEnabled } = useUiState();
   const { setMaskPreviewEnabled } = useUiActions();
@@ -39,7 +112,6 @@ export function GenerationToolbar(): React.JSX.Element {
     maskShapes,
     activeMaskId,
     maskInvert,
-    maskFeather,
     maskGenLoading,
     maskGenMode,
   } = useMaskingState();
@@ -51,6 +123,7 @@ export function GenerationToolbar(): React.JSX.Element {
   const { setStudioSettings } = useSettingsActions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [maskAttachMode, setMaskAttachMode] = useState<MaskAttachMode>('client_canvas_polygon');
 
   const eligibleMaskShapes = useMemo(
     () =>
@@ -94,55 +167,40 @@ export function GenerationToolbar(): React.JSX.Element {
       img.src = src;
     });
 
-  const buildMaskSvg = (
-    shapes: typeof exportMaskShapes,
+  const polygonsFromShapes = (shapes: typeof exportMaskShapes): Array<Array<{ x: number; y: number }>> =>
+    shapes.flatMap((shape) => normalizeShapeToPolygons(shape));
+
+  const renderMaskDataUrlFromPolygons = (
+    polygons: Array<Array<{ x: number; y: number }>>,
     width: number,
     height: number,
-    foreground: 'white' | 'black',
+    variant: 'white' | 'black',
     inverted: boolean
   ): string => {
-    const pathData = shapes
-      .map((shape) => vectorShapeToPathWithBounds(shape, width, height))
-      .filter((value): value is string => Boolean(value))
-      .join(' ');
-
-    const preferWhite = foreground === 'white';
-    const isInverted = inverted;
-    const background = (preferWhite && !isInverted) || (!preferWhite && isInverted) ? '#000000' : '#ffffff';
-    const fill = background === '#000000' ? '#ffffff' : '#000000';
-    const featherStdDev = maskFeather > 0 ? Number(((maskFeather / 100) * 8).toFixed(2)) : 0;
-    const filterBlock = featherStdDev > 0
-      ? `<defs><filter id="mask-feather" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="${featherStdDev}" /></filter></defs>`
-      : '';
-    const filterAttr = featherStdDev > 0 ? ' filter="url(#mask-feather)"' : '';
-
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
-${filterBlock}
-<rect x="0" y="0" width="${width}" height="${height}" fill="${background}" />
-<path d="${pathData}" fill="${fill}" fill-rule="nonzero"${filterAttr} />
-</svg>`;
-  };
-
-  const renderMaskDataUrl = async (svgContent: string, width: number, height: number): Promise<string> => {
-    const svgBlob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
-    const svgUrl = URL.createObjectURL(svgBlob);
-
-    try {
-      const image = await loadImageElement(svgUrl);
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const context2d = canvas.getContext('2d');
-      if (!context2d) {
-        throw new Error('Canvas context is unavailable.');
-      }
-      context2d.clearRect(0, 0, width, height);
-      context2d.drawImage(image, 0, 0, width, height);
-      return canvas.toDataURL('image/png');
-    } finally {
-      URL.revokeObjectURL(svgUrl);
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context2d = canvas.getContext('2d');
+    if (!context2d) {
+      throw new Error('Canvas context is unavailable.');
     }
+    const { background, fill } = resolveMaskColors(variant, inverted);
+    context2d.clearRect(0, 0, width, height);
+    context2d.fillStyle = background;
+    context2d.fillRect(0, 0, width, height);
+    context2d.fillStyle = fill;
+    polygons.forEach((polygon) => {
+      if (polygon.length < 3) return;
+      context2d.beginPath();
+      context2d.moveTo(polygon[0]!.x * width, polygon[0]!.y * height);
+      for (let index = 1; index < polygon.length; index += 1) {
+        const point = polygon[index]!;
+        context2d.lineTo(point.x * width, point.y * height);
+      }
+      context2d.closePath();
+      context2d.fill();
+    });
+    return canvas.toDataURL('image/png');
   };
 
   const attachMaskVariantsFromSelection = async (): Promise<void> => {
@@ -156,6 +214,11 @@ ${filterBlock}
       toast('Draw at least one visible shape first.', {
         variant: 'info',
       });
+      return;
+    }
+    const polygons = polygonsFromShapes(shapes);
+    if (polygons.length === 0) {
+      toast('No closed polygon-compatible shapes are available for mask export.', { variant: 'info' });
       return;
     }
 
@@ -184,12 +247,18 @@ ${filterBlock}
         { variant: 'black', inverted: true },
       ];
 
-      const payloadMasks = await Promise.all(
-        variants.map(async ({ variant, inverted }) => {
-          const svgContent = buildMaskSvg(shapes, width, height, variant, inverted);
-          const dataUrl = await renderMaskDataUrl(svgContent, width, height);
-          return { variant, inverted, dataUrl };
-        })
+      const payloadMasks = variants.map(({ variant, inverted }) =>
+        maskAttachMode === 'client_canvas_polygon'
+          ? {
+            variant,
+            inverted,
+            dataUrl: renderMaskDataUrlFromPolygons(polygons, width, height, variant, inverted),
+          }
+          : {
+            variant,
+            inverted,
+            polygons,
+          }
       );
 
       const response = await api.post<{
@@ -198,6 +267,7 @@ ${filterBlock}
           relationType?: string;
         }>;
       }>(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/masks`, {
+        mode: maskAttachMode === 'client_canvas_polygon' ? 'client_data_url' : 'server_polygon',
         masks: payloadMasks,
       });
 
@@ -249,6 +319,13 @@ ${filterBlock}
       { value: 'ai-bbox', label: 'AI Bounding Box' },
       { value: 'threshold', label: 'Threshold' },
       { value: 'edges', label: 'Edge Detection' },
+    ]),
+    []
+  );
+  const maskAttachModeOptions = useMemo(
+    () => ([
+      { value: 'client_canvas_polygon', label: 'Mask: Client Canvas' },
+      { value: 'server_polygon', label: 'Mask: Server Polygon' },
     ]),
     []
   );
@@ -320,6 +397,16 @@ ${filterBlock}
       >
         Attach Masks
       </UnifiedButton>
+      <UnifiedSelect
+        className='w-[185px]'
+        value={maskAttachMode}
+        onValueChange={(value: string) => {
+          setMaskAttachMode(value as MaskAttachMode);
+        }}
+        options={maskAttachModeOptions}
+        triggerClassName='h-8 text-xs'
+        ariaLabel='Mask attach mode'
+      />
       <UnifiedButton
         type='button'
         variant='outline'

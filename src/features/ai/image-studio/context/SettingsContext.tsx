@@ -82,7 +82,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       key: IMAGE_STUDIO_SETTINGS_KEY,
       value: serializeSetting(studioSettings),
     });
-    if (!options?.silent) {
+    if (options?.silent === false) {
       toast('Settings saved.', { variant: 'success' });
     }
   }, [studioSettings, updateSetting, toast]);

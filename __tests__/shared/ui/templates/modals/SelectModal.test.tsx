@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+
 import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
 
 describe('SelectModal', () => {
@@ -80,7 +81,7 @@ describe('SelectModal', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText('Search options..') as HTMLInputElement;
+    const searchInput = screen.getByPlaceholderText('Search options..');
     fireEvent.change(searchInput, { target: { value: 'First' } });
 
     expect(screen.getByText('Option 1')).toBeInTheDocument();

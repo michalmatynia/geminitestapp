@@ -80,23 +80,16 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
       )}
 
       {/* Main Filters */}
-      {(() => {
-        const panelFiltersProps: PanelFiltersProps = {
-          filters,
-          values,
-          search,
-          searchPlaceholder,
-          onFilterChange,
-          compact,
-        };
-        if (onSearchChange) {
-          panelFiltersProps.onSearchChange = onSearchChange;
-        }
-        if (onReset) {
-          panelFiltersProps.onReset = onReset;
-        }
-        return <PanelFilters {...panelFiltersProps} />;
-      })()}
+      <PanelFilters
+        filters={filters}
+        values={values}
+        search={search}
+        searchPlaceholder={searchPlaceholder}
+        onFilterChange={onFilterChange}
+        {...(onSearchChange !== undefined ? { onSearchChange } : {})}
+        {...(onReset !== undefined ? { onReset } : {})}
+        compact={compact}
+      />
 
       {/* Presets (if provided) */}
       {presets.length > 0 && (

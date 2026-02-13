@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Camera, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Camera, Eye, EyeOff, Loader2, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -98,12 +98,27 @@ const buildTimestampSearchText = (value: string | null): string => {
   return `${value} ${parsed.toISOString()} ${parsed.toLocaleDateString()} ${parsed.toLocaleTimeString()} ${parsed.toLocaleString()}`.toLowerCase();
 };
 
+const normalizeImagePath = (value: string | null | undefined): string => {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.pathname.replace(/\\/g, '/');
+    } catch {
+      return trimmed.replace(/\\/g, '/');
+    }
+  }
+  return trimmed.split('?')[0]?.replace(/\\/g, '/') ?? '';
+};
+
 export function CenterPreview(): React.JSX.Element {
   const { isFocusMode, maskPreviewEnabled } = useUiState();
   const { toggleFocusMode } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot, previewMode, captureRef, slots } = useSlotsState();
-  const { setPreviewMode, setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
+  const { setPreviewMode, setSelectedSlotId, setWorkingSlotId, deleteSlotMutation } = useSlotsActions();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -130,6 +145,7 @@ export function CenterPreview(): React.JSX.Element {
   const [variantTimestampQuery, setVariantTimestampQuery] = useState('');
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
+  const [dismissedVariantIds, setDismissedVariantIds] = useState<Set<string>>(new Set());
   const [variantTooltip, setVariantTooltip] = useState<{
     variant: VariantThumbnailInfo;
     x: number;
@@ -271,6 +287,10 @@ export function CenterPreview(): React.JSX.Element {
     setSplitVariantView(false);
   }, [canCompareWithSource]);
 
+  useEffect(() => {
+    setDismissedVariantIds(new Set());
+  }, [activeRunId]);
+
   const variantThumbnails = useMemo((): VariantThumbnailInfo[] => {
     return landingSlots.map((landingSlot): VariantThumbnailInfo => {
       const output = landingSlot.output ?? null;
@@ -292,11 +312,37 @@ export function CenterPreview(): React.JSX.Element {
         };
       }
 
-      const matchingSlots = slots.filter((slot) => slot.imageFileId === output.id);
+      const normalizedOutputPath = normalizeImagePath(output.filepath);
+      const matchingSlots = slots.filter((slot) => {
+        const metadata = asObjectRecord(slot.metadata);
+        const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
+        const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
+          ? metadata['generationOutputIndex']
+          : null;
+
+        if (activeRunId && runId === activeRunId && outputIndex === landingSlot.index) {
+          return true;
+        }
+        if (slot.imageFileId === output.id) {
+          return true;
+        }
+        if (normalizedOutputPath) {
+          if (normalizeImagePath(slot.imageFile?.filepath) === normalizedOutputPath) {
+            return true;
+          }
+          if (normalizeImagePath(slot.imageUrl) === normalizedOutputPath) {
+            return true;
+          }
+        }
+        return false;
+      });
       const matchedSlot = matchingSlots.find((slot) => {
         const metadata = asObjectRecord(slot.metadata);
         const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
-        return Boolean(activeRunId && runId === activeRunId);
+        const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
+          ? metadata['generationOutputIndex']
+          : null;
+        return Boolean(activeRunId && runId === activeRunId && outputIndex === landingSlot.index);
       }) ?? matchingSlots[0] ?? null;
       const imageSrc =
         getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ||
@@ -365,13 +411,18 @@ export function CenterPreview(): React.JSX.Element {
     });
   }, [activeRunId, landingSlots, productImagesExternalBaseUrl, slots]);
 
+  const visibleVariantThumbnails = useMemo(
+    () => variantThumbnails.filter((variant) => !dismissedVariantIds.has(variant.id)),
+    [dismissedVariantIds, variantThumbnails]
+  );
+
   const normalizedVariantTimestampQuery = variantTimestampQuery.trim().toLowerCase();
   const filteredVariantThumbnails = useMemo((): VariantThumbnailInfo[] => {
-    if (!normalizedVariantTimestampQuery) return variantThumbnails;
-    return variantThumbnails.filter((variant) =>
+    if (!normalizedVariantTimestampQuery) return visibleVariantThumbnails;
+    return visibleVariantThumbnails.filter((variant) =>
       variant.timestampSearchText.includes(normalizedVariantTimestampQuery)
     );
-  }, [normalizedVariantTimestampQuery, variantThumbnails]);
+  }, [normalizedVariantTimestampQuery, visibleVariantThumbnails]);
 
   const variantTooltipPosition = useMemo(() => {
     if (!variantTooltip || typeof window === 'undefined') return null;
@@ -389,17 +440,56 @@ export function CenterPreview(): React.JSX.Element {
     return { left, top };
   }, [variantTooltip]);
 
-  const handleLoadVariantToCanvas = useCallback((slotId: string | null): void => {
-    if (!slotId) {
+  const handleLoadVariantToCanvas = useCallback((variant: VariantThumbnailInfo): void => {
+    const resolveFallbackSlotId = (): string | null => {
+      if (variant.slotId && slots.some((slot) => slot.id === variant.slotId)) {
+        return variant.slotId;
+      }
+
+      const matchedByRunMetadata = slots.find((slot) => {
+        const metadata = asObjectRecord(slot.metadata);
+        const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
+        const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
+          ? metadata['generationOutputIndex']
+          : null;
+        return Boolean(activeRunId && runId === activeRunId && outputIndex === variant.index);
+      });
+      if (matchedByRunMetadata) {
+        return matchedByRunMetadata.id;
+      }
+
+      const output = variant.output;
+      if (!output) return null;
+
+      const matchedByFileId = slots.find((slot) => slot.imageFileId === output.id);
+      if (matchedByFileId) {
+        return matchedByFileId.id;
+      }
+
+      const outputPath = normalizeImagePath(output.filepath);
+      if (!outputPath) return null;
+
+      const matchedByPath = slots.find((slot) => {
+        const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
+        if (imageFilePath && imageFilePath === outputPath) return true;
+        const imageUrlPath = normalizeImagePath(slot.imageUrl);
+        return Boolean(imageUrlPath && imageUrlPath === outputPath);
+      });
+      return matchedByPath?.id ?? null;
+    };
+
+    const resolvedSlotId = resolveFallbackSlotId();
+    if (!resolvedSlotId) {
+      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
       toast('Variant is still syncing to card slots. Try again in a second.', { variant: 'info' });
       return;
     }
     setSingleVariantView('variant');
     setSplitVariantView(false);
-    setSelectedSlotId(slotId);
-    setWorkingSlotId(slotId);
+    setSelectedSlotId(resolvedSlotId);
+    setWorkingSlotId(resolvedSlotId);
     setPreviewMode('image');
-  }, [setPreviewMode, setSelectedSlotId, setWorkingSlotId, toast]);
+  }, [activeRunId, projectId, queryClient, setPreviewMode, setSelectedSlotId, setWorkingSlotId, slots, toast]);
 
   const handleToggleSourceVariantView = useCallback((): void => {
     setSplitVariantView(false);
@@ -425,6 +515,33 @@ export function CenterPreview(): React.JSX.Element {
       y: event.clientY,
     });
   }, []);
+
+  const handleDeleteVariant = useCallback((variant: VariantThumbnailInfo): void => {
+    if (!variant.slotId) {
+      toast('Variant is not attached to a card yet.', { variant: 'info' });
+      return;
+    }
+
+    const variantLabel = variant.output?.filename?.trim() || `Variant ${variant.index}`;
+    if (typeof window !== 'undefined') {
+      const confirmed = window.confirm(`Delete variant "${variantLabel}"?`);
+      if (!confirmed) return;
+    }
+
+    void deleteSlotMutation.mutateAsync(variant.slotId).then(() => {
+      if (workingSlot?.id === variant.slotId) {
+        setWorkingSlotId(null);
+      }
+      setDismissedVariantIds((current) => {
+        const next = new Set(current);
+        next.add(variant.id);
+        return next;
+      });
+      setVariantTooltip((current) => (current?.variant.id === variant.id ? null : current));
+    }).catch((error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
+    });
+  }, [deleteSlotMutation, setWorkingSlotId, toast, workingSlot?.id]);
 
   const handleSaveScreenshot = useCallback(async (): Promise<void> => {
     if (!workingSlot?.id) {
@@ -624,54 +741,69 @@ export function CenterPreview(): React.JSX.Element {
                 aria-label='Search generated variants by timestamp'
               />
               <span className='shrink-0 text-[11px] text-gray-400'>
-                {filteredVariantThumbnails.length}/{variantThumbnails.length}
+                {filteredVariantThumbnails.length}/{visibleVariantThumbnails.length}
               </span>
             </div>
             <div className='overflow-x-auto overflow-y-hidden pb-1 pr-1'>
               {filteredVariantThumbnails.length > 0 ? (
                 <div className='flex w-max min-w-full gap-2'>
                   {filteredVariantThumbnails.map((variant) => (
-                    <button
-                      key={variant.id}
-                      type='button'
-                      onClick={(): void => handleLoadVariantToCanvas(variant.slotId)}
-                      onMouseEnter={(event): void => handleVariantTooltipMove(event, variant)}
-                      onMouseMove={(event): void => handleVariantTooltipMove(event, variant)}
-                      onMouseLeave={(): void => setVariantTooltip(null)}
-                      onBlur={(): void => setVariantTooltip(null)}
-                      disabled={!variant.output}
-                      className={`group relative w-28 shrink-0 overflow-hidden rounded border p-1 text-left transition ${
-                        variant.status === 'completed'
-                          ? 'border-emerald-400/40 bg-emerald-500/5'
-                          : variant.status === 'failed'
-                            ? 'border-red-400/40 bg-red-500/5'
-                            : 'border-border/60 bg-card/30'
-                      }`}
-                    >
-                      <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
-                      {variant.output ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={variant.imageSrc || variant.output.filepath}
-                          alt={variant.output.filename || `Generated ${variant.index}`}
-                          className='h-20 w-full rounded object-cover'
-                        />
-                      ) : (
-                        <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
-                          {variant.status === 'pending' ? (
-                            <span className='inline-flex items-center gap-1'>
-                              {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
-                              Waiting
-                            </span>
-                          ) : (
-                            <span>Failed</span>
-                          )}
-                        </div>
-                      )}
-                    </button>
+                    <div key={variant.id} className='relative w-28 shrink-0'>
+                      <button
+                        type='button'
+                        onClick={(): void => handleLoadVariantToCanvas(variant)}
+                        onMouseEnter={(event): void => handleVariantTooltipMove(event, variant)}
+                        onMouseMove={(event): void => handleVariantTooltipMove(event, variant)}
+                        onMouseLeave={(): void => setVariantTooltip(null)}
+                        onBlur={(): void => setVariantTooltip(null)}
+                        disabled={!variant.output}
+                        className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${
+                          variant.status === 'completed'
+                            ? 'border-emerald-400/40 bg-emerald-500/5'
+                            : variant.status === 'failed'
+                              ? 'border-red-400/40 bg-red-500/5'
+                              : 'border-border/60 bg-card/30'
+                        }`}
+                      >
+                        <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
+                        {variant.output ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={variant.imageSrc || variant.output.filepath}
+                            alt={variant.output.filename || `Generated ${variant.index}`}
+                            className='h-20 w-full rounded object-cover'
+                          />
+                        ) : (
+                          <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
+                            {variant.status === 'pending' ? (
+                              <span className='inline-flex items-center gap-1'>
+                                {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
+                                Waiting
+                              </span>
+                            ) : (
+                              <span>Failed</span>
+                            )}
+                          </div>
+                        )}
+                      </button>
+                      {variant.output && variant.slotId ? (
+                        <UnifiedButton
+                          type='button'
+                          size='icon'
+                          variant='ghost'
+                          onClick={(): void => handleDeleteVariant(variant)}
+                          disabled={deleteSlotMutation.isPending}
+                          aria-label={`Delete variant ${variant.index}`}
+                          title='Delete variant'
+                          className='absolute right-1 top-1 z-10 size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
+                        >
+                          <Trash2 className='size-3.5' />
+                        </UnifiedButton>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
-              ) : variantThumbnails.length > 0 ? (
+              ) : visibleVariantThumbnails.length > 0 ? (
                 <div className='px-2 py-3 text-xs text-gray-500'>
                   No variants match this timestamp search.
                 </div>

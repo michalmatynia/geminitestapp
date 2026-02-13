@@ -35,14 +35,14 @@ export default function FileManager({
 }: FileManagerProps): React.JSX.Element {
   return (
     <FileManagerProvider
-      onSelectFile={onSelectFile}
-      mode={mode}
-      selectionMode={selectionMode}
-      autoConfirmSelection={autoConfirmSelection}
-      showFolderFilter={showFolderFilter}
-      defaultFolder={defaultFolder}
-      showBulkActions={showBulkActions}
-      showTagSearch={showTagSearch}
+      {...(onSelectFile !== undefined ? { onSelectFile } : {})}
+      {...(mode !== undefined ? { mode } : {})}
+      {...(selectionMode !== undefined ? { selectionMode } : {})}
+      {...(autoConfirmSelection !== undefined ? { autoConfirmSelection } : {})}
+      {...(showFolderFilter !== undefined ? { showFolderFilter } : {})}
+      {...(defaultFolder !== undefined ? { defaultFolder } : {})}
+      {...(showBulkActions !== undefined ? { showBulkActions } : {})}
+      {...(showTagSearch !== undefined ? { showTagSearch } : {})}
     >
       <div className='p-4 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-800'>
         <FileManagerHeader />

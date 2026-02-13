@@ -42,23 +42,23 @@ export function FileUploadEventsFilters(): React.JSX.Element {
     status, category, projectId, fromDate, toDate
   }), [status, category, projectId, fromDate, toDate]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     setPage(1);
     switch (key) {
       case 'status':
-        setStatus(value || 'all');
+        setStatus(value === 'error' || value === 'success' || value === 'all' ? value : 'all');
         break;
       case 'category':
-        setCategory(value || '');
+        setCategory(typeof value === 'string' ? value : '');
         break;
       case 'projectId':
-        setProjectId(value || '');
+        setProjectId(typeof value === 'string' ? value : '');
         break;
       case 'fromDate':
-        setFromDate(value || '');
+        setFromDate(typeof value === 'string' ? value : '');
         break;
       case 'toDate':
-        setToDate(value || '');
+        setToDate(typeof value === 'string' ? value : '');
         break;
     }
   };

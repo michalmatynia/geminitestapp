@@ -67,52 +67,46 @@ const MIN_TOOLS: ToolOption[] = [
   { key: 'polygon', label: 'Pen', icon: <Pentagon className='size-4' /> },
 ];
 
-export function VectorDrawingToolbar(props: VectorDrawingToolbarProps): React.JSX.Element {
+export function VectorDrawingToolbar({
+  tool: propTool,
+  onSelectTool: propOnSelectTool,
+  onUndo: propOnUndo,
+  onRedo: propOnRedo,
+  onClose: propOnClose,
+  onDetach: propOnDetach,
+  onClear: propOnClear,
+  onSmooth: propOnSmooth,
+  onSimplify: propOnSimplify,
+  disableUndo: propDisableUndo,
+  disableRedo: propDisableRedo,
+  disableClose: propDisableClose,
+  disableDetach: propDisableDetach,
+  disableClear: propDisableClear,
+  disableSmooth: propDisableSmooth,
+  disableSimplify: propDisableSimplify,
+  className,
+  variant = 'full',
+}: VectorDrawingToolbarProps): React.JSX.Element {
   const context = useOptionalVectorDrawing();
-  const contextValues: Partial<VectorDrawingToolbarProps> = context
-    ? {
-      tool: context.tool,
-      onSelectTool: context.setTool,
-      onSmooth: context.onSmooth,
-      onSimplify: context.onSimplify,
-      onUndo: context.onUndo,
-      onRedo: context.onRedo,
-      onClear: context.onClear,
-      onClose: context.onCloseShape,
-      onDetach: context.onDetach,
-      disableUndo: context.disableUndo,
-      disableRedo: context.disableRedo,
-      disableClear: context.disableClear,
-      disableClose: context.disableClose,
-      disableDetach: context.disableDetach,
-      disableSmooth: context.disableSmooth,
-      disableSimplify: context.disableSimplify,
-    }
-    : {};
 
-  const merged = { ...contextValues, ...props };
-  const {
-    tool,
-    onSelectTool,
-    onUndo,
-    onRedo,
-    onClose,
-    onDetach,
-    onClear,
-    onSmooth,
-    onSimplify,
-    disableUndo,
-    disableRedo,
-    disableClose,
-    disableDetach,
-    disableClear,
-    disableSmooth,
-    disableSimplify,
-    className,
-    variant = 'full',
-  } = merged;
+  const tool = propTool ?? context?.tool;
+  const onSelectTool = propOnSelectTool ?? context?.setTool;
+  const onSmooth = propOnSmooth ?? context?.onSmooth;
+  const onSimplify = propOnSimplify ?? context?.onSimplify;
+  const onUndo = propOnUndo ?? context?.onUndo;
+  const onRedo = propOnRedo ?? context?.onRedo;
+  const onClear = propOnClear ?? context?.onClear;
+  const onClose = propOnClose ?? context?.onCloseShape;
+  const onDetach = propOnDetach ?? context?.onDetach;
+  const disableUndo = propDisableUndo ?? context?.disableUndo;
+  const disableRedo = propDisableRedo ?? context?.disableRedo;
+  const disableClear = propDisableClear ?? context?.disableClear;
+  const disableClose = propDisableClose ?? context?.disableClose;
+  const disableDetach = propDisableDetach ?? context?.disableDetach;
+  const disableSmooth = propDisableSmooth ?? context?.disableSmooth;
+  const disableSimplify = propDisableSimplify ?? context?.disableSimplify;
 
-  if (!tool || !onSelectTool) {
+  if (tool === undefined || !onSelectTool) {
     return <div />;
   }
 

@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+
 import { useFormState } from '@/shared/hooks/useFormState';
 
 describe('useFormState', () => {

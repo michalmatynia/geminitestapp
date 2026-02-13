@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
 import { usePickerSearch } from '@/shared/ui/templates/pickers/usePickerSearch';
 
 describe('usePickerSearch', () => {

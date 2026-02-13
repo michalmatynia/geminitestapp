@@ -1,6 +1,7 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+
 import { SectionPicker } from '@/features/cms/components/page-builder/SectionPicker';
 
 vi.mock('@/shared/hooks/use-settings', () => ({
@@ -47,7 +48,7 @@ vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
 
 vi.mock('@/shared/ui', () => ({
   AppModal: ({ children, open, onClose, header }: any) => 
-    open ? <div data-testid="modal">{header}{children}<button data-testid="close-btn" onClick={onClose}>Close</button></div> : null,
+    open ? <div data-testid='modal'>{header}{children}<button data-testid='close-btn' onClick={onClose}>Close</button></div> : null,
   Button: ({ children, onClick, ...props }: any) => 
     <button {...props} onClick={onClick}>{children}</button>,
 }));

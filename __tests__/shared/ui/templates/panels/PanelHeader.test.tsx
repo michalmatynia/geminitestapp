@@ -1,19 +1,20 @@
-import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
+
 import { PanelHeader } from '@/shared/ui/templates/panels/PanelHeader';
 
 describe('PanelHeader', () => {
   it('renders title', () => {
-    render(<PanelHeader title="Test Panel" isLoading={false} />);
+    render(<PanelHeader title='Test Panel' isLoading={false} />);
     expect(screen.getByText('Test Panel')).toBeInTheDocument();
   });
 
   it('renders description when provided', () => {
     render(
       <PanelHeader 
-        title="Test" 
-        description="Test description"
+        title='Test' 
+        description='Test description'
         isLoading={false}
       />
     );
@@ -23,7 +24,7 @@ describe('PanelHeader', () => {
   it('renders refresh button when refreshable is true', () => {
     render(
       <PanelHeader 
-        title="Test" 
+        title='Test' 
         refreshable={true}
         isLoading={false}
       />
@@ -39,7 +40,7 @@ describe('PanelHeader', () => {
     ];
     render(
       <PanelHeader 
-        title="Test"
+        title='Test'
         actions={actions}
         isLoading={false}
         refreshable={false}
@@ -52,7 +53,7 @@ describe('PanelHeader', () => {
   it('disables refresh button when isRefreshing is true', () => {
     render(
       <PanelHeader 
-        title="Test"
+        title='Test'
         refreshable={true}
         isRefreshing={true}
         isLoading={false}
@@ -65,8 +66,8 @@ describe('PanelHeader', () => {
   it('renders icon when provided', () => {
     render(
       <PanelHeader 
-        title="Test"
-        icon={<span data-testid="icon">📊</span>}
+        title='Test'
+        icon={<span data-testid='icon'>📊</span>}
         isLoading={false}
       />
     );

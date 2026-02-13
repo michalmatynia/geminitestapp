@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { describe, it, expect, vi } from 'vitest';
+
 import { GenericGridPicker } from '@/shared/ui/templates/pickers/GenericGridPicker';
 import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
 
@@ -51,7 +52,7 @@ describe('GenericGridPicker', () => {
     render(
       <GenericGridPicker
         items={mockItems}
-        selectedId="item2"
+        selectedId='item2'
         onSelect={onSelect}
         renderItem={defaultRender}
       />

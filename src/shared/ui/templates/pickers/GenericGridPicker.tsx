@@ -52,7 +52,7 @@ export const GenericGridPicker = memo(function GenericGridPicker<
   className,
   gridClassName,
   disabled = false,
-}: GenericGridPickerProps<T>) {
+}: GenericGridPickerProps<T>): React.JSX.Element {
   const [localFocused, setLocalFocused] = useState<string | null>(null);
 
   // Use search hook with custom matcher if provided

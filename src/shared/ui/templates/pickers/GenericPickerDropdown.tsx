@@ -47,7 +47,7 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
   disabled = false,
   searchable = false,
   searchPlaceholder = 'Search...',
-}: GenericPickerDropdownProps<T>) {
+}: GenericPickerDropdownProps<T>): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -202,8 +202,6 @@ export const GenericPickerDropdown = memo(function GenericPickerDropdown<
       )}
     </div>
   );
-}) as (<T extends PickerOption = PickerOption>(
-  props: GenericPickerDropdownProps<T>
-) => React.ReactElement) & { displayName?: string };
+});
 
 GenericPickerDropdown.displayName = 'GenericPickerDropdown';

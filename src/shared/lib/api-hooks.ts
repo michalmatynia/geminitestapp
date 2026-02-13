@@ -32,13 +32,13 @@ export function createQueryHook<TData, TParams = void>(config: QueryConfig<TData
         
         let data: TData;
         if (method === 'POST') {
-          data = await api.post<TData>(url, params as any, config.apiOptions);
+          data = await api.post<TData>(url, params as Record<string, unknown>, config.apiOptions);
         } else {
-          const requestOptions = { ...config.apiOptions };
+          const requestOptions: ApiClientOptions & { params?: TParams } = { ...config.apiOptions };
           if (params && typeof params === 'object') {
-            (requestOptions as any).params = params;
+            requestOptions.params = params;
           }
-          data = await api.get<TData>(url, requestOptions);
+          data = await api.get<TData>(url, requestOptions as ApiClientOptions);
         }
         
         if (config.schema) {
@@ -84,11 +84,11 @@ export function createMutationHook<TData, TVariables, TContext = unknown>(
         }
 
         if (config.onSuccess) {
-          await (config.onSuccess as any)(data, variables, context);
+          await (config.onSuccess as (data: TData, variables: TVariables, context: TContext) => Promise<void>)(data, variables, context);
         }
 
         if (onSuccess) {
-          await (onSuccess as any)(data, variables, context);
+          await (onSuccess as (data: TData, variables: TVariables, context: TContext) => Promise<void>)(data, variables, context);
         }
       },
       ...mutationOptions,

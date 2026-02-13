@@ -11,6 +11,7 @@ import type { PathMeta } from '@/shared/types/domain/ai-paths';
 import { Button, Input, Label, AppModal, UnifiedSelect, useToast } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
+import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
 import { useAiPathsErrorReporting } from './useAiPathsErrorReporting';
 import { usePathConfigHandlers } from './usePathConfigHandlers';
 import { useGraphActions, useGraphState, usePersistenceActions, usePersistenceState, useRuntimeActions, useRuntimeState, useSelectionState } from '../../context';
@@ -25,14 +26,6 @@ import { RunHistoryPanel } from '../run-history-panel';
 import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { SimulationDialog } from '../simulation-dialog';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
-
-type AiPathsSettingsViewProps = {
-  activeTab: 'canvas' | 'paths' | 'docs';
-  renderActions?: ((actions: React.ReactNode) => React.ReactNode) | undefined;
-  onTabChange?: ((tab: 'canvas' | 'paths' | 'docs') => void) | undefined;
-  isFocusMode?: boolean | undefined;
-  onFocusModeChange?: ((next: boolean) => void) | undefined;
-};
 
 const formatDurationMs = (value: number | null | undefined): string => {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
@@ -62,13 +55,14 @@ const statusBadgeClassName = (status: string): string => {
   return 'border-border/60 bg-card/60 text-gray-300';
 };
 
-export function AiPathsSettingsView({
-  activeTab,
-  renderActions,
-  onTabChange,
-  isFocusMode: isFocusModeProp,
-  onFocusModeChange,
-}: AiPathsSettingsViewProps): React.JSX.Element {
+export function AiPathsSettingsView(): React.JSX.Element {
+  const {
+    activeTab,
+    renderActions,
+    onTabChange,
+    isFocusMode: isFocusModeProp,
+    onFocusModeChange,
+  } = useAiPathsSettingsPageContext();
   const state = useAiPathsSettingsOrchestrator();
 
   // Domain: Persistence — read from context

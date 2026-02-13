@@ -7,7 +7,7 @@ import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import { deleteImageStudioSlotLinksForSlot } from './slot-link-repository';
 
-type ImageStudioSlotDocument = {
+export type ImageStudioSlotDocument = {
   _id: string;
   projectId: string;
   name: string | null;
@@ -23,7 +23,7 @@ type ImageStudioSlotDocument = {
   updatedAt: string;
 };
 
-type ImageStudioSlotRecord = {
+export type ImageStudioSlotRecord = {
   id: string;
   projectId: string;
   name: string | null;

@@ -54,7 +54,7 @@ export function IntegrationModal(): React.JSX.Element {
       activeConnection,
       onOpenSessionModal,
       onSavePlaywrightSettings: () => {
-        handleSavePlaywrightSettings();
+        void handleSavePlaywrightSettings();
       },
     }),
     [

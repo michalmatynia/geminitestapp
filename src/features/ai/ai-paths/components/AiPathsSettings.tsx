@@ -1,13 +1,20 @@
 'use client';
 
+import React from 'react';
+
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary';
 
 import { AiPathsProvider, useStateBridgeAll } from '../context';
 import { AiPathsSettingsOrchestratorProvider } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+import {
+  AiPathsSettingsPageProvider,
+  useAiPathsSettingsPageContext,
+  type AiPathsSettingsPageContextValue,
+} from './ai-paths-settings/AiPathsSettingsPageContext';
 import { AiPathsSettingsView } from './ai-paths-settings/AiPathsSettingsView';
 import { useAiPathsSettingsState, type AiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
 
-type AiPathsSettingsProps = {
+export type AiPathsSettingsProps = {
   activeTab: 'canvas' | 'paths' | 'docs';
   renderActions?: ((actions: React.ReactNode) => React.ReactNode) | undefined;
   onTabChange?: ((tab: 'canvas' | 'paths' | 'docs') => void) | undefined;
@@ -29,16 +36,23 @@ export function AiPathsSettings({
   isFocusMode,
   onFocusModeChange,
 }: AiPathsSettingsProps): React.JSX.Element {
+  const pageContextValue = React.useMemo<AiPathsSettingsPageContextValue>(
+    () => ({
+      activeTab,
+      renderActions,
+      onTabChange,
+      isFocusMode,
+      onFocusModeChange,
+    }),
+    [activeTab, isFocusMode, onFocusModeChange, onTabChange, renderActions]
+  );
+
   return (
     <AppErrorBoundary source='AiPathsSettings'>
       <AiPathsProvider>
-        <AiPathsSettingsInner
-          activeTab={activeTab}
-          renderActions={renderActions}
-          onTabChange={onTabChange}
-          isFocusMode={isFocusMode}
-          onFocusModeChange={onFocusModeChange}
-        />
+        <AiPathsSettingsPageProvider value={pageContextValue}>
+          <AiPathsSettingsInner />
+        </AiPathsSettingsPageProvider>
       </AiPathsProvider>
     </AppErrorBoundary>
   );
@@ -49,13 +63,8 @@ export function AiPathsSettings({
  * This allows child components to consume state via context hooks while
  * domain contexts remain the runtime source.
  */
-function AiPathsSettingsInner({
-  activeTab,
-  renderActions,
-  onTabChange,
-  isFocusMode,
-  onFocusModeChange,
-}: AiPathsSettingsProps): React.JSX.Element {
+function AiPathsSettingsInner(): React.JSX.Element {
+  const { activeTab } = useAiPathsSettingsPageContext();
   const state: AiPathsSettingsState = useAiPathsSettingsState({ activeTab });
 
   // Sync orchestrator state to domain contexts for child components.
@@ -133,13 +142,7 @@ function AiPathsSettingsInner({
 
   return (
     <AiPathsSettingsOrchestratorProvider value={state}>
-      <AiPathsSettingsView
-        activeTab={activeTab}
-        renderActions={renderActions}
-        onTabChange={onTabChange}
-        isFocusMode={isFocusMode}
-        onFocusModeChange={onFocusModeChange}
-      />
+      <AiPathsSettingsView />
     </AiPathsSettingsOrchestratorProvider>
   );
 }

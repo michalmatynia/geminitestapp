@@ -85,7 +85,7 @@ export function StudioSettingsContent(): React.JSX.Element {
             <UnifiedButton
               size='sm'
               variant='primary'
-              onClick={() => void saveStudioSettings()}
+              onClick={() => void saveStudioSettings({ silent: false })}
               disabled={Boolean(advancedOverridesError)}
               className='min-w-[80px]'
             >

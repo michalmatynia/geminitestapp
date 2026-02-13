@@ -21,8 +21,6 @@ import type {
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
 import { productMetadataKeys } from '@/shared/lib/query-key-exports';
-
-export { productMetadataKeys };
 import type { Language } from '@/shared/types/domain/internationalization';
 
 

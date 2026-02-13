@@ -61,19 +61,19 @@ export const FileManagerFilters = memo(function FileManagerFilters(): React.JSX.
     folder: folderFilter,
   }), [filenameSearch, productNameSearch, tagSearch, folderFilter]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     switch (key) {
       case 'filename':
-        setFilenameSearch(value || '');
+        setFilenameSearch(typeof value === 'string' ? value : '');
         break;
       case 'product':
-        setProductNameSearch(value || '');
+        setProductNameSearch(typeof value === 'string' ? value : '');
         break;
       case 'tag':
-        setTagSearch(value || '');
+        setTagSearch(typeof value === 'string' ? value : '');
         break;
       case 'folder':
-        setLocalFolderFilter(value || 'all');
+        setLocalFolderFilter(typeof value === 'string' ? value : 'all');
         break;
     }
   };

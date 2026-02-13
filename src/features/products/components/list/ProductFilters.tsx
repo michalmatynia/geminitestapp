@@ -58,10 +58,10 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
   }), [sku, minPrice, maxPrice, startDate, endDate]);
 
   // Handle filter changes
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: unknown) => {
     switch (key) {
       case 'sku':
-        setSku(value || '');
+        setSku(typeof value === 'string' ? value : '');
         break;
       case 'minPrice':
         setMinPrice(value ? Number(value) : undefined);
@@ -69,10 +69,12 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
       case 'maxPrice':
         setMaxPrice(value ? Number(value) : undefined);
         break;
-      case 'createdAt':
-        setStartDate(value?.from || '');
-        setEndDate(value?.to || '');
+      case 'createdAt': {
+        const dateRange = value as { from?: string; to?: string } | undefined;
+        setStartDate(dateRange?.from || '');
+        setEndDate(dateRange?.to || '');
         break;
+      }
     }
   };
 

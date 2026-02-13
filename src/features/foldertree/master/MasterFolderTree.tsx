@@ -11,6 +11,19 @@ import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engin
 
 import type { MasterFolderTreeController } from './types';
 
+const MASTER_TREE_DRAG_NODE_ID = 'application/x-master-tree-node-id';
+
+const getMasterTreeDragNodeId = (dataTransfer: DataTransfer | null): MasterTreeId | null => {
+  if (!dataTransfer) return null;
+  try {
+    const value = dataTransfer.getData(MASTER_TREE_DRAG_NODE_ID);
+    if (typeof value === 'string' && value.trim().length > 0) return value.trim();
+  } catch {
+    // no-op: some browser/OS combinations can block drag payload reads at certain phases
+  }
+  return null;
+};
+
 export type MasterFolderTreeRenderNodeInput = {
   node: MasterTreeViewNode;
   depth: number;
@@ -161,6 +174,10 @@ export function MasterFolderTree({
     if (controller.dragState?.draggedNodeId) {
       return controller.dragState.draggedNodeId;
     }
+    const dragPayloadNodeId = getMasterTreeDragNodeId(event.dataTransfer);
+    if (dragPayloadNodeId) {
+      return dragPayloadNodeId;
+    }
     return resolveDraggedNodeId?.(event) ?? null;
   };
 
@@ -286,6 +303,12 @@ export function MasterFolderTree({
                       },
                       controller
                     );
+                    try {
+                      event.dataTransfer.setData(MASTER_TREE_DRAG_NODE_ID, node.id);
+                      event.dataTransfer.setData('text/plain', node.id);
+                    } catch {
+                      // no-op: setData can throw in a few host environments
+                    }
                     event.dataTransfer.effectAllowed = 'move';
                   }
                   : undefined

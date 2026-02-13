@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
+import sharp from 'sharp';
 import { z } from 'zod';
 
 import {
@@ -15,33 +16,41 @@ import {
   getImageStudioSlotById,
   updateImageStudioSlot,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { getImageFileRepository } from '@/features/files/server';
+import { getDiskPathFromPublicPath, getImageFileRepository } from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
+const pointSchema = z.object({
+  x: z.number().finite().min(0).max(1),
+  y: z.number().finite().min(0).max(1),
+});
+
+const maskEntrySchema = z.object({
+  variant: z.enum(['white', 'black']),
+  inverted: z.boolean().optional(),
+  dataUrl: z.string().trim().min(1).optional(),
+  polygons: z.array(z.array(pointSchema).min(3)).min(1).optional(),
+  filename: z.string().trim().optional(),
+});
+
 const payloadSchema = z.object({
+  mode: z.enum(['client_data_url', 'server_polygon']).optional(),
   masks: z
-    .array(
-      z.object({
-        variant: z.enum(['white', 'black']),
-        inverted: z.boolean().optional(),
-        dataUrl: z.string().trim().min(1),
-        filename: z.string().trim().optional(),
-      })
-    )
+    .array(maskEntrySchema)
     .min(1)
     .max(8),
 });
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'masks');
+type SourceSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 
 function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/i);
   if (!match) return null;
   try {
     const buffer = Buffer.from(match[2] ?? '', 'base64');
-    const mime = match[1] ?? 'image/png';
+    const mime = (match[1] ?? 'image/png').toLowerCase();
     return { buffer, mime };
   } catch {
     return null;
@@ -72,10 +81,132 @@ function sanitizeFolderPath(value: string): string {
   return parts.join('/');
 }
 
+function normalizePublicPath(filepath: string): string {
+  let normalized = filepath.trim().replace(/\\/g, '/');
+  if (!normalized) return '';
+  if (/^https?:\/\//i.test(normalized)) return normalized;
+  if (normalized.startsWith('public/')) {
+    normalized = normalized.slice('public'.length);
+  }
+  if (!normalized.startsWith('/')) normalized = `/${normalized}`;
+  return normalized;
+}
+
 function buildMaskFolderPath(sourceFolder: string | null | undefined, sourceSlotId: string): string {
   const prefix = sourceFolder ? sanitizeFolderPath(sourceFolder) : '';
   const suffix = `_masks/${sourceSlotId}`;
   return prefix ? `${prefix}/${suffix}` : suffix;
+}
+
+async function loadSourceBuffer(sourceSlot: SourceSlotRecord): Promise<Buffer> {
+  const base64Candidate =
+    typeof sourceSlot.imageBase64 === 'string' && sourceSlot.imageBase64.trim().startsWith('data:')
+      ? sourceSlot.imageBase64.trim()
+      : null;
+
+  if (base64Candidate) {
+    const parsedData = parseDataUrl(base64Candidate);
+    if (parsedData) return parsedData.buffer;
+  }
+
+  const sourcePath = sourceSlot.imageFile?.filepath ?? sourceSlot.imageUrl ?? null;
+  if (!sourcePath) {
+    throw badRequestError('Source slot has no image path.');
+  }
+
+  const normalizedPath = normalizePublicPath(sourcePath);
+  if (!normalizedPath) {
+    throw badRequestError('Source image path is invalid.');
+  }
+
+  if (/^https?:\/\//i.test(normalizedPath)) {
+    const response = await fetch(normalizedPath);
+    if (!response.ok) {
+      throw badRequestError(`Failed to fetch source image (${response.status}).`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  }
+
+  const diskPath = getDiskPathFromPublicPath(normalizedPath);
+  return fs.readFile(diskPath);
+}
+
+const colorFor = (hex: '#000000' | '#ffffff'): { r: number; g: number; b: number; alpha: number } =>
+  hex === '#000000'
+    ? { r: 0, g: 0, b: 0, alpha: 1 }
+    : { r: 255, g: 255, b: 255, alpha: 1 };
+
+const resolveMaskColors = (
+  variant: 'white' | 'black',
+  inverted: boolean
+): { background: '#000000' | '#ffffff'; fill: '#000000' | '#ffffff' } => {
+  const preferWhite = variant === 'white';
+  const background =
+    (preferWhite && !inverted) || (!preferWhite && inverted)
+      ? '#000000'
+      : '#ffffff';
+  const fill = background === '#000000' ? '#ffffff' : '#000000';
+  return { background, fill };
+};
+
+const polygonPointsToSvg = (
+  points: Array<{ x: number; y: number }>,
+  width: number,
+  height: number
+): string =>
+  points
+    .map((point) => {
+      const x = Math.max(0, Math.min(1, point.x)) * width;
+      const y = Math.max(0, Math.min(1, point.y)) * height;
+      return `${Number(x.toFixed(2))},${Number(y.toFixed(2))}`;
+    })
+    .join(' ');
+
+async function buildServerPolygonMaskBuffer({
+  width,
+  height,
+  variant,
+  inverted,
+  polygons,
+}: {
+  width: number;
+  height: number;
+  variant: 'white' | 'black';
+  inverted: boolean;
+  polygons: Array<Array<{ x: number; y: number }>>;
+}): Promise<Buffer> {
+  const { background, fill } = resolveMaskColors(variant, inverted);
+  const polygonMaskSvg = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect x="0" y="0" width="${width}" height="${height}" fill="black" />${polygons
+      .map((polygon) => `<polygon points="${polygonPointsToSvg(polygon, width, height)}" fill="white" />`)
+      .join('')}</svg>`,
+    'utf8'
+  );
+
+  const fillLayer = await sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: colorFor(fill),
+    },
+  })
+    .composite([{ input: polygonMaskSvg, blend: 'dest-in' }])
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: colorFor(background),
+    },
+  })
+    .composite([{ input: fillLayer, blend: 'over' }])
+    .png()
+    .toBuffer();
 }
 
 async function POST_handler(
@@ -94,6 +225,31 @@ async function POST_handler(
 
   const sourceSlot = await getImageStudioSlotById(slotId);
   if (!sourceSlot) throw notFoundError('Source slot not found');
+  const mode = parsed.data.mode ?? 'client_data_url';
+
+  if (mode === 'client_data_url') {
+    const missingDataUrls = parsed.data.masks.some((mask) => !mask.dataUrl);
+    if (missingDataUrls) {
+      throw badRequestError('Client mask mode requires dataUrl in all masks.');
+    }
+  } else {
+    const missingPolygons = parsed.data.masks.some((mask) => !mask.polygons || mask.polygons.length === 0);
+    if (missingPolygons) {
+      throw badRequestError('Server polygon mode requires polygons in all masks.');
+    }
+  }
+
+  let sourceWidth = sourceSlot.imageFile?.width ?? null;
+  let sourceHeight = sourceSlot.imageFile?.height ?? null;
+  if (mode === 'server_polygon' && !(sourceWidth && sourceHeight)) {
+    const sourceBuffer = await loadSourceBuffer(sourceSlot);
+    const metadata = await sharp(sourceBuffer).metadata();
+    sourceWidth = metadata.width ?? null;
+    sourceHeight = metadata.height ?? null;
+  }
+  if (mode === 'server_polygon' && !(sourceWidth && sourceHeight)) {
+    throw badRequestError('Could not resolve source image dimensions for server polygon mask.');
+  }
 
   const maskFolderPath = buildMaskFolderPath(sourceSlot.folderPath, sourceSlot.id);
   const diskDir = path.join(uploadsRoot, sourceSlot.id);
@@ -103,14 +259,30 @@ async function POST_handler(
   const results: Array<Record<string, unknown>> = [];
 
   for (const mask of parsed.data.masks) {
-    const parsedData = parseDataUrl(mask.dataUrl);
-    if (!parsedData) {
-      throw badRequestError('Invalid mask data URL');
+    let parsedData: { buffer: Buffer; mime: string } | null = null;
+    if (mode === 'client_data_url') {
+      parsedData = parseDataUrl(mask.dataUrl ?? '');
+      if (!parsedData) {
+        throw badRequestError('Invalid mask data URL');
+      }
+    } else {
+      const polygons = mask.polygons ?? [];
+      if (!(sourceWidth && sourceHeight)) {
+        throw badRequestError('Missing source dimensions for server polygon mask.');
+      }
+      const buffer = await buildServerPolygonMaskBuffer({
+        width: sourceWidth,
+        height: sourceHeight,
+        variant: mask.variant,
+        inverted: Boolean(mask.inverted),
+        polygons,
+      });
+      parsedData = { buffer, mime: 'image/png' };
     }
 
     const ext = guessExtension(parsedData.mime);
     const provided = mask.filename?.trim();
-    const defaultName = `mask-${mask.variant}${mask.inverted ? '-inverted' : ''}-${Date.now()}${ext}`;
+    const defaultName = `mask-${mode}-${mask.variant}${mask.inverted ? '-inverted' : ''}-${Date.now()}${ext}`;
     const safeName = sanitizeFileName(provided || defaultName);
     const diskPath = path.join(diskDir, safeName);
     const publicPath = `/uploads/studio/masks/${sourceSlot.id}/${safeName}`;
@@ -131,6 +303,8 @@ async function POST_handler(
       variant: mask.variant,
       inverted: Boolean(mask.inverted),
       relationType,
+      generationMode: mode,
+      polygonCount: mode === 'server_polygon' ? mask.polygons?.length ?? 0 : undefined,
     };
     let maskSlot = null;
 

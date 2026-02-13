@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, ReactElement } from 'react';
+import { ChangeEvent, ReactElement, useMemo } from 'react';
 
 import { playwrightDeviceOptions } from '@/features/playwright/constants/playwright';
 import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
@@ -367,16 +367,29 @@ export function PlaywrightSettingsFormContent(): ReactElement {
 
 
 
-export function PlaywrightSettingsForm(props: PlaywrightSettingsFormProps): ReactElement {
-  const {
-    settings,
-    setSettings,
-    ...viewProps
-  } = props;
+export function PlaywrightSettingsForm({
+  settings,
+  setSettings,
+  onSave,
+  saveLabel,
+  showSave,
+  title,
+  description,
+}: PlaywrightSettingsFormProps): ReactElement {
+  const viewContextValue = useMemo(
+    () => ({
+      ...(onSave !== undefined && { onSave }),
+      ...(saveLabel !== undefined && { saveLabel }),
+      ...(showSave !== undefined && { showSave }),
+      ...(title !== undefined && { title }),
+      ...(description !== undefined && { description }),
+    }),
+    [description, onSave, saveLabel, showSave, title]
+  );
 
   return (
     <PlaywrightSettingsProvider settings={settings} setSettings={setSettings}>
-      <PlaywrightSettingsFormViewProvider value={viewProps}>
+      <PlaywrightSettingsFormViewProvider value={viewContextValue}>
         <PlaywrightSettingsFormContent />
       </PlaywrightSettingsFormViewProvider>
     </PlaywrightSettingsProvider>

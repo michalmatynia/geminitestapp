@@ -13,6 +13,7 @@ import { BlockPicker } from '../BlockPicker';
 import { getSectionDefinition } from '../section-registry';
 import { BlockNodeItem } from './BlockNodeItem';
 import { ColumnNodeItem } from './ColumnNodeItem';
+import { useComponentTreePanelContext } from './ComponentTreePanelContext';
 import { RowNodeItem } from './RowNodeItem';
 import { SlideshowFrameNodeItem } from './SlideshowFrameNodeItem';
 import {
@@ -33,10 +34,12 @@ import type { BlockInstance, PageZone } from '../../../types/page-builder';
 export function SectionNodeItem({
   section,
   sectionIndex,
-  moveSectionByMaster,
-  startSectionMasterDrag,
-  endSectionMasterDrag,
 }: SectionNodeItemProps): React.ReactNode {
+  const {
+    moveSectionByMaster,
+    startSectionMasterDrag,
+    endSectionMasterDrag,
+  } = useComponentTreePanelContext();
   const { state: pbState } = usePageBuilder();
   const {
     expandedIds,

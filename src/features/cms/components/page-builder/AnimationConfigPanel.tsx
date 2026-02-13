@@ -33,6 +33,7 @@ import {
 } from '@/shared/ui';
 
 import { AdvancedSection } from './animation/AdvancedSection';
+import { AnimationConfigProvider } from './animation/AnimationConfigContext';
 import { ParallaxSection } from './animation/ParallaxSection';
 import { TimelineSection } from './animation/TimelineSection';
 import { VisualEffectsSection } from './animation/VisualEffectsSection';
@@ -311,10 +312,12 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
             </RadioGroup>
           </div>
 
-          <TimelineSection config={config} onChange={onChange} />
-          <ParallaxSection config={config} onChange={onChange} />
-          <AdvancedSection config={config} onChange={onChange} openVectorOverlay={openVectorOverlay} />
-          <VisualEffectsSection config={config} onChange={onChange} />
+          <AnimationConfigProvider value={{ config, onChange, openVectorOverlay }}>
+            <TimelineSection />
+            <ParallaxSection />
+            <AdvancedSection />
+            <VisualEffectsSection />
+          </AnimationConfigProvider>
         </>
       )}
     </div>

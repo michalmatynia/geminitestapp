@@ -13,7 +13,7 @@ import { getSlugsForDomain, resolveCmsDomainFromHeaders } from '@/features/cms/s
 import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
-import type { Slug } from '@/features/cms/types';
+import type { PageComponent, Slug } from '@/features/cms/types';
 import { buildColorSchemeMap, type ThemeSettings } from '@/features/cms/types/theme-settings';
 import { logSystemEvent } from '@/features/observability/server';
 import { ProductCard } from '@/features/products';
@@ -173,6 +173,10 @@ export default async function Home(): Promise<JSX.Element> {
       allowDrafts = await withTiming('canPreviewDrafts', () => canPreviewDrafts(session));
     }
     const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === 'published') && cmsPage.components.length > 0;
+    const rendererComponents: PageComponent[] = (cmsPage?.components ?? []).map((component) => ({
+      type: component.type,
+      content: component.content ?? {},
+    }));
 
     const showMenu = cmsPage?.showMenu !== false;
     if (shouldLogTiming()) {
@@ -193,7 +197,7 @@ export default async function Home(): Promise<JSX.Element> {
       >
         {hasCmsContent ? (
           <CmsPageRenderer
-            components={cmsPage.components}
+            components={rendererComponents}
             colorSchemes={colorSchemes}
             layout={{ fullWidth: themeSettings.fullWidth }}
             hoverEffect={themeSettings?.enableAnimations ? themeSettings.hoverEffect : undefined}

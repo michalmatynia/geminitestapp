@@ -10,7 +10,10 @@ import type {
   CreateProductDto,
   UpdateProductDto,
   CreateProductCategoryDto as CreateCategoryDto,
-  UpdateProductCategoryDto as UpdateCategoryDto
+  UpdateProductCategoryDto as UpdateCategoryDto,
+  ProductImageDto,
+  ProductCatalogDto,
+  ProductParameterValueDto
 } from '../../dtos/index';
 
 export type {
@@ -22,7 +25,10 @@ export type {
   CreateProductDto,
   UpdateProductDto,
   CreateCategoryDto,
-  UpdateCategoryDto
+  UpdateCategoryDto,
+  ProductImageDto,
+  ProductCatalogDto,
+  ProductParameterValueDto
 };
 
 export type ProductDbProvider = 'prisma' | 'mongodb';
@@ -38,10 +44,7 @@ export type ProductParameter = Entity & {
   name_de: string | null;
 };
 
-export type ProductParameterValue = {
-  parameterId: string;
-  value: string;
-};
+export type ProductParameterValue = ProductParameterValueDto;
 
 export type CurrencyRecord = Entity & {
   code: string;
@@ -83,22 +86,13 @@ export type Catalog = CatalogRecord;
  * Domain record for a product.
  * Extends ProductDto with domain-only fields.
  */
-export type ProductRecord = ProductDto & {
-  parameters?: ProductParameterValue[];
-  noteIds: string[];
-};
+export type ProductRecord = ProductDto;
 
-export type ProductImageRecord = {
-  productId: string;
-  imageFileId: string;
-  assignedAt: string | Date;
+export type ProductImageRecord = ProductImageDto & {
   imageFile: ImageFileRecord;
 };
 
-export type ProductCatalogRecord = {
-  productId: string;
-  catalogId: string;
-  assignedAt: string | Date;
+export type ProductCatalogRecord = ProductCatalogDto & {
   catalog: CatalogRecord;
 };
 

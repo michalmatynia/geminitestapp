@@ -111,25 +111,78 @@ export type CreateCmsDomainDto = z.infer<typeof createCmsDomainSchema>;
 export type UpdateCmsDomainDto = Partial<CreateCmsDomainDto>;
 
 /**
+ * CMS Page SEO Contract
+ */
+export const cmsPageSeoSchema = z.object({
+  seoTitle: z.string().optional(),
+  seoDescription: z.string().optional(),
+  seoOgImage: z.string().optional(),
+  seoCanonical: z.string().optional(),
+  robotsMeta: z.string().optional(),
+});
+
+export type CmsPageSeoDto = z.infer<typeof cmsPageSeoSchema>;
+
+/**
+ * CMS Component Contract
+ */
+export const cmsPageComponentSchema = dtoBaseSchema.extend({
+  type: z.string(),
+  order: z.number(),
+  content: z.record(z.string(), z.unknown()),
+  pageId: z.string(),
+});
+
+export type CmsPageComponentDto = z.infer<typeof cmsPageComponentSchema>;
+
+/**
+ * CMS Slug Contract
+ */
+export const cmsSlugSchema = dtoBaseSchema.extend({
+  slug: z.string(),
+  pageId: z.string().nullable(),
+  isDefault: z.boolean(),
+});
+
+export type CmsSlugDto = z.infer<typeof cmsSlugSchema>;
+
+/**
+ * CMS Page Builder Contracts
+ */
+export const cmsBlockInstanceSchema: z.ZodType<any> = z.lazy(() => z.object({
+  id: z.string(),
+  type: z.string(),
+  settings: z.record(z.string(), z.unknown()),
+  blocks: z.array(cmsBlockInstanceSchema).optional(),
+}));
+
+export type CmsBlockInstanceDto = z.infer<typeof cmsBlockInstanceSchema>;
+
+export const cmsSectionInstanceSchema = z.object({
+  id: z.string(),
+  type: z.string(),
+  zone: z.enum(['header', 'template', 'footer']),
+  settings: z.record(z.string(), z.unknown()),
+  blocks: z.array(cmsBlockInstanceSchema),
+});
+
+export type CmsSectionInstanceDto = z.infer<typeof cmsSectionInstanceSchema>;
+
+/**
  * CMS Page Contract
  */
 export const cmsPageSchema = dtoBaseSchema.extend({
   name: z.string(),
   status: z.enum(['draft', 'published', 'scheduled']),
   publishedAt: z.string().optional(),
-  seoTitle: z.string().optional(),
-  seoDescription: z.string().optional(),
-  seoOgImage: z.string().optional(),
-  seoCanonical: z.string().optional(),
-  robotsMeta: z.string().optional(),
   themeId: z.string().nullable(),
   showMenu: z.boolean(),
-  components: z.array(z.lazy(() => cmsPageComponentSchema.partial().extend({
+  components: z.array(cmsPageComponentSchema.partial().extend({
     type: z.string(),
     order: z.number(),
-  }))),
+  })),
   slugs: z.union([z.array(z.string()), z.array(cmsSlugSchema)]),
-});
+}).merge(cmsPageSeoSchema);
 
 export type CmsPageDto = z.infer<typeof cmsPageSchema>;
 

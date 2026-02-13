@@ -1,48 +1,16 @@
-export interface Asset3DRecord {
-  id: string;
-  name: string | null;
-  description: string | null;
-  filename: string;
-  filepath: string;
-  mimetype: string;
-  size: number;
-  tags: string[];
-  category: string | null;
-  metadata: Record<string, unknown> | null;
-  isPublic: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { 
+  Asset3DRecord, 
+  Asset3DCreateInput, 
+  Asset3DUpdateInput, 
+  Asset3DListFilters 
+} from '@/shared/types/domain/viewer3d';
 
-export interface Asset3DCreateInput {
-  name?: string | null;
-  description?: string | null;
-  filename: string;
-  filepath: string;
-  mimetype: string;
-  size: number;
-  tags?: string[];
-  category?: string | null;
-  metadata?: Record<string, unknown> | null;
-  isPublic?: boolean;
-}
-
-export interface Asset3DUpdateInput {
-  name?: string | null;
-  description?: string | null;
-  tags?: string[];
-  category?: string | null;
-  metadata?: Record<string, unknown> | null;
-  isPublic?: boolean;
-}
-
-export interface Asset3DListFilters {
-  filename?: string | null;
-  category?: string | null;
-  tags?: string[];
-  isPublic?: boolean;
-  search?: string | null;
-}
+export type { 
+  Asset3DRecord, 
+  Asset3DCreateInput, 
+  Asset3DUpdateInput, 
+  Asset3DListFilters 
+};
 
 export interface Asset3DRepository {
   createAsset3D(data: Asset3DCreateInput): Promise<Asset3DRecord>;

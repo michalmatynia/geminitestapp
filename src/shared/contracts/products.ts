@@ -131,6 +131,52 @@ export const currencySchema = namedDtoSchema.extend({
 export type ProductCurrencyDto = z.infer<typeof currencySchema>;
 
 /**
+ * Product Image Contract
+ */
+export const productImageSchema = z.object({
+  productId: z.string(),
+  imageFileId: z.string(),
+  assignedAt: z.string(),
+  imageFile: z.any().optional(), // Avoid circular dependency if ImageFile is in another contract
+});
+
+export type ProductImageDto = z.infer<typeof productImageSchema>;
+
+/**
+ * Product Catalog Contract
+ */
+export const productCatalogSchema = z.object({
+  productId: z.string(),
+  catalogId: z.string(),
+  assignedAt: z.string(),
+  catalog: z.lazy(() => catalogSchema).optional(),
+});
+
+export type ProductCatalogDto = z.infer<typeof productCatalogSchema>;
+
+/**
+ * Product Tag Relation Contract
+ */
+export const productTagRelationSchema = z.object({
+  productId: z.string(),
+  tagId: z.string(),
+  assignedAt: z.string(),
+  tag: z.lazy(() => productTagSchema).optional(),
+});
+
+export type ProductTagRelationDto = z.infer<typeof productTagRelationSchema>;
+
+/**
+ * Product Parameter Value Contract
+ */
+export const productParameterValueSchema = z.object({
+  parameterId: z.string(),
+  value: z.string(),
+});
+
+export type ProductParameterValueDto = z.infer<typeof productParameterValueSchema>;
+
+/**
  * Product Contract
  */
 export const productSchema = dtoBaseSchema.extend({
@@ -160,9 +206,10 @@ export const productSchema = dtoBaseSchema.extend({
   published: z.boolean(),
   categoryId: z.string().nullable(),
   catalogId: z.string(),
-  tags: z.array(z.any()),
-  images: z.array(z.any()),
-  catalogs: z.array(z.any()).optional(),
+  tags: z.array(productTagRelationSchema).optional(),
+  images: z.array(productImageSchema).optional(),
+  catalogs: z.array(productCatalogSchema).optional(),
+  parameters: z.array(productParameterValueSchema).optional(),
   imageLinks: z.array(z.string()).optional(),
   imageBase64s: z.array(z.string()).optional(),
   noteIds: z.array(z.string()).optional(),

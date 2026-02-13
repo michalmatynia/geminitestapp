@@ -14,6 +14,7 @@ export * from './domain/settings';
 export * from './domain/internationalization';
 export * from './domain/user-preferences';
 export * from './domain/integrations';
+export * from './domain/viewer3d';
 
 // API types
 export * from './api/api';

@@ -60,7 +60,7 @@ export function CmsPageRenderer({
   const hoverVars = getHoverEffectVars(hoverEffect, hoverScale);
   
   const sections = components.map((comp: PageComponent, idx: number) => {
-    const content = comp.content as SectionContent;
+    const content = (comp.content ?? {}) as SectionContent;
     return {
       key: `section-${idx}`,
       id: `section-${idx}`,

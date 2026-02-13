@@ -1,6 +1,6 @@
-export interface SettingRecordDto {
-  key: string;
-  value: string;
-}
+/**
+ * Compatibility layer for Settings DTOs.
+ * Types are now defined in src/shared/contracts/settings.ts using Zod.
+ */
 
-export type SettingsScopeDto = 'all' | 'light' | 'heavy';
+export * from '../contracts/settings';

@@ -2,13 +2,13 @@
 
 import React, { useCallback } from 'react';
 
-import type { GsapAnimationConfig } from '@/features/gsap';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import {
   FormSection,
   FormField,
 } from '@/shared/ui';
 
+import { useAnimationConfigContext } from './AnimationConfigContext';
 import { RangeField, SelectField } from '../shared-fields';
 import { ColorPickerField } from './ColorPickerField';
 import {
@@ -28,12 +28,8 @@ import {
   buildShadow,
 } from './visual-effect-utils';
 
-interface VisualEffectsSectionProps {
-  config: GsapAnimationConfig;
-  onChange: (config: GsapAnimationConfig) => void;
-}
-
-export function VisualEffectsSection({ config, onChange }: VisualEffectsSectionProps): React.ReactNode {
+export function VisualEffectsSection(): React.ReactNode {
+  const { config, onChange } = useAnimationConfigContext();
   const visualFilterFromValue = config.visualFilterFrom ?? DEFAULT_ANIMATION_CONFIG.visualFilterFrom ?? '';
   const visualFilterToValue = config.visualFilterTo ?? DEFAULT_ANIMATION_CONFIG.visualFilterTo ?? '';
   const visualClipFromValue = config.visualClipFrom ?? DEFAULT_ANIMATION_CONFIG.visualClipFrom ?? '';

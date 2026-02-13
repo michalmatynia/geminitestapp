@@ -23,6 +23,7 @@ import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
 import { productMetadataKeys } from '@/shared/lib/query-key-exports';
 import type { Language } from '@/shared/types/domain/internationalization';
 
+export { productMetadataKeys };
 
 export function useCatalogs(): UseQueryResult<CatalogRecord[]> {
   return useQuery({

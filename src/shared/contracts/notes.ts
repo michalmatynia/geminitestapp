@@ -25,11 +25,50 @@ export const noteSchema = dtoBaseSchema.extend({
 
 export type NoteDto = z.infer<typeof noteSchema>;
 
+/**
+ * Note Tag Relation Contract
+ */
+export const noteTagRelationSchema = z.object({
+  noteId: z.string(),
+  tagId: z.string(),
+  assignedAt: z.string(),
+  tag: z.lazy(() => noteTagSchema).optional(),
+});
+
+export type NoteTagRelationDto = z.infer<typeof noteTagRelationSchema>;
+
+/**
+ * Note Category Relation Contract
+ */
+export const noteCategoryRelationSchema = z.object({
+  noteId: z.string(),
+  categoryId: z.string(),
+  assignedAt: z.string(),
+  category: z.lazy(() => noteCategorySchema).optional(),
+});
+
+export type NoteCategoryRelationDto = z.infer<typeof noteCategoryRelationSchema>;
+
+/**
+ * Note Relation Contract
+ */
+export const noteRelationSchema = z.object({
+  sourceNoteId: z.string(),
+  targetNoteId: z.string(),
+  assignedAt: z.string(),
+  targetNote: z.lazy(() => relatedNoteSchema).optional(),
+  sourceNote: z.lazy(() => relatedNoteSchema).optional(),
+});
+
+export type NoteRelationDto = z.infer<typeof noteRelationSchema>;
+
 export const noteWithRelationsSchema = noteSchema.extend({
-  tags: z.array(z.any()),
-  categories: z.array(z.any()),
-  relations: z.array(z.any()).optional(),
-  files: z.array(z.any()).optional(),
+  tags: z.array(noteTagRelationSchema),
+  categories: z.array(noteCategoryRelationSchema),
+  relations: z.array(relatedNoteSchema).optional(),
+  relationsFrom: z.array(noteRelationSchema).optional(),
+  relationsTo: z.array(noteRelationSchema).optional(),
+  files: z.array(z.any()).optional(), // Keep as any for now or define NoteFileDto
 });
 
 export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;

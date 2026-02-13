@@ -52,23 +52,9 @@ export type IntegrationWithConnectionsBasic = IntegrationWithConnections;
 
 export type ImageBase64Mode = 'base-only' | 'full-data-uri';
 
-export type ImageTransformOptions = {
-  maxWidth?: number;
-  maxHeight?: number;
-  quality?: number;
-  format?: 'jpeg' | 'png' | 'webp';
-  forceJpeg?: boolean;
-  maxDimension?: number;
-  jpegQuality?: number;
-};
+export type ImageTransformOptions = ImageTransformOptionsDto;
 
-export type ImageRetryPreset = {
-  id: string;
-  label: string;
-  description: string;
-  imageBase64Mode: ImageBase64Mode;
-  transform: ImageTransformOptions;
-};
+export type ImageRetryPreset = ImageRetryPresetDto;
 
 export type ImportExportTemplateMapping = ImportExportTemplateMappingDto;
 export type ImportExportTemplate = ImportExportTemplateDto;

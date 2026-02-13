@@ -9,7 +9,10 @@ import type {
   UpdateCmsThemeDto,
   CmsThemeColors,
   CmsThemeTypography,
-  CmsThemeSpacing
+  CmsThemeSpacing,
+  CmsBlockInstanceDto,
+  CmsSectionInstanceDto,
+  CmsPageSeoDto
 } from '../../dtos/cms';
 
 export type {
@@ -23,7 +26,10 @@ export type {
   UpdateCmsThemeDto,
   CmsThemeColors,
   CmsThemeTypography,
-  CmsThemeSpacing
+  CmsThemeSpacing,
+  CmsBlockInstanceDto,
+  CmsSectionInstanceDto,
+  CmsPageSeoDto
 };
 
 // ---------------------------------------------------------------------------
@@ -50,13 +56,7 @@ export interface PageSlugLink {
   };
 }
 
-export interface PageSeoData {
-  seoTitle?: string;
-  seoDescription?: string;
-  seoOgImage?: string;
-  seoCanonical?: string;
-  robotsMeta?: string;
-}
+export type PageSeoData = CmsPageSeoDto;
 
 export interface PageSummary {
   id: string;
@@ -65,57 +65,20 @@ export interface PageSummary {
   slugs: PageSlugLink[];
 }
 
-export interface Page {
-  id: string;
-  name: string;
-  status: PageStatus;
-  publishedAt?: string;
-  seoTitle?: string;
-  seoDescription?: string;
-  seoOgImage?: string;
-  seoCanonical?: string;
-  robotsMeta?: string;
-  themeId?: string;
-  showMenu?: boolean | null;
-  components: PageComponent[];
-  slugs?: PageSlugLink[];
-  slugIds?: string[];
-}
+export type Page = CmsPageDto;
 
-export interface Slug {
-  id: string;
-  slug: string;
-  createdAt?: string;
-  isDefault?: boolean;
-}
+export type Slug = CmsSlugDto;
 
-export interface CmsDomain {
-  id: string;
-  domain: string;
-  aliasOf?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type CmsDomain = CmsDomainDto;
 
 // ---------------------------------------------------------------------------
 // Page Builder Instances & Definitions
 // ---------------------------------------------------------------------------
 export type PageZone = 'header' | 'template' | 'footer';
 
-export interface BlockInstance {
-  id: string;
-  type: string;
-  settings: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
+export type BlockInstance = CmsBlockInstanceDto;
 
-export interface SectionInstance {
-  id: string;
-  type: string;
-  zone: PageZone;
-  settings: Record<string, unknown>;
-  blocks: BlockInstance[];
-}
+export type SectionInstance = CmsSectionInstanceDto;
 
 export interface SettingsFieldOption {
   label: string;

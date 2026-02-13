@@ -324,8 +324,8 @@ export function GenerationToolbar(): React.JSX.Element {
   );
   const maskAttachModeOptions = useMemo(
     () => ([
-      { value: 'client_canvas_polygon', label: 'Mask: Client Canvas' },
-      { value: 'server_polygon', label: 'Mask: Server Polygon' },
+      { value: 'client_canvas_polygon', label: 'Option A: Canvas Polygon' },
+      { value: 'server_polygon', label: 'Option C: Server Polygon' },
     ]),
     []
   );

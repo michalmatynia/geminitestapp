@@ -3,7 +3,6 @@
 import React, { useCallback } from 'react';
 
 import type {
-  GsapAnimationConfig,
   TimelineMode,
   ScrollMode,
   RevealStyle,
@@ -22,12 +21,10 @@ import {
   FormField,
 } from '@/shared/ui';
 
-interface TimelineSectionProps {
-  config: GsapAnimationConfig;
-  onChange: (config: GsapAnimationConfig) => void;
-}
+import { useAnimationConfigContext } from './AnimationConfigContext';
 
-export function TimelineSection({ config, onChange }: TimelineSectionProps): React.ReactNode {
+export function TimelineSection(): React.ReactNode {
+  const { config, onChange } = useAnimationConfigContext();
   const timelineModeValue = config.timelineMode ?? DEFAULT_ANIMATION_CONFIG.timelineMode ?? 'none';
   const timelineGapValue = config.timelineGap ?? DEFAULT_ANIMATION_CONFIG.timelineGap ?? 0.15;
   const timelineOverlapValue = config.timelineOverlap ?? DEFAULT_ANIMATION_CONFIG.timelineOverlap ?? 0.2;

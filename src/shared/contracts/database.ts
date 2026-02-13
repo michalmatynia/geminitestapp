@@ -242,3 +242,114 @@ export const databaseEngineBackupSchedulerTickResultSchema = z.object({
 });
 
 export type DatabaseEngineBackupSchedulerTickResultDto = z.infer<typeof databaseEngineBackupSchedulerTickResultSchema>;
+
+/**
+ * Database Engine Policy DTOs
+ */
+
+export const databaseEngineServiceSchema = z.enum(['app', 'auth', 'product', 'integrations', 'cms']);
+export type DatabaseEngineServiceDto = z.infer<typeof databaseEngineServiceSchema>;
+
+export const databaseEngineProviderSchema = z.enum(['mongodb', 'prisma', 'redis']);
+export type DatabaseEngineProviderDto = z.infer<typeof databaseEngineProviderSchema>;
+
+export const databaseEnginePrimaryProviderSchema = z.enum(['mongodb', 'prisma']);
+export type DatabaseEnginePrimaryProviderDto = z.infer<typeof databaseEnginePrimaryProviderSchema>;
+
+export const databaseEnginePolicySchema = z.object({
+  requireExplicitServiceRouting: z.boolean(),
+  requireExplicitCollectionRouting: z.boolean(),
+  allowAutomaticFallback: z.boolean(),
+  allowAutomaticBackfill: z.boolean(),
+  allowAutomaticMigrations: z.boolean(),
+  strictProviderAvailability: z.boolean(),
+});
+
+export type DatabaseEnginePolicyDto = z.infer<typeof databaseEnginePolicySchema>;
+
+export const databaseEngineServiceStatusSchema = z.object({
+  service: databaseEngineServiceSchema,
+  configuredProvider: databaseEngineProviderSchema.nullable(),
+  effectiveProvider: databaseEnginePrimaryProviderSchema.nullable(),
+  missingExplicitRoute: z.boolean(),
+  unsupportedConfiguredProvider: z.boolean(),
+  unavailableConfiguredProvider: z.boolean(),
+  resolutionError: z.string().nullable(),
+});
+
+export type DatabaseEngineServiceStatusDto = z.infer<typeof databaseEngineServiceStatusSchema>;
+
+export const databaseEngineUnavailableCollectionRouteSchema = z.object({
+  collection: z.string(),
+  provider: databaseEngineProviderSchema,
+});
+
+export type DatabaseEngineUnavailableCollectionRouteDto = z.infer<typeof databaseEngineUnavailableCollectionRouteSchema>;
+
+export const databaseEngineCollectionStatusSchema = z.object({
+  knownCollections: z.array(z.string()),
+  configuredCount: z.number(),
+  missingExplicitRoutes: z.array(z.string()),
+  orphanedRoutes: z.array(z.string()),
+  unavailableConfiguredRoutes: z.array(databaseEngineUnavailableCollectionRouteSchema),
+});
+
+export type DatabaseEngineCollectionStatusDto = z.infer<typeof databaseEngineCollectionStatusSchema>;
+
+export const databaseEngineStatusSchema = z.object({
+  timestamp: z.string(),
+  policy: databaseEnginePolicySchema,
+  providers: z.object({
+    prismaConfigured: z.boolean(),
+    mongodbConfigured: z.boolean(),
+    redisConfigured: z.boolean(),
+  }),
+  serviceRouteMap: z.record(databaseEngineServiceSchema, databaseEngineProviderSchema),
+  collectionRouteMap: z.record(z.string(), databaseEngineProviderSchema),
+  services: z.array(databaseEngineServiceStatusSchema),
+  collections: databaseEngineCollectionStatusSchema,
+  blockingIssues: z.array(z.string()),
+});
+
+export type DatabaseEngineStatusDto = z.infer<typeof databaseEngineStatusSchema>;
+
+export const databaseEngineCollectionProviderPreviewSourceSchema = z.enum([
+  'collection_route',
+  'app_provider',
+  'error',
+]);
+
+export type DatabaseEngineCollectionProviderPreviewSourceDto = z.infer<typeof databaseEngineCollectionProviderPreviewSourceSchema>;
+
+export const databaseEngineCollectionProviderPreviewItemSchema = z.object({
+  collection: z.string(),
+  configuredProvider: databaseEngineProviderSchema.nullable(),
+  effectiveProvider: databaseEnginePrimaryProviderSchema.nullable(),
+  source: databaseEngineCollectionProviderPreviewSourceSchema,
+  error: z.string().nullable(),
+});
+
+export type DatabaseEngineCollectionProviderPreviewItemDto = z.infer<typeof databaseEngineCollectionProviderPreviewItemSchema>;
+
+export const databaseEngineProviderPreviewSchema = z.object({
+  timestamp: z.string(),
+  policy: databaseEnginePolicySchema,
+  appProvider: databaseEnginePrimaryProviderSchema.nullable(),
+  appProviderError: z.string().nullable(),
+  collections: z.array(databaseEngineCollectionProviderPreviewItemSchema),
+});
+
+export type DatabaseEngineProviderPreviewDto = z.infer<typeof databaseEngineProviderPreviewSchema>;
+
+export const databaseCollectionCopyResultSchema = z.object({
+  name: z.string(),
+  status: z.enum(['completed', 'skipped', 'failed']),
+  sourceCount: z.number(),
+  targetDeleted: z.number(),
+  targetInserted: z.number(),
+  warnings: z.array(z.string()).optional(),
+  error: z.string().optional(),
+});
+
+export type DatabaseCollectionCopyResultDto = z.infer<typeof databaseCollectionCopyResultSchema>;
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import {
   MasterFolderTree,
@@ -12,7 +12,6 @@ import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
-  type FolderTreePlaceholderClassSet,
   type MasterTreeNode,
 } from '@/shared/utils';
 
@@ -22,6 +21,11 @@ import {
   PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY,
 } from './settings/PageBuilderSettingsPage';
 import { SectionNodeItem } from './tree';
+import {
+  ComponentTreePanelProvider,
+  useComponentTreePanelContext,
+  type ComponentTreePanelContextValue,
+} from './tree/ComponentTreePanelContext';
 import {
   CMS_ZONE_LABELS,
   CMS_ZONE_ORDER,
@@ -51,34 +55,6 @@ const PROMOTABLE_BLOCK_TYPES = [
   'Model3DElement',
   'Slideshow',
 ];
-
-type ComponentTreeClipboard = { type: 'section' | 'block'; data: unknown } | null;
-
-type ComponentTreePanelContextValue = {
-  currentPage: unknown;
-  clipboard: ComponentTreeClipboard;
-  showExtractPlaceholder: boolean;
-  showSectionDropPlaceholder: boolean;
-  canDropSectionsAtRoot: boolean;
-  canDropBlocksAtRoot: boolean;
-  treePlaceholderClasses: FolderTreePlaceholderClassSet;
-  treeInlineDropLabel: string;
-  treeRootDropLabel: string;
-  startSectionMasterDrag: (sectionId: string) => void;
-  endSectionMasterDrag: () => void;
-  draggedMasterSectionId: string | null;
-  moveSectionByMaster: (sectionId: string, zone: PageZone, toIndex: number) => Promise<boolean>;
-};
-
-const ComponentTreePanelContext = createContext<ComponentTreePanelContextValue | null>(null);
-
-function useComponentTreePanelContext(): ComponentTreePanelContextValue {
-  const context = useContext(ComponentTreePanelContext);
-  if (!context) {
-    throw new Error('useComponentTreePanelContext must be used within ComponentTreePanelContext.Provider');
-  }
-  return context;
-}
 
 export function ComponentTreePanel(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
@@ -265,7 +241,7 @@ export function ComponentTreePanel(): React.ReactNode {
 
   return (
     <TreeActionsProvider expandedIds={expandedIds} setExpandedIds={setExpandedIds}>
-      <ComponentTreePanelContext.Provider value={panelContextValue}>
+      <ComponentTreePanelProvider value={panelContextValue}>
         <FolderTreePanel
           className='flex-1 min-h-0'
           bodyClassName='flex-1 min-h-0 overflow-y-auto'
@@ -339,9 +315,6 @@ export function ComponentTreePanel(): React.ReactNode {
                       <SectionNodeItem
                         section={section}
                         sectionIndex={sectionIndex}
-                        moveSectionByMaster={moveSectionByMaster}
-                        startSectionMasterDrag={startSectionMasterDrag}
-                        endSectionMasterDrag={endSectionMasterDrag}
                       />
                     </div>
                   );
@@ -361,7 +334,7 @@ export function ComponentTreePanel(): React.ReactNode {
             />
           )}
         </FolderTreePanel>
-      </ComponentTreePanelContext.Provider>
+      </ComponentTreePanelProvider>
     </TreeActionsProvider>
   );
 }

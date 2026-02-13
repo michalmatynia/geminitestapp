@@ -74,7 +74,8 @@
       "Bash(python3:*)",
       "Bash(timeout 30 npx next dev:*)",
       "Bash(cd /Users/michalmatynia/Desktop/NPM/2026/Gemini\\\\ new\\\\ Pull/geminitestapp && npx vitest run:*)",
-      "Bash(npx vitest run __tests__/features/notesapp/pages/notes-advanced.test.tsx)"
+      "Bash(npx vitest run __tests__/features/notesapp/pages/notes-advanced.test.tsx)",
+      "Bash(npx vitest run:*)"
     ]
   }
 }

@@ -7,6 +7,10 @@ import { namedDtoSchema } from './base';
  */
 
 export const asset3dSchema = namedDtoSchema.extend({
+  filename: z.string(),
+  filepath: z.string(),
+  mimetype: z.string(),
+  size: z.number(),
   fileUrl: z.string(),
   thumbnailUrl: z.string().nullable(),
   fileSize: z.number(),
@@ -14,6 +18,7 @@ export const asset3dSchema = namedDtoSchema.extend({
   categoryId: z.string().nullable(),
   tags: z.array(z.string()),
   metadata: z.record(z.string(), z.unknown()),
+  isPublic: z.boolean(),
 });
 
 export type Asset3dDto = z.infer<typeof asset3dSchema>;

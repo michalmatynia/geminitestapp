@@ -1,4 +1,6 @@
 // Export all DTOs
+export * from '../contracts/vector';
+export * from '../contracts/analytics';
 export * from './base-ai';
 export * from './admin';
 export * from './agent-runtime';

@@ -15,7 +15,12 @@ import type {
   UpdateNoteTagDto,
   CreateNoteThemeDto,
   UpdateNoteThemeDto,
-  NoteEditorType
+  NoteEditorType,
+  NoteWithRelationsDto,
+  NoteTagRelationDto,
+  NoteCategoryRelationDto,
+  NoteRelationDto,
+  RelatedNoteDto
 } from '../dtos';
 
 export type {
@@ -34,7 +39,12 @@ export type {
   UpdateNoteTagDto,
   CreateNoteThemeDto,
   UpdateNoteThemeDto,
-  NoteEditorType
+  NoteEditorType,
+  NoteWithRelationsDto,
+  NoteTagRelationDto,
+  NoteCategoryRelationDto,
+  NoteRelationDto,
+  RelatedNoteDto
 };
 
 export type NotebookRecord = NotebookDto;
@@ -47,31 +57,14 @@ export type TagRecord = NoteTagDto;
 
 export type CategoryRecord = NoteCategoryDto;
 
-export type NoteTagRecord = {
-  noteId: string;
-  tagId: string;
-  assignedAt: string;
-};
+export type NoteTagRecord = NoteTagRelationDto;
 
-export type NoteCategoryRecord = {
-  noteId: string;
-  categoryId: string;
-  assignedAt: string;
-};
+export type NoteCategoryRecord = NoteCategoryRelationDto;
 
-export type NoteRelationRecord = {
-  sourceNoteId: string;
-  targetNoteId: string;
-  assignedAt: string;
-};
+export type NoteRelationRecord = NoteRelationDto;
 
 // Simple note type for related notes (without nested relations to avoid circular references)
-export type RelatedNote = {
-  id: string;
-  title: string;
-  color: string | null;
-  content?: string | undefined;
-};
+export type RelatedNote = RelatedNoteDto;
 
 export type NoteRelationWithTarget = NoteRelationRecord & {
   targetNote: RelatedNote;
@@ -81,11 +74,9 @@ export type NoteRelationWithSource = NoteRelationRecord & {
   sourceNote: RelatedNote;
 };
 
-export type NoteWithRelations = NoteRecord & {
+export type NoteWithRelations = NoteWithRelationsDto & {
   tags: (NoteTagRecord & { tag: TagRecord })[];
   categories: (NoteCategoryRecord & { category: CategoryRecord })[];
-  relationsFrom?: NoteRelationWithTarget[];
-  relationsTo?: NoteRelationWithSource[];
   relations?: RelatedNote[];
   files?: NoteFileRecord[];
 };

@@ -10,7 +10,7 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 type DatabaseEngineCancelableJob = {
-  productId: string;
+  productId?: string | null | undefined;
   type: string;
 };
 

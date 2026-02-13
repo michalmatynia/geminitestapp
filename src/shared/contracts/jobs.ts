@@ -32,11 +32,57 @@ export type UpdateJobDto = Partial<CreateJobDto>;
 /**
  * Product AI Job Contract
  */
+export const productAiJobTypeSchema = z.enum([
+  'description_generation',
+  'translation',
+  'graph_model',
+  'db_sync',
+  'db_backup',
+  'base64_all',
+  'base_images_sync_all',
+  'description',
+  'tags',
+  'categories',
+  'parameters',
+]);
+
+export type ProductAiJobTypeDto = z.infer<typeof productAiJobTypeSchema>;
+
+export const productAiJobResultSchema = z.object({
+  visionModel: z.string().optional(),
+  generationModel: z.string().optional(),
+  visionOutputEnabled: z.boolean().optional(),
+  generationOutputEnabled: z.boolean().optional(),
+  analysisInitial: z.string().optional(),
+  analysis: z.string().optional(),
+  analysisFinal: z.string().optional(),
+  descriptionInitial: z.string().optional(),
+  description: z.string().optional(),
+  descriptionFinal: z.string().optional(),
+  translationModel: z.string().optional(),
+  sourceLanguage: z.string().optional(),
+  targetLanguages: z.array(z.string()).optional(),
+  translations: z.record(z.string(), z.object({
+    name: z.string().optional(),
+    description: z.string().optional(),
+  })).optional(),
+}).catchall(z.unknown());
+
+export type ProductAiJobResultDto = z.infer<typeof productAiJobResultSchema>;
+
 export const productAiJobSchema = jobSchema.extend({
-  productId: z.string(),
-  operation: z.enum(['generate_description', 'optimize_images', 'categorize', 'tag_generation']).optional(),
+  productId: z.string().nullable().optional(),
+  operation: productAiJobTypeSchema.optional(),
   aiModel: z.string().optional(),
   parameters: z.record(z.string(), z.unknown()).optional(),
+  payload: z.record(z.string(), z.unknown()).optional(),
+  result: productAiJobResultSchema.nullable(),
+  errorMessage: z.string().nullable().optional(),
+  finishedAt: z.string().nullable().optional(),
+  product: z.object({
+    name_en: z.string().nullable(),
+    sku: z.string().nullable(),
+  }).optional(),
 });
 
 export type ProductAiJobDto = z.infer<typeof productAiJobSchema>;

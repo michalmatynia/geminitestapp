@@ -34,11 +34,11 @@ export function createQueryHook<TData, TParams = void>(config: QueryConfig<TData
         if (method === 'POST') {
           data = await api.post<TData>(url, params as Record<string, unknown>, config.apiOptions);
         } else {
-          const requestOptions: ApiClientOptions & { params?: TParams } = { ...config.apiOptions };
+          const requestOptions: ApiClientOptions = { ...config.apiOptions };
           if (params && typeof params === 'object') {
-            requestOptions.params = params;
+            requestOptions.params = params as Record<string, string | number | boolean | undefined>;
           }
-          data = await api.get<TData>(url, requestOptions as ApiClientOptions);
+          data = await api.get<TData>(url, requestOptions);
         }
         
         if (config.schema) {

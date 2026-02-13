@@ -24,12 +24,10 @@ import {
   FormField,
 } from '@/shared/ui';
 
-interface ParallaxSectionProps {
-  config: GsapAnimationConfig;
-  onChange: (config: GsapAnimationConfig) => void;
-}
+import { useAnimationConfigContext } from './AnimationConfigContext';
 
-export function ParallaxSection({ config, onChange }: ParallaxSectionProps): React.ReactNode {
+export function ParallaxSection(): React.ReactNode {
+  const { config, onChange } = useAnimationConfigContext();
   const parallaxPresetValue = config.parallaxPreset ?? DEFAULT_ANIMATION_CONFIG.parallaxPreset ?? 'none';
   const parallaxSelectorValue = config.parallaxSelector ?? DEFAULT_ANIMATION_CONFIG.parallaxSelector ?? '';
   const parallaxAxisValue = config.parallaxAxis ?? DEFAULT_ANIMATION_CONFIG.parallaxAxis ?? 'y';

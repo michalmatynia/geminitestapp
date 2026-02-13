@@ -164,12 +164,14 @@ const polygonPointsToSvg = (
     .join(' ');
 
 async function buildServerPolygonMaskBuffer({
+  sourceBuffer,
   width,
   height,
   variant,
   inverted,
   polygons,
 }: {
+  sourceBuffer: Buffer;
   width: number;
   height: number;
   variant: 'white' | 'black';
@@ -184,6 +186,20 @@ async function buildServerPolygonMaskBuffer({
     'utf8'
   );
 
+  // Apply polygon mask to the high-res source first for reproducible alpha extraction.
+  const cutout = await sharp(sourceBuffer)
+    .ensureAlpha()
+    .composite([{ input: polygonMaskSvg, blend: 'dest-in' }])
+    .png()
+    .toBuffer();
+
+  const alphaMask = await sharp(cutout)
+    .ensureAlpha()
+    .extractChannel(3)
+    .toColourspace('b-w')
+    .png()
+    .toBuffer();
+
   const fillLayer = await sharp({
     create: {
       width,
@@ -192,7 +208,7 @@ async function buildServerPolygonMaskBuffer({
       background: colorFor(fill),
     },
   })
-    .composite([{ input: polygonMaskSvg, blend: 'dest-in' }])
+    .composite([{ input: alphaMask, blend: 'dest-in' }])
     .png()
     .toBuffer();
 
@@ -239,15 +255,16 @@ async function POST_handler(
     }
   }
 
+  let sourceBuffer: Buffer | null = null;
   let sourceWidth = sourceSlot.imageFile?.width ?? null;
   let sourceHeight = sourceSlot.imageFile?.height ?? null;
-  if (mode === 'server_polygon' && !(sourceWidth && sourceHeight)) {
-    const sourceBuffer = await loadSourceBuffer(sourceSlot);
+  if (mode === 'server_polygon') {
+    sourceBuffer = await loadSourceBuffer(sourceSlot);
     const metadata = await sharp(sourceBuffer).metadata();
-    sourceWidth = metadata.width ?? null;
-    sourceHeight = metadata.height ?? null;
+    sourceWidth = metadata.width ?? sourceWidth;
+    sourceHeight = metadata.height ?? sourceHeight;
   }
-  if (mode === 'server_polygon' && !(sourceWidth && sourceHeight)) {
+  if (mode === 'server_polygon' && (!(sourceWidth && sourceHeight) || !sourceBuffer)) {
     throw badRequestError('Could not resolve source image dimensions for server polygon mask.');
   }
 
@@ -267,10 +284,11 @@ async function POST_handler(
       }
     } else {
       const polygons = mask.polygons ?? [];
-      if (!(sourceWidth && sourceHeight)) {
+      if (!(sourceWidth && sourceHeight) || !sourceBuffer) {
         throw badRequestError('Missing source dimensions for server polygon mask.');
       }
       const buffer = await buildServerPolygonMaskBuffer({
+        sourceBuffer,
         width: sourceWidth,
         height: sourceHeight,
         variant: mask.variant,

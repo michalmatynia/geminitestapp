@@ -98,6 +98,9 @@ const buildTimestampSearchText = (value: string | null): string => {
   return `${value} ${parsed.toISOString()} ${parsed.toLocaleDateString()} ${parsed.toLocaleTimeString()} ${parsed.toLocaleString()}`.toLowerCase();
 };
 
+const wait = async (ms: number): Promise<void> =>
+  await new Promise((resolve) => setTimeout(resolve, ms));
+
 const normalizeImagePath = (value: string | null | undefined): string => {
   if (typeof value !== 'string') return '';
   const trimmed = value.trim();
@@ -118,7 +121,7 @@ export function CenterPreview(): React.JSX.Element {
   const { toggleFocusMode } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot, previewMode, captureRef, slots } = useSlotsState();
-  const { setPreviewMode, setSelectedSlotId, setWorkingSlotId, deleteSlotMutation } = useSlotsActions();
+  const { setPreviewMode, setSelectedSlotId, setWorkingSlotId, deleteSlotMutation, createSlots } = useSlotsActions();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -146,6 +149,7 @@ export function CenterPreview(): React.JSX.Element {
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
   const [dismissedVariantIds, setDismissedVariantIds] = useState<Set<string>>(new Set());
+  const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
   const [variantTooltip, setVariantTooltip] = useState<{
     variant: VariantThumbnailInfo;
     x: number;
@@ -440,13 +444,18 @@ export function CenterPreview(): React.JSX.Element {
     return { left, top };
   }, [variantTooltip]);
 
-  const handleLoadVariantToCanvas = useCallback((variant: VariantThumbnailInfo): void => {
-    const resolveFallbackSlotId = (): string | null => {
-      if (variant.slotId && slots.some((slot) => slot.id === variant.slotId)) {
+  const handleLoadVariantToCanvas = useCallback(async (variant: VariantThumbnailInfo): Promise<void> => {
+    if (variantLoadingId === variant.id) return;
+    setVariantLoadingId(variant.id);
+
+    const resolveFallbackSlotId = (
+      candidateSlots: typeof slots
+    ): string | null => {
+      if (variant.slotId && candidateSlots.some((slot) => slot.id === variant.slotId)) {
         return variant.slotId;
       }
 
-      const matchedByRunMetadata = slots.find((slot) => {
+      const matchedByRunMetadata = candidateSlots.find((slot) => {
         const metadata = asObjectRecord(slot.metadata);
         const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
         const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
@@ -461,7 +470,7 @@ export function CenterPreview(): React.JSX.Element {
       const output = variant.output;
       if (!output) return null;
 
-      const matchedByFileId = slots.find((slot) => slot.imageFileId === output.id);
+      const matchedByFileId = candidateSlots.find((slot) => slot.imageFileId === output.id);
       if (matchedByFileId) {
         return matchedByFileId.id;
       }
@@ -469,7 +478,7 @@ export function CenterPreview(): React.JSX.Element {
       const outputPath = normalizeImagePath(output.filepath);
       if (!outputPath) return null;
 
-      const matchedByPath = slots.find((slot) => {
+      const matchedByPath = candidateSlots.find((slot) => {
         const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
         if (imageFilePath && imageFilePath === outputPath) return true;
         const imageUrlPath = normalizeImagePath(slot.imageUrl);
@@ -478,18 +487,77 @@ export function CenterPreview(): React.JSX.Element {
       return matchedByPath?.id ?? null;
     };
 
-    const resolvedSlotId = resolveFallbackSlotId();
-    if (!resolvedSlotId) {
-      void queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
-      toast('Variant is still syncing to card slots. Try again in a second.', { variant: 'info' });
-      return;
+    try {
+      let resolvedSlotId = resolveFallbackSlotId(slots);
+
+      if (!resolvedSlotId) {
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          await queryClient.refetchQueries({
+            queryKey: studioKeys.slots(projectId),
+            type: 'active',
+          });
+
+          const cached = queryClient.getQueryData<{ slots?: typeof slots }>(
+            studioKeys.slots(projectId)
+          );
+          const candidateSlots = Array.isArray(cached?.slots) ? cached.slots : slots;
+          resolvedSlotId = resolveFallbackSlotId(candidateSlots);
+          if (resolvedSlotId) break;
+          await wait(180);
+        }
+      }
+
+      if (!resolvedSlotId && variant.output) {
+        const [createdSlot] = await createSlots([
+          {
+            name: variant.output.filename || `Variant ${variant.index}`,
+            folderPath: workingSlot?.folderPath ?? '',
+            imageFileId: variant.output.id,
+            imageUrl: variant.output.filepath,
+            metadata: {
+              role: 'generation',
+              sourceSlotId: workingSlot?.id ?? null,
+              sourceSlotIds: workingSlot?.id ? [workingSlot.id] : [],
+              relationType: 'generation:output',
+              generationRunId: activeRunId ?? null,
+              generationOutputIndex: variant.index,
+            },
+          },
+        ]);
+        resolvedSlotId = createdSlot?.id ?? null;
+      }
+
+      if (!resolvedSlotId) {
+        toast('Variant is still syncing to card slots. Try again in a second.', { variant: 'info' });
+        return;
+      }
+
+      setSingleVariantView('variant');
+      setSplitVariantView(false);
+      setSelectedSlotId(resolvedSlotId);
+      setWorkingSlotId(resolvedSlotId);
+      setPreviewMode('image');
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Failed to load variant into canvas.', {
+        variant: 'error',
+      });
+    } finally {
+      setVariantLoadingId((current) => (current === variant.id ? null : current));
     }
-    setSingleVariantView('variant');
-    setSplitVariantView(false);
-    setSelectedSlotId(resolvedSlotId);
-    setWorkingSlotId(resolvedSlotId);
-    setPreviewMode('image');
-  }, [activeRunId, projectId, queryClient, setPreviewMode, setSelectedSlotId, setWorkingSlotId, slots, toast]);
+  }, [
+    activeRunId,
+    createSlots,
+    projectId,
+    queryClient,
+    setPreviewMode,
+    setSelectedSlotId,
+    setWorkingSlotId,
+    slots,
+    toast,
+    variantLoadingId,
+    workingSlot?.folderPath,
+    workingSlot?.id,
+  ]);
 
   const handleToggleSourceVariantView = useCallback((): void => {
     setSplitVariantView(false);
@@ -751,12 +819,14 @@ export function CenterPreview(): React.JSX.Element {
                     <div key={variant.id} className='relative w-28 shrink-0'>
                       <button
                         type='button'
-                        onClick={(): void => handleLoadVariantToCanvas(variant)}
+                        onClick={(): void => {
+                          void handleLoadVariantToCanvas(variant);
+                        }}
                         onMouseEnter={(event): void => handleVariantTooltipMove(event, variant)}
                         onMouseMove={(event): void => handleVariantTooltipMove(event, variant)}
                         onMouseLeave={(): void => setVariantTooltip(null)}
                         onBlur={(): void => setVariantTooltip(null)}
-                        disabled={!variant.output}
+                        disabled={!variant.output || variantLoadingId === variant.id}
                         className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${
                           variant.status === 'completed'
                             ? 'border-emerald-400/40 bg-emerald-500/5'

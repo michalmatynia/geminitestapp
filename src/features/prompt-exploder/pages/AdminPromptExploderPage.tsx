@@ -128,12 +128,60 @@ import {
   PROMPT_EXPLODER_SETTINGS_KEY,
 } from '../settings';
 import {
-  learningTokens,
   normalizeLearningText,
   templateSimilarityScore,
   upsertLearnedTemplate,
   type TemplateMergeMode,
 } from '../template-learning';
+
+import {
+  reorderListItemsForDrop,
+  reorderSegmentsForDrop,
+  resolveDropPosition,
+} from '../helpers/drag-reorder';
+import {
+  clampNumber,
+  formatTimestamp,
+  benchmarkSuiteLabel,
+  safeJsonStringify,
+  isFiniteNumber,
+  inferParamTypeLabel,
+} from '../helpers/formatting';
+import {
+  createLogicalConditionId,
+  createLogicalCondition,
+  LOGICAL_OPERATOR_OPTIONS,
+  LOGICAL_COMPARATOR_OPTIONS,
+  LOGICAL_JOIN_OPTIONS,
+  isLogicalComparator,
+  isLogicalJoin,
+  normalizeLogicalOperatorText,
+  normalizeLogicalComparatorText,
+  parseLogicalValueText,
+  formatLogicalValueText,
+  parseSubsectionConditionText,
+  buildSubsectionConditionText,
+} from '../helpers/logical-conditions';
+import {
+  RGB_LITERAL_RE,
+  clampRgb,
+  extractRgbLiteral,
+  rgbToHex,
+  hexToRgb,
+  replaceRgbLiteral,
+} from '../helpers/rgb';
+import {
+  createListItem,
+  addBlankListItem,
+  createSubsection,
+  createManualBindingId,
+  formatSubsectionLabel,
+  buildSegmentSampleText,
+  buildLearnedRulePattern,
+  createApprovalDraftFromSegment,
+  isPromptExploderManagedRule,
+  type ApprovalDraft,
+} from '../helpers/segment-helpers';
 
 import type { PromptExploderLibraryItem } from '../prompt-library';
 import type {
@@ -152,352 +200,6 @@ import type {
   PromptExploderSegment,
   PromptExploderSubsection,
 } from '../types';
-
-const clampNumber = (value: number, min: number, max: number): number =>
-  Math.min(max, Math.max(min, value));
-type ApprovalTemplateMergeMode = TemplateMergeMode;
-
-const formatTimestamp = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
-};
-
-const isPromptExploderManagedRule = (rule: PromptValidationRule): boolean => {
-  const scopes = rule.appliesToScopes ?? [];
-  const hasPromptExploderScope = scopes.includes('prompt_exploder');
-  if (hasPromptExploderScope) return true;
-  if (rule.id.includes('prompt_exploder') || rule.id.includes('exploder') || rule.id.startsWith('segment.')) {
-    return true;
-  }
-  return false;
-};
-
-const createLogicalConditionId = (): string =>
-  `condition_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-
-const createLogicalCondition = (
-  initial?: Partial<PromptExploderLogicalCondition>
-): PromptExploderLogicalCondition => ({
-  id: initial?.id ?? createLogicalConditionId(),
-  paramPath: (initial?.paramPath ?? '').trim(),
-  comparator: initial?.comparator ?? 'truthy',
-  value: initial?.value ?? null,
-  joinWithPrevious: initial?.joinWithPrevious ?? null,
-});
-
-const createListItem = (text = 'New item'): PromptExploderListItem => ({
-  id: `item_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-  text,
-  logicalOperator: null,
-  logicalConditions: [],
-  referencedParamPath: null,
-  referencedComparator: null,
-  referencedValue: null,
-  children: [],
-});
-
-const addBlankListItem = (items: PromptExploderListItem[]): PromptExploderListItem[] => {
-  return [...items, createListItem()];
-};
-
-const createSubsection = (): PromptExploderSubsection => ({
-  id: `subsection_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-  title: 'New subsection',
-  code: null,
-  condition: null,
-  guidance: null,
-  items: [createListItem()],
-});
-
-const createManualBindingId = (): string =>
-  `manual_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-
-const formatSubsectionLabel = (subsection: PromptExploderSubsection): string => {
-  const title = subsection.title.trim() || 'Untitled subsection';
-  if (subsection.code) {
-    return `[${subsection.code}] ${title}`;
-  }
-  return title;
-};
-
-const buildSegmentSampleText = (segment: PromptExploderSegment): string => {
-  if (segment.listItems.length > 0) {
-    return segment.listItems.slice(0, 4).map((item) => item.text).join(' ');
-  }
-  if (segment.subsections.length > 0) {
-    return segment.subsections
-      .slice(0, 3)
-      .map((subsection) => subsection.title)
-      .join(' ');
-  }
-  return segment.text.slice(0, 220);
-};
-
-const buildLearnedRulePattern = (segment: PromptExploderSegment): string => {
-  const tokens = learningTokens(`${segment.title} ${buildSegmentSampleText(segment)}`);
-  if (tokens.length === 0) {
-    const escaped = segment.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return `^\\s*${escaped}\\s*$`;
-  }
-  const anchors = tokens.slice(0, 4);
-  return anchors.map((token) => `\\b${token}\\b`).join('[\\s\\S]{0,120}');
-};
-
-const createApprovalDraftFromSegment = (
-  segment: PromptExploderSegment | null
-): {
-  ruleTitle: string;
-  rulePattern: string;
-  ruleSegmentType: PromptExploderSegment['type'];
-  rulePriority: number;
-  ruleConfidenceBoost: number;
-  ruleTreatAsHeading: boolean;
-  templateMergeMode: ApprovalTemplateMergeMode;
-  templateTargetId: string;
-} => {
-  if (!segment) {
-    return {
-      ruleTitle: 'Learned segment pattern',
-      rulePattern: '\\bsegment\\b',
-      ruleSegmentType: 'assigned_text',
-      rulePriority: 30,
-      ruleConfidenceBoost: 0.2,
-      ruleTreatAsHeading: false,
-      templateMergeMode: 'auto',
-      templateTargetId: '',
-    };
-  }
-
-  return {
-    ruleTitle: `Learned ${segment.type} pattern`,
-    rulePattern: buildLearnedRulePattern(segment),
-    ruleSegmentType: segment.type,
-    rulePriority: 30,
-    ruleConfidenceBoost: 0.2,
-    ruleTreatAsHeading: /^[A-Z0-9 _()[\]\\,:&+.-]{3,}$/.test(
-      segment.title.trim()
-    ),
-    templateMergeMode: 'auto',
-    templateTargetId: '',
-  };
-};
-
-const benchmarkSuiteLabel = (suite: PromptExploderBenchmarkSuite | 'custom'): string => {
-  if (suite === 'extended') return 'extended';
-  if (suite === 'custom') return 'custom';
-  return 'default';
-};
-
-const safeJsonStringify = (value: unknown): string => {
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
-};
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value);
-
-const inferParamTypeLabel = (entry: PromptExploderParamEntry): string => {
-  if (entry.spec?.kind) return entry.spec.kind;
-  const value = entry.value;
-  if (Array.isArray(value)) return 'array';
-  if (value === null) return 'null';
-  return typeof value;
-};
-
-const LOGICAL_OPERATOR_OPTIONS: Array<{
-  value: PromptExploderLogicalOperator | 'none';
-  label: string;
-}> = [
-  { value: 'none', label: 'No condition' },
-  { value: 'if', label: 'If' },
-  { value: 'only_if', label: 'Only if' },
-  { value: 'unless', label: 'Unless' },
-  { value: 'when', label: 'When' },
-];
-
-const LOGICAL_COMPARATOR_OPTIONS: Array<{
-  value: PromptExploderLogicalComparator;
-  label: string;
-}> = [
-  { value: 'truthy', label: 'is true' },
-  { value: 'falsy', label: 'is false' },
-  { value: 'equals', label: '=' },
-  { value: 'not_equals', label: '!=' },
-  { value: 'gt', label: '>' },
-  { value: 'gte', label: '>=' },
-  { value: 'lt', label: '<' },
-  { value: 'lte', label: '<=' },
-  { value: 'contains', label: 'contains' },
-];
-
-const LOGICAL_JOIN_OPTIONS: Array<{
-  value: PromptExploderLogicalJoin;
-  label: string;
-}> = [
-  { value: 'and', label: 'AND' },
-  { value: 'or', label: 'OR' },
-];
-
-const isLogicalComparator = (value: string): value is PromptExploderLogicalComparator => {
-  return LOGICAL_COMPARATOR_OPTIONS.some((option) => option.value === value);
-};
-
-const isLogicalJoin = (value: string): value is PromptExploderLogicalJoin => {
-  return LOGICAL_JOIN_OPTIONS.some((option) => option.value === value);
-};
-
-const RGB_LITERAL_RE = /RGB\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i;
-
-const clampRgb = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
-
-const extractRgbLiteral = (text: string): [number, number, number] | null => {
-  const match = RGB_LITERAL_RE.exec(text);
-  if (!match) return null;
-  const red = Number(match[1]);
-  const green = Number(match[2]);
-  const blue = Number(match[3]);
-  if (![red, green, blue].every((value) => Number.isFinite(value))) return null;
-  return [clampRgb(red), clampRgb(green), clampRgb(blue)];
-};
-
-const rgbToHex = ([red, green, blue]: [number, number, number]): string =>
-  `#${[red, green, blue]
-    .map((value) => clampRgb(value).toString(16).padStart(2, '0'))
-    .join('')}`;
-
-const hexToRgb = (value: string): [number, number, number] | null => {
-  const normalized = value.trim();
-  const match = /^#?([a-f0-9]{6})$/i.exec(normalized);
-  if (!match) return null;
-  const hex = match[1] ?? '';
-  return [
-    Number.parseInt(hex.slice(0, 2), 16),
-    Number.parseInt(hex.slice(2, 4), 16),
-    Number.parseInt(hex.slice(4, 6), 16),
-  ];
-};
-
-const replaceRgbLiteral = (
-  text: string,
-  rgb: [number, number, number]
-): string => {
-  return text.replace(
-    RGB_LITERAL_RE,
-    `RGB(${clampRgb(rgb[0])},${clampRgb(rgb[1])},${clampRgb(rgb[2])})`
-  );
-};
-
-const normalizeLogicalOperatorText = (
-  value: string
-): PromptExploderLogicalOperator | null => {
-  const normalized = value.trim().toLowerCase();
-  if (normalized === 'if') return 'if';
-  if (normalized === 'only if') return 'only_if';
-  if (normalized === 'unless') return 'unless';
-  if (normalized === 'when') return 'when';
-  return null;
-};
-
-const normalizeLogicalComparatorText = (
-  value: string | null | undefined
-): PromptExploderLogicalComparator | null => {
-  if (!value) return null;
-  const normalized = value.trim().toLowerCase();
-  if (normalized === '=' || normalized === '==') return 'equals';
-  if (normalized === '!=') return 'not_equals';
-  if (normalized === '>') return 'gt';
-  if (normalized === '>=') return 'gte';
-  if (normalized === '<') return 'lt';
-  if (normalized === '<=') return 'lte';
-  if (normalized === 'contains') return 'contains';
-  return null;
-};
-
-const parseLogicalValueText = (value: string | null | undefined): unknown => {
-  const trimmed = (value ?? '').trim();
-  if (!trimmed) return null;
-  if (/^(true|false)$/i.test(trimmed)) return /^true$/i.test(trimmed);
-  if (/^null$/i.test(trimmed)) return null;
-  if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
-  ) {
-    return trimmed.slice(1, -1);
-  }
-  return trimmed;
-};
-
-const formatLogicalValueText = (value: unknown): string => {
-  if (typeof value === 'string') return value;
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (value === null || value === undefined) return 'null';
-  return safeJsonStringify(value);
-};
-
-const parseSubsectionConditionText = (
-  condition: string | null | undefined
-): {
-  operator: PromptExploderLogicalOperator;
-  paramPath: string;
-  comparator: PromptExploderLogicalComparator;
-  value: unknown;
-} | null => {
-  const trimmed = (condition ?? '').trim().replace(/:$/, '');
-  if (!trimmed) return null;
-  const operatorMatch = /^(if|only if|unless|when)\s+(.+)$/i.exec(trimmed);
-  if (!operatorMatch) return null;
-  const operator = normalizeLogicalOperatorText(operatorMatch[1] ?? '');
-  if (!operator) return null;
-  const expression = (operatorMatch[2] ?? '').trim();
-  const expressionMatch = /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(
-    expression
-  );
-  if (!expressionMatch) return null;
-  const paramPath = (expressionMatch[1] ?? '').trim().replace(/^params\./i, '');
-  if (!paramPath) return null;
-  const comparator =
-    normalizeLogicalComparatorText(expressionMatch[2]) ??
-    (operator === 'unless' ? 'falsy' : 'truthy');
-  const value =
-    comparator === 'truthy' || comparator === 'falsy'
-      ? null
-      : parseLogicalValueText(expressionMatch[3]);
-  return {
-    operator,
-    paramPath,
-    comparator,
-    value,
-  };
-};
-
-const buildSubsectionConditionText = (input: {
-  operator: PromptExploderLogicalOperator | null;
-  paramPath: string;
-  comparator: PromptExploderLogicalComparator;
-  value: unknown;
-}): string | null => {
-  const operator = input.operator;
-  const paramPath = input.paramPath.trim();
-  if (!operator || !paramPath) return null;
-  const operatorLabel = operator === 'only_if' ? 'Only if' : `${operator.slice(0, 1).toUpperCase()}${operator.slice(1)}`;
-  if (input.comparator === 'truthy') return `${operatorLabel} ${paramPath}:`;
-  if (input.comparator === 'falsy') return `${operatorLabel} ${paramPath}=false:`;
-  if (input.comparator === 'equals') return `${operatorLabel} ${paramPath}=${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'not_equals') return `${operatorLabel} ${paramPath}!=${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'gt') return `${operatorLabel} ${paramPath}>${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'gte') return `${operatorLabel} ${paramPath}>=${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'lt') return `${operatorLabel} ${paramPath}<${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'lte') return `${operatorLabel} ${paramPath}<=${formatLogicalValueText(input.value)}:`;
-  if (input.comparator === 'contains') {
-    return `${operatorLabel} ${paramPath} contains ${formatLogicalValueText(input.value)}:`;
-  }
-  return `${operatorLabel} ${paramPath}:`;
-};
 
 export function AdminPromptExploderPage(): React.JSX.Element {
   const router = useRouter();
@@ -1604,54 +1306,11 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     );
   };
 
-  const reorderListItemsForDrop = (
-    items: PromptExploderListItem[],
-    fromIndex: number,
-    toIndex: number,
-    position: 'before' | 'after'
-  ): PromptExploderListItem[] => {
-    if (fromIndex === toIndex) return items;
-    if (fromIndex < 0 || toIndex < 0) return items;
-    if (fromIndex >= items.length || toIndex >= items.length) return items;
-    const dragged = items[fromIndex];
-    if (!dragged) return items;
-    const remaining = items.filter((_, index) => index !== fromIndex);
-    const targetBaseIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
-    const insertIndex =
-      position === 'after' ? Math.min(targetBaseIndex + 1, remaining.length) : targetBaseIndex;
-    return [
-      ...remaining.slice(0, insertIndex),
-      dragged,
-      ...remaining.slice(insertIndex),
-    ];
-  };
-
-  const reorderSegmentsForDrop = (
-    segments: PromptExploderSegment[],
-    draggedId: string,
-    targetId: string,
-    position: 'before' | 'after'
-  ): PromptExploderSegment[] => {
-    if (!draggedId || !targetId || draggedId === targetId) return segments;
-    const dragged = segments.find((segment) => segment.id === draggedId);
-    if (!dragged) return segments;
-    const remaining = segments.filter((segment) => segment.id !== draggedId);
-    const targetIndex = remaining.findIndex((segment) => segment.id === targetId);
-    if (targetIndex < 0) return segments;
-    const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
-    return [
-      ...remaining.slice(0, insertIndex),
-      dragged,
-      ...remaining.slice(insertIndex),
-    ];
-  };
-
   const resolveSegmentDropPosition = (
     event: React.DragEvent<HTMLDivElement>
   ): 'before' | 'after' => {
     const rect = event.currentTarget.getBoundingClientRect();
-    const offsetY = event.clientY - rect.top;
-    return offsetY >= rect.height / 2 ? 'after' : 'before';
+    return resolveDropPosition(event.clientY, rect.top, rect.height);
   };
 
   const handleListItemDragStart = (
@@ -4752,7 +4411,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                               <UnifiedSelect
                                 value={approvalDraft.templateMergeMode}
                                 onValueChange={(value: string) => {
-                                  const nextMode = value as ApprovalTemplateMergeMode;
+                                  const nextMode = value as TemplateMergeMode;
                                   setApprovalDraft((previous) => ({
                                     ...previous,
                                     templateMergeMode: nextMode,

@@ -113,21 +113,65 @@ export type CreateAiPathDto = z.infer<typeof createAiPathSchema>;
 export type UpdateAiPathDto = Partial<CreateAiPathDto>;
 
 /**
+ * AI Path Run Status
+ */
+export const aiPathRunStatusSchema = z.enum([
+  'queued',
+  'running',
+  'paused',
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
+]);
+
+export type AiPathRunStatusDto = z.infer<typeof aiPathRunStatusSchema>;
+
+/**
  * AI Path Run Contract
  */
 export const aiPathRunSchema = dtoBaseSchema.extend({
-  pathId: z.string(),
-  status: z.enum(['queued', 'running', 'completed', 'failed', 'cancelled', 'paused']),
-  triggerNodeId: z.string(),
-  triggerEvent: z.string(),
-  context: z.record(z.string(), z.unknown()),
-  result: z.record(z.string(), z.unknown()).nullable(),
-  error: z.string().nullable(),
-  startedAt: z.string().nullable(),
-  completedAt: z.string().nullable(),
+  pathId: z.string().nullable().optional(),
+  pathName: z.string().nullable().optional(),
+  userId: z.string().nullable().optional(),
+  status: aiPathRunStatusSchema,
+  triggerNodeId: z.string().nullable().optional(),
+  triggerEvent: z.string().nullable().optional(),
+  triggerContext: z.record(z.string(), z.unknown()).nullable().optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
+  result: z.record(z.string(), z.unknown()).nullable().optional(),
+  error: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
+  startedAt: z.string().nullable().optional(),
+  completedAt: z.string().nullable().optional(),
+  finishedAt: z.string().nullable().optional(),
+  deadLetteredAt: z.string().nullable().optional(),
+  retryCount: z.number().nullable().optional(),
+  maxAttempts: z.number().nullable().optional(),
+  nextRetryAt: z.string().nullable().optional(),
+  meta: z.record(z.string(), z.unknown()).nullable().optional(),
+  entityId: z.string().nullable().optional(),
+  entityType: z.string().nullable().optional(),
 });
 
 export type AiPathRunDto = z.infer<typeof aiPathRunSchema>;
+
+/**
+ * AI Path Node Status
+ */
+export const aiPathNodeStatusSchema = z.enum([
+  'idle',
+  'queued',
+  'running',
+  'completed',
+  'failed',
+  'canceled',
+  'skipped',
+  'blocked',
+  'pending',
+]);
+
+export type AiPathNodeStatusDto = z.infer<typeof aiPathNodeStatusSchema>;
 
 /**
  * AI Path Run Node Contract
@@ -136,12 +180,16 @@ export const aiPathRunNodeSchema = dtoBaseSchema.extend({
   runId: z.string(),
   nodeId: z.string(),
   nodeType: z.string(),
-  status: z.string(), // Generic status
+  nodeTitle: z.string().nullable().optional(),
+  status: aiPathNodeStatusSchema,
+  attempt: z.number(),
   inputs: z.record(z.string(), z.unknown()).optional(),
   outputs: z.record(z.string(), z.unknown()).optional(),
   error: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
   startedAt: z.string().nullable().optional(),
   completedAt: z.string().nullable().optional(),
+  finishedAt: z.string().nullable().optional(),
 });
 
 export type AiPathRunNodeDto = z.infer<typeof aiPathRunNodeSchema>;

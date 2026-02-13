@@ -1,63 +1,54 @@
-import { Entity } from '../core/base-types';
-
 import type { 
   LanguageDto, 
   CountryDto, 
   CurrencyDto, 
-  TranslationDto 
+  TranslationDto,
+  CreateLanguageDto,
+  UpdateLanguageDto,
+  CreateCountryDto,
+  UpdateCountryDto,
+  CreateCurrencyDto,
+  UpdateCurrencyDto,
+  CreateTranslationDto,
+  UpdateTranslationDto
 } from '../dtos';
 
 export type { 
   LanguageDto, 
   CountryDto, 
   CurrencyDto, 
-  TranslationDto 
+  TranslationDto,
+  CreateLanguageDto,
+  UpdateLanguageDto,
+  CreateCountryDto,
+  UpdateCountryDto,
+  CreateCurrencyDto,
+  UpdateCurrencyDto,
+  CreateTranslationDto,
+  UpdateTranslationDto
 };
 
-export type CurrencyOption = {
-  id: string;
-  code: string;
-  name: string;
-  symbol?: string | null;
-};
+export type CurrencyOption = CurrencyDto;
 
-export type CountryOption = {
-  id: string;
-  code: string;
-  name: string;
+export type CountryOption = CountryDto & {
   currencies?: { currencyId: string; currency: CurrencyOption }[];
 };
 
-export type Language = {
-  id: string;
-  code: string;
-  name: string;
-  nativeName?: string | null;
+export type Language = LanguageDto & {
   countries?: { countryId: string; country: CountryOption }[];
 };
 
 // Full record types with timestamps for API responses
 
-export type CurrencyRecord = Entity & {
-  code: string;
-  name: string;
-  symbol: string | null;
-};
+export type CurrencyRecord = CurrencyDto;
 
-export type CountryRecord = Entity & {
-  code: string;
-  name: string;
-};
+export type CountryRecord = CountryDto;
 
 export type CountryWithCurrencies = CountryRecord & {
   currencies: { currencyId: string; currency: CurrencyOption }[];
 };
 
-export type LanguageRecord = Entity & {
-  code: string;
-  name: string;
-  nativeName: string | null;
-};
+export type LanguageRecord = LanguageDto;
 
 export type LanguageWithCountries = LanguageRecord & {
   countries: { countryId: string; country: CountryOption }[];

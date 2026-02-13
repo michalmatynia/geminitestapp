@@ -3,6 +3,31 @@ import { z } from 'zod';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
 /**
+ * Image Processing Contracts
+ */
+export const imageTransformOptionsSchema = z.object({
+  maxWidth: z.number().optional(),
+  maxHeight: z.number().optional(),
+  quality: z.number().optional(),
+  format: z.enum(['jpeg', 'png', 'webp']).optional(),
+  forceJpeg: z.boolean().optional(),
+  maxDimension: z.number().optional(),
+  jpegQuality: z.number().optional(),
+});
+
+export type ImageTransformOptionsDto = z.infer<typeof imageTransformOptionsSchema>;
+
+export const imageRetryPresetSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  description: z.string(),
+  imageBase64Mode: z.enum(['base-only', 'full-data-uri']),
+  transform: imageTransformOptionsSchema,
+});
+
+export type ImageRetryPresetDto = z.infer<typeof imageRetryPresetSchema>;
+
+/**
  * Integration DTOs
  */
 

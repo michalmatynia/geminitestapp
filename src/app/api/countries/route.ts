@@ -112,6 +112,8 @@ const normalizeCountryResponse = (
   id: country.id,
   code: country.code,
   name: country.name,
+  enabled: true, // Assuming default value as it's missing
+  description: '', // Assuming default value as it's missing
   createdAt: country.createdAt.toISOString(),
   updatedAt: country.updatedAt.toISOString(),
   currencies: (country.currencyIds ?? [])

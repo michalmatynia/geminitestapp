@@ -11,7 +11,7 @@ import { resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain'
 import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
-import type { CmsTheme } from '@/features/cms/types';
+import type { CmsTheme, PageComponent } from '@/features/cms/types';
 import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
 
 import type { Metadata } from 'next';
@@ -68,6 +68,10 @@ export default async function CmsPreviewPage({ params }: PreviewPageProps): Prom
   const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
   const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
   const showMenu = page.showMenu !== false;
+  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
+    type: component.type,
+    content: component.content ?? {},
+  }));
   const content = (
     <CmsPageShell
       menu={menuSettings}
@@ -76,7 +80,7 @@ export default async function CmsPreviewPage({ params }: PreviewPageProps): Prom
       showMenu={showMenu}
     >
       <CmsPageRenderer
-        components={page.components ?? []}
+        components={rendererComponents}
         colorSchemes={colorSchemes}
         layout={layout}
         hoverEffect={hoverEffect}

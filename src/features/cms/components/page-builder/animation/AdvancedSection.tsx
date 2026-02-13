@@ -11,7 +11,6 @@ import {
 import React, { useCallback } from 'react';
 
 import type {
-  GsapAnimationConfig,
   TextEffect,
   DragAxis,
   ObserverType,
@@ -35,23 +34,15 @@ import {
   type VectorShape,
 } from '@/shared/ui';
 
+import { useAnimationConfigContext } from './AnimationConfigContext';
+
 import type { VectorOverlayResult } from '../../../hooks/usePageBuilderContext';
 
 
 const EMPTY_SHAPES: VectorShape[] = [];
 
-interface AdvancedSectionProps {
-  config: GsapAnimationConfig;
-  onChange: (config: GsapAnimationConfig) => void;
-  openVectorOverlay: (options: {
-    title: string;
-    description: string;
-    initialShapes: VectorShape[];
-    onApply: (result: VectorOverlayResult) => void;
-  }) => void;
-}
-
-export function AdvancedSection({ config, onChange, openVectorOverlay }: AdvancedSectionProps): React.ReactNode {
+export function AdvancedSection(): React.ReactNode {
+  const { config, onChange, openVectorOverlay } = useAnimationConfigContext();
   const motionPathEnabledValue = config.motionPathEnabled ?? DEFAULT_ANIMATION_CONFIG.motionPathEnabled ?? false;
   const motionPathPathValue = config.motionPathPath ?? DEFAULT_ANIMATION_CONFIG.motionPathPath ?? '';
   const motionPathAlignValue = config.motionPathAlign ?? DEFAULT_ANIMATION_CONFIG.motionPathAlign ?? true;

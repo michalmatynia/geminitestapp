@@ -6,7 +6,9 @@ import type {
   AiEdgeDto, 
   AiPathRunDto, 
   AiPathRunNodeDto,
-  AiNodeTypeDto
+  AiNodeTypeDto,
+  AiPathRunStatusDto,
+  AiPathNodeStatusDto
 } from '../../dtos/ai-paths';
 
 export type { 
@@ -15,10 +17,28 @@ export type {
   AiEdgeDto, 
   AiPathRunDto, 
   AiPathRunNodeDto,
-  AiNodeTypeDto
+  AiNodeTypeDto,
+  AiPathRunStatusDto,
+  AiPathNodeStatusDto
 };
 
 export type NodeType = AiNodeTypeDto;
+
+export type AiPathRunStatus = AiPathRunStatusDto;
+
+export type AiPathNodeStatus = AiPathNodeStatusDto;
+
+export type AiPathRunRecord = AiPathRunDto & {
+  recordingPath?: string | null | undefined;
+  planState?: Record<string, unknown> | null | undefined;
+  activeStepId?: string | null | undefined;
+  checkpointedAt?: Date | string | null | undefined;
+  graph?: { nodes: AiNode[]; edges: Edge[] } | null | undefined;
+  runtimeState?: RuntimeState | null | undefined;
+  _count?: { browserSnapshots?: number; browserLogs?: number } | null | undefined;
+};
+
+export type AiPathRunNodeRecord = AiPathRunNodeDto;
 
 export type ParserConfig = {
   mappings: Record<string, string>;
@@ -505,74 +525,7 @@ export type RuntimeState = {
   history?: Record<string, RuntimeHistoryEntry[]> | undefined;
 };
 
-export type AiPathRunStatus =
-  | 'queued'
-  | 'running'
-  | 'paused'
-  | 'completed'
-  | 'failed'
-  | 'canceled'
-  | 'dead_lettered';
-
-export type AiPathNodeStatus = Status | 'skipped' | 'blocked';
-
 export type AiPathRunEventLevel = 'info' | 'warning' | 'error';
-
-export type AiPathRunRecord = {
-  id: string;
-  userId?: string | null | undefined;
-  pathId?: string | null | undefined;
-  pathName?: string | null | undefined;
-  status: AiPathRunStatus;
-  prompt?: string | null | undefined;
-  model?: string | null | undefined;
-  tools?: string[] | undefined;
-  searchProvider?: string | null | undefined;
-  agentBrowser?: string | null | undefined;
-  runHeadless?: boolean | undefined;
-  logLines?: string[] | undefined;
-  requiresHumanIntervention?: boolean | undefined;
-  errorMessage?: string | null | undefined;
-  memoryKey?: string | null | undefined;
-  recordingPath?: string | null | undefined;
-  planState?: Record<string, unknown> | null | undefined;
-  activeStepId?: string | null | undefined;
-  checkpointedAt?: Date | string | null | undefined;
-  triggerEvent?: string | null | undefined;
-  triggerNodeId?: string | null | undefined;
-  triggerContext?: Record<string, unknown> | null | undefined;
-  graph?: { nodes: AiNode[]; edges: Edge[] } | null | undefined;
-  runtimeState?: RuntimeState | null | undefined;
-  meta?: Record<string, unknown> | null | undefined;
-  entityId?: string | null | undefined;
-  entityType?: string | null | undefined;
-  retryCount?: number | null | undefined;
-  maxAttempts?: number | null | undefined;
-  nextRetryAt?: Date | string | null | undefined;
-  deadLetteredAt?: Date | string | null | undefined;
-  startedAt?: Date | string | null | undefined;
-  finishedAt?: Date | string | null | undefined;
-  createdAt: Date | string;
-  updatedAt?: Date | string | null | undefined;
-  _count?: { browserSnapshots?: number; browserLogs?: number } | null | undefined;
-};
-
-export type AiPathRunNodeRecord = {
-  id: string;
-  runId: string;
-  nodeId: string;
-  nodeType: string;
-  nodeTitle?: string | null | undefined;
-  status: AiPathNodeStatus;
-  attempt: number;
-  inputs?: RuntimePortValues | null | undefined;
-  outputs?: RuntimePortValues | null | undefined;
-  errorMessage?: string | null | undefined;
-  startedAt?: Date | string | null | undefined;
-  finishedAt?: Date | string | null | undefined;
-  createdAt: Date | string;
-  updatedAt?: Date | string | null | undefined;
-};
 
 export type AiPathRunEventRecord = {
   id: string;

@@ -241,6 +241,52 @@ export function MasterFolderTree({
     [controller, onNodeDrop]
   );
 
+  const resolveNodeDropPosition = React.useCallback(
+    (
+      event: React.DragEvent<HTMLDivElement>,
+      draggedNodeId: MasterTreeId,
+      targetNode: MasterTreeViewNode
+    ): MasterTreeDropPosition | null => {
+      const targetRect = event.currentTarget.getBoundingClientRect();
+      const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
+        thresholdRatio: 0.34,
+      });
+      const requestedPosition =
+        resolveDropPosition?.(
+          event,
+          {
+            draggedNodeId,
+            targetId: targetNode.id,
+          },
+          controller
+        ) ??
+        edgePosition ??
+        'inside';
+
+      const insideAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, 'inside');
+      const requestedAllowed = resolveDropAllowance(draggedNodeId, targetNode.id, requestedPosition);
+
+      // Global default: when a file is dropped onto a folder row, prefer nesting inside
+      // over edge reordering unless the consumer provided explicit position logic.
+      if (
+        !resolveDropPosition &&
+        requestedPosition !== 'inside' &&
+        targetNode.type === 'folder' &&
+        insideAllowed
+      ) {
+        const draggedNode = controller.nodes.find((candidate) => candidate.id === draggedNodeId) ?? null;
+        if (!draggedNode || draggedNode.type === 'file') {
+          return 'inside';
+        }
+      }
+
+      if (requestedAllowed) return requestedPosition;
+      if (requestedPosition !== 'inside' && insideAllowed) return 'inside';
+      return null;
+    },
+    [controller, resolveDropAllowance, resolveDropPosition]
+  );
+
   const renderTree = (nodes: MasterTreeViewNode[], depth: number): React.JSX.Element => (
     <div className='space-y-0.5'>
       {nodes.map((node: MasterTreeViewNode) => {
@@ -327,28 +373,7 @@ export function MasterFolderTree({
                     const draggedNodeId = resolveDraggedNode(event);
                     if (!draggedNodeId) return;
                     setRootDropHoverZone(null);
-                    const targetRect = event.currentTarget.getBoundingClientRect();
-                    const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
-                      thresholdRatio: 0.34,
-                    });
-                    const requestedPosition =
-                      resolveDropPosition?.(
-                        event,
-                        {
-                          draggedNodeId,
-                          targetId: node.id,
-                        },
-                        controller
-                      ) ??
-                      edgePosition ??
-                      'inside';
-                    const resolvedPosition =
-                      resolveDropAllowance(draggedNodeId, node.id, requestedPosition)
-                        ? requestedPosition
-                        : requestedPosition !== 'inside' &&
-                            resolveDropAllowance(draggedNodeId, node.id, 'inside')
-                          ? 'inside'
-                          : null;
+                    const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, node);
                     if (!resolvedPosition) return;
                     event.preventDefault();
                     event.stopPropagation();
@@ -367,28 +392,7 @@ export function MasterFolderTree({
                   ? (event: React.DragEvent<HTMLDivElement>): void => {
                     const draggedNodeId = resolveDraggedNode(event);
                     if (!draggedNodeId) return;
-                    const targetRect = event.currentTarget.getBoundingClientRect();
-                    const edgePosition = resolveVerticalDropPosition(event.clientY, targetRect, {
-                      thresholdRatio: 0.34,
-                    });
-                    const requestedPosition =
-                      resolveDropPosition?.(
-                        event,
-                        {
-                          draggedNodeId,
-                          targetId: node.id,
-                        },
-                        controller
-                      ) ??
-                      edgePosition ??
-                      'inside';
-                    const resolvedPosition =
-                      resolveDropAllowance(draggedNodeId, node.id, requestedPosition)
-                        ? requestedPosition
-                        : requestedPosition !== 'inside' &&
-                            resolveDropAllowance(draggedNodeId, node.id, 'inside')
-                          ? 'inside'
-                          : null;
+                    const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, node);
                     if (!resolvedPosition) return;
                     event.preventDefault();
                     event.stopPropagation();

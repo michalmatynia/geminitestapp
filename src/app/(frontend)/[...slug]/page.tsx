@@ -12,7 +12,7 @@ import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from '@/features
 import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
-import type { Page, CmsTheme } from '@/features/cms/types';
+import type { Page, CmsTheme, PageComponent } from '@/features/cms/types';
 import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
 
 import type { Metadata } from 'next';
@@ -134,6 +134,10 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
   const mediaVars = getMediaStyleVars(themeSettings);
   const mediaStyles = getMediaInlineStyles(themeSettings);
   const showMenu = page.showMenu !== false;
+  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
+    type: component.type,
+    content: component.content ?? {},
+  }));
   const content = (
     <CmsPageShell
       menu={menuSettings}
@@ -142,7 +146,7 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
       showMenu={showMenu}
     >
       <CmsPageRenderer
-        components={page.components ?? []}
+        components={rendererComponents}
         colorSchemes={colorSchemes}
         layout={layout}
         hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}

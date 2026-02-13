@@ -49,6 +49,8 @@ import {
   readPromptExploderDraftPrompt,
   savePromptExploderApplyPrompt,
 } from '../bridge';
+import { PromptExploderHierarchyTreeEditor } from '../components/PromptExploderHierarchyTreeEditor';
+import { PromptExploderParserTuningPanel } from '../components/PromptExploderParserTuningPanel';
 import {
   defaultCustomBenchmarkCaseIdFromPrompt,
   mergeCustomBenchmarkCases,
@@ -79,6 +81,12 @@ import {
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
+import {
+  applyPromptExploderParserTuningDrafts,
+  buildPromptExploderParserTuningDrafts,
+  validatePromptExploderParserTuningDrafts,
+  type PromptExploderParserTuningRuleDraft,
+} from '../parser-tuning';
 import {
   ensurePromptExploderPatternPack,
   getPromptExploderScopedRules,
@@ -133,6 +141,8 @@ import type {
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
   PromptExploderLogicalComparator,
+  PromptExploderLogicalCondition,
+  PromptExploderLogicalJoin,
   PromptExploderLogicalOperator,
   PromptExploderParamUiControl,
   PromptExploderPatternSnapshot,
@@ -161,10 +171,24 @@ const isPromptExploderManagedRule = (rule: PromptValidationRule): boolean => {
   return false;
 };
 
+const createLogicalConditionId = (): string =>
+  `condition_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+const createLogicalCondition = (
+  initial?: Partial<PromptExploderLogicalCondition>
+): PromptExploderLogicalCondition => ({
+  id: initial?.id ?? createLogicalConditionId(),
+  paramPath: (initial?.paramPath ?? '').trim(),
+  comparator: initial?.comparator ?? 'truthy',
+  value: initial?.value ?? null,
+  joinWithPrevious: initial?.joinWithPrevious ?? null,
+});
+
 const createListItem = (text = 'New item'): PromptExploderListItem => ({
   id: `item_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
   text,
   logicalOperator: null,
+  logicalConditions: [],
   referencedParamPath: null,
   referencedComparator: null,
   referencedValue: null,
@@ -180,6 +204,7 @@ const createSubsection = (): PromptExploderSubsection => ({
   title: 'New subsection',
   code: null,
   condition: null,
+  guidance: null,
   items: [createListItem()],
 });
 
@@ -307,8 +332,169 @@ const LOGICAL_COMPARATOR_OPTIONS: Array<{
   { value: 'contains', label: 'contains' },
 ];
 
+const LOGICAL_JOIN_OPTIONS: Array<{
+  value: PromptExploderLogicalJoin;
+  label: string;
+}> = [
+  { value: 'and', label: 'AND' },
+  { value: 'or', label: 'OR' },
+];
+
 const isLogicalComparator = (value: string): value is PromptExploderLogicalComparator => {
   return LOGICAL_COMPARATOR_OPTIONS.some((option) => option.value === value);
+};
+
+const isLogicalJoin = (value: string): value is PromptExploderLogicalJoin => {
+  return LOGICAL_JOIN_OPTIONS.some((option) => option.value === value);
+};
+
+const RGB_LITERAL_RE = /RGB\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)/i;
+
+const clampRgb = (value: number): number => Math.max(0, Math.min(255, Math.round(value)));
+
+const extractRgbLiteral = (text: string): [number, number, number] | null => {
+  const match = RGB_LITERAL_RE.exec(text);
+  if (!match) return null;
+  const red = Number(match[1]);
+  const green = Number(match[2]);
+  const blue = Number(match[3]);
+  if (![red, green, blue].every((value) => Number.isFinite(value))) return null;
+  return [clampRgb(red), clampRgb(green), clampRgb(blue)];
+};
+
+const rgbToHex = ([red, green, blue]: [number, number, number]): string =>
+  `#${[red, green, blue]
+    .map((value) => clampRgb(value).toString(16).padStart(2, '0'))
+    .join('')}`;
+
+const hexToRgb = (value: string): [number, number, number] | null => {
+  const normalized = value.trim();
+  const match = /^#?([a-f0-9]{6})$/i.exec(normalized);
+  if (!match) return null;
+  const hex = match[1] ?? '';
+  return [
+    Number.parseInt(hex.slice(0, 2), 16),
+    Number.parseInt(hex.slice(2, 4), 16),
+    Number.parseInt(hex.slice(4, 6), 16),
+  ];
+};
+
+const replaceRgbLiteral = (
+  text: string,
+  rgb: [number, number, number]
+): string => {
+  return text.replace(
+    RGB_LITERAL_RE,
+    `RGB(${clampRgb(rgb[0])},${clampRgb(rgb[1])},${clampRgb(rgb[2])})`
+  );
+};
+
+const normalizeLogicalOperatorText = (
+  value: string
+): PromptExploderLogicalOperator | null => {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'if') return 'if';
+  if (normalized === 'only if') return 'only_if';
+  if (normalized === 'unless') return 'unless';
+  if (normalized === 'when') return 'when';
+  return null;
+};
+
+const normalizeLogicalComparatorText = (
+  value: string | null | undefined
+): PromptExploderLogicalComparator | null => {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === '=' || normalized === '==') return 'equals';
+  if (normalized === '!=') return 'not_equals';
+  if (normalized === '>') return 'gt';
+  if (normalized === '>=') return 'gte';
+  if (normalized === '<') return 'lt';
+  if (normalized === '<=') return 'lte';
+  if (normalized === 'contains') return 'contains';
+  return null;
+};
+
+const parseLogicalValueText = (value: string | null | undefined): unknown => {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed) return null;
+  if (/^(true|false)$/i.test(trimmed)) return /^true$/i.test(trimmed);
+  if (/^null$/i.test(trimmed)) return null;
+  if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith('\'') && trimmed.endsWith('\''))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  return trimmed;
+};
+
+const formatLogicalValueText = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value === null || value === undefined) return 'null';
+  return safeJsonStringify(value);
+};
+
+const parseSubsectionConditionText = (
+  condition: string | null | undefined
+): {
+  operator: PromptExploderLogicalOperator;
+  paramPath: string;
+  comparator: PromptExploderLogicalComparator;
+  value: unknown;
+} | null => {
+  const trimmed = (condition ?? '').trim().replace(/:$/, '');
+  if (!trimmed) return null;
+  const operatorMatch = /^(if|only if|unless|when)\s+(.+)$/i.exec(trimmed);
+  if (!operatorMatch) return null;
+  const operator = normalizeLogicalOperatorText(operatorMatch[1] ?? '');
+  if (!operator) return null;
+  const expression = (operatorMatch[2] ?? '').trim();
+  const expressionMatch = /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(
+    expression
+  );
+  if (!expressionMatch) return null;
+  const paramPath = (expressionMatch[1] ?? '').trim().replace(/^params\./i, '');
+  if (!paramPath) return null;
+  const comparator =
+    normalizeLogicalComparatorText(expressionMatch[2]) ??
+    (operator === 'unless' ? 'falsy' : 'truthy');
+  const value =
+    comparator === 'truthy' || comparator === 'falsy'
+      ? null
+      : parseLogicalValueText(expressionMatch[3]);
+  return {
+    operator,
+    paramPath,
+    comparator,
+    value,
+  };
+};
+
+const buildSubsectionConditionText = (input: {
+  operator: PromptExploderLogicalOperator | null;
+  paramPath: string;
+  comparator: PromptExploderLogicalComparator;
+  value: unknown;
+}): string | null => {
+  const operator = input.operator;
+  const paramPath = input.paramPath.trim();
+  if (!operator || !paramPath) return null;
+  const operatorLabel = operator === 'only_if' ? 'Only if' : `${operator.slice(0, 1).toUpperCase()}${operator.slice(1)}`;
+  if (input.comparator === 'truthy') return `${operatorLabel} ${paramPath}:`;
+  if (input.comparator === 'falsy') return `${operatorLabel} ${paramPath}=false:`;
+  if (input.comparator === 'equals') return `${operatorLabel} ${paramPath}=${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'not_equals') return `${operatorLabel} ${paramPath}!=${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'gt') return `${operatorLabel} ${paramPath}>${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'gte') return `${operatorLabel} ${paramPath}>=${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'lt') return `${operatorLabel} ${paramPath}<${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'lte') return `${operatorLabel} ${paramPath}<=${formatLogicalValueText(input.value)}:`;
+  if (input.comparator === 'contains') {
+    return `${operatorLabel} ${paramPath} contains ${formatLogicalValueText(input.value)}:`;
+  }
+  return `${operatorLabel} ${paramPath}:`;
 };
 
 export function AdminPromptExploderPage(): React.JSX.Element {
@@ -354,6 +540,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     useState(PROMPT_EXPLODER_DEFAULT_SUGGESTION_LIMIT);
   const [customBenchmarkCasesDraft, setCustomBenchmarkCasesDraft] = useState('[]');
   const [customCaseDraftId, setCustomCaseDraftId] = useState('');
+  const [parserTuningDrafts, setParserTuningDrafts] = useState<
+    PromptExploderParserTuningRuleDraft[]
+  >([]);
   const [dismissedBenchmarkSuggestionIds, setDismissedBenchmarkSuggestionIds] =
     useState<string[]>([]);
   const [snapshotDraftName, setSnapshotDraftName] = useState('');
@@ -458,6 +647,17 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     () => getPromptExploderScopedRules(promptSettings),
     [promptSettings]
   );
+  const parserTuningBaseDrafts = useMemo(
+    () =>
+      buildPromptExploderParserTuningDrafts({
+        scopedRules,
+        patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+      }),
+    [scopedRules]
+  );
+  useEffect(() => {
+    setParserTuningDrafts(parserTuningBaseDrafts);
+  }, [parserTuningBaseDrafts]);
   const effectiveRules = useMemo<PromptValidationRule[]>(() => {
     const byId = new Map<string, PromptValidationRule>();
     [...scopedRules, ...sessionLearnedRules].forEach((rule) => {
@@ -955,6 +1155,79 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     });
   };
 
+  const normalizeLogicalConditionList = (
+    item: PromptExploderListItem,
+    sourceConditions: PromptExploderLogicalCondition[],
+    logicalOperator: PromptExploderLogicalOperator
+  ): PromptExploderLogicalCondition[] => {
+    const fallbackComparator: PromptExploderLogicalComparator =
+      logicalOperator === 'unless' ? 'falsy' : 'truthy';
+    const baseConditions = sourceConditions.length
+      ? sourceConditions
+      : [
+        createLogicalCondition({
+          id: `${item.id}_condition_1`,
+          comparator: fallbackComparator,
+          value: null,
+        }),
+      ];
+
+    return baseConditions.map((condition, index) => {
+      const comparator = condition.comparator ?? fallbackComparator;
+      return createLogicalCondition({
+        id: condition.id || `${item.id}_condition_${index + 1}`,
+        paramPath: (condition.paramPath ?? '').trim(),
+        comparator,
+        value:
+          comparator === 'truthy' || comparator === 'falsy'
+            ? null
+            : condition.value ?? null,
+        joinWithPrevious:
+          index === 0
+            ? null
+            : (condition.joinWithPrevious === 'or' ? 'or' : 'and'),
+      });
+    });
+  };
+
+  const deriveLegacyLogicalConditions = (
+    item: PromptExploderListItem
+  ): PromptExploderLogicalCondition[] => {
+    const legacyPath = (item.referencedParamPath ?? '').trim();
+    if (!legacyPath) return [];
+    return [
+      createLogicalCondition({
+        id: `${item.id}_legacy`,
+        paramPath: legacyPath,
+        comparator:
+          item.referencedComparator ??
+          (item.logicalOperator === 'unless' ? 'falsy' : 'truthy'),
+        value: item.referencedValue ?? null,
+        joinWithPrevious: null,
+      }),
+    ];
+  };
+
+  const getEditableLogicalConditions = (
+    item: PromptExploderListItem
+  ): PromptExploderLogicalCondition[] => {
+    if ((item.logicalConditions ?? []).length > 0) {
+      return item.logicalConditions ?? [];
+    }
+    const legacy = deriveLegacyLogicalConditions(item);
+    if (legacy.length > 0) return legacy;
+    if (item.logicalOperator) {
+      return [
+        createLogicalCondition({
+          id: `${item.id}_condition_1`,
+          comparator: item.logicalOperator === 'unless' ? 'falsy' : 'truthy',
+          joinWithPrevious: null,
+        }),
+      ];
+    }
+    return [];
+  };
+
   const normalizeListItemLogicalState = (
     item: PromptExploderListItem,
     override: Partial<PromptExploderListItem>
@@ -963,34 +1236,47 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       ...item,
       ...override,
     };
-    const hasOperator = Boolean(next.logicalOperator);
-    const hasParamPath = Boolean((next.referencedParamPath ?? '').trim());
-    if (!hasOperator || !hasParamPath) {
+    const logicalOperator = next.logicalOperator ?? null;
+    if (!logicalOperator) {
       return {
         ...next,
-        logicalOperator: hasOperator ? next.logicalOperator : null,
-        referencedParamPath: hasParamPath ? next.referencedParamPath : null,
+        logicalOperator: null,
+        logicalConditions: [],
+        referencedParamPath: null,
         referencedComparator: null,
         referencedValue: null,
       };
     }
-    if (!next.referencedComparator) {
-      return {
-        ...next,
-        referencedComparator:
-          next.logicalOperator === 'unless' ? 'falsy' : 'truthy',
-      };
-    }
-    if (
-      next.referencedComparator === 'truthy' ||
-      next.referencedComparator === 'falsy'
-    ) {
-      return {
-        ...next,
-        referencedValue: null,
-      };
-    }
-    return next;
+
+    const sourcedConditions =
+      override.logicalConditions !== undefined
+        ? (override.logicalConditions ?? [])
+        : ((next.logicalConditions ?? []).length > 0
+          ? (next.logicalConditions ?? [])
+          : deriveLegacyLogicalConditions(next));
+
+    const logicalConditions = normalizeLogicalConditionList(
+      next,
+      sourcedConditions,
+      logicalOperator
+    );
+
+    const firstConfiguredCondition =
+      logicalConditions.find((condition) => condition.paramPath.trim().length > 0) ?? null;
+
+    return {
+      ...next,
+      logicalOperator,
+      logicalConditions,
+      referencedParamPath: firstConfiguredCondition?.paramPath ?? null,
+      referencedComparator: firstConfiguredCondition?.comparator ?? null,
+      referencedValue:
+        firstConfiguredCondition &&
+          firstConfiguredCondition.comparator !== 'truthy' &&
+          firstConfiguredCondition.comparator !== 'falsy'
+          ? firstConfiguredCondition.value
+          : null,
+    };
   };
 
   const updateTopLevelListItem = (
@@ -1004,55 +1290,55 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }));
   };
 
-  const updateSubsectionListItem = (
-    segmentId: string,
-    subsectionIndex: number,
-    itemIndex: number,
-    updater: (item: PromptExploderListItem) => PromptExploderListItem
-  ): void => {
-    updateSegment(segmentId, (current) => {
-      const nextSubsections = current.subsections.map((subsection, candidateIndex) => {
-        if (candidateIndex !== subsectionIndex) return subsection;
-        return {
-          ...subsection,
-          items: updateListItemAt(subsection.items, itemIndex, updater),
-        };
-      });
-      return {
-        ...current,
-        subsections: nextSubsections,
-      };
-    });
-  };
-
   const renderListItemLogicalEditor = (args: {
     item: PromptExploderListItem;
     onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
   }): React.JSX.Element => {
     const { item, onChange } = args;
-    const selectedParamPath = (item.referencedParamPath ?? '').trim();
-    const selectedParamEntry = selectedParamPath
-      ? (listParamEntryByPath.get(selectedParamPath) ?? null)
-      : null;
     const operatorValue = item.logicalOperator ?? 'none';
-    const comparatorValue =
-      item.referencedComparator ?? (item.logicalOperator === 'unless' ? 'falsy' : 'truthy');
-    const needsValue =
-      operatorValue !== 'none' &&
-      selectedParamPath.length > 0 &&
-      comparatorValue !== 'truthy' &&
-      comparatorValue !== 'falsy';
-    const paramOptions =
-      selectedParamPath && !listParamOptions.some((option) => option.value === selectedParamPath)
-        ? [{ value: selectedParamPath, label: selectedParamPath }, ...listParamOptions]
-        : listParamOptions;
+    const logicalConditions =
+      operatorValue === 'none' ? [] : getEditableLogicalConditions(item);
 
     const applyPatch = (patch: Partial<PromptExploderListItem>): void => {
       onChange((current) => normalizeListItemLogicalState(current, patch));
     };
 
+    const updateCondition = (
+      conditionIndex: number,
+      patch: Partial<PromptExploderLogicalCondition>
+    ): void => {
+      const nextConditions = logicalConditions.map((condition, index) =>
+        index === conditionIndex ? createLogicalCondition({ ...condition, ...patch }) : condition
+      );
+      applyPatch({
+        logicalConditions: nextConditions,
+      });
+    };
+
+    const addCondition = (): void => {
+      if (operatorValue === 'none') return;
+      const fallbackComparator: PromptExploderLogicalComparator =
+        operatorValue === 'unless' ? 'falsy' : 'truthy';
+      applyPatch({
+        logicalConditions: [
+          ...logicalConditions,
+          createLogicalCondition({
+            comparator: fallbackComparator,
+            joinWithPrevious: 'and',
+          }),
+        ],
+      });
+    };
+
+    const removeCondition = (conditionIndex: number): void => {
+      const nextConditions = logicalConditions.filter((_, index) => index !== conditionIndex);
+      applyPatch({
+        logicalConditions: nextConditions,
+      });
+    };
+
     return (
-      <div className='mt-2 grid gap-2 md:grid-cols-4'>
+      <div className='mt-2 space-y-2 rounded border border-border/50 bg-card/20 p-2'>
         <div className='space-y-1'>
           <Label className='text-[10px] text-gray-500'>Logical Operator</Label>
           <UnifiedSelect
@@ -1061,6 +1347,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               if (next === 'none') {
                 applyPatch({
                   logicalOperator: null,
+                  logicalConditions: [],
                   referencedParamPath: null,
                   referencedComparator: null,
                   referencedValue: null,
@@ -1070,9 +1357,6 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               const nextOperator = next as PromptExploderLogicalOperator;
               applyPatch({
                 logicalOperator: nextOperator,
-                referencedComparator:
-                  item.referencedComparator ??
-                  (nextOperator === 'unless' ? 'falsy' : 'truthy'),
               });
             }}
             options={LOGICAL_OPERATOR_OPTIONS.map((option) => ({
@@ -1082,120 +1366,202 @@ export function AdminPromptExploderPage(): React.JSX.Element {
           />
         </div>
 
-        <div className='space-y-1'>
-          <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
-          <UnifiedSelect
-            value={selectedParamPath}
-            onValueChange={(next: string) => {
-              applyPatch({
-                referencedParamPath: next.trim() || null,
-              });
-            }}
-            options={
-              paramOptions.length > 0
-                ? paramOptions
-                : [{ value: '', label: 'No parameters available' }]
-            }
-          />
-        </div>
+        {operatorValue !== 'none' ? (
+          <div className='space-y-2'>
+            {logicalConditions.map((condition, conditionIndex) => {
+              const selectedParamPath = (condition.paramPath ?? '').trim();
+              const selectedParamEntry = selectedParamPath
+                ? (listParamEntryByPath.get(selectedParamPath) ?? null)
+                : null;
+              const comparatorValue =
+                condition.comparator ?? (operatorValue === 'unless' ? 'falsy' : 'truthy');
+              const needsValue =
+                selectedParamPath.length > 0 &&
+                comparatorValue !== 'truthy' &&
+                comparatorValue !== 'falsy';
+              const paramOptions =
+                selectedParamPath &&
+                  !listParamOptions.some((option) => option.value === selectedParamPath)
+                  ? [{ value: selectedParamPath, label: selectedParamPath }, ...listParamOptions]
+                  : listParamOptions;
 
-        <div className='space-y-1'>
-          <Label className='text-[10px] text-gray-500'>Comparator</Label>
-          <UnifiedSelect
-            value={comparatorValue}
-            onValueChange={(next: string) => {
-              if (!isLogicalComparator(next)) return;
-              applyPatch({
-                referencedComparator: next,
-              });
-            }}
-            options={LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
-              value: option.value,
-              label: option.label,
-            }))}
-          />
-        </div>
+              return (
+                <div
+                  key={condition.id}
+                  className='grid gap-2 md:grid-cols-[120px_minmax(0,1fr)_120px_minmax(0,1fr)_64px]'
+                >
+                  <div className='space-y-1'>
+                    <Label className='text-[10px] text-gray-500'>Join</Label>
+                    {conditionIndex === 0 ? (
+                      <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+                        START
+                      </div>
+                    ) : (
+                      <UnifiedSelect
+                        value={condition.joinWithPrevious === 'or' ? 'or' : 'and'}
+                        onValueChange={(next: string) => {
+                          if (!isLogicalJoin(next)) return;
+                          updateCondition(conditionIndex, {
+                            joinWithPrevious: next,
+                          });
+                        }}
+                        options={LOGICAL_JOIN_OPTIONS.map((option) => ({
+                          value: option.value,
+                          label: option.label,
+                        }))}
+                      />
+                    )}
+                  </div>
 
-        <div className='space-y-1'>
-          <Label className='text-[10px] text-gray-500'>Value</Label>
-          {needsValue ? (
-            selectedParamEntry?.spec?.kind === 'boolean' ? (
-              <UnifiedSelect
-                value={String(Boolean(item.referencedValue))}
-                onValueChange={(next: string) => {
-                  applyPatch({
-                    referencedValue: next === 'true',
-                  });
-                }}
-                options={[
-                  { value: 'true', label: 'true' },
-                  { value: 'false', label: 'false' },
-                ]}
-              />
-            ) : selectedParamEntry?.spec?.kind === 'enum' &&
-              selectedParamEntry.spec.enumOptions ? (
-                <UnifiedSelect
-                  value={String(item.referencedValue ?? selectedParamEntry.spec.enumOptions[0] ?? '')}
-                  onValueChange={(next: string) => {
-                    applyPatch({
-                      referencedValue: next,
-                    });
-                  }}
-                  options={selectedParamEntry.spec.enumOptions.map((value) => ({
-                    value,
-                    label: value,
-                  }))}
-                />
-              ) : selectedParamEntry?.spec?.kind === 'number' ? (
-                <Input
-                  type='number'
-                  value={String(item.referencedValue ?? '')}
-                  onChange={(event) => {
-                    const next = Number(event.target.value);
-                    if (!Number.isFinite(next)) return;
-                    applyPatch({
-                      referencedValue: next,
-                    });
-                  }}
-                />
-              ) : (
-                <Input
-                  value={
-                    typeof item.referencedValue === 'string'
-                      ? item.referencedValue
-                      : safeJsonStringify(item.referencedValue ?? '')
-                  }
-                  onChange={(event) => {
-                    const rawValue = event.target.value;
-                    if (
-                      selectedParamEntry?.spec?.kind === 'rgb' ||
-                      selectedParamEntry?.spec?.kind === 'tuple2' ||
-                      selectedParamEntry?.spec?.kind === 'json'
-                    ) {
-                      applyPatch({
-                        referencedValue: sanitizeParamJsonValue(
-                          rawValue,
-                          item.referencedValue
-                        ),
-                      });
-                      return;
-                    }
-                    applyPatch({
-                      referencedValue: rawValue,
-                    });
-                  }}
-                />
-              )
-          ) : (
-            <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
-              {operatorValue === 'none'
-                ? 'No condition'
-                : (selectedParamPath
-                  ? 'Value not needed'
-                  : 'Select parameter')}
+                  <div className='space-y-1'>
+                    <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
+                    <UnifiedSelect
+                      value={selectedParamPath}
+                      onValueChange={(next: string) => {
+                        updateCondition(conditionIndex, {
+                          paramPath: next.trim(),
+                        });
+                      }}
+                      options={
+                        paramOptions.length > 0
+                          ? paramOptions
+                          : [{ value: '', label: 'No parameters available' }]
+                      }
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[10px] text-gray-500'>Comparator</Label>
+                    <UnifiedSelect
+                      value={comparatorValue}
+                      onValueChange={(next: string) => {
+                        if (!isLogicalComparator(next)) return;
+                        updateCondition(conditionIndex, {
+                          comparator: next,
+                          value:
+                            next === 'truthy' || next === 'falsy'
+                              ? null
+                              : condition.value ?? null,
+                        });
+                      }}
+                      options={LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
+                        value: option.value,
+                        label: option.label,
+                      }))}
+                    />
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[10px] text-gray-500'>Value</Label>
+                    {needsValue ? (
+                      selectedParamEntry?.spec?.kind === 'boolean' ? (
+                        <UnifiedSelect
+                          value={String(Boolean(condition.value))}
+                          onValueChange={(next: string) => {
+                            updateCondition(conditionIndex, {
+                              value: next === 'true',
+                            });
+                          }}
+                          options={[
+                            { value: 'true', label: 'true' },
+                            { value: 'false', label: 'false' },
+                          ]}
+                        />
+                      ) : selectedParamEntry?.spec?.kind === 'enum' &&
+                        selectedParamEntry.spec.enumOptions ? (
+                          <UnifiedSelect
+                            value={String(condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? '')}
+                            onValueChange={(next: string) => {
+                              updateCondition(conditionIndex, {
+                                value: next,
+                              });
+                            }}
+                            options={selectedParamEntry.spec.enumOptions.map((value) => ({
+                              value,
+                              label: value,
+                            }))}
+                          />
+                        ) : selectedParamEntry?.spec?.kind === 'number' ? (
+                          <Input
+                            type='number'
+                            value={String(condition.value ?? '')}
+                            onChange={(event) => {
+                              const next = Number(event.target.value);
+                              if (!Number.isFinite(next)) return;
+                              updateCondition(conditionIndex, {
+                                value: next,
+                              });
+                            }}
+                          />
+                        ) : (
+                          <Input
+                            value={
+                              typeof condition.value === 'string'
+                                ? condition.value
+                                : safeJsonStringify(condition.value ?? '')
+                            }
+                            onChange={(event) => {
+                              const rawValue = event.target.value;
+                              if (
+                                selectedParamEntry?.spec?.kind === 'rgb' ||
+                                selectedParamEntry?.spec?.kind === 'tuple2' ||
+                                selectedParamEntry?.spec?.kind === 'json'
+                              ) {
+                                updateCondition(conditionIndex, {
+                                  value: sanitizeParamJsonValue(
+                                    rawValue,
+                                    condition.value
+                                  ),
+                                });
+                                return;
+                              }
+                              updateCondition(conditionIndex, {
+                                value: rawValue,
+                              });
+                            }}
+                          />
+                        )
+                    ) : (
+                      <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+                        {selectedParamPath ? 'Value not needed' : 'Select parameter'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='space-y-1'>
+                    <Label className='text-[10px] text-gray-500'>Actions</Label>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-9 w-full px-2'
+                      onClick={() => {
+                        removeCondition(conditionIndex);
+                      }}
+                      disabled={logicalConditions.length <= 1}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+            <div className='flex justify-end'>
+              <Button
+                type='button'
+                variant='outline'
+                className='h-8 px-2 text-xs'
+                onClick={addCondition}
+              >
+                <Plus className='mr-1 size-3.5' />
+                Add condition
+              </Button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+            No condition
+          </div>
+        )}
       </div>
     );
   };
@@ -1475,6 +1841,59 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       toast(error instanceof Error ? error.message : 'Failed to install pattern pack.', {
         variant: 'error',
       });
+    }
+  };
+
+  const patchParserTuningDraft = (
+    ruleId: PromptExploderParserTuningRuleDraft['id'],
+    patch: Partial<PromptExploderParserTuningRuleDraft>
+  ): void => {
+    setParserTuningDrafts((previous) =>
+      previous.map((draft) =>
+        draft.id === ruleId
+          ? {
+            ...draft,
+            ...patch,
+          }
+          : draft
+      )
+    );
+  };
+
+  const handleResetParserTuningDrafts = (): void => {
+    setParserTuningDrafts(
+      buildPromptExploderParserTuningDrafts({
+        scopedRules: PROMPT_EXPLODER_PATTERN_PACK,
+        patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+      })
+    );
+    toast('Parser tuning drafts reset to pattern-pack defaults.', { variant: 'info' });
+  };
+
+  const handleSaveParserTuningRules = async (): Promise<void> => {
+    const validation = validatePromptExploderParserTuningDrafts(parserTuningDrafts);
+    if (!validation.ok) {
+      toast(validation.error, { variant: 'error' });
+      return;
+    }
+    try {
+      const nextSettings = applyPromptExploderParserTuningDrafts({
+        settings: promptSettings,
+        drafts: parserTuningDrafts,
+        patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+      });
+      await updateSetting.mutateAsync({
+        key: PROMPT_ENGINE_SETTINGS_KEY,
+        value: serializeSetting(nextSettings),
+      });
+      toast('Prompt Exploder parser tuning rules saved.', { variant: 'success' });
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save parser tuning rules.',
+        { variant: 'error' }
+      );
     }
   };
 
@@ -2591,6 +3010,26 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         </div>
       </FormSection>
 
+      <FormSection
+        title='Parser Tuning'
+        description='Quick-edit boundary and subsection parser rules directly from Prompt Exploder (stored as Validation Patterns).'
+        variant='subtle'
+        className='p-4'
+      >
+        <PromptExploderParserTuningPanel
+          drafts={parserTuningDrafts}
+          onPatchDraft={patchParserTuningDraft}
+          onSave={() => {
+            void handleSaveParserTuningRules();
+          }}
+          onResetToPackDefaults={handleResetParserTuningDrafts}
+          onOpenValidationPatterns={() => {
+            router.push('/admin/validator?scope=prompt-exploder');
+          }}
+          isBusy={updateSetting.isPending}
+        />
+      </FormSection>
+
       <div className='grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]'>
         <div className='space-y-4'>
           <FormSection
@@ -3665,7 +4104,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                         </div>
                       ) : null}
 
-                      {['list', 'referential_list', 'hierarchical_list', 'conditional_list', 'qa_matrix'].includes(
+                      {['list', 'referential_list', 'conditional_list'].includes(
                         selectedSegment.type
                       ) ? (
                           <div className='space-y-2'>
@@ -3692,45 +4131,66 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                             <div className='space-y-2'>
                               {selectedSegment.listItems.map((item, index) => (
                                 <div key={item.id} className='rounded border border-border/50 bg-card/20 p-2'>
-                                  <div className='flex items-center gap-1'>
-                                    <Button
-                                      type='button'
-                                      variant='ghost'
-                                      size='icon'
-                                      disabled={index === 0}
-                                      onClick={() => {
-                                        updateSegment(selectedSegment.id, (current) => ({
-                                          ...current,
-                                          listItems: moveByDelta(current.listItems, index, -1),
-                                        }));
-                                      }}
-                                    >
-                                      <ArrowUp className='size-3.5' />
-                                    </Button>
-                                    <Button
-                                      type='button'
-                                      variant='ghost'
-                                      size='icon'
-                                      disabled={index === selectedSegment.listItems.length - 1}
-                                      onClick={() => {
-                                        updateSegment(selectedSegment.id, (current) => ({
-                                          ...current,
-                                          listItems: moveByDelta(current.listItems, index, 1),
-                                        }));
-                                      }}
-                                    >
-                                      <ArrowDown className='size-3.5' />
-                                    </Button>
-                                    <Input
-                                      value={item.text}
-                                      onChange={(event) => {
-                                        updateTopLevelListItem(selectedSegment.id, index, (currentItem) => ({
-                                          ...currentItem,
-                                          text: event.target.value,
-                                        }));
-                                      }}
-                                    />
-                                  </div>
+                                  {(() => {
+                                    const rgbLiteral = extractRgbLiteral(item.text);
+                                    return (
+                                      <div className='flex items-center gap-1'>
+                                        <Button
+                                          type='button'
+                                          variant='ghost'
+                                          size='icon'
+                                          disabled={index === 0}
+                                          onClick={() => {
+                                            updateSegment(selectedSegment.id, (current) => ({
+                                              ...current,
+                                              listItems: moveByDelta(current.listItems, index, -1),
+                                            }));
+                                          }}
+                                        >
+                                          <ArrowUp className='size-3.5' />
+                                        </Button>
+                                        <Button
+                                          type='button'
+                                          variant='ghost'
+                                          size='icon'
+                                          disabled={index === selectedSegment.listItems.length - 1}
+                                          onClick={() => {
+                                            updateSegment(selectedSegment.id, (current) => ({
+                                              ...current,
+                                              listItems: moveByDelta(current.listItems, index, 1),
+                                            }));
+                                          }}
+                                        >
+                                          <ArrowDown className='size-3.5' />
+                                        </Button>
+                                        <Input
+                                          value={item.text}
+                                          onChange={(event) => {
+                                            updateTopLevelListItem(selectedSegment.id, index, (currentItem) => ({
+                                              ...currentItem,
+                                              text: event.target.value,
+                                            }));
+                                          }}
+                                        />
+                                        {rgbLiteral ? (
+                                          <input
+                                            type='color'
+                                            className='h-9 w-10 cursor-pointer rounded border border-border/60 bg-transparent p-1'
+                                            value={rgbToHex(rgbLiteral)}
+                                            onChange={(event) => {
+                                              const parsed = hexToRgb(event.target.value);
+                                              if (!parsed) return;
+                                              updateTopLevelListItem(selectedSegment.id, index, (currentItem) => ({
+                                                ...currentItem,
+                                                text: replaceRgbLiteral(currentItem.text, parsed),
+                                              }));
+                                            }}
+                                            aria-label='RGB color picker'
+                                          />
+                                        ) : null}
+                                      </div>
+                                    );
+                                  })()}
                                   {renderListItemLogicalEditor({
                                     item,
                                     onChange: (updater) => {
@@ -3743,11 +4203,30 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                           </div>
                         ) : null}
 
-                      {selectedSegment.type === 'sequence' ? (
+                      {selectedSegment.type === 'hierarchical_list' ? (
+                        <PromptExploderHierarchyTreeEditor
+                          items={selectedSegment.listItems}
+                          onChange={(nextItems) => {
+                            updateSegment(selectedSegment.id, (current) => ({
+                              ...current,
+                              listItems: nextItems,
+                            }));
+                          }}
+                          renderLogicalEditor={({ item, onChange }) =>
+                            renderListItemLogicalEditor({
+                              item,
+                              onChange,
+                            })
+                          }
+                          emptyLabel='No hierarchy items detected.'
+                        />
+                      ) : null}
+
+                      {selectedSegment.type === 'sequence' || selectedSegment.type === 'qa_matrix' ? (
                         <div className='space-y-3'>
                           <div className='flex items-center justify-between'>
                             <div className='text-[11px] uppercase tracking-wide text-gray-400'>
-                              Sequence Subsections
+                              {selectedSegment.type === 'qa_matrix' ? 'QA Subsections' : 'Sequence Subsections'}
                             </div>
                             <Button
                               type='button'
@@ -3881,114 +4360,198 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                 }}
                                 placeholder='Condition (optional)'
                               />
-                              <div className='space-y-1'>
-                                <div className='flex items-center justify-between'>
-                                  <div className='text-[11px] text-gray-500'>Items</div>
-                                  <Button
-                                    type='button'
-                                    variant='outline'
-                                    size='sm'
-                                    onClick={() => {
-                                      updateSegment(selectedSegment.id, (current) => {
-                                        const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
-                                          if (candidateIndex !== subsectionIndex) return candidate;
-                                          return {
-                                            ...candidate,
-                                            items: addBlankListItem(candidate.items),
-                                          };
-                                        });
-                                        return {
-                                          ...current,
-                                          subsections: nextSubsections,
-                                        };
-                                      });
-                                    }}
-                                  >
-                                    <Plus className='mr-2 size-3.5' />
-                                    Add Item
-                                  </Button>
-                                </div>
-                                {subsection.items.map((item, itemIndex) => (
-                                  <div
-                                    key={item.id}
-                                    className='rounded border border-border/50 bg-card/20 p-2'
-                                  >
-                                    <div className='flex items-center gap-1'>
-                                      <Button
-                                        type='button'
-                                        variant='ghost'
-                                        size='icon'
-                                        disabled={itemIndex === 0}
-                                        onClick={() => {
-                                          updateSegment(selectedSegment.id, (current) => {
-                                            const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
-                                              if (candidateIndex !== subsectionIndex) return candidate;
+                              {(() => {
+                                const parsedCondition = parseSubsectionConditionText(
+                                  subsection.condition
+                                );
+                                const operatorValue = parsedCondition?.operator ?? 'none';
+                                const paramPath = parsedCondition?.paramPath ?? '';
+                                const comparatorValue =
+                                  parsedCondition?.comparator ?? 'truthy';
+                                const selectedParamEntry = paramPath
+                                  ? (listParamEntryByPath.get(paramPath) ?? null)
+                                  : null;
+                                const needsValue =
+                                  operatorValue !== 'none' &&
+                                  paramPath.length > 0 &&
+                                  comparatorValue !== 'truthy' &&
+                                  comparatorValue !== 'falsy';
+                                const paramOptions =
+                                  paramPath && !listParamOptions.some((option) => option.value === paramPath)
+                                    ? [{ value: paramPath, label: paramPath }, ...listParamOptions]
+                                    : listParamOptions;
+
+                                const patchCondition = (
+                                  patch: Partial<{
+                                    operator: PromptExploderLogicalOperator | null;
+                                    paramPath: string;
+                                    comparator: PromptExploderLogicalComparator;
+                                    value: unknown;
+                                  }>
+                                ): void => {
+                                  const nextOperator = patch.operator ?? parsedCondition?.operator ?? null;
+                                  const nextParamPath = patch.paramPath ?? parsedCondition?.paramPath ?? '';
+                                  const nextComparator =
+                                    patch.comparator ??
+                                    parsedCondition?.comparator ??
+                                    (nextOperator === 'unless' ? 'falsy' : 'truthy');
+                                  const nextValue =
+                                    patch.value ?? parsedCondition?.value ?? null;
+                                  const nextCondition = buildSubsectionConditionText({
+                                    operator: nextOperator,
+                                    paramPath: nextParamPath,
+                                    comparator: nextComparator,
+                                    value: nextValue,
+                                  });
+                                  updateSegment(selectedSegment.id, (current) => {
+                                    const nextSubsections = current.subsections.map((candidate, candidateIndex) =>
+                                      candidateIndex === subsectionIndex
+                                        ? {
+                                          ...candidate,
+                                          condition: nextCondition,
+                                        }
+                                        : candidate
+                                    );
+                                    return {
+                                      ...current,
+                                      subsections: nextSubsections,
+                                    };
+                                  });
+                                };
+
+                                return (
+                                  <div className='grid gap-2 md:grid-cols-4'>
+                                    <div className='space-y-1'>
+                                      <Label className='text-[10px] text-gray-500'>Operator</Label>
+                                      <UnifiedSelect
+                                        value={operatorValue}
+                                        onValueChange={(next: string) => {
+                                          if (next === 'none') {
+                                            updateSegment(selectedSegment.id, (current) => {
+                                              const nextSubsections = current.subsections.map((candidate, candidateIndex) =>
+                                                candidateIndex === subsectionIndex
+                                                  ? {
+                                                    ...candidate,
+                                                    condition: null,
+                                                  }
+                                                  : candidate
+                                              );
                                               return {
-                                                ...candidate,
-                                                items: moveByDelta(candidate.items, itemIndex, -1),
+                                                ...current,
+                                                subsections: nextSubsections,
                                               };
                                             });
-                                            return {
-                                              ...current,
-                                              subsections: nextSubsections,
-                                            };
+                                            return;
+                                          }
+                                          patchCondition({
+                                            operator: next as PromptExploderLogicalOperator,
                                           });
                                         }}
-                                      >
-                                        <ArrowUp className='size-3.5' />
-                                      </Button>
-                                      <Button
-                                        type='button'
-                                        variant='ghost'
-                                        size='icon'
-                                        disabled={itemIndex === subsection.items.length - 1}
-                                        onClick={() => {
-                                          updateSegment(selectedSegment.id, (current) => {
-                                            const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
-                                              if (candidateIndex !== subsectionIndex) return candidate;
-                                              return {
-                                                ...candidate,
-                                                items: moveByDelta(candidate.items, itemIndex, 1),
-                                              };
-                                            });
-                                            return {
-                                              ...current,
-                                              subsections: nextSubsections,
-                                            };
-                                          });
-                                        }}
-                                      >
-                                        <ArrowDown className='size-3.5' />
-                                      </Button>
-                                      <Input
-                                        value={item.text}
-                                        onChange={(event) => {
-                                          updateSubsectionListItem(
-                                            selectedSegment.id,
-                                            subsectionIndex,
-                                            itemIndex,
-                                            (currentItem) => ({
-                                              ...currentItem,
-                                              text: event.target.value,
-                                            })
-                                          );
-                                        }}
+                                        options={LOGICAL_OPERATOR_OPTIONS.map((option) => ({
+                                          value: option.value,
+                                          label: option.label,
+                                        }))}
                                       />
                                     </div>
-                                    {renderListItemLogicalEditor({
-                                      item,
-                                      onChange: (updater) => {
-                                        updateSubsectionListItem(
-                                          selectedSegment.id,
-                                          subsectionIndex,
-                                          itemIndex,
-                                          updater
-                                        );
-                                      },
-                                    })}
+
+                                    <div className='space-y-1'>
+                                      <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
+                                      <UnifiedSelect
+                                        value={paramPath}
+                                        onValueChange={(next: string) => {
+                                          patchCondition({
+                                            paramPath: next.trim(),
+                                          });
+                                        }}
+                                        options={
+                                          paramOptions.length > 0
+                                            ? paramOptions
+                                            : [{ value: '', label: 'No parameters available' }]
+                                        }
+                                      />
+                                    </div>
+
+                                    <div className='space-y-1'>
+                                      <Label className='text-[10px] text-gray-500'>Comparator</Label>
+                                      <UnifiedSelect
+                                        value={comparatorValue}
+                                        onValueChange={(next: string) => {
+                                          if (!isLogicalComparator(next)) return;
+                                          patchCondition({
+                                            comparator: next,
+                                            value:
+                                              next === 'truthy' || next === 'falsy'
+                                                ? null
+                                                : parsedCondition?.value ?? null,
+                                          });
+                                        }}
+                                        options={LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
+                                          value: option.value,
+                                          label: option.label,
+                                        }))}
+                                      />
+                                    </div>
+
+                                    <div className='space-y-1'>
+                                      <Label className='text-[10px] text-gray-500'>Value</Label>
+                                      {needsValue ? (
+                                        selectedParamEntry?.spec?.kind === 'boolean' ? (
+                                          <UnifiedSelect
+                                            value={String(Boolean(parsedCondition?.value))}
+                                            onValueChange={(next: string) => {
+                                              patchCondition({
+                                                value: next === 'true',
+                                              });
+                                            }}
+                                            options={[
+                                              { value: 'true', label: 'true' },
+                                              { value: 'false', label: 'false' },
+                                            ]}
+                                          />
+                                        ) : (
+                                          <Input
+                                            value={formatLogicalValueText(parsedCondition?.value ?? '')}
+                                            onChange={(event) => {
+                                              patchCondition({
+                                                value: parseLogicalValueText(event.target.value),
+                                              });
+                                            }}
+                                          />
+                                        )
+                                      ) : (
+                                        <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+                                          {paramPath ? 'Value not needed' : 'Select parameter'}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                ))}
-                              </div>
+                                );
+                              })()}
+                              <PromptExploderHierarchyTreeEditor
+                                items={subsection.items}
+                                onChange={(nextItems) => {
+                                  updateSegment(selectedSegment.id, (current) => {
+                                    const nextSubsections = current.subsections.map((candidate, candidateIndex) => {
+                                      if (candidateIndex !== subsectionIndex) return candidate;
+                                      return {
+                                        ...candidate,
+                                        items: nextItems,
+                                      };
+                                    });
+                                    return {
+                                      ...current,
+                                      subsections: nextSubsections,
+                                    };
+                                  });
+                                }}
+                                renderLogicalEditor={({ item, onChange }) =>
+                                  renderListItemLogicalEditor({
+                                    item,
+                                    onChange,
+                                  })
+                                }
+                                emptyLabel='No subsection items detected.'
+                              />
                             </div>
                           ))}
                         </div>

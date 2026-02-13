@@ -3,10 +3,9 @@
 import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import { useLanguageForm } from '@/features/internationalization/hooks/useLanguageForm';
+import { LanguageFormFields } from '@/features/internationalization/components/language-modal/LanguageFormFields';
 import { SettingsFormModal } from '@/shared/ui';
-
-import { useLanguageForm } from '../../hooks/useLanguageForm';
-import { LanguageFormFields } from './language-modal/LanguageFormFields';
 
 export function LanguageModal(): React.JSX.Element {
   const {
@@ -44,16 +43,16 @@ export function LanguageModal(): React.JSX.Element {
     >
       <LanguageFormFields
         code={form.code}
-        onCodeChange={(value) =>
-          setForm((p) => ({ ...p, code: value }))
+        onCodeChange={(value: string) =>
+          setForm({ ...form, code: value })
         }
         name={form.name}
-        onNameChange={(value) =>
-          setForm((p) => ({ ...p, name: value }))
+        onNameChange={(value: string) =>
+          setForm({ ...form, name: value })
         }
         nativeName={form.nativeName}
-        onNativeNameChange={(value) =>
-          setForm((p) => ({ ...p, nativeName: value }))
+        onNativeNameChange={(value: string) =>
+          setForm({ ...form, nativeName: value })
         }
         countries={countries}
         selectedCountryIds={selectedCountryIds}

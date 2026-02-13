@@ -8,7 +8,12 @@ import { LearnedRuleList } from '../components/LearnedRuleList';
 import { PromptEngineFilters } from '../components/PromptEngineFilters';
 import { PromptEngineToolbar } from '../components/PromptEngineToolbar';
 import { RuleList } from '../components/RuleList';
-import { PromptEngineProvider, usePromptEngine } from '../context/PromptEngineContext';
+import {
+  PromptEngineProvider,
+  usePromptEngine,
+  type ExploderPatternSubTab,
+  type PatternCollectionTab,
+} from '../context/PromptEngineContext';
 import { PromptEnginePageChromeProvider } from '../context/PromptEnginePageChromeContext';
 
 type AdminPromptEngineValidationPatternsPageProps = {
@@ -17,6 +22,10 @@ type AdminPromptEngineValidationPatternsPageProps = {
   eyebrow?: string;
   backLinkHref?: string;
   backLinkLabel?: string;
+  initialPatternTab?: PatternCollectionTab;
+  initialExploderSubTab?: ExploderPatternSubTab;
+  lockedPatternTab?: PatternCollectionTab;
+  lockedExploderSubTab?: ExploderPatternSubTab;
 };
 
 function AdminPromptEngineValidationPatternsContent({
@@ -76,7 +85,13 @@ function AdminPromptEngineValidationPatternsContent({
 
 export function AdminPromptEngineValidationPatternsPage(props: AdminPromptEngineValidationPatternsPageProps): React.JSX.Element {
   return (
-    <PromptEngineProvider onSaved={props.onSaved}>
+    <PromptEngineProvider
+      onSaved={props.onSaved}
+      initialPatternTab={props.initialPatternTab}
+      initialExploderSubTab={props.initialExploderSubTab}
+      lockedPatternTab={props.lockedPatternTab}
+      lockedExploderSubTab={props.lockedExploderSubTab}
+    >
       <AdminPromptEngineValidationPatternsContent {...props} />
     </PromptEngineProvider>
   );

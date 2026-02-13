@@ -55,6 +55,7 @@ export type PromptExploderSubsection = {
   code: string | null;
   items: PromptExploderListItem[];
   condition: string | null;
+  guidance?: string | null;
 };
 
 export type PromptExploderBindingType = 'references' | 'depends_on' | 'uses_param';

@@ -5,12 +5,10 @@ import { useMemo } from 'react';
 
 import { AdminImageStudioValidationPatternsPage } from '@/features/ai/image-studio';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
+import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine';
 import { ClientOnly, SectionHeader, Tabs, TabsContent, TabsList, TabsTrigger, FormSection } from '@/shared/ui';
 
-type ValidatorScope = 'products' | 'image-studio';
-
-const parseValidatorScope = (value: string | null): ValidatorScope =>
-  value === 'image-studio' ? 'image-studio' : 'products';
+import { parseValidatorScope, type ValidatorScope } from './validator-scope';
 
 export function AdminGlobalValidatorPage(): React.JSX.Element {
   const searchParams = useSearchParams();
@@ -50,6 +48,7 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           <TabsList>
             <TabsTrigger value='products'>Product Patterns</TabsTrigger>
             <TabsTrigger value='image-studio'>Image Studio Patterns</TabsTrigger>
+            <TabsTrigger value='prompt-exploder'>Prompt Exploder Patterns</TabsTrigger>
           </TabsList>
 
           <TabsContent value='products' className='space-y-4'>
@@ -68,6 +67,23 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
               </p>
             </FormSection>
             <AdminImageStudioValidationPatternsPage embedded />
+          </TabsContent>
+
+          <TabsContent value='prompt-exploder' className='space-y-4'>
+            <FormSection variant='subtle' className='p-4'>
+              <p className='text-sm text-gray-300'>
+                Prompt Exploder patterns control prompt segmentation, subsection recognition,
+                and parser behavior for exploded prompt editing.
+              </p>
+            </FormSection>
+            <AdminPromptEngineValidationPatternsPage
+              embedded
+              eyebrow='AI · Prompt Exploder'
+              initialPatternTab='prompt_exploder'
+              initialExploderSubTab='prompt_exploder_rules'
+              lockedPatternTab='prompt_exploder'
+              lockedExploderSubTab='prompt_exploder_rules'
+            />
           </TabsContent>
         </Tabs>
       </ClientOnly>

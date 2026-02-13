@@ -31,8 +31,10 @@ export function PromptEngineFilters(): React.JSX.Element {
     scope,
     setScope,
     patternTab,
+    patternTabLocked,
     setPatternTab,
     exploderSubTab,
+    exploderSubTabLocked,
     setExploderSubTab,
     includeDisabled,
     setIncludeDisabled,
@@ -44,6 +46,8 @@ export function PromptEngineFilters(): React.JSX.Element {
       : exploderSubTab === 'image_studio_rules'
         ? 'Image Studio Rules'
         : 'Prompt Exploder Rules';
+  const showPatternTabSwitch = !patternTabLocked;
+  const showExploderSubTabSwitch = patternTab === 'prompt_exploder' && !exploderSubTabLocked;
 
   const filters: FilterField[] = [
     {
@@ -78,22 +82,24 @@ export function PromptEngineFilters(): React.JSX.Element {
 
   return (
     <div className='space-y-3'>
-      <Tabs
-        value={patternTab}
-        onValueChange={(value: string) => {
-          setPatternTab(value as PatternCollectionTab);
-        }}
-      >
-        <TabsList className='grid w-full max-w-md grid-cols-2'>
-          <TabsTrigger value='core'>
-            Core Patterns
-          </TabsTrigger>
-          <TabsTrigger value='prompt_exploder'>
-            Exploder
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-      {patternTab === 'prompt_exploder' ? (
+      {showPatternTabSwitch ? (
+        <Tabs
+          value={patternTab}
+          onValueChange={(value: string) => {
+            setPatternTab(value as PatternCollectionTab);
+          }}
+        >
+          <TabsList className='grid w-full max-w-md grid-cols-2'>
+            <TabsTrigger value='core'>
+              Core Patterns
+            </TabsTrigger>
+            <TabsTrigger value='prompt_exploder'>
+              Exploder
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      ) : null}
+      {showExploderSubTabSwitch ? (
         <Tabs
           value={exploderSubTab}
           onValueChange={(value: string) => {
@@ -132,8 +138,12 @@ export function PromptEngineFilters(): React.JSX.Element {
           setQuery('');
           setSeverity('all');
           setScope('all');
-          setPatternTab('core');
-          setExploderSubTab('prompt_exploder_rules');
+          if (!patternTabLocked) {
+            setPatternTab('core');
+          }
+          if (!exploderSubTabLocked) {
+            setExploderSubTab('prompt_exploder_rules');
+          }
           setIncludeDisabled(false);
         }}
         showHeader={false}

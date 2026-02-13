@@ -9,13 +9,16 @@ If iit's a logical operator I weant a dropdown (with all logical operator option
 
 * save exploded prompt prompt manager list
 
-Params exploded further with comments and then I should be able to reference Paramets in IF Logical blocks
+* Params need to be exploded as well into a separate section, Parameters (likke the extractor does in Image studio), with appropriate selectors and editable comments / descriptions.
+
+* The list needs logical Operator fields (dropdown fields) that will replace textual "If" statements. The referenced parameters need to be in a referenced field with parameter name and an appropriate selector for it's value.
 
 AI:
 Prompt suggester (how to extend the prompt)
 prompt patcher
 Validation enhancer
 
+Prepare the plan for prompt parsing and finetuning.
 For the Prompt "
 === PREMIUM E-COMMERCE IMAGE EDITING PROMPT WITH STUDIO RELIGHTING ver. 0.8 ===
 
@@ -226,6 +229,8 @@ PIPELINE is a mess, it should be HIERARCHICAL LIST list the Category LIST, use f
 * FAIL if “CG/plastic” look, invented texture, or hue shift appears."
 
 ---
+
+TEST AGAINST DIFFERENT PROMPTS
 
 
 ---

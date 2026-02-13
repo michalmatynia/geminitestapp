@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
-import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/products/hooks/useUserPreferences';
+import { useUserPreferences, useUpdateUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/features/products/types';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
 import { Button, UnifiedSelect, Input, useToast, SectionHeader, SectionPanel, FormSection, FormField } from '@/shared/ui';
@@ -26,7 +26,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
   const catalogs = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
   
   const [preferences, setPreferences] = useState<ProductListPreferences>(DEFAULT_PREFERENCES);
-  const updateMutation = useUpdateUserPreferencesMutation();
+  const updateMutation = useUpdateUserPreferences();
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;

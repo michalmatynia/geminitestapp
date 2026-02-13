@@ -70,7 +70,7 @@ async function updateUserPreferences(
   }
 }
 
-export function useUpdateUserPreferencesMutation(): UseMutationResult<void, Error, Partial<ProductListPreferences>> {
+export function useUpdateUserPreferences(): UseMutationResult<void, Error, Partial<ProductListPreferences>> {
   const queryClient = useQueryClient();
   return useOfflineMutation(
     updateUserPreferences,

@@ -9,6 +9,10 @@ import type {
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
   PromptExploderListItem,
+  PromptExploderLogicalComparator,
+  PromptExploderLogicalCondition,
+  PromptExploderLogicalJoin,
+  PromptExploderLogicalOperator,
   PromptExploderParamUiControl,
   PromptExploderSegment,
   PromptExploderSegmentType,
@@ -41,8 +45,20 @@ const DEFAULT_PATTERN_IDS: Record<string, RegExp> = {
   'segment.conditional.only_if': /\bonly if\b/i,
   'segment.conditional.fix_until': /\bfix\s+until\b/i,
   'segment.comment.patch': /^\s*\/\/\s*PATCH\b/i,
+  'segment.subsection.alpha_heading': /^\s*([A-Z])\)\s+(.+)$/,
+  'segment.subsection.reference_named':
+    /^\s*(RL\d+|P\d+|QA(?:_R)?\d+)\s+\(([^)]+)\)\s*:\s*(.*)$/i,
+  'segment.subsection.reference_plain': /^\s*(RL\d+|P\d+|QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i,
+  'segment.subsection.qa_code': /^\s*(QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i,
+  'segment.subsection.numeric_bracket_heading': /^\s*\d+\.\s+\[([A-Z0-9 _()\-/:&+.,]{2,})]$/,
+  'segment.subsection.bracket_heading': /^\s*\[([A-Z0-9 _()\-/:&+.,]{2,})]$/,
+  'segment.subsection.markdown_heading': /^\s*#{1,6}\s+(.+)$/,
 };
 const BRACKET_SECTION_HEADING_RE = /^\s*\[[A-Z0-9 _()\-/:&+.,]{2,}]$/i;
+const STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE = /^(===\s*STUDIO\s+RELIGHTING|STUDIO\s+RELIGHTING\b)/i;
+const REQUIREMENTS_BOUNDARY_FALLBACK_RE = /^(REQUIREMENTS|COMPOSITING\s+REQUIREMENTS)\b/i;
+const PIPELINE_BOUNDARY_FALLBACK_RE = /^(PIPELINE|WORKFLOW|PROCESS|EXECUTION\s+TEMPLATE)\b/i;
+const FINAL_QA_BOUNDARY_FALLBACK_RE = /^FINAL\s+QA\b/i;
 
 type PatternRuntime = {
   byId: Map<string, RegExp>;
@@ -75,6 +91,14 @@ const listItemId = (() => {
   return (): string => {
     count += 1;
     return `item_${count.toString(36)}`;
+  };
+})();
+
+const logicalConditionId = (() => {
+  let count = 0;
+  return (): string => {
+    count += 1;
+    return `condition_${count.toString(36)}`;
   };
 })();
 
@@ -442,6 +466,31 @@ const testPattern = (runtime: PatternRuntime, patternId: string, value: string):
   return regex.test(value);
 };
 
+const resolveBoundaryRegex = (
+  runtime: PatternRuntime,
+  patternId: string,
+  fallback: RegExp
+): RegExp => {
+  return runtime.byId.get(patternId) ?? fallback;
+};
+
+const resolveBoundaryRegexOptional = (
+  runtime: PatternRuntime | undefined,
+  patternId: string,
+  fallback: RegExp
+): RegExp => {
+  return runtime?.byId.get(patternId) ?? fallback;
+};
+
+const matchesBoundaryHeading = (
+  runtime: PatternRuntime,
+  patternId: string,
+  fallback: RegExp,
+  value: string
+): boolean => {
+  return resolveBoundaryRegex(runtime, patternId, fallback).test(value);
+};
+
 const collectMatchedRules = (
   runtime: PatternRuntime,
   text: string
@@ -502,7 +551,7 @@ const parseLogicalReferenceValue = (rawValue: string | null | undefined): unknow
 
 const normalizeLogicalOperator = (
   raw: string
-): PromptExploderListItem['logicalOperator'] => {
+): PromptExploderLogicalOperator | null => {
   const normalized = raw.trim().toLowerCase();
   if (normalized === 'only if') return 'only_if';
   if (normalized === 'if') return 'if';
@@ -513,7 +562,7 @@ const normalizeLogicalOperator = (
 
 const normalizeLogicalComparator = (
   raw: string | null | undefined
-): PromptExploderListItem['referencedComparator'] => {
+): PromptExploderLogicalComparator | null => {
   if (!raw) return null;
   const normalized = raw.trim().toLowerCase();
   if (normalized === '=' || normalized === '==') return 'equals';
@@ -530,11 +579,99 @@ const normalizeLogicalParamPath = (raw: string): string => {
   return raw.trim().replace(/^\[(.+)]$/i, '$1').replace(/^params\./i, '');
 };
 
+const normalizeLogicalJoin = (raw: string | null | undefined): PromptExploderLogicalJoin | null => {
+  if (!raw) return null;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'and') return 'and';
+  if (normalized === 'or') return 'or';
+  return null;
+};
+
+const parseLogicalConditionExpression = (
+  expression: string,
+  fallbackComparator: PromptExploderLogicalComparator
+): Omit<PromptExploderLogicalCondition, 'id' | 'joinWithPrevious'> | null => {
+  const expressionMatch = /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(
+    expression
+  );
+  if (!expressionMatch) return null;
+
+  const paramPath = normalizeLogicalParamPath(expressionMatch[1] ?? '');
+  if (!paramPath) return null;
+
+  const rawComparator = expressionMatch[2] ?? null;
+  const comparator = normalizeLogicalComparator(rawComparator) ?? fallbackComparator;
+  const value =
+    comparator === 'truthy' || comparator === 'falsy'
+      ? null
+      : parseLogicalReferenceValue(expressionMatch[3]);
+
+  return {
+    paramPath,
+    comparator,
+    value,
+  };
+};
+
+const parseLogicalConditionChain = (
+  expression: string,
+  operator: PromptExploderLogicalOperator
+): PromptExploderLogicalCondition[] => {
+  const fallbackComparator: PromptExploderLogicalComparator =
+    operator === 'unless' ? 'falsy' : 'truthy';
+  const conditions: PromptExploderLogicalCondition[] = [];
+  const separator = /\s+(AND|OR)\s+/gi;
+  let cursor = 0;
+  let joinForNext: PromptExploderLogicalJoin | null = null;
+
+  for (const match of expression.matchAll(separator)) {
+    const index = match.index ?? -1;
+    if (index < 0) continue;
+    const clauseRaw = expression.slice(cursor, index).trim();
+    if (clauseRaw) {
+      const parsed = parseLogicalConditionExpression(clauseRaw, fallbackComparator);
+      if (!parsed) return [];
+      conditions.push({
+        id: logicalConditionId(),
+        ...parsed,
+        joinWithPrevious: conditions.length === 0 ? null : (joinForNext ?? 'and'),
+      });
+    }
+
+    joinForNext = normalizeLogicalJoin(match[1] ?? '') ?? 'and';
+    cursor = index + (match[0]?.length ?? 0);
+  }
+
+  const tailClause = expression.slice(cursor).trim();
+  if (tailClause) {
+    const parsed = parseLogicalConditionExpression(tailClause, fallbackComparator);
+    if (!parsed) return [];
+    conditions.push({
+      id: logicalConditionId(),
+      ...parsed,
+      joinWithPrevious: conditions.length === 0 ? null : (joinForNext ?? 'and'),
+    });
+  }
+
+  if (conditions.length === 0) {
+    const parsed = parseLogicalConditionExpression(expression.trim(), fallbackComparator);
+    if (!parsed) return [];
+    conditions.push({
+      id: logicalConditionId(),
+      ...parsed,
+      joinWithPrevious: null,
+    });
+  }
+
+  return conditions;
+};
+
 const parseLogicalListItemPrefix = (text: string): {
   text: string;
-  logicalOperator: PromptExploderListItem['logicalOperator'];
+  logicalOperator: PromptExploderLogicalOperator;
+  logicalConditions: PromptExploderLogicalCondition[];
   referencedParamPath: string;
-  referencedComparator: PromptExploderListItem['referencedComparator'];
+  referencedComparator: PromptExploderLogicalComparator;
   referencedValue: unknown;
 } | null => {
   const trimmed = text.trim();
@@ -546,26 +683,17 @@ const parseLogicalListItemPrefix = (text: string): {
   const statement = (prefixMatch[3] ?? '').trim();
   if (!operator || !expression || !statement) return null;
 
-  const expressionMatch = /^([A-Za-z_][A-Za-z0-9_.[\]]*)(?:\s*(==|=|!=|>=|<=|>|<|contains)\s*(.+))?$/i.exec(
-    expression
-  );
-  if (!expressionMatch) return null;
-
-  const paramPath = normalizeLogicalParamPath(expressionMatch[1] ?? '');
-  if (!paramPath) return null;
-  const rawComparator = expressionMatch[2] ?? null;
-  const comparator = normalizeLogicalComparator(rawComparator);
-  const referencedComparator: PromptExploderListItem['referencedComparator'] =
-    comparator ?? (operator === 'unless' ? 'falsy' : 'truthy');
-  const referencedValue =
-    comparator ? parseLogicalReferenceValue(expressionMatch[3]) : null;
+  const logicalConditions = parseLogicalConditionChain(expression, operator);
+  const firstCondition = logicalConditions[0];
+  if (!firstCondition) return null;
 
   return {
     text: statement,
     logicalOperator: operator,
-    referencedParamPath: paramPath,
-    referencedComparator,
-    referencedValue,
+    logicalConditions,
+    referencedParamPath: firstCondition.paramPath,
+    referencedComparator: firstCondition.comparator,
+    referencedValue: firstCondition.value,
   };
 };
 
@@ -581,17 +709,28 @@ const parseListLines = (lines: string[]): PromptExploderListItem[] => {
   normalized.forEach((line) => {
     const raw = line;
     const indent = raw.match(/^\s*/)?.[0]?.length ?? 0;
+    const markerMatch = /^\s*(\d+[.)]|[A-Z]\)|[*-])\s+/.exec(raw);
+    const hasMarker = Boolean(markerMatch);
     const cleaned = raw
       .replace(/^\s*(\d+[.)]|[A-Z]\)|[*-])\s+/, '')
       .trim();
 
     if (!cleaned) return;
 
+    if (!hasMarker && stack.length > 0) {
+      const current = stack[stack.length - 1]?.item;
+      if (current) {
+        current.text = `${current.text} ${cleaned}`.trim();
+      }
+      return;
+    }
+
     const logicalPrefix = parseLogicalListItemPrefix(cleaned);
     const item: PromptExploderListItem = {
       id: listItemId(),
       text: logicalPrefix?.text ?? cleaned,
       logicalOperator: logicalPrefix?.logicalOperator ?? null,
+      logicalConditions: logicalPrefix?.logicalConditions ?? [],
       referencedParamPath: logicalPrefix?.referencedParamPath ?? null,
       referencedComparator: logicalPrefix?.referencedComparator ?? null,
       referencedValue: logicalPrefix?.referencedValue ?? null,
@@ -628,27 +767,97 @@ const formatLogicalReferenceValue = (value: unknown): string => {
   }
 };
 
+const buildLogicalConditionsFromLegacyFields = (
+  item: PromptExploderListItem
+): PromptExploderLogicalCondition[] => {
+  const paramPath = (item.referencedParamPath ?? '').trim();
+  if (!paramPath) return [];
+  const fallbackComparator: PromptExploderLogicalComparator =
+    item.logicalOperator === 'unless' ? 'falsy' : 'truthy';
+  const comparator = item.referencedComparator ?? fallbackComparator;
+  return [
+    {
+      id: `${item.id}_legacy`,
+      paramPath,
+      comparator,
+      value:
+        comparator === 'truthy' || comparator === 'falsy'
+          ? null
+          : item.referencedValue ?? null,
+      joinWithPrevious: null,
+    },
+  ];
+};
+
+const resolveLogicalConditions = (item: PromptExploderListItem): PromptExploderLogicalCondition[] => {
+  const fromItem = (item.logicalConditions ?? [])
+    .map((condition, index) => {
+      const paramPath = (condition.paramPath ?? '').trim();
+      if (!paramPath) return null;
+      const fallbackComparator: PromptExploderLogicalComparator =
+        item.logicalOperator === 'unless' ? 'falsy' : 'truthy';
+      const comparator = condition.comparator ?? fallbackComparator;
+      return {
+        id: condition.id || `${item.id}_condition_${index + 1}`,
+        paramPath,
+        comparator,
+        value:
+          comparator === 'truthy' || comparator === 'falsy'
+            ? null
+            : condition.value ?? null,
+        joinWithPrevious:
+          index === 0 ? null : (condition.joinWithPrevious === 'or' ? 'or' : 'and'),
+      } satisfies PromptExploderLogicalCondition;
+    })
+    .filter((condition): condition is PromptExploderLogicalCondition => Boolean(condition));
+  if (fromItem.length > 0) return fromItem;
+  return buildLogicalConditionsFromLegacyFields(item);
+};
+
+const formatLogicalConditionExpression = (condition: PromptExploderLogicalCondition): string => {
+  if (condition.comparator === 'truthy') return condition.paramPath;
+  if (condition.comparator === 'falsy') return `${condition.paramPath}=false`;
+  if (condition.comparator === 'equals') {
+    return `${condition.paramPath}=${formatLogicalReferenceValue(condition.value)}`;
+  }
+  if (condition.comparator === 'not_equals') {
+    return `${condition.paramPath}!=${formatLogicalReferenceValue(condition.value)}`;
+  }
+  if (condition.comparator === 'gt') {
+    return `${condition.paramPath}>${formatLogicalReferenceValue(condition.value)}`;
+  }
+  if (condition.comparator === 'gte') {
+    return `${condition.paramPath}>=${formatLogicalReferenceValue(condition.value)}`;
+  }
+  if (condition.comparator === 'lt') {
+    return `${condition.paramPath}<${formatLogicalReferenceValue(condition.value)}`;
+  }
+  if (condition.comparator === 'lte') {
+    return `${condition.paramPath}<=${formatLogicalReferenceValue(condition.value)}`;
+  }
+  if (condition.comparator === 'contains') {
+    return `${condition.paramPath} contains ${formatLogicalReferenceValue(condition.value)}`;
+  }
+  return condition.paramPath;
+};
+
 const formatLogicalListItemPrefix = (item: PromptExploderListItem): string | null => {
   const operator = item.logicalOperator ?? null;
-  const paramPath = (item.referencedParamPath ?? '').trim();
-  if (!operator || !paramPath) return null;
+  if (!operator) return null;
+  const logicalConditions = resolveLogicalConditions(item);
+  if (!logicalConditions.length) return null;
 
   const operatorLabel =
     operator === 'only_if' ? 'Only if' : `${operator.slice(0, 1).toUpperCase()}${operator.slice(1)}`;
-  const comparator = item.referencedComparator ?? (operator === 'unless' ? 'falsy' : 'truthy');
-
-  if (comparator === 'truthy') return `${operatorLabel} ${paramPath}`;
-  if (comparator === 'falsy') return `${operatorLabel} ${paramPath}=false`;
-  if (comparator === 'equals') return `${operatorLabel} ${paramPath}=${formatLogicalReferenceValue(item.referencedValue)}`;
-  if (comparator === 'not_equals') return `${operatorLabel} ${paramPath}!=${formatLogicalReferenceValue(item.referencedValue)}`;
-  if (comparator === 'gt') return `${operatorLabel} ${paramPath}>${formatLogicalReferenceValue(item.referencedValue)}`;
-  if (comparator === 'gte') return `${operatorLabel} ${paramPath}>=${formatLogicalReferenceValue(item.referencedValue)}`;
-  if (comparator === 'lt') return `${operatorLabel} ${paramPath}<${formatLogicalReferenceValue(item.referencedValue)}`;
-  if (comparator === 'lte') return `${operatorLabel} ${paramPath}<=${formatLogicalReferenceValue(item.referencedValue)}`;
-  if (comparator === 'contains') {
-    return `${operatorLabel} ${paramPath} contains ${formatLogicalReferenceValue(item.referencedValue)}`;
-  }
-  return `${operatorLabel} ${paramPath}`;
+  const expression = logicalConditions
+    .map((condition, index) => {
+      const clause = formatLogicalConditionExpression(condition);
+      if (index === 0) return clause;
+      const joinLabel = condition.joinWithPrevious === 'or' ? 'OR' : 'AND';
+      return `${joinLabel} ${clause}`;
+    })
+    .join(' ');
+  return `${operatorLabel} ${expression}`;
 };
 
 const flattenItemsToTextLines = (
@@ -678,8 +887,12 @@ const collectReferencedParamsFromItems = (items: PromptExploderListItem[]): stri
   const out = new Set<string>();
   const walk = (nodes: PromptExploderListItem[]): void => {
     nodes.forEach((item) => {
-      const path = (item.referencedParamPath ?? '').trim();
-      if (path) out.add(path);
+      resolveLogicalConditions(item).forEach((condition) => {
+        const path = (condition.paramPath ?? '').trim();
+        if (path) out.add(path);
+      });
+      const legacyPath = (item.referencedParamPath ?? '').trim();
+      if (legacyPath) out.add(legacyPath);
       if (item.children.length > 0) walk(item.children);
     });
   };
@@ -804,28 +1017,61 @@ const consumeParamsBlock = (cursor: ParseCursor, runtime?: PatternRuntime): stri
   return cursor.lines.slice(start, end + 1);
 };
 
-const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] => {
+const parseSequenceSubsections = (
+  lines: string[],
+  runtime?: PatternRuntime
+): PromptExploderSubsection[] => {
   const subsections: PromptExploderSubsection[] = [];
   let currentTitle: string | null = null;
   let currentCode: string | null = null;
+  let currentCondition: string | null = null;
+  let currentGuidance: string | null = null;
   let buffer: string[] = [];
+  const alphaHeadingRegex = resolveBoundaryRegexOptional(
+    runtime,
+    'segment.subsection.alpha_heading',
+    DEFAULT_PATTERN_IDS['segment.subsection.alpha_heading']!
+  );
+  const referenceNamedRegex = resolveBoundaryRegexOptional(
+    runtime,
+    'segment.subsection.reference_named',
+    DEFAULT_PATTERN_IDS['segment.subsection.reference_named']!
+  );
+  const referencePlainRegex = resolveBoundaryRegexOptional(
+    runtime,
+    'segment.subsection.reference_plain',
+    DEFAULT_PATTERN_IDS['segment.subsection.reference_plain']!
+  );
+  const numericBracketRegex = resolveBoundaryRegexOptional(
+    runtime,
+    'segment.subsection.numeric_bracket_heading',
+    DEFAULT_PATTERN_IDS['segment.subsection.numeric_bracket_heading']!
+  );
+  const bracketRegex = resolveBoundaryRegexOptional(
+    runtime,
+    'segment.subsection.bracket_heading',
+    DEFAULT_PATTERN_IDS['segment.subsection.bracket_heading']!
+  );
+  const markdownHeadingRegex = resolveBoundaryRegexOptional(
+    runtime,
+    'segment.subsection.markdown_heading',
+    DEFAULT_PATTERN_IDS['segment.subsection.markdown_heading']!
+  );
 
   const flush = (): void => {
     if (!currentTitle && buffer.length === 0) return;
-    const headingAndBody = `${currentTitle ?? ''}\n${buffer.join('\n')}`;
-    const conditionMatch =
-      /\bonly if\b[^\n.]*/i.exec(headingAndBody) ??
-      /\bif\b[^\n.]*/i.exec(headingAndBody) ??
-      /\bunless\b[^\n.]*/i.exec(headingAndBody);
     subsections.push({
       id: subsectionId(),
       title: currentTitle ?? 'Section',
       code: currentCode,
-      condition: conditionMatch?.[0]?.trim() || null,
+      condition: currentCondition,
+      guidance: currentGuidance,
       items: parseListLines(buffer),
     });
     currentTitle = null;
     currentCode = null;
+    currentCondition = null;
+    currentGuidance = null;
     buffer = [];
   };
 
@@ -833,16 +1079,39 @@ const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] =
     const trimmed = line.trim();
     if (!trimmed) return;
     const normalizedHeading = normalizeHeadingLabel(trimmed);
-    const alphaMatch = /^([A-Z])\)\s+(.+)$/.exec(trimmed);
-    const refMatch = /^(RL\d+|P\d+|QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i.exec(trimmed);
-    const numericBracketHeadingMatch = /^\d+\.\s+\[([A-Z0-9 _()\-/:&+.,]{2,})]$/.exec(trimmed);
-    const bracketHeadingMatch = /^\[([A-Z0-9 _()\-/:&+.,]{2,})]$/.exec(trimmed);
-    const markdownHeadingMatch = /^#{1,6}\s+(.+)$/.exec(trimmed);
+    const alphaMatch = alphaHeadingRegex.exec(trimmed);
+    const refWithNamedHeader = referenceNamedRegex.exec(trimmed);
+    const refMatch = referencePlainRegex.exec(trimmed);
+    const numericBracketHeadingMatch = numericBracketRegex.exec(trimmed);
+    const bracketHeadingMatch = bracketRegex.exec(trimmed);
+    const markdownHeadingMatch = markdownHeadingRegex.exec(trimmed);
 
     if (alphaMatch) {
       flush();
-      currentTitle = `${alphaMatch[1] ?? ''}) ${(alphaMatch[2] ?? '').trim()}`;
+      const alphaCode = (alphaMatch[1] ?? '').trim();
+      const alphaTitle = (alphaMatch[2] ?? '').trim();
+      currentTitle =
+        alphaCode && alphaTitle
+          ? `${alphaCode}) ${alphaTitle}`
+          : normalizedHeading || trimmed;
       currentCode = null;
+      currentCondition = null;
+      currentGuidance = null;
+      return;
+    }
+
+    if (refWithNamedHeader) {
+      flush();
+      currentCode = (refWithNamedHeader[1] ?? '').toUpperCase();
+      const subsectionName = (refWithNamedHeader[2] ?? '').trim();
+      const headingTail = (refWithNamedHeader[3] ?? '').trim();
+      currentTitle = subsectionName || currentCode;
+      if (/^(if|only if|unless|when)\b/i.test(headingTail)) {
+        currentCondition = headingTail;
+      } else {
+        currentCondition = null;
+        currentGuidance = headingTail || null;
+      }
       return;
     }
 
@@ -850,6 +1119,8 @@ const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] =
       flush();
       currentCode = (refMatch[1] ?? '').toUpperCase();
       currentTitle = (refMatch[2] ?? '').trim() || currentCode;
+      currentCondition = null;
+      currentGuidance = null;
       return;
     }
 
@@ -857,6 +1128,8 @@ const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] =
       flush();
       currentTitle = `[${(numericBracketHeadingMatch[1] ?? '').trim()}]`;
       currentCode = null;
+      currentCondition = null;
+      currentGuidance = null;
       return;
     }
 
@@ -864,6 +1137,8 @@ const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] =
       flush();
       currentTitle = `[${(bracketHeadingMatch[1] ?? '').trim()}]`;
       currentCode = null;
+      currentCondition = null;
+      currentGuidance = null;
       return;
     }
 
@@ -871,6 +1146,8 @@ const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] =
       flush();
       currentTitle = normalizeHeadingLabel(markdownHeadingMatch[0] ?? '') || normalizedHeading;
       currentCode = null;
+      currentCondition = null;
+      currentGuidance = null;
       return;
     }
 
@@ -881,28 +1158,38 @@ const parseSequenceSubsections = (lines: string[]): PromptExploderSubsection[] =
   return subsections;
 };
 
-const parseQaSubsections = (lines: string[]): PromptExploderSubsection[] => {
+const parseQaSubsections = (
+  lines: string[],
+  runtime?: PatternRuntime
+): PromptExploderSubsection[] => {
   const subsections: PromptExploderSubsection[] = [];
   let currentTitle: string | null = null;
   let currentCode: string | null = null;
+  let currentCondition: string | null = null;
   let buffer: string[] = [];
+  const qaCodeRegex = resolveBoundaryRegexOptional(
+    runtime,
+    'segment.subsection.qa_code',
+    DEFAULT_PATTERN_IDS['segment.subsection.qa_code']!
+  );
+  const finalQaBoundaryRegex = resolveBoundaryRegexOptional(
+    runtime,
+    'segment.boundary.final_qa',
+    FINAL_QA_BOUNDARY_FALLBACK_RE
+  );
 
   const flush = (): void => {
     if (!currentTitle && !currentCode && buffer.length === 0) return;
-    const headingAndBody = `${currentTitle ?? ''}\n${buffer.join('\n')}`;
-    const conditionMatch =
-      /\bonly if\b[^\n.]*/i.exec(headingAndBody) ??
-      /\bif\b[^\n.]*/i.exec(headingAndBody) ??
-      /\bfix\s+until\b[^\n.]*/i.exec(headingAndBody);
     subsections.push({
       id: subsectionId(),
       title: currentTitle ?? currentCode ?? 'QA',
       code: currentCode,
-      condition: conditionMatch?.[0]?.trim() || null,
+      condition: currentCondition,
       items: parseListLines(buffer),
     });
     currentTitle = null;
     currentCode = null;
+    currentCondition = null;
     buffer = [];
   };
 
@@ -911,18 +1198,22 @@ const parseQaSubsections = (lines: string[]): PromptExploderSubsection[] => {
     if (!trimmed) return;
     const normalizedHeading = normalizeHeadingLabel(trimmed);
 
-    const qaMatch = /^(QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i.exec(trimmed);
+    const qaMatch = qaCodeRegex.exec(trimmed);
     if (qaMatch) {
       flush();
-      currentCode = (qaMatch[1] ?? '').toUpperCase();
-      currentTitle = (qaMatch[2] ?? '').trim() || currentCode;
+      currentCode = (qaMatch[1] ?? '').trim().toUpperCase();
+      const qaTail = (qaMatch[2] ?? '').trim();
+      currentTitle = qaTail || currentCode || normalizedHeading || trimmed;
+      currentCondition = null;
       return;
     }
 
-    if (/^FINAL\s+QA\b/i.test(normalizedHeading)) {
+    if (finalQaBoundaryRegex.test(normalizedHeading) || finalQaBoundaryRegex.test(trimmed)) {
       flush();
+      const onlyIfMatch = /\((only if[^)]*)\)/i.exec(normalizedHeading);
       currentTitle = normalizedHeading;
       currentCode = null;
+      currentCondition = onlyIfMatch?.[1]?.trim() || null;
       return;
     }
 
@@ -1053,6 +1344,34 @@ const formatHeadingWithCode = (title: string, code: string | null): string => {
   return `${upperCode} ${normalizedTitle}`;
 };
 
+const formatSubsectionHeading = (subsection: PromptExploderSubsection): string => {
+  const code = subsection.code?.trim().toUpperCase() || null;
+  const title = subsection.title.trim();
+  const condition = subsection.condition?.trim() || null;
+  const guidance = subsection.guidance?.trim() || null;
+
+  if (code && title && (condition || guidance)) {
+    const detail = condition ?? guidance ?? '';
+    return `${code} (${title}): ${detail}`.trim();
+  }
+  if (code && title) {
+    return formatHeadingWithCode(title, code);
+  }
+  if (code) return code;
+  return title;
+};
+
+const stripLeadingTitleLine = (text: string, title: string): string => {
+  const normalized = trimTrailingBlankLines(text);
+  if (!normalized) return '';
+  const lines = normalized.split('\n');
+  const firstLine = normalizeHeadingLabel(lines[0] ?? '');
+  const titleLabel = normalizeHeadingLabel(title);
+  if (!firstLine || !titleLabel) return normalized;
+  if (firstLine.toLowerCase() !== titleLabel.toLowerCase()) return normalized;
+  return trimTrailingBlankLines(lines.slice(1).join('\n'));
+};
+
 const renderSegment = (segment: PromptExploderSegment): string => {
   const lines: string[] = [];
 
@@ -1073,21 +1392,23 @@ const renderSegment = (segment: PromptExploderSegment): string => {
     case 'parameter_block':
       appendTitle();
       if (segment.paramsText.trim().length > 0) {
-        lines.push(segment.paramsText.trim());
+        const body = stripLeadingTitleLine(segment.paramsText, segment.title);
+        if (body.length > 0) lines.push(body);
       } else if (segment.text.trim().length > 0) {
-        lines.push(segment.text.trim());
+        const body = stripLeadingTitleLine(segment.text, segment.title);
+        if (body.length > 0) lines.push(body);
       }
       break;
     case 'sequence':
       appendTitle();
+      if (segment.condition?.trim()) {
+        lines.push(segment.condition.trim());
+      }
       segment.subsections.forEach((subsection, index) => {
         if (index > 0 || lines.length > 0) {
           lines.push('');
         }
-        const subsectionHeading = formatHeadingWithCode(
-          subsection.title,
-          subsection.code
-        );
+        const subsectionHeading = formatSubsectionHeading(subsection);
         if (subsectionHeading) {
           lines.push(subsectionHeading);
         }
@@ -1126,8 +1447,11 @@ const renderSegment = (segment: PromptExploderSegment): string => {
     case 'assigned_text':
     default:
       appendTitle();
-      if (segment.text.trim().length > 0 && segment.text.trim() !== segment.title.trim()) {
-        lines.push(segment.text.trim());
+      if (segment.text.trim().length > 0) {
+        const body = stripLeadingTitleLine(segment.text, segment.title);
+        if (body.length > 0) {
+          lines.push(body);
+        }
       }
       break;
   }
@@ -1308,6 +1632,21 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
     index: 0,
   };
   const segments: PromptExploderSegment[] = [];
+  const studioRelightingBoundary = resolveBoundaryRegex(
+    runtime,
+    'segment.boundary.studio_relighting',
+    STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE
+  );
+  const pipelineBoundary = resolveBoundaryRegex(
+    runtime,
+    'segment.boundary.pipeline',
+    PIPELINE_BOUNDARY_FALLBACK_RE
+  );
+  const finalQaBoundary = resolveBoundaryRegex(
+    runtime,
+    'segment.boundary.final_qa',
+    FINAL_QA_BOUNDARY_FALLBACK_RE
+  );
 
   while (cursor.index < lines.length) {
     const line = toLine(lines[cursor.index]);
@@ -1320,15 +1659,32 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
     }
 
     if (
-      /^===\s*STUDIO\s+RELIGHTING/i.test(trimmed) ||
-      /^STUDIO\s+RELIGHTING\b/i.test(normalizedHeading)
+      matchesBoundaryHeading(
+        runtime,
+        'segment.boundary.studio_relighting',
+        STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE,
+        trimmed
+      ) ||
+      matchesBoundaryHeading(
+        runtime,
+        'segment.boundary.studio_relighting',
+        STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE,
+        normalizedHeading
+      )
     ) {
       const blockLines = consumeBlockUntilBoundary(cursor, [
-        /^PIPELINE\b/i,
-        /^FINAL\s+QA\b/i,
+        pipelineBoundary,
+        finalQaBoundary,
       ]);
       const segmentTitle = blockLines[0]?.trim() || 'STUDIO RELIGHTING EXTENSION';
-      const subsections = parseSequenceSubsections(blockLines.slice(1));
+      const bodyLines = blockLines.slice(1);
+      const firstBodyLine = bodyLines.find((line) => line.trim().length > 0) ?? '';
+      const hasSectionRuleLine = /^RELIGHTING\s+RULES\b/i.test(normalizeHeadingLabel(firstBodyLine));
+      const sectionRuleCondition = hasSectionRuleLine ? normalizeHeadingLabel(firstBodyLine) : null;
+      const subsectionLines = hasSectionRuleLine
+        ? bodyLines.slice(bodyLines.indexOf(firstBodyLine) + 1)
+        : bodyLines;
+      const subsections = parseSequenceSubsections(subsectionLines, runtime);
       segments.push(
         createSegment({
           runtime,
@@ -1337,6 +1693,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
           title: segmentTitle,
           raw: trimTrailingBlankLines(blockLines.join('\n')),
           subsections,
+          condition: sectionRuleCondition,
           includeInOutput: true,
         })
       );
@@ -1396,7 +1753,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
           title: normalizeHeadingLabel(blockLines[0] ?? '') || 'VALIDATION_MODULE',
           raw: trimTrailingBlankLines(blockLines.join('\n')),
           listItems: parseListLines(body),
-          subsections: parseQaSubsections(body),
+          subsections: parseQaSubsections(body, runtime),
           condition: /\bfix\s+until\b/i.test(blockLines.join('\n'))
             ? 'fix_until_all_pass'
             : null,
@@ -1427,9 +1784,22 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       continue;
     }
 
+    const isRequirementsHeading =
+      matchesBoundaryHeading(
+        runtime,
+        'segment.boundary.requirements',
+        REQUIREMENTS_BOUNDARY_FALLBACK_RE,
+        normalizedHeading
+      ) ||
+      matchesBoundaryHeading(
+        runtime,
+        'segment.boundary.requirements',
+        REQUIREMENTS_BOUNDARY_FALLBACK_RE,
+        trimmed
+      );
+
     if (
-      /^REQUIREMENTS\b/i.test(normalizedHeading) ||
-      /^COMPOSITING\s+REQUIREMENTS\b/i.test(normalizedHeading) ||
+      isRequirementsHeading ||
       /^PARSING\s*&\s*EXECUTION\s+RULES\b/i.test(normalizedHeading) ||
       /^MODULES\b/i.test(normalizedHeading) ||
       /^DATA\s+MODEL\b/i.test(normalizedHeading) ||
@@ -1437,13 +1807,19 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       /^ERROR(?:_HANDLING|\s+HANDLING)\b/i.test(normalizedHeading) ||
       /^SECURITY(?:_NOTES|\s+NOTES)\b/i.test(normalizedHeading)
     ) {
-      const blockLines = consumeParagraphBlock(
-        cursor,
-        [/^===\s*STUDIO\s+RELIGHTING/i, /^PIPELINE\b/i, /^FINAL\s+QA\b/i],
-        runtime
-      );
+      const blockLines = isRequirementsHeading
+        ? consumeBlockUntilBoundary(cursor, [
+          studioRelightingBoundary,
+          pipelineBoundary,
+          finalQaBoundary,
+        ])
+        : consumeParagraphBlock(
+          cursor,
+          [studioRelightingBoundary, pipelineBoundary, finalQaBoundary],
+          runtime
+        );
       const body = blockLines.slice(1);
-      const subsections = parseSequenceSubsections(body);
+      const subsections = parseSequenceSubsections(body, runtime);
       segments.push(
         createSegment({
           runtime,
@@ -1458,12 +1834,20 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
     }
 
     if (
-      /^PIPELINE\b/i.test(normalizedHeading) ||
-      /^WORKFLOW\b/i.test(normalizedHeading) ||
-      /^PROCESS\b/i.test(normalizedHeading) ||
-      /^EXECUTION\s+TEMPLATE\b/i.test(normalizedHeading)
+      matchesBoundaryHeading(
+        runtime,
+        'segment.boundary.pipeline',
+        PIPELINE_BOUNDARY_FALLBACK_RE,
+        normalizedHeading
+      ) ||
+      matchesBoundaryHeading(
+        runtime,
+        'segment.boundary.pipeline',
+        PIPELINE_BOUNDARY_FALLBACK_RE,
+        trimmed
+      )
     ) {
-      const blockLines = consumeParagraphBlock(cursor, [/^FINAL\s+QA\b/i], runtime);
+      const blockLines = consumeBlockUntilBoundary(cursor, [finalQaBoundary]);
       const title = normalizeHeadingLabel(blockLines[0] ?? '') || 'PIPELINE';
       const body = blockLines.slice(1);
       segments.push(
@@ -1482,7 +1866,20 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
       continue;
     }
 
-    if (/^FINAL\s+QA\b/i.test(normalizedHeading)) {
+    if (
+      matchesBoundaryHeading(
+        runtime,
+        'segment.boundary.final_qa',
+        FINAL_QA_BOUNDARY_FALLBACK_RE,
+        normalizedHeading
+      ) ||
+      matchesBoundaryHeading(
+        runtime,
+        'segment.boundary.final_qa',
+        FINAL_QA_BOUNDARY_FALLBACK_RE,
+        trimmed
+      )
+    ) {
       const blockLines = consumeQaBlock(cursor, runtime);
       const body = blockLines.slice(1);
       segments.push(
@@ -1493,7 +1890,7 @@ const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderS
           title: normalizeHeadingLabel(blockLines[0] ?? '') || 'FINAL QA',
           raw: trimTrailingBlankLines(blockLines.join('\n')),
           listItems: parseListLines(body),
-          subsections: parseQaSubsections(body),
+          subsections: parseQaSubsections(body, runtime),
           condition: /\bfix\s+until\b/i.test(blockLines.join('\n'))
             ? 'fix_until_all_pass'
             : null,
@@ -1709,6 +2106,9 @@ export function moveByDelta<T>(items: T[], index: number, delta: number): T[] {
 export function cloneListItems(items: PromptExploderListItem[]): PromptExploderListItem[] {
   return items.map((item) => ({
     ...item,
+    logicalConditions: (item.logicalConditions ?? []).map((condition) => ({
+      ...condition,
+    })),
     children: cloneListItems(item.children),
   }));
 }

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import type {
+  PromptExploderRuleSegmentType,
+  PromptValidationRule,
+} from '@/features/prompt-engine/settings';
 import {
   explodePromptText,
   reassemblePromptSegments,
@@ -29,7 +33,7 @@ A) BG (PURE WHITE)
 * Replace entire background with exact RGB(255,255,255).
 
 B) SHADOW
-* If add_new_ground_shadow=true: add ONE neutral gray soft shadow.
+* If add_new_ground_shadow=true AND preserve_original_shadows=false: add ONE neutral gray soft shadow.
 
 === STUDIO RELIGHTING EXTENSION (COMPACT, PROGRAMMABLE) ===
 RELIGHTING RULES (ONLY ACTIVE WHEN apply_studio_relighting=true):
@@ -129,6 +133,148 @@ const OPS_HEADINGS_PROMPT = `# Automation Governance
 [SECURITY_NOTES]
 - Never log credentials or session tokens.`;
 
+const PREMIUM_REGRESSION_PROMPT = `=== PREMIUM E-COMMERCE IMAGE EDITING PROMPT WITH STUDIO RELIGHTING ver. 0.8 ===
+
+ROLE
+Use the image Edit Tool (NOT Python). Edit the provided RAW product photo into a premium, catalog-ready, photorealistic e-commerce image.
+
+PARAMS
+params = {
+  "apply_studio_relighting": true,
+  "preserve_original_shadows": false,
+  "add_new_ground_shadow": true,
+  "background_rgb": [255,255,255],
+  "relight": {
+    "add_rim_light": true
+  }
+}
+
+P0 — PRODUCT INTEGRITY (ABSOLUTE)
+* Color: NO hue shift. Allowed: exposure/contrast/neutral WB + subtle saturation if true-to-life.
+  Rule: if unsure whether a mark is real vs artifact => KEEP (unless remove_uncertain_marks=true).
+
+REQUIREMENTS
+
+A) BG (PURE WHITE)
+* Replace entire background with exact RGB(255,255,255).
+
+B) SHADOW (ONE ONLY, COMPACT UNDER-BASE)
+* If add_new_ground_shadow=true: add ONE neutral gray soft shadow under product base.
+* If preserve_original_shadows=false: remove/neutralize original BG shadows so only new shadow remains.
+
+C) COMPOSITION
+* Fill ~80–90% of frame (target_product_fill_ratio). Center if enabled; if allow_intentional_offcenter=true, keep intentional premium off-center.
+
+E) DETAILS
+* Remove only obvious photo/handling artifacts (dust/lint/sensor spots/smudges clearly not part of product) if enabled; avoid logos/text/patterns/stitching/texture.
+
+=== STUDIO RELIGHTING EXTENSION (COMPACT, PROGRAMMABLE) ===
+RELIGHTING RULES (ONLY ACTIVE WHEN apply_studio_relighting=true):
+
+RL0 (Mandatory): Produce a new studio lighting look that is clearly different from the original capture lighting.
+* This must look like a different studio setup.
+
+RL1 (Dramatic but real): Increase dimensionality using directional key + controlled fill.
+* More highlight-to-shadow separation without crushing blacks or blowing highlights.
+
+RL2 (Color/material integrity): Relighting must NOT change:
+* perceived hue
+* logos/text/labels
+
+RL3 (Specular control): If the product is reflective:
+* reduce harsh clipping hotspots
+
+RL4 (Shadow coherence): If new lighting direction is applied:
+* new ground shadow direction/offset MUST match relight.key_light_direction (and be grounded)
+* remove/neutralize original background shadows if preserve_original_shadows=false
+
+RL5 (Rim light use): If relight.add_rim_light=true:
+* subtle edge separation only
+
+PIPELINE
+1. Mask product cleanly.
+2. Set BG to pure white RGB(255,255,255) outside product+shadow.
+3. Artifact cleanup ONLY when clearly non-product.
+4. Step 4 — Tone/WB & (Conditional) Relighting
+   * Always: neutralize unwanted color cast; retain highlight/shadow detail; NO hue shift.
+   * If apply_studio_relighting=false:
+     * Preserve original lighting intent.
+
+FINAL QA (output PASS/FAIL; fix until all PASS)
+QA1 Integrity: no structural/design/logo/text/material changes
+
+FINAL QA — ADD THESE RELIGHTING CHECKS (only if apply_studio_relighting=true)
+QA_R1 Relighting Applied:
+* PASS if lighting direction/contrast/highlight placement is noticeably different vs original AND remains photorealistic.
+* FAIL if it looks like only global exposure/contrast was changed.
+
+QA_R2 Relighting Coherence:
+* PASS if ground shadow direction/offset matches the new key light direction and looks grounded, while remaining compact under the base.
+* FAIL if shadow conflicts with highlights, becomes a long cast trail, or if rim looks like a halo.
+
+QA_R3 Material/Hue Preservation:
+* PASS if finish class (matte/gloss), texture realism, and hue remain consistent with original product.
+* FAIL if "CG/plastic" look, invented texture, or hue shift appears.
+END`;
+
+const CUSTOM_BOUNDARY_PROMPT = `WORKSTEPS
+1. Parse prompt.
+2. Apply parameters.
+3. Run quality checks.
+
+FINAL CHECKS
+QA1 Integrity: no structure changes
+QA2 Hue: no hue shift`;
+
+const CUSTOM_SUBSECTION_PROMPT = `REQUIREMENTS
+RULE RL0 :: Mandatory :: Produce a new studio lighting look.
+* Must be visibly different from original capture.
+
+RULE RL3 :: Specular control :: If the product is reflective:
+* Reduce clipping hotspots.
+* Keep reflections plausible.`;
+
+const createRegexRule = (args: {
+  id: string;
+  pattern: string;
+  title?: string;
+  message?: string;
+  segmentType?: PromptExploderRuleSegmentType;
+}): PromptValidationRule => ({
+  kind: 'regex',
+  id: args.id,
+  enabled: true,
+  severity: 'info',
+  title: args.title ?? args.id,
+  description: null,
+  pattern: args.pattern,
+  flags: 'mi',
+  message: args.message ?? args.id,
+  similar: [],
+  autofix: {
+    enabled: false,
+    operations: [],
+  },
+  sequenceGroupId: 'test',
+  sequenceGroupLabel: 'test',
+  sequenceGroupDebounceMs: 0,
+  sequence: 1,
+  chainMode: 'continue',
+  maxExecutions: 1,
+  passOutputToNext: true,
+  appliesToScopes: ['prompt_exploder'],
+  launchEnabled: false,
+  launchAppliesToScopes: ['prompt_exploder'],
+  launchScopeBehavior: 'gate',
+  launchOperator: 'contains',
+  launchValue: null,
+  launchFlags: null,
+  promptExploderSegmentType: args.segmentType ?? null,
+  promptExploderConfidenceBoost: 0.1,
+  promptExploderPriority: 20,
+  promptExploderTreatAsHeading: true,
+});
+
 describe('prompt exploder parser', () => {
   it('detects typed segments and defaults metadata to omitted', () => {
     const document = explodePromptText({
@@ -205,6 +351,14 @@ describe('prompt exploder parser', () => {
     expect(conditionalItem).toBeTruthy();
     expect(conditionalItem?.referencedComparator).toBe('equals');
     expect(conditionalItem?.referencedValue).toBe(true);
+    expect(conditionalItem?.logicalConditions).toHaveLength(2);
+    expect(conditionalItem?.logicalConditions?.[0]?.paramPath).toBe('add_new_ground_shadow');
+    expect(conditionalItem?.logicalConditions?.[0]?.comparator).toBe('equals');
+    expect(conditionalItem?.logicalConditions?.[0]?.value).toBe(true);
+    expect(conditionalItem?.logicalConditions?.[1]?.joinWithPrevious).toBe('and');
+    expect(conditionalItem?.logicalConditions?.[1]?.paramPath).toBe('preserve_original_shadows');
+    expect(conditionalItem?.logicalConditions?.[1]?.comparator).toBe('equals');
+    expect(conditionalItem?.logicalConditions?.[1]?.value).toBe(false);
     expect(conditionalItem?.text.toLowerCase()).toContain('add one neutral gray soft shadow');
   });
 
@@ -381,5 +535,153 @@ Rejected when visual coherence does not hold.`;
       expect(segment?.type).toBe('sequence');
       expect(segment?.subsections.length).toBeGreaterThanOrEqual(1);
     });
+  });
+
+  it('fixes premium prompt regressions for structure and reassembly', () => {
+    const document = explodePromptText({
+      prompt: PREMIUM_REGRESSION_PROMPT,
+      validationRules: PROMPT_EXPLODER_PATTERN_PACK,
+    });
+
+    const reassembled = reassemblePromptSegments(document.segments);
+    expect(reassembled.includes('ROLE\nROLE')).toBe(false);
+    expect(reassembled.includes('PARAMS\nPARAMS')).toBe(false);
+    expect(reassembled).toContain(
+      'Rule: if unsure whether a mark is real vs artifact => KEEP (unless remove_uncertain_marks=true).'
+    );
+    expect(reassembled).toContain('4. Step 4 — Tone/WB & (Conditional) Relighting');
+    expect(
+      (reassembled.match(
+        /If add_new_ground_shadow=true: add ONE neutral gray soft shadow under product base\./g
+      ) ?? []).length
+    ).toBe(1);
+
+    const requirements = document.segments.find((segment) => segment.title === 'REQUIREMENTS');
+    expect(requirements?.type).toBe('sequence');
+    expect(requirements?.subsections.length).toBeGreaterThanOrEqual(4);
+    expect(requirements?.subsections.every((subsection) => subsection.condition === null)).toBe(
+      true
+    );
+    const composition = requirements?.subsections.find((subsection) =>
+      subsection.title.toUpperCase().includes('COMPOSITION')
+    );
+    expect(composition?.items).toHaveLength(1);
+    expect(composition?.items[0]?.text).toContain(
+      'allow_intentional_offcenter=true, keep intentional premium off-center.'
+    );
+    const details = requirements?.subsections.find((subsection) =>
+      subsection.title.toUpperCase().includes('DETAILS')
+    );
+    expect(details?.items).toHaveLength(1);
+    expect(details?.items[0]?.text).toContain(
+      'if enabled; avoid logos/text/patterns/stitching/texture.'
+    );
+
+    const relighting = document.segments.find(
+      (segment) =>
+        segment.type === 'sequence' &&
+        /STUDIO RELIGHTING EXTENSION/i.test(segment.title)
+    );
+    expect(relighting?.condition).toBe(
+      'RELIGHTING RULES (ONLY ACTIVE WHEN apply_studio_relighting=true):'
+    );
+
+    const rl0 = relighting?.subsections.find((subsection) => subsection.code === 'RL0');
+    const rl1 = relighting?.subsections.find((subsection) => subsection.code === 'RL1');
+    const rl2 = relighting?.subsections.find((subsection) => subsection.code === 'RL2');
+    const rl3 = relighting?.subsections.find((subsection) => subsection.code === 'RL3');
+    const rl4 = relighting?.subsections.find((subsection) => subsection.code === 'RL4');
+    const rl5 = relighting?.subsections.find((subsection) => subsection.code === 'RL5');
+    expect(rl0?.title).toBe('Mandatory');
+    expect(rl0?.guidance).toBe(
+      'Produce a new studio lighting look that is clearly different from the original capture lighting.'
+    );
+    expect(rl1?.title).toBe('Dramatic but real');
+    expect(rl1?.guidance).toBe('Increase dimensionality using directional key + controlled fill.');
+    expect(rl2?.title).toBe('Color/material integrity');
+    expect(rl2?.guidance).toBe('Relighting must NOT change:');
+    expect(rl3?.title).toBe('Specular control');
+    expect(rl3?.condition).toBe('If the product is reflective:');
+    expect(rl4?.title).toBe('Shadow coherence');
+    expect(rl4?.condition).toBe('If new lighting direction is applied:');
+    expect(rl5?.title).toBe('Rim light use');
+    expect(rl5?.condition).toBe('If relight.add_rim_light=true:');
+
+    const pipeline = document.segments.find((segment) => segment.title === 'PIPELINE');
+    expect(pipeline?.type).toBe('hierarchical_list');
+    expect(pipeline?.listItems.some((item) => /Step 4/i.test(item.text))).toBe(true);
+
+    const qa = document.segments.find((segment) => segment.type === 'qa_matrix');
+    const qaR1 = qa?.subsections.find((subsection) => subsection.code === 'QA_R1');
+    const qaR2 = qa?.subsections.find((subsection) => subsection.code === 'QA_R2');
+    const qaR3 = qa?.subsections.find((subsection) => subsection.code === 'QA_R3');
+    expect(qaR1?.items).toHaveLength(2);
+    expect(qaR2?.items).toHaveLength(2);
+    expect(qaR3?.items).toHaveLength(2);
+  });
+
+  it('allows boundary headings to be tuned via validation rules', () => {
+    const document = explodePromptText({
+      prompt: CUSTOM_BOUNDARY_PROMPT,
+      validationRules: [
+        ...PROMPT_EXPLODER_PATTERN_PACK,
+        createRegexRule({
+          id: 'segment.boundary.pipeline',
+          pattern: '^\\s*WORKSTEPS\\b',
+          title: 'Boundary Pipeline Override',
+          message: 'Pipeline boundary override',
+          segmentType: 'hierarchical_list',
+        }),
+        createRegexRule({
+          id: 'segment.boundary.final_qa',
+          pattern: '^\\s*FINAL\\s+CHECKS\\b',
+          title: 'Boundary Final QA Override',
+          message: 'Final QA boundary override',
+          segmentType: 'qa_matrix',
+        }),
+      ],
+    });
+
+    const pipeline = document.segments.find((segment) => segment.title === 'WORKSTEPS');
+    const qa = document.segments.find((segment) => segment.title === 'FINAL CHECKS');
+
+    expect(pipeline?.type).toBe('hierarchical_list');
+    expect(pipeline?.listItems.map((item) => item.text)).toEqual([
+      'Parse prompt.',
+      'Apply parameters.',
+      'Run quality checks.',
+    ]);
+
+    expect(qa?.type).toBe('qa_matrix');
+    expect(qa?.subsections.map((subsection) => subsection.code)).toEqual(['QA1', 'QA2']);
+  });
+
+  it('allows subsection grammar to be tuned via validation rules', () => {
+    const document = explodePromptText({
+      prompt: CUSTOM_SUBSECTION_PROMPT,
+      validationRules: [
+        ...PROMPT_EXPLODER_PATTERN_PACK,
+        createRegexRule({
+          id: 'segment.subsection.reference_named',
+          pattern: '^\\s*RULE\\s+(RL\\d+)\\s*::\\s*([^:]+)\\s*::\\s*(.+)$',
+          title: 'Custom RL Subsection Grammar',
+          message: 'Custom RL grammar',
+          segmentType: 'sequence',
+        }),
+      ],
+    });
+
+    const requirements = document.segments.find((segment) => segment.title === 'REQUIREMENTS');
+    expect(requirements?.type).toBe('sequence');
+    expect(requirements?.subsections).toHaveLength(2);
+
+    const rl0 = requirements?.subsections[0];
+    const rl3 = requirements?.subsections[1];
+    expect(rl0?.code).toBe('RL0');
+    expect(rl0?.title).toBe('Mandatory');
+    expect(rl0?.guidance).toBe('Produce a new studio lighting look.');
+    expect(rl3?.code).toBe('RL3');
+    expect(rl3?.title).toBe('Specular control');
+    expect(rl3?.condition).toBe('If the product is reflective:');
   });
 });

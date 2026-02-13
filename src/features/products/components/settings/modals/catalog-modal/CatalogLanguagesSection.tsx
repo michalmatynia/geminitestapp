@@ -1,0 +1,155 @@
+import React from 'react';
+import { Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Button } from '@/shared/ui';
+import type { Language } from '@/shared/types/domain/internationalization';
+
+interface CatalogLanguagesSectionProps {
+  selectedLanguageIds: string[];
+  onToggleLanguage: (id: string) => void;
+  onMoveLanguage: (id: string, direction: 'up' | 'down') => void;
+  defaultLanguageId: string;
+  onSetDefaultLanguageId: (id: string) => void;
+  languageQuery: string;
+  onLanguageQueryChange: (query: string) => void;
+  availableLanguages: Language[];
+  getLanguage: (id: string) => Language | undefined;
+  languagesLoading: boolean;
+  languagesError?: string;
+}
+
+export function CatalogLanguagesSection({
+  selectedLanguageIds,
+  onToggleLanguage,
+  onMoveLanguage,
+  defaultLanguageId,
+  onSetDefaultLanguageId,
+  languageQuery,
+  onLanguageQueryChange,
+  availableLanguages,
+  getLanguage,
+  languagesLoading,
+  languagesError,
+}: CatalogLanguagesSectionProps): React.JSX.Element {
+  return (
+    <div className='rounded-md border border-border bg-card/70 p-4 space-y-4'>
+      <Label className='text-sm font-semibold text-white'>
+        Languages
+      </Label>
+      {languagesLoading ? (
+        <p className='text-xs text-gray-500'>Loading languages...</p>
+      ) : languagesError ? (
+        <p className='text-xs text-red-400'>{languagesError}</p>
+      ) : (
+        <div className='space-y-4'>
+          <Input
+            placeholder='Search languages...'
+            value={languageQuery}
+            onChange={(e) => onLanguageQueryChange(e.target.value)}
+          />
+
+          <div className='space-y-1'>
+            {selectedLanguageIds.length === 0 ? (
+              <p className='text-xs text-gray-500'>
+                No languages selected.
+              </p>
+            ) : (
+              selectedLanguageIds.map((id, index) => {
+                const lang = getLanguage(id);
+                const label = lang
+                  ? `${lang.name} (${lang.code})`
+                  : id;
+                return (
+                  <div
+                    key={id}
+                    className='flex items-center justify-between rounded-md border bg-gray-900 px-3 py-1.5 text-xs text-gray-200'
+                  >
+                    <div className='flex items-center gap-2'>
+                      <span className='text-gray-500 w-4'>
+                        {index + 1}.
+                      </span>
+                      <span>{label}</span>
+                      {id === defaultLanguageId && (
+                        <Badge variant='success'>
+                          Default
+                        </Badge>
+                      )}
+                    </div>
+                    <div className='flex gap-1'>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='h-6 w-6'
+                        onClick={() => onMoveLanguage(id, 'up')}
+                        disabled={index === 0}
+                      >
+                        ↑
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='h-6 w-6'
+                        onClick={() => onMoveLanguage(id, 'down')}
+                        disabled={
+                          index === selectedLanguageIds.length - 1
+                        }
+                      >
+                        ↓
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        className='h-6 px-2 text-red-400 hover:text-red-300'
+                        onClick={() => onToggleLanguage(id)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className='max-h-32 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-xs'>
+            {availableLanguages.map((lang) => (
+              <Button
+                key={lang.id}
+                variant='ghost'
+                className='w-full justify-between h-8 px-2'
+                onClick={() => onToggleLanguage(lang.id)}
+              >
+                <span>
+                  {lang.name} ({lang.code})
+                </span>
+                <span className='text-gray-500'>Add</span>
+              </Button>
+            ))}
+          </div>
+
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>
+              Default language
+            </Label>
+            <Select
+              value={defaultLanguageId}
+              onValueChange={onSetDefaultLanguageId}
+              disabled={selectedLanguageIds.length === 0}
+            >
+              <SelectTrigger className='w-full bg-gray-900 border-border text-xs text-white'>
+                <SelectValue placeholder='Select default language' />
+              </SelectTrigger>
+              <SelectContent>
+                {selectedLanguageIds.map((id) => {
+                  const lang = getLanguage(id);
+                  return (
+                    <SelectItem key={id} value={id}>
+                      {lang ? `${lang.name} (${lang.code})` : id}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

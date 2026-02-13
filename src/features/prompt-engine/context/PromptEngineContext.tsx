@@ -25,6 +25,15 @@ export type ScopeFilter = PromptValidationScope | 'all';
 export type PatternCollectionTab = 'core' | 'prompt_exploder';
 export type ExploderPatternSubTab = 'prompt_exploder_rules' | 'image_studio_rules';
 
+type PromptEngineProviderProps = {
+  children: React.ReactNode;
+  onSaved?: (() => void) | undefined;
+  initialPatternTab?: PatternCollectionTab | undefined;
+  initialExploderSubTab?: ExploderPatternSubTab | undefined;
+  lockedPatternTab?: PatternCollectionTab | undefined;
+  lockedExploderSubTab?: ExploderPatternSubTab | undefined;
+};
+
 export type RuleDraft = {
   uid: string;
   text: string;
@@ -42,6 +51,8 @@ interface PromptEngineContextType {
   scope: ScopeFilter;
   patternTab: PatternCollectionTab;
   exploderSubTab: ExploderPatternSubTab;
+  patternTabLocked: boolean;
+  exploderSubTabLocked: boolean;
   includeDisabled: boolean;
   drafts: RuleDraft[];
   learnedDrafts: RuleDraft[];
@@ -295,10 +306,11 @@ const isPromptExploderRule = (rule: PromptValidationRule): boolean => {
 export function PromptEngineProvider({
   children,
   onSaved,
-}: {
-  children: React.ReactNode;
-  onSaved?: (() => void) | undefined;
-}): React.JSX.Element {
+  initialPatternTab,
+  initialExploderSubTab,
+  lockedPatternTab,
+  lockedExploderSubTab,
+}: PromptEngineProviderProps): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
@@ -309,9 +321,13 @@ export function PromptEngineProvider({
   const [query, setQuery] = useState<string>('');
   const [severity, setSeverity] = useState<SeverityFilter>('all');
   const [scope, setScope] = useState<ScopeFilter>('all');
-  const [patternTab, setPatternTab] = useState<PatternCollectionTab>('core');
+  const [patternTab, setPatternTab] = useState<PatternCollectionTab>(
+    lockedPatternTab ?? initialPatternTab ?? 'core'
+  );
   const [exploderSubTab, setExploderSubTab] =
-    useState<ExploderPatternSubTab>('prompt_exploder_rules');
+    useState<ExploderPatternSubTab>(
+      lockedExploderSubTab ?? initialExploderSubTab ?? 'prompt_exploder_rules'
+    );
   const [includeDisabled, setIncludeDisabled] = useState<boolean>(true);
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);
   const [initializedAt, setInitializedAt] = useState<number | null>(null);
@@ -319,6 +335,22 @@ export function PromptEngineProvider({
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [learnedDrafts, setLearnedDrafts] = useState<RuleDraft[]>([]);
   const [learnedDirty, setLearnedDirty] = useState<boolean>(false);
+  const activePatternTab = lockedPatternTab ?? patternTab;
+  const activeExploderSubTab = lockedExploderSubTab ?? exploderSubTab;
+  const patternTabLocked = Boolean(lockedPatternTab);
+  const exploderSubTabLocked = Boolean(lockedExploderSubTab);
+
+  useEffect(() => {
+    if (lockedPatternTab && patternTab !== lockedPatternTab) {
+      setPatternTab(lockedPatternTab);
+    }
+  }, [lockedPatternTab, patternTab]);
+
+  useEffect(() => {
+    if (lockedExploderSubTab && exploderSubTab !== lockedExploderSubTab) {
+      setExploderSubTab(lockedExploderSubTab);
+    }
+  }, [lockedExploderSubTab, exploderSubTab]);
 
   // Sync state with settings query
   useEffect(() => {
@@ -346,22 +378,22 @@ export function PromptEngineProvider({
         if (!term) return true;
         return draft.text.toLowerCase().includes(term);
       }
-      if (patternTab === 'prompt_exploder') {
+      if (activePatternTab === 'prompt_exploder') {
         if (
-          exploderSubTab === 'image_studio_rules' &&
+          activeExploderSubTab === 'image_studio_rules' &&
           !isImageStudioRule(rule)
         ) {
           return false;
         }
         if (
-          exploderSubTab === 'prompt_exploder_rules' &&
+          activeExploderSubTab === 'prompt_exploder_rules' &&
           !isPromptExploderRule(rule)
         ) {
           return false;
         }
       }
       if (
-        patternTab === 'core' &&
+        activePatternTab === 'core' &&
         (isPromptExploderRule(rule) || isImageStudioRule(rule))
       ) {
         return false;
@@ -378,9 +410,9 @@ export function PromptEngineProvider({
       return ruleSearchText(rule).includes(term);
     });
   }, [
-    exploderSubTab,
+    activeExploderSubTab,
+    activePatternTab,
     includeDisabled,
-    patternTab,
     query,
     scope,
     severity,
@@ -396,22 +428,22 @@ export function PromptEngineProvider({
         if (!term) return true;
         return draft.text.toLowerCase().includes(term);
       }
-      if (patternTab === 'prompt_exploder') {
+      if (activePatternTab === 'prompt_exploder') {
         if (
-          exploderSubTab === 'image_studio_rules' &&
+          activeExploderSubTab === 'image_studio_rules' &&
           !isImageStudioRule(rule)
         ) {
           return false;
         }
         if (
-          exploderSubTab === 'prompt_exploder_rules' &&
+          activeExploderSubTab === 'prompt_exploder_rules' &&
           !isPromptExploderRule(rule)
         ) {
           return false;
         }
       }
       if (
-        patternTab === 'core' &&
+        activePatternTab === 'core' &&
         (isPromptExploderRule(rule) || isImageStudioRule(rule))
       ) {
         return false;
@@ -428,10 +460,10 @@ export function PromptEngineProvider({
       return ruleSearchText(rule).includes(term);
     });
   }, [
-    exploderSubTab,
+    activeExploderSubTab,
+    activePatternTab,
     includeDisabled,
     learnedDrafts,
-    patternTab,
     query,
     scope,
     severity,
@@ -652,10 +684,20 @@ export function PromptEngineProvider({
     setSaveError(null);
   }, []);
 
+  const handleSetPatternTab = useCallback((tab: PatternCollectionTab): void => {
+    if (lockedPatternTab) return;
+    setPatternTab(tab);
+  }, [lockedPatternTab]);
+
+  const handleSetExploderSubTab = useCallback((subTab: ExploderPatternSubTab): void => {
+    if (lockedExploderSubTab) return;
+    setExploderSubTab(subTab);
+  }, [lockedExploderSubTab]);
+
   const handleAddRule = useCallback((): void => {
     const preset =
-      patternTab === 'prompt_exploder'
-        ? exploderSubTab === 'image_studio_rules'
+      activePatternTab === 'prompt_exploder'
+        ? activeExploderSubTab === 'image_studio_rules'
           ? 'image_studio'
           : 'prompt_exploder'
         : 'core';
@@ -663,7 +705,7 @@ export function PromptEngineProvider({
     setDrafts((prev: RuleDraft[]) => [createRuleDraft(newRule), ...prev]);
     setIsDirty(true);
     setSaveError(null);
-  }, [exploderSubTab, patternTab]);
+  }, [activeExploderSubTab, activePatternTab]);
 
   const handleAddLearnedRule = useCallback((): void => {
     const newRule: PromptValidationRule = {
@@ -852,8 +894,10 @@ export function PromptEngineProvider({
       query,
       severity,
       scope,
-      patternTab,
-      exploderSubTab,
+      patternTab: activePatternTab,
+      exploderSubTab: activeExploderSubTab,
+      patternTabLocked,
+      exploderSubTabLocked,
       includeDisabled,
       drafts,
       learnedDrafts,
@@ -868,8 +912,8 @@ export function PromptEngineProvider({
       setQuery,
       setSeverity,
       setScope,
-      setPatternTab,
-      setExploderSubTab,
+      setPatternTab: handleSetPatternTab,
+      setExploderSubTab: handleSetExploderSubTab,
       setIncludeDisabled,
       handleRuleTextChange,
       handlePatchRule,
@@ -896,8 +940,10 @@ export function PromptEngineProvider({
       query,
       severity,
       scope,
-      patternTab,
-      exploderSubTab,
+      activePatternTab,
+      activeExploderSubTab,
+      patternTabLocked,
+      exploderSubTabLocked,
       includeDisabled,
       drafts,
       learnedDrafts,
@@ -909,6 +955,8 @@ export function PromptEngineProvider({
       rawSettings,
       filteredDrafts,
       filteredLearnedDrafts,
+      handleSetPatternTab,
+      handleSetExploderSubTab,
       handleRuleTextChange,
       handlePatchRule,
       handleToggleRuleEnabled,

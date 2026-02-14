@@ -47,12 +47,16 @@ export async function uploadAsset3D(
       filepath: `${publicDir}/${filename}`,
       mimetype: file.type || 'application/octet-stream',
       size: file.size,
+      fileUrl: `/uploads/assets3d/${filename}`,
+      thumbnailUrl: null,
+      fileSize: file.size,
+      format: (file.type || '').split('/').pop() || 'bin',
       tags: options?.tags ?? [],
       isPublic: options?.isPublic ?? false,
-      ...(options?.name && { name: options.name }),
-      ...(options?.description && { description: options.description }),
-      ...(options?.category && { category: options.category }),
-      ...(options?.metadata && { metadata: options.metadata }),
+      name: options?.name ?? filename,
+      description: options?.description ?? null,
+      categoryId: options?.category ?? null,
+      metadata: options?.metadata ?? {},
     });
 
     return asset;

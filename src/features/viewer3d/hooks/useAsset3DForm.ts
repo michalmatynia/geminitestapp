@@ -13,7 +13,7 @@ export function useAsset3DForm(
 ) {
   const [name, setName] = useState(asset.name ?? '');
   const [description, setDescription] = useState(asset.description ?? '');
-  const [category, setCategory] = useState(asset.category ?? '');
+  const [category, setCategory] = useState(asset.categoryId ?? '');
   const [tags, setTags] = useState<string[]>(asset.tags);
   const [newTag, setNewTag] = useState('');
   const [isPublic, setIsPublic] = useState(asset.isPublic);
@@ -23,7 +23,7 @@ export function useAsset3DForm(
   useEffect(() => {
     setName(asset.name ?? '');
     setDescription(asset.description ?? '');
-    setCategory(asset.category ?? '');
+    setCategory(asset.categoryId ?? '');
     setTags(asset.tags);
     setIsPublic(asset.isPublic);
     setError(null);
@@ -47,9 +47,9 @@ export function useAsset3DForm(
 
     try {
       const data: Asset3DUpdateInput = {
-        name: name.trim() || null,
+        name: name.trim() || asset.name,
         description: description.trim() || null,
-        category: category.trim() || null,
+        categoryId: category.trim() || null,
         tags,
         isPublic,
       };

@@ -1,0 +1,160 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
+
+import { useAiPathTriggerEvent } from '@/features/ai/ai-paths/hooks/useAiPathTriggerEvent';
+import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
+import { useToast } from '@/shared/ui';
+
+const TOGGLE_STORAGE_KEY = 'aiPathsTriggerButtonToggles';
+const SUCCESS_STORAGE_KEY = 'aiPathsTriggerButtonSuccess';
+
+type TriggerRunState = {
+  status: 'idle' | 'running' | 'success' | 'error';
+  progress: number;
+};
+
+const readMapFromStorage = (key: string): Record<string, boolean> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object') return {};
+    return parsed as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+};
+
+const writeMapToStorage = (key: string, value: Record<string, boolean>): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+};
+
+interface UseTriggerButtonsOptions {
+  location: AiTriggerButtonLocation;
+  entityType: 'product' | 'note' | 'custom';
+  entityId?: string | null | undefined;
+  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+}
+
+export function useTriggerButtons({
+  location,
+  entityType,
+  entityId,
+  getEntityJson,
+}: UseTriggerButtonsOptions) {
+  const { toast } = useToast();
+  const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
+  
+  const [toggleMap, setToggleMap] = useState<Record<string, boolean>>(() => readMapFromStorage(TOGGLE_STORAGE_KEY));
+  const [successMap, setSuccessMap] = useState<Record<string, boolean>>(() => readMapFromStorage(SUCCESS_STORAGE_KEY));
+  const [runStates, setRunStates] = useState<Record<string, TriggerRunState>>({});
+
+  const triggerButtonsQuery = useQuery({
+    queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
+    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
+      const result = await triggerButtonsApi.list();
+      if (!result.ok) return [];
+      return Array.isArray(result.data) ? result.data : [];
+    },
+    staleTime: 10_000,
+  });
+
+  const buttons = useMemo(() => {
+    const all = triggerButtonsQuery.data ?? [];
+    return all.filter((button: AiTriggerButtonRecord) => button.locations.includes(location));
+  }, [triggerButtonsQuery.data, location]);
+
+  const handleTrigger = useCallback(async (button: AiTriggerButtonRecord, options: { mode: 'click' | 'toggle', checked?: boolean, event?: React.MouseEvent }) => {
+    if (!button.id) {
+      toast('Missing trigger id.', { variant: 'error' });
+      return;
+    }
+
+    if (options.mode === 'toggle') {
+      const nextToggleMap = { ...toggleMap, [button.id]: options.checked ?? false };
+      setToggleMap(nextToggleMap);
+      writeMapToStorage(TOGGLE_STORAGE_KEY, nextToggleMap);
+    }
+
+    let gotProgress = false;
+    setRunStates((prev) => ({
+      ...prev,
+      [button.id]: { status: 'running', progress: 0 },
+    }));
+
+    try {
+      await fireAiPathTriggerEvent({
+        triggerEventId: button.id,
+        triggerLabel: button.name,
+        entityType,
+        entityId,
+        ...(getEntityJson ? { getEntityJson } : {}),
+        event: options.event,
+        source: { tab: entityType, location },
+        extras: { mode: options.mode, ...(options.mode === 'toggle' ? { checked: options.checked } : {}) },
+        onProgress: (payload: { status: 'running' | 'success' | 'error'; progress: number }): void => {
+          const { status, progress } = payload;
+          gotProgress = true;
+          
+          if (status === 'success') {
+            setSuccessMap((prev) => {
+              const nextMap = { ...prev, [button.id]: true };
+              writeMapToStorage(SUCCESS_STORAGE_KEY, nextMap);
+              return nextMap;
+            });
+            setRunStates((prev) => ({
+              ...prev,
+              [button.id]: { status: 'idle', progress: 0 },
+            }));
+            return;
+          }
+          
+          if (status === 'error') {
+            setRunStates((prev) => ({
+              ...prev,
+              [button.id]: { status: 'idle', progress: 0 },
+            }));
+            return;
+          }
+          
+          setRunStates((prev) => ({
+            ...prev,
+            [button.id]: { status, progress },
+          }));
+        },
+      });
+    } finally {
+      if (!gotProgress) {
+        setRunStates((prev) => ({
+          ...prev,
+          [button.id]: { status: 'idle', progress: 0 },
+        }));
+      } else {
+        setRunStates((prev) => {
+          const state = prev[button.id];
+          if (state?.status !== 'running') return prev;
+          return { ...prev, [button.id]: { status: 'idle', progress: 0 } };
+        });
+      }
+    }
+  }, [entityId, entityType, fireAiPathTriggerEvent, getEntityJson, location, toast, toggleMap]);
+
+  return {
+    buttons,
+    toggleMap,
+    successMap,
+    runStates,
+    handleTrigger,
+    isLoading: triggerButtonsQuery.isLoading,
+  };
+}

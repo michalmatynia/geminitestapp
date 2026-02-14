@@ -7,7 +7,7 @@ import { Input } from './input';
 import { Label } from './label';
 import { MultiSelect } from './multi-select';
 import { SearchInput } from './search-input';
-import { UnifiedSelect } from './unified-select';
+import { SelectSimple } from './select-simple';
 
 export type FilterFieldType = 'text' | 'search' | 'select' | 'multi-select' | 'date' | 'number';
 
@@ -72,12 +72,12 @@ export function DynamicFilters({
               className='w-full'
             />
           ) : field.type === 'select' ? (
-            <UnifiedSelect
+            <SelectSimple
               value={String(values[field.key] ?? '')}
               onValueChange={(value) => onChange(field.key, value)}
               options={field.options ?? []}
               placeholder={field.placeholder ?? `Select ${field.label.toLowerCase()}...`}
-              triggerClassName='h-9'
+              size='sm'
             />
           ) : field.type === 'search' ? (
             <SearchInput
@@ -87,7 +87,7 @@ export function DynamicFilters({
               onChange={(e) => onChange(field.key, e.target.value)}
               onClear={() => onChange(field.key, '')}
               variant='subtle'
-              className='h-9'
+              size='sm'
             />
           ) : (
             <Input
@@ -97,7 +97,7 @@ export function DynamicFilters({
               value={String(values[field.key] ?? '')}
               onChange={(e) => onChange(field.key, e.target.value)}
               variant='subtle'
-              className='h-9'
+              size='sm'
             />
           )}
         </div>

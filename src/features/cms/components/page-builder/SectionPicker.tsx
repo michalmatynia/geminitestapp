@@ -1,9 +1,11 @@
 'use client';
 
 import { Plus, Trash2 } from 'lucide-react';
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useState, useMemo } from 'react';
 
 import { AppModal, Button } from '@/shared/ui';
+import { GenericGridPicker } from '@/shared/ui/templates/pickers';
+import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
 
 import { useGroupedTemplates } from './hooks/useGroupedTemplates';
 import { useTemplateManagement } from './hooks/useTemplateManagement';
@@ -49,40 +51,55 @@ const renderBlockTypes = (blockTypes: string[]): React.ReactNode => {
   );
 };
 
-const SectionCard = ({ def }: { def: SectionDefinition }): React.ReactNode => {
-  const { onSelect } = useSectionPickerSelectionContext();
-  return (
-    <button
-      type='button'
-      onClick={() => onSelect(def.type)}
-      className='flex w-full flex-col gap-2 rounded-md border border-border/50 bg-card/60 p-3 text-left transition hover:bg-foreground/5'
-    >
-      <div className='flex items-center justify-between'>
-        <span className='text-sm font-medium text-gray-200'>{def.label}</span>
-        <span className='text-[10px] uppercase tracking-wide text-gray-500'>{def.type}</span>
-      </div>
-      {renderBlockTypes(def.allowedBlockTypes)}
-      <span className='text-xs text-gray-500'>{def.allowedBlockTypes.length > 0 ? `Blocks: ${def.allowedBlockTypes.join(', ')}` : 'No blocks'}</span>
-    </button>
-  );
-};
-
 interface CategorySectionProps {
   title: string;
   items: SectionDefinition[];
 }
 
-const CategorySection = ({ title, items }: CategorySectionProps): React.ReactNode =>
-  items.length > 0 ? (
+const CategorySection = ({ title, items }: CategorySectionProps): React.ReactNode => {
+  const { onSelect } = useSectionPickerSelectionContext();
+  
+  const pickerItems: GridPickerItem<SectionDefinition>[] = useMemo(
+    () => items.map(def => ({
+      id: def.type,
+      label: def.label,
+      value: def,
+    })),
+    [items]
+  );
+
+  if (items.length === 0) return null;
+
+  return (
     <div>
       <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>{title}</div>
-      <div className='grid gap-3 md:grid-cols-2'>
-        {items.map((def: SectionDefinition) => (
-          <SectionCard key={def.type} def={def} />
-        ))}
-      </div>
+      <GenericGridPicker
+        items={pickerItems}
+        onSelect={(item) => {
+          if (item.value) onSelect(item.value.type);
+        }}
+        renderItem={(item) => {
+          const def = item.value;
+          if (!def) return null;
+          return (
+            <div className='flex w-full flex-col gap-2 p-3 text-left'>
+              <div className='flex items-center justify-between'>
+                <span className='text-sm font-medium text-gray-200'>{def.label}</span>
+                <span className='text-[10px] uppercase tracking-wide text-gray-500'>{def.type}</span>
+              </div>
+              {renderBlockTypes(def.allowedBlockTypes)}
+              <span className='text-xs text-gray-500'>
+                {def.allowedBlockTypes.length > 0 ? `Blocks: ${def.allowedBlockTypes.join(', ')}` : 'No blocks'}
+              </span>
+            </div>
+          );
+        }}
+        columns={2}
+        gap='12px'
+      />
     </div>
-  ) : null;
+  );
+};
 
 export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
@@ -109,14 +126,21 @@ export function SectionPicker({ disabled, zone, onSelect }: SectionPickerProps):
         <Plus className='size-3.5' />
         Add section
       </Button>
-      <AppModal open={isOpen} onClose={() => setIsOpen(false)} title='Add a section' size='lg' bodyClassName='h-[70vh]' header={
-        <div className='flex items-center justify-between'>
-          <h2 className='text-2xl font-bold text-white'>Add a section</h2>
-          <Button type='button' onClick={() => setIsOpen(false)} className='min-w-[100px] border border-white/20 hover:border-white/40'>
-            Close
-          </Button>
-        </div>
-      }>
+      <AppModal
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        title='Add a section'
+        size='lg'
+        bodyClassName='h-[70vh]'
+        header={
+          <div className='flex items-center justify-between'>
+            <h2 className='text-2xl font-bold text-white'>Add a section</h2>
+            <Button type='button' onClick={() => setIsOpen(false)} className='min-w-[100px] border border-white/20 hover:border-white/40'>
+              Close
+            </Button>
+          </div>
+        }
+      >
         <SectionPickerSelectionContext.Provider value={{ onSelect: handleSelect }}>
           <div className='space-y-6'>
             <CategorySection title='Primitives' items={primitives} />

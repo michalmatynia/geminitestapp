@@ -53,7 +53,7 @@ export function FileManagerContent(): React.JSX.Element {
               )}
               <div className='mt-3 flex items-center justify-between text-xs text-gray-400'>
                 <span>{(asset.size / 1024).toFixed(1)} KB</span>
-                {asset.category && <span>{asset.category}</span>}
+                {asset.categoryId && <span>{asset.categoryId}</span>}
               </div>
               <div className='mt-3 flex justify-end'>
                 <Button

@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { ExternalCategory } from '@/features/integrations/types/category-mapping';
-import { Button, TableCell, TableRow, UnifiedSelect } from '@/shared/ui';
+import { Button, TableCell, TableRow, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { CategoryMapperRowDepthProvider, useCategoryMapperRowDepth } from './CategoryMapperRowDepthContext';
@@ -52,8 +52,10 @@ export function CategoryMapperRow({ category }: CategoryMapperRowProps): React.J
           <div className='flex items-center' style={{ paddingLeft: `${depth * 20}px` }}>
             {hasChildren ? (
               <Button
+                variant='ghost'
+                size='xs'
                 onClick={(): void => toggleExpand(category.id)}
-                className='mr-2 rounded p-0.5 text-gray-400 hover:bg-muted/50 hover:text-white'
+                className='mr-2 p-0.5 text-gray-400 hover:text-white'
               >
                 {isExpanded ? (
                   <ChevronDown className='h-4 w-4' />
@@ -71,7 +73,7 @@ export function CategoryMapperRow({ category }: CategoryMapperRowProps): React.J
           </div>
         </TableCell>
         <TableCell className='px-4 py-2'>
-          <UnifiedSelect
+          <SelectSimple
             value={currentMapping ?? '__unmapped__'}
             onValueChange={(v: string): void =>
               handleMappingChange(category.id, v === '__unmapped__' ? null : v)
@@ -81,7 +83,7 @@ export function CategoryMapperRow({ category }: CategoryMapperRowProps): React.J
               { value: '__unmapped__', label: '— Not mapped —' },
               ...internalCategoryOptions
             ]}
-            triggerClassName='w-full bg-gray-800 border-border text-white text-sm h-8'
+            size='sm'
           />
         </TableCell>
       </TableRow>

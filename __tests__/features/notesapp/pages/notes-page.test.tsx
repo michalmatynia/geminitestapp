@@ -46,8 +46,8 @@ const baseCategories: CategoryRecord[] = [
     parentId: null,
     notebookId: null,
     themeId: null,
-    createdAt: new Date(now),
-    updatedAt: new Date(now),
+    createdAt: now,
+    updatedAt: now,
   },
 ];
 
@@ -85,7 +85,7 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
     {
       noteId: 'note-1',
       categoryId: 'cat-1',
-      assignedAt: new Date(now),
+      assignedAt: now,
       category: baseCategories[0]!,
     },
   ],
@@ -164,11 +164,11 @@ describe('Notes page UI', () => {
           isArchived: body.isArchived ?? false,
           tags: tagIds.map((tagId: string) => {
             const tag = tags.find((t) => t.id === tagId) ?? tags[0]!;
-            return { noteId: 'temp', tagId, assignedAt: new Date(), tag };
+            return { noteId: 'temp', tagId, assignedAt: now, tag };
           }),
           categories: categoryIds.map((categoryId: string) => {
             const category = categories.find((c) => c.id === categoryId) ?? categories[0]!;
-            return { noteId: 'temp', categoryId, assignedAt: new Date(), category };
+            return { noteId: 'temp', categoryId, assignedAt: now, category };
           }),
         });
         notes.push(newNote);

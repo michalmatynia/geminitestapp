@@ -258,8 +258,8 @@ const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => {
     noteIds,
     createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
-    images: images.map(img => ({ ...img, assignedAt: img.assignedAt instanceof Date ? img.assignedAt.toISOString() : img.assignedAt })),
-    catalogs: catalogs.map(cat => ({ ...cat, assignedAt: cat.assignedAt instanceof Date ? cat.assignedAt.toISOString() : cat.assignedAt })),
+    images: images.map(img => ({ ...img, assignedAt: img.assignedAt })),
+    catalogs: catalogs.map(cat => ({ ...cat, assignedAt: cat.assignedAt })),
     categoryId: resolveCategoryId(doc),
     tags,
     producers,
@@ -684,7 +684,7 @@ export const mongoProductRepository: ProductRepository = {
     const incoming = imageFiles.map((imageFile: ImageFileRecord) => ({
       productId,
       imageFileId: imageFile.id,
-      assignedAt: now,
+      assignedAt: now.toISOString(),
       imageFile,
     }));
     const product = await db
@@ -735,7 +735,7 @@ export const mongoProductRepository: ProductRepository = {
       images.push({
         productId,
         imageFileId,
-        assignedAt: new Date(now.getTime() - index),
+        assignedAt: new Date(now.getTime() - index).toISOString(),
         imageFile,
       });
     });
@@ -765,7 +765,7 @@ export const mongoProductRepository: ProductRepository = {
     const catalogEntries = catalogs.map((catalog: CatalogRecord) => ({
       productId,
       catalogId: catalog.id,
-      assignedAt: now,
+      assignedAt: now.toISOString(),
       catalog,
     }));
     await db

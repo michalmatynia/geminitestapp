@@ -11,6 +11,11 @@ import {
 } from 'playwright';
 
 import {
+  isTraderaApiIntegrationSlug,
+  isTraderaBrowserIntegrationSlug,
+  isTraderaIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
+import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
   resolveTraderaSystemSettings,
   TRADERA_SETTINGS_KEYS,
@@ -21,6 +26,10 @@ import {
   findProductListingByIdAcrossProviders,
   getIntegrationRepository,
 } from '@/features/integrations/server';
+import {
+  addTraderaShopItem,
+  type TraderaApiCredentials,
+} from '@/features/integrations/services/tradera-api-client';
 import type { IntegrationConnectionRecord } from '@/features/integrations/types/integrations';
 import type { ProductListingRecord } from '@/features/integrations/types/listings';
 import { ErrorSystem } from '@/features/observability/server';
@@ -49,6 +58,7 @@ type TraderaListingResult = {
   externalListingId: string;
   listingUrl?: string;
   simulated?: boolean;
+  metadata?: Record<string, unknown>;
 };
 
 export type TraderaCategoryRecord = {
@@ -90,6 +100,14 @@ const SUBMIT_SELECTORS = [
   'button:has-text("Publish")',
   'button:has-text("Lägg upp")',
 ];
+
+const DEFAULT_TRADERA_API_CATEGORY_ID = 344481;
+const DEFAULT_TRADERA_API_PAYMENT_CONDITION =
+  process.env['TRADERA_API_DEFAULT_PAYMENT_CONDITION'] ??
+  'Payment within 3 days';
+const DEFAULT_TRADERA_API_SHIPPING_CONDITION =
+  process.env['TRADERA_API_DEFAULT_SHIPPING_CONDITION'] ??
+  'Shipping paid by buyer';
 
 type TraderaFailureCategory =
   | 'AUTH'
@@ -637,6 +655,148 @@ const runTraderaBrowserListing = async ({
   }
 };
 
+const toPositiveInt = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.floor(parsed);
+    }
+  }
+  return null;
+};
+
+const resolveTraderaApiCredentials = (
+  connection: IntegrationConnectionRecord
+): TraderaApiCredentials => {
+  const fallbackSecret = connection.password
+    ? decryptSecret(connection.password).trim()
+    : '';
+  const appId = toPositiveInt(connection.traderaApiAppId);
+  const userId =
+    toPositiveInt(connection.traderaApiUserId) ??
+    toPositiveInt(connection.username);
+  const appKey = connection.traderaApiAppKey
+    ? decryptSecret(connection.traderaApiAppKey).trim()
+    : fallbackSecret;
+  const token = connection.traderaApiToken
+    ? decryptSecret(connection.traderaApiToken).trim()
+    : fallbackSecret;
+
+  if (!appId) {
+    throw internalError(
+      'Tradera API App ID is missing. Update the connection credentials.'
+    );
+  }
+  if (!userId) {
+    throw internalError(
+      'Tradera API User ID is missing. Update the connection credentials.'
+    );
+  }
+  if (!appKey) {
+    throw internalError(
+      'Tradera API App Key is missing. Update the connection credentials.'
+    );
+  }
+  if (!token) {
+    throw internalError(
+      'Tradera API token is missing. Update the connection credentials.'
+    );
+  }
+
+  return {
+    appId,
+    appKey,
+    userId,
+    token,
+    sandbox: connection.traderaApiSandbox ?? false,
+  };
+};
+
+const resolveTraderaApiCategoryId = (
+  listing: ProductListingRecord,
+  product: { categoryId?: string | null }
+): number => {
+  const listingData = toRecord(listing.marketplaceData);
+  const traderaData = toRecord(listingData['tradera']);
+  const fromMarketplaceData = toPositiveInt(traderaData['categoryId']);
+  if (fromMarketplaceData) return fromMarketplaceData;
+
+  const fromProduct = toPositiveInt(product?.categoryId ?? null);
+  if (fromProduct) return fromProduct;
+
+  const fromEnv = toPositiveInt(process.env['TRADERA_API_DEFAULT_CATEGORY_ID']);
+  return fromEnv ?? DEFAULT_TRADERA_API_CATEGORY_ID;
+};
+
+const runTraderaApiListing = async ({
+  listing,
+  connection,
+}: {
+  listing: ProductListingRecord;
+  connection: IntegrationConnectionRecord;
+}): Promise<TraderaListingResult> => {
+  const productRepository = await getProductRepository();
+  const product = await productRepository.getProductById(listing.productId);
+  if (!product) {
+    throw notFoundError('Product not found', { productId: listing.productId });
+  }
+
+  const credentials = resolveTraderaApiCredentials(connection);
+  const title =
+    product.name_en ||
+    product.name_pl ||
+    product.name_de ||
+    product.sku ||
+    `Listing ${listing.productId}`;
+  const description =
+    product.description_en ||
+    product.description_pl ||
+    product.description_de ||
+    title;
+  const normalizedPrice =
+    typeof product.price === 'number' &&
+    Number.isFinite(product.price) &&
+    product.price > 0
+      ? product.price
+      : 1;
+  const quantity =
+    typeof product.stock === 'number' &&
+    Number.isFinite(product.stock) &&
+    product.stock > 0
+      ? Math.floor(product.stock)
+      : 1;
+  const categoryId = resolveTraderaApiCategoryId(listing, product);
+  const addResult = await addTraderaShopItem({
+    credentials,
+    input: {
+      title,
+      description,
+      categoryId,
+      price: normalizedPrice,
+      quantity,
+      shippingCondition: DEFAULT_TRADERA_API_SHIPPING_CONDITION,
+      paymentCondition: DEFAULT_TRADERA_API_PAYMENT_CONDITION,
+    },
+  });
+
+  return {
+    externalListingId: String(addResult.itemId),
+    listingUrl: `https://www.tradera.com/item/${addResult.itemId}`,
+    metadata: {
+      mode: 'api',
+      requestId: addResult.requestId,
+      requestResultCode: addResult.resultCode,
+      requestResultMessage: addResult.resultMessage,
+      categoryId,
+      quantity,
+      sandbox: credentials.sandbox ?? false,
+    },
+  };
+};
+
 export const fetchTraderaCategoriesForConnection = async (
   connection: IntegrationConnectionRecord
 ): Promise<TraderaCategoryRecord[]> => {
@@ -723,7 +883,10 @@ const findDueRelistsInMongo = async (limit: number): Promise<string[]> => {
   const db = await getMongoDb();
   const traderaIntegrations = await db
     .collection<{ _id: string; slug: string }>('integrations')
-    .find({ slug: { $regex: /^tradera$/i } }, { projection: { _id: 1 } })
+    .find(
+      { slug: { $regex: /^(tradera|tradera-api)$/i } },
+      { projection: { _id: 1 } }
+    )
     .toArray();
   if (traderaIntegrations.length === 0) return [];
 
@@ -755,7 +918,7 @@ const findDueRelistsInPrisma = async (limit: number): Promise<string[]> => {
       SELECT pl.id
       FROM "ProductListing" pl
       INNER JOIN "Integration" i ON i.id = pl."integrationId"
-      WHERE LOWER(i.slug) = 'tradera'
+      WHERE LOWER(i.slug) IN ('tradera', 'tradera-api')
         AND pl.status IN ('active', 'queued_relist')
         AND pl."nextRelistAt" IS NOT NULL
         AND pl."nextRelistAt" <= NOW()
@@ -801,7 +964,7 @@ export const processTraderaListingJob = async (
   const integration = await integrationRepository.getIntegrationById(
     listing.integrationId
   );
-  if (integration?.slug.toLowerCase() !== 'tradera') {
+  if (!integration || !isTraderaIntegrationSlug(integration.slug)) {
     throw internalError('Listing is not connected to Tradera.');
   }
 
@@ -826,6 +989,9 @@ export const processTraderaListingJob = async (
   const correlationId = `${input.action}:${listing.id}:${Date.now()}`;
   const existingMarketplaceData = toRecord(listing.marketplaceData);
   const existingTraderaData = toRecord(existingMarketplaceData['tradera']);
+  const listingMode = isTraderaApiIntegrationSlug(integration.slug)
+    ? 'api'
+    : 'browser';
 
   await ErrorSystem.logInfo('Tradera listing job started', {
     service: 'tradera-listing-service',
@@ -847,6 +1013,7 @@ export const processTraderaListingJob = async (
         ...existingTraderaData,
         lastAction: input.action,
         source,
+        mode: listingMode,
         status: 'running',
         jobId: input.jobId ?? null,
         correlationId,
@@ -861,13 +1028,18 @@ export const processTraderaListingJob = async (
   });
 
   try {
-    const result = await runTraderaBrowserListing({
-      listing,
-      connection,
-      systemSettings,
-      source,
-      action: input.action,
-    });
+    const result = isTraderaBrowserIntegrationSlug(integration.slug)
+      ? await runTraderaBrowserListing({
+        listing,
+        connection,
+        systemSettings,
+        source,
+        action: input.action,
+      })
+      : await runTraderaApiListing({
+        listing,
+        connection,
+      });
 
     const expiresAt = resolveExpiry(listingSettings.durationHours);
     const nextRelistAt = resolveNextRelistAt(
@@ -889,8 +1061,10 @@ export const processTraderaListingJob = async (
         ...existingMarketplaceData,
         tradera: {
           ...existingTraderaData,
+          ...(result.metadata ?? {}),
           lastAction: input.action,
           source,
+          mode: listingMode,
           status: 'active',
           simulated: Boolean(result.simulated),
           listingUrl: result.listingUrl ?? null,
@@ -937,6 +1111,7 @@ export const processTraderaListingJob = async (
           ...existingTraderaData,
           lastAction: input.action,
           source,
+          mode: listingMode,
           status: 'failed',
           jobId: input.jobId ?? null,
           correlationId,

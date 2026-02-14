@@ -8,15 +8,16 @@ import { cn } from '@/shared/utils';
 import { Button } from './button';
 import { Input } from './input';
 
-interface SearchInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   value: string;
   onClear?: () => void;
   containerClassName?: string;
   variant?: 'default' | 'subtle';
+  size?: 'default' | 'sm' | 'xs';
 }
 
 export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
-  ({ value, onClear, containerClassName, className, variant = 'default', ...props }, ref) => {
+  ({ value, onClear, containerClassName, className, variant = 'default', size = 'default', ...props }, ref) => {
     return (
       <div className={cn('relative flex items-center', containerClassName)}>
         <Search className='absolute left-3 size-4 text-gray-500' />
@@ -24,6 +25,7 @@ export const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           ref={ref}
           value={value}
           variant={variant}
+          size={size}
           className={cn('pl-9 pr-9', className)}
           {...props}
         />

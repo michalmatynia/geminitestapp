@@ -38,6 +38,12 @@ const connectionSchema = z.object({
   traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
   traderaAutoRelistEnabled: z.boolean().optional(),
   traderaAutoRelistLeadMinutes: z.number().int().min(0).max(10080).optional(),
+  traderaApiAppId: z.number().int().positive().optional(),
+  traderaApiAppKey: z.string().trim().optional(),
+  traderaApiPublicKey: z.string().trim().nullable().optional(),
+  traderaApiUserId: z.number().int().positive().optional(),
+  traderaApiToken: z.string().trim().optional(),
+  traderaApiSandbox: z.boolean().optional(),
 });
 
 /**
@@ -142,7 +148,33 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
       : {}),
     ...(typeof data.traderaAutoRelistLeadMinutes === 'number'
       ? { traderaAutoRelistLeadMinutes: data.traderaAutoRelistLeadMinutes }
-      : {})
+      : {}),
+    ...(typeof data.traderaApiAppId === 'number'
+      ? { traderaApiAppId: data.traderaApiAppId }
+      : {}),
+    ...(typeof data.traderaApiAppKey === 'string' &&
+    data.traderaApiAppKey.trim()
+      ? {
+        traderaApiAppKey: encryptSecret(data.traderaApiAppKey.trim())
+      }
+      : {}),
+    ...(typeof data.traderaApiPublicKey === 'string' ||
+    data.traderaApiPublicKey === null
+      ? { traderaApiPublicKey: data.traderaApiPublicKey ?? null }
+      : {}),
+    ...(typeof data.traderaApiUserId === 'number'
+      ? { traderaApiUserId: data.traderaApiUserId }
+      : {}),
+    ...(typeof data.traderaApiToken === 'string' &&
+    data.traderaApiToken.trim()
+      ? {
+        traderaApiToken: encryptSecret(data.traderaApiToken.trim()),
+        traderaApiTokenUpdatedAt: new Date()
+      }
+      : {}),
+    ...(typeof data.traderaApiSandbox === 'boolean'
+      ? { traderaApiSandbox: data.traderaApiSandbox }
+      : {}),
   });
 
   return NextResponse.json({
@@ -179,7 +211,14 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
     traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
     traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,
-    traderaAutoRelistLeadMinutes: connection.traderaAutoRelistLeadMinutes ?? 180
+    traderaAutoRelistLeadMinutes: connection.traderaAutoRelistLeadMinutes ?? 180,
+    traderaApiAppId: connection.traderaApiAppId ?? null,
+    traderaApiPublicKey: connection.traderaApiPublicKey ?? null,
+    traderaApiUserId: connection.traderaApiUserId ?? null,
+    traderaApiSandbox: connection.traderaApiSandbox ?? false,
+    hasTraderaApiAppKey: Boolean(connection.traderaApiAppKey),
+    hasTraderaApiToken: Boolean(connection.traderaApiToken),
+    traderaApiTokenUpdatedAt: connection.traderaApiTokenUpdatedAt ?? null,
   });
 }
 

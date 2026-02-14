@@ -9,10 +9,13 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   type PromptValidationRule,
 } from '@/features/prompt-engine/settings';
+import type { PromptEngineSettings } from '@/features/prompt-engine/settings';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { promptExploderClampNumber } from '../helpers/formatting';
+import { isPromptExploderManagedRule } from '../helpers/segment-helpers';
 import {
   applyPromptExploderParserTuningDrafts,
   buildPromptExploderParserTuningDrafts,
@@ -31,12 +34,9 @@ import {
   prependPatternSnapshot,
   removePatternSnapshotById,
 } from '../pattern-snapshots';
-import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 import { filterTemplatesForRuntime } from '../runtime-refresh';
-import { isPromptExploderManagedRule } from '../helpers/segment-helpers';
-import { promptExploderClampNumber } from '../helpers/formatting';
+import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 
-import type { PromptEngineSettings } from '@/features/prompt-engine/settings';
 import type {
   PromptExploderLearnedTemplate,
   PromptExploderPatternSnapshot,

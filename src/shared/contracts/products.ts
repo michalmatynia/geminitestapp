@@ -121,14 +121,14 @@ export const productParameterSchema = namedDtoSchema.extend({
 export type ProductParameterDto = z.infer<typeof productParameterSchema>;
 
 /**
- * Currency Contract
+ * Currency Contract (Product-specific)
  */
-export const currencySchema = namedDtoSchema.extend({
+export const productCurrencySchema = namedDtoSchema.extend({
   code: z.string(),
   symbol: z.string().nullable(),
 });
 
-export type ProductCurrencyDto = z.infer<typeof currencySchema>;
+export type ProductCurrencyDto = z.infer<typeof productCurrencySchema>;
 
 /**
  * Product Image Contract

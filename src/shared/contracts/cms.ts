@@ -130,7 +130,7 @@ export interface CmsBlockInstanceDto {
   id: string;
   type: string;
   settings: Record<string, unknown>;
-  blocks?: CmsBlockInstanceDto[];
+  blocks?: CmsBlockInstanceDto[] | undefined;
 }
 
 export const cmsBlockInstanceSchema: z.ZodType<CmsBlockInstanceDto> = z.lazy(() =>

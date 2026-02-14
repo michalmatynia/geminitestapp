@@ -3,12 +3,12 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository, listAllProductListingsAcrossProviders } from '@/features/integrations/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
-const TRADERA_INTEGRATION_SLUGS = new Set(['tradera']);
 type MarketplaceBadgeKey = 'base' | 'tradera';
 type ProductListingBadgesPayload = Record<
   string,

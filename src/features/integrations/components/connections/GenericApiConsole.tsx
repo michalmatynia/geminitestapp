@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Label, Alert, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Textarea, Label, Alert, SelectSimple } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -147,7 +147,7 @@ export function GenericApiConsole({
           <Label className='text-xs text-gray-400'>Method</Label>
           {methodType === 'select' ? (
             <div className='mt-2'>
-              <UnifiedSelect
+              <SelectSimple
                 options={methodOptions}
                 value={method}
                 onValueChange={onSetMethod}

@@ -193,6 +193,13 @@ model IntegrationConnection {
   traderaDefaultDurationHours     Int              @default(72)
   traderaAutoRelistEnabled        Boolean          @default(true)
   traderaAutoRelistLeadMinutes    Int              @default(180)
+  traderaApiAppId                 Int?
+  traderaApiAppKey                String?
+  traderaApiPublicKey             String?
+  traderaApiUserId                Int?
+  traderaApiToken                 String?
+  traderaApiTokenUpdatedAt        DateTime?
+  traderaApiSandbox               Boolean          @default(false)
   integration                     Integration      @relation(fields: [integrationId], references: [id], onDelete: Cascade)
   listings                        ProductListing[]
 }

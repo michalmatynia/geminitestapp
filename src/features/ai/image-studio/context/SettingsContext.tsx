@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { useProjectsState } from './ProjectsContext';
 import {
   IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
   parseImageStudioActiveProject,
@@ -44,6 +45,7 @@ const SettingsActionsContext = createContext<SettingsActions | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
+  const { projectId: selectedProjectId } = useProjectsState();
   const settingsStore = useSettingsStore();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
   const userPreferencesQuery = useUserPreferences();
@@ -51,8 +53,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
+  const hydratedSignatureRef = useRef<string | null>(null);
+  const modelPersistSignatureRef = useRef<string | null>(null);
+  const modelPersistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const heavyMap = heavySettings.data ?? new Map<string, string>();
+  const liveProjectId = selectedProjectId.trim();
   const activeProjectIdFromPreferences =
     typeof userPreferencesQuery.data?.imageStudioLastProjectId === 'string'
       ? userPreferencesQuery.data.imageStudioLastProjectId.trim()
@@ -60,17 +66,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const legacyActiveProjectId = parseImageStudioActiveProject(
     heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)
   );
-  const activeProjectId = activeProjectIdFromPreferences || legacyActiveProjectId;
+  const activeProjectId = liveProjectId || activeProjectIdFromPreferences || legacyActiveProjectId;
   const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
   const studioProjectSettingsRaw =
     projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
   const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const studioSettingsRaw = studioProjectSettingsRaw ?? globalStudioSettingsRaw;
   const openaiModelFallback = settingsStore.get('openai_model');
+  const settingsSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}:${openaiModelFallback ?? ''}`;
 
   useEffect(() => {
-    if (settingsLoaded) return;
     if (settingsStore.isLoading || heavySettings.isLoading || userPreferencesQuery.isLoading) return;
+    if (hydratedSignatureRef.current === settingsSignature) {
+      if (!settingsLoaded) setSettingsLoaded(true);
+      return;
+    }
 
     const stored = parseImageStudioSettings(studioSettingsRaw);
     const hasStoredStudioSettings = Boolean(
@@ -95,14 +105,93 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         : stored;
 
     setStudioSettings(hydrated);
+    hydratedSignatureRef.current = settingsSignature;
     setSettingsLoaded(true);
   }, [
+    settingsSignature,
     settingsLoaded,
     settingsStore.isLoading,
     heavySettings.isLoading,
     userPreferencesQuery.isLoading,
     studioSettingsRaw,
     openaiModelFallback,
+  ]);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    if (settingsStore.isLoading || heavySettings.isLoading || userPreferencesQuery.isLoading) return;
+
+    const activeModel = studioSettings.targetAi.openai.model.trim();
+    if (!activeModel) return;
+    const targetKey = projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
+    if (!targetKey) return;
+
+    const normalizedPresets = normalizeImageStudioModelPresets(
+      studioSettings.targetAi.openai.modelPresets,
+      activeModel,
+    );
+    const persisted = parseImageStudioSettings(studioSettingsRaw);
+    const persistedModel = persisted.targetAi.openai.model.trim();
+    const persistedPresets = normalizeImageStudioModelPresets(
+      persisted.targetAi.openai.modelPresets,
+      persistedModel,
+    );
+
+    const presetsChanged =
+      normalizedPresets.length !== persistedPresets.length ||
+      normalizedPresets.some((entry: string, index: number) => entry !== persistedPresets[index]);
+    const modelChanged = activeModel !== persistedModel;
+    if (!modelChanged && !presetsChanged) {
+      modelPersistSignatureRef.current = null;
+      return;
+    }
+
+    const persistSignature = `${targetKey}:${activeModel}:${normalizedPresets.join('|')}`;
+    if (modelPersistSignatureRef.current === persistSignature) return;
+
+    if (modelPersistTimerRef.current) {
+      clearTimeout(modelPersistTimerRef.current);
+    }
+    modelPersistTimerRef.current = setTimeout(() => {
+      modelPersistSignatureRef.current = persistSignature;
+      const nextSettings: ImageStudioSettings = {
+        ...persisted,
+        targetAi: {
+          ...persisted.targetAi,
+          openai: {
+            ...persisted.targetAi.openai,
+            api: 'images',
+            model: activeModel,
+            modelPresets: normalizedPresets,
+          },
+        },
+      };
+      void updateSetting.mutateAsync({
+        key: targetKey,
+        value: serializeSetting(nextSettings),
+      }).catch(() => {
+        if (modelPersistSignatureRef.current === persistSignature) {
+          modelPersistSignatureRef.current = null;
+        }
+      });
+    }, 450);
+
+    return () => {
+      if (modelPersistTimerRef.current) {
+        clearTimeout(modelPersistTimerRef.current);
+        modelPersistTimerRef.current = null;
+      }
+    };
+  }, [
+    settingsLoaded,
+    settingsStore.isLoading,
+    heavySettings.isLoading,
+    userPreferencesQuery.isLoading,
+    studioSettings.targetAi.openai.model,
+    studioSettings.targetAi.openai.modelPresets,
+    projectSettingsKey,
+    studioSettingsRaw,
+    updateSetting,
   ]);
 
   const saveStudioSettings = useCallback(async (options?: { silent?: boolean }) => {
@@ -121,6 +210,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   }, []);
 
   const handleRefreshSettings = useCallback((): void => {
+    hydratedSignatureRef.current = null;
+    modelPersistSignatureRef.current = null;
+    if (modelPersistTimerRef.current) {
+      clearTimeout(modelPersistTimerRef.current);
+      modelPersistTimerRef.current = null;
+    }
     setSettingsLoaded(false);
     settingsStore.refetch();
     void heavySettings.refetch().catch(() => {});

@@ -4,7 +4,7 @@ import type {
   VectorShapeTypeDto, 
   VectorShapeRoleDto, 
   VectorShapeDto 
-} from '../dtos/index';
+} from '../dtos';
 
 export type { 
   VectorToolModeDto, 

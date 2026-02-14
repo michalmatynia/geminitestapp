@@ -226,7 +226,7 @@ export async function getProductAiJobs(
   // Batch fetch products - deduplicate IDs to avoid redundant queries
   const uniqueProductIds = [
     ...new Set(jobs.filter(shouldFetchProduct).map((j: ProductAiJob) => j.productId)),
-  ];
+  ].filter((id): id is string => typeof id === 'string');
 
   // Fetch all unique products in parallel
   const productResults = await Promise.all(
@@ -268,7 +268,7 @@ export async function getProductAiJobs(
   // Enrich jobs with product data from map
   return jobs.map((job: ProductAiJob) => ({
     ...job,
-    product: productMap.get(job.productId) ?? null,
+    product: job.productId ? (productMap.get(job.productId) ?? null) : null,
   }));
 }
 
@@ -293,13 +293,14 @@ export async function getProductAiJob(
   const source = payload?.['source'] as string | undefined;
   const graph = payload?.['graph'] as Record<string, unknown> | undefined;
   const shouldFetch =
+    !!job.productId &&
     !job.productId.startsWith('path_') &&
     entityType !== 'note' &&
     entityType !== 'user' &&
     entityType !== 'system' &&
     !(source === 'ai_paths' && graph) &&
     (entityType ? entityType === 'product' : true);
-  if (shouldFetch) {
+  if (shouldFetch && job.productId) {
     try {
       const result = await productService.getProductById(job.productId);
       product = isRecord(result) ? result : null;

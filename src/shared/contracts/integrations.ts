@@ -85,6 +85,13 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   traderaDefaultDurationHours: z.number().optional(),
   traderaAutoRelistEnabled: z.boolean().optional(),
   traderaAutoRelistLeadMinutes: z.number().optional(),
+  traderaApiAppId: z.number().nullable().optional(),
+  traderaApiPublicKey: z.string().nullable().optional(),
+  traderaApiUserId: z.number().nullable().optional(),
+  traderaApiSandbox: z.boolean().optional(),
+  hasTraderaApiAppKey: z.boolean().optional(),
+  hasTraderaApiToken: z.boolean().optional(),
+  traderaApiTokenUpdatedAt: z.string().nullable().optional(),
 });
 
 export type IntegrationConnectionDto = z.infer<typeof integrationConnectionSchema>;

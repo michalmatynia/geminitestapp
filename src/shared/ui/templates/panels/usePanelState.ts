@@ -54,7 +54,7 @@ export function usePanelState(
   );
 
   const setFilter = useCallback(
-    (key: string, value: any) => {
+    (key: string, value: unknown) => {
       updateState({
         ...state,
         filters: {
@@ -68,7 +68,7 @@ export function usePanelState(
   );
 
   const setFilters = useCallback(
-    (filters: Record<string, any>) => {
+    (filters: Record<string, unknown>) => {
       updateState({
         ...state,
         filters,

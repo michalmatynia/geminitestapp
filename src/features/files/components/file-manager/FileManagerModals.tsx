@@ -47,10 +47,10 @@ export function FileManagerModals(): React.JSX.Element {
               <div><strong>Path:</strong> {previewAsset.filepath}</div>
               <div><strong>MIME Type:</strong> {previewAsset.mimetype}</div>
               <div><strong>Size:</strong> {(previewAsset.size / 1024).toFixed(2)} KB</div>
-              <div><strong>Category:</strong> {previewAsset.category ?? '—'}</div>
+              <div><strong>Category:</strong> {previewAsset.categoryId ?? '—'}</div>
               <div><strong>Public:</strong> {previewAsset.isPublic ? 'Yes' : 'No'}</div>
               <div><strong>Added:</strong> {new Date(previewAsset.createdAt).toLocaleString()}</div>
-              <div><strong>Modified:</strong> {new Date(previewAsset.updatedAt).toLocaleString()}</div>
+              <div><strong>Modified:</strong> {previewAsset.updatedAt ? new Date(previewAsset.updatedAt).toLocaleString() : '—'}</div>
               {(previewAsset.tags ?? []).length > 0 && (
                 <div><strong>Tags:</strong> {previewAsset.tags.join(', ')}</div>
               )}

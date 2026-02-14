@@ -67,6 +67,13 @@ export type IntegrationConnectionRecord = {
   traderaDefaultDurationHours?: number | null;
   traderaAutoRelistEnabled?: boolean | null;
   traderaAutoRelistLeadMinutes?: number | null;
+  traderaApiAppId?: number | null;
+  traderaApiAppKey?: string | null;
+  traderaApiPublicKey?: string | null;
+  traderaApiUserId?: number | null;
+  traderaApiToken?: string | null;
+  traderaApiTokenUpdatedAt?: Date | null;
+  traderaApiSandbox?: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -91,6 +98,13 @@ export type IntegrationRepository = {
       traderaDefaultDurationHours?: number;
       traderaAutoRelistEnabled?: boolean;
       traderaAutoRelistLeadMinutes?: number;
+      traderaApiAppId?: number | null;
+      traderaApiAppKey?: string | null;
+      traderaApiPublicKey?: string | null;
+      traderaApiUserId?: number | null;
+      traderaApiToken?: string | null;
+      traderaApiTokenUpdatedAt?: Date | null;
+      traderaApiSandbox?: boolean;
     }
   ) => Promise<IntegrationConnectionRecord>;
   updateConnection: (

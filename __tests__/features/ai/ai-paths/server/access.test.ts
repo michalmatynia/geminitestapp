@@ -38,8 +38,8 @@ const buildRun = (userId: string | null): AiPathRunRecord =>
     deadLetteredAt: null,
     startedAt: null,
     finishedAt: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   }) as AiPathRunRecord;
 
 describe('ai-paths access run guards', () => {

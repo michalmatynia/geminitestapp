@@ -13,7 +13,6 @@ import {
   resolveManualBindingSegmentIds,
   resolveManualBindingSubsectionIds,
 } from '../manual-bindings';
-
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 
 import type { PromptExploderBindingType } from '../types';

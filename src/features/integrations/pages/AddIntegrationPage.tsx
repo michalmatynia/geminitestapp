@@ -32,6 +32,13 @@ const AVAILABLE_INTEGRATIONS = [
     type: 'marketplace',
     method: 'browser',
   },
+  {
+    name: 'Tradera API',
+    slug: 'tradera-api',
+    description: 'Direct integration with Tradera API (App ID/App Key/User Token).',
+    type: 'marketplace',
+    method: 'api',
+  },
 ] as const;
 
 export default function AddIntegrationPage(): React.JSX.Element {

@@ -15,9 +15,9 @@ import {
   Label,
   SectionHeader,
   StatusToggle,
-  UnifiedButton,
-  UnifiedInput,
-  UnifiedSelect,
+  Button,
+  Input,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -253,10 +253,10 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         description='Configure runtime, learning, and AI execution defaults for Prompt Exploder operations.'
         actions={
           <div className='flex flex-wrap items-center gap-2'>
-            <UnifiedButton
+            <Button
               type='button'
               variant='outline'
-              size='sm'
+              size='xs'
               onClick={() => {
                 void settingsQuery.refetch();
                 void chatbotModelsQuery.refetch();
@@ -265,13 +265,13 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             >
               <RefreshCcw className='mr-2 size-4' />
               Refresh
-            </UnifiedButton>
-            <UnifiedButton type='button' variant='outline' size='sm' asChild>
+            </Button>
+            <Button type='button' variant='outline' size='xs' asChild>
               <Link href='/admin/prompt-exploder'>
                 <ArrowLeft className='mr-2 size-4' />
                 Back to Prompt Exploder
               </Link>
-            </UnifiedButton>
+            </Button>
           </div>
         }
       />
@@ -291,7 +291,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         <div className='grid gap-3 md:grid-cols-3'>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Operation Mode</Label>
-            <UnifiedSelect
+            <SelectSimple
               value={draft.ai.operationMode}
               onValueChange={(value: string) => {
                 setDraft((previous) =>
@@ -307,11 +307,12 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 );
               }}
               options={OPERATION_MODE_OPTIONS}
+              size='sm'
             />
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Provider</Label>
-            <UnifiedSelect
+            <SelectSimple
               value={draft.ai.provider}
               onValueChange={(value: string) => {
                 setDraft((previous) =>
@@ -327,11 +328,12 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 );
               }}
               options={AI_PROVIDER_OPTIONS}
+              size='sm'
             />
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Primary AI Model</Label>
-            <UnifiedSelect
+            <SelectSimple
               value={draft.ai.modelId}
               onValueChange={(value: string) => {
                 setDraft((previous) =>
@@ -348,11 +350,13 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
               }}
               options={modelOptions}
               placeholder='Choose model'
+              size='sm'
             />
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Custom Primary Model</Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               value={draft.ai.modelId}
               onChange={(event) => {
                 const value = event.target.value;
@@ -373,7 +377,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Fallback Model</Label>
-            <UnifiedSelect
+            <SelectSimple
               value={draft.ai.fallbackModelId}
               onValueChange={(value: string) => {
                 setDraft((previous) =>
@@ -390,11 +394,13 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
               }}
               options={modelOptions}
               placeholder='Optional fallback'
+              size='sm'
             />
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Custom Fallback Model</Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               value={draft.ai.fallbackModelId}
               onChange={(event) => {
                 const value = event.target.value;
@@ -415,7 +421,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Temperature</Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               type='number'
               min={0}
               max={2}
@@ -440,7 +447,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Max Tokens</Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               type='number'
               min={1}
               max={8192}
@@ -475,7 +483,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         <div className='grid gap-3 md:grid-cols-4'>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
-            <UnifiedSelect
+            <SelectSimple
               value={draft.runtime.ruleProfile}
               onValueChange={(value: string) => {
                 setDraft((previous) =>
@@ -495,11 +503,12 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 { value: 'pattern_pack', label: 'Pattern Pack Only' },
                 { value: 'learned_only', label: 'Learned Only' },
               ]}
+              size='sm'
             />
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Benchmark Suite</Label>
-            <UnifiedSelect
+            <SelectSimple
               value={draft.runtime.benchmarkSuite}
               onValueChange={(value: string) => {
                 setDraft((previous) =>
@@ -520,13 +529,15 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                 { value: 'extended', label: 'Extended' },
                 { value: 'custom', label: 'Custom' },
               ]}
+              size='sm'
             />
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>
               Benchmark Low Confidence Threshold
             </Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               type='number'
               min={0.3}
               max={0.9}
@@ -557,7 +568,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
             <Label className='text-[11px] text-gray-400'>
               Benchmark Suggestion Limit
             </Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               type='number'
               min={1}
               max={20}
@@ -613,7 +625,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Similarity Threshold</Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               type='number'
               min={0.3}
               max={0.95}
@@ -638,7 +651,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Template Merge Threshold</Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               type='number'
               min={0.3}
               max={0.95}
@@ -663,7 +677,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Min Approvals For Match</Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               type='number'
               min={1}
               max={20}
@@ -688,7 +703,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Runtime Template Cap</Label>
-            <UnifiedInput
+            <Input
+              size='sm'
               type='number'
               min={50}
               max={5000}
@@ -761,25 +777,27 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       </FormSection>
 
       <div className='flex flex-wrap items-center gap-2'>
-        <UnifiedButton
+        <Button
           type='button'
+          size='sm'
           onClick={() => {
             void handleSave();
           }}
           disabled={saveDisabled}
         >
           Save Prompt Exploder Settings
-        </UnifiedButton>
-        <UnifiedButton
+        </Button>
+        <Button
           type='button'
           variant='outline'
+          size='sm'
           onClick={() => {
             setDraft(toSettingsDraft(parsedSettings));
           }}
           disabled={updateSetting.isPending}
         >
           Reset Unsaved Changes
-        </UnifiedButton>
+        </Button>
         <span className='text-xs text-gray-500'>
           {chatbotModelsQuery.isLoading
             ? 'Loading model discovery...'

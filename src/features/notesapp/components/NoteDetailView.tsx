@@ -6,7 +6,7 @@ import React, { useMemo } from 'react';
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesLookup } from '@/features/notesapp/api/useNoteQueries';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import type { NoteWithRelations, RelatedNote, NoteRelationWithTarget, NoteRelationWithSource } from '@/shared/types/domain/notes';
+import type { NoteWithRelations, RelatedNote } from '@/shared/types/domain/notes';
 import { Button, useToast } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
@@ -57,7 +57,7 @@ export function NoteDetailView(): React.JSX.Element | null {
     ): RelatedNote | null => (id ? { id, title: title ?? 'Untitled note', color: color ?? null } : null);
 
     const fromRelations = (selectedNote.relationsFrom ?? [])
-      .map((relation: NoteRelationWithTarget) =>
+      .map((relation) =>
         build(
           relation.targetNote?.id ?? relation.targetNoteId,
           relation.targetNote?.title,
@@ -67,7 +67,7 @@ export function NoteDetailView(): React.JSX.Element | null {
       .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
     const toRelations = (selectedNote.relationsTo ?? [])
-      .map((relation: NoteRelationWithSource) =>
+      .map((relation) =>
         build(
           relation.sourceNote?.id ?? relation.sourceNoteId,
           relation.sourceNote?.title,

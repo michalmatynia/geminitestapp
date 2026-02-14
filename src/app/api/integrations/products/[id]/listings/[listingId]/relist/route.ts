@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { findProductListingByIdAcrossProviders, getIntegrationRepository } from '@/features/integrations/server';
 import { enqueueTraderaListingJob } from '@/features/jobs/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
@@ -27,7 +28,7 @@ async function POST_handler(
   const integration = await integrationRepository.getIntegrationById(
     resolved.listing.integrationId
   );
-  if (integration?.slug.toLowerCase() !== 'tradera') {
+  if (!isTraderaIntegrationSlug(integration?.slug)) {
     throw badRequestError('Relist is only supported for Tradera listings');
   }
 

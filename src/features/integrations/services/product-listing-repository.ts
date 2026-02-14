@@ -704,6 +704,10 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
         traderaDefaultDurationHours?: number | null;
         traderaAutoRelistEnabled?: boolean | null;
         traderaAutoRelistLeadMinutes?: number | null;
+        traderaApiAppId?: number | null;
+        traderaApiPublicKey?: string | null;
+        traderaApiUserId?: number | null;
+        traderaApiSandbox?: boolean | null;
       }>('integration_connections')
       .find({})
       .sort({ createdAt: -1 })
@@ -723,6 +727,10 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
           traderaDefaultDurationHours?: number | null;
           traderaAutoRelistEnabled?: boolean | null;
           traderaAutoRelistLeadMinutes?: number | null;
+          traderaApiAppId?: number | null;
+          traderaApiPublicKey?: string | null;
+          traderaApiUserId?: number | null;
+          traderaApiSandbox?: boolean | null;
         }) => ({
           id: c._id,
           name: c.name,
@@ -734,6 +742,10 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
             c.traderaAutoRelistEnabled ?? null,
           traderaAutoRelistLeadMinutes:
             c.traderaAutoRelistLeadMinutes ?? null,
+          traderaApiAppId: c.traderaApiAppId ?? null,
+          traderaApiPublicKey: c.traderaApiPublicKey ?? null,
+          traderaApiUserId: c.traderaApiUserId ?? null,
+          traderaApiSandbox: c.traderaApiSandbox ?? null,
         })),
     }));
   }
@@ -750,6 +762,10 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
           traderaDefaultDurationHours: true,
           traderaAutoRelistEnabled: true,
           traderaAutoRelistLeadMinutes: true,
+          traderaApiAppId: true,
+          traderaApiPublicKey: true,
+          traderaApiUserId: true,
+          traderaApiSandbox: true,
         },
       },
     },
@@ -777,6 +793,10 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
           traderaDefaultDurationHours?: number | null;
           traderaAutoRelistEnabled?: boolean | null;
           traderaAutoRelistLeadMinutes?: number | null;
+          traderaApiAppId?: number | null;
+          traderaApiPublicKey?: string | null;
+          traderaApiUserId?: number | null;
+          traderaApiSandbox?: boolean | null;
         })
         .filter((connection): connection is {
           id: string;
@@ -786,6 +806,10 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
           traderaDefaultDurationHours?: number | null;
           traderaAutoRelistEnabled?: boolean | null;
           traderaAutoRelistLeadMinutes?: number | null;
+          traderaApiAppId?: number | null;
+          traderaApiPublicKey?: string | null;
+          traderaApiUserId?: number | null;
+          traderaApiSandbox?: boolean | null;
         } =>
           Boolean(connection.id && connection.name)
         )
@@ -801,6 +825,10 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
             connection.traderaAutoRelistEnabled ?? null,
           traderaAutoRelistLeadMinutes:
             connection.traderaAutoRelistLeadMinutes ?? null,
+          traderaApiAppId: connection.traderaApiAppId ?? null,
+          traderaApiPublicKey: connection.traderaApiPublicKey ?? null,
+          traderaApiUserId: connection.traderaApiUserId ?? null,
+          traderaApiSandbox: connection.traderaApiSandbox ?? null,
         })),
     };
   }) as IntegrationWithConnectionsBasic[];

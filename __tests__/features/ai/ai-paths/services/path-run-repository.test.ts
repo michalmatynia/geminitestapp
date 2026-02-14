@@ -71,7 +71,7 @@ describe('AiPathRunRepository', () => {
     const updated = await repo.updateRun(run.id, {
       status: 'running',
       errorMessage: 'Some error',
-      startedAt: new Date()
+      startedAt: new Date().toISOString()
     });
 
     expect(updated.status).toBe('running');
@@ -207,7 +207,7 @@ describe('AiPathRunRepository', () => {
     const run = await repo.createRun({ pathId: 'stale' });
     await repo.updateRun(run.id, { 
       status: 'running', 
-      startedAt: new Date(Date.now() - 100000) 
+      startedAt: new Date(Date.now() - 100000).toISOString() 
     });
 
     const result = await repo.markStaleRunningRuns(50000); // 50s max age

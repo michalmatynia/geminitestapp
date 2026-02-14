@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { Profiler, memo, useMemo } from 'react';
 
 import { useProductListTableContext } from '@/features/products/context/ProductListContext';
+import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
 import { DataTable, Button, ListPanel, Alert } from '@/shared/ui';
 
 const ProductListHeader = dynamic(
@@ -34,36 +35,10 @@ export const ProductListPanel = memo(function ProductListPanel() {
     loadError,
     actionError,
     onDismissActionError,
-    data,
-    rowSelection,
-    setRowSelection,
     handleProductsTableRender,
-    tableColumns,
-    getRowId,
-    isLoading,
-    skeletonRows,
   } = useProductListTableContext();
 
-  const tableProps = useMemo(
-    () => ({
-      columns: tableColumns,
-      data,
-      getRowId,
-      rowSelection,
-      onRowSelectionChange: setRowSelection,
-      isLoading,
-      skeletonRows,
-    }),
-    [
-      tableColumns,
-      data,
-      getRowId,
-      rowSelection,
-      setRowSelection,
-      isLoading,
-      skeletonRows,
-    ]
-  );
+  const tableProps = useProductsTableProps();
 
   const alerts = useMemo(() => {
     if (!loadError && !actionError) return null;

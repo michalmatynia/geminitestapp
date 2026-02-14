@@ -358,9 +358,9 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                   </div>
                 </TableCell>
                 <TableCell className='hidden sm:table-cell'>
-                  {asset.category ? (
+                  {asset.categoryId ? (
                     <span className='rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300'>
-                      {asset.category}
+                      {asset.categoryId}
                     </span>
                   ) : (
                     <span className='text-sm text-muted-foreground'>-</span>

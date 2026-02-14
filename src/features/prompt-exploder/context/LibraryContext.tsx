@@ -18,9 +18,8 @@ import {
   upsertPromptExploderLibraryItems,
   type PromptExploderLibraryItem,
 } from '../prompt-library';
-
-import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 import { useBenchmarkActions } from './hooks/useBenchmark';
+import { useDocumentState, useDocumentActions } from './hooks/useDocument';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

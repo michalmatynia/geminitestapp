@@ -8,8 +8,6 @@ import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type {
   ThemeRecord,
   RelatedNote,
-  NoteRelationWithTarget,
-  NoteRelationWithSource,
   NoteFileRecord,
   NoteWithRelations,
 } from '@/shared/types/domain/notes';
@@ -125,7 +123,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     ): RelatedNote | null => (id ? { id, title: title ?? 'Untitled note', color: color ?? null } : null);
 
     const fromRelations = (note.relationsFrom ?? [])
-      .map((relation: NoteRelationWithTarget) =>
+      .map((relation) =>
         build(
           relation.targetNote?.id ?? (relation as unknown as { targetNoteId?: string }).targetNoteId,
           relation.targetNote?.title,
@@ -135,7 +133,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
       .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
     const toRelations = (note.relationsTo ?? [])
-      .map((relation: NoteRelationWithSource) =>
+      .map((relation) =>
         build(
           relation.sourceNote?.id ?? (relation as unknown as { sourceNoteId?: string }).sourceNoteId,
           relation.sourceNote?.title,

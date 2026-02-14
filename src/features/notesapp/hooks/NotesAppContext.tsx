@@ -262,8 +262,12 @@ export function NotesAppProvider({
       const sourceRelations: string[] =
         selectedNote.relations?.map((rel: { id: string }): string => rel.id) ||
         [
-          ...(selectedNote.relationsFrom ?? []).map((rel: { targetNote: { id: string } }): string => rel.targetNote.id),
-          ...(selectedNote.relationsTo ?? []).map((rel: { sourceNote: { id: string } }): string => rel.sourceNote.id),
+          ...(selectedNote.relationsFrom ?? [])
+            .map((rel) => rel.targetNote?.id)
+            .filter((rid): rid is string => Boolean(rid)),
+          ...(selectedNote.relationsTo ?? [])
+            .map((rel) => rel.sourceNote?.id)
+            .filter((rid): rid is string => Boolean(rid)),
         ].filter(
           (id: string, index: number, array: string[]): boolean => array.indexOf(id) === index
         );

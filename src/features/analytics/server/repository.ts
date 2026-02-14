@@ -35,6 +35,8 @@ type AnalyticsUtmDoc = {
 
 type AnalyticsEventMongoDoc = {
   _id?: ObjectId;
+  createdAt: Date;
+  updatedAt: Date | null;
   ts: Date;
   type: AnalyticsEventType;
   scope: AnalyticsScope;
@@ -159,6 +161,8 @@ const buildIpFields = (ip: string | undefined): { ip?: string; ipMasked?: string
 
 const toEventDto = (doc: AnalyticsEventMongoDocWithId): AnalyticsEventDto => ({
   id: doc._id.toString(),
+  createdAt: doc.createdAt?.toISOString() ?? doc.ts.toISOString(),
+  updatedAt: doc.updatedAt?.toISOString() ?? null,
   ts: doc.ts.toISOString(),
   type: doc.type,
   scope: doc.scope,
@@ -232,9 +236,12 @@ export async function insertAnalyticsEvent(
   const serverRegion = normalizeOptionalString(server?.region ?? null);
   const serverCity = normalizeOptionalString(server?.city ?? null);
   const ipFields = buildIpFields(serverIp ?? undefined);
+  const now = new Date();
 
   const doc = {
-    ts: new Date(),
+    createdAt: now,
+    updatedAt: now,
+    ts: now,
     type: input.type,
     scope: input.scope,
     path: input.path,

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { setDeepValue } from '@/features/prompt-engine/prompt-params';
 import { useToast } from '@/shared/ui';
@@ -27,7 +27,6 @@ import {
   reassemblePromptSegments,
   updatePromptExploderDocument,
 } from '../parser';
-
 import { useSettingsState } from './hooks/useSettings';
 
 import type {

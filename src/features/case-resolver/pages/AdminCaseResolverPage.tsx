@@ -214,20 +214,19 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   useEffect(() => {
     if (serializedWorkspace === lastPersistedValueRef.current) return;
     const timer = window.setTimeout(() => {
-      void updateSetting
-        .mutateAsync({
-          key: CASE_RESOLVER_WORKSPACE_KEY,
-          value: serializedWorkspace,
-        })
-        .then(() => {
+      void (async (): Promise<void> => {
+        try {
+          await updateSetting.mutateAsync({
+            key: CASE_RESOLVER_WORKSPACE_KEY,
+            value: serializedWorkspace,
+          });
           lastPersistedValueRef.current = serializedWorkspace;
           const pendingToast = pendingSaveToastRef.current;
           if (pendingToast) {
             toast(pendingToast, { variant: 'success' });
             pendingSaveToastRef.current = null;
           }
-        })
-        .catch((error: unknown) => {
+        } catch (error) {
           pendingSaveToastRef.current = null;
           toast(
             error instanceof Error
@@ -235,7 +234,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               : 'Failed to save Case Resolver workspace.',
             { variant: 'error' }
           );
-        });
+        }
+      })();
     }, 350);
 
     return () => {
@@ -384,60 +384,70 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       });
       formData.append('folder', folder);
 
-      const response = await fetch('/api/case-resolver/assets/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const fallbackMessage = `Upload failed (${response.status})`;
-        let detail = fallbackMessage;
-        try {
-          const payload = await response.json() as { error?: string | { message?: string } };
-          if (typeof payload.error === 'string') {
-            detail = payload.error;
-          } else if (payload.error && typeof payload.error.message === 'string') {
-            detail = payload.error.message;
-          }
-        } catch {
-          detail = fallbackMessage;
-        }
-        throw new Error(detail);
-      }
-
-      const payload = await response.json() as UploadedCaseResolverAsset | UploadedCaseResolverAsset[];
-      const uploaded = Array.isArray(payload) ? payload : [payload];
-      const nextAssets = uploaded.map((entry: UploadedCaseResolverAsset) => {
-        const resolvedFolder =
-          typeof entry.folder === 'string' && entry.folder.trim().length > 0
-            ? entry.folder
-            : folder;
-        return createCaseResolverAssetFile({
-          id: createId('case-asset'),
-          name: (entry.originalName ?? '').trim() || entry.filename,
-          folder: resolvedFolder,
-          kind: entry.kind,
-          filepath: entry.filepath,
-          sourceFileId: entry.id,
-          mimeType: entry.mimetype,
-          size: entry.size,
+      try {
+        const response = await fetch('/api/case-resolver/assets/upload', {
+          method: 'POST',
+          body: formData,
         });
-      });
-      const uploadedFolders = nextAssets.map((asset: CaseResolverAssetFile) => asset.folder);
 
-      updateWorkspace((current: CaseResolverWorkspace) => ({
-        ...current,
-        assets: [...current.assets, ...nextAssets],
-        folders: normalizeFolderPaths([...current.folders, ...uploadedFolders]),
-      }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+        if (!response.ok) {
+          const fallbackMessage = `Upload failed (${response.status})`;
+          let detail = fallbackMessage;
+          try {
+            const payload = await response.json() as { error?: string | { message?: string } };
+            if (typeof payload.error === 'string') {
+              detail = payload.error;
+            } else if (payload.error && typeof payload.error.message === 'string') {
+              detail = payload.error.message;
+            }
+          } catch {
+            detail = fallbackMessage;
+          }
+          throw new Error(detail);
+        }
 
-      if (nextAssets[0]) {
-        setSelectedAssetId(nextAssets[0].id);
+        const payload = await response.json() as UploadedCaseResolverAsset | UploadedCaseResolverAsset[];
+        const uploaded = Array.isArray(payload) ? payload : [payload];
+        const nextAssets = uploaded.map((entry: UploadedCaseResolverAsset) => {
+          const resolvedFolder =
+            typeof entry.folder === 'string' && entry.folder.trim().length > 0
+              ? entry.folder
+              : folder;
+          return createCaseResolverAssetFile({
+            id: createId('case-asset'),
+            name: (entry.originalName ?? '').trim() || entry.filename,
+            folder: resolvedFolder,
+            kind: entry.kind,
+            filepath: entry.filepath,
+            sourceFileId: entry.id,
+            mimeType: entry.mimetype,
+            size: entry.size,
+          });
+        });
+        const uploadedFolders = nextAssets.map((asset: CaseResolverAssetFile) => asset.folder);
+
+        updateWorkspace((current: CaseResolverWorkspace) => ({
+          ...current,
+          assets: [...current.assets, ...nextAssets],
+          folders: normalizeFolderPaths([...current.folders, ...uploadedFolders]),
+        }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+
+        if (nextAssets[0]) {
+          setSelectedAssetId(nextAssets[0].id);
+        }
+        setSelectedFolderPath(null);
+        return nextAssets;
+      } catch (error) {
+        toast(
+          error instanceof Error
+            ? error.message
+            : 'An unknown error occurred during asset upload.',
+          { variant: 'error' }
+        );
+        return [];
       }
-      setSelectedFolderPath(null);
-      return nextAssets;
     },
-    [updateWorkspace]
+    [toast, updateWorkspace]
   );
 
   const handleMoveFile = useCallback(
@@ -618,31 +628,40 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleOpenFileEditor = useCallback(
     (fileId: string): void => {
-      const target = workspace.files.find((file: CaseResolverFile) => file.id === fileId);
-      if (!target) {
-        toast('File not found.', { variant: 'warning' });
-        return;
-      }
-
-      setEditingDocumentDraft({
-        id: target.id,
-        name: target.name,
-        folder: target.folder,
-        documentContent: target.documentContent,
-        addresser: target.addresser,
-        addressee: target.addressee,
-      });
-      setSelectedAssetId(null);
-      setSelectedFolderPath(null);
-      updateWorkspace((current: CaseResolverWorkspace) => {
-        if (current.activeFileId === fileId) {
-          return current;
+      try {
+        const target = workspace.files.find((file: CaseResolverFile) => file.id === fileId);
+        if (!target) {
+          toast('File not found.', { variant: 'warning' });
+          return;
         }
-        return {
-          ...current,
-          activeFileId: fileId,
-        };
-      });
+
+        setEditingDocumentDraft({
+          id: target.id,
+          name: target.name,
+          folder: target.folder,
+          documentContent: target.documentContent,
+          addresser: target.addresser,
+          addressee: target.addressee,
+        });
+        setSelectedAssetId(null);
+        setSelectedFolderPath(null);
+        updateWorkspace((current: CaseResolverWorkspace) => {
+          if (current.activeFileId === fileId) {
+            return current;
+          }
+          return {
+            ...current,
+            activeFileId: fileId,
+          };
+        });
+      } catch (error) {
+        toast(
+          error instanceof Error
+            ? error.message
+            : 'An unknown error occurred while opening the file editor.',
+          { variant: 'error' }
+        );
+      }
     },
     [toast, updateWorkspace, workspace.files]
   );

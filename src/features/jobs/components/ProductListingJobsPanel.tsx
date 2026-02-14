@@ -1,62 +1,23 @@
 'use client';
 
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  Loader2,
-} from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
 
 import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContext';
-import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
+import { useProductListingJobsProps } from '@/features/jobs/hooks/useProductListingJobsProps';
+import { getStatusIcon } from '@/features/jobs/utils/job-icons';
 import { Button, AppModal, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField } from '@/shared/ui';
 
 import { ProductListingJobsPanelViewProvider, useProductListingJobsPanelView } from './context/ProductListingJobsPanelViewContext';
-import { JobTable, type JobRowData } from './JobTable';
+import { JobTable } from './JobTable';
 
 type ProductListingJobsPanelProps = {
   showBackToProducts?: boolean;
 };
 
-type ListingRow = {
-  job: ProductJob;
-  listing: ListingJob;
-};
-
-const getStatusIcon = (status: string): React.JSX.Element => {
-  switch (status) {
-    case 'pending':
-    case 'queued':
-    case 'queued_relist':
-      return <Clock className='size-3' />;
-    case 'completed':
-    case 'success':
-    case 'listed':
-      return <CheckCircle className='size-3' />;
-    case 'deleted':
-    case 'removed':
-      return <XCircle className='size-3' />;
-    case 'failed':
-    case 'needs_login':
-    case 'auth_required':
-    case 'error':
-      return <XCircle className='size-3' />;
-    case 'processing':
-    case 'running':
-    case 'in_progress':
-      return <Loader2 className='size-3 animate-spin' />;
-    default:
-      return <Clock className='size-3' />;
-  }
-};
-
 function ProductListingJobsPanelContent(): React.JSX.Element {
   const { showBackToProducts } = useProductListingJobsPanelView();
   const {
-    listingJobs: jobs,
-    listingJobsLoading: isLoading,
     listingJobsRefreshing: isRefreshing,
     refetchListingJobs: refetch,
     listingJobsError: error,
@@ -64,7 +25,6 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
     traderaQueueHealthLoading,
     query,
     setQuery,
-    page,
     setPage,
     pageSize,
     setPageSize,
@@ -72,53 +32,22 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
     setSelectedListing,
   } = useJobsContext();
 
+  const {
+    tableData,
+    isLoading,
+    totalRows,
+    totalPages,
+    clampedPage,
+    startIndex,
+    endIndex,
+  } = useProductListingJobsProps();
+
   const formatDateTime = (value: Date | string | null): string => {
     if (!value) return '—';
     const date: Date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return '—';
     return date.toLocaleString();
   };
-
-  const listingRows: ListingRow[] = useMemo(
-    () =>
-      jobs.flatMap((job: ProductJob) =>
-        job.listings.map((listing: ListingJob) => ({
-          job,
-          listing,
-        }))
-      ),
-    [jobs]
-  );
-
-  const filteredRows = useMemo(() => listingRows.filter(({ job, listing }: ListingRow) => {
-    if (!query.trim()) return true;
-    const target = [
-      job.productName,
-      job.productSku ?? '',
-      job.productId,
-      listing.integrationName,
-      listing.connectionName,
-      listing.id,
-      listing.externalListingId ?? '',
-      listing.inventoryId ?? '',
-    ]
-      .join(' ')
-      .toLowerCase();
-    return target.includes(query.trim().toLowerCase());
-  }), [listingRows, query]);
-
-  const sortedRows = useMemo(() => [...filteredRows].sort((a: ListingRow, b: ListingRow) => {
-    const aTime: number = new Date(a.listing.updatedAt ?? a.listing.createdAt).getTime();
-    const bTime: number = new Date(b.listing.updatedAt ?? b.listing.createdAt).getTime();
-    return bTime - aTime;
-  }), [filteredRows]);
-
-  const totalRows = sortedRows.length;
-  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
-  const clampedPage = Math.min(page, totalPages);
-  const startIndex = (clampedPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const pagedRows = sortedRows.slice(startIndex, endIndex);
 
   const selectedStatus = selectedListing?.listing.status ?? '';
   const traderaListingsQueue = traderaQueueHealth?.queues.listings ?? null;
@@ -137,7 +66,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
             isRefreshing={isRefreshing}
           />
           {showBackToProducts && (
-            <Button asChild variant='outline' size='sm'>
+            <Button asChild variant='outline' size='xs'>
               <Link href='/admin/products'>Back to Products</Link>
             </Button>
           )}
@@ -229,23 +158,7 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
           </div>
         ) : !error ? (
           <JobTable
-            data={pagedRows.map((row: ListingRow): JobRowData => {
-              const { job, listing } = row;
-              const status = listing.status ?? 'unknown';
-              const typeLabel =
-                status === 'deleted' || status === 'removed' ? 'Removal' : 'Export';
-              
-              return {
-                id: listing.id,
-                type: `${typeLabel}: ${listing.integrationName}`,
-                status: status as JobRowData['status'],
-                entityName: job.productName,
-                entitySubText: `SKU: ${job.productSku || 'N/A'} · Listing`,
-                productId: job.productId,
-                createdAt: listing.createdAt,
-                finishedAt: listing.updatedAt,
-              };
-            })}
+            data={tableData}
             isLoading={isLoading}
           />
         ) : null}

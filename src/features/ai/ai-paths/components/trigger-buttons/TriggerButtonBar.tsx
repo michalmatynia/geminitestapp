@@ -1,75 +1,21 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { Settings2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import React from 'react';
 
-import { useAiPathTriggerEvent } from '@/features/ai/ai-paths/hooks/useAiPathTriggerEvent';
-import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
-import { Button, Switch, useToast } from '@/shared/ui';
+import { Button, Switch } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+import { useTriggerButtons } from '../../hooks/useTriggerButtons';
 
 type TriggerButtonBarProps = {
   location: AiTriggerButtonLocation;
   entityType: 'product' | 'note' | 'custom';
-  entityId?: string | null;
-  getEntityJson?: () => Record<string, unknown> | null;
+  entityId?: string | null | undefined;
+  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
   className?: string;
-};
-
-const TOGGLE_STORAGE_KEY = 'aiPathsTriggerButtonToggles';
-const SUCCESS_STORAGE_KEY = 'aiPathsTriggerButtonSuccess';
-
-type TriggerRunState = {
-  status: 'idle' | 'running' | 'success' | 'error';
-  progress: number;
-};
-
-const readToggleMap = (): Record<string, boolean> => {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.localStorage.getItem(TOGGLE_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object') return {};
-    return parsed as Record<string, boolean>;
-  } catch {
-    return {};
-  }
-};
-
-const writeToggleMap = (value: Record<string, boolean>): void => {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(TOGGLE_STORAGE_KEY, JSON.stringify(value));
-  } catch {
-    // ignore
-  }
-};
-
-const readSuccessMap = (): Record<string, boolean> => {
-  if (typeof window === 'undefined') return {};
-  try {
-    const raw = window.localStorage.getItem(SUCCESS_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object') return {};
-    return parsed as Record<string, boolean>;
-  } catch {
-    return {};
-  }
-};
-
-const writeSuccessMap = (value: Record<string, boolean>): void => {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(SUCCESS_STORAGE_KEY, JSON.stringify(value));
-  } catch {
-    // ignore
-  }
 };
 
 export function TriggerButtonBar({
@@ -79,27 +25,18 @@ export function TriggerButtonBar({
   getEntityJson,
   className,
 }: TriggerButtonBarProps): React.JSX.Element | null {
-  const { toast } = useToast();
-  const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
-  const [toggleMap, setToggleMap] = useState<Record<string, boolean>>(readToggleMap());
-  const [successMap, setSuccessMap] = useState<Record<string, boolean>>(readSuccessMap());
-  const [runStates, setRunStates] = useState<Record<string, TriggerRunState>>({});
-
-  const triggerButtonsQuery = useQuery({
-    queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
-    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
-      const result = await triggerButtonsApi.list();
-      if (!result.ok) return [];
-      return Array.isArray(result.data) ? result.data : [];
-    },
-    staleTime: 10_000,
+  const { 
+    buttons, 
+    toggleMap, 
+    successMap, 
+    runStates, 
+    handleTrigger 
+  } = useTriggerButtons({
+    location,
+    entityType,
+    entityId,
+    getEntityJson,
   });
-
-  const buttons = useMemo(() => {
-    const all = triggerButtonsQuery.data ?? [];
-    return all
-      .filter((button: AiTriggerButtonRecord) => button.locations.includes(location));
-  }, [triggerButtonsQuery.data, location]);
 
   if (buttons.length === 0) return null;
 
@@ -115,6 +52,7 @@ export function TriggerButtonBar({
         const hasSucceeded = Boolean(successMap[button.id]);
         const baseOpacity = hasSucceeded ? 1 : 0.7;
         const textOpacity = isRunning ? baseOpacity + (1 - baseOpacity) * progress : baseOpacity;
+        
         if (button.mode === 'toggle') {
           const checked = Boolean(toggleMap[button.id]);
           return (
@@ -153,67 +91,7 @@ export function TriggerButtonBar({
                 disabled={isRunning}
                 className='relative z-10'
                 onCheckedChange={(nextChecked: boolean) => {
-                  const next = { ...toggleMap, [button.id]: nextChecked };
-                  setToggleMap(next);
-                  writeToggleMap(next);
-                  void (async (): Promise<void> => {
-                    let gotProgress = false;
-                    setRunStates((prev: Record<string, TriggerRunState>) => ({
-                      ...prev,
-                      [button.id]: { status: 'running', progress: 0 },
-                    }));
-                    try {
-                      await fireAiPathTriggerEvent({
-                        triggerEventId: button.id,
-                        triggerLabel: button.name,
-                        entityType,
-                        entityId: entityId, // Pass directly as it's already string | null | undefined
-                        ...(getEntityJson ? { getEntityJson } : {}),
-                        source: { tab: entityType, location },
-                        extras: { mode: 'toggle', checked: nextChecked },
-                        onProgress: (payload: { status: 'running' | 'success' | 'error'; progress: number }): void => {
-                          const { status, progress } = payload;
-                          gotProgress = true;
-                          if (status === 'success') {
-                            setSuccessMap((prev: Record<string, boolean>) => {
-                              const nextMap = { ...prev, [button.id]: true };
-                              writeSuccessMap(nextMap);
-                              return nextMap;
-                            });
-                            setRunStates((prev: Record<string, TriggerRunState>) => ({
-                              ...prev,
-                              [button.id]: { status: 'idle', progress: 0 },
-                            }));
-                            return;
-                          }
-                          if (status === 'error') {
-                            setRunStates((prev: Record<string, TriggerRunState>) => ({
-                              ...prev,
-                              [button.id]: { status: 'idle', progress: 0 },
-                            }));
-                            return;
-                          }
-                          setRunStates((prev: Record<string, TriggerRunState>) => ({
-                            ...prev,
-                            [button.id]: { status, progress },
-                          }));
-                        },
-                      });
-                    } finally {
-                      if (!gotProgress) {
-                        setRunStates((prev: Record<string, TriggerRunState>) => ({
-                          ...prev,
-                          [button.id]: { status: 'idle', progress: 0 },
-                        }));
-                      } else {
-                        setRunStates((prev: Record<string, TriggerRunState>) => {
-                          const state = prev[button.id];
-                          if (state?.status !== 'running') return prev;
-                          return { ...prev, [button.id]: { status: 'idle', progress: 0 } };
-                        });
-                      }
-                    }
-                  })();
+                  void handleTrigger(button, { mode: 'toggle', checked: nextChecked });
                 }}
               />
             </div>
@@ -224,73 +102,11 @@ export function TriggerButtonBar({
           <Button
             key={button.id}
             variant='outline'
-            size={showLabel ? 'sm' : 'icon'}
+            size={showLabel ? 'xs' : 'icon'}
             title={button.name}
             disabled={isRunning}
             onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
-              if (!button.id) {
-                toast('Missing trigger id.', { variant: 'error' });
-                return;
-              }
-              void (async (): Promise<void> => {
-                let gotProgress = false;
-                setRunStates((prev: Record<string, TriggerRunState>) => ({
-                  ...prev,
-                  [button.id]: { status: 'running', progress: 0 },
-                }));
-                try {
-                  await fireAiPathTriggerEvent({
-                    triggerEventId: button.id,
-                    triggerLabel: button.name,
-                    entityType,
-                    entityId: entityId, // Pass directly as it's already string | null | undefined
-                    ...(getEntityJson ? { getEntityJson } : {}),
-                    event,
-                    source: { tab: entityType, location },
-                    extras: { mode: 'click' },
-                    onProgress: (payload: { status: 'running' | 'success' | 'error'; progress: number }): void => {
-                      const { status, progress } = payload;
-                      gotProgress = true;
-                      if (status === 'success') {
-                        setSuccessMap((prev: Record<string, boolean>) => {
-                          const nextMap = { ...prev, [button.id]: true };
-                          writeSuccessMap(nextMap);
-                          return nextMap;
-                        });
-                        setRunStates((prev: Record<string, TriggerRunState>) => ({
-                          ...prev,
-                          [button.id]: { status: 'idle', progress: 0 },
-                        }));
-                        return;
-                      }
-                      if (status === 'error') {
-                        setRunStates((prev: Record<string, TriggerRunState>) => ({
-                          ...prev,
-                          [button.id]: { status: 'idle', progress: 0 },
-                        }));
-                        return;
-                      }
-                      setRunStates((prev: Record<string, TriggerRunState>) => ({
-                        ...prev,
-                        [button.id]: { status, progress },
-                      }));
-                    },
-                  });
-                } finally {
-                  if (!gotProgress) {
-                    setRunStates((prev: Record<string, TriggerRunState>) => ({
-                      ...prev,
-                      [button.id]: { status: 'idle', progress: 0 },
-                    }));
-                  } else {
-                    setRunStates((prev: Record<string, TriggerRunState>) => {
-                      const state = prev[button.id];
-                      if (state?.status !== 'running') return prev;
-                      return { ...prev, [button.id]: { status: 'idle', progress: 0 } };
-                    });
-                  }
-                }
-              })();
+              void handleTrigger(button, { mode: 'click', event });
             }}
             className={cn(
               'relative overflow-hidden text-gray-200',

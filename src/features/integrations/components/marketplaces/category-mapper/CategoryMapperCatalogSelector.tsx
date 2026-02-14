@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { Catalog } from '@/features/products/types';
-import { Label, UnifiedSelect } from '@/shared/ui';
+import { Label, SelectSimple } from '@/shared/ui';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
   const {
@@ -19,7 +19,7 @@ export function CategoryMapperCatalogSelector(): React.JSX.Element {
     <div className='flex items-center gap-4'>
       <Label className='text-sm text-gray-400'>Target Catalog:</Label>
       <div className='w-[200px]'>
-        <UnifiedSelect
+        <SelectSimple
           value={selectedCatalogId ?? '__none__'}
           onValueChange={(v: string): void => setSelectedCatalogId(v === '__none__' ? null : v)}
           disabled={catalogsLoading}

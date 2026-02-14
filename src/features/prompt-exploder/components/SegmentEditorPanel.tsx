@@ -3,6 +3,7 @@
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
+import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
 import {
   Button,
   EmptyState,
@@ -14,16 +15,15 @@ import {
   UnifiedSelect,
 } from '@/shared/ui';
 
-import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
 
+import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
+import { PromptExploderHierarchyTreeEditor } from './PromptExploderHierarchyTreeEditor';
 import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
-import { useSettingsState } from '../context/hooks/useSettings';
 import {
   useSegmentEditorState,
   useSegmentEditorActions,
 } from '../context/hooks/useSegmentEditor';
-import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
-import { PromptExploderHierarchyTreeEditor } from './PromptExploderHierarchyTreeEditor';
+import { useSettingsState } from '../context/hooks/useSettings';
 import {
   promptExploderClampNumber,
   promptExploderSafeJsonStringify,
@@ -48,13 +48,13 @@ import {
   promptExploderCreateSubsection,
   createApprovalDraftFromSegment,
 } from '../helpers/segment-helpers';
-import { moveByDelta } from '../parser';
 import {
   buildPromptExploderParamEntries,
   isParamArrayTupleLength,
   promptExploderParamUiControlLabel,
   sanitizeParamJsonValue,
 } from '../params-editor';
+import { moveByDelta } from '../parser';
 
 import type { TemplateMergeMode } from '../template-learning';
 import type {

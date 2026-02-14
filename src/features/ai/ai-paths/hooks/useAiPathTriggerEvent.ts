@@ -72,17 +72,17 @@ export type FireAiPathTriggerEventArgs = {
   triggerLabel?: string | null | undefined;
   entityType: TriggerEventEntityType;
   entityId?: string | null | undefined;
-  getEntityJson?: () => Record<string, unknown> | null;
-  event?: React.MouseEvent<HTMLButtonElement> | React.MouseEvent;
-  source?: { tab?: string; location?: string; page?: string } | null;
-  extras?: Record<string, unknown> | null;
-  onProgress?: (payload: {
+  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
+  event?: React.MouseEvent<HTMLButtonElement> | React.MouseEvent | undefined;
+  source?: { tab?: string | undefined; location?: string | undefined; page?: string | undefined } | null | undefined;
+  extras?: Record<string, unknown> | null | undefined;
+  onProgress?: ((payload: {
     status: 'running' | 'success' | 'error';
     progress: number;
     completedNodes: number;
     totalNodes: number;
-    node?: { id: string; title?: string | null; type?: string | null } | null;
-  }) => void;
+    node?: { id: string; title?: string | null; type?: string | null } | null | undefined;
+  }) => void) | undefined;
 };
 
 const loadPathConfigsFromSettings = async (
@@ -215,9 +215,9 @@ const buildTriggerContext = (args: {
   entityId?: string | null | undefined;
   entityJson?: Record<string, unknown> | null;
   event?: React.MouseEvent;
-  pathInfo?: { id?: string; name?: string } | null;
-  source?: { tab?: string; location?: string; page?: string } | null;
-  extras?: Record<string, unknown> | null;
+  pathInfo?: { id?: string | undefined; name?: string | undefined } | null | undefined;
+  source?: { tab?: string | undefined; location?: string | undefined; page?: string | undefined } | null | undefined;
+  extras?: Record<string, unknown> | null | undefined;
 }): Record<string, unknown> => {
   const timestamp = new Date().toISOString();
   const nativeEvent = args.event?.nativeEvent;

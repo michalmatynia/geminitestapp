@@ -4,7 +4,7 @@ import { Search, X } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import {
@@ -20,10 +20,10 @@ import { FilterField } from './types';
 
 interface PanelFiltersProps {
   filters: FilterField[];
-  values: Record<string, any>;
+  values: Record<string, unknown>;
   search?: string;
   searchPlaceholder?: string;
-  onFilterChange: (key: string, value: any) => void;
+  onFilterChange: (key: string, value: unknown) => void;
   onSearchChange?: (search: string) => void;
   onReset?: () => void;
   compact?: boolean;
@@ -91,9 +91,9 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
         <>
           {/* Toggle button (compact or explicit collapsible mode) */}
           {compact || collapsible ? (
-            <UnifiedButton
+            <Button
               type='button'
-              size='sm'
+              size='xs'
               variant={hasActiveFilters ? 'default' : 'outline'}
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
@@ -103,7 +103,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
             >
               {isExpanded ? 'Hide Filters' : 'Show Filters'}
               {hasActiveFilters && <span> ({activeFilterCount})</span>}
-            </UnifiedButton>
+            </Button>
           ) : null}
 
           {isExpanded && (
@@ -119,15 +119,15 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
 
               {/* Reset Button */}
               {hasActiveFilters && (
-                <UnifiedButton
+                <Button
                   type='button'
                   variant='outline'
-                  size='sm'
+                  size='xs'
                   onClick={handleReset}
                   className='ml-auto'
                 >
                   Reset Filters
-                </UnifiedButton>
+                </Button>
               )}
             </div>
           )}
@@ -139,8 +139,8 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
 
 interface FilterControlProps {
   field: FilterField;
-  value: any;
-  onChange: (value: any) => void;
+  value: unknown;
+  onChange: (value: unknown) => void;
 }
 
 /**
@@ -156,7 +156,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
           <label className='text-xs font-medium text-gray-600'>{field.label}</label>
-          <Select value={value || ''} onValueChange={onChange}>
+          <Select value={(value as string) || ''} onValueChange={(val) => onChange(val)}>
             <SelectTrigger className='h-8'>
               <SelectValue placeholder={field.placeholder} />
             </SelectTrigger>
@@ -176,7 +176,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
         <div style={containerStyle} className='flex items-center gap-2 py-1'>
           <Checkbox
             id={field.key}
-            checked={value || false}
+            checked={(value as boolean) || false}
             onCheckedChange={onChange}
           />
           <label htmlFor={field.key} className='text-sm font-medium cursor-pointer'>
@@ -192,7 +192,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
           <Input
             type='number'
             placeholder={field.placeholder}
-            value={value || ''}
+            value={(value as string | number) || ''}
             onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
             className='h-8 text-sm'
           />
@@ -205,14 +205,15 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
           <label className='text-xs font-medium text-gray-600'>{field.label}</label>
           <Input
             type='date'
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value || undefined)}
             className='h-8 text-sm'
           />
         </div>
       );
 
-    case 'dateRange':
+    case 'dateRange': {
+      const rangeValue = value as { from?: string; to?: string } | undefined;
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
           <label className='text-xs font-medium text-gray-600'>{field.label}</label>
@@ -220,10 +221,10 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
             <Input
               type='date'
               placeholder='From'
-              value={value?.from || ''}
+              value={rangeValue?.from || ''}
               onChange={(e) =>
                 onChange({
-                  ...value,
+                  ...(rangeValue || {}),
                   from: e.target.value || undefined,
                 })
               }
@@ -232,10 +233,10 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
             <Input
               type='date'
               placeholder='To'
-              value={value?.to || ''}
+              value={rangeValue?.to || ''}
               onChange={(e) =>
                 onChange({
-                  ...value,
+                  ...(rangeValue || {}),
                   to: e.target.value || undefined,
                 })
               }
@@ -244,6 +245,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
           </div>
         </div>
       );
+    }
 
     case 'text':
     default:
@@ -253,7 +255,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
           <Input
             type='text'
             placeholder={field.placeholder}
-            value={value || ''}
+            value={(value as string) || ''}
             onChange={(e) => onChange(e.target.value || undefined)}
             className='h-8 text-sm'
           />

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import type { PlaywrightPersona } from '@/features/playwright';
-import { Button, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { DynamicPlaywrightSettingsForm } from './DynamicPlaywrightSettingsForm';
 
@@ -35,7 +35,7 @@ export function PlaywrightTabContent(): React.JSX.Element {
         ) : (
           <div className='mt-4 grid gap-4 md:grid-cols-2'>
             <FormField label='Persona' description='Selecting a persona overwrites the settings below.'>
-              <UnifiedSelect
+              <SelectSimple
                 value={playwrightPersonaId ?? 'custom'}
                 onValueChange={(value: string): void => {
                   void handleSelectPlaywrightPersona(value === 'custom' ? null : value);

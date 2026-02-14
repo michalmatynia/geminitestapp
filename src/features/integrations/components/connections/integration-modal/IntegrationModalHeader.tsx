@@ -6,6 +6,7 @@ export function IntegrationModalHeader(): React.JSX.Element {
   const {
     integrationName,
     isTradera,
+    showPlaywright,
     isAllegro,
     isBaselinker,
   } = useIntegrationModalViewContext();
@@ -13,9 +14,14 @@ export function IntegrationModalHeader(): React.JSX.Element {
   return (
     <div className='flex items-center'>
       {integrationName} Integration
-      {isTradera && (
+      {isTradera && showPlaywright && (
         <span className='ml-2 rounded bg-orange-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-orange-200'>
           Browser
+        </span>
+      )}
+      {isTradera && !showPlaywright && (
+        <span className='ml-2 rounded bg-blue-500/30 px-1.5 py-0.5 text-xs font-normal uppercase tracking-wider text-blue-200'>
+          API
         </span>
       )}
       {isAllegro && (

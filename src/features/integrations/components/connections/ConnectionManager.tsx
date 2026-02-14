@@ -1,5 +1,9 @@
 'use client';
 
+import {
+  isTraderaApiIntegrationSlug,
+  isTraderaIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { IntegrationConnection, TestLogEntry } from '@/features/integrations/types/integrations-ui';
 import { Button, Input,  StatusBadge, FormSection, FormField } from '@/shared/ui';
@@ -29,12 +33,18 @@ export function ConnectionManager(): React.JSX.Element {
   if (!activeIntegration) return <></>;
 
   const integrationSlug = activeIntegration.slug;
-  const isTradera = integrationSlug === 'tradera';
+  const isTradera = isTraderaIntegrationSlug(integrationSlug);
+  const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);
+  const isTraderaBrowser = isTradera && !isTraderaApi;
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
-  const showPlaywright = isTradera;
+  const showPlaywright = isTraderaBrowser;
   const isCreateMode =
     !editingConnectionId || editingConnectionId === NEW_CONNECTION_DRAFT_ID;
+  const selectedConnection =
+    (editingConnectionId && editingConnectionId !== NEW_CONNECTION_DRAFT_ID
+      ? connections.find((connection: IntegrationConnection) => connection.id === editingConnectionId)
+      : connections[0]) ?? null;
 
   const connectionNamePlaceholder = isAllegro
     ? 'Integration name (e.g. Allegro Main)'
@@ -46,29 +56,39 @@ export function ConnectionManager(): React.JSX.Element {
     ? 'Allegro client ID'
     : isBaselinker
       ? 'Account name (optional)'
-      : 'Tradera username';
+      : isTraderaApi
+        ? 'Tradera username/alias'
+        : 'Tradera username';
   
   const usernamePlaceholder = isAllegro
     ? 'Allegro client ID'
     : isBaselinker
       ? 'Account name (for reference)'
-      : 'Tradera username';
+      : isTraderaApi
+        ? 'Tradera username/alias'
+        : 'Tradera username';
   
   const passwordLabel = isAllegro
     ? 'Allegro client secret'
     : isBaselinker
       ? 'Baselinker API token'
-      : 'Tradera password';
+      : isTraderaApi
+        ? 'Fallback secret'
+        : 'Tradera password';
 
   const passwordPlaceholder = isCreateMode
     ? isAllegro
       ? 'Allegro client secret'
       : isBaselinker
         ? 'Baselinker API token'
-        : 'Tradera password'
+        : isTraderaApi
+          ? 'Fallback secret (required)'
+          : 'Tradera password'
     : isAllegro
       ? 'New client secret (leave blank to keep)'
-      : 'New password (leave blank to keep)';
+      : isTraderaApi
+        ? 'New fallback secret (leave blank to keep)'
+        : 'New password (leave blank to keep)';
 
   return (
     <div className='grid gap-4 md:grid-cols-2'>
@@ -182,6 +202,114 @@ export function ConnectionManager(): React.JSX.Element {
                 />
                 Enable auto relist by default
               </label>
+              {isTraderaApi && (
+                <>
+                  <FormField label='Tradera API App ID'>
+                    <Input
+                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      placeholder='5683'
+                      inputMode='numeric'
+                      value={connectionForm.traderaApiAppId}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setConnectionForm((prev) => ({
+                          ...prev,
+                          traderaApiAppId: event.target.value,
+                        }))
+                      }
+                    />
+                  </FormField>
+                  <FormField label='Tradera API App Key'>
+                    <Input
+                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      type='password'
+                      placeholder={
+                        isCreateMode
+                          ? 'Application key'
+                          : 'New application key (leave blank to keep)'
+                      }
+                      value={connectionForm.traderaApiAppKey}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setConnectionForm((prev) => ({
+                          ...prev,
+                          traderaApiAppKey: event.target.value,
+                        }))
+                      }
+                    />
+                    {!isCreateMode &&
+                      !connectionForm.traderaApiAppKey.trim() &&
+                      selectedConnection?.hasTraderaApiAppKey && (
+                      <p className='mt-1 text-xs text-emerald-300'>
+                        Stored app key retained. Leave blank to keep it.
+                      </p>
+                    )}
+                  </FormField>
+                  <FormField label='Tradera API Public Key (optional)'>
+                    <Input
+                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      placeholder='Public key'
+                      value={connectionForm.traderaApiPublicKey}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setConnectionForm((prev) => ({
+                          ...prev,
+                          traderaApiPublicKey: event.target.value,
+                        }))
+                      }
+                    />
+                  </FormField>
+                  <FormField label='Tradera API User ID'>
+                    <Input
+                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      placeholder='Numeric user ID'
+                      inputMode='numeric'
+                      value={connectionForm.traderaApiUserId}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setConnectionForm((prev) => ({
+                          ...prev,
+                          traderaApiUserId: event.target.value,
+                        }))
+                      }
+                    />
+                  </FormField>
+                  <FormField label='Tradera API Token'>
+                    <Input
+                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      type='password'
+                      placeholder={
+                        isCreateMode
+                          ? 'Access token'
+                          : 'New token (leave blank to keep)'
+                      }
+                      value={connectionForm.traderaApiToken}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setConnectionForm((prev) => ({
+                          ...prev,
+                          traderaApiToken: event.target.value,
+                        }))
+                      }
+                    />
+                    {!isCreateMode &&
+                      !connectionForm.traderaApiToken.trim() &&
+                      selectedConnection?.hasTraderaApiToken && (
+                      <p className='mt-1 text-xs text-emerald-300'>
+                        Stored token retained. Leave blank to keep it.
+                      </p>
+                    )}
+                  </FormField>
+                  <label className='flex items-center gap-2 text-sm text-gray-300'>
+                    <input
+                      type='checkbox'
+                      checked={connectionForm.traderaApiSandbox}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setConnectionForm((prev) => ({
+                          ...prev,
+                          traderaApiSandbox: event.target.checked,
+                        }))
+                      }
+                    />
+                    Use Tradera sandbox
+                  </label>
+                </>
+              )}
             </>
           )}
           <Button
@@ -204,6 +332,12 @@ export function ConnectionManager(): React.JSX.Element {
                 traderaDefaultDurationHours: 72,
                 traderaAutoRelistEnabled: true,
                 traderaAutoRelistLeadMinutes: 180,
+                traderaApiAppId: '',
+                traderaApiAppKey: '',
+                traderaApiPublicKey: '',
+                traderaApiUserId: '',
+                traderaApiToken: '',
+                traderaApiSandbox: false,
               });
             }}
           >
@@ -236,11 +370,13 @@ export function ConnectionManager(): React.JSX.Element {
                     className='text-xs text-gray-200 hover:text-white'
                     type='button'
                     onClick={(): void => {
+                      const preserveCurrentSecrets =
+                        editingConnectionId === connection.id;
                       setEditingConnectionId(connection.id);
-                      setConnectionForm({
+                      setConnectionForm((prev) => ({
                         name: connection.name,
                         username: connection.username ?? '',
-                        password: '',
+                        password: preserveCurrentSecrets ? prev.password : '',
                         traderaDefaultTemplateId:
                           connection.traderaDefaultTemplateId ?? '',
                         traderaDefaultDurationHours:
@@ -249,7 +385,25 @@ export function ConnectionManager(): React.JSX.Element {
                           connection.traderaAutoRelistEnabled ?? true,
                         traderaAutoRelistLeadMinutes:
                           connection.traderaAutoRelistLeadMinutes ?? 180,
-                      });
+                        traderaApiAppId:
+                          typeof connection.traderaApiAppId === 'number'
+                            ? String(connection.traderaApiAppId)
+                            : '',
+                        traderaApiAppKey: preserveCurrentSecrets
+                          ? prev.traderaApiAppKey
+                          : '',
+                        traderaApiPublicKey:
+                          connection.traderaApiPublicKey ?? '',
+                        traderaApiUserId:
+                          typeof connection.traderaApiUserId === 'number'
+                            ? String(connection.traderaApiUserId)
+                            : '',
+                        traderaApiToken: preserveCurrentSecrets
+                          ? prev.traderaApiToken
+                          : '',
+                        traderaApiSandbox:
+                          connection.traderaApiSandbox ?? false,
+                      }));
                     }}
                   >
                     Edit
@@ -272,7 +426,7 @@ export function ConnectionManager(): React.JSX.Element {
                   >
                     {isTesting ? 'Testing...' : 'Test'}
                   </Button>
-                  {isTradera && (
+                  {isTraderaBrowser && (
                     <Button
                       className='text-xs text-emerald-300 hover:text-emerald-200'
                       type='button'

@@ -18,7 +18,7 @@ import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries
 import type { CatalogRecord, ProductTag } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SelectSimple, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
@@ -224,7 +224,7 @@ export function BaseTagMapper(): React.JSX.Element {
                       {catalogsById.get(tag.catalogId) ?? tag.catalogId}
                     </TableCell>
                     <TableCell className='px-4 py-2'>
-                      <UnifiedSelect
+                      <SelectSimple
                         value={currentMapping ?? '__unmapped__'}
                         onValueChange={(value: string): void =>
                           handleMappingChange(tag.id, value === '__unmapped__' ? null : value)

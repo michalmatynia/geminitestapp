@@ -11,12 +11,12 @@ import {
   reorderSegmentsForDrop,
   resolveDropPosition,
 } from '../helpers/drag-reorder';
+import { promptExploderClampNumber } from '../helpers/formatting';
 import {
   buildSegmentSampleText,
   createApprovalDraftFromSegment,
   type ApprovalDraft,
 } from '../helpers/segment-helpers';
-import { promptExploderClampNumber } from '../helpers/formatting';
 import { buildManualLearnedRegexRuleDraft } from '../rule-drafts';
 import { upsertRegexLearnedRule } from '../rule-learning';
 import {
@@ -25,15 +25,14 @@ import {
   reexplodePromptWithRuntime,
   resolveSegmentIdAfterReexplode,
 } from '../runtime-refresh';
+import { PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
 import {
   normalizeLearningText,
   templateSimilarityScore,
   upsertLearnedTemplate,
 } from '../template-learning';
-import { PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
-
-import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
+import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 
 import type {
   PromptExploderLearnedTemplate,

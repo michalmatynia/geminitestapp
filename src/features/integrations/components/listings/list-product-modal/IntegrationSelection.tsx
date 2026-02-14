@@ -3,7 +3,7 @@ import React from 'react';
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationWithConnections, IntegrationConnectionBasic } from '@/features/integrations/types/listings';
 import { FormField, FormSection } from '@/shared/ui';
-import { UnifiedSelect } from '@/shared/ui';
+import { SelectSimple } from '@/shared/ui';
 
 export function IntegrationSelection(): React.JSX.Element {
   const {
@@ -35,7 +35,7 @@ export function IntegrationSelection(): React.JSX.Element {
   return (
     <FormSection title='Integration Target' className='p-4 space-y-4'>
       <FormField label='Marketplace / Integration'>
-        <UnifiedSelect
+        <SelectSimple
           value={selectedIntegrationId || undefined}
           onValueChange={setSelectedIntegrationId}
           options={integrationsWithConnections
@@ -53,7 +53,7 @@ export function IntegrationSelection(): React.JSX.Element {
           label='Account'
           description={`Choose which account to use for listing this product on ${selectedIntegration.name}.`}
         >
-          <UnifiedSelect
+          <SelectSimple
             value={selectedConnectionId || undefined}
             onValueChange={setSelectedConnectionId}
             options={selectedIntegration.connections

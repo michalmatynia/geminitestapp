@@ -5,7 +5,7 @@ import { useEffect, useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import { logClientError } from '@/features/observability';
-import { Button, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SelectSimple, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
@@ -297,7 +297,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
                       </TableCell>
                     )}
                     <TableCell className='px-4 py-2'>
-                      <UnifiedSelect
+                      <SelectSimple
                         value={currentMapping ?? '__unmapped__'}
                         onValueChange={(value: string): void =>
                           handleMappingChange(

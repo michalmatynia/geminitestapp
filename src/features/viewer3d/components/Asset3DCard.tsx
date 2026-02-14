@@ -114,9 +114,9 @@ export function Asset3DCard({
           </div>
 
           {/* Category Badge */}
-          {asset.category && (
+          {asset.categoryId && (
             <div className='absolute top-2 left-2 px-2 py-1 rounded text-xs bg-blue-500/10 text-blue-300'>
-              {asset.category}
+              {asset.categoryId}
             </div>
           )}
         </>

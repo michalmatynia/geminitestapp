@@ -297,7 +297,7 @@ export function Asset3DPickerField({
                         <div className='min-w-0'>
                           <div className='truncate text-sm text-gray-100'>{asset.name || asset.filename}</div>
                           <div className='text-[11px] text-gray-400'>
-                            {asset.category ? `${asset.category} • ` : ''}
+                            {asset.categoryId ? `${asset.categoryId} • ` : ''}
                             {asset.tags?.length ? asset.tags.join(', ') : 'No tags'}
                           </div>
                         </div>

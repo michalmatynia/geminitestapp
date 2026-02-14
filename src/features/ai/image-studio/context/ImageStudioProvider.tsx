@@ -13,9 +13,9 @@ import { VersionGraphProvider } from './VersionGraphContext';
 
 export function ImageStudioProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
-    <SettingsProvider>
-      <UiProvider>
-        <ProjectsProvider>
+    <ProjectsProvider>
+      <SettingsProvider>
+        <UiProvider>
           <SlotsProvider>
             <VersionGraphProvider>
               <MaskingProvider>
@@ -27,8 +27,8 @@ export function ImageStudioProvider({ children }: { children: React.ReactNode })
               </MaskingProvider>
             </VersionGraphProvider>
           </SlotsProvider>
-        </ProjectsProvider>
-      </UiProvider>
-    </SettingsProvider>
+        </UiProvider>
+      </SettingsProvider>
+    </ProjectsProvider>
   );
 }

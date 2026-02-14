@@ -14,8 +14,6 @@ import type {
   ThemeRecord, 
   CategoryWithChildren,
   RelatedNote,
-  NoteRelationWithTarget,
-  NoteRelationWithSource
 } from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -299,8 +297,12 @@ export function NoteFormProvider({
     if (!note) return [];
     return [
       ...(note.relations ?? []).map((rel: RelatedNote) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: '' })),
-      ...(note.relationsFrom ?? []).map((rel: NoteRelationWithTarget) => ({ id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: '' })),
-      ...(note.relationsTo ?? []).map((rel: NoteRelationWithSource) => ({ id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: '' })),
+      ...(note.relationsFrom ?? [])
+        .map((rel) => rel.targetNote ? { id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: '' } : null)
+        .filter((item): item is RelatedNoteItem => Boolean(item)),
+      ...(note.relationsTo ?? [])
+        .map((rel) => rel.sourceNote ? { id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: '' } : null)
+        .filter((item): item is RelatedNoteItem => Boolean(item)),
     ].filter((item: RelatedNoteItem, index: number, array: RelatedNoteItem[]) => array.findIndex((entry: RelatedNoteItem) => entry.id === item.id) === index);
   }, [note]);
 

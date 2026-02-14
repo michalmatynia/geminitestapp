@@ -437,30 +437,34 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   };
 
   const extractPdfText = async (filepath: string): Promise<string> => {
-    const response = await fetch('/api/case-resolver/assets/extract-pdf', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({ filepath }),
-    });
-    if (!response.ok) {
-      const fallbackMessage = `Failed to extract PDF (${response.status})`;
-      let detail = fallbackMessage;
-      try {
-        const payload = (await response.json()) as { error?: string | { message?: string } };
-        if (typeof payload.error === 'string') {
-          detail = payload.error;
-        } else if (payload.error && typeof payload.error.message === 'string') {
-          detail = payload.error.message;
+    try {
+      const response = await fetch('/api/case-resolver/assets/extract-pdf', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ filepath }),
+      });
+      if (!response.ok) {
+        const fallbackMessage = `Failed to extract PDF (${response.status})`;
+        let detail = fallbackMessage;
+        try {
+          const payload = (await response.json()) as { error?: string | { message?: string } };
+          if (typeof payload.error === 'string') {
+            detail = payload.error;
+          } else if (payload.error && typeof payload.error.message === 'string') {
+            detail = payload.error.message;
+          }
+        } catch {
+          detail = fallbackMessage;
         }
-      } catch {
-        detail = fallbackMessage;
+        throw new Error(detail);
       }
-      throw new Error(detail);
+      const payload = (await response.json()) as PdfExtractResponse;
+      return typeof payload.text === 'string' ? payload.text : '';
+    } catch (error) {
+      throw new Error(`PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    const payload = (await response.json()) as PdfExtractResponse;
-    return typeof payload.text === 'string' ? payload.text : '';
   };
 
   const addPdfExtractionPipeline = async (
@@ -468,169 +472,178 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     dropPosition: { x: number; y: number },
     indexOffset = 0
   ): Promise<void> => {
-    const templateDefinition = palette.find((entry: NodeDefinition) => entry.type === 'template');
-    const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
-    const modelDefinition = palette.find((entry: NodeDefinition) => entry.type === 'model');
-    if (!templateDefinition || !promptDefinition || !modelDefinition) {
-      toast('Missing Template/Prompt/Model node definitions for PDF flow.', { variant: 'error' });
-      return;
-    }
-
-    let extractedText = normalizeExtractedPdfText(asset.textContent);
-    if (!extractedText && asset.filepath) {
-      try {
-        extractedText = normalizeExtractedPdfText(await extractPdfText(asset.filepath));
-      } catch (error: unknown) {
-        toast(
-          error instanceof Error
-            ? `${error.message}. PDF node will use file path only.`
-            : 'Failed to extract PDF text. PDF node will use file path only.',
-          { variant: 'warning' }
-        );
+    try {
+      const templateDefinition = palette.find((entry: NodeDefinition) => entry.type === 'template');
+      const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
+      const modelDefinition = palette.find((entry: NodeDefinition) => entry.type === 'model');
+      if (!templateDefinition || !promptDefinition || !modelDefinition) {
+        toast('Missing Template/Prompt/Model node definitions for PDF flow.', { variant: 'error' });
+        return;
       }
+
+      let extractedText = normalizeExtractedPdfText(asset.textContent);
+      if (!extractedText && asset.filepath) {
+        try {
+          extractedText = normalizeExtractedPdfText(await extractPdfText(asset.filepath));
+        } catch (error: unknown) {
+          toast(
+            error instanceof Error
+              ? `${error.message}. PDF node will use file path only.`
+              : 'Failed to extract PDF text. PDF node will use file path only.',
+            { variant: 'warning' }
+          );
+        }
+      }
+
+      const basePosition = clampCanvasPosition({
+        x: dropPosition.x + indexOffset * 36,
+        y: dropPosition.y + indexOffset * 36,
+      });
+      const extractionPromptPosition = clampCanvasPosition({
+        x: basePosition.x + 380,
+        y: basePosition.y,
+      });
+      const modelPosition = clampCanvasPosition({
+        x: extractionPromptPosition.x + 380,
+        y: extractionPromptPosition.y,
+      });
+      const outputPosition = clampCanvasPosition({
+        x: modelPosition.x + 380,
+        y: modelPosition.y,
+      });
+
+      const pdfNodeId = createNodeId();
+      const extractionPromptId = createNodeId();
+      const modelNodeId = createNodeId();
+      const outputNodeId = createNodeId();
+
+      const pdfSourceTemplate = [
+        `PDF File: ${asset.name}`,
+        ...(asset.filepath ? [`Path: ${asset.filepath}`] : []),
+        ...(asset.mimeType ? [`MIME: ${asset.mimeType}`] : []),
+        '',
+        'PDF_TEXT_BEGIN',
+        extractedText || '(No extracted PDF text available. Use the PDF path above as reference.)',
+        'PDF_TEXT_END',
+      ].join('\n');
+
+      const pdfNodeBase = buildNode(templateDefinition, basePosition, pdfNodeId, `PDF Node: ${asset.name}`);
+      const pdfNodeTemplateConfig = resolveTemplateConfig(pdfNodeBase);
+      const pdfNode: AiNode = {
+        ...pdfNodeBase,
+        config: {
+          ...(pdfNodeBase.config ?? {}),
+          template: {
+            ...pdfNodeTemplateConfig,
+            template: pdfSourceTemplate,
+          },
+        },
+      };
+
+      const extractionPromptBase = buildNode(
+        promptDefinition,
+        extractionPromptPosition,
+        extractionPromptId,
+        `Prompt: Extract ${asset.name}`
+      );
+      const extractionPromptConfig = resolvePromptConfig(extractionPromptBase);
+      const extractionPromptNode: AiNode = {
+        ...extractionPromptBase,
+        config: {
+          ...(extractionPromptBase.config ?? {}),
+          prompt: {
+            ...extractionPromptConfig,
+            template: resolveCaseResolverPdfExtractionTemplate(pdfExtractionPresetId),
+          },
+        },
+      };
+
+      const modelNode = buildNode(modelDefinition, modelPosition, modelNodeId, `AI Model: ${asset.name}`);
+
+      const outputPromptBase = buildNode(promptDefinition, outputPosition, outputNodeId, `WYSIWYG Output: ${asset.name}`);
+      const outputPromptConfig = resolvePromptConfig(outputPromptBase);
+      const outputNode: AiNode = {
+        ...outputPromptBase,
+        config: {
+          ...(outputPromptBase.config ?? {}),
+          prompt: {
+            ...outputPromptConfig,
+            template: '<p>{{result}}</p>',
+          },
+        },
+      };
+
+      const edgePdfToPrompt: Edge = {
+        id: createEdgeId(),
+        from: pdfNodeId,
+        to: extractionPromptId,
+        fromPort: 'prompt',
+        toPort: 'result',
+      };
+      const edgePromptToModel: Edge = {
+        id: createEdgeId(),
+        from: extractionPromptId,
+        to: modelNodeId,
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      };
+      const edgeModelToOutput: Edge = {
+        id: createEdgeId(),
+        from: modelNodeId,
+        to: outputNodeId,
+        fromPort: 'result',
+        toPort: 'result',
+      };
+
+      addNode(pdfNode);
+      addNode(extractionPromptNode);
+      addNode(modelNode);
+      addNode(outputNode);
+      addEdge(edgePdfToPrompt);
+      addEdge(edgePromptToModel);
+      addEdge(edgeModelToOutput);
+      selectNode(outputNodeId);
+
+      onGraphChange({
+        nodes: [...nodes, pdfNode, extractionPromptNode, modelNode, outputNode],
+        edges: [...edges, edgePdfToPrompt, edgePromptToModel, edgeModelToOutput],
+        nodeMeta: {
+          ...normalizedNodeMeta,
+          [extractionPromptId]: {
+            ...DEFAULT_CASE_RESOLVER_NODE_META,
+            role: 'ai_prompt',
+            includeInOutput: false,
+            quoteMode: 'none',
+            surroundPrefix: '',
+            surroundSuffix: '',
+          },
+          [outputNodeId]: {
+            ...DEFAULT_CASE_RESOLVER_NODE_META,
+            role: 'text_note',
+            includeInOutput: true,
+            quoteMode: 'none',
+            surroundPrefix: '',
+            surroundSuffix: '',
+          },
+        },
+        edgeMeta: {
+          ...normalizedEdgeMeta,
+          [edgePdfToPrompt.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
+          [edgePromptToModel.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
+          [edgeModelToOutput.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
+        },
+        pdfExtractionPresetId,
+        documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+        documentDropNodeId: normalizedDocumentDropNodeId,
+      });
+    } catch (error) {
+      toast(
+        error instanceof Error
+          ? `PDF pipeline creation failed: ${error.message}`
+          : 'An unknown error occurred in the PDF pipeline.',
+        { variant: 'error' }
+      );
     }
-
-    const basePosition = clampCanvasPosition({
-      x: dropPosition.x + indexOffset * 36,
-      y: dropPosition.y + indexOffset * 36,
-    });
-    const extractionPromptPosition = clampCanvasPosition({
-      x: basePosition.x + 380,
-      y: basePosition.y,
-    });
-    const modelPosition = clampCanvasPosition({
-      x: extractionPromptPosition.x + 380,
-      y: extractionPromptPosition.y,
-    });
-    const outputPosition = clampCanvasPosition({
-      x: modelPosition.x + 380,
-      y: modelPosition.y,
-    });
-
-    const pdfNodeId = createNodeId();
-    const extractionPromptId = createNodeId();
-    const modelNodeId = createNodeId();
-    const outputNodeId = createNodeId();
-
-    const pdfSourceTemplate = [
-      `PDF File: ${asset.name}`,
-      ...(asset.filepath ? [`Path: ${asset.filepath}`] : []),
-      ...(asset.mimeType ? [`MIME: ${asset.mimeType}`] : []),
-      '',
-      'PDF_TEXT_BEGIN',
-      extractedText || '(No extracted PDF text available. Use the PDF path above as reference.)',
-      'PDF_TEXT_END',
-    ].join('\n');
-
-    const pdfNodeBase = buildNode(templateDefinition, basePosition, pdfNodeId, `PDF Node: ${asset.name}`);
-    const pdfNodeTemplateConfig = resolveTemplateConfig(pdfNodeBase);
-    const pdfNode: AiNode = {
-      ...pdfNodeBase,
-      config: {
-        ...(pdfNodeBase.config ?? {}),
-        template: {
-          ...pdfNodeTemplateConfig,
-          template: pdfSourceTemplate,
-        },
-      },
-    };
-
-    const extractionPromptBase = buildNode(
-      promptDefinition,
-      extractionPromptPosition,
-      extractionPromptId,
-      `Prompt: Extract ${asset.name}`
-    );
-    const extractionPromptConfig = resolvePromptConfig(extractionPromptBase);
-    const extractionPromptNode: AiNode = {
-      ...extractionPromptBase,
-      config: {
-        ...(extractionPromptBase.config ?? {}),
-        prompt: {
-          ...extractionPromptConfig,
-          template: resolveCaseResolverPdfExtractionTemplate(pdfExtractionPresetId),
-        },
-      },
-    };
-
-    const modelNode = buildNode(modelDefinition, modelPosition, modelNodeId, `AI Model: ${asset.name}`);
-
-    const outputPromptBase = buildNode(promptDefinition, outputPosition, outputNodeId, `WYSIWYG Output: ${asset.name}`);
-    const outputPromptConfig = resolvePromptConfig(outputPromptBase);
-    const outputNode: AiNode = {
-      ...outputPromptBase,
-      config: {
-        ...(outputPromptBase.config ?? {}),
-        prompt: {
-          ...outputPromptConfig,
-          template: '<p>{{result}}</p>',
-        },
-      },
-    };
-
-    const edgePdfToPrompt: Edge = {
-      id: createEdgeId(),
-      from: pdfNodeId,
-      to: extractionPromptId,
-      fromPort: 'prompt',
-      toPort: 'result',
-    };
-    const edgePromptToModel: Edge = {
-      id: createEdgeId(),
-      from: extractionPromptId,
-      to: modelNodeId,
-      fromPort: 'prompt',
-      toPort: 'prompt',
-    };
-    const edgeModelToOutput: Edge = {
-      id: createEdgeId(),
-      from: modelNodeId,
-      to: outputNodeId,
-      fromPort: 'result',
-      toPort: 'result',
-    };
-
-    addNode(pdfNode);
-    addNode(extractionPromptNode);
-    addNode(modelNode);
-    addNode(outputNode);
-    addEdge(edgePdfToPrompt);
-    addEdge(edgePromptToModel);
-    addEdge(edgeModelToOutput);
-    selectNode(outputNodeId);
-
-    onGraphChange({
-      nodes: [...nodes, pdfNode, extractionPromptNode, modelNode, outputNode],
-      edges: [...edges, edgePdfToPrompt, edgePromptToModel, edgeModelToOutput],
-      nodeMeta: {
-        ...normalizedNodeMeta,
-        [extractionPromptId]: {
-          ...DEFAULT_CASE_RESOLVER_NODE_META,
-          role: 'ai_prompt',
-          includeInOutput: false,
-          quoteMode: 'none',
-          surroundPrefix: '',
-          surroundSuffix: '',
-        },
-        [outputNodeId]: {
-          ...DEFAULT_CASE_RESOLVER_NODE_META,
-          role: 'text_note',
-          includeInOutput: true,
-          quoteMode: 'none',
-          surroundPrefix: '',
-          surroundSuffix: '',
-        },
-      },
-      edgeMeta: {
-        ...normalizedEdgeMeta,
-        [edgePdfToPrompt.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
-        [edgePromptToModel.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
-        [edgeModelToOutput.id]: { ...DEFAULT_CASE_RESOLVER_EDGE_META },
-      },
-      pdfExtractionPresetId,
-      documentFileLinksByNode: normalizedDocumentFileLinksByNode,
-      documentDropNodeId: normalizedDocumentDropNodeId,
-    });
   };
 
   const addDroppedAssetNode = async (
@@ -933,8 +946,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     try {
       await navigator.clipboard.writeText(compiled.prompt);
       toast('Compiled prompt copied.', { variant: 'success' });
-    } catch {
+    } catch (error) {
       toast('Failed to copy compiled prompt.', { variant: 'error' });
+      console.error('Failed to copy compiled prompt:', error);
     }
   };
 

@@ -1,20 +1,12 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { AI_PATHS_LOCAL_RUNS_KEY, parseLocalRuns } from '@/features/ai/ai-paths/lib';
-import type { AiPathLocalRunRecord } from '@/features/ai/ai-paths/lib';
-import { AI_PATHS_RUN_SOURCE_VALUES } from '@/features/ai/ai-paths/lib/run-sources';
-import {
-  fetchAiPathsSettingsCached,
-  invalidateAiPathsSettingsCache,
-  updateAiPathsSetting,
-} from '@/features/ai/ai-paths/lib/settings-store-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, ConfirmDialog, useToast, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
-import { serializeSetting } from '@/shared/utils/settings-json';
+import { Button, ConfirmDialog, DataTable } from '@/shared/ui';
+
+import { useLocalRuns, type LocalRunsScope } from '../hooks/useLocalRuns';
+import { useLocalRunsTableProps } from '../hooks/useLocalRunsTableProps';
 
 const formatDate = (value?: string | null): string => {
   if (!value) return '-';
@@ -33,40 +25,12 @@ const formatDuration = (value?: number | null): string => {
   return `${minutes}m ${remaining}s`;
 };
 
-const formatEntity = (run: AiPathLocalRunRecord): string => {
-  if (!run.entityType && !run.entityId) return '-';
-  if (run.entityType && run.entityId) return `${run.entityType}:${run.entityId}`;
-  return run.entityType ?? run.entityId ?? '-';
-};
-
-const AI_PATHS_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
-const TERMINAL_LOCAL_RUN_STATUSES = new Set(['success', 'error']);
-
 type LocalRunsPanelProps = {
-  sourceFilter?: string | null;
-  sourceMode?: 'include' | 'exclude';
+  sourceFilter?: string | null | undefined;
+  sourceMode?: 'include' | 'exclude' | undefined;
 };
 
-const shouldIncludeRun = (
-  run: AiPathLocalRunRecord,
-  sourceFilter?: string | null,
-  sourceMode?: 'include' | 'exclude'
-): boolean => {
-  if (!sourceFilter) return true;
-  const sourceValue = run.source ?? null;
-  if (sourceMode === 'exclude') {
-    if (sourceFilter === 'ai_paths_ui') {
-      return sourceValue !== null && !AI_PATHS_SOURCES.has(sourceValue);
-    }
-    return sourceValue !== sourceFilter;
-  }
-  if (sourceFilter === 'ai_paths_ui') {
-    return sourceValue === null || (sourceValue !== null && AI_PATHS_SOURCES.has(sourceValue));
-  }
-  return sourceValue === sourceFilter;
-};
-
-const getPanelLabel = (sourceFilter?: string | null, sourceMode?: 'include' | 'exclude'): string => {
+const getPanelLabel = (sourceFilter?: string | null | undefined, sourceMode?: 'include' | 'exclude' | undefined): string => {
   if (sourceFilter === 'ai_paths_ui' && sourceMode === 'exclude') return 'External Local Runs';
   if (sourceFilter === 'ai_paths_ui') return 'Local Runs';
   return 'Local Runs';
@@ -76,92 +40,20 @@ export function LocalRunsPanel({
   sourceFilter,
   sourceMode,
 }: LocalRunsPanelProps): React.JSX.Element {
-  const { toast } = useToast();
-  const settingsQuery = useQuery({
-    queryKey: QUERY_KEYS.ai.aiPaths.settings(),
-    queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
-      await fetchAiPathsSettingsCached({ bypassCache: true }),
-  });
-  const updateSetting = useMutation({
-    mutationFn: async (nextRuns: AiPathLocalRunRecord[]): Promise<void> => {
-      await updateAiPathsSetting(AI_PATHS_LOCAL_RUNS_KEY, serializeSetting(nextRuns));
-      invalidateAiPathsSettingsCache();
-    },
-    onSuccess: (): void => {
-      void settingsQuery.refetch();
-    },
-  });
-  const [clearScope, setClearScope] = React.useState<'terminal' | 'all' | null>(null);
+  const {
+    runs,
+    metrics,
+    isLoading,
+    isFetching,
+    isUpdating,
+    refetch,
+    clearRuns,
+  } = useLocalRuns({ sourceFilter, sourceMode });
 
-  const rawRuns = React.useMemo(() => {
-    const map = new Map((settingsQuery.data ?? []).map((item) => [item.key, item.value]));
-    return map.get(AI_PATHS_LOCAL_RUNS_KEY) ?? null;
-  }, [settingsQuery.data]);
-  const allRuns = React.useMemo(() => parseLocalRuns(rawRuns), [rawRuns]);
-  const runs = React.useMemo(() => {
-    return allRuns.filter((run: AiPathLocalRunRecord) => shouldIncludeRun(run, sourceFilter, sourceMode));
-  }, [allRuns, sourceFilter, sourceMode]);
-
-  React.useEffect((): (() => void) => {
-    const handler = (event: Event): void => {
-      const detail = (event as CustomEvent<{ scope?: string }>).detail;
-      if (detail?.scope && detail.scope !== 'ai-paths') return;
-      void settingsQuery.refetch();
-    };
-    window.addEventListener('ai-paths:settings:updated', handler);
-    return (): void => window.removeEventListener('ai-paths:settings:updated', handler);
-  }, [settingsQuery]);
-
-  const metrics = React.useMemo(() => {
-    const total = runs.length;
-    const success = runs.filter((run: AiPathLocalRunRecord) => run.status === 'success').length;
-    const error = runs.filter((run: AiPathLocalRunRecord) => run.status === 'error').length;
-    const durations = runs
-      .map((run: AiPathLocalRunRecord) => run.durationMs)
-      .filter((value: number | null | undefined): value is number => Number.isFinite(value));
-    const avgDuration = durations.length
-      ? Math.round(durations.reduce((acc: number, value: number) => acc + value, 0) / durations.length)
-      : null;
-    const p95Duration = durations.length
-      ? [...durations].sort((a: number, b: number) => a - b)[Math.max(0, Math.ceil(durations.length * 0.95) - 1)] ?? null
-      : null;
-    const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
-    const lastRunAt = runs[0]?.startedAt ?? null;
-    return { total, success, error, avgDuration, p95Duration, successRate, lastRunAt };
-  }, [runs]);
-
-  const handleClear = React.useCallback(async (): Promise<void> => {
-    if (!clearScope) return;
-    const scope = clearScope;
-    const nextRuns = allRuns.filter((run: AiPathLocalRunRecord) => {
-      const inPanel = shouldIncludeRun(run, sourceFilter, sourceMode);
-      if (!inPanel) return true;
-      if (scope === 'all') return false;
-      return !TERMINAL_LOCAL_RUN_STATUSES.has(run.status);
-    });
-
-    try {
-      await updateSetting.mutateAsync(nextRuns);
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
-        );
-      }
-      toast(
-        scope === 'all'
-          ? 'Cleared all local runs in this list.'
-          : 'Cleared finished local runs in this list.',
-        { variant: 'success' }
-      );
-      setClearScope(null);
-      void settingsQuery.refetch();
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to clear local runs.', { variant: 'error' });
-    }
-  }, [allRuns, clearScope, settingsQuery, sourceFilter, sourceMode, toast, updateSetting]);
+  const tableProps = useLocalRunsTableProps(runs, isLoading);
+  const [clearScope, setClearScope] = React.useState<LocalRunsScope | null>(null);
 
   const panelLabel = getPanelLabel(sourceFilter, sourceMode);
-  const isBusy = settingsQuery.isLoading || updateSetting.isPending;
 
   return (
     <div className='space-y-4'>
@@ -174,17 +66,17 @@ export function LocalRunsPanel({
           <Button
             type='button'
             className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-            onClick={() => { void settingsQuery.refetch(); }}
-            disabled={settingsQuery.isFetching}
+            onClick={refetch}
+            disabled={isFetching}
           >
-            {settingsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
+            {isFetching ? 'Refreshing...' : 'Refresh'}
           </Button>
           <Button
             type='button'
             variant='destructive'
             className='rounded-md border px-2 py-1 text-[10px]'
             onClick={() => setClearScope('terminal')}
-            disabled={isBusy}
+            disabled={isLoading || isUpdating}
           >
             <Trash2 className='mr-1 size-3' />
             Clear Finished
@@ -194,7 +86,7 @@ export function LocalRunsPanel({
             variant='destructive'
             className='rounded-md border px-2 py-1 text-[10px]'
             onClick={() => setClearScope('all')}
-            disabled={isBusy}
+            disabled={isLoading || isUpdating}
           >
             <Trash2 className='mr-1 size-3' />
             Clear All
@@ -230,80 +122,30 @@ export function LocalRunsPanel({
         </div>
       </div>
 
-      {settingsQuery.isLoading ? (
-        <div className='rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400'>
-          Loading local runs...
-        </div>
-      ) : runs.length === 0 ? (
-        <div className='rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400'>
-          No local runs recorded yet.
-        </div>
-      ) : (
-        <div className='overflow-hidden rounded-md border border-border/60 bg-card/40'>
-          <Table>
-            <TableHeader className='bg-muted/40'>
-              <TableRow className='border-border/60 hover:bg-transparent'>
-                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Started</TableHead>
-                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Path</TableHead>
-                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Trigger</TableHead>
-                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Entity</TableHead>
-                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Status</TableHead>
-                <TableHead className='h-10 px-4 text-[11px] uppercase tracking-wide text-gray-400'>Duration</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {runs.map((run: AiPathLocalRunRecord) => (
-                <TableRow key={run.id} className='border-border/40 hover:bg-card/60'>
-                  <TableCell className='px-4 py-3 text-xs text-gray-300'>{formatDate(run.startedAt)}</TableCell>
-                  <TableCell className='px-4 py-3 text-xs'>
-                    <div className='font-medium text-gray-100'>{run.pathName ?? 'Untitled path'}</div>
-                    <div className='text-[10px] text-gray-500'>{run.pathId ?? '-'}</div>
-                  </TableCell>
-                  <TableCell className='px-4 py-3 text-xs'>
-                    <div className='font-medium text-gray-100'>{run.triggerLabel ?? run.triggerEvent ?? '-'}</div>
-                    <div className='text-[10px] text-gray-500'>{run.triggerEvent ?? '-'}</div>
-                  </TableCell>
-                  <TableCell className='px-4 py-3 text-xs text-gray-300'>{formatEntity(run)}</TableCell>
-                  <TableCell className='px-4 py-3 text-xs'>
-                    <span
-                      className={`rounded-full border px-2 py-1 text-[10px] uppercase ${
-                        run.status === 'success'
-                          ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
-                          : 'border-rose-500/40 bg-rose-500/10 text-rose-200'
-                      }`}
-                      title={run.error ?? undefined}
-                    >
-                      {run.status}
-                    </span>
-                  </TableCell>
-                  <TableCell className='px-4 py-3 text-xs text-gray-300'>{formatDuration(run.durationMs)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <div className='overflow-hidden rounded-md border border-border/60 bg-card/40'>
+        <DataTable {...tableProps} />
+      </div>
 
       <ConfirmDialog
         open={clearScope === 'terminal'}
         onOpenChange={(open: boolean): void => setClearScope(open ? 'terminal' : null)}
-        onConfirm={() => { void handleClear(); }}
+        onConfirm={() => { void clearRuns('terminal'); }}
         title='Clear finished local runs'
         description='Delete completed local run history for this tab.'
         confirmText='Clear Finished'
         variant='destructive'
-        loading={updateSetting.isPending}
+        loading={isUpdating}
       />
 
       <ConfirmDialog
         open={clearScope === 'all'}
         onOpenChange={(open: boolean): void => setClearScope(open ? 'all' : null)}
-        onConfirm={() => { void handleClear(); }}
+        onConfirm={() => { void clearRuns('all'); }}
         title='Clear all local runs'
         description='Delete all local run records for this tab.'
         confirmText='Clear All'
         variant='destructive'
-        loading={updateSetting.isPending}
+        loading={isUpdating}
       />
     </div>
   );

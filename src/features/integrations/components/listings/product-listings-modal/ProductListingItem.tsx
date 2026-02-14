@@ -5,6 +5,10 @@ import React from 'react';
 
 import type { ImageRetryPreset } from '@/features/data-import-export';
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
+import {
+  isTraderaBrowserIntegrationSlug,
+  TRADERA_INTEGRATION_SLUGS,
+} from '@/features/integrations/constants/slugs';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails, ProductListingExportEvent } from '@/features/integrations/types/listings';
 import {
@@ -55,14 +59,19 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
 
   const imageRetryPresets = useImageRetryPresets();
   const isBaseListing = ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug));
-  const isTraderaListing = normalizeIntegrationSlug(listing.integration.slug) === 'tradera';
+  const isTraderaListing = TRADERA_INTEGRATION_SLUGS.has(
+    normalizeIntegrationSlug(listing.integration.slug)
+  );
+  const isTraderaBrowserListing = isTraderaBrowserIntegrationSlug(
+    listing.integration.slug
+  );
   const normalizedListingStatus = (listing.status ?? '').trim().toLowerCase();
   const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(normalizedListingStatus);
   const isExportRunningStatus = ['running', 'processing', 'in_progress', 'pending', 'queued'].includes(normalizedListingStatus);
   const canRetryExport = isBaseListing && !isExportRunningStatus;
   const traderaFailureReason = (listing.failureReason ?? '').trim().toLowerCase();
   const traderaNeedsManualLogin =
-    isTraderaListing &&
+    isTraderaBrowserListing &&
     ['failed', 'needs_login', 'auth_required'].includes(
       normalizedListingStatus
     ) &&

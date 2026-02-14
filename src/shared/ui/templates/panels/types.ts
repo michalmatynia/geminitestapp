@@ -10,7 +10,7 @@ export interface FilterField {
   label: string;
   type: 'text' | 'select' | 'date' | 'dateRange' | 'checkbox' | 'number';
   placeholder?: string;
-  options?: Array<{ label: string; value: any }>;
+  options?: Array<{ label: string; value: string | number }>;
   width?: string; // CSS width value
 }
 
@@ -41,7 +41,7 @@ export interface ColumnDef<T> {
   key: keyof T;
   header: string;
   width?: string;
-  render?: (value: any, row: T) => ReactNode;
+  render?: (value: unknown, row: T) => ReactNode;
   sortable?: boolean;
   align?: 'left' | 'center' | 'right';
 }
@@ -55,18 +55,18 @@ export interface PanelState {
   pageSize: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  filters: Record<string, any>;
+  filters: Record<string, unknown>;
   search?: string;
 }
 
 export interface PanelCallbacks {
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
-  onFilterChange?: (key: string, value: any) => void;
+  onFilterChange?: (key: string, value: unknown) => void;
   onSearchChange?: (search: string) => void;
   onRefresh?: () => void | Promise<void>;
   onSort?: (key: string, order: 'asc' | 'desc') => void;
-  onRowClick?: (row: any) => void;
+  onRowClick?: (row: unknown) => void;
 }
 
 // ============================================================
@@ -143,7 +143,7 @@ export interface PanelConfig<T> {
 export interface UsePanelStateOptions {
   initialPage?: number;
   initialPageSize?: number;
-  initialFilters?: Record<string, any>;
+  initialFilters?: Record<string, unknown>;
   onStateChange?: (state: PanelState) => void;
 }
 
@@ -151,8 +151,8 @@ export interface UsePanelStateReturn {
   state: PanelState;
   setPage: (page: number) => void;
   setPageSize: (pageSize: number) => void;
-  setFilter: (key: string, value: any) => void;
-  setFilters: (filters: Record<string, any>) => void;
+  setFilter: (key: string, value: unknown) => void;
+  setFilters: (filters: Record<string, unknown>) => void;
   setSearch: (search: string) => void;
   reset: () => void;
 }

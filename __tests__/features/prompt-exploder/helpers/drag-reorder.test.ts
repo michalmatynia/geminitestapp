@@ -5,7 +5,6 @@ import {
   reorderSegmentsForDrop,
   resolveDropPosition,
 } from '@/features/prompt-exploder/helpers/drag-reorder';
-
 import type { PromptExploderListItem, PromptExploderSegment } from '@/features/prompt-exploder/types';
 
 const makeItem = (id: string): PromptExploderListItem => ({

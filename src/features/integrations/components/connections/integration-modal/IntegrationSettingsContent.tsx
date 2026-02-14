@@ -40,6 +40,7 @@ export function IntegrationSettingsContent(): React.JSX.Element {
     isAllegro,
     isBaselinker,
     isTradera,
+    showPlaywright,
     activeConnection,
     onOpenSessionModal,
   } = useIntegrationModalViewContext();
@@ -55,7 +56,7 @@ export function IntegrationSettingsContent(): React.JSX.Element {
         <div className='min-h-[220px]' />
       )}
 
-      {isTradera && Boolean(activeConnection) && (
+      {isTradera && showPlaywright && Boolean(activeConnection) && (
         <div className='mt-4 rounded-md border border-border/60 bg-card/30 p-3 text-xs text-gray-300'>
           <div className='flex items-center justify-between gap-3'>
             <p>

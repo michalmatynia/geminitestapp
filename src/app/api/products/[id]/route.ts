@@ -36,14 +36,21 @@ async function GET_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const id = params.id;
+  try {
+    const id = params.id;
 
-  const product = await productService.getProductById(id);
-  if (!product) {
-    throw notFoundError('Product not found', { productId: id });
+    const product = await productService.getProductById(id);
+    if (!product) {
+      throw notFoundError('Product not found', { productId: id });
+    }
+
+    return NextResponse.json(product);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json(product);
 }
 
 /**
@@ -55,36 +62,42 @@ async function PUT_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const id = params.id;
-  let formData: FormData;
   try {
-     
-    formData = await req.formData();
-  } catch (error) {
-    if (isLikelyPayloadTooLarge(error)) {
-      throw payloadTooLargeError(
-        'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.',
-        { productId: id }
-      );
+    const id = params.id;
+    let formData: FormData;
+    try {
+      formData = await req.formData();
+    } catch (error) {
+      if (isLikelyPayloadTooLarge(error)) {
+        throw payloadTooLargeError(
+          'Upload payload too large. Reduce image sizes/count or increase proxyClientMaxBodySize.',
+          { productId: id }
+        );
+      }
+      throw badRequestError('Invalid form data payload', {
+        productId: id,
+        error,
+      });
     }
-    throw badRequestError('Invalid form data payload', {
-      productId: id,
-      error,
-    });
-  }
 
-  // Validate the form data
-  const validation = await validateProductUpdateMiddleware(formData);
-  if (!validation.success) {
-    return validation.response;
-  }
+    // Validate the form data
+    const validation = await validateProductUpdateMiddleware(formData);
+    if (!validation.success) {
+      return validation.response;
+    }
 
-  const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
-  const product: ProductWithImages | null = await productService.updateProduct(id, formData, options);
-  if (!product) {
-    throw notFoundError('Product not found', { productId: id });
+    const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
+    const product: ProductWithImages | null = await productService.updateProduct(id, formData, options);
+    if (!product) {
+      throw notFoundError('Product not found', { productId: id });
+    }
+    return NextResponse.json(product);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
+      { status: 500 }
+    );
   }
-  return NextResponse.json(product);
 }
 
 const patchProductSchema = z.object({
@@ -101,38 +114,44 @@ async function PATCH_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const id = params.id;
+  try {
+    const id = params.id;
 
-  const parsed = await parseJsonBody(req, patchProductSchema, {
-    logPrefix: 'products.PATCH',
-  });
-  if (!parsed.ok) {
-    return parsed.response;
+    const parsed = await parseJsonBody(req, patchProductSchema, {
+      logPrefix: 'products.PATCH',
+    });
+    if (!parsed.ok) {
+      return parsed.response;
+    }
+    const data = parsed.data;
+
+    const updateData: { price?: number; stock?: number } = {};
+    if (data.price !== undefined) updateData.price = data.price;
+    if (data.stock !== undefined) updateData.stock = data.stock;
+
+    const productRepository = await getProductRepository();
+    const product: ProductRecord | null = await productRepository.updateProduct(id, updateData);
+    if (!product) {
+      throw notFoundError('Product not found', { productId: id });
+    }
+
+    // Manually log activity for PATCH as it uses repository directly for now
+    void (logActivity({
+      type: ActivityTypes.PRODUCT.UPDATED,
+      description: `Quick updated product ${id}`,
+      userId: _ctx.userId ?? null,
+      entityId: id,
+      entityType: 'product',
+      metadata: { changes: updateData }
+    })).catch(() => {});
+
+    return NextResponse.json(product);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
+      { status: 500 }
+    );
   }
-  const data = parsed.data;
-
-  const updateData: { price?: number; stock?: number } = {};
-  if (data.price !== undefined) updateData.price = data.price;
-  if (data.stock !== undefined) updateData.stock = data.stock;
-
-  const productRepository = await getProductRepository();
-  const product: ProductRecord | null = await productRepository.updateProduct(id, updateData);
-  if (!product) {
-    throw notFoundError('Product not found', { productId: id });
-  }
-
-  // Manually log activity for PATCH as it uses repository directly for now
-   
-  void (logActivity({
-    type: ActivityTypes.PRODUCT.UPDATED,
-    description: `Quick updated product ${id}`,
-    userId: _ctx.userId ?? null,
-    entityId: id,
-    entityType: 'product',
-    metadata: { changes: updateData }
-  })).catch(() => {});
-
-  return NextResponse.json(product);
 }
 
 /**
@@ -144,13 +163,20 @@ async function DELETE_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const id = params.id;
-  const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
-  const product: ProductRecord | null = await productService.deleteProduct(id, options);
-  if (!product) {
-    throw notFoundError('Product not found', { productId: id });
+  try {
+    const id = params.id;
+    const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
+    const product: ProductRecord | null = await productService.deleteProduct(id, options);
+    if (!product) {
+      throw notFoundError('Product not found', { productId: id });
+    }
+    return new Response(null, { status: 204 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'An unknown error occurred' },
+      { status: 500 }
+    );
   }
-  return new Response(null, { status: 204 });
 }
 
 export const GET = apiHandlerWithParams<{ id: string }>(GET_handler, {

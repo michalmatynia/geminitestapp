@@ -5,8 +5,8 @@ import React from 'react';
 
 import { Button, FormSection, Input, UnifiedSelect } from '@/shared/ui';
 
-import { useDocumentState } from '../context/hooks/useDocument';
 import { useBindingsState, useBindingsActions } from '../context/hooks/useBindings';
+import { useDocumentState } from '../context/hooks/useDocument';
 import { formatSubsectionLabel } from '../helpers/segment-helpers';
 
 import type { PromptExploderBindingType } from '../types';

@@ -37,6 +37,7 @@ export * from './section-panel';
 export * from './selection-bar';
 export * from './status-badge';
 export * from './status-toggle';
+export * from './select-simple';
 export * from './unified-select';
 export * from './unified-button';
 export * from './unified-input';

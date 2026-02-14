@@ -15,7 +15,7 @@ npx prisma db push
 
 address vitest Prisma mock issues
 ---
-INNESTIGATION AN PLANNING
+INVESTIGATION AN PLANNING
 -Carry out investigation into *** 
 -I would like to introduce a new feature, prepare a plan, main concerns, areas of interest and fallback strategies for ***
 -Run a thorough scan of the application and identify areas of improvement
@@ -27,7 +27,6 @@ INNESTIGATION AN PLANNING
 ---
 
 ERROR DETECTION
--completed
 Scan the ****** feature and build logical try and Catch Blocks with error explanantion around potential areas of failure
 Add Error Boundary components to catch uncaught UI errors and forward them to your logger (via componentDidCatch)
 -Replace ad-hoc try/catch patterns with a consistent error boundary: server action wrapper + route handler wrapper + job wrapper. Each wrapper must: normalize errors, attach context, log centrally, and return a typed result.

@@ -45,6 +45,10 @@ export type IntegrationConnectionBasic = {
   traderaDefaultDurationHours?: number | null;
   traderaAutoRelistEnabled?: boolean | null;
   traderaAutoRelistLeadMinutes?: number | null;
+  traderaApiAppId?: number | null;
+  traderaApiPublicKey?: string | null;
+  traderaApiUserId?: number | null;
+  traderaApiSandbox?: boolean | null;
 };
 
 export type IntegrationWithConnections = {

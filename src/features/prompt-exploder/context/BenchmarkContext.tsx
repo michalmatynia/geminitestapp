@@ -2,8 +2,8 @@
 
 import React, { createContext, useCallback, useMemo, useState } from 'react';
 
-import { useToast } from '@/shared/ui';
 import { defaultPromptEngineSettings, PROMPT_ENGINE_SETTINGS_KEY } from '@/features/prompt-engine/settings';
+import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -33,9 +33,8 @@ import {
   resolveSegmentIdAfterReexplode,
 } from '../runtime-refresh';
 import { PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
-
-import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
+import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 
 import type { PromptExploderBenchmarkSuite, PromptExploderSegment } from '../types';
 

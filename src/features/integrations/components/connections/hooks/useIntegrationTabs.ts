@@ -1,5 +1,9 @@
 import { useState } from 'react';
 
+import {
+  isTraderaApiIntegrationSlug,
+  isTraderaIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import type { PlaywrightPersona } from '@/features/playwright';
 
@@ -58,10 +62,11 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
   }
 
   const integrationSlug = activeIntegration.slug;
-  const isTradera = integrationSlug === 'tradera';
+  const isTradera = isTraderaIntegrationSlug(integrationSlug);
+  const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
-  const showPlaywright = isTradera;
+  const showPlaywright = isTradera && !isTraderaApi;
   const showAllegroConsole = isAllegro;
   const showBaseConsole = isBaselinker;
   const activeConnection =

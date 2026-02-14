@@ -15,7 +15,7 @@ import {
   ConfirmDialog,
   EmptyState,
   StatusBadge,
-  UnifiedSelect,
+  SelectSimple,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -178,14 +178,15 @@ export default function PagesPage(): React.ReactNode {
                     </span>
                   )}
                   {zoneSlugs.length > 1 ? (
-                    <UnifiedSelect
+                    <SelectSimple
                       value={previewSlug ?? ''}
                       onValueChange={(value: string): void =>
                         setPreviewSelections((prev: Record<string, string>): Record<string, string> => ({ ...prev, [page.id]: value }))
                       }
                       options={zoneSlugs.map((slug: string) => ({ value: slug, label: `/${slug}` }))}
                       disabled={slugsQuery.isLoading}
-                      triggerClassName='h-8 w-[170px] text-xs'
+                      size='sm'
+                      className='w-[170px]'
                       placeholder='Preview slug'
                     />
                   ) : zoneSlugs.length === 1 ? (

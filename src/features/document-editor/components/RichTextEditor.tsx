@@ -8,7 +8,6 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableRow } from '@tiptap/extension-table-row';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
-import type { AnyExtension } from '@tiptap/core';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
@@ -35,6 +34,7 @@ import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { RichTextEditorVariant } from '../types';
+import type { AnyExtension } from '@tiptap/core';
 
 type HeadingLevel = 1 | 2 | 3;
 

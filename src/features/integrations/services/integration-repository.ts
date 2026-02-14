@@ -42,6 +42,13 @@ const CONNECTION_DEFAULTS = {
   traderaDefaultDurationHours: 72,
   traderaAutoRelistEnabled: true,
   traderaAutoRelistLeadMinutes: 180,
+  traderaApiAppId: null,
+  traderaApiAppKey: null,
+  traderaApiPublicKey: null,
+  traderaApiUserId: null,
+  traderaApiToken: null,
+  traderaApiTokenUpdatedAt: null,
+  traderaApiSandbox: false,
 } as const;
 
 const INTEGRATIONS_COLLECTION = 'integrations';
@@ -96,6 +103,13 @@ type IntegrationConnectionDocument = {
   traderaDefaultDurationHours?: number | null;
   traderaAutoRelistEnabled?: boolean | null;
   traderaAutoRelistLeadMinutes?: number | null;
+  traderaApiAppId?: number | null;
+  traderaApiAppKey?: string | null;
+  traderaApiPublicKey?: string | null;
+  traderaApiUserId?: number | null;
+  traderaApiToken?: string | null;
+  traderaApiTokenUpdatedAt?: Date | null;
+  traderaApiSandbox?: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -174,6 +188,19 @@ const toConnectionRecord = (
   traderaAutoRelistLeadMinutes:
     doc.traderaAutoRelistLeadMinutes ??
     CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
+  traderaApiAppId: doc.traderaApiAppId ?? CONNECTION_DEFAULTS.traderaApiAppId,
+  traderaApiAppKey:
+    doc.traderaApiAppKey ?? CONNECTION_DEFAULTS.traderaApiAppKey,
+  traderaApiPublicKey:
+    doc.traderaApiPublicKey ?? CONNECTION_DEFAULTS.traderaApiPublicKey,
+  traderaApiUserId:
+    doc.traderaApiUserId ?? CONNECTION_DEFAULTS.traderaApiUserId,
+  traderaApiToken: doc.traderaApiToken ?? CONNECTION_DEFAULTS.traderaApiToken,
+  traderaApiTokenUpdatedAt:
+    doc.traderaApiTokenUpdatedAt ??
+    CONNECTION_DEFAULTS.traderaApiTokenUpdatedAt,
+  traderaApiSandbox:
+    doc.traderaApiSandbox ?? CONNECTION_DEFAULTS.traderaApiSandbox,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -220,6 +247,13 @@ const prismaRepository: IntegrationRepository = {
       traderaDefaultDurationHours?: number;
       traderaAutoRelistEnabled?: boolean;
       traderaAutoRelistLeadMinutes?: number;
+      traderaApiAppId?: number | null;
+      traderaApiAppKey?: string | null;
+      traderaApiPublicKey?: string | null;
+      traderaApiUserId?: number | null;
+      traderaApiToken?: string | null;
+      traderaApiTokenUpdatedAt?: Date | null;
+      traderaApiSandbox?: boolean;
     }
   ): Promise<IntegrationConnectionRecord> => {
     return prisma.integrationConnection.create({
@@ -240,6 +274,30 @@ const prismaRepository: IntegrationRepository = {
           : {}),
         ...(typeof input.traderaAutoRelistLeadMinutes === 'number'
           ? { traderaAutoRelistLeadMinutes: input.traderaAutoRelistLeadMinutes }
+          : {}),
+        ...(typeof input.traderaApiAppId === 'number'
+          ? { traderaApiAppId: input.traderaApiAppId }
+          : {}),
+        ...(typeof input.traderaApiAppKey === 'string' ||
+        input.traderaApiAppKey === null
+          ? { traderaApiAppKey: input.traderaApiAppKey ?? null }
+          : {}),
+        ...(typeof input.traderaApiPublicKey === 'string' ||
+        input.traderaApiPublicKey === null
+          ? { traderaApiPublicKey: input.traderaApiPublicKey ?? null }
+          : {}),
+        ...(typeof input.traderaApiUserId === 'number'
+          ? { traderaApiUserId: input.traderaApiUserId }
+          : {}),
+        ...(typeof input.traderaApiToken === 'string' ||
+        input.traderaApiToken === null
+          ? { traderaApiToken: input.traderaApiToken ?? null }
+          : {}),
+        ...(input.traderaApiTokenUpdatedAt instanceof Date
+          ? { traderaApiTokenUpdatedAt: input.traderaApiTokenUpdatedAt }
+          : {}),
+        ...(typeof input.traderaApiSandbox === 'boolean'
+          ? { traderaApiSandbox: input.traderaApiSandbox }
           : {}),
       },
     });
@@ -344,6 +402,13 @@ const mongoRepository: IntegrationRepository = {
       traderaDefaultDurationHours?: number;
       traderaAutoRelistEnabled?: boolean;
       traderaAutoRelistLeadMinutes?: number;
+      traderaApiAppId?: number | null;
+      traderaApiAppKey?: string | null;
+      traderaApiPublicKey?: string | null;
+      traderaApiUserId?: number | null;
+      traderaApiToken?: string | null;
+      traderaApiTokenUpdatedAt?: Date | null;
+      traderaApiSandbox?: boolean;
     }
   ): Promise<IntegrationConnectionRecord> => {
     const db = await getMongoDb();
@@ -368,6 +433,30 @@ const mongoRepository: IntegrationRepository = {
         : {}),
       ...(typeof input.traderaAutoRelistLeadMinutes === 'number'
         ? { traderaAutoRelistLeadMinutes: input.traderaAutoRelistLeadMinutes }
+        : {}),
+      ...(typeof input.traderaApiAppId === 'number'
+        ? { traderaApiAppId: input.traderaApiAppId }
+        : {}),
+      ...(typeof input.traderaApiAppKey === 'string' ||
+      input.traderaApiAppKey === null
+        ? { traderaApiAppKey: input.traderaApiAppKey ?? null }
+        : {}),
+      ...(typeof input.traderaApiPublicKey === 'string' ||
+      input.traderaApiPublicKey === null
+        ? { traderaApiPublicKey: input.traderaApiPublicKey ?? null }
+        : {}),
+      ...(typeof input.traderaApiUserId === 'number'
+        ? { traderaApiUserId: input.traderaApiUserId }
+        : {}),
+      ...(typeof input.traderaApiToken === 'string' ||
+      input.traderaApiToken === null
+        ? { traderaApiToken: input.traderaApiToken ?? null }
+        : {}),
+      ...(input.traderaApiTokenUpdatedAt instanceof Date
+        ? { traderaApiTokenUpdatedAt: input.traderaApiTokenUpdatedAt }
+        : {}),
+      ...(typeof input.traderaApiSandbox === 'boolean'
+        ? { traderaApiSandbox: input.traderaApiSandbox }
         : {}),
       createdAt: now,
       updatedAt: now,

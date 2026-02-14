@@ -2,17 +2,17 @@
 
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
-
 import { Textarea, type TextareaProps } from './textarea';
 
+/** @deprecated Use Textarea with size="sm" instead */
 export interface UnifiedTextareaProps extends TextareaProps {}
 
+/** @deprecated Use Textarea with size="sm" instead */
 export const UnifiedTextarea = React.forwardRef<HTMLTextAreaElement, UnifiedTextareaProps>(
-  ({ className, ...props }, ref) => (
+  ({ size = 'sm', ...props }, ref) => (
     <Textarea
       ref={ref}
-      className={cn('text-xs', className)}
+      size={size}
       {...props}
     />
   )

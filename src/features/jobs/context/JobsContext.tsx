@@ -9,8 +9,6 @@ import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
 import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 
-export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress' | 'queued' | 'queued_relist' | 'needs_login' | 'auth_required';
-
 export type ChatbotJob = {
   id: string;
   sessionId: string;

@@ -15,7 +15,7 @@ import {
 import { logClientError } from '@/features/observability';
 import { useProducers } from '@/features/products/hooks/useProductMetadataQueries';
 import type { Producer } from '@/features/products/types';
-import { Button, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SelectSimple, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
@@ -200,7 +200,7 @@ export function BaseProducerMapper(): React.JSX.Element {
                   >
                     <TableCell className='px-4 py-2 text-sm text-gray-200'>{producer.name}</TableCell>
                     <TableCell className='px-4 py-2'>
-                      <UnifiedSelect
+                      <SelectSimple
                         value={currentMapping ?? '__unmapped__'}
                         onValueChange={(value: string): void =>
                           handleMappingChange(

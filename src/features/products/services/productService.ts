@@ -126,108 +126,116 @@ async function getProducts(
   filters: ProductFilters,
   options?: { timings?: ProductQueryTimings; provider?: ProductDbProvider }
 ): Promise<ProductWithImages[]> {
-  const timings = options?.timings;
-  const totalStart = performance.now();
-  const provider = options?.provider ?? await getProductDataProvider();
-  const productRepository = await resolveProductRepository(provider);
+  try {
+    const timings = options?.timings;
+    const totalStart = performance.now();
+    const provider = options?.provider ?? await getProductDataProvider();
+    const productRepository = await resolveProductRepository(provider);
 
-  const repoStart = performance.now();
-  let products = await productRepository.getProducts(filters);
-  const repoMs = performance.now() - repoStart;
-  if (timings) {
-    timings['repo'] = repoMs;
-  }
-  performanceMonitor.record('db.query', repoMs, { operation: 'getProducts', provider });
+    const repoStart = performance.now();
+    let products = await productRepository.getProducts(filters);
+    const repoMs = performance.now() - repoStart;
+    if (timings) {
+      timings['repo'] = repoMs;
+    }
+    performanceMonitor.record('db.query', repoMs, { operation: 'getProducts', provider });
 
-  const fallbackProvider = getFallbackProvider(provider);
-  const compareFallbackProvider = await shouldCompareFallbackProvider();
-  if (compareFallbackProvider && isProviderAvailable(fallbackProvider)) {
-    const fallbackRepository = await resolveProductRepository(fallbackProvider);
-    const shouldCompareCounts =
-      products.length === 0 || Number(filters.page ?? 1) === 1;
+    const fallbackProvider = getFallbackProvider(provider);
+    const compareFallbackProvider = await shouldCompareFallbackProvider();
+    if (compareFallbackProvider && isProviderAvailable(fallbackProvider)) {
+      const fallbackRepository = await resolveProductRepository(fallbackProvider);
+      const shouldCompareCounts =
+        products.length === 0 || Number(filters.page ?? 1) === 1;
 
-    let primaryCount = products.length;
-    let fallbackCount = 0;
+      let primaryCount = products.length;
+      let fallbackCount = 0;
 
-    if (shouldCompareCounts) {
-      const countStart = performance.now();
-      primaryCount = await productRepository.countProducts(filters);
-      fallbackCount = await fallbackRepository.countProducts(filters);
-      if (timings) {
-        timings['countCompare'] = performance.now() - countStart;
+      if (shouldCompareCounts) {
+        const countStart = performance.now();
+        primaryCount = await productRepository.countProducts(filters);
+        fallbackCount = await fallbackRepository.countProducts(filters);
+        if (timings) {
+          timings['countCompare'] = performance.now() - countStart;
+        }
+      } else if (products.length === 0) {
+        fallbackCount = await fallbackRepository.countProducts(filters);
       }
-    } else if (products.length === 0) {
-      fallbackCount = await fallbackRepository.countProducts(filters);
+
+      const shouldUseFallback =
+        (products.length === 0 && fallbackCount > 0) || fallbackCount > primaryCount;
+
+      if (shouldUseFallback) {
+        const fallbackStart = performance.now();
+        const fallbackProducts = await fallbackRepository.getProducts(filters);
+        const fallbackMs = performance.now() - fallbackStart;
+        if (timings) {
+          timings['repoFallback'] = fallbackMs;
+        }
+        performanceMonitor.record('db.query', fallbackMs, {
+          operation: 'getProducts.fallback',
+          provider: fallbackProvider,
+        });
+        products = fallbackProducts;
+        await logSystemEvent({
+          level: 'warn',
+          message:
+            '[products] Primary provider has fewer matching rows; using fallback provider.',
+          context: {
+            primaryProvider: provider,
+            fallbackProvider,
+            primaryCount,
+            fallbackCount,
+            returnedCount: fallbackProducts.length,
+            filters,
+          },
+        });
+      }
     }
 
-    const shouldUseFallback =
-      (products.length === 0 && fallbackCount > 0) || fallbackCount > primaryCount;
-
-    if (shouldUseFallback) {
-      const fallbackStart = performance.now();
-      const fallbackProducts = await fallbackRepository.getProducts(filters);
-      const fallbackMs = performance.now() - fallbackStart;
-      if (timings) {
-        timings['repoFallback'] = fallbackMs;
+    const imagesStart = performance.now();
+    
+    // We no longer perform fs.access checks here for performance.
+    // Missing files will result in a 404 which is faster than checking every file on every list load.
+    const result = products.map((product: ProductWithImages): ProductWithImages => {
+      if (!product.images?.length) {
+        return product;
       }
-      performanceMonitor.record('db.query', fallbackMs, {
-        operation: 'getProducts.fallback',
-        provider: fallbackProvider,
-      });
-      products = fallbackProducts;
+
+      return {
+        ...product,
+        images: product.images.filter((image: ProductImageRecord) => {
+          return Boolean(getProductImageFilepath(image));
+        }),
+      };
+    });
+
+    const imagesMs = performance.now() - imagesStart;
+    if (timings) {
+      timings['images'] = imagesMs;
+      timings['fsChecks'] = 0;
+      timings['total'] = performance.now() - totalStart;
+    }
+    if (shouldLogTiming()) {
       await logSystemEvent({
-        level: 'warn',
-        message:
-          '[products] Primary provider has fewer matching rows; using fallback provider.',
+        level: 'info',
+        message: '[timing] productService.getProducts',
         context: {
-          primaryProvider: provider,
-          fallbackProvider,
-          primaryCount,
-          fallbackCount,
-          returnedCount: fallbackProducts.length,
-          filters,
+          provider,
+          repoMs: Math.round(repoMs),
+          imagesMs: Math.round(imagesMs),
+          fsChecks: 0,
+          totalMs: Math.round(performance.now() - totalStart),
         },
       });
     }
-  }
-
-  const imagesStart = performance.now();
-  
-  // We no longer perform fs.access checks here for performance.
-  // Missing files will result in a 404 which is faster than checking every file on every list load.
-  const result = products.map((product: ProductWithImages): ProductWithImages => {
-    if (!product.images?.length) {
-      return product;
-    }
-
-    return {
-      ...product,
-      images: product.images.filter((image: ProductImageRecord) => {
-        return Boolean(getProductImageFilepath(image));
-      }),
-    };
-  });
-
-  const imagesMs = performance.now() - imagesStart;
-  if (timings) {
-    timings['images'] = imagesMs;
-    timings['fsChecks'] = 0;
-    timings['total'] = performance.now() - totalStart;
-  }
-  if (shouldLogTiming()) {
-    await logSystemEvent({
-      level: 'info',
-      message: '[timing] productService.getProducts',
-      context: {
-        provider,
-        repoMs: Math.round(repoMs),
-        imagesMs: Math.round(imagesMs),
-        fsChecks: 0,
-        totalMs: Math.round(performance.now() - totalStart),
-      },
+    return result;
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'getProducts',
     });
+    return [];
   }
-  return result;
 }
 
 /**
@@ -236,34 +244,42 @@ async function getProducts(
  * @returns The total count.
  */
 async function countProducts(filters: ProductFilters): Promise<number> {
-  const provider = await getProductDataProvider();
-  const productRepository = await resolveProductRepository(provider);
-  const count = await productRepository.countProducts(filters);
+  try {
+    const provider = await getProductDataProvider();
+    const productRepository = await resolveProductRepository(provider);
+    const count = await productRepository.countProducts(filters);
 
-  const fallbackProvider = getFallbackProvider(provider);
-  const compareFallbackProvider = await shouldCompareFallbackProvider();
-  if (!compareFallbackProvider || !isProviderAvailable(fallbackProvider)) {
+    const fallbackProvider = getFallbackProvider(provider);
+    const compareFallbackProvider = await shouldCompareFallbackProvider();
+    if (!compareFallbackProvider || !isProviderAvailable(fallbackProvider)) {
+      return count;
+    }
+
+    const fallbackRepository = await resolveProductRepository(fallbackProvider);
+    const fallbackCount = await fallbackRepository.countProducts(filters);
+    if (fallbackCount > count) {
+      await logSystemEvent({
+        level: 'warn',
+        message:
+          '[products] Primary provider has fewer matching rows; using fallback provider count.',
+        context: {
+          primaryProvider: provider,
+          fallbackProvider,
+          primaryCount: count,
+          fallbackCount,
+          filters,
+        },
+      });
+      return fallbackCount;
+    }
     return count;
-  }
-
-  const fallbackRepository = await resolveProductRepository(fallbackProvider);
-  const fallbackCount = await fallbackRepository.countProducts(filters);
-  if (fallbackCount > count) {
-    await logSystemEvent({
-      level: 'warn',
-      message:
-        '[products] Primary provider has fewer matching rows; using fallback provider count.',
-      context: {
-        primaryProvider: provider,
-        fallbackProvider,
-        primaryCount: count,
-        fallbackCount,
-        filters,
-      },
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'countProducts',
     });
-    return fallbackCount;
+    return 0;
   }
-  return count;
 }
 
 /**
@@ -272,44 +288,62 @@ async function countProducts(filters: ProductFilters): Promise<number> {
  * @returns The product, or null if not found.
  */
 async function getProductById(id: string): Promise<ProductWithImages | null> {
-  const provider = await getProductDataProvider();
-  const productRepository = await resolveProductRepository(provider);
-  const product = await productRepository.getProductById(id);
-  if (product) return product;
+  try {
+    const provider = await getProductDataProvider();
+    const productRepository = await resolveProductRepository(provider);
+    const product = await productRepository.getProductById(id);
+    if (product) return product;
 
-  const policy = await getDatabaseEnginePolicy();
-  if (!policy.allowAutomaticFallback) {
-    return null;
-  }
-
-  const fallbackProvider = getFallbackProvider(provider);
-  if (!isProviderAvailable(fallbackProvider)) {
-    return null;
-  }
-  const fallbackRepository = await resolveProductRepository(fallbackProvider);
-  return fallbackRepository.getProductById(id);
-}
-
-async function getProductBySku(sku: string): Promise<ProductWithImages | null> {
-  const provider = await getProductDataProvider();
-  const productRepository = await resolveProductRepository(provider);
-  let product = await productRepository.getProductBySku(sku);
-
-  if (!product) {
     const policy = await getDatabaseEnginePolicy();
     if (!policy.allowAutomaticFallback) {
       return null;
     }
 
     const fallbackProvider = getFallbackProvider(provider);
-    if (isProviderAvailable(fallbackProvider)) {
-      const fallbackRepository = await resolveProductRepository(fallbackProvider);
-      product = await fallbackRepository.getProductBySku(sku);
+    if (!isProviderAvailable(fallbackProvider)) {
+      return null;
     }
+    const fallbackRepository = await resolveProductRepository(fallbackProvider);
+    return fallbackRepository.getProductById(id);
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'getProductById',
+      productId: id,
+    });
+    return null;
   }
+}
 
-  if (!product) return null;
-  return getProductById(product.id);
+async function getProductBySku(sku: string): Promise<ProductWithImages | null> {
+  try {
+    const provider = await getProductDataProvider();
+    const productRepository = await resolveProductRepository(provider);
+    let product = await productRepository.getProductBySku(sku);
+
+    if (!product) {
+      const policy = await getDatabaseEnginePolicy();
+      if (!policy.allowAutomaticFallback) {
+        return null;
+      }
+
+      const fallbackProvider = getFallbackProvider(provider);
+      if (isProviderAvailable(fallbackProvider)) {
+        const fallbackRepository = await resolveProductRepository(fallbackProvider);
+        product = await fallbackRepository.getProductBySku(sku);
+      }
+    }
+
+    if (!product) return null;
+    return getProductById(product.id);
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'getProductBySku',
+      sku,
+    });
+    return null;
+  }
 }
 
 /**
@@ -721,34 +755,42 @@ async function linkImagesToProduct(
   productSku?: string | null,
   options?: { mode?: 'append' | 'replace' },
 ): Promise<void> {
-  const productRepository = await resolveProductRepository();
-  const mode = options?.mode ?? 'append';
-  const allImageFileIds = [...imageFileIds];
+  try {
+    const productRepository = await resolveProductRepository();
+    const mode = options?.mode ?? 'append';
+    const allImageFileIds = [...imageFileIds];
 
-  if (images.length > 0) {
-    for (const image of images) {
-      // Filter out empty file inputs
-      if (image.size > 0) {
-        const uploadedImage = await uploadFile(image, {
-          category: 'products',
-          sku: productSku,
-        });
-        allImageFileIds.push(uploadedImage.id);
+    if (images.length > 0) {
+      for (const image of images) {
+        // Filter out empty file inputs
+        if (image.size > 0) {
+          const uploadedImage = await uploadFile(image, {
+            category: 'products',
+            sku: productSku,
+          });
+          allImageFileIds.push(uploadedImage.id);
+        }
       }
     }
-  }
 
-  if (productSku && imageFileIds.length > 0) {
-    await moveTempImageFilesToSku(imageFileIds, productSku);
-  }
+    if (productSku && imageFileIds.length > 0) {
+      await moveTempImageFilesToSku(imageFileIds, productSku);
+    }
 
-  if (mode === 'replace') {
-    await productRepository.replaceProductImages(productId, allImageFileIds);
-    return;
-  }
+    if (mode === 'replace') {
+      await productRepository.replaceProductImages(productId, allImageFileIds);
+      return;
+    }
 
-  if (allImageFileIds.length > 0) {
-    await productRepository.addProductImages(productId, allImageFileIds);
+    if (allImageFileIds.length > 0) {
+      await productRepository.addProductImages(productId, allImageFileIds);
+    }
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'linkImagesToProduct',
+      productId,
+    });
   }
 }
 
@@ -807,24 +849,32 @@ async function updateProductCatalogs(
   productId: string,
   catalogIds: string[],
 ): Promise<void> {
-  const productRepository = await resolveProductRepository();
-  await productRepository.replaceProductCatalogs(productId, catalogIds);
+  try {
+    const productRepository = await resolveProductRepository();
+    await productRepository.replaceProductCatalogs(productId, catalogIds);
 
-  // Why: Products need a default price group for inventory/listing calculations.
-  // Auto-assigning from the first assigned catalog prevents incomplete product state.
-  // Only sets it if the product doesn't already have one to preserve manual overrides.
-  const firstCatalogId = catalogIds[0];
-  if (firstCatalogId) {
-    const product = await productRepository.getProductById(productId);
-    if (product && !product.defaultPriceGroupId) {
-      const catalogRepository = await getCatalogRepository();
-      const catalog = await catalogRepository.getCatalogById(firstCatalogId);
-      if (catalog?.defaultPriceGroupId) {
-        await productRepository.updateProduct(productId, {
-          defaultPriceGroupId: catalog.defaultPriceGroupId,
-        });
+    // Why: Products need a default price group for inventory/listing calculations.
+    // Auto-assigning from the first assigned catalog prevents incomplete product state.
+    // Only sets it if the product doesn't already have one to preserve manual overrides.
+    const firstCatalogId = catalogIds[0];
+    if (firstCatalogId) {
+      const product = await productRepository.getProductById(productId);
+      if (product && !product.defaultPriceGroupId) {
+        const catalogRepository = await getCatalogRepository();
+        const catalog = await catalogRepository.getCatalogById(firstCatalogId);
+        if (catalog?.defaultPriceGroupId) {
+          await productRepository.updateProduct(productId, {
+            defaultPriceGroupId: catalog.defaultPriceGroupId,
+          });
+        }
       }
     }
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'updateProductCatalogs',
+      productId,
+    });
   }
 }
 
@@ -832,32 +882,64 @@ async function updateProductCategory(
   productId: string,
   categoryId: string | null,
 ): Promise<void> {
-  const productRepository = await resolveProductRepository();
-  await productRepository.replaceProductCategory(productId, categoryId);
+  try {
+    const productRepository = await resolveProductRepository();
+    await productRepository.replaceProductCategory(productId, categoryId);
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'updateProductCategory',
+      productId,
+    });
+  }
 }
 
 async function updateProductTags(
   productId: string,
   tagIds: string[],
 ): Promise<void> {
-  const productRepository = await resolveProductRepository();
-  await productRepository.replaceProductTags(productId, tagIds);
+  try {
+    const productRepository = await resolveProductRepository();
+    await productRepository.replaceProductTags(productId, tagIds);
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'updateProductTags',
+      productId,
+    });
+  }
 }
 
 async function updateProductProducers(
   productId: string,
   producerIds: string[],
 ): Promise<void> {
-  const productRepository = await resolveProductRepository();
-  await productRepository.replaceProductProducers(productId, producerIds);
+  try {
+    const productRepository = await resolveProductRepository();
+    await productRepository.replaceProductProducers(productId, producerIds);
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'updateProductProducers',
+      productId,
+    });
+  }
 }
 
 async function updateProductNotes(
   productId: string,
   noteIds: string[],
 ): Promise<void> {
-  const productRepository = await resolveProductRepository();
-  await productRepository.replaceProductNotes(productId, noteIds);
+  try {
+    const productRepository = await resolveProductRepository();
+    await productRepository.replaceProductNotes(productId, noteIds);
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'updateProductNotes',
+      productId,
+    });
+  }
 }
 
 // Why: Temp path allows users to upload images before saving a product. Once a
@@ -921,16 +1003,25 @@ async function moveLinkedTempImagesToSku(
   productId: string,
   sku: string,
 ): Promise<void> {
-  const productRepository = await resolveProductRepository();
-  const product = await productRepository.getProductById(productId);
-  const imageFileIds =
-    product?.images
-      .filter((image: ProductImageRecord): boolean =>
-        (getProductImageFilepath(image) ?? '').startsWith(tempProductPathPrefix),
-      )
-      .map((image: ProductImageRecord): string => image.imageFileId) ?? [];
-  if (imageFileIds.length > 0) {
-    await moveTempImageFilesToSku(imageFileIds, sku);
+  try {
+    const productRepository = await resolveProductRepository();
+    const product = await productRepository.getProductById(productId);
+    const imageFileIds =
+      product?.images
+        .filter((image: ProductImageRecord): boolean =>
+          (getProductImageFilepath(image) ?? '').startsWith(tempProductPathPrefix),
+        )
+        .map((image: ProductImageRecord): string => image.imageFileId) ?? [];
+    if (imageFileIds.length > 0) {
+      await moveTempImageFilesToSku(imageFileIds, sku);
+    }
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'productService',
+      action: 'moveLinkedTempImagesToSku',
+      productId,
+      sku,
+    });
   }
 }
 

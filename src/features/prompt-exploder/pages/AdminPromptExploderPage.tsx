@@ -25,8 +25,7 @@ import {
   SectionHeader,
   StatusToggle,
   Textarea,
-  UnifiedButton,
-  UnifiedSelect,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -73,39 +72,31 @@ import {
   promptExploderInferParamTypeLabel,
 } from '../helpers/formatting';
 import {
-  createLogicalConditionId,
   createLogicalCondition,
   PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS,
   PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS,
   PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS,
   isLogicalComparator,
   isLogicalJoin,
-  normalizeLogicalOperatorText,
-  normalizeLogicalComparatorText,
   parseLogicalValueText,
   formatLogicalValueText,
   parseSubsectionConditionText,
   buildSubsectionConditionText,
 } from '../helpers/logical-conditions';
 import {
-  PROMPT_EXPLODER_RGB_LITERAL_RE,
-  clampRgb,
   extractRgbLiteral,
   rgbToHex,
   hexToRgb,
   replaceRgbLiteral,
 } from '../helpers/rgb';
 import {
-  promptExploderCreateListItem,
   promptExploderAddBlankListItem,
   promptExploderCreateSubsection,
   promptExploderCreateManualBindingId,
   formatSubsectionLabel,
   buildSegmentSampleText,
-  buildLearnedRulePattern,
   createApprovalDraftFromSegment,
   isPromptExploderManagedRule,
-  type ApprovalDraft,
 } from '../helpers/segment-helpers';
 import {
   buildManualBindingFromDraft,
@@ -1063,7 +1054,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       <div className='mt-2 space-y-2 rounded border border-border/50 bg-card/20 p-2'>
         <div className='space-y-1'>
           <Label className='text-[10px] text-gray-500'>Logical Operator</Label>
-          <UnifiedSelect
+          <SelectSimple
+            size='sm'
             value={operatorValue}
             onValueChange={(next: string) => {
               if (next === 'none') {
@@ -1119,7 +1111,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                         START
                       </div>
                     ) : (
-                      <UnifiedSelect
+                      <SelectSimple
+                        size='sm'
                         value={condition.joinWithPrevious === 'or' ? 'or' : 'and'}
                         onValueChange={(next: string) => {
                           if (!isLogicalJoin(next)) return;
@@ -1137,7 +1130,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
                   <div className='space-y-1'>
                     <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
-                    <UnifiedSelect
+                    <SelectSimple
+                      size='sm'
                       value={selectedParamPath}
                       onValueChange={(next: string) => {
                         updateCondition(conditionIndex, {
@@ -1154,7 +1148,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
                   <div className='space-y-1'>
                     <Label className='text-[10px] text-gray-500'>Comparator</Label>
-                    <UnifiedSelect
+                    <SelectSimple
+                      size='sm'
                       value={comparatorValue}
                       onValueChange={(next: string) => {
                         if (!isLogicalComparator(next)) return;
@@ -1177,7 +1172,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                     <Label className='text-[10px] text-gray-500'>Value</Label>
                     {needsValue ? (
                       selectedParamEntry?.spec?.kind === 'boolean' ? (
-                        <UnifiedSelect
+                        <SelectSimple
+                          size='sm'
                           value={String(Boolean(condition.value))}
                           onValueChange={(next: string) => {
                             updateCondition(conditionIndex, {
@@ -1191,7 +1187,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                         />
                       ) : selectedParamEntry?.spec?.kind === 'enum' &&
                         selectedParamEntry.spec.enumOptions ? (
-                          <UnifiedSelect
+                          <SelectSimple
+                            size='sm'
                             value={String(condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? '')}
                             onValueChange={(next: string) => {
                               updateCondition(conditionIndex, {
@@ -2420,33 +2417,33 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         description='Explode prompts into typed segments, edit structure, and reassemble with references intact.'
         actions={
           <div className='flex flex-wrap items-center gap-2'>
-            <UnifiedButton
+            <Button
+              size='xs'
               variant='outline'
-              size='sm'
               onClick={handleReloadFromStudio}
             >
               <RefreshCcw className='mr-2 size-4' />
               Reload Studio Draft
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button
+              size='xs'
               variant='outline'
-              size='sm'
               onClick={() => {
                 router.push('/admin/prompt-exploder/settings');
               }}
             >
               <Settings2 className='mr-2 size-4' />
               Settings
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button
+              size='xs'
               variant='outline'
-              size='sm'
               onClick={() => {
                 router.push(returnTo);
               }}
             >
               Back to Image Studio
-            </UnifiedButton>
+            </Button>
           </div>
         }
       />
@@ -2502,7 +2499,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         <div className='mt-3 grid gap-2 md:grid-cols-8'>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
-            <UnifiedSelect
+            <SelectSimple
+              size='sm'
               value={learningDraft.runtimeRuleProfile}
               onValueChange={(value: string) => {
                 setLearningDraft((previous) => ({
@@ -2663,7 +2661,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               onChange={(event) => setSnapshotDraftName(event.target.value)}
               placeholder='Snapshot name (optional)'
             />
-            <UnifiedSelect
+            <SelectSimple
+              size='sm'
               value={selectedSnapshotId}
               onValueChange={setSelectedSnapshotId}
               options={
@@ -2737,7 +2736,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                     </div>
                   </div>
                   <div className='mt-1 flex items-center justify-between gap-2'>
-                    <UnifiedSelect
+                    <SelectSimple
+                      size='sm'
                       value={template.state}
                       onValueChange={(value: string) => {
                         void handleTemplateStateChange(
@@ -3010,7 +3010,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               <div className='grid gap-2 md:grid-cols-5'>
                 <div className='space-y-1'>
                   <Label className='text-[11px] text-gray-400'>Benchmark Suite</Label>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={benchmarkSuiteDraft}
                     onValueChange={(value: string) => {
                       setBenchmarkSuiteDraft(value as PromptExploderBenchmarkSuite);
@@ -3405,7 +3406,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                       <div className='grid gap-3 md:grid-cols-2'>
                         <div className='space-y-1'>
                           <Label className='text-[11px] text-gray-400'>Type</Label>
-                          <UnifiedSelect
+                          <SelectSimple
+                            size='sm'
                             value={selectedSegment.type}
                             onValueChange={(value: string) => {
                               updateSegment(selectedSegment.id, (current) => ({
@@ -3458,7 +3460,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                       {selectedSegment.type === 'metadata' ? (
                         <div className='space-y-1'>
                           <Label className='text-[11px] text-gray-400'>Metadata Mode</Label>
-                          <UnifiedSelect
+                          <SelectSimple
+                            size='sm'
                             value={selectedSegment.includeInOutput ? 'include' : 'omit'}
                             onValueChange={(value: string) => {
                               updateSegment(selectedSegment.id, (current) => ({
@@ -3506,7 +3509,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                       <div className='grid gap-2 lg:grid-cols-[220px_minmax(0,1fr)]'>
                                         <div className='space-y-1'>
                                           <Label className='text-[10px] text-gray-500'>Selector</Label>
-                                          <UnifiedSelect
+                                          <SelectSimple
+                                            size='sm'
                                             value={entry.selector}
                                             onValueChange={(next: string) => {
                                               updateParameterSelector(selectedSegment.id, entry.path, next);
@@ -3553,7 +3557,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                                   </Button>
                                                 </div>
                                               ) : (
-                                                <UnifiedSelect
+                                                <SelectSimple
+                                                  size='sm'
                                                   value={entry.value ? 'true' : 'false'}
                                                   onValueChange={(next: string) => {
                                                     updateParameterValue(
@@ -3608,7 +3613,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                                   }}
                                                 />
                                               ) : (
-                                                <UnifiedSelect
+                                                <SelectSimple
+                                                  size='sm'
                                                   value={entry.value}
                                                   onValueChange={(next: string) => {
                                                     updateParameterValue(
@@ -4214,7 +4220,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                   <div className='grid gap-2 md:grid-cols-4'>
                                     <div className='space-y-1'>
                                       <Label className='text-[10px] text-gray-500'>Operator</Label>
-                                      <UnifiedSelect
+                                      <SelectSimple
+                                        size='sm'
                                         value={operatorValue}
                                         onValueChange={(next: string) => {
                                           if (next === 'none') {
@@ -4247,7 +4254,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
                                     <div className='space-y-1'>
                                       <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
-                                      <UnifiedSelect
+                                      <SelectSimple
+                                        size='sm'
                                         value={paramPath}
                                         onValueChange={(next: string) => {
                                           patchCondition({
@@ -4264,7 +4272,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
                                     <div className='space-y-1'>
                                       <Label className='text-[10px] text-gray-500'>Comparator</Label>
-                                      <UnifiedSelect
+                                      <SelectSimple
+                                        size='sm'
                                         value={comparatorValue}
                                         onValueChange={(next: string) => {
                                           if (!isLogicalComparator(next)) return;
@@ -4287,7 +4296,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                       <Label className='text-[10px] text-gray-500'>Value</Label>
                                       {needsValue ? (
                                         selectedParamEntry?.spec?.kind === 'boolean' ? (
-                                          <UnifiedSelect
+                                          <SelectSimple
+                                            size='sm'
                                             value={String(Boolean(parsedCondition?.value))}
                                             onValueChange={(next: string) => {
                                               patchCondition({
@@ -4408,7 +4418,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                           <div className='grid gap-2 md:grid-cols-2'>
                             <div className='space-y-1'>
                               <Label className='text-[11px] text-gray-400'>Template Merge Mode</Label>
-                              <UnifiedSelect
+                              <SelectSimple
+                                size='sm'
                                 value={approvalDraft.templateMergeMode}
                                 onValueChange={(value: string) => {
                                   const nextMode = value as TemplateMergeMode;
@@ -4433,7 +4444,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                             {approvalDraft.templateMergeMode === 'target' ? (
                               <div className='space-y-1'>
                                 <Label className='text-[11px] text-gray-400'>Merge Target Template</Label>
-                                <UnifiedSelect
+                                <SelectSimple
+                                  size='sm'
                                   value={approvalDraft.templateTargetId}
                                   onValueChange={(value: string) => {
                                     setApprovalDraft((previous) => ({
@@ -4538,7 +4550,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                             </div>
                             <div className='space-y-1'>
                               <Label className='text-[11px] text-gray-400'>Segment Type Hint</Label>
-                              <UnifiedSelect
+                              <SelectSimple
+                                size='sm'
                                 value={approvalDraft.ruleSegmentType}
                                 onValueChange={(value: string) => {
                                   const nextSegmentType = value as PromptExploderSegment['type'];
@@ -4689,7 +4702,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 <div className='rounded border border-border/50 bg-card/20 p-2'>
                   <div className='grid gap-2'>
                     <div className='grid gap-2 md:grid-cols-3'>
-                      <UnifiedSelect
+                      <SelectSimple
+                        size='sm'
                         value={bindingDraft.type}
                         onValueChange={(value: string) => {
                           setBindingDraft((previous) => ({
@@ -4703,7 +4717,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                           { value: 'uses_param', label: 'Uses Param' },
                         ]}
                       />
-                      <UnifiedSelect
+                      <SelectSimple
+                        size='sm'
                         value={bindingDraft.fromSegmentId}
                         onValueChange={(value: string) => {
                           setBindingDraft((previous) => ({
@@ -4714,7 +4729,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                         }}
                         options={segmentOptions}
                       />
-                      <UnifiedSelect
+                      <SelectSimple
+                        size='sm'
                         value={bindingDraft.fromSubsectionId}
                         onValueChange={(value: string) => {
                           setBindingDraft((previous) => ({
@@ -4726,7 +4742,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                       />
                     </div>
                     <div className='grid gap-2 md:grid-cols-2'>
-                      <UnifiedSelect
+                      <SelectSimple
+                        size='sm'
                         value={bindingDraft.toSegmentId}
                         onValueChange={(value: string) => {
                           setBindingDraft((previous) => ({
@@ -4737,7 +4754,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                         }}
                         options={segmentOptions}
                       />
-                      <UnifiedSelect
+                      <SelectSimple
+                        size='sm'
                         value={bindingDraft.toSubsectionId}
                         onValueChange={(value: string) => {
                           setBindingDraft((previous) => ({

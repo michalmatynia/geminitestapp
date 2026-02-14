@@ -26,4 +26,5 @@ export * from '@/shared/contracts/observability';
 export * from '@/shared/contracts/playwright';
 export * from '@/shared/contracts/products';
 export * from '@/shared/contracts/settings';
+export * from '@/shared/contracts/vector';
 export * from '@/shared/contracts/viewer3d';

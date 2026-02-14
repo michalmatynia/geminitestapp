@@ -44,10 +44,15 @@ const resolveEdgeMeta = (
 };
 
 const decodeHtmlEntity = (value: string): string => {
-  if (typeof window === 'undefined') return value;
-  const textarea = document.createElement('textarea');
-  textarea.innerHTML = value;
-  return textarea.value;
+  try {
+    if (typeof window === 'undefined') return value;
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = value;
+    return textarea.value;
+  } catch (error) {
+    console.error('Failed to decode HTML entity:', error);
+    return value;
+  }
 };
 
 const stripHtml = (html: string): string => {
@@ -96,96 +101,104 @@ export const compileCaseResolverPrompt = (
   graph: CaseResolverGraph,
   selectedNodeId: string | null
 ): CaseResolverCompileResult => {
-  const nodeById = new Map<string, AiNode>(
-    graph.nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
-  );
-  const outgoingByNode = new Map<string, Edge[]>();
-  const incomingCount = new Map<string, number>();
+  try {
+    const nodeById = new Map<string, AiNode>(
+      graph.nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
+    );
+    const outgoingByNode = new Map<string, Edge[]>();
+    const incomingCount = new Map<string, number>();
 
-  graph.nodes.forEach((node: AiNode) => {
-    incomingCount.set(node.id, 0);
-    outgoingByNode.set(node.id, []);
-  });
-
-  graph.edges.forEach((edge: Edge) => {
-    if (!nodeById.has(edge.from) || !nodeById.has(edge.to)) return;
-    const outgoing = outgoingByNode.get(edge.from) ?? [];
-    outgoing.push(edge);
-    outgoingByNode.set(edge.from, outgoing);
-    incomingCount.set(edge.to, (incomingCount.get(edge.to) ?? 0) + 1);
-  });
-
-  const sortedNodeIds = sortNodeIdsByPosition(graph.nodes);
-  const rootNodeIds = sortedNodeIds.filter((nodeId: string) => (incomingCount.get(nodeId) ?? 0) === 0);
-
-  const startNodeIds =
-    selectedNodeId && nodeById.has(selectedNodeId)
-      ? [selectedNodeId]
-      : rootNodeIds.length > 0
-        ? rootNodeIds
-        : sortedNodeIds;
-
-  const visitOrder: Array<{ nodeId: string; incomingEdgeId: string | null }> = [];
-  const visited = new Set<string>();
-
-  const visit = (nodeId: string, incomingEdgeId: string | null): void => {
-    if (visited.has(nodeId)) return;
-    visited.add(nodeId);
-    visitOrder.push({ nodeId, incomingEdgeId });
-
-    const outgoing = [...(outgoingByNode.get(nodeId) ?? [])].sort((left: Edge, right: Edge) => {
-      const leftNode = nodeById.get(left.to);
-      const rightNode = nodeById.get(right.to);
-      if (!leftNode || !rightNode) return left.id.localeCompare(right.id);
-      if (leftNode.position.y !== rightNode.position.y) {
-        return leftNode.position.y - rightNode.position.y;
-      }
-      if (leftNode.position.x !== rightNode.position.x) {
-        return leftNode.position.x - rightNode.position.x;
-      }
-      return left.id.localeCompare(right.id);
+    graph.nodes.forEach((node: AiNode) => {
+      incomingCount.set(node.id, 0);
+      outgoingByNode.set(node.id, []);
     });
 
-    outgoing.forEach((edge: Edge) => visit(edge.to, edge.id));
-  };
-
-  startNodeIds.forEach((nodeId: string) => visit(nodeId, null));
-  if (!(selectedNodeId && nodeById.has(selectedNodeId))) {
-    sortedNodeIds.forEach((nodeId: string) => visit(nodeId, null));
-  }
-
-  const segments: CaseResolverCompiledSegment[] = [];
-  const outputParts: string[] = [];
-
-  visitOrder.forEach(({ nodeId, incomingEdgeId }) => {
-    const node = nodeById.get(nodeId);
-    if (!node) return;
-    const meta = resolveNodeMeta(node.id, graph.nodeMeta);
-    const resolvedText = wrapByQuoteMode(resolveNodeText(node), meta);
-
-    segments.push({
-      nodeId: node.id,
-      title: node.title,
-      text: resolvedText,
-      role: meta.role,
-      includeInOutput: meta.includeInOutput,
+    graph.edges.forEach((edge: Edge) => {
+      if (!nodeById.has(edge.from) || !nodeById.has(edge.to)) return;
+      const outgoing = outgoingByNode.get(edge.from) ?? [];
+      outgoing.push(edge);
+      outgoingByNode.set(edge.from, outgoing);
+      incomingCount.set(edge.to, (incomingCount.get(edge.to) ?? 0) + 1);
     });
 
-    if (!meta.includeInOutput || resolvedText.trim().length === 0) return;
+    const sortedNodeIds = sortNodeIdsByPosition(graph.nodes);
+    const rootNodeIds = sortedNodeIds.filter((nodeId: string) => (incomingCount.get(nodeId) ?? 0) === 0);
 
-    if (outputParts.length === 0) {
-      outputParts.push(resolvedText);
-      return;
+    const startNodeIds =
+      selectedNodeId && nodeById.has(selectedNodeId)
+        ? [selectedNodeId]
+        : rootNodeIds.length > 0
+          ? rootNodeIds
+          : sortedNodeIds;
+
+    const visitOrder: Array<{ nodeId: string; incomingEdgeId: string | null }> = [];
+    const visited = new Set<string>();
+
+    const visit = (nodeId: string, incomingEdgeId: string | null): void => {
+      if (visited.has(nodeId)) return;
+      visited.add(nodeId);
+      visitOrder.push({ nodeId, incomingEdgeId });
+
+      const outgoing = [...(outgoingByNode.get(nodeId) ?? [])].sort((left: Edge, right: Edge) => {
+        const leftNode = nodeById.get(left.to);
+        const rightNode = nodeById.get(right.to);
+        if (!leftNode || !rightNode) return left.id.localeCompare(right.id);
+        if (leftNode.position.y !== rightNode.position.y) {
+          return leftNode.position.y - rightNode.position.y;
+        }
+        if (leftNode.position.x !== rightNode.position.x) {
+          return leftNode.position.x - rightNode.position.x;
+        }
+        return left.id.localeCompare(right.id);
+      });
+
+      outgoing.forEach((edge: Edge) => visit(edge.to, edge.id));
+    };
+
+    startNodeIds.forEach((nodeId: string) => visit(nodeId, null));
+    if (!(selectedNodeId && nodeById.has(selectedNodeId))) {
+      sortedNodeIds.forEach((nodeId: string) => visit(nodeId, null));
     }
 
-    const joinMode = incomingEdgeId
-      ? resolveEdgeMeta(incomingEdgeId, graph.edgeMeta).joinMode
-      : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
-    outputParts.push(`${JOIN_VALUE_MAP[joinMode]}${resolvedText}`);
-  });
+    const segments: CaseResolverCompiledSegment[] = [];
+    const outputParts: string[] = [];
 
-  return {
-    prompt: outputParts.join('').trim(),
-    segments,
-  };
+    visitOrder.forEach(({ nodeId, incomingEdgeId }) => {
+      const node = nodeById.get(nodeId);
+      if (!node) return;
+      const meta = resolveNodeMeta(node.id, graph.nodeMeta);
+      const resolvedText = wrapByQuoteMode(resolveNodeText(node), meta);
+
+      segments.push({
+        nodeId: node.id,
+        title: node.title,
+        text: resolvedText,
+        role: meta.role,
+        includeInOutput: meta.includeInOutput,
+      });
+
+      if (!meta.includeInOutput || resolvedText.trim().length === 0) return;
+
+      if (outputParts.length === 0) {
+        outputParts.push(resolvedText);
+        return;
+      }
+
+      const joinMode = incomingEdgeId
+        ? resolveEdgeMeta(incomingEdgeId, graph.edgeMeta).joinMode
+        : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
+      outputParts.push(`${JOIN_VALUE_MAP[joinMode]}${resolvedText}`);
+    });
+
+    return {
+      prompt: outputParts.join('').trim(),
+      segments,
+    };
+  } catch (error) {
+    console.error('Failed to compile Case Resolver prompt:', error);
+    return {
+      prompt: '',
+      segments: [],
+    };
+  }
 };

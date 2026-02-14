@@ -4,8 +4,8 @@ import React from 'react';
 
 import { Button, FormSection, Input, Label, StatusToggle, UnifiedSelect } from '@/shared/ui';
 
-import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
+import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { PROMPT_EXPLODER_PATTERN_PACK } from '../pattern-pack';
 

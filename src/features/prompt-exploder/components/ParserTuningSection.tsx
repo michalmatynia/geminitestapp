@@ -5,9 +5,9 @@ import React from 'react';
 
 import { Button, FormSection } from '@/shared/ui';
 
-import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 import { PromptExploderParserTuningProvider } from './PromptExploderParserTuningContext';
 import { PromptExploderParserTuningPanel } from './PromptExploderParserTuningPanel';
+import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 
 export function ParserTuningSection(): React.JSX.Element {
   const router = useRouter();

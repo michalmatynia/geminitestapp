@@ -19,7 +19,6 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
   ListPanel,
-  UnifiedSelect,
   Label,
   Checkbox,
   Switch,
@@ -28,6 +27,7 @@ import {
   SearchInput,
   AppModal,
   PageLayout,
+  SelectSimple,
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -174,7 +174,7 @@ export default function SlugsPage(): React.JSX.Element {
             </Label>
           </div>
           {zoningEnabled ? (
-            <UnifiedSelect
+            <SelectSimple
               value={activeDomainId || ''}
               onValueChange={handleDomainChange}
               options={domains.map((item: CmsDomain) => ({
@@ -184,7 +184,7 @@ export default function SlugsPage(): React.JSX.Element {
               }))}
               placeholder='Current domain'
               className='w-[220px]'
-              triggerClassName='h-9'
+              size='sm'
             />
           ) : (
             <span className='text-xs text-muted-foreground'>Simple routing</span>

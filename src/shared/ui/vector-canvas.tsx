@@ -299,8 +299,8 @@ export function VectorCanvas({
 
       if (shape.type === 'rect') {
         if (shape.points.length < 2) return false;
-        const a = toPx(shape.points[0]);
-        const b = toPx(shape.points[1]);
+        const a = toPx(shape.points[0]!);
+        const b = toPx(shape.points[1]!);
         const x = Math.min(a.x, b.x);
         const y = Math.min(a.y, b.y);
         const w = Math.abs(a.x - b.x);
@@ -313,8 +313,8 @@ export function VectorCanvas({
 
       if (shape.type === 'ellipse') {
         if (shape.points.length < 2) return false;
-        const a = toPx(shape.points[0]);
-        const b = toPx(shape.points[1]);
+        const a = toPx(shape.points[0]!);
+        const b = toPx(shape.points[1]!);
         const cx = (a.x + b.x) / 2;
         const cy = (a.y + b.y) / 2;
         const rx = Math.abs(a.x - b.x) / 2;
@@ -326,7 +326,7 @@ export function VectorCanvas({
       }
 
       if (!shape.closed || shape.points.length < 3) return false;
-      const first = toPx(shape.points[0]);
+      const first = toPx(shape.points[0]!);
       ctx.beginPath();
       ctx.moveTo(first.x, first.y);
       shape.points.slice(1).forEach((p: VectorPoint) => {
@@ -397,23 +397,23 @@ export function VectorCanvas({
 
       ctx.beginPath();
       if (shape.type === 'rect' && shape.points.length >= 2) {
-        const a = toPx(shape.points[0]);
-        const b = toPx(shape.points[1]);
+        const a = toPx(shape.points[0]!);
+        const b = toPx(shape.points[1]!);
         const x = Math.min(a.x, b.x);
         const y = Math.min(a.y, b.y);
         const w = Math.abs(a.x - b.x);
         const h = Math.abs(a.y - b.y);
         ctx.rect(x, y, w, h);
       } else if (shape.type === 'ellipse' && shape.points.length >= 2) {
-        const a = toPx(shape.points[0]);
-        const b = toPx(shape.points[1]);
+        const a = toPx(shape.points[0]!);
+        const b = toPx(shape.points[1]!);
         const cx = (a.x + b.x) / 2;
         const cy = (a.y + b.y) / 2;
         const rx = Math.abs(a.x - b.x) / 2;
         const ry = Math.abs(a.y - b.y) / 2;
         ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
       } else {
-        const first = toPx(shape.points[0]);
+        const first = toPx(shape.points[0]!);
         ctx.moveTo(first.x, first.y);
         shape.points.slice(1).forEach((p: VectorPoint) => {
           const px = toPx(p);
@@ -430,7 +430,7 @@ export function VectorCanvas({
 
       // Draw "M" badge on mask-eligible shapes
       if (isMaskEligible) {
-        const firstPt = toPx(shape.points[0]);
+        const firstPt = toPx(shape.points[0]!);
         ctx.font = 'bold 10px sans-serif';
         ctx.fillStyle = 'rgba(56, 189, 248, 0.95)';
         ctx.fillText('M', firstPt.x + 8, firstPt.y - 6);

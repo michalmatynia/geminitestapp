@@ -43,6 +43,13 @@ export type IntegrationConnection = {
   traderaDefaultDurationHours?: number | undefined;
   traderaAutoRelistEnabled?: boolean | undefined;
   traderaAutoRelistLeadMinutes?: number | undefined;
+  traderaApiAppId?: number | null | undefined;
+  traderaApiPublicKey?: string | null | undefined;
+  traderaApiUserId?: number | null | undefined;
+  traderaApiSandbox?: boolean | undefined;
+  hasTraderaApiAppKey?: boolean | undefined;
+  hasTraderaApiToken?: boolean | undefined;
+  traderaApiTokenUpdatedAt?: string | null | undefined;
 };
 
 export const TEST_STATUSES = ['pending', 'ok', 'failed'] as const;
@@ -77,6 +84,7 @@ export type SessionCookie = {
 
 export const integrationDefinitions = [
   { name: 'Tradera', slug: 'tradera' },
+  { name: 'Tradera API', slug: 'tradera-api' },
   { name: 'Allegro', slug: 'allegro' },
   { name: 'Baselinker', slug: 'baselinker' },
 ] as const;

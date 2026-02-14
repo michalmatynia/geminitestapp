@@ -190,12 +190,12 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
       if (!requeued) {
         return;
       }
-        await repo.createRunEvent({
-          runId: run.id,
-          level: 'warning',
-          message: `Run failed. Retrying in ${Math.round(delayMs / 1000)}s.`,
-          metadata: { retryCount, nextRetryAt: nextRetryAt.toISOString() },
-        });
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'warning',
+        message: `Run failed. Retrying in ${Math.round(delayMs / 1000)}s.`,
+        metadata: { retryCount, nextRetryAt: nextRetryAt.toISOString() },
+      });
       return { requeueDelayMs: delayMs };
     } else {
       const finishedAt = new Date();

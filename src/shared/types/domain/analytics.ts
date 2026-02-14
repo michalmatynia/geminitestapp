@@ -8,7 +8,7 @@ import type {
   AnalyticsViewportDto,
   AnalyticsScreenDto,
   AnalyticsConnectionInfoDto
-} from '../dtos/index';
+} from '../dtos';
 
 export type { 
   AnalyticsEventDto, 

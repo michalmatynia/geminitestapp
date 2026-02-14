@@ -172,7 +172,7 @@ const toProductImageRecord = (image: {
   return {
     productId: image.productId,
     imageFileId: image.imageFileId,
-    assignedAt: image.assignedAt,
+    assignedAt: image.assignedAt.toISOString(),
     imageFile: toImageFileRecord(image.imageFile),
   };
 };

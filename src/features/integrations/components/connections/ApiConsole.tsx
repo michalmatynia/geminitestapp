@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Label, Alert, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Textarea, Label, Alert, SelectSimple } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -76,7 +76,9 @@ export function ApiConsole({
           <Button
             key={preset.label}
             type='button'
-            className='rounded-full border px-3 py-1 text-[11px] text-gray-300 hover:border-gray-500'
+            variant='outline'
+            size='xs'
+            className='rounded-full border px-3 py-1'
             onClick={() => {
               setMethod(preset.method);
               if (setPath && preset.path) setPath(preset.path);
@@ -99,17 +101,18 @@ export function ApiConsole({
           <Label className='text-xs text-gray-400'>Method</Label>
           {methodType === 'select' ? (
             <div className='mt-2'>
-              <UnifiedSelect
+              <SelectSimple
                 options={methodOptions}
                 value={method}
                 onValueChange={setMethod}
                 placeholder='Method'
-                className='w-full border border-border bg-card px-3 py-2 text-sm text-white'
+                size='sm'
               />
             </div>
           ) : (
             <Input
-              className='mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+              className='mt-2'
+              size='sm'
               value={method}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMethod(e.target.value)}
             />
@@ -119,7 +122,8 @@ export function ApiConsole({
           <div>
             <Label className='text-xs text-gray-400'>Endpoint path</Label>
             <Input
-              className='mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+              className='mt-2'
+              size='sm'
               value={path || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPath(e.target.value)}
             />
@@ -129,13 +133,14 @@ export function ApiConsole({
       <div className='mt-3'>
         <Label className='text-xs text-gray-400'>{bodyOrParamsLabel}</Label>
         <Textarea
-          className='mt-2 h-32 w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-white'
+          className='mt-2 h-32 font-mono'
+          size='sm'
           value={bodyOrParams}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBodyOrParams(e.target.value)}
         />
       </div>      <div className='mt-3 flex items-center gap-3'>
         <Button
-          className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-70'
+          variant='primary'
           type='button'
           disabled={loading || !isConnected}
           onClick={onRequest}

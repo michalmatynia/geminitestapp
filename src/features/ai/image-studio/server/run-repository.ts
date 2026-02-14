@@ -169,8 +169,8 @@ export async function listImageStudioRuns(
   const offset = Number.isFinite(input.offset) ? Math.max(0, Math.floor(input.offset ?? 0)) : 0;
 
   const query: Record<string, unknown> = {};
-  if (input.status) query.status = input.status;
-  if (input.projectId) query.projectId = input.projectId;
+  if (input.status) query['status'] = input.status;
+  if (input.projectId) query['projectId'] = input.projectId;
   if (input.sourceSlotId) query['request.asset.id'] = input.sourceSlotId;
 
   const [docs, total] = await Promise.all([

@@ -17,7 +17,7 @@ import {
   ListPanel,
   EmptyState,
   useToast,
-  UnifiedSelect,
+  SelectSimple,
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -135,7 +135,7 @@ export default function ZonesPage(): React.JSX.Element {
                 )}
               </div>
               <div className='flex items-center gap-2'>
-                <UnifiedSelect
+                <SelectSimple
                   value={item.aliasOf ?? 'none'}
                   onValueChange={(value: string): void => { void handleAliasChange(item.id, value); }}
                   options={[
@@ -147,7 +147,8 @@ export default function ZonesPage(): React.JSX.Element {
                         label: `Share with ${domainOption.domain}`,
                       })),
                   ]}
-                  triggerClassName='h-8 w-[220px]'
+                  size='sm'
+                  className='w-[220px]'
                   placeholder='Independent zone'
                 />
                 <Button

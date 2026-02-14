@@ -12,7 +12,7 @@ import {
   TabsList,
   TabsTrigger,
   Tooltip,
-  UnifiedButton,
+  Button,
   UnifiedSelect,
   useToast,
 } from '@/shared/ui';
@@ -137,9 +137,9 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                       : 'No active card selected. Pick a card from the tree.'}
                   </span>
                   <Tooltip content={selectedSlot ? 'Copy card name' : 'Select a card first'}>
-                    <UnifiedButton
+                    <Button
                       type='button'
-                      size='icon'
+                      size='xs'
                       variant='ghost'
                       className='size-7 shrink-0'
                       onClick={handleCopyActiveCardName}
@@ -148,7 +148,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                       aria-label='Copy card name'
                     >
                       <Copy className='size-3.5' />
-                    </UnifiedButton>
+                    </Button>
                   </Tooltip>
                   <UnifiedSelect
                     className='w-[320px] shrink-0'
@@ -156,7 +156,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                     onValueChange={(value: string) => setProjectId(value)}
                     options={projectSelectOptions}
                     placeholder={projectsQuery.isLoading ? 'Loading projects...' : 'Select project'}
-                    triggerClassName='h-8 bg-card text-xs'
+                    size='sm'
                     ariaLabel='Select project'
                   />
                 </div>

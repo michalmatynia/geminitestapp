@@ -9,23 +9,9 @@ import { useJobsContext } from '@/features/jobs/context/JobsContext';
 import { DataTable, StatusBadge } from '@/shared/ui';
 import { Button } from '@/shared/ui';
 
+import { type JobRowData } from '../types';
+
 import type { ColumnDef } from '@tanstack/react-table';
-
-export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress' | 'queued' | 'queued_relist' | 'needs_login' | 'auth_required';
-
-export interface JobRowData {
-  id: string;
-  type: string;
-  status: JobStatus;
-  entityName: string;
-  entitySubText?: string | undefined;
-  entityId?: string | undefined;
-  productId?: string | undefined;
-  createdAt: string | Date;
-  finishedAt?: string | Date | null;
-  errorMessage?: string | null;
-  integrationName?: string;
-}
 
 interface JobTableProps {
   data: JobRowData[];

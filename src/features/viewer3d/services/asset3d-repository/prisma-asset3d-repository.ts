@@ -25,18 +25,22 @@ const toRecord = (asset: {
   updatedAt: Date;
 }): Asset3DRecord => ({
   id: asset.id,
-  name: asset.name,
+  name: asset.name ?? '',
   description: asset.description,
   filename: asset.filename,
   filepath: asset.filepath,
   mimetype: asset.mimetype,
   size: asset.size,
+  fileUrl: '', // Will be updated by service if needed
+  thumbnailUrl: null,
+  fileSize: asset.size,
+  format: asset.mimetype.split('/').pop() || '',
   tags: asset.tags,
-  category: asset.category,
-  metadata: asset.metadata as Record<string, unknown> | null,
+  categoryId: asset.category,
+  metadata: (asset.metadata as Record<string, unknown>) || {},
   isPublic: asset.isPublic,
-  createdAt: asset.createdAt,
-  updatedAt: asset.updatedAt,
+  createdAt: asset.createdAt.toISOString(),
+  updatedAt: asset.updatedAt ? asset.updatedAt.toISOString() : null,
 });
 
 export const prismaAsset3DRepository: Asset3DRepository = {
@@ -50,7 +54,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
         mimetype: data.mimetype,
         size: data.size,
         tags: data.tags ?? [],
-        category: data.category ?? null,
+        category: data.categoryId ?? null,
         metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : Prisma.JsonNull,
         isPublic: data.isPublic ?? false,
       },
@@ -73,8 +77,8 @@ export const prismaAsset3DRepository: Asset3DRepository = {
       };
     }
 
-    if (filters?.category) {
-      where.category = filters.category;
+    if (filters?.categoryId) {
+      where.category = filters.categoryId;
     }
 
     if (filters?.isPublic !== undefined) {
@@ -109,7 +113,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
       if (data.name !== undefined) updateData.name = data.name;
       if (data.description !== undefined) updateData.description = data.description;
       if (data.tags !== undefined) updateData.tags = data.tags;
-      if (data.category !== undefined) updateData.category = data.category;
+      if (data.categoryId !== undefined) updateData.category = data.categoryId;
       if (data.metadata !== undefined) {
         updateData.metadata = data.metadata ? (data.metadata as Prisma.InputJsonValue) : Prisma.JsonNull;
       }

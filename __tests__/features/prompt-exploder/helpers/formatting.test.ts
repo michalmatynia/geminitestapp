@@ -8,7 +8,6 @@ import {
   promptExploderIsFiniteNumber,
   promptExploderInferParamTypeLabel,
 } from '@/features/prompt-exploder/helpers/formatting';
-
 import type { PromptExploderParamEntry } from '@/features/prompt-exploder/params-editor';
 
 describe('promptExploderClampNumber', () => {

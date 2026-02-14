@@ -2,7 +2,7 @@
 
 import { RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { logClientError } from '@/features/observability';
@@ -16,21 +16,22 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  UnifiedButton,
-  UnifiedInput,
+  Button,
+  Input,
   Label,
   SectionHeader,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  UnifiedTextarea,
-  UnifiedSelect,
+  Textarea,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { useProjectsState } from '../context/ProjectsContext';
 import { useStudioImageModels } from '../hooks/useImageStudioQueries';
 import { getImageModelCapabilities, isGpt52ImageModel, uniqueSortedModelIds } from '../utils/image-models';
 import {
@@ -130,6 +131,7 @@ export function AdminImageStudioSettingsPage(
   const userPreferencesQuery = useUserPreferences();
   const updateSetting = useUpdateSetting();
   const imageModelsQuery = useStudioImageModels();
+  const { projectId: selectedProjectId } = useProjectsState();
 
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState<StudioSettingsTab>('pipeline');
@@ -152,15 +154,15 @@ export function AdminImageStudioSettingsPage(
   const [backfillRunning, setBackfillRunning] = useState<boolean>(false);
   const [backfillResultText, setBackfillResultText] = useState<string>('');
   const [modelToAdd, setModelToAdd] = useState<string>('');
+  const hydratedSignatureRef = useRef<string | null>(null);
 
-  // Derived state for settings initialization
-  const [prevSettingsData, setPrevSettingsData] = useState<unknown>(null);
   const promptEngineRaw = settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY);
   const promptEngineSettings = useMemo(
     () => parsePromptEngineSettings(promptEngineRaw),
     [promptEngineRaw]
   );
   const heavyMap = heavySettings.data ?? new Map<string, string>();
+  const liveProjectId = selectedProjectId.trim();
   const activeProjectIdFromPreferences =
     typeof userPreferencesQuery.data?.imageStudioLastProjectId === 'string'
       ? userPreferencesQuery.data.imageStudioLastProjectId.trim()
@@ -168,25 +170,26 @@ export function AdminImageStudioSettingsPage(
   const legacyActiveProjectId = parseImageStudioActiveProject(
     heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)
   );
-  const activeProjectId = activeProjectIdFromPreferences || legacyActiveProjectId;
+  const activeProjectId = liveProjectId || activeProjectIdFromPreferences || legacyActiveProjectId;
   const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
   const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const projectStudioSettingsRaw =
     projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
   const studioSettingsRaw = projectStudioSettingsRaw ?? globalStudioSettingsRaw;
+  const openaiModelFallback = settingsStore.get('openai_model');
+  const apiKeyFallback = settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? settingsStore.get('openai_api_key') ?? '';
+  const hydrationSignature = `${projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY}:${studioSettingsRaw ?? ''}:${openaiModelFallback ?? ''}:${apiKeyFallback}:${promptEngineRaw ?? ''}`;
 
   useEffect(() => {
-    if (!heavySettings.data || settingsLoaded) return;
-    if (userPreferencesQuery.isLoading) return;
-    if (heavySettings.data === prevSettingsData) return;
-
-    setPrevSettingsData(heavySettings.data);
+    if (settingsStore.isLoading || heavySettings.isLoading || userPreferencesQuery.isLoading) return;
+    if (hydratedSignatureRef.current === hydrationSignature) {
+      if (!settingsLoaded) setSettingsLoaded(true);
+      return;
+    }
 
     const storedRaw = studioSettingsRaw;
     const stored = parseImageStudioSettings(storedRaw);
     const promptEngineStored = parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY));
-    const openaiModelFallback = settingsStore.get('openai_model');
-    const apiKeyFallback = settingsStore.get(IMAGE_STUDIO_OPENAI_API_KEY_KEY) ?? settingsStore.get('openai_api_key') ?? '';
     const hasStoredStudioSettings = Boolean(storedRaw && storedRaw.trim().length > 0);
 
     const hydrated: ImageStudioSettings =
@@ -214,17 +217,20 @@ export function AdminImageStudioSettingsPage(
     setPromptValidationRulesText(JSON.stringify(promptEngineStored.promptValidation.rules, null, 2));
     setPromptValidationRulesError(null);
     setModelToAdd('');
+    hydratedSignatureRef.current = hydrationSignature;
     setSettingsLoaded(true);
   }, [
-    heavySettings.data,
-    prevSettingsData,
+    hydrationSignature,
     settingsLoaded,
+    settingsStore.isLoading,
+    heavySettings.isLoading,
     settingsStore,
     userPreferencesQuery.isLoading,
     studioSettingsRaw,
   ]);
 
   const handleRefresh = useCallback(async (): Promise<void> => {
+    hydratedSignatureRef.current = null;
     setSettingsLoaded(false);
     settingsStore.refetch();
     await heavySettings.refetch().catch(() => {});
@@ -320,7 +326,9 @@ export function AdminImageStudioSettingsPage(
     };
 
     try {
-      const targetSettingsKey = projectSettingsKey ?? IMAGE_STUDIO_SETTINGS_KEY;
+      const targetProjectId = selectedProjectId.trim() || activeProjectId.trim();
+      const targetSettingsKey =
+        getImageStudioProjectSettingsKey(targetProjectId) ?? IMAGE_STUDIO_SETTINGS_KEY;
       await updateSetting.mutateAsync({
         key: targetSettingsKey,
         value: serializeSetting(nextStudioSettings),
@@ -344,7 +352,15 @@ export function AdminImageStudioSettingsPage(
           },
         }),
       });
-      toast('Image Studio settings saved.', { variant: 'success' });
+      setStudioSettings(nextStudioSettings);
+      hydratedSignatureRef.current = null;
+      await heavySettings.refetch().catch(() => {});
+      toast(
+        targetProjectId
+          ? `Image Studio settings saved for project "${targetProjectId}".`
+          : 'Image Studio global settings saved.',
+        { variant: 'success' }
+      );
       onSaved?.();
     } catch (error) {
       logClientError(error, { context: { source: 'AdminImageStudioSettingsPage', action: 'saveSettings' } });
@@ -356,12 +372,14 @@ export function AdminImageStudioSettingsPage(
     promptValidationRulesError,
     studioSettings,
     imageStudioApiKey,
+    selectedProjectId,
+    activeProjectId,
     promptValidationRulesText,
     promptEngineSettings,
     toast,
     updateSetting,
     onSaved,
-    projectSettingsKey,
+    heavySettings,
   ]);
 
   const resetStudioSettings = useCallback((): void => {
@@ -605,14 +623,17 @@ export function AdminImageStudioSettingsPage(
         actions={
           <>
             {!embedded ? (
-              <UnifiedButton type='button' variant='outline' asChild>
+              <Button
+                size='xs' type='button' variant='outline' asChild>
                 <Link href='/admin/image-studio'>Back to Studio</Link>
-              </UnifiedButton>
+              </Button>
             ) : null}
-            <UnifiedButton type='button' variant='outline' asChild>
+            <Button
+              size='xs' type='button' variant='outline' asChild>
               <Link href='/admin/validator'>Global Validation Patterns</Link>
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button
+              size='xs'
               type='button'
               variant='outline'
               onClick={() => { void handleRefresh(); }}
@@ -621,7 +642,7 @@ export function AdminImageStudioSettingsPage(
             >
               <RefreshCcw className={cn('mr-2 size-4', settingsStore.isFetching ? 'animate-spin' : '')} />
               Refresh
-            </UnifiedButton>
+            </Button>
           </>
         }
       />
@@ -630,21 +651,21 @@ export function AdminImageStudioSettingsPage(
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <div className='text-xs text-gray-300'>Studio Settings</div>
           <div className='flex items-center gap-2'>
-            <UnifiedButton
+            <Button
+              size='xs'
               variant='outline'
-              size='sm'
               onClick={resetStudioSettings}
               disabled={updateSetting.isPending}
             >
               Reset
-            </UnifiedButton>
-            <UnifiedButton
-              size='sm'
+            </Button>
+            <Button
+              size='xs'
               onClick={() => { saveStudioSettings().catch(() => {}); }}
               disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
             >
               {updateSetting.isPending ? 'Saving...' : 'Save'}
-            </UnifiedButton>
+            </Button>
           </div>
         </div>
 
@@ -702,7 +723,8 @@ export function AdminImageStudioSettingsPage(
                 </label>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Trigger</div>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={studioSettings.projectSequencing.trigger}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -720,7 +742,8 @@ export function AdminImageStudioSettingsPage(
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Upscale Scale</div>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={String(studioSettings.projectSequencing.upscaleScale)}
                     onValueChange={(value: string) => {
                       const numeric = Number(value);
@@ -765,28 +788,28 @@ export function AdminImageStudioSettingsPage(
                         ) : null}
                       </label>
                       <div className='flex items-center gap-1'>
-                        <UnifiedButton
+                        <Button
+                          size='xs'
                           type='button'
                           variant='outline'
-                          size='sm'
                           className='h-7 px-2 text-xs'
                           onClick={() => moveProjectSequencingOperation(operation, -1)}
                           disabled={!enabled || orderIndex <= 0}
                           title='Move up'
                         >
                           Up
-                        </UnifiedButton>
-                        <UnifiedButton
+                        </Button>
+                        <Button
+                          size='xs'
                           type='button'
                           variant='outline'
-                          size='sm'
                           className='h-7 px-2 text-xs'
                           onClick={() => moveProjectSequencingOperation(operation, 1)}
                           disabled={!enabled || orderIndex < 0 || orderIndex >= operations.length - 1}
                           title='Move down'
                         >
                           Down
-                        </UnifiedButton>
+                        </Button>
                       </div>
                     </div>
                   );
@@ -825,7 +848,8 @@ export function AdminImageStudioSettingsPage(
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Mode</div>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={studioSettings.promptExtraction.mode}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -843,7 +867,8 @@ export function AdminImageStudioSettingsPage(
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Model</div>
-                  <UnifiedInput
+                  <Input
+                    size='sm'
                     value={studioSettings.promptExtraction.gpt.model}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -863,7 +888,8 @@ export function AdminImageStudioSettingsPage(
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Temperature</div>
-                  <UnifiedInput
+                  <Input
+                    size='sm'
                     type='number'
                     value={studioSettings.promptExtraction.gpt.temperature ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -886,7 +912,8 @@ export function AdminImageStudioSettingsPage(
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Top P</div>
-                  <UnifiedInput
+                  <Input
+                    size='sm'
                     type='number'
                     value={studioSettings.promptExtraction.gpt.top_p ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -912,7 +939,8 @@ export function AdminImageStudioSettingsPage(
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Max Output Tokens</div>
-                  <UnifiedInput
+                  <Input
+                    size='sm'
                     type='number'
                     value={studioSettings.promptExtraction.gpt.max_output_tokens ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -994,7 +1022,8 @@ export function AdminImageStudioSettingsPage(
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Mode</div>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={studioSettings.uiExtractor.mode}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1012,7 +1041,8 @@ export function AdminImageStudioSettingsPage(
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Model</div>
-                  <UnifiedInput
+                  <Input
+                    size='sm'
                     value={studioSettings.uiExtractor.model}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1031,7 +1061,8 @@ export function AdminImageStudioSettingsPage(
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Temperature</div>
-                  <UnifiedInput
+                  <Input
+                    size='sm'
                     type='number'
                     value={studioSettings.uiExtractor.temperature ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1054,7 +1085,8 @@ export function AdminImageStudioSettingsPage(
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Max Output Tokens</div>
-                  <UnifiedInput
+                  <Input
+                    size='sm'
                     type='number'
                     value={studioSettings.uiExtractor.max_output_tokens ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1085,7 +1117,8 @@ export function AdminImageStudioSettingsPage(
                 Generation runs with the Images API (image-in, image-out).
               </div>
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]'>
-                <UnifiedSelect
+                <SelectSimple
+                  size='sm'
                   value={selectedGenerationModel}
                   onValueChange={(value: string) => {
                     setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1105,20 +1138,21 @@ export function AdminImageStudioSettingsPage(
                   triggerClassName='h-8 text-xs'
                   ariaLabel='Generation model'
                 />
-                <UnifiedButton
+                <Button
+                  size='xs'
                   type='button'
                   variant='outline'
-                  size='sm'
                   onClick={() => { void imageModelsQuery.refetch(); }}
                   disabled={imageModelsQuery.isFetching}
                 >
                   {imageModelsQuery.isFetching ? 'Refreshing…' : 'Refresh Models'}
-                </UnifiedButton>
+                </Button>
               </div>
               <div className='rounded border border-border/60 bg-card/40 p-2'>
                 <div className='mb-2 text-[11px] text-gray-500'>Quick-switch model list</div>
                 <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]'>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={modelToAdd || ''}
                     onValueChange={(value: string) => {
                       setModelToAdd(value);
@@ -1129,10 +1163,10 @@ export function AdminImageStudioSettingsPage(
                     disabled={addableGenerationModelOptions.length === 0}
                     ariaLabel='Add model to quick-switch list'
                   />
-                  <UnifiedButton
+                  <Button
+                    size='xs'
                     type='button'
                     variant='outline'
-                    size='sm'
                     disabled={!modelToAdd}
                     onClick={() => {
                       if (!modelToAdd) return;
@@ -1153,7 +1187,7 @@ export function AdminImageStudioSettingsPage(
                     }}
                   >
                     Add Model
-                  </UnifiedButton>
+                  </Button>
                 </div>
                 <div className='mt-2 flex flex-wrap gap-2'>
                   {quickSwitchModels.map((modelId) => {
@@ -1168,10 +1202,10 @@ export function AdminImageStudioSettingsPage(
                             : 'border-border/60 bg-card/30 text-gray-300'
                         )}
                       >
-                        <UnifiedButton
+                        <Button
+                          size='xs'
                           type='button'
                           variant='ghost'
-                          size='sm'
                           className='h-auto rounded-none border-0 bg-transparent p-0 text-[11px] hover:bg-transparent hover:underline'
                           onClick={() =>
                             setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1188,11 +1222,11 @@ export function AdminImageStudioSettingsPage(
                           }
                         >
                           {modelId}
-                        </UnifiedButton>
-                        <UnifiedButton
+                        </Button>
+                        <Button
+                          size='xs'
                           type='button'
                           variant='ghost'
-                          size='sm'
                           className='h-auto rounded-none border-0 bg-transparent p-0 text-[11px] text-gray-400 hover:bg-transparent hover:text-red-300'
                           title='Remove from quick-switch list'
                           onClick={() =>
@@ -1219,7 +1253,7 @@ export function AdminImageStudioSettingsPage(
                           }
                         >
                           Remove
-                        </UnifiedButton>
+                        </Button>
                       </div>
                     );
                   })}
@@ -1246,7 +1280,8 @@ export function AdminImageStudioSettingsPage(
             <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
               <div className='space-y-1'>
                 <div className='text-[11px] text-gray-500'>OpenAI API Key</div>
-                <UnifiedInput
+                <Input
+                  size='sm'
                   type='password'
                   value={imageStudioApiKey}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageStudioApiKey(e.target.value)}
@@ -1261,7 +1296,8 @@ export function AdminImageStudioSettingsPage(
               {modelCapabilities.supportsUser ? (
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>User (optional)</div>
-                  <UnifiedInput
+                  <Input
+                    size='sm'
                     value={studioSettings.targetAi.openai.user ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1287,7 +1323,8 @@ export function AdminImageStudioSettingsPage(
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Size</div>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={modelAwareSizeValue}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1311,7 +1348,8 @@ export function AdminImageStudioSettingsPage(
                 </div>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Quality</div>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={modelAwareQualityValue}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1340,7 +1378,8 @@ export function AdminImageStudioSettingsPage(
               <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
                 <div className='space-y-1'>
                   <div className='text-[11px] text-gray-500'>Background</div>
-                  <UnifiedSelect
+                  <SelectSimple
+                    size='sm'
                     value={modelAwareBackgroundValue}
                     onValueChange={(value: string) =>
                       setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1367,7 +1406,8 @@ export function AdminImageStudioSettingsPage(
                 {modelCapabilities.supportsOutputFormat ? (
                   <div className='space-y-1'>
                     <div className='text-[11px] text-gray-500'>Format</div>
-                    <UnifiedSelect
+                    <SelectSimple
+                      size='sm'
                       value={modelAwareFormatValue}
                       onValueChange={(value: string) =>
                         setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1393,7 +1433,8 @@ export function AdminImageStudioSettingsPage(
                 {modelCapabilities.supportsCount ? (
                   <div className='space-y-1'>
                     <div className='text-[11px] text-gray-500'>N</div>
-                    <UnifiedInput
+                    <Input
+                      size='sm'
                       type='number'
                       value={studioSettings.targetAi.openai.image.n ?? ''}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1425,7 +1466,8 @@ export function AdminImageStudioSettingsPage(
                   {modelCapabilities.supportsModeration ? (
                     <div className='space-y-1'>
                       <div className='text-[11px] text-gray-500'>Moderation</div>
-                      <UnifiedSelect
+                      <SelectSimple
+                        size='sm'
                         value={studioSettings.targetAi.openai.image.moderation ?? '__null__'}
                         onValueChange={(value: string) =>
                           setStudioSettings((prev: ImageStudioSettings) => ({
@@ -1454,7 +1496,8 @@ export function AdminImageStudioSettingsPage(
                   {modelCapabilities.supportsOutputCompression ? (
                     <div className='space-y-1'>
                       <div className='text-[11px] text-gray-500'>Output Compression</div>
-                      <UnifiedInput
+                      <Input
+                        size='sm'
                         type='number'
                         value={studioSettings.targetAi.openai.image.output_compression ?? ''}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1486,7 +1529,8 @@ export function AdminImageStudioSettingsPage(
                   {modelCapabilities.supportsPartialImages ? (
                     <div className='space-y-1'>
                       <div className='text-[11px] text-gray-500'>Partial Images</div>
-                      <UnifiedInput
+                      <Input
+                        size='sm'
                         type='number'
                         value={studioSettings.targetAi.openai.image.partial_images ?? ''}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1543,7 +1587,8 @@ export function AdminImageStudioSettingsPage(
 
             <div className='space-y-1'>
               <div className='text-[11px] text-gray-500'>Advanced Overrides (JSON)</div>
-              <UnifiedTextarea
+              <Textarea
+                size='sm'
                 value={advancedOverridesText}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
                 className='h-28 font-mono text-[11px]'
@@ -1572,7 +1617,8 @@ export function AdminImageStudioSettingsPage(
             <div className='text-[11px] text-gray-500'>
               Validates programmatic prompts and suggests fixes when patterns look almost correct. Auto format uses each rule’s <span className='text-gray-300'>autofix</span> operations.
             </div>
-            <UnifiedTextarea
+            <Textarea
+              size='sm'
               value={promptValidationRulesText}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handlePromptValidationRulesChange(e.target.value)}
               className='h-56 font-mono text-[11px]'
@@ -1586,14 +1632,14 @@ export function AdminImageStudioSettingsPage(
           <TabsContent value='maintenance' className='mt-4 space-y-3'>
             <div className='flex flex-wrap items-center justify-between gap-2'>
               <div className='text-xs text-gray-300'>Card Metadata Backfill</div>
-              <UnifiedButton
+              <Button
+                size='xs'
                 type='button'
-                size='sm'
                 onClick={() => { void runCardBackfill(); }}
                 disabled={backfillRunning}
               >
                 {backfillRunning ? 'Running...' : backfillDryRun ? 'Run Dry-Run' : 'Run Backfill'}
-              </UnifiedButton>
+              </Button>
             </div>
 
             <div className='text-[11px] text-gray-500'>
@@ -1604,7 +1650,8 @@ export function AdminImageStudioSettingsPage(
             <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Project ID (optional)</Label>
-                <UnifiedInput
+                <Input
+                  size='sm'
                   value={backfillProjectId}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => setBackfillProjectId(event.target.value)}
                   className='h-8'
@@ -1613,7 +1660,8 @@ export function AdminImageStudioSettingsPage(
               </div>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Execution Mode</Label>
-                <UnifiedSelect
+                <SelectSimple
+                  size='sm'
                   value={backfillDryRun ? 'dry' : 'write'}
                   onValueChange={(value: string) => setBackfillDryRun(value !== 'write')}
                   options={BACKFILL_EXECUTION_MODE_OPTIONS}

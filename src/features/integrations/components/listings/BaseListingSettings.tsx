@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import { Label, UnifiedSelect, Checkbox } from '@/shared/ui';
+import { Label, SelectSimple, Checkbox } from '@/shared/ui';
 
 export function BaseListingSettings(): React.JSX.Element {
   const {
@@ -25,7 +25,7 @@ export function BaseListingSettings(): React.JSX.Element {
         <Label htmlFor='inventory'>
           Base.com Inventory {loadingInventories && '(Loading...)'}
         </Label>
-        <UnifiedSelect
+        <SelectSimple
           value={selectedInventoryId}
           onValueChange={setSelectedInventoryId}
           disabled={loadingInventories || inventories.length === 0}
@@ -46,7 +46,7 @@ export function BaseListingSettings(): React.JSX.Element {
 
       <div className='space-y-2'>
         <Label htmlFor='template'>Template (Optional)</Label>
-        <UnifiedSelect
+        <SelectSimple
           value={selectedTemplateId}
           onValueChange={setSelectedTemplateId}
           options={[

@@ -9,18 +9,26 @@ export function IntegrationTabsList(): React.JSX.Element {
     showPlaywright,
   } = useIntegrationModalViewContext();
 
-  const colsClass =
-    showPlaywright || showAllegroConsole || showBaseConsole ? 'grid-cols-5' : 'grid-cols-4';
+  const tabs = [
+    { value: 'connections', label: 'Connections' },
+    { value: 'settings', label: 'Settings' },
+    { value: 'allegro-api', label: 'Allegro API', show: showAllegroConsole },
+    { value: 'base-api', label: 'Base API', show: showBaseConsole },
+    { value: 'price-sync', label: 'Price Sync' },
+    { value: 'inventory-sync', label: 'Inventory Sync' },
+    { value: 'playwright', label: 'Playwright', show: showPlaywright },
+  ].filter(t => t.show !== false);
 
   return (
-    <TabsList className={`grid w-full ${colsClass}`}>
-      <TabsTrigger value='connections'>Connections</TabsTrigger>
-      <TabsTrigger value='settings'>Settings</TabsTrigger>
-      {showAllegroConsole && <TabsTrigger value='allegro-api'>Allegro API</TabsTrigger>}
-      {showBaseConsole && <TabsTrigger value='base-api'>Base API</TabsTrigger>}
-      <TabsTrigger value='price-sync'>Price Sync</TabsTrigger>
-      <TabsTrigger value='inventory-sync'>Inventory Sync</TabsTrigger>
-      {showPlaywright && <TabsTrigger value='playwright'>Playwright</TabsTrigger>}
+    <TabsList 
+      className='grid w-full' 
+      style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+    >
+      {tabs.map(tab => (
+        <TabsTrigger key={tab.value} value={tab.value}>
+          {tab.label}
+        </TabsTrigger>
+      ))}
     </TabsList>
   );
 }

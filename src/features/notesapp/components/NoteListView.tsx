@@ -4,7 +4,7 @@ import React from 'react';
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, ThemeRecord } from '@/shared/types/domain/notes';
-import { Button, ListPanel, EmptyState, Pagination, UnifiedSelect } from '@/shared/ui';
+import { Button, ListPanel, EmptyState, Pagination, SelectSimple } from '@/shared/ui';
 
 import { NoteCard } from './NoteCard';
 import { NotesFilters } from './NotesFilters';
@@ -61,6 +61,7 @@ export function NoteListView(): React.JSX.Element {
             <Button
               onClick={onExpandFolderTree}
               variant='outline'
+              size='xs'
               className='border text-gray-300 hover:bg-muted/50 hover:text-white'
             >
               <ChevronLeft className='-scale-x-100' size={16} />
@@ -81,7 +82,7 @@ export function NoteListView(): React.JSX.Element {
           </h1>
           <div className='flex items-center gap-2'>
             <span className='text-xs text-gray-500'>Theme</span>
-            <UnifiedSelect
+            <SelectSimple
               value={selectedFolderThemeId || ''}
               onValueChange={(val: string) => {
                 void handleThemeChange(val || null);
@@ -93,7 +94,8 @@ export function NoteListView(): React.JSX.Element {
                   label: theme.name,
                 })),
               ]}
-              triggerClassName='h-8 w-32 text-xs bg-gray-800 border-border text-gray-300'
+              size='sm'
+              className='w-32'
             />
           </div>
           <div className='ml-auto flex items-center gap-2'>
@@ -144,6 +146,8 @@ export function NoteListView(): React.JSX.Element {
           {buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
             <React.Fragment key={index}>
               <Button
+                variant='ghost'
+                size='xs'
                 onClick={(): void => {
                   if (crumb.id) setSelectedFolderId(crumb.id);
                   setSelectedNote(null);

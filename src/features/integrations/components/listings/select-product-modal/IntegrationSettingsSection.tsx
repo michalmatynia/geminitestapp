@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations/types/listings';
-import { FormField, FormSection, UnifiedSelect } from '@/shared/ui';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui';
 
 import { BaseListingSettings } from '../BaseListingSettings';
 import { useSelectProductForListingModalContext } from './context/SelectProductForListingModalContext';
@@ -29,7 +29,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
         ) : (
           <>
             <FormField label='Marketplace'>
-              <UnifiedSelect
+              <SelectSimple
                 value={selectedIntegrationId ?? undefined}
                 onValueChange={setSelectedIntegrationId}
                 options={integrationsWithConnections.map((i) => ({ value: i.id, label: i.name }))}
@@ -39,7 +39,7 @@ export function IntegrationSettingsSection(): React.JSX.Element {
 
             {selectedIntegration && (
               <FormField label='Account'>
-                <UnifiedSelect
+                <SelectSimple
                   value={selectedConnectionId ?? undefined}
                   onValueChange={setSelectedConnectionId}
                   options={selectedIntegration.connections.map((c: IntegrationConnectionBasic) => ({

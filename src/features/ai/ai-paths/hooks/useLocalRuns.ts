@@ -1,0 +1,129 @@
+'use client';
+
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
+
+import { AI_PATHS_LOCAL_RUNS_KEY, parseLocalRuns } from '@/features/ai/ai-paths/lib';
+import type { AiPathLocalRunRecord } from '@/features/ai/ai-paths/lib';
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/features/ai/ai-paths/lib/run-sources';
+import {
+  fetchAiPathsSettingsCached,
+  invalidateAiPathsSettingsCache,
+  updateAiPathsSetting,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { useToast } from '@/shared/ui';
+import { serializeSetting } from '@/shared/utils/settings-json';
+
+const AI_PATHS_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
+const TERMINAL_LOCAL_RUN_STATUSES = new Set(['success', 'error']);
+
+export type LocalRunsScope = 'terminal' | 'all';
+
+interface UseLocalRunsOptions {
+  sourceFilter?: string | null | undefined;
+  sourceMode?: 'include' | 'exclude' | undefined;
+}
+
+const shouldIncludeRun = (
+  run: AiPathLocalRunRecord,
+  sourceFilter?: string | null | undefined,
+  sourceMode?: 'include' | 'exclude' | undefined
+): boolean => {
+  if (!sourceFilter) return true;
+  const sourceValue = run.source ?? null;
+  if (sourceMode === 'exclude') {
+    if (sourceFilter === 'ai_paths_ui') {
+      return sourceValue !== null && !AI_PATHS_SOURCES.has(sourceValue);
+    }
+    return sourceValue !== sourceFilter;
+  }
+  if (sourceFilter === 'ai_paths_ui') {
+    return sourceValue === null || (sourceValue !== null && AI_PATHS_SOURCES.has(sourceValue));
+  }
+  return sourceValue === sourceFilter;
+};
+
+export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions = {}) {
+  const { toast } = useToast();
+  const settingsQuery = useQuery({
+    queryKey: QUERY_KEYS.ai.aiPaths.settings(),
+    queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
+      await fetchAiPathsSettingsCached({ bypassCache: true }),
+  });
+
+  const updateSetting = useMutation({
+    mutationFn: async (nextRuns: AiPathLocalRunRecord[]): Promise<void> => {
+      await updateAiPathsSetting(AI_PATHS_LOCAL_RUNS_KEY, serializeSetting(nextRuns));
+      invalidateAiPathsSettingsCache();
+    },
+    onSuccess: (): void => {
+      void settingsQuery.refetch();
+    },
+  });
+
+  const rawRuns = useMemo(() => {
+    const map = new Map((settingsQuery.data ?? []).map((item) => [item.key, item.value]));
+    return map.get(AI_PATHS_LOCAL_RUNS_KEY) ?? null;
+  }, [settingsQuery.data]);
+
+  const allRuns = useMemo(() => parseLocalRuns(rawRuns), [rawRuns]);
+  
+  const runs = useMemo(() => {
+    return allRuns.filter((run: AiPathLocalRunRecord) => shouldIncludeRun(run, sourceFilter, sourceMode));
+  }, [allRuns, sourceFilter, sourceMode]);
+
+  const metrics = useMemo(() => {
+    const total = runs.length;
+    const success = runs.filter((run: AiPathLocalRunRecord) => run.status === 'success').length;
+    const error = runs.filter((run: AiPathLocalRunRecord) => run.status === 'error').length;
+    const durations = runs
+      .map((run: AiPathLocalRunRecord) => run.durationMs)
+      .filter((value: number | null | undefined): value is number => Number.isFinite(value));
+    const avgDuration = durations.length
+      ? Math.round(durations.reduce((acc: number, value: number) => acc + value, 0) / durations.length)
+      : null;
+    const p95Duration = durations.length
+      ? [...durations].sort((a: number, b: number) => a - b)[Math.max(0, Math.ceil(durations.length * 0.95) - 1)] ?? null
+      : null;
+    const successRate = total > 0 ? Math.round((success / total) * 100) : 0;
+    const lastRunAt = runs[0]?.startedAt ?? null;
+    return { total, success, error, avgDuration, p95Duration, successRate, lastRunAt };
+  }, [runs]);
+
+  const clearRuns = useCallback(async (scope: LocalRunsScope): Promise<void> => {
+    const nextRuns = allRuns.filter((run: AiPathLocalRunRecord) => {
+      const inPanel = shouldIncludeRun(run, sourceFilter, sourceMode);
+      if (!inPanel) return true;
+      if (scope === 'all') return false;
+      return !TERMINAL_LOCAL_RUN_STATUSES.has(run.status);
+    });
+
+    try {
+      await updateSetting.mutateAsync(nextRuns);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
+        );
+      }
+      toast(
+        scope === 'all'
+          ? 'Cleared all local runs in this list.'
+          : 'Cleared finished local runs in this list.',
+        { variant: 'success' }
+      );
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Failed to clear local runs.', { variant: 'error' });
+    }
+  }, [allRuns, sourceFilter, sourceMode, toast, updateSetting]);
+
+  return {
+    runs,
+    metrics,
+    isLoading: settingsQuery.isLoading,
+    isFetching: settingsQuery.isFetching,
+    isUpdating: updateSetting.isPending,
+    refetch: () => { void settingsQuery.refetch(); },
+    clearRuns,
+  };
+}

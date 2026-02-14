@@ -28,7 +28,7 @@ export const smoothPoints = (points: VectorPoint[], iterations: number = 1): Vec
       const r = { x: 0.25 * p0.x + 0.75 * p1.x, y: 0.25 * p0.y + 0.75 * p1.y };
       next.push(q, r);
     }
-    next.push(result[result.length - 1]);
+    next.push(result[result.length - 1]!);
     result = next;
   }
   return result;
@@ -44,7 +44,7 @@ export const simplifyPoints = (points: VectorPoint[], tolerance: number = 0.0025
     const a = pts[start]!;
     const b = pts[end]!;
     for (let i = start + 1; i < end; i += 1) {
-      const dist = perpendicularDistanceSq(pts[i], a, b);
+      const dist = perpendicularDistanceSq(pts[i]!, a, b);
       if (dist > maxDist) {
         index = i;
         maxDist = dist;

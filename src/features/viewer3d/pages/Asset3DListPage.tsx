@@ -232,9 +232,9 @@ export function Asset3DListPage(): React.JSX.Element {
                   {asset.name || asset.filename}
                 </p>
                 <div className='mt-2 flex items-center gap-2'>
-                  {asset.category && (
+                  {asset.categoryId && (
                     <span className='rounded bg-blue-500/10 px-1.5 py-0.5 text-xs text-blue-300'>
-                      {asset.category}
+                      {asset.categoryId}
                     </span>
                   )}
                   <span className='text-xs text-muted-foreground'>
@@ -273,9 +273,9 @@ export function Asset3DListPage(): React.JSX.Element {
                   </div>
                 </TableCell>
                 <TableCell className='hidden sm:table-cell'>
-                  {asset.category ? (
+                  {asset.categoryId ? (
                     <span className='rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300'>
-                      {asset.category}
+                      {asset.categoryId}
                     </span>
                   ) : (
                     <span className='text-sm text-muted-foreground'>-</span>

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
+import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -138,7 +139,9 @@ export function useIntegrationSelection(
   const isBaseComIntegration = ['baselinker', 'base-com', 'base'].includes(
     selectedIntegration?.slug ?? ''
   );
-  const isTraderaIntegration = (selectedIntegration?.slug ?? '').toLowerCase() === 'tradera';
+  const isTraderaIntegration = TRADERA_INTEGRATION_SLUGS.has(
+    (selectedIntegration?.slug ?? '').toLowerCase()
+  );
 
   return {
     integrations,

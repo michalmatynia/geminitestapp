@@ -2,17 +2,17 @@
 
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
-
 import { Button, type ButtonProps } from './button';
 
+/** @deprecated Use Button with size="xs" instead */
 export interface UnifiedButtonProps extends ButtonProps {}
 
+/** @deprecated Use Button with size="xs" instead */
 export const UnifiedButton = React.forwardRef<HTMLButtonElement, UnifiedButtonProps>(
-  ({ className, ...props }, ref) => (
+  ({ size = 'xs', ...props }, ref) => (
     <Button
       ref={ref}
-      className={cn('text-xs', className)}
+      size={size}
       {...props}
     />
   )

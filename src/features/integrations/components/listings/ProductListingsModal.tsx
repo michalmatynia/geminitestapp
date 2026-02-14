@@ -3,6 +3,10 @@
 import React, { useMemo } from 'react';
 
 import { ExportLogViewer } from '@/features/integrations/components/listings/ExportLogViewer';
+import {
+  BASE_INTEGRATION_SLUGS,
+  TRADERA_INTEGRATION_SLUGS,
+} from '@/features/integrations/constants/slugs';
 import { ProductListingsProvider, useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import type { ProductWithImages } from '@/features/products/types';
@@ -31,8 +35,6 @@ type ProductListingsModalProps = {
   onListingsUpdated?: (() => void) | undefined;
 };
 
-const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
-
 const normalizeSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
@@ -45,6 +47,9 @@ const matchesIntegrationSlug = (
   const listing = normalizeSlug(listingSlug);
   if (BASE_INTEGRATION_SLUGS.has(filter)) {
     return BASE_INTEGRATION_SLUGS.has(listing);
+  }
+  if (TRADERA_INTEGRATION_SLUGS.has(filter)) {
+    return TRADERA_INTEGRATION_SLUGS.has(listing);
   }
   return listing === filter;
 };

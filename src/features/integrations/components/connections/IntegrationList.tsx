@@ -3,15 +3,20 @@
 import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { Integration, integrationDefinitions } from '@/features/integrations/types/integrations-ui';
+import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
 import { Button, ListPanel } from '@/shared/ui';
 
 
 export function IntegrationList(): React.JSX.Element {
-  const { integrations, handleIntegrationClick } = useIntegrationsContext();
-  const integrationSlugs = integrations.map((integration: Integration) => integration.slug);
-  const hasIntegrations = integrations.length > 0;
+  const {
+    handleIntegrationClick,
+    integrationSlugs,
+    hasIntegrations,
+    traderaDefinition,
+    traderaApiDefinition,
+    allegroDefinition,
+    baselinkerDefinition,
+  } = useIntegrationList();
 
   return (
     <ListPanel
@@ -48,9 +53,33 @@ export function IntegrationList(): React.JSX.Element {
                   Tradera
                   <Button
                     type='button'
-                    onClick={() => void handleIntegrationClick(integrationDefinitions[0])}
+                    onClick={() => {
+                      if (traderaDefinition) {
+                        void handleIntegrationClick(traderaDefinition);
+                      }
+                    }}
                     className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
                     aria-label='Manage Tradera settings'
+                  >
+                    <SettingsIcon className='size-3.5' />
+                  </Button>
+                </div>
+              )}
+              {integrationSlugs.includes('tradera-api') && (
+                <div className='flex items-center gap-2 rounded-full border border-cyan-400/50 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-200'>
+                  <span className='rounded bg-blue-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-blue-100'>
+                    API
+                  </span>
+                  Tradera API
+                  <Button
+                    type='button'
+                    onClick={() => {
+                      if (traderaApiDefinition) {
+                        void handleIntegrationClick(traderaApiDefinition);
+                      }
+                    }}
+                    className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
+                    aria-label='Manage Tradera API settings'
                   >
                     <SettingsIcon className='size-3.5' />
                   </Button>
@@ -64,7 +93,11 @@ export function IntegrationList(): React.JSX.Element {
                   Allegro
                   <Button
                     type='button'
-                    onClick={() => void handleIntegrationClick(integrationDefinitions[1])}
+                    onClick={() => {
+                      if (allegroDefinition) {
+                        void handleIntegrationClick(allegroDefinition);
+                      }
+                    }}
                     className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
                     aria-label='Manage Allegro settings'
                   >
@@ -80,7 +113,11 @@ export function IntegrationList(): React.JSX.Element {
                   Baselinker
                   <Button
                     type='button'
-                    onClick={() => void handleIntegrationClick(integrationDefinitions[2])}
+                    onClick={() => {
+                      if (baselinkerDefinition) {
+                        void handleIntegrationClick(baselinkerDefinition);
+                      }
+                    }}
                     className='rounded-full border border-white/20 bg-white/10 p-1 text-white hover:bg-white/20'
                     aria-label='Manage Baselinker settings'
                   >

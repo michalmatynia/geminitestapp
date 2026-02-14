@@ -60,27 +60,28 @@ export function AllegroSettings(): React.JSX.Element {
           <div className='flex flex-wrap items-center gap-3'>
             <Button
               type='button'
+              variant='primary'
               onClick={handleAllegroAuthorize}
-              className='rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
             >
               {allegroConnected ? 'Reauthorize' : 'Connect Allegro'}
             </Button>
             <Button
               type='button'
+              variant='outline'
               onClick={() => { void handleAllegroSandboxConnect(); }}
-              className='rounded-md border border-amber-500/50 px-3 py-2 text-sm font-semibold text-amber-200 hover:border-amber-400'
+              className='border-amber-500/50 text-amber-200 hover:border-amber-400'
               disabled={savingAllegroSandbox}
             >
               {savingAllegroSandbox ? 'Preparing...' : 'Test Sandbox Connection'}
             </Button>
-            <span className='rounded-full border bg-card/60 px-2 py-1 text-[10px] font-semibold text-gray-300'>
+            <span className='rounded-full border border-border bg-card/60 px-2 py-1 text-[10px] font-semibold text-gray-300'>
               {activeConnection?.allegroUseSandbox ? 'Sandbox' : 'Production'}
             </span>
             {allegroConnected && (
               <Button
                 type='button'
+                variant='outline'
                 onClick={() => { void handleAllegroDisconnect(); }}
-                className='rounded-md border px-3 py-2 text-sm text-gray-200 hover:border-gray-500'
               >
                 Disconnect
               </Button>

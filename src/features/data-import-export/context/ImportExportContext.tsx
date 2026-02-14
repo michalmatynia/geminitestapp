@@ -415,13 +415,25 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   // Data loading hooks
   const inventoriesQuery = useInventories(selectedBaseConnectionId, isBaseConnected);
   const inventories = useMemo<InventoryOption[]>(() => {
-    const rawInventories = inventoriesQuery.data ?? [];
+    const toText = (value: unknown): string => {
+      if (typeof value === 'string') return value.trim();
+      if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+      return '';
+    };
+    const rawInventories = Array.isArray(inventoriesQuery.data) ? inventoriesQuery.data : [];
     return rawInventories
       .map((inventory) => ({
-        id: inventory.inventory_id,
-        name: inventory.name,
+        id: toText(
+          (inventory as { inventory_id?: unknown; id?: unknown })?.inventory_id ??
+            (inventory as { inventory_id?: unknown; id?: unknown })?.id
+        ),
+        name: toText((inventory as { name?: unknown })?.name),
       }))
-      .filter((inventory: InventoryOption) => inventory.id.length > 0);
+      .filter((inventory: InventoryOption) => inventory.id.length > 0)
+      .map((inventory: InventoryOption) => ({
+        ...inventory,
+        name: inventory.name || inventory.id,
+      }));
   }, [inventoriesQuery.data]);
   const isFetchingInventories = inventoriesQuery.isFetching;
   const refetchInventories = inventoriesQuery.refetch;

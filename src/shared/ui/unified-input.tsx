@@ -2,17 +2,17 @@
 
 import * as React from 'react';
 
-import { cn } from '@/shared/utils';
-
 import { Input, type InputProps } from './input';
 
+/** @deprecated Use Input with size="sm" instead */
 export interface UnifiedInputProps extends InputProps {}
 
+/** @deprecated Use Input with size="sm" instead */
 export const UnifiedInput = React.forwardRef<HTMLInputElement, UnifiedInputProps>(
-  ({ className, ...props }, ref) => (
+  ({ size = 'sm', ...props }, ref) => (
     <Input
       ref={ref}
-      className={cn('h-8 text-xs', className)}
+      size={size}
       {...props}
     />
   )

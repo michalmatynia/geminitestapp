@@ -4,9 +4,10 @@ import React, { useMemo } from 'react';
 
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds/lib/constants';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
+import type { PickerOption } from '@/shared/ui/templates/pickers/types';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
-import { PickerDropdown } from './PickerDropdown';
 import { getAllowedBlockTypes } from './section-registry';
 
 import type { BlockDefinition } from '../../types/page-builder';
@@ -34,8 +35,8 @@ export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.
   const groups = useMemo(() => [
     {
       label: 'Blocks',
-      options: blockTypes.map((def: BlockDefinition) => ({
-        type: def.type,
+      options: blockTypes.map((def: BlockDefinition): PickerOption => ({
+        key: def.type,
         label: def.label,
       })),
     },
@@ -44,9 +45,9 @@ export function BlockPicker({ sectionType, onSelect }: BlockPickerProps): React.
   if (blockTypes.length === 0) return null;
 
   return (
-    <PickerDropdown
+    <GenericPickerDropdown
       groups={groups}
-      onSelect={onSelect}
+      onSelect={(option: PickerOption) => onSelect(option.key)}
       ariaLabel='Add block'
     />
   );

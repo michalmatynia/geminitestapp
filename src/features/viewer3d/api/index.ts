@@ -8,7 +8,7 @@ const API_BASE = '/api/assets3d';
 export async function fetchAssets3D(filters?: Asset3DListFilters): Promise<Asset3DRecord[]> {
   const params: Record<string, string> = {};
   if (filters?.filename) params['filename'] = filters.filename;
-  if (filters?.category) params['category'] = filters.category;
+  if (filters?.categoryId) params['categoryId'] = filters.categoryId;
   if (filters?.search) params['search'] = filters.search;
   if (filters?.isPublic !== undefined) params['isPublic'] = String(filters.isPublic);
   if (filters?.tags && filters.tags.length > 0) {

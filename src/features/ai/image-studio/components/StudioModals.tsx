@@ -915,7 +915,6 @@ export function StudioModals(): React.JSX.Element {
                 <Button size='xs'
                   type='button'
                   variant='outline'
-                  size='sm'
                   onClick={() => {
                     void linkedRunsQuery.refetch();
                   }}
@@ -971,7 +970,6 @@ export function StudioModals(): React.JSX.Element {
                         </div>
                         <Button size='xs'
                           type='button'
-                          size='sm'
                           variant='outline'
                           onClick={() => {
                             void handleApplyLinkedVariantToCard(variant);

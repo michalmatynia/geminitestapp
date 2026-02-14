@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 215ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 23.8s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/cms/pages/slugs/SlugsPage.tsx:324:12
+Type error: Cannot find name 'FormField'.
+
+[0m [90m 322 |[39m       [33m>[39m
+ [90m 323 |[39m         [33m<[39m[33mdiv[39m className[33m=[39m[32m'space-y-4'[39m[33m>[39m
+[31m[1m>[22m[39m[90m 324 |[39m           [33m<[39m[33mFormField[39m label[33m=[39m[32m'Search Available Routes'[39m[33m>[39m
+ [90m     |[39m            [31m[1m^[22m[39m
+ [90m 325 |[39m             [33m<[39m[33mSearchInput[39m
+ [90m 326 |[39m               value[33m=[39m{attachSearch}
+ [90m 327 |[39m               onChange[33m=[39m{(e) [33m=>[39m setAttachSearch(e[33m.[39mtarget[33m.[39mvalue)}[0m
+Next.js build worker exited with code: 1 and signal: null

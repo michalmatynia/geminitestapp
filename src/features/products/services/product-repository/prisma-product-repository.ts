@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Prisma } from '@prisma/client';
+import { Prisma, Product as PrismaProduct, ProductImage as PrismaProductImage, ImageFile as PrismaImageFile, Catalog as PrismaCatalog, ProductCatalog as PrismaProductCatalog } from '@prisma/client';
 
 import type { CatalogRecord, ProductRecord } from '@/features/products/types';
 import type { ProductParameterValue } from '@/features/products/types';
@@ -14,7 +14,10 @@ import { conflictError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
-// Helper to remove undefined keys for exactOptionalPropertyTypes compliance
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function removeUndefined<T extends object>(obj: T): T {
   const newObj = { ...obj };
   Object.keys(newObj).forEach((key: string) => {
@@ -46,14 +49,11 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
   }
 
   if (filters.search) {
-    // If a specific language is selected, only search in that language's name field
     if (filters.searchLanguage) {
-      // searchLanguage is like "name_en", "name_pl", "name_de"
       where.OR = [
         { [filters.searchLanguage]: { contains: filters.search, mode: 'insensitive' } },
       ];
     } else {
-      // Search all language fields
       where.OR = [
         { name_en: { contains: filters.search, mode: 'insensitive' } },
         { name_pl: { contains: filters.search, mode: 'insensitive' } },
@@ -101,73 +101,37 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
   return where;
 };
 
-const toImageFileRecord = (imageFile: {
-  id: string;
-  filename: string;
-  filepath: string;
-  mimetype: string;
-  size: number;
-  width: number | null;
-  height: number | null;
-  tags: string[] | null;
-  createdAt: Date;
-  updatedAt: Date;
-}): ImageFileRecord => ({
+// ---------------------------------------------------------------------------
+// Mappers
+// ---------------------------------------------------------------------------
+
+const toImageFileRecord = (imageFile: PrismaImageFile): ImageFileRecord => ({
   id: imageFile.id,
   filename: imageFile.filename,
   filepath: imageFile.filepath,
   mimetype: imageFile.mimetype,
   size: imageFile.size,
-  width: imageFile.width ?? null,
-  height: imageFile.height ?? null,
-  tags: imageFile.tags ?? [],
+  width: imageFile.width,
+  height: imageFile.height,
+  tags: (imageFile.tags) ?? [],
   createdAt: imageFile.createdAt.toISOString(),
   updatedAt: imageFile.updatedAt.toISOString(),
 });
 
-const toCatalogRecord = (catalog: {
-  id: string;
-  name: string;
-  description: string | null;
-  isDefault: boolean;
-  defaultLanguageId: string | null;
-  defaultPriceGroupId: string | null;
-  priceGroupIds: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  languages?: { languageId: string }[];
-}): CatalogRecord => ({
+const toCatalogRecord = (catalog: PrismaCatalog & { languages?: { languageId: string }[] }): CatalogRecord => ({
   id: catalog.id,
   name: catalog.name,
-  description: catalog.description ?? null,
+  description: catalog.description,
   isDefault: catalog.isDefault,
-  defaultLanguageId: catalog.defaultLanguageId ?? null,
-  defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
+  defaultLanguageId: catalog.defaultLanguageId,
+  defaultPriceGroupId: catalog.defaultPriceGroupId,
   createdAt: catalog.createdAt.toISOString(),
   updatedAt: catalog.updatedAt.toISOString(),
-  languageIds: catalog.languages?.map((entry: { languageId: string }) => entry.languageId) ?? [],
-  priceGroupIds: Array.isArray(catalog.priceGroupIds)
-    ? catalog.priceGroupIds
-    : [],
+  languageIds: catalog.languages?.map(l => l.languageId) ?? [],
+  priceGroupIds: catalog.priceGroupIds ?? [],
 });
 
-const toProductImageRecord = (image: {
-  productId: string;
-  imageFileId: string;
-  assignedAt: Date;
-  imageFile?: {
-    id: string;
-    filename: string;
-    filepath: string;
-    mimetype: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-    tags: string[] | null;
-    createdAt: Date;
-    updatedAt: Date;
-  } | null;
-}) => {
+const toProductImageRecord = (image: PrismaProductImage & { imageFile?: PrismaImageFile | null }) => {
   if (!image.imageFile) return null;
   return {
     productId: image.productId,
@@ -177,81 +141,76 @@ const toProductImageRecord = (image: {
   };
 };
 
-interface PrismaProductWithRelations extends Omit<Prisma.ProductGetPayload<{
-  include: {
-    images: { include: { imageFile: true } };
-    catalogs: { include: { catalog: true } };
-    categories: { select: { categoryId: true } };
-    tags: { select: { tagId: true } };
-    producers: { select: { producerId: true } };
+type FullPrismaProduct = PrismaProduct & {
+  images?: (PrismaProductImage & { imageFile: PrismaImageFile | null })[];
+  catalogs?: (PrismaProductCatalog & { catalog: PrismaCatalog & { languages?: { languageId: string }[] } })[];
+  categories?: { categoryId: string }[];
+  tags?: { tagId: string }[];
+  producers?: { producerId: string }[];
+};
+
+const toProductRecord = (product: FullPrismaProduct): ProductRecord => {
+  const catalogs = product.catalogs?.map(pc => ({
+    productId: pc.productId,
+    catalogId: pc.catalogId,
+    assignedAt: pc.assignedAt.toISOString(),
+    catalog: toCatalogRecord(pc.catalog),
+  })) ?? [];
+
+  return {
+    id: product.id,
+    sku: product.sku ?? null,
+    baseProductId: product.baseProductId ?? null,
+    defaultPriceGroupId: product.defaultPriceGroupId ?? null,
+    ean: product.ean ?? null,
+    gtin: product.gtin ?? null,
+    asin: product.asin ?? null,
+    name: { 
+      en: product.name_en ?? '', 
+      pl: product.name_pl ?? null, 
+      de: product.name_de ?? null 
+    },
+    description: {
+      en: product.description_en ?? '',
+      pl: product.description_pl ?? null,
+      de: product.description_de ?? null,
+    },
+    name_en: product.name_en ?? null,
+    name_pl: product.name_pl ?? null,
+    name_de: product.name_de ?? null,
+    description_en: product.description_en ?? null,
+    description_pl: product.description_pl ?? null,
+    description_de: product.description_de ?? null,
+    supplierName: product.supplierName ?? null,
+    supplierLink: product.supplierLink ?? null,
+    priceComment: product.priceComment ?? null,
+    stock: product.stock ?? null,
+    price: product.price ?? null,
+    sizeLength: product.sizeLength ?? null,
+    sizeWidth: product.sizeWidth ?? null,
+    weight: product.weight ?? null,
+    length: product.length ?? null,
+    published: (product.published as boolean | null | undefined) ?? true,
+    catalogId: (product.catalogId as string | null | undefined) ?? catalogs[0]?.catalogId ?? '',
+    parameters: (product.parameters as unknown as ProductParameterValue[]) ?? [],
+    imageLinks: product.imageLinks ?? [],
+    imageBase64s: [],
+    noteIds: product.noteIds ?? [],
+    createdAt: product.createdAt.toISOString(),
+    updatedAt: product.updatedAt.toISOString(),
+    categoryId: product.categories?.[0]?.categoryId ?? null,
+    tags: product.tags?.map(t => ({ tagId: t.tagId })) ?? [],
+    producers: product.producers?.map(p => ({ producerId: p.producerId })) ?? [],
+    images: product.images?.map(toProductImageRecord).filter((i): i is NonNullable<typeof i> => i !== null) ?? [],
+    catalogs,
   };
-}>, 'images' | 'catalogs' | 'tags' | 'producers'> {
-  images?: Array<{ productId: string; imageFileId: string; assignedAt: Date; imageFile: ImageFileRecord }>;
-  catalogs?: Array<{ productId: string; catalogId: string; assignedAt: Date; catalog: CatalogRecord }>;
-      tags?: Array<{ productId: string; tagId: string; assignedAt: Date }>;
-      producers?: Array<{ productId: string; producerId: string; assignedAt: Date }>;
-      categories?: { categoryId: string } | null;
-      published?: boolean | null;
-      catalogId?: string | null;
-    }
-const toProductRecord = (product: PrismaProductWithRelations & {
-  imageLinks: string[];
-  imageBase64s: string[];
-  noteIds?: string[] | null;
-}): ProductRecord => ({
-  id: product.id,
-  sku: product.sku ?? null,
-  baseProductId: product.baseProductId ?? null,
-  defaultPriceGroupId: product.defaultPriceGroupId ?? null,
-  ean: product.ean ?? null,
-  gtin: product.gtin ?? null,
-  asin: product.asin ?? null,
-  name: { en: product.name_en ?? '', pl: product.name_pl ?? null, de: product.name_de ?? null },
-  description: {
-    en: product.description_en ?? '',
-    pl: product.description_pl ?? null,
-    de: product.description_de ?? null,
-  },
-  name_en: product.name_en ?? null,
-  name_pl: product.name_pl ?? null,
-  name_de: product.name_de ?? null,
-  description_en: product.description_en ?? null,
-  description_pl: product.description_pl ?? null,
-  description_de: product.description_de ?? null,
-  supplierName: product.supplierName ?? null,
-  supplierLink: product.supplierLink ?? null,
-  priceComment: product.priceComment ?? null,
-  stock: product.stock ?? null,
-  price: product.price ?? null,
-  sizeLength: product.sizeLength ?? null,
-  sizeWidth: product.sizeWidth ?? null,
-  weight: product.weight ?? null,
-  length: product.length ?? null,
-  published: product.published ?? true,
-  catalogId: product.catalogId ?? product.catalogs?.[0]?.catalogId ?? '',
-  parameters: Array.isArray(product.parameters)
-    ? (product.parameters as unknown as ProductParameterValue[])
-    : [],
-  imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
-  imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
-  noteIds: Array.isArray(product.noteIds) ? product.noteIds : [],
-  createdAt: product.createdAt.toISOString(),
-  updatedAt: product.updatedAt.toISOString(),
-  categoryId: product.categories?.categoryId ?? null,
-  tags: (product.tags as unknown as Array<{ productId: string; tagId: string; assignedAt: Date }>) ?? [],
-  images:
-    (product.images as unknown as Array<{
-      productId: string;
-      imageFileId: string;
-      assignedAt: Date;
-      imageFile: ImageFileRecord;
-    }>) ?? [],
-});
-// Helper function to create a ProductRepository instance that uses a Prisma TransactionClient
+};
+
+// ---------------------------------------------------------------------------
+// Repository Implementation
+// ---------------------------------------------------------------------------
+
 const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRepository => ({
-  // Implement all methods of ProductRepository using the provided 'tx' client
-  // Read operations can still use `prisma` if they don't need to see uncommitted writes from this transaction,
-  // but for consistency and safety, it's better to use `tx` where possible.
   getProducts: async (filters) => {
     const where = buildProductWhere(filters);
     const page = filters.page ?? 1;
@@ -267,7 +226,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         catalogs: {
           include: {
             catalog: {
-              include: { languages: { include: { language: true } } }
+              include: { languages: { select: { languageId: true } } }
             }
           }
         },
@@ -280,30 +239,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       take: pageSize,
     });
 
-    return products.map((product: typeof products[number]) => ({
-      ...toProductRecord({
-        ...product,
-        imageBase64s: [],
-      }),
-      images: (product.images || [])
-        .map((image: typeof product.images[number]) => toProductImageRecord(image))
-        .filter(
-          (
-            image,
-          ): image is NonNullable<ReturnType<typeof toProductImageRecord>> =>
-            image !== null
-        ),
-      catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
-        productId: entry.productId,
-        catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt.toISOString(),
-        catalog: toCatalogRecord(entry.catalog),
-      })),
-      tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
-      producers: (product.producers || []).map((p: { producerId: string }) => ({
-        producerId: p.producerId,
-      })),
-    }));
+    return products.map(p => toProductRecord(p as FullPrismaProduct));
   },
 
   countProducts: (filters) => tx.product.count({ where: buildProductWhere(filters) }),
@@ -319,7 +255,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         catalogs: {
           include: {
             catalog: {
-              include: { languages: { include: { language: true } } }
+              include: { languages: { select: { languageId: true } } }
             }
           }
         },
@@ -328,45 +264,35 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         producers: { select: { producerId: true } },
       },
     });
-    if (!product) return null;
-    return {
-      ...toProductRecord({
-        ...product,
-        imageBase64s: [],
-      }),
-      images: (product.images || [])
-        .map((image: typeof product.images[number]) => toProductImageRecord(image))
-        .filter(
-          (
-            image,
-          ): image is NonNullable<ReturnType<typeof toProductImageRecord>> =>
-            image !== null
-        ),
-      catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
-        productId: entry.productId,
-        catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt.toISOString(),
-        catalog: toCatalogRecord(entry.catalog),
-      })),
-      tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
-      producers: (product.producers || []).map((p: { producerId: string }) => ({
-        producerId: p.producerId,
-      })),
-    };
+    return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
 
   getProductBySku: async (sku) => {
-    const product = await tx.product.findUnique({ where: { sku } });
-    if (!product) return null;
-    return toProductRecord({ ...product, imageBase64s: [] });
+    const product = await tx.product.findUnique({ 
+      where: { sku },
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      }
+    });
+    return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
 
   findProductByBaseId: async (baseProductId) => {
     const product = await tx.product.findFirst({
       where: { baseProductId },
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      }
     });
-    if (!product) return null;
-    return toProductRecord({ ...product, imageBase64s: [] });
+    return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
 
   createProduct: async (data) => {
@@ -383,8 +309,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { categoryId, id, ...rest } = data;
+    const { categoryId: _cat, id, ...rest } = data;
     const cleanData = removeUndefined({
       ...rest,
       ...(id ? { id } : {}),
@@ -392,7 +317,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
 
     try {
       const product = await tx.product.create({ data: cleanData });
-      return toProductRecord({ ...product, imageBase64s: [] });
+      return toProductRecord(product as FullPrismaProduct);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -412,19 +337,37 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
     const productExists = await tx.product.findUnique({ where: { id } });
     if (!productExists) return null;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { categoryId, id: _id, ...rest } = data;
+    const { categoryId: _cat, id: _id, ...rest } = data;
     const cleanData = removeUndefined(rest) as Prisma.ProductUpdateInput;
 
-    const product = await tx.product.update({ where: { id }, data: cleanData });
-    return toProductRecord({ ...product, imageBase64s: [] });
+    const product = await tx.product.update({ 
+      where: { id }, 
+      data: cleanData,
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      }
+    });
+    return toProductRecord(product as FullPrismaProduct);
   },
 
   deleteProduct: async (id) => {
     const productExists = await tx.product.findUnique({ where: { id } });
     if (!productExists) return null;
-    const product = await tx.product.delete({ where: { id } });
-    return toProductRecord({ ...product, imageBase64s: [] });
+    const product = await tx.product.delete({ 
+      where: { id },
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      }
+    });
+    return toProductRecord(product as FullPrismaProduct);
   },
 
   duplicateProduct: async (id, sku) => {
@@ -459,8 +402,8 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         sizeWidth: product.sizeWidth,
         weight: product.weight,
         length: product.length,
-        parameters: Array.isArray(product.parameters) ? product.parameters : [],
-        imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
+        parameters: (product.parameters as unknown as Prisma.InputJsonValue) || [],
+        imageLinks: product.imageLinks || [],
         defaultPriceGroupId: product.defaultPriceGroupId ?? null,
         ean: product.ean ?? null,
         gtin: product.gtin ?? null,
@@ -468,7 +411,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         sku,
       },
     });
-    return toProductRecord({ ...duplicated, imageBase64s: [] });
+    return toProductRecord(duplicated as FullPrismaProduct);
   },
 
   addProductImages: async (productId, imageFileIds) => {
@@ -585,8 +528,6 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
   createProductInTransaction: async <T>(
     _callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>
   ): Promise<T> => {
-    // This method should not be called directly on the transactional repository,
-    // but only on the main repository. Throw an error if it is.
     throw internalError('createProductInTransaction cannot be called within a transaction');
   },
 });
@@ -607,13 +548,9 @@ export const prismaProductRepository: ProductRepository = {
         catalogs: {
           include: {
             catalog: {
-              include: {
-                languages: {
-                  include: { language: true }
-                }
-              }
+              include: { languages: { select: { languageId: true } } }
             }
-          },
+          }
         },
         categories: { select: { categoryId: true } },
         tags: { select: { tagId: true } },
@@ -624,30 +561,7 @@ export const prismaProductRepository: ProductRepository = {
       take: pageSize,
     });
 
-    return products.map((product: typeof products[number]) => ({
-      ...toProductRecord({
-        ...product,
-        imageBase64s: [],
-      }),
-      images: (product.images || [])
-        .map((image: typeof product.images[number]) => toProductImageRecord(image))
-        .filter(
-          (
-            image,
-          ): image is NonNullable<ReturnType<typeof toProductImageRecord>> =>
-            image !== null
-        ),
-      catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
-        productId: entry.productId,
-        catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt.toISOString(),
-        catalog: toCatalogRecord(entry.catalog),
-      })),
-      tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
-      producers: (product.producers || []).map((p: { producerId: string }) => ({
-        producerId: p.producerId,
-      })),
-    }));
+    return products.map(p => toProductRecord(p as FullPrismaProduct));
   },
 
   async countProducts(filters: ProductFilters) {
@@ -666,64 +580,44 @@ export const prismaProductRepository: ProductRepository = {
         catalogs: {
           include: {
             catalog: {
-              include: {
-                languages: {
-                  include: { language: true }
-                }
-              }
+              include: { languages: { select: { languageId: true } } }
             }
-          },
+          }
         },
         categories: { select: { categoryId: true } },
         tags: { select: { tagId: true } },
         producers: { select: { producerId: true } },
       },
     });
-    if (!product) return null;
-    return {
-      ...toProductRecord({
-        ...product,
-        imageBase64s: [],
-      }),
-      images: (product.images || [])
-        .map((image: typeof product.images[number]) => toProductImageRecord(image))
-        .filter(
-          (
-            image,
-          ): image is NonNullable<ReturnType<typeof toProductImageRecord>> =>
-            image !== null
-        ),
-      catalogs: (product.catalogs || []).map((entry: typeof product.catalogs[number]) => ({
-        productId: entry.productId,
-        catalogId: entry.catalogId,
-        assignedAt: entry.assignedAt.toISOString(),
-        catalog: toCatalogRecord(entry.catalog),
-      })),
-      tags: (product.tags || []).map((t: { tagId: string }) => ({ tagId: t.tagId })),
-      producers: (product.producers || []).map((p: { producerId: string }) => ({
-        producerId: p.producerId,
-      })),
-    };
+    return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
 
   async getProductBySku(sku: string) {
-    const product = await prisma.product.findUnique({ where: { sku } });
-    if (!product) return null;
-    return toProductRecord({
-      ...product,
-      imageBase64s: [],
+    const product = await prisma.product.findUnique({ 
+      where: { sku },
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      }
     });
+    return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
 
   async findProductByBaseId(baseProductId: string) {
     const product = await prisma.product.findFirst({
       where: { baseProductId },
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      }
     });
-    if (!product) return null;
-    return toProductRecord({
-      ...product,
-      imageBase64s: [],
-    });
+    return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
 
   async createProduct(data: CreateProductInput) {
@@ -740,8 +634,7 @@ export const prismaProductRepository: ProductRepository = {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { categoryId, id, ...rest } = data;
+    const { categoryId: _cat, id, ...rest } = data;
     const cleanData = removeUndefined({
       ...rest,
       ...(id ? { id } : {}),
@@ -749,10 +642,7 @@ export const prismaProductRepository: ProductRepository = {
 
     try {
       const product = await prisma.product.create({ data: cleanData });
-      return toProductRecord({
-        ...product,
-        imageBase64s: [],
-      });
+      return toProductRecord(product as FullPrismaProduct);
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -772,25 +662,37 @@ export const prismaProductRepository: ProductRepository = {
     const productExists = await prisma.product.findUnique({ where: { id } });
     if (!productExists) return null;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { categoryId, id: _id, ...rest } = data;
+    const { categoryId: _cat, id: _id, ...rest } = data;
     const cleanData = removeUndefined(rest) as Prisma.ProductUpdateInput;
 
-    const product = await prisma.product.update({ where: { id }, data: cleanData });
-    return toProductRecord({
-      ...product,
-      imageBase64s: [],
+    const product = await prisma.product.update({ 
+      where: { id }, 
+      data: cleanData,
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      }
     });
+    return toProductRecord(product as FullPrismaProduct);
   },
 
   async deleteProduct(id: string) {
     const productExists = await prisma.product.findUnique({ where: { id } });
     if (!productExists) return null;
-    const product = await prisma.product.delete({ where: { id } });
-    return toProductRecord({
-      ...product,
-      imageBase64s: [],
+    const product = await prisma.product.delete({ 
+      where: { id },
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      }
     });
+    return toProductRecord(product as FullPrismaProduct);
   },
 
   async duplicateProduct(id: string, sku: string) {
@@ -825,8 +727,8 @@ export const prismaProductRepository: ProductRepository = {
         sizeWidth: product.sizeWidth,
         weight: product.weight,
         length: product.length,
-        parameters: Array.isArray(product.parameters) ? product.parameters : [],
-        imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
+        parameters: (product.parameters as unknown as Prisma.InputJsonValue) || [],
+        imageLinks: product.imageLinks || [],
         defaultPriceGroupId: product.defaultPriceGroupId ?? null,
         ean: product.ean ?? null,
         gtin: product.gtin ?? null,
@@ -834,10 +736,7 @@ export const prismaProductRepository: ProductRepository = {
         sku,
       },
     });
-    return toProductRecord({
-      ...duplicated,
-      imageBase64s: [],
-    });
+    return toProductRecord(duplicated as FullPrismaProduct);
   },
 
   async addProductImages(productId: string, imageFileIds: string[]) {

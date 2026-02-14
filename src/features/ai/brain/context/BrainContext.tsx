@@ -26,8 +26,7 @@ import type {
   AnalyticsSummaryDto,
   SystemLogMetrics,
 } from '@/shared/types';
-import type { SelectOption } from '@/shared/ui';
-import { useToast } from '@/shared/ui';
+import { useToast, type SelectSimpleOption } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -162,8 +161,8 @@ interface BrainContextType {
   runtimeAnalyticsQuery: UseQueryResult<AiPathRuntimeAnalyticsSummary>;
   
   // Computed
-  modelQuickPicks: SelectOption[];
-  agentQuickPicks: SelectOption[];
+  modelQuickPicks: SelectSimpleOption[];
+  agentQuickPicks: SelectSimpleOption[];
   effectiveAssignments: Record<AiBrainFeature, AiBrainAssignment>;
   saving: boolean;
   liveOllamaModels: string[];
@@ -307,9 +306,9 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
       .filter((model: string) => model.length > 0);
   }, [ollamaModelsQuery.data?.models]);
 
-  const modelQuickPicks = useMemo((): SelectOption[] => {
+  const modelQuickPicks = useMemo((): SelectSimpleOption[] => {
     const seen = new Set<string>();
-    const options: SelectOption[] = [];
+    const options: SelectSimpleOption[] = [];
     const append = (values: string[], source: string): void => {
       values.forEach((value: string) => {
         const trimmed = value.trim();
@@ -329,9 +328,9 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     return options;
   }, [liveOllamaModels, providerCatalog]);
 
-  const agentQuickPicks = useMemo((): SelectOption[] => {
+  const agentQuickPicks = useMemo((): SelectSimpleOption[] => {
     const seen = new Set<string>();
-    const options: SelectOption[] = [];
+    const options: SelectSimpleOption[] = [];
     const append = (values: string[], source: string): void => {
       values.forEach((value: string) => {
         const trimmed = value.trim();

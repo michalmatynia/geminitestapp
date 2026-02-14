@@ -41,6 +41,7 @@ interface DataTableProps<TData> {
   skeletonRows?: React.ReactNode;
   meta?: Record<string, unknown>;
   className?: string;
+  getRowClassName?: (row: Row<TData>) => string | undefined;
 }
 
 declare module '@tanstack/react-table' {
@@ -67,6 +68,7 @@ export const DataTable = memo(function DataTable<TData>({
   skeletonRows,
   meta,
   className,
+  getRowClassName,
 }: DataTableProps<TData>) {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [internalExpanded, setInternalExpanded] = useState<ExpandedState>({});
@@ -172,7 +174,7 @@ export const DataTable = memo(function DataTable<TData>({
               <React.Fragment key={row.id}>
                 <TableRow
                   data-state={row.getIsSelected() && 'selected'}
-                  className='border-border'
+                  className={cn('border-border', getRowClassName?.(row))}
                   data-row-id={getRowId ? getRowId(row.original) : undefined}
                 >
                   {row.getVisibleCells().map((cell) => (

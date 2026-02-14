@@ -1,0 +1,46 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 215ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 20.6s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/auth/hooks/useUsersState.ts:183:7
+Type error: Type 'UseMutationResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }>' is not assignable to type 'UseMutationResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }>'.
+  Type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'UseMutationResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }>'.
+    Type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown>, { ...; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>, { ...; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown>, { ...; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>' is not assignable to type 'UseMutateFunction<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown>'.
+            Types of parameters 'options' and 'options' are incompatible.
+              Type 'MutateOptions<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown> | undefined' is not assignable to type 'MutateOptions<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown> | undefined'.
+                Type 'MutateOptions<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string; emailVerified?: boolean; }, unknown>' is not assignable to type 'MutateOptions<{ ok: boolean; payload: RegisterResponse; }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Type '{ email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined; }' is not assignable to type '{ email: string; password: string; name?: string; emailVerified?: boolean; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                    Types of property 'name' are incompatible.
+                      Type 'string | undefined' is not assignable to type 'string'.
+                        Type 'undefined' is not assignable to type 'string'.
+
+[0m [90m 181 |[39m       updateSecurity[33m:[39m updateAuthUserSecurityMutation[33m,[39m
+ [90m 182 |[39m       deleteUser[33m:[39m deleteAuthUserMutation[33m,[39m
+[31m[1m>[22m[39m[90m 183 |[39m       register[33m:[39m registerUserMutation[33m,[39m
+ [90m     |[39m       [31m[1m^[22m[39m
+ [90m 184 |[39m       mockSignIn[33m:[39m mockSignInMutation[33m,[39m
+ [90m 185 |[39m     }
+ [90m 186 |[39m   }[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

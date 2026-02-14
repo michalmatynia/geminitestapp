@@ -82,7 +82,6 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
           </div>
           <Button size='xs'
             type='button'
-            size='icon'
             variant='ghost'
             title={flipped ? 'Show value' : 'Edit selector'}
             onClick={onFlip}
@@ -143,7 +142,6 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
               <div className='flex items-center gap-2'>
                 <Button size='xs'
                   type='button'
-                  size='sm'
                   variant={value ? 'secondary' : 'outline'}
                   onClick={() => onChange(true)}
                 >
@@ -151,7 +149,6 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                 </Button>
                 <Button size='xs'
                   type='button'
-                  size='sm'
                   variant={!value ? 'secondary' : 'outline'}
                   onClick={() => onChange(false)}
                 >
@@ -176,7 +173,6 @@ export function ParamRow({ leaf }: { leaf: ParamLeaf }): React.JSX.Element {
                   <Button size='xs'
                     key={opt}
                     type='button'
-                    size='sm'
                     variant={opt === value ? 'secondary' : 'outline'}
                     onClick={() => onChange(opt)}
                   >

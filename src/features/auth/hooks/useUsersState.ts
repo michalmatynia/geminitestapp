@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
 import type { RegisterResponse } from '@/features/auth/api/register';
 import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
@@ -38,14 +38,14 @@ export interface UseUsersStateReturn {
   dirtyRoles: boolean;
   saveRoles: () => Promise<void>;
   editingUser: AuthUserSummary | null;
-  setEditingUser: (user: AuthUserSummary | null) => void;
+  setEditingUser: Dispatch<SetStateAction<AuthUserSummary | null>>;
   userToDelete: AuthUserSummary | null;
-  setUserToDelete: (user: AuthUserSummary | null) => void;
+  setUserToDelete: Dispatch<SetStateAction<AuthUserSummary | null>>;
   deleteUser: () => Promise<void>;
   createOpen: boolean;
-  setCreateOpen: (open: boolean) => void;
+  setCreateOpen: Dispatch<SetStateAction<boolean>>;
   createForm: CreateUserForm;
-  setCreateForm: (form: CreateUserForm | ((prev: CreateUserForm) => CreateUserForm)) => void;
+  setCreateForm: Dispatch<SetStateAction<CreateUserForm>>;
   isLoading: boolean;
   isFetching: boolean;
   canReadUsers: boolean;
@@ -59,7 +59,7 @@ export interface UseUsersStateReturn {
     updateUser: UseMutationResult<AuthUserSummary, Error, { userId: string; input: { name?: string | null; email?: string | null; emailVerified?: boolean | null } }>;
     updateSecurity: UseMutationResult<AuthUserSecurityProfile, Error, { userId: string; input: { disabled?: boolean; banned?: boolean; allowedIps?: string[]; disableMfa?: boolean } }>;
     deleteUser: UseMutationResult<{ id: string; deleted: boolean }, Error, { userId: string }>;
-    register: UseMutationResult<{ ok: boolean; payload: RegisterResponse }, Error, { email: string; password: string; name?: string; emailVerified?: boolean }>;
+    register: UseMutationResult<{ ok: boolean; payload: RegisterResponse }, Error, { email: string; password: string; name?: string | undefined; emailVerified?: boolean | undefined }>;
     mockSignIn: UseMutationResult<{ ok: boolean; payload: { ok?: boolean; message?: string } }, Error, { email: string; password: string }>;
   };
 }

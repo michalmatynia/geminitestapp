@@ -4,9 +4,12 @@ import prisma from '@/shared/lib/db/prisma';
 
 import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '../../types';
 import type { CmsRepository, PageUpdateData } from '../../types/services/cms-repository';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, Page as PrismaPage, Slug as PrismaSlug, CmsTheme as PrismaCmsTheme, PageComponent as PrismaPageComponent } from '@prisma/client';
 
-// Helper to remove undefined keys for exactOptionalPropertyTypes compliance
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function removeUndefined<T extends object>(obj: T): T {
   const newObj = { ...obj };
   Object.keys(newObj).forEach((key: string): void => {
@@ -16,6 +19,76 @@ function removeUndefined<T extends object>(obj: T): T {
   });
   return newObj;
 }
+
+// ---------------------------------------------------------------------------
+// Mappers
+// ---------------------------------------------------------------------------
+
+function mapPrismaSlug(
+  s: PrismaSlug & {
+    pages?: { pageId: string }[];
+  }
+): Slug {
+  return {
+    id: s.id,
+    slug: s.slug,
+    pageId: s.pages?.[0]?.pageId ?? null,
+    isDefault: s.isDefault,
+    createdAt: s.createdAt.toISOString(),
+    updatedAt: s.updatedAt.toISOString(),
+  };
+}
+
+function mapPrismaTheme(t: PrismaCmsTheme): CmsTheme {
+  return {
+    id: t.id,
+    name: t.name,
+    colors: t.colors as unknown as CmsTheme['colors'],
+    typography: t.typography as unknown as CmsTheme['typography'],
+    spacing: t.spacing as unknown as CmsTheme['spacing'],
+    customCss: t.customCss ?? undefined,
+    isDefault: t.isDefault,
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt.toISOString(),
+  };
+}
+
+function mapPrismaPageComponent(c: PrismaPageComponent): PageComponent {
+  return {
+    type: c.type,
+    order: c.order,
+    content: c.content as unknown as Record<string, unknown>,
+  };
+}
+
+function mapPrismaPage(
+  p: PrismaPage & { 
+    slugs?: { slug: PrismaSlug }[];
+    components?: PrismaPageComponent[];
+  }
+): Page {
+  return {
+    id: p.id,
+    name: p.name,
+    status: p.status as 'draft' | 'published' | 'scheduled',
+    publishedAt: p.publishedAt?.toISOString(),
+    themeId: p.themeId,
+    showMenu: p.showMenu,
+    seoTitle: p.seoTitle ?? undefined,
+    seoDescription: p.seoDescription ?? undefined,
+    seoOgImage: p.seoOgImage ?? undefined,
+    seoCanonical: p.seoCanonical ?? undefined,
+    robotsMeta: p.robotsMeta ?? undefined,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+    slugs: p.slugs?.map(ps => mapPrismaSlug(ps.slug)) ?? [],
+    components: p.components?.map(c => mapPrismaPageComponent(c)) ?? [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Repository Implementation
+// ---------------------------------------------------------------------------
 
 export const prismaCmsRepository: CmsRepository = {
   // Pages
@@ -30,7 +103,7 @@ export const prismaCmsRepository: CmsRepository = {
       },
       orderBy: { updatedAt: 'desc' },
     });
-    return pages as unknown as Page[];
+    return pages.map(mapPrismaPage);
   },
 
   async getPageById(id: string): Promise<Page | null> {
@@ -42,10 +115,12 @@ export const prismaCmsRepository: CmsRepository = {
             slug: true,
           },
         },
-        components: true,
+        components: {
+          orderBy: { order: 'asc' }
+        },
       },
     });
-    return page as unknown as Page | null;
+    return page ? mapPrismaPage(page) : null;
   },
 
   async createPage(data: { name: string; themeId?: string | null | undefined }): Promise<Page> {
@@ -54,8 +129,12 @@ export const prismaCmsRepository: CmsRepository = {
         name: data.name,
         themeId: data.themeId ?? null,
       },
+      include: {
+        slugs: { include: { slug: true } },
+        components: true
+      }
     });
-    return page as unknown as Page;
+    return mapPrismaPage(page);
   },
 
   async getPageBySlug(slugValue: string): Promise<Page | null> {
@@ -95,8 +174,14 @@ export const prismaCmsRepository: CmsRepository = {
   },
 
   async deletePage(id: string): Promise<Page | null> {
-    const page = await prisma.page.delete({ where: { id } });
-    return page as unknown as Page | null;
+    const page = await prisma.page.delete({ 
+      where: { id },
+      include: {
+        slugs: { include: { slug: true } },
+        components: true
+      }
+    });
+    return mapPrismaPage(page);
   },
 
   async replacePageSlugs(pageId: string, slugIds: string[]): Promise<void> {
@@ -123,27 +208,35 @@ export const prismaCmsRepository: CmsRepository = {
   // Slugs
   async getSlugs(): Promise<Slug[]> {
     const slugs = await prisma.slug.findMany({
+      include: { pages: true },
       orderBy: { createdAt: 'desc' },
     });
-    return slugs as unknown as Slug[];
+    return slugs.map(mapPrismaSlug);
   },
 
   async getSlugById(id: string): Promise<Slug | null> {
-    const slug = await prisma.slug.findUnique({ where: { id } });
-    return slug as unknown as Slug | null;
+    const slug = await prisma.slug.findUnique({ 
+      where: { id },
+      include: { pages: true }
+    });
+    return slug ? mapPrismaSlug(slug) : null;
   },
 
   async getSlugByValue(slugValue: string): Promise<Slug | null> {
-    const slug = await prisma.slug.findUnique({ where: { slug: slugValue } });
-    return slug as unknown as Slug | null;
+    const slug = await prisma.slug.findUnique({ 
+      where: { slug: slugValue },
+      include: { pages: true }
+    });
+    return slug ? mapPrismaSlug(slug) : null;
   },
 
   async createSlug(data: { slug: string; isDefault?: boolean | undefined }): Promise<Slug> {
     const cleanData = removeUndefined(data);
     const slug = await prisma.slug.create({
       data: cleanData as Prisma.SlugCreateInput,
+      include: { pages: true }
     });
-    return slug as unknown as Slug;
+    return mapPrismaSlug(slug);
   },
 
   async updateSlug(id: string, data: { slug?: string | undefined; isDefault?: boolean | undefined }): Promise<Slug | null> {
@@ -151,13 +244,14 @@ export const prismaCmsRepository: CmsRepository = {
     const slug = await prisma.slug.update({
       where: { id },
       data: cleanData as Prisma.SlugUpdateInput,
+      include: { pages: true }
     });
-    return slug as unknown as Slug | null;
+    return slug ? mapPrismaSlug(slug) : null;
   },
 
   async deleteSlug(id: string): Promise<Slug | null> {
     const slug = await prisma.slug.delete({ where: { id } });
-    return slug as unknown as Slug | null;
+    return slug ? mapPrismaSlug(slug) : null;
   },
 
   // Relationships
@@ -186,12 +280,12 @@ export const prismaCmsRepository: CmsRepository = {
     const themes = await prisma.cmsTheme.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return themes as unknown as CmsTheme[];
+    return themes.map(mapPrismaTheme);
   },
 
   async getThemeById(id: string): Promise<CmsTheme | null> {
     const theme = await prisma.cmsTheme.findUnique({ where: { id } });
-    return theme as unknown as CmsTheme | null;
+    return theme ? mapPrismaTheme(theme) : null;
   },
 
   async createTheme(data: CmsThemeCreateInput): Promise<CmsTheme> {
@@ -204,7 +298,7 @@ export const prismaCmsRepository: CmsRepository = {
         customCss: data.customCss ?? null,
       },
     });
-    return theme as unknown as CmsTheme;
+    return mapPrismaTheme(theme);
   },
 
   async updateTheme(id: string, data: CmsThemeUpdateInput): Promise<CmsTheme | null> {
@@ -219,11 +313,11 @@ export const prismaCmsRepository: CmsRepository = {
       where: { id },
       data: cleanData as Prisma.CmsThemeUpdateInput,
     });
-    return theme as unknown as CmsTheme | null;
+    return theme ? mapPrismaTheme(theme) : null;
   },
 
   async deleteTheme(id: string): Promise<CmsTheme | null> {
     const theme = await prisma.cmsTheme.delete({ where: { id } });
-    return theme as unknown as CmsTheme | null;
+    return theme ? mapPrismaTheme(theme) : null;
   },
 };

@@ -21,7 +21,7 @@ import {
 } from '@/features/products/validation-engine/core';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, SelectSimple, FormSection, FormField, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
+import { Button, Input, SelectSimple, FormSection, FormField, DataTable, Badge } from '@/shared/ui';
 
 import { ValidatorIssueHint } from './ProductFormGeneral';
 
@@ -323,7 +323,7 @@ export default function ProductFormOther(): React.JSX.Element {
                     {
                       accessorKey: 'name',
                       header: 'Price Group',
-                      cell: ({ row }) => (
+                      cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
                         <div className='flex items-center gap-2'>
                           <span className={row.original.id === selectedDefaultPriceGroupId ? 'font-semibold text-white' : 'text-gray-300'}>
                             {row.original.name}
@@ -342,12 +342,12 @@ export default function ProductFormOther(): React.JSX.Element {
                     {
                       accessorKey: 'currencyCode',
                       header: 'Currency',
-                      cell: ({ row }) => <span className='text-gray-500'>{(row.original as any).currency?.code ?? row.original.currencyCode}</span>
+                      cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => <span className='text-gray-500'>{row.original.currency?.code ?? row.original.currencyCode}</span>
                     },
                     {
                       accessorKey: 'calculatedPrice',
                       header: () => <div className='text-right'>Price</div>,
-                      cell: ({ row }) => (
+                      cell: ({ row }: { row: { original: PriceGroupWithCalculatedPrice } }) => (
                         <div className='text-right font-mono'>
                           {row.original.calculatedPrice !== null ? (
                             <span className={row.original.isCalculated ? 'text-blue-400' : 'text-white'}>

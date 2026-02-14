@@ -248,9 +248,11 @@ AI_PATHS_ACTION_RATE_LIMIT_MAX=120
   - Integrations (Category Mappers)
   - Auth (Users Page)
   - Observability (System Logs)
+  - CMS (Pages, Slugs, Themes, Zones)
 - **State Management**: Extracted complex state logic into dedicated hooks (e.g., `useDatabaseEngineState`, `useUsersState`, `useAsset3DListState`) to improve component maintainability and testability.
 - **Observability**: Enhanced system logs with AI interpretation, structured metadata display, and detailed stack trace formatting.
 - **Type Safety**: Refactored data access layers and components to use strict TypeScript types, eliminating `any` usage in key administrative views.
+- **Performance**: Reduced bundle size by optimizing imports and removing duplicate `size` attributes in Image Studio components.
 
 ---
 

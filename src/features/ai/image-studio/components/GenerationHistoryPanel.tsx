@@ -87,7 +87,6 @@ export function GenerationHistoryPanel({
                 <Button size='xs'
                   type='button'
                   variant='outline'
-                  size='sm'
                   className='h-6 text-[10px]'
                   onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();

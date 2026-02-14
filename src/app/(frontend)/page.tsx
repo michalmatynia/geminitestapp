@@ -175,7 +175,8 @@ export default async function Home(): Promise<JSX.Element> {
     const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === 'published') && cmsPage.components.length > 0;
     const rendererComponents: PageComponent[] = (cmsPage?.components ?? []).map((component) => ({
       type: component.type,
-      content: component.content ?? {},
+      order: component.order || 0,
+      content: (component.content as Record<string, unknown>) ?? {},
     }));
 
     const showMenu = cmsPage?.showMenu !== false;

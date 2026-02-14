@@ -9,7 +9,7 @@ import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks
 import type { Slug } from '@/features/cms/types';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
-import { Button, Input, Label, SectionHeader, Checkbox, Switch } from '@/shared/ui';
+import { Button, Input, SectionHeader, Checkbox, Switch, FormSection, FormField, Badge } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function CreatePagePage(): React.JSX.Element {

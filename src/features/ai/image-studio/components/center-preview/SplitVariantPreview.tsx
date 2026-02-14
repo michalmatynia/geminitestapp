@@ -80,7 +80,6 @@ export function SplitVariantPreview({
         <div className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'>
           <Button size='xs'
             type='button'
-            size='sm'
             variant='outline'
             className='h-5 w-5 px-0 text-[10px]'
             onClick={(): void => {
@@ -95,7 +94,6 @@ export function SplitVariantPreview({
           </span>
           <Button size='xs'
             type='button'
-            size='sm'
             variant='outline'
             className='h-5 w-5 px-0 text-[10px]'
             onClick={(): void => {
@@ -107,7 +105,6 @@ export function SplitVariantPreview({
           </Button>
           <Button size='xs'
             type='button'
-            size='sm'
             variant='outline'
             className='h-5 px-1 text-[10px]'
             onClick={(): void => {
@@ -136,7 +133,6 @@ export function SplitVariantPreview({
         <div className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'>
           <Button size='xs'
             type='button'
-            size='sm'
             variant='outline'
             className='h-5 w-5 px-0 text-[10px]'
             onClick={(): void => {
@@ -151,7 +147,6 @@ export function SplitVariantPreview({
           </span>
           <Button size='xs'
             type='button'
-            size='sm'
             variant='outline'
             className='h-5 w-5 px-0 text-[10px]'
             onClick={(): void => {
@@ -163,7 +158,6 @@ export function SplitVariantPreview({
           </Button>
           <Button size='xs'
             type='button'
-            size='sm'
             variant='outline'
             className='h-5 px-1 text-[10px]'
             onClick={(): void => {

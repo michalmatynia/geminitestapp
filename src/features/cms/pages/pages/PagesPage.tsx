@@ -16,7 +16,8 @@ import {
   StatusBadge,
   SelectSimple,
   DataTable,
-  Badge
+  Badge,
+  SectionHeader
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

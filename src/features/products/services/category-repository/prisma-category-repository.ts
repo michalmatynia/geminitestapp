@@ -20,10 +20,12 @@ type PrismaCategoryWithChildren = PrismaProductCategory & {
 };
 
 const compareBySortIndexThenName = (
-  a: { sortIndex: number; name: string },
-  b: { sortIndex: number; name: string }
+  a: { sortIndex: number | null; name: string },
+  b: { sortIndex: number | null; name: string }
 ): number => {
-  if (a.sortIndex !== b.sortIndex) return a.sortIndex - b.sortIndex;
+  const aIndex = a.sortIndex ?? 0;
+  const bIndex = b.sortIndex ?? 0;
+  if (aIndex !== bIndex) return aIndex - bIndex;
   return a.name.localeCompare(b.name);
 };
 

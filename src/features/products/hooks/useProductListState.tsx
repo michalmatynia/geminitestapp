@@ -63,7 +63,7 @@ export function useProductListState(): ProductListContextType & {
   handleMassDelete: () => Promise<void>;
   handleConfirmSingleDelete: () => Promise<void>;
   bulkDeletePending: boolean;
-} {
+  } {
   const searchParams = useSearchParams();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isDebugOpen, setIsDebugOpen] = useState(false);

@@ -1,0 +1,236 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/pages/pages/EditPagePage.tsx
+  12:78  warning  'useToast' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/pages/zones/ZonesPage.tsx
+   28:1   error  There should be at least one empty line between import groups                                                                                                       import/order
+   33:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   34:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   35:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   36:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   37:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   39:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   40:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   41:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   43:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   44:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   45:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   46:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   47:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   48:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   49:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   50:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   51:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   52:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   53:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   55:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   56:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   57:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   58:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+   59:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+   60:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+   61:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   62:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+   63:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+   64:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   65:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   66:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   67:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   69:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   70:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   71:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   72:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   73:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   74:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   75:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   76:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   77:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   78:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   80:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+   81:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   82:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   83:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   84:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   85:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   86:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   87:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   88:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   89:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   90:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   92:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   93:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   94:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   95:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   96:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+   97:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   98:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+   99:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  100:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+  102:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+  103:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  104:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  105:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  106:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  107:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  108:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  109:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  110:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  111:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  112:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  113:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  114:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  115:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  116:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  117:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  118:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  119:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  120:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  121:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  122:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  123:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  124:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  125:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  126:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  127:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  128:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  129:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  130:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  131:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  132:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  133:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  134:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  135:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  136:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  137:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  138:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  139:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  139:37  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+  140:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  141:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  142:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  143:1   error  Expected indentation of 14 spaces but found 13                                                                                                                      indent
+  144:1   error  Expected indentation of 14 spaces but found 13                                                                                                                      indent
+  145:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  146:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  147:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  148:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  149:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  150:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  151:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  152:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  153:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  154:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  155:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  156:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  157:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  158:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  159:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  160:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  161:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  162:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  163:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  164:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  165:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  166:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+  168:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+  169:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  170:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  171:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  172:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  173:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  175:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  176:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  177:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  178:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  178:18  error  Placing a void expression inside another expression is forbidden. Move it to its own statement instead                                                              @typescript-eslint/no-confusing-void-expression
+  179:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  180:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  181:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  182:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  183:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  184:1   error  Expected indentation of 14 spaces but found 13                                                                                                                      indent
+  185:1   error  Expected indentation of 14 spaces but found 13                                                                                                                      indent
+  186:1   error  Expected indentation of 14 spaces but found 13                                                                                                                      indent
+  187:1   error  Expected indentation of 14 spaces but found 13                                                                                                                      indent
+  188:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  189:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  190:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  191:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  192:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  193:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  194:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  195:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  197:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  198:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  199:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  200:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  201:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  202:1   error  Expected indentation of 12 spaces but found 11                                                                                                                      indent
+  203:1   error  Expected indentation of 10 spaces but found 9                                                                                                                       indent
+  204:1   error  Expected indentation of 8 spaces but found 7                                                                                                                        indent
+  205:1   error  Expected indentation of 6 spaces but found 5                                                                                                                        indent
+  206:1   error  Expected indentation of 4 spaces but found 3                                                                                                                        indent
+  207:1   error  Expected indentation of 2 spaces but found 1                                                                                                                        indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useDatabaseEngineState.ts
+  29:1  error  `@/shared/contracts/database` type import should occur before import of `@/shared/hooks/use-settings`  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabaseEnginePage.tsx
+  161:1    error  Expected indentation of 18 spaces but found 38  indent
+  162:1    error  Expected indentation of 20 spaces but found 40  indent
+  163:1    error  Expected indentation of 20 spaces but found 40  indent
+  163:139  error  Unsafe return of a value of type `any`          @typescript-eslint/no-unsafe-return
+  164:1    error  Expected indentation of 18 spaces but found 38  indent
+  172:1    error  Expected indentation of 18 spaces but found 38  indent
+  173:1    error  Expected indentation of 20 spaces but found 40  indent
+  174:1    error  Expected indentation of 20 spaces but found 40  indent
+  174:139  error  Unsafe return of a value of type `any`          @typescript-eslint/no-unsafe-return
+  175:1    error  Expected indentation of 18 spaces but found 38  indent
+  183:1    error  Expected indentation of 18 spaces but found 38  indent
+  184:1    error  Expected indentation of 20 spaces but found 40  indent
+  185:1    error  Expected indentation of 20 spaces but found 40  indent
+  185:139  error  Unsafe return of a value of type `any`          @typescript-eslint/no-unsafe-return
+  186:1    error  Expected indentation of 18 spaces but found 38  indent
+  194:1    error  Expected indentation of 18 spaces but found 38  indent
+  195:1    error  Expected indentation of 20 spaces but found 40  indent
+  196:1    error  Expected indentation of 20 spaces but found 40  indent
+  196:139  error  Unsafe return of a value of type `any`          @typescript-eslint/no-unsafe-return
+  197:1    error  Expected indentation of 18 spaces but found 38  indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasePreviewPage.tsx
+  366:5  warning  'tableRows' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/marketplaces/category-mapper/GenericItemMapper.tsx
+  10:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+   19:3   warning  'ListPanel' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   26:3   warning  'StatusToggle' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   39:7   warning  'getContextValue' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  132:5   warning  'rebuildIndexesMutation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  136:37  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  140:93  error    Unsafe member access .name on an `any` value                                                       @typescript-eslint/no-unsafe-member-access
+  145:80  error    Unsafe member access .expected on an `any` value                                                   @typescript-eslint/no-unsafe-member-access
+  151:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  151:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  152:26  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  152:98  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  157:14  error    Unsafe call of an `any` typed value                                                                @typescript-eslint/no-unsafe-call
+  157:27  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  157:43  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  159:35  error    Unsafe member access .key on an `any` value                                                        @typescript-eslint/no-unsafe-member-access
+  170:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  170:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  171:37  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  174:62  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormOther.tsx
+  345:130  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/pages/Admin3DAssetsPage.tsx
+   35:1   error  There should be at least one empty line between import groups                      import/order
+  263:27  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+✖ 214 problems (208 errors, 6 warnings)
+  186 errors and 0 warnings potentially fixable with the `--fix` option.
+

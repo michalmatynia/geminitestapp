@@ -69,7 +69,7 @@ export function IconSelector({
         columns={columns}
         searchable={showSearch}
         searchPlaceholder={searchPlaceholder}
-        emptyLabel={emptyLabel}
+        emptyState={<div className='text-sm text-gray-500'>{emptyLabel}</div>}
         className={gridClassName}
         renderItem={(item, selected) => {
           const IconComponent = item.item.icon;

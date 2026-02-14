@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 202ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 21.2s
+  Running TypeScript ...
+Failed to compile.
+
+./src/app/api/cms/pages/[id]/route.ts:88:5
+Type error: Type '{ type: string; content: Record<string, unknown>; }[]' is not assignable to type 'PageComponent[]'.
+  Property 'order' is missing in type '{ type: string; content: Record<string, unknown>; }' but required in type 'PageComponent'.
+
+[0m [90m 86 |[39m     themeId[33m,[39m
+ [90m 87 |[39m     showMenu[33m,[39m
+[31m[1m>[22m[39m[90m 88 |[39m     components[33m,[39m
+ [90m    |[39m     [31m[1m^[22m[39m
+ [90m 89 |[39m   })[33m;[39m
+ [90m 90 |[39m
+ [90m 91 |[39m   [36mif[39m ([33m![39mupdatedPage) {[0m
+Next.js build worker exited with code: 1 and signal: null

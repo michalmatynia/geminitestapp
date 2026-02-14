@@ -10,12 +10,9 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { executeSqlQuery } from '../api';
 import { useDatabase } from '../context/DatabaseContext';
 import { useCrudMutation } from '../hooks/useDatabaseQueries';
-
-import type {
-  CrudOperation,
-  DatabaseColumnInfo,
-  DatabaseTableDetail,
-  DatabaseType,
+import {
+  type DatabaseTableDetail,
+  type DatabaseType,
 } from '../types';
 
 export function useCrudPanelState(props: {
@@ -83,7 +80,8 @@ export function useCrudPanelState(props: {
             type: 'postgresql',
           });
           if (!countResult.error) {
-            totalRows = Number((countResult.rows[0] as any)?.['total'] ?? totalRows);
+            const firstRow = countResult.rows[0];
+            totalRows = Number(firstRow?.['total'] ?? totalRows);
           }
         } catch (error) {
           logClientError(error, { context: { source: 'useCrudPanelState', action: 'fetchCount', table: selectedTable } });

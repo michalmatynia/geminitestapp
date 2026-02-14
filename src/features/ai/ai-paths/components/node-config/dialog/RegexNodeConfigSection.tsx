@@ -933,7 +933,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
             <Label className='text-xs text-gray-400'>Regex Pattern</Label>
             {hasAiProposal ? (
               <div className='mt-2 flex items-center gap-2'>
-                <SelectSimple size='sm' size='sm'
+                <SelectSimple size='sm'
                   value={activeVariant}
                   onValueChange={(value: string): void => {
                     if (value === 'ai' || value === 'manual') {
@@ -1080,7 +1080,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
         <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
           <div>
             <Label className='text-xs text-gray-400'>Mode</Label>
-            <SelectSimple size='sm' size='sm'
+            <SelectSimple size='sm'
               value={regexMode}
               onValueChange={(value: string): void =>
                 updateRegex({ mode: value as NonNullable<RegexConfig['mode']> })
@@ -1097,7 +1097,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
           </div>
           <div>
             <Label className='text-xs text-gray-400'>Match Mode</Label>
-            <SelectSimple size='sm' size='sm'
+            <SelectSimple size='sm'
               value={regexConfig.matchMode ?? 'first'}
               onValueChange={(value: string): void =>
                 updateRegex({ matchMode: value as NonNullable<RegexConfig['matchMode']> })
@@ -1117,7 +1117,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
           </div>
           <div>
             <Label className='text-xs text-gray-400'>Grouped Output Mode</Label>
-            <SelectSimple size='sm' size='sm'
+            <SelectSimple size='sm'
               value={regexConfig.outputMode ?? 'object'}
               onValueChange={(value: string): void =>
                 updateRegex({ outputMode: value as NonNullable<RegexConfig['outputMode']> })
@@ -1428,7 +1428,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Mode</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={template.mode ?? 'group'}
                       onValueChange={(value: string): void =>
                         updateRegexTemplate(template.id, { mode: value as RegexConfig['mode'] })
@@ -1445,7 +1445,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
                   </div>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Match Mode</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={template.matchMode ?? 'first'}
                       onValueChange={(value: string): void =>
                         updateRegexTemplate(template.id, { matchMode: value as RegexConfig['matchMode'] })
@@ -1462,7 +1462,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
                   </div>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Output Mode</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={template.outputMode ?? 'object'}
                       onValueChange={(value: string): void =>
                         updateRegexTemplate(template.id, { outputMode: value as RegexConfig['outputMode'] })
@@ -1611,7 +1611,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
                 <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Mode</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={template.mode ?? 'group'}
                       onValueChange={(value: string): void =>
                         updateGlobalTemplate(template.id, { mode: value as RegexConfig['mode'] })
@@ -1628,7 +1628,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
                   </div>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Match Mode</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={template.matchMode ?? 'first'}
                       onValueChange={(value: string): void =>
                         updateGlobalTemplate(template.id, { matchMode: value as RegexConfig['matchMode'] })
@@ -1645,7 +1645,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
                   </div>
                   <div>
                     <Label className='text-[10px] text-gray-400'>Output Mode</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={template.outputMode ?? 'object'}
                       onValueChange={(value: string): void =>
                         updateGlobalTemplate(template.id, { outputMode: value as RegexConfig['outputMode'] })

@@ -106,7 +106,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='flex items-center gap-2'>
                     <Label className='text-xs text-gray-400'>Operation {index + 1}</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={operation.type}
                       onValueChange={(value: string): void =>
                         replaceOperation(index, value as StringMutatorOperation['type'])
@@ -131,7 +131,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                 {operation.type === 'trim' && (
                   <div className='mt-3'>
                     <Label className='text-xs text-gray-400'>Trim Mode</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={operation.mode ?? 'both'}
                       onValueChange={(value: string): void =>
                         updateOperation(index, { mode: value as 'both' | 'start' | 'end' })
@@ -177,7 +177,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                     )}
                     <div>
                       <Label className='text-xs text-gray-400'>Match Mode</Label>
-                      <SelectSimple size='sm' size='sm'
+                      <SelectSimple size='sm'
                         value={operation.matchMode ?? 'all'}
                         onValueChange={(value: string): void =>
                           updateOperation(index, { matchMode: value as 'first' | 'all' })
@@ -223,7 +223,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                 {operation.type === 'case' && (
                   <div className='mt-3'>
                     <Label className='text-xs text-gray-400'>Case Mode</Label>
-                    <SelectSimple size='sm' size='sm'
+                    <SelectSimple size='sm'
                       value={operation.mode ?? 'lower'}
                       onValueChange={(value: string): void =>
                         updateOperation(index, { mode: value as 'upper' | 'lower' | 'title' })
@@ -254,7 +254,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                     </div>
                     <div>
                       <Label className='text-xs text-gray-400'>Position</Label>
-                      <SelectSimple size='sm' size='sm'
+                      <SelectSimple size='sm'
                         value={operation.position ?? 'suffix'}
                         onValueChange={(value: string): void =>
                           updateOperation(index, { position: value as 'prefix' | 'suffix' })
@@ -304,7 +304,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
         </div>
 
         <div className='mt-4 flex flex-wrap items-center gap-2'>
-          <SelectSimple size='sm' size='sm'
+          <SelectSimple size='sm'
             value={newType}
             onValueChange={(value: string): void =>
               setNewType(value as StringMutatorOperation['type'])

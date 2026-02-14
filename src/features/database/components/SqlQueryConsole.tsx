@@ -9,12 +9,13 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Badge, Button,  Textarea, SelectSimple, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
+import { Badge, Button, Textarea, SelectSimple, DataTable } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
 
 import type { DatabaseType, SqlQueryResult } from '../types';
+import type { ColumnDef } from '@tanstack/react-table';
 
 const HISTORY_KEY = 'db-sql-query-history';
 const MAX_HISTORY = 20;
@@ -230,14 +231,14 @@ export function SqlQueryConsole({
                   {
                     id: 'index',
                     header: '#',
-                    cell: ({ row }) => <span className='text-gray-600 text-[10px]'>{row.index + 1}</span>,
+                    cell: ({ row }: { row: { index: number } }) => <span className='text-gray-600 text-[10px]'>{row.index + 1}</span>,
                     size: 40,
                   },
                   ...(result.fields.length > 0
                     ? result.fields.map((f: { name: string }) => ({
                       accessorKey: f.name,
                       header: f.name,
-                      cell: ({ row }: any) => (
+                      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
                         <span 
                           className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
                           title={formatCellValue(row.original[f.name])}
@@ -249,7 +250,7 @@ export function SqlQueryConsole({
                     : Object.keys(result.rows[0] ?? {}).map((key) => ({
                       accessorKey: key,
                       header: key,
-                      cell: ({ row }: any) => (
+                      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
                         <span 
                           className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
                           title={formatCellValue(row.original[key])}
@@ -259,7 +260,7 @@ export function SqlQueryConsole({
                       )
                     }))
                   )
-                ]}
+                ] as ColumnDef<Record<string, unknown>>[]}
                 data={result.rows}
               />
             </div>

@@ -1,0 +1,37 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 214ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 18.8s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/chatbot/hooks/useChatbotContextState.ts:197:11
+Type error: Type '{ id: string; title: string; content: string; createdAt: string; tags: string[] | undefined; source: "manual" | "pdf" | undefined; }' is not assignable to type 'ContextItem' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'tags' are incompatible.
+    Type 'string[] | undefined' is not assignable to type 'string[]'.
+      Type 'undefined' is not assignable to type 'string[]'.
+
+[0m [90m 195 |[39m   [36mconst[39m handleSaveDraft [33m=[39m useCallback(() [33m=>[39m {
+ [90m 196 |[39m     [36mif[39m ([33m![39mmodalDraft) [36mreturn[39m[33m;[39m
+[31m[1m>[22m[39m[90m 197 |[39m     [36mconst[39m nextItem[33m:[39m [33mContextItem[39m [33m=[39m {
+ [90m     |[39m           [31m[1m^[22m[39m
+ [90m 198 |[39m       id[33m:[39m modalDraft[33m.[39mid[33m,[39m
+ [90m 199 |[39m       title[33m:[39m modalDraft[33m.[39mtitle[33m,[39m
+ [90m 200 |[39m       content[33m:[39m modalDraft[33m.[39mcontent[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

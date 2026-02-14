@@ -1,8 +1,16 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
+import type { 
+  DatabaseEngineStatusDto, 
+  DatabaseEngineOperationJobDto, 
+  DatabaseEngineOperationsJobsDto,
+  DatabaseEngineBackupSchedulerStatusDto,
+  RedisOverviewDto,
+  DatabaseEngineProviderPreviewDto
+} from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
   isValidDatabaseEngineBackupTimeUtc,
@@ -26,28 +34,15 @@ import {
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
-import type { 
-  DatabaseEngineStatusDto, 
-  DatabaseEngineOperationJobDto, 
-  DatabaseEngineOperationsJobsDto,
-  DatabaseEngineBackupSchedulerStatusDto,
-  RedisOverviewDto,
-  DatabaseEngineProviderPreviewDto
-} from '@/shared/contracts/database';
 
 import {
   useAllCollectionsSchema,
-  useCancelDatabaseEngineOperationJobMutation,
-  useCopyCollectionMutation,
-  useDatabaseBackupRunNowMutation,
-  useDatabaseBackupSchedulerTickMutation,
   useDatabaseEngineOperationsJobs,
   useDatabaseBackupSchedulerStatus,
   useDatabaseEngineProviderPreview,
   useDatabaseEngineStatus,
   useRedisOverview,
 } from '../hooks/useDatabaseQueries';
-import { useSettingsBackfillMutation, useSyncDatabaseMutation } from '../hooks/useDatabaseSettings';
 
 export type DatabaseEngineWorkspaceView = 'engine' | 'backups' | 'operations';
 
@@ -88,15 +83,15 @@ export interface UseDatabaseEngineStateReturn {
   workspaceView: DatabaseEngineWorkspaceView;
   setView: (view: DatabaseEngineWorkspaceView) => void;
   policyDraft: DatabaseEnginePolicy;
-  setPolicyDraft: (policy: DatabaseEnginePolicy) => void;
+  setPolicyDraft: Dispatch<SetStateAction<DatabaseEnginePolicy>>;
   serviceRouteMapDraft: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>;
-  setServiceRouteMapDraft: (map: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>) => void;
+  setServiceRouteMapDraft: Dispatch<SetStateAction<Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>>>;
   collectionRouteMapDraft: Record<string, DatabaseEngineProvider>;
-  setCollectionRouteMapDraft: (map: Record<string, DatabaseEngineProvider>) => void;
+  setCollectionRouteMapDraft: Dispatch<SetStateAction<Record<string, DatabaseEngineProvider>>>;
   backupScheduleDraft: DatabaseEngineBackupSchedule;
-  setBackupScheduleDraft: (schedule: DatabaseEngineBackupSchedule) => void;
+  setBackupScheduleDraft: Dispatch<SetStateAction<DatabaseEngineBackupSchedule>>;
   operationControlsDraft: DatabaseEngineOperationControls;
-  setOperationControlsDraft: (controls: DatabaseEngineOperationControls) => void;
+  setOperationControlsDraft: Dispatch<SetStateAction<DatabaseEngineOperationControls>>;
   rows: DatabaseCollectionRow[];
   validationErrors: string[];
   saveConfiguration: () => Promise<void>;
@@ -126,13 +121,6 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const backupSchedulerStatusQuery = useDatabaseBackupSchedulerStatus();
   const operationsJobsQuery = useDatabaseEngineOperationsJobs(30);
   
-  const backupSchedulerTickMutation = useDatabaseBackupSchedulerTickMutation();
-  const backupRunNowMutation = useDatabaseBackupRunNowMutation();
-  const cancelOperationJobMutation = useCancelDatabaseEngineOperationJobMutation();
-  const syncDatabaseMutation = useSyncDatabaseMutation();
-  const backfillMutation = useSettingsBackfillMutation();
-  const copyCollectionMutation = useCopyCollectionMutation();
-
   const [workspaceView, setWorkspaceView] = useState<DatabaseEngineWorkspaceView>(
     (searchParams.get('view') as DatabaseEngineWorkspaceView) || 'engine'
   );
@@ -224,7 +212,7 @@ export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
 
   const saveConfiguration = async () => {
     if (validationErrors.length > 0) {
-      toast(validationErrors[0], { variant: 'error' });
+      toast(validationErrors[0] ?? 'Validation failed', { variant: 'error' });
       return;
     }
     try {

@@ -171,8 +171,12 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
       });
     },
     onError: (error: TError): void => {
-      const message = options.errorMessage || 
-        (error instanceof Error ? error.message : 'An error occurred');
+      let message = options.errorMessage || 'An error occurred';
+      if (error instanceof Error) {
+        message = options.errorMessage 
+          ? `${options.errorMessage}: ${error.message}`
+          : error.message;
+      }
       toast(message, { variant: 'error' });
     },
   });

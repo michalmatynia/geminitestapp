@@ -33,12 +33,12 @@ const filterFields: FilterField[] = [
   { key: 'toDate', label: 'To', type: 'date' },
 ];
 
-type MongoIndexInfo = {
+export type MongoIndexInfo = {
   name?: string;
   key: Record<string, unknown>;
 };
 
-type MongoCollectionIndexStatus = {
+export type MongoCollectionIndexStatus = {
   name: string;
   expected: MongoIndexInfo[];
   existing: MongoIndexInfo[];

@@ -265,7 +265,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
         <div className='flex justify-end pt-4'>
           <Button
             size='sm'
-            onClick={handleSave}
+            onClick={() => { void handleSave(); }}
             disabled={saveMutation.isPending}
             className='h-9 px-8'
           >

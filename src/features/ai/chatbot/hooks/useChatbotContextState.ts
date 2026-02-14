@@ -199,8 +199,8 @@ export function useChatbotContextState() {
       title: modalDraft.title,
       content: modalDraft.content,
       createdAt: modalDraft.createdAt,
-      tags: modalDraft.tags,
-      source: modalDraft.source,
+      ...(modalDraft.tags !== undefined && { tags: modalDraft.tags }),
+      ...(modalDraft.source !== undefined && { source: modalDraft.source }),
     };
 
     setContexts((prev) => {
@@ -219,7 +219,10 @@ export function useChatbotContextState() {
 
   const handlePdfUpload = async (file: File, helpers?: FileUploadHelpers) => {
     try {
-      const data = await uploadPdfMutation.mutateAsync({ file, helpers });
+      const data = await uploadPdfMutation.mutateAsync({ 
+        file, 
+        ...(helpers !== undefined && { helpers }) 
+      });
       if (data.segments.length === 0) {
         toast('No text found in PDF.', { variant: 'info' });
         return;

@@ -66,7 +66,6 @@ export function VersionGraphComparePanel(): React.JSX.Element {
       <div className='mt-2 flex gap-2'>
         <Button size='xs'
           variant='outline'
-          size='sm'
           className='flex-1 text-[10px]'
           onClick={onSwap}
         >
@@ -74,7 +73,6 @@ export function VersionGraphComparePanel(): React.JSX.Element {
         </Button>
         <Button size='xs'
           variant='outline'
-          size='sm'
           className='flex-1 text-[10px]'
           onClick={onExit}
         >

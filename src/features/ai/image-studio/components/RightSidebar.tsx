@@ -305,7 +305,6 @@ export function RightSidebar(): React.JSX.Element {
             <Button size='xs'
               type='button'
               variant='ghost'
-              size='sm'
               className={cn(
                 'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
                 sidebarTab === 'controls'
@@ -319,7 +318,6 @@ export function RightSidebar(): React.JSX.Element {
             <Button size='xs'
               type='button'
               variant='ghost'
-              size='sm'
               className={cn(
                 'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
                 sidebarTab === 'graph'
@@ -363,7 +361,6 @@ export function RightSidebar(): React.JSX.Element {
                     <Button size='xs'
                       onClick={handleRunGeneration}
                       disabled={!workingSlot || !promptText.trim() || generationBusy}
-                      size='sm'
                       className='sm:min-w-[140px]'
                     >
                       {generationBusy ? (
@@ -390,7 +387,6 @@ export function RightSidebar(): React.JSX.Element {
                 <div className='flex flex-wrap items-center justify-end gap-2'>
                   <Button size='xs'
                     variant='outline'
-                    size='sm'
                     title='Open prompt controls'
                     aria-label='Open prompt controls'
                     onClick={() => setPromptControlOpen(true)}
@@ -400,7 +396,6 @@ export function RightSidebar(): React.JSX.Element {
                   </Button>
                   <Button size='xs'
                     variant='outline'
-                    size='sm'
                     title='Preview generation request payload and input images'
                     aria-label='Preview generation request payload and input images'
                     onClick={() => setRequestPreviewOpen(true)}
@@ -410,7 +405,6 @@ export function RightSidebar(): React.JSX.Element {
                   </Button>
                   <Button size='xs'
                     variant='outline'
-                    size='sm'
                     title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
                     aria-label='Open extracted controls'
                     disabled={!hasExtractedControls}
@@ -551,14 +545,12 @@ export function RightSidebar(): React.JSX.Element {
           <div className='flex items-center justify-end gap-2'>
             <Button size='xs'
               variant='outline'
-              size='sm'
               onClick={() => setPromptControlOpen(false)}
             >
               Close
             </Button>
             <Button size='xs'
               variant='outline'
-              size='sm'
               title='Open Prompt Exploder with current prompt'
               aria-label='Open Prompt Exploder with current prompt'
               disabled={!promptText.trim()}
@@ -571,7 +563,6 @@ export function RightSidebar(): React.JSX.Element {
             </Button>
             <Button size='xs'
               variant='outline'
-              size='sm'
               title='Extract functions and selectors from prompt'
               aria-label='Extract functions and selectors from prompt'
               disabled={!promptText.trim()}

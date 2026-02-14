@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 206ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 23.3s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/database/services/database-sync.ts:549:32
+Type error: Argument of type 'MongoUserDoc' is not assignable to parameter of type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type 'MongoUserDoc'.
+
+[0m [90m 547 |[39m     [36mconst[39m data[33m:[39m [33mPrisma[39m[33m.[39m[33mUserCreateManyInput[39m[] [33m=[39m docs
+ [90m 548 |[39m       [33m.[39mmap((doc[33m:[39m [33mMongoUserDoc[39m) [33m=>[39m {
+[31m[1m>[22m[39m[90m 549 |[39m         [36mconst[39m id [33m=[39m normalizeId(doc)[33m;[39m
+ [90m     |[39m                                [31m[1m^[22m[39m
+ [90m 550 |[39m         [36mif[39m ([33m![39mid) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m 551 |[39m         [36mreturn[39m {
+ [90m 552 |[39m           id[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

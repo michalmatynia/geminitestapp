@@ -1,0 +1,40 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.3.0 -> 7.4.0                        │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 230ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 30.1s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/ai-paths/components/ImageStudioRunsQueuePanel.tsx:140:17
+Type error: Type '"xs"' is not assignable to type '"default" | "sm"'.
+
+[0m [90m 138 |[39m                 onValueChange[33m=[39m{(v) [33m=>[39m setStatusFilter(v [36mas[39m [32m'all'[39m [33m|[39m [33mImageStudioRunStatus[39m)}
+ [90m 139 |[39m                 options[33m=[39m{[33mSTATUS_OPTIONS[39m}
+[31m[1m>[22m[39m[90m 140 |[39m                 size[33m=[39m[32m'xs'[39m
+ [90m     |[39m                 [31m[1m^[22m[39m
+ [90m 141 |[39m                 className[33m=[39m[32m'w-28 mt-[-2px]'[39m
+ [90m 142 |[39m               [33m/[39m[33m>[39m
+ [90m 143 |[39m             )[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

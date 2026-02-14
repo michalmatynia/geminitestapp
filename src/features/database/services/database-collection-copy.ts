@@ -55,9 +55,9 @@ const genericHandler = (mongoCollectionName: string, prismaModelName: string): C
       .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc);
         if (!id) return null;
-        const json = toJsonValue(doc);
-        delete json._id;
-        json.id = id;
+        const json = toJsonValue(doc) as Record<string, unknown>;
+        delete json['_id'];
+        json['id'] = id;
         return json;
       })
       .filter(Boolean);
@@ -110,14 +110,15 @@ const settingsHandler: CollectionHandler = {
     const docs = await mongo.collection('settings').find({}).toArray();
     const byKey = new Map<string, { key: string; value: string; createdAt: Date; updatedAt: Date }>();
     for (const doc of docs) {
-      const key = (doc as Record<string, unknown>).key ?? (doc as Record<string, unknown>)._id?.toString() ?? '';
+      const typedDoc = doc as Record<string, unknown>;
+      const key = (typedDoc['key'] as string | undefined) ?? typedDoc['_id']?.toString() ?? '';
       if (!key) continue;
-      const value = (doc as Record<string, unknown>).value;
+      const value = typedDoc['value'];
       const entry = {
         key,
         value: typeof value === 'string' ? value : JSON.stringify(value ?? ''),
-        createdAt: toDate((doc as Record<string, unknown>).createdAt) ?? new Date(),
-        updatedAt: toDate((doc as Record<string, unknown>).updatedAt) ?? new Date(),
+        createdAt: toDate(typedDoc['createdAt']) ?? new Date(),
+        updatedAt: toDate(typedDoc['updatedAt']) ?? new Date(),
       };
       const existing = byKey.get(key);
       if (!existing || entry.updatedAt > existing.updatedAt) {
@@ -152,14 +153,14 @@ const aiPathsSettingsHandler: CollectionHandler = {
     const docs = await mongo.collection('ai_paths_settings').find({}).toArray();
     const normalized = docs
       .map((doc: Record<string, unknown>) => {
-        const key = normalizeAiPathsKey(typeof doc.key === 'string' ? doc.key : null);
-        const value = doc.value;
+        const key = normalizeAiPathsKey(typeof doc['key'] === 'string' ? doc['key'] : null);
+        const value = doc['value'];
         if (!key || typeof value !== 'string') return null;
         return {
           key: `${AI_PATHS_LEGACY_PREFIX}${key}`,
           value,
-          createdAt: toDate(doc.createdAt) ?? new Date(),
-          updatedAt: toDate(doc.updatedAt) ?? new Date(),
+          createdAt: toDate(doc['createdAt']) ?? new Date(),
+          updatedAt: toDate(doc['updatedAt']) ?? new Date(),
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -241,11 +242,11 @@ const usersHandler: CollectionHandler = {
         if (!id) return null;
         return {
           id,
-          name: doc.name ?? null,
-          email: doc.email ?? null,
-          emailVerified: toDate(doc.emailVerified),
-          image: doc.image ?? null,
-          passwordHash: doc.passwordHash ?? null,
+          name: (doc['name'] as string | null) ?? null,
+          email: (doc['email'] as string | null) ?? null,
+          emailVerified: toDate(doc['emailVerified']),
+          image: (doc['image'] as string | null) ?? null,
+          passwordHash: (doc['passwordHash'] as string | null) ?? null,
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);

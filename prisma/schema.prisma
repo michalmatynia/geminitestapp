@@ -492,6 +492,7 @@ model CmsTheme {
   typography Json
   spacing    Json
   customCss  String?
+  isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   pages      Page[]

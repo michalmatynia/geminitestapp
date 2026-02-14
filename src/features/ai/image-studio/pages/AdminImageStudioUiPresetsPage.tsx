@@ -135,7 +135,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
                   </div>
                   <div className='flex flex-col gap-2'>
                     <Button size='xs'
-                      size='sm'
+                     
                       variant={activeId === preset.id ? 'default' : 'outline'}
                       onClick={() => void handleSetActive(preset.id)}
                     >

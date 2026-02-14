@@ -156,7 +156,6 @@ export function ShapeListPanel({
             <Button size='xs'
               type='button'
               variant='ghost'
-              size='icon'
               className='size-5 opacity-60 hover:opacity-100'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
@@ -171,7 +170,6 @@ export function ShapeListPanel({
             <Button size='xs'
               type='button'
               variant='ghost'
-              size='icon'
               className='size-5 opacity-0 group-hover:opacity-60 hover:!opacity-100 text-destructive'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();

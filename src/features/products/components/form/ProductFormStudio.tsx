@@ -639,7 +639,6 @@ export default function ProductFormStudio(): React.JSX.Element {
               <div className='absolute right-2 top-2 z-20 flex items-center gap-1 rounded bg-black/65 px-2 py-1 text-[10px] text-gray-100'>
                 <Button size='xs'
                   type='button'
-                  size='sm'
                   variant='outline'
                   className='h-5 w-5 px-0 text-[10px]'
                   onClick={(): void => {
@@ -651,7 +650,6 @@ export default function ProductFormStudio(): React.JSX.Element {
                 </Button>
                 <Button size='xs'
                   type='button'
-                  size='sm'
                   variant='outline'
                   className='h-5 w-5 px-0 text-[10px]'
                   onClick={(): void => {
@@ -663,7 +661,6 @@ export default function ProductFormStudio(): React.JSX.Element {
                 </Button>
                 <Button size='xs'
                   type='button'
-                  size='sm'
                   variant='outline'
                   className='h-5 px-1 text-[10px]'
                   onClick={(): void => {

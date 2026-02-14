@@ -9,7 +9,7 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Page, Slug } from '@/features/cms/types';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
-import { Button, Checkbox, Input, Label, SectionHeader, Switch } from '@/shared/ui';
+import { Button, Checkbox, Input, SectionHeader, Switch, FormSection, Badge } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {

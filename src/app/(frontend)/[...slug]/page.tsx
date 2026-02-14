@@ -136,7 +136,8 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
   const showMenu = page.showMenu !== false;
   const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
     type: component.type,
-    content: component.content ?? {},
+    order: component.order || 0,
+    content: (component.content as Record<string, unknown>) ?? {},
   }));
   const content = (
     <CmsPageShell

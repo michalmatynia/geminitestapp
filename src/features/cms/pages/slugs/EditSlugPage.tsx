@@ -10,7 +10,7 @@ import {
   cmsSlugDomainsUpdateSchema,
   cmsSlugUpdateSchema,
 } from '@/features/cms/validations/api';
-import { Button, Input, Switch, SectionHeader, Checkbox, FormSection, FormField, useToast } from '@/shared/ui';
+import { Button, Input, Switch, SectionHeader, Checkbox, FormSection, FormField, Badge, useToast } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditSlugPageLoader(): React.JSX.Element {

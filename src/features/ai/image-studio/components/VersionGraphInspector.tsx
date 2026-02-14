@@ -116,7 +116,6 @@ export function VersionGraphInspector(): React.JSX.Element {
       <div className='mt-2 flex gap-2'>
         <Button size='xs'
           variant='outline'
-          size='sm'
           className='flex-1 text-xs'
           onClick={onSetAsSource}
         >
@@ -126,7 +125,6 @@ export function VersionGraphInspector(): React.JSX.Element {
         {selectedNode.type === 'composite' ? (
           <Button size='xs'
             variant='outline'
-            size='sm'
             className='flex-1 border-teal-400/40 text-xs text-teal-400 hover:bg-teal-500/10'
             disabled={compositeBusy || compositeLoading}
             onClick={() => { onFlattenComposite(selectedNode.id); }}
@@ -138,7 +136,6 @@ export function VersionGraphInspector(): React.JSX.Element {
         {selectedNode.type === 'composite' && onRefreshCompositePreview ? (
           <Button size='xs'
             variant='ghost'
-            size='icon'
             className='size-7 text-teal-400'
             title='Refresh composite preview'
             disabled={compositeBusy || compositeLoading}

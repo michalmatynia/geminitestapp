@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 201ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 21.1s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/auth/pages/admin/UsersPage.tsx:237:34
+Type error: Argument of type '(prev: AuthUserSummary | null) => { name: string; id: string; createdAt: string; updatedAt: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; password?: string | undefined; } | null' is not assignable to parameter of type '{ id: string; createdAt: string; updatedAt: string | null; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; password?: string | undefined; }'.
+
+[0m [90m 235 |[39m                 value[33m=[39m{editingUser[33m?[39m[33m.[39mname [33m?[39m[33m?[39m [32m''[39m}
+ [90m 236 |[39m                 onChange[33m=[39m{(e) [33m=>[39m {
+[31m[1m>[22m[39m[90m 237 |[39m                   setEditingUser((prev[33m:[39m [33mAuthUserSummary[39m [33m|[39m [36mnull[39m) [33m=>[39m prev [33m?[39m { [33m...[39mprev[33m,[39m name[33m:[39m e[33m.[39mtarget[33m.[39mvalue } [33m:[39m [36mnull[39m)[33m;[39m
+ [90m     |[39m                                  [31m[1m^[22m[39m
+ [90m 238 |[39m                 }}
+ [90m 239 |[39m                 placeholder[33m=[39m[32m'Display name'[39m
+ [90m 240 |[39m               [33m/[39m[33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

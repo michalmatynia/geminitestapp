@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 254ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 26.2s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/image-studio/components/ToggleButtonGroup.tsx:33:11
+Type error: JSX elements cannot have multiple attributes with the same name.
+
+[0m [90m 31 |[39m         [33m<[39m[33mButton[39m size[33m=[39m[32m'xs'[39m
+ [90m 32 |[39m           key[33m=[39m{option[33m.[39mvalue}
+[31m[1m>[22m[39m[90m 33 |[39m           size[33m=[39m{size}
+ [90m    |[39m           [31m[1m^[22m[39m
+ [90m 34 |[39m           variant[33m=[39m{value [33m===[39m option[33m.[39mvalue [33m?[39m [32m'secondary'[39m [33m:[39m [32m'ghost'[39m}
+ [90m 35 |[39m           onClick[33m=[39m{() [33m=>[39m onChange(option[33m.[39mvalue)}
+ [90m 36 |[39m         [33m>[39m[0m
+Next.js build worker exited with code: 1 and signal: null

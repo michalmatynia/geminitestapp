@@ -15,7 +15,6 @@ import {
   Button,
   Input,
   ListPanel,
-  EmptyState,
   useToast,
   SelectSimple,
   DataTable,
@@ -27,7 +26,9 @@ import {
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { cmsDomainCreateSchema, cmsDomainUpdateSchema } from '../../validations/api';
+
 import type { ColumnDef } from '@tanstack/react-table';
+
 
 export default function ZonesPage(): React.JSX.Element {
   const domainsQuery = useCmsDomains();
@@ -40,7 +41,7 @@ export default function ZonesPage(): React.JSX.Element {
   const [domain, setDomain] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const validation = validateFormData(
       cmsDomainCreateSchema,
@@ -53,14 +54,17 @@ export default function ZonesPage(): React.JSX.Element {
     }
 
     setError('');
-    try {
-      await createDomain.mutateAsync(validation.data);
-      setDomain('');
-      toast(`Zone ${validation.data.domain} added successfully.`, { variant: 'success' });
-    } catch (err: unknown) {
-      logClientError(err, { context: { source: 'ZonesPage', action: 'createDomain', domain } });
-      setError(err instanceof Error ? err.message : 'Failed to create domain.');
-    }
+    const handleAdd = async () => {
+      try {
+        await createDomain.mutateAsync(validation.data);
+        setDomain('');
+        toast(`Zone ${validation.data.domain} added successfully.`, { variant: 'success' });
+      } catch (err: unknown) {
+        logClientError(err, { context: { source: 'ZonesPage', action: 'createDomain', domain } });
+        setError(err instanceof Error ? err.message : 'Failed to create domain.');
+      }
+    };
+    void handleAdd();
   };
 
   const handleDelete = async (id: string) => {
@@ -133,7 +137,7 @@ export default function ZonesPage(): React.JSX.Element {
         <SelectSimple
           size='xs'
           value={row.original.aliasOf ?? 'none'}
-          onValueChange={(val) => void handleAliasChange(row.original.id, val)}
+          onValueChange={(val) => { void handleAliasChange(row.original.id, val); }}
           options={[
             { value: 'none', label: 'Keep Independent' },
             ...domains
@@ -153,7 +157,7 @@ export default function ZonesPage(): React.JSX.Element {
             variant='ghost' 
             size='xs' 
             className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => void handleDelete(row.original.id)}
+            onClick={() => { void handleDelete(row.original.id); }}
           >
             <Trash2 className='size-3.5' />
           </Button>
@@ -170,8 +174,12 @@ export default function ZonesPage(): React.JSX.Element {
       />
 
       <FormSection title='Provision New Zone' className='p-6'>
+
         <form onSubmit={handleSubmit} className='flex items-end gap-4'>
+
           <FormField label='Hostname / Domain' error={error} className='flex-1'>
+
+      
             <Input
               value={domain}
               onChange={(e) => setDomain(e.target.value)}

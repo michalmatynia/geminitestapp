@@ -331,7 +331,6 @@ export function LeftSidebar(): React.JSX.Element {
             <Button size='xs'
               type='button'
               variant='outline'
-              size='sm'
               className='h-7 px-2 text-[11px]'
               title='Save current Image Studio project state'
               aria-label='Save current Image Studio project state'
@@ -354,7 +353,6 @@ export function LeftSidebar(): React.JSX.Element {
               <Tooltip content='Load to canvas'>
                 <Button size='xs'
                   type='button'
-                  size='icon'
                   variant='outline'
                   title='Load to canvas'
                   onClick={handleLoadToCanvas}
@@ -367,7 +365,6 @@ export function LeftSidebar(): React.JSX.Element {
               <Tooltip content='De-canvas'>
                 <Button size='xs'
                   type='button'
-                  size='icon'
                   variant='outline'
                   title='De-canvas'
                   onClick={handleDeCanvas}
@@ -380,7 +377,6 @@ export function LeftSidebar(): React.JSX.Element {
               <Tooltip content='New Card'>
                 <Button size='xs'
                   type='button'
-                  size='icon'
                   variant='outline'
                   title='New Card'
                   onClick={handleCreateCardFromLoadedImage}
@@ -393,7 +389,6 @@ export function LeftSidebar(): React.JSX.Element {
               <Tooltip content='New folder'>
                 <Button size='xs'
                   type='button'
-                  size='icon'
                   variant='outline'
                   title='New folder'
                   onClick={handleCreateFolder}
@@ -407,7 +402,6 @@ export function LeftSidebar(): React.JSX.Element {
                 <Tooltip content='Edit card'>
                   <Button size='xs'
                     type='button'
-                    size='icon'
                     variant='outline'
                     title='Edit card'
                     onClick={() => setSlotInlineEditOpen(true)}

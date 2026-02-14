@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 213ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 18.2s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/ai-paths/components/node-config/dialog/HttpNodeConfigSection.tsx:53:35
+Type error: JSX elements cannot have multiple attributes with the same name.
+
+[0m [90m 51 |[39m         [33m<[39m[33mdiv[39m[33m>[39m
+ [90m 52 |[39m           [33m<[39m[33mLabel[39m className[33m=[39m[32m'text-xs text-gray-400'[39m[33m>[39m[33mMethod[39m[33m<[39m[33m/[39m[33mLabel[39m[33m>[39m
+[31m[1m>[22m[39m[90m 53 |[39m           [33m<[39m[33mSelectSimple[39m size[33m=[39m[32m'sm'[39m size[33m=[39m[32m'sm'[39m
+ [90m    |[39m                                   [31m[1m^[22m[39m
+ [90m 54 |[39m             value[33m=[39m{httpConfig[33m.[39mmethod}
+ [90m 55 |[39m             onValueChange[33m=[39m{(value[33m:[39m string)[33m:[39m [36mvoid[39m [33m=>[39m
+ [90m 56 |[39m               updateSelectedNodeConfig({[0m
+Next.js build worker exited with code: 1 and signal: null

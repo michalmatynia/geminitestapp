@@ -128,7 +128,7 @@ export function ProductFormProvider({
   draft,
   onSuccess,
   onEditSave,
-  requireSku,
+  requireSku = true,
   initialSku,
   initialCatalogId,
 }: {

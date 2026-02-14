@@ -23,6 +23,7 @@ import {
   Input, 
   ConfirmDialog,
   StatusBadge,
+  StatusToggle,
   FormModal,
   Checkbox,
   Label,
@@ -91,8 +92,8 @@ export default function AuthUsersPage(): React.JSX.Element {
       header: 'Verified',
       cell: ({ row }: { row: { original: AuthUserSummary } }) => (
         <StatusBadge 
-          status={row.original.emailVerified ? 'success' : 'warning'} 
-          label={row.original.emailVerified ? 'Verified' : 'Pending'} 
+          status={row.original.emailVerified ? 'Verified' : 'Pending'} 
+          variant={row.original.emailVerified ? 'success' : 'warning'} 
           className='text-[9px]' 
         />
       ),

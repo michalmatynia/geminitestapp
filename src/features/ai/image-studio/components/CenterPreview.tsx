@@ -926,7 +926,6 @@ export function CenterPreview(): React.JSX.Element {
       <Button size='xs'
         type='button'
         variant='outline'
-        size='sm'
         onClick={toggleFocusMode}
         title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
         aria-label={isFocusMode ? 'Show side panels' : 'Show canvas only'}
@@ -978,7 +977,6 @@ export function CenterPreview(): React.JSX.Element {
           {previewMode === '3d' && workingSlot ? (
             <Button size='xs'
               variant='outline'
-              size='sm'
               onClick={() => { void handleSaveScreenshot(); }}
               disabled={screenshotBusy}
               title='Capture current 3D frame and attach it to this slot'
@@ -1044,7 +1042,6 @@ export function CenterPreview(): React.JSX.Element {
             <div className='absolute bottom-2 left-2 z-20'>
               <Button size='xs'
                 type='button'
-                size='sm'
                 variant='outline'
                 onClick={handleRevealInTreeFromCanvas}
                 disabled={!workingSlot?.id}
@@ -1126,7 +1123,6 @@ export function CenterPreview(): React.JSX.Element {
                         {variant.output && variant.slotId ? (
                           <Button size='xs'
                             type='button'
-                            size='icon'
                             variant='ghost'
                             onClick={(): void => handleDeleteVariant(variant)}
                             disabled={deleteSlotMutation.isPending}

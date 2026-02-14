@@ -33,6 +33,7 @@ import { Asset3DEditModal } from '../components/Asset3DEditModal';
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
 import { Asset3DUploader } from '../components/Asset3DUploader';
 import { useAdmin3DAssetsState } from '../hooks/useAdmin3DAssetsState';
+
 import type { Asset3DRecord } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -260,7 +261,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={handleReindex}
+                  onClick={() => { void handleReindex(); }}
                   disabled={isReindexing}
                 >
                   <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isReindexing ? 'animate-spin' : ''}`} />

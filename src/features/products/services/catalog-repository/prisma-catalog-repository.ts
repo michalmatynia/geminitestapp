@@ -1,5 +1,6 @@
 import 'server-only';
 
+
 import type {
   CatalogCreateInput,
   CatalogRecord,
@@ -8,33 +9,26 @@ import type {
 } from '@/features/products/types/services/catalog-repository';
 import prisma from '@/shared/lib/db/prisma';
 
-const toRecord = (catalog: {
-  id: string;
-  name: string;
-  description: string | null;
-  isDefault: boolean;
-  defaultLanguageId: string | null;
-  defaultPriceGroupId: string | null;
-  priceGroupIds: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  languages?: { languageId: string; position: number }[];
-}): CatalogRecord => ({
+import type { Catalog as PrismaCatalog } from '@prisma/client';
+
+const toRecord = (
+  catalog: PrismaCatalog & {
+    languages?: { languageId: string; position: number }[];
+  }
+): CatalogRecord => ({
   id: catalog.id,
   name: catalog.name,
   description: catalog.description ?? null,
   isDefault: catalog.isDefault,
   defaultLanguageId: catalog.defaultLanguageId ?? null,
   defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
-  createdAt: catalog.createdAt?.toISOString() ?? new Date().toISOString(),
-  updatedAt: catalog.updatedAt?.toISOString() ?? new Date().toISOString(),
+  createdAt: catalog.createdAt.toISOString(),
+  updatedAt: catalog.updatedAt.toISOString(),
   // Sort by position to ensure correct ordering
   languageIds: catalog.languages
-    ?.sort((a: { languageId: string; position: number }, b: { languageId: string; position: number }) => a.position - b.position)
-    .map((entry: { languageId: string; position: number }) => entry.languageId) ?? [],
-  priceGroupIds: Array.isArray(catalog.priceGroupIds)
-    ? catalog.priceGroupIds
-    : [],
+    ?.sort((a: { position: number }, b: { position: number }) => a.position - b.position)
+    .map((entry: { languageId: string }) => entry.languageId) ?? [],
+  priceGroupIds: (catalog.priceGroupIds) ?? [],
 });
 
 export const prismaCatalogRepository: CatalogRepository = {

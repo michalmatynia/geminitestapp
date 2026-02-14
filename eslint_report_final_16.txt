@@ -1,0 +1,86 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/pages/pages/EditPagePage.tsx
+  12:78  warning  'useToast' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/pages/zones/ZonesPage.tsx
+  178:1  error  Expected indentation of 10 spaces but found 1   indent
+  179:1  error  Expected indentation of 12 spaces but found 2   indent
+  180:1  error  Expected indentation of 10 spaces but found 1   indent
+  181:1  error  Expected indentation of 10 spaces but found 12  indent
+  186:1  error  Expected indentation of 14 spaces but found 13  indent
+  187:1  error  Expected indentation of 14 spaces but found 12  indent
+  188:1  error  Expected indentation of 14 spaces but found 1   indent
+  189:1  error  Expected indentation of 14 spaces but found 0   indent
+  190:1  error  Expected indentation of 12 spaces but found 4   indent
+  200:1  error  Expected indentation of 8 spaces but found 7    indent
+  202:1  error  Expected indentation of 12 spaces but found 0   indent
+  203:1  error  Expected indentation of 12 spaces but found 0   indent
+  204:1  error  Expected indentation of 12 spaces but found 0   indent
+  205:1  error  Expected indentation of 10 spaces but found 0   indent
+  206:1  error  Expected indentation of 8 spaces but found 0    indent
+  207:1  error  Expected indentation of 6 spaces but found 0    indent
+  208:1  error  Expected indentation of 4 spaces but found 0    indent
+  209:1  error  Expected indentation of 2 spaces but found 0    indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useDatabaseEngineState.ts
+  29:1  error  `@/shared/contracts/database` type import should occur before import of `@/shared/hooks/use-settings`  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabaseEnginePage.tsx
+  161:1    error  Expected indentation of 18 spaces but found 38  indent
+  162:1    error  Expected indentation of 20 spaces but found 40  indent
+  163:1    error  Expected indentation of 20 spaces but found 40  indent
+  163:139  error  Unsafe return of a value of type `any`          @typescript-eslint/no-unsafe-return
+  164:1    error  Expected indentation of 18 spaces but found 38  indent
+  172:1    error  Expected indentation of 18 spaces but found 38  indent
+  173:1    error  Expected indentation of 20 spaces but found 40  indent
+  174:1    error  Expected indentation of 20 spaces but found 40  indent
+  174:139  error  Unsafe return of a value of type `any`          @typescript-eslint/no-unsafe-return
+  175:1    error  Expected indentation of 18 spaces but found 38  indent
+  183:1    error  Expected indentation of 18 spaces but found 38  indent
+  184:1    error  Expected indentation of 20 spaces but found 40  indent
+  185:1    error  Expected indentation of 20 spaces but found 40  indent
+  185:139  error  Unsafe return of a value of type `any`          @typescript-eslint/no-unsafe-return
+  186:1    error  Expected indentation of 18 spaces but found 38  indent
+  194:1    error  Expected indentation of 18 spaces but found 38  indent
+  195:1    error  Expected indentation of 20 spaces but found 40  indent
+  196:1    error  Expected indentation of 20 spaces but found 40  indent
+  196:139  error  Unsafe return of a value of type `any`          @typescript-eslint/no-unsafe-return
+  197:1    error  Expected indentation of 18 spaces but found 38  indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasePreviewPage.tsx
+  366:5  warning  'tableRows' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/marketplaces/category-mapper/GenericItemMapper.tsx
+  10:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+   19:3   warning  'ListPanel' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   26:3   warning  'StatusToggle' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   39:7   warning  'getContextValue' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  132:5   warning  'rebuildIndexesMutation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  136:37  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  140:93  error    Unsafe member access .name on an `any` value                                                       @typescript-eslint/no-unsafe-member-access
+  145:80  error    Unsafe member access .expected on an `any` value                                                   @typescript-eslint/no-unsafe-member-access
+  151:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  151:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  152:26  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  152:98  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  157:14  error    Unsafe call of an `any` typed value                                                                @typescript-eslint/no-unsafe-call
+  157:27  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  157:43  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  159:35  error    Unsafe member access .key on an `any` value                                                        @typescript-eslint/no-unsafe-member-access
+  170:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  170:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  171:37  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  174:62  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormOther.tsx
+  345:130  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/pages/Admin3DAssetsPage.tsx
+   35:1   error  There should be at least one empty line between import groups                      import/order
+  263:27  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+✖ 64 problems (58 errors, 6 warnings)
+  38 errors and 0 warnings potentially fixable with the `--fix` option.
+

@@ -1,0 +1,12 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabaseEnginePage.tsx
+  164:90  error  Unsafe return of a value of type `any`  @typescript-eslint/no-unsafe-return
+  176:90  error  Unsafe return of a value of type `any`  @typescript-eslint/no-unsafe-return
+  188:90  error  Unsafe return of a value of type `any`  @typescript-eslint/no-unsafe-return
+  200:90  error  Unsafe return of a value of type `any`  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+  59:43  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+✖ 5 problems (5 errors, 0 warnings)
+

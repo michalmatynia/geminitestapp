@@ -17,6 +17,7 @@ interface FormSectionProps {
   className?: string | undefined;
   gridClassName?: string | undefined;
   variant?: 'default' | 'compact' | 'subtle' | 'subtle-compact' | 'glass' | undefined;
+  id?: string | undefined;
 }
 
 export function FormSection({
@@ -28,9 +29,10 @@ export function FormSection({
   className,
   gridClassName,
   variant = 'subtle',
+  id,
 }: FormSectionProps): React.JSX.Element {
   return (
-    <SectionPanel variant={variant} className={cn('space-y-4', className)}>
+    <SectionPanel id={id} variant={variant} className={cn('space-y-4', className)}>
       {(title || description || actions) && (
         <SectionHeader
           title={title ?? ''}
@@ -54,7 +56,7 @@ interface FormFieldProps {
   description?: string | undefined;
   actions?: ReactNode | undefined;
   children?: ReactNode | undefined;
-  error?: string | undefined;
+  error?: string | null | undefined;
   required?: boolean | undefined;
   className?: string | undefined;
   id?: string | undefined;

@@ -1,8 +1,14 @@
+Hide Convert all to Base into Actions
+When I create Product from Draft, I get Failed to create
+When I create from draft I should be able to choose the first tab selected
+
+
 Versioning graph, detach node, flatten
 
-TEST AGAINST DIFFERENT PROMPTS
+TEST Exploder AGAINST DIFFERENT PROMPTS
 
-
+Prompts not getting saved in project, I need one place to retain prompt
+Image Generation need proper history
 ---
 * Backup MongoDB
 

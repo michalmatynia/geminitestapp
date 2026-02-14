@@ -6,9 +6,9 @@ import { useEffect, useMemo } from 'react';
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import { logClientError } from '@/features/observability';
 import { Button, SectionHeader, DataTable, SelectSimple, useToast } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
+
 import type { ColumnDef } from '@tanstack/react-table';
 
 export interface GenericItemMapperConfig<TInternal, TExternal, TMapping> {
@@ -261,7 +261,7 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
           data={sortedInternalItems}
           isLoading={loading}
           getRowId={(row) => getInternalId(row)}
-          getRowClassName={(row) => {
+          getRowClassName={(row: { original: TInternal }) => {
             const hasPendingChange = pendingMappings.has(getInternalId(row.original));
             return hasPendingChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : '';
           }}

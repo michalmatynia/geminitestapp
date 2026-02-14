@@ -82,7 +82,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* Merge mode toggle */}
         <Button size='xs'
           variant={mergeMode ? 'default' : 'ghost'}
-          size='icon'
           className={cn('size-6', mergeMode && 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30')}
           title={mergeMode ? 'Exit merge mode' : 'Enter merge mode'}
           onClick={onToggleMergeMode}
@@ -94,7 +93,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {mergeMode && mergeSelectedIds.length >= 2 ? (
           <Button size='xs'
             variant='outline'
-            size='sm'
             className='h-6 border-orange-400/40 px-2 text-[10px] text-orange-400 hover:bg-orange-500/10'
             disabled={mergeBusy}
             onClick={onExecuteMerge}
@@ -107,7 +105,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {mergeMode && mergeSelectedIds.length > 0 ? (
           <Button size='xs'
             variant='ghost'
-            size='icon'
             className='size-6 text-gray-400'
             title='Clear selection'
             onClick={onClearMergeSelection}
@@ -119,7 +116,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* Composite mode toggle */}
         <Button size='xs'
           variant={compositeMode ? 'default' : 'ghost'}
-          size='icon'
           className={cn('size-6', compositeMode && 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30')}
           title={compositeMode ? 'Exit composite mode' : 'Enter composite mode'}
           onClick={onToggleCompositeMode}
@@ -131,7 +127,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {compositeMode && compositeSelectedIds.length >= 2 ? (
           <Button size='xs'
             variant='outline'
-            size='sm'
             className='h-6 border-teal-400/40 px-2 text-[10px] text-teal-400 hover:bg-teal-500/10'
             disabled={compositeBusy}
             onClick={onExecuteComposite}
@@ -144,7 +139,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {compositeMode && compositeSelectedIds.length > 0 ? (
           <Button size='xs'
             variant='ghost'
-            size='icon'
             className='size-6 text-gray-400'
             title='Clear selection'
             onClick={onClearCompositeSelection}
@@ -156,7 +150,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* Compare mode toggle */}
         <Button size='xs'
           variant={compareMode ? 'default' : 'ghost'}
-          size='icon'
           className={cn('size-6', compareMode && 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30')}
           title={compareMode ? 'Exit compare mode' : 'Compare two nodes'}
           onClick={onToggleCompareMode}
@@ -171,7 +164,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* Collapse controls */}
         <Button size='xs'
           variant='ghost'
-          size='icon'
           className='size-6'
           title='Collapse all'
           onClick={onCollapseAll}
@@ -180,7 +172,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         </Button>
         <Button size='xs'
           variant='ghost'
-          size='icon'
           className='size-6'
           title='Expand all'
           onClick={onExpandAll}
@@ -191,7 +182,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* Stats toggle */}
         <Button size='xs'
           variant={showStats ? 'default' : 'ghost'}
-          size='icon'
           className={cn('size-6', showStats && 'bg-accent')}
           title={showStats ? 'Hide stats' : 'Show stats'}
           onClick={onToggleStats}
@@ -203,7 +193,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {showMinimapButton ? (
           <Button size='xs'
             variant={showMinimap ? 'default' : 'ghost'}
-            size='icon'
             className={cn('size-6', showMinimap && 'bg-accent')}
             title={showMinimap ? 'Hide minimap' : 'Show minimap'}
             onClick={onToggleMinimap}
@@ -215,7 +204,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* Export PNG */}
         <Button size='xs'
           variant='ghost'
-          size='icon'
           className='size-6'
           title='Export as PNG'
           disabled={exporting || nodeCount === 0}
@@ -252,7 +240,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* Zoom controls */}
         <Button size='xs'
           variant='ghost'
-          size='icon'
           className='size-6'
           title='Zoom out'
           onClick={() => onSetZoom((z) => Math.max(0.25, z - ZOOM_BUTTON_STEP))}
@@ -264,7 +251,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         </span>
         <Button size='xs'
           variant='ghost'
-          size='icon'
           className='size-6'
           title='Zoom in'
           onClick={() => onSetZoom((z) => Math.min(3, z + ZOOM_BUTTON_STEP))}
@@ -273,7 +259,6 @@ export function VersionGraphToolbar(): React.JSX.Element {
         </Button>
         <Button size='xs'
           variant='ghost'
-          size='icon'
           className='size-6'
           title='Fit to view'
           onClick={onFitToView}

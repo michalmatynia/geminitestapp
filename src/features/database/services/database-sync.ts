@@ -546,7 +546,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('users').find({}).toArray();
     const data: Prisma.UserCreateManyInput[] = docs
       .map((doc: MongoUserDoc) => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
@@ -568,7 +568,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('accounts').find({}).toArray();
     const data: Prisma.AccountCreateManyInput[] = docs
       .map((doc: MongoAccountDoc) => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         const userIdRaw = doc.userId;
         const userId = userIdRaw instanceof ObjectId ? userIdRaw.toString() : String(userIdRaw ?? '');
         if (!id || !userId) return null;
@@ -640,7 +640,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('auth_security_profiles').find({}).toArray();
     const data = docs
       .map((doc: MongoAuthSecurityProfileDoc): Prisma.AuthSecurityProfileCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         const userId = doc.userId ?? id;
         if (!userId) return null;
         return {
@@ -667,11 +667,11 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('auth_login_challenges').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
-          data: toJsonValue(doc),
+          data: toJsonValue(doc) as Prisma.InputJsonValue,
           createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
           updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
         };
@@ -687,11 +687,11 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('auth_security_attempts').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
-          data: toJsonValue(doc),
+          data: toJsonValue(doc) as Prisma.InputJsonValue,
           createdAt: toDate((doc as { createdAt?: Date | string }).createdAt) ?? new Date(),
           updatedAt: toDate((doc as { updatedAt?: Date | string }).updatedAt) ?? new Date(),
         };
@@ -751,7 +751,7 @@ async function syncMongoToPrisma(
           level: doc.level ?? 'error',
           message: doc.message ?? '',
           source: doc.source ?? null,
-          context: toJsonValue(doc.context ?? null),
+          context: toJsonValue(doc.context ?? null) as Prisma.InputJsonValue,
           stack: doc.stack ?? null,
           path: doc.path ?? null,
           method: doc.method ?? null,
@@ -794,7 +794,7 @@ async function syncMongoToPrisma(
           errorMessage: doc.errorMessage ?? null,
           requestId: doc.requestId ?? null,
           userId: doc.userId ?? null,
-          meta: toJsonValue(doc.meta ?? null),
+          meta: toJsonValue(doc.meta ?? null) as Prisma.InputJsonValue,
           createdAt: toDate(doc.createdAt) ?? new Date(),
         };
       })
@@ -907,7 +907,7 @@ async function syncMongoToPrisma(
           sessionId,
           status: (doc.status as ChatbotJobStatus) ?? 'pending',
           model: doc.model ?? null,
-          payload: toJsonValue(doc.payload ?? null),
+          payload: toJsonValue(doc.payload ?? null) as Prisma.InputJsonValue,
           resultText: doc.resultText ?? null,
           errorMessage: doc.errorMessage ?? null,
           createdAt: toDate(doc.createdAt) ?? new Date(),
@@ -1374,7 +1374,7 @@ async function syncMongoToPrisma(
           imageBase64: doc.imageBase64 ?? null,
           asset3dId: resolvedAsset3dId,
           screenshotFileId: resolvedScreenshotFileId,
-          metadata: toJsonValue(doc.metadata ?? null),
+          metadata: toJsonValue(doc.metadata ?? null) as Prisma.InputJsonValue,
           createdAt: toDate(doc.createdAt) ?? new Date(),
           updatedAt: toDate(doc.updatedAt) ?? new Date(),
         };
@@ -1549,7 +1549,7 @@ async function syncMongoToPrisma(
     const seenSlugs = new Set<string>();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.IntegrationCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         const rawName = typeof (doc as { name?: string }).name === 'string' ? (doc as { name?: string }).name?.trim() ?? '' : '';
         const name = rawName || id;
@@ -1600,7 +1600,7 @@ async function syncMongoToPrisma(
     const warnings: string[] = [];
     const byIntegration = new Map<string,  { doc: Record<string, unknown>; updatedAt: Date }>();
     docs.forEach((doc: Record<string, unknown>) => {
-      const id = normalizeId(doc);
+      const id = normalizeId(doc as unknown as Record<string, unknown>);
       const integrationId = (doc as { integrationId?: string }).integrationId ?? '';
       if (!id || !integrationId) {
         warnings.push('Skipped integration connection with missing id/integrationId');
@@ -1622,7 +1622,7 @@ async function syncMongoToPrisma(
       byIntegration.set(integrationId, { doc, updatedAt });
     });
     const data = Array.from(byIntegration.values()).map(({ doc }) => ({
-      id: normalizeId(doc),
+      id: normalizeId(doc as unknown as Record<string, unknown>),
       integrationId: (doc as { integrationId?: string }).integrationId ?? '',
       name: (doc as { name?: string }).name ?? 'Connection',
       username: (doc as { username?: string }).username ?? '',
@@ -1686,7 +1686,7 @@ async function syncMongoToPrisma(
     const warnings: string[] = [];
     const byKey = new Map<string,  { doc: Record<string, unknown>; updatedAt: Date }>();
     docs.forEach((doc: Record<string, unknown>) => {
-      const id = normalizeId(doc);
+      const id = normalizeId(doc as unknown as Record<string, unknown>);
       const productId = (doc as { productId?: string }).productId ?? '';
       const connectionId = (doc as { connectionId?: string }).connectionId ?? '';
       if (!id || !productId || !connectionId) {
@@ -1718,10 +1718,10 @@ async function syncMongoToPrisma(
       const connectionId = (doc as { connectionId?: string }).connectionId ?? '';
       const resolvedIntegrationId = connectionMap.get(connectionId) ?? (doc as { integrationId?: string }).integrationId ?? '';
       if ((doc as { integrationId?: string }).integrationId && (doc as { integrationId?: string }).integrationId !== resolvedIntegrationId) {
-        warnings.push(`Product listing ${normalizeId(doc)}: corrected integrationId to match connection`);
+        warnings.push(`Product listing ${normalizeId(doc as unknown as Record<string, unknown>)}: corrected integrationId to match connection`);
       }
       return {
-        id: normalizeId(doc),
+        id: normalizeId(doc as unknown as Record<string, unknown>),
         productId: (doc as { productId?: string }).productId ?? '',
         integrationId: resolvedIntegrationId,
         connectionId,
@@ -1729,7 +1729,7 @@ async function syncMongoToPrisma(
         inventoryId: (doc as { inventoryId?: string | null }).inventoryId ?? null,
         status: (doc as { status?: string }).status ?? 'pending',
         listedAt: toDate((doc as { listedAt?: Date | string | null }).listedAt),
-        exportHistory: toJsonValue((doc as { exportHistory?: unknown }).exportHistory ?? null),
+        exportHistory: toJsonValue((doc as { exportHistory?: unknown }).exportHistory ?? null) as Prisma.InputJsonValue,
         createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
         updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
       };
@@ -1749,7 +1749,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('product_drafts').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.ProductDraftCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
@@ -1774,11 +1774,11 @@ async function syncMongoToPrisma(
           supplierLink: (doc as { supplierLink?: string | null }).supplierLink ?? null,
           priceComment: (doc as { priceComment?: string | null }).priceComment ?? null,
           stock: (doc as { stock?: number | null }).stock ?? null,
-          catalogIds: (doc as { catalogIds?: unknown[] }).catalogIds ?? [],
+          catalogIds: ((doc as { catalogIds?: unknown[] }).catalogIds ?? []) as Prisma.InputJsonValue,
           categoryId: (doc as { categoryId?: string | null }).categoryId ?? null,
-          tagIds: (doc as { tagIds?: unknown[] }).tagIds ?? [],
-          producerIds: (doc as { producerIds?: unknown[] }).producerIds ?? [],
-          parameters: (doc as { parameters?: unknown[] }).parameters ?? [],
+          tagIds: ((doc as { tagIds?: unknown[] }).tagIds ?? []) as Prisma.InputJsonValue,
+          producerIds: ((doc as { producerIds?: unknown[] }).producerIds ?? []) as Prisma.InputJsonValue,
+          parameters: ((doc as { parameters?: unknown[] }).parameters ?? []) as Prisma.InputJsonValue,
           defaultPriceGroupId: (doc as { defaultPriceGroupId?: string | null }).defaultPriceGroupId ?? null,
           active: (doc as { active?: boolean | null }).active ?? true,
           icon: (doc as { icon?: string | null }).icon ?? null,
@@ -1788,7 +1788,7 @@ async function syncMongoToPrisma(
             && /^#[0-9a-fA-F]{6}$/.test(((doc as { iconColor?: string | null }).iconColor as string).trim())
               ? ((doc as { iconColor?: string | null }).iconColor as string).trim().toLowerCase()
               : null,
-          imageLinks: (doc as { imageLinks?: unknown[] }).imageLinks ?? [],
+          imageLinks: ((doc as { imageLinks?: unknown[] }).imageLinks ?? []) as Prisma.InputJsonValue,
           baseProductId: (doc as { baseProductId?: string | null }).baseProductId ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
@@ -1805,7 +1805,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('cms_slugs').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.SlugCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
@@ -1826,18 +1826,19 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('cms_themes').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.CmsThemeCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
-        return {
-          id,
-          name: (doc as { name?: string }).name ?? id,
-          colors: (doc as { colors?: unknown }).colors ?? {},
-          typography: (doc as { typography?: unknown }).typography ?? {},
-          spacing: (doc as { spacing?: unknown }).spacing ?? {},
-          customCss: (doc as { customCss?: string | null }).customCss ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-        };
+                  return {
+                    id,
+                    name: (doc as { name?: string }).name ?? id,
+                    colors: ((doc as { colors?: unknown }).colors ?? {}) as Prisma.InputJsonValue,
+                    typography: ((doc as { typography?: unknown }).typography ?? {}) as Prisma.InputJsonValue,
+                    spacing: ((doc as { spacing?: unknown }).spacing ?? {}) as Prisma.InputJsonValue,
+                    customCss: (doc as { customCss?: string | null }).customCss ?? null,
+                    createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+                    updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+                  };
+        
       })
       .filter((item): item is Prisma.CmsThemeCreateManyInput => item !== null);
     const deleted = await prisma.cmsTheme.deleteMany();
@@ -1850,7 +1851,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('cms_pages').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>) => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
@@ -1887,7 +1888,7 @@ async function syncMongoToPrisma(
         pageId: page.id,
         type: component.type,
         order: index,
-        content: component.content ?? {},
+        content: (component.content ?? {}) as Prisma.InputJsonValue,
         createdAt: page.createdAt,
         updatedAt: page.updatedAt,
       }))
@@ -1924,7 +1925,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('cms_domains').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.CmsDomainCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
@@ -1969,7 +1970,7 @@ async function syncMongoToPrisma(
     const seenNames = new Set<string>();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.NotebookCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         const name = (doc as { name?: string }).name ?? id;
         if (seenNames.has(name)) {
@@ -2007,7 +2008,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('themes').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.ThemeCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
         const resolvedNotebookId =
@@ -2055,7 +2056,7 @@ async function syncMongoToPrisma(
     const seenTags = new Set<string>();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.TagCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         const name = (doc as { name?: string }).name ?? id;
         const rawNotebookId = (doc as { notebookId?: string | null }).notebookId ?? null;
@@ -2104,7 +2105,7 @@ async function syncMongoToPrisma(
     );
     const raw = docs
       .map((doc: Record<string, unknown>): Prisma.CategoryCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
@@ -2280,7 +2281,7 @@ async function syncMongoToPrisma(
     );
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.NoteFileCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         const noteId = (doc as { noteId?: string }).noteId;
         if (!id || !noteId || !availableNoteIds.has(noteId)) return null;
         return {
@@ -2308,17 +2309,18 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('product_ai_jobs').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.ProductAiJobCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         const productId = (doc as { productId?: string }).productId;
         if (!id || !productId) return null;
-        return {
-          id,
-          productId,
-          status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? 'pending',
-          type: (doc as { type?: string }).type ?? 'description_generation',
-          payload: (doc as { payload?: unknown }).payload ?? {},
-          result: (doc as { result?: unknown }).result ?? null,
-          errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
+                  return {
+                    id,
+                    productId,
+                    status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? 'pending',
+                    type: (doc as { type?: string }).type ?? 'description_generation',
+                    payload: ((doc as { payload?: unknown }).payload ?? {}) as Prisma.InputJsonValue,
+                    result: ((doc as { result?: unknown }).result ?? null) as Prisma.InputJsonValue,
+                    errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
+        
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           startedAt: toDate((doc as { startedAt?: Date | string | null }).startedAt),
           finishedAt: toDate((doc as { finishedAt?: Date | string | null }).finishedAt),
@@ -2335,7 +2337,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('ai_path_runs').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.AiPathRunCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
         return {
           id,
@@ -2344,12 +2346,13 @@ async function syncMongoToPrisma(
           pathName: (doc as { pathName?: string | null }).pathName ?? null,
           status: ((doc as { status?: string }).status as AiPathRunStatus) ?? 'queued',
           triggerEvent: (doc as { triggerEvent?: string | null }).triggerEvent ?? null,
-          triggerNodeId: (doc as { triggerNodeId?: string | null }).triggerNodeId ?? null,
-          triggerContext: (doc as { triggerContext?: unknown }).triggerContext ?? null,
-          graph: (doc as { graph?: unknown }).graph ?? null,
-          runtimeState: (doc as { runtimeState?: unknown }).runtimeState ?? null,
-          meta: (doc as { meta?: unknown }).meta ?? null,
-          entityId: (doc as { entityId?: string | null }).entityId ?? null,
+                      triggerNodeId: (doc as { triggerNodeId?: string | null }).triggerNodeId ?? null,
+                      triggerContext: toJsonValue((doc as { triggerContext?: unknown }).triggerContext ?? null) as Prisma.InputJsonValue,
+                      graph: toJsonValue((doc as { graph?: unknown }).graph ?? null) as Prisma.InputJsonValue,
+                      runtimeState: toJsonValue((doc as { runtimeState?: unknown }).runtimeState ?? null) as Prisma.InputJsonValue,
+                      meta: toJsonValue((doc as { meta?: unknown }).meta ?? null) as Prisma.InputJsonValue,
+                      entityId: (doc as { entityId?: string | null }).entityId ?? null,
+          
           entityType: (doc as { entityType?: string | null }).entityType ?? null,
           errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
           retryCount: (doc as { retryCount?: number | null }).retryCount ?? 0,
@@ -2375,7 +2378,7 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('ai_path_run_nodes').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.AiPathRunNodeCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         const runId = (doc as { runId?: string }).runId;
         if (!id || !runId) return null;
         return {
@@ -2384,11 +2387,12 @@ async function syncMongoToPrisma(
           nodeId: (doc as { nodeId?: string }).nodeId ?? '',
           nodeType: (doc as { nodeType?: string }).nodeType ?? '',
           nodeTitle: (doc as { nodeTitle?: string | null }).nodeTitle ?? null,
-          status: ((doc as { status?: string }).status as AiPathNodeStatus) ?? 'pending',
-          attempt: (doc as { attempt?: number }).attempt ?? 0,
-          inputs: (doc as { inputs?: unknown }).inputs ?? null,
-          outputs: (doc as { outputs?: unknown }).outputs ?? null,
-          errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
+                      status: ((doc as { status?: string }).status as AiPathNodeStatus) ?? 'pending',
+                      attempt: (doc as { attempt?: number }).attempt ?? 0,
+                      inputs: toJsonValue((doc as { inputs?: unknown }).inputs ?? null) as Prisma.InputJsonValue,
+                      outputs: toJsonValue((doc as { outputs?: unknown }).outputs ?? null) as Prisma.InputJsonValue,
+                      errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
+          
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
           startedAt: toDate((doc as { startedAt?: Date | string | null }).startedAt),
@@ -2406,16 +2410,17 @@ async function syncMongoToPrisma(
     const docs = await mongo.collection('ai_path_run_events').find({}).toArray();
     const data = docs
       .map((doc: Record<string, unknown>): Prisma.AiPathRunEventCreateManyInput | null => {
-        const id = normalizeId(doc);
+        const id = normalizeId(doc as unknown as Record<string, unknown>);
         const runId = (doc as { runId?: string }).runId;
         if (!id || !runId) return null;
         return {
           id,
-          runId,
-          level: ((doc as { level?: string }).level as AiPathRunEventLevel) ?? 'info',
-          message: (doc as { message?: string }).message ?? '',
-          metadata: (doc as { metadata?: unknown }).metadata ?? null,
-          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+                      runId,
+                      level: ((doc as { level?: string }).level as AiPathRunEventLevel) ?? 'info',
+                      message: (doc as { message?: string }).message ?? '',
+                      metadata: toJsonValue((doc as { metadata?: unknown }).metadata ?? null) as Prisma.InputJsonValue,
+                      createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+          
         };
       })
       .filter((item): item is Prisma.AiPathRunEventCreateManyInput => item !== null);
@@ -2621,7 +2626,7 @@ async function syncPrismaToMongo(
     });
     const collection = mongo.collection('auth_login_challenges');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2639,7 +2644,7 @@ async function syncPrismaToMongo(
     });
     const collection = mongo.collection('auth_security_attempts');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 

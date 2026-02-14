@@ -489,89 +489,48 @@ export function MasterFolderTree({
             }
             : undefined
         }
-        className='relative space-y-1'
+        className='space-y-1'
       >
         {showRootDropZones ? (
-          <>
-            <div
-              data-master-tree-root-drop='top'
-              onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-                const draggedNodeId = resolveDraggedNode(event);
-                if (!draggedNodeId) return;
-                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-                event.preventDefault();
-                event.stopPropagation();
-                setRootDropHoverZone('top');
-                if (!controller.dragState) {
-                  setExternalDraggedNodeId(draggedNodeId);
-                }
-                if (controller.dragState) {
-                  controller.updateDragTarget(null, 'inside');
-                }
-                event.dataTransfer.dropEffect = 'move';
-              }}
-              onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
-                const nextTarget = event.relatedTarget;
-                if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
-                setRootDropHoverZone((current) => (current === 'top' ? null : current));
-              }}
-              onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-                const draggedNodeId = resolveDraggedNode(event);
-                if (!draggedNodeId) return;
-                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-                event.preventDefault();
-                event.stopPropagation();
-                clearDragIndicators();
-                void applyRootDrop(draggedNodeId, 'top');
-              }}
-              className={`absolute inset-x-2 top-1 z-20 flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
-                rootDropHoverZone === 'top'
-                  ? rootDropActiveClassName
-                  : rootDropIdleClassName
-              }`}
-            >
-              {rootDropLabel}
-            </div>
-            <div
-              data-master-tree-root-drop='bottom'
-              onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-                const draggedNodeId = resolveDraggedNode(event);
-                if (!draggedNodeId) return;
-                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-                event.preventDefault();
-                event.stopPropagation();
-                setRootDropHoverZone('bottom');
-                if (!controller.dragState) {
-                  setExternalDraggedNodeId(draggedNodeId);
-                }
-                if (controller.dragState) {
-                  controller.updateDragTarget(null, 'inside');
-                }
-                event.dataTransfer.dropEffect = 'move';
-              }}
-              onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
-                const nextTarget = event.relatedTarget;
-                if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
-                setRootDropHoverZone((current) => (current === 'bottom' ? null : current));
-              }}
-              onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-                const draggedNodeId = resolveDraggedNode(event);
-                if (!draggedNodeId) return;
-                if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
-                event.preventDefault();
-                event.stopPropagation();
-                clearDragIndicators();
-                void applyRootDrop(draggedNodeId, 'bottom');
-              }}
-              className={`absolute inset-x-2 bottom-1 z-20 flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
-                rootDropHoverZone === 'bottom'
-                  ? rootDropActiveClassName
-                  : rootDropIdleClassName
-              }`}
-            >
-              {rootDropLabel}
-            </div>
-          </>
+          <div
+            data-master-tree-root-drop='top'
+            onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+              const draggedNodeId = resolveDraggedNode(event);
+              if (!draggedNodeId) return;
+              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              event.preventDefault();
+              event.stopPropagation();
+              setRootDropHoverZone('top');
+              if (!controller.dragState) {
+                setExternalDraggedNodeId(draggedNodeId);
+              }
+              if (controller.dragState) {
+                controller.updateDragTarget(null, 'inside');
+              }
+              event.dataTransfer.dropEffect = 'move';
+            }}
+            onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+              const nextTarget = event.relatedTarget;
+              if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+              setRootDropHoverZone((current) => (current === 'top' ? null : current));
+            }}
+            onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+              const draggedNodeId = resolveDraggedNode(event);
+              if (!draggedNodeId) return;
+              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              event.preventDefault();
+              event.stopPropagation();
+              clearDragIndicators();
+              void applyRootDrop(draggedNodeId, 'top');
+            }}
+            className={`flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
+              rootDropHoverZone === 'top'
+                ? rootDropActiveClassName
+                : rootDropIdleClassName
+            }`}
+          >
+            {rootDropLabel}
+          </div>
         ) : null}
         {controller.roots.length > 0 ? (
           renderTree(controller.roots, 0)
@@ -580,6 +539,47 @@ export function MasterFolderTree({
             {emptyLabel}
           </div>
         )}
+        {showRootDropZones ? (
+          <div
+            data-master-tree-root-drop='bottom'
+            onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+              const draggedNodeId = resolveDraggedNode(event);
+              if (!draggedNodeId) return;
+              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              event.preventDefault();
+              event.stopPropagation();
+              setRootDropHoverZone('bottom');
+              if (!controller.dragState) {
+                setExternalDraggedNodeId(draggedNodeId);
+              }
+              if (controller.dragState) {
+                controller.updateDragTarget(null, 'inside');
+              }
+              event.dataTransfer.dropEffect = 'move';
+            }}
+            onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
+              const nextTarget = event.relatedTarget;
+              if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+              setRootDropHoverZone((current) => (current === 'bottom' ? null : current));
+            }}
+            onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+              const draggedNodeId = resolveDraggedNode(event);
+              if (!draggedNodeId) return;
+              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              event.preventDefault();
+              event.stopPropagation();
+              clearDragIndicators();
+              void applyRootDrop(draggedNodeId, 'bottom');
+            }}
+            className={`flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
+              rootDropHoverZone === 'bottom'
+                ? rootDropActiveClassName
+                : rootDropIdleClassName
+            }`}
+          >
+            {rootDropLabel}
+          </div>
+        ) : null}
       </div>
     </div>
   );

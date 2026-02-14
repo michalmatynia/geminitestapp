@@ -62,7 +62,9 @@ export const PanelStats: React.FC<PanelStatsProps> = ({
             {isLoading ? (
               <Loader2 className='h-4 w-4 animate-spin' />
             ) : (
-              <span className='text-lg font-bold text-gray-900'>{stat.value}</span>
+              <span className={cn('text-lg font-bold text-gray-900', stat.valueClassName)}>
+                {stat.value}
+              </span>
             )}
           </div>
         </div>

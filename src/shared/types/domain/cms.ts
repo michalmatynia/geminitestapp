@@ -47,6 +47,7 @@ export type PageStatus = 'draft' | 'published' | 'scheduled';
 
 export interface PageComponent {
   type: string;
+  order: number;
   content: Record<string, unknown>;
 }
 

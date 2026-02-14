@@ -176,7 +176,6 @@ export function UIPresetsPanel(): React.JSX.Element {
         <Button size='xs'
           type='button'
           variant='outline'
-          size='sm'
           onClick={() => {
             if (!selectedPresetId) return;
             handleApplyPreset(selectedPresetId);
@@ -204,7 +203,6 @@ export function UIPresetsPanel(): React.JSX.Element {
         <Button size='xs'
           type='button'
           variant='outline'
-          size='sm'
           onClick={() => { void handleSavePreset(); }}
           disabled={updateSetting.isPending}
         >
@@ -213,7 +211,6 @@ export function UIPresetsPanel(): React.JSX.Element {
         <Button size='xs'
           type='button'
           variant='outline'
-          size='sm'
           onClick={() => {
             if (!selectedPresetId) return;
             void handleSetActivePreset(selectedPresetId).then(() => {
@@ -229,7 +226,6 @@ export function UIPresetsPanel(): React.JSX.Element {
         <Button size='xs'
           type='button'
           variant='ghost'
-          size='sm'
           onClick={() => { void handleDeletePreset(); }}
           disabled={!selectedPresetId || updateSetting.isPending}
         >

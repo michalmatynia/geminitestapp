@@ -1,8 +1,8 @@
 'use client';
 
-import { Fragment, useMemo } from 'react';
+import { useMemo } from 'react';
 
-import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import type { AiPathRunEventRecord, AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { 
   Button, 
   Checkbox, 
@@ -18,13 +18,7 @@ import {
   ConfirmDialog,
   ListPanel,
   FormField,
-  StatusBadge,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
+  StatusBadge
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -431,7 +425,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                         header: 'Details',
                         cell: ({ row }) => {
                           const hasData = Boolean(row.original.inputs) || Boolean(row.original.outputs);
-                          const isExpanded = expandedNodeIds.has(row.original.nodeId);
+                          const isExpanded = row.getIsExpanded();
                           return (
                             <Button
                               variant='ghost'
@@ -467,27 +461,30 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       }
                     ]}
                     data={detail.nodes}
-                    renderRowDetails={({ row }) => {
-                      if (!expandedNodeIds.has(row.original.nodeId)) return null;
-                      return (
-                        <div className='p-4 bg-black/40 border-t border-white/5'>
-                          <div className='grid gap-4 md:grid-cols-2'>
-                            <div className='space-y-1'>
-                              <span className='text-[10px] uppercase text-gray-600 font-bold'>Inputs</span>
-                              <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
-                                {JSON.stringify(row.original.inputs || {}, null, 2)}
-                              </pre>
-                            </div>
-                            <div className='space-y-1'>
-                              <span className='text-[10px] uppercase text-gray-600 font-bold'>Outputs</span>
-                              <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
-                                {JSON.stringify(row.original.outputs || {}, null, 2)}
-                              </pre>
-                            </div>
+                    getRowId={(row) => row.nodeId}
+                    expanded={useMemo(() => {
+                      const state: Record<string, boolean> = {};
+                      expandedNodeIds.forEach(id => { state[id] = true; });
+                      return state;
+                    }, [expandedNodeIds])}
+                    renderRowDetails={({ row }) => (
+                      <div className='p-4 bg-black/40 border-t border-white/5'>
+                        <div className='grid gap-4 md:grid-cols-2'>
+                          <div className='space-y-1'>
+                            <span className='text-[10px] uppercase text-gray-600 font-bold'>Inputs</span>
+                            <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
+                              {JSON.stringify(row.original.inputs || {}, null, 2)}
+                            </pre>
+                          </div>
+                          <div className='space-y-1'>
+                            <span className='text-[10px] uppercase text-gray-600 font-bold'>Outputs</span>
+                            <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
+                              {JSON.stringify(row.original.outputs || {}, null, 2)}
+                            </pre>
                           </div>
                         </div>
-                      );
-                    }}
+                      </div>
+                    )}
                   />
                 </div>
               </div>

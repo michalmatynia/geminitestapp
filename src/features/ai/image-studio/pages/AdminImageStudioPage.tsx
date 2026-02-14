@@ -156,7 +156,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                     onValueChange={(value: string) => setProjectId(value)}
                     options={projectSelectOptions}
                     placeholder={projectsQuery.isLoading ? 'Loading projects...' : 'Select project'}
-                    size='sm'
                     ariaLabel='Select project'
                   />
                 </div>

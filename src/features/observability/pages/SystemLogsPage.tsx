@@ -3,7 +3,7 @@
 import { AlertTriangle, Copy, Link2, Monitor, Server, Shield, Trash2, SearchIcon, Eye } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { SystemLogsProvider, useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
+import { SystemLogsProvider, useSystemLogsContext, type MongoCollectionIndexStatus, type MongoIndexInfo } from '@/features/observability/context/SystemLogsContext';
 import {
   SYSTEM_LOG_FILTER_DEFAULTS,
   SYSTEM_LOG_TRIAGE_PRESETS,
@@ -16,34 +16,22 @@ import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import { 
   Button, 
   DynamicFilters, 
-  ListPanel, 
   DataTable, 
   Pagination, 
   StatusBadge, 
   ConfirmDialog, 
   PageLayout, 
   FormSection,
-  StatusToggle,
-  Badge
+  Badge,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 
 const formatTimestamp = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleString();
-};
-
-const getContextValue = (context: unknown, path: string): unknown => {
-  if (!context || typeof context !== 'object' || Array.isArray(context)) return null;
-  let current: unknown = context;
-  for (const key of path.split('.')) {
-    if (!current || typeof current !== 'object' || Array.isArray(current)) return null;
-    current = (current as Record<string, unknown>)[key];
-  }
-  return current ?? null;
 };
 
 const triagePresetIcons: Record<LogTriagePreset['id'], React.ComponentType<{ className?: string }>> = {
@@ -129,32 +117,31 @@ function LogDiagnostics(): React.JSX.Element {
     diagnostics,
     diagnosticsUpdatedAt,
     mongoDiagnosticsQuery,
-    rebuildIndexesMutation,
     setIsRebuildIndexesConfirmOpen,
   } = useSystemLogsContext();
 
-  const columns = useMemo<ColumnDef<any>[]>(() => [
+  const columns = useMemo<ColumnDef<MongoCollectionIndexStatus>[]>(() => [
     {
       accessorKey: 'name',
       header: 'Collection',
-      cell: ({ row }) => <span className='font-mono text-xs text-emerald-200'>{row.original.name}</span>,
+      cell: ({ row }: { row: Row<MongoCollectionIndexStatus> }) => <span className='font-mono text-xs text-emerald-200'>{row.original.name}</span>,
     },
     {
       accessorKey: 'expected',
       header: 'Expected',
-      cell: ({ row }) => <span className='text-xs text-gray-400'>{row.original.expected.length}</span>,
+      cell: ({ row }: { row: Row<MongoCollectionIndexStatus> }) => <span className='text-xs text-gray-400'>{row.original.expected.length}</span>,
     },
     {
       accessorKey: 'missing',
       header: 'Missing',
-      cell: ({ row }) => {
+      cell: ({ row }: { row: Row<MongoCollectionIndexStatus> }) => {
         const missingCount = row.original.missing.length;
         if (row.original.error) return <span className='text-rose-400 text-[10px]'>{row.original.error}</span>;
         if (missingCount === 0) return <span className='text-gray-600'>0</span>;
         return (
           <div className='flex flex-wrap gap-1'>
             <span className='text-amber-400 font-bold mr-2'>{missingCount}</span>
-            {row.original.missing.map((m: any, i: number) => (
+            {row.original.missing.map((m: MongoIndexInfo, i: number) => (
               <Badge key={i} variant='outline' className='text-[9px] bg-amber-500/5 text-amber-300 border-amber-500/20'>
                 {JSON.stringify(m.key)}
               </Badge>
@@ -166,7 +153,7 @@ function LogDiagnostics(): React.JSX.Element {
     {
       id: 'status',
       header: () => <div className='text-right'>Status</div>,
-      cell: ({ row }) => {
+      cell: ({ row }: { row: Row<MongoCollectionIndexStatus> }) => {
         const missingCount = row.original.missing.length;
         const status = row.original.error ? 'error' : missingCount === 0 ? 'success' : 'warning';
         return (

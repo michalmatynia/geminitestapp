@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 203ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 21.1s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/ai/brain/context/BrainContext.tsx:29:15
+Type error: Module '"@/shared/ui"' has no exported member 'SelectOption'.
+
+[0m [90m 27 |[39m   [33mSystemLogMetrics[39m[33m,[39m
+ [90m 28 |[39m } [36mfrom[39m [32m'@/shared/types'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 29 |[39m [36mimport[39m type { [33mSelectOption[39m } [36mfrom[39m [32m'@/shared/ui'[39m[33m;[39m
+ [90m    |[39m               [31m[1m^[22m[39m
+ [90m 30 |[39m [36mimport[39m { useToast } [36mfrom[39m [32m'@/shared/ui'[39m[33m;[39m
+ [90m 31 |[39m [36mimport[39m { parseJsonSetting[33m,[39m serializeSetting } [36mfrom[39m [32m'@/shared/utils/settings-json'[39m[33m;[39m
+ [90m 32 |[39m[0m
+Next.js build worker exited with code: 1 and signal: null

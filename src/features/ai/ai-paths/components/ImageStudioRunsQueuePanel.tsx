@@ -126,10 +126,11 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
 
       <PanelStats
         stats={[
-          { label: 'Total', value: stats.total },
-          { label: 'Queued', value: stats.queuedCount, valueClassName: 'text-amber-200' },
-          { label: 'Running', value: stats.runningCount, valueClassName: 'text-sky-200' },
+          { key: 'total', label: 'Total', value: stats.total },
+          { key: 'queued', label: 'Queued', value: stats.queuedCount, color: 'warning' },
+          { key: 'running', label: 'Running', value: stats.runningCount, color: 'info' },
           {
+            key: 'filter',
             label: 'Filter',
             value: (
               <SelectSimple
@@ -137,7 +138,7 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
                 onValueChange={(v) => setStatusFilter(v as 'all' | ImageStudioRunStatus)}
                 options={STATUS_OPTIONS}
                 size='xs'
-                className='w-28'
+                className='w-28 mt-[-2px]'
               />
             ),
           },

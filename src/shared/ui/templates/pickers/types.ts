@@ -61,14 +61,14 @@ export interface PickerState<T = unknown> {
 export interface GenericPickerDropdownProps<T extends PickerOption = PickerOption> {
   groups: PickerGroup[];
   onSelect: (option: T) => void;
-  selectedKey?: string;
-  ariaLabel?: string;
-  triggerClassName?: string;
-  dropdownClassName?: string;
-  triggerContent?: React.ReactNode;
-  disabled?: boolean;
-  searchable?: boolean;
-  searchPlaceholder?: string;
+  selectedKey?: string | undefined;
+  ariaLabel?: string | undefined;
+  triggerClassName?: string | undefined;
+  dropdownClassName?: string | undefined;
+  triggerContent?: React.ReactNode | undefined;
+  disabled?: boolean | undefined;
+  searchable?: boolean | undefined;
+  searchPlaceholder?: string | undefined;
 }
 
 /**
@@ -76,18 +76,18 @@ export interface GenericPickerDropdownProps<T extends PickerOption = PickerOptio
  */
 export interface GenericGridPickerProps<T extends GridPickerItem = GridPickerItem> {
   items: T[];
-  selectedId?: string;
+  selectedId?: string | undefined;
   onSelect: (item: T) => void;
   renderItem: (item: T, selected: boolean) => React.ReactNode;
-  columns?: number;
-  gap?: string;
-  searchable?: boolean;
-  searchPlaceholder?: string;
-  searchMatcher?: (query: string, item: T) => boolean;
-  emptyState?: React.ReactNode;
-  className?: string;
-  gridClassName?: string;
-  disabled?: boolean;
+  columns?: number | undefined;
+  gap?: string | undefined;
+  searchable?: boolean | undefined;
+  searchPlaceholder?: string | undefined;
+  searchMatcher?: ((query: string, item: T) => boolean) | undefined;
+  emptyState?: React.ReactNode | undefined;
+  className?: string | undefined;
+  gridClassName?: string | undefined;
+  disabled?: boolean | undefined;
 }
 
 /**
@@ -105,9 +105,9 @@ export interface UsePickerSearchReturn<T> {
  * Hook options for usePickerSearch
  */
 export interface UsePickerSearchOptions<T> {
-  initialQuery?: string;
-  matcher?: (query: string, item: T) => boolean;
-  debounce?: number;
+  initialQuery?: string | undefined;
+  matcher?: ((query: string, item: T) => boolean) | undefined;
+  debounce?: number | undefined;
 }
 
 /**
@@ -115,11 +115,11 @@ export interface UsePickerSearchOptions<T> {
  */
 export interface GenericMultiSelectorProps<T extends PickerOption = PickerOption> {
   groups: PickerGroup[];
-  selectedKeys?: Set<string>;
+  selectedKeys?: Set<string> | undefined;
   onSelect: (option: T, selected: boolean) => void;
-  ariaLabel?: string;
-  maxSelections?: number;
-  showSelectedCount?: boolean;
+  ariaLabel?: string | undefined;
+  maxSelections?: number | undefined;
+  showSelectedCount?: boolean | undefined;
 }
 
 /**
@@ -128,10 +128,10 @@ export interface GenericMultiSelectorProps<T extends PickerOption = PickerOption
 export interface PickerTemplate {
   id: string;
   name: string;
-  description?: string;
+  description?: string | undefined;
   category: string;
   createdAt: Date;
-  metadata?: Record<string, unknown>;
+  metadata?: Record<string, unknown> | undefined;
 }
 
 /**
@@ -139,10 +139,10 @@ export interface PickerTemplate {
  */
 export interface PickerModalConfig<T = unknown> {
   title: string;
-  description?: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  searchable?: boolean;
+  description?: string | undefined;
+  confirmLabel?: string | undefined;
+  cancelLabel?: string | undefined;
+  searchable?: boolean | undefined;
   onConfirm: (value: T) => void;
-  onCancel?: () => void;
+  onCancel?: (() => void) | undefined;
 }

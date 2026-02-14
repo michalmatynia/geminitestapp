@@ -241,7 +241,7 @@ function IndexesTab({ indexes }: { indexes: DatabaseIndexInfo[] }): React.JSX.El
       accessorKey: 'isUnique',
       header: 'Unique',
       cell: ({ row }) => row.original.isUnique ? (
-        <StatusBadge status='success' label='UNIQUE' className='text-[9px]' />
+        <StatusBadge status='UNIQUE' variant='success' className='text-[9px]' />
       ) : <span className='text-gray-500'>—</span>,
     },
     {
@@ -363,7 +363,6 @@ function DatabasePreviewContent(): React.JSX.Element {
     groups,
     filteredGroups,
     tables,
-    tableRows,
     enums,
     databaseSize,
     isLoading,
@@ -393,7 +392,6 @@ function DatabasePreviewContent(): React.JSX.Element {
     handleManageTable,
     stats,
   } = useDatabasePreviewState();
-
   return (
     <div className='container mx-auto py-10 space-y-6'>
       <SectionHeader

@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 212ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 19.8s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/database/services/database-collection-copy.ts:113:52
+Type error: Property 'key' comes from an index signature, so it must be accessed with ['key'].
+
+[0m [90m 111 |[39m     [36mconst[39m byKey [33m=[39m [36mnew[39m [33mMap[39m[33m<[39m[33mstring[39m[33m,[39m { key[33m:[39m string[33m;[39m value[33m:[39m string[33m;[39m createdAt[33m:[39m [33mDate[39m[33m;[39m updatedAt[33m:[39m [33mDate[39m }[33m>[39m()[33m;[39m
+ [90m 112 |[39m     [36mfor[39m ([36mconst[39m doc [36mof[39m docs) {
+[31m[1m>[22m[39m[90m 113 |[39m       [36mconst[39m key [33m=[39m (doc [36mas[39m [33mRecord[39m[33m<[39m[33mstring[39m[33m,[39m unknown[33m>[39m)[33m.[39mkey [33m?[39m[33m?[39m (doc [36mas[39m [33mRecord[39m[33m<[39m[33mstring[39m[33m,[39m unknown[33m>[39m)[33m.[39m_id[33m?[39m[33m.[39mtoString() [33m?[39m[33m?[39m [32m''[39m[33m;[39m
+ [90m     |[39m                                                    [31m[1m^[22m[39m
+ [90m 114 |[39m       [36mif[39m ([33m![39mkey) [36mcontinue[39m[33m;[39m
+ [90m 115 |[39m       [36mconst[39m value [33m=[39m (doc [36mas[39m [33mRecord[39m[33m<[39m[33mstring[39m[33m,[39m unknown[33m>[39m)[33m.[39mvalue[33m;[39m
+ [90m 116 |[39m       [36mconst[39m entry [33m=[39m {[0m
+Next.js build worker exited with code: 1 and signal: null

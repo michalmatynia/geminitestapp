@@ -1,0 +1,207 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/pages/pages/CreatePagePage.tsx
+  12:25  warning  'Label' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/pages/pages/EditPagePage.tsx
+  12:35  warning  'Label' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/pages/zones/ZonesPage.tsx
+  28:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useCrudPanelState.ts
+  15:3   warning  'CrudOperation' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  16:3   warning  'DatabaseColumnInfo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  86:56  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  86:63  error    Unsafe member access ['total'] on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useDatabaseEngineState.ts
+   29:1  error    `@/shared/contracts/database` type import should occur before import of `@/shared/hooks/use-settings`   import/order
+  129:9  warning  'backupSchedulerTickMutation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  130:9  warning  'backupRunNowMutation' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  131:9  warning  'cancelOperationJobMutation' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  132:9  warning  'syncDatabaseMutation' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  133:9  warning  'backfillMutation' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  134:9  warning  'copyCollectionMutation' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabaseEnginePage.tsx
+   26:1   error    There should be at least one empty line between import groups                                        import/order
+   27:1   error    `@/shared/contracts/database` type import should occur before import of `@/shared/ui`                import/order
+   29:1   error    There should be at least one empty line between import groups                                        import/order
+   30:1   error    `@/shared/lib/db/database-engine-constants` type import should occur before import of `@/shared/ui`  import/order
+   38:5   warning  'serviceRouteMapDraft' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   39:5   warning  'setServiceRouteMapDraft' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   50:5   warning  'operationQueueStatus' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   88:21  error    Unsafe assignment of an `any` value                                                                  @typescript-eslint/no-unsafe-assignment
+   89:47  error    Unsafe member access [row.original.name] on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+   90:25  error    Unsafe member access [row.original.name] on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+   91:15  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+  143:55  error    Promise-returning function provided to attribute where a void return was expected                    @typescript-eslint/no-misused-promises
+  165:66  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+  175:66  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+  185:66  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+  195:66  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasePreviewPage.tsx
+  366:5  warning  'tableRows' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/marketplaces/category-mapper/GenericItemMapper.tsx
+  10:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/pages/marketplaces/TraderaSettingsPage.tsx
+  268:21  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+   19:3   warning  'ListPanel' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   26:3   warning  'StatusToggle' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   39:7   warning  'getContextValue' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  132:5   warning  'rebuildIndexesMutation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  136:37  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  140:93  error    Unsafe member access .name on an `any` value                                                       @typescript-eslint/no-unsafe-member-access
+  145:80  error    Unsafe member access .expected on an `any` value                                                   @typescript-eslint/no-unsafe-member-access
+  151:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  151:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  152:26  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  152:98  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  157:14  error    Unsafe call of an `any` typed value                                                                @typescript-eslint/no-unsafe-call
+  157:27  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  157:43  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  159:35  error    Unsafe member access .key on an `any` value                                                        @typescript-eslint/no-unsafe-member-access
+  170:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  170:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  171:37  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  174:62  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormOther.tsx
+   28:11  warning  'PriceGroupWithCalculatedPrice' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  327:1   error    Expected indentation of 24 spaces but found 3                                                    indent
+  332:1   error    Expected indentation of 28 spaces but found 2                                                    indent
+  333:1   error    Expected indentation of 26 spaces but found 1                                                    indent
+  335:1   error    Expected indentation of 28 spaces but found 2                                                    indent
+  338:1   error    Expected indentation of 26 spaces but found 8                                                    indent
+  340:1   error    Expected indentation of 22 spaces but found 20                                                   indent
+  342:1   error    Expected indentation of 20 spaces but found 13                                                   indent
+  343:1   error    Expected indentation of 22 spaces but found 20                                                   indent
+  344:1   error    Expected indentation of 22 spaces but found 20                                                   indent
+  345:1   error    Expected indentation of 22 spaces but found 10                                                   indent
+  345:92  error    Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+  345:97  error    Unsafe member access .w: { ori on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  346:1   error    Expected indentation of 20 spaces but found 2                                                    indent
+  347:1   error    Expected indentation of 20 spaces but found 0                                                    indent
+  348:1   error    Expected indentation of 22 spaces but found 2                                                    indent
+  349:1   error    Expected indentation of 22 spaces but found 1                                                    indent
+  350:1   error    Expected indentation of 22 spaces but found 20                                                   indent
+  351:1   error    Expected indentation of 24 spaces but found 10                                                   indent
+  353:1   error    Expected indentation of 28 spaces but found 3                                                    indent
+  356:1   error    Expected indentation of 26 spaces but found 3                                                    indent
+  357:1   error    Expected indentation of 28 spaces but found 2                                                    indent
+  358:1   error    Expected indentation of 26 spaces but found 9                                                    indent
+  360:1   error    Expected indentation of 22 spaces but found 19                                                   indent
+  361:1   error    Expected indentation of 20 spaces but found 17                                                   indent
+  362:1   error    Expected indentation of 18 spaces but found 14                                                   indent
+  364:1   error    Expected indentation of 16 spaces but found 0                                                    indent
+  370:1   error    Expected indentation of 10 spaces but found 8                                                    indent
+  372:1   error    Expected indentation of 6 spaces but found 1                                                     indent
+  389:1   error    Expected indentation of 12 spaces but found 0                                                    indent
+  390:1   error    Expected indentation of 12 spaces but found 1                                                    indent
+  391:1   error    Expected indentation of 12 spaces but found 2                                                    indent
+  392:1   error    Expected indentation of 14 spaces but found 8                                                    indent
+  393:1   error    Expected indentation of 16 spaces but found 1                                                    indent
+  394:1   error    Expected indentation of 18 spaces but found 10                                                   indent
+  395:1   error    Expected indentation of 18 spaces but found 11                                                   indent
+  396:1   error    Expected indentation of 16 spaces but found 7                                                    indent
+  397:1   error    Expected indentation of 12 spaces but found 1                                                    indent
+  398:1   error    Expected indentation of 12 spaces but found 1                                                    indent
+  399:1   error    Expected indentation of 12 spaces but found 8                                                    indent
+  400:1   error    Expected indentation of 10 spaces but found 0                                                    indent
+  403:1   error    Expected indentation of 14 spaces but found 3                                                    indent
+  404:1   error    Expected indentation of 16 spaces but found 2                                                    indent
+  405:1   error    Expected indentation of 16 spaces but found 9                                                    indent
+  406:1   error    Expected indentation of 16 spaces but found 0                                                    indent
+  407:1   error    Expected indentation of 16 spaces but found 1                                                    indent
+  408:1   error    Expected indentation of 18 spaces but found 14                                                   indent
+  409:1   error    Expected indentation of 20 spaces but found 10                                                   indent
+  410:1   error    Expected indentation of 22 spaces but found 12                                                   indent
+  411:1   error    Expected indentation of 24 spaces but found 6                                                    indent
+  412:1   error    Expected indentation of 24 spaces but found 16                                                   indent
+  413:1   error    Expected indentation of 24 spaces but found 4                                                    indent
+  414:1   error    Expected indentation of 24 spaces but found 10                                                   indent
+  415:1   error    Expected indentation of 24 spaces but found 7                                                    indent
+  416:1   error    Expected indentation of 22 spaces but found 18                                                   indent
+  417:1   error    Expected indentation of 22 spaces but found 3                                                    indent
+  418:1   error    Expected indentation of 20 spaces but found 5                                                    indent
+  419:1   error    Expected indentation of 20 spaces but found 14                                                   indent
+  420:1   error    Expected indentation of 16 spaces but found 1                                                    indent
+  421:1   error    Expected indentation of 16 spaces but found 0                                                    indent
+  422:1   error    Expected indentation of 18 spaces but found 14                                                   indent
+  423:1   error    Expected indentation of 20 spaces but found 8                                                    indent
+  424:1   error    Expected indentation of 20 spaces but found 7                                                    indent
+  425:1   error    Expected indentation of 20 spaces but found 9                                                    indent
+  426:1   error    Expected indentation of 20 spaces but found 10                                                   indent
+  427:1   error    Expected indentation of 18 spaces but found 14                                                   indent
+  428:1   error    Expected indentation of 16 spaces but found 5                                                    indent
+  429:1   error    Expected indentation of 16 spaces but found 13                                                   indent
+  430:1   error    Expected indentation of 14 spaces but found 1                                                    indent
+  431:1   error    Expected indentation of 12 spaces but found 8                                                    indent
+  438:1   error    Expected indentation of 12 spaces but found 4                                                    indent
+  439:1   error    Expected indentation of 10 spaces but found 1                                                    indent
+  442:1   error    Expected indentation of 12 spaces but found 1                                                    indent
+  443:1   error    Expected indentation of 12 spaces but found 10                                                   indent
+  444:1   error    Expected indentation of 10 spaces but found 1                                                    indent
+  447:1   error    Expected indentation of 14 spaces but found 3                                                    indent
+  448:1   error    Expected indentation of 16 spaces but found 3                                                    indent
+  451:1   error    Expected indentation of 16 spaces but found 2                                                    indent
+  452:1   error    Expected indentation of 16 spaces but found 14                                                   indent
+  453:1   error    Expected indentation of 18 spaces but found 1                                                    indent
+  454:1   error    Expected indentation of 18 spaces but found 3                                                    indent
+  455:1   error    Expected indentation of 16 spaces but found 0                                                    indent
+  456:1   error    Expected indentation of 18 spaces but found 14                                                   indent
+  457:1   error    Expected indentation of 20 spaces but found 2                                                    indent
+  458:1   error    Expected indentation of 20 spaces but found 3                                                    indent
+  459:1   error    Expected indentation of 20 spaces but found 2                                                    indent
+  460:1   error    Expected indentation of 20 spaces but found 16                                                   indent
+  461:1   error    Expected indentation of 20 spaces but found 17                                                   indent
+  462:1   error    Expected indentation of 20 spaces but found 18                                                   indent
+  463:1   error    Expected indentation of 22 spaces but found 18                                                   indent
+  464:1   error    Expected indentation of 24 spaces but found 16                                                   indent
+  465:1   error    Expected indentation of 26 spaces but found 0                                                    indent
+  466:1   error    Expected indentation of 28 spaces but found 14                                                   indent
+  467:1   error    Expected indentation of 28 spaces but found 18                                                   indent
+  468:1   error    Expected indentation of 28 spaces but found 24                                                   indent
+  469:1   error    Expected indentation of 28 spaces but found 23                                                   indent
+  470:1   error    Expected indentation of 28 spaces but found 22                                                   indent
+  471:1   error    Expected indentation of 26 spaces but found 20                                                   indent
+  472:1   error    Expected indentation of 26 spaces but found 1                                                    indent
+  473:1   error    Expected indentation of 24 spaces but found 1                                                    indent
+  474:1   error    Expected indentation of 24 spaces but found 24                                                   indent
+  475:1   error    Expected indentation of 20 spaces but found 1                                                    indent
+  476:1   error    Expected indentation of 20 spaces but found 10                                                   indent
+  477:1   error    Expected indentation of 22 spaces but found 18                                                   indent
+  478:1   error    Expected indentation of 24 spaces but found 0                                                    indent
+  479:1   error    Expected indentation of 24 spaces but found 22                                                   indent
+  480:1   error    Expected indentation of 24 spaces but found 22                                                   indent
+  481:1   error    Expected indentation of 24 spaces but found 20                                                   indent
+  482:1   error    Expected indentation of 22 spaces but found 1                                                    indent
+  483:1   error    Expected indentation of 20 spaces but found 20                                                   indent
+  484:1   error    Expected indentation of 20 spaces but found 1                                                    indent
+  485:1   error    Expected indentation of 18 spaces but found 13                                                   indent
+  486:1   error    Expected indentation of 16 spaces but found 8                                                    indent
+  487:1   error    Expected indentation of 14 spaces but found 1                                                    indent
+  488:1   error    Expected indentation of 12 spaces but found 0                                                    indent
+  490:1   error    Expected indentation of 12 spaces but found 9                                                    indent
+  492:1   error    Expected indentation of 16 spaces but found 12                                                   indent
+  493:1   error    Expected indentation of 16 spaces but found 13                                                   indent
+  494:1   error    Expected indentation of 16 spaces but found 12                                                   indent
+  495:1   error    Expected indentation of 16 spaces but found 2                                                    indent
+  496:1   error    Expected indentation of 14 spaces but found 8                                                    indent
+  500:1   error    Expected indentation of 10 spaces but found 1                                                    indent
+  503:1   error    Expected indentation of 12 spaces but found 4                                                    indent
+  504:1   error    Expected indentation of 12 spaces but found 2                                                    indent
+  508:1   error    Expected indentation of 10 spaces but found 0                                                    indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/pages/Admin3DAssetsPage.tsx
+   35:1   error  There should be at least one empty line between import groups                      import/order
+  263:27  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+✖ 179 problems (160 errors, 19 warnings)
+  130 errors and 0 warnings potentially fixable with the `--fix` option.
+

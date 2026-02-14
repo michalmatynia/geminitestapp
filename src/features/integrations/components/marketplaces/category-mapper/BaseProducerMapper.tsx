@@ -37,7 +37,7 @@ export function BaseProducerMapper(): React.JSX.Element {
   );
 
   const mappings = useMemo(
-    (): ProducerMapping[] => (mappingsQuery.data ?? []).map((m: any) => ({
+    (): ProducerMapping[] => (mappingsQuery.data ?? []).map((m: { internalProducerId: string; externalProducerId: string | null; isActive: boolean }) => ({
       internalProducerId: m.internalProducerId,
       externalProducerId: m.externalProducerId,
       isActive: Boolean(m.isActive)

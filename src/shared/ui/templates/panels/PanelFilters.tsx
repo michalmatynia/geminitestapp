@@ -1,7 +1,7 @@
 'use client';
 
 import { Search, X } from 'lucide-react';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
 
 import { Button } from '@/shared/ui';
@@ -72,7 +72,7 @@ interface PanelFiltersProps {
 export const PanelFilters: React.FC<PanelFiltersProps> = ({
   filters,
   values,
-  search = '',
+  search: externalSearch = '',
   searchPlaceholder = 'Search...',
   onFilterChange,
   onSearchChange,
@@ -83,9 +83,27 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   className,
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
+  const [localSearch, setLocalSearch] = useState(externalSearch);
+
+  // Sync local search with external search (e.g. on reset)
+  useEffect(() => {
+    setLocalSearch(externalSearch);
+  }, [externalSearch]);
+
+  // Debounce search changes
+  useEffect(() => {
+    if (localSearch === externalSearch) return;
+    
+    const timer = setTimeout(() => {
+      onSearchChange?.(localSearch);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [localSearch, externalSearch, onSearchChange]);
 
   const handleReset = useCallback(() => {
     onReset?.();
+    setLocalSearch('');
     setIsExpanded(false);
   }, [onReset]);
 
@@ -103,13 +121,16 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
           <Input
             type='text'
             placeholder={searchPlaceholder}
-            value={search}
-            onChange={(e) => onSearchChange?.(e.target.value)}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             className='pl-8 pr-8'
           />
-          {search && (
+          {localSearch && (
             <button
-              onClick={() => onSearchChange?.('')}
+              onClick={() => {
+                setLocalSearch('');
+                onSearchChange?.('');
+              }}
               className='absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600'
               aria-label='Clear search'
             >

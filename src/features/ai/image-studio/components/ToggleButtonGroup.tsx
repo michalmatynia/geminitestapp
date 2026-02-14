@@ -10,7 +10,7 @@ interface ToggleButtonGroupProps<T extends string> {
   onChange: (value: T) => void;
   options: ReadonlyArray<{ value: T; label: string }>;
   className?: string | undefined;
-  size?: 'sm' | 'default' | undefined;
+  size?: 'xs' | 'sm' | 'default' | undefined;
 }
 
 export function ToggleButtonGroup<T extends string>({
@@ -28,7 +28,7 @@ export function ToggleButtonGroup<T extends string>({
       )}
     >
       {options.map((option) => (
-        <Button size='xs'
+        <Button
           key={option.value}
           size={size}
           variant={value === option.value ? 'secondary' : 'ghost'}

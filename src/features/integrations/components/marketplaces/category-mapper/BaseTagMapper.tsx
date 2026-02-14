@@ -52,7 +52,7 @@ export function BaseTagMapper(): React.JSX.Element {
   );
 
   const mappings = useMemo(
-    (): TagMapping[] => (mappingsQuery.data ?? []).map((m: any) => ({
+    (): TagMapping[] => (mappingsQuery.data ?? []).map((m: { internalTagId: string; externalTagId: string | null; isActive: boolean }) => ({
       internalTagId: m.internalTagId,
       externalTagId: m.externalTagId,
       isActive: Boolean(m.isActive)

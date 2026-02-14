@@ -61,7 +61,6 @@ export function OutputImageGrid({
               <Button size='xs'
                 type='button'
                 variant='ghost'
-                size='icon'
                 className='size-6 rounded p-0 text-white/80 hover:text-white hover:bg-white/10'
                 title='Save to card history'
                 onClick={() => onSaveAsSlot(output)}

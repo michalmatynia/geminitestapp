@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 220ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 26.7s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/cms/components/page-builder/ThemeSettingsPanel.tsx:794:17
+Type error: Type '{ children: false | Element; key: string; id: string; title: string; variant: "subtle"; className: string; actions: Element; }' is not assignable to type 'IntrinsicAttributes & FormSectionProps'.
+  Property 'id' does not exist on type 'IntrinsicAttributes & FormSectionProps'.
+
+[0m [90m 792 |[39m               [33m<[39m[33mFormSection[39m
+ [90m 793 |[39m                 key[33m=[39m{section}
+[31m[1m>[22m[39m[90m 794 |[39m                 id[33m=[39m{toSectionId(section)}
+ [90m     |[39m                 [31m[1m^[22m[39m
+ [90m 795 |[39m                 title[33m=[39m{section}
+ [90m 796 |[39m                 variant[33m=[39m[32m'subtle'[39m
+ [90m 797 |[39m                 className[33m=[39m[32m'p-0 overflow-hidden'[39m[0m
+Next.js build worker exited with code: 1 and signal: null

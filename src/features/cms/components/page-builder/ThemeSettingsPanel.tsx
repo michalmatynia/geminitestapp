@@ -15,6 +15,7 @@ import {
   FileUploadTrigger,
   SectionHeader,
   Textarea,
+  FormSection,
 } from '@/shared/ui';
 
 import {

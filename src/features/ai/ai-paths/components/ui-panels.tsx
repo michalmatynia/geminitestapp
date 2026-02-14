@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
-import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DataTable } from '@/shared/ui';
+import { Button, SearchInput, DataTable } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useGraphState } from '../context';
@@ -615,36 +615,34 @@ export function DocsTabPanel(): React.JSX.Element {
                     </div>
                   </div>
 
-                  <div className='mt-4 rounded-md border border-border/60 bg-card/60'>
-                    <div className='border-b border-border/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-300'>
+                  <div className='mt-4 rounded-md border border-border/60 bg-gray-950/20 overflow-hidden'>
+                    <div className='border-b border-border/60 bg-black/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-300'>
                     Configuration
                     </div>
-                    <Table>
-                      <TableHeader>
-                        <TableRow className='border-border/60'>
-                          <TableHead className='text-xs text-gray-400'>Config key</TableHead>
-                          <TableHead className='text-xs text-gray-400'>Meaning</TableHead>
-                          <TableHead className='text-xs text-gray-400'>Default</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {doc.config.map((field: (typeof doc.config)[number]) => (
-                          <TableRow key={field.path} className='border-border/50'>
-                            <TableCell className='text-[11px] text-gray-200'>
-                              <span className='rounded border border-border/60 bg-card/60 px-2 py-0.5'>
-                                {field.path}
-                              </span>
-                            </TableCell>
-                            <TableCell className='text-[11px] text-gray-400'>
-                              {field.description}
-                            </TableCell>
-                            <TableCell className='text-[11px] text-gray-400'>
-                              {field.defaultValue ?? '—'}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    <DataTable
+                      columns={[
+                        {
+                          accessorKey: 'path',
+                          header: 'Config key',
+                          cell: ({ row }) => (
+                            <span className='rounded border border-border/60 bg-card/60 px-2 py-0.5 font-mono text-[11px] text-gray-200'>
+                              {row.original.path}
+                            </span>
+                          )
+                        },
+                        {
+                          accessorKey: 'description',
+                          header: 'Meaning',
+                          cell: ({ row }) => <span className='text-[11px] text-gray-400'>{row.original.description}</span>
+                        },
+                        {
+                          accessorKey: 'defaultValue',
+                          header: 'Default',
+                          cell: ({ row }) => <span className='text-[11px] text-gray-400'>{row.original.defaultValue ?? '—'}</span>
+                        }
+                      ]}
+                      data={doc.config}
+                    />
                   </div>
 
                   {doc.notes?.length ? (

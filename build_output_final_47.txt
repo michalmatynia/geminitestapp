@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 225ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 20.5s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/integrations/components/marketplaces/category-mapper/GenericItemMapper.tsx:264:11
+Type error: Type '{ columns: ColumnDef<TInternal>[]; data: TInternal[]; isLoading: boolean; getRowId: (row: TInternal) => string; getRowClassName: (row: { original: TInternal; }) => "" | "bg-amber-500/5 hover:bg-amber-500/10"; }' is not assignable to type 'IntrinsicAttributes & DataTableProps<TInternal>'.
+  Property 'getRowClassName' does not exist on type 'IntrinsicAttributes & DataTableProps<TInternal>'.
+
+[0m [90m 262 |[39m           isLoading[33m=[39m{loading}
+ [90m 263 |[39m           getRowId[33m=[39m{(row) [33m=>[39m getInternalId(row)}
+[31m[1m>[22m[39m[90m 264 |[39m           getRowClassName[33m=[39m{(row[33m:[39m { original[33m:[39m [33mTInternal[39m }) [33m=>[39m {
+ [90m     |[39m           [31m[1m^[22m[39m
+ [90m 265 |[39m             [36mconst[39m hasPendingChange [33m=[39m pendingMappings[33m.[39mhas(getInternalId(row[33m.[39moriginal))[33m;[39m
+ [90m 266 |[39m             [36mreturn[39m hasPendingChange [33m?[39m [32m'bg-amber-500/5 hover:bg-amber-500/10'[39m [33m:[39m [32m''[39m[33m;[39m
+ [90m 267 |[39m           }}[0m
+Next.js build worker exited with code: 1 and signal: null

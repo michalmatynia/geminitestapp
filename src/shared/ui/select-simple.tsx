@@ -29,7 +29,7 @@ interface SelectSimpleProps {
   contentClassName?: string | undefined;
   disabled?: boolean | undefined;
   ariaLabel?: string | undefined;
-  size?: 'default' | 'sm';
+  size?: 'default' | 'sm' | 'xs';
 }
 
 export function SelectSimple({
@@ -62,6 +62,7 @@ export function SelectSimple({
           className={cn(
             'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',
             size === 'sm' && 'h-8 text-xs',
+            size === 'xs' && 'h-7 text-[10px]',
             triggerClassName
           )}
           aria-label={ariaLabel}

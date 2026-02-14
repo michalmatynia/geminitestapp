@@ -22,7 +22,6 @@ export function SplitViewControls({
     <div className='absolute bottom-2 left-2 z-20 flex items-center gap-2'>
       <Button size='xs'
         type='button'
-        size='sm'
         variant='outline'
         onClick={onToggleSourceVariantView}
         disabled={splitVariantView}
@@ -38,7 +37,6 @@ export function SplitViewControls({
       </Button>
       <Button size='xs'
         type='button'
-        size='sm'
         variant='outline'
         onClick={onToggleSplitVariantView}
         className='h-7 w-7 bg-background/90 px-0 backdrop-blur'

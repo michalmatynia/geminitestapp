@@ -51,7 +51,7 @@ export function StudioProjectsList(): React.JSX.Element {
           className='h-9'
         />
         <Button size='xs'
-          size='sm'
+         
           onClick={() => void handleCreate()}
           disabled={!newProjectId.trim() || createProjectMutation.isPending}
         >
@@ -88,7 +88,6 @@ export function StudioProjectsList(): React.JSX.Element {
                   <span className='truncate pr-2'>{id}</span>
                   <Button size='xs'
                     variant='ghost'
-                    size='icon'
                     className='size-6 text-gray-500 hover:text-red-400'
                     onClick={(e) => {
                       e.stopPropagation();

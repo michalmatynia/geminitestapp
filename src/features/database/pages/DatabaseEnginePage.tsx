@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import React, { useMemo, Suspense } from 'react';
 
+import type { DatabaseEngineOperationJobDto } from '@/shared/contracts/database';
+import type { DatabaseEngineProvider, DatabaseEnginePolicy } from '@/shared/lib/db/database-engine-constants';
 import { 
   Button, 
   FormSection, 
@@ -24,10 +26,9 @@ import {
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
 import { DatabaseOperationsPanel } from '../components/DatabaseOperationsPanel';
 import { useDatabaseEngineState, type DatabaseEngineWorkspaceView, type DatabaseCollectionRow } from '../hooks/useDatabaseEngineState';
-import type { DatabaseEngineOperationJobDto } from '@/shared/contracts/database';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import type { DatabaseEngineProvider } from '@/shared/lib/db/database-engine-constants';
+
 
 function DatabaseEngineContent(): React.JSX.Element {
   const {
@@ -35,8 +36,6 @@ function DatabaseEngineContent(): React.JSX.Element {
     setView,
     policyDraft,
     setPolicyDraft,
-    serviceRouteMapDraft,
-    setServiceRouteMapDraft,
     collectionRouteMapDraft,
     setCollectionRouteMapDraft,
     rows,
@@ -47,7 +46,6 @@ function DatabaseEngineContent(): React.JSX.Element {
     refetch,
     engineStatus,
     operationJobs,
-    operationQueueStatus,
     redisOverview,
     saving,
   } = useDatabaseEngineState();
@@ -79,12 +77,12 @@ function DatabaseEngineContent(): React.JSX.Element {
     {
       id: 'provider',
       header: 'Assigned Provider',
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: DatabaseCollectionRow } }) => (
         <SelectSimple
           size='xs'
           value={collectionRouteMapDraft[row.original.name] ?? 'auto'}
           onValueChange={(val) => {
-            setCollectionRouteMapDraft(prev => {
+            setCollectionRouteMapDraft((prev: Record<string, DatabaseEngineProvider>) => {
               const next = { ...prev };
               if (val === 'auto') delete next[row.original.name];
               else next[row.original.name] = val as DatabaseEngineProvider;
@@ -140,7 +138,7 @@ function DatabaseEngineContent(): React.JSX.Element {
               <RefreshCwIcon className={`size-3.5 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button size='xs' className='h-8' onClick={saveConfiguration} disabled={saving || validationErrors.length > 0}>
+            <Button size='xs' className='h-8' onClick={() => { void saveConfiguration(); }} disabled={saving || validationErrors.length > 0}>
               <SaveIcon className='size-3.5 mr-2' />
               {saving ? 'Saving...' : 'Save Configuration'}
             </Button>
@@ -162,7 +160,10 @@ function DatabaseEngineContent(): React.JSX.Element {
                 <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
                   <Checkbox 
                     checked={policyDraft.requireExplicitServiceRouting} 
-                    onCheckedChange={(v) => setPolicyDraft(p => ({ ...p, requireExplicitServiceRouting: !!v }))}
+                    onCheckedChange={(v: boolean | 'indeterminate') => {
+                      const isChecked = v === true;
+                      setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitServiceRouting: isChecked }));
+                    }}
                   />
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-gray-200'>Strict Service Routing</span>
@@ -172,7 +173,10 @@ function DatabaseEngineContent(): React.JSX.Element {
                 <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
                   <Checkbox 
                     checked={policyDraft.requireExplicitCollectionRouting} 
-                    onCheckedChange={(v) => setPolicyDraft(p => ({ ...p, requireExplicitCollectionRouting: !!v }))}
+                    onCheckedChange={(v: boolean | 'indeterminate') => {
+                      const isChecked = v === true;
+                      setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitCollectionRouting: isChecked }));
+                    }}
                   />
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-gray-200'>Strict Collection Routing</span>
@@ -182,7 +186,10 @@ function DatabaseEngineContent(): React.JSX.Element {
                 <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
                   <Checkbox 
                     checked={policyDraft.allowAutomaticFallback} 
-                    onCheckedChange={(v) => setPolicyDraft(p => ({ ...p, allowAutomaticFallback: !!v }))}
+                    onCheckedChange={(v: boolean | 'indeterminate') => {
+                      const isChecked = v === true;
+                      setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, allowAutomaticFallback: isChecked }));
+                    }}
                   />
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-gray-200'>Auto Fallback</span>
@@ -192,7 +199,10 @@ function DatabaseEngineContent(): React.JSX.Element {
                 <label className='flex items-center gap-3 p-3 rounded-md border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
                   <Checkbox 
                     checked={policyDraft.strictProviderAvailability} 
-                    onCheckedChange={(v) => setPolicyDraft(p => ({ ...p, strictProviderAvailability: !!v }))}
+                    onCheckedChange={(v: boolean | 'indeterminate') => {
+                      const isChecked = v === true;
+                      setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, strictProviderAvailability: isChecked }));
+                    }}
                   />
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-gray-200'>Strict Availability</span>

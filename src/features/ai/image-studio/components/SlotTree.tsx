@@ -330,7 +330,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           <Button size='xs'
             type='button'
             variant='outline'
-            size='sm'
             className='h-8 px-3 text-xs'
             onClick={(): void => setPanelCollapsed(false)}
             title='Show card tree'
@@ -366,7 +365,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         <Button size='xs'
           type='button'
           variant='outline'
-          size='icon'
           className='size-6'
           onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
             event.preventDefault();

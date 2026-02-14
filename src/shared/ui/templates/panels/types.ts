@@ -18,10 +18,11 @@ export interface FilterField {
 export interface PanelStat {
   key: string;
   label: string;
-  value: string | number;
+  value: string | number | ReactNode;
   icon?: ReactNode;
   color?: 'default' | 'success' | 'warning' | 'error' | 'info';
   tooltip?: string;
+  valueClassName?: string;
 }
 
 export interface PanelAction {

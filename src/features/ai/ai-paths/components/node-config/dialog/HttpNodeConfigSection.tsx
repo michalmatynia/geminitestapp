@@ -50,7 +50,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
       <div className='grid gap-3 sm:grid-cols-2'>
         <div>
           <Label className='text-xs text-gray-400'>Method</Label>
-          <SelectSimple size='sm' size='sm'
+          <SelectSimple size='sm'
             value={httpConfig.method}
             onValueChange={(value: string): void =>
               updateSelectedNodeConfig({
@@ -64,7 +64,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
         </div>
         <div>
           <Label className='text-xs text-gray-400'>Response Mode</Label>
-          <SelectSimple size='sm' size='sm'
+          <SelectSimple size='sm'
             value={httpConfig.responseMode}
             onValueChange={(value: string): void =>
               updateSelectedNodeConfig({

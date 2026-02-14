@@ -51,6 +51,7 @@ export const cmsPageCreateSchema = z.object({
 
 export const cmsPageComponentSchema = z.object({
   type: nonEmptyStringSchema,
+  order: z.number(),
   content: z.record(z.string(), z.unknown()),
 });
 

@@ -499,7 +499,6 @@ export function GenerationToolbar(): React.JSX.Element {
       <Button size='xs'
         onClick={handleRunGeneration}
         disabled={!workingSlot || !promptText.trim() || generationBusy}
-        size='sm'
         className='flex-1'
       >
         {generationBusy ? (
@@ -544,7 +543,6 @@ export function GenerationToolbar(): React.JSX.Element {
       <Button size='xs'
         type='button'
         variant='outline'
-        size='sm'
         onClick={() => {
           void handleUpscale();
         }}
@@ -557,7 +555,6 @@ export function GenerationToolbar(): React.JSX.Element {
       <Button size='xs'
         type='button'
         variant='outline'
-        size='sm'
         onClick={() => {
           void attachMaskVariantsFromSelection();
         }}
@@ -579,7 +576,6 @@ export function GenerationToolbar(): React.JSX.Element {
       <Button size='xs'
         type='button'
         variant='outline'
-        size='sm'
         onClick={() => {
           setMaskPreviewEnabled(true);
         }}

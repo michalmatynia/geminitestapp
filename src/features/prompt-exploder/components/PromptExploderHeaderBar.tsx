@@ -23,7 +23,6 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
         <div className='flex flex-wrap items-center gap-2'>
           <Button size='xs'
             variant='outline'
-            size='sm'
             onClick={handleReloadFromStudio}
           >
             <RefreshCcw className='mr-2 size-4' />
@@ -31,7 +30,6 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
           </Button>
           <Button size='xs'
             variant='outline'
-            size='sm'
             onClick={() => {
               router.push('/admin/prompt-exploder/settings');
             }}
@@ -41,7 +39,6 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
           </Button>
           <Button size='xs'
             variant='outline'
-            size='sm'
             onClick={() => {
               router.push(returnTo);
             }}

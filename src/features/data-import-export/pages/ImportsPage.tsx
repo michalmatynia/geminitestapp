@@ -21,7 +21,7 @@ import {
   Checkbox,
   ConfirmDialog,
   Input,
-  UnifiedSelect,
+  SelectSimple,
   Tabs,
   TabsContent,
   TabsList,
@@ -190,7 +190,7 @@ function ImportsPageContent(): React.JSX.Element {
                         className='flex-1'
                       />
                       <div className='flex-1'>
-                        <UnifiedSelect
+                        <SelectSimple size='sm'
                           value={m.targetField}
                           onValueChange={(v: string): void => updateMapping(i, { targetField: v })}
                           options={[

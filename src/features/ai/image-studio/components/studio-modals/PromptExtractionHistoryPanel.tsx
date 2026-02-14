@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
 import {
   formatHistoryTime,
@@ -33,14 +33,14 @@ export function PromptExtractionHistoryPanel({
     <div className='space-y-2 rounded border border-indigo-500/30 bg-indigo-500/5 p-3'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div className='text-xs font-semibold text-indigo-100'>Extraction History</div>
-        <UnifiedButton
+        <Button size='xs'
           type='button'
           variant='ghost'
           className='h-7 px-2 text-xs text-indigo-100 hover:bg-indigo-500/20'
           onClick={onClearHistory}
         >
           Clear History
-        </UnifiedButton>
+        </Button>
       </div>
       <div className='grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]'>
         <div className='max-h-60 space-y-1 overflow-auto pr-1'>

@@ -16,7 +16,7 @@ import {
 import {
   Checkbox,
   Input,
-  UnifiedSelect,
+  SelectSimple,
   FormSection,
   FormField,
 } from '@/shared/ui';
@@ -214,7 +214,7 @@ export function TimelineSection(): React.ReactNode {
       {/* Timeline choreography */}
       <FormSection title='Timeline choreography' variant='subtle-compact' className='p-3 space-y-4'>
         <FormField label='Mode'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={timelineModeValue}
             onValueChange={handleTimelineModeChange}
             options={timelineModeOptions}
@@ -347,7 +347,7 @@ export function TimelineSection(): React.ReactNode {
       {/* Scroll storytelling */}
       <FormSection title='Scroll storytelling' variant='subtle-compact' className='p-3 space-y-4'>
         <FormField label='Mode'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={scrollModeValue}
             onValueChange={handleScrollModeChange}
             options={scrollModeOptions}
@@ -377,7 +377,7 @@ export function TimelineSection(): React.ReactNode {
 
             {scrollModeValue === 'reveal' && (
               <FormField label='Reveal style'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={revealStyleValue}
                   onValueChange={handleRevealStyleChange}
                   options={revealStyleOptions}

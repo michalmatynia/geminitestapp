@@ -21,8 +21,7 @@ import {
   Label,
   RadioGroup,
   RadioGroupItem,
-  UnifiedButton,
-  UnifiedSelect,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 
@@ -238,7 +237,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
             label='Default Image Studio Project'
             description='Used as the default project binding in product workflows.'
           >
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={selectedStudioProject}
               onValueChange={setSelectedStudioProject}
               options={studioProjectOptions}
@@ -253,7 +252,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
             />
           </FormField>
           <div className='flex flex-wrap items-center gap-2'>
-            <UnifiedButton
+            <Button size='xs'
               type='button'
               variant='default'
               onClick={handleSaveStudioProject}
@@ -264,8 +263,8 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               }
             >
               {updateStudioProjectSetting.isPending ? 'Saving...' : 'Save Project Binding'}
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button size='xs'
               type='button'
               variant='outline'
               onClick={handleStartStudioConnection}
@@ -274,7 +273,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               {normalizedSelectedStudioProject
                 ? 'Start Image Studio Connection'
                 : 'Open Image Studio Projects'}
-            </UnifiedButton>
+            </Button>
           </div>
         </div>
       </FormSection>
@@ -296,7 +295,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               }
             }}
           />
-          <Button
+          <Button size='xs'
             type='button'
             variant='outline'
             onClick={handleAddRoute}
@@ -331,7 +330,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
                 >
                   {route}
                 </Label>
-                <Button
+                <Button size='xs'
                   type='button'
                   variant='ghost'
                   onClick={() => handleRemoveRoute(route)}
@@ -346,7 +345,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
       </div>
 
       <div className='flex items-center gap-3'>
-        <Button
+        <Button size='xs'
           type='button'
           variant='outline'
           onClick={handleUseLocalhost}
@@ -354,7 +353,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
         >
           Use localhost:3000
         </Button>
-        <Button
+        <Button size='xs'
           type='button'
           onClick={handleSave}
           disabled={updateSettingsBulk.isPending}

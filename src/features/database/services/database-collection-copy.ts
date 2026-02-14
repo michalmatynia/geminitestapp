@@ -1,10 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import 'server-only';
+
+import { Prisma } from '@prisma/client';
 
 import { ErrorSystem } from '@/features/observability/server';
 import { operationFailedError } from '@/shared/errors/app-error';
@@ -18,6 +14,12 @@ import type { DatabaseSyncCollectionResult, DatabaseSyncDirection } from './data
 // ── Types ──
 
 type SyncResult = { sourceCount: number; targetDeleted: number; targetInserted: number; warnings?: string[] };
+
+type PrismaModel = {
+  findMany: (args?: unknown) => Promise<Record<string, unknown>[]>;
+  deleteMany: (args?: unknown) => Promise<{ count: number }>;
+  createMany: (args: { data: unknown[]; skipDuplicates?: boolean }) => Promise<{ count: number }>;
+};
 
 type CollectionHandler = {
   mongoToPrisma: () => Promise<SyncResult>;
@@ -50,7 +52,7 @@ const genericHandler = (mongoCollectionName: string, prismaModelName: string): C
     const docs = await mongo.collection(mongoCollectionName).find({}).toArray();
 
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc);
         if (!id) return null;
         const json = toJsonValue(doc);
@@ -61,7 +63,7 @@ const genericHandler = (mongoCollectionName: string, prismaModelName: string): C
       .filter(Boolean);
 
     const key = prismaModelName.charAt(0).toLowerCase() + prismaModelName.slice(1);
-    const model = (prisma as any)[key];
+    const model = (prisma as unknown as Record<string, PrismaModel>)[key];
     if (!model) {
       return { sourceCount: docs.length, targetDeleted: 0, targetInserted: 0, warnings: [`Prisma model "${prismaModelName}" not found`] };
     }
@@ -74,15 +76,15 @@ const genericHandler = (mongoCollectionName: string, prismaModelName: string): C
   async prismaToMongo(): Promise<SyncResult> {
     const mongo = await getMongoDb();
     const key = prismaModelName.charAt(0).toLowerCase() + prismaModelName.slice(1);
-    const model = (prisma as any)[key];
+    const model = (prisma as unknown as Record<string, PrismaModel>)[key];
     if (!model) {
       return { sourceCount: 0, targetDeleted: 0, targetInserted: 0, warnings: [`Prisma model "${prismaModelName}" not found`] };
     }
 
     const rows = await model.findMany();
-    const docs = rows.map((row: any) => {
+    const docs = rows.map((row: Record<string, unknown>) => {
       const doc: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(row as Record<string, unknown>)) {
+      for (const [k, v] of Object.entries(row)) {
         if (k === 'id') {
           doc['_id'] = toObjectIdMaybe(v as string);
           doc['id'] = v;
@@ -95,7 +97,7 @@ const genericHandler = (mongoCollectionName: string, prismaModelName: string): C
 
     const collection = mongo.collection(mongoCollectionName);
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   },
 });
@@ -108,14 +110,14 @@ const settingsHandler: CollectionHandler = {
     const docs = await mongo.collection('settings').find({}).toArray();
     const byKey = new Map<string, { key: string; value: string; createdAt: Date; updatedAt: Date }>();
     for (const doc of docs) {
-      const key = (doc as any).key ?? (doc as any)._id?.toString() ?? '';
+      const key = (doc as Record<string, unknown>).key ?? (doc as Record<string, unknown>)._id?.toString() ?? '';
       if (!key) continue;
-      const value = (doc as any).value;
+      const value = (doc as Record<string, unknown>).value;
       const entry = {
         key,
         value: typeof value === 'string' ? value : JSON.stringify(value ?? ''),
-        createdAt: toDate((doc as any).createdAt) ?? new Date(),
-        updatedAt: toDate((doc as any).updatedAt) ?? new Date(),
+        createdAt: toDate((doc as Record<string, unknown>).createdAt) ?? new Date(),
+        updatedAt: toDate((doc as Record<string, unknown>).updatedAt) ?? new Date(),
       };
       const existing = byKey.get(key);
       if (!existing || entry.updatedAt > existing.updatedAt) {
@@ -139,7 +141,7 @@ const settingsHandler: CollectionHandler = {
     }));
     const collection = mongo.collection('settings');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   },
 };
@@ -149,7 +151,7 @@ const aiPathsSettingsHandler: CollectionHandler = {
     const mongo = await getMongoDb();
     const docs = await mongo.collection('ai_paths_settings').find({}).toArray();
     const normalized = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const key = normalizeAiPathsKey(typeof doc.key === 'string' ? doc.key : null);
         const value = doc.value;
         if (!key || typeof value !== 'string') return null;
@@ -220,7 +222,7 @@ const aiPathsSettingsHandler: CollectionHandler = {
 
     const collection = mongo.collection('ai_paths_settings');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return {
       sourceCount: byKey.size,
       targetDeleted: deleted.deletedCount ?? 0,
@@ -234,7 +236,7 @@ const usersHandler: CollectionHandler = {
     const mongo = await getMongoDb();
     const docs = await mongo.collection('users').find({}).toArray();
     const data = docs
-      .map((doc: any) => {
+      .map((doc: Record<string, unknown>) => {
         const id = normalizeId(doc);
         if (!id) return null;
         return {
@@ -265,7 +267,7 @@ const usersHandler: CollectionHandler = {
     }));
     const collection = mongo.collection('users');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   },
 };
@@ -296,59 +298,63 @@ const productsHandler: CollectionHandler = {
       },
     });
 
-    const docs = rows.map((row: any) => {
+    type PrismaProductRow = Prisma.ProductGetPayload<{
+      include: {
+        images: { include: { imageFile: true } };
+        catalogs: { include: { catalog: { include: { languages: { select: { languageId: true } } } } } };
+        categories: { select: { categoryId: true } };
+        tags: { select: { tagId: true } };
+        producers: { select: { producerId: true } };
+      };
+    }>;
+
+    const docs = rows.map((row: PrismaProductRow) => {
       const categoryId = row.categories?.categoryId ?? null;
       const categories = categoryId
         ? [{ productId: row.id, categoryId, assignedAt: row.updatedAt ?? row.createdAt }]
         : [];
-      const images = Array.isArray(row.images)
-        ? row.images
-          .filter((image: any) => image?.imageFile)
-          .map((image: any) => ({
-            productId: row.id,
-            imageFileId: image.imageFileId,
-            assignedAt: image.assignedAt,
-            imageFile: {
-              id: image.imageFile.id,
-              filename: image.imageFile.filename,
-              filepath: image.imageFile.filepath,
-              mimetype: image.imageFile.mimetype,
-              size: image.imageFile.size,
-              width: image.imageFile.width ?? null,
-              height: image.imageFile.height ?? null,
-              tags: Array.isArray(image.imageFile.tags) ? image.imageFile.tags : [],
-              createdAt: image.imageFile.createdAt,
-              updatedAt: image.imageFile.updatedAt,
-            },
-          }))
-        : [];
-      const catalogs = Array.isArray(row.catalogs)
-        ? row.catalogs
-          .filter((entry: any) => entry?.catalog)
-          .map((entry: any) => ({
-            productId: row.id,
-            catalogId: entry.catalogId,
-            assignedAt: entry.assignedAt,
-            catalog: {
-              id: entry.catalog.id,
-              name: entry.catalog.name,
-              description: entry.catalog.description ?? null,
-              isDefault: entry.catalog.isDefault,
-              defaultLanguageId: entry.catalog.defaultLanguageId ?? null,
-              defaultPriceGroupId: entry.catalog.defaultPriceGroupId ?? null,
-              languageIds: Array.isArray(entry.catalog.languages)
-                ? entry.catalog.languages
-                  .map((languageEntry: any) => languageEntry?.languageId)
-                  .filter(Boolean)
-                : [],
-              priceGroupIds: Array.isArray(entry.catalog.priceGroupIds)
-                ? entry.catalog.priceGroupIds
-                : [],
-              createdAt: entry.catalog.createdAt,
-              updatedAt: entry.catalog.updatedAt,
-            },
-          }))
-        : [];
+      const images = row.images
+        .filter((image) => image?.imageFile)
+        .map((image) => ({
+          productId: row.id,
+          imageFileId: image.imageFileId,
+          assignedAt: image.assignedAt,
+          imageFile: {
+            id: image.imageFile.id,
+            filename: image.imageFile.filename,
+            filepath: image.imageFile.filepath,
+            mimetype: image.imageFile.mimetype,
+            size: image.imageFile.size,
+            width: image.imageFile.width ?? null,
+            height: image.imageFile.height ?? null,
+            tags: Array.isArray(image.imageFile.tags) ? image.imageFile.tags : [],
+            createdAt: image.imageFile.createdAt,
+            updatedAt: image.imageFile.updatedAt,
+          },
+        }));
+      const catalogs = row.catalogs
+        .filter((entry) => entry?.catalog)
+        .map((entry) => ({
+          productId: row.id,
+          catalogId: entry.catalogId,
+          assignedAt: entry.assignedAt,
+          catalog: {
+            id: entry.catalog.id,
+            name: entry.catalog.name,
+            description: entry.catalog.description ?? null,
+            isDefault: entry.catalog.isDefault,
+            defaultLanguageId: entry.catalog.defaultLanguageId ?? null,
+            defaultPriceGroupId: entry.catalog.defaultPriceGroupId ?? null,
+            languageIds: entry.catalog.languages
+              .map((languageEntry) => languageEntry?.languageId)
+              .filter(Boolean),
+            priceGroupIds: Array.isArray(entry.catalog.priceGroupIds)
+              ? entry.catalog.priceGroupIds
+              : [],
+            createdAt: entry.catalog.createdAt,
+            updatedAt: entry.catalog.updatedAt,
+          },
+        }));
 
       return {
         _id: row.id,
@@ -384,19 +390,15 @@ const productsHandler: CollectionHandler = {
         categories,
         images,
         catalogs,
-        tags: Array.isArray(row.tags)
-          ? row.tags.map((tag: any) => ({ tagId: tag.tagId }))
-          : [],
-        producers: Array.isArray(row.producers)
-          ? row.producers.map((producer: any) => ({ producerId: producer.producerId }))
-          : [],
+        tags: row.tags.map((tag) => ({ tagId: tag.tagId })),
+        producers: row.producers.map((producer) => ({ producerId: producer.producerId })),
       };
     });
 
     const mongo = await getMongoDb();
     const collection = mongo.collection('products');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   },
 };

@@ -1,7 +1,7 @@
 'use client';
 
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -37,7 +37,7 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Collection Type</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={simulationConfig.entityType ?? 'products'}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

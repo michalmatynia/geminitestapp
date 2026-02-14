@@ -101,7 +101,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   }, [isBaseComIntegration, selectedInventoryId, preferredInventoryId, connectionId, updatePreferredInventoryMutation]);
 
   return {
-    templates: templates as any[],
+    templates,
     selectedTemplateId,
     setSelectedTemplateId,
     inventories,

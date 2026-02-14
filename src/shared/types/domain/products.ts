@@ -88,7 +88,7 @@ export type Catalog = CatalogRecord;
  */
 export type ProductRecord = ProductDto;
 
-export type ProductImageRecord = ProductImageDto & {
+export type ProductImageRecord = Omit<ProductImageDto, 'imageFile'> & {
   imageFile: ImageFileRecord;
 };
 

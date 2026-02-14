@@ -21,7 +21,7 @@ import {
 } from '@/features/products/validation-engine/core';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, UnifiedSelect, FormSection, FormField, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
+import { Button, Input, SelectSimple, FormSection, FormField, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
 
 import { ValidatorIssueHint } from './ProductFormGeneral';
 
@@ -301,7 +301,7 @@ export default function ProductFormOther(): React.JSX.Element {
             id='defaultPriceGroupId'
             description={isPriceGroupAutoAssigned ? 'Auto-assigned from catalog' : undefined}
           >
-            <UnifiedSelect
+            <SelectSimple size='sm'
               onValueChange={(value: string) => setValue('defaultPriceGroupId', value)}
               value={selectedDefaultPriceGroupId || ''}
               disabled={isPriceGroupAutoAssigned}

@@ -8,7 +8,7 @@ import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries
 import { useUserPreferences, useUpdateUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/features/products/types';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
-import { Button, UnifiedSelect, Input, useToast, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { Button, SelectSimple, Input, useToast, SectionHeader, FormSection, FormField } from '@/shared/ui';
 
 const DEFAULT_PREFERENCES: ProductListPreferences = {
   nameLocale: 'name_en',
@@ -104,7 +104,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
               label='Product Name Language'
               description='Default language for product names in the list'
             >
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={preferences.nameLocale || 'name_en'}
                 onValueChange={(value: string) =>
                   setPreferences((prev: ProductListPreferences) => ({
@@ -125,7 +125,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
               label='Default Catalog Filter'
               description='Default catalog filter when opening the product list'
             >
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={preferences.catalogFilter || 'all'}
                 onValueChange={(value: string) =>
                   setPreferences((prev: ProductListPreferences) => ({
@@ -166,7 +166,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
               label='Thumbnail Source'
               description='Choose which image source is used for product list thumbnails'
             >
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={preferences.thumbnailSource || 'file'}
                 onValueChange={(value: string) =>
                   setPreferences((prev: ProductListPreferences) => ({
@@ -187,7 +187,7 @@ export function ProductPreferencesPage(): React.JSX.Element {
               label='Products Per Page'
               description='Number of products to display per page'
             >
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={String(preferences.pageSize || 50)}
                 onValueChange={(value: string) =>
                   setPreferences((prev: ProductListPreferences) => ({

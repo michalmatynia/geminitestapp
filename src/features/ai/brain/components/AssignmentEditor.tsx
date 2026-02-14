@@ -4,13 +4,8 @@ import {
   Checkbox,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectSimple,
   Textarea,
-  UnifiedSelect,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -53,22 +48,13 @@ export function AssignmentEditor({
       <div className='grid gap-2 md:grid-cols-2'>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Provider</Label>
-          <Select
+          <SelectSimple
             value={assignment.provider}
             onValueChange={(value: string) => updateField({ provider: value as AiBrainProvider })}
+            options={providerOptions}
             disabled={!!readOnly}
-          >
-            <SelectTrigger className='h-9'>
-              <SelectValue placeholder='Select provider' />
-            </SelectTrigger>
-            <SelectContent>
-              {providerOptions.map((opt: { value: AiBrainProvider; label: string }) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            placeholder='Select provider'
+          />
         </div>
 
         <div className='space-y-1'>
@@ -93,13 +79,14 @@ export function AssignmentEditor({
             disabled={!!readOnly || assignment.provider !== 'model'}
           />
           {modelQuickPicks.length > 0 ? (
-            <UnifiedSelect
+            <SelectSimple
               value=''
               onValueChange={(value: string) => updateField({ modelId: value })}
               options={modelQuickPicks}
               placeholder='Pick model preset'
               disabled={!!readOnly || assignment.provider !== 'model'}
-              triggerClassName='h-8 text-[11px]'
+              size='sm'
+              className='mt-1'
             />
           ) : null}
         </div>
@@ -113,13 +100,14 @@ export function AssignmentEditor({
             disabled={!!readOnly || assignment.provider !== 'agent'}
           />
           {agentQuickPicks.length > 0 ? (
-            <UnifiedSelect
+            <SelectSimple
               value=''
               onValueChange={(value: string) => updateField({ agentId: value })}
               options={agentQuickPicks}
               placeholder='Pick agent/persona preset'
               disabled={!!readOnly || assignment.provider !== 'agent'}
-              triggerClassName='h-8 text-[11px]'
+              size='sm'
+              className='mt-1'
             />
           ) : null}
         </div>

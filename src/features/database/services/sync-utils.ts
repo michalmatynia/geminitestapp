@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import 'server-only';
 
 import { ObjectId } from 'mongodb';
@@ -22,7 +18,7 @@ export const toDate = (value: unknown): Date | null => {
   return null;
 };
 
-export const toJsonValue = (value: unknown): any => {
+export const toJsonValue = (value: unknown): unknown => {
   if (value === undefined || value === null) return null;
   if (value instanceof Date) return value.toISOString();
   if (value instanceof ObjectId) return value.toString();
@@ -40,10 +36,10 @@ export const toJsonValue = (value: unknown): any => {
   return value;
 };
 
-export const normalizeId = (doc: any): string => {
-  const direct = doc.id;
+export const normalizeId = (doc: Record<string, unknown>): string => {
+  const direct = doc['id'];
   if (typeof direct === 'string' && direct.trim()) return direct;
-  const raw = doc._id;
+  const raw = doc['_id'];
   if (typeof raw === 'string') return raw;
   if (raw && typeof raw === 'object' && 'toString' in raw) {
     return (raw as { toString: () => string }).toString();

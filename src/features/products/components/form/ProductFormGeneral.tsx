@@ -35,7 +35,7 @@ import {
 } from '@/features/products/validation-engine/core';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const buildIssueSnippet = (
@@ -722,7 +722,7 @@ export default function ProductFormGeneral(): React.JSX.Element {
         
         <FormField label='Product Identifier' description='EAN, GTIN or ASIN code.'>
           <div className='flex gap-2'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={identifierType}
               onValueChange={(value: string): void =>
                 setIdentifierType(value as 'ean' | 'gtin' | 'asin')

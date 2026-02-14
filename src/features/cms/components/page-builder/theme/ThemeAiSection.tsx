@@ -7,7 +7,7 @@ import {
   Button,
   Label,
   Textarea,
-  UnifiedSelect,
+  SelectSimple,
 } from '@/shared/ui';
 
 import { useThemeColors } from './ThemeColorsContext';
@@ -44,7 +44,7 @@ export function ThemeAiSection(): React.JSX.Element {
       </div>
       <div className='space-y-1.5'>
         <Label className='text-xs text-gray-400'>Provider</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={schemeAiProvider}
           onValueChange={(value: string): void => setSchemeAiProvider(value as 'model' | 'agent')}
           options={schemeProviderOptions}
@@ -54,7 +54,7 @@ export function ThemeAiSection(): React.JSX.Element {
       {schemeAiProvider !== 'agent' ? (
         <div className='space-y-1.5'>
           <Label className='text-xs text-gray-400'>Model</Label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={schemeAiModelId}
             onValueChange={(value: string): void => setSchemeAiModelId(value)}
             options={modelOptions.map((model: string) => ({ value: model, label: model }))}
@@ -64,7 +64,7 @@ export function ThemeAiSection(): React.JSX.Element {
       ) : (
         <div className='space-y-1.5'>
           <Label className='text-xs text-gray-400'>Deepthinking agent</Label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={schemeAiAgentId}
             onValueChange={(value: string): void => setSchemeAiAgentId(value)}
             options={agentOptions.length ? agentOptions : [{ label: 'No agents configured', value: '' }]}

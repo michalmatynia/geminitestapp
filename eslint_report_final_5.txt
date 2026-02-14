@@ -1,0 +1,59 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/pages/AdminAiPathsDeadLetterPage.tsx
+   24:1   error    `./dead-letter-utils` import should occur before import of `../hooks/useDeadLetterRuns`         import/order
+   30:1   error    There should be at least one empty line between import groups                                   import/order
+   30:1   error    `@/shared/types/domain/ai-paths` type import should occur before import of `@/shared/ui`        import/order
+   50:5   warning  'toggleSelectVisible' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   51:5   warning  'clearSelection' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  259:24  error    Unsafe assignment of an error typed value                                                       @typescript-eslint/no-unsafe-assignment
+  501:44  error    Unsafe assignment of an error typed value                                                       @typescript-eslint/no-unsafe-assignment
+  501:44  error    Unsafe call of a type that could not be resolved                                                @typescript-eslint/no-unsafe-call
+  504:1   error    Expected indentation of 30 spaces but found 28                                                  indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/chatbot/hooks/useChatbotMemoryState.ts
+  5:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/chatbot/hooks/useChatbotSessionsState.ts
+  3:23  warning  'useQueryClient' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/chatbot/pages/AdminChatbotMemoryPage.tsx
+    4:8   warning  'Link' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   11:3   warning  'FormSection' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  191:28  error    Unsafe member access .original on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  191:52  error    Unsafe member access .original on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  199:69  error    Unsafe argument of type `any` assigned to a parameter of type `string | null | undefined`  @typescript-eslint/no-unsafe-argument
+  199:73  error    Unsafe member access .original on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  203:69  error    Unsafe argument of type `any` assigned to a parameter of type `string | null | undefined`  @typescript-eslint/no-unsafe-argument
+  203:73  error    Unsafe member access .original on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  207:72  error    Unsafe member access .original on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  210:26  error    Unsafe member access .original on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  214:47  error    Unsafe member access .original on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/chatbot/pages/AdminChatbotSessionsPage.tsx
+    3:15  warning  'XCircle' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   10:3   warning  'Label' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   17:3   warning  'FormSection' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+   18:3   warning  'FormField' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   23:1   error    There should be at least one empty line between import groups                                  import/order
+   24:1   error    There should be no empty line within import group                                              import/order
+   29:11  warning  'toast' is assigned a value but never used. Allowed unused vars must match /^_/u               @typescript-eslint/no-unused-vars
+   39:5   warning  'skipBulkConfirm' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+   40:5   warning  'setSkipBulkConfirm' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   50:5   warning  'clearSelection' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  261:33  error    Unsafe call of a type that could not be resolved                                               @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useDatabasePreviewState.ts
+  5:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasePreviewPage.tsx
+  322:23  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  323:93  error    Unsafe member access .original on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  324:32  error    Unsafe member access .original on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  327:20  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  366:5   warning  'tableRows' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  650:10  error    'DatabasePreviewPageInner' is already defined                                         @typescript-eslint/no-redeclare
+  669:25  error    'DatabasePreviewPage' is already defined                                              @typescript-eslint/no-redeclare
+
+✖ 41 problems (27 errors, 14 warnings)
+  8 errors and 0 warnings potentially fixable with the `--fix` option.
+

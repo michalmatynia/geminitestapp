@@ -7,7 +7,7 @@ import { cn } from '@/shared/utils';
 
 import { Button } from './button';
 import { Label } from './label';
-import { UnifiedSelect } from './unified-select';
+import { SelectSimple } from './select-simple';
 
 interface PaginationProps {
   page: number;
@@ -74,7 +74,7 @@ export function Pagination({
       {showPageSize && onPageSizeChange && pageSize !== undefined && (
         <div className='flex items-center gap-2'>
           {showLabels && !isCompact && <Label className='text-xs text-muted-foreground whitespace-nowrap'>Rows per page</Label>}
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={String(pageSize)}
             onValueChange={(value) => {
               onPageSizeChange(Number(value));

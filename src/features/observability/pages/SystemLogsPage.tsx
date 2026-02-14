@@ -1,6 +1,7 @@
 'use client';
 
-import { AlertTriangle, Copy, Link2, Monitor, Server, Shield, Trash2 } from 'lucide-react';
+import { AlertTriangle, Copy, Link2, Monitor, Server, Shield, Trash2, SearchIcon, Eye } from 'lucide-react';
+import React, { useMemo } from 'react';
 
 import { SystemLogsProvider, useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
 import {
@@ -12,8 +13,22 @@ import {
   type SystemLogFilterFormValues,
 } from '@/features/observability/lib/log-triage-presets';
 import type { SystemLogRecord, AiInsightRecord } from '@/shared/types';
-import { Button, DynamicFilters, ListPanel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Pagination, StatusBadge, ConfirmDialog, PageLayout, FormSection } from '@/shared/ui';
+import { 
+  Button, 
+  DynamicFilters, 
+  ListPanel, 
+  DataTable, 
+  Pagination, 
+  StatusBadge, 
+  ConfirmDialog, 
+  PageLayout, 
+  FormSection,
+  StatusToggle,
+  Badge
+} from '@/shared/ui';
 import { cn } from '@/shared/utils';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 const formatTimestamp = (value: Date | string): string => {
   const date = value instanceof Date ? value : new Date(value);
@@ -118,122 +133,77 @@ function LogDiagnostics(): React.JSX.Element {
     setIsRebuildIndexesConfirmOpen,
   } = useSystemLogsContext();
 
+  const columns = useMemo<ColumnDef<any>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Collection',
+      cell: ({ row }) => <span className='font-mono text-xs text-emerald-200'>{row.original.name}</span>,
+    },
+    {
+      accessorKey: 'expected',
+      header: 'Expected',
+      cell: ({ row }) => <span className='text-xs text-gray-400'>{row.original.expected.length}</span>,
+    },
+    {
+      accessorKey: 'missing',
+      header: 'Missing',
+      cell: ({ row }) => {
+        const missingCount = row.original.missing.length;
+        if (row.original.error) return <span className='text-rose-400 text-[10px]'>{row.original.error}</span>;
+        if (missingCount === 0) return <span className='text-gray-600'>0</span>;
+        return (
+          <div className='flex flex-wrap gap-1'>
+            <span className='text-amber-400 font-bold mr-2'>{missingCount}</span>
+            {row.original.missing.map((m: any, i: number) => (
+              <Badge key={i} variant='outline' className='text-[9px] bg-amber-500/5 text-amber-300 border-amber-500/20'>
+                {JSON.stringify(m.key)}
+              </Badge>
+            ))}
+          </div>
+        );
+      }
+    },
+    {
+      id: 'status',
+      header: () => <div className='text-right'>Status</div>,
+      cell: ({ row }) => {
+        const missingCount = row.original.missing.length;
+        const status = row.original.error ? 'error' : missingCount === 0 ? 'success' : 'warning';
+        return (
+          <div className='text-right'>
+            <StatusBadge status={status} label={row.original.error ? 'Error' : missingCount === 0 ? 'Healthy' : 'Sync Required'} className='text-[9px]' />
+          </div>
+        );
+      }
+    }
+  ], []);
+
   return (
     <FormSection
-      title='Diagnostics'
-      description='Mongo index status for AI Paths runtime collections.'
+      title='Database Health'
+      description='Mongo index consistency for observability collections.'
       actions={
-        <div className='flex items-center gap-2 text-xs text-gray-500'>
-          <span>
-            {diagnosticsUpdatedAt
-              ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}`
-              : '—'}
+        <div className='flex items-center gap-2'>
+          <span className='text-[10px] uppercase font-bold text-gray-600'>
+            {diagnosticsUpdatedAt ? `Updated ${formatTimestamp(diagnosticsUpdatedAt)}` : ''}
           </span>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={(): void => {
-              void mongoDiagnosticsQuery.refetch();
-            }}
-            disabled={mongoDiagnosticsQuery.isFetching}
-          >
+          <Button variant='outline' size='xs' onClick={() => void mongoDiagnosticsQuery.refetch()} disabled={mongoDiagnosticsQuery.isFetching}>
             Refresh
           </Button>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => setIsRebuildIndexesConfirmOpen(true)}
-            disabled={rebuildIndexesMutation.isPending}
-            className='border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
-          >
-            {rebuildIndexesMutation.isPending ? 'Rebuilding...' : 'Rebuild missing indexes'}
+          <Button variant='outline' size='xs' onClick={() => setIsRebuildIndexesConfirmOpen(true)} className='border-amber-500/20 text-amber-200 hover:bg-amber-500/5'>
+            Rebuild Indexes
           </Button>
         </div>
       }
-      className='space-y-4'
+      className='p-6'
     >
-      {mongoDiagnosticsQuery.isLoading ? (
-        <div className='text-sm text-gray-400'>Loading diagnostics...</div>
-      ) : diagnostics.length === 0 ? (
-        <div className='text-sm text-gray-400'>No diagnostics available.</div>
-      ) : (
-        <div className='rounded-md border border-border/70 bg-card/60'>
-          <Table>
-            <TableHeader>
-              <TableRow className='border-border/60'>
-                <TableHead className='text-xs text-gray-400'>Collection</TableHead>
-                <TableHead className='text-xs text-gray-400'>Expected</TableHead>
-                <TableHead className='text-xs text-gray-400'>Missing</TableHead>
-                <TableHead className='text-xs text-gray-400'>Extra</TableHead>
-                <TableHead className='text-xs text-gray-400 text-right'>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {diagnostics.map((collection) => {
-                const missingCount = collection.missing.length;
-                const extraCount = collection.extra.length;
-                const statusLabel = collection.error
-                  ? 'Error'
-                  : missingCount === 0
-                    ? 'OK'
-                    : 'Missing';
-                return (
-                  <TableRow key={collection.name} className='border-border/50'>
-                    <TableCell className='font-mono text-xs text-gray-200'>
-                      {collection.name}
-                    </TableCell>
-                    <TableCell className='text-xs text-gray-300'>
-                      {collection.expected.length}
-                    </TableCell>
-                    <TableCell className='text-xs text-gray-300'>
-                      {collection.error ? (
-                        <div className='space-y-1 text-rose-200'>
-                          <div>—</div>
-                          <div className='rounded bg-rose-500/10 px-2 py-1 text-[10px]'>
-                            {collection.error}
-                          </div>
-                        </div>
-                      ) : missingCount === 0 ? (
-                        '0'
-                      ) : (
-                        <div className='space-y-1'>
-                          <div className='text-amber-200'>{missingCount}</div>
-                          <div className='space-y-1 text-[10px] text-amber-200'>
-                            {collection.missing.map((item) => (
-                              <div
-                                key={JSON.stringify(item.key)}
-                                className='rounded bg-amber-500/10 px-2 py-1'
-                              >
-                                {JSON.stringify(item.key)}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className='text-xs text-gray-300'>
-                      {extraCount}
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <span
-                        className={`rounded border px-2 py-0.5 text-xs ${
-                          collection.error
-                            ? 'border-rose-400/40 text-rose-200 bg-rose-500/10'
-                            : missingCount === 0
-                              ? 'border-emerald-400/40 text-emerald-200 bg-emerald-500/10'
-                              : 'border-amber-400/40 text-amber-200 bg-amber-500/10'
-                        }`}
-                      >
-                        {statusLabel}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden mt-4'>
+        <DataTable
+          columns={columns}
+          data={diagnostics}
+          isLoading={mongoDiagnosticsQuery.isLoading}
+        />
+      </div>
     </FormSection>
   );
 }
@@ -243,69 +213,49 @@ function LogMetrics(): React.JSX.Element {
 
   return (
     <FormSection
-      title='Metrics'
-      description='Metrics reflect the current filters.'
-      variant='subtle'
+      title='Log Volume Metrics'
+      description='Aggregated events based on current active filters.'
       actions={
-        <div className='text-xs text-gray-500'>
-          {metrics?.generatedAt ? `Updated ${formatTimestamp(metrics.generatedAt)}` : '—'}
+        <div className='text-[10px] uppercase font-bold text-gray-600'>
+          {metrics?.generatedAt ? `Generated ${formatTimestamp(metrics.generatedAt)}` : ''}
         </div>
       }
-      className='p-4'
+      className='p-6'
     >
       {metricsQuery.isLoading ? (
-        <div className='mt-4 text-sm text-gray-400'>Loading metrics...</div>
-      ) : !metrics ? (
-        <div className='mt-4 text-sm text-gray-400'>
-          No metrics available yet.
+        <div className='py-8 text-center text-xs text-gray-500 animate-pulse uppercase tracking-widest'>Calculating metrics...</div>
+      ) : metrics ? (
+        <div className='grid gap-4 md:grid-cols-3 mt-4'>
+          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <p className='text-[10px] uppercase font-bold text-gray-500 mb-2'>Retention Period</p>
+            <div className='space-y-1 text-sm'>
+              <div className='flex justify-between'><span className='text-gray-400'>Total Logs</span><span className='text-white font-mono'>{metrics.total}</span></div>
+              <div className='flex justify-between'><span className='text-gray-400'>Last 24h</span><span className='text-white font-mono'>{metrics.last24Hours}</span></div>
+              <div className='flex justify-between'><span className='text-gray-400'>Last 7d</span><span className='text-white font-mono'>{metrics.last7Days}</span></div>
+            </div>
+          </div>
+          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <p className='text-[10px] uppercase font-bold text-gray-500 mb-2'>Level Distribution</p>
+            <div className='space-y-1 text-sm'>
+              <div className='flex justify-between'><span className='text-rose-400'>Errors</span><span className='text-rose-300 font-mono'>{levels.error}</span></div>
+              <div className='flex justify-between'><span className='text-amber-400'>Warnings</span><span className='text-amber-300 font-mono'>{levels.warn}</span></div>
+              <div className='flex justify-between'><span className='text-sky-400'>Info</span><span className='text-sky-300 font-mono'>{levels.info}</span></div>
+            </div>
+          </div>
+          <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+            <p className='text-[10px] uppercase font-bold text-gray-500 mb-2'>Traffic Origins</p>
+            <div className='max-h-[100px] overflow-y-auto pr-2 space-y-1'>
+              {metrics.topSources.map((item) => (
+                <div key={item.source} className='flex items-center justify-between text-[11px] bg-white/5 px-2 py-1 rounded'>
+                  <span className='truncate text-gray-300 font-mono'>{item.source}</span>
+                  <span className='text-gray-500'>{item.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
-        <div className='mt-4 grid gap-4 md:grid-cols-3'>
-          <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-            <div className='text-xs text-gray-400'>Totals</div>
-            <div className='mt-2 space-y-1 text-sm text-gray-200'>
-              <div>Total: {metrics.total}</div>
-              <div>Last 24h: {metrics.last24Hours}</div>
-              <div>Last 7d: {metrics.last7Days}</div>
-            </div>
-          </div>
-          <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-            <div className='text-xs text-gray-400'>By level</div>
-            <div className='mt-2 space-y-1 text-sm text-gray-200'>
-              <div className='text-red-300'>Errors: {levels.error}</div>
-              <div className='text-yellow-300'>Warnings: {levels.warn}</div>
-              <div className='text-blue-300'>Info: {levels.info}</div>
-            </div>
-          </div>
-          <div className='rounded-lg border border-border/60 bg-card/30 p-3'>
-            <div className='text-xs text-gray-400'>Top sources</div>
-            {metrics.topSources.length === 0 ? (
-              <div className='mt-2 text-xs text-gray-500'>No sources yet.</div>
-            ) : (
-              <div className='mt-2 space-y-1 text-xs text-gray-300'>
-                {metrics.topSources.map((item) => (
-                  <div key={item.source} className='flex items-center justify-between gap-2'>
-                    <span className='truncate'>{item.source}</span>
-                    <span className='text-gray-500'>{item.count}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            <div className='mt-3 text-xs text-gray-400'>Top paths</div>
-            {metrics.topPaths.length === 0 ? (
-              <div className='mt-2 text-xs text-gray-500'>No paths yet.</div>
-            ) : (
-              <div className='mt-2 space-y-1 text-xs text-gray-300'>
-                {metrics.topPaths.map((item) => (
-                  <div key={item.path} className='flex items-center justify-between gap-2'>
-                    <span className='truncate'>{item.path}</span>
-                    <span className='text-gray-500'>{item.count}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <div className='py-8 text-center text-xs text-gray-600'>No metrics available for this filter set.</div>
       )}
     </FormSection>
   );
@@ -316,51 +266,43 @@ function AiLogInterpreter(): React.JSX.Element {
 
   return (
     <FormSection
-      title='AI Log Interpreter'
-      description='Summarizes error patterns and potential causes using your configured AI model or agent.'
-      variant='subtle'
+      title='AI Insights Engine'
+      description='Deep-scan error patterns and identify root causes automatically.'
       actions={
         <Button
           variant='outline'
-          size='sm'
+          size='xs'
+          className='h-8'
           onClick={() => runInsightMutation.mutate()}
           disabled={runInsightMutation.isPending}
         >
-          {runInsightMutation.isPending ? 'Running...' : 'Run AI Interpretation'}
+          {runInsightMutation.isPending ? 'Running interpretation...' : 'Generate New Insight'}
         </Button>
       }
-      className='p-4'
+      className='p-6'
     >
-      {insightsQuery.isLoading ? (
-        <div className='text-xs text-gray-400'>Loading AI insights...</div>
-      ) : insightsQuery.error ? (
-        <div className='text-xs text-red-400'>{(insightsQuery.error).message}</div>
-      ) : (insightsQuery.data?.insights?.length ?? 0) === 0 ? (
-        <div className='text-xs text-gray-500'>No AI insights yet.</div>
-      ) : (
-        <div className='space-y-3'>
-          {insightsQuery.data?.insights.map((insight: AiInsightRecord) => (
-            <div key={insight.id} className='rounded-md border border-border/60 bg-gray-950/40 p-3 text-xs text-gray-300'>
-              <div className='flex items-center justify-between gap-2'>
-                <span className='text-[10px] uppercase text-gray-500'>
-                  {formatTimestamp(insight.createdAt)}
-                </span>
+      <div className='mt-4 space-y-3'>
+        {insightsQuery.isLoading ? (
+          <div className='py-4 text-center text-xs text-gray-500 animate-pulse'>Consulting AI models...</div>
+        ) : insightsQuery.data?.insights?.length ? (
+          insightsQuery.data.insights.map((insight: AiInsightRecord) => (
+            <div key={insight.id} className='rounded-lg border border-border/60 bg-gray-950/40 p-4'>
+              <div className='flex items-center justify-between mb-3'>
+                <span className='text-[10px] font-mono text-gray-500 uppercase'>{formatTimestamp(insight.createdAt)}</span>
                 <StatusBadge status={insight.status} />
               </div>
-              <div className='mt-2 text-sm text-white'>{insight.summary}</div>
-              {insight.warnings.length > 0 ? (
-                <ul className='mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
-                  {insight.warnings.map((warning: string, index: number) => (
-                    <li key={`${insight.id}-warn-${index}`}>{warning}</li>
-                  ))}
-                </ul>
-              ) : null}
+              <p className='text-sm text-gray-200 leading-relaxed'>{insight.summary}</p>
+              {insight.warnings.length > 0 && (
+                <div className='mt-3 p-2 bg-amber-500/5 border border-amber-500/20 rounded text-[11px] text-amber-200 space-y-1'>
+                  <span className='font-bold uppercase text-[9px] block mb-1'>Advisory Warnings</span>
+                  {insight.warnings.map((w, i) => <p key={i}>• {w}</p>)}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
-      )}
-      <div className='mt-3 text-[10px] text-gray-500'>
-        Configure the AI model/agent in Settings → AI.
+          ))
+        ) : (
+          <div className='py-8 text-center text-xs text-gray-600 uppercase tracking-widest bg-black/20 rounded border border-white/5'>No intelligence reports available</div>
+        )}
       </div>
     </FormSection>
   );
@@ -378,163 +320,142 @@ function LogList(): React.JSX.Element {
     logInterpretations,
   } = useSystemLogsContext();
 
-  return (
-    <div className='rounded-lg border border-border/60 bg-card/40 p-0 overflow-hidden'>
-      <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 text-xs text-gray-400'>
-        <span>
-          Showing {logs.length} of {total} logs
-        </span>
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          className='scale-90 origin-right'
+  const columns = useMemo<ColumnDef<SystemLogRecord>[]>(() => [
+    {
+      accessorKey: 'level',
+      header: 'Level',
+      cell: ({ row }) => (
+        <StatusBadge
+          status={row.original.level}
+          variant={(row.original.level === 'warn' ? 'warning' : row.original.level) as 'default' | 'success' | 'warning' | 'error' | 'info'}
+          className='text-[9px]'
         />
-      </div>
-      {logsQuery.isLoading ? (
-        <div className='px-4 py-8 text-sm text-gray-400'>Loading logs...</div>
-      ) : logs.length === 0 ? (
-        <div className='px-4 py-8 text-sm text-gray-400'>
-          No system logs found.
+      ),
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Timestamp',
+      cell: ({ row }) => <span className='text-xs text-gray-500 font-mono'>{formatTimestamp(row.original.createdAt)}</span>,
+    },
+    {
+      accessorKey: 'message',
+      header: 'Event Message',
+      cell: ({ row }) => (
+        <div className='flex flex-col gap-1 max-w-[500px]'>
+          <span className='text-sm text-gray-200 font-medium truncate' title={row.original.message}>{row.original.message}</span>
+          {(row.original.path || row.original.method) && (
+            <span className='text-[10px] text-gray-500 font-mono'>
+              {row.original.method && <span className='text-sky-400 mr-1'>{row.original.method}</span>}
+              {row.original.path}
+              {row.original.statusCode && <span className='ml-2 text-amber-400'>• {row.original.statusCode}</span>}
+            </span>
+          )}
         </div>
-      ) : (
-        <div className='divide-y divide-border'>
-          {logs.map((log: SystemLogRecord) => (
-            <div key={log.id} className='px-4 py-4'>
-              <div className='flex flex-wrap items-center justify-between gap-3'>
-                <div className='flex items-center gap-3'>
-                  <StatusBadge
-                    status={log.level}
-                    variant={log.level === 'warn' ? 'warning' : log.level as 'info' | 'success' | 'warning' | 'error'}
-                  />
-                  <span className='text-xs text-gray-400'>
-                    {formatTimestamp(log.createdAt)}
-                  </span>
-                </div>
-                <div className='flex items-center gap-2'>
-                  {log.source ? (
-                    <span className='text-xs text-gray-500'>{log.source}</span>
-                  ) : null}
-                  {log.requestId ? (
-                    <span className='rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-gray-400'>
-                      {log.requestId}
-                    </span>
-                  ) : null}
-                  {log.userId ? (
-                    <span className='rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-gray-400'>
-                      {log.userId}
-                    </span>
-                  ) : null}
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => interpretLogMutation.mutate(log.id)}
-                    disabled={interpretLogMutation.isPending}
-                    className='h-6 px-2 text-[10px]'
-                  >
-                    Interpret
-                  </Button>
+      ),
+    },
+    {
+      accessorKey: 'source',
+      header: 'Source',
+      cell: ({ row }) => <Badge variant='outline' className='text-[9px] font-mono text-gray-400 uppercase'>{row.original.source || 'system'}</Badge>,
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Tools</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end gap-2'>
+          <Button
+            variant='ghost'
+            size='xs'
+            className='h-7 w-7 p-0'
+            onClick={() => interpretLogMutation.mutate(row.original.id)}
+            disabled={interpretLogMutation.isPending}
+            title='AI Interpretation'
+          >
+            <Eye className='size-3.5' />
+          </Button>
+        </div>
+      ),
+    },
+  ], [interpretLogMutation]);
+
+  return (
+    <div className='space-y-4'>
+      <div className='flex items-center justify-between px-2'>
+        <h3 className='text-xs font-semibold uppercase tracking-widest text-gray-500'>Event Stream</h3>
+        <div className='flex items-center gap-4'>
+          <span className='text-xs text-gray-600 font-bold'>{total} Total Events</span>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            variant='compact'
+          />
+        </div>
+      </div>
+
+      <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+        <DataTable
+          columns={columns}
+          data={logs}
+          isLoading={logsQuery.isLoading}
+          renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
+            const log = row.original;
+            const interpretation = logInterpretations[log.id];
+            return (
+              <div className='p-6 bg-black/40 space-y-6 border-t border-white/5'>
+                {interpretation && (
+                  <div className='p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20'>
+                    <div className='flex items-center gap-2 text-emerald-300 font-bold text-[10px] uppercase mb-2'>
+                      <Monitor className='size-3' />
+                      AI Interpretation Output
+                    </div>
+                    <p className='text-sm text-gray-200 leading-relaxed'>{interpretation.summary}</p>
+                    {interpretation.warnings?.length ? (
+                      <ul className='mt-3 space-y-1 border-t border-emerald-500/10 pt-2'>
+                        {interpretation.warnings.map((w, i) => <li key={i} className='text-[11px] text-emerald-400/80'>• {w}</li>)}
+                      </ul>
+                    ) : null}
+                  </div>
+                )}
+
+                <div className='grid gap-6 md:grid-cols-2'>
+                  <div className='space-y-4'>
+                    <div>
+                      <h4 className='text-[10px] uppercase font-bold text-gray-600 mb-2'>Identification</h4>
+                      <div className='grid grid-cols-2 gap-2 text-xs'>
+                        <div className='p-2 rounded bg-white/5 border border-white/5'>
+                          <span className='block text-gray-500 text-[9px] uppercase'>Request ID</span>
+                          <span className='font-mono text-gray-300'>{log.requestId || '—'}</span>
+                        </div>
+                        <div className='p-2 rounded bg-white/5 border border-white/5'>
+                          <span className='block text-gray-500 text-[9px] uppercase'>User ID</span>
+                          <span className='font-mono text-gray-300'>{log.userId || '—'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {log.stack && (
+                      <div>
+                        <h4 className='text-[10px] uppercase font-bold text-gray-600 mb-2'>StackTrace</h4>
+                        <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-rose-300/80 overflow-auto max-h-[300px] whitespace-pre-wrap'>
+                          {log.stack}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4 className='text-[10px] uppercase font-bold text-gray-600 mb-2'>Payload Context</h4>
+                    <pre className='p-3 rounded-lg bg-gray-950 border border-white/5 font-mono text-[10px] text-sky-300/80 overflow-auto max-h-[400px]'>
+                      {JSON.stringify(log.context || {}, null, 2)}
+                    </pre>
+                  </div>
                 </div>
               </div>
-              <div className='mt-2 text-sm text-gray-200'>{log.message}</div>
-              {(log.path || log.method || log.statusCode) && (
-                <div className='mt-2 text-xs text-gray-500'>
-                  {log.method ? `${log.method} ` : ''}
-                  {log.path ?? ''}
-                  {log.statusCode ? ` • ${log.statusCode}` : ''}
-                </div>
-              )}
-              {log.context && getContextValue(log.context, 'fingerprint') ? (
-                <div className='mt-2 text-xs text-gray-500'>
-                  Fingerprint:{' '}
-                  <span className='font-mono text-gray-300'>
-                    {String(getContextValue(log.context, 'fingerprint'))}
-                  </span>
-                </div>
-              ) : null}
-              {log.context && getContextValue(log.context, 'category') ? (
-                <div className='mt-1 text-xs text-gray-500'>
-                  Category:{' '}
-                  <span className='font-mono text-gray-300'>
-                    {String(getContextValue(log.context, 'category'))}
-                  </span>
-                </div>
-              ) : null}
-              {(log.context || log.stack) && (
-                <details className='mt-2 text-xs text-gray-400'>
-                  <summary className='cursor-pointer hover:text-gray-200'>
-                    Details
-                  </summary>
-                  {logInterpretations[log.id] ? (
-                    <div className='mt-2 rounded border border-border/60 bg-gray-900/40 p-2 text-[11px] text-gray-300'>
-                      <div className='font-semibold text-gray-200'>AI Interpretation</div>
-                      <div className='mt-2 text-gray-300'>
-                        {logInterpretations[log.id]?.summary}
-                      </div>
-                      {logInterpretations[log.id]?.warnings?.length ? (
-                        <ul className='mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
-                          {logInterpretations[log.id]?.warnings?.map((warning: string, index: number) => (
-                            <li key={`${log.id}-ai-${index}`}>{warning}</li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {log.source === 'client' && log.context ? (
-                    <div className='mt-2 rounded border border-border/60 bg-gray-900/40 p-2 text-[11px] text-gray-300'>
-                      <div className='font-semibold text-gray-200'>Client context</div>
-                      <div className='mt-2 grid gap-2 md:grid-cols-2'>
-                        <div>
-                          <div className='text-gray-500'>App</div>
-                          <div>{String((getContextValue(log.context, 'app.version') as string | number | null) ?? '—')}</div>
-                          <div className='text-gray-500'>Build</div>
-                          <div>{String((getContextValue(log.context, 'app.buildId') as string | number | null) ?? '—')}</div>
-                          <div className='text-gray-500'>Release</div>
-                          <div>{String((getContextValue(log.context, 'app.releaseChannel') as string | number | null) ?? '—')}</div>
-                        </div>
-                        <div>
-                          <div className='text-gray-500'>User</div>
-                          <div>{String((getContextValue(log.context, 'user.email') as string | number | null) ?? '—')}</div>
-                          <div className='text-gray-500'>Role</div>
-                          <div>{String((getContextValue(log.context, 'user.role') as string | number | null) ?? '—')}</div>
-                          <div className='text-gray-500'>Route</div>
-                          <div>{String((getContextValue(log.context, 'route') as string | number | null) ?? '—')}</div>
-                        </div>
-                        <div>
-                          <div className='text-gray-500'>Device</div>
-                          <div>{String((getContextValue(log.context, 'device.platform') as string | number | null) ?? '—')}</div>
-                          <div className='text-gray-500'>Memory</div>
-                          <div>{String((getContextValue(log.context, 'device.deviceMemory') as string | number | null) ?? '—')}</div>
-                          <div className='text-gray-500'>Cores</div>
-                          <div>{String((getContextValue(log.context, 'device.hardwareConcurrency') as string | number | null) ?? '—')}</div>
-                        </div>
-                        <div>
-                          <div className='text-gray-500'>Network</div>
-                          <div>{String((getContextValue(log.context, 'network.effectiveType') as string | number | null) ?? '—')}</div>
-                          <div className='text-gray-500'>Downlink</div>
-                          <div>{String((getContextValue(log.context, 'network.downlink') as string | number | null) ?? '—')}</div>
-                          <div className='text-gray-500'>RTT</div>
-                          <div>{String((getContextValue(log.context, 'network.rtt') as string | number | null) ?? '—')}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                  {log.stack && (
-                    <pre className='mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300'>
-                      {log.stack}
-                    </pre>
-                  )}
-                  {log.context && (
-                    <pre className='mt-2 whitespace-pre-wrap rounded border border-border bg-card p-2 text-[11px] text-gray-300'>
-                      {JSON.stringify(log.context, null, 2)}
-                    </pre>
-                  )}
-                </details>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            );
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -606,8 +527,8 @@ function SystemLogsContent(): React.JSX.Element {
 
   return (
     <PageLayout
-      title='System Logs'
-      description='Centralized error and warning events captured across the platform.'
+      title='Observation Post'
+      description='Aggregate telemetry and event logging across all platform components.'
       refresh={{
         onRefresh: (): void => {
           void logsQuery.refetch();
@@ -616,125 +537,129 @@ function SystemLogsContent(): React.JSX.Element {
         isRefreshing: logsQuery.isFetching || metricsQuery.isFetching,
       }}
       headerActions={
-        <>
+        <div className='flex gap-2'>
           <Button
             variant='outline'
-            size='sm'
+            size='xs'
+            className='h-8'
             onClick={() => window.location.assign('/admin/settings/logging')}
           >
-            Client Logging Settings
+            Settings
           </Button>
           <Button
             variant='outline'
-            size='sm'
-            className='gap-2'
+            size='xs'
+            className='h-8'
             onClick={(): void => {
               if (typeof window === 'undefined') return;
               void navigator.clipboard
                 .writeText(window.location.href)
                 .then(() => {
-                  toast('Investigation link copied', { variant: 'success' });
-                })
-                .catch(() => {
-                  toast('Failed to copy link', { variant: 'error' });
+                  toast('Telemetry session link copied', { variant: 'success' });
                 });
             }}
           >
-            <Link2 className='h-4 w-4' />
-            Copy Link
+            <Link2 className='size-3.5 mr-2' />
+            Sync Link
           </Button>
           <Button
             variant='outline'
-            size='sm'
-            className='gap-2'
+            size='xs'
+            className='h-8'
             disabled={logs.length === 0}
             onClick={(): void => {
               void navigator.clipboard.writeText(logsJson).then(() => {
-                toast('Copied to clipboard', { variant: 'success' });
+                toast('JSON Exported to clipboard', { variant: 'success' });
               });
             }}
           >
-            <Copy className='h-4 w-4' />
-            Copy
+            <Copy className='size-3.5 mr-2' />
+            Export
           </Button>
           <Button
             variant='outline'
-            size='sm'
+            size='xs'
+            className='h-8 border-rose-500/20 text-rose-300 hover:bg-rose-500/5'
             onClick={() => setIsClearLogsConfirmOpen(true)}
-            className='border-red-500/40 text-red-200 hover:bg-red-500/10'
             disabled={clearLogsMutation.isPending}
           >
-            <Trash2 className='mr-2 h-4 w-4' />
-            {clearLogsMutation.isPending ? 'Clearing...' : 'Clear Logs'}
+            <Trash2 className='size-3.5 mr-2' />
+            {clearLogsMutation.isPending ? 'Purging...' : 'Wipe Logs'}
           </Button>
-        </>
+        </div>
       }
     >
-      <ListPanel
-        variant='flat'
-        alerts={
-          <>
-            <ConfirmDialog
-              open={isClearLogsConfirmOpen}
-              onOpenChange={setIsClearLogsConfirmOpen}
-              onConfirm={(): void => {
-                void handleClearLogs();
-              }}
-              title='Clear System Logs'
-              description='Are you sure you want to clear all system logs? This action cannot be undone.'
-              confirmText='Clear All'
-              variant='destructive'
-            />
-            <ConfirmDialog
-              open={isRebuildIndexesConfirmOpen}
-              onOpenChange={setIsRebuildIndexesConfirmOpen}
-              onConfirm={(): void => {
-                void handleRebuildMongoIndexes();
-              }}
-              title='Rebuild Indexes'
-              description='This will scan AI Paths collections and create missing indexes. Proceed?'
-              confirmText='Rebuild'
-            />
-            <LogDiagnostics />
-          </>
-        }
-        filters={
-          <div className='space-y-3'>
-            <LogTriagePresets
-              values={currentFilterValues}
-              onApplyPreset={handleApplyPreset}
-              onClearPreset={handleResetFilters}
-            />
-            <DynamicFilters
-              fields={filterFields}
-              values={currentFilterValues}
-              onChange={handleDynamicFilterChange}
-              onReset={handleResetFilters}
-              hasActiveFilters={Boolean(
-                level !== 'all' ||
-                query ||
-                source ||
-                method ||
-                statusCode ||
-                requestId ||
-                userId ||
-                fingerprint ||
-                category ||
-                fromDate ||
-                toDate
-              )}
-              gridClassName='md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
-            />
+      <div className='space-y-6'>
+        <LogTriagePresets
+          values={currentFilterValues}
+          onApplyPreset={handleApplyPreset}
+          onClearPreset={handleResetFilters}
+        />
+
+        <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
+          <div className='flex items-center gap-2 mb-6 text-xs font-bold uppercase text-gray-500'>
+            <SearchIcon className='size-3.5' />
+            Log Filters
           </div>
-        }
-      >
-        <div className='space-y-6'>
+          <DynamicFilters
+            fields={filterFields}
+            values={currentFilterValues}
+            onChange={handleDynamicFilterChange}
+            onReset={handleResetFilters}
+            hasActiveFilters={Boolean(
+              level !== 'all' ||
+              query ||
+              source ||
+              method ||
+              statusCode ||
+              requestId ||
+              userId ||
+              fingerprint ||
+              category ||
+              fromDate ||
+              toDate
+            )}
+            gridClassName='md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6'
+          />
+        </div>
+
+        <LogDiagnostics />
+
+        <div className='grid gap-6 lg:grid-cols-2'>
           <LogMetrics />
           <AiLogInterpreter />
-          <LogList />
         </div>
-      </ListPanel>
+
+        <LogList />
+      </div>
+
+      <ConfirmDialog
+        open={isClearLogsConfirmOpen}
+        onOpenChange={setIsClearLogsConfirmOpen}
+        onConfirm={(): void => { void handleClearLogs(); }}
+        title='Wipe Observation Logs'
+        description='Permanently delete all captured telemetry data. This action is irreversible.'
+        confirmText='Confirm Wipe'
+        variant='destructive'
+      />
+      
+      <ConfirmDialog
+        open={isRebuildIndexesConfirmOpen}
+        onOpenChange={setIsRebuildIndexesConfirmOpen}
+        onConfirm={(): void => { void handleRebuildMongoIndexes(); }}
+        title='Restore Index Health'
+        description='Initiate a background scan and reconstruction of missing telemetry indexes.'
+        confirmText='Begin Rebuild'
+      />
     </PageLayout>
+  );
+}
+
+export default function SystemLogsPage(): React.JSX.Element {
+  return (
+    <SystemLogsProvider>
+      <SystemLogsContent />
+    </SystemLogsProvider>
   );
 }
 

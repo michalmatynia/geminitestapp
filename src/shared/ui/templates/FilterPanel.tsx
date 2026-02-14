@@ -17,23 +17,23 @@ import { FilterField } from './panels/types';
 export interface FilterPanelProps {
   // Filter configuration
   filters: FilterField[];
-  values: Record<string, any>;
+  values: Record<string, unknown>;
 
   // Search
   search?: string;
   searchPlaceholder?: string;
 
   // Callbacks
-  onFilterChange: (key: string, value: any) => void;
+  onFilterChange: (key: string, value: unknown) => void;
   onSearchChange?: (search: string) => void;
   onReset?: () => void;
 
   // Presets/quick filters
   presets?: Array<{
     label: string;
-    values: Record<string, any>;
+    values: Record<string, unknown>;
   }>;
-  onApplyPreset?: (preset: Record<string, any>) => void;
+  onApplyPreset?: (preset: Record<string, unknown>) => void;
 
   // Layout
   compact?: boolean;

@@ -1,6 +1,6 @@
 'use client';
 
-import { Input, UnifiedSelect, Button, FiltersContainer } from '@/shared/ui';
+import { Input, SelectSimple, Button, FiltersContainer } from '@/shared/ui';
 
 import { useFileManager } from '../../contexts/FileManagerContext';
 
@@ -68,7 +68,7 @@ export function FileManagerFilters(): React.JSX.Element {
       {folderFilterEnabled && (
         <div className='space-y-1.5'>
           <label className='text-[11px] font-medium text-gray-400'>Folder</label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={folderFilter}
             onValueChange={setLocalFolderFilter}
             options={folderOptions.map((folder: string) => ({

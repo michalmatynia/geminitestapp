@@ -9,16 +9,18 @@ import {
   MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
-import { TreeCaret, TreeContextMenu, TreeRow, UnifiedButton, useToast } from '@/shared/ui';
+import { TreeCaret, TreeContextMenu, TreeRow, Button, useToast } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
+  type MasterTreeDropPosition,
   type MasterTreeId,
   type MasterTreeNode,
 } from '@/shared/utils';
 import {
   DRAG_KEYS,
   getFirstDragValue,
+  resolveVerticalDropPosition,
 } from '@/shared/utils/drag-drop';
 import {
   canMoveTreePath,
@@ -325,7 +327,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     return (
       <div className='relative h-full w-full min-w-0 overflow-hidden rounded border border-border bg-card/40 p-2'>
         <div className='flex h-full items-center justify-center'>
-          <UnifiedButton
+          <Button size='xs'
             type='button'
             variant='outline'
             size='sm'
@@ -336,7 +338,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           >
             <ChevronRight className='mr-1 size-4 -scale-x-100' />
             Show Card Tree
-          </UnifiedButton>
+          </Button>
         </div>
       </div>
     );
@@ -361,7 +363,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
       }}
     >
       <div className='absolute right-2 top-2 z-20' data-preserve-slot-selection='true'>
-        <UnifiedButton
+        <Button size='xs'
           type='button'
           variant='outline'
           size='icon'
@@ -376,23 +378,38 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           data-preserve-slot-selection='true'
         >
           <ChevronLeft className='size-3.5' />
-        </UnifiedButton>
+        </Button>
       </div>
       <MasterFolderTree
         controller={controller}
         className='space-y-0.5'
         emptyLabel='No folders yet. Create a folder or add cards here.'
         rootDropUi={rootDropUi}
-        resolveDropPosition={(): 'inside' => 'inside'}
+        resolveDropPosition={(event, { targetId }, ctlr): MasterTreeDropPosition => {
+          const targetNode = ctlr.nodes.find(
+            (candidate: MasterTreeNode): boolean => candidate.id === targetId
+          );
+          if (targetNode?.type === 'folder') return 'inside';
+          const targetRect = event.currentTarget.getBoundingClientRect();
+          return resolveVerticalDropPosition(event.clientY, targetRect, {
+            thresholdRatio: 0.34,
+          }) ?? 'after';
+        }}
         resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): MasterTreeId | null =>
           resolveExternalDraggedNodeId(event.dataTransfer)
         }
-        canDrop={({ draggedNodeId, targetId }, ctlr): boolean => {
+        canDrop={({ draggedNodeId, targetId, defaultAllowed }, ctlr): boolean => {
+          if (defaultAllowed) return true;
           const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
           if (isInternalNode && targetId === null) {
             return canDropInternalNodeToRoot(draggedNodeId);
           }
-          if (isInternalNode) return false;
+          if (isInternalNode && targetId !== null) {
+            const targetNode = ctlr.nodes.find(
+              (candidate: MasterTreeNode): boolean => candidate.id === targetId
+            );
+            return targetNode?.type === 'folder';
+          }
           return canDropImageStudioExternalNode({
             draggedNodeId,
             targetId,
@@ -406,26 +423,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         ): Promise<void> => {
           const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
           if (isInternalNode) {
-            if (targetId === null) {
-              const folderPath = fromFolderMasterNodeId(draggedNodeId);
-              if (folderPath !== null) {
-                const normalizedFolderPath = normalizeTreePath(folderPath);
-                if (normalizedFolderPath.includes('/')) {
-                  await onMoveFolder(normalizedFolderPath, '');
-                }
-                return;
-              }
-
-              const slotId = fromSlotMasterNodeId(draggedNodeId);
-              if (slotId) {
-                const slot = slotById.get(slotId);
-                if (!slot) return;
-                if (!normalizeTreePath(slot.folderPath ?? '')) return;
-                await moveSlot({ slot, targetFolder: '' });
-                return;
-              }
-            }
-
             await applyInternalMasterTreeDrop({
               controller: ctlr,
               draggedNodeId,

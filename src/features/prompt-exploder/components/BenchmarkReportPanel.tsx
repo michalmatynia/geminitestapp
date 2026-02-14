@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, FormSection, Input, Label, Textarea, UnifiedSelect } from '@/shared/ui';
+import { Button, FormSection, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 
 import {
   DEFAULT_PROMPT_EXPLODER_BENCHMARK_CASES,
@@ -67,7 +67,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
         <div className='grid gap-2 md:grid-cols-5'>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Benchmark Suite</Label>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={benchmarkSuiteDraft}
               onValueChange={(value: string) => {
                 setBenchmarkSuiteDraft(value as PromptExploderBenchmarkSuite);

@@ -5,7 +5,7 @@ import { useCallback, useMemo } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { UnifiedButton, Label,  UnifiedTextarea, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, Label, Textarea, SelectSimple, useToast } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { IMAGE_STUDIO_UI_ACTIVE_KEY, IMAGE_STUDIO_UI_PRESETS_KEY, parseImageStudioUiPresets, type ImageStudioUiPreset } from '../utils/ui-presets';
@@ -95,7 +95,7 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
       <div className='rounded-lg border border-border/60 bg-card/40 p-6 space-y-4'>
         <div className='space-y-1'>
           <Label className='text-xs text-gray-400'>Active UI preset</Label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={activeId || '__none__'}
             onValueChange={(value: string) => {
               if (value === '__none__') return;
@@ -134,21 +134,21 @@ export function AdminImageStudioUiPresetsPage(): React.JSX.Element {
                     <div className='text-[11px] text-gray-500'>Updated: {preset.updatedAt}</div>
                   </div>
                   <div className='flex flex-col gap-2'>
-                    <UnifiedButton
+                    <Button size='xs'
                       size='sm'
                       variant={activeId === preset.id ? 'default' : 'outline'}
                       onClick={() => void handleSetActive(preset.id)}
                     >
                       {activeId === preset.id ? 'Active' : 'Set active'}
-                    </UnifiedButton>
-                    <UnifiedButton size='sm' variant='outline' onClick={() => void handleDelete(preset.id)}>
+                    </Button>
+                    <Button size='sm' variant='outline' onClick={() => void handleDelete(preset.id)}>
                       Delete
-                    </UnifiedButton>
+                    </Button>
                   </div>
                 </div>
                 <div className='mt-3 rounded border border-border bg-card/60 p-2'>
                   <div className='text-[11px] text-gray-400'>Param UI overrides</div>
-                  <UnifiedTextarea
+                  <Textarea size='sm'
                     readOnly
                     className='mt-1 h-20 font-mono text-[10px]'
                     value={JSON.stringify(preset.paramUiOverrides ?? {}, null, 2)}

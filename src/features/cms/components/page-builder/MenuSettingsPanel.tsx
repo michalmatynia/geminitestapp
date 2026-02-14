@@ -20,7 +20,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Input,
   Label,
-  UnifiedSelect,
+  SelectSimple,
   Checkbox,
   Button,
   SectionHeader,
@@ -197,7 +197,7 @@ function SelectField({
 }): React.JSX.Element {
   return (
     <FormField label={label}>
-      <UnifiedSelect
+      <SelectSimple size='sm'
         value={value}
         onValueChange={onChange}
         options={options}
@@ -894,7 +894,7 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
           <FormSection title='Menu scope' variant='subtle' className='p-3'>
             {zoningEnabled ? (
               <div className='mt-2 space-y-2'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={menuScopeId}
                   onValueChange={(value: string): void => {
                     setUserMenuScopeId(value);

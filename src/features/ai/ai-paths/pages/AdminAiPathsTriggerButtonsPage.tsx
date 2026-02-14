@@ -25,7 +25,7 @@ import {
   Label, 
   SectionHeader, 
    
-  UnifiedSelect, 
+  SelectSimple, 
   AppModal, 
   useToast 
 } from '@/shared/ui';
@@ -284,7 +284,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
           <div className='space-y-2'>
             <Label>Display</Label>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={draft.display}
               onValueChange={(value: string): void =>
                 setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, display: value as AiTriggerButtonDisplay }))
@@ -328,7 +328,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
           <div className='space-y-2'>
             <Label>Trigger condition</Label>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={draft.mode}
               onValueChange={(value: string): void =>
                 setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, mode: value as AiTriggerButtonMode }))

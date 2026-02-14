@@ -26,13 +26,13 @@ export interface PickerGroup {
 /**
  * Grid picker item with custom rendering support
  */
-export interface GridPickerItem<T = any> {
+export interface GridPickerItem<T = unknown> {
   id: string;
   label: string;
   value?: T;
   icon?: React.ReactNode;
   disabled?: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -48,7 +48,7 @@ export interface PickerSearchConfig {
 /**
  * Generic picker state management
  */
-export interface PickerState<T = any> {
+export interface PickerState<T = unknown> {
   selected: T | null;
   isOpen: boolean;
   focused: string | null;
@@ -131,13 +131,13 @@ export interface PickerTemplate {
   description?: string;
   category: string;
   createdAt: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
  * Configuration for modal-based pickers
  */
-export interface PickerModalConfig<T = any> {
+export interface PickerModalConfig<T = unknown> {
   title: string;
   description?: string;
   confirmLabel?: string;

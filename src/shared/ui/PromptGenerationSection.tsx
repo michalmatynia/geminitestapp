@@ -1,6 +1,6 @@
 import { CopyIcon } from 'lucide-react';
 
-import { Button, Label, Textarea, Checkbox, Badge, UnifiedSelect, SectionPanel } from '@/shared/ui';
+import { Button, Label, Textarea, Checkbox, Badge, SelectSimple, SectionPanel } from '@/shared/ui';
 
 
 interface PromptGenerationSectionProps {
@@ -93,7 +93,7 @@ export function PromptGenerationSection({
 
         <div className='max-w-md'>
           <Label>{modelLabel}</Label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={modelValue}
             onValueChange={onModelChange}
             options={modelOptions}

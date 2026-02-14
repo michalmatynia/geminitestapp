@@ -134,7 +134,7 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
             value: (
               <SelectSimple
                 value={statusFilter}
-                onValueChange={(v) => setStatusFilter(v as any)}
+                onValueChange={(v) => setStatusFilter(v as 'all' | ImageStudioRunStatus)}
                 options={STATUS_OPTIONS}
                 size='xs'
                 className='w-28'

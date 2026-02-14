@@ -4,7 +4,7 @@
 
 
 import type { GateConfig } from '@/features/ai/ai-paths/lib';
-import { Input, Label, UnifiedSelect } from '@/shared/ui';
+import { Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -22,7 +22,7 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Mode</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={gateConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

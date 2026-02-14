@@ -1,9 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect, type ChangeEvent } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, Label, Switch, useToast } from '@/shared/ui';
+import { Button, Input, Switch, useToast, SectionHeader, FormSection, FormField } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 type TransientRecoverySettings = {
@@ -28,7 +29,7 @@ const toNumber = (value: string, fallback: number, min: number = 0): number => {
   return parsed;
 };
 
-export default function TransientRecoverySettingsPage() {
+export default function TransientRecoverySettingsPage(): React.JSX.Element {
   const [constants, setConstants] = useState<{
     DEFAULT_TRANSIENT_RECOVERY_SETTINGS: TransientRecoverySettings;
     TRANSIENT_RECOVERY_KEYS: { settings: string };
@@ -96,7 +97,7 @@ function TransientRecoverySettingsForm({
 }: {
   initialSettings: TransientRecoverySettings;
   recoveryKeys: { settings: string };
-}) {
+}): React.JSX.Element {
   const { toast } = useToast();
   const [settings, setSettings] = useState<TransientRecoverySettings>(initialSettings);
   const [dirty, setDirty] = useState(false);
@@ -158,23 +159,22 @@ function TransientRecoverySettingsForm({
 
   return (
     <div className='container mx-auto py-10 space-y-6'>
-      <div>
-        <h1 className='text-3xl font-bold text-white'>Transient Recovery</h1>
-        <p className='mt-2 text-sm text-gray-400'>
-          Configure retry and circuit-breaker policies for transient failures.
-        </p>
-      </div>
+      <SectionHeader
+        title='Transient Recovery'
+        description='Configure retry and circuit-breaker policies for transient failures.'
+        eyebrow={(
+          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
+            ← Back to settings
+          </Link>
+        )}
+      />
 
-      <div className='rounded-md border border-gray-800 bg-gray-950 p-4 space-y-6'>
-        <div className='flex flex-wrap items-center justify-between gap-4'>
-          <div>
-            <h2 className='text-lg font-semibold text-white'>Global toggle</h2>
-            <p className='mt-1 text-xs text-gray-400'>
-              Disable to skip all retries and circuit breakers across the app.
-            </p>
-          </div>
+      <FormSection
+        title='Global Controls'
+        description='Manage high-level activation of recovery policies.'
+        actions={(
           <div className='flex items-center gap-2'>
-            <Label className='text-xs text-gray-400'>Enabled</Label>
+            <span className='text-xs text-gray-400'>Global {settings.enabled ? 'Enabled' : 'Disabled'}</span>
             <Switch
               checked={settings.enabled}
               onCheckedChange={(checked: boolean) => {
@@ -183,29 +183,24 @@ function TransientRecoverySettingsForm({
               }}
             />
           </div>
-        </div>
-
+        )}
+        className='p-6'
+      >
         <div className='grid gap-6 md:grid-cols-2'>
-          <div className='space-y-4 rounded-md border border-gray-800 bg-gray-900 p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <h3 className='text-sm font-semibold text-white'>Retry policy</h3>
-                <p className='text-xs text-gray-400'>
-                  Applies to transient external calls and webhooks.
-                </p>
-              </div>
-              <div className='flex items-center gap-2'>
-                <Label className='text-xs text-gray-400'>Enabled</Label>
-                <Switch
-                  checked={settings.retry.enabled}
-                  onCheckedChange={(checked: boolean) => updateRetry('enabled', checked)}
-                />
-              </div>
-            </div>
-
-            <div className='grid gap-3'>
-              <div className='grid gap-1'>
-                <Label className='text-xs text-gray-400'>Max attempts</Label>
+          <FormSection
+            title='Retry Policy'
+            description='Applies to transient external calls and webhooks.'
+            variant='subtle'
+            className='p-4'
+            actions={(
+              <Switch
+                checked={settings.retry.enabled}
+                onCheckedChange={(checked: boolean) => updateRetry('enabled', checked)}
+              />
+            )}
+          >
+            <div className='grid gap-4 mt-2'>
+              <FormField label='Max attempts' description='Maximum number of execution tries.'>
                 <Input
                   type='number'
                   min={1}
@@ -218,39 +213,38 @@ function TransientRecoverySettingsForm({
                   }
                   disabled={settingsQuery.isPending}
                 />
+              </FormField>
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField label='Initial delay (ms)'>
+                  <Input
+                    type='number'
+                    min={0}
+                    value={settings.retry.initialDelayMs}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      updateRetry(
+                        'initialDelayMs',
+                        toNumber(event.target.value, settings.retry.initialDelayMs)
+                      )
+                    }
+                    disabled={settingsQuery.isPending}
+                  />
+                </FormField>
+                <FormField label='Max delay (ms)'>
+                  <Input
+                    type='number'
+                    min={0}
+                    value={settings.retry.maxDelayMs}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      updateRetry(
+                        'maxDelayMs',
+                        toNumber(event.target.value, settings.retry.maxDelayMs)
+                      )
+                    }
+                    disabled={settingsQuery.isPending}
+                  />
+                </FormField>
               </div>
-              <div className='grid gap-1'>
-                <Label className='text-xs text-gray-400'>Initial delay (ms)</Label>
-                <Input
-                  type='number'
-                  min={0}
-                  value={settings.retry.initialDelayMs}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    updateRetry(
-                      'initialDelayMs',
-                      toNumber(event.target.value, settings.retry.initialDelayMs)
-                    )
-                  }
-                  disabled={settingsQuery.isPending}
-                />
-              </div>
-              <div className='grid gap-1'>
-                <Label className='text-xs text-gray-400'>Max delay (ms)</Label>
-                <Input
-                  type='number'
-                  min={0}
-                  value={settings.retry.maxDelayMs}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    updateRetry(
-                      'maxDelayMs',
-                      toNumber(event.target.value, settings.retry.maxDelayMs)
-                    )
-                  }
-                  disabled={settingsQuery.isPending}
-                />
-              </div>
-              <div className='grid gap-1'>
-                <Label className='text-xs text-gray-400'>Timeout per attempt (ms)</Label>
+              <FormField label='Timeout per attempt (ms)' description='Set to 0 to disable.'>
                 <Input
                   type='number'
                   min={0}
@@ -263,33 +257,24 @@ function TransientRecoverySettingsForm({
                   }
                   disabled={settingsQuery.isPending}
                 />
-                <p className='text-[11px] text-gray-500'>
-                  Set to 0 to disable per-attempt timeout.
-                </p>
-              </div>
+              </FormField>
             </div>
-          </div>
+          </FormSection>
 
-          <div className='space-y-4 rounded-md border border-gray-800 bg-gray-900 p-4'>
-            <div className='flex items-center justify-between'>
-              <div>
-                <h3 className='text-sm font-semibold text-white'>Circuit breaker</h3>
-                <p className='text-xs text-gray-400'>
-                  Prevents repeated calls to failing services.
-                </p>
-              </div>
-              <div className='flex items-center gap-2'>
-                <Label className='text-xs text-gray-400'>Enabled</Label>
-                <Switch
-                  checked={settings.circuit.enabled}
-                  onCheckedChange={(checked: boolean) => updateCircuit('enabled', checked)}
-                />
-              </div>
-            </div>
-
-            <div className='grid gap-3'>
-              <div className='grid gap-1'>
-                <Label className='text-xs text-gray-400'>Failure threshold</Label>
+          <FormSection
+            title='Circuit Breaker'
+            description='Prevents repeated calls to failing services.'
+            variant='subtle'
+            className='p-4'
+            actions={(
+              <Switch
+                checked={settings.circuit.enabled}
+                onCheckedChange={(checked: boolean) => updateCircuit('enabled', checked)}
+              />
+            )}
+          >
+            <div className='grid gap-4 mt-2'>
+              <FormField label='Failure threshold' description='Consecutive failures before opening.'>
                 <Input
                   type='number'
                   min={1}
@@ -306,9 +291,8 @@ function TransientRecoverySettingsForm({
                   }
                   disabled={settingsQuery.isPending}
                 />
-              </div>
-              <div className='grid gap-1'>
-                <Label className='text-xs text-gray-400'>Reset timeout (ms)</Label>
+              </FormField>
+              <FormField label='Reset timeout (ms)' description='Wait time before attempting to close.'>
                 <Input
                   type='number'
                   min={0}
@@ -324,12 +308,12 @@ function TransientRecoverySettingsForm({
                   }
                   disabled={settingsQuery.isPending}
                 />
-              </div>
+              </FormField>
             </div>
-          </div>
+          </FormSection>
         </div>
 
-        <div className='flex items-center justify-between'>
+        <div className='mt-6 flex items-center justify-between border-t border-border pt-6'>
           <p className='text-xs text-gray-500'>
             Changes apply across the app after saving.
           </p>
@@ -338,10 +322,10 @@ function TransientRecoverySettingsForm({
             onClick={() => void saveSettings()}
             disabled={!dirty || updateSetting.isPending}
           >
-            {updateSetting.isPending ? 'Saving...' : 'Save settings'}
+            {updateSetting.isPending ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
-      </div>
+      </FormSection>
     </div>
   );
 }

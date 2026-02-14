@@ -137,7 +137,7 @@ export const productImageSchema = z.object({
   productId: z.string(),
   imageFileId: z.string(),
   assignedAt: z.string(),
-  imageFile: z.any().optional(), // Avoid circular dependency if ImageFile is in another contract
+  imageFile: z.unknown().optional(), // Avoid circular dependency if ImageFile is in another contract
 });
 
 export type ProductImageDto = z.infer<typeof productImageSchema>;

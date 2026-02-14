@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
 
 const ERROR_PATTERNS: [RegExp, ErrorCategory][] = [
@@ -9,11 +11,20 @@ const ERROR_PATTERNS: [RegExp, ErrorCategory][] = [
 ];
 
 /**
- * Classifies an error into a category based on its message.
+ * Classifies an error into a category based on its message or instance type.
  */
 export function classifyError(error: unknown): ErrorCategory {
+  if (error instanceof z.ZodError) {
+    return ErrorCategory.VALIDATION;
+  }
+
   const message = error instanceof Error ? error.message : String(error);
   
+  // Check common library error indicators
+  if (message.includes('PrismaClient') || message.includes('MongoDB')) {
+    return ErrorCategory.DATABASE;
+  }
+
   for (const [pattern, category] of ERROR_PATTERNS) {
     if (pattern.test(message)) {
       return category;

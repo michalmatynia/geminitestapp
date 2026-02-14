@@ -1,6 +1,7 @@
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { ErrorCategory, type SuggestedAction } from '@/shared/types/observability';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
+import { getTraceId } from '@/shared/utils/observability/trace';
 
 export interface ApiClientOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -14,6 +15,7 @@ export class ApiError extends Error {
   category?: ErrorCategory | string | undefined;
   suggestedActions?: SuggestedAction[] | undefined;
   payload?: unknown | undefined;
+  __logged?: boolean;
 
   constructor(
     message: string,
@@ -64,6 +66,7 @@ export async function apiClient<T>(
     ...customConfig,
     headers: withCsrfHeaders({
       ...headers,
+      'X-Trace-Id': getTraceId(),
       ...customConfig.headers,
     } as Record<string, string>),
   };
@@ -123,9 +126,13 @@ export async function apiClient<T>(
           endpoint, 
           method: config.method, 
           status: response.status,
+          traceId: getTraceId(),
           params 
         } 
       });
+      if (isLoggableObject(error)) {
+        error.__logged = true;
+      }
     }
 
     throw error;
@@ -136,7 +143,17 @@ export async function apiClient<T>(
 
     const genericError = new Error(error instanceof Error ? error.message : 'Network Error');
     if (logError) {
-      logClientError(genericError, { context: { endpoint, method: config.method, params } });
+      logClientError(genericError, { 
+        context: { 
+          endpoint, 
+          method: config.method, 
+          traceId: getTraceId(),
+          params 
+        } 
+      });
+      if (isLoggableObject(genericError)) {
+        genericError.__logged = true;
+      }
     }
     throw genericError;
   } finally {

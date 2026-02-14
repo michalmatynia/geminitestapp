@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { logClientError } from '@/features/observability';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/features/products/types';
-import { useToast, Button, UnifiedSelect, Input, FormModal, EmptyState, ConfirmDialog, Tag as UiTag, Skeleton, FormSection, FormField } from '@/shared/ui';
+import { useToast, Button, SelectSimple, Input, FormModal, EmptyState, ConfirmDialog, Tag as UiTag, Skeleton, FormSection, FormField } from '@/shared/ui';
 
 import { useProductSettingsContext } from './ProductSettingsContext';
 
@@ -128,7 +128,7 @@ export function TagsSettings(): React.JSX.Element {
         className='p-4'
       >
         <div className='w-full max-w-xs mt-4'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
             options={catalogs.map((catalog: Catalog) => ({
@@ -253,7 +253,7 @@ export function TagsSettings(): React.JSX.Element {
             </FormField>
 
             <FormField label='Catalog'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={formData.catalogId}
                 onValueChange={(value: string): void =>
                   setFormData((prev: TagFormData) => ({

@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  UnifiedSelect,
+  SelectSimple,
   
 } from '@/shared/ui';
 
@@ -488,7 +488,7 @@ function BorderField(): React.ReactNode {
       <div className='grid grid-cols-2 gap-2'>
         <div className='space-y-0.5'>
           <span className='text-[10px] text-gray-500 uppercase'>Style</span>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={(border['style'] as string) ?? 'solid'}
             onValueChange={(v: string): void => update('style', v)}
             options={BORDER_STYLE_OPTIONS}
@@ -580,7 +580,7 @@ function BackgroundField(): React.ReactNode {
 
   return (
     <div className='space-y-2'>
-      <UnifiedSelect
+      <SelectSimple size='sm'
         value={bgType}
         onValueChange={(v: string): void => update('type', v)}
         options={BG_TYPE_OPTIONS}
@@ -614,7 +614,7 @@ function BackgroundField(): React.ReactNode {
         <div className='space-y-1.5'>
           <div className='flex items-center gap-2'>
             <span className='text-[10px] text-gray-500 w-10'>Dir</span>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={currentDirectionValue}
               onValueChange={(v: string): void => {
                 if (v === 'custom') return;
@@ -713,7 +713,7 @@ function TypographyField(): React.ReactNode {
     <div className='space-y-2'>
       <div className='space-y-0.5'>
         <span className='text-[10px] text-gray-500 uppercase'>Font Family</span>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={(typo['fontFamily'] as string) ?? 'Inter, sans-serif'}
           onValueChange={(v: string): void => update('fontFamily', v)}
           options={FONT_FAMILY_OPTIONS}
@@ -723,7 +723,7 @@ function TypographyField(): React.ReactNode {
       <div className='grid grid-cols-2 gap-2'>
         <div className='space-y-0.5'>
           <span className='text-[10px] text-gray-500 uppercase'>Weight</span>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={String((typo['fontWeight'] as string | number) ?? '400')}
             onValueChange={(v: string): void => update('fontWeight', v)}
             options={FONT_WEIGHT_OPTIONS}

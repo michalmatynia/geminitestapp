@@ -4,7 +4,8 @@
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { useToast } from "@/shared/ui";
-import { logClientError } from "@/shared/utils/observability/client-error-logger";
+import { logClientError, isLoggableObject } from "@/shared/utils/observability/client-error-logger";
+import { getTraceId } from "@/shared/utils/observability/trace";
 
 interface ErrorHandlingConfig {
   showToast?: boolean;
@@ -128,14 +129,22 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         if (
           config.logErrors !== false &&
           shouldLogError(error) &&
-          message
+          message &&
+          !(isLoggableObject(error) && error.__logged)
         ) {
-          const logPayload: Record<string, unknown> = { message, queryKey };
+          const logPayload: Record<string, unknown> = { message, queryKey, traceId: getTraceId() };
           const loggableError = getLoggableError(error);
           if (loggableError !== undefined) {
             logPayload['error'] = loggableError;
           }
           logClientError(loggableError || message, { context: logPayload });
+          
+          // Mark as logged
+          if (isLoggableObject(error)) {
+            try {
+              error.__logged = true;
+            } catch {}
+          }
         }
 
         // Show toast notification

@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
-import { Label, UnifiedSelect } from '@/shared/ui';
+import { Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -51,7 +51,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Trigger Action</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={triggerConfig.event}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

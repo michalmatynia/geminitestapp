@@ -3,7 +3,7 @@
 import type {
   ProductValidationInstanceScope,
 } from '@/shared/types/domain/products';
-import { FormSection, UnifiedSelect } from '@/shared/ui';
+import { FormSection, SelectSimple } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
@@ -28,7 +28,7 @@ export function ValidatorInstanceBehaviorPanel(): React.JSX.Element {
               <p className='text-xs font-medium text-white'>{INSTANCE_SCOPE_LABELS[scope]}</p>
               <p className='mt-1 text-[11px] text-gray-400'>When a correction is denied</p>
               <div className='mt-2'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={instanceDenyBehavior[scope]}
                   onValueChange={(value: string): void => {
                     void handleInstanceBehaviorChange(

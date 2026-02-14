@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  UnifiedSelect,
+  SelectSimple,
   SearchInput,
   Alert,
   EmptyState,
@@ -120,7 +120,7 @@ export function Asset3DListPage(): React.JSX.Element {
 
           {categories.length > 0 && (
             <div className='w-[180px]'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={selectedCategory ?? '__all__'}
                 onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
                 options={[

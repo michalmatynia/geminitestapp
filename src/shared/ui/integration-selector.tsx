@@ -3,7 +3,7 @@
 import type { IntegrationWithConnections } from '@/shared/types';
 
 import { Label } from './label';
-import { UnifiedSelect } from './unified-select';
+import { SelectSimple } from './select-simple';
 
 interface IntegrationSelectorProps {
   integrations: IntegrationWithConnections[];
@@ -34,7 +34,7 @@ export function IntegrationSelector({
         <Label className='mb-2 block text-sm font-medium text-gray-300'>
           Integration
         </Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={selectedIntegrationId}
           onValueChange={onIntegrationChange}
           disabled={disabled || loading}
@@ -53,7 +53,7 @@ export function IntegrationSelector({
           <Label className='mb-2 block text-sm font-medium text-gray-300'>
             Account / Connection
           </Label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={selectedConnectionId}
             onValueChange={onConnectionChange}
             disabled={disabled || loading}

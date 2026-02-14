@@ -1,7 +1,7 @@
 'use client';
 
 import { parsePathList } from '@/features/ai/ai-paths/lib';
-import { Label, Textarea, UnifiedSelect } from '@/shared/ui';
+import { Label, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -24,7 +24,7 @@ export function ValidatorNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Validation Mode</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={validatorConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

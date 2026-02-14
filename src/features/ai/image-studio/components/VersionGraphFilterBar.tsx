@@ -3,7 +3,7 @@
 import { Search, Shield, X } from 'lucide-react';
 import React from 'react';
 
-import { UnifiedInput } from '@/shared/ui';
+import { Input } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
@@ -29,7 +29,7 @@ export function VersionGraphFilterBar(): React.JSX.Element {
       <div className='flex items-center gap-1.5'>
         <div className='relative flex-1'>
           <Search className='absolute left-1.5 top-1/2 size-3 -translate-y-1/2 text-gray-500' />
-          <UnifiedInput
+          <Input size='sm'
             type='text'
             value={filterQuery}
             onChange={(e) => onSetFilterQuery(e.target.value)}

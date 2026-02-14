@@ -15,7 +15,7 @@ import {
 import { useConvertAllImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import type { Catalog } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
-import { Button, UnifiedSelect, useToast, Pagination, ConfirmDialog,  SectionHeader } from '@/shared/ui';
+import { Button, SelectSimple, useToast, Pagination, ConfirmDialog,  SectionHeader } from '@/shared/ui';
 
 interface ProductListHeaderProps {
   showHeader?: boolean;
@@ -143,7 +143,7 @@ export const ProductListHeader = memo(function ProductListHeader({
 
         {/* Filter selectors */}
         <div className='flex flex-col gap-2 sm:flex-row sm:gap-3'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={nameLocale}
             onValueChange={(value: string) =>
               setNameLocale(value as 'name_en' | 'name_pl' | 'name_de')
@@ -154,7 +154,7 @@ export const ProductListHeader = memo(function ProductListHeader({
             ariaLabel='Select product name language'
           />
 
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={currencyCode}
             onValueChange={setCurrencyCode}
             options={currencyOptions.map((code: string) => ({ value: code, label: code }))}
@@ -163,7 +163,7 @@ export const ProductListHeader = memo(function ProductListHeader({
             ariaLabel='Select currency'
           />
 
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={catalogFilter}
             onValueChange={setCatalogFilter}
             options={[

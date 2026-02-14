@@ -18,7 +18,7 @@ import { TagsSettings } from '@/features/products/components/settings/TagsSettin
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
 import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/features/products/types';
-import { Button, SectionHeader, UnifiedButton, useToast } from '@/shared/ui';
+import { Button, SectionHeader, useToast } from '@/shared/ui';
 
 import {
   settingSections,
@@ -171,20 +171,20 @@ export function ProductSettingsPage(): React.JSX.Element {
                 Configure default Studio project binding and start Product to Image Studio connection.
               </p>
             </div>
-            <UnifiedButton
+            <Button size='xs'
               type='button'
               variant='outline'
               onClick={(): void => setActiveSection('Images & Studio')}
             >
               Open Integration Settings
-            </UnifiedButton>
+            </Button>
           </div>
         </div>
         <div className='grid gap-6 md:grid-cols-[240px_1fr]'>
           <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
             <div className='flex flex-col gap-2'>
               {settingSections.map((section: typeof settingSections[number]) => (
-                <Button
+                <Button size='xs'
                   key={section}
                   variant='ghost'
                   onClick={() => setActiveSection(section)}

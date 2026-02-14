@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Textarea, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Textarea, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { useComponentSettings } from '../context/ComponentSettingsContext';
 import { useInspectorAi } from '../context/InspectorAiContext';
@@ -44,7 +44,7 @@ function ContentAiSection(): React.JSX.Element {
       >
         <div className='space-y-4 mt-4'>
           <FormField label='Provider'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={contentAiProvider}
               onValueChange={(value: string): void => setContentAiProvider(value as 'model' | 'agent')}
               options={providerOptions}
@@ -53,7 +53,7 @@ function ContentAiSection(): React.JSX.Element {
           </FormField>
           {contentAiProvider !== 'agent' ? (
             <FormField label='Model'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={contentAiModelId}
                 onValueChange={(value: string): void => setContentAiModelId(value)}
                 options={modelOptions.map((model: string) => ({ value: model, label: model }))}
@@ -62,7 +62,7 @@ function ContentAiSection(): React.JSX.Element {
             </FormField>
           ) : (
             <FormField label='Deepthinking agent'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={contentAiAgentId}
                 onValueChange={(value: string): void => setContentAiAgentId(value)}
                 options={agentOptions.length ? agentOptions : [{ label: 'No agents configured', value: '' }]}

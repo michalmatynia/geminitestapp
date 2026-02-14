@@ -1,7 +1,7 @@
 'use client';
 
 import type { ConstantConfig } from '@/features/ai/ai-paths/lib';
-import { Input, Label, Textarea, UnifiedSelect } from '@/shared/ui';
+import { Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -27,7 +27,7 @@ export function ConstantNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Value Type</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={constantConfig.valueType}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

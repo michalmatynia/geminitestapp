@@ -13,7 +13,7 @@ import {
   TabsTrigger,
   Tooltip,
   Button,
-  UnifiedSelect,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 
@@ -150,7 +150,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                       <Copy className='size-3.5' />
                     </Button>
                   </Tooltip>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     className='w-[320px] shrink-0'
                     value={projectId || undefined}
                     onValueChange={(value: string) => setProjectId(value)}

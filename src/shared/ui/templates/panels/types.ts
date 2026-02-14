@@ -109,7 +109,7 @@ export interface PanelConfig<T> {
 
   // Filters & Search
   filters?: FilterField[];
-  filterValues?: Record<string, any>;
+  filterValues?: Record<string, unknown>;
   searchable?: boolean;
   searchPlaceholder?: string;
 

@@ -9,7 +9,7 @@ import { ProducerMultiSelectField } from '@/features/products/components/form/Pr
 import { ProductMetadataFieldProvider } from '@/features/products/components/form/ProductMetadataFieldContext';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
-import { Button, Input, Label, Textarea, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useDraftCreatorFormContext } from './DraftCreatorFormContext';
 
@@ -149,7 +149,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
         <div className='grid grid-cols-1 gap-3 md:grid-cols-[12rem_minmax(0,1fr)]'>
           <div className='space-y-2'>
             <Label htmlFor='iconColorMode'>Icon Color</Label>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               options={[
                 { value: 'theme', label: 'Match Theme' },
                 { value: 'custom', label: 'Custom Color' },
@@ -244,7 +244,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
         <div className='space-y-2'>
           <Label>Product Identifier</Label>
           <div className='flex gap-2'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               options={[
                 { value: 'ean', label: 'EAN' },
                 { value: 'gtin', label: 'GTIN' },
@@ -660,7 +660,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
                 className='flex flex-col gap-3 rounded-md border border-border bg-card/60 p-3 md:flex-row md:items-center'
               >
                 <div className='w-full md:w-64'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     options={availableOptions.map((parameter: ProductParameter) => ({
                       value: parameter.id,
                       label: getParameterLabel(parameter),

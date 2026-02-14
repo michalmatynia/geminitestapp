@@ -2,7 +2,7 @@
 
 import { AlertTriangleIcon } from 'lucide-react';
 
-import { FormSection, Tabs, TabsContent, TabsList, TabsTrigger, UnifiedSelect } from '@/shared/ui';
+import { FormSection, Tabs, TabsContent, TabsList, TabsTrigger, SelectSimple } from '@/shared/ui';
 
 import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
@@ -17,7 +17,7 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <div className='flex items-center gap-2'>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={dbType}
           onValueChange={(value: string): void =>
             setDbType(value as DatabaseType)

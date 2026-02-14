@@ -198,7 +198,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   // Queries
   const { data: integrationsWithConnectionsData, isLoading: checkingIntegration } = useIntegrationsWithConnections();
   const integrationsWithConnections = useMemo((): IntegrationWithConnections[] => 
-    Array.isArray(integrationsWithConnectionsData) ? integrationsWithConnectionsData as IntegrationWithConnections[] : [],
+    Array.isArray(integrationsWithConnectionsData) ? integrationsWithConnectionsData : [],
   [integrationsWithConnectionsData]
   );
   const catalogsQuery = useCatalogs();

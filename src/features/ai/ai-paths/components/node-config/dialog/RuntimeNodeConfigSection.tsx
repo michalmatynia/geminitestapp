@@ -1,7 +1,7 @@
 'use client';
 
 import type { NodeCacheMode } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, UnifiedSelect, Switch } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, Switch } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -25,7 +25,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-3 rounded-md border border-border bg-card/50 p-3'>
       <div>
         <Label className='text-xs text-gray-400'>Execution cache</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={cacheMode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

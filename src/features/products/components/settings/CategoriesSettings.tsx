@@ -33,7 +33,7 @@ import {
   TreeActionButton,
   TreeActionSlot,
   TreeCaret,
-  UnifiedSelect,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 import {
@@ -370,7 +370,7 @@ export function CategoriesSettings(): React.JSX.Element {
           Each catalog has its own category tree. Select a catalog to manage its categories.
         </p>
         <div className='w-full max-w-xs'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
             options={catalogs.map((catalog: Catalog) => ({

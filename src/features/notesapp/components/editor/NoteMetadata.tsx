@@ -5,7 +5,7 @@ import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { TagRecord, NoteWithRelations } from '@/shared/types/domain/notes';
-import { Button, Input, Label, Checkbox, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, SelectSimple } from '@/shared/ui';
 
 
 interface NoteMetadataProps {
@@ -83,7 +83,7 @@ export function NoteMetadata({
 
       <div>
         <Label className='mb-2 block text-sm font-medium text-white'>Folder</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={selectedFolderId || '__none__'}
           onValueChange={(value: string): void => setSelectedFolderId(value === '__none__' ? '' : value)}
           options={[

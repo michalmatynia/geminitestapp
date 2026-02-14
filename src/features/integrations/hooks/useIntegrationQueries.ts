@@ -4,16 +4,20 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import type { BaseInventory } from '@/features/data-import-export';
+import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
 import type { PlaywrightPersona } from '@/features/playwright/types';
 import { normalizePlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
-  importExportTemplateSchema
+  importExportTemplateSchema,
+  type ImportExportTemplateDto
 } from '@/shared/contracts/data-import-export';
 import { 
   integrationSchema, 
-  integrationConnectionSchema
+  integrationConnectionSchema,
+  type IntegrationDto,
+  type IntegrationConnectionDto
 } from '@/shared/contracts/integrations';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createQueryHook } from '@/shared/lib/api-hooks';
@@ -22,25 +26,25 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';
 
-export const useIntegrations = createQueryHook({
+export const useIntegrations = createQueryHook<IntegrationDto[]>({
   queryKeyFactory: () => integrationKeys.all,
   endpoint: '/api/integrations',
   schema: z.array(integrationSchema),
 });
 
-export const useIntegrationConnections = createQueryHook({
+export const useIntegrationConnections = createQueryHook<IntegrationConnectionDto[], string | undefined>({
   queryKeyFactory: (integrationId?: string) => getIntegrationConnectionsQueryKey(integrationId),
   endpoint: (integrationId?: string) => `/api/integrations/${integrationId}/connections`,
   schema: z.array(integrationConnectionSchema),
 });
 
-export const useConnectionSession = createQueryHook({
+export const useConnectionSession = createQueryHook<unknown, string | undefined>({
   queryKeyFactory: (connectionId?: string) => integrationKeys.connectionSession(connectionId),
   endpoint: (connectionId?: string) => `/api/integrations/connections/${connectionId}/session`,
   staleTime: 0,
 });
 
-export const useIntegrationsWithConnections = createQueryHook({
+export const useIntegrationsWithConnections = createQueryHook<IntegrationWithConnections[]>({
   queryKeyFactory: () => integrationKeys.withConnections(),
   endpoint: '/api/integrations/with-connections',
 });
@@ -60,7 +64,7 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
   });
 }
 
-export const useExportTemplates = createQueryHook({
+export const useExportTemplates = createQueryHook<ImportExportTemplateDto[]>({
   queryKeyFactory: () => integrationKeys.exportTemplates(),
   endpoint: '/api/integrations/export-templates',
   schema: z.array(importExportTemplateSchema),

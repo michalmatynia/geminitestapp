@@ -27,7 +27,7 @@ import {
 } from '@/features/admin/constants/admin-menu-settings';
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, Switch, useToast, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, Switch, useToast, SelectSimple, FormSection, FormField } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
 const normalize = (value: string): string =>
@@ -636,7 +636,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                     )}
                     <span className='text-sm text-gray-200'>{section.label}</span>
                   </div>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={current}
                     onValueChange={(value: string) => updateSectionColor(section.id, value)}
                     options={[

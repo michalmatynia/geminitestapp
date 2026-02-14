@@ -21,7 +21,7 @@ import type { ProductStudioSequencingConfig } from '@/features/products/types/pr
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FormField, FormSection, UnifiedButton, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, FormField, FormSection, SelectSimple, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type ProductStudioVariantsResponse = {
@@ -359,7 +359,7 @@ export default function ProductFormStudio(): React.JSX.Element {
           label='Studio Project'
           description='Once selected, you can send product images to Studio and accept generated variants into image slots.'
         >
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={studioProjectId ?? ''}
             onValueChange={(value: string): void => {
               setStudioProjectId(value || null);
@@ -400,7 +400,7 @@ export default function ProductFormStudio(): React.JSX.Element {
         description='Pick a product image, send it to Studio, preview generated variants, then accept one to autosave it into this image slot.'
       >
         <div className='flex flex-wrap items-center gap-2'>
-          <UnifiedButton
+          <Button size='xs'
             type='button'
             onClick={(): void => {
               void handleSendToStudio();
@@ -419,9 +419,9 @@ export default function ProductFormStudio(): React.JSX.Element {
               <Monitor className='mr-2 size-4' />
             )}
             {sending ? 'Sending...' : 'Send To Studio'}
-          </UnifiedButton>
+          </Button>
 
-          <Button
+          <Button size='xs'
             type='button'
             onClick={(): void => {
               void handleAcceptVariant();
@@ -437,7 +437,7 @@ export default function ProductFormStudio(): React.JSX.Element {
             {accepting ? 'Accepting...' : 'Accept Variant'}
           </Button>
 
-          <UnifiedButton
+          <Button size='xs'
             type='button'
             variant='outline'
             onClick={(): void => {
@@ -449,7 +449,7 @@ export default function ProductFormStudio(): React.JSX.Element {
               <Loader2 className='mr-2 size-4 animate-spin' />
             ) : null}
             Refresh Variants
-          </UnifiedButton>
+          </Button>
 
           {runStatus ? (
             <span className='rounded border border-border/60 bg-background/40 px-2 py-1 text-xs text-gray-300'>
@@ -637,7 +637,7 @@ export default function ProductFormStudio(): React.JSX.Element {
 
             {!splitVariantView && canCompareWithSource ? (
               <div className='absolute right-2 top-2 z-20 flex items-center gap-1 rounded bg-black/65 px-2 py-1 text-[10px] text-gray-100'>
-                <UnifiedButton
+                <Button size='xs'
                   type='button'
                   size='sm'
                   variant='outline'
@@ -648,8 +648,8 @@ export default function ProductFormStudio(): React.JSX.Element {
                   }}
                 >
                   -
-                </UnifiedButton>
-                <UnifiedButton
+                </Button>
+                <Button size='xs'
                   type='button'
                   size='sm'
                   variant='outline'
@@ -660,8 +660,8 @@ export default function ProductFormStudio(): React.JSX.Element {
                   }}
                 >
                   +
-                </UnifiedButton>
-                <UnifiedButton
+                </Button>
+                <Button size='xs'
                   type='button'
                   size='sm'
                   variant='outline'
@@ -672,7 +672,7 @@ export default function ProductFormStudio(): React.JSX.Element {
                   }}
                 >
                   100%
-                </UnifiedButton>
+                </Button>
               </div>
             ) : null}
           </div>

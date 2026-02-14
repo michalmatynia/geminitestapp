@@ -4,10 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
-  UnifiedButton,
-  UnifiedInput,
+  Button,
+  Input,
   Label,
-  UnifiedSelect,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -165,7 +165,7 @@ export function UIPresetsPanel(): React.JSX.Element {
         </span>
       </div>
       <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_120px]'>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={selectedPresetId || '__none__'}
           onValueChange={(value: string) => setSelectedPresetId(value === '__none__' ? '' : value)}
           options={presetOptions}
@@ -173,7 +173,7 @@ export function UIPresetsPanel(): React.JSX.Element {
           triggerClassName='h-8 text-xs'
           ariaLabel='Choose UI preset'
         />
-        <UnifiedButton
+        <Button size='xs'
           type='button'
           variant='outline'
           size='sm'
@@ -184,16 +184,16 @@ export function UIPresetsPanel(): React.JSX.Element {
           disabled={!selectedPresetId}
         >
           Apply
-        </UnifiedButton>
+        </Button>
       </div>
       <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]'>
-        <UnifiedInput
+        <Input size='sm'
           value={uiPresetNameDraft}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUiPresetNameDraft(event.target.value)}
           placeholder='Preset name'
           className='h-8 text-xs'
         />
-        <UnifiedInput
+        <Input size='sm'
           value={uiPresetDescriptionDraft}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUiPresetDescriptionDraft(event.target.value)}
           placeholder='Description (optional)'
@@ -201,7 +201,7 @@ export function UIPresetsPanel(): React.JSX.Element {
         />
       </div>
       <div className='flex flex-wrap items-center gap-2'>
-        <UnifiedButton
+        <Button size='xs'
           type='button'
           variant='outline'
           size='sm'
@@ -209,8 +209,8 @@ export function UIPresetsPanel(): React.JSX.Element {
           disabled={updateSetting.isPending}
         >
           {selectedPresetId ? 'Update Preset' : 'Save Preset'}
-        </UnifiedButton>
-        <UnifiedButton
+        </Button>
+        <Button size='xs'
           type='button'
           variant='outline'
           size='sm'
@@ -225,8 +225,8 @@ export function UIPresetsPanel(): React.JSX.Element {
           disabled={!selectedPresetId || updateSetting.isPending}
         >
           Set Active
-        </UnifiedButton>
-        <UnifiedButton
+        </Button>
+        <Button size='xs'
           type='button'
           variant='ghost'
           size='sm'
@@ -234,7 +234,7 @@ export function UIPresetsPanel(): React.JSX.Element {
           disabled={!selectedPresetId || updateSetting.isPending}
         >
           Delete
-        </UnifiedButton>
+        </Button>
       </div>
     </div>
   );

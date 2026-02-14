@@ -11,7 +11,7 @@ import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
 import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
-import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, SelectSimple, useToast } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../../hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useUpdateSlug } from '../../../hooks/useCmsQueries';
@@ -816,7 +816,7 @@ function PageSettingsTab(): React.ReactNode {
           </div>
           <div className='space-y-2'>
             <Label className='text-xs text-gray-400'>Task</Label>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={pageAiTask}
               onValueChange={(value: string): void => setPageAiTask(value as 'layout' | 'seo')}
               options={pageAiTaskOptions}
@@ -825,7 +825,7 @@ function PageSettingsTab(): React.ReactNode {
           </div>
           <div className='space-y-2'>
             <Label className='text-xs text-gray-400'>Provider</Label>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={pageAiProvider}
               onValueChange={(value: string): void => setPageAiProvider(value as 'model' | 'agent')}
               options={pageAiProviderOptions}
@@ -835,7 +835,7 @@ function PageSettingsTab(): React.ReactNode {
           {pageAiProvider !== 'agent' ? (
             <div className='space-y-2'>
               <Label className='text-xs text-gray-400'>Model</Label>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={pageAiModelId}
                 onValueChange={(value: string): void => setPageAiModelId(value)}
                 options={modelOptions.map((model: string) => ({ value: model, label: model }))}
@@ -845,7 +845,7 @@ function PageSettingsTab(): React.ReactNode {
           ) : (
             <div className='space-y-2'>
               <Label className='text-xs text-gray-400'>Deepthinking agent</Label>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={pageAiAgentId}
                 onValueChange={(value: string): void => setPageAiAgentId(value)}
                 options={agentOptions.length ? agentOptions : [{ label: 'No agents configured', value: '' }]}

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { logClientError } from '@/features/observability';
 import { APP_FONT_SET_SETTING_KEY, APP_FONT_SETS, getAppFontSet, type AppFontSetId } from '@/shared/constants/typography';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, SectionHeader, UnifiedSelect, useToast, FormSection, FormField } from '@/shared/ui';
+import { Button, SectionHeader, SelectSimple, useToast, FormSection, FormField } from '@/shared/ui';
 
 export function AdminTypographySettingsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -64,7 +64,7 @@ export function AdminTypographySettingsPage(): React.JSX.Element {
               label='Font set'
               description='Fonts are defined in src/app/fonts.css and loaded from public/fonts.'
             >
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={selected}
                 onValueChange={(val: string) => setSelected(val as AppFontSetId)}
                 options={APP_FONT_SETS.map((set: { id: AppFontSetId; name: string; description: string }) => ({

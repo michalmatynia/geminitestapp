@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
 import {
   SPLIT_WHEEL_MAX_DELTA,
@@ -78,7 +78,7 @@ export function SplitVariantPreview({
           Source
         </div>
         <div className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'>
-          <UnifiedButton
+          <Button size='xs'
             type='button'
             size='sm'
             variant='outline'
@@ -89,11 +89,11 @@ export function SplitVariantPreview({
             title='Zoom out source'
           >
             -
-          </UnifiedButton>
+          </Button>
           <span className='min-w-10 text-center text-[10px] text-gray-100'>
             {Math.round(leftSplitZoom * 100)}%
           </span>
-          <UnifiedButton
+          <Button size='xs'
             type='button'
             size='sm'
             variant='outline'
@@ -104,8 +104,8 @@ export function SplitVariantPreview({
             title='Zoom in source'
           >
             +
-          </UnifiedButton>
-          <UnifiedButton
+          </Button>
+          <Button size='xs'
             type='button'
             size='sm'
             variant='outline'
@@ -116,7 +116,7 @@ export function SplitVariantPreview({
             title='Reset source zoom'
           >
             100%
-          </UnifiedButton>
+          </Button>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -134,7 +134,7 @@ export function SplitVariantPreview({
           Variant
         </div>
         <div className='absolute right-1 top-1 z-10 flex items-center gap-1 rounded bg-black/65 p-1'>
-          <UnifiedButton
+          <Button size='xs'
             type='button'
             size='sm'
             variant='outline'
@@ -145,11 +145,11 @@ export function SplitVariantPreview({
             title='Zoom out variant'
           >
             -
-          </UnifiedButton>
+          </Button>
           <span className='min-w-10 text-center text-[10px] text-gray-100'>
             {Math.round(rightSplitZoom * 100)}%
           </span>
-          <UnifiedButton
+          <Button size='xs'
             type='button'
             size='sm'
             variant='outline'
@@ -160,8 +160,8 @@ export function SplitVariantPreview({
             title='Zoom in variant'
           >
             +
-          </UnifiedButton>
-          <UnifiedButton
+          </Button>
+          <Button size='xs'
             type='button'
             size='sm'
             variant='outline'
@@ -172,7 +172,7 @@ export function SplitVariantPreview({
             title='Reset variant zoom'
           >
             100%
-          </UnifiedButton>
+          </Button>
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

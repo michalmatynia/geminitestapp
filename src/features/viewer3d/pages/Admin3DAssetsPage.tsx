@@ -23,7 +23,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  UnifiedSelect,
+  SelectSimple,
   SearchInput,
   Alert,
   useToast,
@@ -253,7 +253,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         <FormSection title='Advanced Filters' className='p-4'>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2 mt-4'>
             <FormField label='Category'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={selectedCategory ?? '__all__'}
                 onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
                 options={[

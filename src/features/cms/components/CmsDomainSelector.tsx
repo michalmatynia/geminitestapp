@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import type { CmsDomain } from '@/features/cms/types';
-import { UnifiedSelect } from '@/shared/ui';
+import { SelectSimple } from '@/shared/ui';
 
 type CmsDomainSelectorProps = {
   label?: string;
@@ -48,7 +48,7 @@ export function CmsDomainSelector({
   return (
     <div className='flex items-center gap-2'>
       {label && <span className='text-[11px] font-medium uppercase tracking-wide text-gray-400'>{label}</span>}
-      <UnifiedSelect
+      <SelectSimple size='sm'
         options={options}
         value={activeDomainId ?? undefined}
         onValueChange={handleChange}

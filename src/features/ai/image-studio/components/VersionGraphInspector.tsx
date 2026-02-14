@@ -3,7 +3,7 @@
 import { Copy, Crosshair, Focus, Layers, MousePointer2, RefreshCw } from 'lucide-react';
 import React from 'react';
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
 import { useVersionGraphInspectorContext } from './VersionGraphInspectorContext';
 import { readMeta } from '../utils/metadata';
@@ -114,7 +114,7 @@ export function VersionGraphInspector(): React.JSX.Element {
       </div>
 
       <div className='mt-2 flex gap-2'>
-        <UnifiedButton
+        <Button size='xs'
           variant='outline'
           size='sm'
           className='flex-1 text-xs'
@@ -122,9 +122,9 @@ export function VersionGraphInspector(): React.JSX.Element {
         >
           <Crosshair className='mr-1.5 size-3' />
           Set as Source
-        </UnifiedButton>
+        </Button>
         {selectedNode.type === 'composite' ? (
-          <UnifiedButton
+          <Button size='xs'
             variant='outline'
             size='sm'
             className='flex-1 border-teal-400/40 text-xs text-teal-400 hover:bg-teal-500/10'
@@ -133,10 +133,10 @@ export function VersionGraphInspector(): React.JSX.Element {
           >
             <Layers className='mr-1.5 size-3' />
             Flatten
-          </UnifiedButton>
+          </Button>
         ) : null}
         {selectedNode.type === 'composite' && onRefreshCompositePreview ? (
-          <UnifiedButton
+          <Button size='xs'
             variant='ghost'
             size='icon'
             className='size-7 text-teal-400'
@@ -145,7 +145,7 @@ export function VersionGraphInspector(): React.JSX.Element {
             onClick={() => onRefreshCompositePreview(selectedNode.id)}
           >
             <RefreshCw className={`size-3 ${compositeLoading ? 'animate-spin' : ''}`} />
-          </UnifiedButton>
+          </Button>
         ) : null}
       </div>
 

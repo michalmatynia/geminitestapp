@@ -3,7 +3,7 @@
 import { Download, Save } from 'lucide-react';
 import React from 'react';
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 export interface OutputImage {
@@ -58,7 +58,7 @@ export function OutputImageGrid({
               <Download className='size-3.5' />
             </a>
             {onSaveAsSlot && (
-              <UnifiedButton
+              <Button size='xs'
                 type='button'
                 variant='ghost'
                 size='icon'
@@ -67,7 +67,7 @@ export function OutputImageGrid({
                 onClick={() => onSaveAsSlot(output)}
               >
                 <Save className='size-3.5' />
-              </UnifiedButton>
+              </Button>
             )}
           </div>
         </div>

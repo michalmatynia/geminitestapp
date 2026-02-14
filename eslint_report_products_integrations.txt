@@ -1,0 +1,13 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/context/CategoryMapperPageContext.tsx
+  74:5  error  Unsafe return of a value of type `any[]`  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts
+  237:3   error  Unsafe assignment of an `any` value               @typescript-eslint/no-unsafe-assignment
+  237:47  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  237:52  error  Unsafe member access .catalogs on an `any` value  @typescript-eslint/no-unsafe-member-access
+  245:41  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  246:45  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+✖ 6 problems (6 errors, 0 warnings)
+

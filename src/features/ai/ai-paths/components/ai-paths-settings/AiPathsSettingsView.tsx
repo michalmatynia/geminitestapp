@@ -8,7 +8,7 @@ import type {
   AiNode,
 } from '@/features/ai/ai-paths/lib';
 import type { PathMeta } from '@/shared/types/domain/ai-paths';
-import { Button, Input, Label, AppModal, UnifiedSelect, useToast } from '@/shared/ui';
+import { Button, Input, Label, AppModal, SelectSimple, useToast } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
@@ -427,7 +427,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 )}
                 <div className='flex flex-col items-end gap-1'>
                   <Label className='text-[10px] uppercase text-gray-500'>Execution</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={executionMode}
                     onValueChange={(value: string): void => {
                       if (value !== executionMode) {
@@ -442,7 +442,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 </div>
                 <div className='flex flex-col items-end gap-1'>
                   <Label className='text-[10px] uppercase text-gray-500'>Flow</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={flowIntensity}
                     onValueChange={(value: string): void => {
                       if (value !== flowIntensity) {
@@ -457,7 +457,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 </div>
                 <div className='flex flex-col items-end gap-1'>
                   <Label className='text-[10px] uppercase text-gray-500'>Run Mode</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={runMode}
                     onValueChange={(value: string): void => {
                       if (value !== runMode) {
@@ -472,7 +472,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 </div>
                 <div className='flex flex-col items-end gap-1'>
                   <Label className='text-[10px] uppercase text-gray-500'>History</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={String(historyRetentionPasses)}
                     onValueChange={(value: string): void => {
                       const parsed = Number.parseInt(value, 10);
@@ -485,7 +485,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     disabled={saving}
                   />
                 </div>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={activePathId}
                   onValueChange={(value: string): void => {
                     if (!value || value === activePathId) return;

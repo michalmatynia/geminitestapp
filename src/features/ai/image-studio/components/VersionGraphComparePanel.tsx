@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
 import { useVersionGraphCompareContext } from './VersionGraphCompareContext';
 import { compareGenerationParams } from '../utils/version-graph-compare';
@@ -64,22 +64,22 @@ export function VersionGraphComparePanel(): React.JSX.Element {
 
       {/* Actions */}
       <div className='mt-2 flex gap-2'>
-        <UnifiedButton
+        <Button size='xs'
           variant='outline'
           size='sm'
           className='flex-1 text-[10px]'
           onClick={onSwap}
         >
           Swap
-        </UnifiedButton>
-        <UnifiedButton
+        </Button>
+        <Button size='xs'
           variant='outline'
           size='sm'
           className='flex-1 text-[10px]'
           onClick={onExit}
         >
           Exit Compare
-        </UnifiedButton>
+        </Button>
       </div>
     </div>
   );

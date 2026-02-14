@@ -1,8 +1,15 @@
 type InstrumentationGlobal = typeof globalThis & {
+  __nodeInstrumentationRegistered?: boolean;
   __cmsProcessHandlersRegistered?: boolean;
 };
 
 export async function registerNodeInstrumentation() {
+  const globalScope = globalThis as InstrumentationGlobal;
+  if (globalScope.__nodeInstrumentationRegistered) {
+    return;
+  }
+  globalScope.__nodeInstrumentationRegistered = true;
+
   const { validateDatabaseConfig } = await import('@/shared/lib/env');
   validateDatabaseConfig();
 
@@ -40,7 +47,6 @@ export async function registerNodeInstrumentation() {
   const { initializeQueues } = await import('@/features/jobs/lib/queue-init');
   initializeQueues();
 
-  const globalScope = globalThis as InstrumentationGlobal;
   if (globalScope.__cmsProcessHandlersRegistered) {
     return;
   }

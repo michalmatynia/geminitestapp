@@ -16,7 +16,7 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { IntegrationConnectionBasic } from '@/features/integrations';
 import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { Button, Input, Checkbox, Label, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Checkbox, Label, SelectSimple } from '@/shared/ui';
 
 export function ExportTab(): React.JSX.Element {
   const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
@@ -144,7 +144,7 @@ export function ExportTab(): React.JSX.Element {
               Base connection for inventories/warehouses
             </Label>
             <div className='mt-2'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={selectedBaseConnectionId || '__none__'}
                 onValueChange={(v: string): void => setSelectedBaseConnectionId(v === '__none__' ? '' : v)}
                 disabled={baseConnections.length === 0}
@@ -163,7 +163,7 @@ export function ExportTab(): React.JSX.Element {
           <div>
             <Label className='text-xs text-gray-400'>Default Inventory</Label>
             <div className='mt-2'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={exportInventoryId || '__none__'}
                 onValueChange={(v: string): void => setExportInventoryId(v === '__none__' ? '' : v)}
                 disabled={inventories.length === 0 && !exportInventoryId}
@@ -185,7 +185,7 @@ export function ExportTab(): React.JSX.Element {
               Default Export Template
             </Label>
             <div className='mt-2'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={exportActiveTemplateId || '__none__'}
                 onValueChange={(nextId: string): void => {
                   const val = nextId === '__none__' ? '' : nextId;
@@ -277,7 +277,7 @@ export function ExportTab(): React.JSX.Element {
         <div>
           <Label className='text-xs text-gray-400'>Default Warehouse ID</Label>
           <div className='mt-2'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={exportWarehouseId || '__none__'}
               onValueChange={(v: string): void => setExportWarehouseId(v === '__none__' ? '' : v)}
               disabled={warehouseOptions.length === 0}

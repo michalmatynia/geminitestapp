@@ -3,7 +3,7 @@
 import { Redo, Undo } from 'lucide-react';
 import React from 'react';
 
-import { Button, Input, Label, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple } from '@/shared/ui';
 
 import type { DocumentEditorMode } from '../types';
 
@@ -282,7 +282,7 @@ export function MarkdownToolbar({
           </Button>
 
           {fileReferenceOptions && fileReferenceOptions.length > 0 && onInsertFileReference ? (
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value=''
               onValueChange={(value: string): void => {
                 onInsertFileReference(value);
@@ -296,7 +296,7 @@ export function MarkdownToolbar({
 
           <div className='ml-2 flex items-center gap-2 border-l border-border pl-2'>
             <Label className='text-xs text-gray-400'>Font</Label>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={fontFamily}
               onValueChange={onFontFamilyChange}
               options={[

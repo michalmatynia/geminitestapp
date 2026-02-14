@@ -10,7 +10,7 @@ import {
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  UnifiedButton,
+  Button,
   
   Tooltip,
   useToast,
@@ -328,7 +328,7 @@ export function LeftSidebar(): React.JSX.Element {
       >
         <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
           <div className='px-1 py-1' data-preserve-slot-selection='true'>
-            <UnifiedButton
+            <Button size='xs'
               type='button'
               variant='outline'
               size='sm'
@@ -340,7 +340,7 @@ export function LeftSidebar(): React.JSX.Element {
               data-preserve-slot-selection='true'
             >
               {projectSaveBusy ? 'Saving...' : 'Save Project'}
-            </UnifiedButton>
+            </Button>
           </div>
 
           <div
@@ -352,7 +352,7 @@ export function LeftSidebar(): React.JSX.Element {
             </div>
             <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
               <Tooltip content='Load to canvas'>
-                <UnifiedButton
+                <Button size='xs'
                   type='button'
                   size='icon'
                   variant='outline'
@@ -362,10 +362,10 @@ export function LeftSidebar(): React.JSX.Element {
                   aria-label='Load to canvas'
                 >
                   <ImagePlus className='size-4' />
-                </UnifiedButton>
+                </Button>
               </Tooltip>
               <Tooltip content='De-canvas'>
-                <UnifiedButton
+                <Button size='xs'
                   type='button'
                   size='icon'
                   variant='outline'
@@ -375,10 +375,10 @@ export function LeftSidebar(): React.JSX.Element {
                   aria-label='De-canvas'
                 >
                   <ImageOff className='size-4' />
-                </UnifiedButton>
+                </Button>
               </Tooltip>
               <Tooltip content='New Card'>
-                <UnifiedButton
+                <Button size='xs'
                   type='button'
                   size='icon'
                   variant='outline'
@@ -388,10 +388,10 @@ export function LeftSidebar(): React.JSX.Element {
                   aria-label='New Card'
                 >
                   <Plus className='size-4' />
-                </UnifiedButton>
+                </Button>
               </Tooltip>
               <Tooltip content='New folder'>
-                <UnifiedButton
+                <Button size='xs'
                   type='button'
                   size='icon'
                   variant='outline'
@@ -401,11 +401,11 @@ export function LeftSidebar(): React.JSX.Element {
                   aria-label='New folder'
                 >
                   <FolderPlus className='size-4' />
-                </UnifiedButton>
+                </Button>
               </Tooltip>
               {selectedSlot ? (
                 <Tooltip content='Edit card'>
-                  <UnifiedButton
+                  <Button size='xs'
                     type='button'
                     size='icon'
                     variant='outline'
@@ -414,7 +414,7 @@ export function LeftSidebar(): React.JSX.Element {
                     aria-label='Edit card'
                   >
                     <Settings2 className='size-4' />
-                  </UnifiedButton>
+                  </Button>
                 </Tooltip>
               ) : null}
             </div>

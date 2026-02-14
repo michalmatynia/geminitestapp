@@ -6,7 +6,7 @@ import { FormModal } from '../FormModal';
 
 export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'custom';
 
-export interface SettingsField<T extends Record<string, any>> {
+export interface SettingsField<T extends Record<string, unknown>> {
   /** Field key in the form data */
   key: keyof T;
   
@@ -36,13 +36,13 @@ export interface SettingsField<T extends Record<string, any>> {
 }
 
 export interface SettingsFieldRenderProps {
-  value: any;
-  onChange: (value: any) => void;
+  value: unknown;
+  onChange: (value: unknown) => void;
   error?: string;
   disabled?: boolean;
 }
 
-export interface SettingsPanelBuilderProps<T extends Record<string, any>> {
+export interface SettingsPanelBuilderProps<T extends Record<string, unknown>> {
   open: boolean;
   onClose: () => void;
   title: string;
@@ -60,7 +60,7 @@ export interface SettingsPanelBuilderProps<T extends Record<string, any>> {
  * Generic settings panel builder.
  * Consolidates Theme, Component, Menu, Viewer3D settings patterns.
  */
-export function SettingsPanelBuilder<T extends Record<string, any>>({
+export function SettingsPanelBuilder<T extends Record<string, unknown>>({
   open,
   onClose,
   title,
@@ -73,7 +73,7 @@ export function SettingsPanelBuilder<T extends Record<string, any>>({
   isSaving = false,
   size = 'md',
 }: SettingsPanelBuilderProps<T>) {
-  const handleFieldChange = (key: keyof T, value: any) => {
+  const handleFieldChange = (key: keyof T, value: unknown) => {
     onChange({ [key]: value } as Partial<T>);
   };
 
@@ -103,13 +103,13 @@ export function SettingsPanelBuilder<T extends Record<string, any>>({
             {field.render ? (
               field.render({
                 value: values[field.key],
-                onChange: (value: any) => handleFieldChange(field.key, value),
+                onChange: (value: unknown) => handleFieldChange(field.key, value),
                 disabled: field.disabled || isSaving,
                 ...(errors[field.key] !== undefined ? { error: errors[field.key] } : {}),
               })
             ) : field.type === 'textarea' ? (
               <textarea
-                value={values[field.key] || ''}
+                value={(values[field.key] as string) || ''}
                 onChange={e => handleFieldChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
                 disabled={field.disabled || isSaving}
@@ -117,7 +117,7 @@ export function SettingsPanelBuilder<T extends Record<string, any>>({
               />
             ) : field.type === 'select' ? (
               <select
-                value={values[field.key] || ''}
+                value={(values[field.key] as string) || ''}
                 onChange={e => handleFieldChange(field.key, e.target.value)}
                 disabled={field.disabled || isSaving}
                 className='w-full px-3 py-2 border border-border rounded-md bg-background text-foreground'
@@ -133,7 +133,7 @@ export function SettingsPanelBuilder<T extends Record<string, any>>({
               <label className='flex items-center gap-2 cursor-pointer'>
                 <input
                   type='checkbox'
-                  checked={values[field.key] || false}
+                  checked={(values[field.key] as boolean) || false}
                   onChange={e => handleFieldChange(field.key, e.target.checked)}
                   disabled={field.disabled || isSaving}
                   className='w-4 h-4 rounded border-border'
@@ -143,7 +143,7 @@ export function SettingsPanelBuilder<T extends Record<string, any>>({
             ) : (
               <input
                 type={field.type}
-                value={values[field.key] || ''}
+                value={(values[field.key] as string | number) || ''}
                 onChange={e => handleFieldChange(field.key, e.target.value)}
                 placeholder={field.placeholder}
                 disabled={field.disabled || isSaving}

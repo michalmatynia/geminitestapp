@@ -15,7 +15,7 @@ import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { UnifiedButton, UnifiedInput, useToast } from '@/shared/ui';
+import { Button, Input, useToast } from '@/shared/ui';
 
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
@@ -923,7 +923,7 @@ export function CenterPreview(): React.JSX.Element {
 
   const focusToggleButton = typeof document !== 'undefined'
     ? createPortal(
-      <UnifiedButton
+      <Button size='xs'
         type='button'
         variant='outline'
         size='sm'
@@ -933,7 +933,7 @@ export function CenterPreview(): React.JSX.Element {
         className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
       >
         {isFocusMode ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
-      </UnifiedButton>,
+      </Button>,
       document.body
     )
     : null;
@@ -976,7 +976,7 @@ export function CenterPreview(): React.JSX.Element {
             />
           ) : null}
           {previewMode === '3d' && workingSlot ? (
-            <UnifiedButton
+            <Button size='xs'
               variant='outline'
               size='sm'
               onClick={() => { void handleSaveScreenshot(); }}
@@ -985,7 +985,7 @@ export function CenterPreview(): React.JSX.Element {
             >
               {screenshotBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : <Camera className='mr-2 size-4' />}
               Save Shot
-            </UnifiedButton>
+            </Button>
           ) : null}
         </div>
         <div />
@@ -1042,7 +1042,7 @@ export function CenterPreview(): React.JSX.Element {
               />
             ) : null}
             <div className='absolute bottom-2 left-2 z-20'>
-              <UnifiedButton
+              <Button size='xs'
                 type='button'
                 size='sm'
                 variant='outline'
@@ -1054,12 +1054,12 @@ export function CenterPreview(): React.JSX.Element {
               >
                 <Locate className='mr-1.5 size-3.5' />
                 Reveal in tree
-              </UnifiedButton>
+              </Button>
             </div>
           </div>
           <div className='shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
             <div className='mb-2 flex items-center gap-2'>
-              <UnifiedInput
+              <Input size='sm'
                 value={variantTimestampQuery}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                   setVariantTimestampQuery(event.target.value);
@@ -1124,7 +1124,7 @@ export function CenterPreview(): React.JSX.Element {
                           )}
                         </button>
                         {variant.output && variant.slotId ? (
-                          <UnifiedButton
+                          <Button size='xs'
                             type='button'
                             size='icon'
                             variant='ghost'
@@ -1135,7 +1135,7 @@ export function CenterPreview(): React.JSX.Element {
                             className='absolute right-1 top-1 z-10 size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
                           >
                             <Trash2 className='size-3.5' />
-                          </UnifiedButton>
+                          </Button>
                         ) : null}
                       </div>
                     );

@@ -4,7 +4,7 @@
 
 
 import type { RouterConfig } from '@/features/ai/ai-paths/lib';
-import { Input, Label, UnifiedSelect } from '@/shared/ui';
+import { Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -23,7 +23,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Match Source</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm' size='sm'
           value={routerConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -43,7 +43,7 @@ export function RouterNodeConfigSection(): React.JSX.Element | null {
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Match Mode</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm' size='sm'
           value={routerConfig.matchMode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

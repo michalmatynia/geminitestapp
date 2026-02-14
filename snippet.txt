@@ -1,0 +1,81 @@
+const toProductRecord = (product: {
+  id: string;
+  sku: string | null;
+  baseProductId: string | null;
+  defaultPriceGroupId: string | null;
+  ean: string | null;
+  gtin: string | null;
+  asin: string | null;
+  name_en: string | null;
+  name_pl: string | null;
+  name_de: string | null;
+  description_en: string | null;
+  description_pl: string | null;
+  description_de: string | null;
+  supplierName: string | null;
+  supplierLink: string | null;
+  priceComment: string | null;
+  stock: number | null;
+  price: number | null;
+  sizeLength: number | null;
+  sizeWidth: number | null;
+  weight: number | null;
+  length: number | null;
+  published?: boolean | null;
+  catalogId?: string | null;
+  parameters?: Prisma.JsonValue | null;
+  imageLinks: string[];
+  imageBase64s: string[];
+  noteIds?: string[] | null;
+  createdAt: Date;
+  updatedAt: Date;
+}): ProductRecord => ({
+  id: product.id,
+  sku: product.sku ?? null,
+  baseProductId: product.baseProductId ?? null,
+  defaultPriceGroupId: product.defaultPriceGroupId ?? null,
+  ean: product.ean ?? null,
+  gtin: product.gtin ?? null,
+  asin: product.asin ?? null,
+  name: { en: product.name_en ?? '', pl: product.name_pl ?? null, de: product.name_de ?? null },
+  description: { en: product.description_en ?? '', pl: product.description_pl ?? null, de: product.description_de ?? null },
+  name_en: product.name_en ?? null,
+  name_pl: product.name_pl ?? null,
+  name_de: product.name_de ?? null,
+  description_en: product.description_en ?? null,
+  description_pl: product.description_pl ?? null,
+  description_de: product.description_de ?? null,
+  supplierName: product.supplierName ?? null,
+  supplierLink: product.supplierLink ?? null,
+  priceComment: product.priceComment ?? null,
+  stock: product.stock ?? null,
+  price: product.price ?? null,
+  sizeLength: product.sizeLength ?? null,
+  sizeWidth: product.sizeWidth ?? null,
+  weight: product.weight ?? null,
+  length: product.length ?? null,
+  published: product.published ?? true,
+  catalogId: product.catalogId ?? (product as any).catalogs?.[0]?.catalogId ?? '',
+  parameters: Array.isArray(product.parameters) ? (product.parameters as unknown as ProductParameterValue[]) : [],
+  imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
+  imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
+  noteIds: Array.isArray(product.noteIds) ? product.noteIds : [],
+  createdAt: product.createdAt.toISOString(),
+  updatedAt: product.updatedAt.toISOString(),
+  categoryId: (product as unknown as { categories?: { categoryId: string } | null }).categories?.categoryId ?? null,
+  tags: (product as unknown as { tags?: any[] }).tags ?? [],
+  images: (product as unknown as { images?: any[] }).images ?? [],
+});
+
+// Helper function to create a ProductRepository instance that uses a Prisma TransactionClient
+const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRepository => ({
+  // Implement all methods of ProductRepository using the provided 'tx' client
+  // Read operations can still use `prisma` if they don't need to see uncommitted writes from this transaction,
+  // but for consistency and safety, it's better to use `tx` where possible.
+  getProducts: async (filters) => {
+    const where = buildProductWhere(filters);
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
+
+    const products = await tx.product.findMany({
+      where,

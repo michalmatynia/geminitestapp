@@ -12,7 +12,7 @@ import {
   useToast,
   FormSection,
   RefreshButton,
-  UnifiedSelect,
+  SelectSimple,
   FormField,
 } from '@/shared/ui';
 
@@ -284,7 +284,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
 
           <div className='flex items-end gap-2'>
             <FormField label='Select backup to restore'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={selectedJsonBackup}
                 onValueChange={setSelectedJsonBackup}
                 options={[

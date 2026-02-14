@@ -6,7 +6,7 @@ import { useState, useCallback } from 'react';
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameter } from '@/features/products/types';
-import { useToast, Button, Input, UnifiedSelect, FormModal, EmptyState, ConfirmDialog, Skeleton, FormSection, FormField } from '@/shared/ui';
+import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, ConfirmDialog, Skeleton, FormSection, FormField } from '@/shared/ui';
 
 type ParametersSettingsProps = {
   loading: boolean;
@@ -131,7 +131,7 @@ export function ParametersSettings({
         className='p-4'
       >
         <div className='w-full max-w-xs mt-4'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={selectedCatalogId || ''}
             onValueChange={onCatalogChange}
             options={catalogs.map((catalog: CatalogRecord) => ({

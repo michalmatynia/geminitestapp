@@ -30,6 +30,43 @@ const captureException = async (error: unknown, context: { service: string; cate
   }
 };
 
+const TRANSIENT_REDIS_ERROR_CODES = new Set([
+  'EPIPE',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+]);
+
+const transientErrorLoggedAt = new Map<string, number>();
+const TRANSIENT_ERROR_LOG_COOLDOWN_MS = 30_000;
+
+const isTransientRedisTransportError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const code = (error as NodeJS.ErrnoException).code;
+  if (typeof code === 'string' && TRANSIENT_REDIS_ERROR_CODES.has(code.toUpperCase())) {
+    return true;
+  }
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('write epipe') ||
+    message.includes('read econnreset') ||
+    message.includes('econnreset') ||
+    message.includes('econnrefused') ||
+    message.includes('connection is closed') ||
+    message.includes('socket closed unexpectedly') ||
+    message.includes('timeout')
+  );
+};
+
+const shouldLogTransientQueueError = (queueName: string, message: string): boolean => {
+  const key = `${queueName}:${message}`;
+  const now = Date.now();
+  const lastLoggedAt = transientErrorLoggedAt.get(key) ?? 0;
+  if (now - lastLoggedAt < TRANSIENT_ERROR_LOG_COOLDOWN_MS) return false;
+  transientErrorLoggedAt.set(key, now);
+  return true;
+};
+
 export function createManagedQueue<TJobData>(
   config: QueueConfig<TJobData>,
 ): ManagedQueue<TJobData> {
@@ -49,6 +86,24 @@ export function createManagedQueue<TJobData>(
         removeOnFail: 100,
         ...config.defaultJobOptions,
       },
+    });
+    queue.on('error', (err: Error) => {
+      if (isTransientRedisTransportError(err)) {
+        const normalizedMessage = err.message.trim() || 'Redis transport error';
+        if (shouldLogTransientQueueError(config.name, normalizedMessage)) {
+          void logSystemEvent({
+            level: 'warn',
+            source: 'queue-factory',
+            message: `[queue-factory:${config.name}] transient queue transport error: ${normalizedMessage}`,
+            context: { queueName: config.name }
+          });
+        }
+        return;
+      }
+      void captureException(err, {
+        service: `queue:${config.name}`,
+        category: 'SYSTEM',
+      });
     });
     return queue;
   };
@@ -123,6 +178,18 @@ export function createManagedQueue<TJobData>(
     }
 
     worker.on('error', (err: Error) => {
+      if (isTransientRedisTransportError(err)) {
+        const normalizedMessage = err.message.trim() || 'Redis transport error';
+        if (shouldLogTransientQueueError(config.name, normalizedMessage)) {
+          void logSystemEvent({
+            level: 'warn',
+            source: 'queue-factory',
+            message: `[queue-factory:${config.name}] transient worker transport error: ${normalizedMessage}`,
+            context: { queueName: config.name }
+          });
+        }
+        return;
+      }
       void captureException(err, {
         service: `queue-worker:${config.name}`,
         category: 'SYSTEM',

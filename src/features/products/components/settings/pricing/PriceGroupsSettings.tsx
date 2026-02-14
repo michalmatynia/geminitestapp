@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { PriceGroup } from '@/features/products/types';
-import { Badge, Button, FormSection, UnifiedSelect } from '@/shared/ui';
+import { Badge, Button, FormSection, SelectSimple } from '@/shared/ui';
 
 import { useProductSettingsContext } from '../ProductSettingsContext';
 
@@ -103,7 +103,7 @@ export function PriceGroupsSettings(): React.JSX.Element {
         className='p-4'
       >
         <div className='mt-4'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={defaultGroupId}
             onValueChange={onDefaultGroupChange}
             disabled={priceGroups.length === 0 || defaultGroupSaving}

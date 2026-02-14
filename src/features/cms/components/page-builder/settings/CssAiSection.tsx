@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import type { CustomCssAiProvider } from '@/features/cms/types/custom-css-ai';
-import { Button, Switch, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Switch, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { useInspectorAi } from '../context/InspectorAiContext';
 import { buildDiffLines } from '../utils/ai-helpers';
@@ -77,7 +77,7 @@ function CssAiSection(): React.JSX.Element {
     >
       <div className='space-y-4 mt-4'>
         <FormField label='Provider'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={customCssAiConfig.provider ?? 'model'}
             onValueChange={(value: string): void =>
               updateCustomCssAiConfig({ provider: value as CustomCssAiProvider })
@@ -88,7 +88,7 @@ function CssAiSection(): React.JSX.Element {
         </FormField>
         {customCssAiConfig.provider !== 'agent' ? (
           <FormField label='Model'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={customCssAiConfig.modelId ?? ''}
               onValueChange={(value: string): void =>
                 updateCustomCssAiConfig({ modelId: value })
@@ -99,7 +99,7 @@ function CssAiSection(): React.JSX.Element {
           </FormField>
         ) : (
           <FormField label='Deepthinking agent'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={customCssAiConfig.agentId ?? ''}
               onValueChange={(value: string): void =>
                 updateCustomCssAiConfig({ agentId: value })

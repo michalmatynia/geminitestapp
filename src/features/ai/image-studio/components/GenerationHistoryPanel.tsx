@@ -3,7 +3,7 @@
 import { RotateCcw } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useGeneration } from '../context/GenerationContext';
@@ -84,7 +84,7 @@ export function GenerationHistoryPanel({
                   </div>
                 )}
 
-                <UnifiedButton
+                <Button size='xs'
                   type='button'
                   variant='outline'
                   size='sm'
@@ -96,7 +96,7 @@ export function GenerationHistoryPanel({
                 >
                   <RotateCcw className='mr-1 size-3' />
                   Re-run
-                </UnifiedButton>
+                </Button>
               </div>
             )}
           </div>

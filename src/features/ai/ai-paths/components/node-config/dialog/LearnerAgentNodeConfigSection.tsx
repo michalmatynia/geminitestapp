@@ -9,7 +9,7 @@ import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teach
 import {
   Button,
   Label,
-  UnifiedSelect,
+  SelectSimple,
   Textarea,
 } from '@/shared/ui';
 
@@ -63,7 +63,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         </Button>
       </div>
 
-      <UnifiedSelect
+      <SelectSimple size='sm'
         value={learnerConfig.agentId ? learnerConfig.agentId : NO_AGENT_VALUE}
         onValueChange={(value: string): void =>
           updateSelectedNodeConfig({

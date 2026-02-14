@@ -27,7 +27,7 @@ import {
   Label,
   Input,
   Tooltip,
-  UnifiedSelect,
+  SelectSimple,
   RadioGroup,
   RadioGroupItem,
 } from '@/shared/ui';
@@ -272,7 +272,7 @@ export function AnimationConfigPanel({ value, onChange }: AnimationConfigPanelPr
             <Label className='text-xs font-medium uppercase tracking-wide text-gray-400'>
               Easing
             </Label>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={config.easing}
               onValueChange={handleEasingChange}
               options={ANIMATION_EASINGS}

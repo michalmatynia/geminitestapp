@@ -3,7 +3,7 @@
 import { ArrowLeftRight, Eye, EyeOff } from 'lucide-react';
 import React from 'react';
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
 type SplitViewControlsProps = {
   singleVariantView: 'variant' | 'source';
@@ -20,7 +20,7 @@ export function SplitViewControls({
 }: SplitViewControlsProps): React.JSX.Element {
   return (
     <div className='absolute bottom-2 left-2 z-20 flex items-center gap-2'>
-      <UnifiedButton
+      <Button size='xs'
         type='button'
         size='sm'
         variant='outline'
@@ -35,8 +35,8 @@ export function SplitViewControls({
         ) : (
           <EyeOff className='size-3.5' />
         )}
-      </UnifiedButton>
-      <UnifiedButton
+      </Button>
+      <Button size='xs'
         type='button'
         size='sm'
         variant='outline'
@@ -46,7 +46,7 @@ export function SplitViewControls({
         aria-label={splitVariantView ? 'Exit split view' : 'Split view'}
       >
         <ArrowLeftRight className='size-3.5' />
-      </UnifiedButton>
+      </Button>
     </div>
   );
 }

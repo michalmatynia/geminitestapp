@@ -183,13 +183,11 @@ import type {
   PromptExploderLearnedTemplate,
   PromptExploderLogicalComparator,
   PromptExploderLogicalCondition,
-  PromptExploderLogicalJoin,
   PromptExploderLogicalOperator,
   PromptExploderParamUiControl,
   PromptExploderPatternSnapshot,
   PromptExploderListItem,
   PromptExploderSegment,
-  PromptExploderSubsection,
 } from '../types';
 
 export function AdminPromptExploderPage(): React.JSX.Element {
@@ -3683,14 +3681,14 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                                     <div className='text-[10px] text-gray-500'>{label}</div>
                                                     <Input
                                                       type='number'
-                                                      value={String((entry.value as any[])[index] ?? '')}
+                                                      value={String((entry.value as unknown[])[index] ?? '')}
                                                       min={entry.spec?.min ?? 0}
                                                       max={entry.spec?.max ?? 255}
                                                       step={entry.spec?.step ?? 1}
                                                       onChange={(event) => {
                                                         const next = Number(event.target.value);
                                                         if (!Number.isFinite(next)) return;
-                                                        const nextRgb = [...(entry.value as any[])];
+                                                        const nextRgb = [...(entry.value as unknown[])];
                                                         nextRgb[index] = next;
                                                         updateParameterValue(
                                                           selectedSegment.id,
@@ -3713,14 +3711,14 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                                     <div className='text-[10px] text-gray-500'>{label}</div>
                                                     <Input
                                                       type='number'
-                                                      value={String((entry.value as any[])[index] ?? '')}
+                                                      value={String((entry.value as unknown[])[index] ?? '')}
                                                       min={entry.spec?.min}
                                                       max={entry.spec?.max}
                                                       step={entry.spec?.step ?? 1}
                                                       onChange={(event) => {
                                                         const next = Number(event.target.value);
                                                         if (!Number.isFinite(next)) return;
-                                                        const nextTuple = [...(entry.value as any[])];
+                                                        const nextTuple = [...(entry.value as unknown[])];
                                                         nextTuple[index] = next;
                                                         updateParameterValue(
                                                           selectedSegment.id,

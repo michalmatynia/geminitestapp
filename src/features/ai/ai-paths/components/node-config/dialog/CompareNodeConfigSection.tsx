@@ -1,7 +1,7 @@
 'use client';
 
 import type { CompareConfig } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -35,7 +35,7 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Operator</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={compareConfig.operator}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

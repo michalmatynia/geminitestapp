@@ -12,9 +12,9 @@ import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  UnifiedButton,
+  Button,
   Switch,
-  UnifiedSelect,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 
@@ -456,7 +456,7 @@ export function GenerationToolbar(): React.JSX.Element {
 
   return (
     <div className='flex flex-wrap items-center gap-2'>
-      <UnifiedSelect
+      <SelectSimple size='sm'
         className='w-full min-w-0 sm:w-[min(100%,20rem)]'
         value={studioSettings.targetAi.openai.model}
         onValueChange={(value: string) => {
@@ -477,7 +477,7 @@ export function GenerationToolbar(): React.JSX.Element {
         triggerClassName='h-8 w-full text-xs'
         ariaLabel='Generation model'
       />
-      <UnifiedSelect
+      <SelectSimple size='sm'
         className='w-[60px]'
         value={String(studioSettings.targetAi.openai.image.n ?? 1)}
         onValueChange={(value: string) => {
@@ -496,7 +496,7 @@ export function GenerationToolbar(): React.JSX.Element {
         triggerClassName='h-8 text-xs'
         ariaLabel='Generation image count'
       />
-      <UnifiedButton
+      <Button size='xs'
         onClick={handleRunGeneration}
         disabled={!workingSlot || !promptText.trim() || generationBusy}
         size='sm'
@@ -508,8 +508,8 @@ export function GenerationToolbar(): React.JSX.Element {
           <Play className='mr-2 size-4' />
         )}
         {generationLabel}
-      </UnifiedButton>
-      <UnifiedSelect
+      </Button>
+      <SelectSimple size='sm'
         className='w-[190px]'
         value={upscaleMode}
         onValueChange={(value: string) => {
@@ -519,7 +519,7 @@ export function GenerationToolbar(): React.JSX.Element {
         triggerClassName='h-8 text-xs'
         ariaLabel='Upscale mode'
       />
-      <UnifiedSelect
+      <SelectSimple size='sm'
         className='w-[85px]'
         value={upscaleScale}
         onValueChange={(value: string) => {
@@ -530,7 +530,7 @@ export function GenerationToolbar(): React.JSX.Element {
         ariaLabel='Upscale scale'
       />
       {upscaleMode === 'client_canvas' ? (
-        <UnifiedSelect
+        <SelectSimple size='sm'
           className='w-[150px]'
           value={upscaleSmoothingQuality}
           onValueChange={(value: string) => {
@@ -541,7 +541,7 @@ export function GenerationToolbar(): React.JSX.Element {
           ariaLabel='Upscale smoothing quality'
         />
       ) : null}
-      <UnifiedButton
+      <Button size='xs'
         type='button'
         variant='outline'
         size='sm'
@@ -553,8 +553,8 @@ export function GenerationToolbar(): React.JSX.Element {
       >
         {upscaleBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
         Upscale
-      </UnifiedButton>
-      <UnifiedButton
+      </Button>
+      <Button size='xs'
         type='button'
         variant='outline'
         size='sm'
@@ -565,8 +565,8 @@ export function GenerationToolbar(): React.JSX.Element {
         title='Create and attach white/black masks and their inverted variants'
       >
         Attach Masks
-      </UnifiedButton>
-      <UnifiedSelect
+      </Button>
+      <SelectSimple size='sm'
         className='w-[185px]'
         value={maskAttachMode}
         onValueChange={(value: string) => {
@@ -576,7 +576,7 @@ export function GenerationToolbar(): React.JSX.Element {
         triggerClassName='h-8 text-xs'
         ariaLabel='Mask attach mode'
       />
-      <UnifiedButton
+      <Button size='xs'
         type='button'
         variant='outline'
         size='sm'
@@ -587,7 +587,7 @@ export function GenerationToolbar(): React.JSX.Element {
         title='Generate and enable mask preview'
       >
         Generate Mask
-      </UnifiedButton>
+      </Button>
       <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
         <span>Mask Preview</span>
         <Switch
@@ -606,7 +606,7 @@ export function GenerationToolbar(): React.JSX.Element {
           aria-label='Toggle mask inversion'
         />
       </label>
-      <UnifiedSelect
+      <SelectSimple size='sm'
         className='w-[130px]'
         value={maskGenMode}
         onValueChange={(value: string) => {

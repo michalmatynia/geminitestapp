@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { CopyButton, UnifiedInput,  FormSection } from '@/shared/ui';
+import { CopyButton, Input,  FormSection } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { useGenerationState } from '../context/GenerationContext';
@@ -605,7 +605,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         description='Live documentation of the current Image Studio runtime state and every persisted setting used by generation, extraction, validation, presets, and folder-tree behavior.'
         className='p-5'
         actions={(
-          <UnifiedInput
+          <Input size='sm'
             value={docsQuery}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDocsQuery(event.target.value)}
             placeholder='Search state, setting path, value...'

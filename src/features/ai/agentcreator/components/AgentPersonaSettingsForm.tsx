@@ -2,7 +2,7 @@
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
 import type { AgentPersonaSettings } from '@/features/ai/agentcreator/types';
-import { UnifiedSelect, FormField } from '@/shared/ui';
+import { SelectSimple, FormField } from '@/shared/ui';
 
 const DEFAULT_VALUE = '__default__';
 
@@ -105,7 +105,7 @@ export function AgentPersonaSettingsForm({
             label={field.label}
             description={field.description}
           >
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={toSelectValue(settings[field.key])}
               onValueChange={(value: string): void => handleUpdate(field.key, value)}
               options={[

@@ -12,7 +12,7 @@ import {
   Label,
   StatusToggle,
   Textarea,
-  UnifiedSelect,
+  SelectSimple,
 } from '@/shared/ui';
 
 
@@ -312,7 +312,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
       <div className='mt-2 space-y-2 rounded border border-border/50 bg-card/20 p-2'>
         <div className='space-y-1'>
           <Label className='text-[10px] text-gray-500'>Logical Operator</Label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={operatorValue}
             onValueChange={(next: string) => {
               if (next === 'none') {
@@ -368,7 +368,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         START
                       </div>
                     ) : (
-                      <UnifiedSelect
+                      <SelectSimple size='sm'
                         value={condition.joinWithPrevious === 'or' ? 'or' : 'and'}
                         onValueChange={(next: string) => {
                           if (!isLogicalJoin(next)) return;
@@ -386,7 +386,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
 
                   <div className='space-y-1'>
                     <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={selectedParamPath}
                       onValueChange={(next: string) => {
                         updateCondition(conditionIndex, {
@@ -403,7 +403,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
 
                   <div className='space-y-1'>
                     <Label className='text-[10px] text-gray-500'>Comparator</Label>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={comparatorValue}
                       onValueChange={(next: string) => {
                         if (!isLogicalComparator(next)) return;
@@ -426,7 +426,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                     <Label className='text-[10px] text-gray-500'>Value</Label>
                     {needsValue ? (
                       selectedParamEntry?.spec?.kind === 'boolean' ? (
-                        <UnifiedSelect
+                        <SelectSimple size='sm'
                           value={String(Boolean(condition.value))}
                           onValueChange={(next: string) => {
                             updateCondition(conditionIndex, {
@@ -440,7 +440,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         />
                       ) : selectedParamEntry?.spec?.kind === 'enum' &&
                         selectedParamEntry.spec.enumOptions ? (
-                          <UnifiedSelect
+                          <SelectSimple size='sm'
                             value={String(condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? '')}
                             onValueChange={(next: string) => {
                               updateCondition(conditionIndex, {
@@ -629,7 +629,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 <div className='grid gap-3 md:grid-cols-2'>
                   <div className='space-y-1'>
                     <Label className='text-[11px] text-gray-400'>Type</Label>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={selectedSegment.type}
                       onValueChange={(value: string) => {
                         updateSegment(selectedSegment.id, (current) => ({
@@ -682,7 +682,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 {selectedSegment.type === 'metadata' ? (
                   <div className='space-y-1'>
                     <Label className='text-[11px] text-gray-400'>Metadata Mode</Label>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={selectedSegment.includeInOutput ? 'include' : 'omit'}
                       onValueChange={(value: string) => {
                         updateSegment(selectedSegment.id, (current) => ({
@@ -731,7 +731,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                 <div className='grid gap-2 lg:grid-cols-[220px_minmax(0,1fr)]'>
                                   <div className='space-y-1'>
                                     <Label className='text-[10px] text-gray-500'>Selector</Label>
-                                    <UnifiedSelect
+                                    <SelectSimple size='sm'
                                       value={entry.selector}
                                       onValueChange={(next: string) => {
                                         updateParameterSelector(selectedSegment.id, entry.path, next);
@@ -778,7 +778,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                             </Button>
                                           </div>
                                         ) : (
-                                          <UnifiedSelect
+                                          <SelectSimple size='sm'
                                             value={entry.value ? 'true' : 'false'}
                                             onValueChange={(next: string) => {
                                               updateParameterValue(
@@ -833,7 +833,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                             }}
                                           />
                                         ) : (
-                                          <UnifiedSelect
+                                          <SelectSimple size='sm'
                                             value={entry.value}
                                             onValueChange={(next: string) => {
                                               updateParameterValue(
@@ -902,14 +902,14 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                               <div className='text-[10px] text-gray-500'>{label}</div>
                                               <Input
                                                 type='number'
-                                                value={String((entry.value as any[])[index] ?? '')}
+                                                value={String((entry.value as unknown[])[index] ?? '')}
                                                 min={entry.spec?.min ?? 0}
                                                 max={entry.spec?.max ?? 255}
                                                 step={entry.spec?.step ?? 1}
                                                 onChange={(event) => {
                                                   const next = Number(event.target.value);
                                                   if (!Number.isFinite(next)) return;
-                                                  const nextRgb = [...(entry.value as any[])];
+                                                  const nextRgb = [...(entry.value as unknown[])];
                                                   nextRgb[index] = next;
                                                   updateParameterValue(
                                                     selectedSegment.id,
@@ -932,14 +932,14 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                               <div className='text-[10px] text-gray-500'>{label}</div>
                                               <Input
                                                 type='number'
-                                                value={String((entry.value as any[])[index] ?? '')}
+                                                value={String((entry.value as unknown[])[index] ?? '')}
                                                 min={entry.spec?.min}
                                                 max={entry.spec?.max}
                                                 step={entry.spec?.step ?? 1}
                                                 onChange={(event) => {
                                                   const next = Number(event.target.value);
                                                   if (!Number.isFinite(next)) return;
-                                                  const nextTuple = [...(entry.value as any[])];
+                                                  const nextTuple = [...(entry.value as unknown[])];
                                                   nextTuple[index] = next;
                                                   updateParameterValue(
                                                     selectedSegment.id,
@@ -1442,7 +1442,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                             <div className='grid gap-2 md:grid-cols-4'>
                               <div className='space-y-1'>
                                 <Label className='text-[10px] text-gray-500'>Operator</Label>
-                                <UnifiedSelect
+                                <SelectSimple size='sm'
                                   value={operatorValue}
                                   onValueChange={(next: string) => {
                                     if (next === 'none') {
@@ -1475,7 +1475,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
 
                               <div className='space-y-1'>
                                 <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
-                                <UnifiedSelect
+                                <SelectSimple size='sm'
                                   value={paramPath}
                                   onValueChange={(next: string) => {
                                     patchCondition({
@@ -1492,7 +1492,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
 
                               <div className='space-y-1'>
                                 <Label className='text-[10px] text-gray-500'>Comparator</Label>
-                                <UnifiedSelect
+                                <SelectSimple size='sm'
                                   value={comparatorValue}
                                   onValueChange={(next: string) => {
                                     if (!isLogicalComparator(next)) return;
@@ -1515,7 +1515,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                 <Label className='text-[10px] text-gray-500'>Value</Label>
                                 {needsValue ? (
                                   selectedParamEntry?.spec?.kind === 'boolean' ? (
-                                    <UnifiedSelect
+                                    <SelectSimple size='sm'
                                       value={String(Boolean(parsedCondition?.value))}
                                       onValueChange={(next: string) => {
                                         patchCondition({
@@ -1638,7 +1638,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                     <div className='grid gap-2 md:grid-cols-2'>
                       <div className='space-y-1'>
                         <Label className='text-[11px] text-gray-400'>Template Merge Mode</Label>
-                        <UnifiedSelect
+                        <SelectSimple size='sm'
                           value={approvalDraft.templateMergeMode}
                           onValueChange={(value: string) => {
                             const nextMode = value as TemplateMergeMode;
@@ -1663,7 +1663,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                       {approvalDraft.templateMergeMode === 'target' ? (
                         <div className='space-y-1'>
                           <Label className='text-[11px] text-gray-400'>Merge Target Template</Label>
-                          <UnifiedSelect
+                          <SelectSimple size='sm'
                             value={approvalDraft.templateTargetId}
                             onValueChange={(value: string) => {
                               setApprovalDraft((previous) => ({
@@ -1768,7 +1768,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                       </div>
                       <div className='space-y-1'>
                         <Label className='text-[11px] text-gray-400'>Segment Type Hint</Label>
-                        <UnifiedSelect
+                        <SelectSimple size='sm'
                           value={approvalDraft.ruleSegmentType}
                           onValueChange={(value: string) => {
                             const nextSegmentType = value as PromptExploderSegment['type'];

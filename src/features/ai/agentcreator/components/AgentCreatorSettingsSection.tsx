@@ -1,7 +1,7 @@
 'use client';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator/hooks/useAgentCreatorSettings';
-import { Input, Checkbox, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 export function AgentCreatorSettingsSection(): React.ReactElement {
   const {
@@ -49,7 +49,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
 
             <FormField label='Browser'>
 
-              <UnifiedSelect
+              <SelectSimple size='sm'
 
                 value={agentBrowser}
 

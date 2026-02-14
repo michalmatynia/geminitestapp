@@ -26,7 +26,7 @@ import {
   FormModal,
   ConfirmDialog,
   RefreshButton,
-  UnifiedSelect,
+  SelectSimple,
   FormField,
 } from '@/shared/ui';
 
@@ -376,7 +376,7 @@ export function CrudPanel({
     <div ref={panelRef} className='space-y-4'>
       {/* Table selector */}
       <div className='flex flex-wrap items-center gap-3'>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={selectedTable}
           onValueChange={(v: string): void => {
             setSelectedTable(v);

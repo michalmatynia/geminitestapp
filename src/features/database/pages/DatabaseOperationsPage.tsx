@@ -11,7 +11,7 @@ import {
   TabsList,
   TabsTrigger,
   FormSection,
-  UnifiedSelect,
+  SelectSimple,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -30,7 +30,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
       description='Execute SQL queries and manage table data directly.'
       headerActions={
         <div className='flex items-center gap-2'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={dbType}
             onValueChange={(value: string): void =>
               setDbType(value as DatabaseType)

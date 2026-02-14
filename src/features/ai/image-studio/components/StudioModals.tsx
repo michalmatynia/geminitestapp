@@ -18,7 +18,7 @@ import {
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
-import { UnifiedButton, UnifiedInput, Label, AppModal, UnifiedTextarea, useToast } from '@/shared/ui';
+import { Button, Input, Label, AppModal, Textarea, useToast } from '@/shared/ui';
 
 import {
   buildHeuristicControls,
@@ -789,7 +789,7 @@ export function StudioModals(): React.JSX.Element {
         size='xl'
       >
         <div className='mb-3 flex flex-wrap items-center gap-2'>
-          <UnifiedButton
+          <Button size='xs'
             type='button'
             variant='outline'
             onClick={() => {
@@ -803,7 +803,7 @@ export function StudioModals(): React.JSX.Element {
           >
             {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
             Upload From Computer
-          </UnifiedButton>
+          </Button>
           <span className='text-xs text-gray-400'>
             Or select existing files below.
           </span>
@@ -824,7 +824,7 @@ export function StudioModals(): React.JSX.Element {
         size='md'
       >
         <div className='space-y-4 text-sm text-gray-200'>
-          <UnifiedButton
+          <Button size='xs'
             variant='outline'
             onClick={() => {
               void handleCreateEmptySlot();
@@ -833,8 +833,8 @@ export function StudioModals(): React.JSX.Element {
             className='w-full'
           >
             Create Empty Card
-          </UnifiedButton>
-          <UnifiedButton
+          </Button>
+          <Button size='xs'
             onClick={() => {
               setSlotCreateOpen(false);
               setDriveImportMode('create');
@@ -845,8 +845,8 @@ export function StudioModals(): React.JSX.Element {
             className='w-full'
           >
             Create Card From Image
-          </UnifiedButton>
-          <UnifiedButton
+          </Button>
+          <Button size='xs'
             variant='outline'
             onClick={() => {
               setSlotCreateOpen(false);
@@ -857,7 +857,7 @@ export function StudioModals(): React.JSX.Element {
           >
             {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
             Create Card From Local Upload
-          </UnifiedButton>
+          </Button>
         </div>
       </AppModal>
 
@@ -872,7 +872,7 @@ export function StudioModals(): React.JSX.Element {
             <div className='grid gap-3 sm:grid-cols-2'>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Card Name</Label>
-                <UnifiedInput
+                <Input size='sm'
                   value={slotNameDraft}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotNameDraft(event.target.value)}
                   className='h-9'
@@ -880,7 +880,7 @@ export function StudioModals(): React.JSX.Element {
               </div>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Folder Path</Label>
-                <UnifiedInput
+                <Input size='sm'
                   value={slotFolderDraft}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotFolderDraft(event.target.value)}
                   placeholder='e.g. variants/red'
@@ -891,7 +891,7 @@ export function StudioModals(): React.JSX.Element {
 
             <div className='space-y-1'>
               <Label className='text-xs text-gray-400'>Image URL</Label>
-              <UnifiedInput
+              <Input size='sm'
                 value={slotImageUrlDraft}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(event.target.value)}
                 placeholder='/uploads/... or https://...'
@@ -901,7 +901,7 @@ export function StudioModals(): React.JSX.Element {
 
             <div className='space-y-1'>
               <Label className='text-xs text-gray-400'>Image Base64 (optional)</Label>
-              <UnifiedTextarea
+              <Textarea size='sm'
                 value={slotBase64Draft}
                 onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(event.target.value)}
                 className='h-28 font-mono text-[11px]'
@@ -912,7 +912,7 @@ export function StudioModals(): React.JSX.Element {
             <div className='space-y-2'>
               <div className='flex items-center justify-between gap-2'>
                 <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
-                <UnifiedButton
+                <Button size='xs'
                   type='button'
                   variant='outline'
                   size='sm'
@@ -923,7 +923,7 @@ export function StudioModals(): React.JSX.Element {
                 >
                   {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
                   Refresh
-                </UnifiedButton>
+                </Button>
               </div>
               <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
                 {linkedRunsQuery.isLoading ? (
@@ -969,7 +969,7 @@ export function StudioModals(): React.JSX.Element {
                             {formatLinkedVariantTimestamp(variant.runCreatedAt)}
                           </div>
                         </div>
-                        <UnifiedButton
+                        <Button size='xs'
                           type='button'
                           size='sm'
                           variant='outline'
@@ -980,7 +980,7 @@ export function StudioModals(): React.JSX.Element {
                         >
                           {isApplying ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
                           Use On Card
-                        </UnifiedButton>
+                        </Button>
                       </div>
                     );
                   })
@@ -989,7 +989,7 @@ export function StudioModals(): React.JSX.Element {
             </div>
 
             <div className='flex flex-wrap items-center gap-2'>
-              <UnifiedButton
+              <Button size='xs'
                 type='button'
                 variant='outline'
                 onClick={() => {
@@ -1000,8 +1000,8 @@ export function StudioModals(): React.JSX.Element {
                 }}
               >
                 Replace From Drive
-              </UnifiedButton>
-              <UnifiedButton
+              </Button>
+              <Button size='xs'
                 type='button'
                 variant='outline'
                 onClick={() => {
@@ -1012,8 +1012,8 @@ export function StudioModals(): React.JSX.Element {
               >
                 {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
                 Replace From Local Upload
-              </UnifiedButton>
-              <UnifiedButton
+              </Button>
+              <Button size='xs'
                 type='button'
                 variant='outline'
                 onClick={() => {
@@ -1022,8 +1022,8 @@ export function StudioModals(): React.JSX.Element {
                 disabled={slotUpdateBusy}
               >
                 Clear Image
-              </UnifiedButton>
-              <UnifiedButton
+              </Button>
+              <Button size='xs'
                 type='button'
                 onClick={() => {
                   void handleSaveInlineSlot();
@@ -1032,7 +1032,7 @@ export function StudioModals(): React.JSX.Element {
               >
                 {slotUpdateBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
                 Save Card
-              </UnifiedButton>
+              </Button>
             </div>
           </div>
         ) : (
@@ -1049,7 +1049,7 @@ export function StudioModals(): React.JSX.Element {
         <div className='space-y-4'>
           <div className='space-y-1'>
             <Label className='text-xs text-gray-400'>Prompt Source</Label>
-            <UnifiedTextarea
+            <Textarea size='sm'
               value={extractDraftPrompt}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setExtractDraftPrompt(event.target.value)}
               className='h-36 font-mono text-[11px]'
@@ -1058,7 +1058,7 @@ export function StudioModals(): React.JSX.Element {
           </div>
 
           <div className='flex flex-wrap items-center gap-2'>
-            <UnifiedButton
+            <Button size='xs'
               type='button'
               onClick={() => {
                 void handleSmartExtraction();
@@ -1067,8 +1067,8 @@ export function StudioModals(): React.JSX.Element {
             >
               {extractBusy === 'smart' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
               Smart Extract
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button size='xs'
               type='button'
               variant='outline'
               onClick={() => {
@@ -1078,8 +1078,8 @@ export function StudioModals(): React.JSX.Element {
             >
               {extractBusy === 'programmatic' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
               Programmatic Extract
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button size='xs'
               type='button'
               variant='outline'
               onClick={() => {
@@ -1089,8 +1089,8 @@ export function StudioModals(): React.JSX.Element {
             >
               {extractBusy === 'ai' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
               AI Only
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button size='xs'
               type='button'
               variant='outline'
               onClick={() => {
@@ -1100,14 +1100,14 @@ export function StudioModals(): React.JSX.Element {
             >
               {extractBusy === 'ui' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
               Suggest Selectors
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button size='xs'
               type='button'
               onClick={handleApplyExtraction}
               disabled={!previewParams}
             >
               Apply
-            </UnifiedButton>
+            </Button>
           </div>
 
           {extractError ? (

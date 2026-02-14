@@ -13,7 +13,7 @@ import {
   Label,
   SectionHeader,
   Textarea,
-  UnifiedSelect,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 import {
@@ -376,7 +376,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
               <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Placeholder Preset</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={profile.placeholders.preset}
                     options={folderTreePlaceholderPresetOptions.map((option) => ({
                       value: option.value,
@@ -396,7 +396,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Placeholder Style</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={profile.placeholders.style}
                     options={folderTreePlaceholderStyleValues.map((value) => ({
                       value,
@@ -416,7 +416,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Placeholder Emphasis</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={profile.placeholders.emphasis}
                     options={folderTreePlaceholderEmphasisValues.map((value) => ({
                       value,
@@ -436,7 +436,7 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
                 <div className='space-y-2'>
                   <Label className='text-xs text-gray-300'>Selection Behavior</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={profile.interactions.selectionBehavior}
                     options={folderTreeSelectionBehaviorOptions}
                     onValueChange={(value: string): void => {

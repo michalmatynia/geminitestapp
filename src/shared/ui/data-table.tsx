@@ -6,18 +6,22 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
+  getExpandedRowModel,
   SortingState,
   useReactTable,
   Table as ReactTable,
   RowSelectionState,
+  ExpandedState,
   OnChangeFn,
   RowData,
+  Row,
 } from '@tanstack/react-table';
 import { Loader2 } from 'lucide-react';
 import React, { JSX, memo, useEffect, useMemo, useState } from 'react';
 
 import { EmptyState } from './empty-state';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
+import { cn } from '@/shared/utils';
 
 
 interface DataTableProps<TData> {
@@ -29,9 +33,13 @@ interface DataTableProps<TData> {
   footer?: (table: ReactTable<TData>) => React.ReactNode;
   rowSelection?: RowSelectionState;
   onRowSelectionChange?: OnChangeFn<RowSelectionState>;
+  expanded?: ExpandedState;
+  onExpandedChange?: OnChangeFn<ExpandedState>;
+  renderRowDetails?: (props: { row: Row<TData> }) => React.ReactNode;
   isLoading?: boolean;
   skeletonRows?: React.ReactNode;
   meta?: Record<string, unknown>;
+  className?: string;
 }
 
 declare module '@tanstack/react-table' {
@@ -51,16 +59,23 @@ export const DataTable = memo(function DataTable<TData>({
   footer,
   rowSelection: controlledRowSelection,
   onRowSelectionChange: controlledOnRowSelectionChange,
+  expanded: controlledExpanded,
+  onExpandedChange: controlledOnExpandedChange,
+  renderRowDetails,
   isLoading = false,
   skeletonRows,
   meta,
+  className,
 }: DataTableProps<TData>) {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
+  const [internalExpanded, setInternalExpanded] = useState<ExpandedState>({});
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const queryClient = useQueryClient();
 
   const rowSelection = controlledRowSelection ?? internalRowSelection;
   const onRowSelectionChange = controlledOnRowSelectionChange ?? setInternalRowSelection;
+  const expanded = controlledExpanded ?? internalExpanded;
+  const onExpandedChange = controlledOnExpandedChange ?? setInternalExpanded;
 
   useEffect(() => {
     if (!sortingStorageKey) return;
@@ -102,18 +117,21 @@ export const DataTable = memo(function DataTable<TData>({
     getRowId: getRowId as (row: TData) => string,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: onRowSelectionChange,
+    onExpandedChange: onExpandedChange,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     onSortingChange: setSorting,
     state: {
       rowSelection,
       sorting,
+      expanded,
     },
     meta: tableMeta,
   });
 
   return (
-    <div className='rounded-md border border-border'>
+    <div className={cn('rounded-md border border-border', className)}>
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
@@ -150,18 +168,26 @@ export const DataTable = memo(function DataTable<TData>({
             )
           ) : table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && 'selected'}
-                className='border-border'
-                data-row-id={getRowId ? getRowId(row.original) : undefined}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className='text-muted-foreground'>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
+              <React.Fragment key={row.id}>
+                <TableRow
+                  data-state={row.getIsSelected() && 'selected'}
+                  className='border-border'
+                  data-row-id={getRowId ? getRowId(row.original) : undefined}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className='text-muted-foreground'>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+                {row.getIsExpanded() && renderRowDetails && (
+                  <TableRow className='border-border bg-muted/30'>
+                    <TableCell colSpan={columns.length} className='p-0'>
+                      {renderRowDetails({ row })}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </React.Fragment>
             ))
           ) : (
             <TableRow>

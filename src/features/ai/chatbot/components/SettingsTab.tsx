@@ -6,7 +6,7 @@ import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
 import { logClientError } from '@/features/observability';
 import type { PlaywrightPersona } from '@/features/playwright/types';
-import { Button, UnifiedSelect, Checkbox, useToast, FormSection, FormField } from '@/shared/ui';
+import { Button, SelectSimple, Checkbox, useToast, FormSection, FormField } from '@/shared/ui';
 
 import { useChatbot } from '../context/ChatbotContext';
 
@@ -80,7 +80,7 @@ export function SettingsTab(): React.JSX.Element {
       <FormSection title='General Settings' variant='subtle' className='p-4'>
         <div className='grid gap-4 md:grid-cols-2 mt-4'>
           <FormField label='Model'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={model}
               onValueChange={(value: string): void => setModel(value)}
               options={modelOptions.map((opt: string) => ({ value: opt, label: opt }))}
@@ -88,7 +88,7 @@ export function SettingsTab(): React.JSX.Element {
             />
           </FormField>
           <FormField label='Search Provider'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={searchProvider}
               onValueChange={(value: string): void => setSearchProvider(value)}
               options={[
@@ -144,7 +144,7 @@ export function SettingsTab(): React.JSX.Element {
           ) : (
             <div className='grid gap-4 md:grid-cols-2 mt-4'>
               <FormField label='Persona'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={playwrightPersonaId ?? 'custom'}
                   onValueChange={handlePersonaChange}
                   options={[

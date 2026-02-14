@@ -23,7 +23,7 @@ import {
 } from '@/features/filemaker/settings';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { AppModal, Button, Input, Label, Textarea, UnifiedSelect, useToast } from '@/shared/ui';
+import { AppModal, Button, Input, Label, Textarea, SelectSimple, useToast } from '@/shared/ui';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
@@ -998,7 +998,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             <div className='grid gap-3 md:grid-cols-2'>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Addresser</Label>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={encodeFilemakerPartyReference(activeFile.addresser)}
                   onValueChange={(value: string): void => {
                     handleUpdateActiveFileParties({
@@ -1015,7 +1015,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               </div>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Addressee</Label>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={encodeFilemakerPartyReference(activeFile.addressee)}
                   onValueChange={(value: string): void => {
                     handleUpdateActiveFileParties({
@@ -1108,7 +1108,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               <div className='grid gap-3 md:grid-cols-2'>
                 <div className='space-y-1'>
                   <Label className='text-xs text-gray-400'>Addresser</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
                     onValueChange={(value: string): void => {
                       const nextAddresser = decodeFilemakerPartyReference(value);
@@ -1128,7 +1128,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 </div>
                 <div className='space-y-1'>
                   <Label className='text-xs text-gray-400'>Addressee</Label>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
                     onValueChange={(value: string): void => {
                       const nextAddressee = decodeFilemakerPartyReference(value);

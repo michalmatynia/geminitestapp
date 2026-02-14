@@ -5,12 +5,6 @@
  
  
  
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
- 
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import 'server-only';
 
 import {
@@ -1604,7 +1598,7 @@ async function syncMongoToPrisma(
     );
     const docs = await mongo.collection('integration_connections').find({}).toArray();
     const warnings: string[] = [];
-    const byIntegration = new Map<string, { doc: any; updatedAt: Date }>();
+    const byIntegration = new Map<string,  { doc: Record<string, unknown>; updatedAt: Date }>();
     docs.forEach((doc: Record<string, unknown>) => {
       const id = normalizeId(doc);
       const integrationId = (doc as { integrationId?: string }).integrationId ?? '';
@@ -1628,7 +1622,7 @@ async function syncMongoToPrisma(
       byIntegration.set(integrationId, { doc, updatedAt });
     });
     const data = Array.from(byIntegration.values()).map(({ doc }) => ({
-      id: normalizeId(doc as Record<string, unknown>),
+      id: normalizeId(doc),
       integrationId: (doc as { integrationId?: string }).integrationId ?? '',
       name: (doc as { name?: string }).name ?? 'Connection',
       username: (doc as { username?: string }).username ?? '',
@@ -1690,7 +1684,7 @@ async function syncMongoToPrisma(
     );
     const docs = await mongo.collection('product_listings').find({}).toArray();
     const warnings: string[] = [];
-    const byKey = new Map<string, { doc: any; updatedAt: Date }>();
+    const byKey = new Map<string,  { doc: Record<string, unknown>; updatedAt: Date }>();
     docs.forEach((doc: Record<string, unknown>) => {
       const id = normalizeId(doc);
       const productId = (doc as { productId?: string }).productId ?? '';
@@ -1724,10 +1718,10 @@ async function syncMongoToPrisma(
       const connectionId = (doc as { connectionId?: string }).connectionId ?? '';
       const resolvedIntegrationId = connectionMap.get(connectionId) ?? (doc as { integrationId?: string }).integrationId ?? '';
       if ((doc as { integrationId?: string }).integrationId && (doc as { integrationId?: string }).integrationId !== resolvedIntegrationId) {
-        warnings.push(`Product listing ${normalizeId(doc as Record<string, unknown>)}: corrected integrationId to match connection`);
+        warnings.push(`Product listing ${normalizeId(doc)}: corrected integrationId to match connection`);
       }
       return {
-        id: normalizeId(doc as Record<string, unknown>),
+        id: normalizeId(doc),
         productId: (doc as { productId?: string }).productId ?? '',
         integrationId: resolvedIntegrationId,
         connectionId,
@@ -1780,11 +1774,11 @@ async function syncMongoToPrisma(
           supplierLink: (doc as { supplierLink?: string | null }).supplierLink ?? null,
           priceComment: (doc as { priceComment?: string | null }).priceComment ?? null,
           stock: (doc as { stock?: number | null }).stock ?? null,
-          catalogIds: (doc as { catalogIds?: any[] }).catalogIds ?? [],
+          catalogIds: (doc as { catalogIds?: unknown[] }).catalogIds ?? [],
           categoryId: (doc as { categoryId?: string | null }).categoryId ?? null,
-          tagIds: (doc as { tagIds?: any[] }).tagIds ?? [],
-          producerIds: (doc as { producerIds?: any[] }).producerIds ?? [],
-          parameters: (doc as { parameters?: any[] }).parameters ?? [],
+          tagIds: (doc as { tagIds?: unknown[] }).tagIds ?? [],
+          producerIds: (doc as { producerIds?: unknown[] }).producerIds ?? [],
+          parameters: (doc as { parameters?: unknown[] }).parameters ?? [],
           defaultPriceGroupId: (doc as { defaultPriceGroupId?: string | null }).defaultPriceGroupId ?? null,
           active: (doc as { active?: boolean | null }).active ?? true,
           icon: (doc as { icon?: string | null }).icon ?? null,
@@ -1794,7 +1788,7 @@ async function syncMongoToPrisma(
             && /^#[0-9a-fA-F]{6}$/.test(((doc as { iconColor?: string | null }).iconColor as string).trim())
               ? ((doc as { iconColor?: string | null }).iconColor as string).trim().toLowerCase()
               : null,
-          imageLinks: (doc as { imageLinks?: any[] }).imageLinks ?? [],
+          imageLinks: (doc as { imageLinks?: unknown[] }).imageLinks ?? [],
           baseProductId: (doc as { baseProductId?: string | null }).baseProductId ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
@@ -1837,9 +1831,9 @@ async function syncMongoToPrisma(
         return {
           id,
           name: (doc as { name?: string }).name ?? id,
-          colors: (doc as { colors?: any }).colors ?? {},
-          typography: (doc as { typography?: any }).typography ?? {},
-          spacing: (doc as { spacing?: any }).spacing ?? {},
+          colors: (doc as { colors?: unknown }).colors ?? {},
+          typography: (doc as { typography?: unknown }).typography ?? {},
+          spacing: (doc as { spacing?: unknown }).spacing ?? {},
           customCss: (doc as { customCss?: string | null }).customCss ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
@@ -2273,7 +2267,7 @@ async function syncMongoToPrisma(
 
     const collection = mongo.collection('notes');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: notes.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2322,8 +2316,8 @@ async function syncMongoToPrisma(
           productId,
           status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? 'pending',
           type: (doc as { type?: string }).type ?? 'description_generation',
-          payload: (doc as { payload?: any }).payload ?? {},
-          result: (doc as { result?: any }).result ?? null,
+          payload: (doc as { payload?: unknown }).payload ?? {},
+          result: (doc as { result?: unknown }).result ?? null,
           errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           startedAt: toDate((doc as { startedAt?: Date | string | null }).startedAt),
@@ -2351,10 +2345,10 @@ async function syncMongoToPrisma(
           status: ((doc as { status?: string }).status as AiPathRunStatus) ?? 'queued',
           triggerEvent: (doc as { triggerEvent?: string | null }).triggerEvent ?? null,
           triggerNodeId: (doc as { triggerNodeId?: string | null }).triggerNodeId ?? null,
-          triggerContext: (doc as { triggerContext?: any | null }).triggerContext ?? null,
-          graph: (doc as { graph?: any | null }).graph ?? null,
-          runtimeState: (doc as { runtimeState?: any | null }).runtimeState ?? null,
-          meta: (doc as { meta?: any | null }).meta ?? null,
+          triggerContext: (doc as { triggerContext?: unknown }).triggerContext ?? null,
+          graph: (doc as { graph?: unknown }).graph ?? null,
+          runtimeState: (doc as { runtimeState?: unknown }).runtimeState ?? null,
+          meta: (doc as { meta?: unknown }).meta ?? null,
           entityId: (doc as { entityId?: string | null }).entityId ?? null,
           entityType: (doc as { entityType?: string | null }).entityType ?? null,
           errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
@@ -2392,8 +2386,8 @@ async function syncMongoToPrisma(
           nodeTitle: (doc as { nodeTitle?: string | null }).nodeTitle ?? null,
           status: ((doc as { status?: string }).status as AiPathNodeStatus) ?? 'pending',
           attempt: (doc as { attempt?: number }).attempt ?? 0,
-          inputs: (doc as { inputs?: any | null }).inputs ?? null,
-          outputs: (doc as { outputs?: any | null }).outputs ?? null,
+          inputs: (doc as { inputs?: unknown }).inputs ?? null,
+          outputs: (doc as { outputs?: unknown }).outputs ?? null,
           errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
@@ -2420,7 +2414,7 @@ async function syncMongoToPrisma(
           runId,
           level: ((doc as { level?: string }).level as AiPathRunEventLevel) ?? 'info',
           message: (doc as { message?: string }).message ?? '',
-          metadata: (doc as { metadata?: any | null }).metadata ?? null,
+          metadata: (doc as { metadata?: unknown }).metadata ?? null,
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
         };
       })
@@ -2507,7 +2501,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('settings');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2524,7 +2518,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('users');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     const result: {
       sourceCount: number;
       targetDeleted: number;
@@ -2560,7 +2554,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('accounts');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2575,7 +2569,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('sessions');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2588,7 +2582,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('verification_tokens');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2609,7 +2603,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('auth_security_profiles');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2627,7 +2621,7 @@ async function syncPrismaToMongo(
     });
     const collection = mongo.collection('auth_login_challenges');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2645,7 +2639,7 @@ async function syncPrismaToMongo(
     });
     const collection = mongo.collection('auth_security_attempts');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2664,7 +2658,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('user_preferences');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return {
       sourceCount: rows.length,
       targetDeleted: deleted.deletedCount ?? 0,
@@ -2692,7 +2686,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('system_logs');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2718,7 +2712,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('file_upload_events');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2742,7 +2736,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('ai_configurations');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2764,7 +2758,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('chatbot_sessions');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: sessions.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2784,7 +2778,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('chatbot_jobs');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2801,7 +2795,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('currencies');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2818,7 +2812,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('countries');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2830,7 +2824,7 @@ async function syncPrismaToMongo(
       code: row.code,
       name: row.name,
       nativeName: row.nativeName ?? null,
-      countries: row.countries.map((entry: { countryId: string; country: { id: string; code: any; name: string } }) => ({
+      countries: row.countries.map((entry: { countryId: string; country: { id: string; code: string; name: string } }) => ({
         countryId: entry.countryId,
         country: {
           id: entry.country.id,
@@ -2843,7 +2837,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('languages');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2867,7 +2861,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('price_groups');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2890,7 +2884,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('catalogs');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2909,7 +2903,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('product_categories');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2926,7 +2920,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('product_tags');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2942,7 +2936,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('product_producers');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2960,7 +2954,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('product_parameters');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -2981,7 +2975,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('image_files');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3005,7 +2999,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('image_studio_slots');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3023,10 +3017,10 @@ async function syncPrismaToMongo(
       prisma.catalog.findMany({ include: { languages: true } }),
     ]);
     const catalogLanguageMap = new Map(
-      catalogRows.map((catalog: any) => [
+      catalogRows.map((catalog) => [
         catalog.id,
         catalog.languages
-          .sort((a: any, b: any) => a.position - b.position)
+          .sort((a, b) => a.position - b.position)
           .map((entry: { languageId: string }) => entry.languageId),
       ])
     );
@@ -3078,7 +3072,7 @@ async function syncPrismaToMongo(
             updatedAt: image.imageFile.updatedAt,
           },
         })),
-        catalogs: product.catalogs.map((entry: any) => ({
+        catalogs: product.catalogs.map((entry) => ({
           productId: entry.productId,
           catalogId: entry.catalogId,
           assignedAt: entry.assignedAt,
@@ -3105,22 +3099,21 @@ async function syncPrismaToMongo(
             },
           ]
           : [],
-        tags: product.tags.map((entry: any) => ({
+        tags: product.tags.map((entry) => ({
           productId: entry.productId,
           tagId: entry.tagId,
           assignedAt: entry.assignedAt,
         })),
-        producers: product.producers.map((entry: any) => ({
+        producers: product.producers.map((entry) => ({
           productId: entry.productId,
           producerId: entry.producerId,
           assignedAt: entry.assignedAt,
         })),
       };
     });
-
     const collection = mongo.collection('products');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3136,7 +3129,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('integrations');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3184,7 +3177,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('integration_connections');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3206,7 +3199,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('product_listings');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3253,7 +3246,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('product_drafts');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3269,7 +3262,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('cms_slugs');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3288,7 +3281,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('cms_themes');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3309,7 +3302,7 @@ async function syncPrismaToMongo(
       showMenu: row.showMenu ?? true,
       components: row.components
         .sort((a: { order: number }, b: { order: number }) => a.order - b.order)
-        .map((component: { type: string; content: any }) => ({
+        .map((component: { type: string; content: unknown }) => ({
           type: component.type,
           content: component.content ?? {},
         })),
@@ -3318,7 +3311,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('cms_pages');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3331,7 +3324,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('cms_page_slugs');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3347,7 +3340,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('cms_domains');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3363,7 +3356,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('cms_domain_slugs');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3385,7 +3378,7 @@ async function syncPrismaToMongo(
     const noteMap = new Map(notes.map((note) => [note.id, note]));
 
     const docs = notes.map((note) => {
-      const tagEntries = note.tags.map((entry: any) => {
+      const tagEntries = note.tags.map((entry) => {
         const tag = tagMap.get(entry.tagId);
         return {
           noteId: entry.noteId,
@@ -3403,7 +3396,7 @@ async function syncPrismaToMongo(
             : { id: entry.tagId, name: '', color: null, notebookId: null, createdAt: note.createdAt, updatedAt: note.updatedAt },
         };
       });
-      const categoryEntries = note.categories.map((entry: any) => {
+      const categoryEntries = note.categories.map((entry) => {
         const category = categoryMap.get(entry.categoryId);
         return {
           noteId: entry.noteId,
@@ -3425,7 +3418,7 @@ async function syncPrismaToMongo(
             : { id: entry.categoryId, name: '', description: null, color: null, parentId: null, themeId: null, notebookId: null, sortIndex: 0, createdAt: note.createdAt, updatedAt: note.updatedAt },
         };
       });
-      const relationsFrom = note.relationsFrom.map((entry: any) => {
+      const relationsFrom = note.relationsFrom.map((entry) => {
         const target = noteMap.get(entry.targetNoteId);
         return {
           sourceNoteId: entry.sourceNoteId,
@@ -3436,7 +3429,6 @@ async function syncPrismaToMongo(
             : { id: entry.targetNoteId, title: '', color: null },
         };
       });
-
       return {
         _id: note.id,
         id: note.id,
@@ -3471,7 +3463,7 @@ async function syncPrismaToMongo(
 
     const collection = mongo.collection('notes');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: notes.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3493,7 +3485,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('noteFiles');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: files.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3510,7 +3502,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('tags');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3531,7 +3523,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('categories');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3548,7 +3540,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('notebooks');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3574,7 +3566,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('themes');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3595,7 +3587,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('product_ai_jobs');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3628,7 +3620,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('ai_path_runs');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3653,7 +3645,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('ai_path_run_nodes');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 
@@ -3670,7 +3662,7 @@ async function syncPrismaToMongo(
     }));
     const collection = mongo.collection('ai_path_run_events');
     const deleted = await collection.deleteMany({});
-    if (docs.length) await collection.insertMany(docs as any[]);
+    if (docs.length) await collection.insertMany(docs as Record<string, unknown>[]);
     return { sourceCount: rows.length, targetDeleted: deleted.deletedCount ?? 0, targetInserted: docs.length };
   });
 }

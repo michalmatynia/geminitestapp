@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { PromptExploderRuleSegmentType } from '@/features/prompt-engine/settings';
-import { Button, Input, Label, StatusToggle, Textarea, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, StatusToggle, Textarea, SelectSimple } from '@/shared/ui';
 
 import { usePromptExploderParserTuningContext } from './PromptExploderParserTuningContext';
 
@@ -87,7 +87,7 @@ export function PromptExploderParserTuningPanel(): React.JSX.Element {
               </div>
               <div className='space-y-1'>
                 <Label className='text-[10px] text-gray-500'>Type Hint</Label>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={draft.promptExploderSegmentType ?? 'none'}
                   onValueChange={(value: string) => {
                     onPatchDraft(draft.id, {

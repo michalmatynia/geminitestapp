@@ -3,7 +3,7 @@
 import { Link2, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, FormSection, Input, UnifiedSelect } from '@/shared/ui';
+import { Button, FormSection, Input, SelectSimple } from '@/shared/ui';
 
 import { useBindingsState, useBindingsActions } from '../context/hooks/useBindings';
 import { useDocumentState } from '../context/hooks/useDocument';
@@ -42,7 +42,7 @@ export function BindingsPanel(): React.JSX.Element {
           <div className='rounded border border-border/50 bg-card/20 p-2'>
             <div className='grid gap-2'>
               <div className='grid gap-2 md:grid-cols-3'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={bindingDraft.type}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -56,7 +56,7 @@ export function BindingsPanel(): React.JSX.Element {
                     { value: 'uses_param', label: 'Uses Param' },
                   ]}
                 />
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={bindingDraft.fromSegmentId}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -67,7 +67,7 @@ export function BindingsPanel(): React.JSX.Element {
                   }}
                   options={segmentOptions}
                 />
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={bindingDraft.fromSubsectionId}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -79,7 +79,7 @@ export function BindingsPanel(): React.JSX.Element {
                 />
               </div>
               <div className='grid gap-2 md:grid-cols-2'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={bindingDraft.toSegmentId}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({
@@ -90,7 +90,7 @@ export function BindingsPanel(): React.JSX.Element {
                   }}
                   options={segmentOptions}
                 />
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={bindingDraft.toSubsectionId}
                   onValueChange={(value: string) => {
                     setBindingDraft((previous) => ({

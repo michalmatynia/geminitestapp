@@ -4,7 +4,7 @@ import React from 'react';
 
 import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import { Input, ItemLibrary, UnifiedSelect, Textarea, useToast, Checkbox, FormField } from '@/shared/ui';
+import { Input, ItemLibrary, SelectSimple, Textarea, useToast, Checkbox, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useAgentTeachingContext } from '../context/AgentTeachingContext';
@@ -160,7 +160,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
               label='LLM model'
               description='Model used to answer questions.'
             >
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={draft.llmModel ?? ''}
                 onValueChange={(value: string) => onChange({ llmModel: value })}
                 options={chatModels.map((model: string) => ({ value: model, label: model }))}
@@ -172,7 +172,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
               label='Embedding model'
               description='Must match the embedding collections you attach.'
             >
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={draft.embeddingModel ?? ''}
                 onValueChange={(value: string) => onChange({ embeddingModel: value })}
                 options={embeddingModels.map((model: string) => ({ value: model, label: model }))}

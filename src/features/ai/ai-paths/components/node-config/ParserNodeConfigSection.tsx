@@ -23,7 +23,7 @@ import {
   inferImageMappingPath,
   safeParseJson,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -382,7 +382,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Preset</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={presetId}
           onValueChange={(value: string) =>
             commitMappingsImmediate(draftMappings, outputMode, value)
@@ -412,7 +412,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       <div>
         <Label className='text-xs text-gray-400'>Sample JSON</Label>
         <div className='mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={sampleState.entityType}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -447,7 +447,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               placeholder='Entity ID'
             />
             {simulationOptions.length > 0 && (
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={sampleState.simulationId ?? ''}
                 onValueChange={(value: string) => {
                   const option = simulationOptions.find(
@@ -500,7 +500,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           placeholder='{ "id": "123", "title": "Sample" }'
         />
         <div className='mt-2 flex flex-wrap gap-2'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={sampleState.mappingMode}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -517,7 +517,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             ]}
             className='w-[180px]'
           />
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={String(sampleState.depth)}
             onValueChange={(value: string) =>
               setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -551,7 +551,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             {sampleState.includeContainers ? 'Containers: On' : 'Containers: Off'}
           </Button>
           {sampleState.mappingMode === 'flatten' && (
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={sampleState.keyStyle}
               onValueChange={(value: string) =>
                 setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -606,7 +606,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
 
       <div>
         <Label className='text-xs text-gray-400'>Output Mode</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={outputMode}
           onValueChange={(value: string) =>
             commitMappingsImmediate(
@@ -687,7 +687,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 }
                 placeholder='$.path.to.value'
               />
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 onValueChange={(value: string) => updateMappingPath(index, value)}
                 options={uniqueSuggestedPathOptions}
                 placeholder='Pick a suggested path'

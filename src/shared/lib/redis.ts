@@ -6,6 +6,31 @@ const REDIS_URL = process.env['REDIS_URL'];
 
 let redis: Redis | null = null;
 
+const TRANSIENT_REDIS_ERROR_CODES = new Set([
+  'EPIPE',
+  'ECONNRESET',
+  'ECONNREFUSED',
+  'ETIMEDOUT',
+]);
+
+const isTransientRedisTransportError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const code = (error as NodeJS.ErrnoException).code;
+  if (typeof code === 'string' && TRANSIENT_REDIS_ERROR_CODES.has(code.toUpperCase())) {
+    return true;
+  }
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('write epipe') ||
+    message.includes('read econnreset') ||
+    message.includes('econnreset') ||
+    message.includes('econnrefused') ||
+    message.includes('connection is closed') ||
+    message.includes('socket closed unexpectedly') ||
+    message.includes('timeout')
+  );
+};
+
 const captureException = async (error: unknown, context: { service: string; action: string }): Promise<void> => {
   try {
     // eslint-disable-next-line import/no-restricted-paths
@@ -25,6 +50,7 @@ if (REDIS_URL) {
     });
     
     redis.on('error', (err) => {
+      if (isTransientRedisTransportError(err)) return;
       void captureException(err, { service: 'redis', action: 'connection_error' });
     });
   } catch (error) {

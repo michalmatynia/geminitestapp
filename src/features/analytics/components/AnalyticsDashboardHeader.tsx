@@ -4,7 +4,7 @@ import type { AnalyticsScope } from '@/shared/types';
 import {
   Button,
   SectionHeader,
-  UnifiedSelect,
+  SelectSimple,
 } from '@/shared/ui';
 
 import { type AnalyticsRange } from '../api';
@@ -36,7 +36,7 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
           <>
             <div className='flex items-center gap-2'>
               <span className='text-xs text-gray-400'>Scope</span>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={scope}
                 onValueChange={(val: string): void =>
                   setScope(val as AnalyticsScope | 'all')
@@ -48,7 +48,7 @@ export function AnalyticsDashboardHeader(): React.JSX.Element {
 
             <div className='flex items-center gap-2'>
               <span className='text-xs text-gray-400'>Range</span>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={range}
                 onValueChange={(val: string): void =>
                   setRange(val as AnalyticsRange)

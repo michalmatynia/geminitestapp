@@ -22,7 +22,7 @@ import {
   MultiSelect,
   FormModal,
   Textarea,
-  UnifiedSelect,
+  SelectSimple,
   StatusToggle,
   FormField,
   FormSection,
@@ -95,7 +95,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <FormField label='Target'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={formData.target}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => {
@@ -123,7 +123,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           </FormField>
 
           <FormField label='Locale Context'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={isLocaleTarget(formData.target) ? formData.locale || 'any' : 'any'}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
@@ -158,7 +158,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <FormField label='Severity'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={formData.severity}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
@@ -170,7 +170,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
             />
           </FormField>
           <FormField label='Replacer Mode'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={formData.replacementMode}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
@@ -198,7 +198,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
               </FormField>
             ) : (
               <FormField label='Source Mode'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={formData.sourceMode}
                   onValueChange={(value: string): void =>
                     setFormData((prev: PatternFormData) => ({
@@ -228,7 +228,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
             />
           </FormField>
           <FormField label='Chain Mode'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={formData.chainMode}
               onValueChange={(value: string): void =>
                 setFormData((prev: PatternFormData) => ({
@@ -316,7 +316,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 label='Launch Scope Behavior'
                 description='`Gate` blocks pattern outside selected forms. `Condition Only` skips condition outside selected forms.'
               >
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={formData.launchScopeBehavior}
                   onValueChange={(value: string): void =>
                     setFormData((prev: PatternFormData) => ({
@@ -333,7 +333,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
               <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                 <FormField label='Launch Source Mode'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={formData.launchSourceMode}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
@@ -345,7 +345,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   />
                 </FormField>
                 <FormField label='Launch Operator'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={formData.launchOperator}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
@@ -374,7 +374,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
               {(formData.launchSourceMode === 'form_field' ||
                 formData.launchSourceMode === 'latest_product_field') && (
                 <FormField label='Launch Source Field'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={formData.launchSourceField || '__none__'}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
@@ -434,7 +434,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           {formData.runtimeEnabled && (
             <div className='mt-4 space-y-4'>
               <FormField label='Runtime Type'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={formData.runtimeType}
                   onValueChange={(value: string): void =>
                     setFormData((prev: PatternFormData) => ({
@@ -471,7 +471,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
             <div className='space-y-4 mt-4'>
               {(formData.sourceMode === 'form_field' || formData.sourceMode === 'latest_product_field') && (
                 <FormField label='Source Field'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={formData.sourceField || '__none__'}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
@@ -531,7 +531,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
               <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                 <FormField label='Math Operation'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={formData.mathOperation}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
@@ -556,7 +556,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   />
                 </FormField>
                 <FormField label='Round Mode'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={formData.roundMode}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
@@ -570,7 +570,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
               </div>
 
               <FormField label='Logic Operator'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={formData.logicOperator}
                   onValueChange={(value: string): void =>
                     setFormData((prev: PatternFormData) => ({
@@ -617,7 +617,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <FormSection title='When condition is TRUE' variant='subtle' className='p-3 space-y-3'>
                     <div className='mt-2 space-y-3'>
-                      <UnifiedSelect
+                      <SelectSimple size='sm'
                         value={formData.logicWhenTrueAction}
                         onValueChange={(value: string): void =>
                           setFormData((prev: PatternFormData) => ({
@@ -645,7 +645,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
                   <FormSection title='When condition is FALSE' variant='subtle' className='p-3 space-y-3'>
                     <div className='mt-2 space-y-3'>
-                      <UnifiedSelect
+                      <SelectSimple size='sm'
                         value={formData.logicWhenFalseAction}
                         onValueChange={(value: string): void =>
                           setFormData((prev: PatternFormData) => ({
@@ -675,7 +675,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
 
               <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 <FormField label='Result Assembly'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={formData.resultAssembly}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
@@ -687,7 +687,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   />
                 </FormField>
                 <FormField label='Apply To Target'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={formData.targetApply}
                     onValueChange={(value: string): void =>
                       setFormData((prev: PatternFormData) => ({
@@ -827,7 +827,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
         </FormField>
 
         <FormField label='After Replace Is Accepted'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={formData.postAcceptBehavior}
             onValueChange={(value: string): void =>
               setFormData((prev: PatternFormData) => ({
@@ -844,7 +844,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           label='Deny Policy Override'
           description='Override form-level deny policy for this pattern only.'
         >
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={formData.denyBehaviorOverride}
             onValueChange={(value: string): void =>
               setFormData((prev: PatternFormData) => ({

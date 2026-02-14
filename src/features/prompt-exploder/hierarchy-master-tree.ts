@@ -114,35 +114,36 @@ const readNodeMetadata = (node: MasterTreeNode): PromptExploderNodeMetadata | nu
 };
 
 const coerceLogicalConditions = (
-  conditions: any[] | null | undefined
+  conditions: unknown[] | null | undefined
 ): PromptExploderLogicalCondition[] => {
   if (!Array.isArray(conditions)) return [];
   const results: PromptExploderLogicalCondition[] = [];
 
   conditions.forEach((condition, index) => {
     if (!condition || typeof condition !== 'object') return;
-    const paramPath = typeof condition.paramPath === 'string' ? condition.paramPath.trim() : '';
+    const c = condition as Record<string, unknown>;
+    const paramPath = typeof c.paramPath === 'string' ? c.paramPath.trim() : '';
     const comparator =
-      typeof condition.comparator === 'string' &&
-        LOGICAL_COMPARATOR_VALUES.has(condition.comparator)
-        ? (condition.comparator as PromptExploderLogicalComparator)
+      typeof c.comparator === 'string' &&
+        LOGICAL_COMPARATOR_VALUES.has(c.comparator)
+        ? (c.comparator as PromptExploderLogicalComparator)
         : null;
     if (!paramPath || !comparator) return;
     const joinWithPrevious =
-      typeof condition.joinWithPrevious === 'string' &&
-        LOGICAL_JOIN_VALUES.has(condition.joinWithPrevious)
-        ? (condition.joinWithPrevious as PromptExploderLogicalJoin)
+      typeof c.joinWithPrevious === 'string' &&
+        LOGICAL_JOIN_VALUES.has(c.joinWithPrevious)
+        ? (c.joinWithPrevious as PromptExploderLogicalJoin)
         : index === 0
           ? null
           : 'and';
     results.push({
       id:
-        typeof condition.id === 'string' && condition.id.trim()
-          ? condition.id
+        typeof c.id === 'string' && c.id.trim()
+          ? c.id
           : `${Date.now().toString(36)}_${index + 1}`,
       paramPath,
       comparator,
-      value: condition.value ?? null,
+      value: c.value ?? null,
       joinWithPrevious,
     });
   });

@@ -106,6 +106,13 @@ const buildPayload = (
   return payload;
 };
 
+export interface LoggableObject extends Record<string, unknown> {
+  __logged?: boolean;
+}
+
+export const isLoggableObject = (error: unknown): error is LoggableObject =>
+  typeof error === 'object' && error !== null;
+
 export const logClientError = (
   error: unknown,
   extra?: {
@@ -115,8 +122,23 @@ export const logClientError = (
   }
 ): void => {
   if (typeof window === 'undefined') return;
+
+  // Prevent double logging of the same error instance
+  if (isLoggableObject(error) && error.__logged) {
+    return;
+  }
+
   const payload = buildPayload(error, extra);
   const body = JSON.stringify(payload);
+
+  // Mark error as logged
+  if (isLoggableObject(error)) {
+    try {
+      error.__logged = true;
+    } catch {
+      // Ignore frozen objects
+    }
+  }
 
   try {
     if (navigator.sendBeacon) {

@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 
 import {
   Badge,
@@ -27,36 +27,30 @@ import {
   Input,
   Pagination,
   SectionHeader,
-  
   FormSection,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
+  DataTable,
+  StatusBadge,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
-import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
+import { DatabaseProvider } from '../context/DatabaseContext';
+import { useDatabasePreviewState } from '../hooks/useDatabasePreviewState';
 
 import type {
   DatabaseColumnInfo,
-  DatabaseEnumInfo,
   DatabaseForeignKeyInfo,
   DatabaseIndexInfo,
-  DatabasePreviewGroup,
-  DatabasePreviewMode,
   DatabasePreviewRow,
-  DatabasePreviewTable,
   DatabaseTableDetail,
   DatabaseType,
+  DatabasePreviewMode,
 } from '../types';
+import type { ColumnDef } from '@tanstack/react-table';
 
 const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   TABLE: TableIcon,
@@ -86,7 +80,7 @@ function TableDetailCard({
   onManageTable?: (tableName: string) => void;
 }): React.JSX.Element {
   const [expanded, setExpanded] = useState(false);
-  const { tableRows } = useDatabase();
+  const { tableRows } = useDatabasePreviewState();
 
   const tableRow = useMemo(
     () => tableRows.find((r: DatabasePreviewRow) => r.name === detail.name),
@@ -94,31 +88,25 @@ function TableDetailCard({
   );
 
   return (
-    <div className='rounded-md border border-border bg-card/60'>
-      <div className='flex items-center justify-between px-4 py-3'>
-        <button
-          type='button'
-          onClick={(): void => setExpanded((prev: boolean) => !prev)}
-          className='flex flex-1 items-center gap-3 text-left'
-        >
+    <div className='rounded-md border border-border bg-card/60 overflow-hidden'>
+      <div className='flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer' onClick={() => setExpanded(!expanded)}>
+        <div className='flex flex-1 items-center gap-3'>
           <TableIcon className='size-4 text-emerald-300' />
           <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
-          <span className='text-xs text-gray-500'>
-            ~{detail.rowEstimate.toLocaleString()} rows
+          <span className='text-[10px] uppercase tracking-wider text-gray-500'>
+            {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
           </span>
-          <span className='text-xs text-gray-500'>{detail.sizeFormatted}</span>
-        </button>
+        </div>
         <div className='flex items-center gap-2'>
           {onQueryTable && (
             <Button
               variant='ghost'
-              size='sm'
+              size='xs'
               onClick={(e: React.MouseEvent): void => {
                 e.stopPropagation();
                 onQueryTable(detail.name);
               }}
-              className='h-6 gap-1 text-[10px] text-gray-400 hover:text-blue-300'
-              title={`SELECT * FROM "${detail.name}" LIMIT 20`}
+              className='h-7 gap-1 text-[10px] text-gray-400 hover:text-blue-300'
             >
               <PlayIcon className='size-3' />
               Query
@@ -127,26 +115,17 @@ function TableDetailCard({
           {onManageTable && (
             <Button
               variant='ghost'
-              size='sm'
+              size='xs'
               onClick={(e: React.MouseEvent): void => {
                 e.stopPropagation();
                 onManageTable(detail.name);
               }}
-              className='h-6 gap-1 text-[10px] text-gray-400 hover:text-emerald-300'
-              title='Manage rows'
+              className='h-7 gap-1 text-[10px] text-gray-400 hover:text-emerald-300'
             >
               <SettingsIcon className='size-3' />
               Manage
             </Button>
           )}
-          {detail.foreignKeys.length > 0 && (
-            <Badge variant='outline' className='text-[10px]'>
-              {detail.foreignKeys.length} FK{detail.foreignKeys.length !== 1 ? 's' : ''}
-            </Badge>
-          )}
-          <Badge variant='outline' className='text-[10px]'>
-            {detail.columns.length} cols
-          </Badge>
           {expanded ? (
             <ChevronDownIcon className='size-4 text-gray-400' />
           ) : (
@@ -156,36 +135,38 @@ function TableDetailCard({
       </div>
 
       {expanded && (
-        <div className='border-t border-border'>
+        <div className='border-t border-border bg-black/20'>
           <Tabs defaultValue='columns' className='w-full'>
-            <TabsList className='border-b border-border bg-transparent px-4'>
-              <TabsTrigger value='columns' className='text-xs'>
-                Columns ({detail.columns.length})
-              </TabsTrigger>
-              <TabsTrigger value='indexes' className='text-xs'>
-                Indexes ({detail.indexes.length})
-              </TabsTrigger>
-              <TabsTrigger value='foreignKeys' className='text-xs'>
-                Foreign Keys ({detail.foreignKeys.length})
-              </TabsTrigger>
-              <TabsTrigger value='data' className='text-xs'>
-                Data {tableRow ? `(${tableRow.totalRows})` : ''}
-              </TabsTrigger>
-            </TabsList>
+            <div className='px-4 pt-2'>
+              <TabsList className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'>
+                <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
+                  Columns ({detail.columns.length})
+                </TabsTrigger>
+                <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
+                  Indexes ({detail.indexes.length})
+                </TabsTrigger>
+                <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
+                  Foreign Keys ({detail.foreignKeys.length})
+                </TabsTrigger>
+                <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
+                  Preview {tableRow ? `(${tableRow.totalRows})` : ''}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <TabsContent value='columns' className='p-0'>
+            <TabsContent value='columns' className='mt-0'>
               <ColumnsTab columns={detail.columns} />
             </TabsContent>
 
-            <TabsContent value='indexes' className='p-0'>
+            <TabsContent value='indexes' className='mt-0'>
               <IndexesTab indexes={detail.indexes} />
             </TabsContent>
 
-            <TabsContent value='foreignKeys' className='p-0'>
+            <TabsContent value='foreignKeys' className='mt-0'>
               <ForeignKeysTab foreignKeys={detail.foreignKeys} />
             </TabsContent>
 
-            <TabsContent value='data' className='p-0'>
+            <TabsContent value='data' className='mt-0'>
               <DataTab tableRows={tableRow} />
             </TabsContent>
           </Tabs>
@@ -196,124 +177,132 @@ function TableDetailCard({
 }
 
 function ColumnsTab({ columns }: { columns: DatabaseColumnInfo[] }): React.JSX.Element {
-  if (columns.length === 0) {
-    return <p className='px-4 py-3 text-xs text-gray-500'>No columns found.</p>;
-  }
+  const tableColumns = useMemo<ColumnDef<DatabaseColumnInfo>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Column',
+      cell: ({ row }) => <span className='font-mono font-medium text-emerald-200'>{row.original.name}</span>,
+    },
+    {
+      accessorKey: 'type',
+      header: 'Type',
+      cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.type}</span>,
+    },
+    {
+      accessorKey: 'nullable',
+      header: 'Nullable',
+      cell: ({ row }) => (
+        <span className={row.original.nullable ? 'text-amber-400' : 'text-gray-500'}>
+          {row.original.nullable ? 'YES' : 'NO'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'defaultValue',
+      header: 'Default',
+      cell: ({ row }) => <span className='font-mono text-gray-400'>{row.original.defaultValue ?? '—'}</span>,
+    },
+    {
+      id: 'key',
+      header: 'Key',
+      cell: ({ row }) => row.original.isPrimaryKey && (
+        <Badge variant='secondary' className='h-5 gap-1 text-[9px] uppercase font-bold bg-amber-500/10 text-amber-300 border-amber-500/20'>
+          <KeyIcon className='size-2.5' />
+          PK
+        </Badge>
+      ),
+    },
+  ], []);
+
   return (
-    <div className='overflow-auto'>
-      <Table className='text-xs'>
-        <TableHeader>
-          <TableRow className='hover:bg-transparent'>
-            <TableHead className='px-4 py-2 font-medium'>Column</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>Type</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>Nullable</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>Default</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>Key</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {columns.map((col: DatabaseColumnInfo) => (
-            <TableRow key={col.name} className='text-gray-300'>
-              <TableCell className='px-4 py-2 font-mono'>{col.name}</TableCell>
-              <TableCell className='px-4 py-2 font-mono text-blue-300'>{col.type}</TableCell>
-              <TableCell className='px-4 py-2'>
-                {col.nullable ? (
-                  <span className='text-yellow-400'>YES</span>
-                ) : (
-                  <span className='text-gray-500'>NO</span>
-                )}
-              </TableCell>
-              <TableCell className='px-4 py-2 font-mono text-gray-400'>
-                {col.defaultValue ?? <span className='text-gray-600'>—</span>}
-              </TableCell>
-              <TableCell className='px-4 py-2'>
-                {col.isPrimaryKey && (
-                  <Badge variant='default' className='gap-1 text-[10px]'>
-                    <KeyIcon className='size-3' />
-                    PK
-                  </Badge>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className='p-2'>
+      <DataTable
+        columns={tableColumns}
+        data={columns}
+        className='border-none bg-transparent'
+      />
     </div>
   );
 }
 
 function IndexesTab({ indexes }: { indexes: DatabaseIndexInfo[] }): React.JSX.Element {
-  if (indexes.length === 0) {
-    return <p className='px-4 py-3 text-xs text-gray-500'>No indexes found.</p>;
-  }
+  const tableColumns = useMemo<ColumnDef<DatabaseIndexInfo>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Index',
+      cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span>,
+    },
+    {
+      accessorKey: 'columns',
+      header: 'Columns',
+      cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.columns.join(', ')}</span>,
+    },
+    {
+      accessorKey: 'isUnique',
+      header: 'Unique',
+      cell: ({ row }) => row.original.isUnique ? (
+        <StatusBadge status='success' label='UNIQUE' className='text-[9px]' />
+      ) : <span className='text-gray-500'>—</span>,
+    },
+    {
+      accessorKey: 'definition',
+      header: 'Definition',
+      cell: ({ row }) => (
+        <div className='max-w-[300px] truncate font-mono text-gray-400 text-[10px]' title={row.original.definition}>
+          {row.original.definition}
+        </div>
+      ),
+    },
+  ], []);
+
   return (
-    <div className='overflow-auto'>
-      <Table className='w-full text-xs'>
-        <TableHeader>
-          <TableRow className='hover:bg-transparent'>
-            <TableHead className='px-4 py-2 font-medium'>Index</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>Columns</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>Unique</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>Definition</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {indexes.map((idx: DatabaseIndexInfo) => (
-            <TableRow key={idx.name} className='text-gray-300'>
-              <TableCell className='px-4 py-2 font-mono'>{idx.name}</TableCell>
-              <TableCell className='px-4 py-2 font-mono text-blue-300'>
-                {idx.columns.join(', ')}
-              </TableCell>
-              <TableCell className='px-4 py-2'>
-                {idx.isUnique ? (
-                  <Badge variant='outline' className='text-[10px] text-emerald-400'>UNIQUE</Badge>
-                ) : (
-                  <span className='text-gray-500'>—</span>
-                )}
-              </TableCell>
-              <TableCell className='max-w-xs truncate px-4 py-2 font-mono text-gray-400' title={idx.definition}>
-                {idx.definition}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className='p-2'>
+      <DataTable
+        columns={tableColumns}
+        data={indexes}
+        className='border-none bg-transparent'
+      />
     </div>
   );
 }
 
 function ForeignKeysTab({ foreignKeys }: { foreignKeys: DatabaseForeignKeyInfo[] }): React.JSX.Element {
-  if (foreignKeys.length === 0) {
-    return <p className='px-4 py-3 text-xs text-gray-500'>No foreign keys found.</p>;
-  }
+  const tableColumns = useMemo<ColumnDef<DatabaseForeignKeyInfo>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Constraint',
+      cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span>,
+    },
+    {
+      accessorKey: 'column',
+      header: 'Column',
+      cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.column}</span>,
+    },
+    {
+      id: 'references',
+      header: 'References',
+      cell: ({ row }) => (
+        <div className='font-mono text-gray-200'>
+          <span className='text-emerald-300'>{row.original.referencedTable}</span>
+          <span className='text-gray-500'>.</span>
+          <span className='text-blue-300'>{row.original.referencedColumn}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'onDelete',
+      header: 'On Delete',
+      cell: ({ row }) => <span className='text-gray-400'>{row.original.onDelete}</span>,
+    },
+  ], []);
+
   return (
-    <div className='overflow-auto'>
-      <Table className='w-full text-xs'>
-        <TableHeader>
-          <TableRow className='hover:bg-transparent'>
-            <TableHead className='px-4 py-2 font-medium'>Constraint</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>Column</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>References</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>On Delete</TableHead>
-            <TableHead className='px-4 py-2 font-medium'>On Update</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {foreignKeys.map((fk: DatabaseForeignKeyInfo) => (
-            <TableRow key={fk.name} className='text-gray-300'>
-              <TableCell className='px-4 py-2 font-mono'>{fk.name}</TableCell>
-              <TableCell className='px-4 py-2 font-mono text-blue-300'>{fk.column}</TableCell>
-              <TableCell className='px-4 py-2 font-mono'>
-                <span className='text-emerald-300'>{fk.referencedTable}</span>
-                <span className='text-gray-500'>.</span>
-                <span className='text-blue-300'>{fk.referencedColumn}</span>
-              </TableCell>
-              <TableCell className='px-4 py-2 text-gray-400'>{fk.onDelete}</TableCell>
-              <TableCell className='px-4 py-2 text-gray-400'>{fk.onUpdate}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className='p-2'>
+      <DataTable
+        columns={tableColumns}
+        data={foreignKeys}
+        className='border-none bg-transparent'
+      />
     </div>
   );
 }
@@ -323,39 +312,37 @@ function DataTab({
 }: {
   tableRows: DatabasePreviewRow | undefined;
 }): React.JSX.Element {
-  const { page, pageSize } = useDatabase();
+  const { page, pageSize } = useDatabasePreviewState();
+  
+  const columns = useMemo(() => {
+    if (!tableRows || tableRows.rows.length === 0) return [];
+    return Object.keys(tableRows.rows[0] ?? {}).map(col => ({
+      accessorKey: col,
+      header: col,
+      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+        <span className='max-w-[200px] truncate font-mono block' title={formatCellValue(row.original[col])}>
+          {formatCellValue(row.original[col])}
+        </span>
+      )
+    } as ColumnDef<Record<string, unknown>>));
+  }, [tableRows]);
+
   if (!tableRows || tableRows.rows.length === 0) {
-    return <p className='px-4 py-3 text-xs text-gray-500'>No row data available.</p>;
+    return <p className='px-4 py-8 text-center text-xs text-gray-500 uppercase tracking-widest'>No row data available</p>;
   }
-  const columns = Object.keys(tableRows.rows[0] ?? {});
+
   const startRow = (page - 1) * pageSize + 1;
+
   return (
-    <div className='overflow-auto'>
-      <p className='px-4 py-2 text-[11px] text-gray-500'>
-        Showing rows {startRow}–{startRow + tableRows.rows.length - 1} of {tableRows.totalRows.toLocaleString()}
-      </p>
-      <Table className='w-full text-xs'>
-        <TableHeader>
-          <TableRow className='hover:bg-transparent'>
-            {columns.map((col: string) => (
-              <TableHead key={col} className='whitespace-nowrap px-3 py-2 font-medium font-mono'>
-                {col}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {tableRows.rows.map((row: Record<string, unknown>, i: number) => (
-            <TableRow key={i} className='text-gray-300'>
-              {columns.map((col: string) => (
-                <TableCell key={col} className='max-w-[200px] truncate whitespace-nowrap px-3 py-1.5 font-mono'>
-                  {formatCellValue(row[col])}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className='p-2 space-y-2'>
+      <div className='px-2 text-[10px] uppercase font-bold text-gray-500'>
+        Rows {startRow}–{startRow + tableRows.rows.length - 1} of {tableRows.totalRows.toLocaleString()}
+      </div>
+      <DataTable
+        columns={columns}
+        data={tableRows.rows}
+        className='border-none bg-transparent'
+      />
     </div>
   );
 }
@@ -372,12 +359,14 @@ function DatabasePreviewContent(): React.JSX.Element {
   const {
     dbType,
     tableDetails,
+    filteredTableDetails,
     groups,
+    filteredGroups,
     tables,
     tableRows,
     enums,
     databaseSize,
-    isLoading: loading,
+    isLoading,
     error,
     mode,
     backupName,
@@ -385,306 +374,207 @@ function DatabasePreviewContent(): React.JSX.Element {
     setPage,
     pageSize,
     setPageSize,
-  } = useDatabase();
-
-  const [groupQuery, setGroupQuery] = useState('');
-  const [tableQuery, setTableQuery] = useState('');
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
-  const [consoleSql, setConsoleSql] = useState('');
-  const [showConsole, setShowConsole] = useState(false);
-  const [crudTable, setCrudTable] = useState('');
-  const [showCrud, setShowCrud] = useState(false);
-  const consoleSectionRef = useRef<HTMLDivElement>(null);
-  const crudSectionRef = useRef<HTMLDivElement>(null);
-
-  const scrollToConsole = useCallback(() => {
-    setTimeout(() => consoleSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-  }, []);
-  const scrollToCrud = useCallback(() => {
-    setTimeout(() => crudSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-  }, []);
-
-  const grouped = useMemo(
-    () =>
-      groups.map((group: DatabasePreviewGroup) => ({
-        ...group,
-        Icon: groupIconMap[group.type] ?? FileTextIcon,
-      })),
-    [groups]
-  );
-
-  const filteredGroups = useMemo(() => {
-    const query = groupQuery.trim().toLowerCase();
-    if (!query) return grouped;
-    return grouped
-      .map((group: (typeof grouped)[number]) => {
-        const matchesType = group.type.toLowerCase().includes(query);
-        const objects = group.objects.filter((obj: string) =>
-          obj.toLowerCase().includes(query)
-        );
-        if (!matchesType && objects.length === 0) return null;
-        return matchesType
-          ? group
-          : { ...group, objects };
-      })
-      .filter((group: (typeof grouped)[number] | null): group is (typeof grouped)[number] => Boolean(group));
-  }, [grouped, groupQuery]);
-
-  const filteredTableDetails = useMemo(() => {
-    const query = tableQuery.trim().toLowerCase();
-    if (!query) return tableDetails;
-    return tableDetails.filter((t: DatabaseTableDetail) => t.name.toLowerCase().includes(query));
-  }, [tableDetails, tableQuery]);
-
-  const toggleGroup = (type: string): void => {
-    setExpandedGroups((prev: Record<string, boolean>) => ({ ...prev, [type]: !prev[type] }));
-  };
-
-  const maxPage = useMemo(() => {
-    if (tableRows.length === 0) return 1;
-    const pages = tableRows.map((table: DatabasePreviewRow) =>
-      Math.max(1, Math.ceil(table.totalRows / pageSize))
-    );
-    return Math.max(1, ...pages);
-  }, [pageSize, tableRows]);
-
-  const totalFks = useMemo(
-    () => tableDetails.reduce((sum: number, t: DatabaseTableDetail) => sum + t.foreignKeys.length, 0),
-    [tableDetails]
-  );
-  const totalIndexes = useMemo(
-    () => tableDetails.reduce((sum: number, t: DatabaseTableDetail) => sum + t.indexes.length, 0),
-    [tableDetails]
-  );
+    maxPage,
+    groupQuery,
+    setGroupQuery,
+    tableQuery,
+    setTableQuery,
+    expandedGroups,
+    toggleGroup,
+    consoleSql,
+    showConsole,
+    setShowConsole,
+    crudTable,
+    showCrud,
+    setShowCrud,
+    consoleSectionRef,
+    crudSectionRef,
+    handleQueryTable,
+    handleManageTable,
+    stats,
+  } = useDatabasePreviewState();
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='container mx-auto py-10 space-y-6'>
       <SectionHeader
         title='Database Preview'
         description={
           mode === 'current'
-            ? 'Source: Current database'
+            ? 'Source: Current database instance'
             : backupName
               ? `Source: ${backupName}`
-              : 'No backup selected.'
+              : 'No source selected.'
         }
+        eyebrow={(
+          <Link href='/admin/databases' className='text-blue-300 hover:text-blue-200 transition-colors'>
+            ← Back to databases
+          </Link>
+        )}
         actions={
-          <Button asChild variant='outline' size='sm'>
-            <Link href='/admin/databases'>Back to databases</Link>
-          </Button>
+          <div className='flex gap-2'>
+            <Button variant='outline' size='xs' className='h-8' onClick={() => window.location.reload()}>
+              <RefreshCwIcon className='size-3.5 mr-2' />
+              Refresh
+            </Button>
+          </div>
         }
-        className='mb-6'
       />
 
-      {/* Error display */}
       {error && (
-        <div className='mb-6 rounded-lg border border-red-500/40 bg-red-500/10 p-5'>
-          <p className='text-xs text-red-300'>{error}</p>
+        <div className='rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 text-xs text-rose-300 flex items-center gap-3'>
+          <ShieldCheckIcon className='size-4 shrink-0' />
+          {error}
         </div>
       )}
 
-      {loading && (
-        <div className='rounded-lg border border-border/60 bg-card/50 p-5'>
-          <p className='text-xs text-gray-400'>Loading preview... This may take a moment for backup restores.</p>
+      {isLoading ? (
+        <div className='py-20 text-center space-y-4'>
+          <div className='inline-block size-8 animate-spin rounded-full border-2 border-primary border-t-transparent' />
+          <p className='text-sm text-gray-500 animate-pulse'>Reconstructing database schema preview...</p>
         </div>
-      )}
-
-      {!loading && !error && (
+      ) : (
         <div className='space-y-6'>
-          {/* ── Database Overview ── */}
-          {(databaseSize || tableDetails.length > 0 || enums.length > 0) && (
-            <FormSection title='Database Overview' className='p-5'>
-              <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5'>
-                {databaseSize && (
-                  <div className='rounded-md border border-border bg-card/80 px-3 py-2'>
-                    <p className='text-[11px] uppercase tracking-wider text-gray-500'>Total Size</p>
-                    <p className='mt-1 text-sm font-semibold text-gray-200'>{databaseSize}</p>
-                  </div>
-                )}
-                <div className='rounded-md border border-border bg-card/80 px-3 py-2'>
-                  <p className='text-[11px] uppercase tracking-wider text-gray-500'>Tables</p>
-                  <p className='mt-1 text-sm font-semibold text-gray-200'>{tables.length}</p>
-                </div>
-                <div className='rounded-md border border-border bg-card/80 px-3 py-2'>
-                  <p className='text-[11px] uppercase tracking-wider text-gray-500'>Enums</p>
-                  <p className='mt-1 text-sm font-semibold text-gray-200'>{enums.length}</p>
-                </div>
-                <div className='rounded-md border border-border bg-card/80 px-3 py-2'>
-                  <p className='text-[11px] uppercase tracking-wider text-gray-500'>Indexes</p>
-                  <p className='mt-1 text-sm font-semibold text-gray-200'>{totalIndexes}</p>
-                </div>
-                <div className='rounded-md border border-border bg-card/80 px-3 py-2'>
-                  <p className='text-[11px] uppercase tracking-wider text-gray-500'>Foreign Keys</p>
-                  <p className='mt-1 text-sm font-semibold text-gray-200'>{totalFks}</p>
-                </div>
+          {/* ── Database Metrics ── */}
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
+            {databaseSize && (
+              <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+                <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Total Size</p>
+                <p className='text-lg font-semibold text-white'>{databaseSize}</p>
               </div>
-            </FormSection>
-          )}
+            )}
+            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+              <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Tables</p>
+              <p className='text-lg font-semibold text-white'>{tables.length}</p>
+            </div>
+            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+              <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Enums</p>
+              <p className='text-lg font-semibold text-white'>{enums.length}</p>
+            </div>
+            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+              <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Indexes</p>
+              <p className='text-lg font-semibold text-white'>{stats.totalIndexes}</p>
+            </div>
+            <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+              <p className='text-[10px] uppercase font-bold text-gray-500 mb-1'>Relations</p>
+              <p className='text-lg font-semibold text-white'>{stats.totalFks}</p>
+            </div>
+          </div>
 
-          {/* ── Tables (Detailed) ── */}
+          {/* ── Tables Section ── */}
           {tableDetails.length > 0 && (
             <FormSection
-              title='Tables'
-              description={`${filteredTableDetails.length} of ${tableDetails.length} tables`}
+              title='Table Browser'
+              description={`${filteredTableDetails.length} items`}
               actions={
-                <div className='flex items-center gap-3'>
+                <div className='flex items-center gap-4'>
                   <Input
+                    size='sm'
                     type='search'
                     value={tableQuery}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTableQuery(event.target.value)}
+                    onChange={(e) => setTableQuery(e.target.value)}
                     placeholder='Filter tables...'
-                    className='h-8 w-full max-w-xs text-xs'
-                    aria-label='Filter tables'
+                    className='h-8 w-48 text-xs'
                   />
-                  <Pagination
-                    page={page}
-                    totalPages={maxPage}
-                    onPageChange={setPage}
-                    pageSize={pageSize}
-                    onPageSizeChange={(size: number) => {
-                      setPage(1);
-                      setPageSize(size);
-                    }}
-                    pageSizeOptions={[10, 20, 50, 100]}
-                    showPageSize
-                    className='scale-90 origin-right'
-                  />
+                  <div className='flex items-center gap-2'>
+                    <Pagination
+                      page={page}
+                      totalPages={maxPage}
+                      onPageChange={setPage}
+                      pageSize={pageSize}
+                      onPageSizeChange={(s) => {
+                        setPage(1);
+                        setPageSize(s);
+                      }}
+                      pageSizeOptions={[10, 20, 50, 100]}
+                      showPageSize
+                      variant='compact'
+                    />
+                  </div>
                 </div>
               }
-              className='p-5'
+              className='p-6'
             >
-              <div className='space-y-2 mt-4'>
-                {filteredTableDetails.map((detail: DatabaseTableDetail) => (
+              <div className='grid gap-3 mt-4'>
+                {filteredTableDetails.map((detail) => (
                   <TableDetailCard
                     key={detail.name}
                     detail={detail}
-                    onQueryTable={(name: string): void => {
-                      setConsoleSql(`SELECT * FROM "${name}" LIMIT 20`);
-                      setShowConsole(true);
-                      scrollToConsole();
-                    }}
-                    onManageTable={(name: string): void => {
-                      setCrudTable(name);
-                      setShowCrud(true);
-                      scrollToCrud();
-                    }}
+                    onQueryTable={handleQueryTable}
+                    onManageTable={handleManageTable}
                   />
                 ))}
               </div>
             </FormSection>
           )}
 
-          {/* ── Tables fallback (no details, e.g. MongoDB) ── */}
-          {tableDetails.length === 0 && tables.length > 0 && (
-            <FormSection
-              title='Tables & Row Estimates'
-              description={`${tables.length} tables`}
-              className='p-5'
-            >
-              <div className='mt-3 max-h-64 divide-y divide-border overflow-auto rounded-md border border-border bg-card/60'>
-                {tables.map((table: DatabasePreviewTable) => (
-                  <div key={table.name} className='flex items-center justify-between px-3 py-2 text-xs'>
-                    <span className='text-gray-200'>{table.name}</span>
-                    <span className='text-gray-400'>~{table.rowEstimate.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </FormSection>
-          )}
-
-          {/* ── Enums ── */}
-          {enums.length > 0 && (
-            <FormSection title={`Enum Types (${enums.length})`} className='p-5'>
-              <div className='space-y-2 mt-4'>
-                {enums.map((enumType: DatabaseEnumInfo) => (
-                  <div key={enumType.name} className='rounded-md border border-border bg-card/60 px-4 py-3'>
-                    <span className='text-xs font-semibold font-mono text-emerald-300'>{enumType.name}</span>
-                    <div className='mt-2 flex flex-wrap gap-1.5'>
-                      {enumType.values.map((val: string) => (
-                        <Badge key={val} variant='outline' className='text-[10px] font-mono'>
-                          {val}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </FormSection>
-          )}
-
-          {/* ── Schema Objects (backup mode groups) ── */}
+          {/* ── Schema Groups ── */}
           {groups.length > 0 && (
             <FormSection
-              title='Schema Objects'
-              description={`${filteredGroups.length} groups`}
+              title='Additional Objects'
+              description='Functions, views, and sequences'
               actions={
                 <Input
-                  type='search'
+                  size='sm'
                   value={groupQuery}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setGroupQuery(event.target.value)}
-                  placeholder='Filter objects or types...'
-                  className='h-8 w-full max-w-xs text-xs'
-                  aria-label='Filter schema objects'
+                  onChange={(e) => setGroupQuery(e.target.value)}
+                  placeholder='Search objects...'
+                  className='h-8 w-40 text-xs'
                 />
               }
-              className='p-5'
+              className='p-6'
             >
-              {filteredGroups.length === 0 && (
-                <p className='mt-3 text-xs text-gray-500'>No schema objects match the current filter.</p>
-              )}
-              {filteredGroups.length > 0 && (
-                <div className='mt-4 space-y-2'>
-                  {filteredGroups.map((group: (typeof filteredGroups)[number]) => {
-                    const isExpanded = expandedGroups[group.type] ?? false;
-                    return (
-                      <div key={group.type} className='rounded-md border border-border bg-card/60'>
-                        <Button
-                          type='button'
-                          onClick={(): void => toggleGroup(group.type)}
-                          className='flex w-full items-center justify-between px-3 py-2 text-left text-xs text-gray-200'
-                        >
-                          <span className='flex items-center gap-2'>
-                            <group.Icon className='size-4 text-emerald-200' />
-                            <span className='font-semibold'>{group.type} ({group.objects.length})</span>
-                          </span>
-                          {isExpanded ? (
-                            <ChevronDownIcon className='size-4 text-gray-400' />
-                          ) : (
-                            <ChevronRightIcon className='size-4 text-gray-400' />
-                          )}
-                        </Button>
-                        {isExpanded && (
-                          <div className='border-t border-border px-3 py-2 text-xs text-gray-400'>
-                            {group.objects.join(', ')}
+              <div className='grid gap-2 mt-4'>
+                {filteredGroups.map((group) => {
+                  const isExpanded = expandedGroups[group.type] ?? false;
+                  const Icon = groupIconMap[group.type] ?? FileTextIcon;
+                  return (
+                    <div key={group.type} className='rounded-md border border-border/60 bg-card/40'>
+                      <button
+                        type='button'
+                        onClick={() => toggleGroup(group.type)}
+                        className='flex w-full items-center justify-between p-3 text-left'
+                      >
+                        <span className='flex items-center gap-2 text-xs font-semibold text-gray-200'>
+                          <Icon className='size-4 text-sky-300' />
+                          {group.type}
+                          <Badge variant='outline' className='text-[9px] bg-sky-500/5'>{group.objects.length}</Badge>
+                        </span>
+                        {isExpanded ? <ChevronDownIcon className='size-4 text-gray-500' /> : <ChevronRightIcon className='size-4 text-gray-500' />}
+                      </button>
+                      {isExpanded && (
+                        <div className='border-t border-border/40 p-3 bg-black/20'>
+                          <div className='flex flex-wrap gap-2'>
+                            {group.objects.map(obj => (
+                              <span key={obj} className='font-mono text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded'>
+                                {obj}
+                              </span>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </FormSection>
           )}
 
-          {/* ── SQL Query Console ── */}
+          {/* ── SQL Console ── */}
           {dbType === 'postgresql' && (
-            <div ref={consoleSectionRef}>
+            <div ref={consoleSectionRef} className='scroll-mt-6'>
               <FormSection
-                title='SQL Console'
+                title='SQL Query Console'
                 actions={
                   <Button
                     variant='ghost'
-                    size='sm'
-                    onClick={(): void => setShowConsole(!showConsole)}
+                    size='xs'
+                    className='h-7 w-7 p-0'
+                    onClick={() => setShowConsole(!showConsole)}
                   >
-                    {showConsole ? (
-                      <ChevronDownIcon className='size-4 text-gray-400' />
-                    ) : (
-                      <ChevronRightIcon className='size-4 text-gray-400' />
-                    )}
+                    {showConsole ? <ChevronDownIcon className='size-4' /> : <ChevronRightIcon className='size-4' />}
                   </Button>
                 }
-                className='p-5'
+                className='p-6'
               >
                 {showConsole && (
                   <div className='mt-4'>
@@ -698,22 +588,21 @@ function DatabasePreviewContent(): React.JSX.Element {
             </div>
           )}
 
-          {/* ── CRUD Panel ── */}
+          {/* ── Table Manager ── */}
           {showCrud && tableDetails.length > 0 && (
-            <div ref={crudSectionRef}>
+            <div ref={crudSectionRef} className='scroll-mt-6'>
               <FormSection
-                title='Table Manager'
+                title='Row Management'
                 actions={
                   <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={(): void => setShowCrud(false)}
-                    className='text-xs text-gray-400'
+                    variant='outline'
+                    size='xs'
+                    onClick={() => setShowCrud(false)}
                   >
-                    Close
+                    Exit Manager
                   </Button>
                 }
-                className='p-5'
+                className='p-6 border-emerald-500/20'
               >
                 <div className='mt-4'>
                   <CrudPanel
@@ -752,7 +641,7 @@ function DatabasePreviewPageInner(): React.JSX.Element {
 
 export default function DatabasePreviewPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className='p-6 text-sm text-gray-500'>Loading...</div>}>
+    <Suspense fallback={<div className='p-12 text-center text-sm text-gray-500 animate-pulse'>Mounting database preview environment...</div>}>
       <DatabasePreviewPageInner />
     </Suspense>
   );

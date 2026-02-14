@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Input, Label,  UnifiedSelect, Checkbox } from '@/shared/ui';
+import { Input, Label,  SelectSimple, Checkbox } from '@/shared/ui';
 
 import { usePromptEngine, type SeverityFilter } from '../context/PromptEngineContext';
 
@@ -22,7 +22,7 @@ export function PromptEngineFilters(): React.JSX.Element {
         </div>
         <div className='w-[160px]'>
           <Label className='text-xs text-gray-400 mb-1.5 block'>Severity</Label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={severity}
             onValueChange={(value: string) => setSeverity(value as SeverityFilter)}
             options={[

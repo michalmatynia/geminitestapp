@@ -23,7 +23,7 @@ vi.mock('@/features/cms/components/page-builder/grid-templates', () => ({
 }));
 
 vi.mock('@/features/cms/components/page-builder/section-registry', () => ({
-  getSectionTypesForZone: vi.fn((zone) => [
+  getSectionTypesForZone: vi.fn((_zone) => [
     { type: 'Grid', label: 'Grid', allowedBlockTypes: ['Block'] },
     { type: 'TextElement', label: 'Text', allowedBlockTypes: [] },
     { type: 'Header', label: 'Header', allowedBlockTypes: ['Block'] },

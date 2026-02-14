@@ -1,6 +1,8 @@
 import { MutationCache, QueryCache, QueryClient, type QueryKey } from '@tanstack/react-query';
 
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { classifyError } from '@/shared/errors/error-classifier';
+import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
+import { getTraceId } from '@/shared/utils/observability/trace';
 
 import { isOfflineQuery } from './offline-support';
 
@@ -66,11 +68,21 @@ const safeLogCacheError = (
   error: unknown
 ): void => {
   try {
+    const statusCode = extractStatusCode(error);
+    const category = classifyError(error);
+    
+    // Avoid re-logging if the error was already enriched and logged by api-client
+    if (isLoggableObject(error) && error.__logged) {
+      return;
+    }
+
     const baseContext = {
       source,
       key: toStableKey(key),
       attempt: toAttempt(attempt),
-      statusCode: extractStatusCode(error),
+      statusCode,
+      category,
+      traceId: getTraceId(),
     };
     const context =
       source === 'QueryCache'
@@ -80,6 +92,15 @@ const safeLogCacheError = (
     logClientError(error, {
       context,
     });
+    
+    // Mark as logged to prevent double logging in useGlobalQueryErrorHandler
+    if (isLoggableObject(error)) {
+      try {
+        error.__logged = true;
+      } catch {
+        // ignore read-only errors
+      }
+    }
   } catch {
     // Cache callbacks must never throw.
   }

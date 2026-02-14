@@ -9,7 +9,7 @@ import type {
   InventoryOption,
   Template,
 } from '@/features/data-import-export/types/imports';
-import { Button, Input, Label, Checkbox, Pagination, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, Pagination, SelectSimple } from '@/shared/ui';
 
 export function ImportTab(): React.JSX.Element {
   const {
@@ -88,7 +88,7 @@ export function ImportTab(): React.JSX.Element {
             <div className='flex-1 min-w-[200px]'>
               <Label className='text-xs text-gray-400'>Inventory</Label>
               <div className='mt-2'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={inventoryId}
                   onValueChange={setInventoryId}
                   disabled={inventories.length === 0}
@@ -112,7 +112,7 @@ export function ImportTab(): React.JSX.Element {
             <div className='w-40'>
               <Label className='text-xs text-gray-400'>Limit</Label>
               <div className='mt-2'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={limit}
                   onValueChange={setLimit}
                   options={[
@@ -133,7 +133,7 @@ export function ImportTab(): React.JSX.Element {
             <div>
               <Label className='text-xs text-gray-400'>Catalog</Label>
               <div className='mt-2'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={catalogId || '__none__'}
                   onValueChange={(v: string): void => setCatalogId(v === '__none__' ? '' : v)}
                   disabled={loadingCatalogs || catalogs.length === 0}
@@ -149,7 +149,7 @@ export function ImportTab(): React.JSX.Element {
             <div>
               <Label className='text-xs text-gray-400'>Import template</Label>
               <div className='mt-2'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={importTemplateId || '__none__'}
                   onValueChange={(v: string): void => setImportTemplateId(v === '__none__' ? '' : v)}
                   disabled={loadingImportTemplates || importTemplates.length === 0}
@@ -168,7 +168,7 @@ export function ImportTab(): React.JSX.Element {
             <div>
               <Label className='text-xs text-gray-400'>Images</Label>
               <div className='mt-2'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={imageMode}
                   onValueChange={(v: string): void => setImageMode(v as 'links' | 'download')}
                   options={[
@@ -252,7 +252,7 @@ export function ImportTab(): React.JSX.Element {
               placeholder='Search SKU...'
               className='h-8 w-40 border-border bg-gray-900 text-xs text-white placeholder:text-gray-500'
             />
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={uniqueOnly ? 'unique' : 'all'}
               onValueChange={(v: string): void => {
                 setUniqueOnly(v === 'unique');
@@ -265,7 +265,7 @@ export function ImportTab(): React.JSX.Element {
               className='w-32'
               triggerClassName='h-8 border-border bg-gray-900 text-xs text-white'
             />
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={String(importListPageSize)}
               onValueChange={(value: string): void => {
                 const nextSize = Number(value);

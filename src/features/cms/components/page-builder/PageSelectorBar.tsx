@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
-import { UnifiedSelect } from '@/shared/ui';
+import { SelectSimple } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsPage } from '../../hooks/useCmsQueries';
@@ -108,7 +108,7 @@ export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): Reac
           <span>Page</span>
         </div>
       )}
-      <UnifiedSelect
+      <SelectSimple size='sm'
         value={selectedPageId}
         onValueChange={handlePageChange}
         options={(pagesQuery.data ?? []).map((page: PageSummary) => ({

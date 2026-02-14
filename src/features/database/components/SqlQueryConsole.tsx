@@ -9,7 +9,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
-import { Badge, Button,  Textarea, UnifiedSelect, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
+import { Badge, Button,  Textarea, SelectSimple, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
@@ -108,7 +108,7 @@ export function SqlQueryConsole({
       <div>
         <div className='flex items-center justify-between mb-2'>
           <div className='flex items-center gap-2'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={dbType}
               onValueChange={(v: string): void =>
                 setDbType(v as DatabaseType)

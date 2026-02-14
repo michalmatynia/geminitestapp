@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 
-import { Button, UnifiedSelect, useToast, useToastSettings, SectionHeader, FormSection, FormField } from '@/shared/ui';
+import { Button, SelectSimple, useToast, useToastSettings, SectionHeader, FormSection, FormField } from '@/shared/ui';
 
 const positionOptions = [
   { value: 'top-right', label: 'Top Right', description: 'Corner top right' },
@@ -84,7 +84,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                 label='Toast Position'
                 description='Choose where notifications appear on your screen.'
               >
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={position}
                   onValueChange={(val: string) => setPosition(val as PositionType)}
                   options={positionOptions.map((opt: { value: string; label: string; description: string }) => ({
@@ -101,7 +101,7 @@ export function AdminNotificationsSettingsPage(): React.JSX.Element {
                 label='Accent Color'
                 description='Select the primary color for success notifications.'
               >
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={accent}
                   onValueChange={(val: string) => setAccent(val as AccentType)}
                   options={accentOptions.map((opt: { value: string; label: string; color: string }) => ({

@@ -15,7 +15,7 @@ import {
   type CssAnimationDirection,
   type CssAnimationFillMode,
 } from '@/features/cms/types/css-animations';
-import { Checkbox, Input, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Checkbox, Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 interface CssAnimationConfigPanelProps {
   value?: CssAnimationConfig;
@@ -194,7 +194,7 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
         {enabled && (
           <div className='mt-4 space-y-4'>
             <FormField label='Effect'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={effect}
                 onValueChange={handleEffectChange}
                 options={CSS_ANIMATION_EFFECTS}
@@ -202,7 +202,7 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
             </FormField>
 
             <FormField label='Trigger' description={helpText}>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={trigger}
                 onValueChange={handleTriggerChange}
                 options={CSS_ANIMATION_TRIGGERS}
@@ -242,7 +242,7 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
             </div>
 
             <FormField label='Easing'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={easingSelectValue}
                 onValueChange={handleEasingChange}
                 options={CSS_EASINGS}
@@ -279,14 +279,14 @@ export function CssAnimationConfigPanel({ value, onChange }: CssAnimationConfigP
 
             <div className='grid gap-3 sm:grid-cols-2'>
               <FormField label='Direction'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={direction}
                   onValueChange={handleDirectionChange}
                   options={CSS_ANIMATION_DIRECTIONS}
                 />
               </FormField>
               <FormField label='Fill mode'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={fillMode}
                   onValueChange={handleFillModeChange}
                   options={CSS_ANIMATION_FILL_MODES}

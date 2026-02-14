@@ -7,7 +7,7 @@ import type { AgentConfig } from '@/features/ai/ai-paths/lib';
 import {
   Button,
   Label,
-  UnifiedSelect,
+  SelectSimple,
   Textarea,
 } from '@/shared/ui';
 
@@ -60,7 +60,7 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
           <Link href='/admin/agentcreator/personas'>Manage Personas</Link>
         </Button>
       </div>
-      <UnifiedSelect
+      <SelectSimple size='sm'
         value={agentConfig.personaId ? agentConfig.personaId : RUNTIME_PERSONA_VALUE}
         onValueChange={(value: string): void =>
           updateSelectedNodeConfig({

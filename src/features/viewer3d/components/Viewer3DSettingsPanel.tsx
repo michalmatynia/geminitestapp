@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { Button, UnifiedSelect, Input, FormSection, FormField, Checkbox } from '@/shared/ui';
+import { Button, SelectSimple, Input, FormSection, FormField, Checkbox } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useViewer3D, orderedDitheringPresets, type OrderedDitheringPresetKey } from '../context/Viewer3DContext';
@@ -129,7 +129,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
           <div className='space-y-4'>
             {/* Environment Preset */}
             <FormField label='HDR Environment'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={environment}
                 onValueChange={(v: string): void => setEnvironment(v as EnvironmentPreset)}
                 options={environmentPresets}
@@ -319,7 +319,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
               {enableOrderedDithering && (
                 <div className='mt-4 space-y-4'>
                   <FormField label='Preset'>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={orderedDitheringPreset}
                       onValueChange={(v: string): void => {
                         const value = v as OrderedDitheringPresetKey;
@@ -368,7 +368,7 @@ export function Viewer3DSettingsPanel(): React.JSX.Element {
                     />
                   </FormField>
                   <FormField label='Luminance'>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={String(orderedDitheringLuminanceMethod)}
                       onValueChange={(v: string): void => {
                         setOrderedDitheringLuminanceMethod(parseInt(v, 10));

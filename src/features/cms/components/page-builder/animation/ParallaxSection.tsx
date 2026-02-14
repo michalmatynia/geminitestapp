@@ -19,7 +19,7 @@ import {
 import {
   Checkbox,
   Input,
-  UnifiedSelect,
+  SelectSimple,
   FormSection,
   FormField,
 } from '@/shared/ui';
@@ -267,7 +267,7 @@ export function ParallaxSection(): React.ReactNode {
   return (
     <FormSection title='Parallax' variant='subtle-compact' className='p-3 space-y-4'>
       <FormField label='Preset'>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={parallaxPresetValue}
           onValueChange={handleParallaxPresetChange}
           options={PARALLAX_PRESETS}
@@ -278,7 +278,7 @@ export function ParallaxSection(): React.ReactNode {
         <div className='mt-4 space-y-4'>
           <div className='grid gap-3 sm:grid-cols-2 items-end'>
             <FormField label='Pattern'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={parallaxPatternValue}
                 onValueChange={handleParallaxPatternChange}
                 options={PARALLAX_PATTERNS}
@@ -292,7 +292,7 @@ export function ParallaxSection(): React.ReactNode {
           </div>
 
           <FormField label='Axis'>
-            <UnifiedSelect
+            <SelectSimple size='sm'
               value={parallaxAxisValue}
               onValueChange={handleParallaxAxisChange}
               options={parallaxAxisOptions}
@@ -354,7 +354,7 @@ export function ParallaxSection(): React.ReactNode {
               />
             </FormField>
             <FormField label='Ease'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={parallaxEaseValue}
                 onValueChange={handleParallaxEaseChange}
                 options={ANIMATION_EASINGS}

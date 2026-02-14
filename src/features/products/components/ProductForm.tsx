@@ -20,7 +20,7 @@ import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
 } from '@/shared/types/domain/products';
-import { Tabs, TabsList, TabsTrigger, TabsContent, UnifiedSelect, ValidatorFormatterToggle } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, ValidatorFormatterToggle } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import ProductFormGeneral from './form/ProductFormGeneral';
@@ -537,7 +537,7 @@ export default function ProductForm({
               />
               <div className='mt-4 grid gap-2 md:max-w-sm'>
                 <p className='text-xs font-medium text-white'>When a correction is denied</p>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={effectiveValidationDenyBehavior}
                   onValueChange={(value: string): void =>
                     setValidationDenyBehavior(

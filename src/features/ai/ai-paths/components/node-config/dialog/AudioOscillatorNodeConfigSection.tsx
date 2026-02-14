@@ -5,7 +5,7 @@ import { toNumber } from '@/features/ai/ai-paths/lib';
 import {
   Input,
   Label,
-  UnifiedSelect,
+  SelectSimple,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -29,7 +29,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Waveform</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={oscillatorConfig.waveform}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

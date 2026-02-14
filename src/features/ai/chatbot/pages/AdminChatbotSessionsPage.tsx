@@ -1,373 +1,259 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
+import { Eye, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-import { Button, Input, useToast, Label, Checkbox, ListPanel, SectionHeader, ConfirmDialog, EmptyState, SearchInput, FormSection, FormField } from '@/shared/ui';
+import { 
+  Button, 
+  Input, 
+  Checkbox, 
+  ListPanel, 
+  SectionHeader, 
+  ConfirmDialog, 
+  EmptyState, 
+  SearchInput, 
+  DataTable
+} from '@/shared/ui';
 
-import * as chatbotApi from '../api';
-import {
-  useChatbotSessions,
-  useDeleteChatbotSession,
-  useDeleteChatbotSessions,
-  useUpdateSessionTitle,
-} from '../hooks';
+import { useChatbotSessionsState } from '../hooks/useChatbotSessionsState';
 
 import type { ChatbotSessionListItem } from '../types';
+import type { ColumnDef } from '@tanstack/react-table';
 
 export default function ChatbotSessionsPage(): React.JSX.Element {
-  const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draftTitle, setDraftTitle] = useState<string>('');
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [skipBulkConfirm, setSkipBulkConfirm] = useState<boolean>(false);
-  const [sessionToDelete, setSessionToDelete] = useState<ChatbotSessionListItem | null>(null);
-  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
+  const {
+    filteredSessions,
+    searchQuery,
+    setSearchQuery,
+    editingId,
+    draftTitle,
+    setDraftTitle,
+    deletingId,
+    selectedIds,
+    sessionToDelete,
+    setSessionToDelete,
+    isBulkDeleteConfirmOpen,
+    setIsBulkDeleteConfirmOpen,
+    loading,
+    isFetching,
+    error,
+    bulkDeleting,
+    selectingAll,
+    selectAllVisible,
+    selectAllMatching,
+    toggleSelected,
+    startEditing,
+    cancelEditing,
+    saveTitle,
+    deleteSession,
+    handleBulkDeleteClick,
+    bulkDelete,
+    refetch,
+  } = useChatbotSessionsState();
 
-  const sessionsQuery = useChatbotSessions();
-  const updateTitleMutation = useUpdateSessionTitle();
-  const deleteSessionMutation = useDeleteChatbotSession();
-  const deleteSessionsMutation = useDeleteChatbotSessions();
-  const selectAllMatchingMutation = useMutation({
-    mutationFn: chatbotApi.fetchChatbotSessionIds,
-  });
-
-  const sessions = sessionsQuery.data ?? [];
-  const loading = sessionsQuery.isLoading;
-  const error = sessionsQuery.isError
-    ? sessionsQuery.error.message
-    : null;
-  const bulkDeleting = deleteSessionsMutation.isPending;
-  const selectingAll = selectAllMatchingMutation.isPending;
-
-  const clearSelection = (): void => setSelectedIds(new Set());
-  const selectAllVisible = (): void => setSelectedIds(new Set(filteredSessions.map((s: ChatbotSessionListItem): string => s.id)));
-  const selectAllMatching = (): void => {
-    void (async (): Promise<void> => {
-      if (selectingAll) return;
-      try {
-        const term: string = searchQuery.trim();
-        const ids: string[] = await selectAllMatchingMutation.mutateAsync(
-          term || undefined
+  const columns = useMemo<ColumnDef<ChatbotSessionListItem>[]>(() => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }: { row: { original: ChatbotSessionListItem } }) => (
+        <Checkbox
+          checked={selectedIds.has(row.original.id)}
+          onCheckedChange={() => toggleSelected(row.original.id)}
+          aria-label='Select row'
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: 'title',
+      header: 'Session',
+      cell: ({ row }: { row: { original: ChatbotSessionListItem } }) => {
+        const session = row.original;
+        const isEditing = editingId === session.id;
+        return (
+          <div className='flex flex-col gap-1'>
+            {isEditing ? (
+              <Input
+                size='sm'
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+                className='h-7 max-w-xs text-xs'
+                autoFocus
+              />
+            ) : (
+              <span className='font-medium text-white'>
+                {session.title || `Session ${session.id.slice(0, 6)}`}
+              </span>
+            )}
+            <span className='text-[10px] text-gray-500'>
+              Updated {new Date(session.updatedAt).toLocaleString()}
+            </span>
+          </div>
         );
-        setSelectedIds(new Set(ids));
-        toast(
-          ids.length
-            ? `Selected ${ids.length} sessions`
-            : 'No matching sessions found'
+      },
+    },
+    {
+      accessorKey: 'id',
+      header: 'ID',
+      cell: ({ row }: { row: { original: ChatbotSessionListItem } }) => <span className='font-mono text-[10px] text-gray-500'>{row.original.id}</span>,
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }: { row: { original: ChatbotSessionListItem } }) => {
+        const session = row.original;
+        const isEditing = editingId === session.id;
+        return (
+          <div className='flex justify-end gap-2'>
+            {isEditing ? (
+              <>
+                <Button size='xs' onClick={() => void saveTitle(session.id)}>Save</Button>
+                <Button size='xs' variant='ghost' onClick={cancelEditing}>Cancel</Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  size='icon'
+                  variant='ghost'
+                  className='h-7 w-7'
+                  onClick={() => startEditing(session)}
+                  title='Edit title'
+                >
+                  <Eye className='size-3.5' />
+                </Button>
+                <Link href={`/admin/chatbot?session=${session.id}`}>
+                  <Button size='xs' variant='outline'>Open</Button>
+                </Link>
+                <Button
+                  size='icon'
+                  variant='ghost'
+                  className='h-7 w-7 text-rose-400 hover:text-rose-300'
+                  disabled={deletingId === session.id}
+                  onClick={() => setSessionToDelete(session)}
+                >
+                  <Trash2 className='size-3.5' />
+                </Button>
+              </>
+            )}
+          </div>
         );
-      } catch (error: unknown) {
-        const message: string =
-          error instanceof Error ? error.message : 'Failed to select sessions.';
-        toast(message, { variant: 'error' });
-      }
-    })();
-  };
-  const toggleSelected = (id: string): void => {
-    setSelectedIds((prev: Set<string>): Set<string> => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
-
-  const filteredSessions = useMemo((): ChatbotSessionListItem[] => {
-    const term: string = searchQuery.trim().toLowerCase();
-    if (!term) return sessions;
-    return sessions.filter((session: ChatbotSessionListItem): boolean => {
-      const title: string = session.title?.toLowerCase() || '';
-      return title.includes(term) || session.id.toLowerCase().includes(term);
-    });
-  }, [searchQuery, sessions]);
-
-  const startEditing = (session: ChatbotSessionListItem): void => {
-    setEditingId(session.id);
-    setDraftTitle(session.title || '');
-  };
-
-  const cancelEditing = (): void => {
-    setEditingId(null);
-    setDraftTitle('');
-  };
-
-  const saveTitle = async (sessionId: string): Promise<void> => {
-    try {
-      await updateTitleMutation.mutateAsync({
-        sessionId,
-        title: draftTitle,
-      });
-      cancelEditing();
-      toast('Session title updated', { variant: 'success' });
-    } catch (error: unknown) {
-      const message: string =
-        error instanceof Error
-          ? error.message
-          : 'Failed to update session title.';
-      toast(message, { variant: 'error' });
-    }
-  };
-
-  const deleteSession = async (session: ChatbotSessionListItem): Promise<void> => {
-    setDeletingId(session.id);
-    try {
-      await deleteSessionMutation.mutateAsync(session.id);
-      if (editingId === session.id) {
-        cancelEditing();
-      }
-      setSelectedIds((prev: Set<string>): Set<string> => {
-        if (!prev.has(session.id)) return prev;
-        const next: Set<string> = new Set(prev);
-        next.delete(session.id);
-        return next;
-      });
-      toast('Session deleted', { variant: 'success' });
-    } catch (error: unknown) {
-      const message: string =
-        error instanceof Error ? error.message : 'Failed to delete session.';
-      toast(message, { variant: 'error' });
-    } finally {
-      setDeletingId(null);
-      setSessionToDelete(null);
-    }
-  };
-
-  const handleBulkDeleteClick = (): void => {
-    if (selectedIds.size === 0) return;
-    if (skipBulkConfirm) {
-      void bulkDelete();
-    } else {
-      setIsBulkDeleteConfirmOpen(true);
-    }
-  };
-
-  const bulkDelete = async (): Promise<void> => {
-    const idsToDelete = Array.from(selectedIds);
-    try {
-      await deleteSessionsMutation.mutateAsync(idsToDelete);
-      clearSelection();
-      toast('Selected sessions deleted', { variant: 'success' });
-    } catch (error: unknown) {
-      const message: string =
-        error instanceof Error ? error.message : 'Failed to delete sessions.';
-      toast(message, { variant: 'error' });
-    } finally {
-      setIsBulkDeleteConfirmOpen(false);
-    }
-  };
-
-  const showList: boolean = !loading && !error && sessions.length > 0;
+      },
+    },
+  ], [selectedIds, toggleSelected, editingId, draftTitle, setDraftTitle, saveTitle, cancelEditing, startEditing, deletingId, setSessionToDelete]);
 
   return (
     <div className='container mx-auto py-10'>
+      <SectionHeader
+        title='Chat Sessions'
+        description='History of conversations with AI agents.'
+        eyebrow={(
+          <a href='/admin/chatbot' className='text-blue-300 hover:text-blue-200'>
+            ← Back to chatbot
+          </a>
+        )}
+        actions={(
+          <Button
+            variant='outline'
+            size='xs'
+            onClick={refetch}
+            disabled={isFetching}
+          >
+            {isFetching ? 'Refreshing...' : 'Refresh'}
+          </Button>
+        )}
+        className='mb-6'
+      />
+
       <ListPanel
-        header={
-          <SectionHeader
-            title='Chat Sessions'
-            eyebrow={(
-              <Link
-                href='/admin/chatbot'
-                className='text-blue-300 hover:text-blue-200'
-              >
-                ← Back to chatbot
-              </Link>
-            )}
-          />
-        }
-        alerts={
-          error ? <p className='text-sm text-red-400'>{error}</p> : null
-        }
-        filters={
-          showList ? (
-            <FormSection className='p-4'>
-              <FormField label='Search sessions...'>
-                <SearchInput
-                  placeholder='Search sessions...'
-                  value={searchQuery}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
-                  onClear={() => setSearchQuery('')}
-                  className='h-8 text-sm max-w-sm'
-                />
-              </FormField>
-            </FormSection>
-          ) : null
-        }
-        actions={
-          showList ? (
-            <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
-              <span>Selected: {selectedIds.size}</span>
+        variant='flat'
+        alerts={error ? <p className='text-sm text-rose-400'>{error}</p> : null}
+        filters={(
+          <div className='flex flex-wrap items-end gap-4'>
+            <div className='flex-1 min-w-[240px]'>
+              <SearchInput
+                placeholder='Search sessions...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onClear={() => setSearchQuery('')}
+                className='h-9'
+              />
+            </div>
+            <div className='flex items-center gap-2 pb-2'>
               <Button
                 variant='outline'
                 size='sm'
                 onClick={selectAllVisible}
-                disabled={
-                  filteredSessions.length === 0 || bulkDeleting
-                }
+                disabled={filteredSessions.length === 0}
               >
-                Select all visible
+                Select visible
               </Button>
               <Button
                 variant='outline'
                 size='sm'
-                onClick={selectAllMatching}
-                disabled={bulkDeleting || selectingAll}
+                onClick={() => { void selectAllMatching(); }}
+                disabled={selectingAll}
               >
-                {selectingAll ? 'Selecting...' : 'Select all (all pages)'}
+                {selectingAll ? 'Selecting...' : 'Select all matching'}
               </Button>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={clearSelection}
-                disabled={
-                  selectedIds.size === 0 || bulkDeleting
-                }
-              >
-                Clear selection
-              </Button>
-              <Button
-                variant='destructive'
-                size='sm'
-                onClick={handleBulkDeleteClick}
-                disabled={
-                  selectedIds.size === 0 || bulkDeleting
-                }
-              >
-                {bulkDeleting ? 'Removing...' : 'Remove selected'}
-              </Button>
-              <Label className='flex items-center gap-2 text-[11px] text-gray-500'>
-                <Checkbox
-                  checked={skipBulkConfirm}
-                  onCheckedChange={(checked: boolean): void =>
-                    setSkipBulkConfirm(Boolean(checked))
-                  }
+              {selectedIds.size > 0 && (
+                <Button
+                  variant='destructive'
+                  size='sm'
+                  onClick={handleBulkDeleteClick}
                   disabled={bulkDeleting}
-                />
-                Skip confirmation
-              </Label>
+                >
+                  {bulkDeleting ? 'Deleting...' : `Delete ${selectedIds.size}`}
+                </Button>
+              )}
             </div>
-          ) : null
-        }
+          </div>
+        )}
       >
-        {loading ? (
-          <p className='text-sm text-gray-400'>Loading sessions...</p>
-        ) : error ? null : sessions.length === 0 ? (
+        {filteredSessions.length === 0 && !loading ? (
           <EmptyState
-            title='No sessions yet'
-            description='Start a chat with an agent to see your session history here.'
-            action={
+            title='No sessions found'
+            description={searchQuery ? 'Try adjusting your filters.' : 'Start a new chat to see it here.'}
+            action={!searchQuery ? (
               <Link href='/admin/chatbot'>
-                <Button>Start Chatting</Button>
+                <Button size='sm'>Start Chatting</Button>
               </Link>
-            }
+            ) : undefined}
           />
         ) : (
-          <div className='space-y-3'>
-            {filteredSessions.map((session: ChatbotSessionListItem): React.JSX.Element => (
-              <div
-                key={session.id}
-                className='flex items-center justify-between rounded-md border border-border bg-gray-900 px-4 py-3'
-              >
-                <div className='flex items-start gap-3'>
-                  <Checkbox
-                    checked={selectedIds.has(session.id)}
-                    onCheckedChange={(): void => toggleSelected(session.id)}
-                    aria-label={`Select session ${session.title || session.id}`}
-                    className='mt-1'
-                  />
-                  <div>
-                    {editingId === session.id ? (
-                      <Input
-                        value={draftTitle}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setDraftTitle(event.target.value)}
-                        className='max-w-xs'
-                        placeholder='Session title'
-                      />
-                    ) : (
-                      <p className='text-sm text-white'>
-                        {session.title || `Session ${session.id.slice(0, 6)}`}
-                      </p>
-                    )}
-                    <p className='text-xs text-gray-500'>
-                      Updated {new Date(session.updatedAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-
-                <div className='flex items-center gap-2'>
-                  {editingId === session.id ? (
-                    <>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={() => { void saveTitle(session.id); }}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        variant='ghost'
-                        size='sm'
-                        onClick={cancelEditing}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={(): void => startEditing(session)}
-                    >
-                      Edit
-                    </Button>
-                  )}
-                  <Button
-                    variant='destructive'
-                    size='sm'
-                    disabled={deletingId === session.id}
-                    onClick={() => setSessionToDelete(session)}
-                  >
-                    {deletingId === session.id ? 'Removing...' : 'Remove'}
-                  </Button>
-                  <Link
-                    href={`/admin/chatbot?session=${session.id}`}
-                    onClick={(): void => toast('Opening session...')}
-                  >
-                    <Button variant='outline' size='sm'>
-                      Open
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
-            {filteredSessions.length === 0 ? (
-              <p className='text-sm text-gray-500'>No matching sessions.</p>
-            ) : null}
+          <div className='rounded-md border border-border bg-gray-900/20'>
+            <DataTable
+              columns={columns}
+              data={filteredSessions}
+              isLoading={loading}
+            />
           </div>
         )}
       </ListPanel>
 
       <ConfirmDialog
         open={!!sessionToDelete}
-        onOpenChange={(open: boolean) => !open && setSessionToDelete(null)}
-        onConfirm={(): void => { if (sessionToDelete) { void deleteSession(sessionToDelete); } }}
+        onOpenChange={(open) => !open && setSessionToDelete(null)}
+        onConfirm={() => { if (sessionToDelete) void deleteSession(sessionToDelete); }}
         title='Delete Session'
-        description={`Are you sure you want to delete session "${sessionToDelete?.title || 'this session'}"? This cannot be undone.`}
+        description={`Are you sure you want to delete "${sessionToDelete?.title || 'this session'}"?`}
         confirmText='Delete'
         variant='destructive'
       />
 
       <ConfirmDialog
         open={isBulkDeleteConfirmOpen}
-        onOpenChange={(open: boolean) => setIsBulkDeleteConfirmOpen(open)}
-        onConfirm={(): void => { void bulkDelete(); }}
+        onOpenChange={setIsBulkDeleteConfirmOpen}
+        onConfirm={() => { void bulkDelete(); }}
         title='Delete Sessions'
-        description={`Are you sure you want to delete ${selectedIds.size} selected sessions? This action cannot be undone.`}
+        description={`Are you sure you want to delete ${selectedIds.size} sessions?`}
         confirmText='Delete All'
         variant='destructive'
       />

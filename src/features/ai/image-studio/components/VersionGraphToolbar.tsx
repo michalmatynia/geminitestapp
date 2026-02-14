@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 
-import { UnifiedButton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useVersionGraphControlsContext } from './VersionGraphControlsContext';
@@ -80,7 +80,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         {/* ── Modes group ──────────────────────────────────────── */}
 
         {/* Merge mode toggle */}
-        <UnifiedButton
+        <Button size='xs'
           variant={mergeMode ? 'default' : 'ghost'}
           size='icon'
           className={cn('size-6', mergeMode && 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30')}
@@ -88,11 +88,11 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={onToggleMergeMode}
         >
           <GitMerge className='size-3' />
-        </UnifiedButton>
+        </Button>
 
         {/* Merge execute button */}
         {mergeMode && mergeSelectedIds.length >= 2 ? (
-          <UnifiedButton
+          <Button size='xs'
             variant='outline'
             size='sm'
             className='h-6 border-orange-400/40 px-2 text-[10px] text-orange-400 hover:bg-orange-500/10'
@@ -100,12 +100,12 @@ export function VersionGraphToolbar(): React.JSX.Element {
             onClick={onExecuteMerge}
           >
             Merge ({mergeSelectedIds.length})
-          </UnifiedButton>
+          </Button>
         ) : null}
 
         {/* Clear merge selection */}
         {mergeMode && mergeSelectedIds.length > 0 ? (
-          <UnifiedButton
+          <Button size='xs'
             variant='ghost'
             size='icon'
             className='size-6 text-gray-400'
@@ -113,11 +113,11 @@ export function VersionGraphToolbar(): React.JSX.Element {
             onClick={onClearMergeSelection}
           >
             <X className='size-3' />
-          </UnifiedButton>
+          </Button>
         ) : null}
 
         {/* Composite mode toggle */}
-        <UnifiedButton
+        <Button size='xs'
           variant={compositeMode ? 'default' : 'ghost'}
           size='icon'
           className={cn('size-6', compositeMode && 'bg-teal-500/20 text-teal-400 hover:bg-teal-500/30')}
@@ -125,11 +125,11 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={onToggleCompositeMode}
         >
           <Layers className='size-3' />
-        </UnifiedButton>
+        </Button>
 
         {/* Composite execute button */}
         {compositeMode && compositeSelectedIds.length >= 2 ? (
-          <UnifiedButton
+          <Button size='xs'
             variant='outline'
             size='sm'
             className='h-6 border-teal-400/40 px-2 text-[10px] text-teal-400 hover:bg-teal-500/10'
@@ -137,12 +137,12 @@ export function VersionGraphToolbar(): React.JSX.Element {
             onClick={onExecuteComposite}
           >
             Composite ({compositeSelectedIds.length})
-          </UnifiedButton>
+          </Button>
         ) : null}
 
         {/* Clear composite selection */}
         {compositeMode && compositeSelectedIds.length > 0 ? (
-          <UnifiedButton
+          <Button size='xs'
             variant='ghost'
             size='icon'
             className='size-6 text-gray-400'
@@ -150,11 +150,11 @@ export function VersionGraphToolbar(): React.JSX.Element {
             onClick={onClearCompositeSelection}
           >
             <X className='size-3' />
-          </UnifiedButton>
+          </Button>
         ) : null}
 
         {/* Compare mode toggle */}
-        <UnifiedButton
+        <Button size='xs'
           variant={compareMode ? 'default' : 'ghost'}
           size='icon'
           className={cn('size-6', compareMode && 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30')}
@@ -162,14 +162,14 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={onToggleCompareMode}
         >
           <Columns2 className='size-3' />
-        </UnifiedButton>
+        </Button>
 
         <div className='mx-1 h-4 w-px bg-border/40' />
 
         {/* ── Actions group ────────────────────────────────────── */}
 
         {/* Collapse controls */}
-        <UnifiedButton
+        <Button size='xs'
           variant='ghost'
           size='icon'
           className='size-6'
@@ -177,8 +177,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={onCollapseAll}
         >
           <ChevronUp className='size-3' />
-        </UnifiedButton>
-        <UnifiedButton
+        </Button>
+        <Button size='xs'
           variant='ghost'
           size='icon'
           className='size-6'
@@ -186,10 +186,10 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={onExpandAll}
         >
           <ChevronDown className='size-3' />
-        </UnifiedButton>
+        </Button>
 
         {/* Stats toggle */}
-        <UnifiedButton
+        <Button size='xs'
           variant={showStats ? 'default' : 'ghost'}
           size='icon'
           className={cn('size-6', showStats && 'bg-accent')}
@@ -197,11 +197,11 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={onToggleStats}
         >
           <BarChart3 className='size-3' />
-        </UnifiedButton>
+        </Button>
 
         {/* Minimap toggle */}
         {showMinimapButton ? (
-          <UnifiedButton
+          <Button size='xs'
             variant={showMinimap ? 'default' : 'ghost'}
             size='icon'
             className={cn('size-6', showMinimap && 'bg-accent')}
@@ -209,11 +209,11 @@ export function VersionGraphToolbar(): React.JSX.Element {
             onClick={onToggleMinimap}
           >
             <Map className='size-3' />
-          </UnifiedButton>
+          </Button>
         ) : null}
 
         {/* Export PNG */}
-        <UnifiedButton
+        <Button size='xs'
           variant='ghost'
           size='icon'
           className='size-6'
@@ -222,7 +222,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={onExportPng}
         >
           <Download className='size-3' />
-        </UnifiedButton>
+        </Button>
 
         <div className='mx-1 h-4 w-px bg-border/40' />
 
@@ -250,7 +250,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
         </div>
 
         {/* Zoom controls */}
-        <UnifiedButton
+        <Button size='xs'
           variant='ghost'
           size='icon'
           className='size-6'
@@ -258,11 +258,11 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={() => onSetZoom((z) => Math.max(0.25, z - ZOOM_BUTTON_STEP))}
         >
           <Minus className='size-3' />
-        </UnifiedButton>
+        </Button>
         <span className='min-w-[36px] text-center text-[10px] text-gray-400'>
           {Math.round(zoom * 100)}%
         </span>
-        <UnifiedButton
+        <Button size='xs'
           variant='ghost'
           size='icon'
           className='size-6'
@@ -270,8 +270,8 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={() => onSetZoom((z) => Math.min(3, z + ZOOM_BUTTON_STEP))}
         >
           <Plus className='size-3' />
-        </UnifiedButton>
-        <UnifiedButton
+        </Button>
+        <Button size='xs'
           variant='ghost'
           size='icon'
           className='size-6'
@@ -279,7 +279,7 @@ export function VersionGraphToolbar(): React.JSX.Element {
           onClick={onFitToView}
         >
           <Maximize2 className='size-3' />
-        </UnifiedButton>
+        </Button>
       </div>
     </div>
   );

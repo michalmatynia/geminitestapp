@@ -177,37 +177,27 @@ const toProductImageRecord = (image: {
   };
 };
 
-const toProductRecord = (product: {
-  id: string;
-  sku: string | null;
-  baseProductId: string | null;
-  defaultPriceGroupId: string | null;
-  ean: string | null;
-  gtin: string | null;
-  asin: string | null;
-  name_en: string | null;
-  name_pl: string | null;
-  name_de: string | null;
-  description_en: string | null;
-  description_pl: string | null;
-  description_de: string | null;
-  supplierName: string | null;
-  supplierLink: string | null;
-  priceComment: string | null;
-  stock: number | null;
-  price: number | null;
-  sizeLength: number | null;
-  sizeWidth: number | null;
-  weight: number | null;
-  length: number | null;
-  published?: boolean | null;
-  catalogId?: string | null;
-  parameters?: Prisma.JsonValue | null;
+interface PrismaProductWithRelations extends Omit<Prisma.ProductGetPayload<{
+  include: {
+    images: { include: { imageFile: true } };
+    catalogs: { include: { catalog: true } };
+    categories: { select: { categoryId: true } };
+    tags: { select: { tagId: true } };
+    producers: { select: { producerId: true } };
+  };
+}>, 'images' | 'catalogs' | 'tags' | 'producers'> {
+  images?: Array<{ productId: string; imageFileId: string; assignedAt: Date; imageFile: ImageFileRecord }>;
+  catalogs?: Array<{ productId: string; catalogId: string; assignedAt: Date; catalog: CatalogRecord }>;
+      tags?: Array<{ productId: string; tagId: string; assignedAt: Date }>;
+      producers?: Array<{ productId: string; producerId: string; assignedAt: Date }>;
+      categories?: { categoryId: string } | null;
+      published?: boolean | null;
+      catalogId?: string | null;
+    }
+const toProductRecord = (product: PrismaProductWithRelations & {
   imageLinks: string[];
   imageBase64s: string[];
   noteIds?: string[] | null;
-  createdAt: Date;
-  updatedAt: Date;
 }): ProductRecord => ({
   id: product.id,
   sku: product.sku ?? null,
@@ -217,7 +207,11 @@ const toProductRecord = (product: {
   gtin: product.gtin ?? null,
   asin: product.asin ?? null,
   name: { en: product.name_en ?? '', pl: product.name_pl ?? null, de: product.name_de ?? null },
-  description: { en: product.description_en ?? '', pl: product.description_pl ?? null, de: product.description_de ?? null },
+  description: {
+    en: product.description_en ?? '',
+    pl: product.description_pl ?? null,
+    de: product.description_de ?? null,
+  },
   name_en: product.name_en ?? null,
   name_pl: product.name_pl ?? null,
   name_de: product.name_de ?? null,
@@ -234,18 +228,25 @@ const toProductRecord = (product: {
   weight: product.weight ?? null,
   length: product.length ?? null,
   published: product.published ?? true,
-  catalogId: product.catalogId ?? (product as any).catalogs?.[0]?.catalogId ?? '',
-  parameters: Array.isArray(product.parameters) ? (product.parameters as unknown as ProductParameterValue[]) : [],
+  catalogId: product.catalogId ?? product.catalogs?.[0]?.catalogId ?? '',
+  parameters: Array.isArray(product.parameters)
+    ? (product.parameters as unknown as ProductParameterValue[])
+    : [],
   imageLinks: Array.isArray(product.imageLinks) ? product.imageLinks : [],
   imageBase64s: Array.isArray(product.imageBase64s) ? product.imageBase64s : [],
   noteIds: Array.isArray(product.noteIds) ? product.noteIds : [],
   createdAt: product.createdAt.toISOString(),
   updatedAt: product.updatedAt.toISOString(),
-  categoryId: (product as unknown as { categories?: { categoryId: string } | null }).categories?.categoryId ?? null,
-  tags: (product as unknown as { tags?: any[] }).tags ?? [],
-  images: (product as unknown as { images?: any[] }).images ?? [],
+  categoryId: product.categories?.categoryId ?? null,
+  tags: (product.tags as unknown as Array<{ productId: string; tagId: string; assignedAt: Date }>) ?? [],
+  images:
+    (product.images as unknown as Array<{
+      productId: string;
+      imageFileId: string;
+      assignedAt: Date;
+      imageFile: ImageFileRecord;
+    }>) ?? [],
 });
-
 // Helper function to create a ProductRepository instance that uses a Prisma TransactionClient
 const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRepository => ({
   // Implement all methods of ProductRepository using the provided 'tx' client

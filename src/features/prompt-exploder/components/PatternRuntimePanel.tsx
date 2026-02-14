@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, FormSection, Input, Label, StatusToggle, UnifiedSelect } from '@/shared/ui';
+import { Button, FormSection, Input, Label, StatusToggle, SelectSimple } from '@/shared/ui';
 
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
 import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
@@ -94,7 +94,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
       <div className='mt-3 grid gap-2 md:grid-cols-8'>
         <div className='space-y-1'>
           <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={learningDraft.runtimeRuleProfile}
             onValueChange={(value: string) => {
               setLearningDraft((previous) => ({
@@ -252,7 +252,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             onChange={(event) => setSnapshotDraftName(event.target.value)}
             placeholder='Snapshot name (optional)'
           />
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={selectedSnapshotId}
             onValueChange={setSelectedSnapshotId}
             options={
@@ -326,7 +326,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
                   </div>
                 </div>
                 <div className='mt-1 flex items-center justify-between gap-2'>
-                  <UnifiedSelect
+                  <SelectSimple size='sm'
                     value={template.state}
                     onValueChange={(value: string) => {
                       void handleTemplateStateChange(

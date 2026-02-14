@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Input, UnifiedSelect, Button } from '@/shared/ui';
+import { Input, SelectSimple, Button } from '@/shared/ui';
 
 import { useFileManager } from '../../contexts/FileManagerContext';
 
@@ -27,7 +27,7 @@ export function FileManagerBulkActions(): React.JSX.Element {
         onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setBulkTagInput(e.target.value)}
         className='w-full md:w-72 p-2 bg-gray-800 rounded'
       />
-      <UnifiedSelect
+      <SelectSimple size='sm'
         value={bulkTagMode}
         onValueChange={(value: string): void => setBulkTagMode(value as 'add' | 'replace')}
         options={[

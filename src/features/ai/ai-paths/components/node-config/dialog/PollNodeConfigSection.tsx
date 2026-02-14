@@ -15,7 +15,7 @@ import {
   Input,
   Label,
   Textarea,
-  UnifiedSelect,
+  SelectSimple,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -115,7 +115,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Mode</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm' size='sm'
           value={resolvedPollConfig.mode || ''}
           onValueChange={(value: string): void =>
             updatePollConfig({ mode: value as 'job' | 'database' })
@@ -176,7 +176,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
           <div className='grid gap-3 sm:grid-cols-2'>
             <div>
               <Label className='text-xs text-gray-400'>Provider</Label>
-              <UnifiedSelect
+              <SelectSimple size='sm' size='sm'
                 value={queryConfig.provider}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -198,7 +198,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </div>
             <div>
               <Label className='text-xs text-gray-400'>Collection</Label>
-              <UnifiedSelect
+              <SelectSimple size='sm' size='sm'
                 value={collectionOption}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -251,7 +251,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
           <div className='grid gap-3 sm:grid-cols-2'>
             <div>
               <Label className='text-xs text-gray-400'>Query mode</Label>
-              <UnifiedSelect
+              <SelectSimple size='sm' size='sm'
                 value={queryConfig.mode}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -272,7 +272,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </div>
             <div>
               <Label className='text-xs text-gray-400'>ID type</Label>
-              <UnifiedSelect
+              <SelectSimple size='sm' size='sm'
                 value={queryConfig.idType}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -296,7 +296,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             <div className='grid gap-3 sm:grid-cols-2'>
               <div>
                 <Label className='text-xs text-gray-400'>Preset</Label>
-                <UnifiedSelect
+                <SelectSimple size='sm' size='sm'
                   value={queryConfig.preset}
                   onValueChange={(value: string): void =>
                     updatePollConfig({
@@ -449,7 +449,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </div>
             <div>
               <Label className='text-xs text-gray-400'>Success operator</Label>
-              <UnifiedSelect
+              <SelectSimple size='sm' size='sm'
                 value={resolvedPollConfig.successOperator ?? 'equals'}
                 onValueChange={(value: string): void =>
                   updatePollConfig({

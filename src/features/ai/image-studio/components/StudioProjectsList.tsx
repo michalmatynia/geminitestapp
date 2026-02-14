@@ -3,7 +3,7 @@
 import { Plus, X } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { UnifiedButton, UnifiedInput,  useToast } from '@/shared/ui';
+import { Button, Input, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useProjects } from '../context/ProjectsContext';
@@ -44,25 +44,25 @@ export function StudioProjectsList(): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <div className='flex items-center gap-2 rounded-lg border border-border/60 bg-card/40 p-3'>
-        <UnifiedInput
+        <Input size='sm'
           placeholder='New project ID...'
           value={newProjectId}
           onChange={(e) => setNewProjectId(e.target.value)}
           className='h-9'
         />
-        <UnifiedButton
+        <Button size='xs'
           size='sm'
           onClick={() => void handleCreate()}
           disabled={!newProjectId.trim() || createProjectMutation.isPending}
         >
           <Plus className='mr-2 size-4' />
           Create
-        </UnifiedButton>
+        </Button>
       </div>
 
       <div className='overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
         <div className='border-b border-border/60 bg-muted/30 p-2'>
-          <UnifiedInput
+          <Input size='sm'
             placeholder='Search projects...'
             value={projectSearch}
             onChange={(e) => setProjectSearch(e.target.value)}
@@ -86,7 +86,7 @@ export function StudioProjectsList(): React.JSX.Element {
                   onClick={() => setProjectId(id)}
                 >
                   <span className='truncate pr-2'>{id}</span>
-                  <UnifiedButton
+                  <Button size='xs'
                     variant='ghost'
                     size='icon'
                     className='size-6 text-gray-500 hover:text-red-400'
@@ -96,7 +96,7 @@ export function StudioProjectsList(): React.JSX.Element {
                     }}
                   >
                     <X className='size-3' />
-                  </UnifiedButton>
+                  </Button>
                 </div>
               ))}
             </div>

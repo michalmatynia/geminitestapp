@@ -28,7 +28,7 @@ import {
   Checkbox,
   Input,
   Tooltip,
-  UnifiedSelect,
+  SelectSimple,
   FormSection,
   FormField,
   type VectorShape,
@@ -771,7 +771,7 @@ export function AdvancedSection(): React.ReactNode {
       {/* Text Effects */}
       <FormSection title='Text Effects' variant='subtle-compact' className='p-3 space-y-4'>
         <FormField label='Mode'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={textEffectValue}
             onValueChange={handleTextEffectChange}
             options={TEXT_EFFECTS}
@@ -864,7 +864,7 @@ export function AdvancedSection(): React.ReactNode {
       {/* Velocity-based FX */}
       <FormSection title='Velocity FX' variant='subtle-compact' className='p-3 space-y-4'>
         <FormField label='Effect'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={velocityEffectValue}
             onValueChange={handleVelocityEffectChange}
             options={VELOCITY_EFFECTS}
@@ -908,7 +908,7 @@ export function AdvancedSection(): React.ReactNode {
         {draggableEnabledValue && (
           <div className='mt-4 space-y-4'>
             <FormField label='Axis'>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={draggableTypeValue}
                 onValueChange={handleDraggableTypeChange}
                 options={DRAG_AXES}
@@ -1024,7 +1024,7 @@ export function AdvancedSection(): React.ReactNode {
 
             <div className='grid gap-3 sm:grid-cols-2'>
               <FormField label='Axis'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={observerAxisValue}
                   onValueChange={handleObserverAxisChange}
                   options={DRAG_AXES}
@@ -1082,7 +1082,7 @@ export function AdvancedSection(): React.ReactNode {
 
             <div className='grid gap-3 sm:grid-cols-2'>
               <FormField label='Axis'>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   value={magnetAxisValue}
                   onValueChange={handleMagnetAxisChange}
                   options={DRAG_AXES}

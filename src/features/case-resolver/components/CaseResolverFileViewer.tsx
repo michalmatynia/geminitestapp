@@ -106,6 +106,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
       <div className='min-h-0 flex-1 overflow-hidden rounded border border-border/60 bg-card/25'>
         {showImagePreview ? (
           <div className='flex h-full items-center justify-center p-3'>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={selectedAsset.filepath ?? ''}
               alt={selectedAsset.name}

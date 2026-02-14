@@ -38,7 +38,7 @@ import {
   Checkbox,
   Input,
   Label,
-  UnifiedSelect,
+  SelectSimple,
   useToast,
 } from '@/shared/ui';
 
@@ -1117,7 +1117,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
           <div className='mx-1 h-6 w-px bg-border/60' />
 
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={newNodeType}
             onValueChange={(value: string): void => {
               if (
@@ -1148,7 +1148,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
           <div className='mx-1 h-6 w-px bg-border/60' />
 
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={fileDropMode}
             onValueChange={(value: string): void => {
               if (value === 'file_node' || value === 'text_node') {
@@ -1162,7 +1162,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
             className='w-[220px]'
             triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
           />
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={pdfExtractionPresetId}
             onValueChange={(value: string): void => {
               if (
@@ -1273,7 +1273,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                 <>
                   <div className='space-y-2'>
                     <Label className='text-xs text-gray-400'>Node Role</Label>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={selectedPromptMeta.role}
                       onValueChange={(value: string): void => {
                         if (value === 'text_note' || value === 'explanatory' || value === 'ai_prompt') {
@@ -1287,7 +1287,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
                   <div className='space-y-2'>
                     <Label className='text-xs text-gray-400'>Quotation Wrapper</Label>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={selectedPromptMeta.quoteMode}
                       onValueChange={(value: string): void => {
                         if (value === 'none' || value === 'double' || value === 'single') {
@@ -1366,7 +1366,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
               <div className='text-[11px] text-gray-500'>
                 {selectedEdge.fromPort ?? 'output'} → {selectedEdge.toPort ?? 'input'}
               </div>
-              <UnifiedSelect
+              <SelectSimple size='sm'
                 value={selectedEdgeJoinMode}
                 onValueChange={(value: string): void => {
                   if (value === 'newline' || value === 'tab' || value === 'space' || value === 'none') {

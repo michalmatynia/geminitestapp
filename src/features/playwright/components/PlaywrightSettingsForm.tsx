@@ -5,7 +5,7 @@ import { ChangeEvent, ReactElement, useMemo } from 'react';
 import { playwrightDeviceOptions } from '@/features/playwright/constants/playwright';
 import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
 import type { PlaywrightSettings } from '@/features/playwright/types';
-import { Button, Input, Checkbox, UnifiedSelect, FormSection, FormField } from '@/shared/ui';
+import { Button, Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
 import { PlaywrightSettingsFormViewProvider, usePlaywrightSettingsFormView } from './context/PlaywrightSettingsFormViewContext';
 
@@ -71,7 +71,7 @@ function EmulationSection(): ReactElement {
       </div>
       {settings.emulateDevice && (
         <FormField label='Device'>
-          <UnifiedSelect
+          <SelectSimple size='sm'
             value={settings.deviceName}
             onValueChange={(v: string): void =>
               setSettings((prev: PlaywrightSettings) => ({

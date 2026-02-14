@@ -5,9 +5,9 @@ import React, { useCallback, useState } from 'react';
 
 import type { VectorShape, VectorShapeRole } from '@/shared/types/domain/vector';
 import {
-  UnifiedButton,
-  UnifiedInput,
-  UnifiedSelect,
+  Button,
+  Input,
+  SelectSimple,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -106,7 +106,7 @@ export function ShapeListPanel({
             {/* Name / rename */}
             <div className='min-w-0 flex-1'>
               {editingId === shape.id ? (
-                <UnifiedInput
+                <Input size='sm'
                   value={editName}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditName(e.target.value)}
                   onBlur={commitRename}
@@ -138,7 +138,7 @@ export function ShapeListPanel({
             {/* Role selector */}
             {isActive && (
               <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                <UnifiedSelect
+                <SelectSimple size='sm'
                   className='w-[72px]'
                   value={shape.role ?? undefined}
                   onValueChange={(value: string) =>
@@ -153,7 +153,7 @@ export function ShapeListPanel({
             )}
 
             {/* Visibility toggle */}
-            <UnifiedButton
+            <Button size='xs'
               type='button'
               variant='ghost'
               size='icon'
@@ -165,10 +165,10 @@ export function ShapeListPanel({
               title={shape.visible ? 'Hide shape' : 'Show shape'}
             >
               {shape.visible ? <Eye className='size-3' /> : <EyeOff className='size-3' />}
-            </UnifiedButton>
+            </Button>
 
             {/* Delete */}
-            <UnifiedButton
+            <Button size='xs'
               type='button'
               variant='ghost'
               size='icon'
@@ -180,7 +180,7 @@ export function ShapeListPanel({
               title='Delete shape'
             >
               <Trash2 className='size-3' />
-            </UnifiedButton>
+            </Button>
           </div>
         );
       })}

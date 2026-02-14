@@ -18,13 +18,13 @@ import {
 } from '@/features/vector-drawing';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
-  UnifiedButton,
+  Button,
   AppModal,
   Label,
   MultiSelect,
   
-  UnifiedTextarea,
-  UnifiedSelect,
+  Textarea,
+  SelectSimple,
   ValidatorFormatterToggle,
   useToast,
 } from '@/shared/ui';
@@ -302,7 +302,7 @@ export function RightSidebar(): React.JSX.Element {
         >
           {/* Tab toggle */}
           <div className='flex border-b border-border/40'>
-            <UnifiedButton
+            <Button size='xs'
               type='button'
               variant='ghost'
               size='sm'
@@ -315,8 +315,8 @@ export function RightSidebar(): React.JSX.Element {
               onClick={() => setSidebarTab('controls')}
             >
             Controls
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button size='xs'
               type='button'
               variant='ghost'
               size='sm'
@@ -330,7 +330,7 @@ export function RightSidebar(): React.JSX.Element {
             >
               <GitBranch className='mr-1 inline size-3' />
             Version Graph
-            </UnifiedButton>
+            </Button>
           </div>
 
           {sidebarTab === 'graph' ? (
@@ -340,7 +340,7 @@ export function RightSidebar(): React.JSX.Element {
               <div className='space-y-2 px-4 py-2'>
                 <div className='rounded border border-border/60 bg-card/30 p-2'>
                   <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={studioSettings.targetAi.openai.model}
                       onValueChange={(value: string) => {
                         setStudioSettings((prev) => ({
@@ -360,7 +360,7 @@ export function RightSidebar(): React.JSX.Element {
                       triggerClassName='h-8 text-xs'
                       ariaLabel='Quick generation model'
                     />
-                    <UnifiedButton
+                    <Button size='xs'
                       onClick={handleRunGeneration}
                       disabled={!workingSlot || !promptText.trim() || generationBusy}
                       size='sm'
@@ -372,7 +372,7 @@ export function RightSidebar(): React.JSX.Element {
                         <Play className='mr-2 size-4' />
                       )}
                       {generationLabel}
-                    </UnifiedButton>
+                    </Button>
                   </div>
                   <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px]'>
                     <span className='rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'>
@@ -388,7 +388,7 @@ export function RightSidebar(): React.JSX.Element {
                 </div>
 
                 <div className='flex flex-wrap items-center justify-end gap-2'>
-                  <UnifiedButton
+                  <Button size='xs'
                     variant='outline'
                     size='sm'
                     title='Open prompt controls'
@@ -397,8 +397,8 @@ export function RightSidebar(): React.JSX.Element {
                   >
                     <Sparkles className='mr-2 size-4' />
             Control Prompt
-                  </UnifiedButton>
-                  <UnifiedButton
+                  </Button>
+                  <Button size='xs'
                     variant='outline'
                     size='sm'
                     title='Preview generation request payload and input images'
@@ -407,8 +407,8 @@ export function RightSidebar(): React.JSX.Element {
                   >
                     <Eye className='mr-2 size-4' />
             Preview Request
-                  </UnifiedButton>
-                  <UnifiedButton
+                  </Button>
+                  <Button size='xs'
                     variant='outline'
                     size='sm'
                     title={hasExtractedControls ? 'Open extracted controls' : 'Extract controls first'}
@@ -418,7 +418,7 @@ export function RightSidebar(): React.JSX.Element {
                   >
                     <SlidersHorizontal className='mr-2 size-4' />
               Controls
-                  </UnifiedButton>
+                  </Button>
                 </div>
 
               </div>
@@ -527,7 +527,7 @@ export function RightSidebar(): React.JSX.Element {
 
           <div className='space-y-2'>
             <Label className='text-xs text-gray-400'>Prompt</Label>
-            <UnifiedTextarea
+            <Textarea size='sm'
               value={promptText}
               onChange={(event) => setPromptText(event.target.value)}
               className='h-44 font-mono text-[11px]'
@@ -549,14 +549,14 @@ export function RightSidebar(): React.JSX.Element {
           </div>
 
           <div className='flex items-center justify-end gap-2'>
-            <UnifiedButton
+            <Button size='xs'
               variant='outline'
               size='sm'
               onClick={() => setPromptControlOpen(false)}
             >
               Close
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button size='xs'
               variant='outline'
               size='sm'
               title='Open Prompt Exploder with current prompt'
@@ -568,8 +568,8 @@ export function RightSidebar(): React.JSX.Element {
               }}
             >
               Prompt Exploder
-            </UnifiedButton>
-            <UnifiedButton
+            </Button>
+            <Button size='xs'
               variant='outline'
               size='sm'
               title='Extract functions and selectors from prompt'
@@ -582,7 +582,7 @@ export function RightSidebar(): React.JSX.Element {
             >
               <Sparkles className='mr-2 size-4' />
               Extract
-            </UnifiedButton>
+            </Button>
           </div>
         </div>
       </AppModal>

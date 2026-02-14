@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
-import { Button, Input, FormSection, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, FormSection, SelectSimple } from '@/shared/ui';
 
 
 const getParameterLabel = (
@@ -88,7 +88,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                   className='flex flex-col gap-3 rounded-md border border-border bg-card/40 p-3 md:flex-row md:items-center'
                 >
                   <div className='w-full md:w-64'>
-                    <UnifiedSelect
+                    <SelectSimple size='sm'
                       value={entry.parameterId}
                       onValueChange={(value: string) => updateParameterId(index, value)}
                       options={availableOptions.map((param: ProductParameter) => ({

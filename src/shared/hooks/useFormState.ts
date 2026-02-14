@@ -7,7 +7,7 @@ import {
   useMemo,
 } from 'react';
 
-export interface FormStateOptions<T extends Record<string, any>> {
+export interface FormStateOptions<T extends Record<string, unknown>> {
   /**
    * Initial form values
    */
@@ -39,7 +39,7 @@ export interface FormStateOptions<T extends Record<string, any>> {
   onSubmitSuccess?: () => void;
 }
 
-export interface FormState<T extends Record<string, any>> {
+export interface FormState<T extends Record<string, unknown>> {
   values: T;
   errors: Partial<Record<keyof T, string>>;
   isSubmitting: boolean;
@@ -47,8 +47,8 @@ export interface FormState<T extends Record<string, any>> {
   isValid: boolean;
 }
 
-export interface FormActions<T extends Record<string, any>> {
-  setValue: (field: keyof T, value: any) => void;
+export interface FormActions<T extends Record<string, unknown>> {
+  setValue: <K extends keyof T>(field: K, value: T[K]) => void;
   setValues: (values: Partial<T>) => void;
   setFieldError: (field: keyof T, error: string) => void;
   clearFieldError: (field: keyof T) => void;
@@ -56,7 +56,7 @@ export interface FormActions<T extends Record<string, any>> {
   handleSubmit: () => Promise<void>;
   reset: () => void;
   getValues: () => T;
-  getValue: (field: keyof T) => any;
+  getValue: <K extends keyof T>(field: K) => T[K];
 }
 
 /**
@@ -76,7 +76,7 @@ export interface FormActions<T extends Record<string, any>> {
  *   },
  * });
  */
-export function useFormState<T extends Record<string, any>>({
+export function useFormState<T extends Record<string, unknown>>({
   initialValues,
   validate,
   onSubmit,
@@ -97,7 +97,7 @@ export function useFormState<T extends Record<string, any>>({
     return Object.keys(errors).length === 0;
   }, [errors]);
 
-  const setValue = useCallback((field: keyof T, value: any) => {
+  const setValue = useCallback(<K extends keyof T>(field: K, value: T[K]) => {
     setValues(prev => ({ ...prev, [field]: value }));
     setErrors(prev => {
       const newErrors = { ...prev };
@@ -159,7 +159,7 @@ export function useFormState<T extends Record<string, any>>({
 
   const getValues = useCallback(() => values, [values]);
 
-  const getValue = useCallback((field: keyof T) => values[field], [values]);
+  const getValue = useCallback(<K extends keyof T>(field: K) => values[field], [values]);
 
   return {
     state: {
@@ -182,3 +182,4 @@ export function useFormState<T extends Record<string, any>>({
     },
   };
 }
+

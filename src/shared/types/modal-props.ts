@@ -149,9 +149,9 @@ export interface MultiSectionModalProps extends ModalStateProps {
  * type CatalogEntity = ExtractEntityType<typeof CatalogModalProps>;
  * ```
  */
-export type ExtractEntityType<T extends EntityModalProps<any, any>> = T extends EntityModalProps<infer E, any> ? E : never;
+export type ExtractEntityType<T extends EntityModalProps<unknown, unknown>> = T extends EntityModalProps<infer E, unknown> ? E : never;
 
 /**
  * Helper type to extract list item type from EntityModalProps
  */
-export type ExtractListItemType<T extends EntityModalProps<any, any>> = T extends EntityModalProps<any, infer L> ? L : never;
+export type ExtractListItemType<T extends EntityModalProps<unknown, unknown>> = T extends EntityModalProps<unknown, infer L> ? L : never;

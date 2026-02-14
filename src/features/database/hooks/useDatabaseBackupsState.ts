@@ -101,8 +101,7 @@ ${log}`
           payload.backupName ? `Backup: ${payload.backupName}` : null,
         ]
           .filter(Boolean)
-          .join('
-');
+          .join('\n');
 
         openLogModal(
           `${payload.error ?? 'Failed to restore backup.'}${meta ? `

@@ -6,7 +6,7 @@ import type { AiNode, Edge, ModelConfig } from '@/features/ai/ai-paths/lib';
 import { DEFAULT_MODELS, toNumber } from '@/features/ai/ai-paths/lib';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, Label, UnifiedSelect } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -90,7 +90,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <div>
         <Label className='text-xs text-gray-400'>Model</Label>
-        <UnifiedSelect
+        <SelectSimple size='sm'
           value={modelConfig.modelId}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({

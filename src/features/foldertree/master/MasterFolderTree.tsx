@@ -341,14 +341,8 @@ export function MasterFolderTree({
               onDragStart={
                 enableDnd
                   ? (event: React.DragEvent<HTMLDivElement>): void => {
-                    controller.startDrag(node.id);
-                    onNodeDragStart?.(
-                      {
-                        node,
-                        event,
-                      },
-                      controller
-                    );
+                    // Set drag data synchronously — dataTransfer is only writable
+                    // during the dragStart event.
                     try {
                       event.dataTransfer.setData(MASTER_TREE_DRAG_NODE_ID, node.id);
                       event.dataTransfer.setData('text/plain', node.id);
@@ -356,6 +350,18 @@ export function MasterFolderTree({
                       // no-op: setData can throw in a few host environments
                     }
                     event.dataTransfer.effectAllowed = 'move';
+                    // Defer React state updates so the re-render does not cancel
+                    // the browser's native drag operation before it fully starts.
+                    setTimeout((): void => {
+                      controller.startDrag(node.id);
+                      onNodeDragStart?.(
+                        {
+                          node,
+                          event,
+                        },
+                        controller
+                      );
+                    }, 0);
                   }
                   : undefined
               }

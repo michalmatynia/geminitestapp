@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
-import { Button, UnifiedSelect, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader,  FormSection, FormField } from '@/shared/ui';
+import { Button, SelectSimple, useToast, Label, Checkbox, RadioGroup, RadioGroupItem, SectionHeader,  FormSection, FormField } from '@/shared/ui';
 
 
 
@@ -84,7 +84,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             label='Sort By'
             description={!isDefault('sortBy') ? 'Modified from default' : undefined}
           >
-            <UnifiedSelect
+            <SelectSimple size='sm'
               options={[...sortByOptions]}
               value={settings.sortBy}
               onValueChange={(value: string): void =>
@@ -98,7 +98,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             label='Sort Order'
             description={!isDefault('sortOrder') ? 'Modified from default' : undefined}
           >
-            <UnifiedSelect
+            <SelectSimple size='sm'
               options={[...sortOrderOptions]}
               value={settings.sortOrder}
               onValueChange={(value: string): void =>
@@ -152,7 +152,7 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             label='Default Search Scope'
             description={!isDefault('searchScope') ? 'Modified from default' : undefined}
           >
-            <UnifiedSelect
+            <SelectSimple size='sm'
               options={[...searchScopeOptions]}
               value={settings.searchScope}
               onValueChange={(value: string): void =>

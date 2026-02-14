@@ -19,3 +19,17 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
   Creating an optimized production build ...
 ✓ Compiled successfully in 21.3s
   Running TypeScript ...
+Failed to compile.
+
+./src/features/jobs/components/ProductListingJobsPanel.tsx:118:92
+Type error: Type '{ status: string; label: string; className: string; }' is not assignable to type 'IntrinsicAttributes & StatusBadgeProps'.
+  Property 'label' does not exist on type 'IntrinsicAttributes & StatusBadgeProps'.
+
+[0m [90m 116 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m'flex items-center justify-between'[39m[33m>[39m
+ [90m 117 |[39m             [33m<[39m[33mspan[39m className[33m=[39m[32m'text-[10px] text-gray-500 uppercase font-bold'[39m[33m>[39m[33mRuntime[39m [33mMode[39m[33m<[39m[33m/[39m[33mspan[39m[33m>[39m
+[31m[1m>[22m[39m[90m 118 |[39m             [33m<[39m[33mStatusBadge[39m status[33m=[39m{traderaQueueHealth[33m?[39m[33m.[39mredisAvailable [33m?[39m [32m'success'[39m [33m:[39m [32m'error'[39m} label[33m=[39m{traderaQueueHealth[33m?[39m[33m.[39mredisAvailable [33m?[39m [32m'Redis Up'[39m [33m:[39m [32m'No Redis'[39m} className[33m=[39m[32m'text-[9px]'[39m [33m/[39m[33m>[39m
+ [90m     |[39m                                                                                            [31m[1m^[22m[39m
+ [90m 119 |[39m           [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 120 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m'mt-2 text-xs text-gray-300 font-medium'[39m[33m>[39m
+ [90m 121 |[39m             {traderaQueueHealthLoading [33m?[39m [32m'Scanning...'[39m [33m:[39m traderaQueueHealth[33m?[39m[33m.[39mmode [33m?[39m[33m?[39m [32m'Unknown'[39m}[0m
+Next.js build worker exited with code: 1 and signal: null

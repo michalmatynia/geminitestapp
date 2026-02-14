@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 220ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 15.9s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/products/context/ProductListContext.tsx:363:24
+Type error: Property 'maxHeight' does not exist on type 'ProductListContextType'.
+
+[0m [90m 361 |[39m       isLoading[33m:[39m value[33m.[39misLoading[33m,[39m
+ [90m 362 |[39m       skeletonRows[33m:[39m value[33m.[39mskeletonRows[33m,[39m
+[31m[1m>[22m[39m[90m 363 |[39m       maxHeight[33m:[39m value[33m.[39mmaxHeight[33m,[39m
+ [90m     |[39m                        [31m[1m^[22m[39m
+ [90m 364 |[39m       stickyHeader[33m:[39m value[33m.[39mstickyHeader[33m,[39m
+ [90m 365 |[39m     })[33m,[39m
+ [90m 366 |[39m     [value][0m
+Next.js build worker exited with code: 1 and signal: null

@@ -100,8 +100,8 @@ export type ProductWithImages = Omit<ProductRecord, 'images' | 'catalogs' | 'tag
   images: ProductImageRecord[];
   catalogs: ProductCatalogRecord[];
   categoryId?: string | null;
-  tags?: { tagId: string }[];
-  producers?: { producerId: string }[];
+  tags?: ProductTagRelationDto[];
+  producers?: ProductProducerRelationDto[];
 };
 
 /**

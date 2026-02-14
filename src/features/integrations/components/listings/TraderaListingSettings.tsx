@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import { Checkbox, Input, Label } from '@/shared/ui';
+import { Checkbox, Input, Label, FormField } from '@/shared/ui';
 
 export function TraderaListingSettings(): React.JSX.Element {
   const {
@@ -19,8 +19,10 @@ export function TraderaListingSettings(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <div className='space-y-2'>
-        <Label htmlFor='traderaTemplateId'>Template ID (Optional)</Label>
+      <FormField 
+        label='Template ID (Optional)'
+        description='Optional listing template identifier for Tradera automation mapping.'
+      >
         <Input
           id='traderaTemplateId'
           value={selectedTraderaTemplateId === 'none' ? '' : selectedTraderaTemplateId}
@@ -31,13 +33,9 @@ export function TraderaListingSettings(): React.JSX.Element {
           placeholder='tradera-template-1'
           className='h-9 border bg-card/60 text-gray-200'
         />
-        <p className='text-xs text-gray-500'>
-          Optional listing template identifier for Tradera automation mapping.
-        </p>
-      </div>
+      </FormField>
 
-      <div className='space-y-2'>
-        <Label htmlFor='traderaDuration'>Listing Duration (Hours)</Label>
+      <FormField label='Listing Duration (Hours)'>
         <Input
           id='traderaDuration'
           type='number'
@@ -51,7 +49,7 @@ export function TraderaListingSettings(): React.JSX.Element {
           }}
           className='h-9 border bg-card/60 text-gray-200'
         />
-      </div>
+      </FormField>
 
       <div className='flex items-center gap-2 pt-1'>
         <Checkbox
@@ -67,8 +65,10 @@ export function TraderaListingSettings(): React.JSX.Element {
         </Label>
       </div>
 
-      <div className='space-y-2'>
-        <Label htmlFor='traderaRelistLead'>Relist Lead Time (Minutes)</Label>
+      <FormField 
+        label='Relist Lead Time (Minutes)'
+        description='The relist job starts this many minutes before expiry.'
+      >
         <Input
           id='traderaRelistLead'
           type='number'
@@ -85,10 +85,7 @@ export function TraderaListingSettings(): React.JSX.Element {
           }}
           className='h-9 border bg-card/60 text-gray-200 disabled:opacity-50'
         />
-        <p className='text-xs text-gray-500'>
-          The relist job starts this many minutes before expiry.
-        </p>
-      </div>
+      </FormField>
     </div>
   );
 }

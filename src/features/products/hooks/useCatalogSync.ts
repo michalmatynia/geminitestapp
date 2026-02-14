@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { useState, useRef, useMemo } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -56,29 +56,32 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
   const catalogFilterInitialized = useRef(false);
 
   // Parallel queries for all data sources
-  const catalogsQuery = useQuery({
-    queryKey: QUERY_KEYS.products.metadata.catalogs,
-    queryFn: fetchCatalogs,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+  const results = useQueries({
+    queries: [
+      {
+        queryKey: QUERY_KEYS.products.metadata.catalogs,
+        queryFn: fetchCatalogs,
+        staleTime: 1000 * 60 * 5, // 5 minutes
+      },
+      {
+        queryKey: QUERY_KEYS.products.metadata.priceGroups,
+        queryFn: fetchPriceGroups,
+        staleTime: 1000 * 60 * 5,
+      },
+      {
+        queryKey: QUERY_KEYS.products.metadata.languages,
+        queryFn: fetchLanguages,
+        staleTime: 1000 * 60 * 5,
+      },
+      {
+        queryKey: QUERY_KEYS.internationalization.currencies,
+        queryFn: fetchCurrencies,
+        staleTime: 1000 * 60 * 5,
+      },
+    ],
   });
 
-  const priceGroupsQuery = useQuery({
-    queryKey: QUERY_KEYS.products.metadata.priceGroups,
-    queryFn: fetchPriceGroups,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const languagesQuery = useQuery({
-    queryKey: QUERY_KEYS.products.metadata.languages,
-    queryFn: fetchLanguages,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const currenciesQuery = useQuery({
-    queryKey: QUERY_KEYS.internationalization.currencies,
-    queryFn: fetchCurrencies,
-    staleTime: 1000 * 60 * 5,
-  });
+  const [catalogsQuery, priceGroupsQuery, languagesQuery, currenciesQuery] = results;
 
   // Log errors
   if (catalogsQuery.error) {

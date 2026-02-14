@@ -42,6 +42,8 @@ interface DataTableProps<TData> {
   meta?: Record<string, unknown>;
   className?: string;
   getRowClassName?: (row: Row<TData>) => string | undefined;
+  maxHeight?: string | number;
+  stickyHeader?: boolean;
 }
 
 declare module '@tanstack/react-table' {
@@ -69,6 +71,8 @@ export const DataTable = memo(function DataTable<TData>({
   meta,
   className,
   getRowClassName,
+  maxHeight,
+  stickyHeader = false,
 }: DataTableProps<TData>) {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [internalExpanded, setInternalExpanded] = useState<ExpandedState>({});
@@ -134,80 +138,88 @@ export const DataTable = memo(function DataTable<TData>({
   });
 
   return (
-    <div className={cn('rounded-md border border-border', className)}>
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className='border-border'>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id} className='text-foreground'>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            skeletonRows || (
+    <div 
+      className={cn('rounded-md border border-border flex flex-col', className)}
+      style={maxHeight ? { maxHeight } : undefined}
+    >
+      <div className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>
+        <Table className='border-collapse'>
+          <TableHeader className={cn(stickyHeader && 'sticky top-0 z-10 bg-background')}>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id} className='border-border'>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead 
+                      key={header.id} 
+                      className={cn('text-foreground', stickyHeader && 'bg-background')}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                    </TableHead>
+                  );
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              skeletonRows || (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className='h-24'
+                  >
+                    <div className='flex flex-col items-center justify-center gap-2 text-muted-foreground'>
+                      <Loader2 className='h-6 w-6 animate-spin text-blue-500' />
+                      <span className='text-xs'>Loading data...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )
+            ) : table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <React.Fragment key={row.id}>
+                  <TableRow
+                    data-state={row.getIsSelected() && 'selected'}
+                    className={cn('border-border', getRowClassName?.(row))}
+                    data-row-id={getRowId ? getRowId(row.original) : undefined}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className='text-muted-foreground'>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() && renderRowDetails && (
+                    <TableRow className='border-border bg-muted/30'>
+                      <TableCell colSpan={columns.length} className='p-0'>
+                        {renderRowDetails({ row })}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
+              ))
+            ) : (
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className='h-24'
+                  className='h-24 py-12'
                 >
-                  <div className='flex flex-col items-center justify-center gap-2 text-muted-foreground'>
-                    <Loader2 className='h-6 w-6 animate-spin text-blue-500' />
-                    <span className='text-xs'>Loading data...</span>
-                  </div>
+                  <EmptyState 
+                    title='No results' 
+                    description="Try adjusting your filters to find what you're looking for."
+                    className='border-none p-0'
+                  />
                 </TableCell>
               </TableRow>
-            )
-          ) : table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <React.Fragment key={row.id}>
-                <TableRow
-                  data-state={row.getIsSelected() && 'selected'}
-                  className={cn('border-border', getRowClassName?.(row))}
-                  data-row-id={getRowId ? getRowId(row.original) : undefined}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className='text-muted-foreground'>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-                {row.getIsExpanded() && renderRowDetails && (
-                  <TableRow className='border-border bg-muted/30'>
-                    <TableCell colSpan={columns.length} className='p-0'>
-                      {renderRowDetails({ row })}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </React.Fragment>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={columns.length}
-                className='h-24 py-12'
-              >
-                <EmptyState 
-                  title='No results' 
-                  description="Try adjusting your filters to find what you're looking for."
-                  className='border-none p-0'
-                />
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            )}
+          </TableBody>
+        </Table>
+      </div>
       {footer?.(table)}
     </div>
   );

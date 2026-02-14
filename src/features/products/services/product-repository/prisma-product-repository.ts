@@ -2,7 +2,7 @@ import 'server-only';
 
 import { Prisma, Product as PrismaProduct, ProductImage as PrismaProductImage, ImageFile as PrismaImageFile, Catalog as PrismaCatalog, ProductCatalog as PrismaProductCatalog } from '@prisma/client';
 
-import type { CatalogRecord, ProductRecord } from '@/features/products/types';
+import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameterValue } from '@/features/products/types';
 import type {
   CreateProductInput,
@@ -145,11 +145,11 @@ type FullPrismaProduct = PrismaProduct & {
   images?: (PrismaProductImage & { imageFile: PrismaImageFile | null })[];
   catalogs?: (PrismaProductCatalog & { catalog: PrismaCatalog & { languages?: { languageId: string }[] } })[];
   categories?: { categoryId: string }[];
-  tags?: { tagId: string }[];
-  producers?: { producerId: string }[];
+  tags?: (Prisma.ProductTagAssignmentGetPayload<{}>)[];
+  producers?: (Prisma.ProductProducerAssignmentGetPayload<{}>)[];
 };
 
-const toProductRecord = (product: FullPrismaProduct): ProductRecord => {
+const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
   const catalogs = product.catalogs?.map(pc => ({
     productId: pc.productId,
     catalogId: pc.catalogId,
@@ -199,8 +199,16 @@ const toProductRecord = (product: FullPrismaProduct): ProductRecord => {
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
     categoryId: product.categories?.[0]?.categoryId ?? null,
-    tags: product.tags?.map(t => ({ tagId: t.tagId })) ?? [],
-    producers: product.producers?.map(p => ({ producerId: p.producerId })) ?? [],
+    tags: product.tags?.map(t => ({ 
+      productId: t.productId,
+      tagId: t.tagId,
+      assignedAt: t.assignedAt.toISOString(),
+    })) ?? [],
+    producers: product.producers?.map(p => ({ 
+      productId: p.productId,
+      producerId: p.producerId,
+      assignedAt: p.assignedAt.toISOString(),
+    })) ?? [],
     images: product.images?.map(toProductImageRecord).filter((i): i is NonNullable<typeof i> => i !== null) ?? [],
     catalogs,
   };

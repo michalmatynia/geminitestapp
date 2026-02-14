@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from 'react';
 
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
@@ -52,21 +52,26 @@ export function useIntegrationSelection(
   );
   const initializedRef = useRef(false);
 
-  const preferredConnectionQuery = useQuery({
-    queryKey: integrationSelectionKeys.defaultConnection,
-    queryFn: fetchPreferredBaseConnection,
-    staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-    gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-    refetchOnWindowFocus: false,
+  const results = useQueries({
+    queries: [
+      {
+        queryKey: integrationSelectionKeys.defaultConnection,
+        queryFn: fetchPreferredBaseConnection,
+        staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+        gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+        refetchOnWindowFocus: false,
+      },
+      {
+        queryKey: integrationSelectionKeys.withConnections,
+        queryFn: fetchIntegrationsWithConnections,
+        staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
+        gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+        refetchOnWindowFocus: false,
+      },
+    ],
   });
 
-  const integrationsQuery = useQuery({
-    queryKey: integrationSelectionKeys.withConnections,
-    queryFn: fetchIntegrationsWithConnections,
-    staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
-    gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
-    refetchOnWindowFocus: false,
-  });
+  const [preferredConnectionQuery, integrationsQuery] = results;
 
   const loading = integrationsQuery.isPending && !integrationsQuery.data;
   const integrations = useMemo((): IntegrationWithConnections[] => {

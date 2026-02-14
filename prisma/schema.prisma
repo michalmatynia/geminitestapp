@@ -24,6 +24,8 @@ model Product {
   sizeWidth           Int?
   weight              Int?
   length              Int?
+  published           Boolean                     @default(true)
+  catalogId           String?
   createdAt           DateTime                    @default(now())
   updatedAt           DateTime                    @updatedAt
   asin                String?
@@ -1164,6 +1166,20 @@ model ImageStudioSlot {
 
   @@index([projectId])
   @@index([folderPath])
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityId   String?
+  entityType String?
+  details    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 enum CurrencyCode {

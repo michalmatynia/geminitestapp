@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 204ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 19.6s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/observability/pages/SystemLogsPage.tsx:161:42
+Type error: Type '{ status: string; label: string; className: string; }' is not assignable to type 'IntrinsicAttributes & StatusBadgeProps'.
+  Property 'label' does not exist on type 'IntrinsicAttributes & StatusBadgeProps'.
+
+[0m [90m 159 |[39m         [36mreturn[39m (
+ [90m 160 |[39m           [33m<[39m[33mdiv[39m className[33m=[39m[32m'text-right'[39m[33m>[39m
+[31m[1m>[22m[39m[90m 161 |[39m             [33m<[39m[33mStatusBadge[39m status[33m=[39m{status} label[33m=[39m{row[33m.[39moriginal[33m.[39merror [33m?[39m [32m'Error'[39m [33m:[39m missingCount [33m===[39m [35m0[39m [33m?[39m [32m'Healthy'[39m [33m:[39m [32m'Sync Required'[39m} className[33m=[39m[32m'text-[9px]'[39m [33m/[39m[33m>[39m
+ [90m     |[39m                                          [31m[1m^[22m[39m
+ [90m 162 |[39m           [33m<[39m[33m/[39m[33mdiv[39m[33m>[39m
+ [90m 163 |[39m         )[33m;[39m
+ [90m 164 |[39m       }[0m
+Next.js build worker exited with code: 1 and signal: null

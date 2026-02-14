@@ -167,6 +167,18 @@ export const productTagRelationSchema = z.object({
 export type ProductTagRelationDto = z.infer<typeof productTagRelationSchema>;
 
 /**
+ * Product Producer Relation Contract
+ */
+export const productProducerRelationSchema = z.object({
+  productId: z.string(),
+  producerId: z.string(),
+  assignedAt: z.string(),
+  producer: z.lazy(() => producerSchema).optional(),
+});
+
+export type ProductProducerRelationDto = z.infer<typeof productProducerRelationSchema>;
+
+/**
  * Product Parameter Value Contract
  */
 export const productParameterValueSchema = z.object({
@@ -207,6 +219,7 @@ export const productSchema = dtoBaseSchema.extend({
   categoryId: z.string().nullable(),
   catalogId: z.string(),
   tags: z.array(productTagRelationSchema).optional(),
+  producers: z.array(productProducerRelationSchema).optional(),
   images: z.array(productImageSchema).optional(),
   catalogs: z.array(productCatalogSchema).optional(),
   parameters: z.array(productParameterValueSchema).optional(),

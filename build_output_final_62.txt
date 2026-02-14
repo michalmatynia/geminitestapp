@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 205ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 19.9s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/products/services/product-repository/prisma-product-repository.ts:202:5
+Type error: Type '{ tagId: string; }[]' is not assignable to type '{ productId: string; tagId: string; assignedAt: string; tag?: { id: string; createdAt: string; updatedAt: string | null; name: string; color: string | null; catalogId: string; description?: string | null | undefined; } | undefined; }[]'.
+  Type '{ tagId: string; }' is missing the following properties from type '{ productId: string; tagId: string; assignedAt: string; tag?: { id: string; createdAt: string; updatedAt: string | null; name: string; color: string | null; catalogId: string; description?: string | null | undefined; } | undefined; }': productId, assignedAt
+
+[0m [90m 200 |[39m     updatedAt[33m:[39m product[33m.[39mupdatedAt[33m.[39mtoISOString()[33m,[39m
+ [90m 201 |[39m     categoryId[33m:[39m product[33m.[39mcategories[33m?[39m[33m.[39m[[35m0[39m][33m?[39m[33m.[39mcategoryId [33m?[39m[33m?[39m [36mnull[39m[33m,[39m
+[31m[1m>[22m[39m[90m 202 |[39m     tags[33m:[39m product[33m.[39mtags[33m?[39m[33m.[39mmap(t [33m=>[39m ({ tagId[33m:[39m t[33m.[39mtagId })) [33m?[39m[33m?[39m [][33m,[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 203 |[39m     producers[33m:[39m product[33m.[39mproducers[33m?[39m[33m.[39mmap(p [33m=>[39m ({ producerId[33m:[39m p[33m.[39mproducerId })) [33m?[39m[33m?[39m [][33m,[39m
+ [90m 204 |[39m     images[33m:[39m product[33m.[39mimages[33m?[39m[33m.[39mmap(toProductImageRecord)[33m.[39mfilter((i)[33m:[39m i is [33mNonNullable[39m[33m<[39m[36mtypeof[39m i[33m>[39m [33m=>[39m i [33m!==[39m [36mnull[39m) [33m?[39m[33m?[39m [][33m,[39m
+ [90m 205 |[39m     catalogs[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

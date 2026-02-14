@@ -33,7 +33,7 @@ type ProductDocument = Omit<
   catalogId?: string;
   images?: ProductWithImages['images'];
   catalogs?: ProductWithImages['catalogs'];
-  categories?: Array<{ categoryId: string; assignedAt?: Date }>;
+  categories?: Array<{ categoryId: string; assignedAt?: string }>;
   categoryId?: string | null;
   tags?: ProductWithImages['tags'];
   producers?: ProductWithImages['producers'];
@@ -806,7 +806,7 @@ export const mongoProductRepository: ProductRepository = {
       {
         productId,
         categoryId: (categories[0] as unknown as { id: string }).id,
-        assignedAt: now,
+        assignedAt: now.toISOString(),
       },
     ];
     await db
@@ -837,7 +837,7 @@ export const mongoProductRepository: ProductRepository = {
     const tagEntries = tags.map((tag: Document) => ({
       productId,
       tagId: (tag as unknown as { id: string }).id,
-      assignedAt: now,
+      assignedAt: now.toISOString(),
     }));
     await db
       .collection<ProductDocument>(productCollectionName)
@@ -867,7 +867,7 @@ export const mongoProductRepository: ProductRepository = {
     const producerEntries = producers.map((producer: Document) => ({
       productId,
       producerId: (producer as unknown as { id: string }).id,
-      assignedAt: now,
+      assignedAt: now.toISOString(),
     }));
     await db
       .collection<ProductDocument>(productCollectionName)

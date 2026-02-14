@@ -1,0 +1,37 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 220ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 18.3s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/products/services/product-repository/mongo-product-repository.ts:816:19
+Type error: Type '{ productId: string; categoryId: string; assignedAt: string; }[]' is not assignable to type '{ categoryId: string; assignedAt?: Date; }[]'.
+  Type '{ productId: string; categoryId: string; assignedAt: string; }' is not assignable to type '{ categoryId: string; assignedAt?: Date; }'.
+    Types of property 'assignedAt' are incompatible.
+      Type 'string' is not assignable to type 'Date'.
+
+[0m [90m 814 |[39m       [33m.[39mupdateOne(
+ [90m 815 |[39m         buildProductIdFilter(productId)[33m,[39m
+[31m[1m>[22m[39m[90m 816 |[39m         { $set[33m:[39m { categories[33m:[39m categoryEntries[33m,[39m categoryId[33m:[39m categoryEntries[[35m0[39m][33m?[39m[33m.[39mcategoryId [33m?[39m[33m?[39m [36mnull[39m[33m,[39m updatedAt[33m:[39m [36mnew[39m [33mDate[39m() } }
+ [90m     |[39m                   [31m[1m^[22m[39m
+ [90m 817 |[39m       )[33m;[39m
+ [90m 818 |[39m   }[33m,[39m
+ [90m 819 |[39m[0m
+Next.js build worker exited with code: 1 and signal: null

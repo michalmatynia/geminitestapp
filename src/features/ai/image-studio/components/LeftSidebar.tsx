@@ -141,7 +141,11 @@ export function LeftSidebar(): React.JSX.Element {
     const normalizePath = (value: string): string =>
       value.trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
 
-    const selectedParent = normalizePath(selectedFolder);
+    // When a card is selected, create folder in the card's parent folder.
+    // When a folder is selected, create inside it. Otherwise create at root.
+    const selectedParent = selectedSlotId
+      ? normalizePath(selectedSlot?.folderPath ?? '')
+      : normalizePath(selectedFolder);
     const allFolderPaths = new Set<string>();
     virtualFolders.forEach((folderPath: string) => {
       const normalized = normalizePath(folderPath);
@@ -190,12 +194,29 @@ export function LeftSidebar(): React.JSX.Element {
       const sourceImageFileId = sourceSlot?.imageFileId ?? null;
       const hasSourceImage = Boolean(sourceImageFileId || sourceImageUrl || sourceImageBase64);
 
+      // Resolve target folder: card selected → card's folder, folder selected → that folder, else root
+      const resolvedTargetFolder = selectedSlotId
+        ? (selectedSlot?.folderPath?.trim() ?? '')
+        : selectedFolder.trim();
+
       if (!sourceSlot || !hasSourceImage) {
-        toast('Load an image first, then create a card from it.', { variant: 'info' });
+        // No loaded image — create an empty card in the resolved folder
+        const created = await createSlots([
+          {
+            name: `Card ${Date.now()}`,
+            ...(resolvedTargetFolder ? { folderPath: resolvedTargetFolder } : {}),
+          },
+        ]);
+        const nextCard = created[0] ?? null;
+        if (!nextCard) {
+          throw new Error('Failed to create card.');
+        }
+        setSelectedSlotId(nextCard.id);
+        toast('Created empty card.', { variant: 'success' });
         return;
       }
 
-      const targetFolder = sourceSlot.folderPath?.trim() || selectedFolder.trim();
+      const targetFolder = sourceSlot.folderPath?.trim() || resolvedTargetFolder;
       const created = await createSlots([
         {
           name: sourceSlot.name?.trim() ? `${sourceSlot.name.trim()} Copy` : `Card ${Date.now()}`,

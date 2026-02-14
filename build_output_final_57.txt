@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 226ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 19.7s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/products/hooks/useProductListState.tsx:697:5
+Type error: Cannot find name 'isFetching'.
+
+[0m [90m 695 |[39m     isCreateOpen[33m,[39m
+ [90m 696 |[39m     isDebugOpen[33m,[39m
+[31m[1m>[22m[39m[90m 697 |[39m     isFetching[33m,[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 698 |[39m     isLoading[33m,[39m
+ [90m 699 |[39m     isMassDeleteConfirmOpen[33m,[39m
+ [90m 700 |[39m     isMounted[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

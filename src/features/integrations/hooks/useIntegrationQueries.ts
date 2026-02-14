@@ -64,10 +64,22 @@ export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
   });
 }
 
+export const getExportTemplatesQueryOptions = () => ({
+  queryKey: integrationKeys.exportTemplates(),
+  queryFn: () => api.get<ImportExportTemplateDto[]>('/api/integrations/export-templates'),
+  staleTime: 5 * 60 * 1000,
+});
+
 export const useExportTemplates = createQueryHook<ImportExportTemplateDto[]>({
   queryKeyFactory: () => integrationKeys.exportTemplates(),
   endpoint: '/api/integrations/export-templates',
   schema: z.array(importExportTemplateSchema),
+});
+
+export const getActiveExportTemplateQueryOptions = () => ({
+  queryKey: integrationKeys.activeExportTemplate(),
+  queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
+  staleTime: 5 * 60 * 1000,
 });
 
 export const useActiveExportTemplate = createQueryHook({
@@ -75,22 +87,30 @@ export const useActiveExportTemplate = createQueryHook({
   endpoint: '/api/integrations/exports/base/active-template',
 });
 
+export const getDefaultExportInventoryQueryOptions = () => ({
+  queryKey: integrationKeys.defaultExportInventory(),
+  queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
+  staleTime: 5 * 60 * 1000,
+});
+
 export const useDefaultExportInventory = createQueryHook({
   queryKeyFactory: () => integrationKeys.defaultExportInventory(),
   endpoint: '/api/integrations/exports/base/default-inventory',
 });
 
+export const getBaseInventoriesQueryOptions = (connectionId: string, enabled: boolean = true) => ({
+  queryKey: integrationKeys.baseInventories(connectionId),
+  queryFn: async (): Promise<BaseInventory[]> => {
+    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
+      action: 'inventories',
+      connectionId,
+    });
+    if (data.error) throw new ApiError(data.error, 400);
+    return Array.isArray(data.inventories) ? data.inventories : [];
+  },
+  enabled: enabled && !!connectionId,
+});
+
 export function useBaseInventories(connectionId: string, enabled: boolean = true): UseQueryResult<BaseInventory[]> {
-  return useQuery({
-    queryKey: integrationKeys.baseInventories(connectionId),
-    queryFn: async (): Promise<BaseInventory[]> => {
-      const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
-        action: 'inventories',
-        connectionId,
-      });
-      if (data.error) throw new ApiError(data.error, 400);
-      return Array.isArray(data.inventories) ? data.inventories : [];
-    },
-    enabled: enabled && !!connectionId,
-  });
+  return useQuery(getBaseInventoriesQueryOptions(connectionId, enabled));
 }

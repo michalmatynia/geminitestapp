@@ -23,6 +23,7 @@ import {
   PageLayout, 
   FormSection,
   Badge,
+  type StatusVariant
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -155,10 +156,13 @@ function LogDiagnostics(): React.JSX.Element {
       header: () => <div className='text-right'>Status</div>,
       cell: ({ row }: { row: Row<MongoCollectionIndexStatus> }) => {
         const missingCount = row.original.missing.length;
-        const status = row.original.error ? 'error' : missingCount === 0 ? 'success' : 'warning';
         return (
           <div className='text-right'>
-            <StatusBadge status={status} label={row.original.error ? 'Error' : missingCount === 0 ? 'Healthy' : 'Sync Required'} className='text-[9px]' />
+            <StatusBadge 
+              status={row.original.error ? 'Error' : missingCount === 0 ? 'Healthy' : 'Sync Required'} 
+              variant={row.original.error ? 'error' : missingCount === 0 ? 'success' : 'warning'} 
+              className='text-[9px]' 
+            />
           </div>
         );
       }
@@ -311,13 +315,23 @@ function LogList(): React.JSX.Element {
     {
       accessorKey: 'level',
       header: 'Level',
-      cell: ({ row }) => (
-        <StatusBadge
-          status={row.original.level}
-          variant={(row.original.level === 'warn' ? 'warning' : row.original.level) as 'default' | 'success' | 'warning' | 'error' | 'info'}
-          className='text-[9px]'
-        />
-      ),
+              cell: ({ row }) => {
+                const level = row.original.level.toLowerCase();
+                const variantMap: Record<string, StatusVariant> = {
+                  error: 'error',
+                  warn: 'warning',
+                  info: 'info',
+                  debug: 'neutral',
+                };
+                return (
+                  <StatusBadge
+                    status={row.original.level}
+                    variant={variantMap[level] || 'neutral'}
+                    className='text-[9px]'
+                  />
+                );
+              },
+      
     },
     {
       accessorKey: 'createdAt',
@@ -380,12 +394,23 @@ function LogList(): React.JSX.Element {
         </div>
       </div>
 
-      <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-        <DataTable
-          columns={columns}
-          data={logs}
-          isLoading={logsQuery.isLoading}
-          renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
+              <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+
+                <DataTable
+
+                  columns={columns}
+
+                  data={logs}
+
+                  isLoading={logsQuery.isLoading}
+
+                  maxHeight='60vh'
+
+                  stickyHeader
+
+                  renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
+
+      
             const log = row.original;
             const interpretation = logInterpretations[log.id];
             return (

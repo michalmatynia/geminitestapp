@@ -63,14 +63,15 @@ export const useProductsCount = createQueryHook({
 export function useProductsWithCount(
   filters: UseProductsFilters,
   options: UseProductsOptions = {},
-): {
-  products: ProductWithImages[];
-  total: number;
-  isLoading: boolean;
-  isFetching: boolean;
-  error: unknown;
-  refetch: () => Promise<void>;
-} {
+  ): {
+    products: ProductWithImages[];
+    total: number;
+    isLoading: boolean;
+    isFetching: boolean;
+    error: unknown;
+    refetch: () => Promise<void>;
+  } {
+
   const { enabled = true } = options;
   const queryClient = useQueryClient();
 

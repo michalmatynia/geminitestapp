@@ -1828,16 +1828,16 @@ async function syncMongoToPrisma(
       .map((doc: Record<string, unknown>): Prisma.CmsThemeCreateManyInput | null => {
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         if (!id) return null;
-                  return {
-                    id,
-                    name: (doc as { name?: string }).name ?? id,
-                    colors: ((doc as { colors?: unknown }).colors ?? {}) as Prisma.InputJsonValue,
-                    typography: ((doc as { typography?: unknown }).typography ?? {}) as Prisma.InputJsonValue,
-                    spacing: ((doc as { spacing?: unknown }).spacing ?? {}) as Prisma.InputJsonValue,
-                    customCss: (doc as { customCss?: string | null }).customCss ?? null,
-                    createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-                    updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-                  };
+        return {
+          id,
+          name: (doc as { name?: string }).name ?? id,
+          colors: ((doc as { colors?: unknown }).colors ?? {}) as Prisma.InputJsonValue,
+          typography: ((doc as { typography?: unknown }).typography ?? {}) as Prisma.InputJsonValue,
+          spacing: ((doc as { spacing?: unknown }).spacing ?? {}) as Prisma.InputJsonValue,
+          customCss: (doc as { customCss?: string | null }).customCss ?? null,
+          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+          updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
+        };
         
       })
       .filter((item): item is Prisma.CmsThemeCreateManyInput => item !== null);
@@ -2312,14 +2312,14 @@ async function syncMongoToPrisma(
         const id = normalizeId(doc as unknown as Record<string, unknown>);
         const productId = (doc as { productId?: string }).productId;
         if (!id || !productId) return null;
-                  return {
-                    id,
-                    productId,
-                    status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? 'pending',
-                    type: (doc as { type?: string }).type ?? 'description_generation',
-                    payload: ((doc as { payload?: unknown }).payload ?? {}) as Prisma.InputJsonValue,
-                    result: ((doc as { result?: unknown }).result ?? null) as Prisma.InputJsonValue,
-                    errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
+        return {
+          id,
+          productId,
+          status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? 'pending',
+          type: (doc as { type?: string }).type ?? 'description_generation',
+          payload: ((doc as { payload?: unknown }).payload ?? {}) as Prisma.InputJsonValue,
+          result: ((doc as { result?: unknown }).result ?? null) as Prisma.InputJsonValue,
+          errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
         
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           startedAt: toDate((doc as { startedAt?: Date | string | null }).startedAt),
@@ -2346,12 +2346,12 @@ async function syncMongoToPrisma(
           pathName: (doc as { pathName?: string | null }).pathName ?? null,
           status: ((doc as { status?: string }).status as AiPathRunStatus) ?? 'queued',
           triggerEvent: (doc as { triggerEvent?: string | null }).triggerEvent ?? null,
-                      triggerNodeId: (doc as { triggerNodeId?: string | null }).triggerNodeId ?? null,
-                      triggerContext: toJsonValue((doc as { triggerContext?: unknown }).triggerContext ?? null) as Prisma.InputJsonValue,
-                      graph: toJsonValue((doc as { graph?: unknown }).graph ?? null) as Prisma.InputJsonValue,
-                      runtimeState: toJsonValue((doc as { runtimeState?: unknown }).runtimeState ?? null) as Prisma.InputJsonValue,
-                      meta: toJsonValue((doc as { meta?: unknown }).meta ?? null) as Prisma.InputJsonValue,
-                      entityId: (doc as { entityId?: string | null }).entityId ?? null,
+          triggerNodeId: (doc as { triggerNodeId?: string | null }).triggerNodeId ?? null,
+          triggerContext: toJsonValue((doc as { triggerContext?: unknown }).triggerContext ?? null) as Prisma.InputJsonValue,
+          graph: toJsonValue((doc as { graph?: unknown }).graph ?? null) as Prisma.InputJsonValue,
+          runtimeState: toJsonValue((doc as { runtimeState?: unknown }).runtimeState ?? null) as Prisma.InputJsonValue,
+          meta: toJsonValue((doc as { meta?: unknown }).meta ?? null) as Prisma.InputJsonValue,
+          entityId: (doc as { entityId?: string | null }).entityId ?? null,
           
           entityType: (doc as { entityType?: string | null }).entityType ?? null,
           errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
@@ -2387,11 +2387,11 @@ async function syncMongoToPrisma(
           nodeId: (doc as { nodeId?: string }).nodeId ?? '',
           nodeType: (doc as { nodeType?: string }).nodeType ?? '',
           nodeTitle: (doc as { nodeTitle?: string | null }).nodeTitle ?? null,
-                      status: ((doc as { status?: string }).status as AiPathNodeStatus) ?? 'pending',
-                      attempt: (doc as { attempt?: number }).attempt ?? 0,
-                      inputs: toJsonValue((doc as { inputs?: unknown }).inputs ?? null) as Prisma.InputJsonValue,
-                      outputs: toJsonValue((doc as { outputs?: unknown }).outputs ?? null) as Prisma.InputJsonValue,
-                      errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
+          status: ((doc as { status?: string }).status as AiPathNodeStatus) ?? 'pending',
+          attempt: (doc as { attempt?: number }).attempt ?? 0,
+          inputs: toJsonValue((doc as { inputs?: unknown }).inputs ?? null) as Prisma.InputJsonValue,
+          outputs: toJsonValue((doc as { outputs?: unknown }).outputs ?? null) as Prisma.InputJsonValue,
+          errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,
           
           createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
@@ -2415,11 +2415,11 @@ async function syncMongoToPrisma(
         if (!id || !runId) return null;
         return {
           id,
-                      runId,
-                      level: ((doc as { level?: string }).level as AiPathRunEventLevel) ?? 'info',
-                      message: (doc as { message?: string }).message ?? '',
-                      metadata: toJsonValue((doc as { metadata?: unknown }).metadata ?? null) as Prisma.InputJsonValue,
-                      createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
+          runId,
+          level: ((doc as { level?: string }).level as AiPathRunEventLevel) ?? 'info',
+          message: (doc as { message?: string }).message ?? '',
+          metadata: toJsonValue((doc as { metadata?: unknown }).metadata ?? null) as Prisma.InputJsonValue,
+          createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
           
         };
       })

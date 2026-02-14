@@ -73,6 +73,8 @@ export interface ProductListContextType {
   tableColumns: ColumnDef<ProductWithImages>[];
   getRowId: (row: ProductWithImages) => string;
   skeletonRows: ReactNode;
+  maxHeight?: string | number | undefined;
+  stickyHeader?: boolean | undefined;
   
   // Row Handlers
   productNameKey: 'name_en' | 'name_pl' | 'name_de';
@@ -171,6 +173,8 @@ export interface ProductListTableContextType {
   getRowId: (row: ProductWithImages) => string;
   isLoading: boolean;
   skeletonRows: ReactNode;
+  maxHeight?: string | number | undefined;
+  stickyHeader?: boolean | undefined;
 }
 
 export interface ProductListActionsContextType {
@@ -358,6 +362,8 @@ export function ProductListProvider({
       getRowId: value.getRowId,
       isLoading: value.isLoading,
       skeletonRows: value.skeletonRows,
+      maxHeight: value.maxHeight,
+      stickyHeader: value.stickyHeader,
     }),
     [value]
   );

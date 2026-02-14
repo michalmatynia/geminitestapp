@@ -266,6 +266,8 @@ export function CrudPanel(props: {
             columns={columnDefs}
             data={rows}
             isLoading={isLoadingRows}
+            maxHeight='50vh'
+            stickyHeader
           />
 
           {!isLoadingRows && rows.length > 0 && (

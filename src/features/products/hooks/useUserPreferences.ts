@@ -97,7 +97,6 @@ export interface UserPreferencesHookResult {
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {
-  const queryClient = useQueryClient();
   const { data = DEFAULT_PREFERENCES, isLoading } = useQuery({
     queryKey: userPreferencesQueryKey,
     queryFn: fetchUserPreferences,
@@ -105,40 +104,44 @@ export function useUserPreferences(): UserPreferencesHookResult {
     placeholderData: DEFAULT_PREFERENCES,
   });
 
+  const { mutateAsync: updateBulk } = useUpdateUserPreferences();
+
+  const setPreference = useCallback(
+    async (updates: Partial<ProductListPreferences>) => {
+      await updateBulk(updates);
+      Object.entries(updates).forEach(([key, value]) => {
+        updateLocalStorage(key as keyof ProductListPreferences, value);
+      });
+    },
+    [updateBulk]
+  );
+
   const setNameLocale = useCallback(
     async (locale: 'name_en' | 'name_pl' | 'name_de') => {
-      await updateUserPreference('nameLocale', locale);
-      updateLocalStorage('nameLocale', locale);
-      void invalidateUserPreferences(queryClient);
+      await setPreference({ nameLocale: locale });
     },
-    [queryClient],
+    [setPreference]
   );
 
   const setCatalogFilter = useCallback(
     async (filter: string) => {
-      await updateUserPreference('catalogFilter', filter);
-      updateLocalStorage('catalogFilter', filter);
-      void invalidateUserPreferences(queryClient);
+      await setPreference({ catalogFilter: filter });
     },
-    [queryClient],
+    [setPreference]
   );
 
   const setCurrencyCode = useCallback(
     async (code: string) => {
-      await updateUserPreference('currencyCode', code);
-      updateLocalStorage('currencyCode', code);
-      void invalidateUserPreferences(queryClient);
+      await setPreference({ currencyCode: code });
     },
-    [queryClient],
+    [setPreference]
   );
 
   const setPageSize = useCallback(
     async (size: number) => {
-      await updateUserPreference('pageSize', size);
-      updateLocalStorage('pageSize', size);
-      void invalidateUserPreferences(queryClient);
+      await setPreference({ pageSize: size });
     },
-    [queryClient],
+    [setPreference]
   );
 
   return {

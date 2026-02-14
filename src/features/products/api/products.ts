@@ -64,6 +64,7 @@ export async function countProducts(filters: {
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {
   return api.post<ProductWithImages>('/api/products', formData, {
     headers: {}, // Let browser set multipart/form-data with boundary
+    timeout: 60000, // Product creation involves many DB ops + image uploads
   });
 }
 

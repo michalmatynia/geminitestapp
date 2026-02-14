@@ -103,7 +103,7 @@ export function PageLayout({
             <Button 
               onClick={() => void onSave()} 
               disabled={isSaving} 
-              variant='primary'
+              variant='default'
               className='min-w-[140px]'
             >
               {isSaving ? 'Saving...' : saveText}

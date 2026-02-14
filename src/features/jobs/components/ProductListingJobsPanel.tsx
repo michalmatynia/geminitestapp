@@ -115,8 +115,9 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
         <FormSection title='Tradera Status' variant='subtle-compact' className='p-3'>
           <div className='flex items-center justify-between'>
             <span className='text-[10px] text-gray-500 uppercase font-bold'>Runtime Mode</span>
-            <StatusBadge status={traderaQueueHealth?.redisAvailable ? 'success' : 'error'} label={traderaQueueHealth?.redisAvailable ? 'Redis Up' : 'No Redis'} className='text-[9px]' />
+            <StatusBadge status={traderaQueueHealth?.redisAvailable ? 'Redis Up' : 'No Redis'} variant={traderaQueueHealth?.redisAvailable ? 'success' : 'error'} className='text-[9px]' />
           </div>
+          
           <div className='mt-2 text-xs text-gray-300 font-medium'>
             {traderaQueueHealthLoading ? 'Scanning...' : traderaQueueHealth?.mode ?? 'Unknown'}
           </div>
@@ -125,8 +126,9 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
         <FormSection title='Listing Queue' variant='subtle-compact' className='p-3'>
           <div className='flex items-center justify-between mb-2'>
             <span className='text-[10px] text-gray-500 uppercase font-bold'>Health</span>
-            <StatusBadge status={traderaListingsQueue?.running ? 'success' : 'warning'} label={traderaListingsQueue?.running ? 'Active' : 'Paused'} className='text-[9px]' />
+            <StatusBadge status={traderaListingsQueue?.running ? 'Active' : 'Paused'} variant={traderaListingsQueue?.running ? 'success' : 'warning'} className='text-[9px]' />
           </div>
+          
           <div className='grid grid-cols-3 gap-1 text-[10px] text-center uppercase font-bold'>
             <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Wait</span><span className='text-blue-400'>{traderaListingsQueue?.waitingCount ?? 0}</span></div>
             <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Busy</span><span className='text-amber-400'>{traderaListingsQueue?.activeCount ?? 0}</span></div>
@@ -135,10 +137,11 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
         </FormSection>
 
         <FormSection title='Relist Scheduler' variant='subtle-compact' className='p-3'>
-          <div className='flex items-center justify-between mb-2'>
-            <span className='text-[10px] text-gray-500 uppercase font-bold'>Service</span>
-            <StatusBadge status={traderaSchedulerQueue?.running ? 'success' : 'warning'} label={traderaSchedulerQueue?.running ? 'Polling' : 'Idle'} className='text-[9px]' />
-          </div>
+                      <div className='flex items-center justify-between mb-2'>
+                        <span className='text-[10px] text-gray-500 uppercase font-bold'>Service</span>
+                        <StatusBadge status={traderaSchedulerQueue?.running ? 'Polling' : 'Idle'} variant={traderaSchedulerQueue?.running ? 'success' : 'warning'} className='text-[9px]' />
+                      </div>
+          
           <div className='grid grid-cols-2 gap-1 text-[10px] text-center uppercase font-bold'>
             <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Pending</span><span className='text-blue-400'>{traderaSchedulerQueue?.waitingCount ?? 0}</span></div>
             <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Active</span><span className='text-amber-400'>{traderaSchedulerQueue?.activeCount ?? 0}</span></div>

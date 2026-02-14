@@ -205,7 +205,8 @@ export async function getProductAiJobs(
   const jobRecords = await jobRepository.findJobs(productId);
   const jobs = jobRecords.map(toProductAiJob);
 
-  const shouldFetchProduct = (job: { productId: string; payload: unknown }): boolean => {
+  const shouldFetchProduct = (job: ProductAiJob): boolean => {
+    if (!job.productId) return false;
     const payload =
       job.payload && typeof job.payload === 'object'
         ? (job.payload as Record<string, unknown>)

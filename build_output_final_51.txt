@@ -1,0 +1,48 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 235ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 33.2s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/jobs/services/productAiService.ts:228:28
+Type error: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: { id: string; createdAt: string; updatedAt: string | null; type: string; status: string; error: string | null; startedAt: string | null; completedAt: string | null; result: { [x: string]: unknown; ... 13 more ...; translations?: Record<...> | undefined; } | null; ... 10 more ...; product?: { ...; } | undefined; }, index: number, array: { ...; }[]) => value is { ...; }, thisArg?: any): { ...; }[]', gave the following error.
+    Argument of type '(job: { productId: string; payload: unknown; }) => boolean' is not assignable to parameter of type '(value: { id: string; createdAt: string; updatedAt: string | null; type: string; status: string; error: string | null; startedAt: string | null; completedAt: string | null; result: { [x: string]: unknown; ... 13 more ...; translations?: Record<...> | undefined; } | null; ... 10 more ...; product?: { ...; } | undefin...'.
+      Types of parameters 'job' and 'value' are incompatible.
+        Type '{ id: string; createdAt: string; updatedAt: string | null; type: string; status: string; error: string | null; startedAt: string | null; completedAt: string | null; result: { [x: string]: unknown; ... 13 more ...; translations?: Record<...> | undefined; } | null; ... 10 more ...; product?: { ...; } | undefined; }' is not assignable to type '{ productId: string; payload: unknown; }'.
+          Types of property 'productId' are incompatible.
+            Type 'string | null | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.
+  Overload 2 of 2, '(predicate: (value: { id: string; createdAt: string; updatedAt: string | null; type: string; status: string; error: string | null; startedAt: string | null; completedAt: string | null; result: { [x: string]: unknown; ... 13 more ...; translations?: Record<...> | undefined; } | null; ... 10 more ...; product?: { ...; } | undefined; }, index: number, array: { ...; }[]) => unknown, thisArg?: any): { ...; }[]', gave the following error.
+    Argument of type '(job: { productId: string; payload: unknown; }) => boolean' is not assignable to parameter of type '(value: { id: string; createdAt: string; updatedAt: string | null; type: string; status: string; error: string | null; startedAt: string | null; completedAt: string | null; result: { [x: string]: unknown; ... 13 more ...; translations?: Record<...> | undefined; } | null; ... 10 more ...; product?: { ...; } | undefin...'.
+      Types of parameters 'job' and 'value' are incompatible.
+        Type '{ id: string; createdAt: string; updatedAt: string | null; type: string; status: string; error: string | null; startedAt: string | null; completedAt: string | null; result: { [x: string]: unknown; ... 13 more ...; translations?: Record<...> | undefined; } | null; ... 10 more ...; product?: { ...; } | undefined; }' is not assignable to type '{ productId: string; payload: unknown; }'.
+          Types of property 'productId' are incompatible.
+            Type 'string | null | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.
+
+[0m [90m 226 |[39m   [90m// Batch fetch products - deduplicate IDs to avoid redundant queries[39m
+ [90m 227 |[39m   [36mconst[39m uniqueProductIds [33m=[39m [
+[31m[1m>[22m[39m[90m 228 |[39m     [33m...[39m[36mnew[39m [33mSet[39m(jobs[33m.[39mfilter(shouldFetchProduct)[33m.[39mmap((j[33m:[39m [33mProductAiJob[39m) [33m=>[39m j[33m.[39mproductId))[33m,[39m
+ [90m     |[39m                            [31m[1m^[22m[39m
+ [90m 229 |[39m   ][33m.[39mfilter((id)[33m:[39m id is string [33m=>[39m [36mtypeof[39m id [33m===[39m [32m'string'[39m)[33m;[39m
+ [90m 230 |[39m
+ [90m 231 |[39m   [90m// Fetch all unique products in parallel[39m[0m
+Next.js build worker exited with code: 1 and signal: null

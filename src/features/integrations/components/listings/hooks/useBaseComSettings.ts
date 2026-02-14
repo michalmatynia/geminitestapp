@@ -1,3 +1,4 @@
+import { useQueries } from '@tanstack/react-query';
 import { useEffect, useState, useMemo, useRef, type Dispatch, type SetStateAction } from 'react';
 
 import type { Template, BaseInventory } from '@/features/data-import-export';
@@ -6,10 +7,10 @@ import {
   useUpdatePreferredInventory,
 } from '@/features/integrations/hooks/useIntegrationMutations';
 import {
-  useExportTemplates,
-  useActiveExportTemplate,
-  useDefaultExportInventory,
-  useBaseInventories,
+  getExportTemplatesQueryOptions,
+  getActiveExportTemplateQueryOptions,
+  getDefaultExportInventoryQueryOptions,
+  getBaseInventoriesQueryOptions,
 } from '@/features/integrations/hooks/useIntegrationQueries';
 
 // Why: Base.com has complex, interconnected setup:
@@ -35,17 +36,23 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   const hasInitializedInventory = useRef(false);
 
   // Queries
-  const templatesQuery = useExportTemplates();
-  const activeTemplateQuery = useActiveExportTemplate();
-  const defaultInventoryQuery = useDefaultExportInventory();
-  const inventoriesQuery = useBaseInventories(connectionId, isBaseComIntegration);
+  const results = useQueries({
+    queries: [
+      getExportTemplatesQueryOptions(),
+      getActiveExportTemplateQueryOptions(),
+      getDefaultExportInventoryQueryOptions(),
+      getBaseInventoriesQueryOptions(connectionId, isBaseComIntegration),
+    ],
+  });
+
+  const [templatesQuery, activeTemplateQuery, defaultInventoryQuery, inventoriesQuery] = results;
 
   // Mutations
   const updatePreferredTemplateMutation = useUpdatePreferredTemplate();
   const updatePreferredInventoryMutation = useUpdatePreferredInventory();
 
-  const templates = templatesQuery.data ?? [];
-  const inventories = useMemo(() => inventoriesQuery.data ?? [], [inventoriesQuery.data]);
+  const templates = (templatesQuery.data as Template[]) ?? [];
+  const inventories = useMemo(() => (inventoriesQuery.data as BaseInventory[]) ?? [], [inventoriesQuery.data]);
   const preferredTemplateId = (activeTemplateQuery.data as { templateId?: string | null } | undefined)?.templateId ?? null;
   const preferredInventoryId = (defaultInventoryQuery.data as { inventoryId?: string | null } | undefined)?.inventoryId ?? null;
 

@@ -1,0 +1,37 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 208ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 18.7s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/products/hooks/useProductsTableProps.ts:35:3
+Type error: Type '{ columns: ColumnDef<ProductWithImages>[]; data: ProductWithImages[]; getRowId: (row: ProductWithImages) => string; rowSelection: RowSelectionState; ... 4 more ...; stickyHeader: boolean | undefined; }' is not assignable to type 'UseProductsTablePropsReturn' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'maxHeight' are incompatible.
+    Type 'string | number | undefined' is not assignable to type 'string | number'.
+      Type 'undefined' is not assignable to type 'string | number'.
+
+[0m [90m 33 |[39m   } [33m=[39m useProductListTableContext()[33m;[39m
+ [90m 34 |[39m
+[31m[1m>[22m[39m[90m 35 |[39m   [36mreturn[39m useMemo(
+ [90m    |[39m   [31m[1m^[22m[39m
+ [90m 36 |[39m     () [33m=>[39m ({
+ [90m 37 |[39m       columns[33m:[39m tableColumns[33m,[39m
+ [90m 38 |[39m       data[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

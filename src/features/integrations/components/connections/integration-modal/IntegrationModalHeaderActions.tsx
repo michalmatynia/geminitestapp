@@ -13,7 +13,7 @@ export function IntegrationModalHeaderActions(): React.JSX.Element | null {
 
   return (
     <Button
-      variant='primary'
+      variant='default'
       onClick={onSavePlaywrightSettings}
       className='min-w-[100px]'
     >

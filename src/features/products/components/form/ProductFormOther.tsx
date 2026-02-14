@@ -317,47 +317,51 @@ export default function ProductFormOther(): React.JSX.Element {
           {selectedDefaultPriceGroupId && filteredPriceGroups.length > 0 && (
             <div className='md:col-span-2 space-y-2'>
               <label className='text-[11px] font-medium uppercase tracking-wider text-gray-400'>Price Groups Overview</label>
-              <div className='rounded-md border border-border bg-card/40 overflow-hidden'>
-                <Table className='text-xs'>
-                  <TableHeader>
-                    <TableRow className='bg-muted/50 hover:bg-muted/50'>
-                      <TableHead className='px-3 py-2 text-left font-medium text-gray-400'>Price Group</TableHead>
-                      <TableHead className='px-3 py-2 text-left font-medium text-gray-400'>Currency</TableHead>
-                      <TableHead className='px-3 py-2 text-right font-medium text-gray-400'>Price</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {priceGroupPrices.map((group: PriceGroupWithCalculatedPrice) => (
-                      <TableRow key={group.id} className='border-b last:border-0 border-border/50'>
-                        <TableCell className='px-3 py-2'>
-                          <div className='flex items-center gap-2'>
-                            <span className={group.id === selectedDefaultPriceGroupId ? 'font-semibold text-white' : 'text-gray-300'}>
-                              {group.name}
+              <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+                <DataTable
+                  columns={[
+                    {
+                      accessorKey: 'name',
+                      header: 'Price Group',
+                      cell: ({ row }) => (
+                        <div className='flex items-center gap-2'>
+                          <span className={row.original.id === selectedDefaultPriceGroupId ? 'font-semibold text-white' : 'text-gray-300'}>
+                            {row.original.name}
+                          </span>
+                          {row.original.id === selectedDefaultPriceGroupId && (
+                            <Badge variant='outline' className='text-[9px] uppercase font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-1 py-0 h-4'>Selected</Badge>
+                          )}
+                          {row.original.isCalculated && row.original.sourceGroupName && (
+                            <span className='text-[10px] text-gray-500 italic'>
+                              ({row.original.sourceGroupName} × {row.original.priceMultiplier})
                             </span>
-                            {group.id === selectedDefaultPriceGroupId && (
-                              <span className='text-[10px] text-emerald-400 uppercase font-bold tracking-tighter'>Selected</span>
-                            )}
-                            {group.isCalculated && group.sourceGroupName && (
-                              <span className='text-[10px] text-gray-500 italic'>
-                                ({group.sourceGroupName} × {group.priceMultiplier})
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className='px-3 py-2 text-gray-500'>{group.currency?.code ?? group.currencyCode}</TableCell>
-                        <TableCell className='px-3 py-2 text-right font-mono'>
-                          {group.calculatedPrice !== null ? (
-                            <span className={group.isCalculated ? 'text-blue-400' : 'text-white'}>
-                              {group.calculatedPrice.toFixed(2)}
+                          )}
+                        </div>
+                      )
+                    },
+                    {
+                      accessorKey: 'currencyCode',
+                      header: 'Currency',
+                      cell: ({ row }) => <span className='text-gray-500'>{(row.original as any).currency?.code ?? row.original.currencyCode}</span>
+                    },
+                    {
+                      accessorKey: 'calculatedPrice',
+                      header: () => <div className='text-right'>Price</div>,
+                      cell: ({ row }) => (
+                        <div className='text-right font-mono'>
+                          {row.original.calculatedPrice !== null ? (
+                            <span className={row.original.isCalculated ? 'text-blue-400' : 'text-white'}>
+                              {row.original.calculatedPrice.toFixed(2)}
                             </span>
                           ) : (
                             <span className='text-gray-600'>-</span>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </div>
+                      )
+                    }
+                  ]}
+                  data={priceGroupPrices}
+                />
               </div>
               <p className='text-[10px] text-gray-500 italic'>
                 Blue prices are automatically calculated based on the default group.

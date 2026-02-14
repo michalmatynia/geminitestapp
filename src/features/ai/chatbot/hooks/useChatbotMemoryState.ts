@@ -17,7 +17,26 @@ export interface ExtendedMemoryItem extends ChatbotMemoryItem {
   metadata?: Record<string, unknown>;
 }
 
-export function useChatbotMemoryState() {
+export interface UseChatbotMemoryStateReturn {
+  items: ExtendedMemoryItem[];
+  memoryKey: string;
+  setMemoryKey: (key: string) => void;
+  tag: string;
+  setTag: (tag: string) => void;
+  query: string;
+  setQuery: (query: string) => void;
+  limit: number;
+  setLimit: (limit: number) => void;
+  expanded: Record<string, boolean>;
+  toggleExpanded: (id: string) => void;
+  resetFilters: () => void;
+  loading: boolean;
+  isFetching: boolean;
+  error: Error | null;
+  refetch: () => void;
+}
+
+export function useChatbotMemoryState(): UseChatbotMemoryStateReturn {
   const [memoryKey, setMemoryKey] = useState<string>('');
   const [tag, setTag] = useState<string>('');
   const [query, setQuery] = useState<string>('');

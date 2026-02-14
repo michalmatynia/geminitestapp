@@ -5,7 +5,6 @@ import { useState, useMemo, useCallback } from 'react';
 
 import type { 
   AgentTeachingChatSource, 
-  AgentTeachingEmbeddingCollectionRecord, 
   AgentTeachingEmbeddingDocumentListItem 
 } from '@/shared/types/domain/agent-teaching';
 import { useToast } from '@/shared/ui';
@@ -68,7 +67,7 @@ export function useAgentTeachingCollectionDetailState() {
       setTitle('');
       setSource('');
       setTags('');
-      refetchDocs();
+      void refetchDocs();
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to add document.', { variant: 'error' });
     }
@@ -79,7 +78,7 @@ export function useAgentTeachingCollectionDetailState() {
     try {
       await deleteDoc({ collectionId, documentId: docToDelete.id });
       toast('Document deleted.', { variant: 'success' });
-      refetchDocs();
+      void refetchDocs();
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to delete document.', { variant: 'error' });
     } finally {

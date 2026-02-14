@@ -8,8 +8,6 @@ import {
   Trash2, 
   Edit2, 
   ShieldCheck,
-  UserCheck,
-  Shield,
   Key
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
@@ -28,12 +26,11 @@ import {
   FormModal,
   Checkbox,
   Label,
-  Textarea,
-  FormSection,
   useToast
 } from '@/shared/ui';
 
 import { useUsersState } from '../../hooks/useUsersState';
+
 import type { AuthUserSummary } from '../../types';
 import type { AuthRole } from '../../utils/auth-management';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -77,7 +74,7 @@ export default function AuthUsersPage(): React.JSX.Element {
     {
       accessorKey: 'name',
       header: 'User',
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: AuthUserSummary } }) => (
         <div className='flex flex-col'>
           <span className='font-medium text-gray-200'>{row.original.name || 'Unnamed User'}</span>
           <span className='text-[10px] text-gray-500 font-mono'>{row.original.id}</span>
@@ -87,12 +84,12 @@ export default function AuthUsersPage(): React.JSX.Element {
     {
       accessorKey: 'email',
       header: 'Email',
-      cell: ({ row }) => <span className='text-xs text-gray-400'>{row.original.email}</span>,
+      cell: ({ row }: { row: { original: AuthUserSummary } }) => <span className='text-xs text-gray-400'>{row.original.email}</span>,
     },
     {
       accessorKey: 'emailVerified',
       header: 'Verified',
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: AuthUserSummary } }) => (
         <StatusBadge 
           status={row.original.emailVerified ? 'success' : 'warning'} 
           label={row.original.emailVerified ? 'Verified' : 'Pending'} 
@@ -103,7 +100,7 @@ export default function AuthUsersPage(): React.JSX.Element {
     {
       id: 'role',
       header: 'Access Role',
-      cell: ({ row }) => {
+      cell: ({ row }: { row: { original: AuthUserSummary } }) => {
         const currentRoleId = localUserRoles[row.original.id];
         return (
           <SelectSimple
@@ -122,7 +119,7 @@ export default function AuthUsersPage(): React.JSX.Element {
     {
       id: 'actions',
       header: () => <div className='text-right'>Tools</div>,
-      cell: ({ row }) => (
+      cell: ({ row }: { row: { original: AuthUserSummary } }) => (
         <div className='flex justify-end gap-2'>
           <Button variant='ghost' size='xs' className='h-7 w-7 p-0' onClick={() => setEditingUser(row.original)}>
             <Edit2 className='size-3.5' />
@@ -169,7 +166,7 @@ export default function AuthUsersPage(): React.JSX.Element {
               <UserPlusIcon className='size-3.5 mr-2' />
               New User
             </Button>
-            <Button size='xs' className='h-8' onClick={saveRoles} disabled={!dirtyRoles}>
+            <Button size='xs' className='h-8' onClick={() => { void saveRoles(); }} disabled={!dirtyRoles}>
               <ShieldCheck className='size-3.5 mr-2' />
               {dirtyRoles ? 'Save Changes' : 'Permissions Up-to-date'}
             </Button>
@@ -212,18 +209,21 @@ export default function AuthUsersPage(): React.JSX.Element {
         open={Boolean(editingUser)}
         onClose={() => setEditingUser(null)}
         title='Identity Inspector'
-        onSave={async () => {
-          if (!editingUser) return;
-          try {
-            await mutations.updateUser.mutateAsync({
-              userId: editingUser.id,
-              input: { name: editingUser.name, email: editingUser.email }
-            });
-            setEditingUser(null);
-            toast('Identity updated successfully', { variant: 'success' });
-          } catch (e) {
-            toast('Failed to update identity', { variant: 'error' });
-          }
+        onSave={() => {
+          const handleSave = async () => {
+            if (!editingUser) return;
+            try {
+              await mutations.updateUser.mutateAsync({
+                userId: editingUser.id,
+                input: { name: editingUser.name, email: editingUser.email }
+              });
+              setEditingUser(null);
+              toast('Identity updated successfully', { variant: 'success' });
+            } catch (_e) {
+              toast('Failed to update identity', { variant: 'error' });
+            }
+          };
+          void handleSave();
         }}
         isSaving={mutations.updateUser.isPending}
         size='md'
@@ -233,20 +233,24 @@ export default function AuthUsersPage(): React.JSX.Element {
             <FormField label='Full Name'>
               <Input
                 value={editingUser?.name ?? ''}
-                onChange={(e) => setEditingUser(prev => prev ? { ...prev, name: e.target.value } : null)}
+                onChange={(e) => {
+                  setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, name: e.target.value } : null);
+                }}
                 placeholder='Display name'
               />
             </FormField>
             <FormField label='Email Address'>
               <Input
                 value={editingUser?.email ?? ''}
-                onChange={(e) => setEditingUser(prev => prev ? { ...prev, email: e.target.value } : null)}
+                onChange={(e) => {
+                  setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, email: e.target.value } : null);
+                }}
                 placeholder='user@example.com'
               />
             </FormField>
           </div>
 
-          <FormSection title='Security & Access' variant='subtle' className='p-4'>
+          <div className='p-4 rounded-md border border-white/5 bg-white/5'>
             {loadingSecurity ? (
               <div className='py-4 text-center text-xs text-gray-500 animate-pulse'>Fetching security profile...</div>
             ) : (
@@ -255,7 +259,9 @@ export default function AuthUsersPage(): React.JSX.Element {
                   <Checkbox 
                     id='verified' 
                     checked={Boolean(editingUser?.emailVerified)}
-                    onCheckedChange={(v) => setEditingUser(prev => prev ? { ...prev, emailVerified: v ? new Date().toISOString() : null } : null)}
+                    onCheckedChange={(v) => {
+                      setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, emailVerified: v ? new Date().toISOString() : null } : null);
+                    }}
                   />
                   <Label htmlFor='verified' className='text-xs font-medium cursor-pointer text-gray-300'>Manually verify email address</Label>
                 </div>
@@ -278,7 +284,7 @@ export default function AuthUsersPage(): React.JSX.Element {
                 </div>
               </div>
             )}
-          </FormSection>
+          </div>
         </div>
       </FormModal>
 
@@ -287,24 +293,27 @@ export default function AuthUsersPage(): React.JSX.Element {
         open={createOpen}
         onClose={() => setCreateOpen(false)}
         title='Provision New Account'
-        onSave={async () => {
-          if (!createForm.email || !createForm.password) {
-            toast('Email and password required', { variant: 'error' });
-            return;
-          }
-          try {
-            await mutations.register.mutateAsync({
-              email: createForm.email,
-              password: createForm.password,
-              name: createForm.name
-            });
-            setCreateOpen(false);
-            setCreateForm({ name: '', email: '', password: '', roleId: 'none', verified: false });
-            toast('User provisioned successfully', { variant: 'success' });
-            refetch();
-          } catch (e) {
-            toast('Provisioning failed', { variant: 'error' });
-          }
+        onSave={() => {
+          const handleSave = async () => {
+            if (!createForm.email || !createForm.password) {
+              toast('Email and password required', { variant: 'error' });
+              return;
+            }
+            try {
+              await mutations.register.mutateAsync({
+                email: createForm.email,
+                password: createForm.password,
+                name: createForm.name
+              });
+              setCreateOpen(false);
+              setCreateForm({ name: '', email: '', password: '', roleId: 'none', verified: false });
+              toast('User provisioned successfully', { variant: 'success' });
+              refetch();
+            } catch (_e) {
+              toast('Provisioning failed', { variant: 'error' });
+            }
+          };
+          void handleSave();
         }}
         isSaving={mutations.register.isPending}
         size='sm'
@@ -313,14 +322,18 @@ export default function AuthUsersPage(): React.JSX.Element {
           <FormField label='Full Name'>
             <Input 
               value={createForm.name} 
-              onChange={(e) => setCreateForm(p => ({ ...p, name: e.target.value }))}
+              onChange={(e) => {
+                setCreateForm(p => ({ ...p, name: e.target.value }));
+              }}
               placeholder='Optional display name' 
             />
           </FormField>
           <FormField label='Email Address'>
             <Input 
               value={createForm.email} 
-              onChange={(e) => setCreateForm(p => ({ ...p, email: e.target.value }))}
+              onChange={(e) => {
+                setCreateForm(p => ({ ...p, email: e.target.value }));
+              }}
               placeholder='user@example.com' 
             />
           </FormField>
@@ -328,7 +341,9 @@ export default function AuthUsersPage(): React.JSX.Element {
             <Input 
               type='password' 
               value={createForm.password} 
-              onChange={(e) => setCreateForm(p => ({ ...p, password: e.target.value }))}
+              onChange={(e) => {
+                setCreateForm(p => ({ ...p, password: e.target.value }));
+              }}
               placeholder='Minimum 8 characters' 
             />
           </FormField>
@@ -344,14 +359,17 @@ export default function AuthUsersPage(): React.JSX.Element {
         onClose={() => setMockOpen(false)}
         title='Identity Validator'
         saveText='Verify Credentials'
-        onSave={async () => {
-          try {
-            const res = await mutations.mockSignIn.mutateAsync({ email: mockEmail, password: mockPassword });
-            if (res.ok) toast('Credentials valid', { variant: 'success' });
-            else toast('Invalid credentials', { variant: 'error' });
-          } catch (e) {
-            toast('Verification failed', { variant: 'error' });
-          }
+        onSave={() => {
+          const handleSave = async () => {
+            try {
+              const res = await mutations.mockSignIn.mutateAsync({ email: mockEmail, password: mockPassword });
+              if (res.ok) toast('Credentials valid', { variant: 'success' });
+              else toast('Invalid credentials', { variant: 'error' });
+            } catch (_e) {
+              toast('Verification failed', { variant: 'error' });
+            }
+          };
+          void handleSave();
         }}
         isSaving={mutations.mockSignIn.isPending}
         size='sm'
@@ -374,7 +392,7 @@ export default function AuthUsersPage(): React.JSX.Element {
         description={`This will terminate all active sessions for ${userToDelete?.email} and remove their identity record. This action is irreversible.`}
         confirmText='Destroy Record'
         variant='destructive'
-        onConfirm={deleteUser}
+        onConfirm={() => { void deleteUser(); }}
       />
     </div>
   );

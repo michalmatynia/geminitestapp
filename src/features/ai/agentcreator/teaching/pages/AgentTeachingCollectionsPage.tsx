@@ -19,6 +19,7 @@ import {
 } from '@/shared/ui';
 
 import { useAgentTeachingCollectionsState } from '../hooks/useAgentTeachingCollectionsState';
+
 import type { ColumnDef } from '@tanstack/react-table';
 
 export function AgentTeachingCollectionsPage(): React.JSX.Element {
@@ -139,7 +140,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         description={`This will permanently delete "${itemToDelete?.name}" and all associated document embeddings. Agents using this collection will lose access to this knowledge.`}
         confirmText='Delete'
         variant='destructive'
-        onConfirm={handleDelete}
+        onConfirm={() => { void handleDelete(); }}
       />
 
       <FormModal

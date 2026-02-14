@@ -7,6 +7,7 @@ import { Button, DataTable } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useAnalytics } from '../context/AnalyticsContext';
+
 import type { ColumnDef } from '@tanstack/react-table';
 
 type AnalyticsEvent = NonNullable<AnalyticsSummaryDto['recent']>[number];

@@ -1,22 +1,19 @@
 'use client';
 
-import { GripVertical, Trash2 } from 'lucide-react';
-import React, { useState, useCallback, useEffect } from 'react';
+import { GripVertical, Trash2, Edit } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import {
   AiTriggerButtonDto,
 } from '@/shared/contracts/ai-trigger-buttons';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
   Button,
+  DataTable,
+  Badge
 } from '@/shared/ui';
-import { cn } from '@/shared/utils';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 // Define the record type for clarity as it's used extensively
 export type AiTriggerButtonRecord = AiTriggerButtonDto & {
@@ -52,8 +49,8 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   const applyOrder = useCallback(
     (rows: AiTriggerButtonRecord[], sourceId: string, targetId: string): AiTriggerButtonRecord[] => {
       if (sourceId === targetId) return rows;
-      const sourceIndex = rows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === sourceId);
-      const targetIndex = rows.findIndex((row: AiTriggerButtonRecord): boolean => row.id === targetId);
+      const sourceIndex = rows.findIndex((row) => row.id === sourceId);
+      const targetIndex = rows.findIndex((row) => row.id === targetId);
       if (sourceIndex === -1 || targetIndex === -1) return rows;
 
       const nextRows = [...rows];
@@ -83,7 +80,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     const nextRows = applyOrder(localRows, draggingId, targetId);
     if (nextRows !== localRows) {
       setLocalRows(nextRows);
-      onOrderChange(nextRows.map((row: AiTriggerButtonRecord): string => row.id));
+      onOrderChange(nextRows.map((row) => row.id));
     }
     setDraggingId(null);
     setOverId(null);
@@ -94,105 +91,113 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     setOverId(null);
   }, []);
 
+  const columns = useMemo<ColumnDef<AiTriggerButtonRecord>[]>(() => [
+    {
+      id: 'drag',
+      header: () => null,
+      cell: ({ row }) => (
+        <div
+          draggable
+          onDragStart={(e) => handleDragStart(e, row.original.id)}
+          onDragEnter={() => handleDragEnter(row.original.id)}
+          onDragEnd={handleDragEnd}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            handleDrop(row.original.id);
+          }}
+          className='cursor-grab active:cursor-grabbing p-2'
+        >
+          <GripVertical className='size-4 text-muted-foreground' />
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => <span className='font-medium text-gray-200'>{row.original.name}</span>,
+    },
+    {
+      accessorKey: 'locations',
+      header: 'Location',
+      cell: ({ row }) => (
+        <div className='flex flex-wrap gap-1'>
+          {row.original.locations.map((loc: string, idx: number) => (
+            <Badge key={idx} variant='outline' className='text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/20'>
+              {loc}
+            </Badge>
+          ))}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'mode',
+      header: 'Mode',
+      cell: ({ row }) => <Badge variant='secondary' className='text-[10px]'>{row.original.mode}</Badge>,
+    },
+    {
+      id: 'display',
+      header: 'Display',
+      cell: ({ row }) => {
+        const Icon = row.original.iconId ? ICON_LIBRARY_MAP[row.original.iconId] : undefined;
+        if (!Icon) return <span className='text-xs text-gray-400'>{row.original.display}</span>;
+        return (
+          <div className='flex items-center gap-2 text-gray-300'>
+            <Icon className='size-4' />
+            {row.original.display === 'icon_label' && <span className='text-xs'>{row.original.display}</span>}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'pathName',
+      header: 'Path',
+      cell: ({ row }) => <span className='text-xs text-gray-500'>{row.original.pathName || 'N/A'}</span>,
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end gap-2'>
+          <Button
+            variant='ghost'
+            size='xs'
+            onClick={() => onEdit(row.original)}
+            className='h-7 w-7 p-0'
+          >
+            <Edit className='size-3.5' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='xs'
+            onClick={() => onDelete(row.original.id)}
+            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+          >
+            <Trash2 className='size-3.5' />
+          </Button>
+        </div>
+      ),
+    },
+  ], [handleDragStart, handleDragEnter, handleDragEnd, handleDrop, onEdit, onDelete]);
+
   if (isLoading && localRows.length === 0) {
-    return <p>Loading trigger buttons...</p>;
+    return <p className='text-sm text-gray-500'>Loading trigger buttons...</p>;
   }
 
   if (localRows.length === 0) {
-    return <p>No trigger buttons defined yet.</p>;
+    return <p className='text-sm text-gray-500'>No trigger buttons defined yet.</p>;
   }
 
   return (
-    <Table className='max-w-4xl'>
-      <TableHeader>
-        <TableRow>
-          <TableHead className='w-[50px]'></TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead className='w-[200px]'>Location</TableHead>
-          <TableHead className='w-[150px]'>Mode</TableHead>
-          <TableHead className='w-[150px]'>Display</TableHead>
-          <TableHead className='w-[100px]'>Path</TableHead>
-          <TableHead className='w-[100px] text-right'>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {localRows.map((row: AiTriggerButtonRecord) => (
-          <TableRow
-            key={row.id}
-            draggable
-            onDragStart={(event: React.DragEvent): void => handleDragStart(event, row.id)}
-            onDragEnter={(): void => handleDragEnter(row.id)}
-            onDragEnd={handleDragEnd}
-            onDragOver={(event: React.DragEvent): void => {
-              event.preventDefault();
-              event.dataTransfer.dropEffect = 'move';
-            }}
-            onDrop={(event: React.DragEvent): void => {
-              event.preventDefault();
-              handleDrop(row.id);
-            }}
-            className={cn(
-              'cursor-grab',
-              draggingId === row.id && 'opacity-50',
-              overId === row.id && 'bg-muted'
-            )}
-          >
-            <TableCell>
-              <GripVertical className='size-4 text-muted-foreground' />
-            </TableCell>
-            <TableCell>{row.name}</TableCell>
-            <TableCell>
-              <div className='flex flex-col gap-1'>
-                {row.locations.map((loc: string, idx: number) => (
-                  <span key={idx} className='inline-flex items-center rounded-md bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-400 ring-1 ring-inset ring-blue-500/20'>
-                    {loc}
-                  </span>
-                ))}
-              </div>
-            </TableCell>
-            <TableCell>
-              <span className='inline-flex items-center rounded-md bg-purple-500/10 px-2 py-1 text-xs font-medium text-purple-400 ring-1 ring-inset ring-purple-500/20'>
-                {row.mode}
-              </span>
-            </TableCell>
-            <TableCell>
-              {(() : React.JSX.Element => {
-                const Icon = row.iconId ? ICON_LIBRARY_MAP[row.iconId] : undefined;
-                if (!Icon) return <span className='text-sm'>{row.display}</span>;
-                return (
-                  <span className='flex items-center gap-2'>
-                    <Icon className='size-4' />
-                    {row.display === 'icon_label' && <span className='text-sm'>{row.display}</span>}
-                  </span>
-                );
-              })()}
-            </TableCell>
-            <TableCell>
-              <span className='text-sm text-muted-foreground'>
-                {row.pathName || 'N/A'}
-              </span>
-            </TableCell>
-            <TableCell className='text-right'>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={(): void => onEdit(row)}
-                className='text-muted-foreground hover:text-white'
-              >
-                Edit
-              </Button>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={(): void => onDelete(row.id)}
-                className='text-destructive hover:text-red-500'
-              >
-                <Trash2 className='size-4' />
-              </Button>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className='rounded-md border border-border bg-gray-950/20 max-w-4xl'>
+      <DataTable
+        columns={columns}
+        data={localRows}
+        getRowId={(row) => row.id}
+      />
+    </div>
   );
 };

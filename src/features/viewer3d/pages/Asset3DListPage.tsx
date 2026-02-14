@@ -6,85 +6,140 @@ import {
   Grid,
   List,
   Eye,
+  RefreshCw
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import {
   Button,
   ListPanel,
   SectionHeader,
-  
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  DataTable,
   SelectSimple,
   SearchInput,
   Alert,
   EmptyState,
-  RefreshButton,
+  Badge
 } from '@/shared/ui';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
-import { useAssets3D, useAsset3DCategories, useAsset3DTags, useReindexAssets3DMutation } from '../hooks/useAsset3dQueries';
+import { useAsset3DListState } from '../hooks/useAsset3DListState';
 
 import type { Asset3DRecord } from '../types';
+import type { ColumnDef } from '@tanstack/react-table';
 
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+};
 
-type ViewMode = 'grid' | 'list';
+const formatDate = (date: Date | string): string => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
 
 export function Asset3DListPage(): React.JSX.Element {
-  const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const {
+    previewAsset,
+    setPreviewAsset,
+    viewMode,
+    setViewMode,
+    searchQuery,
+    setSearchQuery,
+    selectedCategory,
+    setSelectedCategory,
+    selectedTags,
+    setSelectedTags,
+    assets,
+    loading,
+    error,
+    categories,
+    allTags,
+    reindexing,
+    handleReindex,
+    refetch,
+  } = useAsset3DListState();
 
-  // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const columns = useMemo<ColumnDef<Asset3DRecord>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-3'>
+          <div className='flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40'>
+            <Box className='h-4 w-4 text-muted-foreground' />
+          </div>
+          <span className='text-sm font-medium text-foreground truncate'>
+            {row.original.name || row.original.filename}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'categoryId',
+      header: 'Category',
+      cell: ({ row }) => row.original.categoryId ? (
+        <Badge variant='outline' className='bg-blue-500/10 text-blue-300 border-blue-500/20'>
+          {row.original.categoryId}
+        </Badge>
+      ) : <span className='text-muted-foreground'>-</span>,
+    },
+    {
+      accessorKey: 'tags',
+      header: 'Tags',
+      cell: ({ row }) => (
+        <div className='flex flex-wrap gap-1'>
+          {row.original.tags.slice(0, 2).map((tag) => (
+            <Badge key={tag} variant='secondary' className='text-[10px]'>
+              {tag}
+            </Badge>
+          ))}
+          {row.original.tags.length > 2 && (
+            <Badge variant='outline' className='text-[10px]'>
+              +{row.original.tags.length - 2}
+            </Badge>
+          )}
+          {row.original.tags.length === 0 && <span className='text-muted-foreground'>-</span>}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'size',
+      header: 'Size',
+      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size)}</span>,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Date',
+      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatDate(row.original.createdAt)}</span>,
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Action</div>,
+      cell: ({ row }) => (
+        <div className='text-right'>
+          <Button
+            variant='outline'
+            size='xs'
+            onClick={() => setPreviewAsset(row.original)}
+          >
+            View
+          </Button>
+        </div>
+      ),
+    },
+  ], [setPreviewAsset]);
 
-  const filters = useMemo(
-    () => ({
-      ...(searchQuery && { search: searchQuery }),
-      ...(selectedCategory && { category: selectedCategory }),
-      ...(selectedTags.length > 0 && { tags: selectedTags }),
-    }),
-    [searchQuery, selectedCategory, selectedTags]
-  );
-
-  const assetsQuery = useAssets3D(filters);
-  const reindexMutation = useReindexAssets3DMutation();
-  const categoriesQuery = useAsset3DCategories();
-  const tagsQuery = useAsset3DTags();
-
-  const assets = assetsQuery.data ?? [];
-  const loading = assetsQuery.isPending;
-  const error = assetsQuery.error instanceof Error ? assetsQuery.error.message : null;
-  const categories = categoriesQuery.data ?? [];
-  const allTags = tagsQuery.data ?? [];
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-  };
-
-  const formatDate = (date: Date | string): string => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const stats =
-    !loading && assets.length > 0 ? (
-      <div className='text-sm text-muted-foreground'>
-        {assets.length} asset{assets.length !== 1 ? 's' : ''}
-        {searchQuery || selectedCategory || selectedTags.length > 0 ? ' (filtered)' : ''}
-      </div>
-    ) : null;
+  const stats = !loading && assets.length > 0 ? (
+    <div className='text-xs text-muted-foreground'>
+      {assets.length} asset{assets.length !== 1 ? 's' : ''}
+      {searchQuery || selectedCategory || selectedTags.length > 0 ? ' (filtered)' : ''}
+    </div>
+  ) : null;
 
   return (
     <ListPanel
@@ -93,25 +148,19 @@ export function Asset3DListPage(): React.JSX.Element {
           title='3D Asset Library'
           description='Browse and preview 3D models'
           actions={
-            <RefreshButton
-              onRefresh={() => void assetsQuery.refetch()}
-              isRefreshing={loading}
-            />
+            <Button variant='outline' size='xs' className='h-8' onClick={refetch} disabled={loading}>
+              <RefreshCw className={`size-3.5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           }
         />
       }
-      alerts={
-        error ? (
-          <Alert variant='error'>
-            {error}
-          </Alert>
-        ) : null
-      }
+      alerts={error ? <Alert variant='error'>{error}</Alert> : null}
       filters={
         <div className='flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card/50 p-3'>
           <SearchInput
             value={searchQuery}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             onClear={() => setSearchQuery('')}
             placeholder='Search assets...'
             className='h-8'
@@ -120,15 +169,13 @@ export function Asset3DListPage(): React.JSX.Element {
 
           {categories.length > 0 && (
             <div className='w-[180px]'>
-              <SelectSimple size='sm'
+              <SelectSimple 
+                size='sm'
                 value={selectedCategory ?? '__all__'}
-                onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
+                onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}
                 options={[
                   { value: '__all__', label: 'All categories' },
-                  ...categories.map((cat: string) => ({
-                    value: cat,
-                    label: cat,
-                  })),
+                  ...categories.map((cat) => ({ value: cat, label: cat })),
                 ]}
                 placeholder='All categories'
                 triggerClassName='h-8'
@@ -138,17 +185,17 @@ export function Asset3DListPage(): React.JSX.Element {
 
           {allTags.length > 0 && (
             <div className='flex flex-wrap gap-2'>
-              {allTags.slice(0, 5).map((tag: string) => (
+              {allTags.slice(0, 5).map((tag) => (
                 <Button
                   key={tag}
                   variant={selectedTags.includes(tag) ? 'default' : 'outline'}
-                  size='sm'
+                  size='xs'
                   onClick={() =>
-                    setSelectedTags((prev: string[]) =>
-                      prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
+                    setSelectedTags((prev) =>
+                      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
                     )
                   }
-                  className='h-7 px-2 text-xs'
+                  className='h-7'
                 >
                   {tag}
                 </Button>
@@ -197,15 +244,10 @@ export function Asset3DListPage(): React.JSX.Element {
             !searchQuery && !selectedCategory && selectedTags.length === 0 ? (
               <Button
                 variant='outline'
-                disabled={reindexMutation.isPending}
-                onClick={() =>
-                  void reindexMutation
-                    .mutateAsync()
-                    .then(() => assetsQuery.refetch())
-                    .catch(() => {})
-                }
+                disabled={reindexing}
+                onClick={() => { void handleReindex(); }}
               >
-                {reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
+                {reindexing ? 'Reindexing...' : 'Reindex local uploads'}
               </Button>
             ) : undefined
           }
@@ -214,7 +256,7 @@ export function Asset3DListPage(): React.JSX.Element {
 
       {!loading && assets.length > 0 && viewMode === 'grid' && (
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
-          {assets.map((asset: Asset3DRecord) => (
+          {assets.map((asset) => (
             <div
               key={asset.id}
               onClick={() => setPreviewAsset(asset)}
@@ -233,9 +275,9 @@ export function Asset3DListPage(): React.JSX.Element {
                 </p>
                 <div className='mt-2 flex items-center gap-2'>
                   {asset.categoryId && (
-                    <span className='rounded bg-blue-500/10 px-1.5 py-0.5 text-xs text-blue-300'>
+                    <Badge variant='outline' className='text-[10px] bg-blue-500/10 text-blue-300 border-blue-500/20'>
                       {asset.categoryId}
-                    </span>
+                    </Badge>
                   )}
                   <span className='text-xs text-muted-foreground'>
                     {formatFileSize(asset.size)}
@@ -248,78 +290,12 @@ export function Asset3DListPage(): React.JSX.Element {
       )}
 
       {!loading && assets.length > 0 && viewMode === 'list' && (
-        <Table className='text-sm text-foreground'>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className='hidden sm:table-cell'>Category</TableHead>
-              <TableHead className='hidden md:table-cell'>Tags</TableHead>
-              <TableHead className='hidden lg:table-cell'>Size</TableHead>
-              <TableHead className='hidden lg:table-cell'>Date</TableHead>
-              <TableHead className='w-24 text-right'>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assets.map((asset: Asset3DRecord) => (
-              <TableRow key={asset.id}>
-                <TableCell>
-                  <div className='flex items-center gap-3'>
-                    <div className='flex h-9 w-9 items-center justify-center rounded-md border border-border bg-muted/40'>
-                      <Box className='h-4 w-4 text-muted-foreground' />
-                    </div>
-                    <span className='text-sm font-medium text-foreground truncate'>
-                      {asset.name || asset.filename}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell className='hidden sm:table-cell'>
-                  {asset.categoryId ? (
-                    <span className='rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300'>
-                      {asset.categoryId}
-                    </span>
-                  ) : (
-                    <span className='text-sm text-muted-foreground'>-</span>
-                  )}
-                </TableCell>
-                <TableCell className='hidden md:table-cell'>
-                  <div className='flex flex-wrap gap-1'>
-                    {asset.tags.slice(0, 2).map((tag: string) => (
-                      <span
-                        key={tag}
-                        className='rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground'
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {asset.tags.length > 2 && (
-                      <span className='text-xs text-muted-foreground'>
-                        +{asset.tags.length - 2}
-                      </span>
-                    )}
-                    {asset.tags.length === 0 && (
-                      <span className='text-sm text-muted-foreground'>-</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className='hidden lg:table-cell text-muted-foreground'>
-                  {formatFileSize(asset.size)}
-                </TableCell>
-                <TableCell className='hidden lg:table-cell text-muted-foreground'>
-                  {formatDate(asset.createdAt)}
-                </TableCell>
-                <TableCell className='text-right'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setPreviewAsset(asset)}
-                  >
-                    View
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div className='rounded-md border border-border bg-gray-950/20'>
+          <DataTable
+            columns={columns}
+            data={assets}
+          />
+        </div>
       )}
 
       {previewAsset && (

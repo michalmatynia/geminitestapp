@@ -56,7 +56,7 @@ npm run debug
 - React 19.2.3
 - TypeScript 5.9.3 (strict)
 - Prisma 7.3.0
-- NextAuth/Auth.js 5.0.0-beta.30 + @auth/core 0.41.1
+- NextAuth/Auth.js 5.0.0-beta.30 + <!-- Import failed: auth/core - ENOENT: no such file or directory, access '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/auth/core' --> 0.41.1
 - MongoDB adapter (@auth/mongodb-adapter)
 - Tailwind CSS 4.1.18 + ShadCN/ui (copy-pasted in `src/shared/ui/`)
 - TanStack Query + TanStack Table
@@ -237,4 +237,21 @@ AI_PATHS_ACTION_RATE_LIMIT_MAX=120
 
 ---
 
-**Last Updated**: February 1, 2026
+## Recent Improvements (February 2026)
+
+- **UI Standardization**: Migrated legacy tables to `DataTable`, `ListPanel`, and `FormSection` components across:
+  - Analytics (Recent Events)
+  - Agent Creator (Teaching Collections & Detail)
+  - AI Paths (Path List & Trigger Buttons)
+  - 3D Viewer (Asset Lists & Admin)
+  - Database (CRUD Panel, Preview, Engine)
+  - Integrations (Category Mappers)
+  - Auth (Users Page)
+  - Observability (System Logs)
+- **State Management**: Extracted complex state logic into dedicated hooks (e.g., `useDatabaseEngineState`, `useUsersState`, `useAsset3DListState`) to improve component maintainability and testability.
+- **Observability**: Enhanced system logs with AI interpretation, structured metadata display, and detailed stack trace formatting.
+- **Type Safety**: Refactored data access layers and components to use strict TypeScript types, eliminating `any` usage in key administrative views.
+
+---
+
+**Last Updated**: February 14, 2026

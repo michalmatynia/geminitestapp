@@ -1,8 +1,8 @@
 'use client';
-import { Eye, Plus } from 'lucide-react';
+import { Eye, Plus, Edit, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
@@ -13,14 +13,14 @@ import {
   Button,
   ListPanel,
   ConfirmDialog,
-  EmptyState,
   StatusBadge,
   SelectSimple,
+  DataTable,
+  Badge
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-
-
+import type { ColumnDef } from '@tanstack/react-table';
 
 type StatusFilter = PageStatus | 'all';
 type StatusFilterOption = { label: string; value: StatusFilter };
@@ -49,20 +49,17 @@ export default function PagesPage(): React.ReactNode {
     (): Set<string> | null => (domainSlugs.length ? new Set(domainSlugs.map((slug: Slug) => slug.slug)) : null),
     [domainSlugs]
   );
+  
   const filteredPages = useMemo((): PageSummary[] => {
     if (statusFilter === 'all') return pages;
     return pages.filter((page: PageSummary) => (page.status ?? 'draft') === statusFilter);
   }, [pages, statusFilter]);
 
-  const handleDelete = useCallback((page: PageSummary): void => {
-    setPageToDelete(page);
-  }, []);
-
   const handleConfirmDelete = async (): Promise<void> => {
     if (!pageToDelete) return;
     try {
       await deletePage.mutateAsync(pageToDelete.id);
-    } catch (error) {
+    } catch (error: unknown) {
       logClientError(error, { context: { source: 'PagesPage.handleConfirmDelete', pageId: pageToDelete.id } });
     } finally {
       setPageToDelete(null);
@@ -86,142 +83,158 @@ export default function PagesPage(): React.ReactNode {
     window.open(`${protocol}//${resolvedHost}${path}`, '_blank', 'noopener,noreferrer');
   };
 
+  const columns = useMemo<ColumnDef<PageSummary>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Page Name',
+      cell: ({ row }) => (
+        <div className='flex flex-col gap-1'>
+          <Link 
+            href={`/admin/cms/builder?pageId=${row.original.id}`}
+            className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
+          >
+            {row.original.name}
+          </Link>
+          <div className='flex flex-wrap gap-1'>
+            {row.original.slugs.map((s: PageSlugLink) => {
+              const isOutOfZone = domainSlugSet && !domainSlugSet.has(s.slug.slug);
+              return (
+                <Badge 
+                  key={s.slug.id} 
+                  variant='outline' 
+                  className={`text-[9px] px-1 py-0 ${isOutOfZone ? 'border-amber-500/30 text-amber-400 bg-amber-500/5' : 'text-gray-500'}`}
+                >
+                  /{s.slug.slug}
+                </Badge>
+              );
+            })}
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => <StatusBadge status={row.original.status ?? 'draft'} className='text-[10px]' />,
+      size: 100,
+    },
+    {
+      id: 'preview',
+      header: 'Live Preview',
+      cell: ({ row }) => {
+        const page = row.original;
+        const slugValues = page.slugs.map((s: PageSlugLink) => s.slug.slug);
+        const zoneSlugs = domainSlugSet
+          ? slugValues.filter((value: string) => domainSlugSet.has(value))
+          : [];
+        const selectedSlugCandidate = previewSelections[page.id];
+        const previewSlug = zoneSlugs.length
+          ? (selectedSlugCandidate && zoneSlugs.includes(selectedSlugCandidate)
+            ? selectedSlugCandidate
+            : zoneSlugs[0])
+          : null;
+
+        if (!previewSlug) return <span className='text-[10px] text-gray-600 uppercase font-bold'>No route</span>;
+
+        return (
+          <div className='flex items-center gap-2'>
+            {zoneSlugs.length > 1 ? (
+              <SelectSimple
+                size='xs'
+                value={previewSlug}
+                onValueChange={(val) => setPreviewSelections(prev => ({ ...prev, [page.id]: val }))}
+                options={zoneSlugs.map(s => ({ value: s, label: `/${s}` }))}
+                className='h-7 w-28 text-[10px]'
+              />
+            ) : (
+              <span className='text-[10px] text-blue-400 font-mono'>/{previewSlug}</span>
+            )}
+            <Button
+              variant='ghost'
+              size='xs'
+              className='h-7 w-7 p-0'
+              onClick={() => handlePreview(previewSlug)}
+              title={`Preview on ${activeDomain?.domain ?? 'current'}`}
+            >
+              <Eye className='size-3.5' />
+            </Button>
+          </div>
+        );
+      }
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end gap-2'>
+          <Link href={`/admin/cms/builder?pageId=${row.original.id}`}>
+            <Button variant='ghost' size='xs' className='h-7 w-7 p-0'>
+              <Edit className='size-3.5' />
+            </Button>
+          </Link>
+          <Button 
+            variant='ghost' 
+            size='xs' 
+            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+            onClick={() => setPageToDelete(row.original)}
+          >
+            <Trash2 className='size-3.5' />
+          </Button>
+        </div>
+      )
+    }
+  ], [domainSlugSet, previewSelections, activeDomain]);
+
   return (
-    <div className='container mx-auto py-10'>
-      <ListPanel
-        title='Pages'
-        headerActions={
-          <>
+    <div className='container mx-auto py-10 space-y-6'>
+      <SectionHeader
+        title='Content Pages'
+        description='Manage layouts and routes for your marketplace domains.'
+        actions={
+          <div className='flex gap-2'>
             <CmsDomainSelector />
-            <Button onClick={handleCreatePage}>Create Page</Button>
-          </>
+            <Button size='xs' className='h-8' onClick={handleCreatePage}>
+              <Plus className='size-3.5 mr-2' />
+              Create Page
+            </Button>
+          </div>
         }
-        isLoading={pagesQuery.isLoading}
-        loadingMessage='Loading pages...'
-        emptyState={
-          <EmptyState
-            variant='compact'
-            title='No pages match this filter'
-            description={statusFilter === 'all' ? 'Create your first page to get started with CMS.' : 'Try changing the status filter or create a new page.'}
-            action={
-              statusFilter === 'all' && (
-                <Button onClick={handleCreatePage} variant='outline'>
-                  <Plus className='mr-2 h-4 w-4' />
-                  Create Page
-                </Button>
-              )
-            }
-          />
+      />
+
+      <ListPanel
+        variant='flat'
+        filters={
+          <div className='flex gap-2'>
+            {STATUS_FILTERS.map((filter) => (
+              <Button
+                key={filter.value}
+                size='xs'
+                variant={statusFilter === filter.value ? 'default' : 'outline'}
+                onClick={() => setStatusFilter(filter.value)}
+                className='h-7 rounded-full px-3'
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </div>
         }
       >
-        <div className='mb-4 flex flex-wrap gap-2'>
-          {STATUS_FILTERS.map((filter: StatusFilterOption) => (
-            <Button
-              key={filter.value}
-              type='button'
-              variant='ghost'
-              onClick={() => setStatusFilter(filter.value)}
-              className={`h-auto rounded-md border px-3 py-1 text-xs font-medium transition hover:bg-blue-500/20 ${
-                statusFilter === filter.value
-                  ? 'border-blue-500 bg-blue-500/10 text-blue-300'
-                  : 'border-border/40 bg-gray-900/40 text-gray-400 hover:border-border/60'
-              }`}
-            >
-              {filter.label}
-            </Button>
-          ))}
+        <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+          <DataTable
+            columns={columns}
+            data={filteredPages}
+            isLoading={pagesQuery.isLoading}
+          />
         </div>
-        <ul>
-          {filteredPages.map((page: PageSummary) => {
-            const status: PageStatus = page.status ?? 'draft';
-            const slugValues = page.slugs.map((s: PageSlugLink) => s.slug.slug);
-            const outOfZone = domainSlugSet
-              ? slugValues.filter((value: string) => !domainSlugSet.has(value))
-              : [];
-            const zoneSlugs = domainSlugSet
-              ? slugValues.filter((value: string) => domainSlugSet.has(value))
-              : [];
-            const selectedSlugCandidate = previewSelections[page.id];
-            const previewSlug = zoneSlugs.length
-              ? (selectedSlugCandidate && zoneSlugs.includes(selectedSlugCandidate)
-                ? selectedSlugCandidate
-                : zoneSlugs[0])
-              : null;
-            const previewPath = previewSlug ? (previewSlug.startsWith('/') ? previewSlug : `/${previewSlug}`) : '';
-            const previewTitle = slugsQuery.isLoading
-              ? 'Loading zone slugs...'
-              : previewSlug
-                ? `Preview ${activeDomain?.domain ?? 'current'}${previewPath}`
-                : 'No slug in current zone';
-            return (
-              <li key={page.id} className='flex justify-between items-center py-2 border-b border-border/40 last:border-0'>
-                <div className='flex items-center gap-3'>
-                  <Link href={`/admin/cms/builder?pageId=${page.id}`}>
-                    <span className='hover:underline text-sm font-medium'>{page.name}</span>
-                  </Link>
-                  <StatusBadge status={status} />
-                  {page.slugs.length > 0 && (
-                    <span className='text-xs text-gray-500'>
-                      {page.slugs.map((s: PageSlugLink) => `/${s.slug.slug}`).join(', ')}
-                      {outOfZone.length > 0 && (
-                        <span className='ml-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300'>
-                          Cross-zone
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </div>
-                <div className='flex items-center gap-3'>
-                  {outOfZone.length > 0 && (
-                    <span className='text-xs text-amber-400'>
-                      Out of zone: {outOfZone.map((slug: string) => `/${slug}`).join(', ')}
-                    </span>
-                  )}
-                  {zoneSlugs.length > 1 ? (
-                    <SelectSimple
-                      value={previewSlug ?? ''}
-                      onValueChange={(value: string): void =>
-                        setPreviewSelections((prev: Record<string, string>): Record<string, string> => ({ ...prev, [page.id]: value }))
-                      }
-                      options={zoneSlugs.map((slug: string) => ({ value: slug, label: `/${slug}` }))}
-                      disabled={slugsQuery.isLoading}
-                      size='sm'
-                      className='w-[170px]'
-                      placeholder='Preview slug'
-                    />
-                  ) : zoneSlugs.length === 1 ? (
-                    <div className='rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-[10px] text-blue-200'>
-                      Preview: {activeDomain?.domain ?? 'current'}/{zoneSlugs[0]}
-                    </div>
-                  ) : null}
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    disabled={!previewSlug || slugsQuery.isLoading}
-                    title={previewTitle}
-                    onClick={() => {
-                      if (previewSlug) handlePreview(previewSlug);
-                    }}
-                  >
-                    <Eye className='mr-2 size-4' />
-                    Preview
-                  </Button>
-                  <Button variant='destructive' size='sm' onClick={() => { handleDelete(page); }}>
-                    Delete
-                  </Button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
       </ListPanel>
 
       <ConfirmDialog
         open={!!pageToDelete}
-        onOpenChange={(open: boolean) => !open && setPageToDelete(null)}
+        onOpenChange={(open) => !open && setPageToDelete(null)}
         onConfirm={() => { void handleConfirmDelete(); }}
-        title='Delete Page'        description={`Are you sure you want to delete page "${pageToDelete?.name}"? This cannot be undone.`}
-        confirmText='Delete'
+        title='Permanently Delete Page?'
+        description={`This will destroy "${pageToDelete?.name}" and all its block configurations. This cannot be undone.`}
+        confirmText='Destroy Page'
         variant='destructive'
       />
     </div>

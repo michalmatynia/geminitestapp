@@ -224,47 +224,44 @@ export function SqlQueryConsole({
 
           {/* Results table */}
           {!result.error && result.rows.length > 0 && (
-            <div className='overflow-auto max-h-[50vh] rounded-md border border-border'>
-              <Table className='text-xs'>
-                <TableHeader className='sticky top-0 bg-card z-10'>
-                  <TableRow className='hover:bg-transparent'>
-                    <TableHead className='w-12 font-medium text-gray-600'>#</TableHead>
-                    {result.fields.length > 0
-                      ? result.fields.map((f: { name: string }) => (
-                        <TableHead key={f.name} className='whitespace-nowrap font-medium font-mono'>
-                          {f.name}
-                        </TableHead>
-                      ))
-                      : Object.keys(result.rows[0] ?? {}).map((key: string) => (
-                        <TableHead key={key} className='whitespace-nowrap font-medium font-mono'>
-                          {key}
-                        </TableHead>
-                      ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {result.rows.map((row: Record<string, unknown>, i: number) => {
-                    const keys =
-                      result.fields.length > 0
-                        ? result.fields.map((f: { name: string }) => f.name)
-                        : Object.keys(row);
-                    return (
-                      <TableRow key={i} className='text-gray-300 hover:bg-muted/30'>
-                        <TableCell className='text-gray-600'>{i + 1}</TableCell>
-                        {keys.map((key: string) => (
-                          <TableCell
-                            key={key}
-                            className='max-w-[250px] truncate whitespace-nowrap font-mono'
-                            title={formatCellValue(row[key])}
-                          >
-                            {formatCellValue(row[key])}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+              <DataTable
+                columns={[
+                  {
+                    id: 'index',
+                    header: '#',
+                    cell: ({ row }) => <span className='text-gray-600 text-[10px]'>{row.index + 1}</span>,
+                    size: 40,
+                  },
+                  ...(result.fields.length > 0
+                    ? result.fields.map((f: { name: string }) => ({
+                      accessorKey: f.name,
+                      header: f.name,
+                      cell: ({ row }: any) => (
+                        <span 
+                          className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
+                          title={formatCellValue(row.original[f.name])}
+                        >
+                          {formatCellValue(row.original[f.name])}
+                        </span>
+                      )
+                    }))
+                    : Object.keys(result.rows[0] ?? {}).map((key) => ({
+                      accessorKey: key,
+                      header: key,
+                      cell: ({ row }: any) => (
+                        <span 
+                          className='font-mono text-[11px] text-gray-300 truncate block max-w-[250px]' 
+                          title={formatCellValue(row.original[key])}
+                        >
+                          {formatCellValue(row.original[key])}
+                        </span>
+                      )
+                    }))
+                  )
+                ]}
+                data={result.rows}
+              />
             </div>
           )}
 

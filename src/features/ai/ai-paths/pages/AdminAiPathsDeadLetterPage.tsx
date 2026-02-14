@@ -2,6 +2,7 @@
 
 import { Fragment, useMemo } from 'react';
 
+import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { 
   Button, 
   Checkbox, 
@@ -25,7 +26,6 @@ import {
   TableHeader,
   TableRow
 } from '@/shared/ui';
-import type { AiPathRunEventRecord, AiPathRunNodeRecord, AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { cn } from '@/shared/utils';
 
 import {
@@ -76,6 +76,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     setStreamPaused,
     eventsOverflow,
     eventsBatchLimit,
+    loading,
     isFetching,
     refetch,
     handleRequeueSingle,
@@ -407,80 +408,87 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   </div>
                 </div>
                 
-                <div className='rounded-md border border-border bg-gray-950/20'>
-                  <Table>
-                    <TableHeader className='bg-black/20'>
-                      <TableRow className='hover:bg-transparent border-border/60'>
-                        <TableHead className='text-[10px] py-2'>Node</TableHead>
-                        <TableHead className='text-[10px] py-2'>Status</TableHead>
-                        <TableHead className='text-[10px] py-2'>Details</TableHead>
-                        <TableHead className='text-[10px] py-2 text-right'>Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {detail.nodes.map((node: AiPathRunNodeRecord) => {
-                        const isRetryable = node.status === 'failed' || node.status === 'blocked';
-                        const isExpanded = expandedNodeIds.has(node.nodeId);
-                        const hasData = Boolean(node.inputs) || Boolean(node.outputs);
-                        
-                        return (
-                          <Fragment key={node.id}>
-                            <TableRow className='border-border/40 hover:bg-white/5'>
-                              <TableCell className='py-2'>
-                                <div className='font-mono text-[11px] text-gray-200'>{node.nodeId}</div>
-                                <div className='text-[10px] text-gray-500'>{node.nodeTitle || node.nodeType}</div>
-                              </TableCell>
-                              <TableCell className='py-2'>
-                                <StatusBadge status={node.status} className='text-[9px] px-1.5 py-0' />
-                              </TableCell>
-                              <TableCell className='py-2'>
-                                <Button
-                                  variant='ghost'
-                                  size='xs'
-                                  className='h-6 text-[10px] gap-1'
-                                  onClick={() => toggleNodeExpanded(node.nodeId)}
-                                  disabled={!hasData}
-                                >
-                                  {isExpanded ? 'Hide Data' : 'Show Data'}
-                                </Button>
-                              </TableCell>
-                              <TableCell className='py-2 text-right'>
-                                <Button
-                                  variant='outline'
-                                  size='xs'
-                                  className='h-6 text-[10px]'
-                                  onClick={() => retryNode(node.nodeId)}
-                                  disabled={!isRetryable || retryingNodeId === node.nodeId}
-                                >
-                                  {retryingNodeId === node.nodeId ? 'Retrying...' : 'Retry'}
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                            {isExpanded && (
-                              <TableRow className='bg-black/40 border-border/40'>
-                                <TableCell colSpan={4} className='p-4'>
-                                  <div className='grid gap-4 md:grid-cols-2'>
-                                    <div className='space-y-1'>
-                                      <span className='text-[10px] uppercase text-gray-600 font-bold'>Inputs</span>
-                                      <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
-                                        {JSON.stringify(node.inputs || {}, null, 2)}
-                                      </pre>
-                                    </div>
-                                    <div className='space-y-1'>
-                                      <span className='text-[10px] uppercase text-gray-600 font-bold'>Outputs</span>
-                                      <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
-                                        {JSON.stringify(node.outputs || {}, null, 2)}
-                                      </pre>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )}
-                          </Fragment>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
+                <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+                  <DataTable
+                    columns={[
+                      {
+                        accessorKey: 'nodeId',
+                        header: 'Node',
+                        cell: ({ row }) => (
+                          <div className='flex flex-col'>
+                            <span className='font-mono text-[11px] text-gray-200'>{row.original.nodeId}</span>
+                            <span className='text-[10px] text-gray-500'>{row.original.nodeTitle || row.original.nodeType}</span>
+                          </div>
+                        )
+                      },
+                      {
+                        accessorKey: 'status',
+                        header: 'Status',
+                        cell: ({ row }) => <StatusBadge status={row.original.status} className='text-[9px] px-1.5 py-0' />
+                      },
+                      {
+                        id: 'details',
+                        header: 'Details',
+                        cell: ({ row }) => {
+                          const hasData = Boolean(row.original.inputs) || Boolean(row.original.outputs);
+                          const isExpanded = expandedNodeIds.has(row.original.nodeId);
+                          return (
+                            <Button
+                              variant='ghost'
+                              size='xs'
+                              className='h-6 text-[10px] gap-1'
+                              onClick={() => toggleNodeExpanded(row.original.nodeId)}
+                              disabled={!hasData}
+                            >
+                              {isExpanded ? 'Hide Data' : 'Show Data'}
+                            </Button>
+                          );
+                        }
+                      },
+                      {
+                        id: 'actions',
+                        header: () => <div className='text-right'>Action</div>,
+                        cell: ({ row }) => {
+                          const isRetryable = row.original.status === 'failed' || row.original.status === 'blocked';
+                          return (
+                            <div className='text-right'>
+                              <Button
+                                variant='outline'
+                                size='xs'
+                                className='h-6 text-[10px]'
+                                onClick={() => retryNode(row.original.nodeId)}
+                                disabled={!isRetryable || retryingNodeId === row.original.nodeId}
+                              >
+                                {retryingNodeId === row.original.nodeId ? 'Retrying...' : 'Retry'}
+                              </Button>
+                            </div>
+                          );
+                        }
+                      }
+                    ]}
+                    data={detail.nodes}
+                    renderRowDetails={({ row }) => {
+                      if (!expandedNodeIds.has(row.original.nodeId)) return null;
+                      return (
+                        <div className='p-4 bg-black/40 border-t border-white/5'>
+                          <div className='grid gap-4 md:grid-cols-2'>
+                            <div className='space-y-1'>
+                              <span className='text-[10px] uppercase text-gray-600 font-bold'>Inputs</span>
+                              <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
+                                {JSON.stringify(row.original.inputs || {}, null, 2)}
+                              </pre>
+                            </div>
+                            <div className='space-y-1'>
+                              <span className='text-[10px] uppercase text-gray-600 font-bold'>Outputs</span>
+                              <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
+                                {JSON.stringify(row.original.outputs || {}, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
                 </div>
               </div>
 

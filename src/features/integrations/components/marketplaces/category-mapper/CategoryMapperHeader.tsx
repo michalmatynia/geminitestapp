@@ -34,30 +34,25 @@ export function CategoryMapperHeader(): React.JSX.Element {
       title='Marketplace Categories'
       description={`Connection: ${connectionName}`}
       actions={
-        <div className='flex items-center gap-3'>
+        <div className='flex items-center gap-2'>
           <Button
+            variant='outline'
+            size='xs'
+            className='h-8'
             onClick={(): void => { void handleFetchFromBase(); }}
             disabled={isFetchPending}
-            className='flex items-center gap-2 rounded-md border bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700 disabled:opacity-50'
           >
-            {isFetchPending ? (
-              <RefreshCw className='h-4 w-4 animate-spin' />
-            ) : (
-              <Download className='h-4 w-4' />
-            )}
+            {isFetchPending ? <RefreshCw className='mr-2 h-3.5 w-3.5 animate-spin' /> : <Download className='mr-2 h-3.5 w-3.5' />}
             {isFetchPending ? 'Fetching...' : 'Fetch Categories'}
           </Button>
 
           <Button
+            size='xs'
+            className='h-8'
             onClick={(): void => { void handleSave(); }}
             disabled={isSavePending || pendingCount === 0}
-            className='flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50'
           >
-            {isSavePending ? (
-              <RefreshCw className='h-4 w-4 animate-spin' />
-            ) : (
-              <Save className='h-4 w-4' />
-            )}
+            {isSavePending ? <RefreshCw className='mr-2 h-3.5 w-3.5 animate-spin' /> : <Save className='mr-2 h-3.5 w-3.5' />}
             {isSavePending ? 'Saving...' : `Save (${pendingCount})`}
           </Button>
         </div>

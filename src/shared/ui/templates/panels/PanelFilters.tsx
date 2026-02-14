@@ -7,6 +7,7 @@ import React, { useState, useCallback } from 'react';
 import { Button } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
+import { MultiSelect } from '@/shared/ui/multi-select';
 import {
   Select,
   SelectContent,
@@ -17,6 +18,38 @@ import {
 import { cn } from '@/shared/utils/ui-utils';
 
 import { FilterField } from './types';
+
+const isActiveFilterValue = (value: unknown): boolean => {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value !== '';
+  if (Array.isArray(value)) return value.length > 0;
+  return true;
+};
+
+const getSingleSelectValue = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (Array.isArray(value)) {
+    const firstValue = (value as unknown[])[0];
+    if (typeof firstValue === 'string') return firstValue;
+    if (typeof firstValue === 'number') return String(firstValue);
+    return '';
+  }
+  return '';
+};
+
+const getMultiSelectValues = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .filter((entry): entry is string | number => typeof entry === 'string' || typeof entry === 'number')
+      .map(String);
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const normalized = String(value);
+    return normalized ? [normalized] : [];
+  }
+  return [];
+};
 
 interface PanelFiltersProps {
   filters: FilterField[];
@@ -56,8 +89,8 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
     setIsExpanded(false);
   }, [onReset]);
 
-  const hasActiveFilters = Object.values(values).some((v) => v !== undefined && v !== null && v !== '');
-  const activeFilterCount = Object.values(values).filter((v) => v !== undefined && v !== null && v !== '').length;
+  const hasActiveFilters = Object.values(values).some((value) => isActiveFilterValue(value));
+  const activeFilterCount = Object.values(values).filter((value) => isActiveFilterValue(value)).length;
 
   const filterFieldsToRender = filters.filter((f) => f.type !== 'text');
 
@@ -152,11 +185,31 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
   };
 
   switch (field.type) {
-    case 'select':
+    case 'select': {
+      const options = (field.options ?? []).map((option) => ({
+        value: String(option.value),
+        label: option.label,
+      }));
+
+      if (field.multi) {
+        return (
+          <div style={containerStyle} className='flex flex-col gap-1'>
+            <label className='text-xs font-medium text-gray-600'>{field.label}</label>
+            <MultiSelect
+              options={options}
+              selected={getMultiSelectValues(value)}
+              onChange={(selectedValues) => onChange(selectedValues)}
+              placeholder={field.placeholder ?? 'Select options...'}
+              className='w-full'
+            />
+          </div>
+        );
+      }
+
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
           <label className='text-xs font-medium text-gray-600'>{field.label}</label>
-          <Select value={(value as string) || ''} onValueChange={(val) => onChange(val)}>
+          <Select value={getSingleSelectValue(value)} onValueChange={(val) => onChange(val)}>
             <SelectTrigger className='h-8'>
               <SelectValue placeholder={field.placeholder} />
             </SelectTrigger>
@@ -170,6 +223,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
           </Select>
         </div>
       );
+    }
 
     case 'checkbox':
       return (

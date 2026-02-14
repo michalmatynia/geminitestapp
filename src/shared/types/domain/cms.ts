@@ -52,6 +52,7 @@ export interface PageComponent {
 
 export interface PageSlugLink {
   slug: {
+    id: string;
     slug: string;
   };
 }

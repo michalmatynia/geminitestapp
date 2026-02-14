@@ -65,12 +65,19 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   headerAction,
   className,
 }) => {
+  const isActiveFilterValue = (value: unknown): boolean => {
+    if (value === undefined || value === null) return false;
+    if (typeof value === 'string') return value !== '';
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
+  };
+
   const hasActiveFilters = Object.values(values).some(
-    (v) => v !== undefined && v !== null && v !== ''
+    (value) => isActiveFilterValue(value)
   ) || search;
 
   const activeFilterCount = Object.entries(values).filter(
-    ([, v]) => v !== undefined && v !== null && v !== ''
+    ([, value]) => isActiveFilterValue(value)
   ).length;
 
   return (

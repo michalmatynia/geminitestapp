@@ -1,6 +1,7 @@
 'use client';
 
 import NextImage from 'next/image';
+import { useMemo } from 'react';
 
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import type {
@@ -9,7 +10,9 @@ import type {
   InventoryOption,
   Template,
 } from '@/features/data-import-export/types/imports';
-import { Button, Input, Label, Checkbox, Pagination, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, Checkbox, Pagination, SelectSimple, DataTable, Badge } from '@/shared/ui';
+import { cn } from '@/shared/utils';
+import type { ColumnDef } from '@tanstack/react-table';
 
 export function ImportTab(): React.JSX.Element {
   const {
@@ -55,8 +58,113 @@ export function ImportTab(): React.JSX.Element {
   } = useImportExport();
 
   const selectedImportCount = selectedImportIds.size;
-  const allVisibleSelected = importList.length > 0 && importList.every((item: ImportListItem) => selectedImportIds.has(item.baseProductId));
-  const isSomeVisibleSelected = importList.some((item: ImportListItem) => selectedImportIds.has(item.baseProductId)) && !allVisibleSelected;
+
+  const columns = useMemo<ColumnDef<ImportListItem>[]>(() => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label='Select all'
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedImportIds.has(row.original.baseProductId)}
+          onCheckedChange={(checked) => {
+            const isChecked = Boolean(checked);
+            setSelectedImportIds((prev: Set<string>) => {
+              const next = new Set(prev);
+              if (isChecked) next.add(row.original.baseProductId);
+              else next.delete(row.original.baseProductId);
+              return next;
+            });
+          }}
+          aria-label={`Select ${row.original.name}`}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+      size: 40,
+    },
+    {
+      id: 'image',
+      header: 'Img',
+      cell: ({ row }) => (
+        <div className='relative h-10 w-10 overflow-hidden rounded bg-gray-900 border border-white/5'>
+          {row.original.image ? (
+            <NextImage
+              src={row.original.image}
+              alt=''
+              fill
+              className='object-cover'
+              unoptimized={!row.original.image.includes('baselinker.com')}
+            />
+          ) : (
+            <div className='flex h-full w-full items-center justify-center text-[10px] text-gray-600 font-bold uppercase'>
+              NA
+            </div>
+          )}
+        </div>
+      ),
+      size: 60,
+    },
+    {
+      accessorKey: 'baseProductId',
+      header: 'Base ID',
+      cell: ({ row }) => <span className='font-mono text-[10px] text-gray-500'>{row.original.baseProductId}</span>,
+      size: 100,
+    },
+    {
+      accessorKey: 'name',
+      header: 'Product',
+      cell: ({ row }) => (
+        <div className='flex flex-col min-w-0'>
+          <span className='font-medium text-gray-200 truncate'>{row.original.name}</span>
+          {row.original.description && (
+            <span className='text-[10px] text-gray-500 truncate italic'>{row.original.description}</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'sku',
+      header: 'SKU',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-1'>
+          <span className={cn('font-mono text-[11px]', row.original.skuExists ? 'text-amber-400 font-bold' : 'text-gray-400')}>
+            {row.original.sku || '—'}
+          </span>
+          {row.original.skuExists && <span className='text-[10px] opacity-70' title='SKU already exists'>⚠</span>}
+        </div>
+      ),
+      size: 120,
+    },
+    {
+      accessorKey: 'price',
+      header: 'Price',
+      cell: ({ row }) => <span className='font-mono text-xs text-gray-300'>{row.original.price ?? 0}</span>,
+      size: 80,
+    },
+    {
+      accessorKey: 'stock',
+      header: 'Qty',
+      cell: ({ row }) => <span className='font-mono text-xs text-gray-300'>{row.original.stock ?? 0}</span>,
+      size: 60,
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: ({ row }) => {
+        const item = row.original;
+        if (item.exists) return <Badge variant='outline' className='bg-blue-500/10 text-blue-400 border-blue-500/20 text-[9px] uppercase font-bold'>Exists</Badge>;
+        if (item.skuExists) return <Badge variant='outline' className='bg-amber-500/10 text-amber-400 border-amber-500/20 text-[9px] uppercase font-bold'>SKU Dup</Badge>;
+        return <Badge variant='outline' className='bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[9px] uppercase font-bold'>New</Badge>;
+      },
+      size: 80,
+    }
+  ], [selectedImportIds, setSelectedImportIds]);
 
   return (
     <div className='space-y-4'>
@@ -316,131 +424,12 @@ export function ImportTab(): React.JSX.Element {
         ) : null}
 
         {importList.length > 0 ? (
-          <div className='mt-3 max-h-96 overflow-auto rounded-md border border-border/60 bg-card/20 p-0'>
-            <div className='grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-border/60 px-3 py-2 text-[11px] uppercase tracking-wide text-gray-500 sticky top-0 bg-card z-10'>
-              <span className='flex items-center'>
-                <Checkbox
-                  aria-label='Select all visible products'
-                  checked={
-                    allVisibleSelected ||
-                    (isSomeVisibleSelected && 'indeterminate')
-                  }
-                  onCheckedChange={(
-                    checked: boolean | 'indeterminate',
-                  ): void => {
-                    if (checked) {
-                      setSelectedImportIds((prev: Set<string>) => {
-                        const next = new Set(prev);
-                        importList.forEach((item: ImportListItem) => {
-                          if (item.baseProductId) next.add(item.baseProductId);
-                        });
-                        return next;
-                      });
-                    } else {
-                      setSelectedImportIds((prev: Set<string>) => {
-                        const next = new Set(prev);
-                        importList.forEach((item: ImportListItem) => {
-                          if (item.baseProductId)
-                            next.delete(item.baseProductId);
-                        });
-                        return next;
-                      });
-                    }
-                  }}
-                  className='h-3 w-3 rounded border bg-gray-900 text-emerald-500'
-                />
-              </span>
-              <span>Img</span>
-              <span>Base ID</span>
-              <span>Product</span>
-              <span>SKU</span>
-              <span>Price</span>
-              <span>Qty</span>
-              <span>Status</span>
-            </div>
-            {importList.map((item: ImportListItem) => (
-              <div
-                key={item.baseProductId}
-                className={`grid grid-cols-[28px_50px_100px_1fr_90px_70px_60px_70px] gap-3 border-b border-gray-900/70 px-3 py-2 text-xs text-gray-300 last:border-b-0 items-center transition-colors ${
-                  selectedImportIds.has(item.baseProductId)
-                    ? 'bg-emerald-500/5'
-                    : 'hover:bg-card/40'
-                }`}
-              >
-                <Checkbox
-                  checked={selectedImportIds.has(item.baseProductId)}
-                  onCheckedChange={(
-                    checked: boolean | 'indeterminate',
-                  ): void => {
-                    const isChecked = Boolean(checked);
-                    setSelectedImportIds((prev: Set<string>) => {
-                      const next = new Set(prev);
-                      if (isChecked) {
-                        next.add(item.baseProductId);
-                      } else {
-                        next.delete(item.baseProductId);
-                      }
-                      return next;
-                    });
-                  }}
-                  className='h-3 w-3 rounded border bg-gray-900 text-emerald-500'
-                  aria-label={`Select ${item.name}`}
-                />
-                <div className='relative h-10 w-10 overflow-hidden rounded bg-gray-900'>
-                  {item.image ? (
-                    <NextImage
-                      src={item.image}
-                      alt=''
-                      fill
-                      className='object-cover'
-                      unoptimized={!item.image.includes('baselinker.com')}
-                    />
-                  ) : (
-                    <div className='flex h-full w-full items-center justify-center text-[10px] text-gray-600'>
-                      No img
-                    </div>
-                  )}
-                </div>
-                <span className='truncate text-gray-400 font-mono text-[11px]'>
-                  {item.baseProductId}
-                </span>
-                <div className='min-w-0'>
-                  <div className='truncate font-medium text-gray-200'>
-                    {item.name}
-                  </div>
-                  {item.description && (
-                    <div className='truncate text-[11px] text-gray-500'>
-                      {item.description}
-                    </div>
-                  )}
-                </div>
-                <span
-                  className={`truncate font-mono text-[11px] ${
-                    item.skuExists ? 'text-yellow-400' : 'text-gray-400'
-                  }`}
-                >
-                  {item.sku ?? '—'}
-                  {item.skuExists && (
-                    <span className='ml-1' title='SKU already exists'>
-                      ⚠
-                    </span>
-                  )}
-                </span>
-                <span className='truncate'>{item.price ?? 0}</span>
-                <span className='truncate'>{item.stock ?? 0}</span>
-                <span
-                  className={`text-[11px] font-medium ${
-                    item.exists
-                      ? 'text-amber-400'
-                      : item.skuExists
-                        ? 'text-yellow-400'
-                        : 'text-emerald-400'
-                  }`}
-                >
-                  {item.exists ? 'Exists' : item.skuExists ? 'SKU dup' : 'New'}
-                </span>
-              </div>
-            ))}
+          <div className='mt-3 rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+            <DataTable
+              columns={columns}
+              data={importList}
+              getRowId={(row) => row.baseProductId}
+            />
           </div>
         ) : (
           <p className='mt-3 text-xs text-gray-500'>

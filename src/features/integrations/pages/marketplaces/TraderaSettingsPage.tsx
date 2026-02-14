@@ -7,10 +7,10 @@ import {
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, Checkbox, Input } from '@/shared/ui';
-import { SectionHeader } from '@/shared/ui';
+import { Button, Checkbox, Input, FormSection, FormField, SectionHeader, useToast } from '@/shared/ui';
 
 export default function TraderaSettingsPage(): React.JSX.Element {
+  const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const saveMutation = useUpdateSettingsBulk();
   const [durationHours, setDurationHours] = useState<number>(
@@ -37,7 +37,6 @@ export default function TraderaSettingsPage(): React.JSX.Element {
   const [selectorProfile, setSelectorProfile] = useState<string>(
     DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile
   );
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const map = settingsQuery.data;
@@ -121,7 +120,6 @@ export default function TraderaSettingsPage(): React.JSX.Element {
   }, [settingsQuery.data]);
 
   const handleSave = async (): Promise<void> => {
-    setStatusMessage(null);
     try {
       await saveMutation.mutateAsync([
         {
@@ -157,136 +155,123 @@ export default function TraderaSettingsPage(): React.JSX.Element {
           value: selectorProfile.trim() || DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile,
         },
       ]);
-      setStatusMessage('Tradera settings saved.');
+      toast('Tradera settings saved successfully.', { variant: 'success' });
     } catch (error) {
-      setStatusMessage(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save Tradera settings.'
-      );
+      toast(error instanceof Error ? error.message : 'Failed to save settings.', { variant: 'error' });
     }
   };
 
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
+    <div className='container mx-auto py-10 max-w-4xl space-y-6'>
       <SectionHeader
-        title='Tradera Settings'
-        description='Configure global Tradera listing defaults, scheduler behavior, and automation guardrails.'
-        className='mb-6'
+        title='Tradera Automation'
+        description='Manage global listing behaviors, relist scheduling, and browser automation profiles.'
       />
 
-      <div className='space-y-4 rounded-lg border border-border/60 bg-card/40 p-6'>
-        <div className='grid gap-4 md:grid-cols-2'>
-          <label className='space-y-1'>
-            <span className='text-sm text-gray-300'>Default listing duration (hours)</span>
-            <Input
-              type='number'
-              min={1}
-              max={720}
-              value={String(durationHours)}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setDurationHours(Number(event.target.value))
-              }
-              className='h-9 border bg-card/60 text-gray-200'
-            />
-          </label>
+      <div className='grid gap-6'>
+        <FormSection title='Listing Defaults' className='p-6'>
+          <div className='grid gap-4 md:grid-cols-2'>
+            <FormField label='Default Duration (Hours)' description='Maximum time a listing remains active.'>
+              <Input
+                type='number'
+                min={1}
+                max={720}
+                value={String(durationHours)}
+                onChange={(e) => setDurationHours(Number(e.target.value))}
+              />
+            </FormField>
 
-          <label className='space-y-1'>
-            <span className='text-sm text-gray-300'>Default relist lead (minutes)</span>
-            <Input
-              type='number'
-              min={0}
-              max={10080}
-              value={String(autoRelistLeadMinutes)}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setAutoRelistLeadMinutes(Number(event.target.value))
-              }
-              className='h-9 border bg-card/60 text-gray-200'
-            />
-          </label>
+            <FormField label='Relist Lead (Minutes)' description='Buffer time before relisting expires.'>
+              <Input
+                type='number'
+                min={0}
+                max={10080}
+                value={String(autoRelistLeadMinutes)}
+                onChange={(e) => setAutoRelistLeadMinutes(Number(e.target.value))}
+              />
+            </FormField>
+          </div>
+        </FormSection>
 
-          <label className='space-y-1'>
-            <span className='text-sm text-gray-300'>Scheduler interval (ms)</span>
-            <Input
-              type='number'
-              min={30000}
-              max={3600000}
-              value={String(schedulerIntervalMs)}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setSchedulerIntervalMs(Number(event.target.value))
-              }
-              className='h-9 border bg-card/60 text-gray-200'
-            />
-          </label>
+        <FormSection title='Automation & Scheduling' className='p-6'>
+          <div className='space-y-4'>
+            <FormField label='Scheduler Interval (ms)' description='Frequency of background relist checks.'>
+              <Input
+                type='number'
+                min={30000}
+                max={3600000}
+                value={String(schedulerIntervalMs)}
+                onChange={(e) => setSchedulerIntervalMs(Number(e.target.value))}
+              />
+            </FormField>
 
-          <label className='space-y-1'>
-            <span className='text-sm text-gray-300'>Listing form URL</span>
-            <Input
-              value={listingFormUrl}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setListingFormUrl(event.target.value)
-              }
-              className='h-9 border bg-card/60 text-gray-200'
-            />
-          </label>
+            <div className='grid gap-3 pt-2'>
+              <label className='flex items-center gap-3 p-3 rounded border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
+                <Checkbox
+                  checked={autoRelistEnabled}
+                  onCheckedChange={(v) => setAutoRelistEnabled(Boolean(v))}
+                />
+                <div className='flex flex-col'>
+                  <span className='text-sm font-medium text-gray-200'>Enable Auto Relist</span>
+                  <span className='text-[10px] text-gray-500 uppercase'>Enabled by default for new listings</span>
+                </div>
+              </label>
 
-          <label className='space-y-1 md:col-span-2'>
-            <span className='text-sm text-gray-300'>Selector profile</span>
-            <Input
-              value={selectorProfile}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setSelectorProfile(event.target.value)
-              }
-              className='h-9 border bg-card/60 text-gray-200'
-            />
-          </label>
-        </div>
+              <label className='flex items-center gap-3 p-3 rounded border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
+                <Checkbox
+                  checked={schedulerEnabled}
+                  onCheckedChange={(v) => setSchedulerEnabled(Boolean(v))}
+                />
+                <div className='flex flex-col'>
+                  <span className='text-sm font-medium text-gray-200'>Enable Relist Scheduler</span>
+                  <span className='text-[10px] text-gray-500 uppercase'>Process background relist tasks</span>
+                </div>
+              </label>
 
-        <div className='space-y-2'>
-          <label className='flex items-center gap-2 text-sm text-gray-300'>
-            <Checkbox
-              checked={autoRelistEnabled}
-              onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                setAutoRelistEnabled(Boolean(checked))
-              }
-            />
-            Enable auto relist by default
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-300'>
-            <Checkbox
-              checked={schedulerEnabled}
-              onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                setSchedulerEnabled(Boolean(checked))
-              }
-            />
-            Enable relist scheduler
-          </label>
-          <label className='flex items-center gap-2 text-sm text-gray-300'>
-            <Checkbox
-              checked={allowSimulatedSuccess}
-              onCheckedChange={(checked: boolean | 'indeterminate'): void =>
-                setAllowSimulatedSuccess(Boolean(checked))
-              }
-            />
-            Allow simulated success fallback (for selector/profile tuning)
-          </label>
-        </div>
+              <label className='flex items-center gap-3 p-3 rounded border border-white/5 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors'>
+                <Checkbox
+                  checked={allowSimulatedSuccess}
+                  onCheckedChange={(v) => setAllowSimulatedSuccess(Boolean(v))}
+                />
+                <div className='flex flex-col'>
+                  <span className='text-sm font-medium text-gray-200'>Simulated Success Fallback</span>
+                  <span className='text-[10px] text-gray-500 uppercase'>Bypass actual listing for profile tuning</span>
+                </div>
+              </label>
+            </div>
+          </div>
+        </FormSection>
 
-        <div className='flex items-center justify-between border-t border-border/50 pt-4'>
-          <p className='text-xs text-muted-foreground'>
-            Scheduler checks due relists and enqueues Playwright relist jobs.
-          </p>
+        <FormSection title='System Configuration' className='p-6'>
+          <div className='space-y-4'>
+            <FormField label='Listing Form URL'>
+              <Input
+                value={listingFormUrl}
+                onChange={(e) => setListingFormUrl(e.target.value)}
+                placeholder='https://www.tradera.com/...'
+              />
+            </FormField>
+
+            <FormField label='Selector Profile'>
+              <Input
+                value={selectorProfile}
+                onChange={(e) => setSelectorProfile(e.target.value)}
+                placeholder='default'
+              />
+            </FormField>
+          </div>
+        </FormSection>
+
+        <div className='flex justify-end pt-4'>
           <Button
-            type='button'
-            onClick={(): void => { void handleSave(); }}
+            size='sm'
+            onClick={handleSave}
             disabled={saveMutation.isPending}
+            className='h-9 px-8'
           >
-            {saveMutation.isPending ? 'Saving...' : 'Save settings'}
+            {saveMutation.isPending ? 'Saving Configuration...' : 'Save Tradera Settings'}
           </Button>
         </div>
-        {statusMessage && (
-          <p className='text-xs text-muted-foreground'>{statusMessage}</p>
-        )}
       </div>
     </div>
   );

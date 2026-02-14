@@ -1,45 +1,29 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   EditIcon,
   PlusIcon,
   Trash2Icon,
+  RefreshCwIcon
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
-import { logClientError } from '@/features/observability';
-import { ApiError } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Badge,
   Button,
   Input,
   Pagination,
-  
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  DataTable,
   FormModal,
   ConfirmDialog,
-  RefreshButton,
   SelectSimple,
   FormField,
 } from '@/shared/ui';
 
-import { executeSqlQuery } from '../api';
-import { useDatabase } from '../context/DatabaseContext';
-import { useCrudMutation } from '../hooks/useDatabaseQueries';
+import { useCrudPanelState } from '../hooks/useCrudPanelState';
 
-import type {
-  CrudOperation,
-  DatabaseColumnInfo,
-  DatabaseTableDetail,
-  DatabaseType,
-} from '../types';
+import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '../types';
+import type { ColumnDef } from '@tanstack/react-table';
 
 function formatCellValue(value: unknown): string {
   if (value === null || value === undefined) return '∅';
@@ -62,8 +46,6 @@ function parseInputValue(value: string, type: string): unknown {
   }
   return value;
 }
-
-/* ─── Row Form Modal ─── */
 
 function RowFormModal({
   columns,
@@ -99,7 +81,6 @@ function RowFormModal({
     const parsed: Record<string, unknown> = {};
     for (const col of columns) {
       const val = formData[col.name] ?? '';
-      // Skip auto-generated PK columns on insert
       if (mode === 'add' && col.isPrimaryKey && col.defaultValue && val === '') continue;
       parsed[col.name] = parseInputValue(val, col.type);
     }
@@ -117,7 +98,7 @@ function RowFormModal({
       size='md'
     >
       <form ref={formRef} onSubmit={handleSubmit} className='space-y-4'>
-        {columns.map((col: DatabaseColumnInfo) => (
+        {columns.map((col) => (
           <FormField
             key={col.name}
             label={col.name}
@@ -127,16 +108,16 @@ function RowFormModal({
             <div className='flex flex-col gap-1.5'>
               {col.isPrimaryKey && (
                 <div className='flex items-center gap-2'>
-                  <Badge variant='default' className='text-[9px]'>PK</Badge>
+                  <Badge variant='outline' className='text-[9px] bg-blue-500/10 border-blue-500/20 text-blue-300'>PK</Badge>
                 </div>
               )}
               <Input
                 value={formData[col.name] ?? ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  setFormData((prev: Record<string, string>) => ({ ...prev, [col.name]: e.target.value }))
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, [col.name]: e.target.value }))
                 }
                 placeholder={col.defaultValue ?? (col.nullable ? 'NULL' : 'required')}
-                className='h-8 font-mono text-xs'
+                className='font-mono text-xs'
                 disabled={mode === 'edit' && col.isPrimaryKey}
               />
             </div>
@@ -147,372 +128,175 @@ function RowFormModal({
   );
 }
 
-/* ─── Main CRUD Panel ─── */
-
-export function CrudPanel({
-  tableDetails: tableDetailsProp,
-  defaultTable,
-  dbType: dbTypeProp,
-}: {
+export function CrudPanel(props: {
   tableDetails?: DatabaseTableDetail[];
   defaultTable?: string;
   dbType?: DatabaseType;
 }): React.JSX.Element {
-  const dbKeys = QUERY_KEYS.system.databases;
-  const context = useDatabase();
-  const dbType = dbTypeProp ?? context.dbType;
-  const tableDetails = tableDetailsProp ?? context.tableDetails;
+  const {
+    selectedTable, setSelectedTable,
+    page, setPage,
+    pageSize, setPageSize,
+    mutationError, setMutationError,
+    successMessage, setSuccessMessage,
+    showAddModal, setShowAddModal,
+    editingRow, setEditingRow,
+    deletingRow, setDeletingRow,
+    tableDetail,
+    rows,
+    totalRows,
+    isLoadingRows,
+    maxPage,
+    fetchRows,
+    handleAdd,
+    handleEdit,
+    handleDelete,
+    crudMutation,
+    tableDetails,
+    columns,
+    rowsQuery,
+  } = useCrudPanelState(props);
 
-  const [selectedTable, setSelectedTable] = useState(defaultTable ?? '');
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [mutationError, setMutationError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
+  const columnDefs = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
+    if (!columns.length && rows.length === 0) return [];
+    
+    const actionCol: ColumnDef<Record<string, unknown>> = {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-1'>
+          <button
+            type='button'
+            onClick={() => setEditingRow(row.original)}
+            className='rounded p-1 text-gray-400 hover:bg-white/10 hover:text-blue-300 transition-colors'
+            title='Edit row'
+          >
+            <EditIcon className='size-3.5' />
+          </button>
+          <button
+            type='button'
+            onClick={() => setDeletingRow(row.original)}
+            className='rounded p-1 text-gray-400 hover:bg-white/10 hover:text-rose-300 transition-colors'
+            title='Delete row'
+          >
+            <Trash2Icon className='size-3.5' />
+          </button>
+        </div>
+      ),
+      size: 80,
+    };
 
-  // Sync when parent changes the default table (e.g. clicking "Manage" on a different table)
-  useEffect(() => {
-    if (defaultTable && defaultTable !== selectedTable) {
-      setSelectedTable(defaultTable);
-      setPage(1);
-      setMutationError(null);
-      setSuccessMessage(null);
-    }
-  }, [defaultTable, selectedTable]);  
+    const dataCols = (rows.length > 0 ? Object.keys(rows[0] ?? {}) : columns.map(c => c.name)).map((key) => ({
+      accessorKey: key,
+      header: key,
+      cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
+        <span 
+          className='font-mono text-xs text-gray-300 truncate block max-w-[200px]' 
+          title={formatCellValue(row.original[key])}
+        >
+          {formatCellValue(row.original[key])}
+        </span>
+      ),
+    }));
 
-  // Modal state
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingRow, setEditingRow] = useState<Record<string, unknown> | null>(null);
-  const [deletingRow, setDeletingRow] = useState<Record<string, unknown> | null>(null);
+    return [actionCol, ...dataCols];
+  }, [columns, rows, setEditingRow, setDeletingRow]);
 
-  const crudMutation = useCrudMutation();
-
-  const tableDetail = useMemo(
-    () => tableDetails.find((t: DatabaseTableDetail) => t.name === selectedTable),
-    [tableDetails, selectedTable]
-  );
-
-  const primaryKeyColumns = useMemo(
-    () => (tableDetail?.columns ?? []).filter((c: DatabaseColumnInfo) => c.isPrimaryKey),
-    [tableDetail]
-  );
-
-  const rowsQuery = useQuery({
-    queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize }),
-    enabled: Boolean(selectedTable),
-    queryFn: async (): Promise<{ rows: Record<string, unknown>[]; totalRows: number }> => {
-      if (!selectedTable) {
-        return { rows: [], totalRows: 0 };
-      }
-
-      const offset = (page - 1) * pageSize;
-
-      if (dbType === 'postgresql') {
-        const rowsResult = await executeSqlQuery({
-          sql: `SELECT * FROM "${selectedTable}" LIMIT ${pageSize} OFFSET ${offset}`,
-          type: 'postgresql',
-        });
-
-        if (rowsResult.error) {
-          throw new ApiError(rowsResult.error, 400);
-        }
-
-        let totalRows = rowsResult.rowCount ?? rowsResult.rows.length;
-        try {
-          const countResult = await executeSqlQuery({
-            sql: `SELECT COUNT(*)::bigint AS total FROM "${selectedTable}"`,
-            type: 'postgresql',
-          });
-          if (!countResult.error) {
-            totalRows = Number(
-              (countResult.rows[0] as Record<string, unknown>)?.['total'] ?? totalRows
-            );
-          }
-        } catch (error: unknown) {
-          logClientError(error, {
-            context: { source: 'CrudPanel', action: 'fetchCount', table: selectedTable },
-          });
-        }
-
-        return { rows: rowsResult.rows, totalRows };
-      }
-
-      const mongoResult = await executeSqlQuery({
-        type: 'mongodb',
-        collection: selectedTable,
-        operation: 'find',
-        filter: {},
-      });
-
-      if (mongoResult.error) {
-        throw new ApiError(mongoResult.error, 400);
-      }
-
-      return {
-        rows: mongoResult.rows,
-        totalRows: mongoResult.rowCount ?? mongoResult.rows.length,
-      };
-    },
-  });
-
-  const fetchRows = useCallback((): void => {
-    if (!selectedTable) return;
-    setMutationError(null);
-    setSuccessMessage(null);
-    void queryClient.invalidateQueries({
-      queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize }),
-    });
-  }, [dbKeys, dbType, page, pageSize, queryClient, selectedTable]);
-
-  const getPrimaryKey = (row: Record<string, unknown>): Record<string, unknown> => {
-    const pk: Record<string, unknown> = {};
-    if (dbType === 'mongodb') {
-      pk['_id'] = row['_id'];
-    } else {
-      for (const col of primaryKeyColumns) {
-        pk[col.name] = row[col.name];
-      }
-      // Fallback: use all columns if no PK
-      if (Object.keys(pk).length === 0) {
-        return { ...row };
-      }
-    }
-    return pk;
-  };
-
-  const handleAdd = (data: Record<string, unknown>): void => {
-    setSuccessMessage(null);
-    setMutationError(null);
-    crudMutation.mutate(
-      { table: selectedTable, operation: 'insert' as CrudOperation, type: dbType, data },
-      {
-        onSuccess: (result) => {
-          if (result.error) {
-            setMutationError(result.error);
-          } else {
-            setShowAddModal(false);
-            setSuccessMessage(`Inserted ${result.rowCount} row(s)`);
-            void rowsQuery.refetch();
-          }
-        },
-        onError: (err: Error) => {
-          logClientError(err, { context: { source: 'CrudPanel', action: 'insertRow', table: selectedTable } });
-          setMutationError(err.message);
-        },
-      }
-    );
-  };
-
-  const handleEdit = (data: Record<string, unknown>): void => {
-    if (!editingRow) return;
-    setSuccessMessage(null);
-    setMutationError(null);
-    crudMutation.mutate(
-      {
-        table: selectedTable,
-        operation: 'update' as CrudOperation,
-        type: dbType,
-        data,
-        primaryKey: getPrimaryKey(editingRow),
-      },
-      {
-        onSuccess: (result) => {
-          if (result.error) {
-            setMutationError(result.error);
-          } else {
-            setEditingRow(null);
-            setSuccessMessage(`Updated ${result.rowCount} row(s)`);
-            void rowsQuery.refetch();
-          }
-        },
-        onError: (err: Error) => {
-          logClientError(err, { context: { source: 'CrudPanel', action: 'updateRow', table: selectedTable } });
-          setMutationError(err.message);
-        },
-      }
-    );
-  };
-
-  const handleDelete = (): void => {
-    if (!deletingRow) return;
-    setSuccessMessage(null);
-    setMutationError(null);
-    crudMutation.mutate(
-      {
-        table: selectedTable,
-        operation: 'delete' as CrudOperation,
-        type: dbType,
-        primaryKey: getPrimaryKey(deletingRow),
-      },
-      {
-        onSuccess: (result) => {
-          if (result.error) {
-            setMutationError(result.error);
-          } else {
-            setDeletingRow(null);
-            setSuccessMessage(`Deleted ${result.rowCount} row(s)`);
-            void rowsQuery.refetch();
-          }
-        },
-        onError: (err: Error) => {
-          logClientError(err, { context: { source: 'CrudPanel', action: 'deleteRow', table: selectedTable } });
-          setMutationError(err.message);
-        },
-      }
-    );
-  };
-
-  const rows = rowsQuery.data?.rows ?? [];
-  const totalRows = rowsQuery.data?.totalRows ?? 0;
-  const isLoadingRows = rowsQuery.isLoading;
-  const errorMessage =
-    mutationError ?? (rowsQuery.isError ? rowsQuery.error.message : null);
-  const maxPage = Math.max(1, Math.ceil(totalRows / pageSize));
-  const columns = tableDetail?.columns ?? [];
-  const columnKeys = rows.length > 0 ? Object.keys(rows[0] ?? {}) : columns.map((c: DatabaseColumnInfo) => c.name);
+  const errorMessage = mutationError ?? (rowsQuery.isError ? rowsQuery.error.message : null);
 
   return (
-    <div ref={panelRef} className='space-y-4'>
-      {/* Table selector */}
-      <div className='flex flex-wrap items-center gap-3'>
-        <SelectSimple size='sm'
+    <div className='space-y-4'>
+      <div className='flex flex-wrap items-center gap-3 bg-card/30 p-3 rounded-lg border border-border/60'>
+        <SelectSimple 
+          size='sm'
           value={selectedTable}
-          onValueChange={(v: string): void => {
+          onValueChange={(v) => {
             setSelectedTable(v);
             setPage(1);
             setMutationError(null);
             setSuccessMessage(null);
           }}
-          options={tableDetails.map((t: DatabaseTableDetail) => ({
+          options={tableDetails.map((t) => ({
             value: t.name,
             label: `${t.name} (~${t.rowEstimate} rows)`,
           }))}
-          placeholder='Select a table...'
+          placeholder='Select a table to manage...'
           triggerClassName='h-8 min-w-[240px] text-xs'
         />
 
         {selectedTable && (
           <>
-            <RefreshButton
-              onRefresh={fetchRows}
-              isRefreshing={rowsQuery.isFetching}
-            />
+            <div className='h-4 w-px bg-border/60 mx-1' />
             <Button
-              size='sm'
-              onClick={(): void => setShowAddModal(true)}
-              className='h-8 gap-1 text-xs'
+              variant='outline'
+              size='xs'
+              onClick={fetchRows}
+              disabled={rowsQuery.isFetching}
+              className='h-8'
             >
-              <PlusIcon className='size-3' />
+              <RefreshCwIcon className={`size-3.5 mr-2 ${rowsQuery.isFetching ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button
+              size='xs'
+              onClick={() => setShowAddModal(true)}
+              className='h-8'
+            >
+              <PlusIcon className='size-3.5 mr-2' />
               Add Row
             </Button>
           </>
         )}
       </div>
 
-      {/* Messages */}
       {errorMessage && (
-        <div className='rounded-md border border-red-500/30 bg-red-900/20 px-3 py-2 text-xs text-red-300'>
+        <div className='rounded-md border border-rose-500/30 bg-rose-900/10 px-3 py-2 text-xs text-rose-300'>
           {errorMessage}
         </div>
       )}
       {successMessage && (
-        <div className='rounded-md border border-emerald-500/30 bg-emerald-900/20 px-3 py-2 text-xs text-emerald-300'>
+        <div className='rounded-md border border-emerald-500/30 bg-emerald-900/10 px-3 py-2 text-xs text-emerald-300'>
           {successMessage}
         </div>
       )}
 
-      {/* Data browser */}
       {selectedTable && (
-        <div className='rounded-lg border border-border/60 bg-card/40'>
-          {isLoadingRows && <p className='p-4 text-xs text-gray-400'>Loading rows...</p>}
-
-          {!isLoadingRows && rows.length === 0 && (
-            <p className='p-4 text-xs text-gray-500'>No rows found in this table.</p>
-          )}
+        <div className='rounded-lg border border-border/60 bg-card/40 overflow-hidden'>
+          <DataTable
+            columns={columnDefs}
+            data={rows}
+            isLoading={isLoadingRows}
+          />
 
           {!isLoadingRows && rows.length > 0 && (
-            <>
-              <div className='overflow-auto max-h-[50vh]'>
-                <Table className='text-xs'>
-                  <TableHeader className='sticky top-0 bg-card z-10'>
-                    <TableRow className='hover:bg-transparent'>
-                      <TableHead className='w-20 font-medium'>Actions</TableHead>
-                      {columnKeys.map((key: string) => (
-                        <TableHead key={key} className='whitespace-nowrap font-medium font-mono'>
-                          {key}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rows.map((row: Record<string, unknown>, i: number) => (
-                      <TableRow key={i} className='text-gray-300 hover:bg-muted/30'>
-                        <TableCell className='py-1.5'>
-                          <div className='flex items-center gap-1'>
-                            <button
-                              type='button'
-                              onClick={(): void => setEditingRow(row)}
-                              className='rounded p-1 text-gray-400 hover:bg-muted hover:text-blue-300'
-                              title='Edit row'
-                            >
-                              <EditIcon className='size-3' />
-                            </button>
-                            <button
-                              type='button'
-                              onClick={(): void => setDeletingRow(row)}
-                              className='rounded p-1 text-gray-400 hover:bg-muted hover:text-red-300'
-                              title='Delete row'
-                            >
-                              <Trash2Icon className='size-3' />
-                            </button>
-                          </div>
-                        </TableCell>
-                        {columnKeys.map((key: string) => (
-                          <TableCell
-                            key={key}
-                            className='max-w-[200px] truncate whitespace-nowrap font-mono py-1.5'
-                            title={formatCellValue(row[key])}
-                          >
-                            {formatCellValue(row[key])}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className='flex items-center justify-between border-t border-border px-4 py-2'>
-                <span className='text-xs text-gray-500'>
-                  {totalRows.toLocaleString()} total rows
-                </span>
-                <Pagination
-                  page={page}
-                  totalPages={maxPage}
-                  onPageChange={setPage}
-                  pageSize={pageSize}
-                  onPageSizeChange={(size: number) => {
-                    setPage(1);
-                    setPageSize(size);
-                  }}
-                  pageSizeOptions={[10, 20, 50, 100]}
-                  showPageSize
-                  className='scale-90 origin-right'
-                />
-              </div>
-            </>
+            <div className='flex items-center justify-between border-t border-border px-4 py-2 bg-card/20'>
+              <span className='text-xs text-gray-500 font-mono'>
+                {totalRows.toLocaleString()} total rows
+              </span>
+              <Pagination
+                page={page}
+                totalPages={maxPage}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={(size) => {
+                  setPage(1);
+                  setPageSize(size);
+                }}
+                pageSizeOptions={[10, 20, 50, 100]}
+                showPageSize
+                variant='compact'
+              />
+            </div>
           )}
         </div>
       )}
 
-      {/* Modals */}
       {showAddModal && tableDetail && (
         <RowFormModal
           columns={tableDetail.columns}
           mode='add'
           onSubmit={handleAdd}
-          onClose={(): void => setShowAddModal(false)}
+          onClose={() => setShowAddModal(false)}
           isPending={crudMutation.isPending}
         />
       )}
@@ -523,23 +307,21 @@ export function CrudPanel({
           initialData={editingRow}
           mode='edit'
           onSubmit={handleEdit}
-          onClose={(): void => setEditingRow(null)}
+          onClose={() => setEditingRow(null)}
           isPending={crudMutation.isPending}
         />
       )}
 
-      {deletingRow && (
-        <ConfirmDialog
-          open={true}
-          onOpenChange={(open: boolean) => !open && setDeletingRow(null)}
-          onConfirm={handleDelete}
-          title='Delete Row'
-          description='Are you sure you want to delete this row? This action cannot be undone.'
-          confirmText='Delete'
-          variant='destructive'
-          loading={crudMutation.isPending}
-        />
-      )}
+      <ConfirmDialog
+        open={!!deletingRow}
+        onOpenChange={(open) => !open && setDeletingRow(null)}
+        onConfirm={handleDelete}
+        title='Delete Row'
+        description='Are you sure you want to delete this row? This action cannot be undone.'
+        confirmText='Delete'
+        variant='destructive'
+        loading={crudMutation.isPending}
+      />
     </div>
   );
 }

@@ -107,39 +107,43 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
   ) : null;
 
   const alerts = (
-    <div className='space-y-3'>
-      {error ? (
-        <div className='rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200'>
-          {error.message}
-        </div>
-      ) : null}
-      <div className='grid grid-cols-1 gap-2 md:grid-cols-3'>
-        <div className='rounded-md border border-border/70 bg-card/60 px-3 py-2 text-xs text-gray-300'>
-          <div className='uppercase tracking-wide text-gray-500'>Tradera mode</div>
-          <div className='mt-1 text-sm text-white'>
-            {traderaQueueHealthLoading
-              ? 'Loading...'
-              : traderaQueueHealth
-                ? `${traderaQueueHealth.mode} (${traderaQueueHealth.redisAvailable ? 'redis up' : 'redis unavailable'})`
-                : 'Unavailable'}
+    <div className='space-y-4'>
+      {error && (
+        <Alert variant='error'>{error.message}</Alert>
+      )}
+      <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+        <FormSection title='Tradera Status' variant='subtle-compact' className='p-3'>
+          <div className='flex items-center justify-between'>
+            <span className='text-[10px] text-gray-500 uppercase font-bold'>Runtime Mode</span>
+            <StatusBadge status={traderaQueueHealth?.redisAvailable ? 'success' : 'error'} label={traderaQueueHealth?.redisAvailable ? 'Redis Up' : 'No Redis'} className='text-[9px]' />
           </div>
-        </div>
-        <div className='rounded-md border border-border/70 bg-card/60 px-3 py-2 text-xs text-gray-300'>
-          <div className='uppercase tracking-wide text-gray-500'>Listing queue</div>
-          <div className='mt-1 text-sm text-white'>
-            {traderaListingsQueue
-              ? `running=${traderaListingsQueue.running ? 'yes' : 'no'} waiting=${traderaListingsQueue.waitingCount} active=${traderaListingsQueue.activeCount} failed=${traderaListingsQueue.failedCount}`
-              : 'Not registered'}
+          <div className='mt-2 text-xs text-gray-300 font-medium'>
+            {traderaQueueHealthLoading ? 'Scanning...' : traderaQueueHealth?.mode ?? 'Unknown'}
           </div>
-        </div>
-        <div className='rounded-md border border-border/70 bg-card/60 px-3 py-2 text-xs text-gray-300'>
-          <div className='uppercase tracking-wide text-gray-500'>Relist scheduler</div>
-          <div className='mt-1 text-sm text-white'>
-            {traderaSchedulerQueue
-              ? `running=${traderaSchedulerQueue.running ? 'yes' : 'no'} waiting=${traderaSchedulerQueue.waitingCount} active=${traderaSchedulerQueue.activeCount}`
-              : 'Not registered'}
+        </FormSection>
+
+        <FormSection title='Listing Queue' variant='subtle-compact' className='p-3'>
+          <div className='flex items-center justify-between mb-2'>
+            <span className='text-[10px] text-gray-500 uppercase font-bold'>Health</span>
+            <StatusBadge status={traderaListingsQueue?.running ? 'success' : 'warning'} label={traderaListingsQueue?.running ? 'Active' : 'Paused'} className='text-[9px]' />
           </div>
-        </div>
+          <div className='grid grid-cols-3 gap-1 text-[10px] text-center uppercase font-bold'>
+            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Wait</span><span className='text-blue-400'>{traderaListingsQueue?.waitingCount ?? 0}</span></div>
+            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Busy</span><span className='text-amber-400'>{traderaListingsQueue?.activeCount ?? 0}</span></div>
+            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Fail</span><span className='text-rose-400'>{traderaListingsQueue?.failedCount ?? 0}</span></div>
+          </div>
+        </FormSection>
+
+        <FormSection title='Relist Scheduler' variant='subtle-compact' className='p-3'>
+          <div className='flex items-center justify-between mb-2'>
+            <span className='text-[10px] text-gray-500 uppercase font-bold'>Service</span>
+            <StatusBadge status={traderaSchedulerQueue?.running ? 'success' : 'warning'} label={traderaSchedulerQueue?.running ? 'Polling' : 'Idle'} className='text-[9px]' />
+          </div>
+          <div className='grid grid-cols-2 gap-1 text-[10px] text-center uppercase font-bold'>
+            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Pending</span><span className='text-blue-400'>{traderaSchedulerQueue?.waitingCount ?? 0}</span></div>
+            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Active</span><span className='text-amber-400'>{traderaSchedulerQueue?.activeCount ?? 0}</span></div>
+          </div>
+        </FormSection>
       </div>
     </div>
   );

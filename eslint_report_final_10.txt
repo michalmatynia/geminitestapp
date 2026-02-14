@@ -1,0 +1,168 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/hooks/useUsersState.ts
+   3:10  warning  'useMutation' is defined but never used. Allowed unused vars must match /^_/u                                @typescript-eslint/no-unused-vars
+  25:1   error    `@/features/auth/api/users` type import should occur before import of `@/features/auth/context/AuthContext`  import/order
+  58:35  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  58:47  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  59:39  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  59:51  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  60:35  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  60:47  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  61:33  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  61:45  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  62:35  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  62:47  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
+  212:16  error  Promise-returning function provided to attribute where a void return was expected                       @typescript-eslint/no-misused-promises
+  233:57  error  Unsafe return of a value of type `any`                                                                  @typescript-eslint/no-unsafe-return
+  240:57  error  Unsafe return of a value of type `any`                                                                  @typescript-eslint/no-unsafe-return
+  255:68  error  Unsafe return of a value of type `any`                                                                  @typescript-eslint/no-unsafe-return
+  287:16  error  Promise-returning function provided to attribute where a void return was expected                       @typescript-eslint/no-misused-promises
+  301:18  error  Placing a void expression inside another expression is forbidden. Move it to its own statement instead  @typescript-eslint/no-confusing-void-expression
+  344:16  error  Promise-returning function provided to attribute where a void return was expected                       @typescript-eslint/no-misused-promises
+  346:19  error  Unsafe assignment of an `any` value                                                                     @typescript-eslint/no-unsafe-assignment
+  347:21  error  Unsafe member access .ok on an `any` value                                                              @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/components/CrudPanel.tsx
+    9:44  warning  'useEffect' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+   23:1   error    There should be at least one empty line between import groups                      import/order
+  191:23  error    Unexpected any. Specify a different type                                           @typescript-eslint/no-explicit-any
+  194:38  error    Unsafe member access .original on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  196:32  error    Unsafe member access .original on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  204:63  error    This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useCrudPanelState.ts
+  15:3   warning  'CrudOperation' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  16:3   warning  'DatabaseColumnInfo' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  86:56  error    Unexpected any. Specify a different type                                              @typescript-eslint/no-explicit-any
+  86:63  error    Unsafe member access ['total'] on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useDatabaseEngineState.ts
+   26:1   error    `@/shared/contracts/database` type import should occur before import of `@/shared/hooks/use-settings`   import/order
+  121:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  121:9   warning  'backupSchedulerTickMutation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  121:39  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  122:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  122:9   warning  'backupRunNowMutation' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  122:32  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  123:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  123:9   warning  'cancelOperationJobMutation' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  123:38  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  124:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  124:9   warning  'syncDatabaseMutation' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  124:32  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  125:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  125:9   warning  'backfillMutation' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  125:28  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  126:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  126:9   warning  'copyCollectionMutation' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  126:34  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  147:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  148:5   error    Unsafe return of a value of type error                                                                  @typescript-eslint/no-unsafe-return
+  148:5   error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  160:10  error    Unsafe array destructuring of a tuple element with an error typed value                                 @typescript-eslint/no-unsafe-assignment
+  206:13  error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  206:42  error    Unsafe member access [dbType] on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  207:32  error    Unsafe member access .schedulerEnabled on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  207:60  error    Unsafe member access .enabled on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  208:47  error    Unsafe argument of type error typed assigned to a parameter of type `string`                            @typescript-eslint/no-unsafe-argument
+  208:54  error    Unsafe member access .timeUtc on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  253:5   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabaseEnginePage.tsx
+   26:1   error    There should be at least one empty line between import groups                                        import/order
+   27:1   error    `@/shared/contracts/database` type import should occur before import of `@/shared/ui`                import/order
+   29:1   error    There should be at least one empty line between import groups                                        import/order
+   30:1   error    `@/shared/lib/db/database-engine-constants` type import should occur before import of `@/shared/ui`  import/order
+   38:5   warning  'serviceRouteMapDraft' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   39:5   warning  'setServiceRouteMapDraft' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   50:5   warning  'operationQueueStatus' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+   88:21  error    Unsafe assignment of an `any` value                                                                  @typescript-eslint/no-unsafe-assignment
+   89:47  error    Unsafe member access [row.original.name] on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+   90:25  error    Unsafe member access [row.original.name] on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+   91:15  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+  143:55  error    Promise-returning function provided to attribute where a void return was expected                    @typescript-eslint/no-misused-promises
+  165:66  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+  175:66  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+  185:66  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+  195:66  error    Unsafe return of a value of type `any`                                                               @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasePreviewPage.tsx
+  366:5  warning  'tableRows' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/marketplaces/category-mapper/BaseProducerMapper.tsx
+  40:65  error  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  41:7   error  Unsafe assignment of an `any` value                         @typescript-eslint/no-unsafe-assignment
+  41:29  error  Unsafe member access .internalProducerId on an `any` value  @typescript-eslint/no-unsafe-member-access
+  42:7   error  Unsafe assignment of an `any` value                         @typescript-eslint/no-unsafe-assignment
+  42:29  error  Unsafe member access .externalProducerId on an `any` value  @typescript-eslint/no-unsafe-member-access
+  43:27  error  Unsafe member access .isActive on an `any` value            @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/marketplaces/category-mapper/BaseTagMapper.tsx
+  55:60  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  56:7   error  Unsafe assignment of an `any` value                    @typescript-eslint/no-unsafe-assignment
+  56:24  error  Unsafe member access .internalTagId on an `any` value  @typescript-eslint/no-unsafe-member-access
+  57:7   error  Unsafe assignment of an `any` value                    @typescript-eslint/no-unsafe-assignment
+  57:24  error  Unsafe member access .externalTagId on an `any` value  @typescript-eslint/no-unsafe-member-access
+  58:27  error  Unsafe member access .isActive on an `any` value       @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/marketplaces/category-mapper/GenericItemMapper.tsx
+    9:10  warning  'cn' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+   11:1   error    There should be at least one empty line between import groups              import/order
+  265:72  error    Unsafe argument of type `any` assigned to a parameter of type `TInternal`  @typescript-eslint/no-unsafe-argument
+  265:76  error    Unsafe member access .original on an `any` value                           @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+   19:3   warning  'ListPanel' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   26:3   warning  'StatusToggle' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   39:7   warning  'getContextValue' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  132:5   warning  'rebuildIndexesMutation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  136:37  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  140:93  error    Unsafe member access .name on an `any` value                                                       @typescript-eslint/no-unsafe-member-access
+  145:80  error    Unsafe member access .expected on an `any` value                                                   @typescript-eslint/no-unsafe-member-access
+  151:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  151:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  152:26  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  152:98  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  157:14  error    Unsafe call of an `any` typed value                                                                @typescript-eslint/no-unsafe-call
+  157:27  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  157:43  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  159:35  error    Unsafe member access .key on an `any` value                                                        @typescript-eslint/no-unsafe-member-access
+  170:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  170:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  171:37  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  174:62  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormOther.tsx
+   24:63   warning  'Table' is defined but never used. Allowed unused vars must match /^_/u                          @typescript-eslint/no-unused-vars
+   24:70   warning  'TableHeader' is defined but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
+   24:83   warning  'TableRow' is defined but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
+   24:93   warning  'TableHead' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   24:104  warning  'TableBody' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   24:115  warning  'TableCell' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   28:11   warning  'PriceGroupWithCalculatedPrice' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  328:48   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  329:34   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  331:32   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  334:32   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  334:61   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  336:37   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  336:70   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  345:76   error    This assertion is unnecessary since it does not change the type of the expression                @typescript-eslint/no-unnecessary-type-assertion
+  345:80   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  345:92   error    Unexpected any. Specify a different type                                                         @typescript-eslint/no-explicit-any
+  345:97   error    Unsafe member access .currency on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  345:119  error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  352:32   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  353:50   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  354:32   error    Unsafe call of an `any` typed value                                                              @typescript-eslint/no-unsafe-call
+  354:36   error    Unsafe member access .original on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/pages/Admin3DAssetsPage.tsx
+   35:1   error  There should be at least one empty line between import groups                      import/order
+  263:27  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+✖ 138 problems (112 errors, 26 warnings)
+  11 errors and 0 warnings potentially fixable with the `--fix` option.
+

@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { PlusIcon, Trash2, Globe } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
 import {
   useCmsDomains,
@@ -13,15 +14,20 @@ import { logClientError } from '@/features/observability';
 import {
   Button,
   Input,
-  Label,
   ListPanel,
   EmptyState,
   useToast,
   SelectSimple,
+  DataTable,
+  Badge,
+  SectionHeader,
+  FormField,
+  FormSection
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { cmsDomainCreateSchema, cmsDomainUpdateSchema } from '../../validations/api';
+import type { ColumnDef } from '@tanstack/react-table';
 
 export default function ZonesPage(): React.JSX.Element {
   const domainsQuery = useCmsDomains();
@@ -29,11 +35,12 @@ export default function ZonesPage(): React.JSX.Element {
   const deleteDomain = useDeleteCmsDomain();
   const updateDomain = useUpdateCmsDomain();
   const { toast } = useToast();
+  
   const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
   const [domain, setDomain] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const validation = validateFormData(
       cmsDomainCreateSchema,
@@ -49,24 +56,25 @@ export default function ZonesPage(): React.JSX.Element {
     try {
       await createDomain.mutateAsync(validation.data);
       setDomain('');
+      toast(`Zone ${validation.data.domain} added successfully.`, { variant: 'success' });
     } catch (err: unknown) {
       logClientError(err, { context: { source: 'ZonesPage', action: 'createDomain', domain } });
       setError(err instanceof Error ? err.message : 'Failed to create domain.');
     }
   };
 
-  const handleDelete = async (id: string): Promise<void> => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Remove this domain and its slug assignments?')) return;
     try {
       await deleteDomain.mutateAsync(id);
+      toast('Zone removed successfully.', { variant: 'success' });
     } catch (err: unknown) {
-      logClientError(err, { context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id } });
       logClientError(err, { context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id } });
       toast(err instanceof Error ? err.message : 'Failed to delete domain.', { variant: 'error' });
     }
   };
 
-  const handleAliasChange = async (id: string, aliasOfValue: string): Promise<void> => {
+  const handleAliasChange = async (id: string, aliasOfValue: string) => {
     const aliasOf = aliasOfValue === 'none' ? null : aliasOfValue;
     const validation = validateFormData(
       cmsDomainUpdateSchema,
@@ -81,87 +89,111 @@ export default function ZonesPage(): React.JSX.Element {
     try {
       const input = validation.data.aliasOf === undefined ? {} : { aliasOf: validation.data.aliasOf };
       await updateDomain.mutateAsync({ id, input });
+      toast('Zone routing updated.', { variant: 'success' });
     } catch (err: unknown) {
-      logClientError(err, { context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf } });
       logClientError(err, { context: { source: 'ZonesPage', action: 'updateAlias', domainId: id, aliasOf } });
       toast(err instanceof Error ? err.message : 'Failed to update alias.', { variant: 'error' });
     }
   };
 
-  return (
-    <div className='container mx-auto py-10'>
-      <ListPanel
-        title='Zones (Domains)'
-        description='Zones scope CMS slugs per hostname. Domains are auto-created on first request; add here to pre-provision or share slug sets.'
-        isLoading={domainsQuery.isLoading}
-        emptyState={
-          <EmptyState
-            title='No zones yet'
-            description='Create one or visit a domain to auto-register it.'
-          />
-        }
-      >
-        <form
-          onSubmit={(event: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(event); }}
-          className='flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-end'
-        >
-          <div className='flex-1'>
-            <Label htmlFor='domain'>Domain</Label>
-            <Input
-              id='domain'
-              value={domain}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setDomain(event.target.value)}
-              placeholder='milkbar.com'
-              autoComplete='off'
-            />
-            {error ? <p className='mt-1 text-sm text-red-500'>{error}</p> : null}
+  const columns = useMemo<ColumnDef<CmsDomain>[]>(() => [
+    {
+      accessorKey: 'domain',
+      header: 'Hostname / URL',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-3'>
+          <div className='flex h-8 w-8 items-center justify-center rounded bg-emerald-500/10 text-emerald-400'>
+            <Globe className='size-4' />
           </div>
-          <Button type='submit' size='sm'>
-            Add Zone
+          <div className='flex flex-col'>
+            <span className='font-medium text-gray-200'>{row.original.domain}</span>
+            <span className='text-[10px] text-gray-500 font-mono uppercase tracking-tighter'>{row.original.id}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'type',
+      header: 'Routing Policy',
+      cell: ({ row }) => {
+        if (!row.original.aliasOf) return <Badge variant='outline' className='text-[9px] uppercase font-bold bg-blue-500/10 text-blue-400 border-blue-500/20'>Independent Zone</Badge>;
+        const target = domains.find(d => d.id === row.original.aliasOf);
+        return (
+          <div className='flex flex-col gap-1'>
+            <Badge variant='outline' className='text-[9px] uppercase font-bold bg-amber-500/10 text-amber-400 border-amber-500/20 w-fit'>Shared Context</Badge>
+            <span className='text-[10px] text-gray-500'>Inherits slugs from {target?.domain ?? 'another zone'}</span>
+          </div>
+        );
+      }
+    },
+    {
+      id: 'alias',
+      header: 'Alias Configuration',
+      cell: ({ row }) => (
+        <SelectSimple
+          size='xs'
+          value={row.original.aliasOf ?? 'none'}
+          onValueChange={(val) => void handleAliasChange(row.original.id, val)}
+          options={[
+            { value: 'none', label: 'Keep Independent' },
+            ...domains
+              .filter(d => d.id !== row.original.id)
+              .map(d => ({ value: d.id, label: `Alias of ${d.domain}` })),
+          ]}
+          className='h-7 w-44 text-[10px]'
+        />
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Tools</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end'>
+          <Button 
+            variant='ghost' 
+            size='xs' 
+            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+            onClick={() => void handleDelete(row.original.id)}
+          >
+            <Trash2 className='size-3.5' />
+          </Button>
+        </div>
+      )
+    }
+  ], [domains, handleAliasChange, handleDelete]);
+
+  return (
+    <div className='container mx-auto py-10 space-y-6'>
+      <SectionHeader
+        title='Content Zones'
+        description='Map CMS content to specific hostnames. Zones allow you to serve different layouts or localized versions of your storefront.'
+      />
+
+      <FormSection title='Provision New Zone' className='p-6'>
+        <form onSubmit={handleSubmit} className='flex items-end gap-4'>
+          <FormField label='Hostname / Domain' error={error} className='flex-1'>
+            <Input
+              value={domain}
+              onChange={(e) => setDomain(e.target.value)}
+              placeholder='e.g. uk.storefront.com'
+              className='h-9'
+            />
+          </FormField>
+          <Button type='submit' size='sm' className='h-9' disabled={createDomain.isPending}>
+            <PlusIcon className='size-3.5 mr-2' />
+            {createDomain.isPending ? 'Adding...' : 'Add Zone'}
           </Button>
         </form>
+      </FormSection>
 
-        <ul className='divide-y divide-border'>
-          {domains.map((item: CmsDomain) => (
-            <li key={item.id} className='flex items-center justify-between px-4 py-3'>
-              <div className='flex flex-col gap-1'>
-                <span className='text-sm font-medium'>{item.domain}</span>
-                {item.aliasOf ? (
-                  <span className='text-xs text-muted-foreground'>
-                    Shares slugs with {domains.find((d: CmsDomain) => d.id === item.aliasOf)?.domain ?? 'another zone'}
-                  </span>
-                ) : (
-                  <span className='text-xs text-muted-foreground'>Independent zone</span>
-                )}
-              </div>
-              <div className='flex items-center gap-2'>
-                <SelectSimple
-                  value={item.aliasOf ?? 'none'}
-                  onValueChange={(value: string): void => { void handleAliasChange(item.id, value); }}
-                  options={[
-                    { value: 'none', label: 'Independent zone' },
-                    ...domains
-                      .filter((domainOption: CmsDomain) => domainOption.id !== item.id)
-                      .map((domainOption: CmsDomain) => ({
-                        value: domainOption.id,
-                        label: `Share with ${domainOption.domain}`,
-                      })),
-                  ]}
-                  size='sm'
-                  className='w-[220px]'
-                  placeholder='Independent zone'
-                />
-                <Button
-                  size='sm'
-                  variant='destructive'
-                  onClick={() => { void handleDelete(item.id); }}
-                >
-                  Delete
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+      <ListPanel variant='flat'>
+        <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+          <DataTable
+            columns={columns}
+            data={domains}
+            isLoading={domainsQuery.isLoading}
+          />
+        </div>
       </ListPanel>
     </div>
   );

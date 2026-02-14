@@ -784,28 +784,31 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
         />
       )}
       <div className='flex-1 overflow-y-auto p-3'>
-        <div className='space-y-2'>
+        <div className='space-y-3'>
           {THEME_SECTIONS.map((section: string): React.JSX.Element => {
             const isOpen = openSections.has(section);
             return (
-              <div
+              <FormSection
                 key={section}
                 id={toSectionId(section)}
-                className='rounded border border-border/40 bg-gray-900/60'
+                title={section}
+                variant='subtle'
+                className='p-0 overflow-hidden'
+                actions={
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={(): void => toggleSection(section)}
+                    className='h-8 w-8 p-0'
+                  >
+                    <ChevronDown className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+                }
               >
-                <button
-                  type='button'
-                  onClick={(): void => toggleSection(section)}
-                  className='flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm text-gray-200 hover:bg-muted/40'
-                  aria-expanded={isOpen}
-                >
-                  <span>{section}</span>
-                  <ChevronDown className={`size-4 text-gray-500 transition ${isOpen ? 'rotate-180' : ''}`} />
-                </button>
                 {isOpen && (
-                  <div className='px-3 pb-3'>{renderSectionBody(section)}</div>
+                  <div className='px-3 pb-3 border-t border-border/40 pt-3'>{renderSectionBody(section)}</div>
                 )}
-              </div>
+              </FormSection>
             );
           })}
         </div>

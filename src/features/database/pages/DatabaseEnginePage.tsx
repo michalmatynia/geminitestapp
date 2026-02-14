@@ -1,42 +1,33 @@
 'use client';
 
 import { 
-  DatabaseIcon, 
-  HardDriveIcon, 
   SaveIcon, 
   RefreshCwIcon,
-  ActivityIcon,
-  ShieldCheckIcon,
-  SearchIcon,
-  PlayIcon,
-  SettingsIcon
+  ShieldCheckIcon
 } from 'lucide-react';
 import React, { useMemo, Suspense } from 'react';
 
 import { 
-  PageLayout, 
   Button, 
   FormSection, 
-  FormField, 
-  Input, 
   DataTable, 
-  Badge, 
   SelectSimple, 
   Checkbox, 
-  Switch,
   StatusBadge,
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
-  useToast
+  SectionHeader
 } from '@/shared/ui';
 
-import { useDatabaseEngineState, type DatabaseEngineWorkspaceView } from '../hooks/useDatabaseEngineState';
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
 import { DatabaseOperationsPanel } from '../components/DatabaseOperationsPanel';
+import { useDatabaseEngineState, type DatabaseEngineWorkspaceView, type DatabaseCollectionRow } from '../hooks/useDatabaseEngineState';
+import type { DatabaseEngineOperationJobDto } from '@/shared/contracts/database';
 
 import type { ColumnDef } from '@tanstack/react-table';
+import type { DatabaseEngineProvider } from '@/shared/lib/db/database-engine-constants';
 
 function DatabaseEngineContent(): React.JSX.Element {
   const {
@@ -61,7 +52,7 @@ function DatabaseEngineContent(): React.JSX.Element {
     saving,
   } = useDatabaseEngineState();
 
-  const collectionColumns = useMemo<ColumnDef<any>[]>(() => [
+  const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(() => [
     {
       accessorKey: 'name',
       header: 'Collection',
@@ -96,7 +87,7 @@ function DatabaseEngineContent(): React.JSX.Element {
             setCollectionRouteMapDraft(prev => {
               const next = { ...prev };
               if (val === 'auto') delete next[row.original.name];
-              else next[row.original.name] = val as any;
+              else next[row.original.name] = val as DatabaseEngineProvider;
               return next;
             });
           }}
@@ -112,7 +103,7 @@ function DatabaseEngineContent(): React.JSX.Element {
     },
   ], [collectionRouteMapDraft, setCollectionRouteMapDraft]);
 
-  const jobColumns = useMemo<ColumnDef<any>[]>(() => [
+  const jobColumns = useMemo<ColumnDef<DatabaseEngineOperationJobDto>[]>(() => [
     {
       accessorKey: 'id',
       header: 'Job ID',

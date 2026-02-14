@@ -12,6 +12,7 @@ import {
   ListPanel,
   Tag
 } from '@/shared/ui';
+
 import { useChatbotMemoryState, type ExtendedMemoryItem } from '../hooks/useChatbotMemoryState';
 
 import type { ColumnDef } from '@tanstack/react-table';

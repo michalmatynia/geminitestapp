@@ -4,7 +4,10 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { isValidDatabaseEngineBackupTimeUtc } from '@/shared/lib/db/database-engine-backup-schedule';
+import {
+  isValidDatabaseEngineBackupTimeUtc,
+  normalizeDatabaseEngineBackupSchedule,
+} from '@/shared/lib/db/database-engine-backup-schedule';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY,
@@ -23,15 +26,28 @@ import {
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
 import { useToast } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
+import type { 
+  DatabaseEngineStatusDto, 
+  DatabaseEngineOperationJobDto, 
+  DatabaseEngineOperationsJobsDto,
+  DatabaseEngineBackupSchedulerStatusDto,
+  RedisOverviewDto,
+  DatabaseEngineProviderPreviewDto
+} from '@/shared/contracts/database';
 
 import {
   useAllCollectionsSchema,
+  useCancelDatabaseEngineOperationJobMutation,
+  useCopyCollectionMutation,
+  useDatabaseBackupRunNowMutation,
+  useDatabaseBackupSchedulerTickMutation,
   useDatabaseEngineOperationsJobs,
   useDatabaseBackupSchedulerStatus,
   useDatabaseEngineProviderPreview,
   useDatabaseEngineStatus,
   useRedisOverview,
 } from '../hooks/useDatabaseQueries';
+import { useSettingsBackfillMutation, useSyncDatabaseMutation } from '../hooks/useDatabaseSettings';
 
 export type DatabaseEngineWorkspaceView = 'engine' | 'backups' | 'operations';
 
@@ -68,7 +84,35 @@ const parseCollectionRouteMap = (raw: string | undefined): Record<string, Databa
   return result;
 };
 
-export function useDatabaseEngineState() {
+export interface UseDatabaseEngineStateReturn {
+  workspaceView: DatabaseEngineWorkspaceView;
+  setView: (view: DatabaseEngineWorkspaceView) => void;
+  policyDraft: DatabaseEnginePolicy;
+  setPolicyDraft: (policy: DatabaseEnginePolicy) => void;
+  serviceRouteMapDraft: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>;
+  setServiceRouteMapDraft: (map: Partial<Record<DatabaseEngineServiceRoute, DatabaseEngineProvider>>) => void;
+  collectionRouteMapDraft: Record<string, DatabaseEngineProvider>;
+  setCollectionRouteMapDraft: (map: Record<string, DatabaseEngineProvider>) => void;
+  backupScheduleDraft: DatabaseEngineBackupSchedule;
+  setBackupScheduleDraft: (schedule: DatabaseEngineBackupSchedule) => void;
+  operationControlsDraft: DatabaseEngineOperationControls;
+  setOperationControlsDraft: (controls: DatabaseEngineOperationControls) => void;
+  rows: DatabaseCollectionRow[];
+  validationErrors: string[];
+  saveConfiguration: () => Promise<void>;
+  isLoading: boolean;
+  isFetching: boolean;
+  refetch: () => void;
+  engineStatus: DatabaseEngineStatusDto | undefined;
+  operationJobs: DatabaseEngineOperationJobDto[];
+  operationQueueStatus: DatabaseEngineOperationsJobsDto['queueStatus'] | null;
+  backupSchedulerStatus: DatabaseEngineBackupSchedulerStatusDto | undefined;
+  redisOverview: RedisOverviewDto | undefined;
+  providerPreview: DatabaseEngineProviderPreviewDto | undefined;
+  saving: boolean;
+}
+
+export function useDatabaseEngineState(): UseDatabaseEngineStateReturn {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

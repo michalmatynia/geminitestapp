@@ -145,8 +145,8 @@ DATABASE - REDIS
 -Add a cache policy registry: every cached key must define TTL, stale strategy, invalidation triggers, and max payload size.
 
 DATABASE - PRISMA
--Scan Prisma queries for over-fetching and missing indexes; add indexes in schema for where/orderBy hot paths. Provide before/after timings.
--Ensure PrismaClient is instantiated once per runtime and reused to avoid connection exhaustion; refactor any per-request instantiation.
+-Scan Prisma/MongoDB queries for over-fetching and missing indexes; add indexes in schema for where/orderBy hot paths. Provide before/after timings.
+-Ensure PrismaClient/MongoDBClient is instantiated once per runtime and reused to avoid connection exhaustion; refactor any per-request instantiation.
 -Introduce bulk operations (createMany, updateMany, etc.) for heavy write paths; verify correctness with tests.
 -Add query monitoring/optimization workflow (Prisma Optimize or equivalent): record slow queries, group by pattern, and fix the highest-impact items first.
 

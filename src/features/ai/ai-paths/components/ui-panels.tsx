@@ -1,15 +1,17 @@
 'use client';
 
-import { Lock } from 'lucide-react';
+import { Lock, Edit, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
-import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui';
+import { Button, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DataTable } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useGraphState } from '../context';
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 type PathsTabPanelProps = {
   onPathOpen?: ((id: string) => void) | undefined;
@@ -20,9 +22,10 @@ export function PathsTabPanel({
 }: PathsTabPanelProps): React.JSX.Element {
   const orchestrator = useAiPathsSettingsOrchestrator();
   const { paths: graphPaths, pathConfigs } = useGraphState();
-  const resolvedPathFlagsById = useMemo((): Record<string, { isLocked?: boolean; isActive?: boolean }> => {
+  
+  const resolvedPathFlagsById = useMemo(() => {
     const next: Record<string, { isLocked?: boolean; isActive?: boolean }> = {};
-    graphPaths.forEach((meta: PathMeta) => {
+    graphPaths.forEach((meta) => {
       const config = pathConfigs[meta.id];
       next[meta.id] = {
         isLocked: config?.isLocked ?? false,
@@ -31,17 +34,74 @@ export function PathsTabPanel({
     });
     return next;
   }, [graphPaths, pathConfigs]);
+
   const handleCreatePath = orchestrator.handleCreatePath;
-  const handleSaveList = (): void => {
+  const handleSaveList = () => {
     void orchestrator.savePathIndex(graphPaths).catch(() => {});
   };
-  const handleOpenPath = (pathId: string): void => {
+  const handleOpenPath = (pathId: string) => {
     orchestrator.handleSwitchPath(pathId);
     onPathOpen?.(pathId);
   };
-  const handleDeletePath = (pathId: string): void => {
+  const handleDeletePath = (pathId: string) => {
     void orchestrator.handleDeletePath(pathId).catch(() => {});
   };
+
+  const columns = useMemo<ColumnDef<PathMeta>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Path Name',
+      cell: ({ row }) => {
+        const path = row.original;
+        const flags = resolvedPathFlagsById[path.id] ?? {};
+        const isLocked = Boolean(flags.isLocked);
+        const isActive = flags.isActive !== false;
+        
+        return (
+          <button
+            type='button'
+            className={cn(
+              'inline-flex items-center gap-2 cursor-pointer text-left text-sm transition',
+              isActive ? 'text-white hover:text-gray-200' : 'text-gray-400 hover:text-gray-300'
+            )}
+            onClick={() => handleOpenPath(path.id)}
+          >
+            {isLocked ? <Lock className='size-3 text-amber-300/90' /> : null}
+            {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
+          </button>
+        );
+      },
+    },
+    {
+      accessorKey: 'updatedAt',
+      header: 'Updated',
+      cell: ({ row }) => <span className='text-xs text-gray-400'>{row.original.updatedAt ? new Date(row.original.updatedAt).toLocaleString() : '—'}</span>,
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end gap-2'>
+          <Button
+            variant='ghost'
+            size='xs'
+            className='h-7 w-7 p-0'
+            onClick={() => handleOpenPath(row.original.id)}
+          >
+            <Edit className='size-3.5' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='xs'
+            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+            onClick={() => handleDeletePath(row.original.id)}
+          >
+            <Trash2 className='size-3.5' />
+          </Button>
+        </div>
+      ),
+    },
+  ], [resolvedPathFlagsById, handleOpenPath, handleDeletePath]);
 
   return (
     <div className='space-y-4'>
@@ -51,15 +111,15 @@ export function PathsTabPanel({
         </div>
         <div className='flex items-center gap-2'>
           <Button
-            className='rounded-md border text-sm text-white hover:bg-muted/60'
-            type='button'
+            variant='outline'
+            size='sm'
             onClick={handleCreatePath}
           >
             New Path
           </Button>
           <Button
-            className='rounded-md border text-sm text-white hover:bg-muted/60'
-            type='button'
+            variant='outline'
+            size='sm'
             onClick={handleSaveList}
           >
             Save List
@@ -67,74 +127,11 @@ export function PathsTabPanel({
         </div>
       </div>
 
-      <div className='overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
-        <Table>
-          <TableHeader>
-            <TableRow className='border-border/60'>
-              <TableHead className='text-xs text-gray-400'>Path Name</TableHead>
-              <TableHead className='text-xs text-gray-400'>Updated</TableHead>
-              <TableHead className='text-xs text-gray-400 text-right'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {graphPaths.map((path: PathMeta): React.JSX.Element => {
-              const flags = resolvedPathFlagsById[path.id] ?? {};
-              const isLocked = Boolean(flags.isLocked);
-              const isActive = flags.isActive !== false;
-              return (
-                <TableRow
-                  key={path.id}
-                  className={cn('border-border/50', !isActive ? 'opacity-50' : null)}
-                >
-                  <TableCell className={cn('text-sm text-white', !isActive ? 'text-gray-400' : null)}>
-                    <button
-                      type='button'
-                      className={cn(
-                        'inline-flex items-center gap-2 cursor-pointer text-left text-sm transition',
-                        isActive ? 'text-white hover:text-gray-200' : 'text-gray-400 hover:text-gray-300'
-                      )}
-                      onClick={(): void => handleOpenPath(path.id)}
-                    >
-                      {isLocked ? <Lock className='size-3 text-amber-300/90' /> : null}
-                      {path.name?.trim() || `Path ${path.id.slice(0, 6)}`}
-                    </button>
-                  </TableCell>
-                  <TableCell className='text-xs text-gray-400'>
-                    {path.updatedAt ? new Date(path.updatedAt).toLocaleString() : '—'}
-                  </TableCell>
-                  <TableCell className='text-right'>
-                    <div className='flex items-center justify-end gap-2'>
-                      <Button
-                        className='rounded-md border text-xs text-white hover:bg-muted/60'
-                        type='button'
-                        onClick={(): void => handleOpenPath(path.id)}
-                      >
-                      Edit
-                      </Button>
-                      <Button
-                        className='rounded-md border border-border text-xs text-rose-200 hover:bg-rose-500/10'
-                        type='button'
-                        onClick={(): void => handleDeletePath(path.id)}
-                      >
-                      Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {graphPaths.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={3}
-                  className='h-24 text-center text-sm text-gray-400'
-                >
-                  No paths yet. Create a new path to get started.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <div className='rounded-md border border-border/60 bg-card/40'>
+        <DataTable
+          columns={columns}
+          data={graphPaths}
+        />
       </div>
     </div>
   );

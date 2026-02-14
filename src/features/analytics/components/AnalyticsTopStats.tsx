@@ -1,6 +1,6 @@
 'use client';
 
-import {  Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui';
+import { DataTable } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 
@@ -17,30 +17,27 @@ function MiniTable(props: {
   emptyLabel: string;
 }): React.JSX.Element {
   if (props.rows.length === 0) {
-    return <p className='text-sm text-gray-500'>{props.emptyLabel}</p>;
+    return <p className='text-xs text-gray-500 py-4 text-center italic'>{props.emptyLabel}</p>;
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className='px-2'>Value</TableHead>
-          <TableHead className='px-2 text-right'>Count</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {props.rows.map((row) => (
-          <TableRow key={row.key}>
-            <TableCell className='px-2 py-2 text-sm text-gray-200'>
-              <span className='truncate'>{row.left}</span>
-            </TableCell>
-            <TableCell className='px-2 py-2 text-right text-sm text-gray-200'>
-              {row.right}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className='rounded border border-white/5 bg-black/20 overflow-hidden'>
+      <DataTable
+        columns={[
+          {
+            accessorKey: 'left',
+            header: 'Value',
+            cell: ({ row }) => <span className='text-xs text-gray-300 truncate block max-w-[200px]'>{row.original.left}</span>
+          },
+          {
+            accessorKey: 'right',
+            header: () => <div className='text-right'>Count</div>,
+            cell: ({ row }) => <div className='text-right font-mono text-xs text-blue-400'>{row.original.right}</div>
+          }
+        ]}
+        data={props.rows}
+      />
+    </div>
   );
 }
 

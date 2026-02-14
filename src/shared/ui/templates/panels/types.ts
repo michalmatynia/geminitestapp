@@ -11,6 +11,7 @@ export interface FilterField {
   type: 'text' | 'select' | 'date' | 'dateRange' | 'checkbox' | 'number';
   placeholder?: string;
   options?: Array<{ label: string; value: string | number }>;
+  multi?: boolean;
   width?: string; // CSS width value
 }
 

@@ -662,11 +662,3 @@ export default function SystemLogsPage(): React.JSX.Element {
     </SystemLogsProvider>
   );
 }
-
-export default function SystemLogsPage(): React.JSX.Element {
-  return (
-    <SystemLogsProvider>
-      <SystemLogsContent />
-    </SystemLogsProvider>
-  );
-}

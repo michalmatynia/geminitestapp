@@ -1,6 +1,5 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Upload,
@@ -9,196 +8,187 @@ import {
   List,
   Filter,
   X,
+  RefreshCw,
+  Eye,
+  Edit,
+  Trash2
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-import { logClientError } from '@/features/observability/utils/client-error-logger';
 import {
   Button,
-  
   ListPanel,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  DataTable,
   SelectSimple,
   SearchInput,
   Alert,
-  useToast,
-  RefreshButton,
   FormSection,
   FormField,
   EmptyState,
+  Badge
 } from '@/shared/ui';
 
 import { Asset3DCard } from '../components/Asset3DCard';
 import { Asset3DEditModal } from '../components/Asset3DEditModal';
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
 import { Asset3DUploader } from '../components/Asset3DUploader';
-import { 
-  useAssets3D, 
-  useAsset3DCategories, 
-  useAsset3DTags,
-  useDeleteAsset3DMutation,
-  useReindexAssets3DMutation,
-  asset3dKeys
-} from '../hooks/useAsset3dQueries';
-
+import { useAdmin3DAssetsState } from '../hooks/useAdmin3DAssetsState';
 import type { Asset3DRecord } from '../types';
+import type { ColumnDef } from '@tanstack/react-table';
 
-type ViewMode = 'grid' | 'list';
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+};
+
+const formatDate = (date: Date | string): string => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
 
 export function Admin3DAssetsPage(): React.JSX.Element {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const [showUploader, setShowUploader] = useState(false);
-  const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
-  const [editAsset, setEditAsset] = useState<Asset3DRecord | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const {
+    showUploader, setShowUploader,
+    previewAsset, setPreviewAsset,
+    editAsset, setEditAsset,
+    viewMode, setViewMode,
+    searchQuery, setSearchQuery,
+    selectedCategory, setSelectedCategory,
+    selectedTags, setSelectedTags,
+    showFilters, setShowFilters,
+    assets,
+    loading,
+    error,
+    categories,
+    allTags,
+    handleUpload,
+    handleEdit,
+    handleDelete,
+    handleReindex,
+    clearFilters,
+    hasActiveFilters,
+    isDeleting,
+    isReindexing,
+    refetch,
+    isFetching,
+  } = useAdmin3DAssetsState();
 
-  // Filters
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const columns = useMemo<ColumnDef<Asset3DRecord>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => (
+        <div className='flex items-center gap-3'>
+          <div
+            className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors'
+            onClick={() => setPreviewAsset(row.original)}
+          >
+            <Box className='h-4 w-4 text-muted-foreground' />
+          </div>
+          <span className='text-sm font-medium text-foreground truncate'>
+            {row.original.name || row.original.filename}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'categoryId',
+      header: 'Category',
+      cell: ({ row }) => row.original.categoryId ? (
+        <Badge variant='outline' className='bg-blue-500/10 text-blue-300 border-blue-500/20'>
+          {row.original.categoryId}
+        </Badge>
+      ) : <span className='text-muted-foreground'>-</span>,
+    },
+    {
+      accessorKey: 'tags',
+      header: 'Tags',
+      cell: ({ row }) => (
+        <div className='flex flex-wrap gap-1'>
+          {row.original.tags.slice(0, 2).map((tag) => (
+            <Badge key={tag} variant='secondary' className='text-[10px]'>
+              {tag}
+            </Badge>
+          ))}
+          {row.original.tags.length > 2 && (
+            <Badge variant='outline' className='text-[10px]'>
+              +{row.original.tags.length - 2}
+            </Badge>
+          )}
+          {row.original.tags.length === 0 && <span className='text-muted-foreground'>-</span>}
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'size',
+      header: 'Size',
+      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size)}</span>,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Date',
+      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatDate(row.original.createdAt)}</span>,
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end gap-2'>
+          <Button variant='ghost' size='xs' className='h-7 w-7 p-0' onClick={() => setPreviewAsset(row.original)}>
+            <Eye className='size-3.5' />
+          </Button>
+          <Button variant='ghost' size='xs' className='h-7 w-7 p-0' onClick={() => setEditAsset(row.original)}>
+            <Edit className='size-3.5' />
+          </Button>
+          <Button
+            variant='ghost'
+            size='xs'
+            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+            onClick={() => void handleDelete(row.original)}
+            disabled={isDeleting(row.original.id)}
+          >
+            {isDeleting(row.original.id) ? (
+              <Loader2 className='size-3.5 animate-spin' />
+            ) : (
+              <Trash2 className='size-3.5' />
+            )}
+          </Button>
+        </div>
+      ),
+    },
+  ], [setPreviewAsset, setEditAsset, handleDelete, isDeleting]);
 
-  const filters = useMemo(
-    () => ({
-      ...(searchQuery && { search: searchQuery }),
-      ...(selectedCategory && { category: selectedCategory }),
-      ...(selectedTags.length > 0 && { tags: selectedTags }),
-    }),
-    [searchQuery, selectedCategory, selectedTags]
-  );
-
-  const assetsQuery = useAssets3D(filters);
-  const categoriesQuery = useAsset3DCategories();
-  const tagsQuery = useAsset3DTags();
-  const deleteMutation = useDeleteAsset3DMutation();
-  const reindexMutation = useReindexAssets3DMutation();
-
-  const assets = assetsQuery.data ?? [];
-  const loading = assetsQuery.isPending;
-  const error = assetsQuery.error instanceof Error ? assetsQuery.error.message : null;
-  const categories = categoriesQuery.data ?? [];
-  const allTags = tagsQuery.data ?? [];
-
-  const handleUpload = (_asset: Asset3DRecord): void => {
-    setShowUploader(false);
-    void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
-  };
-
-  const handleEdit = (_updated: Asset3DRecord): void => {
-    void queryClient.invalidateQueries({ queryKey: asset3dKeys.all });
-  };
-
-  const handleDelete = async (asset: Asset3DRecord): Promise<void> => {
-    if (!confirm(`Are you sure you want to delete "${asset.name || asset.filename}"?`)) {
-      return;
-    }
-
-    try {
-      await deleteMutation.mutateAsync(asset.id);
-      toast(`Asset "${asset.name || asset.filename}" deleted.`, { variant: 'success' });
-    } catch (err) {
-      logClientError(err, { context: { source: 'Admin3DAssetsPage', action: 'deleteAsset', assetId: asset.id } });
-      toast(err instanceof Error ? err.message : 'Failed to delete asset', { variant: 'error' });
-    }
-  };
-
-  const clearFilters = (): void => {
-    setSearchQuery('');
-    setSelectedCategory(null);
-    setSelectedTags([]);
-  };
-
-  const hasActiveFilters = searchQuery || selectedCategory || selectedTags.length > 0;
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
-  };
-
-  const formatDate = (date: Date | string): string => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
-  const stats =
-    !loading && assets.length > 0 ? (
-      <div className='text-sm text-muted-foreground'>
-        Showing {assets.length} asset{assets.length !== 1 ? 's' : ''}
-        {hasActiveFilters && ' (filtered)'}
-      </div>
-    ) : null;
+  const stats = !loading && assets.length > 0 ? (
+    <div className='text-xs text-muted-foreground'>
+      Showing {assets.length} asset{assets.length !== 1 ? 's' : ''}
+      {hasActiveFilters && ' (filtered)'}
+    </div>
+  ) : null;
 
   return (
     <ListPanel
-      title='3D Assets'
-      description='Upload and manage 3D models with dithering preview'
+      title='3D Asset Manager'
+      description='Centralized repository for 3D models and digital twins.'
       refresh={{
-        onRefresh: () => void assetsQuery.refetch(),
-        isRefreshing: assetsQuery.isFetching,
+        onRefresh: refetch,
+        isRefreshing: isFetching,
       }}
       headerActions={
-        <Button size='sm' onClick={() => setShowUploader(true)}>
-          <Upload className='mr-2 h-4 w-4' />
+        <Button size='sm' onClick={() => setShowUploader(true)} className='h-8 text-xs'>
+          <Upload className='mr-2 h-3.5 w-3.5' />
           Upload Asset
         </Button>
       }
-      isLoading={loading}
-      loadingMessage='Loading 3D assets...'
-      emptyState={
-        <EmptyState
-          title={hasActiveFilters ? 'No matching assets' : 'No 3D assets yet'}
-          description={hasActiveFilters ? 'Try adjusting your filters' : 'Upload your first .glb or .gltf file'}
-          icon={<Box className='h-12 w-12 opacity-60' />}
-          action={
-            !hasActiveFilters ? (
-              <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
-                <Button onClick={() => setShowUploader(true)}>
-                  <Upload className='mr-2 h-4 w-4' />
-                  Upload Asset
-                </Button>
-                <RefreshButton
-                  onRefresh={(): void => {
-                    void reindexMutation
-                      .mutateAsync()
-                      .then((): void => { 
-                        toast('Assets reindexed successfully.', { variant: 'success' });
-                        void assetsQuery.refetch(); 
-                      })
-                      .catch((err: unknown): void => {
-                        logClientError(err, { context: { source: 'Admin3DAssetsPage', action: 'reindexAssets' } });
-                        toast(err instanceof Error ? err.message : 'Failed to reindex assets', { variant: 'error' });
-                      });
-                  }}
-                  isRefreshing={reindexMutation.isPending}
-                  label={reindexMutation.isPending ? 'Reindexing...' : 'Reindex local uploads'}
-                />
-              </div>
-            ) : undefined
-          }
-        />
-      }
-      alerts={
-        error ? (
-          <Alert variant='error'>
-            {error}
-          </Alert>
-        ) : null
-      }
+      alerts={error ? <Alert variant='error'>{error}</Alert> : null}
       filters={
         <div className='flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-card/50 p-3'>
           <SearchInput
             value={searchQuery}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery(e.target.value)}
             onClear={() => setSearchQuery('')}
             placeholder='Search assets...'
             className='h-8'
@@ -209,20 +199,20 @@ export function Admin3DAssetsPage(): React.JSX.Element {
             variant={showFilters ? 'default' : 'outline'}
             size='sm'
             onClick={() => setShowFilters(!showFilters)}
-            className='gap-2'
+            className='gap-2 h-8 text-xs'
           >
-            <Filter className='h-4 w-4' />
+            <Filter className='h-3.5 w-3.5' />
               Filters
             {hasActiveFilters && (
-              <span className='ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] text-white'>
+              <span className='ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500 text-[9px] text-white font-bold'>
                 {(selectedCategory ? 1 : 0) + selectedTags.length}
               </span>
             )}
           </Button>
 
           {hasActiveFilters && (
-            <Button variant='ghost' size='sm' onClick={clearFilters} className='gap-1'>
-              <X className='h-4 w-4' />
+            <Button variant='ghost' size='sm' onClick={clearFilters} className='gap-1 h-8 text-xs'>
+              <X className='h-3.5 w-3.5' />
                 Clear
             </Button>
           )}
@@ -249,43 +239,74 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       }
       footer={stats}
     >
+      {loading && (
+        <div className='flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground'>
+          <Loader2 className='h-7 w-7 animate-spin text-blue-400' />
+        </div>
+      )}
+
+      {!loading && assets.length === 0 && (
+        <EmptyState
+          title={hasActiveFilters ? 'No matching assets' : 'Library is empty'}
+          description={hasActiveFilters ? 'Try adjusting your filters.' : 'Upload your first .glb or .gltf file to get started.'}
+          icon={<Box className='h-12 w-12 opacity-60' />}
+          action={
+            !hasActiveFilters ? (
+              <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
+                <Button onClick={() => setShowUploader(true)} size='sm'>
+                  <Upload className='mr-2 h-4 w-4' />
+                  Upload Asset
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleReindex}
+                  disabled={isReindexing}
+                >
+                  <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isReindexing ? 'animate-spin' : ''}`} />
+                  {isReindexing ? 'Reindexing...' : 'Reindex Local Files'}
+                </Button>
+              </div>
+            ) : undefined
+          }
+        />
+      )}
+
       {showFilters && (
-        <FormSection title='Advanced Filters' className='p-4'>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 mt-4'>
+        <FormSection className='p-4 mb-4 border-t-0 rounded-t-none border-x-0 rounded-b-lg mt-[-1px]'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <FormField label='Category'>
-              <SelectSimple size='sm'
+              <SelectSimple 
+                size='sm'
                 value={selectedCategory ?? '__all__'}
-                onValueChange={(v: string): void => setSelectedCategory(v === '__all__' ? null : v)}
+                onValueChange={(v) => setSelectedCategory(v === '__all__' ? null : v)}
                 options={[
                   { value: '__all__', label: 'All categories' },
-                  ...categories.map((cat: string) => ({
-                    value: cat,
-                    label: cat,
-                  })),
+                  ...categories.map((cat) => ({ value: cat, label: cat })),
                 ]}
                 placeholder='All categories'
               />
             </FormField>
 
             <FormField label='Tags'>
-              <div className='flex flex-wrap gap-2'>
-                {allTags.map((tag: string) => (
+              <div className='flex flex-wrap gap-2 pt-1'>
+                {allTags.map((tag) => (
                   <Button
                     key={tag}
                     variant={selectedTags.includes(tag) ? 'default' : 'outline'}
-                    size='sm'
+                    size='xs'
                     onClick={() =>
-                      setSelectedTags((prev: string[]) =>
-                        prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
+                      setSelectedTags((prev) =>
+                        prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
                       )
                     }
-                    className='h-7 px-2 text-xs'
+                    className='h-6 px-2 text-[10px]'
                   >
                     {tag}
                   </Button>
                 ))}
                 {allTags.length === 0 && (
-                  <span className='text-sm text-muted-foreground'>No tags available</span>
+                  <span className='text-xs text-muted-foreground italic'>No tags available</span>
                 )}
               </div>
             </FormField>
@@ -297,11 +318,11 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         <FormSection
           title='Upload 3D Asset'
           actions={(
-            <Button variant='ghost' size='sm' onClick={() => setShowUploader(false)}>
+            <Button variant='ghost' size='sm' onClick={() => setShowUploader(false)} className='h-7 text-xs'>
               Cancel
             </Button>
           )}
-          className='p-4'
+          className='p-4 mb-6'
         >
           <div className='mt-4'>
             <Asset3DUploader
@@ -314,111 +335,28 @@ export function Admin3DAssetsPage(): React.JSX.Element {
         </FormSection>
       )}
 
-      {assets.length > 0 && viewMode === 'grid' && (
+      {!loading && assets.length > 0 && viewMode === 'grid' && (
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-          {assets.map((asset: Asset3DRecord) => (
+          {assets.map((asset) => (
             <Asset3DCard
               key={asset.id}
               asset={asset}
               onPreview={setPreviewAsset}
               onEdit={setEditAsset}
-              onDelete={(a: Asset3DRecord) => void handleDelete(a)}
-              isDeleting={deleteMutation.isPending && deleteMutation.variables === asset.id}
+              onDelete={(a) => void handleDelete(a)}
+              isDeleting={isDeleting(asset.id)}
             />
           ))}
         </div>
       )}
 
-      {assets.length > 0 && viewMode === 'list' && (
-        <Table className='text-sm text-foreground'>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className='hidden sm:table-cell'>Category</TableHead>
-              <TableHead className='hidden md:table-cell'>Tags</TableHead>
-              <TableHead className='hidden lg:table-cell'>Size</TableHead>
-              <TableHead className='hidden lg:table-cell'>Date</TableHead>
-              <TableHead className='w-36 text-right'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {assets.map((asset: Asset3DRecord) => (
-              <TableRow key={asset.id}>
-                <TableCell>
-                  <div className='flex items-center gap-3'>
-                    <div
-                      className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-border bg-muted/40'
-                      onClick={() => setPreviewAsset(asset)}
-                    >
-                      <Box className='h-4 w-4 text-muted-foreground' />
-                    </div>
-                    <span className='text-sm font-medium text-foreground truncate'>
-                      {asset.name || asset.filename}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell className='hidden sm:table-cell'>
-                  {asset.categoryId ? (
-                    <span className='rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300'>
-                      {asset.categoryId}
-                    </span>
-                  ) : (
-                    <span className='text-sm text-muted-foreground'>-</span>
-                  )}
-                </TableCell>
-                <TableCell className='hidden md:table-cell'>
-                  <div className='flex flex-wrap gap-1'>
-                    {asset.tags.slice(0, 2).map((tag: string) => (
-                      <span
-                        key={tag}
-                        className='rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground'
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {asset.tags.length > 2 && (
-                      <span className='text-xs text-muted-foreground'>
-                        +{asset.tags.length - 2}
-                      </span>
-                    )}
-                    {asset.tags.length === 0 && (
-                      <span className='text-sm text-muted-foreground'>-</span>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className='hidden lg:table-cell text-muted-foreground'>
-                  {formatFileSize(asset.size)}
-                </TableCell>
-                <TableCell className='hidden lg:table-cell text-muted-foreground'>
-                  {formatDate(asset.createdAt)}
-                </TableCell>
-                <TableCell className='text-right'>
-                  <div className='flex items-center justify-end gap-2'>
-                    <Button variant='outline' size='sm' onClick={() => setPreviewAsset(asset)}>
-                      Preview
-                    </Button>
-                    <Button variant='outline' size='sm' onClick={() => setEditAsset(asset)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      className='text-red-400 hover:text-red-300'
-                      onClick={() => void handleDelete(asset)}
-                      disabled={deleteMutation.isPending && deleteMutation.variables === asset.id}
-                    >
-                      {deleteMutation.isPending && deleteMutation.variables === asset.id ? (
-                        <Loader2 className='h-4 w-4 animate-spin' />
-                      ) : (
-                        'Delete'
-                      )}
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      {!loading && assets.length > 0 && viewMode === 'list' && (
+        <div className='rounded-md border border-border bg-gray-950/20'>
+          <DataTable
+            columns={columns}
+            data={assets}
+          />
+        </div>
       )}
 
       {previewAsset && (

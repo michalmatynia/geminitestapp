@@ -1,0 +1,267 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agentcreator/teaching/pages/AgentTeachingCollectionDetailPage.tsx
+   20:1   error  There should be at least one empty line between import groups                      import/order
+  250:19  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agentcreator/teaching/pages/AgentTeachingCollectionsPage.tsx
+  21:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/TriggerButtonListManager.tsx
+    8:1  error  Expected indentation of 2 spaces but found 0    indent
+   11:1  error  Expected indentation of 2 spaces but found 0    indent
+   12:1  error  Expected indentation of 2 spaces but found 0    indent
+   13:1  error  Expected indentation of 2 spaces but found 0    indent
+   14:1  error  Expected indentation of 2 spaces but found 0    indent
+   15:1  error  Expected indentation of 2 spaces but found 0    indent
+   16:1  error  Expected indentation of 2 spaces but found 0    indent
+   17:1  error  Expected indentation of 2 spaces but found 0    indent
+   36:1  error  Expected indentation of 2 spaces but found 0    indent
+   37:1  error  Expected indentation of 2 spaces but found 0    indent
+   38:1  error  Expected indentation of 2 spaces but found 0    indent
+   39:1  error  Expected indentation of 2 spaces but found 0    indent
+   40:1  error  Expected indentation of 2 spaces but found 0    indent
+   42:1  error  Expected indentation of 2 spaces but found 0    indent
+   43:1  error  Expected indentation of 2 spaces but found 1    indent
+   44:1  error  Expected indentation of 2 spaces but found 0    indent
+   47:1  error  Expected indentation of 4 spaces but found 0    indent
+   48:1  error  Expected indentation of 4 spaces but found 0    indent
+   49:1  error  Expected indentation of 4 spaces but found 0    indent
+   50:1  error  Expected indentation of 2 spaces but found 0    indent
+   52:1  error  Expected indentation of 2 spaces but found 1    indent
+   53:1  error  Expected indentation of 4 spaces but found 0    indent
+   54:1  error  Expected indentation of 6 spaces but found 1    indent
+   55:1  error  Expected indentation of 6 spaces but found 2    indent
+   56:1  error  Expected indentation of 6 spaces but found 1    indent
+   57:1  error  Expected indentation of 6 spaces but found 2    indent
+   59:1  error  Expected indentation of 6 spaces but found 1    indent
+   60:1  error  Expected indentation of 6 spaces but found 0    indent
+   61:1  error  Expected indentation of 6 spaces but found 3    indent
+   62:1  error  Expected indentation of 6 spaces but found 2    indent
+   63:1  error  Expected indentation of 6 spaces but found 1    indent
+   64:1  error  Expected indentation of 4 spaces but found 1    indent
+   65:1  error  Expected indentation of 4 spaces but found 0    indent
+   66:1  error  Expected indentation of 2 spaces but found 0    indent
+   68:1  error  Expected indentation of 2 spaces but found 0    indent
+   69:1  error  Expected indentation of 4 spaces but found 0    indent
+   70:1  error  Expected indentation of 4 spaces but found 0    indent
+   71:1  error  Expected indentation of 4 spaces but found 0    indent
+   72:1  error  Expected indentation of 4 spaces but found 1    indent
+   73:1  error  Expected indentation of 2 spaces but found 0    indent
+   75:1  error  Expected indentation of 2 spaces but found 0    indent
+   76:1  error  Expected indentation of 4 spaces but found 0    indent
+   77:1  error  Expected indentation of 4 spaces but found 1    indent
+   78:1  error  Expected indentation of 4 spaces but found 0    indent
+   79:1  error  Expected indentation of 2 spaces but found 0    indent
+   81:1  error  Expected indentation of 2 spaces but found 0    indent
+   82:1  error  Expected indentation of 4 spaces but found 0    indent
+   83:1  error  Expected indentation of 4 spaces but found 1    indent
+   84:1  error  Expected indentation of 4 spaces but found 0    indent
+   85:1  error  Expected indentation of 6 spaces but found 4    indent
+   86:1  error  Expected indentation of 6 spaces but found 3    indent
+   87:1  error  Expected indentation of 4 spaces but found 1    indent
+   88:1  error  Expected indentation of 4 spaces but found 0    indent
+   89:1  error  Expected indentation of 4 spaces but found 0    indent
+   90:1  error  Expected indentation of 2 spaces but found 0    indent
+   92:1  error  Expected indentation of 2 spaces but found 0    indent
+   93:1  error  Expected indentation of 4 spaces but found 0    indent
+   94:1  error  Expected indentation of 4 spaces but found 1    indent
+   95:1  error  Expected indentation of 2 spaces but found 0    indent
+   97:1  error  Expected indentation of 2 spaces but found 0    indent
+   99:1  error  Expected indentation of 2 spaces but found 1    indent
+  101:1  error  Expected indentation of 2 spaces but found 0    indent
+  102:1  error  Expected indentation of 4 spaces but found 0    indent
+  103:1  error  Expected indentation of 2 spaces but found 0    indent
+  105:1  error  Expected indentation of 2 spaces but found 0    indent
+  120:1  error  Expected indentation of 10 spaces but found 8   indent
+  121:1  error  Expected indentation of 12 spaces but found 1   indent
+  122:1  error  Expected indentation of 12 spaces but found 1   indent
+  123:1  error  Expected indentation of 12 spaces but found 4   indent
+  124:1  error  Expected indentation of 12 spaces but found 0   indent
+  125:1  error  Expected indentation of 12 spaces but found 1   indent
+  126:1  error  Expected indentation of 12 spaces but found 0   indent
+  127:1  error  Expected indentation of 14 spaces but found 5   indent
+  128:1  error  Expected indentation of 14 spaces but found 5   indent
+  129:1  error  Expected indentation of 12 spaces but found 7   indent
+  130:1  error  Expected indentation of 12 spaces but found 0   indent
+  131:1  error  Expected indentation of 14 spaces but found 4   indent
+  132:1  error  Expected indentation of 14 spaces but found 1   indent
+  133:1  error  Expected indentation of 12 spaces but found 0   indent
+  134:1  error  Expected indentation of 12 spaces but found 4   indent
+  135:1  error  Expected indentation of 14 spaces but found 3   indent
+  136:1  error  Expected indentation of 14 spaces but found 6   indent
+  137:1  error  Expected indentation of 14 spaces but found 2   indent
+  138:1  error  Expected indentation of 12 spaces but found 0   indent
+  139:1  error  Expected indentation of 10 spaces but found 2   indent
+  147:1  error  Expected indentation of 18 spaces but found 0   indent
+  150:1  error  Expected indentation of 16 spaces but found 8   indent
+  160:1  error  Expected indentation of 16 spaces but found 10  indent
+  161:1  error  Expected indentation of 16 spaces but found 2   indent
+  162:1  error  Expected indentation of 16 spaces but found 1   indent
+  163:1  error  Expected indentation of 18 spaces but found 12  indent
+  167:1  error  Expected indentation of 16 spaces but found 6   indent
+  168:1  error  Expected indentation of 14 spaces but found 1   indent
+  177:1  error  Expected indentation of 16 spaces but found 5   indent
+  178:1  error  Expected indentation of 16 spaces but found 7   indent
+  179:1  error  Expected indentation of 16 spaces but found 8   indent
+  180:1  error  Expected indentation of 16 spaces but found 6   indent
+  181:1  error  Expected indentation of 14 spaces but found 0   indent
+  183:1  error  Expected indentation of 14 spaces but found 0   indent
+  184:1  error  Expected indentation of 14 spaces but found 0   indent
+  185:1  error  Expected indentation of 16 spaces but found 0   indent
+  186:1  error  Expected indentation of 16 spaces but found 0   indent
+  187:1  error  Expected indentation of 16 spaces but found 0   indent
+  188:1  error  Expected indentation of 16 spaces but found 0   indent
+  189:1  error  Expected indentation of 14 spaces but found 0   indent
+  190:1  error  Expected indentation of 16 spaces but found 0   indent
+  191:1  error  Expected indentation of 14 spaces but found 0   indent
+  192:1  error  Expected indentation of 12 spaces but found 0   indent
+  193:1  error  Expected indentation of 10 spaces but found 0   indent
+  194:1  error  Expected indentation of 8 spaces but found 0    indent
+  195:1  error  Expected indentation of 6 spaces but found 0    indent
+  196:1  error  Expected indentation of 4 spaces but found 0    indent
+  197:1  error  Expected indentation of 2 spaces but found 0    indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ui-panels.tsx
+  12:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/pages/AdminAiPathsDeadLetterPage.tsx
+  28:1  error  `@/shared/types/domain/ai-paths` type import should occur before import of `@/shared/ui`  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/chatbot/pages/AdminChatbotMemoryPage.tsx
+  6:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/analytics/components/RecentEventsTable.tsx
+  9:1  error  There should be at least one empty line between import groups  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/hooks/useUsersState.ts
+   21:1   error    `@/shared/utils/settings-json` import should occur after import of `@/shared/lib/query-invalidation`                                                                import/order
+   22:1   error    `@/shared/ui` import should occur after import of `@/shared/lib/query-invalidation`                                                                                 import/order
+   23:10  warning  'logClientError' is defined but never used. Allowed unused vars must match /^_/u                                                                                    @typescript-eslint/no-unused-vars
+   33:5   warning  'session' is assigned a value but never used. Allowed unused vars must match /^_/u                                                                                  @typescript-eslint/no-unused-vars
+   95:14  warning  'e' is defined but never used. Allowed unused caught errors must match /^_/u                                                                                        @typescript-eslint/no-unused-vars
+  107:14  warning  'e' is defined but never used. Allowed unused caught errors must match /^_/u                                                                                        @typescript-eslint/no-unused-vars
+  137:7   error    Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+  138:7   error    Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/pages/admin/UsersPage.tsx
+   11:3   warning  'UserCheck' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+   12:3   warning  'Shield' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+   31:3   warning  'Textarea' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   36:1   error    There should be at least one empty line between import groups                      import/order
+  172:55  error    Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  215:16  error    Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  224:20  warning  'e' is defined but never used. Allowed unused caught errors must match /^_/u       @typescript-eslint/no-unused-vars
+  290:16  error    Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  305:20  warning  'e' is defined but never used. Allowed unused caught errors must match /^_/u       @typescript-eslint/no-unused-vars
+  347:16  error    Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+  352:20  warning  'e' is defined but never used. Allowed unused caught errors must match /^_/u       @typescript-eslint/no-unused-vars
+  377:19  error    Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useDatabaseEngineState.ts
+   16:8   warning  'DatabaseEngineBackupSchedule' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+   17:8   warning  'DatabaseEngineOperationControls' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+   85:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+   85:9   warning  'backupSchedulerTickMutation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   85:39  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+   86:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+   86:9   warning  'backupRunNowMutation' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   86:32  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+   87:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+   87:9   warning  'cancelOperationJobMutation' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+   87:38  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+   88:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+   88:9   warning  'syncDatabaseMutation' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+   88:32  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+   89:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+   89:9   warning  'backfillMutation' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+   89:28  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+   90:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+   90:9   warning  'copyCollectionMutation' is assigned a value but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+   90:34  error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  111:9   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  112:5   error    Unsafe return of a value of type error                                                                  @typescript-eslint/no-unsafe-return
+  112:5   error    Unsafe call of a type that could not be resolved                                                        @typescript-eslint/no-unsafe-call
+  124:10  error    Unsafe array destructuring of a tuple element with an error typed value                                 @typescript-eslint/no-unsafe-assignment
+  170:13  error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+  170:42  error    Unsafe member access [dbType] on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  171:32  error    Unsafe member access .schedulerEnabled on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  171:60  error    Unsafe member access .enabled on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  172:47  error    Unsafe argument of type error typed assigned to a parameter of type `string`                            @typescript-eslint/no-unsafe-argument
+  172:54  error    Unsafe member access .timeUtc on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
+  217:5   error    Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabaseEnginePage.tsx
+    4:3   warning  'DatabaseIcon' is defined but never used. Allowed unused vars must match /^_/u                                 @typescript-eslint/no-unused-vars
+    5:3   warning  'HardDriveIcon' is defined but never used. Allowed unused vars must match /^_/u                                @typescript-eslint/no-unused-vars
+    8:3   warning  'ActivityIcon' is defined but never used. Allowed unused vars must match /^_/u                                 @typescript-eslint/no-unused-vars
+   10:3   warning  'SearchIcon' is defined but never used. Allowed unused vars must match /^_/u                                   @typescript-eslint/no-unused-vars
+   11:3   warning  'PlayIcon' is defined but never used. Allowed unused vars must match /^_/u                                     @typescript-eslint/no-unused-vars
+   12:3   warning  'SettingsIcon' is defined but never used. Allowed unused vars must match /^_/u                                 @typescript-eslint/no-unused-vars
+   17:3   warning  'PageLayout' is defined but never used. Allowed unused vars must match /^_/u                                   @typescript-eslint/no-unused-vars
+   20:3   warning  'FormField' is defined but never used. Allowed unused vars must match /^_/u                                    @typescript-eslint/no-unused-vars
+   21:3   warning  'Input' is defined but never used. Allowed unused vars must match /^_/u                                        @typescript-eslint/no-unused-vars
+   23:3   warning  'Badge' is defined but never used. Allowed unused vars must match /^_/u                                        @typescript-eslint/no-unused-vars
+   26:3   warning  'Switch' is defined but never used. Allowed unused vars must match /^_/u                                       @typescript-eslint/no-unused-vars
+   32:3   warning  'useToast' is defined but never used. Allowed unused vars must match /^_/u                                     @typescript-eslint/no-unused-vars
+   35:1   error    `../hooks/useDatabaseEngineState` import should occur after import of `../components/DatabaseOperationsPanel`  import/order
+   47:5   warning  'serviceRouteMapDraft' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+   48:5   warning  'setServiceRouteMapDraft' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+   59:5   warning  'operationQueueStatus' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+   64:47  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+   68:97  error    Unsafe member access .name on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+   75:25  error    Unsafe member access .existsInMongo on an `any` value                                                          @typescript-eslint/no-unsafe-member-access
+   75:41  error    Unsafe call of an `any` typed value                                                                            @typescript-eslint/no-unsafe-call
+   75:55  error    Unsafe member access .mongoDocumentCount on an `any` value                                                     @typescript-eslint/no-unsafe-member-access
+   75:80  error    Unsafe member access .toLocaleString on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+   84:25  error    Unsafe member access .existsInPrisma on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+   84:42  error    Unsafe call of an `any` typed value                                                                            @typescript-eslint/no-unsafe-call
+   84:56  error    Unsafe member access .prismaRowCount on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+   84:77  error    Unsafe member access .toLocaleString on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+   94:42  error    Computed name [row.original.name] resolves to an `any` value                                                   @typescript-eslint/no-unsafe-member-access
+   94:55  error    Unsafe member access .name on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+   98:47  error    Computed name [row.original.name] resolves to an `any` value                                                   @typescript-eslint/no-unsafe-member-access
+   98:60  error    Unsafe member access .name on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+   99:20  error    Unsafe assignment of an `any` value                                                                            @typescript-eslint/no-unsafe-assignment
+   99:25  error    Computed name [row.original.name] resolves to an `any` value                                                   @typescript-eslint/no-unsafe-member-access
+   99:38  error    Unsafe member access .name on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+   99:53  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  115:40  error    Unexpected any. Specify a different type                                                                       @typescript-eslint/no-explicit-any
+  119:81  error    Unsafe call of an `any` typed value                                                                            @typescript-eslint/no-unsafe-call
+  119:94  error    Unsafe member access .id on an `any` value                                                                     @typescript-eslint/no-unsafe-member-access
+  128:47  error    Unsafe assignment of an `any` value                                                                            @typescript-eslint/no-unsafe-assignment
+  128:60  error    Unsafe member access .status on an `any` value                                                                 @typescript-eslint/no-unsafe-member-access
+  133:80  error    Unsafe argument of type `any` assigned to a parameter of type `string | number | Date`                         @typescript-eslint/no-unsafe-argument
+  133:93  error    Unsafe member access .createdAt on an `any` value                                                              @typescript-eslint/no-unsafe-member-access
+  152:55  error    Promise-returning function provided to attribute where a void return was expected                              @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasePreviewPage.tsx
+  366:5  warning  'tableRows' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/pages/SystemLogsPage.tsx
+   19:3   warning  'ListPanel' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
+   26:3   warning  'StatusToggle' is defined but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
+   39:7   warning  'getContextValue' is assigned a value but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  132:5   warning  'rebuildIndexesMutation' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  136:37  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  140:93  error    Unsafe member access .name on an `any` value                                                       @typescript-eslint/no-unsafe-member-access
+  145:80  error    Unsafe member access .expected on an `any` value                                                   @typescript-eslint/no-unsafe-member-access
+  151:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  151:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  152:26  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  152:98  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  157:14  error    Unsafe call of an `any` typed value                                                                @typescript-eslint/no-unsafe-call
+  157:27  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  157:43  error    Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+  159:35  error    Unsafe member access .key on an `any` value                                                        @typescript-eslint/no-unsafe-member-access
+  170:15  error    Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+  170:43  error    Unsafe member access .missing on an `any` value                                                    @typescript-eslint/no-unsafe-member-access
+  171:37  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+  174:62  error    Unsafe member access .error on an `any` value                                                      @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/data-table.tsx
+  23:1  error  There should be at least one empty line between import groups          import/order
+  24:1  error  `@/shared/utils` import should occur before import of `./empty-state`  import/order
+
+✖ 235 problems (197 errors, 38 warnings)
+  125 errors and 0 warnings potentially fixable with the `--fix` option.
+

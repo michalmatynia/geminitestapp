@@ -2,91 +2,106 @@
 
 import { Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import React from 'react';
+import React, { useMemo } from 'react';
 
-import type { AgentTeachingChatSource, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
-import { Button, ConfirmDialog, Input, SectionHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
+import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
+import { 
+  Button, 
+  ConfirmDialog, 
+  Input, 
+  SectionHeader, 
+  DataTable, 
+  Textarea, 
+  FormSection, 
+  FormField,
+  Badge
+} from '@/shared/ui';
 
-import { useAgentTeachingContext } from '../context/AgentTeachingContext';
-import { useAddEmbeddingDocumentMutation, useDeleteEmbeddingDocumentMutation, useEmbeddingDocuments, useSearchEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
+import { useAgentTeachingCollectionDetailState } from '../hooks/useAgentTeachingCollectionDetailState';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
-  const { toast } = useToast();
-  const params = useParams<{ collectionId: string }>();
-  const collectionId = params?.collectionId ?? null;
+  const {
+    collectionId,
+    collection,
+    docs,
+    isLoading,
+    adding,
+    deleting,
+    searching,
+    text, setText,
+    title, setTitle,
+    source, setSource,
+    tags, setTags,
+    docToDelete, setDocToDelete,
+    searchQuery, setSearchQuery,
+    searchTopK, setSearchTopK,
+    searchMinScore, setSearchMinScore,
+    searchResults,
+    searchError,
+    handleAdd,
+    handleDelete,
+    handleSearch,
+  } = useAgentTeachingCollectionDetailState();
 
-  const { collections, isLoading: loadingCollections } = useAgentTeachingContext();
-  const collection: AgentTeachingEmbeddingCollectionRecord | null =
-    collectionId
-      ? collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === collectionId) ?? null
-      : null;
-
-  const { data: docsResult, isLoading: loadingDocs } = useEmbeddingDocuments(collectionId);
-  const { mutateAsync: addDoc, isPending: adding } = useAddEmbeddingDocumentMutation();
-  const { mutateAsync: deleteDoc, isPending: deleting } = useDeleteEmbeddingDocumentMutation();
-  const searchMutation = useSearchEmbeddingCollectionMutation();
-
-  const [text, setText] = React.useState('');
-  const [title, setTitle] = React.useState('');
-  const [source, setSource] = React.useState('');
-  const [tags, setTags] = React.useState('');
-  const [docToDelete, setDocToDelete] = React.useState<AgentTeachingEmbeddingDocumentListItem | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState('');
-  const [searchTopK, setSearchTopK] = React.useState(8);
-  const [searchMinScore, setSearchMinScore] = React.useState(0.15);
-  const [searchResults, setSearchResults] = React.useState<AgentTeachingChatSource[]>([]);
-  const [searchError, setSearchError] = React.useState<string | null>(null);
-
-  const isLoading = loadingCollections || loadingDocs;
-  const searching = searchMutation.isPending;
-
-  const handleAdd = async (): Promise<void> => {
-    if (!collectionId) return;
-    const trimmed = text.trim();
-    if (!trimmed) {
-      toast('Text is required.', { variant: 'error' });
-      return;
-    }
-    try {
-      await addDoc({
-        collectionId,
-        text: trimmed,
-        title: title.trim() || null,
-        source: source.trim() || null,
-        tags: tags
-          .split(',')
-          .map((t: string) => t.trim())
-          .filter(Boolean),
-      });
-      toast('Document embedded and saved.', { variant: 'success' });
-      setText('');
-      setTitle('');
-      setSource('');
-      setTags('');
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to add document.', { variant: 'error' });
-    }
-  };
-
-  const handleSearch = async (): Promise<void> => {
-    if (!collectionId) return;
-    const queryText = searchQuery.trim();
-    if (!queryText) return;
-    setSearchError(null);
-    try {
-      const results = await searchMutation.mutateAsync({
-        collectionId,
-        queryText,
-        topK: searchTopK,
-        minScore: searchMinScore,
-      });
-      setSearchResults(results);
-    } catch (error) {
-      setSearchError(error instanceof Error ? error.message : 'Search failed.');
-      setSearchResults([]);
-    }
-  };
+  const columns = useMemo<ColumnDef<AgentTeachingEmbeddingDocumentListItem>[]>(() => [
+    {
+      accessorKey: 'text',
+      header: 'Document Text',
+      cell: ({ row }) => (
+        <div className='max-w-[520px] truncate text-sm text-gray-300' title={row.original.text}>
+          {row.original.text}
+        </div>
+      ),
+    },
+    {
+      id: 'meta',
+      header: 'Metadata',
+      cell: ({ row }) => (
+        <div className='flex flex-col gap-1 text-xs'>
+          {row.original.metadata?.title && (
+            <div className='text-gray-200 font-medium'>{row.original.metadata.title}</div>
+          )}
+          {row.original.metadata?.source && (
+            <div className='text-gray-500 italic'>{row.original.metadata.source}</div>
+          )}
+          {row.original.metadata?.tags?.length ? (
+            <div className='flex gap-1 flex-wrap'>
+              {row.original.metadata.tags.map(t => (
+                <Badge key={t} variant='outline' className='text-[9px] px-1 py-0'>{t}</Badge>
+              ))}
+            </div>
+          ) : null}
+          <div className='text-[10px] text-gray-600 mt-1'>
+            {row.original.embeddingModel} ({row.original.embeddingDimensions})
+          </div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'updatedAt',
+      header: 'Updated',
+      cell: ({ row }) => <span className='text-xs text-gray-500'>{row.original.updatedAt ? new Date(row.original.updatedAt).toLocaleString() : '—'}</span>,
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='text-right'>
+          <Button
+            variant='ghost'
+            size='xs'
+            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+            onClick={() => setDocToDelete(row.original)}
+            disabled={adding || deleting}
+          >
+            <Trash2 className='size-3.5' />
+          </Button>
+        </div>
+      ),
+    },
+  ], [adding, deleting, setDocToDelete]);
 
   return (
     <div className='container mx-auto py-10 space-y-6'>
@@ -94,212 +109,146 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         title={collection ? collection.name : 'Collection'}
         description='Manage documents (original text + embedding vectors).'
         eyebrow={(
-          <Link href='/admin/agentcreator/teaching/collections' className='text-blue-300 hover:text-blue-200'>
+          <Link href='/admin/agentcreator/teaching/collections' className='text-blue-300 hover:text-blue-200 transition-colors'>
             ← Back to collections
           </Link>
         )}
         actions={collection ? (
-          <div className='text-xs text-gray-400'>
-            Embedding model: <span className='text-gray-200'>{collection.embeddingModel}</span>
-          </div>
+          <Badge variant='secondary' className='text-xs font-mono'>
+            Model: {collection.embeddingModel}
+          </Badge>
         ) : undefined}
       />
 
-      <FormSection title='Add document' className='p-4 space-y-4'>
-        <div className='grid gap-4 md:grid-cols-2'>
-          <FormField label='Title (optional)'>
-            <Input value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} placeholder='e.g. Product naming rules' />
-          </FormField>
-          <FormField label='Source (optional)'>
-            <Input value={source} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSource(e.target.value)} placeholder='e.g. internal wiki / URL / note id' />
-          </FormField>
-        </div>
-        <FormField label='Tags (comma separated)'>
-          <Input value={tags} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTags(e.target.value)} placeholder='pricing, listings, seo' />
-        </FormField>
-        <FormField
-          label='Text to embed'
-          description='This stores both the text and the embedding vector in MongoDB.'
-        >
-          <Textarea
-            value={text}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value)}
-            placeholder='Paste the original text you want the agent to learn from...'
-            className='min-h-[160px]'
-          />
-          <div className='flex justify-end mt-2'>
-            <Button type='button' onClick={() => void handleAdd()} disabled={adding || deleting || !collectionId || !text.trim()}>
-              {adding ? 'Embedding...' : 'Add to collection'}
-            </Button>
+      <div className='grid gap-6 lg:grid-cols-2'>
+        <FormSection title='Add Document' className='p-6'>
+          <div className='space-y-4'>
+            <div className='grid gap-4 md:grid-cols-2'>
+              <FormField label='Title (optional)'>
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder='e.g. Product naming rules' />
+              </FormField>
+              <FormField label='Source (optional)'>
+                <Input value={source} onChange={(e) => setSource(e.target.value)} placeholder='e.g. internal wiki' />
+              </FormField>
+            </div>
+            <FormField label='Tags (comma separated)'>
+              <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder='pricing, listings, seo' />
+            </FormField>
+            <FormField
+              label='Text Content'
+              description='Raw text to be vectorized and stored.'
+            >
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder='Paste knowledge content here...'
+                className='min-h-[120px] font-mono text-xs'
+              />
+            </FormField>
+            <div className='flex justify-end'>
+              <Button onClick={() => void handleAdd()} disabled={adding || deleting || !collectionId || !text.trim()}>
+                {adding ? 'Embedding...' : 'Add Document'}
+              </Button>
+            </div>
           </div>
-        </FormField>
-      </FormSection>
+        </FormSection>
 
-      <FormSection
-        title='Search the embedding school'
-        description='Embed a query and preview which documents would be retrieved.'
-        actions={(
-          <Button
-            type='button'
-            onClick={() => void handleSearch()}
-            disabled={searching || !collectionId || !searchQuery.trim()}
-          >
-            {searching ? 'Searching...' : 'Search'}
-          </Button>
-        )}
-        className='p-4 space-y-3'
-      >
-        <div className='grid gap-4 md:grid-cols-3'>
-          <div className='md:col-span-2'>
-            <FormField label='Query'>
+        <FormSection
+          title='Semantic Search Simulator'
+          description='Test retrieval relevance by running queries against this collection.'
+          actions={(
+            <Button
+              variant='outline'
+              size='xs'
+              onClick={() => void handleSearch()}
+              disabled={searching || !collectionId || !searchQuery.trim()}
+            >
+              {searching ? 'Searching...' : 'Run Search'}
+            </Button>
+          )}
+          className='p-6'
+        >
+          <div className='space-y-4'>
+            <FormField label='Test Query'>
               <Textarea
                 value={searchQuery}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setSearchQuery(e.target.value)}
-                placeholder='Ask something you expect the learner agent to answer from this collection...'
-                className='min-h-[90px]'
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder='Ask a question...'
+                className='min-h-[80px]'
                 disabled={searching || !collectionId}
               />
             </FormField>
-          </div>
-          <div className='space-y-3'>
-            <FormField label='Top K'>
-              <Input
-                type='number'
-                min={1}
-                max={50}
-                value={String(searchTopK)}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTopK(Number(e.target.value))}
-                disabled={searching || !collectionId}
-              />
-            </FormField>
-            <FormField label='Min score'>
-              <Input
-                type='number'
-                min={-1}
-                max={1}
-                step={0.01}
-                value={String(searchMinScore)}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchMinScore(Number(e.target.value))}
-                disabled={searching || !collectionId}
-              />
-            </FormField>
-          </div>
-        </div>
-
-        {searchError ? (
-          <div className='rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-[11px] text-rose-200'>
-            {searchError}
-          </div>
-        ) : null}
-
-        <div className='rounded-md border border-border bg-card/30 p-3'>
-          <div className='text-sm font-semibold text-white'>Top matches</div>
-          {searchResults.length === 0 ? (
-            <div className='mt-2 text-sm text-gray-400'>
-              {searching ? 'Searching…' : 'No matches yet. Run a search.'}
+            
+            <div className='grid grid-cols-2 gap-4'>
+              <FormField label='Top K'>
+                <Input
+                  type='number'
+                  min={1}
+                  max={50}
+                  value={String(searchTopK)}
+                  onChange={(e) => setSearchTopK(Number(e.target.value))}
+                  disabled={searching || !collectionId}
+                />
+              </FormField>
+              <FormField label='Min Score'>
+                <Input
+                  type='number'
+                  min={-1}
+                  max={1}
+                  step={0.01}
+                  value={String(searchMinScore)}
+                  onChange={(e) => setSearchMinScore(Number(e.target.value))}
+                  disabled={searching || !collectionId}
+                />
+              </FormField>
             </div>
-          ) : (
-            <div className='mt-2 space-y-2'>
-              {searchResults.map((src: AgentTeachingChatSource) => (
-                <div key={src.documentId} className='rounded-md border border-border bg-card/50 p-2'>
-                  <div className='flex items-center justify-between gap-2'>
-                    <div className='text-xs text-gray-300'>
-                      [doc:{src.documentId}] • score {src.score.toFixed(3)}
-                    </div>
-                    {src.metadata?.title ? (
-                      <div className='text-[11px] text-gray-500'>
-                        {src.metadata.title}
-                      </div>
-                    ) : null}
-                  </div>
-                  {src.metadata?.source ? (
-                    <div className='mt-1 text-[11px] text-gray-500'>Source: {src.metadata.source}</div>
-                  ) : null}
-                  <div className='mt-2 max-h-28 overflow-auto whitespace-pre-wrap text-xs text-gray-200'>
-                    {src.text}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </FormSection>
 
-      <div className='rounded-md border bg-card/60 backdrop-blur'>
-        <Table>
-          <TableHeader>
-            <TableRow className='border-border/60'>
-              <TableHead className='text-xs text-gray-400'>Text</TableHead>
-              <TableHead className='text-xs text-gray-400'>Meta</TableHead>
-              <TableHead className='text-xs text-gray-400'>Updated</TableHead>
-              <TableHead className='text-xs text-gray-400 text-right'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {(docsResult?.items ?? []).map((doc: AgentTeachingEmbeddingDocumentListItem) => (
-              <TableRow key={doc.id} className='border-border/50'>
-                <TableCell className='text-sm text-gray-200'>
-                  <div className='max-w-[520px] truncate' title={doc.text}>
-                    {doc.text}
-                  </div>
-                </TableCell>
-                <TableCell className='text-xs text-gray-400'>
-                  <div className='space-y-1'>
-                    {doc.metadata?.title ? <div>Title: {doc.metadata.title}</div> : null}
-                    {doc.metadata?.source ? <div>Source: {doc.metadata.source}</div> : null}
-                    {doc.metadata?.tags?.length ? <div>Tags: {doc.metadata.tags.join(', ')}</div> : null}
-                    <div className='text-[11px] text-gray-500'>
-                      {doc.embeddingModel} ({doc.embeddingDimensions})
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell className='text-xs text-gray-400'>
-                  {doc.updatedAt ? new Date(doc.updatedAt).toLocaleString() : '—'}
-                </TableCell>
-                <TableCell className='text-right'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={(): void => setDocToDelete(doc)}
-                    disabled={adding || deleting}
-                  >
-                    <Trash2 className='mr-1 size-3' />
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-
-            {!isLoading && (docsResult?.items ?? []).length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className='h-24 text-center text-sm text-gray-400'>
-                  No documents yet.
-                </TableCell>
-              </TableRow>
+            {searchError && (
+              <div className='p-3 rounded bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300'>
+                {searchError}
+              </div>
             )}
-          </TableBody>
-        </Table>
+
+            <div className='rounded-md border border-border bg-black/20 p-0 overflow-hidden'>
+              <div className='px-3 py-2 border-b border-border/40 text-xs font-semibold text-gray-400'>Results</div>
+              <div className='max-h-[200px] overflow-y-auto p-2 space-y-2'>
+                {searchResults.length === 0 ? (
+                  <div className='text-center py-4 text-xs text-gray-600'>
+                    {searching ? ' analyzing vectors...' : 'No results to display.'}
+                  </div>
+                ) : (
+                  searchResults.map((src: AgentTeachingChatSource) => (
+                    <div key={src.documentId} className='text-xs p-2 rounded bg-white/5 border border-white/5'>
+                      <div className='flex justify-between mb-1 text-gray-400'>
+                        <span>Score: {src.score.toFixed(3)}</span>
+                        <span>{src.metadata?.title}</span>
+                      </div>
+                      <p className='text-gray-300 line-clamp-3'>{src.text}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </FormSection>
+      </div>
+
+      <div className='rounded-md border border-border bg-gray-950/20'>
+        <DataTable
+          columns={columns}
+          data={docs}
+          isLoading={isLoading}
+        />
       </div>
 
       <ConfirmDialog
         open={!!docToDelete}
-        onOpenChange={(open: boolean): void => {
-          if (!open) setDocToDelete(null);
-        }}
+        onOpenChange={(open) => !open && setDocToDelete(null)}
         title='Delete document'
-        description='Delete this embedded document? This cannot be undone.'
+        description='This action cannot be undone.'
         confirmText='Delete'
         variant='destructive'
-        onConfirm={(): void => {
-          if (!collectionId || !docToDelete) return;
-          void deleteDoc({ collectionId, documentId: docToDelete.id })
-            .then(() => toast('Document deleted.', { variant: 'success' }))
-            .catch((error: unknown) =>
-              toast(error instanceof Error ? error.message : 'Failed to delete document.', { variant: 'error' })
-            )
-            .finally(() => setDocToDelete(null));
-        }}
+        onConfirm={() => { void handleDelete(); }}
       />
     </div>
   );

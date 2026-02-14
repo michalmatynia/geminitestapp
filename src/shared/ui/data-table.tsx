@@ -19,9 +19,10 @@ import {
 import { Loader2 } from 'lucide-react';
 import React, { JSX, memo, useEffect, useMemo, useState } from 'react';
 
+import { cn } from '@/shared/utils';
+
 import { EmptyState } from './empty-state';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
-import { cn } from '@/shared/utils';
 
 
 interface DataTableProps<TData> {

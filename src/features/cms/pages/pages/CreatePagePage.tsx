@@ -58,79 +58,104 @@ export default function CreatePagePage(): React.JSX.Element {
   };
 
   return (
-    <div className='container mx-auto py-10'>
-      <SectionHeader title='Create Page' className='mb-6' />
-      <div className='mb-6'>
-        <CmsDomainSelector />
-      </div>
+    <div className='container mx-auto py-10 max-w-3xl space-y-6'>
+      <SectionHeader 
+        title='Create Page' 
+        description='Provision a new content page and map it to URL routes.'
+        eyebrow='CMS · Page Management'
+        actions={<CmsDomainSelector />}
+      />
+      
       <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
-        {error ? (
-          <div className='mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200'>
-            {error}
-          </div>
-        ) : null}
-        <div className='mb-4'>
-          <Label htmlFor='name'>Page Name</Label>
-          <Input
-            id='name'
-            value={name}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
-            required
-          />
-        </div>
-        <div className='mb-4 space-y-2'>
-          <div className='flex items-center justify-between'>
-            <Label htmlFor='slug-search'>Slugs</Label>
-            <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-              <Switch
-                id='slug-all-zones'
-                checked={includeAllZones}
-                onCheckedChange={setIncludeAllZones}
+        <div className='space-y-6'>
+          <FormSection title='General Information' className='p-6'>
+            <FormField label='Page Name' error={error} required>
+              <Input
+                id='name'
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder='e.g. Summer Collection 2026'
+                className='h-9'
+                autoFocus
               />
-              <Label htmlFor='slug-all-zones'>All zones</Label>
+            </FormField>
+          </FormSection>
+
+          <FormSection 
+            title='Route Mapping' 
+            description='Select which URL paths should resolve to this page.'
+            actions={
+              <div className='flex items-center gap-2'>
+                <Switch
+                  id='slug-all-zones'
+                  checked={includeAllZones}
+                  onCheckedChange={setIncludeAllZones}
+                />
+                <label htmlFor='slug-all-zones' className='text-[10px] uppercase font-bold text-gray-500 cursor-pointer'>Show all zones</label>
+              </div>
+            }
+            className='p-6'
+          >
+            <div className='space-y-4'>
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder='Filter available routes...'
+                className='h-8 text-xs'
+              />
+              
+              <div className='space-y-2'>
+                <div className='flex justify-between items-center px-1'>
+                  <span className='text-[10px] uppercase font-bold text-gray-500'>Available Slugs</span>
+                  <Badge variant='secondary' className='text-[9px]'>{slugIds.length} selected</Badge>
+                </div>
+
+                <div className='max-h-56 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
+                  {filteredSlugs.length === 0 ? (
+                    <div className='py-8 text-center text-xs text-gray-600'>No routes found matching your criteria.</div>
+                  ) : (
+                    filteredSlugs.map((slug) => {
+                      const checked = slugIds.includes(slug.id);
+                      const isCrossZone = includeAllZones && !domainSlugIds.has(slug.id);
+                      return (
+                        <label key={slug.id} className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'>
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => {
+                              setSlugIds((prev) =>
+                                checked ? prev.filter((id) => id !== slug.id) : [...prev, slug.id]
+                              );
+                            }}
+                          />
+                          <div className='flex flex-1 items-center justify-between'>
+                            <span className='text-sm text-gray-300'>/{slug.slug}</span>
+                            {isCrossZone && (
+                              <Badge variant='outline' className='text-[8px] bg-amber-500/5 text-amber-400 border-amber-500/20'>Cross-Zone</Badge>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             </div>
+          </FormSection>
+
+          <div className='flex justify-end gap-3 pt-4'>
+            <Button 
+              type='button' 
+              variant='outline' 
+              size='sm' 
+              onClick={() => router.back()}
+            >
+              Cancel
+            </Button>
+            <Button type='submit' size='sm' disabled={createPage.isPending}>
+              {createPage.isPending ? 'Creating...' : 'Create Page'}
+            </Button>
           </div>
-          <Input
-            id='slug-search'
-            value={search}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setSearch(e.target.value)}
-            placeholder='Search slugs...'
-          />
-          <div className='max-h-56 space-y-2 overflow-y-auto rounded border border-border/50 bg-gray-900/40 p-2'>
-            {filteredSlugs.length === 0 ? (
-              <p className='py-4 text-center text-xs text-gray-500'>
-                No slugs available for this zone.
-              </p>
-            ) : (
-              filteredSlugs.map((slug: Slug) => {
-                const checked = slugIds.includes(slug.id);
-                const isCrossZone = includeAllZones && !domainSlugIds.has(slug.id);
-                return (
-                  <label key={slug.id} className='flex items-center gap-2 text-sm text-gray-200'>
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={() => {
-                        setSlugIds((prev: string[]): string[] =>
-                          checked ? prev.filter((id: string): boolean => id !== slug.id) : [...prev, slug.id]
-                        );
-                      }}
-                    />
-                    <span>
-                      /{slug.slug}
-                      {isCrossZone ? (
-                        <span className='ml-2 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] text-amber-200'>
-                          Other zone
-                        </span>
-                      ) : null}
-                    </span>
-                  </label>
-                );
-              })
-            )}
-          </div>
-          <p className='text-xs text-gray-500'>{slugIds.length} selected</p>
         </div>
-        <Button type='submit'>Create</Button>
       </form>
     </div>
   );

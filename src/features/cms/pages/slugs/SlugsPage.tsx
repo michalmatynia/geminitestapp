@@ -1,9 +1,9 @@
 'use client';
 
+import { Edit, Link2, Unlink } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import {
@@ -28,10 +28,13 @@ import {
   AppModal,
   PageLayout,
   SelectSimple,
+  DataTable,
+  Badge
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
+import type { ColumnDef } from '@tanstack/react-table';
 
 export default function SlugsPage(): React.JSX.Element {
   const router = useRouter();
@@ -152,25 +155,78 @@ export default function SlugsPage(): React.JSX.Element {
     }
   };
 
+  const columns = useMemo<ColumnDef<Slug>[]>(() => [
+    {
+      accessorKey: 'slug',
+      header: 'Route Path',
+      cell: ({ row }) => (
+        <div className='flex flex-col gap-1'>
+          <Link 
+            href={buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`)}
+            className='font-medium text-gray-200 hover:text-blue-300 transition-colors'
+          >
+            /{row.original.slug}
+          </Link>
+          <div className='flex items-center gap-2'>
+            {row.original.isDefault && <Badge variant='outline' className='text-[9px] uppercase font-bold bg-blue-500/10 text-blue-400 border-blue-500/20 px-1 py-0 h-4'>Default</Badge>}
+            {(canonicalDomain || sharedWithDomains.length > 0) && (
+              <Badge variant='outline' className='text-[9px] uppercase font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-1 py-0 h-4'>Shared</Badge>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'sharing',
+      header: 'Sharing Status',
+      cell: ({ row: _row }) => {
+        if (canonicalDomain) return <span className='text-xs text-gray-500'>Inherited from {canonicalDomain.domain}</span>;
+        if (sharedWithDomains.length > 0) return <span className='text-xs text-gray-500'>Pushed to {sharedWithDomains.length} domains</span>;
+        return <span className='text-xs text-gray-600 italic'>Local only</span>;
+      }
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end gap-2'>
+          <Link href={buildDomainHref(`/admin/cms/slugs/${row.original.id}/edit`)}>
+            <Button variant='ghost' size='xs' className='h-7 w-7 p-0'>
+              <Edit className='size-3.5' />
+            </Button>
+          </Link>
+          <Button 
+            variant='ghost' 
+            size='xs' 
+            className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
+            onClick={() => handleDelete(row.original)}
+          >
+            <Unlink className='size-3.5' />
+          </Button>
+        </div>
+      )
+    }
+  ], [buildDomainHref, canonicalDomain, sharedWithDomains, handleDelete]);
+
   return (
     <PageLayout
       title='Slugs'
       description={
         zoningEnabled
-          ? 'Manage slugs assigned to the currently active domain. Slugs control routing for your CMS pages.'
-          : 'Manage slugs for all domains. Slugs control routing for your CMS pages.'
+          ? 'Manage unique paths assigned to the active domain. These control how pages are resolved.'
+          : 'Global route management. Domain zoning is currently disabled.'
       }
       headerActions={
-        <>
-          <div className='flex items-center gap-2 rounded-md border border-border/60 bg-background/40 px-2 py-1'>
+        <div className='flex items-center gap-3'>
+          <div className='flex items-center gap-2 rounded-lg border border-border/60 bg-black/20 px-3 py-1.5'>
             <Switch
               id='cms-domain-zoning'
               checked={zoningToggleValue}
               onCheckedChange={handleZoningToggle}
               disabled={updateSetting.isPending}
             />
-            <Label htmlFor='cms-domain-zoning' className='text-xs text-muted-foreground'>
-              Domain zoning
+            <Label htmlFor='cms-domain-zoning' className='text-[10px] uppercase font-bold text-gray-500 cursor-pointer'>
+              Zoning
             </Label>
           </div>
           {zoningEnabled ? (
@@ -180,185 +236,140 @@ export default function SlugsPage(): React.JSX.Element {
               options={domains.map((item: CmsDomain) => ({
                 value: item.id,
                 label: item.domain,
-                description: hostDomainId === item.id ? 'current' : undefined
+                description: hostDomainId === item.id ? 'host' : undefined
               }))}
-              placeholder='Current domain'
-              className='w-[220px]'
+              placeholder='Select domain...'
+              className='w-[200px]'
               size='sm'
             />
-          ) : (
-            <span className='text-xs text-muted-foreground'>Simple routing</span>
-          )}
-          {zoningEnabled ? (
-            <Button variant='secondary' onClick={() => setAttachOpen(true)}>Attach Existing</Button>
           ) : null}
-          <AppModal
-            open={attachOpen}
-            onClose={(): void => {
-              setAttachOpen(false);
-              setAttachSelectedIds([]);
-              setAttachSearch('');
-              setAttachError('');
-            }}
-            title='Attach Existing Slug'
-            size='md'
-            footer={
-              <>
-                <Button
-                  variant='secondary'
-                  onClick={() => {
-                    setAttachOpen(false);
-                    setAttachSelectedIds([]);
-                    setAttachSearch('');
-                    setAttachError('');
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => { void handleAttach(); }}
-                  disabled={selectedAttachCount === 0}
-                >
-                  Attach
-                </Button>
-              </>
-            }
-          >
-            <div className='space-y-3'>
-              <div className='space-y-1'>
-                <Label htmlFor='attach-search'>Search</Label>
-                <SearchInput
-                  id='attach-search'
-                  value={attachSearch}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setAttachSearch(event.target.value)}
-                  onClear={() => setAttachSearch('')}
-                  placeholder='Search slugs...'
-                />
-              </div>
-              <div className='space-y-2'>
-                <div className='flex items-center justify-between'>
-                  <Label>Available slugs</Label>
-                  <div className='flex items-center gap-2 text-xs text-muted-foreground'>
-                    <button
-                      type='button'
-                      className='hover:text-foreground'
-                      onClick={selectAllVisible}
-                    >
-                      Select all
-                    </button>
-                    <span>•</span>
-                    <button
-                      type='button'
-                      className='hover:text-foreground'
-                      onClick={clearSelection}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
-                <div className='max-h-56 overflow-y-auto rounded-md border border-border/60 bg-background/40 p-2'>
-                  {allSlugsQuery.isLoading ? (
-                    <p className='py-6 text-center text-sm text-muted-foreground'>
-                      Loading slugs…
-                    </p>
-                  ) : availableAttachSlugs.length === 0 ? (
-                    <p className='py-6 text-center text-sm text-muted-foreground'>
-                      No available slugs to attach.
-                    </p>
-                  ) : (
-                    <ul className='space-y-2'>
-                      {availableAttachSlugs.map((slug: Slug) => (
-                        <li key={slug.id} className='flex items-center gap-2'>
-                          <Checkbox
-                            checked={attachSelectedIds.includes(slug.id)}
-                            onCheckedChange={() => toggleAttachSelection(slug.id)}
-                          />
-                          <span className='text-sm'>/{slug.slug}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <p className='text-xs text-muted-foreground'>
-                  {selectedAttachCount} selected
-                </p>
-                {attachError ? (
-                  <p className='text-sm text-red-500'>{attachError}</p>
-                ) : null}
-              </div>
-            </div>
-          </AppModal>
-          <Button asChild>
-            <Link href={buildDomainHref('/admin/cms/slugs/create')}>Create Slug</Link>
-          </Button>
-        </>
+          <div className='flex gap-2'>
+            {zoningEnabled && (
+              <Button variant='outline' size='xs' className='h-8' onClick={() => setAttachOpen(true)}>
+                <Link2 className='size-3.5 mr-2' />
+                Attach Existing
+              </Button>
+            )}
+            <Button size='xs' className='h-8' asChild>
+              <Link href={buildDomainHref('/admin/cms/slugs/create')}>Create New Slug</Link>
+            </Button>
+          </div>
+        </div>
       }
     >
-      <ListPanel
-        header={null} // Header handled by AdminPageLayout
-      >
+      <ListPanel variant='flat'>
         {slugs.length === 0 ? (
           <EmptyState
-            title='No slugs assigned'
-            description='Assign slugs to this domain to enable routing for your CMS pages.'
+            title='No routes defined'
+            description='This domain currently has no assigned slugs. Pages will not be reachable until a route is mapped.'
             action={
               <div className='flex gap-2'>
-                <Button onClick={() => setAttachOpen(true)} variant='outline'>
+                <Button onClick={() => setAttachOpen(true)} variant='outline' size='sm'>
                   Attach Existing
                 </Button>
-                <Button asChild>
+                <Button asChild size='sm'>
                   <Link href={buildDomainHref('/admin/cms/slugs/create')}>
-                    Create New
+                    Create First Slug
                   </Link>
                 </Button>
               </div>
             }
           />
         ) : (
-          <ul>
-            {slugs.map((slug: Slug) => (
-              <li
-                key={slug.id}
-                className='flex justify-between items-center py-2 border-b border'
-              >
-                <Link href={buildDomainHref(`/admin/cms/slugs/${slug.id}/edit`)} className='flex flex-col'>
-                  <span className='hover:underline'>
-                    /{slug.slug} {slug.isDefault && '(Default)'}
-                    {(canonicalDomain || sharedWithDomains.length > 0) ? (
-                      <span className='ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-[11px] text-foreground/70'>
-                        Shared
-                      </span>
-                    ) : null}
-                  </span>
-                  {canonicalDomain ? (
-                    <span className='text-xs text-muted-foreground'>
-                      Shared from {canonicalDomain.domain}
-                    </span>
-                  ) : sharedWithDomains.length > 0 ? (
-                    <span className='text-xs text-muted-foreground'>
-                      Shared with {sharedWithDomains.map((item: CmsDomain) => item.domain).join(', ')}
-                    </span>
-                  ) : null}
-                </Link>
-                <Button
-                  variant='destructive'
-                  onClick={() => handleDelete(slug)}
-                >
-                  Remove from zone
-                </Button>
-              </li>
-            ))}
-          </ul>
+          <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+            <DataTable
+              columns={columns}
+              data={slugs}
+              isLoading={slugsQuery.isLoading}
+            />
+          </div>
         )}
       </ListPanel>
 
+      <AppModal
+        open={attachOpen}
+        onClose={(): void => {
+          setAttachOpen(false);
+          setAttachSelectedIds([]);
+          setAttachSearch('');
+          setAttachError('');
+        }}
+        title='Attach Existing Slug'
+        size='md'
+        footer={
+          <div className='flex justify-end gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => {
+                setAttachOpen(false);
+                setAttachSelectedIds([]);
+                setAttachSearch('');
+                setAttachError('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              size='sm'
+              onClick={() => { void handleAttach(); }}
+              disabled={selectedAttachCount === 0}
+            >
+              Attach {selectedAttachCount > 0 ? `(${selectedAttachCount})` : ''}
+            </Button>
+          </div>
+        }
+      >
+        <div className='space-y-4'>
+          <FormField label='Search Available Routes'>
+            <SearchInput
+              value={attachSearch}
+              onChange={(e) => setAttachSearch(e.target.value)}
+              onClear={() => setAttachSearch('')}
+              placeholder='Filter slugs...'
+              className='h-9'
+            />
+          </FormField>
+          
+          <div className='space-y-2'>
+            <div className='flex items-center justify-between'>
+              <span className='text-[10px] uppercase font-bold text-gray-500'>Available Slugs</span>
+              <div className='flex items-center gap-3 text-[10px] uppercase font-bold'>
+                <button type='button' className='text-blue-400 hover:text-blue-300' onClick={selectAllVisible}>All</button>
+                <button type='button' className='text-gray-500 hover:text-gray-400' onClick={clearSelection}>None</button>
+              </div>
+            </div>
+            
+            <div className='max-h-60 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
+              {allSlugsQuery.isLoading ? (
+                <div className='py-8 text-center text-xs text-gray-500 animate-pulse'>Fetching global slug index...</div>
+              ) : availableAttachSlugs.length === 0 ? (
+                <div className='py-8 text-center text-xs text-gray-600 italic'>No unassigned routes found matching your criteria.</div>
+              ) : (
+                availableAttachSlugs.map((slug) => (
+                  <label key={slug.id} className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'>
+                    <Checkbox
+                      checked={attachSelectedIds.includes(slug.id)}
+                      onCheckedChange={() => toggleAttachSelection(slug.id)}
+                    />
+                    <span className='text-sm text-gray-300'>/{slug.slug}</span>
+                  </label>
+                ))
+              )}
+            </div>
+            
+            {attachError && <p className='text-xs text-rose-400 font-medium'>{attachError}</p>}
+          </div>
+        </div>
+      </AppModal>
+
       <ConfirmDialog
         open={!!slugToDelete}
-        onOpenChange={(open: boolean) => !open && setSlugToDelete(null)}
+        onOpenChange={(open) => !open && setSlugToDelete(null)}
         onConfirm={(): void => { void handleConfirmDelete(); }}
         title='Remove Slug from Zone'
-        description='Are you sure you want to remove this slug from the current zone? It will stay in other zones if assigned.'
-        confirmText='Remove'
+        description='This route will be detached from the current domain. It will remain active in other domains if previously assigned.'
+        confirmText='Detach Route'
         variant='destructive'
       />
     </PageLayout>

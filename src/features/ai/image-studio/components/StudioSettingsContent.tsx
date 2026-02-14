@@ -84,7 +84,7 @@ export function StudioSettingsContent(): React.JSX.Element {
             </Button>
             <Button
               size='xs'
-              variant='primary'
+              variant='default'
               onClick={() => void saveStudioSettings({ silent: false })}
               disabled={Boolean(advancedOverridesError)}
               className='min-w-[80px]'

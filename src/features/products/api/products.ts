@@ -13,7 +13,7 @@ export async function getProducts(filters: {
   pageSize?: number | undefined;
   catalogId?: string | undefined;
   searchLanguage?: string | undefined;
-}): Promise<ProductWithImages[]> {
+}, signal?: AbortSignal): Promise<ProductWithImages[]> {
   return api.get<ProductWithImages[]>('/api/products', {
     params: {
       search: filters.search,
@@ -28,6 +28,7 @@ export async function getProducts(filters: {
       searchLanguage: filters.searchLanguage,
     },
     cache: 'no-store',
+    signal,
   });
 }
 
@@ -40,7 +41,7 @@ export async function countProducts(filters: {
   endDate?: string | undefined;
   catalogId?: string | undefined;
   searchLanguage?: string | undefined;
-}): Promise<number> {
+}, signal?: AbortSignal): Promise<number> {
   try {
     const data = await api.get<{ count: number }>('/api/products/count', {
       params: {
@@ -54,6 +55,7 @@ export async function countProducts(filters: {
         searchLanguage: filters.searchLanguage,
       },
       cache: 'no-store',
+      signal,
     });
     return data.count ?? 0;
   } catch (_error) {

@@ -1,7 +1,14 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+import { render } from '@/__tests__/test-utils';
 import { GenericItemMapper } from '@/features/integrations/components/marketplaces/category-mapper/GenericItemMapper';
+import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
+
+// Mock the context hook
+vi.mock('@/features/integrations/context/CategoryMapperContext', () => ({
+  useCategoryMapper: vi.fn(),
+}));
 
 // Mock types and data
 interface MockInternalItem {
@@ -34,6 +41,18 @@ describe('GenericItemMapper', () => {
   const mockMappings: MockMapping[] = [
     { internalId: '1', externalId: 'ext-1' },
   ];
+
+  const defaultMockContext = {
+    pendingMappings: new Map(),
+    handleMappingChange: vi.fn(),
+    getMappingForExternal: vi.fn().mockReturnValue(null),
+    internalCategoryOptions: [],
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useCategoryMapper).mockReturnValue(defaultMockContext as any);
+  });
 
   const createConfig = (overrides = {}) => ({
     title: 'Test Mapper',
@@ -94,7 +113,7 @@ describe('GenericItemMapper', () => {
     const config = createConfig({ isLoadingInternal: true });
     render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getByText(/Loading/)).toBeInTheDocument();
   });
 
   it('renders additional column when provided', () => {

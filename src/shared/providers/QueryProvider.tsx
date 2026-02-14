@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientContext, QueryClientProvider } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
 import { setupOfflineSupport } from "@/shared/lib/offline-support";
 import { createQueryClient } from "@/shared/lib/query-client";
@@ -95,11 +95,18 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 }
 
 export const QueryProvider = ({ children }: QueryProviderProps): React.JSX.Element => {
+  const existingQueryClient = React.useContext(QueryClientContext);
+  const isNestedProvider = existingQueryClient !== undefined;
   const [queryClient] = useState(getQueryClient);
 
   useEffect(() => {
+    if (isNestedProvider) return;
     setupOfflineSupport(queryClient);
-  }, [queryClient]);
+  }, [isNestedProvider, queryClient]);
+
+  if (isNestedProvider) {
+    return <>{children}</>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>

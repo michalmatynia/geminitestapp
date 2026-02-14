@@ -60,7 +60,7 @@ export function AllegroSettings(): React.JSX.Element {
           <div className='flex flex-wrap items-center gap-3'>
             <Button
               type='button'
-              variant='primary'
+              variant='default'
               onClick={handleAllegroAuthorize}
             >
               {allegroConnected ? 'Reauthorize' : 'Connect Allegro'}

@@ -20,7 +20,7 @@ import { Button, Input, useToast } from '@/shared/ui';
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
-import { useGenerationState } from '../context/GenerationContext';
+import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
@@ -65,6 +65,7 @@ export function CenterPreview(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { landingSlots, isRunInFlight, activeRunError, activeRunId } = useGenerationState();
+  const { clearActiveRunError } = useGenerationActions();
 
   const {
     tool,
@@ -796,6 +797,9 @@ export function CenterPreview(): React.JSX.Element {
         return next;
       });
       setVariantTooltip((current) => (current?.variant.id === variant.id ? null : current));
+      if (variant.status === 'failed') {
+        clearActiveRunError();
+      }
     };
 
     const resolveVariantSlotId = (): string | null => {
@@ -887,6 +891,7 @@ export function CenterPreview(): React.JSX.Element {
     slots,
     toast,
     workingSlot?.id,
+    clearActiveRunError,
   ]);
 
   const handleSaveScreenshot = useCallback(async (): Promise<void> => {

@@ -467,7 +467,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       if (!result.ok) return [];
       return Array.isArray(result.data) ? result.data : [];
     },
-    staleTime: 10_000,
+    staleTime: 5 * 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
@@ -785,7 +788,10 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
         return { models: [] };
       }
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 30,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const modelOptions = useMemo((): string[] => {

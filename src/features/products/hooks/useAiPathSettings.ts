@@ -21,6 +21,15 @@ import type {
 import type { QueryClient } from '@tanstack/react-query';
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
+const USER_PREFERENCES_STALE_MS = 5 * 60_000;
+
+const resolvePreferredActivePathId = (
+  data: { aiPathsActivePathId?: unknown } | null | undefined
+): string | null =>
+  typeof data?.aiPathsActivePathId === 'string' &&
+  data.aiPathsActivePathId.trim().length > 0
+    ? data.aiPathsActivePathId.trim()
+    : null;
 
 export type PathSettingsResult = {
   configs: Record<string, PathConfig>;
@@ -51,21 +60,23 @@ export async function fetchPathSettings(
   );
 
   let preferredActivePathId: string | null = null;
+  const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
+    QUERY_KEYS.userPreferences
+  );
   try {
-    const preferencesResponse = await queryClient.fetchQuery({
-      queryKey: QUERY_KEYS.auth.preferences.detail('ai-paths'),
-      queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
-        return await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
-          logError: false,
-        });
-      },
-      staleTime: AI_PATHS_SETTINGS_STALE_MS,
-    });
-    preferredActivePathId =
-      typeof preferencesResponse.aiPathsActivePathId === 'string' &&
-      preferencesResponse.aiPathsActivePathId.trim().length > 0
-        ? preferencesResponse.aiPathsActivePathId.trim()
-        : null;
+    preferredActivePathId = resolvePreferredActivePathId(cachedPreferences);
+    if (!cachedPreferences) {
+      const preferencesResponse = await queryClient.fetchQuery({
+        queryKey: QUERY_KEYS.userPreferences,
+        queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
+          return await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
+            logError: false,
+          });
+        },
+        staleTime: USER_PREFERENCES_STALE_MS,
+      });
+      preferredActivePathId = resolvePreferredActivePathId(preferencesResponse);
+    }
   } catch {
     preferredActivePathId = null;
   }

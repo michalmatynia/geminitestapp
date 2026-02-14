@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 
@@ -289,10 +289,23 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const activeVariant = regexConfig.activeVariant ?? 'manual';
   const aiProposals = React.useMemo(() => regexConfig.aiProposals ?? [], [regexConfig.aiProposals]);
   const regexTemplates = React.useMemo(() => regexConfig.templates ?? [], [regexConfig.templates]);
+  const queryClient = useQueryClient();
+  const cachedAiPathSettings =
+    queryClient.getQueryData<Array<{ key: string; value: string }>>(
+      QUERY_KEYS.ai.aiPaths.settings()
+    ) ?? [];
+  const hasCachedAiPathSettings = Boolean(
+    queryClient.getQueryState(QUERY_KEYS.ai.aiPaths.settings())?.dataUpdatedAt
+  );
   const settingsQuery = useQuery({
     queryKey: QUERY_KEYS.ai.aiPaths.settings(),
     queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
-      await fetchAiPathsSettingsCached({ bypassCache: true }),
+      await fetchAiPathsSettingsCached(),
+    ...(hasCachedAiPathSettings ? { initialData: cachedAiPathSettings } : {}),
+    staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const updateSettingMutation = useMutation({
     mutationFn: async (payload: { key: string; value: string }): Promise<void> => {

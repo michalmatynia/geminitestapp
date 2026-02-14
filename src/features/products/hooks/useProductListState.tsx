@@ -205,13 +205,15 @@ export function useProductListState(): ProductListContextType & {
     queryKey: editingProduct
       ? getProductDetailQueryKey(editingProduct.id)
       : inactiveProductDetailQueryKey,
-    queryFn: () => api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`),
+    queryFn: ({ signal }) =>
+      api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`, { signal }),
     enabled: Boolean(editingProduct?.id),
     staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
     refetchOnMount: false,
     refetchInterval: false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const {

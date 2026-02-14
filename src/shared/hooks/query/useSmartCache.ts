@@ -4,7 +4,7 @@
 import { useQuery, useQueryClient, type Query, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { fetchSettingsCached } from '@/shared/api/settings-client';
+import { fetchLiteSettingsCached } from '@/shared/api/settings-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 // Predefined cache strategies
@@ -175,8 +175,9 @@ export function useCacheWarming(): {
   const warmFrequentlyAccessedData = useCallback(async (): Promise<void> => {
     const frequentQueries = [
       {
-        queryKey: QUERY_KEYS.settings.scope('light'),
-        queryFn: async (): Promise<unknown> => await fetchSettingsCached({ scope: 'light' }),
+        // Match SettingsStoreProvider default query key to avoid duplicate warm + runtime fetches.
+        queryKey: QUERY_KEYS.settings.scope('lite'),
+        queryFn: async (): Promise<unknown> => await fetchLiteSettingsCached(),
       },
     ];
 

@@ -52,6 +52,7 @@ import {
 import { logClientError } from '@/features/observability';
 import { api } from '@/shared/lib/api-client';
 import { invalidateAiPathSettings } from '@/shared/lib/query-invalidation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
   buildPersistedRuntimeState,
@@ -141,6 +142,14 @@ type AiPathsUiState = {
 };
 type AiPathsUserPreferences = {
   aiPathsActivePathId?: string | null;
+};
+const USER_PREFERENCES_STALE_MS = 5 * 60_000;
+
+const resolvePreferredActivePathId = (
+  preferences: AiPathsUserPreferences | null | undefined
+): string | null => {
+  const value = preferences?.aiPathsActivePathId;
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 };
 
 type UseAiPathsPersistenceResult = {
@@ -321,11 +330,32 @@ export function useAiPathsPersistence({
     },
     [updateAiPathsSettingsMutation]
   );
-  const persistUserPreferences = useCallback(async (pathId: string | null): Promise<void> => {
-    await api.patch('/api/user/preferences', {
-      aiPathsActivePathId: pathId,
-    });
-  }, []);
+  const persistUserPreferences = useCallback(
+    async (pathId: string | null): Promise<void> => {
+      const updatedPreferences = await api.patch<AiPathsUserPreferences>(
+        '/api/user/preferences',
+        {
+          aiPathsActivePathId: pathId,
+        }
+      );
+      const nextPathId = resolvePreferredActivePathId(updatedPreferences) ?? pathId ?? null;
+      const updateCachedPreferences = (
+        current: AiPathsUserPreferences | undefined
+      ): AiPathsUserPreferences => ({
+        ...(current ?? {}),
+        aiPathsActivePathId: nextPathId,
+      });
+      queryClient.setQueryData<AiPathsUserPreferences>(
+        QUERY_KEYS.userPreferences,
+        updateCachedPreferences
+      );
+      queryClient.setQueryData<AiPathsUserPreferences>(
+        QUERY_KEYS.auth.preferences.detail('ai-paths'),
+        updateCachedPreferences
+      );
+    },
+    [queryClient]
+  );
   const persistActivePathPreference = useCallback(
     async (pathId: string | null): Promise<void> => {
       if (!uiStateLoaded) return;
@@ -341,6 +371,31 @@ export function useAiPathsPersistence({
     [persistUserPreferences, uiStateLoaded]
   );
 
+  const resolveUserPreferences = useCallback(
+    async (): Promise<AiPathsUserPreferences | null> => {
+      const cachedPreferences = queryClient.getQueryData<AiPathsUserPreferences>(
+        QUERY_KEYS.userPreferences
+      );
+      if (cachedPreferences && typeof cachedPreferences === 'object') {
+        return cachedPreferences;
+      }
+      try {
+        return await queryClient.fetchQuery({
+          queryKey: QUERY_KEYS.userPreferences,
+          queryFn: async (): Promise<AiPathsUserPreferences> => {
+            return await api.get<AiPathsUserPreferences>('/api/user/preferences', {
+              logError: false,
+            });
+          },
+          staleTime: USER_PREFERENCES_STALE_MS,
+        });
+      } catch {
+        return null;
+      }
+    },
+    [queryClient]
+  );
+
   useEffect((): void => {
     if (loadInFlightRef.current) return;
     if (loadAttemptRef.current === loadNonce) return;
@@ -351,16 +406,7 @@ export function useAiPathsPersistence({
       try {
         const [data, userPreferences] = await Promise.all([
           fetchAiPathsSettingsCached({ bypassCache: true }),
-          (async (): Promise<AiPathsUserPreferences | null> => {
-            try {
-              return await api.get<AiPathsUserPreferences>('/api/user/preferences', {
-                cache: 'no-store',
-                logError: false,
-              });
-            } catch {
-              return null;
-            }
-          })(),
+          resolveUserPreferences(),
         ]);
         const map = new Map(
           data.map((item: { key: string; value: string }): [string, string] => [
@@ -386,11 +432,7 @@ export function useAiPathsPersistence({
             : null;
         const preferredPathIdFromUi =
           typeof uiState?.['activePathId'] === 'string' ? uiState?.['activePathId'] : null;
-        const preferredPathIdFromUser =
-          typeof userPreferences?.['aiPathsActivePathId'] === 'string' &&
-          userPreferences['aiPathsActivePathId'].trim().length > 0
-            ? userPreferences['aiPathsActivePathId'].trim()
-            : null;
+        const preferredPathIdFromUser = resolvePreferredActivePathId(userPreferences);
         const preferredGroups = Array.isArray(uiState?.['expandedGroups'])
           ? (uiState?.['expandedGroups'] as unknown[]).filter(
             (value: unknown): value is string =>
@@ -683,6 +725,7 @@ export function useAiPathsPersistence({
     normalizeHistoryRetentionPasses,
     normalizeHistoryRetentionOptionsMax,
     persistLastError,
+    resolveUserPreferences,
     setLoading,
     setHistoryRetentionPasses,
     setHistoryRetentionOptionsMax,

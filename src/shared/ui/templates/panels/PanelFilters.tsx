@@ -231,7 +231,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
         <div style={containerStyle} className='flex flex-col gap-1'>
           <label className='text-xs font-medium text-gray-600'>{field.label}</label>
           <Select value={getSingleSelectValue(value)} onValueChange={(val) => onChange(val)}>
-            <SelectTrigger className='h-8'>
+            <SelectTrigger className='h-8' aria-label={field.label}>
               <SelectValue placeholder={field.placeholder} />
             </SelectTrigger>
             <SelectContent>

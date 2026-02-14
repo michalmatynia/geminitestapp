@@ -7,7 +7,8 @@ import type { ProductListPreferences } from '@/features/products/types/products-
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateUserPreferences } from '@/shared/lib/query-invalidation';
-import { authKeys } from '@/shared/lib/query-key-exports';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { UserPreferences as SharedUserPreferences } from '@/shared/types/domain/user-preferences';
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,
@@ -22,19 +23,23 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   thumbnailSource: 'file',
 };
 
-const userPreferencesQueryKey = authKeys.preferences.detail('product-list');
+const userPreferencesQueryKey = QUERY_KEYS.userPreferences;
 
-async function fetchUserPreferences(): Promise<ProductListPreferences> {
+const mapProductListPreferences = (
+  data: SharedUserPreferences | null | undefined
+): ProductListPreferences => ({
+  nameLocale: (data?.productListNameLocale as 'name_en' | 'name_pl' | 'name_de' | null | undefined) || 'name_en',
+  catalogFilter: data?.productListCatalogFilter || 'all',
+  currencyCode: data?.productListCurrencyCode ?? 'PLN',
+  pageSize: data?.productListPageSize || 12,
+  thumbnailSource: data?.productListThumbnailSource || 'file',
+});
+
+async function fetchUserPreferences(signal?: AbortSignal): Promise<SharedUserPreferences> {
   const data = normalizeUserPreferencesResponse(
-    await api.get<unknown>('/api/user/preferences')
-  );
-  return {
-    nameLocale: (data.productListNameLocale as 'name_en' | 'name_pl' | 'name_de' | null | undefined) || 'name_en',
-    catalogFilter: data.productListCatalogFilter || 'all',
-    currencyCode: data.productListCurrencyCode ?? 'PLN',
-    pageSize: data.productListPageSize || 12,
-    thumbnailSource: data.productListThumbnailSource || 'file',
-  };
+    await api.get<unknown>('/api/user/preferences', { signal })
+  ) as SharedUserPreferences;
+  return data;
 }
 
 async function updateUserPreference(
@@ -99,9 +104,13 @@ export interface UserPreferencesHookResult {
 export function useUserPreferences(): UserPreferencesHookResult {
   const { data = DEFAULT_PREFERENCES, isLoading } = useQuery({
     queryKey: userPreferencesQueryKey,
-    queryFn: fetchUserPreferences,
-    staleTime: 1000 * 60 * 60,
-    placeholderData: DEFAULT_PREFERENCES,
+    queryFn: ({ signal }): Promise<SharedUserPreferences> => fetchUserPreferences(signal),
+    select: mapProductListPreferences,
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: 1,
   });
 
   const { mutateAsync: updateBulk } = useUpdateUserPreferences();

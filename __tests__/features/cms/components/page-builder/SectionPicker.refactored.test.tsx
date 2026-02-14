@@ -75,8 +75,10 @@ describe('SectionPicker.refactored', () => {
     render(<SectionPicker zone='header' onSelect={mockOnSelect} />);
     fireEvent.click(screen.getByRole('button', { name: /add section/i }));
     
-    const gridButtons = screen.getAllByRole('button', { name: /grid/i });
-    fireEvent.click(gridButtons[0]);
+    // Find the item by text and click its container (gridcell)
+    const gridItem = screen.getAllByText('Grid')[0].closest('[role="gridcell"]');
+    expect(gridItem).toBeInTheDocument();
+    fireEvent.click(gridItem!);
     
     expect(mockOnSelect).toHaveBeenCalledWith('Grid');
   });
@@ -127,8 +129,8 @@ describe('SectionPicker.refactored', () => {
   it('has correct button styling', () => {
     render(<SectionPicker zone='header' onSelect={mockOnSelect} />);
     const button = screen.getByRole('button', { name: /add section/i });
-    expect(button).toHaveClass('h-7');
-    expect(button).toHaveClass('gap-1.5');
+    expect(button.className).toContain('h-7');
+    expect(button.className).toContain('gap-1.5');
   });
 
   it('renders section categories', () => {
@@ -144,8 +146,9 @@ describe('SectionPicker.refactored', () => {
     render(<SectionPicker zone='header' onSelect={mockOnSelect} />);
     fireEvent.click(screen.getByRole('button', { name: /add section/i }));
     
-    const textElements = screen.getAllByRole('button', { name: /text/i });
-    fireEvent.click(textElements[0]);
+    const textItem = screen.getAllByText('Text')[0].closest('[role="gridcell"]');
+    expect(textItem).toBeInTheDocument();
+    fireEvent.click(textItem!);
     
     expect(mockOnSelect).toHaveBeenCalledWith('TextElement');
   });

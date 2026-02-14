@@ -145,8 +145,11 @@ export const createQueryClient = (): QueryClient =>
         staleTime: (query): number =>
           isOfflineQuery(query.queryKey) ? OFFLINE_QUERY_STALE_TIME_MS : QUERY_STALE_TIME_MS,
         gcTime: QUERY_GC_TIME_MS,
-        refetchOnWindowFocus: true,
-        refetchOnReconnect: true,
+        // Prefer explicit invalidation/refresh over implicit focus/reconnect refetches
+        // to reduce duplicate requests across mounted views/modals.
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
         refetchInterval: false,
         refetchIntervalInBackground: false,
         retry: (failureCount: number, error: unknown): boolean =>

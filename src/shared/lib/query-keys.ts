@@ -124,7 +124,7 @@ export const QUERY_KEYS = {
       defaultConnection: () =>
         [...QUERY_KEYS.integrations.all, 'base', 'default-connection'] as const,
       withConnections: () =>
-        [...QUERY_KEYS.integrations.withConnections(), 'selector-v2'] as const,
+        QUERY_KEYS.integrations.withConnections(),
     },
     marketplace: {
       all: ['marketplace'] as const,

@@ -68,6 +68,9 @@ export const getExportTemplatesQueryOptions = () => ({
   queryKey: integrationKeys.exportTemplates(),
   queryFn: () => api.get<ImportExportTemplateDto[]>('/api/integrations/export-templates'),
   staleTime: 5 * 60 * 1000,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
 });
 
 export const useExportTemplates = createQueryHook<ImportExportTemplateDto[]>({
@@ -80,6 +83,9 @@ export const getActiveExportTemplateQueryOptions = () => ({
   queryKey: integrationKeys.activeExportTemplate(),
   queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
   staleTime: 5 * 60 * 1000,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
 });
 
 export const useActiveExportTemplate = createQueryHook({
@@ -91,6 +97,9 @@ export const getDefaultExportInventoryQueryOptions = () => ({
   queryKey: integrationKeys.defaultExportInventory(),
   queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
   staleTime: 5 * 60 * 1000,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
 });
 
 export const useDefaultExportInventory = createQueryHook({
@@ -109,6 +118,9 @@ export const getBaseInventoriesQueryOptions = (connectionId: string, enabled: bo
     return Array.isArray(data.inventories) ? data.inventories : [];
   },
   enabled: enabled && !!connectionId,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
+  refetchOnReconnect: false,
 });
 
 export function useBaseInventories(connectionId: string, enabled: boolean = true): UseQueryResult<BaseInventory[]> {

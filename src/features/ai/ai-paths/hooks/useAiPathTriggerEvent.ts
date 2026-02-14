@@ -45,6 +45,7 @@ import { useToast } from '@/shared/ui';
 type TriggerEventEntityType = 'product' | 'note' | 'custom';
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
+const USER_PREFERENCES_STALE_MS = 5 * 60_000;
 
 const normalizeHistoryRetentionPasses = (value: unknown): number => {
   const parsed =
@@ -317,25 +318,42 @@ const buildTriggerContext = (args: {
   return base;
 };
 
-const loadPreferredActivePathId = async (): Promise<string | null> => {
-  try {
-    const data = await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
-      logError: false,
-    });
-    return typeof data.aiPathsActivePathId === 'string' &&
-      data.aiPathsActivePathId.trim().length > 0
-      ? data.aiPathsActivePathId.trim()
-      : null;
-  } catch {
-    return null;
-  }
-};
-
 export function useAiPathTriggerEvent(): {
   fireAiPathTriggerEvent: (args: FireAiPathTriggerEventArgs) => Promise<void>;
   } {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const resolvePreferredActivePathId = async (): Promise<string | null> => {
+    const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
+      QUERY_KEYS.userPreferences
+    );
+    const cachedPathId =
+      typeof cachedPreferences?.aiPathsActivePathId === 'string' &&
+      cachedPreferences.aiPathsActivePathId.trim().length > 0
+        ? cachedPreferences.aiPathsActivePathId.trim()
+        : null;
+    if (cachedPathId) {
+      return cachedPathId;
+    }
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: QUERY_KEYS.userPreferences,
+        queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
+          return await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
+            logError: false,
+          });
+        },
+        staleTime: USER_PREFERENCES_STALE_MS,
+      });
+      return typeof data.aiPathsActivePathId === 'string' &&
+        data.aiPathsActivePathId.trim().length > 0
+        ? data.aiPathsActivePathId.trim()
+        : null;
+    } catch {
+      return null;
+    }
+  };
 
   const fireAiPathTriggerEvent = async (args: FireAiPathTriggerEventArgs): Promise<void> => {
     const triggerEventId = args.triggerEventId.trim();
@@ -346,7 +364,7 @@ export function useAiPathTriggerEvent(): {
 
     try {
       let settingsData: Array<{ key: string; value: string }> = [];
-      const preferredActivePathId = await loadPreferredActivePathId();
+      const preferredActivePathId = await resolvePreferredActivePathId();
       try {
         settingsData = await queryClient.fetchQuery({
           queryKey: QUERY_KEYS.ai.aiPaths.settings(),

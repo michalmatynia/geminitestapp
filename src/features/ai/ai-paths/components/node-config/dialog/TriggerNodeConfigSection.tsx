@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
@@ -10,16 +10,32 @@ import { Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
+const triggerButtonsQueryKey = QUERY_KEYS.ai.aiPaths.triggerButtons();
+
 // Query for trigger buttons (always called)
-const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error> => useQuery({
-  queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
-  queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
-    const result = await triggerButtonsApi.list();
-    if (!result.ok) return [];
-    return Array.isArray(result.data) ? result.data : [];
-  },
-  staleTime: 10_000,
-});
+const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error> => {
+  const queryClient = useQueryClient();
+  const queryState = queryClient.getQueryState<AiTriggerButtonRecord[]>(triggerButtonsQueryKey);
+  const hasCachedButtons = Boolean(queryState?.dataUpdatedAt);
+  const cachedButtons =
+    queryClient.getQueryData<AiTriggerButtonRecord[]>(triggerButtonsQueryKey) ?? [];
+
+  return useQuery({
+    queryKey: triggerButtonsQueryKey,
+    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
+      const result = await triggerButtonsApi.list();
+      if (!result.ok) return [];
+      return Array.isArray(result.data) ? result.data : [];
+    },
+    ...(hasCachedButtons ? { initialData: cachedButtons } : {}),
+    // Modal should reuse already-fetched trigger buttons whenever possible.
+    enabled: !hasCachedButtons,
+    staleTime: 5 * 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+};
 
 export function TriggerNodeConfigSection(): React.JSX.Element | null {
   const { selectedNode, updateSelectedNodeConfig } = useAiPathConfig();

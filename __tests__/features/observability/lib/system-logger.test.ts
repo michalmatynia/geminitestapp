@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { notifyCriticalError } from '@/features/observability/lib/critical-error-notifier';

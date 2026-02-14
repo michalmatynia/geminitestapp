@@ -58,6 +58,7 @@ export interface GenerationState {
 export interface GenerationActions {
   handleRunGeneration: () => void;
   restoreGeneration: (record: GenerationRecord) => void;
+  clearActiveRunError: () => void;
 }
 
 type PollToken = {
@@ -553,6 +554,10 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     [setPromptText, setMaskInvert, setMaskFeather, toast]
   );
 
+  const clearActiveRunError = useCallback((): void => {
+    setActiveRunError(null);
+  }, []);
+
   const state = useMemo<GenerationState>(
     () => ({
       runMutation,
@@ -579,8 +584,8 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   );
 
   const actions = useMemo<GenerationActions>(
-    () => ({ handleRunGeneration, restoreGeneration }),
-    [handleRunGeneration, restoreGeneration]
+    () => ({ handleRunGeneration, restoreGeneration, clearActiveRunError }),
+    [handleRunGeneration, restoreGeneration, clearActiveRunError]
   );
 
   return (

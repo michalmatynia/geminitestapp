@@ -5,7 +5,8 @@ import { useEffect, useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import { logClientError } from '@/features/observability';
-import { Button, SectionHeader, DataTable, SelectSimple, useToast } from '@/shared/ui';
+import { Button, SectionHeader, DataTable, SelectSimple } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
 
@@ -261,8 +262,10 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
           data={sortedInternalItems}
           isLoading={loading}
           getRowId={(row) => getInternalId(row)}
+          maxHeight='60vh'
+          stickyHeader
           getRowClassName={(row: { original: TInternal }) => {
-            const hasPendingChange = pendingMappings.has(getInternalId(row.original));
+            const hasPendingChange = pendingMappings.size > 0 && pendingMappings.has(getInternalId(row.original));
             return hasPendingChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : '';
           }}
         />

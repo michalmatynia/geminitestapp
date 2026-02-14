@@ -12,12 +12,16 @@ const mockAsset: Asset3DRecord = {
   filepath: '/path/to/model.glb',
   mimetype: 'model/gltf-binary',
   size: 1024 * 1024 * 1.5, // 1.5 MB
+  fileUrl: '/path/to/model.glb',
+  thumbnailUrl: null,
+  fileSize: 1024 * 1024 * 1.5,
+  format: 'glb',
   tags: ['cool', 'new', 'test', 'extra'],
-  category: 'Architecture',
+  categoryId: 'Architecture',
   isPublic: true,
-  createdAt: new Date('2024-01-01T12:00:00Z'),
-  updatedAt: new Date('2024-01-01T12:00:00Z'),
-  metadata: null,
+  createdAt: '2024-01-01T12:00:00Z',
+  updatedAt: '2024-01-01T12:00:00Z',
+  metadata: {},
 };
 
 describe('Asset3DCard', () => {

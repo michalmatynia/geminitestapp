@@ -20,6 +20,7 @@ import {
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
 import { AdminImageStudioValidationPatternsPage } from './AdminImageStudioValidationPatternsPage';
 import { ImageStudioDocsContent } from '../components/ImageStudioDocsContent';
+import { ProjectGenerationHistoryTab } from '../components/ProjectGenerationHistoryTab';
 import { StudioMainContent } from '../components/StudioMainContent';
 import { StudioModals } from '../components/StudioModals';
 import { StudioProjectsList } from '../components/StudioProjectsList';
@@ -29,7 +30,7 @@ import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
 
-type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'docs';
+type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'history' | 'docs';
 
 function AdminImageStudioPageContent(): React.JSX.Element {
   const { handleRefreshSettings } = useSettingsActions();
@@ -48,7 +49,11 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   useEffect(() => {
     const rawTab = searchParams?.get('tab');
     const nextTab: StudioTab =
-      rawTab === 'projects' || rawTab === 'settings' || rawTab === 'validation' || rawTab === 'docs'
+      rawTab === 'projects' ||
+      rawTab === 'settings' ||
+      rawTab === 'validation' ||
+      rawTab === 'history' ||
+      rawTab === 'docs'
         ? rawTab
         : 'studio';
     if (nextTab !== activeTab) {
@@ -74,7 +79,11 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
   const handleTabChange = useCallback((value: string): void => {
     const nextTab: StudioTab =
-      value === 'projects' || value === 'settings' || value === 'validation' || value === 'docs'
+      value === 'projects' ||
+      value === 'settings' ||
+      value === 'validation' ||
+      value === 'history' ||
+      value === 'docs'
         ? value
         : 'studio';
     setActiveTab(nextTab);
@@ -128,6 +137,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='projects'>Projects</TabsTrigger>
                   <TabsTrigger value='settings'>Settings</TabsTrigger>
                   <TabsTrigger value='validation'>Validation</TabsTrigger>
+                  <TabsTrigger value='history'>History</TabsTrigger>
                   <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
                 <div className='ml-auto flex min-w-0 items-center gap-2'>
@@ -187,6 +197,10 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                 embedded
                 onSaved={handleRefreshSettings}
               />
+            </TabsContent>
+
+            <TabsContent value='history' className='h-full m-0 overflow-y-auto p-4'>
+              <ProjectGenerationHistoryTab />
             </TabsContent>
 
             <TabsContent value='docs' className='h-full m-0 overflow-y-auto p-4'>

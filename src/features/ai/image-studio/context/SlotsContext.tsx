@@ -30,8 +30,7 @@ import {
 import { useProjectsState } from './ProjectsContext';
 import {
   getImageStudioProjectSessionKey,
-  parseImageStudioProjectSession,
-  parseImageStudioProjectSessionLocal,
+  resolveImageStudioProjectSession,
 } from '../utils/project-session';
 import { expandFolderPath, normalizeFolderPaths, IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
 
@@ -304,9 +303,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     const signature = `${projectSessionKey}:${projectSessionRaw ?? ''}`;
     if (hydratedSessionSignatureRef.current === signature) return;
 
-    const session =
-      parseImageStudioProjectSession(projectSessionRaw, projectId) ??
-      parseImageStudioProjectSessionLocal(projectId);
+    const session = resolveImageStudioProjectSession(projectSessionRaw, projectId);
     setSelectedSlotId(session?.selectedSlotId ?? null);
     setWorkingSlotId(session?.workingSlotId ?? null);
     setSelectedFolderRaw(session?.selectedFolder ?? '');

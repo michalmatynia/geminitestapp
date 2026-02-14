@@ -26,15 +26,15 @@ export function createQueryHook<TData, TParams = void>(config: QueryConfig<TData
   return (params: TParams, options?: Partial<UseQueryOptions<TData>>) => {
     return useQuery({
       queryKey: config.queryKeyFactory(params),
-      queryFn: async () => {
+      queryFn: async ({ signal }) => {
         const url = typeof config.endpoint === 'function' ? config.endpoint(params) : config.endpoint;
         const method = config.apiOptions?.method ?? 'GET';
-        
+        const requestOptions: ApiClientOptions = { ...config.apiOptions, signal };
+
         let data: TData;
         if (method === 'POST') {
-          data = await api.post<TData>(url, params as Record<string, unknown>, config.apiOptions);
+          data = await api.post<TData>(url, params as Record<string, unknown>, requestOptions);
         } else {
-          const requestOptions: ApiClientOptions = { ...config.apiOptions };
           if (params && typeof params === 'object') {
             requestOptions.params = params as Record<string, string | number | boolean | undefined>;
           }
@@ -47,6 +47,9 @@ export function createQueryHook<TData, TParams = void>(config: QueryConfig<TData
         return data;
       },
       ...(config.staleTime !== undefined ? { staleTime: config.staleTime } : {}),
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
       ...options,
     });
   };

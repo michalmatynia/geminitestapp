@@ -75,7 +75,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
     },
-    staleTime: 10_000,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   useEffect(() => {

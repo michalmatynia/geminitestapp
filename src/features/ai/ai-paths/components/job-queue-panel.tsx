@@ -426,7 +426,11 @@ export function JobQueuePanel({
   const aiPathsSettingsQuery = useQuery({
     queryKey: QUERY_KEYS.ai.aiPaths.settings(),
     queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
-      await fetchAiPathsSettingsCached({ bypassCache: true }),
+      await fetchAiPathsSettingsCached(),
+    staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const heavyMap = React.useMemo(
     () => new Map((aiPathsSettingsQuery.data ?? []).map((item) => [item.key, item.value])),

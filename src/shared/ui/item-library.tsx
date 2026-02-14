@@ -226,7 +226,7 @@ export function ItemLibrary<T extends LibraryItem>({
             </Button>
             <Button 
               type='button' 
-              variant='primary'
+              variant='default'
               onClick={handleSave} 
               disabled={isSaving || !draft.name?.trim()}
               className='min-w-[120px]'

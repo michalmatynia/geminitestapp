@@ -215,7 +215,10 @@ export async function insertAnalyticsEvent(
     city?: string | null;
   }
 ): Promise<{ id: string }> {
-  await ensureAnalyticsIndexes();
+  // Never block event ingestion on first-load index creation.
+  void ensureAnalyticsIndexes().catch(() => {
+    // Best-effort optimization; inserts should still proceed without indexes.
+  });
   const db = await getMongoDb();
   const col = db.collection<AnalyticsEventMongoDoc>(COLLECTION_NAME);
 

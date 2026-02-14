@@ -46,38 +46,29 @@ vi.mock('@/shared/ui', async () => {
 });
 
 describe('SectionTemplatePicker Component', () => {
-  const mockDispatch = vi.fn();
+  const mockOnSelect = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (usePageBuilder as any).mockReturnValue({ dispatch: mockDispatch });
   });
 
-  it('should open dialog and show mocked template', () => {
-    render(<SectionTemplatePicker zone='template' />);
+  it('should show mocked template', () => {
+    render(<SectionTemplatePicker zone='template' onSelect={mockOnSelect} />);
     
-    const trigger = screen.getByRole('button', { name: /Templates/i });
-    fireEvent.click(trigger);
-    
-    expect(screen.getByText('Section Templates')).toBeInTheDocument();
     // If mock works, it should find "Standard Hero"
     expect(screen.getByText('Standard Hero')).toBeInTheDocument();
+    expect(screen.getByText('Desc')).toBeInTheDocument();
   });
 
-  it('should dispatch INSERT_TEMPLATE_SECTION when a template is selected', () => {
-    render(<SectionTemplatePicker zone='header' />);
+  it('should call onSelect when a template is selected', () => {
+    render(<SectionTemplatePicker zone='header' onSelect={mockOnSelect} />);
     
-    fireEvent.click(screen.getByRole('button', { name: /Templates/i }));
-    
-    const templateBtn = screen.getByText('Standard Hero');
-    fireEvent.click(templateBtn);
+    const templateItem = screen.getByText('Standard Hero').closest('[role="gridcell"]');
+    expect(templateItem).toBeInTheDocument();
+    fireEvent.click(templateItem!);
 
-    expect(mockDispatch).toHaveBeenCalledWith({
-      type: 'INSERT_TEMPLATE_SECTION',
-      section: expect.objectContaining({
-        type: 'Hero',
-        zone: 'header'
-      })
-    });
+    expect(mockOnSelect).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Standard Hero',
+    }));
   });
 });

@@ -20,7 +20,7 @@ function QueryErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         </p>
         <Button
           onClick={resetErrorBoundary}
-          variant='primary'
+          variant='default'
           className='flex items-center gap-2'
         >
           <RefreshCcw className='h-4 w-4' />

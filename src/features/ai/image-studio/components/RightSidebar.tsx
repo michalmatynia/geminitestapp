@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, GitBranch, Loader2, Play, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Eye, GitBranch, Loader2, Play, SlidersHorizontal, Sparkles, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -35,6 +35,7 @@ import { GenerationToolbar } from './GenerationToolbar';
 import { LabeledSlider } from './LabeledSlider';
 import { ParamRow } from './ParamRow';
 import { RightSidebarProvider } from './RightSidebarContext';
+import { SequencingPanel } from './SequencingPanel';
 import { StudioCard } from './StudioCard';
 import { UIPresetsPanel } from './UIPresetsPanel';
 import { VersionNodeMapPanel } from './VersionNodeMapPanel';
@@ -126,7 +127,7 @@ export function RightSidebar(): React.JSX.Element {
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph'>('controls');
+  const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph' | 'sequencing'>('controls');
   const switchToControls = useCallback(() => setSidebarTab('controls'), []);
 
   const promptValidationSettings = useMemo(
@@ -301,7 +302,7 @@ export function RightSidebar(): React.JSX.Element {
           aria-hidden={isFocusMode}
         >
           {/* Tab toggle */}
-          <div className='flex border-b border-border/40'>
+          <div className='grid grid-cols-3 border-b border-border/40'>
             <Button size='xs'
               type='button'
               variant='ghost'
@@ -329,10 +330,26 @@ export function RightSidebar(): React.JSX.Element {
               <GitBranch className='mr-1 inline size-3' />
             Version Graph
             </Button>
+            <Button size='xs'
+              type='button'
+              variant='ghost'
+              className={cn(
+                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+                sidebarTab === 'sequencing'
+                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                  : 'text-gray-500 hover:text-gray-300'
+              )}
+              onClick={() => setSidebarTab('sequencing')}
+            >
+              <Workflow className='mr-1 inline size-3' />
+            Sequencing
+            </Button>
           </div>
 
           {sidebarTab === 'graph' ? (
             <VersionNodeMapPanel />
+          ) : sidebarTab === 'sequencing' ? (
+            <SequencingPanel />
           ) : (
             <>
               <div className='space-y-2 px-4 py-2'>

@@ -48,7 +48,7 @@ function AppErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         <div className='flex flex-col gap-3 sm:flex-row'>
           <Button
             onClick={resetErrorBoundary}
-            variant='primary'
+            variant='default'
             className='flex items-center gap-2'
           >
             <RefreshCcw className='h-4 w-4' />

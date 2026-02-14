@@ -89,6 +89,212 @@ type CaseResolverFileEditDraft = {
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const sanitizeRichTextForPdf = (value: string): string => {
+  if (!value.trim()) return '<p></p>';
+  if (typeof window === 'undefined') return value;
+
+  const parser = new DOMParser();
+  const parsed = parser.parseFromString(value, 'text/html');
+  parsed.querySelectorAll('script, iframe, object, embed').forEach((node: Element) => {
+    node.remove();
+  });
+  parsed.querySelectorAll('*').forEach((element: Element) => {
+    Array.from(element.attributes).forEach((attribute: Attr) => {
+      if (attribute.name.toLowerCase().startsWith('on')) {
+        element.removeAttribute(attribute.name);
+      }
+    });
+  });
+  return parsed.body.innerHTML || '<p></p>';
+};
+
+const buildDocumentPdfMarkup = ({
+  documentName,
+  folderPath,
+  addresserLabel,
+  addresseeLabel,
+  documentContent,
+}: {
+  documentName: string;
+  folderPath: string;
+  addresserLabel: string;
+  addresseeLabel: string;
+  documentContent: string;
+}): string => {
+  const normalizedName = documentName.trim() || 'Untitled Document';
+  const normalizedFolder = normalizeFolderPath(folderPath) || '(root)';
+  const normalizedAddresser = addresserLabel.trim() || 'Not selected';
+  const normalizedAddressee = addresseeLabel.trim() || 'Not selected';
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(normalizedName)} - PDF Preview</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 14mm;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #e8edf3;
+        color: #111827;
+        font-family: "Times New Roman", Georgia, serif;
+      }
+
+      .sheet {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 20px auto;
+        background: #ffffff;
+        box-shadow: 0 0 0 1px #d1d5db, 0 10px 24px rgba(17, 24, 39, 0.16);
+        padding: 16mm;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+
+      .meta-card {
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 8px 10px;
+      }
+
+      .meta-label {
+        color: #6b7280;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .meta-value {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #111827;
+        word-break: break-word;
+      }
+
+      .title {
+        margin: 0 0 14px 0;
+        font-size: 24px;
+        line-height: 1.2;
+      }
+
+      .content {
+        font-size: 12pt;
+        line-height: 1.5;
+      }
+
+      .content p {
+        margin: 0 0 0.9em 0;
+      }
+
+      .content h1,
+      .content h2,
+      .content h3,
+      .content h4 {
+        margin: 0.5em 0 0.35em 0;
+        line-height: 1.25;
+      }
+
+      .content ul,
+      .content ol {
+        margin: 0 0 1em 1.4em;
+        padding: 0;
+      }
+
+      .content blockquote {
+        margin: 0 0 1em 0;
+        padding-left: 12px;
+        border-left: 3px solid #9ca3af;
+      }
+
+      .content table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0 0 1em 0;
+      }
+
+      .content th,
+      .content td {
+        border: 1px solid #d1d5db;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .content img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      @media print {
+        body {
+          background: #ffffff;
+        }
+
+        .sheet {
+          width: auto;
+          min-height: auto;
+          margin: 0;
+          padding: 0;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="sheet">
+      <h1 class="title">${escapeHtml(normalizedName)}</h1>
+      <section class="meta">
+        <article class="meta-card">
+          <div class="meta-label">Folder</div>
+          <div class="meta-value">${escapeHtml(normalizedFolder)}</div>
+        </article>
+        <article class="meta-card">
+          <div class="meta-label">Addresser</div>
+          <div class="meta-value">${escapeHtml(normalizedAddresser)}</div>
+        </article>
+        <article class="meta-card">
+          <div class="meta-label">Addressee</div>
+          <div class="meta-value">${escapeHtml(normalizedAddressee)}</div>
+        </article>
+        <article class="meta-card">
+          <div class="meta-label">Generated</div>
+          <div class="meta-value">${escapeHtml(new Date().toLocaleString())}</div>
+        </article>
+      </section>
+      <section class="content">${documentContent}</section>
+    </main>
+  </body>
+</html>`;
+};
+
 const removeLinkedDocumentFileId = (
   graph: CaseResolverGraph,
   fileId: string
@@ -670,6 +876,64 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setEditingDocumentDraft(null);
   }, []);
 
+  const buildPdfMarkupFromDraft = useCallback(
+    (draft: CaseResolverFileEditDraft): string => {
+      const addresserLabel =
+        resolveFilemakerPartyLabel(filemakerDatabase, draft.addresser) ?? 'Not selected';
+      const addresseeLabel =
+        resolveFilemakerPartyLabel(filemakerDatabase, draft.addressee) ?? 'Not selected';
+      return buildDocumentPdfMarkup({
+        documentName: draft.name,
+        folderPath: draft.folder,
+        addresserLabel,
+        addresseeLabel,
+        documentContent: sanitizeRichTextForPdf(draft.documentContent),
+      });
+    },
+    [filemakerDatabase]
+  );
+
+  const openPdfWindow = useCallback(
+    (pdfMarkup: string, options?: { autoPrint?: boolean }): void => {
+      const previewWindow = window.open('', '_blank', 'width=1100,height=900');
+      if (!previewWindow) {
+        toast('Failed to open PDF window. Please allow popups for this site.', { variant: 'error' });
+        return;
+      }
+
+      previewWindow.document.open();
+      previewWindow.document.write(pdfMarkup);
+      previewWindow.document.close();
+
+      if (!options?.autoPrint) {
+        return;
+      }
+
+      const triggerPrint = (): void => {
+        previewWindow.focus();
+        previewWindow.print();
+      };
+      if (previewWindow.document.readyState === 'complete') {
+        window.setTimeout(triggerPrint, 120);
+      } else {
+        previewWindow.addEventListener('load', (): void => {
+          window.setTimeout(triggerPrint, 120);
+        }, { once: true });
+      }
+    },
+    [toast]
+  );
+
+  const handlePreviewPdf = useCallback((): void => {
+    if (!editingDocumentDraft) return;
+    openPdfWindow(buildPdfMarkupFromDraft(editingDocumentDraft));
+  }, [buildPdfMarkupFromDraft, editingDocumentDraft, openPdfWindow]);
+
+  const handleExportPdf = useCallback((): void => {
+    if (!editingDocumentDraft) return;
+    openPdfWindow(buildPdfMarkupFromDraft(editingDocumentDraft), { autoPrint: true });
+  }, [buildPdfMarkupFromDraft, editingDocumentDraft, openPdfWindow]);
+
   const handleToggleFileLock = useCallback(
     (fileId: string): void => {
       updateWorkspace(
@@ -1060,6 +1324,20 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           size='xl'
           footer={(
             <>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={handlePreviewPdf}
+              >
+              Preview PDF
+              </Button>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={handleExportPdf}
+              >
+              Export PDF
+              </Button>
               <Button
                 type='button'
                 variant='outline'

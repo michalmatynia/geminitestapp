@@ -8,6 +8,9 @@ import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/types';
 
 const VISITOR_COOKIE = 'pa_vid';
 const SESSION_STORAGE_KEY = 'pa_sid';
+const PAGEVIEW_DEDUPE_WINDOW_MS = 1500;
+
+let lastTrackedPageview: { key: string; ts: number } | null = null;
 
 const readCookie = (name: string): string | null => {
   if (typeof document === 'undefined') return null;
@@ -99,6 +102,15 @@ export default function PageAnalyticsTracker(): null {
 
   useEffect(() => {
     if (!pathname) return;
+    const pageKey = `${pathname}?${search}`;
+    const now = Date.now();
+    const isDuplicatePageview =
+      lastTrackedPageview?.key === pageKey &&
+      now - (lastTrackedPageview?.ts ?? 0) < PAGEVIEW_DEDUPE_WINDOW_MS;
+    if (isDuplicatePageview) {
+      return;
+    }
+    lastTrackedPageview = { key: pageKey, ts: now };
 
     const visitorId = getOrCreateVisitorId();
     const sessionId = getOrCreateSessionId();

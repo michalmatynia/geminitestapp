@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueries } from '@tanstack/react-query';
-import { useState, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { Catalog } from '@/features/products/types';
@@ -23,20 +23,20 @@ const supportedLanguageMap: Record<string, LanguageOption> = {
 };
 
 // API fetch functions
-async function fetchCatalogs(): Promise<Catalog[]> {
-  return api.get<Catalog[]>('/api/catalogs');
+async function fetchCatalogs(signal?: AbortSignal): Promise<Catalog[]> {
+  return api.get<Catalog[]>('/api/catalogs', { signal });
 }
 
-async function fetchPriceGroups(): Promise<PriceGroupWithDetails[]> {
-  return api.get<PriceGroupWithDetails[]>('/api/price-groups');
+async function fetchPriceGroups(signal?: AbortSignal): Promise<PriceGroupWithDetails[]> {
+  return api.get<PriceGroupWithDetails[]>('/api/price-groups', { signal });
 }
 
-async function fetchLanguages(): Promise<LanguageRecord[]> {
-  return api.get<LanguageRecord[]>('/api/languages');
+async function fetchLanguages(signal?: AbortSignal): Promise<LanguageRecord[]> {
+  return api.get<LanguageRecord[]>('/api/languages', { signal });
 }
 
-async function fetchCurrencies(): Promise<CurrencyRecord[]> {
-  return api.get<CurrencyRecord[]>('/api/currencies');
+async function fetchCurrencies(signal?: AbortSignal): Promise<CurrencyRecord[]> {
+  return api.get<CurrencyRecord[]>('/api/currencies', { signal });
 }
 
 export interface UseCatalogSyncResult {
@@ -60,31 +60,43 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
     queries: [
       {
         queryKey: QUERY_KEYS.products.metadata.catalogs,
-        queryFn: fetchCatalogs,
+        queryFn: ({ signal }): Promise<Catalog[]> => fetchCatalogs(signal),
         staleTime: 1000 * 60 * 5, // 5 minutes
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
       {
         queryKey: QUERY_KEYS.products.metadata.priceGroups,
-        queryFn: fetchPriceGroups,
+        queryFn: ({ signal }): Promise<PriceGroupWithDetails[]> => fetchPriceGroups(signal),
         staleTime: 1000 * 60 * 5,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
       {
         queryKey: QUERY_KEYS.products.metadata.languages,
-        queryFn: fetchLanguages,
+        queryFn: ({ signal }): Promise<LanguageRecord[]> => fetchLanguages(signal),
         staleTime: 1000 * 60 * 5,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
       {
         queryKey: QUERY_KEYS.internationalization.currencies,
-        queryFn: fetchCurrencies,
+        queryFn: ({ signal }): Promise<CurrencyRecord[]> => fetchCurrencies(signal),
         staleTime: 1000 * 60 * 5,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
     ],
   });
 
-  const catalogsQuery = results[0]!;
-  const priceGroupsQuery = results[1]!;
-  const languagesQuery = results[2]!;
-  const currenciesQuery = results[3]!;
+  const catalogsQuery = results[0];
+  const priceGroupsQuery = results[1];
+  const languagesQuery = results[2];
+  const currenciesQuery = results[3];
 
   // Log errors
   useEffect(() => {
@@ -192,17 +204,11 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
       : fallbackCode;
 
   const handleSetCurrencyCode = useCallback((action: string | ((prev: string) => string)): void => {
-    // Wrap the setter to handle functional updates correctly with the derived value
-    if (typeof action === 'function') {
-      setUserCurrencyCode((_prev) => {
-        // We use the *derived* currencyCode as the base for the update
-        const newVal = action(currencyCode);
-        return newVal;
-      });
-    } else {
-      setUserCurrencyCode(action);
-    }
-  }, [currencyCode]);
+    setUserCurrencyCode((current) => {
+      const baseValue = current ?? fallbackCode;
+      return typeof action === 'function' ? action(baseValue) : action;
+    });
+  }, [fallbackCode]);
 
   const { languageOptions, fallbackNameLocale } = useMemo((): { languageOptions: LanguageOption[]; fallbackNameLocale: 'name_en' | 'name_pl' | 'name_de' | undefined } => {
     const options: LanguageOption[] = [];

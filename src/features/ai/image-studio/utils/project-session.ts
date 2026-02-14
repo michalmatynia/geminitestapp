@@ -138,3 +138,25 @@ export function parseImageStudioProjectSessionLocal(
   const raw = window.localStorage.getItem(key);
   return parseImageStudioProjectSession(raw, projectId);
 }
+
+const parseSavedAtMs = (value: string | null | undefined): number => {
+  if (typeof value !== 'string' || !value.trim()) return 0;
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return 0;
+  return parsed;
+};
+
+export function resolveImageStudioProjectSession(
+  cloudRaw: string | null | undefined,
+  projectId: string
+): ImageStudioProjectSession | null {
+  const cloud = parseImageStudioProjectSession(cloudRaw, projectId);
+  const local = parseImageStudioProjectSessionLocal(projectId);
+  if (!cloud) return local;
+  if (!local) return cloud;
+
+  const cloudSavedAt = parseSavedAtMs(cloud.savedAt);
+  const localSavedAt = parseSavedAtMs(local.savedAt);
+  if (localSavedAt > cloudSavedAt) return local;
+  return cloud;
+}

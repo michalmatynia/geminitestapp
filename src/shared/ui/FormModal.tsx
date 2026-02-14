@@ -45,7 +45,7 @@ export function FormModal({
       type='button'
       onClick={() => formRef.current?.requestSubmit()}
       disabled={isSaving}
-      variant='primary'
+      variant='default'
       className='min-w-[100px]'
     >
       {isSaving ? 'Saving...' : saveText}
@@ -54,7 +54,7 @@ export function FormModal({
     <Button
       onClick={onSave}
       disabled={isSaving}
-      variant='primary'
+      variant='default'
       className='min-w-[100px]'
     >
       {isSaving ? 'Saving...' : saveText}

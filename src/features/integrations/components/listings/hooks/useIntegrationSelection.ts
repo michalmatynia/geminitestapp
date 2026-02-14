@@ -11,7 +11,8 @@ const INTEGRATION_SELECTION_GC_TIME_MS = 30 * 60 * 1000;
 
 const integrationSelectionKeys = {
   defaultConnection: QUERY_KEYS.integrations.selection.defaultConnection(),
-  withConnections: QUERY_KEYS.integrations.selection.withConnections(),
+  // Reuse canonical integrations cache key to avoid duplicate fetches in modal flows.
+  withConnections: QUERY_KEYS.integrations.withConnections(),
 } as const;
 export const integrationSelectionQueryKeys = integrationSelectionKeys;
 
@@ -59,14 +60,18 @@ export function useIntegrationSelection(
         queryFn: fetchPreferredBaseConnection,
         staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
         gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+        refetchOnMount: false,
         refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
       {
         queryKey: integrationSelectionKeys.withConnections,
         queryFn: fetchIntegrationsWithConnections,
         staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
         gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
+        refetchOnMount: false,
         refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
     ],
   });

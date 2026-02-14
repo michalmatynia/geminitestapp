@@ -155,7 +155,7 @@ export function SelectModal<T>({
             </Button>
             <Button
               onClick={handleConfirm}
-              variant='primary'
+              variant='default'
               disabled={selected.size === 0 || loading}
             >
               Select ({selected.size})

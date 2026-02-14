@@ -79,15 +79,21 @@ export function useProductsWithCount(
     queries: [
       {
         queryKey: getProductListQueryKey(filters),
-        queryFn: (): Promise<ProductWithImages[]> => getProducts(filters),
+        queryFn: ({ signal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
         enabled,
         staleTime: PRODUCTS_STALE_MS,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
       {
         queryKey: getProductCountQueryKey(filters),
-        queryFn: (): Promise<number> => countProducts(filters),
+        queryFn: ({ signal }): Promise<number> => countProducts(filters, signal),
         enabled,
         staleTime: PRODUCTS_STALE_MS,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
     ],
   });

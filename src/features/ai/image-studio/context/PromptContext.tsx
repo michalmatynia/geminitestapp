@@ -11,8 +11,7 @@ import { useProjectsState } from './ProjectsContext';
 import { type ParamUiControl } from '../utils/param-ui';
 import {
   getImageStudioProjectSessionKey,
-  parseImageStudioProjectSession,
-  parseImageStudioProjectSessionLocal,
+  resolveImageStudioProjectSession,
 } from '../utils/project-session';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -77,9 +76,7 @@ export function PromptProvider({ children }: { children: React.ReactNode }): Rea
     const signature = `${projectSessionKey}:${projectSessionRaw ?? ''}`;
     if (hydratedSessionSignatureRef.current === signature) return;
 
-    const session =
-      parseImageStudioProjectSession(projectSessionRaw, projectId) ??
-      parseImageStudioProjectSessionLocal(projectId);
+    const session = resolveImageStudioProjectSession(projectSessionRaw, projectId);
     setPromptText(session?.promptText ?? '');
     setParamsState((session?.paramsState ?? null));
     setParamSpecs((session?.paramSpecs ?? null) as Record<string, ParamSpec> | null);

@@ -13,6 +13,8 @@ import type {
   UpdateProductCategoryDto as UpdateCategoryDto,
   ProductImageDto,
   ProductCatalogDto,
+  ProductTagRelationDto,
+  ProductProducerRelationDto,
   ProductParameterValueDto
 } from '../../contracts/products';
 
@@ -28,6 +30,8 @@ export type {
   UpdateCategoryDto,
   ProductImageDto,
   ProductCatalogDto,
+  ProductTagRelationDto,
+  ProductProducerRelationDto,
   ProductParameterValueDto
 };
 

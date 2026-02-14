@@ -3,8 +3,9 @@
 import { useMemo } from 'react';
 
 import { useProductListTableContext } from '@/features/products/context/ProductListContext';
-import type { ColumnDef, OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 import type { ProductWithImages } from '@/features/products/types';
+
+import type { ColumnDef, OnChangeFn, RowSelectionState } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 
 export interface UseProductsTablePropsReturn {

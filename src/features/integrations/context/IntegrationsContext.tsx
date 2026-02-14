@@ -264,16 +264,24 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     connections.find((connection: IntegrationConnection) => connection.id === editingConnectionId) ??
     connections[0] ??
     null;
+
+  interface SessionPayload {
+    cookies?: SessionCookie[];
+    origins?: unknown[];
+    updatedAt?: string;
+    error?: string;
+  }
+
   const sessionQuery = useConnectionSession(activeConnection?.id, {
     enabled: showSessionModal,
   });
-  const sessionPayload = sessionQuery.data as Record<string, unknown> | undefined;
-  const sessionCookies = (sessionPayload?.['cookies'] as SessionCookie[]) ?? [];
-  const sessionOrigins = (sessionPayload?.['origins'] as unknown[]) ?? [];
-  const sessionUpdatedAt = (sessionPayload?.['updatedAt'] as string) ?? null;
+  const sessionPayload = sessionQuery.data as SessionPayload | undefined;
+  const sessionCookies = sessionPayload?.cookies ?? [];
+  const sessionOrigins = sessionPayload?.origins ?? [];
+  const sessionUpdatedAt = sessionPayload?.updatedAt ?? null;
   const sessionError = sessionQuery.isError
-    ? (sessionQuery.error)?.message ?? 'Failed to load session cookies.'
-    : (sessionPayload?.['error'] as string) ?? null;
+    ? (sessionQuery.error as Error)?.message ?? 'Failed to load session cookies.'
+    : sessionPayload?.error ?? null;
 
   // Playwright State
   const [playwrightSettings, setPlaywrightSettings] = useState(defaultPlaywrightSettings);
@@ -874,7 +882,7 @@ ${errorBody}`;
   const onCloseModal = () => setIsModalOpen(false);
   const onOpenSessionModal = () => setShowSessionModal(true);
 
-  const value = {
+  const value = useMemo(() => ({
     integrations,
     integrationsLoading,
     activeIntegration,
@@ -952,7 +960,65 @@ ${errorBody}`;
     handleAllegroApiRequest,
     onCloseModal,
     onOpenSessionModal,
-  };
+  }), [
+    activeIntegration,
+    allegroApiBody,
+    allegroApiError,
+    allegroApiLoading,
+    allegroApiMethod,
+    allegroApiPath,
+    allegroApiResponse,
+    baseApiError,
+    baseApiLoading,
+    baseApiMethod,
+    baseApiParams,
+    baseApiResponse,
+    connectionForm,
+    connectionToDelete,
+    connections,
+    connectionsLoading,
+    editingConnectionId,
+    handleAllegroApiRequest,
+    handleAllegroAuthorize,
+    handleAllegroDisconnect,
+    handleAllegroSandboxConnect,
+    handleAllegroSandboxToggle,
+    handleAllegroTest,
+    handleBaseApiRequest,
+    handleBaselinkerTest,
+    handleConfirmDeleteConnection,
+    handleDeleteConnection,
+    handleIntegrationClick,
+    handleSaveConnection,
+    handleSavePlaywrightSettings,
+    handleSelectPlaywrightPersona,
+    handleTestConnection,
+    handleTraderaManualLogin,
+    isModalOpen,
+    isTesting,
+    integrations,
+    integrationsLoading,
+    playwrightPersonaId,
+    playwrightPersonas,
+    playwrightPersonasLoading,
+    playwrightSettings,
+    savingAllegroSandbox,
+    selectedStep,
+    sessionCookies,
+    sessionError,
+    sessionOrigins,
+    sessionQuery.isFetching,
+    sessionUpdatedAt,
+    showPlaywrightSaved,
+    showSessionModal,
+    showTestErrorModal,
+    showTestLogModal,
+    showTestSuccessModal,
+    testError,
+    testErrorMeta,
+    testLog,
+    testSuccessMessage,
+  ]);
 
   return (
     <IntegrationsContext.Provider value={value}>

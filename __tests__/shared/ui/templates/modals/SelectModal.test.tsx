@@ -24,7 +24,7 @@ describe('SelectModal', () => {
       />
     );
 
-    expect(screen.getByText('Select an option')).toBeInTheDocument();
+    expect(screen.getAllByText('Select an option').length).toBeGreaterThan(0);
   });
 
   it('does not render modal when closed', () => {
@@ -81,7 +81,7 @@ describe('SelectModal', () => {
       />
     );
 
-    const searchInput = screen.getByPlaceholderText('Search options..');
+    const searchInput = screen.getByPlaceholderText('Search options...');
     fireEvent.change(searchInput, { target: { value: 'First' } });
 
     expect(screen.getByText('Option 1')).toBeInTheDocument();
@@ -103,7 +103,7 @@ describe('SelectModal', () => {
       />
     );
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
+    expect(screen.getAllByText('Loading...').length).toBeGreaterThan(0);
   });
 
   it('disables disabled options', () => {

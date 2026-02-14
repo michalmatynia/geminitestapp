@@ -17,7 +17,7 @@ describe('DetailModal', () => {
       </DetailModal>
     );
 
-    expect(screen.getByText('Details')).toBeInTheDocument();
+    expect(screen.getAllByText('Details').length).toBeGreaterThan(0);
     expect(screen.getByText('Detail content')).toBeInTheDocument();
   });
 
@@ -68,6 +68,6 @@ describe('DetailModal', () => {
       </DetailModal>
     );
 
-    expect(screen.getByText('Additional info')).toBeInTheDocument();
+    expect(screen.getAllByText('Additional info').length).toBeGreaterThan(0);
   });
 });

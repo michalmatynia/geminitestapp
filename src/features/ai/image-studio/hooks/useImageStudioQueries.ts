@@ -18,26 +18,39 @@ export type StudioImageModelsResponse = {
 export function useStudioProjects(): UseQueryResult<string[], Error> {
   return useQuery({
     queryKey: studioKeys.projects(),
-    queryFn: async (): Promise<string[]> => {
-      const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects');
+    queryFn: async ({ signal }): Promise<string[]> => {
+      const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects', { signal });
       return Array.isArray(data.projects) ? data.projects : [];
     },
-    staleTime: 10_000,
+    staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 
 export function useStudioSlots(projectId: string): UseQueryResult<StudioSlotsResponse, Error> {
   return useQuery({
     queryKey: studioKeys.slots(projectId),
-    queryFn: () => api.get<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`),
+    queryFn: ({ signal }) =>
+      api.get<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, {
+        signal,
+      }),
     enabled: !!projectId,
+    staleTime: 15_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }
 
 export function useStudioImageModels(): UseQueryResult<StudioImageModelsResponse, Error> {
   return useQuery({
     queryKey: studioKeys.models(),
-    queryFn: () => api.get<StudioImageModelsResponse>('/api/image-studio/models'),
+    queryFn: ({ signal }) => api.get<StudioImageModelsResponse>('/api/image-studio/models', { signal }),
     staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }

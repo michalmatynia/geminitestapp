@@ -46,6 +46,7 @@ export interface ImageStudioRunRecord {
   id: string;
   projectId: string;
   status: ImageStudioRunStatus;
+  dispatchMode: 'queued' | 'inline' | null;
   expectedOutputs: number;
   outputs: ImageFileRecord[];
   errorMessage: string | null;

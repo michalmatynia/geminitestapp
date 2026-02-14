@@ -6,11 +6,13 @@ import type { ImageFileRecord } from '@/shared/types/domain/files';
 import type { ImageStudioRunRequest } from './run-executor';
 
 export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
+export type ImageStudioRunDispatchMode = 'queued' | 'inline';
 
 export type ImageStudioRunRecord = {
   id: string;
   projectId: string;
   status: ImageStudioRunStatus;
+  dispatchMode: ImageStudioRunDispatchMode | null;
   request: ImageStudioRunRequest;
   expectedOutputs: number;
   outputs: ImageFileRecord[];
@@ -25,6 +27,7 @@ type ImageStudioRunDocument = {
   _id: string;
   projectId: string;
   status: ImageStudioRunStatus;
+  dispatchMode?: ImageStudioRunDispatchMode | null;
   request: ImageStudioRunRequest;
   expectedOutputs: number;
   outputs?: ImageFileRecord[] | null;
@@ -43,6 +46,7 @@ type CreateImageStudioRunInput = {
 
 type UpdateImageStudioRunInput = {
   status?: ImageStudioRunStatus;
+  dispatchMode?: ImageStudioRunDispatchMode | null;
   expectedOutputs?: number;
   outputs?: ImageFileRecord[];
   errorMessage?: string | null;
@@ -88,6 +92,7 @@ const toRecord = (doc: ImageStudioRunDocument): ImageStudioRunRecord => ({
   id: doc._id,
   projectId: doc.projectId,
   status: doc.status,
+  dispatchMode: doc.dispatchMode ?? null,
   request: doc.request,
   expectedOutputs: Number.isFinite(doc.expectedOutputs) ? Math.max(1, Math.floor(doc.expectedOutputs)) : 1,
   outputs: Array.isArray(doc.outputs) ? doc.outputs : [],
@@ -106,6 +111,7 @@ export async function createImageStudioRun(input: CreateImageStudioRunInput): Pr
     _id: createId(),
     projectId: input.projectId,
     status: 'queued',
+    dispatchMode: null,
     request: input.request,
     expectedOutputs: Math.max(1, Math.min(10, Math.floor(input.expectedOutputs || 1))),
     outputs: [],
@@ -141,6 +147,7 @@ export async function updateImageStudioRun(
   };
 
   if (update.status !== undefined) patch.status = update.status;
+  if (update.dispatchMode !== undefined) patch.dispatchMode = update.dispatchMode;
   if (update.expectedOutputs !== undefined) patch.expectedOutputs = Math.max(1, Math.min(10, Math.floor(update.expectedOutputs || 1)));
   if (update.outputs !== undefined) patch.outputs = update.outputs;
   if (update.errorMessage !== undefined) patch.errorMessage = update.errorMessage;

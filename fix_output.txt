@@ -1,0 +1,8 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/export-to-base/route.ts
+  488:27  error  Unsafe return of a value of type error                         @typescript-eslint/no-unsafe-return
+  488:27  error  Unsafe call of a type that could not be resolved               @typescript-eslint/no-unsafe-call
+  488:31  error  Unsafe member access .tagId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+
+✖ 3 problems (3 errors, 0 warnings)
+

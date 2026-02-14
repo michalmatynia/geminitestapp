@@ -122,28 +122,28 @@ const coerceLogicalConditions = (
   conditions.forEach((condition, index) => {
     if (!condition || typeof condition !== 'object') return;
     const c = condition as Record<string, unknown>;
-    const paramPath = typeof c.paramPath === 'string' ? c.paramPath.trim() : '';
+    const paramPath = typeof c['paramPath'] === 'string' ? c['paramPath'].trim() : '';
     const comparator =
-      typeof c.comparator === 'string' &&
-        LOGICAL_COMPARATOR_VALUES.has(c.comparator)
-        ? (c.comparator as PromptExploderLogicalComparator)
+      typeof c['comparator'] === 'string' &&
+        LOGICAL_COMPARATOR_VALUES.has(c['comparator'])
+        ? (c['comparator'] as PromptExploderLogicalComparator)
         : null;
     if (!paramPath || !comparator) return;
     const joinWithPrevious =
-      typeof c.joinWithPrevious === 'string' &&
-        LOGICAL_JOIN_VALUES.has(c.joinWithPrevious)
-        ? (c.joinWithPrevious as PromptExploderLogicalJoin)
+      typeof c['joinWithPrevious'] === 'string' &&
+        LOGICAL_JOIN_VALUES.has(c['joinWithPrevious'])
+        ? (c['joinWithPrevious'] as PromptExploderLogicalJoin)
         : index === 0
           ? null
           : 'and';
     results.push({
       id:
-        typeof c.id === 'string' && c.id.trim()
-          ? c.id
+        typeof c['id'] === 'string' && c['id'].trim()
+          ? c['id']
           : `${Date.now().toString(36)}_${index + 1}`,
       paramPath,
       comparator,
-      value: c.value ?? null,
+      value: c['value'] ?? null,
       joinWithPrevious,
     });
   });

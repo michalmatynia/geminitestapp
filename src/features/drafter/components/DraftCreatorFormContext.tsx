@@ -11,6 +11,7 @@ import type {
   ProductParameterValue,
   ProductTag,
 } from '@/features/products/types';
+import type { ProductDraftOpenFormTab } from '@/features/products/types/drafts';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 
 export interface DraftCreatorFormContextValue {
@@ -28,6 +29,8 @@ export interface DraftCreatorFormContextValue {
   setIconColorMode: (next: 'theme' | 'custom') => void;
   iconColor: string;
   setIconColor: (next: string) => void;
+  openProductFormTab: ProductDraftOpenFormTab;
+  setOpenProductFormTab: (next: ProductDraftOpenFormTab) => void;
   resolvedIconColor: string;
   openIconLibrary: () => void;
   sku: string;

@@ -485,7 +485,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       ? Array.from(
         new Set(
           (product.tags ?? [])
-            .map((tag) => tag.tagId?.trim())
+            .map((tag: { tagId?: string }) => tag.tagId?.trim())
             .filter((tagId): tagId is string => Boolean(tagId))
         )
       )

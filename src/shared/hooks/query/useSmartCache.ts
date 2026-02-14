@@ -1,7 +1,7 @@
  
 'use client';
 
-import { useQuery, useQueryClient, type Query } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type Query, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { fetchSettingsCached } from '@/shared/api/settings-client';
@@ -140,11 +140,11 @@ export function useCacheWarming(): {
     const userQueries = [
       {
         queryKey: QUERY_KEYS.user.preferences(userId),
-        queryFn: async (): Promise<any> => await fetch(`/api/user/${userId}/preferences`).then((r: Response) => r.json()),
+        queryFn: async (): Promise<unknown> => await fetch(`/api/user/${userId}/preferences`).then((r: Response) => r.json()),
       },
       {
         queryKey: QUERY_KEYS.user.settings(userId),
-        queryFn: async (): Promise<any> => await fetch(`/api/user/${userId}/settings`).then((r: Response) => r.json()),
+        queryFn: async (): Promise<unknown> => await fetch(`/api/user/${userId}/settings`).then((r: Response) => r.json()),
       },
     ];
 
@@ -158,7 +158,7 @@ export function useCacheWarming(): {
   const warmNavigationData = useCallback(async (routes: string[]): Promise<void> => {
     const navigationQueries = routes.map((route: string) => ({
       queryKey: QUERY_KEYS.navigation.route(route),
-      queryFn: async (): Promise<any> => await fetch(`/api${route}`).then((r: Response) => r.json()),
+      queryFn: async (): Promise<unknown> => await fetch(`/api${route}`).then((r: Response) => r.json()),
     }));
 
     await Promise.allSettled(
@@ -176,7 +176,7 @@ export function useCacheWarming(): {
     const frequentQueries = [
       {
         queryKey: QUERY_KEYS.settings.scope('light'),
-        queryFn: async (): Promise<any> => await fetchSettingsCached({ scope: 'light' }),
+        queryFn: async (): Promise<unknown> => await fetchSettingsCached({ scope: 'light' }),
       },
     ];
 
@@ -206,7 +206,7 @@ export function useAdaptiveQuery<T>(
     dataType?: 'realtime' | 'standard' | 'longTerm' | 'static';
     priority?: 'high' | 'medium' | 'low';
   }
-): any {
+): UseQueryResult<T> {
   const dataType = options?.dataType || 'standard';
   const strategy = cacheStrategies[dataType];
 

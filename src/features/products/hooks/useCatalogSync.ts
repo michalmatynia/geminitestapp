@@ -81,40 +81,44 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
     ],
   });
 
-  const [catalogsQuery, priceGroupsQuery, languagesQuery, currenciesQuery] = results;
+  const catalogsQuery = results[0]!;
+  const priceGroupsQuery = results[1]!;
+  const languagesQuery = results[2]!;
+  const currenciesQuery = results[3]!;
 
   // Log errors
-  if (catalogsQuery.error) {
-    logClientError(catalogsQuery.error, { context: { source: 'useCatalogSync', action: 'fetchCatalogs' } });
-  }
-  if (priceGroupsQuery.error) {
-    logClientError(priceGroupsQuery.error, { context: { source: 'useCatalogSync', action: 'fetchPriceGroups' } });
-  }
-  if (languagesQuery.error) {
-    logClientError(languagesQuery.error, { context: { source: 'useCatalogSync', action: 'fetchLanguages' } });
-  }
-  if (currenciesQuery.error) {
-    logClientError(currenciesQuery.error, { context: { source: 'useCatalogSync', action: 'fetchCurrencies' } });
-  }
+  useEffect(() => {
+    if (catalogsQuery.error) {
+      logClientError(catalogsQuery.error, { context: { source: 'useCatalogSync', action: 'fetchCatalogs' } });
+    }
+    if (priceGroupsQuery.error) {
+      logClientError(priceGroupsQuery.error, { context: { source: 'useCatalogSync', action: 'fetchPriceGroups' } });
+    }
+    if (languagesQuery.error) {
+      logClientError(languagesQuery.error, { context: { source: 'useCatalogSync', action: 'fetchLanguages' } });
+    }
+    if (currenciesQuery.error) {
+      logClientError(currenciesQuery.error, { context: { source: 'useCatalogSync', action: 'fetchCurrencies' } });
+    }
+  }, [catalogsQuery.error, priceGroupsQuery.error, languagesQuery.error, currenciesQuery.error]);
 
   // Extract data with defaults
   const rawCatalogs = useMemo(
-    () => catalogsQuery.data ?? [],
+    () => (catalogsQuery.data as Catalog[]) ?? [],
     [catalogsQuery.data],
   );
   const priceGroups = useMemo(
-    () => priceGroupsQuery.data ?? [],
+    () => (priceGroupsQuery.data as PriceGroupWithDetails[]) ?? [],
     [priceGroupsQuery.data],
   );
   const languages = useMemo(
-    () => languagesQuery.data ?? [],
+    () => (languagesQuery.data as LanguageRecord[]) ?? [],
     [languagesQuery.data],
   );
-  const currencyPriceGroups = priceGroups;
 
   // Compute allowed currency codes
   const allowedCurrencyCodes = useMemo(() => {
-    const data = currenciesQuery.data ?? [];
+    const data = (currenciesQuery.data as CurrencyRecord[]) ?? [];
     return data
       .map((entry) => entry.code?.trim().toUpperCase())
       .filter((code): code is string => Boolean(code));
@@ -133,7 +137,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
 
   // Memoize currency options to prevent unnecessary re-renders
   const { codes, fallbackCode } = useMemo((): { codes: string[]; fallbackCode: string } => {
-    if (currencyPriceGroups.length === 0)
+    if (priceGroups.length === 0)
       return { codes: [] as string[], fallbackCode: '' };
 
     const isCatalogScoped =
@@ -146,8 +150,8 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
       catalogPriceGroupIds.length > 0 ? new Set(catalogPriceGroupIds) : null;
 
     const candidateGroups = allowedGroupIds
-      ? currencyPriceGroups.filter((group) => allowedGroupIds.has(group.id))
-      : currencyPriceGroups;
+      ? priceGroups.filter((group) => allowedGroupIds.has(group.id))
+      : priceGroups;
 
     let codes = Array.from(
       new Set(
@@ -175,7 +179,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
     const fallbackCode = defaultGroup?.currency?.code || codes[0] || '';
 
     return { codes, fallbackCode };
-  }, [catalogFilter, catalogs, currencyPriceGroups, allowedCurrencyCodes]);
+  }, [catalogFilter, catalogs, priceGroups, allowedCurrencyCodes]);
 
   // Sync Currency Options based on Catalog
   const currencyOptions = codes;
@@ -187,7 +191,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
       ? userCurrencyCode
       : fallbackCode;
 
-  const setCurrencyCode = (action: string | ((prev: string) => string)): void => {
+  const handleSetCurrencyCode = useCallback((action: string | ((prev: string) => string)): void => {
     // Wrap the setter to handle functional updates correctly with the derived value
     if (typeof action === 'function') {
       setUserCurrencyCode((_prev) => {
@@ -198,7 +202,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
     } else {
       setUserCurrencyCode(action);
     }
-  };
+  }, [currencyCode]);
 
   const { languageOptions, fallbackNameLocale } = useMemo((): { languageOptions: LanguageOption[]; fallbackNameLocale: 'name_en' | 'name_pl' | 'name_de' | undefined } => {
     const options: LanguageOption[] = [];
@@ -268,7 +272,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
     catalogsLoading: catalogsQuery.isLoading,
     catalogsError: catalogsQuery.error ? catalogsQuery.error.message : null,
     currencyCode,
-    setCurrencyCode,
+    setCurrencyCode: handleSetCurrencyCode,
     currencyOptions,
     priceGroups,
     catalogFilterInitialized,

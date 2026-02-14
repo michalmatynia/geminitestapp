@@ -2,7 +2,7 @@ import 'server-only';
 
 import { Prisma, Product as PrismaProduct, ProductImage as PrismaProductImage, ImageFile as PrismaImageFile, Catalog as PrismaCatalog, ProductCatalog as PrismaProductCatalog } from '@prisma/client';
 
-import type { CatalogRecord } from '@/features/products/types';
+import type { CatalogRecord, ProductWithImages } from '@/features/products/types';
 import type { ProductParameterValue } from '@/features/products/types';
 import type {
   CreateProductInput,
@@ -144,7 +144,7 @@ const toProductImageRecord = (image: PrismaProductImage & { imageFile?: PrismaIm
 type FullPrismaProduct = PrismaProduct & {
   images?: (PrismaProductImage & { imageFile: PrismaImageFile | null })[];
   catalogs?: (PrismaProductCatalog & { catalog: PrismaCatalog & { languages?: { languageId: string }[] } })[];
-  categories?: { categoryId: string }[];
+  categories?: { categoryId: string } | null;
   tags?: (Prisma.ProductTagAssignmentGetPayload<{}>)[];
   producers?: (Prisma.ProductProducerAssignmentGetPayload<{}>)[];
 };
@@ -198,7 +198,7 @@ const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
     noteIds: product.noteIds ?? [],
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
-    categoryId: product.categories?.[0]?.categoryId ?? null,
+    categoryId: product.categories?.categoryId ?? null,
     tags: product.tags?.map(t => ({ 
       productId: t.productId,
       tagId: t.tagId,

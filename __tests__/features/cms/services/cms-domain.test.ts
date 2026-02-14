@@ -61,7 +61,8 @@ describe('CMS Domain Service', () => {
     });
 
     it('returns existing domain if found', async () => {
-      const existing = { id: 'd1', domain: 'existing.com', aliasOf: null };
+      const now = new Date();
+      const existing = { id: 'd1', domain: 'existing.com', aliasOf: null, createdAt: now, updatedAt: now };
       mockCollection.findOne.mockResolvedValue(existing);
 
       const domain = await resolveCmsDomainByHost('existing.com');
@@ -71,8 +72,9 @@ describe('CMS Domain Service', () => {
     });
 
     it('resolves alias to canonical domain', async () => {
-      const alias = { id: 'd2', domain: 'alias.com', aliasOf: 'd1' };
-      const canonical = { id: 'd1', domain: 'canonical.com', aliasOf: null };
+      const now = new Date();
+      const alias = { id: 'd2', domain: 'alias.com', aliasOf: 'd1', createdAt: now, updatedAt: now };
+      const canonical = { id: 'd1', domain: 'canonical.com', aliasOf: null, createdAt: now, updatedAt: now };
       
       mockCollection.findOne
         .mockResolvedValueOnce(alias) // Initial find by host
@@ -88,8 +90,9 @@ describe('CMS Domain Service', () => {
 
   describe('resolveCmsDomainScopeById', () => {
     it('handles circular aliases gracefully', async () => {
-      const d1 = { id: 'd1', domain: 'd1.com', aliasOf: 'd2' };
-      const d2 = { id: 'd2', domain: 'd2.com', aliasOf: 'd1' };
+      const now = new Date();
+      const d1 = { id: 'd1', domain: 'd1.com', aliasOf: 'd2', createdAt: now, updatedAt: now };
+      const d2 = { id: 'd2', domain: 'd2.com', aliasOf: 'd1', createdAt: now, updatedAt: now };
 
       mockCollection.findOne
         .mockResolvedValueOnce(d1)
@@ -102,7 +105,17 @@ describe('CMS Domain Service', () => {
 
   describe('Management', () => {
     it('should create a new domain', async () => {
+      const now = new Date();
       mockCollection.findOne.mockResolvedValue(null);
+      mockCollection.insertOne.mockResolvedValue({ insertedId: 'mock-domain-uuid' });
+      // We also need findOne to return the newly created domain for the final response mapping
+      mockCollection.findOne.mockResolvedValue({
+        id: 'mock-domain-uuid',
+        domain: 'new-domain.com',
+        createdAt: now,
+        updatedAt: now
+      });
+
       const result = await createCmsDomain('new-domain.com');
       expect(result.domain).toBe('new-domain.com');
       expect(mockCollection.insertOne).toHaveBeenCalled();
@@ -119,8 +132,9 @@ describe('CMS Domain Service', () => {
     });
 
     it('should set domain alias', async () => {
-      const d2 = { id: 'd2', domain: 'd2.com', aliasOf: null };
-      const d1 = { id: 'd1', domain: 'd1.com', aliasOf: null };
+      const now = new Date();
+      const d2 = { id: 'd2', domain: 'd2.com', aliasOf: null, createdAt: now, updatedAt: now };
+      const d1 = { id: 'd1', domain: 'd1.com', aliasOf: null, createdAt: now, updatedAt: now };
       
       mockCollection.findOne
         .mockResolvedValueOnce(d2) // getDomainRecordById("d2")

@@ -315,22 +315,22 @@ function LogList(): React.JSX.Element {
     {
       accessorKey: 'level',
       header: 'Level',
-              cell: ({ row }) => {
-                const level = row.original.level.toLowerCase();
-                const variantMap: Record<string, StatusVariant> = {
-                  error: 'error',
-                  warn: 'warning',
-                  info: 'info',
-                  debug: 'neutral',
-                };
-                return (
-                  <StatusBadge
-                    status={row.original.level}
-                    variant={variantMap[level] || 'neutral'}
-                    className='text-[9px]'
-                  />
-                );
-              },
+      cell: ({ row }) => {
+        const level = row.original.level.toLowerCase();
+        const variantMap: Record<string, StatusVariant> = {
+          error: 'error',
+          warn: 'warning',
+          info: 'info',
+          debug: 'neutral',
+        };
+        return (
+          <StatusBadge
+            status={row.original.level}
+            variant={variantMap[level] || 'neutral'}
+            className='text-[9px]'
+          />
+        );
+      },
       
     },
     {
@@ -394,21 +394,21 @@ function LogList(): React.JSX.Element {
         </div>
       </div>
 
-              <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+      <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
 
-                <DataTable
+        <DataTable
 
-                  columns={columns}
+          columns={columns}
 
-                  data={logs}
+          data={logs}
 
-                  isLoading={logsQuery.isLoading}
+          isLoading={logsQuery.isLoading}
 
-                  maxHeight='60vh'
+          maxHeight='60vh'
 
-                  stickyHeader
+          stickyHeader
 
-                  renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
+          renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
 
       
             const log = row.original;

@@ -66,6 +66,11 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
               <div id='export-jobs'>
                 <ProductListingJobsPanel showBackToProducts={false} />
               </div>
+              {activeTab === 'paths-external' ? (
+                <div id='image-studio-jobs'>
+                  <ImageStudioRunsQueuePanel />
+                </div>
+              ) : null}
             </TabsContent>
 
             <TabsContent value='file-uploads' className='space-y-4'>
@@ -73,7 +78,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             </TabsContent>
 
             <TabsContent value='image-studio' className='space-y-4'>
-              <ImageStudioRunsQueuePanel />
+              {activeTab === 'image-studio' ? <ImageStudioRunsQueuePanel /> : null}
             </TabsContent>
 
           </Tabs>

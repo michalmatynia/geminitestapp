@@ -1,0 +1,34 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 204ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 22.5s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/prompt-exploder/hierarchy-master-tree.ts:125:32
+Type error: Property 'paramPath' comes from an index signature, so it must be accessed with ['paramPath'].
+
+[0m [90m 123 |[39m     [36mif[39m ([33m![39mcondition [33m||[39m [36mtypeof[39m condition [33m!==[39m [32m'object'[39m) [36mreturn[39m[33m;[39m
+ [90m 124 |[39m     [36mconst[39m c [33m=[39m condition [36mas[39m [33mRecord[39m[33m<[39m[33mstring[39m[33m,[39m unknown[33m>[39m[33m;[39m
+[31m[1m>[22m[39m[90m 125 |[39m     [36mconst[39m paramPath [33m=[39m [36mtypeof[39m c[33m.[39mparamPath [33m===[39m [32m'string'[39m [33m?[39m c[33m.[39mparamPath[33m.[39mtrim() [33m:[39m [32m''[39m[33m;[39m
+ [90m     |[39m                                [31m[1m^[22m[39m
+ [90m 126 |[39m     [36mconst[39m comparator [33m=[39m
+ [90m 127 |[39m       [36mtypeof[39m c[33m.[39mcomparator [33m===[39m [32m'string'[39m [33m&&[39m
+ [90m 128 |[39m         [33mLOGICAL_COMPARATOR_VALUES[39m[33m.[39mhas(c[33m.[39mcomparator)[0m
+Next.js build worker exited with code: 1 and signal: null

@@ -33,7 +33,8 @@ describe('Mongo CMS Repository', () => {
 
   describe('Pages', () => {
     it('should get all pages', async () => {
-      const mockDocs = [{ id: '1', name: 'Home', components: [] }];
+      const now = new Date();
+      const mockDocs = [{ id: '1', name: 'Home', components: [], createdAt: now, updatedAt: now }];
       mockCollection.toArray
         .mockResolvedValueOnce(mockDocs) // pages
         .mockResolvedValueOnce([]) // slugLinks
@@ -54,7 +55,8 @@ describe('Mongo CMS Repository', () => {
     });
 
     it('should update a page', async () => {
-      const mockPage = { id: '1', name: 'Updated', components: [] };
+      const now = new Date();
+      const mockPage = { id: '1', name: 'Updated', components: [], createdAt: now, updatedAt: now };
       mockCollection.findOneAndUpdate.mockResolvedValue(mockPage);
       mockCollection.findOne.mockResolvedValue(mockPage); // Inside getPageById
       mockCollection.toArray.mockResolvedValue([]); // slugs

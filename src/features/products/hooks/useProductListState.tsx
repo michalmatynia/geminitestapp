@@ -26,7 +26,6 @@ import {
   getProductDetailQueryKey,
   getProductListQueryKey,
   inactiveProductDetailQueryKey,
-  invalidateProductsAndCounts,
 } from '@/features/products/hooks/productCache';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import {
@@ -34,8 +33,6 @@ import {
   useBulkDeleteProductsMutation,
 } from '@/features/products/hooks/useProductData';
 import { 
-  useProductCacheWarmup, 
-  useProductPrefetch, 
   useProductSync 
 } from '@/features/products/hooks/useProductEnhancements';
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
@@ -52,6 +49,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import type { ProductListContextType } from '../context/ProductListContext';
 
 type RowSelectionState = Record<string, boolean>;
+const EDIT_PRODUCT_DETAIL_STALE_TIME_MS = 30_000;
 
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
@@ -115,10 +113,8 @@ export function useProductListState(): ProductListContextType & {
 
   const queuedProductIds = useQueuedProductIds();
 
-  // Enhanced TanStack Query features
-  useProductCacheWarmup();
+  // Keep cross-tab list updates, avoid eager warmups on initial page load.
   useProductSync();
-  useProductPrefetch();
 
   // Load user preferences
   const {
@@ -211,8 +207,9 @@ export function useProductListState(): ProductListContextType & {
       : inactiveProductDetailQueryKey,
     queryFn: () => api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`),
     enabled: Boolean(editingProduct?.id),
-    staleTime: 0,
-    refetchInterval: editingProduct?.id ? 5000 : false,
+    staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchInterval: false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
   });
@@ -234,10 +231,6 @@ export function useProductListState(): ProductListContextType & {
     handleListProductSuccess: baseHandleListProductSuccess,
   } = useIntegrationOperations();
 
-  useEffect(() => {
-    prefetchIntegrationSelectionData();
-  }, [prefetchIntegrationSelectionData]);
-
   // Initialize currency code from preferences
   useEffect(() => {
     if (!preferencesLoading && preferences.currencyCode) {
@@ -255,31 +248,9 @@ export function useProductListState(): ProductListContextType & {
   }, [editingProduct, editingProductDetailQuery.data, setEditingProduct]);
 
   const handleOpenEditModal = useCallback((product: ProductWithImages) => {
-    const run = async (): Promise<void> => {
-      setActionError(null);
-      try {
-        const fullProduct = await queryClient.fetchQuery({
-          queryKey: getProductDetailQueryKey(product.id),
-          queryFn: () => api.get<ProductWithImages>(`/api/products/${product.id}`),
-          staleTime: 0,
-        });
-        setEditingProduct(fullProduct);
-      } catch (error) {
-        logClientError(error, {
-          context: {
-            source: 'useProductListState',
-            action: 'openEditModal',
-            productId: product.id,
-          },
-        });
-        setEditingProduct(product);
-        toast('Could not load full product details. Opened with limited data.', {
-          variant: 'info',
-        });
-      }
-    };
-    void run();
-  }, [setActionError, queryClient, setEditingProduct, toast]);
+    setActionError(null);
+    setEditingProduct(product);
+  }, [setActionError, setEditingProduct]);
 
   const handleOpenCreate = useCallback(() => {
     setCreateDraft(null);
@@ -507,8 +478,7 @@ export function useProductListState(): ProductListContextType & {
 
   useEffect(() => {
     setIsMounted(true);
-    void invalidateProductsAndCounts(queryClient);
-  }, [queryClient]);
+  }, []);
 
   useEffect(() => {
     if (!lastEditedId) return;

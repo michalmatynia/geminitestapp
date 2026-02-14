@@ -1074,6 +1074,9 @@ export function CenterPreview(): React.JSX.Element {
                 <div className='flex w-max min-w-full gap-2'>
                   {filteredVariantThumbnails.map((variant) => {
                     const isActive = activeVariantId === variant.id;
+                    const canDeleteVariant =
+                      variant.status !== 'pending' &&
+                      (variant.status === 'failed' || Boolean(variant.output) || Boolean(variant.slotId));
                     const statusClasses =
                       variant.status === 'completed'
                         ? 'border-emerald-400/40 bg-emerald-500/5'
@@ -1120,7 +1123,7 @@ export function CenterPreview(): React.JSX.Element {
                             </div>
                           )}
                         </button>
-                        {variant.output && variant.slotId ? (
+                        {canDeleteVariant ? (
                           <Button size='xs'
                             type='button'
                             variant='ghost'

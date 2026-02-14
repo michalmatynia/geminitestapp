@@ -105,7 +105,10 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
     const profileValue = activeProjectIdFromPreferences || null;
     const shouldPersistProfile = profileValue !== nextPersistedValue;
-    const shouldPersistLegacy = normalizedProjectId !== legacyActiveProjectId;
+    // Keep legacy key in sync only when it already exists; avoid creating it implicitly,
+    // because each write invalidates broad settings queries and triggers redundant refetches.
+    const shouldPersistLegacy = Boolean(legacyActiveProjectId) &&
+      normalizedProjectId !== legacyActiveProjectId;
 
     if (!shouldPersistProfile && !shouldPersistLegacy) {
       lastPersistedProjectRef.current = nextPersistedValue;

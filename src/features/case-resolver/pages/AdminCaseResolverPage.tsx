@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, Eye, EyeOff, FolderOpen, Users } from 'lucide-react';
+import { ChevronRight, Eye, EyeOff, FileText, FolderOpen, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -907,6 +907,20 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     ) : (
                       <Eye className='size-3.5' />
                     )}
+                  </Button>
+                ) : null}
+                {activeFile ? (
+                  <Button
+                    type='button'
+                    onClick={(): void => {
+                      setIsPreviewPageVisible(false);
+                      handleOpenFileEditor(activeFile.id);
+                    }}
+                    title='Open document editor'
+                    aria-label='Open document editor'
+                    className='h-8 w-8 rounded-md border border-border px-0 text-gray-200 hover:bg-muted/60'
+                  >
+                    <FileText className='size-3.5' />
                   </Button>
                 ) : null}
                 {activeFile ? (

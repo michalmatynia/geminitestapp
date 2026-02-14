@@ -139,7 +139,7 @@ export const DataTable = memo(function DataTable<TData>({
 
   return (
     <div 
-      className={cn('rounded-md border border-border flex flex-col', className)}
+      className={cn('rounded-md border border-border flex flex-col', className, 'w-full min-w-0 max-w-none')}
       style={maxHeight ? { maxHeight } : undefined}
     >
       <div className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>

@@ -62,7 +62,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
   }
 
-  const latestRun = (await getImageStudioRunById(run.id)) ?? run;
+  const latestRun = (
+    await updateImageStudioRun(run.id, {
+      dispatchMode,
+    })
+  ) ?? (await getImageStudioRunById(run.id)) ?? run;
 
   return NextResponse.json({
     runId: latestRun.id,

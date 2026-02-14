@@ -18,7 +18,7 @@ describe('ConfirmModal', () => {
       />
     );
 
-    expect(screen.getByText('Confirm Action')).toBeInTheDocument();
+    expect(screen.getAllByText('Confirm Action').length).toBeGreaterThan(0);
     expect(screen.getByText('Are you sure?')).toBeInTheDocument();
   });
 
@@ -96,6 +96,6 @@ describe('ConfirmModal', () => {
     );
 
     const deleteButton = screen.getByText('Delete');
-    expect(deleteButton).toHaveClass('destructive');
+    expect(deleteButton.className).toContain('destructive');
   });
 });

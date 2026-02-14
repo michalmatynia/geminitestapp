@@ -18,10 +18,8 @@ import {
   useToast,
 } from '@/shared/ui';
 
-import { useGenerationState, useGenerationActions } from '../context/GenerationContext';
 import { useMaskingState, useMaskingActions, type MaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
-import { usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
@@ -125,9 +123,6 @@ export function GenerationToolbar(): React.JSX.Element {
     maskGenMode,
   }: Pick<MaskingState, 'maskShapes' | 'activeMaskId' | 'maskInvert' | 'maskGenLoading' | 'maskGenMode'> = useMaskingState();
   const { setMaskInvert, setMaskGenMode, handleAiMaskGeneration } = useMaskingActions();
-  const { promptText } = usePromptState();
-  const { runMutation, isRunInFlight, activeRunStatus } = useGenerationState();
-  const { handleRunGeneration } = useGenerationActions();
   const { studioSettings } = useSettingsState();
   const { setStudioSettings } = useSettingsActions();
   const { toast } = useToast();
@@ -395,12 +390,10 @@ export function GenerationToolbar(): React.JSX.Element {
     }
   };
 
-  const generationBusy = runMutation.isPending || isRunInFlight;
-  const generationLabel = generationBusy
-    ? activeRunStatus === 'queued'
-      ? 'Queued...'
-      : 'Generating...'
-    : `Generate ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`;
+  const maskGenerationBusy = maskGenLoading;
+  const maskGenerationLabel = maskGenerationBusy
+    ? 'Generating Mask...'
+    : 'Generate Mask';
 
   const quickSwitchModels = useMemo(
     () =>
@@ -497,16 +490,20 @@ export function GenerationToolbar(): React.JSX.Element {
         ariaLabel='Generation image count'
       />
       <Button size='xs'
-        onClick={handleRunGeneration}
-        disabled={!workingSlot || !promptText.trim() || generationBusy}
+        type='button'
+        variant='outline'
+        onClick={() => {
+          handleAiMaskGeneration(maskGenMode);
+        }}
+        disabled={!workingSlot || maskGenerationBusy}
         className='flex-1'
       >
-        {generationBusy ? (
+        {maskGenerationBusy ? (
           <Loader2 className='mr-2 size-4 animate-spin' />
         ) : (
           <Play className='mr-2 size-4' />
         )}
-        {generationLabel}
+        {maskGenerationLabel}
       </Button>
       <SelectSimple size='sm'
         className='w-[190px]'
@@ -580,9 +577,9 @@ export function GenerationToolbar(): React.JSX.Element {
           setMaskPreviewEnabled(true);
         }}
         disabled={!workingSlot || exportMaskCount === 0 || maskPreviewEnabled}
-        title='Generate and enable mask preview'
+        title='Enable mask preview'
       >
-        Generate Mask
+        Enable Preview
       </Button>
       <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
         <span>Mask Preview</span>
@@ -608,7 +605,6 @@ export function GenerationToolbar(): React.JSX.Element {
         onValueChange={(value: string) => {
           const mode = value as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
           setMaskGenMode(mode);
-          handleAiMaskGeneration(mode);
         }}
         options={maskModeOptions}
         placeholder={maskGenLoading ? 'Detecting...' : 'Smart Mask'}

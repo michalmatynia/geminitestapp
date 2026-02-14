@@ -2045,11 +2045,18 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }
 
     const builtBinding = buildManualBindingFromDraft({
+
       segments: documentState.segments,
+
       draft: bindingDraft,
-      promptExploderCreateManualBindingId,
+
+      createManualBindingId: promptExploderCreateManualBindingId,
+
       formatSubsectionLabel,
+
     });
+
+    
     if (!builtBinding.ok) {
       toast(builtBinding.message, { variant: builtBinding.variant });
       return;

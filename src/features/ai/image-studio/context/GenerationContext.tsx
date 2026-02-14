@@ -364,11 +364,13 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     }
 
     let cancelled = false;
+    const hydrationAbortController = new AbortController();
 
     const hydrateLatestRun = async (): Promise<void> => {
       try {
         const response = await api.get<{ runs?: PersistedImageStudioRunRecord[] }>(
-          `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=1`
+          `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=1`,
+          { signal: hydrationAbortController.signal }
         );
         if (cancelled) return;
 
@@ -429,6 +431,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
     return () => {
       cancelled = true;
+      hydrationAbortController.abort();
       cancelCurrentPoll();
     };
   }, [projectId, cancelCurrentPoll]);

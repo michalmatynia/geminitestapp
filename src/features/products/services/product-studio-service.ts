@@ -734,7 +734,11 @@ export async function sendProductImageToStudio(params: {
     );
   }
 
-  const latestRun = (await getImageStudioRunById(run.id)) ?? run;
+  const latestRun = (
+    await updateImageStudioRun(run.id, {
+      dispatchMode,
+    })
+  ) ?? (await getImageStudioRunById(run.id)) ?? run;
 
   return {
     config,

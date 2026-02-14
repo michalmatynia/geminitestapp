@@ -6,7 +6,13 @@ import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 
 import { getProductDataProvider } from '@/features/products/server';
-import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products/types/drafts';
+import {
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
+  type ProductDraft,
+  type CreateProductDraftInput,
+  type UpdateProductDraftInput,
+  type ProductDraftOpenFormTab,
+} from '@/features/products/types/drafts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import type { ProductParameterValue } from '@/shared/types/domain/products';
@@ -48,6 +54,7 @@ type MongoDraftDoc = {
   icon?: string | null;
   iconColorMode?: 'theme' | 'custom' | null;
   iconColor?: string | null;
+  openProductFormTab?: string | null;
   imageLinks?: string[];
   baseProductId?: string | null;
   createdAt?: Date;
@@ -76,6 +83,19 @@ const normalizeIconColor = (value: unknown): string | null => {
   const trimmed = value.trim();
   if (!HEX_COLOR_PATTERN.test(trimmed)) return null;
   return trimmed.toLowerCase();
+};
+
+const openProductFormTabOptions = new Set<string>(
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS
+);
+
+const normalizeOpenProductFormTab = (
+  value: unknown
+): ProductDraftOpenFormTab => {
+  if (typeof value !== 'string') return 'general';
+  const trimmed = value.trim();
+  if (!openProductFormTabOptions.has(trimmed)) return 'general';
+  return trimmed as ProductDraftOpenFormTab;
 };
 
 const getDraftProvider = async (): Promise<DraftProvider> => {
@@ -129,6 +149,7 @@ const listDrafts_Mongo = async (): Promise<ProductDraft[]> => {
     icon: draft.icon || null,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
+    openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
     createdAt: draft.createdAt || new Date(),
@@ -179,6 +200,7 @@ const getDraft_Mongo = async (id: string): Promise<ProductDraft | null> => {
     icon: draft.icon || null,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
+    openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: Array.isArray(draft.imageLinks) ? draft.imageLinks : [],
     baseProductId: draft.baseProductId || null,
     createdAt: draft.createdAt || new Date(),
@@ -226,6 +248,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     icon: input.icon || null,
     iconColorMode: normalizeIconColorMode(input.iconColorMode),
     iconColor: normalizeIconColor(input.iconColor),
+    openProductFormTab: normalizeOpenProductFormTab(input.openProductFormTab),
     imageLinks: input.imageLinks || [],
     active: input.active ?? true,
     createdAt: now,
@@ -269,6 +292,7 @@ const createDraft_Mongo = async (input: CreateProductDraftInput): Promise<Produc
     icon: draft.icon || null,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
+    openProductFormTab: normalizeOpenProductFormTab(draft.openProductFormTab),
     imageLinks: draft.imageLinks || [],
     baseProductId: input.baseProductId || null,
     createdAt: now,
@@ -304,6 +328,12 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
 
   if ('iconColor' in input) {
     updatePayload.iconColor = normalizeIconColor(input.iconColor);
+  }
+
+  if ('openProductFormTab' in input) {
+    updatePayload.openProductFormTab = normalizeOpenProductFormTab(
+      input.openProductFormTab
+    );
   }
 
   const result = await mongo.collection<MongoDraftDoc>('product_drafts').findOneAndUpdate(
@@ -363,6 +393,7 @@ const updateDraft_Mongo = async (id: string, input: UpdateProductDraftInput): Pr
     icon: doc.icon || null,
     iconColorMode: normalizeIconColorMode(doc.iconColorMode),
     iconColor: normalizeIconColor(doc.iconColor),
+    openProductFormTab: normalizeOpenProductFormTab(doc.openProductFormTab),
     imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
     baseProductId: doc.baseProductId || null,
     createdAt: doc.createdAt || now,
@@ -393,6 +424,7 @@ const listDrafts_Prisma = async (): Promise<ProductDraft[]> => {
     formatterEnabled: false,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
+    openProductFormTab: 'general',
     imageLinks: draft.imageLinks as string[],
   }));
 };
@@ -415,6 +447,7 @@ const getDraft_Prisma = async (id: string): Promise<ProductDraft | null> => {
     formatterEnabled: false,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
+    openProductFormTab: 'general',
     imageLinks: draft.imageLinks as string[],
   };
 };
@@ -469,6 +502,7 @@ const createDraft_Prisma = async (input: CreateProductDraftInput): Promise<Produ
     formatterEnabled: false,
     iconColorMode: normalizeIconColorMode(draft.iconColorMode),
     iconColor: normalizeIconColor(draft.iconColor),
+    openProductFormTab: 'general',
     imageLinks: draft.imageLinks as string[],
   };
 };
@@ -478,6 +512,7 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): P
     const {
       validatorEnabled: _validatorEnabled,
       formatterEnabled: _formatterEnabled,
+      openProductFormTab: _openProductFormTab,
       ...updateData
     } = input;
     if ('iconColorMode' in input) {
@@ -503,6 +538,7 @@ const updateDraft_Prisma = async (id: string, input: UpdateProductDraftInput): P
       formatterEnabled: false,
       iconColorMode: normalizeIconColorMode(draft.iconColorMode),
       iconColor: normalizeIconColor(draft.iconColor),
+      openProductFormTab: 'general',
       imageLinks: draft.imageLinks as string[],
     };
   } catch {

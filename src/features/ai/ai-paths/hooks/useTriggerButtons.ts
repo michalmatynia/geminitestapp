@@ -66,7 +66,9 @@ export function useTriggerButtons({
       if (!result.ok) return [];
       return Array.isArray(result.data) ? result.data : [];
     },
-    staleTime: 10_000,
+    staleTime: 5 * 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   const buttons = useMemo(() => {

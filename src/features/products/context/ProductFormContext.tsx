@@ -45,6 +45,68 @@ import type { ImageFileSelection } from '@/shared/types/domain/files';
 import type { Language } from '@/shared/types/domain/internationalization';
 import { useToast } from '@/shared/ui';
 
+const PRODUCT_STUDIO_CONFIG_CACHE_TTL_MS = 30_000;
+
+type ProductStudioConfigResponse = {
+  config?: {
+    projectId?: string | null;
+  };
+};
+
+type ProductStudioConfigCacheEntry = {
+  projectId: string | null;
+  expiresAt: number;
+};
+
+const productStudioConfigCache = new Map<string, ProductStudioConfigCacheEntry>();
+const productStudioConfigInFlight = new Map<string, Promise<string | null>>();
+
+const normalizeStudioProjectId = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+};
+
+const setCachedStudioProjectId = (productId: string, projectId: string | null): void => {
+  productStudioConfigCache.set(productId, {
+    projectId,
+    expiresAt: Date.now() + PRODUCT_STUDIO_CONFIG_CACHE_TTL_MS,
+  });
+};
+
+const loadStudioProjectId = async (productId: string): Promise<string | null> => {
+  const cached = productStudioConfigCache.get(productId);
+  const now = Date.now();
+  if (cached && cached.expiresAt > now) {
+    return cached.projectId;
+  }
+
+  const inFlight = productStudioConfigInFlight.get(productId);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const request = api
+    .get<ProductStudioConfigResponse>(
+      `/api/products/${encodeURIComponent(productId)}/studio`,
+      {
+        cache: 'no-store',
+        logError: false,
+      }
+    )
+    .then((response) => normalizeStudioProjectId(response.config?.projectId))
+    .then((projectId) => {
+      setCachedStudioProjectId(productId, projectId);
+      return projectId;
+    })
+    .finally(() => {
+      productStudioConfigInFlight.delete(productId);
+    });
+
+  productStudioConfigInFlight.set(productId, request);
+  return request;
+};
+
 export interface ProductFormContextType {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
@@ -210,25 +272,10 @@ export function ProductFormProvider({
     }
 
     setStudioConfigLoading(true);
-    void api
-      .get<{
-        config?: {
-          projectId?: string | null;
-        };
-      }>(
-        `/api/products/${encodeURIComponent(productId)}/studio`,
-        {
-          cache: 'no-store',
-          logError: false,
-        }
-      )
-      .then((response) => {
+    void loadStudioProjectId(productId)
+      .then((persistedProjectId) => {
         if (cancelled) return;
-        const nextProjectId =
-          typeof response.config?.projectId === 'string'
-            ? response.config.projectId.trim()
-            : '';
-        const normalized = nextProjectId || defaultStudioProjectId;
+        const normalized = persistedProjectId ?? defaultStudioProjectId;
         setStudioProjectIdState(normalized);
         persistedStudioProjectRef.current = normalized;
         currentStudioProjectRef.current = normalized;
@@ -270,11 +317,8 @@ export function ProductFormProvider({
       )
       .then((response) => {
         if (studioConfigSaveRequestRef.current !== requestId) return;
-        const persistedRaw =
-          typeof response.config?.projectId === 'string'
-            ? response.config.projectId.trim()
-            : '';
-        const persistedProjectId = persistedRaw || null;
+        const persistedProjectId = normalizeStudioProjectId(response.config?.projectId);
+        setCachedStudioProjectId(productId, persistedProjectId);
         persistedStudioProjectRef.current = persistedProjectId;
         currentStudioProjectRef.current = persistedProjectId;
         setStudioProjectIdState(persistedProjectId);

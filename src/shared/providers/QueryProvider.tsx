@@ -18,6 +18,18 @@ type QueryProviderProps = {
   children: React.ReactNode;
 };
 
+let browserQueryClient: ReturnType<typeof createQueryClient> | null = null;
+
+const getQueryClient = () => {
+  if (typeof window === 'undefined') {
+    return createQueryClient();
+  }
+  if (!browserQueryClient) {
+    browserQueryClient = createQueryClient();
+  }
+  return browserQueryClient;
+};
+
 function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element {
   // Global error handling
   useGlobalQueryErrorHandler({
@@ -83,7 +95,7 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
 }
 
 export const QueryProvider = ({ children }: QueryProviderProps): React.JSX.Element => {
-  const [queryClient] = useState(() => createQueryClient());
+  const [queryClient] = useState(getQueryClient);
 
   useEffect(() => {
     setupOfflineSupport(queryClient);

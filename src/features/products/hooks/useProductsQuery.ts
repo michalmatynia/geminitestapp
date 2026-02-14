@@ -63,7 +63,7 @@ export const useProductsCount = createQueryHook({
 export function useProductsWithCount(
   filters: UseProductsFilters,
   options: UseProductsOptions = {},
-  ): {
+): {
     products: ProductWithImages[];
     total: number;
     isLoading: boolean;

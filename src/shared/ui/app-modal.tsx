@@ -5,7 +5,7 @@ import * as React from 'react';
 import { cn } from '@/shared/utils';
 
 import { Button } from './button';
-import { Dialog, DialogContent, DialogTitle } from './dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from './dialog';
 import { SectionHeader } from './section-header';
 
 type AppModalProps = {
@@ -14,6 +14,7 @@ type AppModalProps = {
   onClose?: (() => void) | undefined;
   title: React.ReactNode;
   subtitle?: React.ReactNode | undefined;
+  description?: React.ReactNode | undefined;
   titleHidden?: boolean | undefined;
   header?: React.ReactNode | undefined;
   headerActions?: React.ReactNode | undefined;
@@ -43,6 +44,7 @@ export function AppModal({
   onClose,
   title,
   subtitle,
+  description,
   titleHidden = false,
   header,
   headerActions,
@@ -77,6 +79,12 @@ export function AppModal({
 
   const bodyHeightClass = size === 'sm' ? 'max-h-[50vh]' : 'h-[80vh]';
   const isGlass = variant === 'glass';
+  const dialogDescription =
+    description ??
+    subtitle ??
+    (typeof title === 'string' && title.trim().length > 0
+      ? `${title} dialog`
+      : 'Modal dialog content');
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -89,6 +97,9 @@ export function AppModal({
         onEscapeKeyDown={handleEscapeKeyDown}
       >
         <DialogTitle className='sr-only'>{title}</DialogTitle>
+        <DialogDescription className='sr-only'>
+          {dialogDescription}
+        </DialogDescription>
         <div
           className={cn(
             'pointer-events-auto w-full rounded-lg border flex flex-col',

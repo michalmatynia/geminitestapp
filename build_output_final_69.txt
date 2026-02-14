@@ -19,3 +19,16 @@ Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
   Creating an optimized production build ...
 ✓ Compiled successfully in 26.4s
   Running TypeScript ...
+Failed to compile.
+
+./src/features/products/services/product-repository/prisma-product-repository.ts:152:55
+Type error: Cannot find name 'ProductWithImages'.
+
+[0m [90m 150 |[39m }[33m;[39m
+ [90m 151 |[39m
+[31m[1m>[22m[39m[90m 152 |[39m [36mconst[39m toProductRecord [33m=[39m (product[33m:[39m [33mFullPrismaProduct[39m)[33m:[39m [33mProductWithImages[39m [33m=>[39m {
+ [90m     |[39m                                                       [31m[1m^[22m[39m
+ [90m 153 |[39m   [36mconst[39m catalogs [33m=[39m product[33m.[39mcatalogs[33m?[39m[33m.[39mmap(pc [33m=>[39m ({
+ [90m 154 |[39m     productId[33m:[39m pc[33m.[39mproductId[33m,[39m
+ [90m 155 |[39m     catalogId[33m:[39m pc[33m.[39mcatalogId[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

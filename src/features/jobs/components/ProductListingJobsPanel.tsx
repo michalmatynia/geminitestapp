@@ -137,10 +137,10 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
         </FormSection>
 
         <FormSection title='Relist Scheduler' variant='subtle-compact' className='p-3'>
-                      <div className='flex items-center justify-between mb-2'>
-                        <span className='text-[10px] text-gray-500 uppercase font-bold'>Service</span>
-                        <StatusBadge status={traderaSchedulerQueue?.running ? 'Polling' : 'Idle'} variant={traderaSchedulerQueue?.running ? 'success' : 'warning'} className='text-[9px]' />
-                      </div>
+          <div className='flex items-center justify-between mb-2'>
+            <span className='text-[10px] text-gray-500 uppercase font-bold'>Service</span>
+            <StatusBadge status={traderaSchedulerQueue?.running ? 'Polling' : 'Idle'} variant={traderaSchedulerQueue?.running ? 'success' : 'warning'} className='text-[9px]' />
+          </div>
           
           <div className='grid grid-cols-2 gap-1 text-[10px] text-center uppercase font-bold'>
             <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Pending</span><span className='text-blue-400'>{traderaSchedulerQueue?.waitingCount ?? 0}</span></div>

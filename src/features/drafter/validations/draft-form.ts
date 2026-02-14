@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/features/products/types/drafts';
+
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 export const draftSubmitSchema = z
@@ -7,6 +9,7 @@ export const draftSubmitSchema = z
     name: z.string().trim().min(1, 'Draft name is required'),
     iconColorMode: z.enum(['theme', 'custom']),
     iconColor: z.string().trim().optional().nullable(),
+    openProductFormTab: z.enum(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS),
   })
   .superRefine((data, ctx) => {
     if (data.iconColorMode !== 'custom') return;

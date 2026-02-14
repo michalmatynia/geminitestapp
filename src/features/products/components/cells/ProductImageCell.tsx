@@ -61,15 +61,16 @@ export const ProductImageCell = React.memo(function ProductImageCell({
       onMouseLeave={() => setShowPreview(false)}
       onMouseMove={handleMouseMove}
     >
-      <Image
-        src={imageUrl}
-        alt={productName}
-        width={64}
-        height={64}
-        sizes='64px'
-        unoptimized
-        className='h-16 w-16 rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80'
-      />
+      <div className='relative h-16 w-16'>
+        <Image
+          src={imageUrl}
+          alt={productName}
+          fill
+          sizes='64px'
+          unoptimized
+          className='rounded-md object-cover cursor-pointer transition-opacity hover:opacity-80'
+        />
+      </div>
 
       {showPreview && (
         <div
@@ -98,17 +99,18 @@ export const ProductImageCell = React.memo(function ProductImageCell({
           }}
         >
           <div className='bg-card rounded-lg overflow-hidden shadow-2xl border border-border/60'>
-            <Image
-              src={imageUrl}
-              alt={productName}
-              width={PREVIEW_SIZE}
-              height={PREVIEW_SIZE}
-              sizes={`${PREVIEW_SIZE}px`}
-              unoptimized
-              className='h-[136px] w-[136px] rounded-lg object-cover'
-              priority
-              quality={90}
-            />
+            <div className='relative h-[136px] w-[136px]'>
+              <Image
+                src={imageUrl}
+                alt={productName}
+                fill
+                sizes={`${PREVIEW_SIZE}px`}
+                unoptimized
+                className='rounded-lg object-cover'
+                priority
+                quality={90}
+              />
+            </div>
           </div>
         </div>
       )}

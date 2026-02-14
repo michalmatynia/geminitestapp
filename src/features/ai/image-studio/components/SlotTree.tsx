@@ -301,13 +301,13 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
   useEffect(() => {
     if (!revealRequest?.slotId) return;
     if (revealRequest.nonce === lastHandledRevealNonceRef.current) return;
-    if (panelCollapsed) {
-      setPanelCollapsed(false);
-    }
 
     const targetNodeId = toSlotMasterNodeId(revealRequest.slotId);
     const targetNodeExists = controller.nodes.some((node: MasterTreeNode) => node.id === targetNodeId);
     if (!targetNodeExists) return;
+    if (panelCollapsed) {
+      setPanelCollapsed(false);
+    }
 
     findMasterNodeAncestorIds(controller.nodes, targetNodeId).forEach((ancestorId: string) => {
       expandNode(ancestorId);

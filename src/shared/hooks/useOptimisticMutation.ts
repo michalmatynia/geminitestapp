@@ -1,8 +1,7 @@
-/* eslint-disable */
-"use client";
+'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 interface OptimisticUpdateConfig<TData, TVariables> {
   queryKey: readonly unknown[];

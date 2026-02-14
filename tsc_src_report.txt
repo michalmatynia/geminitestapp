@@ -1,0 +1,5 @@
+src/features/case-resolver/__tests__/settings.test.ts(82,47): error TS4111: Property 'n1' comes from an index signature, so it must be accessed with ['n1'].
+src/features/case-resolver/__tests__/settings.test.ts(89,47): error TS4111: Property 'n2' comes from an index signature, so it must be accessed with ['n2'].
+src/features/products/hooks/useEnhancedQueries.ts(104,10): error TS2304: Cannot find name 'UseQueryResult'.
+src/features/products/hooks/useEnhancedQueries.ts(105,16): error TS2304: Cannot find name 'UseQueryResult'.
+src/features/products/hooks/useEnhancedQueries.ts(106,13): error TS2304: Cannot find name 'UseQueryResult'.

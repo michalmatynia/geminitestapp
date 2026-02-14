@@ -149,11 +149,13 @@ const resolveCategoryId = (doc: ProductDocument): string | null => {
   return null;
 };
 
-const normalizeProducerRefs = (
-  producers: unknown
-): Array<{ producerId: string }> => {
+const normalizeProducerRelations = (
+  producers: unknown,
+  fallbackProductId: string,
+  fallbackAssignedAt: string
+): NonNullable<ProductWithImages['producers']> => {
   if (!Array.isArray(producers)) return [];
-  const normalized: Array<{ producerId: string }> = [];
+  const normalized: NonNullable<ProductWithImages['producers']> = [];
   const seen = new Set<string>();
   for (const entry of producers) {
     if (!entry || typeof entry !== 'object') continue;
@@ -165,7 +167,30 @@ const normalizeProducerRefs = (
       toTrimmedString(record['value']);
     if (!producerId || seen.has(producerId)) continue;
     seen.add(producerId);
-    normalized.push({ producerId });
+
+    const relationProductId =
+      toTrimmedString(record['productId']) ??
+      toTrimmedString(record['product_id']) ??
+      fallbackProductId;
+
+    const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
+    let assignedAt = fallbackAssignedAt;
+    if (rawAssignedAt && typeof rawAssignedAt === 'object' && rawAssignedAt instanceof Date) {
+      assignedAt = rawAssignedAt.toISOString();
+    } else {
+      assignedAt = toTrimmedString(rawAssignedAt) ?? fallbackAssignedAt;
+    }
+
+    const relation: NonNullable<ProductWithImages['producers']>[number] = {
+      productId: relationProductId,
+      producerId,
+      assignedAt,
+    };
+
+    if (record['producer'] && typeof record['producer'] === 'object') {
+      relation.producer = record['producer'] as NonNullable<ProductWithImages['producers']>[number]['producer'];
+    }
+    normalized.push(relation);
   }
   return normalized;
 };
@@ -217,16 +242,20 @@ const normalizeTagRelations = (
 };
 
 const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => {
+  const productId = doc.id ?? doc._id;
   const images = Array.isArray(doc.images) ? doc.images : [];
   const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
-  const tags = Array.isArray(doc.tags) ? doc.tags : [];
-  const producers = normalizeProducerRefs(doc.producers);
+  const fallbackAssignedAt = doc.updatedAt instanceof Date
+    ? doc.updatedAt.toISOString()
+    : ((doc.updatedAt as unknown as string) || new Date().toISOString());
+  const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
+  const producers = normalizeProducerRelations(doc.producers, productId, fallbackAssignedAt);
   const noteIds = Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
     ? ((doc as unknown as { noteIds: string[] }).noteIds)
     : [];
 
   return {
-    id: doc.id ?? doc._id,
+    id: productId,
     sku: doc.sku ?? null,
     baseProductId: doc.baseProductId ?? null,
     defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
@@ -275,6 +304,7 @@ const toProductBase = (doc: ProductDocument): ProductRecord => {
     ? doc.updatedAt.toISOString()
     : ((doc.updatedAt as unknown as string) || new Date().toISOString());
   const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
+  const producers = normalizeProducerRelations(doc.producers, productId, fallbackAssignedAt);
 
   return {
     id: productId,
@@ -311,6 +341,7 @@ const toProductBase = (doc: ProductDocument): ProductRecord => {
     updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
     categoryId: resolveCategoryId(doc),
     tags,
+    producers,
     images: Array.isArray(doc.images) ? doc.images : [],
   };
 };

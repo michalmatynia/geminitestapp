@@ -36,6 +36,11 @@ const getStatusClassName = (status: ImageStudioRunStatus): string => {
   return 'border-rose-500/40 bg-rose-500/10 text-rose-200';
 };
 
+const getDispatchModeClassName = (dispatchMode: ImageStudioRunRecord['dispatchMode']): string => {
+  if (dispatchMode === 'inline') return 'border-rose-500/40 bg-rose-500/10 text-rose-200';
+  return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
+};
+
 export function ImageStudioRunsQueuePanel(): React.JSX.Element {
   const {
     runs,
@@ -65,6 +70,15 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
       cell: ({ row }) => (
         <span className={`inline-flex rounded-full border px-2 py-[1px] text-[10px] ${getStatusClassName(row.original.status)}`}>
           {row.original.status}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'dispatchMode',
+      header: 'Runtime',
+      cell: ({ row }) => (
+        <span className={`inline-flex rounded-full border px-2 py-[1px] text-[10px] ${getDispatchModeClassName(row.original.dispatchMode)}`}>
+          {row.original.dispatchMode === 'inline' ? 'Inline' : 'Redis'}
         </span>
       ),
     },

@@ -9,6 +9,7 @@ import { ProducerMultiSelectField } from '@/features/products/components/form/Pr
 import { ProductMetadataFieldProvider } from '@/features/products/components/form/ProductMetadataFieldContext';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
+import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS, type ProductDraftOpenFormTab } from '@/features/products/types/drafts';
 import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useDraftCreatorFormContext } from './DraftCreatorFormContext';
@@ -21,6 +22,17 @@ const normalizeIconColor = (value: string | null | undefined): string | null => 
   const trimmed = value.trim();
   if (!HEX_COLOR_PATTERN.test(trimmed)) return null;
   return trimmed.toLowerCase();
+};
+
+const OPEN_PRODUCT_FORM_TAB_LABELS: Record<ProductDraftOpenFormTab, string> = {
+  general: 'General',
+  other: 'Other',
+  parameters: 'Parameters',
+  images: 'Images',
+  studio: 'Studio',
+  'import-info': 'Import Info',
+  'note-link': 'Note Link',
+  validation: 'Validation',
 };
 
 export function DraftCreatorDraftInfoSection(): React.JSX.Element {
@@ -39,6 +51,8 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
     setIconColorMode,
     iconColor,
     setIconColor,
+    openProductFormTab,
+    setOpenProductFormTab,
     resolvedIconColor,
     openIconLibrary,
   } = useDraftCreatorFormContext();
@@ -69,6 +83,26 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
           placeholder='Describe what this draft is for...'
           rows={2}
         />
+      </div>
+
+      <div className='space-y-2'>
+        <Label htmlFor='openProductFormTab'>Open Product Form On Tab</Label>
+        <SelectSimple size='sm'
+          options={PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS.map(
+            (value: ProductDraftOpenFormTab) => ({
+              value,
+              label: OPEN_PRODUCT_FORM_TAB_LABELS[value],
+            })
+          )}
+          value={openProductFormTab}
+          onValueChange={(value: string): void =>
+            setOpenProductFormTab(value as ProductDraftOpenFormTab)
+          }
+          placeholder='Select tab'
+        />
+        <p className='text-xs text-gray-500'>
+          Used when creating a product via Create from Draft.
+        </p>
       </div>
 
       <div className='space-y-2'>

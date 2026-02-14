@@ -8,6 +8,10 @@ import { useProductFormContext } from '@/features/products/context/ProductFormCo
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import {
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
+  type ProductDraftOpenFormTab,
+} from '@/features/products/types/drafts';
+import {
   normalizeProductValidationDenyBehavior,
   normalizeProductValidationInstanceDenyBehaviorMap,
   normalizeProductValidationPatternDenyBehaviorOverride,
@@ -41,6 +45,14 @@ const VALIDATION_DENY_BEHAVIOR_SESSION_KEY = 'product_validation_deny_behavior_b
 const VALIDATION_DENIED_ISSUES_SESSION_KEY = 'product_validation_denied_issues';
 const VALIDATION_ACCEPTED_ISSUES_SESSION_KEY = 'product_validation_accepted_issues';
 const VALIDATION_DENY_SESSION_ID_KEY = 'product_validation_decision_session_id';
+const PRODUCT_FORM_TAB_SET = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS);
+
+const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
+  if (typeof value !== 'string') return 'general';
+  const trimmed = value.trim();
+  if (!PRODUCT_FORM_TAB_SET.has(trimmed)) return 'general';
+  return trimmed as ProductDraftOpenFormTab;
+};
 
 /**
  * This component renders the product form fields and handles user interactions.
@@ -60,6 +72,9 @@ export default function ProductForm({
   
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProductDraftOpenFormTab>(() =>
+    normalizeProductFormTab(draft?.openProductFormTab)
+  );
   const validatorConfigQuery = useProductValidatorConfig();
   const [validatorEnabled, setValidatorEnabled] = useState<boolean>(() => draft?.validatorEnabled ?? true);
   const [formatterEnabled, setFormatterEnabled] = useState<boolean>(
@@ -176,6 +191,10 @@ export default function ProductForm({
   useEffect(() => {
     setIsDebugOpen(searchParams.get('debug') === 'true');
   }, [searchParams]);
+
+  useEffect(() => {
+    setActiveTab(normalizeProductFormTab(draft?.openProductFormTab));
+  }, [draft?.id, draft?.openProductFormTab]);
 
   useEffect(() => {
     if (!draft) return;
@@ -484,7 +503,13 @@ export default function ProductForm({
           acceptIssue,
         }}
       >
-        <Tabs defaultValue='general' className='w-full'>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value: string): void =>
+            setActiveTab(normalizeProductFormTab(value))
+          }
+          className='w-full'
+        >
           <TabsList
             className='grid w-full grid-cols-4 md:grid-cols-8'
           >

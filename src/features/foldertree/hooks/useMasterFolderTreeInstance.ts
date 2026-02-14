@@ -6,7 +6,7 @@ import { useConfiguredMasterFolderTree } from '@/features/foldertree/master/useC
 import type { UseConfiguredMasterFolderTreeOptions } from '@/features/foldertree/master/useConfiguredMasterFolderTree';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui/toast';
 import {
   FOLDER_TREE_UI_STATE_V1_SETTING_KEY,
   parseFolderTreeUiStateV1,
@@ -36,7 +36,16 @@ const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, stri
   case_resolver: 'Case Resolver tree changes saved.',
 };
 
-const shouldNotifyMasterTreePersistByInstance: Record<FolderTreeInstance, boolean> = {
+const shouldNotifyMasterTreePersistSuccessByInstance: Record<FolderTreeInstance, boolean> = {
+  notes: false,
+  image_studio: true,
+  product_categories: false,
+  // CMS tree frequently rehydrates from external builder state; suppress noisy success toasts.
+  cms_page_builder: false,
+  case_resolver: false,
+};
+
+const shouldNotifyMasterTreePersistErrorByInstance: Record<FolderTreeInstance, boolean> = {
   notes: false,
   image_studio: true,
   product_categories: false,
@@ -261,7 +270,9 @@ export function useMasterFolderTreeInstance({
   }, []);
 
   useEffect(() => {
-    if (!shouldNotifyMasterTreePersistByInstance[instance]) {
+    const shouldNotifySuccess = shouldNotifyMasterTreePersistSuccessByInstance[instance];
+    const shouldNotifyError = shouldNotifyMasterTreePersistErrorByInstance[instance];
+    if (!shouldNotifySuccess && !shouldNotifyError) {
       previousApplyingRef.current = controller.isApplying;
       return;
     }
@@ -280,10 +291,10 @@ export function useMasterFolderTreeInstance({
         lastStableTreeFingerprintRef.current || currentTreeFingerprint;
     }
 
-    if (lastError && lastError.at !== lastNotifiedErrorAtRef.current) {
+    if (shouldNotifyError && lastError && lastError.at !== lastNotifiedErrorAtRef.current) {
       lastNotifiedErrorAtRef.current = lastError.at;
       toast(lastError.message || 'Failed to persist folder tree changes.', { variant: 'error' });
-    } else if (wasApplying && !isApplying && !lastError) {
+    } else if (shouldNotifySuccess && wasApplying && !isApplying && !lastError) {
       const applyingStartTreeFingerprint = applyingStartTreeFingerprintRef.current;
       if (
         applyingStartTreeFingerprint &&

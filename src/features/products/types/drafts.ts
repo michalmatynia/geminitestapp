@@ -1,6 +1,20 @@
 import type { ProductParameterValue } from '@/features/products/types';
 import type { CreateProductDto } from '@/shared/contracts/products';
 
+export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS = [
+  'general',
+  'other',
+  'parameters',
+  'images',
+  'studio',
+  'import-info',
+  'note-link',
+  'validation',
+] as const;
+
+export type ProductDraftOpenFormTab =
+  (typeof PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS)[number];
+
 export type ProductDraft = {
   id: string;
   name: string;
@@ -50,6 +64,7 @@ export type ProductDraft = {
   icon?: string | null;
   iconColorMode?: 'theme' | 'custom' | null;
   iconColor?: string | null;
+  openProductFormTab?: ProductDraftOpenFormTab | null;
 
   // Image links
   imageLinks?: string[];
@@ -79,6 +94,7 @@ export interface CreateProductDraftInput
   icon?: string | null;
   iconColorMode?: 'theme' | 'custom' | null;
   iconColor?: string | null;
+  openProductFormTab?: ProductDraftOpenFormTab | null;
   baseProductId?: string | null;
   parameters?: ProductParameterValue[];
   catalogIds?: string[];

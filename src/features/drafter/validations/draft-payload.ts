@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/features/products/types/drafts';
+
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 const draftPayloadSchema = z.object({
@@ -43,6 +45,10 @@ const draftPayloadSchema = z.object({
   icon: z.string().optional().nullable(),
   iconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
   iconColor: z.string().regex(HEX_COLOR_PATTERN).optional().nullable(),
+  openProductFormTab: z
+    .enum(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS)
+    .optional()
+    .nullable(),
   imageLinks: z.array(z.string()).optional(),
   baseProductId: z.string().optional().nullable(),
 });

@@ -21,7 +21,7 @@ import {
 } from '@/features/ai/image-studio/utils/generation-cost';
 import { parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
-import { createManagedQueue } from '@/shared/lib/queue';
+import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
 
 const LOG_SOURCE = 'image-studio-run-queue';
@@ -419,6 +419,17 @@ export const startImageStudioRunQueue = (): void => {
 };
 
 export const enqueueImageStudioRunJob = async (runId: string): Promise<ImageStudioRunDispatchMode> => {
+  if (!isRedisAvailable()) {
+    await logSystemEvent({
+      level: 'info',
+      source: LOG_SOURCE,
+      message: `Redis unavailable for run ${runId}; processing inline`,
+      context: { runId },
+    });
+    await queue.processInline({ runId });
+    return 'inline';
+  }
+
   try {
     await queue.enqueue({ runId }, { jobId: runId });
     return 'queued';

@@ -1,6 +1,7 @@
 
 'use client';
 
+import { type UseQueryResult } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 import type { ProductDto, ProductCategoryDto, ProductTagDto } from '@/shared/contracts/products';
@@ -11,9 +12,16 @@ import { api } from '@/shared/lib/api-client';
 import { productKeys, settingsKeys, authKeys } from '@/shared/lib/query-key-exports';
 
 
+interface ProductStats {
+  total: number;
+  published: number;
+  categories: number;
+  avgPrice: number;
+}
+
 interface EnhancedProductsQueryResult {
   products: ReturnType<typeof useNormalizedQuery<ProductDto>>;
-  stats: any;
+  stats: ReturnType<typeof useComposedQuery<ProductDto[], ProductStats>>;
   selectById: (id: string) => ProductDto | undefined;
   selectMany: (ids: string[]) => ProductDto[];
 }
@@ -93,7 +101,11 @@ export function useEnhancedProducts(): EnhancedProductsQueryResult {
 }
 
 // Enhanced user management with adaptive caching
-export function useEnhancedUsers(): { users: ReturnType<typeof useAdaptiveQuery>; permissions: ReturnType<typeof useAdaptiveQuery>; activity: ReturnType<typeof useAdaptiveQuery>; } {
+export function useEnhancedUsers(): {
+  users: UseQueryResult<unknown>;
+  permissions: UseQueryResult<unknown>;
+  activity: UseQueryResult<unknown>;
+  } {
   // User list with long-term caching
   const users = useAdaptiveQuery(
     [...authKeys.users.all, 'list'],

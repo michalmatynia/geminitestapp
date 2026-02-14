@@ -298,38 +298,43 @@ export function useProductData({
     searchLanguage: searchLanguage || undefined,
   }), [search, sku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, searchLanguage]);
 
-  const productsQuery = useProducts(filters, { enabled: preferencesLoaded });
-  const countQuery = useProductsCount(filters, { enabled: preferencesLoaded });
+  // Use parallel queries
+  const results = useQueries({
+    queries: [
+      {
+        queryKey: QUERY_KEYS.products.list(filters),
+        queryFn: (): Promise<ProductWithImages[]> => getProducts(filters),
+        enabled: preferencesLoaded,
+        staleTime: 10000,
+      },
+      {
+        queryKey: QUERY_KEYS.products.count(filters),
+        queryFn: (): Promise<number> => countProducts(filters),
+        enabled: preferencesLoaded,
+        staleTime: 10000,
+      },
+    ],
+  });
+
+  const productsQuery = results[0]!;
+  const countQuery = results[1]!;
 
   const totalPages = useMemo(() => {
-    const total = countQuery.data || 0;
+    const total = (countQuery.data as number) || 0;
     return Math.ceil(total / pageSize);
   }, [countQuery.data, pageSize]);
 
   // Keep pagination valid when filters change.
-  // We use the adjustment during render pattern to avoid cascading renders in useEffect.
-  const currentFiltersSignature = JSON.stringify({
-    search,
-    sku,
-    minPrice,
-    maxPrice,
-    startDate,
-    endDate,
-    catalogFilter,
-    pageSize,
-  });
-
-  const [lastFiltersSignature, setLastFiltersSignature] = useState(currentFiltersSignature);
-
-  if (lastFiltersSignature !== currentFiltersSignature) {
-    setLastFiltersSignature(currentFiltersSignature);
+  useEffect(() => {
     setPage(1);
-  }
+  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, pageSize]);
 
   // Clamp page when current page no longer exists after count change.
-  if (page > 1 && totalPages > 0 && page > totalPages) {
-    setPage(totalPages);
-  }
+  useEffect(() => {
+    if (page > 1 && totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   const refresh = useCallback(() => {
     void invalidateProductsAndCounts(queryClient);
@@ -342,28 +347,38 @@ export function useProductData({
     }
   }, [refreshTrigger, refresh]);
 
+  const handleSetPage = useCallback((p: number) => setPage(p), []);
+  const handleSetPageSize = useCallback((size: number) => setPageSize(size), []);
+  const handleSetSearch = useCallback((s: string) => setSearch(s), []);
+  const handleSetSku = useCallback((s: string) => setSku(s), []);
+  const handleSetMinPrice = useCallback((p: number | undefined) => setMinPrice(p), []);
+  const handleSetMaxPrice = useCallback((p: number | undefined) => setMaxPrice(p), []);
+  const handleSetStartDate = useCallback((s: string | undefined) => setStartDate(s), []);
+  const handleSetEndDate = useCallback((s: string | undefined) => setEndDate(s), []);
+  const handleSetCatalogFilter = useCallback((f: string) => setCatalogFilter(f), []);
+
   return {
-    data: productsQuery.data || [],
+    data: (productsQuery.data as ProductWithImages[]) || [],
     totalPages,
     page,
-    setPage,
+    setPage: handleSetPage,
     pageSize,
-    setPageSize,
+    setPageSize: handleSetPageSize,
     search,
-    setSearch,
+    setSearch: handleSetSearch,
     sku,
-    setSku,
+    setSku: handleSetSku,
     minPrice,
-    setMinPrice,
+    setMinPrice: handleSetMinPrice,
     maxPrice,
-    setMaxPrice,
+    setMaxPrice: handleSetMaxPrice,
     startDate,
-    setStartDate,
+    setStartDate: handleSetStartDate,
     endDate,
-    setEndDate,
+    setEndDate: handleSetEndDate,
     catalogFilter,
-    setCatalogFilter,
-    loadError: (productsQuery.error || countQuery.error),
+    setCatalogFilter: handleSetCatalogFilter,
+    loadError: (productsQuery.error || countQuery.error) as Error | null,
     isLoading: productsQuery.isLoading || countQuery.isLoading,
     isFetching: productsQuery.isFetching || countQuery.isFetching,
     refresh,

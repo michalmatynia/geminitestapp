@@ -12,6 +12,7 @@ export type ImageStudioRunRecord = {
   id: string;
   projectId: string;
   status: ImageStudioRunStatus;
+  dispatchMode: 'queued' | 'inline' | null;
   expectedOutputs: number;
   outputs: Array<{ id: string; filepath: string }>;
   errorMessage: string | null;

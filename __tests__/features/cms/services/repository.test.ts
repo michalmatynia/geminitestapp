@@ -47,17 +47,24 @@ describe('CMS Repository (Prisma)', () => {
 
   describe('Pages', () => {
     it('should get all pages', async () => {
-      const mockPages = [{ id: '1', name: 'Home' }];
+      const now = new Date();
+      const mockPages = [{ id: '1', name: 'Home', createdAt: now, updatedAt: now }];
       (prisma.page.findMany as any).mockResolvedValue(mockPages);
 
       const result = await prismaCmsRepository.getPages();
 
       expect(prisma.page.findMany).toHaveBeenCalled();
-      expect(result).toEqual(mockPages);
+      expect(result).toEqual([expect.objectContaining({
+        id: '1',
+        name: 'Home',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      })]);
     });
 
     it('should get page by id with inclusions', async () => {
-      const mockPage = { id: '1', name: 'Home', components: [], slugs: [] };
+      const now = new Date();
+      const mockPage = { id: '1', name: 'Home', components: [], slugs: [], createdAt: now, updatedAt: now };
       (prisma.page.findUnique as any).mockResolvedValue(mockPage);
 
       const result = await prismaCmsRepository.getPageById('1');
@@ -66,43 +73,66 @@ describe('CMS Repository (Prisma)', () => {
         where: { id: '1' },
         include: expect.any(Object),
       }));
-      expect(result).toEqual(mockPage);
+      expect(result).toEqual(expect.objectContaining({
+        id: '1',
+        name: 'Home',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      }));
     });
 
     it('should create a new page', async () => {
-      const mockPage = { id: '1', name: 'New Page' };
+      const now = new Date();
+      const mockPage = { id: '1', name: 'New Page', createdAt: now, updatedAt: now };
       (prisma.page.create as any).mockResolvedValue(mockPage);
 
       const result = await prismaCmsRepository.createPage({ name: 'New Page' });
 
-      expect(prisma.page.create).toHaveBeenCalledWith({
+      expect(prisma.page.create).toHaveBeenCalledWith(expect.objectContaining({
         data: { name: 'New Page', themeId: null },
-      });
-      expect(result).toEqual(mockPage);
+      }));
+      expect(result).toEqual(expect.objectContaining({
+        id: '1',
+        name: 'New Page',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      }));
     });
 
     it('should delete a page', async () => {
-      const mockPage = { id: '1', name: 'Deleted' };
+      const now = new Date();
+      const mockPage = { id: '1', name: 'Deleted', createdAt: now, updatedAt: now };
       (prisma.page.delete as any).mockResolvedValue(mockPage);
 
       const result = await prismaCmsRepository.deletePage('1');
 
-      expect(prisma.page.delete).toHaveBeenCalledWith({ where: { id: '1' } });
-      expect(result).toEqual(mockPage);
+      expect(prisma.page.delete).toHaveBeenCalledWith(expect.objectContaining({ where: { id: '1' } }));
+      expect(result).toEqual(expect.objectContaining({
+        id: '1',
+        name: 'Deleted',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      }));
     });
 
     it('should update a page', async () => {
-      const mockPage = { id: '1', name: 'Updated' };
+      const now = new Date();
+      const mockPage = { id: '1', name: 'Updated', createdAt: now, updatedAt: now };
       (prisma.page.update as any).mockResolvedValue(mockPage);
       (prisma.page.findUnique as any).mockResolvedValue(mockPage);
 
       const result = await prismaCmsRepository.updatePage('1', { name: 'Updated' });
 
-      expect(prisma.page.update).toHaveBeenCalledWith({
+      expect(prisma.page.update).toHaveBeenCalledWith(expect.objectContaining({
         where: { id: '1' },
         data: expect.objectContaining({ name: 'Updated' }),
-      });
-      expect(result).toEqual(mockPage);
+      }));
+      expect(result).toEqual(expect.objectContaining({
+        id: '1',
+        name: 'Updated',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      }));
     });
 
     it('should replace page components', async () => {
@@ -128,25 +158,37 @@ describe('CMS Repository (Prisma)', () => {
 
   describe('Slugs', () => {
     it('should get all slugs', async () => {
-      const mockSlugs = [{ id: '1', slug: 'home' }];
+      const now = new Date();
+      const mockSlugs = [{ id: '1', slug: 'home', createdAt: now, updatedAt: now }];
       (prisma.slug.findMany as any).mockResolvedValue(mockSlugs);
 
       const result = await prismaCmsRepository.getSlugs();
 
       expect(prisma.slug.findMany).toHaveBeenCalled();
-      expect(result).toEqual(mockSlugs);
+      expect(result).toEqual([expect.objectContaining({
+        id: '1',
+        slug: 'home',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      })]);
     });
 
     it('should create a slug', async () => {
-      const mockSlug = { id: '1', slug: 'test' };
+      const now = new Date();
+      const mockSlug = { id: '1', slug: 'test', createdAt: now, updatedAt: now };
       (prisma.slug.create as any).mockResolvedValue(mockSlug);
 
       const result = await prismaCmsRepository.createSlug({ slug: 'test' });
 
-      expect(prisma.slug.create).toHaveBeenCalledWith({
+      expect(prisma.slug.create).toHaveBeenCalledWith(expect.objectContaining({
         data: { slug: 'test' },
-      });
-      expect(result).toEqual(mockSlug);
+      }));
+      expect(result).toEqual(expect.objectContaining({
+        id: '1',
+        slug: 'test',
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      }));
     });
   });
 

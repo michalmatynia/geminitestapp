@@ -13,6 +13,7 @@ import { ProductImagesTabProvider } from '@/features/products/components/form/Pr
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useCatalogs, useProducers } from '@/features/products/hooks/useProductMetadataQueries';
+import { type ProductDraftOpenFormTab } from '@/features/products/types/drafts';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { AppModal, Tabs, TabsContent, TabsList, TabsTrigger, useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -100,6 +101,8 @@ export function DraftCreator({
   const [icon, setIcon] = useState<string | null>(null);
   const [iconColorMode, setIconColorMode] = useState<'theme' | 'custom'>('theme');
   const [iconColor, setIconColor] = useState<string>(DEFAULT_ICON_COLOR);
+  const [openProductFormTab, setOpenProductFormTab] =
+    useState<ProductDraftOpenFormTab>('general');
   const [isIconLibraryOpen, setIsIconLibraryOpen] = useState(false);
 
   const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
@@ -251,6 +254,7 @@ export function DraftCreator({
         setIcon(draft.icon || null);
         setIconColorMode(draft.iconColorMode === 'custom' ? 'custom' : 'theme');
         setIconColor(normalizeIconColor(draft.iconColor) || DEFAULT_ICON_COLOR);
+        setOpenProductFormTab(draft.openProductFormTab ?? 'general');
         applyDraftImageState(draft.imageLinks || []);
         setSelectedCatalogIds(draft.catalogIds || []);
         setSelectedCategoryId(draft.categoryId ?? null);
@@ -288,6 +292,7 @@ export function DraftCreator({
         setIcon(null);
         setIconColorMode('theme');
         setIconColor(DEFAULT_ICON_COLOR);
+        setOpenProductFormTab('general');
         applyDraftImageState([]);
         setSelectedCatalogIds([]);
         setSelectedCategoryId(null);
@@ -304,7 +309,7 @@ export function DraftCreator({
   const handleSave = async (): Promise<void> => {
     const validation = validateFormData(
       draftSubmitSchema,
-      { name, iconColorMode, iconColor },
+      { name, iconColorMode, iconColor, openProductFormTab },
       'Draft form is invalid.',
     );
     if (!validation.success) {
@@ -353,6 +358,7 @@ export function DraftCreator({
         icon,
         iconColorMode,
         iconColor: iconColorMode === 'custom' ? (normalizedIconColor || DEFAULT_ICON_COLOR) : null,
+        openProductFormTab,
         imageLinks: serializedImageLinks,
         baseProductId: baseProductId.trim() || null,
       };
@@ -449,6 +455,8 @@ export function DraftCreator({
       setIconColorMode,
       iconColor,
       setIconColor,
+      openProductFormTab,
+      setOpenProductFormTab,
       resolvedIconColor,
       openIconLibrary: (): void => setIsIconLibraryOpen(true),
       sku,
@@ -528,6 +536,7 @@ export function DraftCreator({
       icon,
       iconColorMode,
       iconColor,
+      openProductFormTab,
       resolvedIconColor,
       sku,
       identifierType,

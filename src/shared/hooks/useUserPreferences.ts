@@ -39,14 +39,17 @@ const hasPreferenceChanged = (
 export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
   return useQuery({
     queryKey: userPreferencesQueryKey,
-    queryFn: () =>
-      api.get<unknown>('/api/user/preferences')
+    queryFn: ({ signal }) =>
+      api.get<unknown>('/api/user/preferences', { signal })
         .then((data: unknown) => normalizeUserPreferencesResponse(data) as UserPreferences)
         .catch(error => {
           logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useUserPreferences', action: 'loadUserPreferences', level: 'warn' } });
           return {} as UserPreferences;
         }),
     staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     retry: 1,
   });
 }

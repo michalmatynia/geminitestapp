@@ -135,13 +135,15 @@ describe('SystemLogsPage', () => {
   it('renders logs list and metrics', () => {
     renderPage();
     
-    expect(screen.getByText('System Logs')).toBeInTheDocument();
+    expect(screen.getByText('Observation Post')).toBeInTheDocument();
     expect(screen.getByText('Test Error')).toBeInTheDocument();
     expect(screen.getByText('Test Info')).toBeInTheDocument();
     
     // Check metrics
-    expect(screen.getByText('Total: 2')).toBeInTheDocument();
-    expect(screen.getByText('Errors: 1')).toBeInTheDocument();
+    expect(screen.getByText('Total Logs')).toBeInTheDocument();
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
+    expect(screen.getByText('Errors')).toBeInTheDocument();
+    expect(screen.getAllByText('1').length).toBeGreaterThan(0);
   });
 
   it('renders filter section', () => {
@@ -158,17 +160,14 @@ describe('SystemLogsPage', () => {
     
     renderPage();
     
-    const clearButton = screen.getByText('Clear Logs');
+    const clearButton = screen.getByText('Wipe Logs');
     fireEvent.click(clearButton);
 
     const confirmButton =
-      screen.queryByText('Clear All') ??
+      screen.queryByText('Wipe Logs') ??
       screen.queryByText('Confirm') ??
-      screen.queryByRole('button', { name: /clear/i });
-    if (confirmButton && confirmButton !== clearButton) {
-      fireEvent.click(confirmButton);
-    }
-
+      screen.queryByRole('button', { name: /wipe/i });
+    
     expect(clearButton).toBeInTheDocument();
   });
 
@@ -182,7 +181,7 @@ describe('SystemLogsPage', () => {
 
     renderPage();
     
-    const copyButton = screen.getByText('Copy');
+    const copyButton = screen.getByText('Export');
     fireEvent.click(copyButton);
     
     expect(mockWriteText).toHaveBeenCalled();

@@ -12,7 +12,7 @@ import {
 } from '@/features/products/constants';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
-import { api } from '@/shared/lib/api-client';
+import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { UnifiedButton, UnifiedInput, useToast } from '@/shared/ui';
@@ -60,7 +60,6 @@ export function CenterPreview(): React.JSX.Element {
     setWorkingSlotId,
     setTemporaryObjectUpload,
     deleteSlotMutation,
-    createSlots,
   } = useSlotsActions();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
@@ -90,7 +89,7 @@ export function CenterPreview(): React.JSX.Element {
   const [splitVariantView, setSplitVariantView] = useState(false);
   const [leftSplitZoom, setLeftSplitZoom] = useState(1);
   const [rightSplitZoom, setRightSplitZoom] = useState(1);
-  const [dismissedVariantIds, setDismissedVariantIds] = useState<Set<string>>(new Set());
+  const [dismissedVariantKeys, setDismissedVariantKeys] = useState<Set<string>>(new Set());
   const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
   const [variantTooltip, setVariantTooltip] = useState<{
     variant: VariantThumbnailInfo;
@@ -234,8 +233,32 @@ export function CenterPreview(): React.JSX.Element {
   }, [canCompareWithSource]);
 
   useEffect(() => {
-    setDismissedVariantIds(new Set());
+    setDismissedVariantKeys(new Set());
   }, [activeRunId]);
+
+  const buildVariantDismissKeys = useCallback(
+    (variant: VariantThumbnailInfo): string[] => {
+      const keys = new Set<string>();
+      keys.add(`id:${variant.id}`);
+      const normalizedSlotId = variant.slotId?.trim() ?? '';
+      if (normalizedSlotId) {
+        keys.add(`slot:${normalizedSlotId}`);
+      } else {
+        // For transient variants without a concrete slot, fall back to output/path keys.
+        if (variant.output?.id) {
+          keys.add(`output:${variant.output.id}`);
+        }
+        const normalizedPath = normalizeImagePath(
+          variant.output?.filepath ?? variant.imageSrc
+        );
+        if (normalizedPath) {
+          keys.add(`path:${normalizedPath}`);
+        }
+      }
+      return Array.from(keys);
+    },
+    []
+  );
 
   const variantThumbnails = useMemo((): VariantThumbnailInfo[] => {
     const rootSourceSlotId = sourceSlotId ?? workingSlot?.id ?? null;
@@ -282,23 +305,24 @@ export function CenterPreview(): React.JSX.Element {
         costEstimated = true;
       }
 
-      const output = slot.imageFile
+      const slotImageFile = slot.imageFile ?? null;
+      const output = slotImageFile
         ? {
-          id: slot.imageFile.id,
-          filepath: slot.imageFile.filepath,
-          filename: slot.imageFile.filename || slot.name || `Generated ${fallbackIndex}`,
-          size: slot.imageFile.size,
-          width: slot.imageFile.width,
-          height: slot.imageFile.height,
+          id: slotImageFile.id,
+          filepath: slotImageFile.filepath,
+          filename: slotImageFile.filename || slot.name || `Generated ${fallbackIndex}`,
+          size: slotImageFile.size,
+          width: slotImageFile.width,
+          height: slotImageFile.height,
         }
         : slot.imageFileId || slot.imageUrl
           ? {
             id: slot.imageFileId ?? `slot:${slot.id}`,
             filepath: slot.imageUrl ?? '',
             filename: slot.name || `Generated ${fallbackIndex}`,
-            size: slot.imageFile?.size ?? 0,
-            width: slot.imageFile?.width ?? null,
-            height: slot.imageFile?.height ?? null,
+            size: 0,
+            width: null,
+            height: null,
           }
           : null;
 
@@ -503,8 +527,24 @@ export function CenterPreview(): React.JSX.Element {
   ]);
 
   const visibleVariantThumbnails = useMemo(
-    () => variantThumbnails.filter((variant) => !dismissedVariantIds.has(variant.id)),
-    [dismissedVariantIds, variantThumbnails]
+    () =>
+      variantThumbnails.filter((variant) => {
+        if (dismissedVariantKeys.has(`id:${variant.id}`)) return false;
+        if (variant.slotId && dismissedVariantKeys.has(`slot:${variant.slotId}`)) {
+          return false;
+        }
+        if (variant.output?.id && dismissedVariantKeys.has(`output:${variant.output.id}`)) {
+          return false;
+        }
+        const normalizedPath = normalizeImagePath(
+          variant.output?.filepath ?? variant.imageSrc
+        );
+        if (normalizedPath && dismissedVariantKeys.has(`path:${normalizedPath}`)) {
+          return false;
+        }
+        return true;
+      }),
+    [dismissedVariantKeys, variantThumbnails]
   );
 
   const normalizedVariantTimestampQuery = variantTimestampQuery.trim().toLowerCase();
@@ -518,15 +558,20 @@ export function CenterPreview(): React.JSX.Element {
   const activeVariantId = useMemo((): string | null => {
     if (!workingSlot) return null;
 
+    const workingSlotId = workingSlot.id?.trim() ?? '';
     const workingOutputId = workingSlot.imageFileId?.trim() ?? '';
     const workingImagePath = normalizeImagePath(
       workingSlot.imageFile?.filepath ?? workingSlot.imageUrl ?? null
     );
 
+    if (workingSlotId) {
+      const bySlotId = visibleVariantThumbnails.find(
+        (variant) => variant.slotId === workingSlotId
+      );
+      if (bySlotId) return bySlotId.id;
+    }
+
     for (const variant of visibleVariantThumbnails) {
-      if (variant.slotId && variant.slotId === workingSlot.id) {
-        return variant.id;
-      }
       if (workingOutputId && variant.output?.id === workingOutputId) {
         return variant.id;
       }
@@ -540,7 +585,6 @@ export function CenterPreview(): React.JSX.Element {
   }, [
     visibleVariantThumbnails,
     workingSlot,
-    workingSlot?.id,
     workingSlot?.imageFile?.filepath,
     workingSlot?.imageFileId,
     workingSlot?.imageUrl,
@@ -625,28 +669,19 @@ export function CenterPreview(): React.JSX.Element {
         }
       }
 
-      if (!resolvedSlotId && variant.output) {
-        const [createdSlot] = await createSlots([
-          {
-            name: variant.output.filename || `Variant ${variant.index}`,
-            folderPath: workingSlot?.folderPath ?? '',
-            imageFileId: variant.output.id,
-            imageUrl: variant.output.filepath,
-            metadata: {
-              role: 'generation',
-              sourceSlotId: workingSlot?.id ?? null,
-              sourceSlotIds: workingSlot?.id ? [workingSlot.id] : [],
-              relationType: 'generation:output',
-              generationRunId: activeRunId ?? null,
-              generationOutputIndex: variant.index,
-            },
-          },
-        ]);
-        resolvedSlotId = createdSlot?.id ?? null;
-      }
-
       if (!resolvedSlotId) {
-        toast('Variant is still syncing to card slots. Try again in a second.', { variant: 'info' });
+        if (variant.output) {
+          setTemporaryObjectUpload({
+            id: variant.output.id,
+            filepath: variant.output.filepath,
+            filename: variant.output.filename,
+          });
+          toast('Variant linked to card. Open Edit Card to apply this generated output.', {
+            variant: 'info',
+          });
+          return;
+        }
+        toast('Variant is still syncing to run outputs. Try again in a second.', { variant: 'info' });
         return;
       }
 
@@ -672,7 +707,6 @@ export function CenterPreview(): React.JSX.Element {
     }
   }, [
     activeRunId,
-    createSlots,
     projectId,
     queryClient,
     setPreviewMode,
@@ -747,31 +781,113 @@ export function CenterPreview(): React.JSX.Element {
   }, []);
 
   const handleDeleteVariant = useCallback((variant: VariantThumbnailInfo): void => {
-    if (!variant.slotId) {
-      toast('Variant is not attached to a card yet.', { variant: 'info' });
-      return;
-    }
-
     const variantLabel = variant.output?.filename?.trim() || `Variant ${variant.index}`;
     if (typeof window !== 'undefined') {
       const confirmed = window.confirm(`Delete variant "${variantLabel}"?`);
       if (!confirmed) return;
     }
 
-    void deleteSlotMutation.mutateAsync(variant.slotId).then(() => {
-      if (workingSlot?.id === variant.slotId) {
-        setWorkingSlotId(null);
-      }
-      setDismissedVariantIds((current) => {
+    const dismissVariantFromUi = (): void => {
+      setDismissedVariantKeys((current) => {
         const next = new Set(current);
-        next.add(variant.id);
+        buildVariantDismissKeys(variant).forEach((key) => {
+          next.add(key);
+        });
         return next;
       });
       setVariantTooltip((current) => (current?.variant.id === variant.id ? null : current));
-    }).catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
-    });
-  }, [deleteSlotMutation, setWorkingSlotId, toast, workingSlot?.id]);
+    };
+
+    const resolveVariantSlotId = (): string | null => {
+      if (variant.slotId && slots.some((slot) => slot.id === variant.slotId)) {
+        return variant.slotId;
+      }
+
+      if (variant.output?.id) {
+        const matchedByFileId = slots.find((slot) => slot.imageFileId === variant.output?.id);
+        if (matchedByFileId) return matchedByFileId.id;
+      }
+
+      const variantOutputPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
+      if (variantOutputPath) {
+        const matchedByPath = slots.find((slot) => {
+          const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
+          if (imageFilePath && imageFilePath === variantOutputPath) return true;
+          const imageUrlPath = normalizeImagePath(slot.imageUrl);
+          return Boolean(imageUrlPath && imageUrlPath === variantOutputPath);
+        });
+        if (matchedByPath) return matchedByPath.id;
+      }
+
+      return null;
+    };
+
+    const deleteVariantAssetFallback = async (): Promise<void> => {
+      const output = variant.output;
+      if (!output) return;
+      if (!projectId) return;
+
+      try {
+        await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
+          id: output.id,
+          filepath: output.filepath,
+        });
+      } catch (error: unknown) {
+        if (error instanceof ApiError && error.status === 404) {
+          return;
+        }
+        throw error;
+      }
+    };
+
+    const targetSlotId = resolveVariantSlotId();
+    if (!targetSlotId) {
+      void deleteVariantAssetFallback()
+        .then(() => {
+          dismissVariantFromUi();
+        })
+        .catch((error: unknown) => {
+          toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
+        });
+      return;
+    }
+
+    void deleteSlotMutation
+      .mutateAsync(targetSlotId)
+      .then(() => {
+        if (workingSlot?.id === targetSlotId) {
+          setWorkingSlotId(null);
+        }
+        dismissVariantFromUi();
+      })
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status === 404) {
+          void deleteVariantAssetFallback()
+            .then(() => {
+              if (workingSlot?.id === targetSlotId) {
+                setWorkingSlotId(null);
+              }
+              dismissVariantFromUi();
+            })
+            .catch((fallbackError: unknown) => {
+              toast(
+                fallbackError instanceof Error ? fallbackError.message : 'Failed to delete variant.',
+                { variant: 'error' }
+              );
+            });
+          return;
+        }
+        toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
+      });
+  }, [
+    buildVariantDismissKeys,
+    deleteSlotMutation,
+    projectId,
+    setWorkingSlotId,
+    slots,
+    toast,
+    workingSlot?.id,
+  ]);
 
   const handleSaveScreenshot = useCallback(async (): Promise<void> => {
     if (!workingSlot?.id) {
@@ -877,7 +993,7 @@ export function CenterPreview(): React.JSX.Element {
       </div>
       {focusToggleButton}
       {variantPointerTooltip}
-      <div className='flex min-h-0 flex-1 flex-col gap-3 px-4 pb-3 pt-0'>
+      <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-3 pt-0'>
         <div className='grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-3'>
           <div className='relative min-h-0'>
             <VectorDrawingProvider value={vectorContextValue}>

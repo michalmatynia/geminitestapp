@@ -16,4 +16,5 @@ export * from './services/integration-service';
 export * from './services/producer-mapping-repository';
 export * from './services/product-listing-repository';
 export * from './services/tag-mapping-repository';
+export * from './services/tradera-listing-service';
 export * from './utils/encryption';

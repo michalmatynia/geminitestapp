@@ -474,7 +474,15 @@ export default function ProductImageManager({
         </Alert>
       ) : null}
 
-      <div className={minimalUi ? 'grid w-full grid-cols-2 justify-items-start gap-2 overflow-x-hidden' : 'grid grid-cols-5 gap-2'}>
+      <div
+        className={
+          minimalUi
+            ? imageSlots.length === 1
+              ? 'flex w-full justify-center overflow-x-hidden'
+              : 'grid w-full grid-cols-2 justify-items-start gap-2 overflow-x-hidden'
+            : 'grid grid-cols-5 gap-2'
+        }
+      >
         {imageSlots.map((slot: ProductImageSlot | null, index: number) => {
           const isDragging = draggedIndex === index;
           const isDragOver = dragOverIndex === index;
@@ -506,15 +514,22 @@ export default function ProductImageManager({
                 : 'Base64';
           const canConvertToBase64 = Boolean(slot || linkValue.trim());
 
+          const rawSlotLabel = slotLabels?.[index] ?? `Slot ${index + 1}`;
+          const slotLabel = typeof rawSlotLabel === 'string' ? rawSlotLabel.trim() : '';
+          const isSingleMinimalSlot = minimalUi && imageSlots.length === 1;
+          const singleMinimalSlotSizeClass = 'w-[7.5rem]';
+          const singleMinimalSlotFrameClass = 'h-[7.5rem] w-[7.5rem]';
+          const previewSize = isSingleMinimalSlot ? 120 : 96;
+
           // Use index as key to prevent re-mounting during drag/drop and updates
           // This eliminates flickering when reordering or updating slots
           const slotKey = `slot-${index}`;
 
           return (
             <div key={slotKey} className='flex flex-col items-center gap-1'>
-              {minimalUi ? (
-                <div className='w-24 text-center text-[10px] font-medium tracking-wide text-gray-400'>
-                  {slotLabels?.[index] ?? `Slot ${index + 1}`}
+              {minimalUi && slotLabel ? (
+                <div className={isSingleMinimalSlot ? `${singleMinimalSlotSizeClass} text-center text-[10px] font-medium tracking-wide text-gray-400` : 'w-24 text-center text-[10px] font-medium tracking-wide text-gray-400'}>
+                  {slotLabel}
                 </div>
               ) : null}
               <input
@@ -536,7 +551,7 @@ export default function ProductImageManager({
               <div
                 className={
                   minimalUi
-                    ? 'mx-auto flex w-24 items-center justify-between gap-1'
+                    ? `mx-auto flex ${isSingleMinimalSlot ? singleMinimalSlotSizeClass : 'w-24'} items-center justify-between gap-1`
                     : 'flex w-full items-center justify-between gap-2'
                 }
               >
@@ -698,7 +713,7 @@ export default function ProductImageManager({
                 onDragLeave={handleDragLeave}
                 onDrop={(e: React.DragEvent<HTMLDivElement>) => handleDrop(e, index)}
                 className={`
-                  relative flex h-24 w-24 items-center justify-center rounded-md border-2 bg-gray-800
+                  relative flex ${isSingleMinimalSlot ? singleMinimalSlotFrameClass : 'h-24 w-24'} items-center justify-center rounded-md border-2 bg-gray-800
                   ${!isReordering ? 'transition-all' : ''}
                   ${hasUpload ? 'cursor-grab active:cursor-grabbing' : ''}
                   ${isDragging ? 'opacity-70 ring-2 ring-emerald-400/60 scale-[0.98] border-emerald-400/40' : 'border'}
@@ -740,9 +755,9 @@ export default function ProductImageManager({
                         <NextImage
                           src={displayUrl}
                           alt={`Product Image ${index + 1}`}
-                          width={96}
-                          height={96}
-                          sizes='96px'
+                          width={previewSize}
+                          height={previewSize}
+                          sizes={`${previewSize}px`}
                           unoptimized
                           className='h-full w-full rounded-md object-cover pointer-events-none'
                           draggable={false}

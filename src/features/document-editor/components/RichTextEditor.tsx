@@ -8,6 +8,7 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableRow } from '@tiptap/extension-table-row';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
+import type { AnyExtension } from '@tiptap/core';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
@@ -146,7 +147,7 @@ export function RichTextEditor({
   }, [headingLevelsSignature]);
 
   const extensions = useMemo(() => {
-    const activeExtensions = [
+    const activeExtensions: AnyExtension[] = [
       StarterKit.configure({
         heading: { levels: normalizedHeadingLevels },
       }),

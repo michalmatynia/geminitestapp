@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import * as productsApi from '@/features/products/api/products';
 import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
@@ -22,7 +21,7 @@ import {
 } from '@/features/products/validation-engine/core';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, UnifiedSelect, FormSection, FormField, Switch, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
+import { Button, Input, UnifiedSelect, FormSection, FormField, Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/shared/ui';
 
 import { ValidatorIssueHint } from './ProductFormGeneral';
 
@@ -53,12 +52,6 @@ export default function ProductFormOther(): React.JSX.Element {
     setCategoryId,
     filteredPriceGroups,
     product,
-    studioProjectId,
-    setStudioProjectId,
-    studioSequencing,
-    setStudioSequencing,
-    studioConfigLoading,
-    studioConfigSaving,
   } = useProductFormContext();
   const {
     validationInstanceScope,
@@ -114,25 +107,6 @@ export default function ProductFormOther(): React.JSX.Element {
   const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
   const hasCatalogs = selectedCatalogIds.length > 0;
   const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
-  const studioProjectsQuery = useStudioProjects();
-  const studioProjectOptions = useMemo(
-    () => [
-      { value: '', label: 'Not Connected' },
-      ...(studioProjectsQuery.data ?? []).map((projectId: string) => ({
-        value: projectId,
-        label: projectId,
-      })),
-    ],
-    [studioProjectsQuery.data]
-  );
-  const studioUpscaleScaleOptions = useMemo(
-    () =>
-      ['1.5', '2', '3', '4'].map((value: string) => ({
-        value,
-        label: `${value}x`,
-      })),
-    []
-  );
   const needsLatestProductSource = useMemo(
     () =>
       validatorPatterns.some((pattern: ProductValidationPattern) => {
@@ -266,127 +240,6 @@ export default function ProductFormOther(): React.JSX.Element {
 
   return (
     <div className='space-y-6'>
-      <FormSection
-        title='Image Studio'
-        description='Select a Studio project to enable Product Studio generations.'
-      >
-        <FormField
-          id='studioProjectId'
-          label='Studio Project'
-          description='The Studio tab appears after selecting a project.'
-        >
-          <UnifiedSelect
-            value={studioProjectId ?? ''}
-            onValueChange={(value: string): void => {
-              setStudioProjectId(value || null);
-            }}
-            options={studioProjectOptions}
-            placeholder={
-              studioProjectsQuery.isLoading
-                ? 'Loading Studio projects...'
-                : 'Select Studio project'
-            }
-            disabled={studioConfigLoading || studioConfigSaving || studioProjectsQuery.isLoading}
-            triggerClassName={studioConfigLoading || studioConfigSaving ? 'opacity-70' : ''}
-          />
-        </FormField>
-
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FormField
-            id='studioSequencingEnabled'
-            label='Sequencing'
-            description='Enable pipeline: center crop before generation and upscale on accept.'
-          >
-            <div className='flex items-center gap-2 rounded border border-border/60 bg-card/30 px-3 py-2'>
-              <Switch
-                checked={studioSequencing.enabled}
-                onCheckedChange={(checked: boolean) => {
-                  setStudioSequencing({ enabled: Boolean(checked) });
-                }}
-                disabled={studioConfigLoading || studioConfigSaving}
-                aria-label='Enable Product Studio sequencing'
-              />
-              <span className='text-xs text-gray-300'>
-                {studioSequencing.enabled ? 'Enabled' : 'Disabled'}
-              </span>
-            </div>
-          </FormField>
-
-          <FormField
-            id='studioUpscaleScale'
-            label='Upscale Scale'
-            description='Applied after clicking Accept Variant.'
-          >
-            <UnifiedSelect
-              value={String(studioSequencing.upscaleScale)}
-              onValueChange={(value: string): void => {
-                setStudioSequencing({ upscaleScale: Number(value) });
-              }}
-              options={studioUpscaleScaleOptions}
-              disabled={
-                studioConfigLoading ||
-                studioConfigSaving ||
-                !studioSequencing.enabled ||
-                !studioSequencing.upscaleOnAccept
-              }
-              placeholder='Select scale'
-            />
-          </FormField>
-        </div>
-
-        <div className='grid gap-3 md:grid-cols-2'>
-          <FormField
-            id='studioCenterCropBeforeGeneration'
-            label='Center Crop Before Generation'
-            description='Applies centered crop on send/regenerate.'
-          >
-            <div className='flex items-center gap-2 rounded border border-border/60 bg-card/30 px-3 py-2'>
-              <Switch
-                checked={studioSequencing.cropCenterBeforeGeneration}
-                onCheckedChange={(checked: boolean) => {
-                  setStudioSequencing({
-                    cropCenterBeforeGeneration: Boolean(checked),
-                  });
-                }}
-                disabled={
-                  studioConfigLoading ||
-                  studioConfigSaving ||
-                  !studioSequencing.enabled
-                }
-                aria-label='Enable center crop before generation'
-              />
-              <span className='text-xs text-gray-300'>
-                {studioSequencing.cropCenterBeforeGeneration ? 'Enabled' : 'Disabled'}
-              </span>
-            </div>
-          </FormField>
-
-          <FormField
-            id='studioUpscaleOnAccept'
-            label='Upscale On Accept'
-            description='Upscales selected variant before saving to product image slot.'
-          >
-            <div className='flex items-center gap-2 rounded border border-border/60 bg-card/30 px-3 py-2'>
-              <Switch
-                checked={studioSequencing.upscaleOnAccept}
-                onCheckedChange={(checked: boolean) => {
-                  setStudioSequencing({ upscaleOnAccept: Boolean(checked) });
-                }}
-                disabled={
-                  studioConfigLoading ||
-                  studioConfigSaving ||
-                  !studioSequencing.enabled
-                }
-                aria-label='Enable upscale on accept'
-              />
-              <span className='text-xs text-gray-300'>
-                {studioSequencing.upscaleOnAccept ? 'Enabled' : 'Disabled'}
-              </span>
-            </div>
-          </FormField>
-        </div>
-      </FormSection>
-
       {!hasCatalogs && (
         <FormSection variant='subtle-compact' className='border-amber-500/40 bg-amber-500/10 text-amber-100'>
           <p className='text-sm'>Select a catalog to set pricing and price groups.</p>

@@ -4,7 +4,7 @@ import { Search, X } from 'lucide-react';
 import React, { useState, useCallback } from 'react';
 
 
-import { Button } from '@/shared/ui/button';
+import { UnifiedButton } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import {
@@ -91,18 +91,19 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
         <>
           {/* Toggle button (compact or explicit collapsible mode) */}
           {compact || collapsible ? (
-            <button
+            <UnifiedButton
+              type='button'
+              size='sm'
+              variant={hasActiveFilters ? 'default' : 'outline'}
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
-                'text-sm font-medium px-2 py-1 rounded border',
-                hasActiveFilters
-                  ? 'bg-blue-50 border-blue-200 text-blue-700'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                'h-8 px-2',
+                hasActiveFilters && 'bg-blue-600 text-white hover:bg-blue-500'
               )}
             >
               {isExpanded ? 'Hide Filters' : 'Show Filters'}
               {hasActiveFilters && <span> ({activeFilterCount})</span>}
-            </button>
+            </UnifiedButton>
           ) : null}
 
           {isExpanded && (
@@ -118,14 +119,15 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
 
               {/* Reset Button */}
               {hasActiveFilters && (
-                <Button
+                <UnifiedButton
+                  type='button'
                   variant='outline'
                   size='sm'
                   onClick={handleReset}
                   className='ml-auto'
                 >
                   Reset Filters
-                </Button>
+                </UnifiedButton>
               )}
             </div>
           )}

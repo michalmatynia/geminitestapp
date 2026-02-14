@@ -2,11 +2,6 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
-import {
-  DEFAULT_PRODUCT_STUDIO_SEQUENCING,
-  normalizeProductStudioSequencing,
-  type ProductStudioSequencingConfig,
-} from '@/features/products/types/product-studio';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -23,14 +18,12 @@ type SettingDocument = {
 export type ProductStudioConfig = {
   projectId: string | null;
   sourceSlotByImageIndex: Record<string, string>;
-  sequencing: ProductStudioSequencingConfig;
   updatedAt: string;
 };
 
 type ProductStudioConfigInput = {
   projectId?: string | null | undefined;
   sourceSlotByImageIndex?: Record<string, string> | null | undefined;
-  sequencing?: unknown;
 };
 
 const SETTINGS_COLLECTION = 'settings';
@@ -80,7 +73,6 @@ const normalizeSourceSlotByImageIndex = (
 const createDefaultConfig = (): ProductStudioConfig => ({
   projectId: null,
   sourceSlotByImageIndex: {},
-  sequencing: { ...DEFAULT_PRODUCT_STUDIO_SEQUENCING },
   updatedAt: new Date().toISOString(),
 });
 
@@ -108,7 +100,6 @@ const toConfig = (raw: string | null): ProductStudioConfig => {
       sourceSlotByImageIndex: normalizeSourceSlotByImageIndex(
         objectValue['sourceSlotByImageIndex'] as Record<string, unknown> | null
       ),
-      sequencing: normalizeProductStudioSequencing(objectValue['sequencing']),
       updatedAt,
     };
   } catch {
@@ -120,7 +111,6 @@ const toStorageValue = (config: ProductStudioConfig): string =>
   JSON.stringify({
     projectId: config.projectId,
     sourceSlotByImageIndex: config.sourceSlotByImageIndex,
-    sequencing: config.sequencing,
     updatedAt: config.updatedAt,
   });
 
@@ -255,15 +245,10 @@ export async function setProductStudioConfig(
       : projectChanged
         ? {}
         : existing.sourceSlotByImageIndex;
-  const nextSequencing =
-    input.sequencing !== undefined
-      ? normalizeProductStudioSequencing(input.sequencing)
-      : existing.sequencing;
 
   const next: ProductStudioConfig = {
     projectId: nextProjectId,
     sourceSlotByImageIndex: nextSourceSlotByImageIndex,
-    sequencing: nextSequencing,
     updatedAt: new Date().toISOString(),
   };
 

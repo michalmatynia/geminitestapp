@@ -25,7 +25,6 @@ import {
 } from './block-helpers';
 import { getSectionDefinition, getBlockDefinition } from '../../components/page-builder/section-registry';
 
-import type { PageComponent } from '../../types';
 import type {
   PageBuilderState,
   PageBuilderAction,
@@ -50,8 +49,8 @@ function reducePageBuilderState(
         showMenu: action.page.showMenu ?? true,
       };
       const reconstructedSections: SectionInstance[] = (action.page.components ?? []).map(
-        (comp: PageComponent, idx: number): SectionInstance => {
-          const content = comp.content as {
+        (comp, idx: number): SectionInstance => {
+          const content = (comp.content ?? {}) as {
             zone?: PageZone;
             settings?: Record<string, unknown>;
             blocks?: BlockInstance[];
@@ -1219,8 +1218,7 @@ function reducePageBuilderState(
         ...state,
         currentPage: {
           ...state.currentPage,
-          slugs: action.slugValues.map((slug: string) => ({ slug: { slug } })),
-          slugIds: action.slugIds,
+          slugs: action.slugValues,
         },
       };
     }

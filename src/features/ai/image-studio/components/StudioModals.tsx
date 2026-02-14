@@ -1,27 +1,31 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import FileManager from '@/features/files/components/FileManager';
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/features/products/constants';
+import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import {
   flattenParams,
   inferParamSpecs,
   type ParamSpec,
 } from '@/features/prompt-engine/prompt-params';
 import { api } from '@/shared/lib/api-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { UnifiedButton, UnifiedInput, Label, AppModal, UnifiedTextarea, useToast } from '@/shared/ui';
 
 import {
   buildHeuristicControls,
   buildPromptDiffLines,
-  getPromptRunKindLabel,
-  getPromptSourceLabel,
   type PromptDiffLine,
   type PromptExtractApiResponse,
   type PromptExtractHistoryEntry,
-  type PromptExtractRunKind,
   type PromptExtractValidationIssue,
   toSlotName,
   type UiExtractorSuggestion,
@@ -31,11 +35,54 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import { studioKeys } from '../hooks/useImageStudioQueries';
 import { isParamUiControl, type ParamUiControl } from '../utils/param-ui';
+
+type LinkedGeneratedRunRecord = {
+  id: string;
+  createdAt: string;
+  outputs: Array<{
+    id: string;
+    filepath: string;
+    filename: string;
+    size: number;
+    width: number | null;
+    height: number | null;
+  }>;
+};
+
+type LinkedGeneratedRunsResponse = {
+  runs?: LinkedGeneratedRunRecord[];
+  total?: number;
+};
+
+type LinkedGeneratedVariant = {
+  key: string;
+  runId: string;
+  runCreatedAt: string;
+  outputIndex: number;
+  outputCount: number;
+  imageSrc: string;
+  output: {
+    id: string;
+    filepath: string;
+    filename: string;
+    size: number;
+    width: number | null;
+    height: number | null;
+  };
+};
+
+const formatLinkedVariantTimestamp = (value: string): string => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString();
+};
 
 export function StudioModals(): React.JSX.Element {
   const { toast } = useToast();
   const { projectId } = useProjectsState();
+  const settingsStore = useSettingsStore();
   const {
     slots,
     selectedFolder,
@@ -95,6 +142,63 @@ export function StudioModals(): React.JSX.Element {
   const localUploadInputRef = useRef<HTMLInputElement | null>(null);
   const [localUploadMode, setLocalUploadMode] = useState<'create' | 'replace' | 'temporary-object'>('create');
   const [localUploadTargetId, setLocalUploadTargetId] = useState<string | null>(null);
+  const [linkedVariantApplyBusyKey, setLinkedVariantApplyBusyKey] = useState<string | null>(null);
+
+  const productImagesExternalBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+
+  const linkedRunsQuery = useQuery<LinkedGeneratedRunsResponse>({
+    queryKey: studioKeys.runs({
+      projectId: projectId ?? null,
+      sourceSlotId: selectedSlot?.id ?? null,
+      status: 'completed',
+      scope: 'slot-inline-edit',
+    }),
+    queryFn: async () => {
+      if (!projectId || !selectedSlot?.id) return { runs: [], total: 0 };
+      return await api.get<LinkedGeneratedRunsResponse>('/api/image-studio/runs', {
+        params: {
+          projectId,
+          sourceSlotId: selectedSlot.id,
+          status: 'completed',
+          limit: 100,
+          offset: 0,
+        },
+      });
+    },
+    enabled: Boolean(projectId && slotInlineEditOpen && selectedSlot?.id),
+    staleTime: 5_000,
+  });
+
+  const linkedGeneratedVariants = useMemo((): LinkedGeneratedVariant[] => {
+    const runs = Array.isArray(linkedRunsQuery.data?.runs) ? linkedRunsQuery.data.runs : [];
+    return runs.flatMap((run) => {
+      const outputs = Array.isArray(run.outputs) ? run.outputs : [];
+      return outputs
+        .map((output, outputIndex): LinkedGeneratedVariant | null => {
+          const outputPath = output.filepath?.trim() ?? '';
+          if (!output.id || !outputPath) return null;
+          return {
+            key: `${run.id}:${output.id}`,
+            runId: run.id,
+            runCreatedAt: run.createdAt,
+            outputIndex: outputIndex + 1,
+            outputCount: outputs.length,
+            imageSrc: resolveProductImageUrl(outputPath, productImagesExternalBaseUrl) ?? outputPath,
+            output: {
+              id: output.id,
+              filepath: outputPath,
+              filename: output.filename ?? '',
+              size: typeof output.size === 'number' && Number.isFinite(output.size) ? output.size : 0,
+              width: typeof output.width === 'number' && Number.isFinite(output.width) ? output.width : null,
+              height: typeof output.height === 'number' && Number.isFinite(output.height) ? output.height : null,
+            },
+          };
+        })
+        .filter((variant): variant is LinkedGeneratedVariant => Boolean(variant));
+    });
+  }, [linkedRunsQuery.data?.runs, productImagesExternalBaseUrl]);
 
   const previewLeaves = useMemo(
     () => (previewParams ? flattenParams(previewParams).filter((leaf) => Boolean(leaf.path)) : []),
@@ -361,6 +465,30 @@ export function StudioModals(): React.JSX.Element {
     } catch (error: unknown) {
       toast(error instanceof Error ? error.message : 'Failed to clear card image', { variant: 'error' });
     } finally {
+      setSlotUpdateBusy(false);
+    }
+  };
+
+  const handleApplyLinkedVariantToCard = async (variant: LinkedGeneratedVariant): Promise<void> => {
+    if (!selectedSlot) return;
+    setLinkedVariantApplyBusyKey(variant.key);
+    setSlotUpdateBusy(true);
+    try {
+      await updateSlotMutation.mutateAsync({
+        id: selectedSlot.id,
+        data: {
+          imageFileId: variant.output.id,
+          imageUrl: variant.output.filepath,
+          imageBase64: null,
+        },
+      });
+      setSlotImageUrlDraft(variant.output.filepath);
+      setSlotBase64Draft('');
+      toast('Linked variant applied to card.', { variant: 'success' });
+    } catch (error: unknown) {
+      toast(error instanceof Error ? error.message : 'Failed to apply linked variant.', { variant: 'error' });
+    } finally {
+      setLinkedVariantApplyBusyKey((current) => (current === variant.key ? null : current));
       setSlotUpdateBusy(false);
     }
   };
@@ -779,6 +907,85 @@ export function StudioModals(): React.JSX.Element {
                 className='h-28 font-mono text-[11px]'
                 placeholder='data:image/png;base64,...'
               />
+            </div>
+
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between gap-2'>
+                <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
+                <UnifiedButton
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => {
+                    void linkedRunsQuery.refetch();
+                  }}
+                  disabled={linkedRunsQuery.isFetching}
+                >
+                  {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                  Refresh
+                </UnifiedButton>
+              </div>
+              <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
+                {linkedRunsQuery.isLoading ? (
+                  <div className='flex items-center gap-2 px-1 py-2 text-xs text-gray-400'>
+                    <Loader2 className='size-4 animate-spin' />
+                    Loading linked variants...
+                  </div>
+                ) : linkedRunsQuery.isError ? (
+                  <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
+                    {linkedRunsQuery.error instanceof Error
+                      ? linkedRunsQuery.error.message
+                      : 'Failed to load linked variants.'}
+                  </div>
+                ) : linkedGeneratedVariants.length === 0 ? (
+                  <div className='px-1 py-2 text-xs text-gray-500'>
+                    No generated variants linked to this card yet.
+                  </div>
+                ) : (
+                  linkedGeneratedVariants.map((variant) => {
+                    const isApplying = linkedVariantApplyBusyKey === variant.key && slotUpdateBusy;
+                    return (
+                      <div
+                        key={variant.key}
+                        className='flex items-center gap-3 rounded border border-border/60 bg-card/50 p-2'
+                      >
+                        <div className='size-14 overflow-hidden rounded-md border border-border/60 bg-black/30'>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={variant.imageSrc}
+                            alt={variant.output.filename || `Linked variant ${variant.outputIndex}`}
+                            className='h-full w-full object-cover'
+                            loading='lazy'
+                          />
+                        </div>
+                        <div className='min-w-0 flex-1 text-[11px] text-gray-300'>
+                          <div className='truncate text-xs text-gray-100'>
+                            {variant.output.filename || `Variant ${variant.outputIndex}`}
+                          </div>
+                          <div className='truncate text-[10px] text-gray-400'>
+                            Run {variant.runId.slice(0, 8)} • Variant {variant.outputIndex}/{variant.outputCount}
+                          </div>
+                          <div className='truncate text-[10px] text-gray-500'>
+                            {formatLinkedVariantTimestamp(variant.runCreatedAt)}
+                          </div>
+                        </div>
+                        <UnifiedButton
+                          type='button'
+                          size='sm'
+                          variant='outline'
+                          onClick={() => {
+                            void handleApplyLinkedVariantToCard(variant);
+                          }}
+                          disabled={slotUpdateBusy}
+                        >
+                          {isApplying ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                          Use On Card
+                        </UnifiedButton>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
 
             <div className='flex flex-wrap items-center gap-2'>

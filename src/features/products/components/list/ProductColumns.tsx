@@ -108,6 +108,59 @@ const defaultExportInventoryQueryKey = QUERY_KEYS.integrations.defaultExportInve
 const activeExportTemplateQueryKey = QUERY_KEYS.integrations.activeExportTemplate();
 const oneClickExportInFlight = new Set<string>();
 
+const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
+const WARNING_STATUSES = new Set([
+  'warning',
+  'pending',
+  'queued',
+  'queued_relist',
+  'processing',
+  'in_progress',
+  'running',
+]);
+const FAILURE_STATUSES = new Set(['failed', 'error', 'removed', 'needs_login', 'auth_required']);
+
+const normalizeMarketplaceStatus = (value: string): string =>
+  value.trim().toLowerCase();
+
+const getStatusToneClass = (value: string): string => {
+  const normalized = normalizeMarketplaceStatus(value);
+  if (SUCCESS_STATUSES.has(normalized)) {
+    return 'border-emerald-400/60 text-emerald-200 hover:border-emerald-300/70 hover:text-emerald-100';
+  }
+  if (WARNING_STATUSES.has(normalized)) {
+    return 'border-amber-400/60 text-amber-200 hover:border-amber-300/70 hover:text-amber-100';
+  }
+  if (FAILURE_STATUSES.has(normalized)) {
+    return 'border-rose-400/60 text-rose-200 hover:border-rose-300/70 hover:text-rose-100';
+  }
+  return 'border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-gray-200';
+};
+
+const getMarketplaceButtonClass = (
+  value: string,
+  manageMode: boolean,
+  marketplace: 'base' | 'tradera'
+): string => {
+  if (!manageMode) {
+    return getStatusToneClass(value);
+  }
+  const normalized = normalizeMarketplaceStatus(value);
+  if (SUCCESS_STATUSES.has(normalized)) {
+    return 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25';
+  }
+  if (WARNING_STATUSES.has(normalized)) {
+    return 'border-amber-400/70 bg-amber-500/15 text-amber-100 hover:border-amber-300/80 hover:bg-amber-500/25';
+  }
+  if (FAILURE_STATUSES.has(normalized)) {
+    return 'border-rose-400/70 bg-rose-500/15 text-rose-100 hover:border-rose-300/80 hover:bg-rose-500/25';
+  }
+  if (marketplace === 'tradera') {
+    return 'border-cyan-400/70 bg-cyan-500/15 text-cyan-100 hover:border-cyan-300/80 hover:bg-cyan-500/25';
+  }
+  return 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
+};
+
 const BaseQuickExportButton = ({
   product,
   status,
@@ -126,37 +179,6 @@ const BaseQuickExportButton = ({
   const quickExportMutation = useGenericExportToBaseMutation();
   const quickExportLockRef = useRef(false);
   const [quickExportLocked, setQuickExportLocked] = useState(false);
-
-  const getStatusToneClass = (value: string): string => {
-    const normalized = value.toLowerCase();
-    if (['active', 'success', 'completed', 'listed', 'ok'].includes(normalized)) {
-      return 'border-emerald-400/60 text-emerald-200 hover:border-emerald-300/70 hover:text-emerald-100';
-    }
-    if (['warning', 'pending', 'queued', 'processing', 'in_progress'].includes(normalized)) {
-      return 'border-amber-400/60 text-amber-200 hover:border-amber-300/70 hover:text-amber-100';
-    }
-    if (['failed', 'error'].includes(normalized)) {
-      return 'border-rose-400/60 text-rose-200 hover:border-rose-300/70 hover:text-rose-100';
-    }
-    return 'border-gray-500/50 text-gray-300 hover:border-gray-400/60 hover:text-gray-200';
-  };
-
-  const getBlButtonClass = (value: string, manageMode: boolean): string => {
-    if (manageMode) {
-      const normalized = value.toLowerCase();
-      if (['active', 'success', 'completed', 'listed', 'ok'].includes(normalized)) {
-        return 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25';
-      }
-      if (['warning', 'pending', 'queued', 'processing', 'in_progress'].includes(normalized)) {
-        return 'border-amber-400/70 bg-amber-500/15 text-amber-100 hover:border-amber-300/80 hover:bg-amber-500/25';
-      }
-      if (['failed', 'error', 'removed'].includes(normalized)) {
-        return 'border-rose-400/70 bg-rose-500/15 text-rose-100 hover:border-rose-300/80 hover:bg-rose-500/25';
-      }
-      return 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
-    }
-    return getStatusToneClass(value);
-  };
 
   const runQuickExport = async (): Promise<void> => {
     if (
@@ -264,10 +286,37 @@ const BaseQuickExportButton = ({
       disabled={!showMarketplaceBadge && quickExportPending}
       ariaLabel={label}
       title={label}
-      className={getBlButtonClass(status, showMarketplaceBadge)}
+      className={getMarketplaceButtonClass(status, showMarketplaceBadge, 'base')}
     >
       <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none tracking-tight'>
         {quickExportPending ? '...' : 'BL'}
+      </span>
+    </CircleIconButton>
+  );
+};
+
+const TraderaStatusButton = ({
+  status,
+  prefetchListings,
+  onOpenListings,
+}: {
+  status: string;
+  prefetchListings: () => void;
+  onOpenListings: () => void;
+}): React.JSX.Element => {
+  const label = `Manage Tradera listing (${status}).`;
+
+  return (
+    <CircleIconButton
+      onClick={onOpenListings}
+      onMouseEnter={prefetchListings}
+      onFocus={prefetchListings}
+      ariaLabel={label}
+      title={label}
+      className={getMarketplaceButtonClass(status, true, 'tradera')}
+    >
+      <span aria-hidden='true' className='text-[10px] font-black uppercase leading-none tracking-tight'>
+        T
       </span>
     </CircleIconButton>
   );
@@ -684,6 +733,8 @@ export const getProductColumns = (
         onExportSettingsClick: handleOpenExportSettings,
         integrationBadgeIds,
         integrationBadgeStatuses,
+        traderaBadgeIds,
+        traderaBadgeStatuses,
       } = useProductListActionsContext();
       const queryClient = useQueryClient();
 
@@ -691,6 +742,9 @@ export const getProductColumns = (
       const showMarketplaceBadge: boolean =
         integrationBadgeIds?.has(product.id) ?? false;
       const status: string = integrationBadgeStatuses?.get(product.id) ?? 'not_started';
+      const showTraderaBadge: boolean = traderaBadgeIds?.has(product.id) ?? false;
+      const traderaStatus: string =
+        traderaBadgeStatuses?.get(product.id) ?? 'not_started';
       const prefetchListings = (): void => {
         void queryClient.prefetchQuery({
           queryKey: productListingsQueryKey(product.id),
@@ -725,6 +779,13 @@ export const getProductColumns = (
                 : undefined
             }
           />
+          {showTraderaBadge && (
+            <TraderaStatusButton
+              status={traderaStatus}
+              prefetchListings={prefetchListings}
+              onOpenListings={(): void => handleClick(product)}
+            />
+          )}
         </div>
       );
     },

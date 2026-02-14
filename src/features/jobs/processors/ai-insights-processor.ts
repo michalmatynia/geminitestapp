@@ -71,7 +71,7 @@ export async function tick(): Promise<void> {
     runId = createdRun.id;
     await runRepository.updateRun(runId, {
       status: 'running',
-      startedAt: new Date(),
+      startedAt: new Date().toISOString(),
     });
     await appendRunEvent('AI Insights tick started.');
   } catch {
@@ -137,7 +137,7 @@ export async function tick(): Promise<void> {
     if (runId) {
       await runRepository.updateRun(runId, {
         status: 'completed',
-        finishedAt: new Date(),
+        finishedAt: new Date().toISOString(),
         runtimeState: {
           inputs: {
             schedule: {
@@ -170,7 +170,7 @@ export async function tick(): Promise<void> {
       try {
         await runRepository.updateRun(runId, {
           status: 'failed',
-          finishedAt: new Date(),
+          finishedAt: new Date().toISOString(),
           errorMessage: toErrorMessage(error),
           meta: {
             ...baseMeta,

@@ -13,19 +13,14 @@ import type { NextRequest } from 'next/server';
 
 type CmsDomainRecord = {
   id: string;
+  name?: string;
   domain: string;
   aliasOf?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
-export type CmsDomainResponse = {
-  id: string;
-  domain: string;
-  aliasOf?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-};
+export type CmsDomainResponse = CmsDomain;
 
 type CmsDomainSlugLink = {
   domainId: string;
@@ -59,6 +54,7 @@ const getFallbackDomain = (): string => {
 
 const buildDefaultDomain = (hostHeader: string | null): CmsDomain => ({
   id: 'default-domain',
+  name: 'Default domain',
   domain: normalizeHost(hostHeader),
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -205,6 +201,7 @@ export async function resolveCmsDomainByHost(hostHeader: string | null): Promise
   const now = new Date();
   const doc: CmsDomainRecord = {
     id: randomUUID(),
+    name: domain,
     domain,
     aliasOf: null,
     createdAt: now,
@@ -247,10 +244,11 @@ export async function getDomainIdsForSlug(slugId: string): Promise<string[]> {
 
 const toDomainResponse = (doc: CmsDomainRecord): CmsDomainResponse => ({
   id: doc.id,
+  name: doc.name ?? doc.domain,
   domain: doc.domain,
   aliasOf: doc.aliasOf ?? null,
-  createdAt: doc.createdAt?.toISOString?.() ?? undefined,
-  updatedAt: doc.updatedAt?.toISOString?.() ?? undefined,
+  createdAt: doc.createdAt.toISOString(),
+  updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
 });
 
 export async function listCmsDomains(): Promise<CmsDomainResponse[]> {
@@ -268,7 +266,15 @@ export async function listCmsDomains(): Promise<CmsDomainResponse[]> {
 export async function createCmsDomain(domain: string): Promise<CmsDomainResponse> {
   const zoningEnabled = await isDomainZoningEnabled();
   if (!zoningEnabled) {
-    return { id: 'default-domain', domain: normalizeHost(domain) };
+    const normalizedDomain = normalizeHost(domain);
+    const now = new Date().toISOString();
+    return {
+      id: 'default-domain',
+      name: normalizedDomain,
+      domain: normalizedDomain,
+      createdAt: now,
+      updatedAt: now,
+    };
   }
   const db = await getMongoDb();
   const normalized = normalizeHost(domain);
@@ -279,6 +285,7 @@ export async function createCmsDomain(domain: string): Promise<CmsDomainResponse
   const now = new Date();
   const doc: CmsDomainRecord = {
     id: randomUUID(),
+    name: normalized,
     domain: normalized,
     aliasOf: null,
     createdAt: now,

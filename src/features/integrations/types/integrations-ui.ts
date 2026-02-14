@@ -20,6 +20,7 @@ export type IntegrationConnection = {
   baseLastInventoryId?: string | null | undefined;
   hasPlaywrightStorageState?: boolean | undefined;
   playwrightStorageStateUpdatedAt?: string | null | undefined;
+  playwrightPersonaId?: string | null | undefined;
   playwrightHeadless?: boolean | undefined;
   playwrightSlowMo?: number | undefined;
   playwrightTimeout?: number | undefined;
@@ -38,6 +39,10 @@ export type IntegrationConnection = {
   playwrightProxyHasPassword?: boolean | undefined;
   playwrightEmulateDevice?: boolean | undefined;
   playwrightDeviceName?: string | null | undefined;
+  traderaDefaultTemplateId?: string | null | undefined;
+  traderaDefaultDurationHours?: number | undefined;
+  traderaAutoRelistEnabled?: boolean | undefined;
+  traderaAutoRelistLeadMinutes?: number | undefined;
 };
 
 export const TEST_STATUSES = ['pending', 'ok', 'failed'] as const;

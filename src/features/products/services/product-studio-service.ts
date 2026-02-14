@@ -25,7 +25,12 @@ import {
   updateImageStudioSlot,
   type ImageStudioSlotRecord,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { IMAGE_STUDIO_SETTINGS_KEY, getImageStudioProjectSettingsKey, parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
+import {
+  IMAGE_STUDIO_SETTINGS_KEY,
+  getImageStudioProjectSettingsKey,
+  parseImageStudioSettings,
+  type ImageStudioSettings,
+} from '@/features/ai/image-studio/utils/studio-settings';
 import { getDiskPathFromPublicPath, uploadFile } from '@/features/files/server';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/features/image-slots';
 import { enqueueImageStudioRunJob, startImageStudioRunQueue, type ImageStudioRunDispatchMode } from '@/features/jobs/workers/imageStudioRunQueue';
@@ -39,6 +44,7 @@ import { badRequestError, notFoundError, operationFailedError } from '@/shared/e
 
 type ProductStudioVariantsResult = {
   config: ProductStudioConfig;
+  sequencing: ProductStudioSequencingConfig;
   projectId: string | null;
   sourceSlotId: string | null;
   sourceSlot: ImageStudioSlotRecord | null;
@@ -47,6 +53,7 @@ type ProductStudioVariantsResult = {
 
 export type ProductStudioSendResult = {
   config: ProductStudioConfig;
+  sequencing: ProductStudioSequencingConfig;
   projectId: string;
   imageSlotIndex: number;
   sourceSlot: ImageStudioSlotRecord;
@@ -400,7 +407,24 @@ const createUpscaledAcceptedProductImage = async (params: {
   };
 };
 
-const resolveStudioSettings = async (projectId: string): Promise<Record<string, unknown>> => {
+const resolveSequencingFromStudioSettings = (
+  studioSettings: ImageStudioSettings
+): ProductStudioSequencingConfig => {
+  const sequenceConfig = studioSettings.projectSequencing;
+  const operations = sequenceConfig.operations;
+  const enabled = Boolean(sequenceConfig.enabled);
+  return {
+    enabled,
+    cropCenterBeforeGeneration: enabled && operations.includes('crop_center'),
+    upscaleOnAccept: enabled && operations.includes('upscale'),
+    upscaleScale: clampUpscaleScale(sequenceConfig.upscaleScale),
+  };
+};
+
+const resolveStudioSettingsBundle = async (projectId: string): Promise<{
+  studioSettings: Record<string, unknown>;
+  sequencing: ProductStudioSequencingConfig;
+}> => {
   const projectSettingsKey = getImageStudioProjectSettingsKey(projectId);
 
   const [projectSettingsRaw, globalSettingsRaw] = await Promise.all([
@@ -408,7 +432,13 @@ const resolveStudioSettings = async (projectId: string): Promise<Record<string, 
     getSettingValue(IMAGE_STUDIO_SETTINGS_KEY),
   ]);
 
-  return parseImageStudioSettings(projectSettingsRaw ?? globalSettingsRaw) as unknown as Record<string, unknown>;
+  const parsedSettings = parseImageStudioSettings(
+    projectSettingsRaw ?? globalSettingsRaw
+  );
+  return {
+    studioSettings: parsedSettings as unknown as Record<string, unknown>,
+    sequencing: resolveSequencingFromStudioSettings(parsedSettings),
+  };
 };
 
 const buildSourceSlotMetadata = (params: {
@@ -535,6 +565,7 @@ export async function getProductStudioVariants(params: {
   projectId?: string | null | undefined;
 }): Promise<ProductStudioVariantsResult> {
   const resolved = await resolveProductAndStudioTarget(params);
+  const { sequencing } = await resolveStudioSettingsBundle(resolved.projectId);
   const sourceSlotId = resolveSourceSlotIdForIndex(
     resolved.config,
     resolved.imageSlotIndex
@@ -543,6 +574,7 @@ export async function getProductStudioVariants(params: {
   if (!sourceSlotId) {
     return {
       config: resolved.config,
+      sequencing,
       projectId: resolved.projectId,
       sourceSlotId: null,
       sourceSlot: null,
@@ -557,6 +589,7 @@ export async function getProductStudioVariants(params: {
 
   return {
     config: resolved.config,
+    sequencing,
     projectId: resolved.projectId,
     sourceSlotId,
     sourceSlot,
@@ -570,6 +603,9 @@ export async function sendProductImageToStudio(params: {
   projectId?: string | null | undefined;
 }): Promise<ProductStudioSendResult> {
   const resolved = await resolveProductAndStudioTarget(params);
+  const { studioSettings, sequencing } = await resolveStudioSettingsBundle(
+    resolved.projectId
+  );
   const sourceImage = toProductImageFileSource(
     resolved.product.images[resolved.imageSlotIndex]?.imageFile
   );
@@ -583,7 +619,7 @@ export async function sendProductImageToStudio(params: {
     imageSlotIndex: resolved.imageSlotIndex,
     productId: resolved.product.id,
     projectId: resolved.projectId,
-    sequencing: resolved.config.sequencing,
+    sequencing,
   });
 
   const slotName = `${pickProductName(resolved.product)} • Slot ${resolved.imageSlotIndex + 1}`;
@@ -640,8 +676,6 @@ export async function sendProductImageToStudio(params: {
     resolved.imageSlotIndex,
     sourceSlot.id
   );
-
-  const studioSettings = await resolveStudioSettings(resolved.projectId);
 
   const runRequestCandidate: ImageStudioRunRequest = {
     projectId: resolved.projectId,
@@ -704,6 +738,7 @@ export async function sendProductImageToStudio(params: {
 
   return {
     config,
+    sequencing,
     projectId: resolved.projectId,
     imageSlotIndex: resolved.imageSlotIndex,
     sourceSlot,
@@ -741,16 +776,17 @@ export async function acceptProductStudioVariant(params: {
     throw badRequestError('Selected generation card has no image file to accept.');
   }
 
+  const { sequencing } = await resolveStudioSettingsBundle(resolved.projectId);
   let acceptedImageFileId = generationImageFileId;
   if (
-    resolved.config.sequencing.enabled &&
-    resolved.config.sequencing.upscaleOnAccept
+    sequencing.enabled &&
+    sequencing.upscaleOnAccept
   ) {
     const upscaled = await createUpscaledAcceptedProductImage({
       generationSlot,
       product: resolved.product,
       imageSlotIndex: resolved.imageSlotIndex,
-      sequencing: resolved.config.sequencing,
+      sequencing,
     });
     acceptedImageFileId = upscaled.imageFileId;
   }

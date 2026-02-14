@@ -2,6 +2,8 @@ import type {
   IntegrationDto, 
   IntegrationConnectionDto, 
   ProductListingDto,
+  ImageTransformOptionsDto,
+  ImageRetryPresetDto,
   TemplateDto,
   TemplateMappingDto,
   ImportExportTemplateDto,
@@ -39,6 +41,10 @@ export type IntegrationConnectionBasic = {
   id: string;
   name: string;
   integrationId: string;
+  traderaDefaultTemplateId?: string | null;
+  traderaDefaultDurationHours?: number | null;
+  traderaAutoRelistEnabled?: boolean | null;
+  traderaAutoRelistLeadMinutes?: number | null;
 };
 
 export type IntegrationWithConnections = {

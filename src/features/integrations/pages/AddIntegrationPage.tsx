@@ -30,7 +30,7 @@ const AVAILABLE_INTEGRATIONS = [
     slug: 'tradera',
     description: 'Direct integration with Tradera marketplace.',
     type: 'marketplace',
-    method: 'api',
+    method: 'browser',
   },
 ] as const;
 

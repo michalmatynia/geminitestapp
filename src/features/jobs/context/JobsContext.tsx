@@ -2,13 +2,14 @@
 
 import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 
+import type { TraderaQueueHealthResponse } from '@/features/jobs/api';
 import { useCancelListingMutation, useChatbotJobMutation, useClearChatbotJobsMutation } from '@/features/jobs/hooks/useJobMutations';
-import { useIntegrationJobs, useChatbotJobs } from '@/features/jobs/hooks/useJobQueries';
+import { useIntegrationJobs, useChatbotJobs, useTraderaQueueHealth } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
 import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 
-export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress';
+export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress' | 'queued' | 'queued_relist' | 'needs_login' | 'auth_required';
 
 export type ChatbotJob = {
   id: string;
@@ -29,6 +30,8 @@ interface JobsContextType {
   listingJobsRefreshing: boolean;
   refetchListingJobs: () => Promise<unknown>;
   listingJobsError: Error | null;
+  traderaQueueHealth: TraderaQueueHealthResponse | null;
+  traderaQueueHealthLoading: boolean;
   
   // Chatbot Jobs
   chatbotJobs: ChatbotJob[];
@@ -74,6 +77,7 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
   // --- Product Listing Jobs ---
   const listingJobsQuery = useIntegrationJobs();
   const listingJobs = useMemo(() => (listingJobsQuery.data as ProductJob[]) || [], [listingJobsQuery.data]);
+  const traderaQueueHealthQuery = useTraderaQueueHealth();
   const cancelListingMutation = useCancelListingMutation();
 
   // --- Chatbot Jobs ---
@@ -122,6 +126,8 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
     listingJobsRefreshing: listingJobsQuery.isFetching,
     refetchListingJobs: listingJobsQuery.refetch,
     listingJobsError: listingJobsQuery.error,
+    traderaQueueHealth: traderaQueueHealthQuery.data ?? null,
+    traderaQueueHealthLoading: traderaQueueHealthQuery.isLoading,
     
     chatbotJobs,
     chatbotJobsLoading: chatbotJobsQuery.isLoading,

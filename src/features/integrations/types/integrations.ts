@@ -34,6 +34,7 @@ export type IntegrationConnectionRecord = {
   password: string;
   playwrightStorageState?: string | null;
   playwrightStorageStateUpdatedAt?: Date | null;
+  playwrightPersonaId?: string | null;
   playwrightHeadless?: boolean | null;
   playwrightSlowMo?: number | null;
   playwrightTimeout?: number | null;
@@ -62,6 +63,10 @@ export type IntegrationConnectionRecord = {
   baseApiToken?: string | null;
   baseTokenUpdatedAt?: Date | null;
   baseLastInventoryId?: string | null;
+  traderaDefaultTemplateId?: string | null;
+  traderaDefaultDurationHours?: number | null;
+  traderaAutoRelistEnabled?: boolean | null;
+  traderaAutoRelistLeadMinutes?: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -78,7 +83,15 @@ export type IntegrationRepository = {
   ) => Promise<IntegrationConnectionRecord | null>;
   createConnection: (
     integrationId: string,
-    input: { name: string; username: string; password: string }
+    input: {
+      name: string;
+      username: string;
+      password: string;
+      traderaDefaultTemplateId?: string | null;
+      traderaDefaultDurationHours?: number;
+      traderaAutoRelistEnabled?: boolean;
+      traderaAutoRelistLeadMinutes?: number;
+    }
   ) => Promise<IntegrationConnectionRecord>;
   updateConnection: (
     id: string,

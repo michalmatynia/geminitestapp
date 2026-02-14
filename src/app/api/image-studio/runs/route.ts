@@ -22,6 +22,7 @@ const parsePositiveInteger = (value: string | null, fallback: number): number =>
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const searchParams = req.nextUrl.searchParams;
   const projectId = searchParams.get('projectId')?.trim() || null;
+  const sourceSlotId = searchParams.get('sourceSlotId')?.trim() || null;
   const statusParam = searchParams.get('status')?.trim().toLowerCase() || null;
   const status = statusParam && RUN_STATUSES.has(statusParam as ImageStudioRunStatus)
     ? (statusParam as ImageStudioRunStatus)
@@ -31,6 +32,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
   const result = await listImageStudioRuns({
     ...(projectId ? { projectId } : {}),
+    ...(sourceSlotId ? { sourceSlotId } : {}),
     ...(status ? { status } : {}),
     limit,
     offset,

@@ -23,5 +23,22 @@ export function useProductListings(productId: string): UseQueryResult<ProductLis
     staleTime: PRODUCT_LISTINGS_STALE_TIME_MS,
     gcTime: PRODUCT_LISTINGS_GC_TIME_MS,
     refetchOnWindowFocus: false,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!Array.isArray(data)) return false;
+      const activeStatuses = new Set([
+        'queued',
+        'queued_relist',
+        'pending',
+        'running',
+        'processing',
+        'in_progress',
+      ]);
+      const hasInFlight = data.some((listing) =>
+        activeStatuses.has((listing.status ?? '').trim().toLowerCase())
+      );
+      return hasInFlight ? 2500 : false;
+    },
+    refetchIntervalInBackground: true,
   });
 }

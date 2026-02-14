@@ -8,7 +8,7 @@ import type {
   IntegrationConnectionRecord,
   IntegrationRepository,
 } from '@/features/integrations/types/integrations';
-import { conflictError, notFoundError } from '@/shared/errors/app-error';
+import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -36,7 +36,12 @@ const CONNECTION_DEFAULTS = {
   playwrightProxyPassword: null,
   playwrightEmulateDevice: false,
   playwrightDeviceName: 'Desktop Chrome',
+  playwrightPersonaId: null,
   allegroUseSandbox: false,
+  traderaDefaultTemplateId: null,
+  traderaDefaultDurationHours: 72,
+  traderaAutoRelistEnabled: true,
+  traderaAutoRelistLeadMinutes: 180,
 } as const;
 
 const INTEGRATIONS_COLLECTION = 'integrations';
@@ -76,6 +81,7 @@ type IntegrationConnectionDocument = {
   playwrightProxyPassword?: string | null;
   playwrightEmulateDevice?: boolean | null;
   playwrightDeviceName?: string | null;
+  playwrightPersonaId?: string | null;
   allegroAccessToken?: string | null;
   allegroRefreshToken?: string | null;
   allegroTokenType?: string | null;
@@ -86,6 +92,10 @@ type IntegrationConnectionDocument = {
   baseApiToken?: string | null;
   baseTokenUpdatedAt?: Date | null;
   baseLastInventoryId?: string | null;
+  traderaDefaultTemplateId?: string | null;
+  traderaDefaultDurationHours?: number | null;
+  traderaAutoRelistEnabled?: boolean | null;
+  traderaAutoRelistLeadMinutes?: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -141,6 +151,8 @@ const toConnectionRecord = (
     doc.playwrightEmulateDevice ?? CONNECTION_DEFAULTS.playwrightEmulateDevice,
   playwrightDeviceName:
     doc.playwrightDeviceName ?? CONNECTION_DEFAULTS.playwrightDeviceName,
+  playwrightPersonaId:
+    doc.playwrightPersonaId ?? CONNECTION_DEFAULTS.playwrightPersonaId,
   allegroAccessToken: doc.allegroAccessToken ?? null,
   allegroRefreshToken: doc.allegroRefreshToken ?? null,
   allegroTokenType: doc.allegroTokenType ?? null,
@@ -151,6 +163,17 @@ const toConnectionRecord = (
   baseApiToken: doc.baseApiToken ?? null,
   baseTokenUpdatedAt: doc.baseTokenUpdatedAt ?? null,
   baseLastInventoryId: doc.baseLastInventoryId ?? null,
+  traderaDefaultTemplateId:
+    doc.traderaDefaultTemplateId ?? CONNECTION_DEFAULTS.traderaDefaultTemplateId,
+  traderaDefaultDurationHours:
+    doc.traderaDefaultDurationHours ??
+    CONNECTION_DEFAULTS.traderaDefaultDurationHours,
+  traderaAutoRelistEnabled:
+    doc.traderaAutoRelistEnabled ??
+    CONNECTION_DEFAULTS.traderaAutoRelistEnabled,
+  traderaAutoRelistLeadMinutes:
+    doc.traderaAutoRelistLeadMinutes ??
+    CONNECTION_DEFAULTS.traderaAutoRelistLeadMinutes,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -187,13 +210,37 @@ const prismaRepository: IntegrationRepository = {
       where: { id, integrationId },
     });
   },
-  createConnection: async (integrationId: string, input: { name: string; username: string; password: string }): Promise<IntegrationConnectionRecord> => {
+  createConnection: async (
+    integrationId: string,
+    input: {
+      name: string;
+      username: string;
+      password: string;
+      traderaDefaultTemplateId?: string | null;
+      traderaDefaultDurationHours?: number;
+      traderaAutoRelistEnabled?: boolean;
+      traderaAutoRelistLeadMinutes?: number;
+    }
+  ): Promise<IntegrationConnectionRecord> => {
     return prisma.integrationConnection.create({
       data: {
         integrationId,
         name: input.name,
         username: input.username,
         password: input.password,
+        ...(typeof input.traderaDefaultTemplateId === 'string' ||
+        input.traderaDefaultTemplateId === null
+          ? { traderaDefaultTemplateId: input.traderaDefaultTemplateId ?? null }
+          : {}),
+        ...(typeof input.traderaDefaultDurationHours === 'number'
+          ? { traderaDefaultDurationHours: input.traderaDefaultDurationHours }
+          : {}),
+        ...(typeof input.traderaAutoRelistEnabled === 'boolean'
+          ? { traderaAutoRelistEnabled: input.traderaAutoRelistEnabled }
+          : {}),
+        ...(typeof input.traderaAutoRelistLeadMinutes === 'number'
+          ? { traderaAutoRelistLeadMinutes: input.traderaAutoRelistLeadMinutes }
+          : {}),
       },
     });
   },
@@ -287,15 +334,20 @@ const mongoRepository: IntegrationRepository = {
       .findOne({ _id: id, integrationId });
     return doc ? toConnectionRecord(doc) : null;
   },
-  createConnection: async (integrationId: string, input: { name: string; username: string; password: string }): Promise<IntegrationConnectionRecord> => {
+  createConnection: async (
+    integrationId: string,
+    input: {
+      name: string;
+      username: string;
+      password: string;
+      traderaDefaultTemplateId?: string | null;
+      traderaDefaultDurationHours?: number;
+      traderaAutoRelistEnabled?: boolean;
+      traderaAutoRelistLeadMinutes?: number;
+    }
+  ): Promise<IntegrationConnectionRecord> => {
     const db = await getMongoDb();
     const now = new Date();
-    const existing = await db
-      .collection<IntegrationConnectionDocument>(CONNECTIONS_COLLECTION)
-      .findOne({ integrationId });
-    if (existing) {
-      throw conflictError('Connection already exists', { integrationId });
-    }
     const id = randomUUID();
     const doc: IntegrationConnectionDocument = {
       _id: id,
@@ -304,6 +356,19 @@ const mongoRepository: IntegrationRepository = {
       username: input.username,
       password: input.password,
       ...CONNECTION_DEFAULTS,
+      ...(typeof input.traderaDefaultTemplateId === 'string' ||
+      input.traderaDefaultTemplateId === null
+        ? { traderaDefaultTemplateId: input.traderaDefaultTemplateId ?? null }
+        : {}),
+      ...(typeof input.traderaDefaultDurationHours === 'number'
+        ? { traderaDefaultDurationHours: input.traderaDefaultDurationHours }
+        : {}),
+      ...(typeof input.traderaAutoRelistEnabled === 'boolean'
+        ? { traderaAutoRelistEnabled: input.traderaAutoRelistEnabled }
+        : {}),
+      ...(typeof input.traderaAutoRelistLeadMinutes === 'number'
+        ? { traderaAutoRelistLeadMinutes: input.traderaAutoRelistLeadMinutes }
+        : {}),
       createdAt: now,
       updatedAt: now,
     };

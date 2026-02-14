@@ -52,6 +52,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   password: z.string().optional(),
   playwrightStorageState: z.string().nullable().optional(),
   playwrightStorageStateUpdatedAt: z.string().nullable().optional(),
+  playwrightPersonaId: z.string().nullable().optional(),
   playwrightHeadless: z.boolean().optional(),
   playwrightSlowMo: z.number().optional(),
   playwrightTimeout: z.number().optional(),
@@ -80,6 +81,10 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   baseApiToken: z.string().nullable().optional(),
   baseTokenUpdatedAt: z.string().nullable().optional(),
   baseLastInventoryId: z.string().nullable().optional(),
+  traderaDefaultTemplateId: z.string().nullable().optional(),
+  traderaDefaultDurationHours: z.number().optional(),
+  traderaAutoRelistEnabled: z.boolean().optional(),
+  traderaAutoRelistLeadMinutes: z.number().optional(),
 });
 
 export type IntegrationConnectionDto = z.infer<typeof integrationConnectionSchema>;
@@ -104,6 +109,9 @@ export const productListingExportEventSchema = z.object({
   templateId: z.string().nullable().optional(),
   warehouseId: z.string().nullable().optional(),
   externalListingId: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
+  failureReason: z.string().nullable().optional(),
+  relist: z.boolean().optional(),
   fields: z.array(z.string()).nullable().optional(),
   requestId: z.string().nullable().optional(),
 });
@@ -118,6 +126,14 @@ export const productListingSchema = dtoBaseSchema.extend({
   inventoryId: z.string().nullable(),
   status: z.string(),
   listedAt: z.string().nullable(),
+  expiresAt: z.string().nullable(),
+  nextRelistAt: z.string().nullable(),
+  relistPolicy: z.record(z.string(), z.unknown()).nullable().optional(),
+  relistAttempts: z.number().int().optional(),
+  lastRelistedAt: z.string().nullable(),
+  lastStatusCheckAt: z.string().nullable(),
+  marketplaceData: z.record(z.string(), z.unknown()).nullable().optional(),
+  failureReason: z.string().nullable(),
   exportHistory: z.array(productListingExportEventSchema).nullable(),
 });
 

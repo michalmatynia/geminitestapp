@@ -30,13 +30,36 @@ const patchSchema = z.object({
   metadata: z.record(z.string(), z.any()).optional().nullable(),
 });
 
+const resolveSlotIdCandidates = (slotIdRaw: string): string[] => {
+  const normalized = slotIdRaw.trim();
+  if (!normalized) return [];
+
+  const candidates = [normalized];
+
+  const prefixedCandidates = [
+    normalized.startsWith('card:') ? normalized.slice('card:'.length) : null,
+    normalized.startsWith('slot:') ? normalized.slice('slot:'.length) : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .map((value: string) => value.trim())
+    .filter((value: string) => value.length > 0);
+
+  for (const candidate of prefixedCandidates) {
+    if (!candidates.includes(candidate)) {
+      candidates.push(candidate);
+    }
+  }
+
+  return candidates;
+};
+
 async function PATCH_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
-  const slotId = params.slotId?.trim() ?? '';
-  if (!slotId) throw badRequestError('Slot id is required');
+  const slotIdCandidates = resolveSlotIdCandidates(params.slotId ?? '');
+  if (slotIdCandidates.length === 0) throw badRequestError('Slot id is required');
 
   const body = (await req.json().catch(() => null)) as unknown;
   const parsed = patchSchema.safeParse(body);
@@ -55,7 +78,11 @@ async function PATCH_handler(
     ...(parsed.data.metadata !== undefined ? { metadata: parsed.data.metadata ?? null } : {}),
   };
 
-  const updated = await updateImageStudioSlot(slotId, data);
+  let updated = null;
+  for (const slotIdCandidate of slotIdCandidates) {
+    updated = await updateImageStudioSlot(slotIdCandidate, data);
+    if (updated) break;
+  }
   if (!updated) throw notFoundError('Slot not found');
 
   return NextResponse.json({ slot: updated });
@@ -66,10 +93,14 @@ async function DELETE_handler(
   _ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
-  const slotId = params.slotId?.trim() ?? '';
-  if (!slotId) throw badRequestError('Slot id is required');
+  const slotIdCandidates = resolveSlotIdCandidates(params.slotId ?? '');
+  if (slotIdCandidates.length === 0) throw badRequestError('Slot id is required');
 
-  const deleted = await deleteImageStudioSlot(slotId);
+  let deleted = false;
+  for (const slotIdCandidate of slotIdCandidates) {
+    deleted = await deleteImageStudioSlot(slotIdCandidate);
+    if (deleted) break;
+  }
   if (!deleted) throw notFoundError('Slot not found');
   return NextResponse.json({ ok: true });
 }

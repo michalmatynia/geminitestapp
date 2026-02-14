@@ -145,7 +145,7 @@ export function Asset3DPickerField({
 
   const filters: Asset3DListFilters = {
     search: search.trim() || null,
-    category: category === '__all__' ? null : category,
+    categoryId: category === '__all__' ? null : category,
     tags: selectedTags.length > 0 ? selectedTags : [],
     ...(isPublicOnly ? { isPublic: true } : {}),
   };

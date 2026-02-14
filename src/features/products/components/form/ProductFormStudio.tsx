@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { clampSplitZoom } from '@/features/ai/image-studio/components/center-preview/preview-utils';
 import { SplitVariantPreview } from '@/features/ai/image-studio/components/center-preview/SplitVariantPreview';
 import { SplitViewControls } from '@/features/ai/image-studio/components/center-preview/SplitViewControls';
+import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import {
@@ -16,14 +17,16 @@ import {
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/features/products/types';
+import type { ProductStudioSequencingConfig } from '@/features/products/types/product-studio';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FormSection, UnifiedButton, useToast } from '@/shared/ui';
+import { Button, FormField, FormSection, UnifiedButton, UnifiedSelect, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type ProductStudioVariantsResponse = {
   projectId: string | null;
+  sequencing?: ProductStudioSequencingConfig;
   sourceSlotId: string | null;
   sourceSlot: ImageStudioSlotRecord | null;
   variants: ImageStudioSlotRecord[];
@@ -82,9 +85,22 @@ export default function ProductFormStudio(): React.JSX.Element {
     product,
     imageSlots,
     studioProjectId,
-    studioSequencing,
+    setStudioProjectId,
+    studioConfigLoading,
+    studioConfigSaving,
     refreshImagesFromProduct,
   } = useProductFormContext();
+  const studioProjectsQuery = useStudioProjects();
+  const studioProjectOptions = useMemo(
+    () => [
+      { value: '', label: 'Not Connected' },
+      ...(studioProjectsQuery.data ?? []).map((projectId: string) => ({
+        value: projectId,
+        label: projectId,
+      })),
+    ],
+    [studioProjectsQuery.data]
+  );
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -241,6 +257,7 @@ export default function ProductFormStudio(): React.JSX.Element {
   }, [imageSlotPreviews, selectedImageIndex]);
 
   const variants = variantsData?.variants ?? [];
+  const sequencing = variantsData?.sequencing;
   const selectedVariant =
     variants.find((slot) => slot.id === selectedVariantSlotId) ?? variants[0] ?? null;
 
@@ -335,8 +352,35 @@ export default function ProductFormStudio(): React.JSX.Element {
     return (
       <FormSection
         title='Studio'
-        description='Select an Image Studio project in the Other tab to enable this workflow.'
-      />
+        description='Connect this product to an Image Studio project to enable permanent listing generations.'
+      >
+        <FormField
+          id='studioProjectIdFromStudioTab'
+          label='Studio Project'
+          description='Once selected, you can send product images to Studio and accept generated variants into image slots.'
+        >
+          <UnifiedSelect
+            value={studioProjectId ?? ''}
+            onValueChange={(value: string): void => {
+              setStudioProjectId(value || null);
+            }}
+            options={studioProjectOptions}
+            placeholder={
+              studioProjectsQuery.isLoading
+                ? 'Loading Studio projects...'
+                : 'Select Studio project'
+            }
+            disabled={
+              studioConfigLoading ||
+              studioConfigSaving ||
+              studioProjectsQuery.isLoading
+            }
+            triggerClassName={
+              studioConfigLoading || studioConfigSaving ? 'opacity-70' : ''
+            }
+          />
+        </FormField>
+      </FormSection>
     );
   }
 
@@ -414,13 +458,13 @@ export default function ProductFormStudio(): React.JSX.Element {
           ) : null}
           <span className='rounded border border-border/60 bg-background/40 px-2 py-1 text-xs text-gray-300'>
             Pipeline:{' '}
-            {studioSequencing.enabled
+            {sequencing?.enabled
               ? `crop-centered before generation, upscale ${
-                studioSequencing.upscaleOnAccept
-                  ? `${studioSequencing.upscaleScale}x on accept`
+                sequencing.upscaleOnAccept
+                  ? `${sequencing.upscaleScale}x on accept`
                   : 'disabled on accept'
               }`
-              : 'disabled'}
+              : 'configured in Image Studio Project Settings'}
           </span>
         </div>
 

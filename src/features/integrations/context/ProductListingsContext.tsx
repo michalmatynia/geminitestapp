@@ -9,6 +9,7 @@ import {
   usePurgeListingMutation,
   useUpdateListingInventoryIdMutation,
   useExportToBaseMutation,
+  useRelistTraderaMutation,
   useSyncBaseImagesMutation,
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
@@ -17,6 +18,7 @@ import type { ProductListingWithDetails } from '@/features/integrations/types/li
 import { logClientError } from '@/features/observability';
 import type { ProductWithImages } from '@/features/products/types';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 interface ProductListingsContextType {
@@ -32,6 +34,8 @@ interface ProductListingsContextType {
   exportingListing: string | null;
   savingInventoryId: string | null;
   syncingImages: string | null;
+  relistingListing: string | null;
+  openingTraderaLogin: string | null;
   inventoryOverrides: Record<string, string>;
   setInventoryOverrides: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   historyOpenByListing: Record<string, boolean>;
@@ -56,6 +60,12 @@ interface ProductListingsContextType {
   handlePurgeListing: (listingId: string) => Promise<void>;
   handleSaveInventoryId: (listingId: string) => Promise<void>;
   handleSyncBaseImages: (baseListing: ProductListingWithDetails | null) => Promise<void>;
+  handleRelistTradera: (listingId: string) => Promise<void>;
+  handleOpenTraderaLogin: (
+    listingId: string,
+    integrationId: string,
+    connectionId: string
+  ) => Promise<void>;
   handleExportAgain: (listingId: string) => Promise<void>;
   handleExportImagesOnly: (listingId: string, preset?: ImageRetryPreset) => Promise<void>;
   handleImageRetry: (preset: ImageRetryPreset) => Promise<void>;
@@ -96,6 +106,8 @@ export function ProductListingsProvider({
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
   const [lastExportListingId, setLastExportListingId] = useState<string | null>(null);
   const [syncingImages, setSyncingImages] = useState<string | null>(null);
+  const [relistingListing, setRelistingListing] = useState<string | null>(null);
+  const [openingTraderaLogin, setOpeningTraderaLogin] = useState<string | null>(null);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
   const [listingToPurge, setListingToPurge] = useState<string | null>(null);
   const [isSyncImagesConfirmOpen, setIsSyncImagesConfirmOpen] = useState(false);
@@ -111,6 +123,7 @@ export function ProductListingsProvider({
   const purgeListingMutation = usePurgeListingMutation(product.id);
   const updateInventoryIdMutation = useUpdateListingInventoryIdMutation(product.id);
   const exportToBaseMutation = useExportToBaseMutation(product.id);
+  const relistTraderaMutation = useRelistTraderaMutation(product.id);
   const syncBaseImagesMutation = useSyncBaseImagesMutation(product.id);
 
   const handleDeleteFromBase = useCallback(async (listingId: string) => {
@@ -194,6 +207,96 @@ export function ProductListingsProvider({
       setIsSyncImagesConfirmOpen(false);
     }
   }, [inventoryOverrides, product.id, syncBaseImagesMutation, toast]);
+
+  const handleRelistTradera = useCallback(async (listingId: string) => {
+    try {
+      setRelistingListing(listingId);
+      setError(null);
+      const response = await relistTraderaMutation.mutateAsync({ listingId });
+      const queueJobId = (
+        response as { queue?: { jobId?: string } } | null
+      )?.queue?.jobId;
+      toast(
+        queueJobId
+          ? `Tradera relist queued (job ${queueJobId}).`
+          : 'Tradera relist queued.',
+        { variant: 'success' }
+      );
+      onListingsUpdated?.();
+    } catch (err: unknown) {
+      logClientError(err, {
+        context: {
+          source: 'ProductListingsContext',
+          action: 'relistTradera',
+          listingId,
+          productId: product.id,
+        },
+      });
+      setError(err instanceof Error ? err.message : 'Failed to queue relist');
+    } finally {
+      setRelistingListing(null);
+    }
+  }, [onListingsUpdated, product.id, relistTraderaMutation, toast]);
+
+  const handleOpenTraderaLogin = useCallback(
+    async (
+      listingId: string,
+      integrationId: string,
+      connectionId: string
+    ) => {
+      try {
+        setOpeningTraderaLogin(listingId);
+        setError(null);
+        const response = await api.post<{
+          ok?: boolean;
+          steps?: Array<{
+            step?: string;
+            status?: 'pending' | 'ok' | 'failed';
+            detail?: string;
+          }>;
+        }>(
+          `/api/integrations/${integrationId}/connections/${connectionId}/test`,
+          {
+            mode: 'manual',
+            manualTimeoutMs: 240000,
+          }
+        );
+        const hasSessionSaved = Array.isArray(response.steps)
+          ? response.steps.some(
+            (step) =>
+              step.step === 'Saving session' && step.status === 'ok'
+          )
+          : false;
+        toast(
+          hasSessionSaved
+            ? 'Tradera login session refreshed.'
+            : 'Tradera manual login completed.',
+          { variant: 'success' }
+        );
+        await listingsQuery.refetch();
+        onListingsUpdated?.();
+      } catch (err: unknown) {
+        logClientError(err, {
+          context: {
+            source: 'ProductListingsContext',
+            action: 'openTraderaLogin',
+            listingId,
+            productId: product.id,
+            integrationId,
+            connectionId,
+          },
+        });
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to open Tradera login window'
+        );
+      } finally {
+        setOpeningTraderaLogin(null);
+      }
+    },
+    [listingsQuery, onListingsUpdated, product.id, toast]
+  );
 
   const getLatestTemplateId = (listing: ProductListingWithDetails): string | null => {
     const history = listing.exportHistory ?? [];
@@ -329,6 +432,8 @@ export function ProductListingsProvider({
     exportingListing,
     savingInventoryId,
     syncingImages,
+    relistingListing,
+    openingTraderaLogin,
     inventoryOverrides,
     setInventoryOverrides,
     historyOpenByListing,
@@ -347,6 +452,8 @@ export function ProductListingsProvider({
     handlePurgeListing,
     handleSaveInventoryId,
     handleSyncBaseImages,
+    handleRelistTradera,
+    handleOpenTraderaLogin,
     handleExportAgain,
     handleExportImagesOnly,
     handleImageRetry,
@@ -356,10 +463,10 @@ export function ProductListingsProvider({
     filterIntegrationSlug,
   }), [
     product, listings, listingsQuery, isListingsLoading, error, deletingFromBase, purgingListing, exportingListing,
-    savingInventoryId, syncingImages, inventoryOverrides, historyOpenByListing, listingToDelete,
+    savingInventoryId, syncingImages, relistingListing, openingTraderaLogin, inventoryOverrides, historyOpenByListing, listingToDelete,
     listingToPurge, isSyncImagesConfirmOpen, exportLogs, logsOpen, lastExportListingId,
     handleDeleteFromBase, handlePurgeListing, handleSaveInventoryId, handleSyncBaseImages,
-    handleExportAgain, handleExportImagesOnly, handleImageRetry, onClose, onStartListing, filterIntegrationSlug
+    handleRelistTradera, handleOpenTraderaLogin, handleExportAgain, handleExportImagesOnly, handleImageRetry, onClose, onStartListing, filterIntegrationSlug
   ]);
 
   return (

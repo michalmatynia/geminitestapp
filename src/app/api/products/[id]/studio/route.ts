@@ -10,16 +10,8 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import { idParamSchema } from '@/shared/validations/api-schemas';
 
-const sequencingSchema = z.object({
-  enabled: z.boolean().optional(),
-  cropCenterBeforeGeneration: z.boolean().optional(),
-  upscaleOnAccept: z.boolean().optional(),
-  upscaleScale: z.number().finite().optional(),
-});
-
 const putSchema = z.object({
   projectId: z.string().trim().nullable().optional(),
-  sequencing: sequencingSchema.optional(),
 });
 
 const ensureProductExists = async (productId: string): Promise<void> => {
@@ -66,9 +58,6 @@ async function PUT_handler(
   const config = await setProductStudioConfig(productId, {
     ...(parsed.data.projectId !== undefined
       ? { projectId: parsed.data.projectId }
-      : {}),
-    ...(parsed.data.sequencing !== undefined
-      ? { sequencing: parsed.data.sequencing }
       : {}),
   });
   return NextResponse.json({ config });

@@ -11,7 +11,7 @@ import { Button } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress';
+export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'canceled' | 'success' | 'listed' | 'deleted' | 'removed' | 'processing' | 'in_progress' | 'queued' | 'queued_relist' | 'needs_login' | 'auth_required';
 
 export interface JobRowData {
   id: string;
@@ -40,6 +40,8 @@ interface JobTableProps {
 const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {
     case 'pending':
+    case 'queued':
+    case 'queued_relist':
       return <Clock className='size-3' />;
     case 'completed':
     case 'success':
@@ -48,6 +50,8 @@ const getStatusIcon = (status: string): React.JSX.Element => {
     case 'deleted':
     case 'removed':
     case 'failed':
+    case 'needs_login':
+    case 'auth_required':
     case 'error':
     case 'canceled':
     case 'cancelled':
@@ -183,7 +187,10 @@ export function JobTable({
               >
                 <Eye className='h-4 w-4' />
               </Button>
-              {(job.status === 'pending' || job.status === 'running') && (
+              {(job.status === 'pending' ||
+                job.status === 'queued' ||
+                job.status === 'queued_relist' ||
+                job.status === 'running') && (
                 <Button
                   variant='ghost'
                   size='icon'

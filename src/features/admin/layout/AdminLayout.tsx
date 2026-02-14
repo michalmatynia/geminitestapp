@@ -82,12 +82,22 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
     void persistMenuCollapsed(nextCollapsed);
   };
 
+  const sidebarClassName = isMenuHidden
+    ? 'w-0 p-0 opacity-0 pointer-events-none overflow-hidden'
+    : isMenuCollapsed
+      ? 'w-16 p-2 sm:w-20 sm:p-4'
+      : 'w-56 p-3 xl:w-64 xl:p-4';
+
+  const contentClassName = isMenuHidden
+    ? 'ml-0'
+    : isMenuCollapsed
+      ? 'ml-16 sm:ml-20'
+      : 'ml-56 xl:ml-64';
+
   return (
-    <div className='dark flex h-screen overflow-hidden bg-gray-900 text-white'>
+    <div className='dark relative h-screen w-full max-w-full overflow-hidden bg-gray-900 text-white'>
       <aside
-        className={`flex h-full flex-col transition-all duration-300 bg-gray-800 ${
-          isMenuHidden ? 'w-0 p-0 opacity-0 pointer-events-none overflow-hidden' : isMenuCollapsed ? 'w-20 p-4' : 'w-64 p-4'
-        }`}
+        className={`fixed inset-y-0 left-0 z-30 flex flex-col overflow-x-hidden border-r border-gray-700/60 bg-gray-800 transition-all duration-300 ${sidebarClassName}`}
         aria-hidden={isMenuHidden}
       >
         {!isMenuHidden ? (
@@ -110,7 +120,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
           </>
         ) : null}
       </aside>
-      <div className='relative flex-1 flex flex-col min-w-0'>
+      <div
+        className={`relative flex h-full min-w-0 flex-col overflow-x-hidden transition-[margin-left] duration-300 ${contentClassName}`}
+      >
         <header className='absolute top-0 right-0 z-10 flex h-14 items-center px-6 pointer-events-none'>
           <div className='pointer-events-auto'>
             <div className='flex items-center gap-2'>
@@ -119,8 +131,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
             </div>
           </div>
         </header>
-        <main className='flex-1 overflow-auto p-4'>
-          <QueryErrorBoundary>{children}</QueryErrorBoundary>
+        <main className='min-h-0 flex-1 min-w-0 max-w-full overflow-x-hidden overflow-y-auto p-4'>
+          <QueryErrorBoundary>
+            <div className='min-w-0 max-w-full'>{children}</div>
+          </QueryErrorBoundary>
         </main>
         <AiInsightsNotificationsDrawer />
       </div>

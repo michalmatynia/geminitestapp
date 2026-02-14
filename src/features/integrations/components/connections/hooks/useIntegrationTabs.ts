@@ -26,6 +26,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
   const {
     activeIntegration,
     connections,
+    editingConnectionId,
     playwrightPersonas,
     playwrightPersonasLoading,
     playwrightPersonaId,
@@ -63,7 +64,10 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
   const showPlaywright = isTradera;
   const showAllegroConsole = isAllegro;
   const showBaseConsole = isBaselinker;
-  const activeConnection = connections[0] || null;
+  const activeConnection =
+    connections.find((connection) => connection.id === editingConnectionId) ??
+    connections[0] ??
+    null;
   const selectedPersona =
     playwrightPersonas.find((persona: PlaywrightPersona) => persona.id === playwrightPersonaId) ?? null;
 

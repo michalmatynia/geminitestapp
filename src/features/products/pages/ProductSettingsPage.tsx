@@ -18,7 +18,7 @@ import { TagsSettings } from '@/features/products/components/settings/TagsSettin
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
 import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/features/products/types';
-import { Button, SectionHeader,  useToast } from '@/shared/ui';
+import { Button, SectionHeader, UnifiedButton, useToast } from '@/shared/ui';
 
 import {
   settingSections,
@@ -163,6 +163,23 @@ export function ProductSettingsPage(): React.JSX.Element {
           title='Product Settings'
           className='mb-6'
         />
+        <div className='mb-4 rounded-lg border border-border/60 bg-card/30 p-4'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <p className='text-sm font-medium text-gray-100'>Image Studio Integration</p>
+              <p className='text-xs text-gray-400'>
+                Configure default Studio project binding and start Product to Image Studio connection.
+              </p>
+            </div>
+            <UnifiedButton
+              type='button'
+              variant='outline'
+              onClick={(): void => setActiveSection('Images & Studio')}
+            >
+              Open Integration Settings
+            </UnifiedButton>
+          </div>
+        </div>
         <div className='grid gap-6 md:grid-cols-[240px_1fr]'>
           <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
             <div className='flex flex-col gap-2'>
@@ -192,7 +209,7 @@ export function ProductSettingsPage(): React.JSX.Element {
               {activeSection === 'Catalogs' && (
                 <CatalogsSettings />
               )}
-              {activeSection === 'Images' && (
+              {activeSection === 'Images & Studio' && (
                 <ProductImageRoutingSettings />
               )}
               {activeSection === 'Validator' && (

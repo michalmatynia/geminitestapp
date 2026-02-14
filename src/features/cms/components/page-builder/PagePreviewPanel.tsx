@@ -30,11 +30,26 @@ import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from '../frontend/theme-styles';
 
 
-import type { PageSlugLink, Slug } from '../../types';
+import type { Slug } from '../../types';
 import type { PageZone, SectionInstance } from '../../types/page-builder';
 
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
 const EDIT_BUTTON_HIDE_DELAY = 2000;
+
+const normalizePageSlugValues = (slugs: unknown): string[] => {
+  if (!Array.isArray(slugs)) return [];
+  return slugs
+    .map((entry: unknown): string => {
+      if (typeof entry === 'string') return entry;
+      if (!entry || typeof entry !== 'object') return '';
+      const candidate = (entry as { slug?: unknown }).slug;
+      if (typeof candidate === 'string') return candidate;
+      if (!candidate || typeof candidate !== 'object') return '';
+      const nested = (candidate as { slug?: unknown }).slug;
+      return typeof nested === 'string' ? nested : '';
+    })
+    .filter((value: string) => value.trim().length > 0);
+};
 
 export function PagePreviewPanel(): React.ReactNode {
   const { state, dispatch, vectorOverlay, closeVectorOverlay } = usePageBuilder();
@@ -78,8 +93,7 @@ export function PagePreviewPanel(): React.ReactNode {
   const mediaStyles = useMemo(() => getMediaInlineStyles(theme), [theme]);
   const outOfZoneSlugs = useMemo(() => {
     if (!domainSlugSet) return [];
-    const slugs = state.currentPage?.slugs ?? [];
-    const values = slugs.map((link: PageSlugLink) => link.slug.slug);
+    const values = normalizePageSlugValues(state.currentPage?.slugs);
     return values.filter((value: string) => !domainSlugSet.has(value));
   }, [state.currentPage?.slugs, domainSlugSet]);
 
@@ -87,15 +101,8 @@ export function PagePreviewPanel(): React.ReactNode {
     const page = state.currentPage;
     const domainSlugs = slugsQuery.data ?? [];
     if (!page || domainSlugs.length === 0) return [];
-    if (page.slugIds?.length) {
-      const slugById = new Map(domainSlugs.map((slug: Slug) => [slug.id, slug.slug]));
-      const ordered = page.slugIds
-        .map((id: string) => slugById.get(id))
-        .filter((value: string | undefined): value is string => Boolean(value));
-      if (ordered.length) return ordered;
-    }
     if (!domainSlugSet) return [];
-    const values = (page.slugs ?? []).map((link: PageSlugLink) => link.slug.slug);
+    const values = normalizePageSlugValues(page.slugs);
     return values.filter((value: string) => domainSlugSet.has(value));
   }, [state.currentPage, slugsQuery.data, domainSlugSet]);
 
@@ -228,10 +235,7 @@ export function PagePreviewPanel(): React.ReactNode {
     if (!state.currentPage) return;
 
     const page = state.currentPage;
-    const slugIds =
-      Array.isArray(page.slugIds)
-        ? page.slugIds.filter((idValue: string | undefined | null) => typeof idValue === 'string' && idValue.trim().length > 0)
-        : undefined;
+    const slugValues = normalizePageSlugValues(page.slugs);
     const updatedPage = {
       ...page,
       name: page.name?.trim() || 'Untitled page',
@@ -243,11 +247,12 @@ export function PagePreviewPanel(): React.ReactNode {
       ...(page.seoOgImage && { seoOgImage: page.seoOgImage }),
       ...(page.seoCanonical && { seoCanonical: page.seoCanonical }),
       ...(page.robotsMeta && { robotsMeta: page.robotsMeta }),
-      components: state.sections.map((s: SectionInstance) => ({
+      components: state.sections.map((s: SectionInstance, index: number) => ({
         type: s.type,
+        order: index,
         content: { zone: s.zone, settings: s.settings, blocks: s.blocks },
       })),
-      ...(slugIds ? { slugIds } : {}),
+      slugs: slugValues,
     };
 
     await updatePage.mutateAsync({

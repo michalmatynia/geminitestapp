@@ -7,6 +7,7 @@ import {
   useDeleteStudioProject,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import { useUpdateUserPreferencesMutation, useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
@@ -48,6 +49,8 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   const [projectSearch, setProjectSearch] = useState<string>('');
 
   const projectsQuery = useStudioProjects();
+  const userPreferencesQuery = useUserPreferences();
+  const updateUserPreferences = useUpdateUserPreferencesMutation();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
   const updateSetting = useUpdateSetting();
   const createProjectMutation = useCreateStudioProject();
@@ -55,10 +58,16 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   const heavyMap = heavySettings.data ?? new Map<string, string>();
   const lastPersistedProjectRef = useRef<string | null>(null);
 
-  const activeProjectId = useMemo(
+  const activeProjectIdFromPreferences = useMemo(() => {
+    const raw = userPreferencesQuery.data?.imageStudioLastProjectId;
+    return typeof raw === 'string' ? raw.trim() : '';
+  }, [userPreferencesQuery.data?.imageStudioLastProjectId]);
+
+  const legacyActiveProjectId = useMemo(
     () => parseImageStudioActiveProject(heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)),
     [heavyMap]
   );
+  const activeProjectId = activeProjectIdFromPreferences || legacyActiveProjectId;
 
   // Auto-select active project when available, otherwise fall back to first project.
   useEffect(() => {
@@ -68,7 +77,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       return;
     }
     if (projectId && availableProjects.includes(projectId)) return;
-    if (heavySettings.isLoading) return;
+    if (heavySettings.isLoading || userPreferencesQuery.isLoading) return;
 
     const preferred = activeProjectId && availableProjects.includes(activeProjectId)
       ? activeProjectId
@@ -76,31 +85,72 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     if (preferred && preferred !== projectId) {
       setProjectId(preferred);
     }
-  }, [projectId, projectsQuery.data, activeProjectId, heavySettings.isLoading]);
+  }, [
+    projectId,
+    projectsQuery.data,
+    activeProjectId,
+    heavySettings.isLoading,
+    userPreferencesQuery.isLoading,
+  ]);
 
-  // Persist the active project immediately on selection change so refresh restores workflow.
+  // Persist the active project to user profile on selection change.
+  // Keep writing the legacy heavy setting as a best-effort compatibility fallback.
   useEffect(() => {
-    if (heavySettings.isLoading) return;
-    if (projectId === activeProjectId) {
-      lastPersistedProjectRef.current = projectId;
+    if (heavySettings.isLoading || userPreferencesQuery.isLoading) return;
+    const normalizedProjectId = projectId.trim();
+    const availableProjects = projectsQuery.data ?? [];
+    if (!normalizedProjectId && availableProjects.length > 0) return;
+    const nextPersistedValue = normalizedProjectId || null;
+    if (lastPersistedProjectRef.current === nextPersistedValue) return;
+
+    const profileValue = activeProjectIdFromPreferences || null;
+    const shouldPersistProfile = profileValue !== nextPersistedValue;
+    const shouldPersistLegacy = normalizedProjectId !== legacyActiveProjectId;
+
+    if (!shouldPersistProfile && !shouldPersistLegacy) {
+      lastPersistedProjectRef.current = nextPersistedValue;
       return;
     }
-    if (lastPersistedProjectRef.current === projectId) return;
 
-    lastPersistedProjectRef.current = projectId;
-    void updateSetting.mutateAsync({
-      key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
-      value: serializeImageStudioActiveProject(projectId),
-    }).catch(() => {
-      // Allow retry on next render/change if persistence fails.
-      if (lastPersistedProjectRef.current === projectId) {
+    lastPersistedProjectRef.current = nextPersistedValue;
+    void (async (): Promise<void> => {
+      let profileWriteFailed = false;
+
+      if (shouldPersistProfile) {
+        try {
+          await updateUserPreferences.mutateAsync({
+            imageStudioLastProjectId: nextPersistedValue,
+          });
+        } catch {
+          profileWriteFailed = true;
+        }
+      }
+
+      if (shouldPersistLegacy) {
+        void updateSetting.mutateAsync({
+          key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+          value: serializeImageStudioActiveProject(normalizedProjectId),
+        }).catch(() => {});
+      }
+
+      // Allow retry on next render/change if user profile persistence fails.
+      if (profileWriteFailed && lastPersistedProjectRef.current === nextPersistedValue) {
         lastPersistedProjectRef.current = null;
       }
-    });
-  }, [activeProjectId, heavySettings.isLoading, projectId, updateSetting]);
+    })();
+  }, [
+    activeProjectIdFromPreferences,
+    heavySettings.isLoading,
+    legacyActiveProjectId,
+    projectsQuery.data,
+    projectId,
+    updateSetting,
+    updateUserPreferences,
+    userPreferencesQuery.isLoading,
+  ]);
 
   const handleDeleteProject = useCallback(async (id: string): Promise<void> => {
-    if (!window.confirm(`Delete project "${id}" and all its slots?`)) return;
+    if (!window.confirm(`Delete project "${id}" and all connected cards, runs, and assets?`)) return;
     try {
       await deleteProjectMutation.mutateAsync(id);
       if (projectId === id) {

@@ -7,7 +7,7 @@ import { CmsDomainSelector } from '@/features/cms';
 import CmsEditorLayout from '@/features/cms/components/CmsEditorLayout';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
-import type { Page, Slug, PageSlugLink } from '@/features/cms/types';
+import type { Page, Slug } from '@/features/cms/types';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import { Button, Checkbox, Input, Label, SectionHeader, Switch } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
@@ -45,9 +45,12 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
     return map;
   }, [allSlugs]);
 
+  const normalizePageSlugValues = (slugs: Page['slugs']): string[] =>
+    (slugs ?? []).map((slug): string => (typeof slug === 'string' ? slug : slug.slug));
+
   const initialSelectedSlugIds = useMemo((): string[] => {
     if (!allSlugs.length) return [];
-    const pageSlugValues = (initialPage.slugs ?? []).map((s: PageSlugLink) => s.slug.slug);
+    const pageSlugValues = normalizePageSlugValues(initialPage.slugs);
     return pageSlugValues
       .map((value: string) => allSlugByValue.get(value)?.id)
       .filter((value: string | undefined): value is string => Boolean(value));

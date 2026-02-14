@@ -53,6 +53,7 @@ type UpdateImageStudioRunInput = {
 type ListImageStudioRunsInput = {
   status?: ImageStudioRunStatus | null;
   projectId?: string | null;
+  sourceSlotId?: string | null;
   limit?: number;
   offset?: number;
 };
@@ -167,9 +168,10 @@ export async function listImageStudioRuns(
   const limit = Number.isFinite(input.limit) ? Math.max(1, Math.min(200, Math.floor(input.limit ?? 50))) : 50;
   const offset = Number.isFinite(input.offset) ? Math.max(0, Math.floor(input.offset ?? 0)) : 0;
 
-  const query: Partial<Pick<ImageStudioRunDocument, 'status' | 'projectId'>> = {};
+  const query: Record<string, unknown> = {};
   if (input.status) query.status = input.status;
   if (input.projectId) query.projectId = input.projectId;
+  if (input.sourceSlotId) query['request.asset.id'] = input.sourceSlotId;
 
   const [docs, total] = await Promise.all([
     collection
@@ -185,4 +187,11 @@ export async function listImageStudioRuns(
     runs: docs.map(toRecord),
     total,
   };
+}
+
+export async function deleteImageStudioRunsByProject(projectId: string): Promise<number> {
+  await ensureIndexesOnce();
+  const db = await getMongoDb();
+  const result = await db.collection<ImageStudioRunDocument>(COLLECTION).deleteMany({ projectId });
+  return result.deletedCount ?? 0;
 }

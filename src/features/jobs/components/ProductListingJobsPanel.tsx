@@ -28,6 +28,8 @@ type ListingRow = {
 const getStatusIcon = (status: string): React.JSX.Element => {
   switch (status) {
     case 'pending':
+    case 'queued':
+    case 'queued_relist':
       return <Clock className='size-3' />;
     case 'completed':
     case 'success':
@@ -37,6 +39,8 @@ const getStatusIcon = (status: string): React.JSX.Element => {
     case 'removed':
       return <XCircle className='size-3' />;
     case 'failed':
+    case 'needs_login':
+    case 'auth_required':
     case 'error':
       return <XCircle className='size-3' />;
     case 'processing':
@@ -56,6 +60,8 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
     listingJobsRefreshing: isRefreshing,
     refetchListingJobs: refetch,
     listingJobsError: error,
+    traderaQueueHealth,
+    traderaQueueHealthLoading,
     query,
     setQuery,
     page,
@@ -115,6 +121,9 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
   const pagedRows = sortedRows.slice(startIndex, endIndex);
 
   const selectedStatus = selectedListing?.listing.status ?? '';
+  const traderaListingsQueue = traderaQueueHealth?.queues.listings ?? null;
+  const traderaSchedulerQueue =
+    traderaQueueHealth?.queues.relistScheduler ?? null;
 
   const header = (
     <SectionHeader
@@ -168,17 +177,49 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
     </div>
   ) : null;
 
+  const alerts = (
+    <div className='space-y-3'>
+      {error ? (
+        <div className='rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200'>
+          {error.message}
+        </div>
+      ) : null}
+      <div className='grid grid-cols-1 gap-2 md:grid-cols-3'>
+        <div className='rounded-md border border-border/70 bg-card/60 px-3 py-2 text-xs text-gray-300'>
+          <div className='uppercase tracking-wide text-gray-500'>Tradera mode</div>
+          <div className='mt-1 text-sm text-white'>
+            {traderaQueueHealthLoading
+              ? 'Loading...'
+              : traderaQueueHealth
+                ? `${traderaQueueHealth.mode} (${traderaQueueHealth.redisAvailable ? 'redis up' : 'redis unavailable'})`
+                : 'Unavailable'}
+          </div>
+        </div>
+        <div className='rounded-md border border-border/70 bg-card/60 px-3 py-2 text-xs text-gray-300'>
+          <div className='uppercase tracking-wide text-gray-500'>Listing queue</div>
+          <div className='mt-1 text-sm text-white'>
+            {traderaListingsQueue
+              ? `running=${traderaListingsQueue.running ? 'yes' : 'no'} waiting=${traderaListingsQueue.waitingCount} active=${traderaListingsQueue.activeCount} failed=${traderaListingsQueue.failedCount}`
+              : 'Not registered'}
+          </div>
+        </div>
+        <div className='rounded-md border border-border/70 bg-card/60 px-3 py-2 text-xs text-gray-300'>
+          <div className='uppercase tracking-wide text-gray-500'>Relist scheduler</div>
+          <div className='mt-1 text-sm text-white'>
+            {traderaSchedulerQueue
+              ? `running=${traderaSchedulerQueue.running ? 'yes' : 'no'} waiting=${traderaSchedulerQueue.waitingCount} active=${traderaSchedulerQueue.activeCount}`
+              : 'Not registered'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <ListPanel
         header={header}
-        alerts={
-          error ? (
-            <div className='rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200'>
-              {error.message}
-            </div>
-          ) : null
-        }
+        alerts={alerts}
         filters={filters}
         footer={footer}
       >

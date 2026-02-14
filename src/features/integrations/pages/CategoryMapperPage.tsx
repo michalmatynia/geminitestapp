@@ -9,7 +9,7 @@ import {
 import { SectionHeader } from '@/shared/ui';
 
 function CategoryMapperPageContent(): React.JSX.Element {
-  const { selectedConnectionId, isBaseConnection } = useCategoryMapperPageContext();
+  const { selectedConnectionId, isSupportedConnection } = useCategoryMapperPageContext();
 
   return (
     <div className='container mx-auto py-10'>
@@ -31,7 +31,7 @@ function CategoryMapperPageContent(): React.JSX.Element {
             <div className='flex h-64 items-center justify-center text-gray-500'>
               <p>Select a marketplace connection to start mapping categories.</p>
             </div>
-          ) : isBaseConnection ? (
+          ) : isSupportedConnection ? (
             <BaseCategoryMapper />
           ) : (
             <div className='flex h-64 items-center justify-center text-gray-500'>

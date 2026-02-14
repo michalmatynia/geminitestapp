@@ -111,6 +111,7 @@ export const userPreferencesSchema = dtoBaseSchema.extend({
   productListDraftIconColorMode: z.enum(['theme', 'custom']),
   productListDraftIconColor: z.string().nullable(),
   aiPathsActivePathId: z.string().nullable(),
+  imageStudioLastProjectId: z.string().nullable(),
   adminMenuCollapsed: z.boolean(),
   adminMenuFavorites: z.array(z.string()),
   adminMenuSectionColors: z.record(z.string(), z.string()),

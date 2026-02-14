@@ -1,16 +1,30 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
+import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,
+  PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
 } from '@/features/products/constants';
 import { normalizeProductImageExternalBaseUrl } from '@/features/products/utils/image-routing';
-import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
+import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, Label, RadioGroup, RadioGroupItem, useToast } from '@/shared/ui';
+import {
+  Button,
+  FormField,
+  FormSection,
+  Input,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+  UnifiedButton,
+  UnifiedSelect,
+  useToast,
+} from '@/shared/ui';
 
 const dedupeRoutes = (routes: string[]): string[] => {
   const next: string[] = [];
@@ -43,9 +57,14 @@ const parseRoutesSetting = (
   }
 };
 
+const STUDIO_PROJECT_NONE = '__product_studio_not_connected__';
+
 export function ProductImageRoutingSettings(): React.JSX.Element {
+  const router = useRouter();
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
+  const studioProjectsQuery = useStudioProjects();
+  const updateStudioProjectSetting = useUpdateSetting();
   const updateSettingsBulk = useUpdateSettingsBulk();
 
   const persistedBaseUrlRaw =
@@ -56,12 +75,35 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
   const persistedRoutesRaw =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY) ?? null;
+  const persistedStudioProjectRaw =
+    settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY) ?? '';
+  const persistedStudioProject = persistedStudioProjectRaw.trim();
 
   const [routes, setRoutes] = useState<string[]>(
     parseRoutesSetting(persistedRoutesRaw, persistedBaseUrl)
   );
   const [defaultRoute, setDefaultRoute] = useState<string>(persistedBaseUrl);
   const [newRoute, setNewRoute] = useState<string>('');
+  const [selectedStudioProject, setSelectedStudioProject] = useState<string>(
+    persistedStudioProject || STUDIO_PROJECT_NONE
+  );
+
+  const studioProjectOptions = useMemo(
+    () => [
+      { value: STUDIO_PROJECT_NONE, label: 'Not Connected' },
+      ...(studioProjectsQuery.data ?? []).map((projectId: string) => ({
+        value: projectId,
+        label: projectId,
+      })),
+    ],
+    [studioProjectsQuery.data]
+  );
+  const normalizedSelectedStudioProject =
+    selectedStudioProject === STUDIO_PROJECT_NONE
+      ? ''
+      : selectedStudioProject.trim();
+  const isStudioProjectDirty =
+    normalizedSelectedStudioProject !== persistedStudioProject;
 
   useEffect(() => {
     const nextRoutes = parseRoutesSetting(persistedRoutesRaw, persistedBaseUrl);
@@ -71,6 +113,10 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     setRoutes(ensuredRoutes);
     setDefaultRoute(persistedBaseUrl);
   }, [persistedBaseUrl, persistedRoutesRaw]);
+
+  useEffect(() => {
+    setSelectedStudioProject(persistedStudioProject || STUDIO_PROJECT_NONE);
+  }, [persistedStudioProject]);
 
   const handleAddRoute = (): void => {
     const normalized = normalizeProductImageExternalBaseUrl(newRoute);
@@ -151,8 +197,90 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     setDefaultRoute(localhostRoute);
   };
 
+  const handleSaveStudioProject = (): void => {
+    updateStudioProjectSetting.mutate(
+      {
+        key: PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
+        value: normalizedSelectedStudioProject,
+      },
+      {
+        onSuccess: () => {
+          settingsStore.refetch();
+          toast('Image Studio default project saved.', { variant: 'success' });
+        },
+        onError: () => {
+          toast('Failed to save Image Studio default project.', { variant: 'error' });
+        },
+      }
+    );
+  };
+
+  const handleStartStudioConnection = (): void => {
+    const params = new URLSearchParams();
+    if (normalizedSelectedStudioProject) {
+      params.set('tab', 'studio');
+      params.set('projectId', normalizedSelectedStudioProject);
+    } else {
+      params.set('tab', 'projects');
+    }
+    router.push(`/admin/image-studio?${params.toString()}`);
+  };
+
   return (
     <div className='space-y-5'>
+      <FormSection
+        title='Image Studio Connection'
+        description='Choose the default Image Studio project for products, then open Studio to continue.'
+      >
+        <div className='space-y-4'>
+          <FormField
+            id='productStudioDefaultProject'
+            label='Default Image Studio Project'
+            description='Used as the default project binding in product workflows.'
+          >
+            <UnifiedSelect
+              value={selectedStudioProject}
+              onValueChange={setSelectedStudioProject}
+              options={studioProjectOptions}
+              placeholder={
+                studioProjectsQuery.isLoading
+                  ? 'Loading Image Studio projects...'
+                  : 'Select Image Studio project'
+              }
+              disabled={studioProjectsQuery.isLoading || updateStudioProjectSetting.isPending}
+              triggerClassName='h-9'
+              ariaLabel='Default Image Studio project'
+            />
+          </FormField>
+          <div className='flex flex-wrap items-center gap-2'>
+            <UnifiedButton
+              type='button'
+              variant='default'
+              onClick={handleSaveStudioProject}
+              disabled={
+                updateStudioProjectSetting.isPending ||
+                studioProjectsQuery.isLoading ||
+                !isStudioProjectDirty
+              }
+            >
+              {updateStudioProjectSetting.isPending ? 'Saving...' : 'Save Project Binding'}
+            </UnifiedButton>
+            <UnifiedButton
+              type='button'
+              variant='outline'
+              onClick={handleStartStudioConnection}
+              disabled={studioProjectsQuery.isLoading}
+            >
+              {normalizedSelectedStudioProject
+                ? 'Start Image Studio Connection'
+                : 'Open Image Studio Projects'}
+            </UnifiedButton>
+          </div>
+        </div>
+      </FormSection>
+
+      <div className='h-px bg-border/60' />
+
       <div className='space-y-2'>
         <Label htmlFor='productImageRoute'>Add Product Image Route</Label>
         <div className='flex items-center gap-2'>

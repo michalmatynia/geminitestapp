@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Filter, GitBranch, Loader2, Pentagon, Play, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Eye, GitBranch, Loader2, Play, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -20,9 +20,6 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   UnifiedButton,
   AppModal,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
   Label,
   MultiSelect,
   
@@ -424,126 +421,73 @@ export function RightSidebar(): React.JSX.Element {
                   </UnifiedButton>
                 </div>
 
-                <div className='rounded border border-border/60 bg-card/30 px-2 py-2'>
-                  <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Toolbar</div>
-                  <div className='flex flex-wrap justify-end gap-2'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <UnifiedButton
-                          variant='outline'
-                          size='sm'
-                          title='Open tools popup'
-                          aria-label='Open tools popup'
-                        >
-                          <Pentagon className='mr-2 size-4' />
-                    Tools
-                        </UnifiedButton>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align='end'
-                        className='w-[min(92vw,460px)] min-h-[230px] !overflow-visible space-y-3 p-3 pb-4'
-                        sideOffset={8}
-                      >
-                        <VectorDrawingToolbar
-                          tool={tool}
-                          onSelectTool={setTool}
-                          className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
-                        />
-                        {tool !== 'select' ? (
-                          <div className='rounded border border-border/60 bg-card/30 p-3'>
-                            <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
-                              <LabeledSlider
-                                label='Mask Feather'
-                                value={maskFeather}
-                                onChange={setMaskFeather}
-                              />
-                              {tool === 'brush' ? (
-                                <LabeledSlider
-                                  label='Brush Radius'
-                                  value={brushRadius}
-                                  onChange={setBrushRadius}
-                                  min={1}
-                                  max={64}
-                                  fallbackValue={8}
-                                />
-                              ) : null}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className='text-[11px] text-gray-500'>
-                      Select a drawing tool to see contextual settings.
-                          </div>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <UnifiedButton
-                          variant='outline'
-                          size='sm'
-                          title='Open mask generation popup'
-                          aria-label='Open mask generation popup'
-                        >
-                          <Play className='mr-2 size-4' />
-                    Mask Generation
-                        </UnifiedButton>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align='end'
-                        className='w-[min(96vw,720px)] space-y-3 p-3'
-                        sideOffset={8}
-                      >
-                        <GenerationToolbar />
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <UnifiedButton
-                          variant='outline'
-                          size='sm'
-                          title='Open masking tools popup'
-                          aria-label='Open masking tools popup'
-                        >
-                          <Filter className='mr-2 size-4' />
-                    Masking Tools
-                        </UnifiedButton>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align='end'
-                        className='w-[min(92vw,420px)] space-y-3 p-3'
-                        sideOffset={8}
-                      >
-                        <div className='rounded border border-border/60 bg-card/30 p-3'>
+              </div>
+              <div className='relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-0'>
+                <StudioCard label='Tools' className='shrink-0'>
+                  <div className='space-y-3'>
+                    <div className='rounded border border-border/60 bg-card/30 p-3'>
+                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Shape Tools</div>
+                      <VectorDrawingToolbar
+                        tool={tool}
+                        onSelectTool={setTool}
+                        className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
+                      />
+                      {tool !== 'select' ? (
+                        <div className='mt-3 rounded border border-border/60 bg-card/30 p-3'>
                           <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
                             <LabeledSlider
                               label='Mask Feather'
                               value={maskFeather}
                               onChange={setMaskFeather}
                             />
-                            <LabeledSlider
-                              label='Threshold Sensitivity'
-                              value={maskThresholdSensitivity}
-                              onChange={setMaskThresholdSensitivity}
-                              fallbackValue={55}
-                              disabled={!workingSlot}
-                            />
-                            <LabeledSlider
-                              label='Edge Sensitivity'
-                              value={maskEdgeSensitivity}
-                              onChange={setMaskEdgeSensitivity}
-                              fallbackValue={55}
-                              disabled={!workingSlot}
-                            />
+                            {tool === 'brush' ? (
+                              <LabeledSlider
+                                label='Brush Radius'
+                                value={brushRadius}
+                                onChange={setBrushRadius}
+                                min={1}
+                                max={64}
+                                fallbackValue={8}
+                              />
+                            ) : null}
                           </div>
                         </div>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      ) : (
+                        <div className='mt-2 text-[11px] text-gray-500'>
+                          Select a drawing tool to see contextual settings.
+                        </div>
+                      )}
+                    </div>
+
+                    <div className='rounded border border-border/60 bg-card/30 p-3'>
+                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Mask Generation</div>
+                      <div className='overflow-x-auto pb-1'>
+                        <GenerationToolbar />
+                      </div>
+                    </div>
+
+                    <div className='rounded border border-border/60 bg-card/30 p-3'>
+                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Masking Tools</div>
+                      <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
+                        <LabeledSlider
+                          label='Threshold Sensitivity'
+                          value={maskThresholdSensitivity}
+                          onChange={setMaskThresholdSensitivity}
+                          fallbackValue={55}
+                          disabled={!workingSlot}
+                        />
+                        <LabeledSlider
+                          label='Edge Sensitivity'
+                          value={maskEdgeSensitivity}
+                          onChange={setMaskEdgeSensitivity}
+                          fallbackValue={55}
+                          disabled={!workingSlot}
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <div className='relative flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-0'>
+                </StudioCard>
+
                 <StudioCard label='Composite References'>
                   <MultiSelect
                     options={compositeAssetOptions}

@@ -146,13 +146,13 @@ model Integration {
   slug        String                 @unique
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
-  connections IntegrationConnection?
+  connections IntegrationConnection[]
   listings    ProductListing[]
 }
 
 model IntegrationConnection {
   id                              String           @id @default(cuid())
-  integrationId                   String           @unique
+  integrationId                   String
   name                            String
   username                        String
   password                        String
@@ -188,6 +188,11 @@ model IntegrationConnection {
   baseApiToken                    String?
   baseLastInventoryId             String?
   baseTokenUpdatedAt              DateTime?
+  playwrightPersonaId             String?
+  traderaDefaultTemplateId        String?
+  traderaDefaultDurationHours     Int              @default(72)
+  traderaAutoRelistEnabled        Boolean          @default(true)
+  traderaAutoRelistLeadMinutes    Int              @default(180)
   integration                     Integration      @relation(fields: [integrationId], references: [id], onDelete: Cascade)
   listings                        ProductListing[]
 }
@@ -201,6 +206,14 @@ model ProductListing {
   inventoryId       String?
   status            String                @default("pending")
   listedAt          DateTime?
+  expiresAt         DateTime?
+  nextRelistAt      DateTime?
+  relistPolicy      Json?
+  relistAttempts    Int                   @default(0)
+  lastRelistedAt    DateTime?
+  lastStatusCheckAt DateTime?
+  marketplaceData   Json?
+  failureReason     String?
   exportHistory     Json?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt

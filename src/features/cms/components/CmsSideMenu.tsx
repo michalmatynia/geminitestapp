@@ -3,33 +3,35 @@
 import * as React from 'react';
 
 import { useCmsEditor } from '@/features/cms/components/CmsEditorContext';
-import type { PageComponent, Page } from '@/features/cms/types';
+import type { Page } from '@/features/cms/types';
 import { Button } from '@/shared/ui';
 
 import RichTextBlock, { type RichTextContent } from './RichTextBlock';
+
+type CmsSideMenuComponent = NonNullable<Page['components']>[number];
 
 export default function CmsSideMenu(): React.JSX.Element {
   const { page, setPage } = useCmsEditor();
 
   const addComponent = (type: string): void => {
-    const newComponent: PageComponent = {
-      type,
-      content: {},
-    };
-
-    setPage((prev: Page | null) => {
+    setPage((prev) => {
       if (!prev) return prev; // nothing to update yet
+      const newComponent: CmsSideMenuComponent = {
+        type,
+        order: prev.components.length,
+        content: {},
+      };
       return {
         ...prev,
-        components: [...(prev.components ?? []), newComponent],
+        components: [...prev.components, newComponent],
       };
     });
   };
 
   const handleContentChange = (index: number, content: RichTextContent): void => {
-    setPage((prev: Page | null) => {
+    setPage((prev) => {
       if (!prev) return prev;
-      const nextComponents = [...(prev.components ?? [])];
+      const nextComponents = [...prev.components];
 
       if (!nextComponents[index]) return prev; // out of range safety
       nextComponents[index] = {
@@ -68,12 +70,12 @@ export default function CmsSideMenu(): React.JSX.Element {
         <div>
           <h3 className='font-bold mb-2'>Template</h3>
 
-          {page.components?.map((component: PageComponent, index: number) => {
+          {page.components.map((component: CmsSideMenuComponent, index: number) => {
             if (component?.type === 'RichText') {
               return (
                 <RichTextBlock
                   key={index}
-                  content={component.content as RichTextContent}
+                  content={(component.content ?? {}) as RichTextContent}
                   onChange={(content: RichTextContent): void => handleContentChange(index, content)}
                 />
               );

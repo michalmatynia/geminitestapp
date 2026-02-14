@@ -224,3 +224,10 @@ export async function deleteImageStudioSlot(slotId: string): Promise<boolean> {
   }
   return deleted;
 }
+
+export async function deleteImageStudioSlotsByProject(projectId: string): Promise<number> {
+  await ensureIndexesOnce();
+  const db = await getMongoDb();
+  const result = await db.collection<ImageStudioSlotDocument>(COLLECTION).deleteMany({ projectId });
+  return result.deletedCount ?? 0;
+}

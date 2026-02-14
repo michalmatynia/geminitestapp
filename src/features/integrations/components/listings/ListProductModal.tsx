@@ -17,6 +17,7 @@ import { ListProductModalFormProvider } from './list-product-modal/context/ListP
 import { ListProductModalViewProvider, useListProductModalViewContext } from './list-product-modal/context/ListProductModalViewContext';
 import { IntegrationSelection } from './list-product-modal/IntegrationSelection';
 import { ListProductErrorPanel } from './list-product-modal/ListProductErrorPanel';
+import { TraderaListingSettings } from './TraderaListingSettings';
 
 type ListProductModalProps = {
   product: ProductWithImages;
@@ -38,8 +39,14 @@ function ListProductModalContent(): React.JSX.Element {
     loadingIntegrations: loading,
     selectedIntegrationId,
     selectedConnectionId,
-    selectedIntegration,
     isBaseComIntegration,
+    selectedInventoryId,
+    selectedTemplateId,
+    isTraderaIntegration,
+    selectedTraderaDurationHours,
+    selectedTraderaAutoRelistEnabled,
+    selectedTraderaAutoRelistLeadMinutes,
+    selectedTraderaTemplateId,
   } = useListingSettingsContext();
 
   const {
@@ -62,7 +69,7 @@ function ListProductModalContent(): React.JSX.Element {
       preset,
       isBaseComIntegration,
       selectedConnectionId,
-      selectedIntegration?.connections?.[0]?.id || null,
+      selectedInventoryId || null,
       product.id,
       onSuccess
     );
@@ -78,8 +85,13 @@ function ListProductModalContent(): React.JSX.Element {
           selectedIntegrationId,
           selectedConnectionId,
           isBaseComIntegration,
-          selectedIntegration?.connections?.[0]?.id || null,
-          null,
+          isTraderaIntegration,
+          selectedInventoryId || null,
+          selectedTemplateId || null,
+          selectedTraderaDurationHours,
+          selectedTraderaAutoRelistEnabled,
+          selectedTraderaAutoRelistLeadMinutes,
+          selectedTraderaTemplateId,
           product.id,
           onSuccess
         );
@@ -110,6 +122,11 @@ function ListProductModalContent(): React.JSX.Element {
               {isBaseComIntegration && selectedConnectionId && (
                 <div className='pt-4 border-t border-border'>
                   <BaseListingSettings />
+                </div>
+              )}
+              {isTraderaIntegration && selectedConnectionId && (
+                <div className='pt-4 border-t border-border'>
+                  <TraderaListingSettings />
                 </div>
               )}
             </div>

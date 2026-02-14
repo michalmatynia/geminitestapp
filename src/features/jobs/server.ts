@@ -23,3 +23,9 @@ export {
   stopProductAiJobQueue,
   enqueueProductAiJobToQueue,
 } from './workers/productAiQueue';
+export {
+  startTraderaListingQueue,
+  stopTraderaListingQueue,
+  enqueueTraderaListingJob,
+} from './workers/traderaListingQueue';
+export { startTraderaRelistSchedulerQueue } from './workers/traderaRelistSchedulerQueue';

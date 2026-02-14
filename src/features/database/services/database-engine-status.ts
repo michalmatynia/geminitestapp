@@ -239,14 +239,26 @@ const buildBlockingIssues = (params: {
 };
 
 export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatusDto> {
-  const [policy, serviceRouteMap, collectionRouteMap] = await Promise.all([
+  const [policy, partialServiceRouteMap, collectionRouteMap] = await Promise.all([
     getDatabaseEnginePolicy(),
     getDatabaseEngineServiceRouteMap(),
     getDatabaseEngineCollectionRouteMap(),
   ]);
 
   const collectionsStatus = await buildCollectionStatus(collectionRouteMap);
-  const servicesStatus = await buildServiceStatuses({ policy, serviceRouteMap });
+  const servicesStatus = await buildServiceStatuses({ policy, serviceRouteMap: partialServiceRouteMap });
+  const serviceStatusByService = new Map(
+    servicesStatus.map((status: DatabaseEngineServiceStatusDto) => [status.service, status])
+  );
+  const serviceRouteMap = services.reduce(
+    (acc, service) => {
+      const status = serviceStatusByService.get(service);
+      const fallbackProvider: DatabaseEngineProviderDto = status?.effectiveProvider ?? 'prisma';
+      acc[service] = partialServiceRouteMap[service] ?? fallbackProvider;
+      return acc;
+    },
+    {} as Record<DatabaseEngineServiceDto, DatabaseEngineProviderDto>
+  );
   const blockingIssues = buildBlockingIssues({
     policy,
     servicesStatus,

@@ -3,6 +3,7 @@
 
 export * from '@/shared/contracts/admin';
 export * from '@/shared/contracts/agents';
+export * from '@/shared/contracts/analytics';
 export * from '@/shared/contracts/ai-paths';
 export * from '@/shared/contracts/ai-trigger-buttons';
 export * from '@/shared/contracts/app-embeds';

@@ -99,7 +99,9 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
     eligibleShapes.length > 0
       ? {
         type: 'polygons',
-        polygons: eligibleShapes.map((shape) => shape.points.map((point) => ({ x: point.x, y: point.y }))),
+        polygons: eligibleShapes.map((shape: VectorShape) =>
+          shape.points.map((point: { x: number; y: number }) => ({ x: point.x, y: point.y }))
+        ),
         invert: maskInvert || undefined,
         feather: maskFeather > 0 ? maskFeather : undefined,
       }

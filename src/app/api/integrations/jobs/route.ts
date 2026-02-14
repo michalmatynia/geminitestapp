@@ -43,6 +43,10 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
           externalListingId: listing.externalListingId,
           inventoryId: listing.inventoryId ?? null,
           listedAt: listing.listedAt,
+          expiresAt: listing.expiresAt ?? null,
+          nextRelistAt: listing.nextRelistAt ?? null,
+          relistAttempts: listing.relistAttempts ?? 0,
+          failureReason: listing.failureReason ?? null,
           exportHistory: listing.exportHistory ?? null,
           createdAt: listing.createdAt,
           updatedAt: listing.updatedAt

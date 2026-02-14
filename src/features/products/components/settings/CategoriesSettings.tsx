@@ -481,9 +481,17 @@ export function CategoriesSettings(): React.JSX.Element {
                               showDropLine ? 'opacity-100' : 'opacity-0'
                             )}
                           />
-                          <button
-                            type='button'
+                          <div
+                            role='button'
+                            tabIndex={0}
                             onClick={select}
+                            onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+                              if (event.target !== event.currentTarget) return;
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                select();
+                              }
+                            }}
                             className={cn(
                               'group flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-sm transition',
                               isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-muted/40',
@@ -551,7 +559,7 @@ export function CategoriesSettings(): React.JSX.Element {
                                 Delete
                               </TreeActionButton>
                             </TreeActionSlot>
-                          </button>
+                          </div>
                         </div>
                       );
                     }}

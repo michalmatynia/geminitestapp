@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
@@ -45,15 +46,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
+  const userPreferencesQuery = useUserPreferences();
   const updateSetting = useUpdateSetting();
 
   const [settingsLoaded, setSettingsLoaded] = useState<boolean>(false);
   const [studioSettings, setStudioSettings] = useState<ImageStudioSettings>(defaultImageStudioSettings);
 
   const heavyMap = heavySettings.data ?? new Map<string, string>();
-  const activeProjectId = parseImageStudioActiveProject(
+  const activeProjectIdFromPreferences =
+    typeof userPreferencesQuery.data?.imageStudioLastProjectId === 'string'
+      ? userPreferencesQuery.data.imageStudioLastProjectId.trim()
+      : '';
+  const legacyActiveProjectId = parseImageStudioActiveProject(
     heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)
   );
+  const activeProjectId = activeProjectIdFromPreferences || legacyActiveProjectId;
   const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
   const studioProjectSettingsRaw =
     projectSettingsKey ? heavyMap.get(projectSettingsKey) : null;
@@ -63,7 +70,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   useEffect(() => {
     if (settingsLoaded) return;
-    if (settingsStore.isLoading || heavySettings.isLoading) return;
+    if (settingsStore.isLoading || heavySettings.isLoading || userPreferencesQuery.isLoading) return;
 
     const stored = parseImageStudioSettings(studioSettingsRaw);
     const hasStoredStudioSettings = Boolean(
@@ -93,6 +100,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     settingsLoaded,
     settingsStore.isLoading,
     heavySettings.isLoading,
+    userPreferencesQuery.isLoading,
     studioSettingsRaw,
     openaiModelFallback,
   ]);

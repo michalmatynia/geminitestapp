@@ -34,6 +34,26 @@ import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwrigh
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
+type ConnectionFormState = {
+  name: string;
+  username: string;
+  password: string;
+  traderaDefaultTemplateId: string;
+  traderaDefaultDurationHours: number;
+  traderaAutoRelistEnabled: boolean;
+  traderaAutoRelistLeadMinutes: number;
+};
+
+const createEmptyConnectionForm = (): ConnectionFormState => ({
+  name: '',
+  username: '',
+  password: '',
+  traderaDefaultTemplateId: '',
+  traderaDefaultDurationHours: 72,
+  traderaAutoRelistEnabled: true,
+  traderaAutoRelistLeadMinutes: 180,
+});
+
 interface IntegrationsContextType {
   // Queries
   integrations: Integration[];
@@ -52,8 +72,8 @@ interface IntegrationsContextType {
   setIsModalOpen: (open: boolean) => void;
   editingConnectionId: string | null;
   setEditingConnectionId: (id: string | null) => void;
-  connectionForm: { name: string; username: string; password: string };
-  setConnectionForm: React.Dispatch<React.SetStateAction<{ name: string; username: string; password: string }>>;
+  connectionForm: ConnectionFormState;
+  setConnectionForm: React.Dispatch<React.SetStateAction<ConnectionFormState>>;
   
   // Testing State
   isTesting: boolean;
@@ -130,6 +150,7 @@ interface IntegrationsContextType {
   handleBaselinkerTest: (connection: IntegrationConnection) => Promise<void>;
   handleAllegroTest: (connection: IntegrationConnection) => Promise<void>;
   handleTestConnection: (connection: IntegrationConnection) => Promise<void>;
+  handleTraderaManualLogin: (connection: IntegrationConnection) => Promise<void>;
   
   handleSelectPlaywrightPersona: (personaId: string | null) => Promise<void>;
   handleSavePlaywrightSettings: () => Promise<void>;
@@ -159,6 +180,7 @@ export function useIntegrationsContext(): IntegrationsContextType {
 const EMPTY_INTEGRATIONS: Integration[] = [];
 const EMPTY_CONNECTIONS: IntegrationConnection[] = [];
 const EMPTY_PERSONAS: PlaywrightPersona[] = [];
+const NEW_CONNECTION_DRAFT_ID = '__new_connection__';
 
 export function IntegrationsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { toast } = useToast();
@@ -193,11 +215,8 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
   const [connectionToDelete, setConnectionToDelete] = useState<IntegrationConnection | null>(null);
-  const [connectionForm, setConnectionForm] = useState({
-    name: '',
-    username: '',
-    password: '',
-  });
+  const [connectionForm, setConnectionForm] =
+    useState<ConnectionFormState>(createEmptyConnectionForm());
 
   // Testing State
   const [testLog, setTestLog] = useState<TestLogEntry[]>([]);
@@ -216,7 +235,10 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
 
   // Session State
   const [showSessionModal, setShowSessionModal] = useState(false);
-  const activeConnection = connections[0] || null;
+  const activeConnection =
+    connections.find((connection: IntegrationConnection) => connection.id === editingConnectionId) ??
+    connections[0] ??
+    null;
   const sessionQuery = useConnectionSession(activeConnection?.id, {
     enabled: showSessionModal,
   });
@@ -301,40 +323,52 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   useEffect(() => {
     if (connections.length === 0) {
       setEditingConnectionId(null);
-      setConnectionForm({ name: '', username: '', password: '' });
+      setConnectionForm(createEmptyConnectionForm());
       return;
     }
-    if (!editingConnectionId) {
-      const connection = connections[0];
-      if (!connection) return;
-      
+    if (editingConnectionId === NEW_CONNECTION_DRAFT_ID) return;
+
+    const connection =
+      connections.find((item: IntegrationConnection) => item.id === editingConnectionId) ??
+      connections[0];
+    if (!connection) return;
+
+    if (editingConnectionId !== connection.id) {
       setEditingConnectionId(connection.id);
-      setConnectionForm({
-        name: connection.name,
-        username: connection.username ?? '',
-        password: '',
-      });
-      setPlaywrightSettings({
-        headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
-        slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
-        timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
-        navigationTimeout: connection.playwrightNavigationTimeout ?? defaultPlaywrightSettings.navigationTimeout,
-        humanizeMouse: connection.playwrightHumanizeMouse ?? defaultPlaywrightSettings.humanizeMouse,
-        mouseJitter: connection.playwrightMouseJitter ?? defaultPlaywrightSettings.mouseJitter,
-        clickDelayMin: connection.playwrightClickDelayMin ?? defaultPlaywrightSettings.clickDelayMin,
-        clickDelayMax: connection.playwrightClickDelayMax ?? defaultPlaywrightSettings.clickDelayMax,
-        inputDelayMin: connection.playwrightInputDelayMin ?? defaultPlaywrightSettings.inputDelayMin,
-        inputDelayMax: connection.playwrightInputDelayMax ?? defaultPlaywrightSettings.inputDelayMax,
-        actionDelayMin: connection.playwrightActionDelayMin ?? defaultPlaywrightSettings.actionDelayMin,
-        actionDelayMax: connection.playwrightActionDelayMax ?? defaultPlaywrightSettings.actionDelayMax,
-        proxyEnabled: connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
-        proxyServer: connection.playwrightProxyServer ?? defaultPlaywrightSettings.proxyServer,
-        proxyUsername: connection.playwrightProxyUsername ?? defaultPlaywrightSettings.proxyUsername,
-        proxyPassword: '',
-        emulateDevice: connection.playwrightEmulateDevice ?? defaultPlaywrightSettings.emulateDevice,
-        deviceName: connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName,
-      });
     }
+
+    setConnectionForm({
+      name: connection.name,
+      username: connection.username ?? '',
+      password: '',
+      traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? '',
+      traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
+      traderaAutoRelistEnabled:
+        connection.traderaAutoRelistEnabled ?? true,
+      traderaAutoRelistLeadMinutes:
+        connection.traderaAutoRelistLeadMinutes ?? 180,
+    });
+    setPlaywrightSettings({
+      headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
+      slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
+      timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
+      navigationTimeout: connection.playwrightNavigationTimeout ?? defaultPlaywrightSettings.navigationTimeout,
+      humanizeMouse: connection.playwrightHumanizeMouse ?? defaultPlaywrightSettings.humanizeMouse,
+      mouseJitter: connection.playwrightMouseJitter ?? defaultPlaywrightSettings.mouseJitter,
+      clickDelayMin: connection.playwrightClickDelayMin ?? defaultPlaywrightSettings.clickDelayMin,
+      clickDelayMax: connection.playwrightClickDelayMax ?? defaultPlaywrightSettings.clickDelayMax,
+      inputDelayMin: connection.playwrightInputDelayMin ?? defaultPlaywrightSettings.inputDelayMin,
+      inputDelayMax: connection.playwrightInputDelayMax ?? defaultPlaywrightSettings.inputDelayMax,
+      actionDelayMin: connection.playwrightActionDelayMin ?? defaultPlaywrightSettings.actionDelayMin,
+      actionDelayMax: connection.playwrightActionDelayMax ?? defaultPlaywrightSettings.actionDelayMax,
+      proxyEnabled: connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
+      proxyServer: connection.playwrightProxyServer ?? defaultPlaywrightSettings.proxyServer,
+      proxyUsername: connection.playwrightProxyUsername ?? defaultPlaywrightSettings.proxyUsername,
+      proxyPassword: '',
+      emulateDevice: connection.playwrightEmulateDevice ?? defaultPlaywrightSettings.emulateDevice,
+      deviceName: connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName,
+    });
+    setPlaywrightPersonaId(connection.playwrightPersonaId ?? null);
   }, [connections, editingConnectionId]);
 
   useEffect(() => {
@@ -343,12 +377,18 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
         setPlaywrightPersonaId(null);
         return;
       }
+      if (
+        playwrightPersonaId &&
+        playwrightPersonas.some((persona: PlaywrightPersona) => persona.id === playwrightPersonaId)
+      ) {
+        return;
+      }
       const { findPlaywrightPersonaMatch } = await import('@/features/playwright');
       const match = findPlaywrightPersonaMatch(playwrightSettings, playwrightPersonas);
       setPlaywrightPersonaId(match?.id ?? null);
     };
     void loadPlaywrightUtils();
-  }, [playwrightPersonas, playwrightSettings]);
+  }, [playwrightPersonas, playwrightSettings, playwrightPersonaId]);
 
   // Handlers
   const ensureIntegration = async (definition: (typeof integrationDefinitions)[number]): Promise<Integration | null> => {
@@ -380,11 +420,13 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
 
   const handleSaveConnection = async (): Promise<void> => {
     if (!activeIntegration) return;
+    const isCreateMode =
+      !editingConnectionId || editingConnectionId === NEW_CONNECTION_DRAFT_ID;
     if (!connectionForm.name.trim() || !connectionForm.username.trim()) {
       toast('Connection name and username are required.', { variant: 'error' });
       return;
     }
-    if (!editingConnectionId && !connectionForm.password.trim()) {
+    if (isCreateMode && !connectionForm.password.trim()) {
       toast('Password/Token is required.', { variant: 'error' });
       return;
     }
@@ -392,15 +434,40 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       name: connectionForm.name.trim(),
       username: connectionForm.username.trim(),
       ...(connectionForm.password.trim() ? { password: connectionForm.password.trim() } : {}),
+      ...(activeIntegration.slug === 'tradera'
+        ? {
+          traderaDefaultTemplateId:
+              connectionForm.traderaDefaultTemplateId.trim() || null,
+          traderaDefaultDurationHours:
+              Math.max(
+                1,
+                Math.min(720, Math.floor(connectionForm.traderaDefaultDurationHours))
+              ),
+          traderaAutoRelistEnabled: connectionForm.traderaAutoRelistEnabled,
+          traderaAutoRelistLeadMinutes: Math.max(
+            0,
+            Math.min(10080, Math.floor(connectionForm.traderaAutoRelistLeadMinutes))
+          ),
+        }
+        : {}),
     };
     try {
-      await upsertConnectionMutation.mutateAsync({
+      const saved = await upsertConnectionMutation.mutateAsync({
         integrationId: activeIntegration.id,
-        ...(editingConnectionId ? { connectionId: editingConnectionId } : {}),
+        ...(!isCreateMode ? { connectionId: editingConnectionId } : {}),
         payload,
       });
-      setConnectionForm({ name: '', username: '', password: '' });
-      setEditingConnectionId(null);
+      setEditingConnectionId(saved.id);
+      setConnectionForm({
+        name: saved.name,
+        username: saved.username ?? '',
+        password: '',
+        traderaDefaultTemplateId: saved.traderaDefaultTemplateId ?? '',
+        traderaDefaultDurationHours: saved.traderaDefaultDurationHours ?? 72,
+        traderaAutoRelistEnabled: saved.traderaAutoRelistEnabled ?? true,
+        traderaAutoRelistLeadMinutes:
+          saved.traderaAutoRelistLeadMinutes ?? 180,
+      });
     } catch (error: unknown) {
       toast((error as Error)?.message ?? 'Failed to save connection.', { variant: 'error' });
     }
@@ -419,7 +486,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       });
       if (editingConnectionId === connectionToDelete.id) {
         setEditingConnectionId(null);
-        setConnectionForm({ name: '', username: '', password: '' });
+        setConnectionForm(createEmptyConnectionForm());
       }
     } catch (error: unknown) {
       toast((error as Error)?.message ?? 'Failed to delete connection.', { variant: 'error' });
@@ -431,7 +498,11 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const handleConnectionTest = async (
     connection: IntegrationConnection,
     type: 'test' | 'base/test' | 'allegro/test',
-    title: string
+    title: string,
+    options?: {
+      body?: Record<string, unknown>;
+      timeoutMs?: number;
+    }
   ): Promise<void> => {
     if (!activeIntegration) return;
     setIsTesting(true);
@@ -452,6 +523,10 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
         integrationId: activeIntegration.id,
         connectionId: connection.id,
         type,
+        ...(options?.body ? { body: options.body } : {}),
+        ...(typeof options?.timeoutMs === 'number'
+          ? { timeoutMs: options.timeoutMs }
+          : {}),
       }));
 
       const normalizedSteps = normalizeSteps((payload['steps'] as unknown[]) || []);
@@ -522,6 +597,11 @@ ${errorBody}`;
   const handleBaselinkerTest = (c: IntegrationConnection) => handleConnectionTest(c, 'base/test', 'Baselinker connection test');
   const handleAllegroTest = (c: IntegrationConnection) => handleConnectionTest(c, 'allegro/test', 'Allegro connection test');
   const handleTestConnection = (c: IntegrationConnection) => handleConnectionTest(c, 'test', 'Connection test');
+  const handleTraderaManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', 'Manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 240000 },
+      timeoutMs: 300000,
+    });
 
   const handleSelectPlaywrightPersona = async (personaId: string | null): Promise<void> => {
     if (!personaId) {
@@ -537,7 +617,7 @@ ${errorBody}`;
   };
 
   const handleSavePlaywrightSettings = async (): Promise<void> => {
-    const connection = connections[0];
+    const connection = activeConnection;
     if (!connection) return;
     try {
       await upsertConnectionMutation.mutateAsync({
@@ -546,6 +626,7 @@ ${errorBody}`;
         payload: {
           name: connection.name,
           username: connection.username,
+          playwrightPersonaId,
           ...playwrightSettings,
           proxyPassword: playwrightSettings.proxyPassword, // Ensure password is sent if provided
         } as Record<string, unknown>,
@@ -703,7 +784,9 @@ ${errorBody}`;
     isModalOpen,
     setIsModalOpen,
     editingConnectionId,
-    setEditingConnectionId,
+    setEditingConnectionId: (id: string | null): void => {
+      setEditingConnectionId(id);
+    },
     connectionForm,
     setConnectionForm,
     isTesting,
@@ -756,6 +839,7 @@ ${errorBody}`;
     handleBaselinkerTest,
     handleAllegroTest,
     handleTestConnection,
+    handleTraderaManualLogin,
     handleSelectPlaywrightPersona,
     handleSavePlaywrightSettings,
     handleAllegroAuthorize,

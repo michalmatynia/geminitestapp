@@ -7,7 +7,9 @@ export type QueueName =
   | 'agent'
   | 'ai-insights'
   | 'database-backup-scheduler'
-  | 'image-studio-run';
+  | 'image-studio-run'
+  | 'tradera-listings'
+  | 'tradera-relist-scheduler';
 
 export type QueueHealthStatus = {
   running: boolean;

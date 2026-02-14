@@ -43,9 +43,24 @@ type ProductListingDocument = {
   inventoryId?: string | null;
   status: string;
   listedAt: Date | null;
+  expiresAt?: Date | null;
+  nextRelistAt?: Date | null;
+  relistPolicy?: Record<string, unknown> | null;
+  relistAttempts?: number;
+  lastRelistedAt?: Date | null;
+  lastStatusCheckAt?: Date | null;
+  marketplaceData?: Record<string, unknown> | null;
+  failureReason?: string | null;
   exportHistory?: ProductListingExportEvent[] | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+const toPrismaNullableJson = (
+  value: unknown
+): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput => {
+  if (value === null) return Prisma.DbNull;
+  return value as Prisma.InputJsonValue;
 };
 
 const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => ({
@@ -57,6 +72,14 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   inventoryId: doc.inventoryId ?? null,
   status: doc.status,
   listedAt: doc.listedAt,
+  expiresAt: doc.expiresAt ?? null,
+  nextRelistAt: doc.nextRelistAt ?? null,
+  relistPolicy: (doc.relistPolicy ?? null) as ProductListingRecord['relistPolicy'],
+  relistAttempts: doc.relistAttempts ?? 0,
+  lastRelistedAt: doc.lastRelistedAt ?? null,
+  lastStatusCheckAt: doc.lastStatusCheckAt ?? null,
+  marketplaceData: (doc.marketplaceData ?? null),
+  failureReason: doc.failureReason ?? null,
   exportHistory: doc.exportHistory ?? null,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
@@ -85,6 +108,8 @@ const prismaRepository: ProductListingRepository = {
     });
     return (listings as EnrichedPrismaListing[]).map((listing: EnrichedPrismaListing) => ({
       ...listing,
+      relistPolicy: (listing as unknown as Record<string, unknown>)['relistPolicy'] as ProductListingRecord['relistPolicy'],
+      marketplaceData: (listing as unknown as Record<string, unknown>)['marketplaceData'] as ProductListingRecord['marketplaceData'],
       exportHistory: listing.exportHistory as unknown as ProductListingExportEvent[] | null,
     })) as unknown as ProductListingWithDetails[];
   },
@@ -94,6 +119,8 @@ const prismaRepository: ProductListingRepository = {
     if (!listing) return null;
     return {
       ...listing,
+      relistPolicy: (listing as unknown as Record<string, unknown>)['relistPolicy'] as ProductListingRecord['relistPolicy'],
+      marketplaceData: (listing as unknown as Record<string, unknown>)['marketplaceData'] as ProductListingRecord['marketplaceData'],
       exportHistory: listing.exportHistory as unknown as ProductListingExportEvent[] | null,
     };
   },
@@ -104,9 +131,21 @@ const prismaRepository: ProductListingRepository = {
         productId: input.productId,
         integrationId: input.integrationId,
         connectionId: input.connectionId,
+        status: input.status ?? 'pending',
         externalListingId: input.externalListingId || null,
         inventoryId: input.inventoryId || null,
-        status: 'pending',
+        expiresAt: input.expiresAt ?? null,
+        nextRelistAt: input.nextRelistAt ?? null,
+        ...(input.relistPolicy !== undefined
+          ? { relistPolicy: toPrismaNullableJson(input.relistPolicy) }
+          : {}),
+        relistAttempts: input.relistAttempts ?? 0,
+        lastRelistedAt: input.lastRelistedAt ?? null,
+        lastStatusCheckAt: input.lastStatusCheckAt ?? null,
+        ...(input.marketplaceData !== undefined
+          ? { marketplaceData: toPrismaNullableJson(input.marketplaceData) }
+          : {}),
+        failureReason: input.failureReason ?? null,
       },
       include: {
         integration: {
@@ -119,6 +158,8 @@ const prismaRepository: ProductListingRepository = {
     });
     return {
       ...listing,
+      relistPolicy: (listing as unknown as Record<string, unknown>)['relistPolicy'] as ProductListingRecord['relistPolicy'],
+      marketplaceData: (listing as unknown as Record<string, unknown>)['marketplaceData'] as ProductListingRecord['marketplaceData'],
       exportHistory: listing.exportHistory as unknown as ProductListingExportEvent[] | null,
     } as unknown as ProductListingWithDetails;
   },
@@ -138,6 +179,47 @@ const prismaRepository: ProductListingRepository = {
     await prisma.productListing.update({
       where: { id },
       data,
+    });
+  },
+
+  updateListing: async (id: string, input: Partial<CreateProductListingInput>): Promise<void> => {
+    const updateData: Record<string, unknown> = {};
+    if (typeof input.integrationId === 'string') updateData['integrationId'] = input.integrationId;
+    if (typeof input.connectionId === 'string') updateData['connectionId'] = input.connectionId;
+    if (typeof input.status === 'string') updateData['status'] = input.status;
+    if (typeof input.externalListingId === 'string' || input.externalListingId === null) {
+      updateData['externalListingId'] = input.externalListingId ?? null;
+    }
+    if (typeof input.inventoryId === 'string' || input.inventoryId === null) {
+      updateData['inventoryId'] = input.inventoryId ?? null;
+    }
+    if (input.expiresAt instanceof Date || input.expiresAt === null) {
+      updateData['expiresAt'] = input.expiresAt ?? null;
+    }
+    if (input.nextRelistAt instanceof Date || input.nextRelistAt === null) {
+      updateData['nextRelistAt'] = input.nextRelistAt ?? null;
+    }
+    if (typeof input.relistAttempts === 'number') updateData['relistAttempts'] = input.relistAttempts;
+    if (input.lastRelistedAt instanceof Date || input.lastRelistedAt === null) {
+      updateData['lastRelistedAt'] = input.lastRelistedAt ?? null;
+    }
+    if (input.lastStatusCheckAt instanceof Date || input.lastStatusCheckAt === null) {
+      updateData['lastStatusCheckAt'] = input.lastStatusCheckAt ?? null;
+    }
+    if (typeof input.failureReason === 'string' || input.failureReason === null) {
+      updateData['failureReason'] = input.failureReason ?? null;
+    }
+    if (input.relistPolicy !== undefined) {
+      updateData['relistPolicy'] = toPrismaNullableJson(input.relistPolicy);
+    }
+    if (input.marketplaceData !== undefined) {
+      updateData['marketplaceData'] = toPrismaNullableJson(input.marketplaceData);
+    }
+
+    if (Object.keys(updateData).length === 0) return;
+    await prisma.productListing.update({
+      where: { id },
+      data: updateData as Prisma.ProductListingUpdateInput,
     });
   },
 
@@ -254,10 +336,18 @@ const mongoRepository: ProductListingRepository = {
       productId: input.productId,
       integrationId: input.integrationId,
       connectionId: input.connectionId,
+      status: input.status ?? 'pending',
       externalListingId: input.externalListingId || null,
       inventoryId: input.inventoryId || null,
-      status: 'pending',
       listedAt: null,
+      expiresAt: input.expiresAt ?? null,
+      nextRelistAt: input.nextRelistAt ?? null,
+      relistPolicy: input.relistPolicy ?? null,
+      relistAttempts: input.relistAttempts ?? 0,
+      lastRelistedAt: input.lastRelistedAt ?? null,
+      lastStatusCheckAt: input.lastStatusCheckAt ?? null,
+      marketplaceData: input.marketplaceData ?? null,
+      failureReason: input.failureReason ?? null,
       exportHistory: [],
       createdAt: now,
       updatedAt: now,
@@ -301,6 +391,40 @@ const mongoRepository: ProductListingRepository = {
     if (status === 'active') {
       updateData['listedAt'] = new Date();
     }
+    await db
+      .collection<ProductListingDocument>(LISTINGS_COLLECTION)
+      .updateOne({ _id: id }, { $set: updateData });
+  },
+
+  updateListing: async (id: string, input: Partial<CreateProductListingInput>): Promise<void> => {
+    const db = await getMongoDb();
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+    if (typeof input.integrationId === 'string') updateData['integrationId'] = input.integrationId;
+    if (typeof input.connectionId === 'string') updateData['connectionId'] = input.connectionId;
+    if (typeof input.status === 'string') updateData['status'] = input.status;
+    if (typeof input.externalListingId === 'string' || input.externalListingId === null) {
+      updateData['externalListingId'] = input.externalListingId ?? null;
+    }
+    if (typeof input.inventoryId === 'string' || input.inventoryId === null) {
+      updateData['inventoryId'] = input.inventoryId ?? null;
+    }
+    if (input.expiresAt instanceof Date || input.expiresAt === null) updateData['expiresAt'] = input.expiresAt ?? null;
+    if (input.nextRelistAt instanceof Date || input.nextRelistAt === null) {
+      updateData['nextRelistAt'] = input.nextRelistAt ?? null;
+    }
+    if (typeof input.relistAttempts === 'number') updateData['relistAttempts'] = input.relistAttempts;
+    if (input.lastRelistedAt instanceof Date || input.lastRelistedAt === null) {
+      updateData['lastRelistedAt'] = input.lastRelistedAt ?? null;
+    }
+    if (input.lastStatusCheckAt instanceof Date || input.lastStatusCheckAt === null) {
+      updateData['lastStatusCheckAt'] = input.lastStatusCheckAt ?? null;
+    }
+    if (typeof input.failureReason === 'string' || input.failureReason === null) {
+      updateData['failureReason'] = input.failureReason ?? null;
+    }
+    if (input.relistPolicy !== undefined) updateData['relistPolicy'] = input.relistPolicy ?? null;
+    if (input.marketplaceData !== undefined) updateData['marketplaceData'] = input.marketplaceData ?? null;
+
     await db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
       .updateOne({ _id: id }, { $set: updateData });
@@ -387,8 +511,8 @@ const listingStatusRank = (status: string | null | undefined): number => {
   if (!normalized) return -1;
   if (normalized === 'active' || normalized === 'success' || normalized === 'completed') return 5;
   if (normalized === 'running' || normalized === 'processing' || normalized === 'in_progress') return 4;
-  if (normalized === 'pending' || normalized === 'queued') return 3;
-  if (normalized === 'failed' || normalized === 'error') return 1;
+  if (normalized === 'pending' || normalized === 'queued' || normalized === 'queued_relist') return 3;
+  if (normalized === 'failed' || normalized === 'error' || normalized === 'needs_login' || normalized === 'auth_required') return 1;
   if (normalized === 'removed') return 0;
   return 2;
 };
@@ -572,7 +696,15 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
       .toArray();
 
     const connections = await db
-      .collection<{ _id: string; name: string; integrationId: string }>('integration_connections')
+      .collection<{
+        _id: string;
+        name: string;
+        integrationId: string;
+        traderaDefaultTemplateId?: string | null;
+        traderaDefaultDurationHours?: number | null;
+        traderaAutoRelistEnabled?: boolean | null;
+        traderaAutoRelistLeadMinutes?: number | null;
+      }>('integration_connections')
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
@@ -583,10 +715,25 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
       slug: integration.slug,
       connections: connections
         .filter((c: { integrationId: string }) => c.integrationId === integration._id)
-        .map((c: { _id: string; name: string; integrationId: string }) => ({
+        .map((c: {
+          _id: string;
+          name: string;
+          integrationId: string;
+          traderaDefaultTemplateId?: string | null;
+          traderaDefaultDurationHours?: number | null;
+          traderaAutoRelistEnabled?: boolean | null;
+          traderaAutoRelistLeadMinutes?: number | null;
+        }) => ({
           id: c._id,
           name: c.name,
           integrationId: c.integrationId,
+          traderaDefaultTemplateId: c.traderaDefaultTemplateId ?? null,
+          traderaDefaultDurationHours:
+            c.traderaDefaultDurationHours ?? null,
+          traderaAutoRelistEnabled:
+            c.traderaAutoRelistEnabled ?? null,
+          traderaAutoRelistLeadMinutes:
+            c.traderaAutoRelistLeadMinutes ?? null,
         })),
     }));
   }
@@ -595,7 +742,15 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
   const integrations = await prisma.integration.findMany({
     include: {
       connections: {
-        select: { id: true, name: true, integrationId: true },
+        select: {
+          id: true,
+          name: true,
+          integrationId: true,
+          traderaDefaultTemplateId: true,
+          traderaDefaultDurationHours: true,
+          traderaAutoRelistEnabled: true,
+          traderaAutoRelistLeadMinutes: true,
+        },
       },
     },
     orderBy: { name: 'asc' },
@@ -614,14 +769,38 @@ export const getIntegrationsWithConnections = async (): Promise<IntegrationWithC
       name: integration.name,
       slug: integration.slug,
       connections: normalizedConnections
-        .map((connection) => connection as { id?: string; name?: string; integrationId?: string })
-        .filter((connection): connection is { id: string; name: string; integrationId: string } =>
+        .map((connection) => connection as {
+          id?: string;
+          name?: string;
+          integrationId?: string;
+          traderaDefaultTemplateId?: string | null;
+          traderaDefaultDurationHours?: number | null;
+          traderaAutoRelistEnabled?: boolean | null;
+          traderaAutoRelistLeadMinutes?: number | null;
+        })
+        .filter((connection): connection is {
+          id: string;
+          name: string;
+          integrationId: string;
+          traderaDefaultTemplateId?: string | null;
+          traderaDefaultDurationHours?: number | null;
+          traderaAutoRelistEnabled?: boolean | null;
+          traderaAutoRelistLeadMinutes?: number | null;
+        } =>
           Boolean(connection.id && connection.name)
         )
         .map((connection) => ({
           id: connection.id,
           name: connection.name,
           integrationId: connection.integrationId ?? integration.id,
+          traderaDefaultTemplateId:
+            connection.traderaDefaultTemplateId ?? null,
+          traderaDefaultDurationHours:
+            connection.traderaDefaultDurationHours ?? null,
+          traderaAutoRelistEnabled:
+            connection.traderaAutoRelistEnabled ?? null,
+          traderaAutoRelistLeadMinutes:
+            connection.traderaAutoRelistLeadMinutes ?? null,
         })),
     };
   }) as IntegrationWithConnectionsBasic[];

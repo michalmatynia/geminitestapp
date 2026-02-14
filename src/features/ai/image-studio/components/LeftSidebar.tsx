@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
+import { FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -219,23 +219,6 @@ export function LeftSidebar(): React.JSX.Element {
     });
   };
 
-  const handleCopyActiveCardName = (): void => {
-    const cardLabel = selectedSlot?.name?.trim() || selectedSlot?.id || null;
-    if (!cardLabel) {
-      toast('Select a card first.', { variant: 'info' });
-      return;
-    }
-    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-      toast('Clipboard is not available in this browser.', { variant: 'error' });
-      return;
-    }
-    void navigator.clipboard.writeText(cardLabel).then(() => {
-      toast('Card name copied.', { variant: 'success' });
-    }).catch(() => {
-      toast('Failed to copy card name.', { variant: 'error' });
-    });
-  };
-
   const handleSaveProject = (): void => {
     const normalizedProjectId = projectId.trim();
     if (!normalizedProjectId) {
@@ -343,8 +326,8 @@ export function LeftSidebar(): React.JSX.Element {
         )}
         aria-hidden={isFocusMode}
       >
-        <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
-          <div className='flex items-center justify-start px-1 py-1' data-preserve-slot-selection='true'>
+        <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
+          <div className='px-1 py-1' data-preserve-slot-selection='true'>
             <UnifiedButton
               type='button'
               variant='outline'
@@ -359,103 +342,82 @@ export function LeftSidebar(): React.JSX.Element {
               {projectSaveBusy ? 'Saving...' : 'Save Project'}
             </UnifiedButton>
           </div>
+
           <div
-            className='flex items-center gap-2 px-1 py-1 text-[11px] text-gray-400'
+            className='grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 px-1 py-1'
             data-preserve-slot-selection='true'
           >
-            <span className='min-w-0 flex-1 truncate'>
-              {selectedSlot
-                ? selectedSlot.name || selectedSlot.id
-                : 'No active card selected. Pick a card from the tree.'}
-            </span>
-            <Tooltip content={selectedSlot ? 'Copy card name' : 'Select a card first'}>
-              <UnifiedButton
-                type='button'
-                size='icon'
-                variant='ghost'
-                className='size-5 shrink-0'
-                onClick={handleCopyActiveCardName}
-                disabled={!selectedSlot?.id}
-                title='Copy card name'
-                aria-label='Copy card name'
-                data-preserve-slot-selection='true'
-              >
-                <Copy className='size-3' />
-              </UnifiedButton>
-            </Tooltip>
-          </div>
-
-          <div data-preserve-slot-selection='true'>
-            <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
-          </div>
-
-          <div className='flex flex-wrap items-center justify-start gap-2' data-preserve-slot-selection='true'>
-            <Tooltip content='Load to canvas'>
-              <UnifiedButton
-                type='button'
-                size='icon'
-                variant='outline'
-                title='Load to canvas'
-                onClick={handleLoadToCanvas}
-                disabled={!canLoadToCanvas}
-                aria-label='Load to canvas'
-              >
-                <ImagePlus className='size-4' />
-              </UnifiedButton>
-            </Tooltip>
-            <Tooltip content='De-canvas'>
-              <UnifiedButton
-                type='button'
-                size='icon'
-                variant='outline'
-                title='De-canvas'
-                onClick={handleDeCanvas}
-                disabled={!workingSlot}
-                aria-label='De-canvas'
-              >
-                <ImageOff className='size-4' />
-              </UnifiedButton>
-            </Tooltip>
-            <Tooltip content='New Card'>
-              <UnifiedButton
-                type='button'
-                size='icon'
-                variant='outline'
-                title='New Card'
-                onClick={handleCreateCardFromLoadedImage}
-                disabled={!projectId}
-                aria-label='New Card'
-              >
-                <Plus className='size-4' />
-              </UnifiedButton>
-            </Tooltip>
-            <Tooltip content='New folder'>
-              <UnifiedButton
-                type='button'
-                size='icon'
-                variant='outline'
-                title='New folder'
-                onClick={handleCreateFolder}
-                disabled={!projectId || createFolderMutation.isPending}
-                aria-label='New folder'
-              >
-                <FolderPlus className='size-4' />
-              </UnifiedButton>
-            </Tooltip>
-            {selectedSlot ? (
-              <Tooltip content='Edit card'>
+            <div className='min-w-0 overflow-hidden'>
+              <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
+            </div>
+            <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
+              <Tooltip content='Load to canvas'>
                 <UnifiedButton
                   type='button'
                   size='icon'
                   variant='outline'
-                  title='Edit card'
-                  onClick={() => setSlotInlineEditOpen(true)}
-                  aria-label='Edit card'
+                  title='Load to canvas'
+                  onClick={handleLoadToCanvas}
+                  disabled={!canLoadToCanvas}
+                  aria-label='Load to canvas'
                 >
-                  <Settings2 className='size-4' />
+                  <ImagePlus className='size-4' />
                 </UnifiedButton>
               </Tooltip>
-            ) : null}
+              <Tooltip content='De-canvas'>
+                <UnifiedButton
+                  type='button'
+                  size='icon'
+                  variant='outline'
+                  title='De-canvas'
+                  onClick={handleDeCanvas}
+                  disabled={!workingSlot}
+                  aria-label='De-canvas'
+                >
+                  <ImageOff className='size-4' />
+                </UnifiedButton>
+              </Tooltip>
+              <Tooltip content='New Card'>
+                <UnifiedButton
+                  type='button'
+                  size='icon'
+                  variant='outline'
+                  title='New Card'
+                  onClick={handleCreateCardFromLoadedImage}
+                  disabled={!projectId}
+                  aria-label='New Card'
+                >
+                  <Plus className='size-4' />
+                </UnifiedButton>
+              </Tooltip>
+              <Tooltip content='New folder'>
+                <UnifiedButton
+                  type='button'
+                  size='icon'
+                  variant='outline'
+                  title='New folder'
+                  onClick={handleCreateFolder}
+                  disabled={!projectId || createFolderMutation.isPending}
+                  aria-label='New folder'
+                >
+                  <FolderPlus className='size-4' />
+                </UnifiedButton>
+              </Tooltip>
+              {selectedSlot ? (
+                <Tooltip content='Edit card'>
+                  <UnifiedButton
+                    type='button'
+                    size='icon'
+                    variant='outline'
+                    title='Edit card'
+                    onClick={() => setSlotInlineEditOpen(true)}
+                    aria-label='Edit card'
+                  >
+                    <Settings2 className='size-4' />
+                  </UnifiedButton>
+                </Tooltip>
+              ) : null}
+            </div>
           </div>
 
           <div className='h-full min-h-0 min-w-0 overflow-hidden'>

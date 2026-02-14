@@ -1,6 +1,7 @@
 'use client';
 
 import { api } from '@/shared/lib/api-client';
+import type { QueueHealthStatus } from '@/shared/lib/queue/types';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
 
@@ -117,4 +118,21 @@ export async function getJobStatusDetail(jobId: string): Promise<{ status: unkno
  */
 export async function cancelJob(jobId: string): Promise<{ success: boolean }> {
   return api.post<{ success: boolean }>(`/api/jobs/${jobId}/cancel`);
+}
+
+export type TraderaQueueHealthResponse = {
+  ok: boolean;
+  mode: 'bullmq' | 'inline';
+  redisAvailable: boolean;
+  timestamp: string;
+  queues: {
+    listings: QueueHealthStatus | null;
+    relistScheduler: QueueHealthStatus | null;
+  };
+};
+
+export async function getTraderaQueueHealth(): Promise<TraderaQueueHealthResponse> {
+  return api.get<TraderaQueueHealthResponse>(
+    '/api/integrations/queues/tradera'
+  );
 }

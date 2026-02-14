@@ -15,6 +15,10 @@ import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
+const CATEGORY_MAPPING_MARKETPLACE_SLUGS = new Set([
+  ...BASE_MARKETPLACE_SLUGS,
+  'tradera',
+]);
 
 type SelectedMarketplaceConnection = {
   id: string;
@@ -27,7 +31,7 @@ type CategoryMapperPageContextType = {
   loading: boolean;
   selectedConnectionId: string | null;
   selectedConnection: SelectedMarketplaceConnection | null;
-  isBaseConnection: boolean;
+  isSupportedConnection: boolean;
   setSelectedConnectionId: (connectionId: string) => void;
 };
 
@@ -68,7 +72,7 @@ export function CategoryMapperPageProvider({
   const integrations = useMemo<IntegrationWithConnections[]>((): IntegrationWithConnections[] => {
     const data = (integrationsQuery.data ?? []) as any[];
     return data.filter((integration: IntegrationWithConnections) =>
-      BASE_MARKETPLACE_SLUGS.has(integration.slug.toLowerCase())
+      CATEGORY_MAPPING_MARKETPLACE_SLUGS.has(integration.slug.toLowerCase())
     );
   }, [integrationsQuery.data]);
 
@@ -97,10 +101,10 @@ export function CategoryMapperPageProvider({
     return allConnections.find((connection: { id: string }) => connection.id === selectedConnectionId) ?? null;
   }, [integrations, selectedConnectionId]);
 
-  const isBaseConnection = useMemo((): boolean => {
+  const isSupportedConnection = useMemo((): boolean => {
     if (!selectedConnection) return false;
     const slug = selectedConnection.integration.slug.toLowerCase();
-    return BASE_MARKETPLACE_SLUGS.has(slug);
+    return CATEGORY_MAPPING_MARKETPLACE_SLUGS.has(slug);
   }, [selectedConnection]);
 
   const setSelectedConnectionId = useCallback((connectionId: string): void => {
@@ -113,7 +117,7 @@ export function CategoryMapperPageProvider({
       loading: integrationsQuery.isLoading,
       selectedConnectionId,
       selectedConnection,
-      isBaseConnection,
+      isSupportedConnection,
       setSelectedConnectionId,
     }),
     [
@@ -121,7 +125,7 @@ export function CategoryMapperPageProvider({
       integrationsQuery.isLoading,
       selectedConnectionId,
       selectedConnection,
-      isBaseConnection,
+      isSupportedConnection,
       setSelectedConnectionId,
     ]
   );

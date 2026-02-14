@@ -103,6 +103,8 @@ describe('ProductListHeader Component', () => {
     onExportSettingsClick: vi.fn(),
     integrationBadgeIds: new Set(),
     integrationBadgeStatuses: new Map(),
+    traderaBadgeIds: new Set(),
+    traderaBadgeStatuses: new Map(),
     queuedProductIds: new Set(),
     isCreateOpen: false,
     initialSku: '',
@@ -128,6 +130,9 @@ describe('ProductListHeader Component', () => {
     massListProductIds: [],
     onCloseMassList: vi.fn(),
     onMassListSuccess: vi.fn(),
+    showIntegrationModal: false,
+    onCloseIntegrationModal: vi.fn(),
+    onSelectIntegrationFromModal: vi.fn(),
   };
 
   const renderWithContext = (ui: React.ReactNode, contextValue = mockContextValue) => {

@@ -14,6 +14,10 @@ interface CurrencyDoc extends Document {
   code: string;
   name: string;
   symbol: string | null;
+  description?: string | null;
+  exchangeRate?: number;
+  isDefault?: boolean;
+  enabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,8 +30,12 @@ const toCurrencyDomain = (doc: CurrencyDoc): CurrencyRecord => ({
   code: doc.code,
   name: doc.name,
   symbol: doc.symbol,
+  description: doc.description ?? undefined,
+  exchangeRate: doc.exchangeRate ?? undefined,
+  isDefault: doc.isDefault ?? false,
+  enabled: doc.enabled ?? true,
   createdAt: doc.createdAt.toISOString(),
-  updatedAt: doc.updatedAt.toISOString(),
+  updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
 });
 
 export const mongoCurrencyRepository: CurrencyRepository = {
@@ -58,6 +66,8 @@ export const mongoCurrencyRepository: CurrencyRepository = {
       code: data.code,
       name: data.name,
       symbol: data.symbol ?? null,
+      isDefault: false,
+      enabled: true,
       createdAt: now,
       updatedAt: now,
     };
@@ -127,6 +137,8 @@ export const mongoCurrencyRepository: CurrencyRepository = {
             code: currency.code,
             name: currency.name,
             symbol: currency.symbol ?? null,
+            isDefault: false,
+            enabled: true,
             createdAt: now,
           },
           $set: { updatedAt: now },

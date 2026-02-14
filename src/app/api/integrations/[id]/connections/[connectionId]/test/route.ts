@@ -17,8 +17,12 @@ import type {
   Browser,
   BrowserContext,
   Page,
-  BrowserContextOptions
+  BrowserContextOptions,
 } from 'playwright';
+
+type PersistedStorageState = NonNullable<
+  Exclude<BrowserContextOptions['storageState'], string>
+>;
 
 type TestLogEntry = {
   step: string;
@@ -27,14 +31,43 @@ type TestLogEntry = {
   detail: string;
 };
 
+type TraderaConnectionTestRequest = {
+  mode?: 'auto' | 'manual';
+  manualTimeoutMs?: number;
+};
+
+const DEFAULT_MANUAL_LOGIN_TIMEOUT_MS = 240000;
+const MAX_MANUAL_LOGIN_TIMEOUT_MS = 600000;
+
 /**
  * POST /api/integrations/[id]/connections/[connectionId]/test
  * Performs a lightweight credential check for the integration connection.
  */
-async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
+async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
   let integrationId: string | null = null;
   let integrationConnectionId: string | null = null;
   const steps: TestLogEntry[] = [];
+
+  let requestBody: TraderaConnectionTestRequest = {};
+  try {
+    const parsed = (await req.json()) as unknown;
+    if (parsed && typeof parsed === 'object') {
+      requestBody = parsed as TraderaConnectionTestRequest;
+    }
+  } catch {
+    requestBody = {};
+  }
+
+  const mode = requestBody.mode === 'manual' ? 'manual' : 'auto';
+  const manualMode = mode === 'manual';
+  const rawManualTimeout = requestBody.manualTimeoutMs;
+  const manualLoginTimeoutMs =
+    typeof rawManualTimeout === 'number' && Number.isFinite(rawManualTimeout)
+      ? Math.max(
+        30_000,
+        Math.min(MAX_MANUAL_LOGIN_TIMEOUT_MS, Math.floor(rawManualTimeout))
+      )
+      : DEFAULT_MANUAL_LOGIN_TIMEOUT_MS;
   
   const pushStep = (
     step: string,
@@ -98,16 +131,30 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     );
   }
 
+  if (manualMode) {
+    pushStep(
+      'Manual mode',
+      'ok',
+      `Manual login enabled (timeout ${manualLoginTimeoutMs}ms).`
+    );
+  }
+
   // Decrypt to ensure credentials are readable with the configured key.
   pushStep(
     'Decrypting credentials',
     'pending',
     'Validating encryption key and decrypting password'
   );
-  const decryptedPassword = decryptSecret(connection.password);
-  pushStep('Decrypting credentials', 'ok', 'Password decrypted successfully');
+  const decryptedPassword = manualMode ? '' : decryptSecret(connection.password);
+  pushStep(
+    'Decrypting credentials',
+    'ok',
+    manualMode
+      ? 'Skipped in manual mode.'
+      : 'Password decrypted successfully'
+  );
 
-  const storedState = null;
+  let storedState: PersistedStorageState | null = null;
 
   if (connection.playwrightStorageState) {
     pushStep(
@@ -117,10 +164,19 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     );
     try {
       const raw = decryptSecret(connection.playwrightStorageState);
-      const parsed = JSON.parse(raw) as { cookies?: unknown[]; origins?: unknown[] };
+      const parsed = JSON.parse(raw) as unknown;
 
       // minimal validation so TS + runtime both stay sane
-      if (Array.isArray(parsed.cookies) && Array.isArray(parsed.origins)) {
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        Array.isArray((parsed as { cookies?: unknown[] }).cookies) &&
+        Array.isArray((parsed as { origins?: unknown[] }).origins)
+      ) {
+        storedState = {
+          cookies: (parsed as PersistedStorageState).cookies,
+          origins: (parsed as PersistedStorageState).origins,
+        };
         pushStep('Loading session', 'ok', 'Stored session loaded');
       } else {
         pushStep(
@@ -140,7 +196,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
     }
   }
 
-  const headless = connection.playwrightHeadless ?? true;
+  const configuredHeadless = connection.playwrightHeadless ?? true;
+  const headless = manualMode ? false : configuredHeadless;
   const slowMo = connection.playwrightSlowMo ?? 0;
   const defaultTimeout = connection.playwrightTimeout ?? 15000;
   const navigationTimeout = connection.playwrightNavigationTimeout ?? 30000;
@@ -558,7 +615,46 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       return null;
     };
 
-    if (!sessionReused) {
+    const useManualLogin = manualMode && !sessionReused;
+
+    if (useManualLogin) {
+      pushStep(
+        'Manual login',
+        'pending',
+        'Complete login in the opened browser window. Waiting for logged-in state.'
+      );
+      try {
+        if (!page) throw internalError('Page not found');
+        await safeGoto(
+          loginUrl,
+          {
+            waitUntil: 'domcontentloaded',
+            timeout: 30000
+          },
+          'Manual login'
+        );
+        await safeWaitForLoadState(
+          'networkidle',
+          { timeout: 15000 },
+          'Manual login'
+        ).catch(() => undefined);
+        await safeWaitFor(
+          page.locator(successSelector).first(),
+          { state: 'visible', timeout: manualLoginTimeoutMs },
+          'Manual login success'
+        );
+        pushStep('Manual login', 'ok', 'Logged-in state detected.');
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        return await failWithDebug(
+          'Manual login',
+          `Manual login timed out or failed after ${manualLoginTimeoutMs}ms: ${message}`
+        );
+      }
+    }
+
+    if (!sessionReused && !useManualLogin) {
       pushStep('Locating login form', 'pending', 'Waiting for sign-in form');
       try {
         await safeWaitForSelector(
@@ -713,7 +809,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
       );
     }
 
-    if (!sessionReused) {
+    if (!sessionReused && !useManualLogin) {
       pushStep('Submitting login', 'pending', 'Attempting to submit form');
       if (!page) throw internalError('Page not found');
       const stayLoggedIn = page
@@ -900,7 +996,13 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
         );
       }
     } else {
-      pushStep('Verifying session', 'ok', 'Session restored from storage');
+      pushStep(
+        'Verifying session',
+        'ok',
+        useManualLogin
+          ? 'Manual login completed and session is active'
+          : 'Session restored from storage'
+      );
     }
 
     pushStep(

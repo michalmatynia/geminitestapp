@@ -108,16 +108,10 @@ describe('Product Studio API', () => {
     });
   });
 
-  it('PUT /api/products/[id]/studio saves sequencing settings', async () => {
+  it('PUT /api/products/[id]/studio ignores legacy sequencing payload', async () => {
     vi.mocked(setProductStudioConfig).mockResolvedValue({
       projectId: 'studio-a',
       sourceSlotByImageIndex: {},
-      sequencing: {
-        enabled: true,
-        cropCenterBeforeGeneration: true,
-        upscaleOnAccept: false,
-        upscaleScale: 2,
-      },
       updatedAt: '2026-02-13T10:00:00.000Z',
     });
 
@@ -137,14 +131,7 @@ describe('Product Studio API', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(setProductStudioConfig).toHaveBeenCalledWith('prod-1', {
-      sequencing: {
-        enabled: true,
-        cropCenterBeforeGeneration: true,
-        upscaleOnAccept: false,
-        upscaleScale: 2,
-      },
-    });
+    expect(setProductStudioConfig).toHaveBeenCalledWith('prod-1', {});
   });
 
   it('POST /api/products/[id]/studio/send forwards request', async () => {
@@ -162,7 +149,7 @@ describe('Product Studio API', () => {
       runId: 'run-1',
       runStatus: 'queued',
       expectedOutputs: 1,
-      dispatchMode: 'queue',
+      dispatchMode: 'queued',
     });
 
     const response = await POST_SEND(
@@ -187,6 +174,12 @@ describe('Product Studio API', () => {
         projectId: 'studio-a',
         sourceSlotByImageIndex: { '1': 'slot-source' },
         updatedAt: '2026-02-13T10:00:00.000Z',
+      },
+      sequencing: {
+        enabled: true,
+        cropCenterBeforeGeneration: true,
+        upscaleOnAccept: true,
+        upscaleScale: 2,
       },
       projectId: 'studio-a',
       sourceSlotId: 'slot-source',

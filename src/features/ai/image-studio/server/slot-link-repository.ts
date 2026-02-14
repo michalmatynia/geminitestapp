@@ -143,3 +143,11 @@ export async function deleteImageStudioSlotLinksForSlot(slotId: string): Promise
   });
   return result.deletedCount ?? 0;
 }
+
+export async function deleteImageStudioSlotLinksForProject(projectId: string): Promise<number> {
+  await ensureIndexesOnce();
+  const db = await getMongoDb();
+  const collection = db.collection<ImageStudioSlotLinkDocument>(COLLECTION);
+  const result = await collection.deleteMany({ projectId });
+  return result.deletedCount ?? 0;
+}

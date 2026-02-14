@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className={cn('font-sans')}>
+      <body className={cn('max-w-full overflow-x-hidden font-sans')}>
         <ToastProvider>
           <QueryProvider>
             <SettingsStoreProvider mode='lite'>

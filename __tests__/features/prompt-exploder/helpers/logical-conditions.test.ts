@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createLogicalCondition,
-  LOGICAL_OPERATOR_OPTIONS,
-  LOGICAL_COMPARATOR_OPTIONS,
-  LOGICAL_JOIN_OPTIONS,
+  PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS,
+  PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS,
+  PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS,
   isLogicalComparator,
   isLogicalJoin,
   normalizeLogicalOperatorText,
@@ -42,17 +42,17 @@ describe('createLogicalCondition', () => {
 });
 
 describe('option constants', () => {
-  it('LOGICAL_OPERATOR_OPTIONS has 5 entries', () => {
-    expect(LOGICAL_OPERATOR_OPTIONS).toHaveLength(5);
-    expect(LOGICAL_OPERATOR_OPTIONS[0]!.value).toBe('none');
+  it('PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS has 5 entries', () => {
+    expect(PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS).toHaveLength(5);
+    expect(PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS[0]!.value).toBe('none');
   });
 
-  it('LOGICAL_COMPARATOR_OPTIONS has 9 entries', () => {
-    expect(LOGICAL_COMPARATOR_OPTIONS).toHaveLength(9);
+  it('PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS has 9 entries', () => {
+    expect(PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS).toHaveLength(9);
   });
 
-  it('LOGICAL_JOIN_OPTIONS has 2 entries', () => {
-    expect(LOGICAL_JOIN_OPTIONS).toHaveLength(2);
+  it('PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS has 2 entries', () => {
+    expect(PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS).toHaveLength(2);
   });
 });
 

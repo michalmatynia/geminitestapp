@@ -21,13 +21,28 @@ import { getSectionDefinition } from '../section-registry';
 import { SECTION_TEMPLATES } from '../section-templates';
 
 
-import type { PageStatus, Slug, PageSlugLink } from '../../../types';
+import type { PageStatus, Slug } from '../../../types';
 import type { SectionInstance, PageZone } from '../../../types/page-builder';
 
 const STATUS_OPTIONS: { label: string; value: PageStatus }[] = [
   { label: 'Draft', value: 'draft' },
   { label: 'Published', value: 'published' },
 ];
+
+const normalizePageSlugValues = (slugs: unknown): string[] => {
+  if (!Array.isArray(slugs)) return [];
+  return slugs
+    .map((entry: unknown): string => {
+      if (typeof entry === 'string') return entry;
+      if (!entry || typeof entry !== 'object') return '';
+      const candidate = (entry as { slug?: unknown }).slug;
+      if (typeof candidate === 'string') return candidate;
+      if (!candidate || typeof candidate !== 'object') return '';
+      const nested = (candidate as { slug?: unknown }).slug;
+      return typeof nested === 'string' ? nested : '';
+    })
+    .filter((value: string) => value.trim().length > 0);
+};
 
 function PageSettingsTab(): React.ReactNode {
   const { state, dispatch } = usePageBuilder();
@@ -112,7 +127,7 @@ function PageSettingsTab(): React.ReactNode {
 
   const selectedSlugIds = useMemo((): string[] => {
     if (!page) return [];
-    const pageSlugValues = (page.slugs ?? []).map((s: PageSlugLink) => s.slug.slug);
+    const pageSlugValues = normalizePageSlugValues(page.slugs);
     return pageSlugValues
       .map((value: string) => allSlugByValue.get(value)?.id)
       .filter((value: string | undefined): value is string => Boolean(value));

@@ -84,6 +84,8 @@ export interface ProductListContextType {
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;
   integrationBadgeStatuses: Map<string, string>;
+  traderaBadgeIds: Set<string>;
+  traderaBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
 
   // Modal State
@@ -186,6 +188,8 @@ export interface ProductListActionsContextType {
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;
   integrationBadgeStatuses: Map<string, string>;
+  traderaBadgeIds: Set<string>;
+  traderaBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
 }
 
@@ -374,6 +378,8 @@ export function ProductListProvider({
       onExportSettingsClick: value.onExportSettingsClick,
       integrationBadgeIds: value.integrationBadgeIds,
       integrationBadgeStatuses: value.integrationBadgeStatuses,
+      traderaBadgeIds: value.traderaBadgeIds,
+      traderaBadgeStatuses: value.traderaBadgeStatuses,
       queuedProductIds: value.queuedProductIds,
     }),
     [value]

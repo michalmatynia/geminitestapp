@@ -32,7 +32,12 @@ const connectionSchema = z.object({
   playwrightProxyPassword: z.string().optional(),
   playwrightEmulateDevice: z.boolean().optional(),
   playwrightDeviceName: z.string().optional(),
-  allegroUseSandbox: z.boolean().optional()
+  playwrightPersonaId: z.string().trim().nullable().optional(),
+  allegroUseSandbox: z.boolean().optional(),
+  traderaDefaultTemplateId: z.string().trim().nullable().optional(),
+  traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
+  traderaAutoRelistEnabled: z.boolean().optional(),
+  traderaAutoRelistLeadMinutes: z.number().int().min(0).max(10080).optional(),
 });
 
 /**
@@ -118,8 +123,25 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     ...(typeof data.playwrightDeviceName === 'string'
       ? { playwrightDeviceName: data.playwrightDeviceName }
       : {}),
+    ...(typeof data.playwrightPersonaId === 'string' ||
+    data.playwrightPersonaId === null
+      ? { playwrightPersonaId: data.playwrightPersonaId ?? null }
+      : {}),
     ...(typeof data.allegroUseSandbox === 'boolean'
       ? { allegroUseSandbox: data.allegroUseSandbox }
+      : {}),
+    ...(typeof data.traderaDefaultTemplateId === 'string' ||
+    data.traderaDefaultTemplateId === null
+      ? { traderaDefaultTemplateId: data.traderaDefaultTemplateId ?? null }
+      : {}),
+    ...(typeof data.traderaDefaultDurationHours === 'number'
+      ? { traderaDefaultDurationHours: data.traderaDefaultDurationHours }
+      : {}),
+    ...(typeof data.traderaAutoRelistEnabled === 'boolean'
+      ? { traderaAutoRelistEnabled: data.traderaAutoRelistEnabled }
+      : {}),
+    ...(typeof data.traderaAutoRelistLeadMinutes === 'number'
+      ? { traderaAutoRelistLeadMinutes: data.traderaAutoRelistLeadMinutes }
       : {})
   });
 
@@ -152,7 +174,12 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
     playwrightProxyUsername: connection.playwrightProxyUsername,
     playwrightProxyHasPassword: Boolean(connection.playwrightProxyPassword),
     playwrightEmulateDevice: connection.playwrightEmulateDevice,
-    playwrightDeviceName: connection.playwrightDeviceName
+    playwrightDeviceName: connection.playwrightDeviceName,
+    playwrightPersonaId: connection.playwrightPersonaId ?? null,
+    traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
+    traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
+    traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,
+    traderaAutoRelistLeadMinutes: connection.traderaAutoRelistLeadMinutes ?? 180
   });
 }
 

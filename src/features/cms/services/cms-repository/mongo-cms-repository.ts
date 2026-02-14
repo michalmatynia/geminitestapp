@@ -58,6 +58,8 @@ interface PageSlugDocument {
   assignedAt: Date;
 }
 
+type PageComponentDto = NonNullable<Page['components']>[number];
+
 // Helper to remove undefined keys for exactOptionalPropertyTypes compliance
 function removeUndefined<T extends object>(obj: T): T {
   const newObj = { ...obj };
@@ -90,6 +92,61 @@ function normalizeShowMenu(value: unknown): boolean {
   return true;
 }
 
+function normalizePageStatus(value: string | null | undefined): Page['status'] {
+  if (value === 'draft' || value === 'published' || value === 'scheduled') return value;
+  return 'draft';
+}
+
+function normalizePageComponents(components: PageComponent[] | undefined): Page['components'] {
+  return (components ?? []).map((component: PageComponent, index: number): PageComponentDto => {
+    const raw = component as PageComponent & {
+      id?: string;
+      createdAt?: string;
+      updatedAt?: string | null;
+      order?: number;
+      pageId?: string;
+    };
+    return {
+      ...raw,
+      type: raw.type,
+      order: typeof raw.order === 'number' ? raw.order : index,
+      content: raw.content ?? {},
+    };
+  });
+}
+
+function mapPageDocumentToPage(doc: PageDocument, slugs: SlugDocument[]): Page {
+  const publishedAt = doc.publishedAt ? doc.publishedAt.toISOString() : undefined;
+  return {
+    id: doc.id,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+    name: doc.name,
+    status: normalizePageStatus(doc.status),
+    ...(publishedAt ? { publishedAt } : {}),
+    themeId: doc.themeId ?? null,
+    showMenu: normalizeShowMenu(doc.showMenu),
+    components: normalizePageComponents(doc.components),
+    slugs: slugs.map((slugDoc: SlugDocument) => slugDoc.slug),
+    ...(doc.seoTitle ? { seoTitle: doc.seoTitle } : {}),
+    ...(doc.seoDescription ? { seoDescription: doc.seoDescription } : {}),
+    ...(doc.seoOgImage ? { seoOgImage: doc.seoOgImage } : {}),
+    ...(doc.seoCanonical ? { seoCanonical: doc.seoCanonical } : {}),
+    ...(doc.robotsMeta ? { robotsMeta: doc.robotsMeta } : {}),
+  };
+}
+
+function mapSlugDocumentToSlug(doc: SlugDocument): Slug {
+  return {
+    id: doc.id,
+    slug: doc.slug,
+    pageId: null,
+    isDefault: doc.isDefault,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+  };
+}
+
 export const mongoCmsRepository: CmsRepository = {
   // Pages
   async getPages(): Promise<Page[]> {
@@ -101,21 +158,7 @@ export const mongoCmsRepository: CmsRepository = {
       const slugLinks = await db.collection<PageSlugDocument>('cms_page_slugs').find({ pageId }).toArray();
       const slugIds = slugLinks.map((link: PageSlugDocument) => link.slugId);
       const slugs = await db.collection<SlugDocument>(slugsCollection).find({ id: { $in: slugIds } }).toArray();
-
-      return {
-        id: pageId,
-        name: doc.name,
-        status: doc.status || 'draft',
-        publishedAt: doc.publishedAt?.toISOString(),
-        seoTitle: doc.seoTitle ?? undefined,
-        seoDescription: doc.seoDescription ?? undefined,
-        seoOgImage: doc.seoOgImage ?? undefined,
-        seoCanonical: doc.seoCanonical ?? undefined,
-        robotsMeta: doc.robotsMeta ?? 'index,follow',
-        showMenu: normalizeShowMenu(doc.showMenu),
-        components: doc.components || [],
-        slugs: slugs.map((s: SlugDocument) => ({ slug: { slug: s.slug } })),
-      } as Page;
+      return mapPageDocumentToPage(doc, slugs);
     }));
   },
 
@@ -128,21 +171,7 @@ export const mongoCmsRepository: CmsRepository = {
     const slugLinks = await db.collection<PageSlugDocument>('cms_page_slugs').find({ pageId }).toArray();
     const slugIds = slugLinks.map((link: PageSlugDocument) => link.slugId);
     const slugs = await db.collection<SlugDocument>(slugsCollection).find({ id: { $in: slugIds } }).toArray();
-
-    return {
-      id: pageId,
-      name: doc.name,
-      status: doc.status || 'draft',
-      publishedAt: doc.publishedAt?.toISOString(),
-      seoTitle: doc.seoTitle ?? undefined,
-      seoDescription: doc.seoDescription ?? undefined,
-      seoOgImage: doc.seoOgImage ?? undefined,
-      seoCanonical: doc.seoCanonical ?? undefined,
-      robotsMeta: doc.robotsMeta ?? 'index,follow',
-      showMenu: normalizeShowMenu(doc.showMenu),
-      components: doc.components || [],
-      slugs: slugs.map((s: SlugDocument) => ({ slug: { slug: s.slug } })),
-    } as Page;
+    return mapPageDocumentToPage(doc, slugs);
   },
 
   async getPageBySlug(slugValue: string): Promise<Page | null> {
@@ -168,7 +197,7 @@ export const mongoCmsRepository: CmsRepository = {
       updatedAt: new Date(),
     };
     await db.collection<PageDocument>(pagesCollection).insertOne(doc);
-    return { id, name: doc.name, status: 'draft', showMenu: true, components: [], themeId: doc.themeId } as Page;
+    return mapPageDocumentToPage(doc, []);
   },
 
   async updatePage(id: string, data: PageUpdateData): Promise<Page | null> {
@@ -205,12 +234,7 @@ export const mongoCmsRepository: CmsRepository = {
     
     // Also cleanup relationships
     await db.collection('cms_page_slugs').deleteMany({ pageId: id });
-
-    return {
-      id: deleted.id,
-      name: deleted.name,
-      components: deleted.components || [],
-    } as Page;
+    return mapPageDocumentToPage(deleted, []);
   },
 
   async replacePageSlugs(pageId: string, slugIds: string[]): Promise<void> {
@@ -234,36 +258,21 @@ export const mongoCmsRepository: CmsRepository = {
   async getSlugs(): Promise<Slug[]> {
     const db = await getMongoDb();
     const docs = await db.collection<SlugDocument>(slugsCollection).find().sort({ createdAt: -1 }).toArray();
-    return docs.map((doc: SlugDocument) => ({
-      id: doc.id,
-      slug: doc.slug,
-      isDefault: doc.isDefault,
-      createdAt: doc.createdAt.toISOString(),
-    })) as Slug[];
+    return docs.map((doc: SlugDocument): Slug => mapSlugDocumentToSlug(doc));
   },
 
   async getSlugById(id: string): Promise<Slug | null> {
     const db = await getMongoDb();
     const doc = await db.collection<SlugDocument>(slugsCollection).findOne(buildIdFilter<SlugDocument>(id));
     if (!doc) return null;
-    return {
-      id: doc.id,
-      slug: doc.slug,
-      isDefault: doc.isDefault,
-      createdAt: doc.createdAt.toISOString(),
-    } as Slug;
+    return mapSlugDocumentToSlug(doc);
   },
 
   async getSlugByValue(slugValue: string): Promise<Slug | null> {
     const db = await getMongoDb();
     const doc = await db.collection<SlugDocument>(slugsCollection).findOne({ slug: slugValue });
     if (!doc) return null;
-    return {
-      id: doc.id,
-      slug: doc.slug,
-      isDefault: doc.isDefault,
-      createdAt: doc.createdAt.toISOString(),
-    } as Slug;
+    return mapSlugDocumentToSlug(doc);
   },
 
   async createSlug(data: { slug: string; isDefault?: boolean | undefined }): Promise<Slug> {
@@ -277,12 +286,7 @@ export const mongoCmsRepository: CmsRepository = {
       updatedAt: new Date(),
     };
     await db.collection<SlugDocument>(slugsCollection).insertOne(doc);
-    return {
-      id,
-      slug: doc.slug,
-      isDefault: doc.isDefault,
-      createdAt: doc.createdAt.toISOString(),
-    } as Slug;
+    return mapSlugDocumentToSlug(doc);
   },
 
   async updateSlug(id: string, data: { slug?: string | undefined; isDefault?: boolean | undefined }): Promise<Slug | null> {
@@ -299,13 +303,7 @@ export const mongoCmsRepository: CmsRepository = {
       { returnDocument: 'after' }
     );
     if (!result) return null;
-    const doc = result;
-    return {
-      id: doc.id,
-      slug: doc.slug,
-      isDefault: doc.isDefault,
-      createdAt: doc.createdAt.toISOString(),
-    } as Slug;
+    return mapSlugDocumentToSlug(result);
   },
 
   async deleteSlug(id: string): Promise<Slug | null> {
@@ -316,13 +314,7 @@ export const mongoCmsRepository: CmsRepository = {
     
     // Cleanup relationships
     await db.collection('cms_page_slugs').deleteMany({ slugId: id });
-
-    return {
-      id: deleted.id,
-      slug: deleted.slug,
-      isDefault: deleted.isDefault,
-      createdAt: deleted.createdAt.toISOString(),
-    } as Slug;
+    return mapSlugDocumentToSlug(deleted);
   },
 
   // Relationships

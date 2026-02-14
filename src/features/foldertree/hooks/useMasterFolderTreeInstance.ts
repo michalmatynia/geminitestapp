@@ -62,6 +62,23 @@ const areNodeIdListsEqual = (left: MasterTreeId[], right: MasterTreeId[]): boole
   return true;
 };
 
+const getMasterTreeStructureFingerprint = (
+  nodes: ReturnType<typeof useConfiguredMasterFolderTree>['nodes']
+): string =>
+  nodes
+    .map((node) =>
+      [
+        node.id,
+        node.parentId ?? '',
+        node.type,
+        node.kind,
+        node.name,
+        node.path,
+        String(node.sortOrder ?? ''),
+      ].join('\u0001')
+    )
+    .join('\u0002');
+
 export function useMasterFolderTreeInstance({
   instance,
   ...controllerOptions
@@ -119,6 +136,8 @@ export function useMasterFolderTreeInstance({
   );
   const previousApplyingRef = useRef<boolean>(false);
   const lastNotifiedErrorAtRef = useRef<string | null>(null);
+  const lastStableTreeFingerprintRef = useRef<string>('');
+  const applyingStartTreeFingerprintRef = useRef<string | null>(null);
 
   useEffect(() => {
     uiStateRef.current = parsedUiState;
@@ -250,16 +269,36 @@ export function useMasterFolderTreeInstance({
     const wasApplying = previousApplyingRef.current;
     const isApplying = controller.isApplying;
     const lastError = controller.lastError;
+    const currentTreeFingerprint = getMasterTreeStructureFingerprint(controller.nodes);
+
+    if (!isApplying) {
+      if (!lastStableTreeFingerprintRef.current) {
+        lastStableTreeFingerprintRef.current = currentTreeFingerprint;
+      }
+    } else if (!wasApplying) {
+      applyingStartTreeFingerprintRef.current =
+        lastStableTreeFingerprintRef.current || currentTreeFingerprint;
+    }
 
     if (lastError && lastError.at !== lastNotifiedErrorAtRef.current) {
       lastNotifiedErrorAtRef.current = lastError.at;
       toast(lastError.message || 'Failed to persist folder tree changes.', { variant: 'error' });
     } else if (wasApplying && !isApplying && !lastError) {
-      toast(masterTreePersistSuccessMessageByInstance[instance], { variant: 'success' });
+      const applyingStartTreeFingerprint = applyingStartTreeFingerprintRef.current;
+      if (
+        applyingStartTreeFingerprint &&
+        applyingStartTreeFingerprint !== currentTreeFingerprint
+      ) {
+        toast(masterTreePersistSuccessMessageByInstance[instance], { variant: 'success' });
+      }
     }
 
+    if (!isApplying) {
+      lastStableTreeFingerprintRef.current = currentTreeFingerprint;
+      applyingStartTreeFingerprintRef.current = null;
+    }
     previousApplyingRef.current = isApplying;
-  }, [controller.isApplying, controller.lastError, instance, toast]);
+  }, [controller.isApplying, controller.lastError, controller.nodes, instance, toast]);
 
   return {
     profile,

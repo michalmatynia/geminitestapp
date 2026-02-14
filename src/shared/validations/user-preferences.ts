@@ -32,6 +32,7 @@ export const userPreferencesUpdateSchema = z.object({
     .optional()
     .nullable(),
   aiPathsActivePathId: nullableIdSchema,
+  imageStudioLastProjectId: nullableIdSchema,
   adminMenuCollapsed: z.boolean().optional().nullable(),
   adminMenuFavorites: stringArraySchema.optional().nullable(),
   adminMenuSectionColors: z.record(z.string(), z.string()).optional().nullable(),
@@ -58,6 +59,7 @@ export const userPreferencesResponseSchema = z
     productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
     productListDraftIconColor: z.string().regex(USER_PREFERENCES_HEX_COLOR_PATTERN).optional().nullable(),
     aiPathsActivePathId: z.string().optional().nullable(),
+    imageStudioLastProjectId: z.string().optional().nullable(),
     adminMenuCollapsed: z.boolean().optional().nullable(),
     adminMenuFavorites: z.array(z.string()).optional(),
     adminMenuSectionColors: z.record(z.string(), z.string()).optional(),
@@ -122,6 +124,9 @@ export const normalizeUserPreferencesUpdatePayload = (
   }
   if (payload.aiPathsActivePathId !== undefined) {
     normalized.aiPathsActivePathId = payload.aiPathsActivePathId;
+  }
+  if (payload.imageStudioLastProjectId !== undefined) {
+    normalized.imageStudioLastProjectId = payload.imageStudioLastProjectId;
   }
   if (payload.adminMenuCollapsed !== undefined) {
     normalized.adminMenuCollapsed = payload.adminMenuCollapsed;

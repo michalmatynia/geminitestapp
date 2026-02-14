@@ -45,7 +45,7 @@ export function MarketplaceSelector(): React.JSX.Element {
         <h2 className='mb-4 text-sm font-semibold text-gray-300'>Connections</h2>
         <EmptyState
           title='No connections found'
-          description='Configure a Base.com connection in Integrations first.'
+          description='Configure a marketplace connection in Integrations first.'
           className='p-6'
           action={
             <Link href='/admin/integrations' className='text-blue-400 hover:underline text-sm'>

@@ -259,6 +259,8 @@ export const QUERY_KEYS = {
   jobs: {
     all: ['jobs'] as const,
     integrations: () => [...QUERY_KEYS.jobs.all, 'integrations'] as const,
+    traderaQueueHealth: () =>
+      [...QUERY_KEYS.jobs.integrations(), 'tradera-queue-health'] as const,
     productAi: (scope: string) => [...QUERY_KEYS.jobs.all, 'product-ai', scope] as const,
     chatbot: (scope: string) => [...QUERY_KEYS.jobs.all, 'chatbot', scope] as const,
     realtime: () => [...QUERY_KEYS.jobs.all, 'realtime'] as const,

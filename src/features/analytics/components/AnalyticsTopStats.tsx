@@ -53,7 +53,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
       <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>Top Pages</h2>
         <MiniTable
-          rows={(summary?.topPages ?? []).map((item) => ({
+          rows={(summary?.topPages ?? []).map((item: { path: string; count: number }) => ({
             key: item.path,
             left: item.path,
             right: formatCount(item.count),
@@ -67,7 +67,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
           Top Referrers
         </h2>
         <MiniTable
-          rows={(summary?.topReferrers ?? []).map((item) => ({
+          rows={(summary?.topReferrers ?? []).map((item: { referrer: string; count: number }) => ({
             key: item.referrer,
             left: item.referrer,
             right: formatCount(item.count),
@@ -81,7 +81,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
           Top Languages
         </h2>
         <MiniTable
-          rows={(summary?.topLanguages ?? []).map((item) => ({
+          rows={(summary?.topLanguages ?? []).map((item: { language: string; count: number }) => ({
             key: item.language,
             left: item.language,
             right: formatCount(item.count),
@@ -95,7 +95,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
           Top Countries
         </h2>
         <MiniTable
-          rows={(summary?.topCountries ?? []).map((item) => ({
+          rows={(summary?.topCountries ?? []).map((item: { country: string; count: number }) => ({
             key: item.country,
             left: item.country,
             right: formatCount(item.count),

@@ -39,6 +39,7 @@ export function useIntegrationSelection(
   selectedConnectionId: string;
   selectedIntegration: IntegrationWithConnections | undefined;
   isBaseComIntegration: boolean;
+  isTraderaIntegration: boolean;
   setSelectedIntegrationId: Dispatch<SetStateAction<string>>;
   setSelectedConnectionId: Dispatch<SetStateAction<string>>;
 } {
@@ -137,6 +138,7 @@ export function useIntegrationSelection(
   const isBaseComIntegration = ['baselinker', 'base-com', 'base'].includes(
     selectedIntegration?.slug ?? ''
   );
+  const isTraderaIntegration = (selectedIntegration?.slug ?? '').toLowerCase() === 'tradera';
 
   return {
     integrations,
@@ -145,6 +147,7 @@ export function useIntegrationSelection(
     selectedConnectionId,
     selectedIntegration,
     isBaseComIntegration,
+    isTraderaIntegration,
     setSelectedIntegrationId,
     setSelectedConnectionId,
   };

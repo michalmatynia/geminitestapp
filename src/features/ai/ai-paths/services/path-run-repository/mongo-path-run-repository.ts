@@ -86,12 +86,12 @@ type RunDocument = {
   errorMessage?: string | null;
   retryCount?: number;
   maxAttempts?: number;
-  nextRetryAt?: Date | null;
-  deadLetteredAt?: Date | null;
-  createdAt: Date;
-  updatedAt?: Date;
-  startedAt?: Date | null;
-  finishedAt?: Date | null;
+  nextRetryAt?: Date | string | null;
+  deadLetteredAt?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
 };
 
 type NodeDocument = {
@@ -105,10 +105,10 @@ type NodeDocument = {
   inputs?: Record<string, unknown> | null;
   outputs?: Record<string, unknown> | null;
   errorMessage?: string | null;
-  createdAt: Date;
-  updatedAt?: Date;
-  startedAt?: Date | null;
-  finishedAt?: Date | null;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+  startedAt?: Date | string | null;
+  finishedAt?: Date | string | null;
 };
 
 type EventDocument = {
@@ -117,11 +117,48 @@ type EventDocument = {
   level: string;
   message: string;
   metadata?: Record<string, unknown> | null;
-  createdAt: Date;
+  createdAt: Date | string;
 };
 
-const toIsoString = (date: Date | null | undefined): string | null => {
-  return date ? date.toISOString() : null;
+const toDate = (value: unknown): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const rawDate = record['$date'];
+    if (typeof rawDate === 'string' || typeof rawDate === 'number') {
+      const parsed = new Date(rawDate);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+    if (rawDate && typeof rawDate === 'object') {
+      const numberLong = (rawDate as Record<string, unknown>)['$numberLong'];
+      if (typeof numberLong === 'string') {
+        const parsed = new Date(Number(numberLong));
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+    }
+    const toDateFn = (value as { toDate?: () => unknown }).toDate;
+    if (typeof toDateFn === 'function') {
+      const maybeDate = toDateFn();
+      return toDate(maybeDate);
+    }
+  }
+  return null;
+};
+
+const toIsoString = (date: unknown): string | null => {
+  const parsed = toDate(date);
+  return parsed ? parsed.toISOString() : null;
+};
+
+const toRequiredIsoString = (date: unknown): string => {
+  return toIsoString(date) ?? new Date(0).toISOString();
 };
 
 const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
@@ -146,7 +183,7 @@ const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   maxAttempts: doc.maxAttempts ?? 3,
   nextRetryAt: toIsoString(doc.nextRetryAt),
   deadLetteredAt: toIsoString(doc.deadLetteredAt),
-  createdAt: doc.createdAt.toISOString(),
+  createdAt: toRequiredIsoString(doc.createdAt),
   updatedAt: toIsoString(doc.updatedAt),
   startedAt: toIsoString(doc.startedAt),
   finishedAt: toIsoString(doc.finishedAt),
@@ -163,7 +200,7 @@ const toNodeRecord = (doc: NodeDocument): AiPathRunNodeRecord => ({
   inputs: (doc.inputs as AiPathRunNodeRecord['inputs']) ?? undefined,
   outputs: (doc.outputs as AiPathRunNodeRecord['outputs']) ?? undefined,
   errorMessage: doc.errorMessage ?? null,
-  createdAt: doc.createdAt.toISOString(),
+  createdAt: toRequiredIsoString(doc.createdAt),
   updatedAt: toIsoString(doc.updatedAt),
   startedAt: toIsoString(doc.startedAt),
   finishedAt: toIsoString(doc.finishedAt),
@@ -175,7 +212,7 @@ const toEventRecord = (doc: EventDocument): AiPathRunEventRecord => ({
   level: doc.level as AiPathRunEventRecord['level'],
   message: doc.message,
   metadata: doc.metadata ?? null,
-  createdAt: doc.createdAt.toISOString(),
+  createdAt: toRequiredIsoString(doc.createdAt),
 });
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -505,7 +542,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
         .limit(1)
         .next(),
     ]);
-    return { queuedCount, oldestQueuedAt: oldest?.createdAt ?? null };
+    return { queuedCount, oldestQueuedAt: toDate(oldest?.createdAt) };
   },
 
   async createRunNodes(runId: string, nodes: AiNode[]) {
@@ -541,6 +578,12 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       ...data,
       updatedAt: now,
     } as Record<string, unknown>;
+    if (updateData['startedAt'] && typeof updateData['startedAt'] === 'string') {
+      updateData['startedAt'] = new Date(updateData['startedAt']);
+    }
+    if (updateData['finishedAt'] && typeof updateData['finishedAt'] === 'string') {
+      updateData['finishedAt'] = new Date(updateData['finishedAt']);
+    }
     const result = await db
       .collection<NodeDocument>(NODES_COLLECTION)
       .findOneAndUpdate(

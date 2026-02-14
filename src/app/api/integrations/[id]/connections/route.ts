@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -14,7 +14,11 @@ const createConnectionSchema = z
   .object({
     name: z.string().trim().min(1),
     username: z.string().trim().min(1),
-    password: z.string().trim().min(1)
+    password: z.string().trim().min(1),
+    traderaDefaultTemplateId: z.string().trim().nullable().optional(),
+    traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
+    traderaAutoRelistEnabled: z.boolean().optional(),
+    traderaAutoRelistLeadMinutes: z.number().int().min(0).max(10080).optional(),
   })
   .strict();
 
@@ -68,7 +72,12 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
     playwrightProxyUsername: connection.playwrightProxyUsername,
     playwrightProxyHasPassword: Boolean(connection.playwrightProxyPassword),
     playwrightEmulateDevice: connection.playwrightEmulateDevice,
-    playwrightDeviceName: connection.playwrightDeviceName
+    playwrightDeviceName: connection.playwrightDeviceName,
+    playwrightPersonaId: connection.playwrightPersonaId ?? null,
+    traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? null,
+    traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
+    traderaAutoRelistEnabled: connection.traderaAutoRelistEnabled ?? true,
+    traderaAutoRelistLeadMinutes: connection.traderaAutoRelistLeadMinutes ?? 180
   }));
 
   return NextResponse.json(payload);
@@ -98,15 +107,23 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     throw notFoundError('Integration not found', { integrationId });
   }
 
-  const existing = await repo.listConnections(integrationId);
-  if (existing.length > 0) {
-    throw conflictError('Connection already exists', { integrationId });
-  }
-
   const created = await repo.createConnection(integrationId, {
     name: data.name,
     username: data.username,
-    password: encryptSecret(data.password)
+    password: encryptSecret(data.password),
+    ...(typeof data.traderaDefaultTemplateId === 'string' ||
+    data.traderaDefaultTemplateId === null
+      ? { traderaDefaultTemplateId: data.traderaDefaultTemplateId ?? null }
+      : {}),
+    ...(typeof data.traderaDefaultDurationHours === 'number'
+      ? { traderaDefaultDurationHours: data.traderaDefaultDurationHours }
+      : {}),
+    ...(typeof data.traderaAutoRelistEnabled === 'boolean'
+      ? { traderaAutoRelistEnabled: data.traderaAutoRelistEnabled }
+      : {}),
+    ...(typeof data.traderaAutoRelistLeadMinutes === 'number'
+      ? { traderaAutoRelistLeadMinutes: data.traderaAutoRelistLeadMinutes }
+      : {}),
   });
 
   return NextResponse.json({
@@ -139,7 +156,12 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     playwrightProxyUsername: created.playwrightProxyUsername,
     playwrightProxyHasPassword: Boolean(created.playwrightProxyPassword),
     playwrightEmulateDevice: created.playwrightEmulateDevice,
-    playwrightDeviceName: created.playwrightDeviceName
+    playwrightDeviceName: created.playwrightDeviceName,
+    playwrightPersonaId: created.playwrightPersonaId ?? null,
+    traderaDefaultTemplateId: created.traderaDefaultTemplateId ?? null,
+    traderaDefaultDurationHours: created.traderaDefaultDurationHours ?? 72,
+    traderaAutoRelistEnabled: created.traderaAutoRelistEnabled ?? true,
+    traderaAutoRelistLeadMinutes: created.traderaAutoRelistLeadMinutes ?? 180
   });
 }
 

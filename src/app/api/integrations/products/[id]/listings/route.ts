@@ -9,6 +9,7 @@ import {
   listProductListingsByProductIdAcrossProviders,
 } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
+import { enqueueTraderaListingJob } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
@@ -17,7 +18,11 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const createListingSchema = z.object({
   integrationId: z.string().min(1),
-  connectionId: z.string().min(1)
+  connectionId: z.string().min(1),
+  durationHours: z.number().int().min(1).max(720).optional(),
+  autoRelistEnabled: z.boolean().optional(),
+  autoRelistLeadMinutes: z.number().int().min(0).max(10080).optional(),
+  templateId: z.string().trim().nullable().optional(),
 });
 
 /**
@@ -50,6 +55,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
     return parsed.response;
   }
   const data = parsed.data;
+  const templateIdProvided = Object.prototype.hasOwnProperty.call(
+    data,
+    'templateId'
+  );
 
   // Verify product exists
   const productRepo = await getProductRepository();
@@ -92,8 +101,51 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
   const listing = await listingRepo.createListing({
     productId,
     integrationId: data.integrationId,
-    connectionId: data.connectionId
+    connectionId: data.connectionId,
+    status: integration.slug.toLowerCase() === 'tradera' ? 'queued' : 'pending',
+    relistPolicy:
+      integration.slug.toLowerCase() === 'tradera'
+        ? {
+          enabled:
+              data.autoRelistEnabled ??
+              connection.traderaAutoRelistEnabled ??
+              true,
+          leadMinutes:
+              data.autoRelistLeadMinutes ??
+              connection.traderaAutoRelistLeadMinutes ??
+              180,
+          durationHours:
+              data.durationHours ??
+              connection.traderaDefaultDurationHours ??
+              72,
+          templateId:
+              templateIdProvided
+                ? (data.templateId ?? null)
+                : (connection.traderaDefaultTemplateId ?? null),
+        }
+        : null,
   });
+
+  if (integration.slug.toLowerCase() === 'tradera') {
+    const enqueuedAt = new Date().toISOString();
+    const jobId = await enqueueTraderaListingJob({
+      listingId: listing.id,
+      action: 'list',
+      source: 'api',
+    });
+    return NextResponse.json(
+      {
+        ...listing,
+        queued: true,
+        queue: {
+          name: 'tradera-listings',
+          jobId,
+          enqueuedAt,
+        },
+      },
+      { status: 201 }
+    );
+  }
 
   return NextResponse.json(listing, { status: 201 });
 }

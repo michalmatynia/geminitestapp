@@ -8,13 +8,28 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+const TRADERA_INTEGRATION_SLUGS = new Set(['tradera']);
+type MarketplaceBadgeKey = 'base' | 'tradera';
+type ProductListingBadgesPayload = Record<
+  string,
+  Partial<Record<MarketplaceBadgeKey, string>>
+>;
 
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
+const resolveMarketplaceKey = (
+  slug: string | null | undefined
+): MarketplaceBadgeKey | null => {
+  const normalized = (slug ?? '').trim().toLowerCase();
+  if (BASE_INTEGRATION_SLUGS.has(normalized)) return 'base';
+  if (TRADERA_INTEGRATION_SLUGS.has(normalized)) return 'tradera';
+  return null;
+};
+
 /**
  * GET /api/integrations/product-listings
- * Returns a map of product IDs to Base.com listing status.
+ * Returns listing badge statuses grouped by marketplace for each product.
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const [listings, integrations] = await Promise.all([
@@ -22,13 +37,14 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     getIntegrationRepository().then((repo) => repo.listIntegrations()),
   ]);
 
-  const baseIntegrationIds = new Set(
-    integrations
-      .filter((integration) => BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase()))
-      .map((integration) => integration.id)
-  );
+  const integrationMarketplaceById = new Map<string, MarketplaceBadgeKey>();
+  for (const integration of integrations) {
+    const marketplace = resolveMarketplaceKey(integration.slug);
+    if (!marketplace) continue;
+    integrationMarketplaceById.set(integration.id, marketplace);
+  }
 
-  if (baseIntegrationIds.size === 0) {
+  if (integrationMarketplaceById.size === 0) {
     return NextResponse.json({});
   }
 
@@ -43,29 +59,42 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     in_progress: 4,
     pending: 3,
     queued: 3,
+    queued_relist: 3,
     failed: 1,
+    needs_login: 1,
+    auth_required: 1,
     error: 1,
     removed: 0,
   };
 
-  const byProduct = new Map<string, string>();
+  const byProduct = new Map<string, Partial<Record<MarketplaceBadgeKey, string>>>();
   for (const listing of listings) {
-    if (!baseIntegrationIds.has(listing.integrationId)) continue;
+    const marketplace = integrationMarketplaceById.get(listing.integrationId);
+    if (!marketplace) continue;
 
     const normalizedStatus = normalizeStatus(listing.status);
-    const current = byProduct.get(listing.productId);
-    if (!current) {
-      byProduct.set(listing.productId, normalizedStatus || 'unknown');
+    const current = byProduct.get(listing.productId) ?? {};
+    const currentStatus = current[marketplace];
+    if (!currentStatus) {
+      byProduct.set(listing.productId, {
+        ...current,
+        [marketplace]: normalizedStatus || 'unknown',
+      });
       continue;
     }
-    const currentRank = statusRank[current] ?? -1;
+    const currentRank = statusRank[currentStatus] ?? -1;
     const nextRank = statusRank[normalizedStatus] ?? -1;
     if (nextRank > currentRank) {
-      byProduct.set(listing.productId, normalizedStatus || 'unknown');
+      byProduct.set(listing.productId, {
+        ...current,
+        [marketplace]: normalizedStatus || 'unknown',
+      });
     }
   }
 
-  return NextResponse.json(Object.fromEntries(byProduct.entries()));
+  return NextResponse.json(
+    Object.fromEntries(byProduct.entries()) as ProductListingBadgesPayload
+  );
 }
 
 export const GET = apiHandler(

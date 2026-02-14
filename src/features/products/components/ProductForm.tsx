@@ -56,7 +56,6 @@ export default function ProductForm({
     handleSubmit,
     product,
     draft,
-    studioProjectId,
   } = useProductFormContext();
   
   const searchParams = useSearchParams();
@@ -153,7 +152,6 @@ export default function ProductForm({
     return 'product_create';
   }, [draft?.id, product?.id]);
   const validationInstanceScope = validationInstanceScopeOverride ?? inferredValidationInstanceScope;
-  const hasStudioProject = Boolean(studioProjectId?.trim());
   const configuredInstanceDenyBehavior = useMemo(
     (): ProductValidationInstanceDenyBehaviorMap =>
       normalizeProductValidationInstanceDenyBehaviorMap(
@@ -488,19 +486,13 @@ export default function ProductForm({
       >
         <Tabs defaultValue='general' className='w-full'>
           <TabsList
-            className={
-              hasStudioProject
-                ? 'grid w-full grid-cols-4 md:grid-cols-8'
-                : 'grid w-full grid-cols-4 md:grid-cols-7'
-            }
+            className='grid w-full grid-cols-4 md:grid-cols-8'
           >
             <TabsTrigger value='general'>General</TabsTrigger>
             <TabsTrigger value='other'>Other</TabsTrigger>
             <TabsTrigger value='parameters'>Parameters</TabsTrigger>
             <TabsTrigger value='images'>Images</TabsTrigger>
-            {hasStudioProject ? (
-              <TabsTrigger value='studio'>Studio</TabsTrigger>
-            ) : null}
+            <TabsTrigger value='studio'>Studio</TabsTrigger>
             <TabsTrigger value='import-info'>Import Info</TabsTrigger>
             <TabsTrigger value='note-link'>Note Link</TabsTrigger>
             <TabsTrigger value='validation'>Validation</TabsTrigger>
@@ -517,11 +509,9 @@ export default function ProductForm({
           <TabsContent value='images' className='mt-4'>
             <ProductFormImages />
           </TabsContent>
-          {hasStudioProject ? (
-            <TabsContent value='studio' className='mt-4'>
-              <ProductFormStudio />
-            </TabsContent>
-          ) : null}
+          <TabsContent value='studio' className='mt-4'>
+            <ProductFormStudio />
+          </TabsContent>
           <TabsContent value='import-info' className='mt-4'>
             <ProductFormImportInfo />
           </TabsContent>

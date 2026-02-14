@@ -25,6 +25,7 @@ export type UserPreferencesData = {
   productListDraftIconColorMode?: 'theme' | 'custom' | null;
   productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
+  imageStudioLastProjectId?: string | null;
   adminMenuCollapsed?: boolean | null;
   adminMenuFavorites?: string[] | null;
   adminMenuSectionColors?: Record<string, string> | null;
@@ -50,6 +51,7 @@ type UserPreferencesRecord = {
   productListDraftIconColorMode: 'theme' | 'custom' | null;
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
+  imageStudioLastProjectId: string | null;
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[];
   adminMenuSectionColors: Record<string, string>;
@@ -77,6 +79,7 @@ type UserPreferencesDocument = {
   productListDraftIconColorMode: 'theme' | 'custom' | null;
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
+  imageStudioLastProjectId: string | null;
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[] | null;
   adminMenuSectionColors: Record<string, string> | null;
@@ -176,6 +179,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme',
   productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
+  imageStudioLastProjectId: doc.imageStudioLastProjectId ?? null,
   adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
   adminMenuFavorites: doc.adminMenuFavorites ?? [],
   adminMenuSectionColors: doc.adminMenuSectionColors ?? {},
@@ -204,6 +208,7 @@ const defaultPreferences = (
   productListDraftIconColorMode: 'theme',
   productListDraftIconColor: '#60a5fa',
   aiPathsActivePathId: null,
+  imageStudioLastProjectId: null,
   adminMenuCollapsed: false,
   adminMenuFavorites: [],
   adminMenuSectionColors: {},

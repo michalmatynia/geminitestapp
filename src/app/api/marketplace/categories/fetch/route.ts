@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { fetchBaseCategories } from '@/features/integrations/server';
+import { fetchTraderaCategoriesForConnection } from '@/features/integrations/server';
 import { getExternalCategoryRepository } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
@@ -13,6 +14,7 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const BASE_MARKETPLACE_SLUGS = new Set(['baselinker', 'base', 'base-com']);
+const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera']);
 
 /**
  * POST /api/marketplace/categories/fetch
@@ -39,30 +41,38 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
     throw notFoundError('Integration not found');
   }
 
-  // Check if this is a Base.com connection
   const integrationSlug = (integration.slug || '').toLowerCase();
-  if (!integrationSlug || !BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
-    throw badRequestError('Only Base.com connections are supported for category fetch');
+  if (!integrationSlug) {
+    throw badRequestError('Integration slug is missing');
   }
 
-  const tokenResolution = resolveBaseConnectionToken(connection);
-  if (!tokenResolution.token) {
+  let categories: Array<{ id: string; name: string; parentId: string | null }> = [];
+  let sourceName = integration.name;
+  if (BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
+    const tokenResolution = resolveBaseConnectionToken(connection);
+    if (!tokenResolution.token) {
+      throw badRequestError(
+        tokenResolution.error || 'Base.com API token not configured for this connection'
+      );
+    }
+    categories = await fetchBaseCategories(tokenResolution.token, {
+      inventoryId: connection.baseLastInventoryId ?? null,
+    });
+    sourceName = 'Base.com';
+  } else if (TRADERA_MARKETPLACE_SLUGS.has(integrationSlug)) {
+    categories = await fetchTraderaCategoriesForConnection(connection);
+    sourceName = 'Tradera';
+  } else {
     throw badRequestError(
-      tokenResolution.error || 'Base.com API token not configured for this connection'
+      `${integration.name} is not yet supported for category fetch`
     );
   }
-
-  // Fetch categories from Base.com API
-  const categories = await fetchBaseCategories(tokenResolution.token, {
-    inventoryId: connection.baseLastInventoryId ?? null,
-  });
 
   if (categories.length === 0) {
     return NextResponse.json({
       fetched: 0,
       total: 0,
-      message:
-        'No categories found in Base.com. Verify categories exist in the selected inventory and test the connection again.',
+      message: `No categories found in ${sourceName}.`,
     });
   }
 
@@ -73,7 +83,7 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
   return NextResponse.json({
     fetched: syncedCount,
     total: categories.length,
-    message: `Successfully synced ${syncedCount} categories from Base.com`,
+    message: `Successfully synced ${syncedCount} categories from ${sourceName}`,
   });
 }
 

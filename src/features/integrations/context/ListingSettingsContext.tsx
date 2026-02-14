@@ -1,8 +1,16 @@
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
+import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { internalError } from '@/shared/errors/app-error';
 
@@ -17,6 +25,7 @@ interface ListingSettingsContextType {
   selectedConnectionId: string;
   selectedIntegration: IntegrationWithConnections | null;
   isBaseComIntegration: boolean;
+  isTraderaIntegration: boolean;
   setSelectedIntegrationId: (id: string) => void;
   setSelectedConnectionId: (id: string) => void;
 
@@ -30,6 +39,16 @@ interface ListingSettingsContextType {
   loadingInventories: boolean;
   allowDuplicateSku: boolean;
   setAllowDuplicateSku: (allowed: boolean) => void;
+
+  // Tradera Settings
+  selectedTraderaDurationHours: number;
+  setSelectedTraderaDurationHours: (value: number) => void;
+  selectedTraderaAutoRelistEnabled: boolean;
+  setSelectedTraderaAutoRelistEnabled: (value: boolean) => void;
+  selectedTraderaAutoRelistLeadMinutes: number;
+  setSelectedTraderaAutoRelistLeadMinutes: (value: number) => void;
+  selectedTraderaTemplateId: string;
+  setSelectedTraderaTemplateId: (value: string) => void;
 }
 
 const ListingSettingsContext = createContext<ListingSettingsContextType | null>(null);
@@ -59,12 +78,64 @@ export function ListingSettingsProvider({
 }: ListingSettingsProviderProps): React.JSX.Element {
   const selection = useIntegrationSelection(initialIntegrationId, initialConnectionId);
   const baseComSettings = useBaseComSettings(selection.isBaseComIntegration, selection.selectedConnectionId);
+  const [selectedTraderaDurationHours, setSelectedTraderaDurationHours] = useState<number>(
+    DEFAULT_TRADERA_SYSTEM_SETTINGS.defaultDurationHours
+  );
+  const [selectedTraderaAutoRelistEnabled, setSelectedTraderaAutoRelistEnabled] = useState<boolean>(
+    DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistEnabled
+  );
+  const [selectedTraderaAutoRelistLeadMinutes, setSelectedTraderaAutoRelistLeadMinutes] = useState<number>(
+    DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistLeadMinutes
+  );
+  const [selectedTraderaTemplateId, setSelectedTraderaTemplateId] = useState<string>('none');
+
+  const selectedTraderaConnection = useMemo(() => {
+    if (!selection.isTraderaIntegration || !selection.selectedIntegration) {
+      return null;
+    }
+    return (
+      selection.selectedIntegration.connections.find(
+        (connection) => connection.id === selection.selectedConnectionId
+      ) ?? null
+    );
+  }, [
+    selection.isTraderaIntegration,
+    selection.selectedConnectionId,
+    selection.selectedIntegration,
+  ]);
+
+  useEffect(() => {
+    if (!selection.isTraderaIntegration) return;
+    setSelectedTraderaDurationHours(
+      selectedTraderaConnection?.traderaDefaultDurationHours ??
+        DEFAULT_TRADERA_SYSTEM_SETTINGS.defaultDurationHours
+    );
+    setSelectedTraderaAutoRelistEnabled(
+      selectedTraderaConnection?.traderaAutoRelistEnabled ??
+        DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistEnabled
+    );
+    setSelectedTraderaAutoRelistLeadMinutes(
+      selectedTraderaConnection?.traderaAutoRelistLeadMinutes ??
+        DEFAULT_TRADERA_SYSTEM_SETTINGS.autoRelistLeadMinutes
+    );
+    setSelectedTraderaTemplateId(
+      selectedTraderaConnection?.traderaDefaultTemplateId ?? 'none'
+    );
+  }, [selection.isTraderaIntegration, selectedTraderaConnection]);
 
   const value: ListingSettingsContextType = {
     ...selection,
     selectedIntegration: selection.selectedIntegration ?? null,
     loadingIntegrations: selection.loading,
     ...baseComSettings,
+    selectedTraderaDurationHours,
+    setSelectedTraderaDurationHours,
+    selectedTraderaAutoRelistEnabled,
+    setSelectedTraderaAutoRelistEnabled,
+    selectedTraderaAutoRelistLeadMinutes,
+    setSelectedTraderaAutoRelistLeadMinutes,
+    selectedTraderaTemplateId,
+    setSelectedTraderaTemplateId,
   };
 
   return (

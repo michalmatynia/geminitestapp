@@ -11,6 +11,9 @@ import { useAgentTeachingContext } from '../context/AgentTeachingContext';
 import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
+type AgentTeachingLibraryItem = Omit<AgentTeachingAgentRecord, 'description'> & {
+  description?: string | null;
+};
 
 export function AgentTeachingAgentsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -27,13 +30,21 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
     () => modelOptions.filter((m: string) => m.trim().length > 0 && isEmbeddingModel(m)),
     [modelOptions]
   );
+  const libraryAgents = React.useMemo<AgentTeachingLibraryItem[]>(
+    () =>
+      agents.map((agent: AgentTeachingAgentRecord) => ({
+        ...agent,
+        description: typeof agent.description === 'string' ? agent.description : null,
+      })),
+    [agents]
+  );
 
   const resolveCollectionName = (id: string): string => {
     const found = collections.find((c: AgentTeachingEmbeddingCollectionRecord) => c.id === id);
     return found?.name ?? id;
   };
 
-  const handleSave = async (draft: Partial<AgentTeachingAgentRecord>): Promise<void> => {
+  const handleSave = async (draft: Partial<AgentTeachingLibraryItem>): Promise<void> => {
     const name = draft.name?.trim();
     if (!name) {
       toast('Agent name is required.', { variant: 'error' });
@@ -98,7 +109,7 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
     }
   };
 
-  const handleDelete = async (agent: AgentTeachingAgentRecord): Promise<void> => {
+  const handleDelete = async (agent: AgentTeachingLibraryItem): Promise<void> => {
     try {
       await remove({ id: agent.id });
       toast('Learner agent deleted.', { variant: 'success' });
@@ -109,19 +120,19 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
   };
 
   return (
-    <ItemLibrary<AgentTeachingAgentRecord>
+    <ItemLibrary<AgentTeachingLibraryItem>
       title='Learner Agents'
       description='Agents that answer using connected embedding collections (RAG).'
       entityName='Learner Agent'
-      items={agents}
+      items={libraryAgents}
       isLoading={isLoadingContext}
       isSaving={saving}
       onSave={handleSave}
       onDelete={handleDelete}
       backLink={(
-        <Link href='/admin/agentcreator/teaching' className='text-blue-300 hover:text-blue-200'>
+        <a href='/admin/agentcreator/teaching' className='text-blue-300 hover:text-blue-200'>
           ← Back to learners
-        </Link>
+        </a>
       )}
       buildDefaultItem={() => ({
         name: '',
@@ -136,13 +147,13 @@ export function AgentTeachingAgentsPage(): React.JSX.Element {
         retrievalMinScore: 0.15,
         maxDocsPerCollection: 400,
       })}
-      renderItemTags={(agent: AgentTeachingAgentRecord) => [
+      renderItemTags={(agent: AgentTeachingLibraryItem) => [
         `LLM: ${agent.llmModel || '—'}`,
         `Embed: ${agent.embeddingModel || '—'}`,
         `KB: ${(agent.collectionIds ?? []).length}`,
         `Temp: ${(typeof agent.temperature === 'number' ? agent.temperature : 0.2).toFixed(2)}`,
       ]}
-      renderExtraFields={(draft: Partial<AgentTeachingAgentRecord>, onChange: (changes: Partial<AgentTeachingAgentRecord>) => void) => (
+      renderExtraFields={(draft: AgentTeachingLibraryItem, onChange: (changes: Partial<AgentTeachingLibraryItem>) => void) => (
         <div className='space-y-6'>
           <div className='grid gap-4 md:grid-cols-2'>
             <FormField

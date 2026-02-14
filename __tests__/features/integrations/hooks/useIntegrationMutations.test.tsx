@@ -85,7 +85,7 @@ describe('useIntegrationMutations invalidation', () => {
       queryKey: QUERY_KEYS.integrations.connections(),
     });
     expect(invalidateSpy).toHaveBeenNthCalledWith(2, {
-      queryKey: [...QUERY_KEYS.integrations.connections(), 'int-1'],
+      queryKey: QUERY_KEYS.integrations.connections('int-1'),
     });
   });
 
@@ -113,7 +113,7 @@ describe('useIntegrationMutations invalidation', () => {
       queryKey: QUERY_KEYS.integrations.connections(),
     });
     expect(invalidateSpy).toHaveBeenNthCalledWith(2, {
-      queryKey: [...QUERY_KEYS.integrations.connections(), 'int-1'],
+      queryKey: QUERY_KEYS.integrations.connections('int-1'),
     });
   });
 
@@ -134,7 +134,7 @@ describe('useIntegrationMutations invalidation', () => {
       queryKey: QUERY_KEYS.integrations.connections(),
     });
     expect(invalidateSpy).toHaveBeenNthCalledWith(2, {
-      queryKey: [...QUERY_KEYS.integrations.connections(), 'int-1'],
+      queryKey: QUERY_KEYS.integrations.connections('int-1'),
     });
   });
 
@@ -158,7 +158,7 @@ describe('useIntegrationMutations invalidation', () => {
       queryKey: QUERY_KEYS.integrations.connections(),
     });
     expect(invalidateSpy).toHaveBeenNthCalledWith(2, {
-      queryKey: [...QUERY_KEYS.integrations.connections(), 'int-1'],
+      queryKey: QUERY_KEYS.integrations.connections('int-1'),
     });
   });
 });

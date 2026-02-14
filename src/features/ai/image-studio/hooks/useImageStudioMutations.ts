@@ -11,6 +11,14 @@ import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
+const normalizeStudioSlotId = (rawId: string): string => {
+  const normalized = rawId.trim();
+  if (!normalized) return normalized;
+  if (normalized.startsWith('card:')) return normalized.slice('card:'.length).trim();
+  if (normalized.startsWith('slot:')) return normalized.slice('slot:'.length).trim();
+  return normalized;
+};
+
 export interface RunStudioPayload {
   projectId: string;
   asset: { filepath: string; id?: string | undefined };
@@ -98,7 +106,8 @@ export function useUpdateStudioSlot(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
-      const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(`/api/image-studio/slots/${encodeURIComponent(id)}`, data);
+      const slotId = normalizeStudioSlotId(id);
+      const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`, data);
       if (!response.slot) {
         throw new Error('Failed to update image studio slot');
       }
@@ -113,7 +122,10 @@ export function useUpdateStudioSlot(projectId: string) {
 export function useDeleteStudioSlot(projectId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.delete<void>(`/api/image-studio/slots/${encodeURIComponent(id)}`),
+    mutationFn: (id: string) => {
+      const slotId = normalizeStudioSlotId(id);
+      return api.delete<void>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`);
+    },
     onSuccess: () => {
       void invalidateImageStudioSlots(queryClient, projectId);
     },

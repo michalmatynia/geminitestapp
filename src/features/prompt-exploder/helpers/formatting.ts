@@ -24,6 +24,9 @@ export const promptExploderSafeJsonStringify = (value: unknown): string => {
   }
 };
 
+// Backward-compat alias used by legacy imports.
+export const safeJsonStringify = promptExploderSafeJsonStringify;
+
 export const promptExploderIsFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 

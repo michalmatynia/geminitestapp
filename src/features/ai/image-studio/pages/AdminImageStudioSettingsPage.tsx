@@ -4,6 +4,7 @@ import { RefreshCcw } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { logClientError } from '@/features/observability';
 import {
   defaultPromptEngineSettings,
@@ -38,6 +39,8 @@ import {
 } from '../utils/project-session';
 import {
   defaultImageStudioSettings,
+  IMAGE_STUDIO_SEQUENCE_OPERATIONS,
+  type ImageStudioSequenceOperation,
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
@@ -99,12 +102,32 @@ const MODERATION_OPTIONS = [
   { value: 'low', label: 'low' },
 ];
 
+const PROJECT_SEQUENCE_TRIGGER_OPTIONS = [
+  { value: 'manual', label: 'Manual Trigger' },
+];
+
+const PROJECT_SEQUENCE_UPSCALE_SCALE_OPTIONS = [
+  { value: '1.5', label: '1.5x' },
+  { value: '2', label: '2x' },
+  { value: '3', label: '3x' },
+  { value: '4', label: '4x' },
+];
+
+const PROJECT_SEQUENCE_OPERATION_LABELS: Record<ImageStudioSequenceOperation, string> = {
+  crop_center: 'Center Crop',
+  mask: 'Masking',
+  generate: 'Generate',
+  regenerate: 'Regenerate',
+  upscale: 'Upscale',
+};
+
 export function AdminImageStudioSettingsPage(
   { embedded = false, onSaved }: { embedded?: boolean | undefined; onSaved?: (() => void) | undefined } = {}
 ): React.JSX.Element {
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
+  const userPreferencesQuery = useUserPreferences();
   const updateSetting = useUpdateSetting();
   const imageModelsQuery = useStudioImageModels();
 
@@ -138,9 +161,14 @@ export function AdminImageStudioSettingsPage(
     [promptEngineRaw]
   );
   const heavyMap = heavySettings.data ?? new Map<string, string>();
-  const activeProjectId = parseImageStudioActiveProject(
+  const activeProjectIdFromPreferences =
+    typeof userPreferencesQuery.data?.imageStudioLastProjectId === 'string'
+      ? userPreferencesQuery.data.imageStudioLastProjectId.trim()
+      : '';
+  const legacyActiveProjectId = parseImageStudioActiveProject(
     heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)
   );
+  const activeProjectId = activeProjectIdFromPreferences || legacyActiveProjectId;
   const projectSettingsKey = getImageStudioProjectSettingsKey(activeProjectId);
   const globalStudioSettingsRaw = heavyMap.get(IMAGE_STUDIO_SETTINGS_KEY);
   const projectStudioSettingsRaw =
@@ -149,6 +177,7 @@ export function AdminImageStudioSettingsPage(
 
   useEffect(() => {
     if (!heavySettings.data || settingsLoaded) return;
+    if (userPreferencesQuery.isLoading) return;
     if (heavySettings.data === prevSettingsData) return;
 
     setPrevSettingsData(heavySettings.data);
@@ -191,6 +220,7 @@ export function AdminImageStudioSettingsPage(
     prevSettingsData,
     settingsLoaded,
     settingsStore,
+    userPreferencesQuery.isLoading,
     studioSettingsRaw,
   ]);
 
@@ -524,6 +554,48 @@ export function AdminImageStudioSettingsPage(
     [modelCapabilities.formatOptions]
   );
 
+  const toggleProjectSequencingOperation = useCallback(
+    (operation: ImageStudioSequenceOperation, checked: boolean): void => {
+      setStudioSettings((prev: ImageStudioSettings) => {
+        const operations = prev.projectSequencing.operations;
+        const nextOperations = checked
+          ? operations.includes(operation)
+            ? operations
+            : [...operations, operation]
+          : operations.filter((entry) => entry !== operation);
+        return {
+          ...prev,
+          projectSequencing: {
+            ...prev.projectSequencing,
+            operations: nextOperations,
+          },
+        };
+      });
+    },
+    []
+  );
+
+  const moveProjectSequencingOperation = useCallback(
+    (operation: ImageStudioSequenceOperation, direction: -1 | 1): void => {
+      setStudioSettings((prev: ImageStudioSettings) => {
+        const operations = [...prev.projectSequencing.operations];
+        const index = operations.indexOf(operation);
+        if (index < 0) return prev;
+        const target = index + direction;
+        if (target < 0 || target >= operations.length) return prev;
+        [operations[index], operations[target]] = [operations[target]!, operations[index]!];
+        return {
+          ...prev,
+          projectSequencing: {
+            ...prev.projectSequencing,
+            operations,
+          },
+        };
+      });
+    },
+    []
+  );
+
   return (
     <div className={cn('space-y-4', embedded ? '' : 'container mx-auto max-w-5xl py-6')}>
       <SectionHeader
@@ -607,6 +679,122 @@ export function AdminImageStudioSettingsPage(
             <div className='rounded border border-border/60 bg-card/30 p-3 text-xs text-gray-300'>
               Main flow: <span className='text-gray-100'>selected preview image + resolved prompt</span> are sent to OpenAI Images API,
               and returned images are available in Outputs where they can be added to card history/versions.
+            </div>
+            <div className='rounded border border-border/60 bg-card/30 p-3'>
+              <Label className='text-xs text-gray-400'>Project Sequencing</Label>
+              <div className='mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3'>
+                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
+                  <input
+                    type='checkbox'
+                    className='h-3.5 w-3.5'
+                    checked={studioSettings.projectSequencing.enabled}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        projectSequencing: {
+                          ...prev.projectSequencing,
+                          enabled: event.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  Enable Sequence
+                </label>
+                <div className='space-y-1'>
+                  <div className='text-[11px] text-gray-500'>Trigger</div>
+                  <UnifiedSelect
+                    value={studioSettings.projectSequencing.trigger}
+                    onValueChange={(value: string) =>
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        projectSequencing: {
+                          ...prev.projectSequencing,
+                          trigger: value === 'manual' ? 'manual' : 'manual',
+                        },
+                      }))
+                    }
+                    options={PROJECT_SEQUENCE_TRIGGER_OPTIONS}
+                    triggerClassName='h-8'
+                    ariaLabel='Project sequence trigger'
+                  />
+                </div>
+                <div className='space-y-1'>
+                  <div className='text-[11px] text-gray-500'>Upscale Scale</div>
+                  <UnifiedSelect
+                    value={String(studioSettings.projectSequencing.upscaleScale)}
+                    onValueChange={(value: string) => {
+                      const numeric = Number(value);
+                      if (!Number.isFinite(numeric)) return;
+                      setStudioSettings((prev: ImageStudioSettings) => ({
+                        ...prev,
+                        projectSequencing: {
+                          ...prev.projectSequencing,
+                          upscaleScale: numeric,
+                        },
+                      }));
+                    }}
+                    options={PROJECT_SEQUENCE_UPSCALE_SCALE_OPTIONS}
+                    triggerClassName='h-8'
+                    ariaLabel='Project sequence upscale scale'
+                  />
+                </div>
+              </div>
+              <div className='mt-3 space-y-2'>
+                <div className='text-[11px] text-gray-500'>Operation Order</div>
+                {IMAGE_STUDIO_SEQUENCE_OPERATIONS.map((operation) => {
+                  const operations = studioSettings.projectSequencing.operations;
+                  const enabled = operations.includes(operation);
+                  const orderIndex = operations.indexOf(operation);
+                  return (
+                    <div
+                      key={operation}
+                      className='flex items-center justify-between rounded border border-border/40 bg-foreground/5 px-3 py-2'
+                    >
+                      <label className='flex items-center gap-2 text-[11px] text-gray-200'>
+                        <input
+                          type='checkbox'
+                          className='h-3.5 w-3.5'
+                          checked={enabled}
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                            toggleProjectSequencingOperation(operation, event.target.checked)
+                          }
+                        />
+                        <span>{PROJECT_SEQUENCE_OPERATION_LABELS[operation]}</span>
+                        {enabled ? (
+                          <span className='text-gray-500'>#{orderIndex + 1}</span>
+                        ) : null}
+                      </label>
+                      <div className='flex items-center gap-1'>
+                        <UnifiedButton
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-7 px-2 text-xs'
+                          onClick={() => moveProjectSequencingOperation(operation, -1)}
+                          disabled={!enabled || orderIndex <= 0}
+                          title='Move up'
+                        >
+                          Up
+                        </UnifiedButton>
+                        <UnifiedButton
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-7 px-2 text-xs'
+                          onClick={() => moveProjectSequencingOperation(operation, 1)}
+                          disabled={!enabled || orderIndex < 0 || orderIndex >= operations.length - 1}
+                          title='Move down'
+                        >
+                          Down
+                        </UnifiedButton>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className='mt-2 text-[11px] text-gray-500'>
+                Sequence runs in configured order when triggered.
+              </div>
             </div>
             <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
               <div className='rounded border border-border/60 bg-card/30 p-3'>

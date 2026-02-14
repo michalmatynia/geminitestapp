@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -10,7 +11,10 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  Tooltip,
+  UnifiedButton,
   UnifiedSelect,
+  useToast,
 } from '@/shared/ui';
 
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
@@ -22,6 +26,7 @@ import { StudioProjectsList } from '../components/StudioProjectsList';
 import { ImageStudioProvider } from '../context/ImageStudioProvider';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import { useSettingsActions } from '../context/SettingsContext';
+import { useSlotsState } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'docs';
@@ -30,6 +35,8 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const { handleRefreshSettings } = useSettingsActions();
   const { projectId, projectsQuery } = useProjectsState();
   const { setProjectId } = useProjectsActions();
+  const { selectedSlot } = useSlotsState();
+  const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -48,6 +55,15 @@ function AdminImageStudioPageContent(): React.JSX.Element {
       setActiveTab(nextTab);
     }
   }, [activeTab, searchParams]);
+
+  useEffect(() => {
+    const requestedProjectId = searchParams?.get('projectId')?.trim() ?? '';
+    if (!requestedProjectId || requestedProjectId === projectId) return;
+    if (projectsQuery.isLoading) return;
+    const availableProjects = projectsQuery.data ?? [];
+    if (availableProjects.length > 0 && !availableProjects.includes(requestedProjectId)) return;
+    setProjectId(requestedProjectId);
+  }, [projectId, projectsQuery.data, projectsQuery.isLoading, searchParams, setProjectId]);
 
   useEffect(() => {
     setIsMenuHidden(hideTopBar);
@@ -78,14 +94,31 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     [projectsQuery.data]
   );
 
+  const handleCopyActiveCardName = useCallback((): void => {
+    const cardLabel = selectedSlot?.name?.trim() || selectedSlot?.id || null;
+    if (!cardLabel) {
+      toast('Select a card first.', { variant: 'info' });
+      return;
+    }
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      toast('Clipboard is not available in this browser.', { variant: 'error' });
+      return;
+    }
+    void navigator.clipboard.writeText(cardLabel).then(() => {
+      toast('Card name copied.', { variant: 'success' });
+    }).catch(() => {
+      toast('Failed to copy card name.', { variant: 'error' });
+    });
+  }, [selectedSlot?.id, selectedSlot?.name, toast]);
+
   return (
-    <div className='container mx-auto max-w-none flex min-h-[calc(100vh-4.25rem)] flex-col gap-3 py-3'>
+    <div className='container mx-auto box-border flex h-[calc(100dvh-4.25rem)] min-h-0 min-w-0 max-w-none flex-col gap-3 overflow-hidden py-3'>
       <ClientOnly fallback={<div className='flex min-h-0 flex-1' />}>
         <Tabs
           id='image-studio-tabs'
           value={activeTab as string}
           onValueChange={handleTabChange}
-          className={hideTopBar ? 'flex min-h-0 flex-1 flex-col gap-0' : 'flex min-h-0 flex-1 flex-col gap-3'}
+          className={hideTopBar ? 'flex min-h-0 min-w-0 flex-1 flex-col gap-0' : 'flex min-h-0 min-w-0 flex-1 flex-col gap-3'}
         >
           {!hideTopBar ? (
             <div className='border-b bg-muted/40 px-4 py-2'>
@@ -97,9 +130,28 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='validation'>Validation</TabsTrigger>
                   <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
-                <div className='ml-auto flex w-full max-w-[320px] items-center gap-2'>
+                <div className='ml-auto flex min-w-0 items-center gap-2'>
+                  <span className='w-[280px] shrink-0 truncate text-xs text-muted-foreground'>
+                    {selectedSlot
+                      ? selectedSlot.name || selectedSlot.id
+                      : 'No active card selected. Pick a card from the tree.'}
+                  </span>
+                  <Tooltip content={selectedSlot ? 'Copy card name' : 'Select a card first'}>
+                    <UnifiedButton
+                      type='button'
+                      size='icon'
+                      variant='ghost'
+                      className='size-7 shrink-0'
+                      onClick={handleCopyActiveCardName}
+                      disabled={!selectedSlot?.id}
+                      title='Copy card name'
+                      aria-label='Copy card name'
+                    >
+                      <Copy className='size-3.5' />
+                    </UnifiedButton>
+                  </Tooltip>
                   <UnifiedSelect
-                    className='w-full max-w-[320px]'
+                    className='w-[320px] shrink-0'
                     value={projectId || undefined}
                     onValueChange={(value: string) => setProjectId(value)}
                     options={projectSelectOptions}
@@ -112,7 +164,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
             </div>
           ) : null}
 
-          <div className='flex-1 overflow-hidden'>
+          <div className='flex-1 min-w-0 overflow-hidden'>
             <TabsContent value='studio' className='h-full m-0 p-0 flex flex-col'>
               <StudioMainContent />
             </TabsContent>

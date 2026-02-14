@@ -31,7 +31,7 @@ export function CategoryMapperHeader(): React.JSX.Element {
 
   return (
     <SectionHeader
-      title='Base.com Categories'
+      title='Marketplace Categories'
       description={`Connection: ${connectionName}`}
       actions={
         <div className='flex items-center gap-3'>

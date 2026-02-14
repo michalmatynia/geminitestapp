@@ -150,7 +150,7 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
       const failed = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
         status: 'failed',
         retryCount: latest?.retryCount ?? run.retryCount ?? 0,
-        finishedAt,
+        finishedAt: finishedAt.toISOString(),
         errorMessage: message,
       });
       if (failed) {
@@ -182,7 +182,7 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
       const requeued = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
         status: 'queued',
         retryCount,
-        nextRetryAt,
+        nextRetryAt: nextRetryAt.toISOString(),
         errorMessage: message,
         startedAt: null,
         finishedAt: null,
@@ -190,20 +190,20 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
       if (!requeued) {
         return;
       }
-      await repo.createRunEvent({
-        runId: run.id,
-        level: 'warning',
-        message: `Run failed. Retrying in ${Math.round(delayMs / 1000)}s.`,
-        metadata: { retryCount, nextRetryAt },
-      });
+        await repo.createRunEvent({
+          runId: run.id,
+          level: 'warning',
+          message: `Run failed. Retrying in ${Math.round(delayMs / 1000)}s.`,
+          metadata: { retryCount, nextRetryAt: nextRetryAt.toISOString() },
+        });
       return { requeueDelayMs: delayMs };
     } else {
       const finishedAt = new Date();
       const deadLettered = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
         status: 'dead_lettered',
         retryCount,
-        finishedAt,
-        deadLetteredAt: finishedAt,
+        finishedAt: finishedAt.toISOString(),
+        deadLetteredAt: finishedAt.toISOString(),
         errorMessage: message,
       });
       if (deadLettered) {

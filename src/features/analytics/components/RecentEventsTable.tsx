@@ -13,7 +13,7 @@ export function RecentEventsTable(): React.JSX.Element {
   const summary = summaryQuery.data;
   const [expandedId, setExpandedId] = useState<string | null>(null);
   
-  const events = summary?.recent ?? [];
+  const events: NonNullable<AnalyticsSummaryDto['recent']> = summary?.recent ?? [];
   if (events.length === 0) {
     return <p className='text-sm text-gray-500'>No events yet.</p>;
   }
@@ -33,7 +33,7 @@ export function RecentEventsTable(): React.JSX.Element {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {events.map((event) => {
+        {events.map((event: NonNullable<AnalyticsSummaryDto['recent']>[number]) => {
           const isExpanded = expandedId === event.id;
           const ipDisplay = event.ip ?? event.ipMasked ?? event.ipHash ?? '—';
           return (

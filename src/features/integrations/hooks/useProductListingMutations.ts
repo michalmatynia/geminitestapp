@@ -39,31 +39,53 @@ type ExportResponse = {
   runId?: string | null;
 };
 
-type ListingBadgesPayload = Record<string, string>;
+type MarketplaceBadgeEntry = {
+  base?: string;
+  tradera?: string;
+};
+type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;
 type GenericExportToBaseVariables = ExportToBaseVariables & {
   productId: string;
   requestId?: string;
 };
 
+const toBadgeEntry = (value: unknown): MarketplaceBadgeEntry =>
+  value && typeof value === 'object'
+    ? (value as MarketplaceBadgeEntry)
+    : {};
+
 const setListingBadgeStatus = (
   queryClient: ReturnType<typeof useQueryClient>,
   productId: string,
+  marketplace: keyof MarketplaceBadgeEntry,
   status: string
 ): void => {
   queryClient.setQueryData<ListingBadgesPayload>(listingBadgesQueryKey, (current) => ({
     ...(current ?? {}),
-    [productId]: status,
+    [productId]: {
+      ...toBadgeEntry(current?.[productId]),
+      [marketplace]: status,
+    },
   }));
 };
 
 const removeListingBadgeStatus = (
   queryClient: ReturnType<typeof useQueryClient>,
-  productId: string
+  productId: string,
+  marketplace: keyof MarketplaceBadgeEntry
 ): void => {
   queryClient.setQueryData<ListingBadgesPayload>(listingBadgesQueryKey, (current) => {
     if (!current) return current;
+    const currentProduct = toBadgeEntry(current[productId]);
+    if (Object.keys(currentProduct).length === 0) return current;
+    const nextProduct = { ...currentProduct };
+    delete nextProduct[marketplace];
     const next = { ...current };
-    delete next[productId];
+    if (Object.keys(nextProduct).length === 0) {
+      delete next[productId];
+    } else {
+      next[productId] = nextProduct;
+    }
     return next;
   });
 };
@@ -108,7 +130,7 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
     }> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
       const previousListingBadges = queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
-      setListingBadgeStatus(queryClient, vars.productId, 'pending');
+      setListingBadgeStatus(queryClient, vars.productId, 'base', 'pending');
       return { previousListingBadges };
     },
     onError: (_error, vars, context): void => {
@@ -116,10 +138,10 @@ export function useGenericExportToBaseMutation(): UseMutationResult<
         queryClient.setQueryData(listingBadgesQueryKey, context.previousListingBadges);
         return;
       }
-      removeListingBadgeStatus(queryClient, vars.productId);
+      removeListingBadgeStatus(queryClient, vars.productId, 'base');
     },
     onSuccess: (_: ExportResponse, vars: GenericExportToBaseVariables): void => {
-      setListingBadgeStatus(queryClient, vars.productId, 'active');
+      setListingBadgeStatus(queryClient, vars.productId, 'base', 'active');
       void invalidateListingsBadgesAndQueues(queryClient, vars.productId);
     },
     onSettled: (_data, _error, vars): void => {
@@ -314,7 +336,7 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
     }> => {
       await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
       const previousListingBadges = queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
-      setListingBadgeStatus(queryClient, productId, 'pending');
+      setListingBadgeStatus(queryClient, productId, 'base', 'pending');
       return { previousListingBadges };
     },
     onError: (_error, _vars, context): void => {
@@ -322,10 +344,10 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
         queryClient.setQueryData(listingBadgesQueryKey, context.previousListingBadges);
         return;
       }
-      removeListingBadgeStatus(queryClient, productId);
+      removeListingBadgeStatus(queryClient, productId, 'base');
     },
     onSuccess: (): void => {
-      setListingBadgeStatus(queryClient, productId, 'active');
+      setListingBadgeStatus(queryClient, productId, 'base', 'active');
       void invalidateListingsBadgesAndQueues(queryClient, productId);
     },
     onSettled: (): void => {
@@ -337,18 +359,73 @@ export function useExportToBaseMutation(productId: string): UseMutationResult<
 export function useCreateListingMutation(productId: string): UseMutationResult<
   Record<string, unknown>,
   Error,
-  { integrationId: string; connectionId: string }
+  {
+    integrationId: string;
+    connectionId: string;
+    durationHours?: number;
+    autoRelistEnabled?: boolean;
+    autoRelistLeadMinutes?: number;
+    templateId?: string | null;
+  }
 > {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ integrationId, connectionId }: { integrationId: string; connectionId: string }) => 
+    mutationFn: ({
+      integrationId,
+      connectionId,
+      durationHours,
+      autoRelistEnabled,
+      autoRelistLeadMinutes,
+      templateId,
+    }: {
+      integrationId: string;
+      connectionId: string;
+      durationHours?: number;
+      autoRelistEnabled?: boolean;
+      autoRelistLeadMinutes?: number;
+      templateId?: string | null;
+    }) =>
       api.post<Record<string, unknown>>(`/api/integrations/products/${productId}/listings`, {
         integrationId,
         connectionId,
+        ...(typeof durationHours === 'number' ? { durationHours } : {}),
+        ...(typeof autoRelistEnabled === 'boolean'
+          ? { autoRelistEnabled }
+          : {}),
+        ...(typeof autoRelistLeadMinutes === 'number'
+          ? { autoRelistLeadMinutes }
+          : {}),
+        ...(templateId !== undefined ? { templateId } : {}),
       }),
-    onSuccess: (): void => {
+    onSuccess: (data): void => {
+      const queueName =
+        (data as { queue?: { name?: string } } | null)?.queue?.name ?? null;
+      if (queueName === 'tradera-listings') {
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
+      }
       void invalidateProductListingsAndBadges(queryClient, productId);
+    },
+  });
+}
+
+export function useRelistTraderaMutation(productId: string): UseMutationResult<
+  { queued?: boolean; listingId?: string; queue?: { name?: string; jobId?: string; enqueuedAt?: string } },
+  Error,
+  { listingId: string }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ listingId }: { listingId: string }) =>
+      api.post<{ queued?: boolean; listingId?: string; queue?: { name?: string; jobId?: string; enqueuedAt?: string } }>(
+        `/api/integrations/products/${productId}/listings/${listingId}/relist`,
+        {}
+      ),
+    onSuccess: (): void => {
+      setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
+      void invalidateProductListingsAndBadges(queryClient, productId);
+      void invalidateProducts(queryClient);
     },
   });
 }

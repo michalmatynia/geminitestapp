@@ -9,6 +9,7 @@ import {
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
+import { useToast } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 type UseListProductFormResult = {
@@ -23,8 +24,13 @@ type UseListProductFormResult = {
     selectedIntegrationId: string | null,
     selectedConnectionId: string | null,
     isBaseComIntegration: boolean,
+    isTraderaIntegration: boolean,
     selectedInventoryId: string | null,
     selectedTemplateId: string | null,
+    traderaDurationHours: number,
+    traderaAutoRelistEnabled: boolean,
+    traderaAutoRelistLeadMinutes: number,
+    traderaTemplateId: string,
     productId: string,
     onSuccess: () => void
   ) => Promise<void>;
@@ -42,6 +48,7 @@ export function useListProductForm(productId: string): UseListProductFormResult 
   const [error, setError] = useState<string | null>(null);
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
+  const { toast } = useToast();
 
   const exportToBaseMutation = useExportToBaseMutation(productId);
   const createListingMutation = useCreateListingMutation(productId);
@@ -70,8 +77,13 @@ export function useListProductForm(productId: string): UseListProductFormResult 
     selectedIntegrationId: string | null,
     selectedConnectionId: string | null,
     isBaseComIntegration: boolean,
+    isTraderaIntegration: boolean,
     selectedInventoryId: string | null,
     selectedTemplateId: string | null,
+    traderaDurationHours: number,
+    traderaAutoRelistEnabled: boolean,
+    traderaAutoRelistLeadMinutes: number,
+    traderaTemplateId: string,
     productId: string,
     onSuccess: () => void
   ): Promise<void> => {
@@ -110,10 +122,32 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         }
         onSuccess();
       } else {
-        await createListingMutation.mutateAsync({
+        const response = await createListingMutation.mutateAsync({
           integrationId: selectedIntegrationId!,
           connectionId: selectedConnectionId!,
+          ...(isTraderaIntegration
+            ? {
+              durationHours: traderaDurationHours,
+              autoRelistEnabled: traderaAutoRelistEnabled,
+              autoRelistLeadMinutes: traderaAutoRelistLeadMinutes,
+              templateId:
+                  traderaTemplateId && traderaTemplateId !== 'none'
+                    ? traderaTemplateId
+                    : null,
+            }
+            : {}),
         });
+        if (isTraderaIntegration) {
+          const queue = (
+            response as { queue?: { jobId?: string; name?: string } } | null
+          )?.queue;
+          toast(
+            queue?.jobId
+              ? `Tradera listing queued (job ${queue.jobId}).`
+              : 'Tradera listing queued.',
+            { variant: 'success' }
+          );
+        }
         onSuccess();
       }
     } catch (err: unknown) {

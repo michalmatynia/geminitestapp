@@ -75,17 +75,29 @@ export function useDeleteConnection(): UseMutationResult<Record<string, unknown>
   });
 }
 
-export function useTestConnection(): UseMutationResult<Record<string, unknown>, Error, { integrationId: string; connectionId: string; type?: 'test' | 'base/test' | 'allegro/test' }> {
+type TestConnectionType = 'test' | 'base/test' | 'allegro/test';
+type TestConnectionVariables = {
+  integrationId: string;
+  connectionId: string;
+  type?: TestConnectionType;
+  body?: Record<string, unknown>;
+  timeoutMs?: number;
+};
+
+export function useTestConnection(): UseMutationResult<Record<string, unknown>, Error, TestConnectionVariables> {
   return useMutation({
-    mutationFn: ({ 
-      integrationId, 
-      connectionId, 
-      type = 'test' 
-    }: { 
-      integrationId: string; 
-      connectionId: string; 
-      type?: 'test' | 'base/test' | 'allegro/test' 
-    }) => api.post<Record<string, unknown>>(`/api/integrations/${integrationId}/connections/${connectionId}/${type}`, {}),
+    mutationFn: ({
+      integrationId,
+      connectionId,
+      type = 'test',
+      body,
+      timeoutMs,
+    }: TestConnectionVariables) =>
+      api.post<Record<string, unknown>>(
+        `/api/integrations/${integrationId}/connections/${connectionId}/${type}`,
+        body ?? {},
+        typeof timeoutMs === 'number' ? { timeout: timeoutMs } : undefined
+      ),
   });
 }
 

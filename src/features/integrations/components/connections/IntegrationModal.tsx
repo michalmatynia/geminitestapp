@@ -80,6 +80,7 @@ export function IntegrationModal(): React.JSX.Element {
         title={<IntegrationModalHeader />}
         subtitle={<IntegrationModalSubtitle />}
         headerActions={<IntegrationModalHeaderActions />}
+        size='xl'
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <IntegrationTabsList />

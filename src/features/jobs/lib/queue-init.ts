@@ -77,11 +77,17 @@ export const initializeQueues = (): void => {
       import('@/features/jobs/workers/aiInsightsQueue'),
       import('@/features/jobs/workers/databaseBackupSchedulerQueue'),
       import('@/features/jobs/workers/imageStudioRunQueue'),
+      import('@/features/jobs/workers/traderaListingQueue'),
+      import('@/features/jobs/workers/traderaRelistSchedulerQueue'),
     ]);
     const backupSchedulerModule = queueModules[5] as {
       startDatabaseBackupSchedulerQueue?: () => void;
     };
     backupSchedulerModule.startDatabaseBackupSchedulerQueue?.();
+    const traderaSchedulerModule = queueModules[8] as {
+      startTraderaRelistSchedulerQueue?: () => void;
+    };
+    traderaSchedulerModule.startTraderaRelistSchedulerQueue?.();
 
     void logSystemEvent({
       level: 'info',

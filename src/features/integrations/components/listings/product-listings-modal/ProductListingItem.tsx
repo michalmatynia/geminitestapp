@@ -45,14 +45,33 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
     handleSaveInventoryId,
     setListingToDelete,
     setListingToPurge,
+    deletingFromBase,
+    purgingListing,
+    relistingListing,
+    openingTraderaLogin,
+    handleRelistTradera,
+    handleOpenTraderaLogin,
   } = useProductListingsContext();
 
   const imageRetryPresets = useImageRetryPresets();
   const isBaseListing = ['baselinker', 'base-com', 'base'].includes(normalizeIntegrationSlug(listing.integration.slug));
+  const isTraderaListing = normalizeIntegrationSlug(listing.integration.slug) === 'tradera';
   const normalizedListingStatus = (listing.status ?? '').trim().toLowerCase();
   const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(normalizedListingStatus);
   const isExportRunningStatus = ['running', 'processing', 'in_progress', 'pending', 'queued'].includes(normalizedListingStatus);
   const canRetryExport = isBaseListing && !isExportRunningStatus;
+  const traderaFailureReason = (listing.failureReason ?? '').trim().toLowerCase();
+  const traderaNeedsManualLogin =
+    isTraderaListing &&
+    ['failed', 'needs_login', 'auth_required'].includes(
+      normalizedListingStatus
+    ) &&
+    (
+      traderaFailureReason.includes('login') ||
+      traderaFailureReason.includes('verification') ||
+      traderaFailureReason.includes('captcha') ||
+      traderaFailureReason.includes('auth')
+    );
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
@@ -90,8 +109,18 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
         )}
         <div className='mt-2 space-y-1 text-xs text-gray-500'>
           <p>Last export: {formatTimestamp(listing.listedAt)}</p>
+          {isTraderaListing && (
+            <>
+              <p>Expires: {formatTimestamp(listing.expiresAt)}</p>
+              <p>Next relist: {formatTimestamp(listing.nextRelistAt)}</p>
+              <p>Relist attempts: {listing.relistAttempts ?? 0}</p>
+            </>
+          )}
           <p>Created: {formatTimestamp(listing.createdAt)}</p>
           <p>Updated: {formatTimestamp(listing.updatedAt)}</p>
+          {listing.failureReason ? (
+            <p className='text-red-300/90'>Failure: {listing.failureReason}</p>
+          ) : null}
           {isBaseListing && (
             <p>Exported fields: {getExportFieldsLabel()}</p>
           )}
@@ -249,7 +278,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                 variant='outline'
                 size='sm'
                 onClick={(): void => setListingToDelete(listing.id)}
-                disabled={useProductListingsContext().deletingFromBase === listing.id}
+                disabled={deletingFromBase === listing.id}
                 className='border-red-500/40 text-red-300 hover:bg-red-500/10'
               >
                 Delete from Base.com
@@ -257,12 +286,46 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             )}
           </>
         )}
+        {isTraderaListing && (
+          <>
+            {traderaNeedsManualLogin && (
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={(): void => {
+                  void handleOpenTraderaLogin(
+                    listing.id,
+                    listing.integrationId,
+                    listing.connectionId
+                  );
+                }}
+                disabled={openingTraderaLogin === listing.id}
+                className='border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
+              >
+                {openingTraderaLogin === listing.id
+                  ? 'Waiting for manual login...'
+                  : 'Open login window'}
+              </Button>
+            )}
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={(): void => { void handleRelistTradera(listing.id); }}
+              disabled={relistingListing === listing.id}
+              className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+            >
+              {relistingListing === listing.id ? 'Queuing relist...' : 'Relist now'}
+            </Button>
+          </>
+        )}
         <Button
           type='button'
           variant='ghost'
           size='sm'
           onClick={(): void => setListingToPurge(listing.id)}
-          disabled={useProductListingsContext().purgingListing === listing.id}
+          disabled={purgingListing === listing.id}
           className='text-gray-400 hover:bg-muted/50 hover:text-red-400'
         >
           <Trash2 className='mr-1 size-3' />

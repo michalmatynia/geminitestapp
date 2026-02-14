@@ -6,13 +6,39 @@ import { jobKeys } from '@/shared/lib/query-key-exports';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
 
-import { getIntegrationJobs, getProductAiJobs, getChatbotJobs } from '../api';
+import {
+  getIntegrationJobs,
+  getProductAiJobs,
+  getChatbotJobs,
+  getTraderaQueueHealth,
+  type TraderaQueueHealthResponse,
+} from '../api';
 
 
 export function useIntegrationJobs(): UseQueryResult<ProductJob[]> {
   return useQuery({
     queryKey: jobKeys.integrations(),
     queryFn: getIntegrationJobs,
+    refetchInterval: (query: Query<ProductJob[], Error>): number | false => {
+      const jobs = query.state.data;
+      if (!Array.isArray(jobs)) return 5000;
+      const activeStatuses = new Set([
+        'queued',
+        'queued_relist',
+        'pending',
+        'running',
+        'processing',
+        'in_progress',
+      ]);
+      const hasActiveListings = jobs.some((job) =>
+        Array.isArray(job.listings) &&
+        job.listings.some((listing) =>
+          activeStatuses.has((listing.status ?? '').trim().toLowerCase())
+        )
+      );
+      return hasActiveListings ? 2500 : false;
+    },
+    refetchIntervalInBackground: true,
   });
 }
 
@@ -50,5 +76,15 @@ export function useChatbotJobs(scope: string = 'all'): UseQueryResult<{ jobs: un
   return useQuery({
     queryKey: jobKeys.chatbot(scope),
     queryFn: () => getChatbotJobs(scope),
+  });
+}
+
+export function useTraderaQueueHealth(): UseQueryResult<TraderaQueueHealthResponse> {
+  return useQuery({
+    queryKey: jobKeys.traderaQueueHealth(),
+    queryFn: getTraderaQueueHealth,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
   });
 }

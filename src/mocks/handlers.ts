@@ -349,7 +349,20 @@ export const handlers = [
 
   // Product listings integrations
   http.get('/api/integrations/product-listings', () => {
-    return HttpResponse.json([]);
+    return HttpResponse.json({});
+  }),
+
+  http.get('/api/integrations/queues/tradera', () => {
+    return HttpResponse.json({
+      ok: true,
+      mode: 'inline',
+      redisAvailable: false,
+      timestamp: new Date().toISOString(),
+      queues: {
+        listings: null,
+        relistScheduler: null,
+      },
+    });
   }),
 
   // Health check

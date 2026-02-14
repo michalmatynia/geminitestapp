@@ -43,8 +43,51 @@ export function normalizeImageStudioModelPresets(
   return normalized;
 }
 
+export const IMAGE_STUDIO_SEQUENCE_OPERATIONS = [
+  'crop_center',
+  'mask',
+  'generate',
+  'regenerate',
+  'upscale',
+] as const;
+
+export type ImageStudioSequenceOperation =
+  (typeof IMAGE_STUDIO_SEQUENCE_OPERATIONS)[number];
+
+export type ImageStudioProjectSequencingSettings = {
+  enabled: boolean;
+  trigger: 'manual';
+  operations: ImageStudioSequenceOperation[];
+  upscaleScale: number;
+};
+
+const clampImageStudioUpscaleScale = (value: number): number => {
+  const clamped = Math.max(1.1, Math.min(8, value));
+  return Number(clamped.toFixed(2));
+};
+
+export function normalizeImageStudioSequenceOperations(
+  input: ImageStudioSequenceOperation[] | null | undefined
+): ImageStudioSequenceOperation[] {
+  const allowed = new Set<ImageStudioSequenceOperation>(
+    IMAGE_STUDIO_SEQUENCE_OPERATIONS
+  );
+  const normalized: ImageStudioSequenceOperation[] = [];
+  if (Array.isArray(input)) {
+    for (const entry of input) {
+      if (!allowed.has(entry)) continue;
+      if (normalized.includes(entry)) continue;
+      normalized.push(entry);
+    }
+  }
+  return normalized.length > 0
+    ? normalized
+    : [...defaultImageStudioSettings.projectSequencing.operations];
+}
+
 export type ImageStudioSettings = {
   version: 1;
+  projectSequencing: ImageStudioProjectSequencingSettings;
   promptExtraction: {
     mode: 'programmatic' | 'gpt' | 'hybrid';
     applyAutofix: boolean;
@@ -97,6 +140,12 @@ export type ImageStudioSettings = {
 
 export const defaultImageStudioSettings: ImageStudioSettings = {
   version: 1,
+  projectSequencing: {
+    enabled: false,
+    trigger: 'manual',
+    operations: ['crop_center', 'generate', 'upscale'],
+    upscaleScale: 2,
+  },
   promptExtraction: {
     mode: 'hybrid',
     applyAutofix: true,
@@ -154,6 +203,30 @@ const nonEmptyStringOrNull = z.string().trim().min(1).nullable().optional().defa
 const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
   .object({
     version: z.literal(1).optional().default(1),
+    projectSequencing: z
+      .object({
+        enabled: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.enabled),
+        trigger: z
+          .enum(['manual'])
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.trigger),
+        operations: z
+          .array(z.enum(IMAGE_STUDIO_SEQUENCE_OPERATIONS))
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.operations),
+        upscaleScale: z
+          .number()
+          .finite()
+          .min(1.1)
+          .max(8)
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.upscaleScale),
+      })
+      .optional()
+      .default(defaultImageStudioSettings.projectSequencing),
     promptExtraction: z
       .object({
         mode: z.enum(['programmatic', 'gpt', 'hybrid']).optional().default(defaultImageStudioSettings.promptExtraction.mode),
@@ -262,8 +335,19 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
       parsedSettings.targetAi.openai.modelPresets,
       parsedSettings.targetAi.openai.model,
     );
+    const projectSequencing: ImageStudioProjectSequencingSettings = {
+      enabled: parsedSettings.projectSequencing.enabled,
+      trigger: parsedSettings.projectSequencing.trigger,
+      operations: normalizeImageStudioSequenceOperations(
+        parsedSettings.projectSequencing.operations
+      ),
+      upscaleScale: clampImageStudioUpscaleScale(
+        parsedSettings.projectSequencing.upscaleScale
+      ),
+    };
     return {
       ...parsedSettings,
+      projectSequencing,
       targetAi: {
         ...parsedSettings.targetAi,
         openai: {

@@ -249,7 +249,6 @@ export function InspectorAiProvider({
         themeId: state.currentPage.themeId,
         publishedAt: state.currentPage.publishedAt,
         slugs: state.currentPage.slugs ?? [],
-        slugIds: state.currentPage.slugIds ?? [],
       },
       sections: (state.sections ?? []).map((section: SectionInstance) => ({
         id: section.id,

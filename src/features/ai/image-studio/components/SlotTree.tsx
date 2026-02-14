@@ -298,10 +298,10 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
 
   useEffect(() => {
     if (!revealRequest?.slotId) return;
+    if (revealRequest.nonce === lastHandledRevealNonceRef.current) return;
     if (panelCollapsed) {
       setPanelCollapsed(false);
     }
-    if (revealRequest.nonce === lastHandledRevealNonceRef.current) return;
 
     const targetNodeId = toSlotMasterNodeId(revealRequest.slotId);
     const targetNodeExists = controller.nodes.some((node: MasterTreeNode) => node.id === targetNodeId);

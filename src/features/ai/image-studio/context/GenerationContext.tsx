@@ -95,24 +95,7 @@ const buildPendingLandingSlots = (runId: string, expectedOutputs: number): Gener
   }));
 };
 
-type PersistedImageStudioRunRecord = ImageStudioRunRecord & {
-  request?: {
-    prompt?: string;
-    asset?: {
-      id?: string;
-      filepath?: string;
-    };
-    mask?: {
-      type?: string;
-      invert?: boolean;
-      feather?: number;
-      polygons?: Array<Array<{ x: number; y: number }>>;
-      points?: Array<{ x: number; y: number }>;
-    } | null;
-  };
-};
-
-const buildLandingSlotsFromRun = (run: PersistedImageStudioRunRecord): GenerationLandingSlot[] => {
+const buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingSlot[] => {
   const outputs = Array.isArray(run.outputs) ? run.outputs : [];
   const slotCount = Math.max(normalizeExpectedOutputs(run.expectedOutputs, 1), outputs.length);
   return Array.from({ length: slotCount }, (_value, index) => {
@@ -369,7 +352,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
     const hydrateLatestRun = async (): Promise<void> => {
       try {
-        const response = await api.get<{ runs?: PersistedImageStudioRunRecord[] }>(
+        const response = await api.get<{ runs?: ImageStudioRunRecord[] }>(
           `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=1`,
           { signal: hydrationAbortController.signal }
         );

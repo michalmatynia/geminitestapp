@@ -46,6 +46,7 @@ const baseCategories: CategoryRecord[] = [
     parentId: null,
     notebookId: null,
     themeId: null,
+    sortIndex: 0,
     createdAt: now,
     updatedAt: now,
   },
@@ -56,6 +57,7 @@ const baseNotebooks = [
     id: 'notebook-1',
     name: 'Default',
     color: '#3b82f6',
+    defaultThemeId: null,
     createdAt: now,
     updatedAt: now,
   },
@@ -73,11 +75,14 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
   notebookId: null,
   createdAt: now,
   updatedAt: now,
+  tagIds: ['tag-1'],
+  categoryIds: ['cat-1'],
+  relatedNoteIds: [],
   tags: [
     {
       noteId: 'note-1',
       tagId: 'tag-1',
-      assignedAt: new Date(now),
+      assignedAt: now,
       tag: baseTags[0]!,
     },
   ],
@@ -95,8 +100,9 @@ const makeNote = (overrides: Partial<NoteWithRelations> = {}): NoteWithRelations
   ...overrides,
 });
 
-const renderNotesPage = () =>
-  render(
+const renderNotesPage = () => {
+  queryClient.clear();
+  return render(
     <QueryClientProvider client={queryClient}>
       <AdminLayoutProvider>
         <NoteSettingsProvider>
@@ -107,6 +113,7 @@ const renderNotesPage = () =>
       </AdminLayoutProvider>
     </QueryClientProvider>
   );
+};
 
 describe('Notes page UI', () => {
   let notes: NoteWithRelations[] = [];
@@ -162,6 +169,8 @@ describe('Notes page UI', () => {
           content: body.content || '',
           isPinned: body.isPinned ?? false,
           isArchived: body.isArchived ?? false,
+          tagIds,
+          categoryIds,
           tags: tagIds.map((tagId: string) => {
             const tag = tags.find((t) => t.id === tagId) ?? tags[0]!;
             return { noteId: 'temp', tagId, assignedAt: now, tag };
@@ -188,7 +197,7 @@ describe('Notes page UI', () => {
         }
         if (tagIds.length > 0 && tagIds[0]) {
           filtered = filtered.filter((note) =>
-            note.tags.some((tag: any) => tagIds.includes(tag.tagId))
+            note.tagIds.some((id) => tagIds.includes(id))
           );
         }
         return HttpResponse.json(filtered);
@@ -212,7 +221,7 @@ describe('Notes page UI', () => {
     const user = userEvent.setup();
 
     await user.type(
-      await screen.findByPlaceholderText('Search in All Notes...'),
+      await screen.findByPlaceholderText('Search notes...'),
       'Alpha'
     );
 
@@ -221,7 +230,7 @@ describe('Notes page UI', () => {
       expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
     });
 
-    const tagFilter = screen.getByRole('button', { name: /Filter by Tag/i });
+    const tagFilter = screen.getByRole('button', { name: /Filter by tags.../i });
     await user.click(tagFilter);
     
     // MultiSelect items are CheckboxItems in DropdownMenu

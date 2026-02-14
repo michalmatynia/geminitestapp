@@ -29,6 +29,12 @@ vi.mock('@/features/observability/server', async (importOriginal) => {
       ...data
     })),
     getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
+    ErrorSystem: {
+      logInfo: vi.fn().mockResolvedValue(undefined),
+      logWarning: vi.fn().mockResolvedValue(undefined),
+      logError: vi.fn().mockResolvedValue(undefined),
+      captureException: vi.fn().mockResolvedValue(undefined),
+    }
   };
 });
 

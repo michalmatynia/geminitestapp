@@ -22,7 +22,7 @@ describe('prismaAsset3DRepository', () => {
       mimetype: 'model/gltf-binary',
       size: 1024,
       tags: ['test', '3d'],
-      category: 'test-category',
+      categoryId: 'test-category',
       isPublic: true,
     };
 
@@ -32,6 +32,7 @@ describe('prismaAsset3DRepository', () => {
     expect(asset.name).toBe(data.name);
     expect(asset.filename).toBe(data.filename);
     expect(asset.tags).toEqual(data.tags);
+    expect(asset.categoryId).toBe('test-category');
     expect(asset.isPublic).toBe(true);
   });
 
@@ -83,7 +84,7 @@ describe('prismaAsset3DRepository', () => {
     const all = await prismaAsset3DRepository.listAssets3D();
     expect(all).toHaveLength(2);
 
-    const filtered = await prismaAsset3DRepository.listAssets3D({ category: 'cat1' });
+    const filtered = await prismaAsset3DRepository.listAssets3D({ categoryId: 'cat1' });
     expect(filtered).toHaveLength(1);
     expect(filtered[0]?.name).toBe('Asset 1');
 
@@ -104,11 +105,11 @@ describe('prismaAsset3DRepository', () => {
 
     const updated = await prismaAsset3DRepository.updateAsset3D(created.id, {
       name: 'Updated Name',
-      category: 'new-cat',
+      categoryId: 'new-cat',
     });
 
     expect(updated?.name).toBe('Updated Name');
-    expect(updated?.category).toBe('new-cat');
+    expect(updated?.categoryId).toBe('new-cat');
   });
 
   it('should update isPublic field', async () => {

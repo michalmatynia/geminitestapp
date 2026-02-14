@@ -1,10 +1,12 @@
 'use client';
 
-import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueries, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 
 import { 
+  countProducts,
   createProduct, 
+  getProducts,
   updateProduct, 
   deleteProduct 
 } from '@/features/products/api';
@@ -24,6 +26,8 @@ import { api } from '@/shared/lib/api-client';
 import type { DeleteResponse } from '@/shared/types/api/api';
 
 import {
+  getProductCountQueryKey,
+  getProductListQueryKey,
   getProductDetailQueryKey,
   invalidateProductsAndCounts,
   productsAllQueryKey,
@@ -272,7 +276,7 @@ export function useProductData({
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     if (preferencesLoaded && !hasInitialized.current) {
       timer = setTimeout(() => {
         if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
@@ -302,25 +306,31 @@ export function useProductData({
   const results = useQueries({
     queries: [
       {
-        queryKey: QUERY_KEYS.products.list(filters),
-        queryFn: (): Promise<ProductWithImages[]> => getProducts(filters),
+        queryKey: getProductListQueryKey(filters),
+        queryFn: ({ signal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
         enabled: preferencesLoaded,
-        staleTime: 10000,
+        staleTime: 10_000,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
       {
-        queryKey: QUERY_KEYS.products.count(filters),
-        queryFn: (): Promise<number> => countProducts(filters),
+        queryKey: getProductCountQueryKey(filters),
+        queryFn: ({ signal }): Promise<number> => countProducts(filters, signal),
         enabled: preferencesLoaded,
-        staleTime: 10000,
+        staleTime: 10_000,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
       },
     ],
   });
 
-  const productsQuery = results[0]!;
-  const countQuery = results[1]!;
+  const productsQuery = results[0];
+  const countQuery = results[1];
 
   const totalPages = useMemo(() => {
-    const total = (countQuery.data as number) || 0;
+    const total = countQuery.data || 0;
     return Math.ceil(total / pageSize);
   }, [countQuery.data, pageSize]);
 
@@ -358,7 +368,7 @@ export function useProductData({
   const handleSetCatalogFilter = useCallback((f: string) => setCatalogFilter(f), []);
 
   return {
-    data: (productsQuery.data as ProductWithImages[]) || [],
+    data: productsQuery.data || [],
     totalPages,
     page,
     setPage: handleSetPage,
@@ -378,8 +388,8 @@ export function useProductData({
     setEndDate: handleSetEndDate,
     catalogFilter,
     setCatalogFilter: handleSetCatalogFilter,
-    loadError: (productsQuery.error || countQuery.error) as Error | null,
-    isLoading: productsQuery.isLoading || countQuery.isLoading,
+    loadError: productsQuery.error || countQuery.error,
+    isLoading: productsQuery.isPending || countQuery.isPending,
     isFetching: productsQuery.isFetching || countQuery.isFetching,
     refresh,
   };

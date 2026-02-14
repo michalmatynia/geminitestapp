@@ -149,7 +149,7 @@ export default function AuthUsersPage(): React.JSX.Element {
   }
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
       <SectionHeader
         title='Identity Management'
         description={`Active directory console using ${provider} provider.`}

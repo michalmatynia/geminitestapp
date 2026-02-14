@@ -84,7 +84,7 @@ describe('useProductSettingsQueries invalidation', () => {
       catalogId: 'catalog-1',
       name: 'Category',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(7));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.metadata.categories('catalog-1'),
     });
@@ -105,7 +105,7 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync({ id: 'tag-1', catalogId: 'catalog-1' });
 
     expect(productSettingsApi.deleteTag).toHaveBeenCalledWith('tag-1');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(7));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.metadata.tags('catalog-1'),
     });
@@ -131,7 +131,7 @@ describe('useProductSettingsQueries invalidation', () => {
       { enabledByDefault: true },
       expect.anything()
     );
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorSettings(),
     });
@@ -272,7 +272,7 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync({ id: 'cat-1', catalogId: 'catalog-1' });
 
     expect(productSettingsApi.deleteCategory).toHaveBeenCalledWith('cat-1');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(7));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.metadata.categories('catalog-1'),
     });
@@ -306,7 +306,7 @@ describe('useProductSettingsQueries invalidation', () => {
       position: 'inside',
       catalogId: 'catalog-1',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(7));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.metadata.categories('catalog-1'),
     });
@@ -336,7 +336,7 @@ describe('useProductSettingsQueries invalidation', () => {
       catalogId: 'catalog-1',
       name: 'Featured',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(7));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.metadata.tags('catalog-1'),
     });
@@ -363,7 +363,7 @@ describe('useProductSettingsQueries invalidation', () => {
       catalogId: 'catalog-1',
       name_en: 'Length',
     });
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(7));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.metadata.parameters('catalog-1'),
     });
@@ -381,7 +381,7 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync({ id: 'param-1', catalogId: 'catalog-1' });
 
     expect(productSettingsApi.deleteParameter).toHaveBeenCalledWith('param-1');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(7));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.metadata.parameters('catalog-1'),
     });
@@ -417,7 +417,7 @@ describe('useProductSettingsQueries invalidation', () => {
       },
       expect.anything()
     );
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorPatterns(),
     });
@@ -449,7 +449,7 @@ describe('useProductSettingsQueries invalidation', () => {
       'pattern-1',
       { label: 'no-empty-name' }
     );
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorPatterns(),
     });
@@ -472,7 +472,7 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync('pattern-1');
 
     expect(productSettingsApi.deleteValidationPattern).toHaveBeenCalledWith('pattern-1');
-    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorPatterns(),
     });

@@ -166,7 +166,7 @@ describe('AI Path Run Queue Worker', () => {
         status: 'queued',
         retryCount: 1,
         errorMessage: 'Network Error',
-        nextRetryAt: expect.any(Date),
+        nextRetryAt: expect.any(String),
       }));
       expect(mockRepo.createRunEvent).toHaveBeenCalledWith(expect.objectContaining({
         runId: 'run-1',

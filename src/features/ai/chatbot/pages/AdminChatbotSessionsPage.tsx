@@ -150,7 +150,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
   ], [selectedIds, toggleSelected, editingId, draftTitle, setDraftTitle, saveTitle, cancelEditing, startEditing, deletingId, setSessionToDelete]);
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='mx-auto w-full max-w-none py-10'>
       <SectionHeader
         title='Chat Sessions'
         description='History of conversations with AI agents.'

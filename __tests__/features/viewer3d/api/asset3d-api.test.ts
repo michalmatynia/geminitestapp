@@ -48,10 +48,10 @@ describe('Asset3D API', () => {
       })
     );
 
-    await fetchAssets3D({ filename: 'test', category: 'c1', tags: ['t1', 't2'], isPublic: true });
+    await fetchAssets3D({ filename: 'test', categoryId: 'c1', tags: ['t1', 't2'], isPublic: true });
     
     expect(capturedParams!.get('filename')).toBe('test');
-    expect(capturedParams!.get('category')).toBe('c1');
+    expect(capturedParams!.get('categoryId')).toBe('c1');
     expect(capturedParams!.get('tags')).toBe('t1,t2');
     expect(capturedParams!.get('isPublic')).toBe('true');
   });

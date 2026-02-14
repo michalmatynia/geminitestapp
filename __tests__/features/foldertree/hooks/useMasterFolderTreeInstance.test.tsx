@@ -23,6 +23,9 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: vi.fn(),
 }));
+vi.mock('@/shared/ui/toast', () => ({
+  useToast: vi.fn(() => ({ toast: vi.fn() })),
+}));
 
 const createNodes = (suffix: string): MasterTreeNode[] => [
   {

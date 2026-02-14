@@ -91,7 +91,7 @@ export default function ThemesPage(): React.ReactNode {
   ], [handleDelete]);
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
       <ListPanel
         title='Design Themes'
         description='Manage color palettes, typography and component style presets for your domains.'

@@ -110,7 +110,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   const hasActiveFilters = Object.values(values).some((value) => isActiveFilterValue(value));
   const activeFilterCount = Object.values(values).filter((value) => isActiveFilterValue(value)).length;
 
-  const filterFieldsToRender = filters.filter((f) => f.type !== 'text');
+  const filterFieldsToRender = filters;
 
   return (
     <div className={cn('space-y-3', className)}>

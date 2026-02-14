@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -51,14 +51,16 @@ const createReorderNodes = (): MasterTreeNode[] => [
   },
 ];
 
-const dataTransferStub = () =>
-  ({
+const dataTransferStub = () => {
+  const store: Record<string, string> = {};
+  return {
     effectAllowed: 'move',
     dropEffect: 'move',
-    setData: vi.fn(),
-    getData: vi.fn(),
+    setData: vi.fn((key, val) => { store[key] = val; }),
+    getData: vi.fn((key) => store[key] || ''),
     types: [],
-  }) as unknown as DataTransfer;
+  } as unknown as DataTransfer;
+};
 
 function MasterTreeHarness({
   initialNodes = createNodes(),
@@ -193,8 +195,12 @@ describe('MasterFolderTree', () => {
     const dataTransfer = dataTransferStub();
     fireEvent.dragStart(dragged, { dataTransfer });
 
+    await waitFor(() => {
+      const topRootDropZone = document.querySelector('[data-master-tree-root-drop="top"]');
+      expect(topRootDropZone).toBeTruthy();
+    });
+
     const topRootDropZone = document.querySelector('[data-master-tree-root-drop="top"]');
-    expect(topRootDropZone).toBeTruthy();
     if (!topRootDropZone) return;
 
     fireEvent.dragOver(topRootDropZone, { dataTransfer });

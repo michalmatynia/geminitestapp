@@ -95,6 +95,24 @@ export type ImageStudioRunRequest = z.infer<typeof imageStudioRunRequestSchema>;
 export type ImageStudioRunExecutionResult = {
   projectId: string;
   outputs: ImageFileRecord[];
+  executionMeta: {
+    modelRequested: string;
+    modelUsed: string;
+    outputFormat: 'png' | 'jpeg' | 'webp';
+    requestedOutputCount: number;
+    responseImageCount: number;
+    inputImageCount: number;
+    usedMask: boolean;
+    requestedSize: string | null;
+    effectiveSize: string | null;
+    requestedQuality: string | null;
+    effectiveQuality: string | null;
+    requestedBackground: string | null;
+    effectiveBackground: string | null;
+    unknownParameterDrops: string[];
+    usedDalle2ModelFallback: boolean;
+    apiAttemptCount: number;
+  };
 };
 
 export const sanitizeImageStudioProjectId = (value: string): string =>
@@ -537,8 +555,11 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
 
   let response: Awaited<ReturnType<typeof client.images.edit>> | null = null;
   let dalle2ModelFallbackApplied = false;
+  const unknownParameterDrops: string[] = [];
+  let apiAttemptCount = 0;
   for (let attempt = 0; attempt < MAX_UNKNOWN_PARAMETER_RETRIES; attempt += 1) {
     try {
+      apiAttemptCount += 1;
       response = await client.images.edit(payload);
       break;
     } catch (error) {
@@ -586,6 +607,9 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
       if (unknownParameter === 'output_format') {
         effectiveFormat = 'png';
       }
+      if (!unknownParameterDrops.includes(unknownParameter)) {
+        unknownParameterDrops.push(unknownParameter);
+      }
       delete payloadRecord[unknownParameter];
     }
   }
@@ -612,5 +636,43 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     outputs.push(record);
   }
 
-  return { projectId, outputs };
+  const modelUsedRaw = payloadRecord['model'];
+  const modelUsed = typeof modelUsedRaw === 'string' && modelUsedRaw.trim()
+    ? modelUsedRaw.trim()
+    : resolvedModel;
+  const effectiveSizeRaw = payloadRecord['size'];
+  const effectiveQualityRaw = payloadRecord['quality'];
+  const effectiveBackgroundRaw = payloadRecord['background'];
+
+  return {
+    projectId,
+    outputs,
+    executionMeta: {
+      modelRequested: resolvedModel,
+      modelUsed,
+      outputFormat: effectiveFormat,
+      requestedOutputCount: Math.max(1, Math.min(10, Math.floor(settings.targetAi.openai.image.n || 1))),
+      responseImageCount: images.length,
+      inputImageCount: imageFiles.length,
+      usedMask: Boolean(payloadRecord['mask']),
+      requestedSize: settings.targetAi.openai.image.size ?? null,
+      effectiveSize:
+        typeof effectiveSizeRaw === 'string' && effectiveSizeRaw.trim()
+          ? effectiveSizeRaw
+          : null,
+      requestedQuality: settings.targetAi.openai.image.quality ?? null,
+      effectiveQuality:
+        typeof effectiveQualityRaw === 'string' && effectiveQualityRaw.trim()
+          ? effectiveQualityRaw
+          : null,
+      requestedBackground: settings.targetAi.openai.image.background ?? null,
+      effectiveBackground:
+        typeof effectiveBackgroundRaw === 'string' && effectiveBackgroundRaw.trim()
+          ? effectiveBackgroundRaw
+          : null,
+      unknownParameterDrops,
+      usedDalle2ModelFallback: dalle2ModelFallbackApplied,
+      apiAttemptCount,
+    },
+  };
 }

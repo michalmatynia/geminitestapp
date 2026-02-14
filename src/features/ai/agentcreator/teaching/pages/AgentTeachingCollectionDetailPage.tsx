@@ -104,7 +104,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
   ], [adding, deleting, setDocToDelete]);
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
       <SectionHeader
         title={collection ? collection.name : 'Collection'}
         description='Manage documents (original text + embedding vectors).'

@@ -15,22 +15,6 @@ vi.mock('@/features/cms/services/cms-domain', () => ({
   resolveCmsDomainScopeById: vi.fn(),
 }));
 
-vi.mock('@/features/observability/server', () => ({
-  logSystemEvent: vi.fn().mockResolvedValue(undefined),
-  logSystemError: vi.fn().mockResolvedValue(undefined), getErrorFingerprint: vi.fn().mockResolvedValue('test-fingerprint'),
-  logActivity: vi.fn().mockResolvedValue(undefined),
-  ActivityTypes: {
-    CMS: {
-      PAGE_CREATED: 'cms.page_created',
-      PAGE_UPDATED: 'cms.page_updated',
-      PAGE_DELETED: 'cms.page_deleted',
-    },
-  },
-  ErrorSystem: {
-    captureException: vi.fn(),
-  },
-}));
-
 describe('CMS Pages API', () => {
   const mockRepo = {
     getPages: vi.fn(),
@@ -106,7 +90,7 @@ describe('CMS Pages API', () => {
       const updateData = {
         name: 'Updated Page',
         slugIds: ['s1'],
-        components: [{ type: 'Hero', content: {} }]
+        components: [{ type: 'Hero', content: {}, order: 0 }]
       };
       const updatedPage = { id: '123', name: 'Updated Page' };
       mockRepo.updatePage.mockResolvedValue(updatedPage);

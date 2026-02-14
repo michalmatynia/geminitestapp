@@ -17,6 +17,8 @@ type CountryResponse = {
 describe('Countries API', () => {
   beforeEach(async () => {
     // Clear the database before each test
+    await prisma.product.deleteMany({});
+    await prisma.priceGroup.deleteMany({});
     await prisma.countryCurrency.deleteMany({});
     await prisma.languageCountry.deleteMany({});
     await prisma.country.deleteMany({});

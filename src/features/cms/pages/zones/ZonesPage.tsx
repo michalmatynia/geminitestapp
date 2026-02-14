@@ -167,7 +167,7 @@ export default function ZonesPage(): React.JSX.Element {
   ], [domains, handleAliasChange, handleDelete]);
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
       <SectionHeader
         title='Content Zones'
         description='Map CMS content to specific hostnames. Zones allow you to serve different layouts or localized versions of your storefront.'

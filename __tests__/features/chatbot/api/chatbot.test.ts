@@ -50,7 +50,7 @@ describe('Chatbot API', () => {
 
     expect(res.status).toBe(200);
     expect(data.models).toBeDefined();
-    expect(data.warning.code).toBe('OLLAMA_UNAVAILABLE');
+    expect(data.warning.code).toBe('MODELS_UNAVAILABLE');
   });
 
   it('should reject invalid chat payloads', async () => {

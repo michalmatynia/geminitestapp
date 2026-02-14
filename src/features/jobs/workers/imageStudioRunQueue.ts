@@ -334,6 +334,18 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
       startedAt,
       finishedAt: null,
       errorMessage: null,
+      appendHistoryEvents: [
+        {
+          type: 'running',
+          source: 'worker',
+          message: 'Generation started.',
+          payload: {
+            runId: run.id,
+            status: 'running',
+            startedAt,
+          },
+        },
+      ],
     });
 
     publishRunEvent(`image-studio:run:${run.id}`, {
@@ -355,6 +367,32 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
         outputs: result.outputs,
         finishedAt,
         errorMessage: null,
+        appendHistoryEvents: [
+          {
+            type: 'completed',
+            source: 'worker',
+            message: 'Generation completed successfully.',
+            payload: {
+              runId: run.id,
+              status: 'completed',
+              finishedAt,
+              outputCount: result.outputs.length,
+              createdSlotCount: createdSlotIds.length,
+              createdSlotIds,
+              executionMeta: result.executionMeta,
+              callbackPayload: {
+                runId: run.id,
+                status: 'completed',
+                finishedAt,
+                outputCount: result.outputs.length,
+                createdSlotCount: createdSlotIds.length,
+                createdSlotIds,
+                outputs: result.outputs,
+                executionMeta: result.executionMeta,
+              },
+            },
+          },
+        ],
       });
 
       publishRunEvent(`image-studio:run:${run.id}`, {
@@ -367,6 +405,7 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
           createdSlotCount: createdSlotIds.length,
           createdSlotIds,
           outputs: result.outputs,
+          executionMeta: result.executionMeta,
         },
         ts: Date.now(),
       });
@@ -383,6 +422,25 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
         status: 'failed',
         errorMessage: message,
         finishedAt,
+        appendHistoryEvents: [
+          {
+            type: 'failed',
+            source: 'worker',
+            message: 'Generation failed.',
+            payload: {
+              runId: run.id,
+              status: 'failed',
+              finishedAt,
+              message,
+              callbackPayload: {
+                runId: run.id,
+                status: 'failed',
+                finishedAt,
+                message,
+              },
+            },
+          },
+        ],
       });
 
       publishRunEvent(`image-studio:run:${run.id}`, {

@@ -118,7 +118,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
   ], [activeIds, toggleActive, openEditModal, handleDeleteContext]);
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='mx-auto w-full max-w-none py-10'>
       <SectionHeader
         title='Chatbot Context'
         description='Define global instructions applied to every chat.'

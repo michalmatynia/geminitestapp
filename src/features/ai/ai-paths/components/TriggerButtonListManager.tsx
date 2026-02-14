@@ -192,7 +192,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   }
 
   return (
-    <div className='rounded-md border border-border bg-gray-950/20 max-w-4xl'>
+    <div className='w-full rounded-md border border-border bg-gray-950/20'>
       <DataTable
         columns={columns}
         data={localRows}

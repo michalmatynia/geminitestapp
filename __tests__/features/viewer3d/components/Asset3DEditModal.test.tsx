@@ -17,12 +17,16 @@ const mockAsset: Asset3DRecord = {
   filepath: '/path.glb',
   mimetype: 'model/gltf-binary',
   size: 1024,
+  fileUrl: '/path.glb',
+  thumbnailUrl: null,
+  fileSize: 1024,
+  format: 'glb',
   tags: ['tag1'],
-  category: 'Category 1',
+  categoryId: 'Category 1',
   isPublic: false,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  metadata: null,
+  createdAt: '2024-01-01T12:00:00Z',
+  updatedAt: '2024-01-01T12:00:00Z',
+  metadata: {},
 };
 
 describe('Asset3DEditModal', () => {
@@ -72,7 +76,7 @@ describe('Asset3DEditModal', () => {
     const nameInput = screen.getByDisplayValue('Original Name');
     fireEvent.change(nameInput, { target: { value: 'Updated Name' } });
 
-    const saveButton = screen.getByText('Save Changes');
+    const saveButton = screen.getByText('Save');
     fireEvent.click(saveButton);
 
     await waitFor(() => expect(updateAsset3D).toHaveBeenCalled());
@@ -88,7 +92,7 @@ describe('Asset3DEditModal', () => {
 
     render(<Asset3DEditModal {...defaultProps} />);
 
-    const saveButton = screen.getByText('Save Changes');
+    const saveButton = screen.getByText('Save');
     fireEvent.click(saveButton);
 
     await waitFor(() => expect(screen.getByText('API Error')).toBeInTheDocument());

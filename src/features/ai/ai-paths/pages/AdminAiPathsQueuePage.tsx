@@ -28,7 +28,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
   }, [defaultTab]);
 
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
+    <div className='mx-auto w-full max-w-none py-10'>
       <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
         <SectionHeader
           title='Job Queue'

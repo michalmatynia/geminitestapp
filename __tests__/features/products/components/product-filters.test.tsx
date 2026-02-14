@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect } from 'vitest';
 
 import { ProductFilters } from '@/features/products/components/list/ProductFilters';
@@ -38,19 +38,19 @@ describe('ProductFilters Component', () => {
   it('renders all filter inputs', () => {
     renderWithProviders(mockContextValue);
     
-    expect(screen.getByPlaceholderText('Search by name...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by product name...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by SKU...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/min price/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/max price/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/from date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/to date/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/from/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/to/i)).toBeInTheDocument();
   });
 
-  it('calls setSearch when name input changes', () => {
+  it('calls setSearch when name input changes', async () => {
     renderWithProviders(mockContextValue);
-    const input = screen.getByPlaceholderText('Search by name...');
+    const input = screen.getByPlaceholderText('Search by product name...');
     fireEvent.change(input, { target: { value: 'laptop' } });
-    expect(mockContextValue.setSearch).toHaveBeenCalledWith('laptop');
+    await waitFor(() => expect(mockContextValue.setSearch).toHaveBeenCalledWith('laptop'), { timeout: 1000 });
   });
 
   it('calls setSku when SKU input changes', () => {

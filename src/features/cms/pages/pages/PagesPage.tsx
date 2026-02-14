@@ -187,7 +187,7 @@ export default function PagesPage(): React.ReactNode {
   ], [domainSlugSet, previewSelections, activeDomain]);
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
       <SectionHeader
         title='Content Pages'
         description='Manage layouts and routes for your marketplace domains.'

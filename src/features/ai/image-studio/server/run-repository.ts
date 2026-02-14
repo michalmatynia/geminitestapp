@@ -7,6 +7,16 @@ import type { ImageStudioRunRequest } from './run-executor';
 
 export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
 export type ImageStudioRunDispatchMode = 'queued' | 'inline';
+export type ImageStudioRunHistoryEventSource = 'api' | 'queue' | 'worker' | 'stream' | 'client';
+
+export type ImageStudioRunHistoryEvent = {
+  id: string;
+  type: string;
+  source: ImageStudioRunHistoryEventSource;
+  message: string;
+  at: string;
+  payload?: Record<string, unknown>;
+};
 
 export type ImageStudioRunRecord = {
   id: string;
@@ -21,6 +31,16 @@ export type ImageStudioRunRecord = {
   updatedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
+  historyEvents: ImageStudioRunHistoryEvent[];
+};
+
+type ImageStudioRunHistoryEventDocument = {
+  id?: string | null;
+  type?: string | null;
+  source?: string | null;
+  message?: string | null;
+  at?: string | null;
+  payload?: Record<string, unknown> | null;
 };
 
 type ImageStudioRunDocument = {
@@ -36,6 +56,7 @@ type ImageStudioRunDocument = {
   updatedAt: string;
   startedAt?: string | null;
   finishedAt?: string | null;
+  historyEvents?: ImageStudioRunHistoryEventDocument[] | null;
 };
 
 type CreateImageStudioRunInput = {
@@ -52,6 +73,13 @@ type UpdateImageStudioRunInput = {
   errorMessage?: string | null;
   startedAt?: string | null;
   finishedAt?: string | null;
+  appendHistoryEvents?: Array<{
+    type: string;
+    source: ImageStudioRunHistoryEventSource;
+    message: string;
+    payload?: Record<string, unknown>;
+    at?: string | null;
+  }>;
 };
 
 type ListImageStudioRunsInput = {
@@ -71,6 +99,17 @@ const createId = (): string => {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const toJsonSafe = <T,>(value: T): T => {
+  try {
+    return JSON.parse(JSON.stringify(value)) as T;
+  } catch {
+    return value;
+  }
+};
+
 const ensureIndexesOnce = (() => {
   let started = false;
   return async (): Promise<void> => {
@@ -88,6 +127,70 @@ const ensureIndexesOnce = (() => {
   };
 })();
 
+const normalizeHistoryEventSource = (value: unknown): ImageStudioRunHistoryEventSource => {
+  if (
+    value === 'api' ||
+    value === 'queue' ||
+    value === 'worker' ||
+    value === 'stream' ||
+    value === 'client'
+  ) {
+    return value;
+  }
+  return 'worker';
+};
+
+const toHistoryEvent = (
+  event: ImageStudioRunHistoryEventDocument | null | undefined,
+  fallbackAt: string
+): ImageStudioRunHistoryEvent | null => {
+  if (!event) return null;
+  const type =
+    typeof event.type === 'string' && event.type.trim()
+      ? event.type.trim()
+      : 'event';
+  const message =
+    typeof event.message === 'string' && event.message.trim()
+      ? event.message.trim()
+      : '';
+  const at =
+    typeof event.at === 'string' && event.at.trim()
+      ? event.at
+      : fallbackAt;
+  const payload = isRecord(event.payload) ? toJsonSafe(event.payload) : undefined;
+  return {
+    id:
+      typeof event.id === 'string' && event.id.trim()
+        ? event.id
+        : createId(),
+    type,
+    source: normalizeHistoryEventSource(event.source),
+    message,
+    at,
+    ...(payload ? { payload } : {}),
+  };
+};
+
+const buildHistoryEventDocument = (
+  event: {
+    type: string;
+    source: ImageStudioRunHistoryEventSource;
+    message: string;
+    payload?: Record<string, unknown>;
+    at?: string | null;
+  },
+  fallbackAt: string
+): ImageStudioRunHistoryEventDocument => ({
+  id: createId(),
+  type: event.type.trim() || 'event',
+  source: normalizeHistoryEventSource(event.source),
+  message: event.message.trim(),
+  at: event.at?.trim() || fallbackAt,
+  ...(event.payload && isRecord(event.payload)
+    ? { payload: toJsonSafe(event.payload) }
+    : {}),
+});
+
 const toRecord = (doc: ImageStudioRunDocument): ImageStudioRunRecord => ({
   id: doc._id,
   projectId: doc.projectId,
@@ -101,6 +204,11 @@ const toRecord = (doc: ImageStudioRunDocument): ImageStudioRunRecord => ({
   updatedAt: doc.updatedAt,
   startedAt: doc.startedAt ?? null,
   finishedAt: doc.finishedAt ?? null,
+  historyEvents: Array.isArray(doc.historyEvents)
+    ? doc.historyEvents
+      .map((event) => toHistoryEvent(event, doc.updatedAt))
+      .filter((event): event is ImageStudioRunHistoryEvent => Boolean(event))
+    : [],
 });
 
 export async function createImageStudioRun(input: CreateImageStudioRunInput): Promise<ImageStudioRunRecord> {
@@ -120,6 +228,21 @@ export async function createImageStudioRun(input: CreateImageStudioRunInput): Pr
     updatedAt: now,
     startedAt: null,
     finishedAt: null,
+    historyEvents: [
+      buildHistoryEventDocument(
+        {
+          type: 'accepted',
+          source: 'api',
+          message: 'Generation run accepted.',
+          payload: {
+            projectId: input.projectId,
+            expectedOutputs: Math.max(1, Math.min(10, Math.floor(input.expectedOutputs || 1))),
+            request: input.request,
+          },
+        },
+        now
+      ),
+    ],
   };
 
   await db.collection<ImageStudioRunDocument>(COLLECTION).insertOne(doc);
@@ -154,10 +277,30 @@ export async function updateImageStudioRun(
   if (update.startedAt !== undefined) patch.startedAt = update.startedAt;
   if (update.finishedAt !== undefined) patch.finishedAt = update.finishedAt;
 
+  const nextHistoryEvents = Array.isArray(update.appendHistoryEvents)
+    ? update.appendHistoryEvents
+      .map((event) => buildHistoryEventDocument(event, now))
+      .filter((event): event is ImageStudioRunHistoryEventDocument => Boolean(event))
+    : [];
+
   const collection = db.collection<ImageStudioRunDocument>(COLLECTION);
+  const updateDocument: {
+    $set: Partial<ImageStudioRunDocument>;
+    $push?: { historyEvents: { $each: ImageStudioRunHistoryEventDocument[] } };
+  } = {
+    $set: patch,
+  };
+  if (nextHistoryEvents.length > 0) {
+    updateDocument.$push = {
+      historyEvents: {
+        $each: nextHistoryEvents,
+      },
+    };
+  }
+
   const result = await collection.findOneAndUpdate(
     { _id: runId },
-    { $set: patch },
+    updateDocument,
     { returnDocument: 'after' }
   );
 

@@ -4,15 +4,16 @@ import {
   folderTreeInstanceValues,
   folderTreePlaceholderPresetOptions,
   getFolderTreePlaceholderClasses,
-} from '@/shared/utils/folder-tree-profiles';
+} from '@/shared/utils/folder-tree-profiles-v2';
 
-describe('folder-tree-profiles', () => {
+describe('folder-tree-profiles-v2', () => {
   it('exposes the unified folder tree instances', () => {
-    expect(folderTreeInstanceValues).toEqual([
+    expect(Array.from(folderTreeInstanceValues)).toEqual([
       'notes',
       'image_studio',
       'product_categories',
       'cms_page_builder',
+      'case_resolver',
     ]);
   });
 

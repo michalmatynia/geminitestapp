@@ -393,7 +393,7 @@ function DatabasePreviewContent(): React.JSX.Element {
     stats,
   } = useDatabasePreviewState();
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
       <SectionHeader
         title='Database Preview'
         description={

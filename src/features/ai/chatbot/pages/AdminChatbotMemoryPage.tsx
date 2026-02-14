@@ -107,7 +107,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
   ], [expanded, toggleExpanded]);
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='mx-auto w-full max-w-none py-10'>
       <SectionHeader
         title='Agent Long-Term Memory'
         description='Knowledge preserved by agents across conversations and runs.'

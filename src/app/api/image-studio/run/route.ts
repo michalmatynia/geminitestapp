@@ -55,6 +55,17 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       status: 'failed',
       errorMessage,
       finishedAt: new Date().toISOString(),
+      appendHistoryEvents: [
+        {
+          type: 'dispatch_failed',
+          source: 'queue',
+          message: 'Failed to dispatch generation run.',
+          payload: {
+            runId: run.id,
+            reason: errorMessage,
+          },
+        },
+      ],
     });
     throw operationFailedError('Failed to dispatch Image Studio run.', {
       runId: run.id,
@@ -65,6 +76,21 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const latestRun = (
     await updateImageStudioRun(run.id, {
       dispatchMode,
+      appendHistoryEvents: [
+        {
+          type: 'dispatched',
+          source: 'queue',
+          message:
+            dispatchMode === 'queued'
+              ? 'Generation run dispatched to Redis queue.'
+              : 'Generation run dispatched inline (Redis unavailable).',
+          payload: {
+            runId: run.id,
+            dispatchMode,
+            expectedOutputs: run.expectedOutputs,
+          },
+        },
+      ],
     })
   ) ?? (await getImageStudioRunById(run.id)) ?? run;
 

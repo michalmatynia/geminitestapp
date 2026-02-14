@@ -107,7 +107,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
   ], [openEdit, saving, deleting, usedByCount, setItemToDelete]);
 
   return (
-    <div className='container mx-auto py-10 space-y-6'>
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
       <SectionHeader
         title='Embedding School'
         description='Knowledge base management for AI agents. Upload documents to create searchable vector embeddings.'

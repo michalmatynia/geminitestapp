@@ -110,9 +110,11 @@ export function NotesFilters(): React.JSX.Element {
         filters={filterConfig}
         values={filterValues}
         onFilterChange={handleFilterChange}
+        onSearchChange={setSearchQuery}
         onReset={handleReset}
         showHeader={true}
         headerTitle='Note Filters'
+        searchPlaceholder='Search notes...'
       />
 
       <div className='flex flex-wrap items-center gap-4 border-t border-border/40 pt-3 px-4'>

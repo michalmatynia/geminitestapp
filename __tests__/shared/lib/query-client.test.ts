@@ -5,6 +5,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: vi.fn(),
+  isLoggableObject: (error: unknown): boolean => typeof error === 'object' && error !== null,
 }));
 
 describe('createQueryClient', () => {

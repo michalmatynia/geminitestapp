@@ -75,16 +75,16 @@ describe('AdminLayout', () => {
     const aside = screen.getByRole('complementary');
     const toggleButton = screen.getByRole('button', { name: '' }); // The chevron button
 
-    // Initially expanded
-    expect(aside).toHaveClass('w-64');
+    // Initially expanded - check for w-56 (default)
+    expect(aside.className).toContain('w-56');
 
     // Click collapse
     fireEvent.click(toggleButton);
-    expect(aside).toHaveClass('w-20');
+    expect(aside.className).toContain('w-16');
     
     // Click expand
     fireEvent.click(toggleButton);
-    expect(aside).toHaveClass('w-64');
+    expect(aside.className).toContain('w-56');
   });
 
   it('renders UserNav in the header', () => {

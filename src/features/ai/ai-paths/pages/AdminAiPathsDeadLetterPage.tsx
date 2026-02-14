@@ -176,7 +176,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const nodeStatusSummary = useMemo(() => calculateNodeStatusSummary(detail), [detail]);
 
   return (
-    <div className='container mx-auto py-10'>
+    <div className='mx-auto w-full max-w-none py-10'>
       <SectionHeader
         title='Dead Letter Queue'
         description='Runs that exceeded retry limits or failed permanently.'

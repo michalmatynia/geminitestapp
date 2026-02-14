@@ -41,7 +41,7 @@ import { useQueuedProductIds } from '@/features/products/state/queued-product-op
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
-import { api } from '@/shared/lib/api-client';
+import { ApiError, api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -251,8 +251,43 @@ export function useProductListState(): ProductListContextType & {
 
   const handleOpenEditModal = useCallback((product: ProductWithImages) => {
     setActionError(null);
-    setEditingProduct(product);
-  }, [setActionError, setEditingProduct]);
+    void queryClient
+      .fetchQuery({
+        queryKey: getProductDetailQueryKey(product.id),
+        queryFn: ({ signal }) =>
+          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}`, {
+            signal,
+            cache: 'no-store',
+            logError: false,
+          }),
+        staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
+      })
+      .then((freshProduct: ProductWithImages) => {
+        setEditingProduct(freshProduct);
+      })
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status === 404) {
+          toast('This product no longer exists. Refreshing the list.', { variant: 'warning' });
+          setRefreshTrigger((prev: number) => prev + 1);
+          return;
+        }
+        toast(
+          error instanceof Error ? error.message : 'Failed to open product editor.',
+          { variant: 'error' }
+        );
+      });
+  }, [queryClient, setActionError, setEditingProduct, toast]);
+
+  useEffect(() => {
+    if (!editingProduct?.id) return;
+    if (!editingProductDetailQuery.error) return;
+    const error = editingProductDetailQuery.error;
+    if (!(error instanceof ApiError) || error.status !== 404) return;
+
+    setEditingProduct(null);
+    toast('This product was deleted or is unavailable.', { variant: 'warning' });
+    setRefreshTrigger((prev: number) => prev + 1);
+  }, [editingProduct?.id, editingProductDetailQuery.error, setEditingProduct, toast]);
 
   const handleOpenCreate = useCallback(() => {
     setCreateDraft(null);

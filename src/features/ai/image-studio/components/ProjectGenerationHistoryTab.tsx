@@ -40,6 +40,14 @@ type HistoryRunRecord = {
   updatedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
+  historyEvents?: Array<{
+    id: string;
+    type: string;
+    source: 'api' | 'queue' | 'worker' | 'stream' | 'client';
+    message: string;
+    at: string;
+    payload?: Record<string, unknown>;
+  }>;
 };
 
 type HistoryRunsResponse = {
@@ -75,6 +83,13 @@ const formatDuration = (startedAt: string | null, finishedAt: string | null): st
   return `${minutes}m ${remainder}s`;
 };
 
+const formatBytes = (value: number): string => {
+  if (!Number.isFinite(value) || value <= 0) return '0 B';
+  if (value < 1024) return `${Math.round(value)} B`;
+  if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(2)} MB`;
+};
+
 const toPrettyJson = (value: unknown): string => {
   try {
     return JSON.stringify(value, null, 2);
@@ -83,7 +98,10 @@ const toPrettyJson = (value: unknown): string => {
   }
 };
 
-const buildRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const buildFallbackRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
   const events: RunTimelineEvent[] = [
     {
       id: `${run.id}:queued`,
@@ -136,6 +154,40 @@ const buildRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
   }
 
   return events;
+};
+
+const resolveRunTimeline = (run: HistoryRunRecord): RunTimelineEvent[] => {
+  const storedEvents = Array.isArray(run.historyEvents) ? run.historyEvents : [];
+  if (storedEvents.length === 0) {
+    return buildFallbackRunTimeline(run);
+  }
+  const mapped = storedEvents.map((event) => ({
+    id: event.id,
+    label: `${event.source} • ${event.type}`,
+    at: event.at,
+    payload: {
+      message: event.message,
+      ...(isRecord(event.payload) ? event.payload : {}),
+    },
+  }));
+  return mapped.sort((left, right) => {
+    const leftTime = left.at ? new Date(left.at).getTime() : 0;
+    const rightTime = right.at ? new Date(right.at).getTime() : 0;
+    return leftTime - rightTime;
+  });
+};
+
+const resolveExecutionMeta = (run: HistoryRunRecord): Record<string, unknown> | null => {
+  const events = Array.isArray(run.historyEvents) ? run.historyEvents : [];
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index];
+    if (!event || !isRecord(event.payload)) continue;
+    const executionMeta = event.payload['executionMeta'];
+    if (isRecord(executionMeta)) {
+      return executionMeta;
+    }
+  }
+  return null;
 };
 
 const getStatusClass = (status: HistoryRunRecord['status']): string => {
@@ -261,7 +313,8 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
         const prompt = run.request?.prompt?.trim() ?? '';
         const promptSummary = prompt.length > 120 ? `${prompt.slice(0, 120)}...` : prompt || 'No prompt';
         const isExpanded = expandedRunId === run.id;
-        const timeline = buildRunTimeline(run);
+        const timeline = resolveRunTimeline(run);
+        const executionMeta = resolveExecutionMeta(run);
         const apiResponseSnapshot = {
           runId: run.id,
           status: run.status,
@@ -314,7 +367,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                 </div>
 
                 <div>
-                  <div className='mb-1 text-xs font-semibold text-foreground'>Callback Timeline</div>
+                  <div className='mb-1 text-xs font-semibold text-foreground'>Lifecycle Events</div>
                   <div className='space-y-1'>
                     {timeline.map((event) => (
                       <div key={event.id} className='rounded border border-border/50 bg-card/50 p-2 text-xs'>
@@ -327,6 +380,37 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                     ))}
                   </div>
                 </div>
+
+                {run.outputs.length > 0 ? (
+                  <div>
+                    <div className='mb-1 text-xs font-semibold text-foreground'>Generated Outputs</div>
+                    <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'>
+                      {run.outputs.map((output, index) => (
+                        <div key={output.id} className='rounded border border-border/50 bg-card/50 p-2'>
+                          <a href={output.filepath} target='_blank' rel='noopener noreferrer'>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={output.filepath}
+                              alt={output.filename || `Output ${index + 1}`}
+                              className='h-36 w-full rounded object-cover'
+                              loading='lazy'
+                            />
+                          </a>
+                          <div className='mt-2 space-y-0.5 text-[11px] text-muted-foreground'>
+                            <div className='text-foreground'>#{index + 1} {output.filename || output.id}</div>
+                            <div>File ID: {output.id}</div>
+                            <div>Size: {formatBytes(output.size)}</div>
+                            <div>Resolution: {output.width ?? '?'} x {output.height ?? '?'}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className='rounded border border-border/50 bg-card/50 p-2 text-xs text-muted-foreground'>
+                    No output files were recorded for this run.
+                  </div>
+                )}
 
                 <div className='grid gap-3 lg:grid-cols-2'>
                   <div>
@@ -341,6 +425,13 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                       {toPrettyJson(apiResponseSnapshot)}
                     </pre>
                   </div>
+                </div>
+
+                <div>
+                  <div className='mb-1 text-xs font-semibold text-foreground'>Execution Metadata</div>
+                  <pre className='max-h-52 overflow-auto rounded border border-border/60 bg-black/30 p-2 text-[11px] text-gray-200'>
+                    {toPrettyJson(executionMeta ?? { note: 'No execution metadata recorded.' })}
+                  </pre>
                 </div>
               </div>
             ) : null}

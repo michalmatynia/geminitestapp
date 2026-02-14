@@ -35,6 +35,38 @@ export interface RunStudioPayload {
 
 export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
 
+export interface ImageStudioRunHistoryEvent {
+  id: string;
+  type: string;
+  source: 'api' | 'queue' | 'worker' | 'stream' | 'client';
+  message: string;
+  at: string;
+  payload?: Record<string, unknown>;
+}
+
+export interface ImageStudioRunRequestRecord {
+  projectId?: string;
+  prompt?: string;
+  asset?: { filepath?: string; id?: string };
+  referenceAssets?: Array<{ filepath?: string; id?: string }>;
+  mask?:
+    | {
+      type: 'polygon';
+      points: Array<{ x: number; y: number }>;
+      closed?: boolean;
+      invert?: boolean;
+      feather?: number;
+    }
+    | {
+      type: 'polygons';
+      polygons: Array<Array<{ x: number; y: number }>>;
+      invert?: boolean;
+      feather?: number;
+    }
+    | null;
+  studioSettings?: Record<string, unknown>;
+}
+
 export interface RunStudioEnqueueResult {
   runId: string;
   status: ImageStudioRunStatus;
@@ -47,6 +79,7 @@ export interface ImageStudioRunRecord {
   projectId: string;
   status: ImageStudioRunStatus;
   dispatchMode: 'queued' | 'inline' | null;
+  request: ImageStudioRunRequestRecord;
   expectedOutputs: number;
   outputs: ImageFileRecord[];
   errorMessage: string | null;
@@ -54,6 +87,7 @@ export interface ImageStudioRunRecord {
   updatedAt: string;
   startedAt: string | null;
   finishedAt: string | null;
+  historyEvents: ImageStudioRunHistoryEvent[];
 }
 
 export interface StudioAssetImportResult {

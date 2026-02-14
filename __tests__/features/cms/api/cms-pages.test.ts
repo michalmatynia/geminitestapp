@@ -178,8 +178,8 @@ describe('CMS Pages API', () => {
         slugIds: [slug.id],
         themeId: theme.id,
         components: [
-          { type: 'hero', content: { title: 'Hello World' } },
-          { type: 'text', content: { body: 'Lorem ipsum' } }
+          { type: 'hero', content: { title: 'Hello World' }, order: 0 },
+          { type: 'text', content: { body: 'Lorem ipsum' }, order: 1 }
         ]
       };
 
@@ -200,7 +200,7 @@ describe('CMS Pages API', () => {
       const updatedPage = await cmsRepository.getPageById(page.id);
       expect(updatedPage.components.length).toBe(2);
       expect(updatedPage.slugs.length).toBe(1);
-      expect(updatedPage.slugs[0].slug.slug).toBe('updated-slug');
+      expect(updatedPage.slugs[0].slug).toBe('updated-slug');
       expect(updatedPage.themeId).toBe(theme.id);
     });
 

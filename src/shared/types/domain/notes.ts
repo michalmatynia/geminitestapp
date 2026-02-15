@@ -21,7 +21,7 @@ import type {
   NoteCategoryRelationDto,
   NoteRelationDto,
   RelatedNoteDto
-} from '../dtos';
+} from '../../contracts/notes';
 
 export type {
   NoteDto,

@@ -157,6 +157,6 @@ export const prismaAsset3DRepository: Asset3DRepository = {
       select: { tags: true },
     });
     const allTags = assets.flatMap((a: { tags: string[] }) => a.tags);
-    return [...new Set(allTags)];
+    return Array.from(new Set(allTags));
   },
 };

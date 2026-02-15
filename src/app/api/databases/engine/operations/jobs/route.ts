@@ -27,7 +27,7 @@ const isDatabaseEngineOperationJob = (job: DatabaseEngineOperationJobRecord): bo
 const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOperationJobDto => {
   const payload =
     job['payload'] && typeof job['payload'] === 'object'
-      ? (job['payload'] as Record<string, unknown>)
+      ? (job['payload'])
       : null;
   const result =
     job['result'] && typeof job['result'] === 'object'
@@ -57,18 +57,18 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
     dbType,
     direction,
     source,
-    createdAt: new Date(job['createdAt'] as string).toISOString(),
+    createdAt: new Date(job['createdAt']).toISOString(),
     updatedAt:
-      typeof job['updatedAt'] === 'string' && (job['updatedAt'] as string).length > 0
-        ? new Date(job['updatedAt'] as string).toISOString()
+      typeof job['updatedAt'] === 'string' && (job['updatedAt']).length > 0
+        ? new Date(job['updatedAt']).toISOString()
         : null,
     startedAt:
-      typeof job['startedAt'] === 'string' && (job['startedAt'] as string).length > 0
-        ? (job['startedAt'] as string)
+      typeof job['startedAt'] === 'string' && (job['startedAt']).length > 0
+        ? (job['startedAt'])
         : null,
     finishedAt:
-      typeof job['finishedAt'] === 'string' && (job['finishedAt'] as string).length > 0
-        ? (job['finishedAt'] as string)
+      typeof job['finishedAt'] === 'string' && (job['finishedAt']).length > 0
+        ? (job['finishedAt'])
         : null,
     errorMessage: (job['errorMessage'] as string) ?? null,
     resultSummary,

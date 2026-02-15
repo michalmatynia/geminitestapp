@@ -25,11 +25,11 @@ import {
   useToast
 } from '@/shared/ui';
 
+import { MockSignInModal } from '../../components/admin/MockSignInModal';
+import { UserCreateModal } from '../../components/admin/UserCreateModal';
+import { UserEditModal } from '../../components/admin/UserEditModal';
 import { useUsersState } from '../../hooks/useUsersState';
 
-import { UserEditModal } from '../../components/admin/UserEditModal';
-import { UserCreateModal } from '../../components/admin/UserCreateModal';
-import { MockSignInModal } from '../../components/admin/MockSignInModal';
 
 import type { AuthUserSummary } from '../../types';
 import type { AuthRole } from '../../utils/auth-management';

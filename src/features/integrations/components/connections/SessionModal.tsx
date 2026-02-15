@@ -3,8 +3,8 @@
 
 
 import { SessionCookie } from '@/features/integrations/types/integrations-ui';
-import { AppModal, Badge } from '@/shared/ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
+import { AppModal, Badge } from '@/shared/ui';
 
 interface SessionModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;

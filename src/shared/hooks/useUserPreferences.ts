@@ -13,7 +13,7 @@ import {
   userPreferencesUpdateSchema,
 } from '@/shared/validations/user-preferences';
 
-const userPreferencesQueryKey = QUERY_KEYS.userPreferences;
+const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
 
 const hasPreferenceChanged = (
   current: UserPreferences | undefined,

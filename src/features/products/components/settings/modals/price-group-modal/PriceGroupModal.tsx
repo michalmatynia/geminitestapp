@@ -30,7 +30,7 @@ export function PriceGroupModal({
 
   const handleSave = async (): Promise<void> => {
     await handleFormSubmit();
-    onSuccess();
+    onSuccess?.();
   };
 
   return (

@@ -168,7 +168,7 @@ export function CatalogModal({
   const handleSubmit = async (): Promise<void> => {
     await handleFormSubmit();
     if (!error) {
-      onSuccess();
+      onSuccess?.();
     }
   };
 

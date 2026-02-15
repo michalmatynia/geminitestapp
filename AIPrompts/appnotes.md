@@ -10,6 +10,12 @@ TEST Exploder AGAINST DIFFERENT PROMPTS
 Prompts not getting saved in project, I need one place to retain prompt
 Image Generation need proper history
 
+
+Case resolver, law in a specialised textual list
+Address groups linked to persons via many to many relations ships but as a separate collection
+Programmable Playwright, program explosion capability and step by step execution
+Address Validation goes via prompt exploder
+in CMS everything can have file uploadeable background
 ---
 * Backup MongoDB
 

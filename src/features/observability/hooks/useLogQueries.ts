@@ -1,13 +1,13 @@
 'use client';
 
+import type { ActivityLogDto } from '@/shared/contracts/system';
+import { api } from '@/shared/lib/api-client';
 import {
   createSingleQuery,
 } from '@/shared/lib/query-factories';
-import { api } from '@/shared/lib/api-client';
 import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import type { SingleQuery } from '@/shared/types/query-result-types';
-import type { ActivityLogDto } from '@/shared/contracts/system';
 
 export type LogFilters = {
   page?: number;

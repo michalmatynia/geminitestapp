@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
+import React from 'react';
 
-import { AppModal, StatusBadge } from '@/shared/ui';
-import type { EntityModalProps } from '@/shared/types/modal-props';
 import { getStatusIcon } from '@/features/jobs/utils/job-icons';
+import type { EntityModalProps } from '@/shared/types/modal-props';
+import { AppModal, StatusBadge } from '@/shared/ui';
 
 interface ExportJobDetailModalProps extends EntityModalProps<any> {}
 

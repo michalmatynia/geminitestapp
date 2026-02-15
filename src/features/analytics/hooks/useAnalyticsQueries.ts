@@ -4,11 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/features/analytics/api';
 import { api } from '@/shared/lib/api-client';
-import { analyticsKeys } from '@/shared/lib/query-key-exports';
 import {
   createSingleQuery,
   createCreateMutation,
 } from '@/shared/lib/query-factories';
+import { analyticsKeys } from '@/shared/lib/query-key-exports';
 import type { AnalyticsScope, AiInsightRecord, AnalyticsSummaryDto } from '@/shared/types';
 import type { SingleQuery, MutationResult } from '@/shared/types/query-result-types';
 

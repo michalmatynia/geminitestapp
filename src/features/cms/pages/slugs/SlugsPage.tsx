@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState, useCallback } from 'react';
 
+import { AttachSlugModal } from '@/features/cms/components/slugs/AttachSlugModal';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import {
   useCmsAllSlugs,
@@ -31,7 +32,6 @@ import {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
-import { AttachSlugModal } from '@/features/cms/components/slugs/AttachSlugModal';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export default function SlugsPage(): React.JSX.Element {

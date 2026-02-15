@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { AppModal, Button } from '@/shared/ui';
+
 import type { ModalStateProps } from '@/shared/types/modal-props';
+import { AppModal, Button } from '@/shared/ui';
+
 import type { ImageStudioSlotRecord } from '../../types';
 
 interface SlotInlineEditModalProps extends ModalStateProps {

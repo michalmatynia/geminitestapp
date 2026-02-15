@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { AppModal, Button } from '@/shared/ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
+import { AppModal, Button } from '@/shared/ui';
 
 import { DraftCreator } from './DraftCreator';
 

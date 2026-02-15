@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import { AppModal, Button, Input, Label } from '@/shared/ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
+import { AppModal, Button, Input, Label } from '@/shared/ui';
 
 interface RenamePathModalProps extends ModalStateProps {
   draftName: string;

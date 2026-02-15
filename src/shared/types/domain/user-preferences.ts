@@ -1,4 +1,4 @@
-import type { UserPreferencesDto, UpdateUserPreferencesDto, JsonValue } from '../dtos';
+import type { UserPreferencesDto, UpdateUserPreferencesDto, JsonValue } from '../../contracts/auth';
 
 export type { UserPreferencesDto, UpdateUserPreferencesDto, JsonValue };
 

@@ -6,6 +6,7 @@ import type {
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,
 } from '@/features/ai/ai-paths/lib';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 import {
   Button,
   Dialog,
@@ -21,7 +22,6 @@ import {
   SelectValue,
   Textarea,
 } from '@/shared/ui';
-import type { ModalStateProps } from '@/shared/types/modal-props';
 
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';

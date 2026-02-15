@@ -9,7 +9,6 @@ import { integrationKeys } from '@/shared/lib/query-key-exports';
 import type { ListQuery } from '@/shared/types/query-result-types';
 
 const PRODUCT_LISTINGS_STALE_TIME_MS = 30_000;
-const PRODUCT_LISTINGS_GC_TIME_MS = 5 * 60 * 1000;
 
 export const productListingsQueryKey = (productId: string): readonly unknown[] =>
   integrationKeys.listings(productId);

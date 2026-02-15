@@ -1,6 +1,6 @@
-import type { 
-  AnalyticsEventDto, 
-  AnalyticsSummaryDto, 
+import type {
+  AnalyticsEventDto,
+  AnalyticsSummaryDto,
   CreateAnalyticsEventDto,
   AnalyticsScopeDto,
   AnalyticsEventTypeDto,
@@ -8,8 +8,7 @@ import type {
   AnalyticsViewportDto,
   AnalyticsScreenDto,
   AnalyticsConnectionInfoDto
-} from '../dtos';
-
+} from '../../contracts/analytics';
 export type { 
   AnalyticsEventDto, 
   AnalyticsSummaryDto, 

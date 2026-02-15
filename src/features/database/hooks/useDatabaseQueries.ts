@@ -2,12 +2,6 @@
 
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 
-import {
-  createListQuery,
-  createSingleQuery,
-  createCreateMutation,
-  createUpdateMutation,
-} from '@/shared/lib/query-factories';
 import type {
   DatabaseBackupFileDto as DatabaseInfoResponse,
   DatabaseBackupOperationResponseDto as DatabaseBackupResponse,
@@ -24,6 +18,12 @@ import type {
 } from '@/shared/contracts/database';
 import { ApiError } from '@/shared/lib/api-client';
 import { resolvePayloadErrorMessage, unwrapMutationResult } from '@/shared/lib/mutation-error-handler';
+import {
+  createListQuery,
+  createSingleQuery,
+  createCreateMutation,
+  createUpdateMutation,
+} from '@/shared/lib/query-factories';
 import { dbKeys } from '@/shared/lib/query-key-exports';
 import type { 
   ListQuery, 
@@ -92,7 +92,7 @@ export function useDatabaseBackups(
 export function useCreateBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   DatabaseType
-> {
+  > {
   const queryClient = useQueryClient();
   return createCreateMutation({
     mutationFn: (dbType: DatabaseType) => createDatabaseBackup(dbType),
@@ -107,7 +107,7 @@ export function useCreateBackupMutation(): MutationResult<
 export function useRestoreBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseRestoreResponse>,
   { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }
-> {
+  > {
   return createCreateMutation({
     mutationFn: (variables: {
       dbType: DatabaseType;
@@ -124,7 +124,7 @@ export function useRestoreBackupMutation(): MutationResult<
 export function useUploadBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   { dbType: DatabaseType; file: File; onProgress?: (loaded: number, total?: number) => void }
-> {
+  > {
   const queryClient = useQueryClient();
   return createCreateMutation({
     mutationFn: (variables: {
@@ -143,7 +143,7 @@ export function useUploadBackupMutation(): MutationResult<
 export function useDeleteBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
   { dbType: DatabaseType; backupName: string }
-> {
+  > {
   const queryClient = useQueryClient();
   return createCreateMutation({
     mutationFn: (variables: { dbType: DatabaseType; backupName: string }) =>
@@ -206,7 +206,7 @@ export function useSqlQueryMutation(): MutationResult<
     update?: Record<string, unknown>;
     pipeline?: Record<string, unknown>[];
   }
-> {
+  > {
   return createCreateMutation({
     mutationFn: (input) => executeSqlQuery(input),
   });
@@ -249,7 +249,7 @@ export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusRespo
 
 export function useDatabaseBackupSchedulerStatus(): SingleQuery<
   DatabaseEngineBackupSchedulerStatusResponse
-> {
+  > {
   return createSingleQuery({
     queryKey: dbKeys.engineBackupSchedulerStatus(),
     queryFn: fetchDatabaseEngineBackupSchedulerStatus,
@@ -276,7 +276,7 @@ export function useDatabaseEngineOperationsJobs(
 export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
   DatabaseEngineBackupSchedulerTickResponse,
   void
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutation({
     mutationFn: runDatabaseEngineBackupSchedulerTick,
@@ -291,7 +291,7 @@ export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
 export function useDatabaseBackupRunNowMutation(): UpdateMutation<
   DatabaseEngineBackupRunNowResponse,
   { dbType: 'mongodb' | 'postgresql' | 'all' }
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutation({
     mutationFn: (variables) =>
@@ -310,7 +310,7 @@ export function useDatabaseBackupRunNowMutation(): UpdateMutation<
 export function useCancelDatabaseEngineOperationJobMutation(): MutationResult<
   { success: boolean; job: unknown },
   { jobId: string }
-> {
+  > {
   const queryClient = useQueryClient();
   return createCreateMutation({
     mutationFn: (variables: { jobId: string }) =>
@@ -343,7 +343,7 @@ export function useDatabaseEngineProviderPreview(
 export function useCopyCollectionMutation(): MutationResult<
   CollectionCopyResult,
   { collection: string; direction: 'mongo_to_prisma' | 'prisma_to_mongo' }
-> {
+  > {
   const queryClient = useQueryClient();
   return createCreateMutation({
     mutationFn: async (variables: {
@@ -367,7 +367,7 @@ export function useCopyCollectionMutation(): MutationResult<
 export function useCreateJsonBackupMutation(): UpdateMutation<
   DatabaseBackupResponse,
   void
-> {
+  > {
   const queryClient = useQueryClient();
   return createUpdateMutation({
     mutationFn: async (): Promise<DatabaseBackupResponse> => {
@@ -385,7 +385,7 @@ export function useCreateJsonBackupMutation(): UpdateMutation<
 export function useRestoreJsonBackupMutation(): UpdateMutation<
   DatabaseRestoreResponse,
   string
-> {
+  > {
   return createUpdateMutation({
     mutationFn: async (backupName: string): Promise<DatabaseRestoreResponse> => {
       const result = await restoreJsonBackup(backupName);

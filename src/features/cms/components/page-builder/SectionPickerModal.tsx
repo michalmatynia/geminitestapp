@@ -4,10 +4,10 @@ import { Trash2 } from 'lucide-react';
 import React, { createContext, useContext, useMemo } from 'react';
 
 import type { SectionDefinition } from '@/features/cms/types/page-builder';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 import { AppModal, Button } from '@/shared/ui';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
-import type { ModalStateProps } from '@/shared/types/modal-props';
 
 interface SectionPickerModalProps extends ModalStateProps {
   primitives: SectionDefinition[];

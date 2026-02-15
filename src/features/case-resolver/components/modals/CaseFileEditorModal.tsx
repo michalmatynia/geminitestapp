@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import { AppModal, Button } from '@/shared/ui';
 import type { EntityModalProps } from '@/shared/types/modal-props';
+import { AppModal, Button } from '@/shared/ui';
+
 import type { CaseResolverFileEditDraft } from '../../types';
 
 interface CaseFileEditorModalProps extends EntityModalProps<CaseResolverFileEditDraft> {

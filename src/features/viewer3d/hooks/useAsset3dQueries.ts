@@ -6,16 +6,16 @@ import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } fr
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
 import { api } from '@/shared/lib/api-client';
 import {
-  invalidateAsset3d,
-  invalidateAsset3dDetail,
-} from '@/shared/lib/query-invalidation';
-import { viewer3dKeys as asset3dKeys } from '@/shared/lib/query-key-exports';
-import {
   createListQuery,
   createSingleQuery,
   createDeleteMutation,
   createUpdateMutation,
 } from '@/shared/lib/query-factories';
+import {
+  invalidateAsset3d,
+  invalidateAsset3dDetail,
+} from '@/shared/lib/query-invalidation';
+import { viewer3dKeys as asset3dKeys } from '@/shared/lib/query-key-exports';
 import type { 
   ListQuery, 
   SingleQuery, 
@@ -49,6 +49,7 @@ export function useAsset3DTags(): ListQuery<string> {
 
 export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
   return createSingleQuery({
+    id,
     queryKey: asset3dKeys.detail(id),
     queryFn: () => api.get<Asset3DRecord>(`/api/assets3d/${id}`),
     options: {

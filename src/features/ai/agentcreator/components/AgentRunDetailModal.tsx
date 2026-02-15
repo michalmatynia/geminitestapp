@@ -9,8 +9,8 @@ import type {
   AgentBrowserLog,
   AgentSnapshot,
 } from '@/shared/types/domain/chatbot';
-import { Button, Tabs, TabsContent, TabsList, TabsTrigger, AppModal } from '@/shared/ui';
 import type { EntityModalProps } from '@/shared/types/modal-props';
+import { Button, Tabs, TabsContent, TabsList, TabsTrigger, AppModal } from '@/shared/ui';
 
 interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {
   agentSnapshots: AgentSnapshot[];

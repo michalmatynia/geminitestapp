@@ -2,12 +2,12 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 import {
   createListQuery,
   createSingleQuery,
   createCreateMutation,
 } from '@/shared/lib/query-factories';
+import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import type { 

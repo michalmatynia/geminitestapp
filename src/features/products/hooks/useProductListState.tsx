@@ -1,6 +1,6 @@
 'use client';
 
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -25,7 +25,6 @@ import {
 import {
   getProductDetailQueryKey,
   getProductListQueryKey,
-  inactiveProductDetailQueryKey,
 } from '@/features/products/hooks/productCache';
 import { useCatalogSync } from '@/features/products/hooks/useCatalogSync';
 import {
@@ -39,7 +38,7 @@ import { useProductOperations } from '@/features/products/hooks/useProductOperat
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
 import type { ProductCategory, ProductWithImages } from '@/features/products/types';
-import type { ProductDraft } from '@/features/products/types/drafts';
+import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { createSingleQuery } from '@/shared/lib/query-factories';
@@ -167,7 +166,7 @@ export function useProductListState(): ProductListContextType & {
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [jobCompletionHighlights, setJobCompletionHighlights] = useState<Record<string, number>>({});
-  const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
+  const [createDraft, setCreateDraft] = useState<ProductDraftDto | null>(null);
   const [productToDelete, setProductToDelete] = useState<ProductWithImages | null>(null);
   const previousQueuedProductIdsRef = useRef<Set<string> | null>(null);
   const previousListingBadgeStatusesRef = useRef<Map<string, string> | null>(null);
@@ -207,7 +206,7 @@ export function useProductListState(): ProductListContextType & {
   }, [queryClient]);
 
   const { data: allDrafts = [] } = useDraftQueries();
-  const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraft) => d.active !== false), [allDrafts]);
+  const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraftDto) => d.active !== false), [allDrafts]);
 
   const queuedProductIds = useQueuedProductIds();
 
@@ -524,7 +523,7 @@ export function useProductListState(): ProductListContextType & {
       try {
         const draft = await queryClient.fetchQuery({
           queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
-          queryFn: () => api.get<ProductDraft>(`/api/drafts/${draftId}`)
+          queryFn: () => api.get<ProductDraftDto>(`/api/drafts/${draftId}`)
         });
         setCreateDraft(draft);
         handleOpenCreateFromDraft(draft);

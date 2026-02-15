@@ -13,7 +13,7 @@ import {
   invalidateImageStudioSlots,
 } from '@/shared/lib/query-invalidation';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
-import type { CreateMutation, UpdateMutation, DeleteMutationResult } from '@/shared/types/query-result-types';
+import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/types/query-result-types';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
@@ -111,7 +111,7 @@ export function useCreateStudioProject(): CreateMutation<string, string> {
   });
 }
 
-export function useDeleteStudioProject(): DeleteMutationResult<string, string> {
+export function useDeleteStudioProject(): DeleteMutation<string, string> {
   const queryClient = useQueryClient();
   return createDeleteMutation<string, string>({
     mutationFn: async (id: string): Promise<string> => {
@@ -162,7 +162,7 @@ export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStud
   });
 }
 
-export function useDeleteStudioSlot(projectId: string): DeleteMutationResult<void, string> {
+export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, string> {
   const queryClient = useQueryClient();
   return createDeleteMutation<void, string>({
     mutationFn: (id: string) => {

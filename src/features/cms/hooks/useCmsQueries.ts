@@ -68,6 +68,7 @@ export function useCmsPages(domainId?: string | null): ListQuery<PageSummary> {
 
 export function useCmsPage(id?: string): SingleQuery<Page> {
   return createSingleQuery({
+    id,
     queryKey: id ? cmsKeys.pages.detail(id) : cmsKeys.pages.detail(''),
     queryFn: () => fetchPage(id as string),
     options: {
@@ -147,6 +148,7 @@ export function useCmsAllSlugs(enabled: boolean = true): ListQuery<Slug> {
 
 export function useCmsSlug(id?: string, domainId?: string): SingleQuery<Slug> {
   return createSingleQuery({
+    id,
     queryKey: id ? cmsKeys.slugs.detailWithDomain(id, domainId) : cmsKeys.slugs.detail(''),
     queryFn: () => fetchSlug(id as string, domainId),
     options: {
@@ -157,6 +159,7 @@ export function useCmsSlug(id?: string, domainId?: string): SingleQuery<Slug> {
 
 export function useCmsSlugDomains(id?: string): SingleQuery<{ domainIds: string[] }> {
   return createSingleQuery({
+    id,
     queryKey: id ? cmsKeys.slugs.domains(id) : cmsKeys.slugs.domains(''),
     queryFn: () => fetchSlugDomains(id as string),
     options: {
@@ -302,6 +305,7 @@ export function useCmsThemes(): ListQuery<CmsTheme> {
 
 export function useCmsTheme(id?: string): SingleQuery<CmsTheme> {
   return createSingleQuery({
+    id,
     queryKey: id ? cmsKeys.themes.detail(id) : cmsKeys.themes.detail(''),
     queryFn: () => fetchTheme(id as string),
     options: {

@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { 
   Button, 
   Input, 
@@ -11,7 +12,7 @@ import {
   Tag, 
   FormField,
 } from '@/shared/ui';
-import type { EntityModalProps } from '@/shared/types/modal-props';
+
 import type { ContextDraft } from '../hooks/useChatbotContextState';
 
 interface ChatbotContextModalProps extends EntityModalProps<ContextDraft> {

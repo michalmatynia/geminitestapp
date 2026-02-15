@@ -1,12 +1,12 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import React from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
-import { AppModal, Button } from '@/shared/ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import dynamic from 'next/dynamic';
+import { AppModal, Button } from '@/shared/ui';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,

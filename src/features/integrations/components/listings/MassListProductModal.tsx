@@ -6,6 +6,7 @@ import {
   ListingSettingsProvider,
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 import { FormModal } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';
@@ -13,7 +14,6 @@ import { ExportLogViewer } from './ExportLogViewer';
 import { useMassListForm } from './hooks/useMassListForm';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { MassListProductModalViewProvider, useMassListProductModalViewContext } from './mass-list-modal/context/MassListProductModalViewContext';
-import type { ModalStateProps } from '@/shared/types/modal-props';
 
 interface MassListProductModalProps extends ModalStateProps {
   productIds: string[];

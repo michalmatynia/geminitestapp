@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { logClientError } from '@/features/observability';
 import { getProductListQueryKey } from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/features/products/types';
-import type { ProductDraft } from '@/features/products/types/drafts';
+import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
@@ -24,7 +24,7 @@ export function useProductOperations(
   actionError: string | null;
   setActionError: React.Dispatch<React.SetStateAction<string | null>>;
   handleOpenCreateModal: () => Promise<void>;
-  handleOpenCreateFromDraft: (draft: ProductDraft) => void;
+  handleOpenCreateFromDraft: (draft: ProductDraftDto) => void;
   handleCreateSuccess: (info?: { queued?: boolean }) => void;
   handleEditSuccess: (info?: { queued?: boolean }) => void;
   handleEditSave: (savedProduct: ProductWithImages) => void;
@@ -71,7 +71,7 @@ export function useProductOperations(
     setIsCreateOpen(true);
   };
 
-  const handleOpenCreateFromDraft = (draft: ProductDraft): void => {
+  const handleOpenCreateFromDraft = (draft: ProductDraftDto): void => {
     const draftSku =
       typeof draft.sku === 'string' ? draft.sku.trim().toUpperCase() : '';
     setInitialSku(draftSku);

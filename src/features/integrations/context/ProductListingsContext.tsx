@@ -151,7 +151,7 @@ export function ProductListingsProvider({
   const handlePurgeListing = useCallback(async (listingId: string) => {
     try {
       setPurgingListing(listingId);
-      await purgeListingMutation.mutateAsync({ listingId });
+      await purgeListingMutation.mutateAsync(listingId);
       onListingsUpdated?.();
     } catch (err: unknown) {
       logClientError(err, { context: { source: 'ProductListingsContext', action: 'purgeListing', listingId, productId: product.id } });

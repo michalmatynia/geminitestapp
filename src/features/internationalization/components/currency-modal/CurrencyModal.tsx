@@ -23,7 +23,7 @@ export function CurrencyModal({
 
   const handleSave = async (): Promise<void> => {
     await handleFormSubmit();
-    onSuccess();
+    onSuccess?.();
   };
 
   return (

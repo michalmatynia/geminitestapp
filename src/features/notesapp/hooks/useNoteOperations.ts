@@ -5,7 +5,7 @@ import type { UseNoteOperationsProps } from '@/features/notesapp/types/notes-hoo
 import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import { ApiError } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { NoteWithRelations, CategoryWithChildren } from '@/shared/types/domain/notes';
+import type { NoteWithRelations, CategoryWithChildren, NoteRelationWithTarget } from '@/shared/types/domain/notes';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { findTreeNodeById, findTreeNodeParentId } from '@/shared/utils/tree-operations';
 
@@ -127,7 +127,7 @@ export function useNoteOperations({
         const numbers = existingNotes
           .map((n: NoteWithRelations) => {
             const match = n.title.match(/\((\d+)\)$/);
-            return match ? parseInt(match[1]!, 10) : 0;
+            return match ? parseInt(match[1], 10) : 0;
           })
           .filter((n: number) => n > 0);
         const maxNumber = Math.max(0, ...numbers);
@@ -312,8 +312,8 @@ export function useNoteOperations({
 
       const sourceRelatedIds =
         sourceNote.relationsFrom
-          ?.map((rel) => rel.targetNote?.id)
-          .filter((rid): rid is string => !!rid) || [];
+          ?.map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
+          .filter((rid: string | undefined): rid is string => !!rid) || [];
       const alreadyLinked = sourceRelatedIds.includes(targetNoteId);
       if (alreadyLinked) {
         toast('Notes are already linked', { variant: 'info' });
@@ -324,8 +324,8 @@ export function useNoteOperations({
 
       const targetRelatedIds =
         targetNote.relationsFrom
-          ?.map((rel) => rel.targetNote?.id)
-          .filter((rid): rid is string => !!rid) || [];
+          ?.map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
+          .filter((rid: string | undefined): rid is string => !!rid) || [];
       const nextTargetIds = Array.from(new Set([...targetRelatedIds, sourceNoteId]));
 
       await Promise.all([

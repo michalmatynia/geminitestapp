@@ -10,10 +10,10 @@ import type {
   TagMappingWithDetails,
 } from '@/features/integrations/types/tag-mapping';
 import { api } from '@/shared/lib/api-client';
-import { marketplaceKeys } from '@/shared/lib/query-key-exports';
 import {
   createListQuery,
 } from '@/shared/lib/query-factories';
+import { marketplaceKeys } from '@/shared/lib/query-key-exports';
 import type { ListQuery } from '@/shared/types/query-result-types';
 
 export function useExternalCategories(connectionId: string): ListQuery<ExternalCategory> {

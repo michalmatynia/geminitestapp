@@ -16,7 +16,7 @@ import type { UndoAction } from '@/features/notesapp/types/notes-hooks';
 import type { NoteSettings } from '@/features/notesapp/types/notes-settings';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
-import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord } from '@/shared/types/domain/notes';
+import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord, NoteRelationWithSource, NoteRelationWithTarget } from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -263,11 +263,11 @@ export function NotesAppProvider({
         selectedNote.relations?.map((rel: { id: string }): string => rel.id) ||
         [
           ...(selectedNote.relationsFrom ?? [])
-            .map((rel) => rel.targetNote?.id)
-            .filter((rid): rid is string => !!rid),
+            .map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
+            .filter((rid: string | undefined): rid is string => !!rid),
           ...(selectedNote.relationsTo ?? [])
-            .map((rel) => rel.sourceNote?.id)
-            .filter((rid): rid is string => !!rid),
+            .map((rel: NoteRelationWithSource) => rel.sourceNote?.id)
+            .filter((rid: string | undefined): rid is string => !!rid),
         ].filter(
           (id: string, index: number, array: string[]): boolean => array.indexOf(id) === index
         );

@@ -1,3 +1,0 @@
-error TS6053: File 'src/features/ai/**/*.tsx' not found.
-  The file is in the program because:
-    Root file specified for compilation

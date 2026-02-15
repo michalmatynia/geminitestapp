@@ -41,11 +41,11 @@ import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { isParamUiControl, type ParamUiControl } from '../utils/param-ui';
-
-import type { ImageStudioSlotRecord } from '../types';
 import { DriveImportModal } from './modals/DriveImportModal';
 import { SlotCreateModal } from './modals/SlotCreateModal';
 import { SlotInlineEditModal } from './modals/SlotInlineEditModal';
+
+import type { ImageStudioSlotRecord } from '../types';
 
 type LinkedGeneratedRunRecord = {
   id: string;

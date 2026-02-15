@@ -36,7 +36,7 @@ export function useLanguageForm(): UseLanguageFormResult {
         name: language.name,
         nativeName: language.nativeName ?? '',
       });
-      setSelectedCountryIds(language.countries?.map((c) => c.countryId) ?? []);
+      setSelectedCountryIds(language.countries?.map((c: { countryId: string }) => c.countryId) ?? []);
     } else {
       setForm({ code: '', name: '', nativeName: '' });
       setSelectedCountryIds([]);

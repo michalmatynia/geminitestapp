@@ -82,7 +82,7 @@ export const mongoNoteRepository: NoteRepository = {
             updatedAt: now.toISOString(),
           };
           await collection.insertOne(doc);
-          return doc as WithId<NotebookDocument>;
+          return doc;
         })())
       );
 
@@ -283,7 +283,7 @@ export const mongoNoteRepository: NoteRepository = {
     };
 
     await collection.insertOne(doc);
-    return toNoteResponse(doc as WithId<NoteDocument>);
+    return toNoteResponse(doc);
   },
 
   async update(id: string, data: NoteUpdateInput): Promise<NoteRecord> {
@@ -456,7 +456,7 @@ export const mongoNoteRepository: NoteRepository = {
     };
 
     await collection.insertOne(doc);
-    return toTagResponse(doc as WithId<TagDocument>);
+    return toTagResponse(doc);
   },
 
   async updateTag(id: string, data: TagUpdateInput): Promise<TagRecord> {
@@ -489,7 +489,7 @@ export const mongoNoteRepository: NoteRepository = {
     // Remove tag from all notes
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const pullTags: UpdateFilter<NoteDocument> = {
-      $pull: { tags: { tagId: id } },
+      $pull: { tags: { tagId: id } } as any,
     };
     await noteCollection.updateMany({ 'tags.tagId': id } as Filter<NoteDocument>, pullTags);
     
@@ -568,7 +568,7 @@ export const mongoNoteRepository: NoteRepository = {
     };
 
     await collection.insertOne(doc);
-    return toCategoryResponse(doc as WithId<CategoryDocument>);
+    return toCategoryResponse(doc);
   },
 
   async updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord> {
@@ -664,7 +664,7 @@ export const mongoNoteRepository: NoteRepository = {
 
       // Remove category from all notes
       const pullCategories: UpdateFilter<NoteDocument> = {
-        $pull: { categories: { categoryId: id } },
+        $pull: { categories: { categoryId: id } } as any,
       };
       await noteCollection.updateMany(
         { 'categories.categoryId': id } as Filter<NoteDocument>,
@@ -705,7 +705,7 @@ export const mongoNoteRepository: NoteRepository = {
       updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
-    return toNotebookResponse(doc as WithId<NotebookDocument>);
+    return toNotebookResponse(doc);
   },
 
   async updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null> {
@@ -791,7 +791,7 @@ export const mongoNoteRepository: NoteRepository = {
       updatedAt: now.toISOString(),
     };
     await collection.insertOne(doc);
-    return toThemeResponse(doc as WithId<ThemeDocument>);
+    return toThemeResponse(doc);
   },
 
   async updateTheme(id: string, data: ThemeUpdateInput): Promise<ThemeRecord | null> {

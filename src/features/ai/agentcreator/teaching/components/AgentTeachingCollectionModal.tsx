@@ -3,8 +3,8 @@
 import React from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
-import { FormField, FormModal, Input, SelectSimple, Textarea } from '@/shared/ui';
 import type { EntityModalProps } from '@/shared/types/modal-props';
+import { FormField, FormModal, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 interface AgentTeachingCollectionModalProps extends EntityModalProps<AgentTeachingEmbeddingCollectionRecord, string> {
   draft: Partial<AgentTeachingEmbeddingCollectionRecord>;

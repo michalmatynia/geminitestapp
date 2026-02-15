@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import { FormField, FormModal, Input, SelectSimple, Textarea } from '@/shared/ui';
 import type { EntityModalProps } from '@/shared/types/modal-props';
+import { FormField, FormModal, Input, SelectSimple, Textarea } from '@/shared/ui';
+
 import type { CaseResolverCategory } from '../../types';
 
 type CategoryFormData = {

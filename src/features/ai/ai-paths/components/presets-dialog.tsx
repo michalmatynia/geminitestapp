@@ -1,5 +1,6 @@
 'use client';
 
+import type { ModalStateProps } from '@/shared/types/modal-props';
 import {
   Button,
   Dialog,
@@ -9,7 +10,6 @@ import {
   DialogTitle,
   Textarea,
 } from '@/shared/ui';
-import type { ModalStateProps } from '@/shared/types/modal-props';
 
 interface PresetsDialogProps extends ModalStateProps {
   presetsJson: string;

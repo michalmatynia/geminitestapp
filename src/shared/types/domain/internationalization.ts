@@ -1,7 +1,7 @@
-import type { 
-  LanguageDto, 
-  CountryDto, 
-  CurrencyDto, 
+import type {
+  LanguageDto,
+  CountryDto,
+  CurrencyDto,
   TranslationDto,
   CreateLanguageDto,
   UpdateLanguageDto,
@@ -11,8 +11,7 @@ import type {
   UpdateCurrencyDto,
   CreateTranslationDto,
   UpdateTranslationDto
-} from '../dtos';
-
+} from '../../contracts/internationalization';
 export type { 
   LanguageDto, 
   CountryDto, 

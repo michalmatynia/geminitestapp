@@ -72,7 +72,7 @@ export type CreateMutation<T, TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>
 export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }> = UseMutationResult<T, Error, TInput>;
 
 /**
- * Standard result type for delete mutations (legacy void return)
+ * Standard result type for delete mutations
  * 
  * @example
  * ```typescript
@@ -81,12 +81,7 @@ export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }> = UseMu
  * }
  * ```
  */
-export type DeleteMutation = UseMutationResult<void, Error, string>;
-
-/**
- * Modern result type for delete mutations that may return data
- */
-export type DeleteMutationResult<TResponse = void, TInput = string> = UseMutationResult<TResponse, Error, TInput>;
+export type DeleteMutation<TResponse = void, TInput = string> = UseMutationResult<TResponse, Error, TInput>;
 
 /**
  * Standard result type for save mutations (create-or-update)

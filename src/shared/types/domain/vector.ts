@@ -1,11 +1,10 @@
-import type { 
-  VectorToolModeDto, 
-  VectorPointDto, 
-  VectorShapeTypeDto, 
-  VectorShapeRoleDto, 
-  VectorShapeDto 
-} from '../dtos';
-
+import type {
+  VectorToolModeDto,
+  VectorPointDto,
+  VectorShapeTypeDto,
+  VectorShapeRoleDto,
+  VectorShapeDto
+} from '../../contracts/vector';
 export type { 
   VectorToolModeDto, 
   VectorPointDto, 

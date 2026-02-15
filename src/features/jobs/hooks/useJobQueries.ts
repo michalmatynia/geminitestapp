@@ -2,8 +2,8 @@
 
 import { type Query } from '@tanstack/react-query';
 
-import { jobKeys } from '@/shared/lib/query-key-exports';
 import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
+import { jobKeys } from '@/shared/lib/query-key-exports';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
 import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';

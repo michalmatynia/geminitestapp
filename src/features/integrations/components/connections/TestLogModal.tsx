@@ -1,7 +1,7 @@
 'use client';
 
-import { ContentDisplayModal } from '@/shared/ui/templates';
 import type { ModalStateProps } from '@/shared/types/modal-props';
+import { ContentDisplayModal } from '@/shared/ui/templates';
 
 interface TestLogModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;

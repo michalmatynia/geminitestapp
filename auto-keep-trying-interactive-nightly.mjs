@@ -35,7 +35,7 @@ function spawnGemini() {
   const resume = RESUME_LATEST ? " --resume latest" : "";
   const geminiCmd = `gemini-nightly --approval-mode yolo -m ${model}${resume}`;
 
-  console.error(`\n[gemini] launching model: ${model}${RESUME_LATEST ? " (resume latest)" : ""}\n`);
+  console.error(`\n[gemini-nightly] launching model: ${model}${RESUME_LATEST ? " (resume latest)" : ""}\n`);
 
   p = pty.spawn(shell, ["-lc", geminiCmd], {
     name: "xterm-256color",

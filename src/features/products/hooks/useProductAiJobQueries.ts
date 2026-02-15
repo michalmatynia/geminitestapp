@@ -42,7 +42,7 @@ export function useAiJobStatus(jobId: string | null): SingleQuery<{ job: AiJobSt
 export function useEnqueueAiJobMutation(): MutationResult<
   { jobId: string },
   { productId: string; type: string; payload: unknown }
-> {
+  > {
   return createCreateMutation({
     mutationFn: async (params) =>
       await api.post<{ jobId: string }>('/api/products/ai-jobs/enqueue', params),
@@ -55,7 +55,7 @@ export function useEnqueueAiJobMutation(): MutationResult<
 export function useBulkAiJobsMutation(): MutationResult<
   { count: number },
   { type: string; config: unknown }
-> {
+  > {
   return createCreateMutation({
     mutationFn: async (params) =>
       await api.post<{ count: number }>('/api/products/ai-jobs/bulk', params),

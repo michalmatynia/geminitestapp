@@ -4,11 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import React, { useState, useMemo, useCallback } from 'react';
 
-import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
-import { Button, SectionHeader } from '@/shared/ui';
 import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
+import { Button, SectionHeader } from '@/shared/ui';
 
 import { AgentRunDetailModal } from '../components/AgentRunDetailModal';
+import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
 
 export default function AgentRunsPage(): React.JSX.Element {
   const queryClient = useQueryClient();

@@ -6,9 +6,9 @@ import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { Input, SelectSimple, Checkbox, Button, AppModal, FormSection } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { EntityModalProps } from '@/shared/types/modal-props';
 
 interface Asset3DPickerModalProps extends EntityModalProps<Asset3DRecord, Asset3DRecord> {
   onSelect: (assetId: string) => void;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import type { ProductListPreferences } from '@/features/products/types/products-ui';

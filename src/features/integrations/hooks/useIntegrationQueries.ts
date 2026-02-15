@@ -20,9 +20,9 @@ import {
 } from '@/shared/contracts/integrations';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createQueryHook } from '@/shared/lib/api-hooks';
-import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
+import { createListQuery } from '@/shared/lib/query-factories';
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
+import type { ListQuery } from '@/shared/types/query-result-types';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';

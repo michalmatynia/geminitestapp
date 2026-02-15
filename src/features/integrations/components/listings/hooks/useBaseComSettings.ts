@@ -81,7 +81,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     let timer: NodeJS.Timeout | null = null;
     if (isBaseComIntegration && !selectedInventoryId && inventories.length > 0 && !inventoriesQuery?.isLoading && !hasInitializedInventory.current) {
       timer = setTimeout(() => {
-        if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.inventory_id === preferredInventoryId)) {
+        if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.id === preferredInventoryId)) {
           setSelectedInventoryId(preferredInventoryId);
           hasInitializedInventory.current = true;
         } else {

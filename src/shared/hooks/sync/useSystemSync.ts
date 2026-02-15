@@ -80,7 +80,7 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
         predicate: (query: { queryKey: unknown; options?: { queryFn?: unknown }; isStale?: () => boolean }) =>
           canRefetch(query) &&
           Array.isArray(query.queryKey) &&
-          query.queryKey[0] === QUERY_KEYS.userPreferences[0],
+          query.queryKey[0] === QUERY_KEYS.userPreferences.all[0],
       });
       // Sync settings
       void queryClient.refetchQueries({

@@ -1,17 +1,19 @@
-import type { 
-  IntegrationDto, 
-  IntegrationConnectionDto, 
+import type {
+  ImportExportTemplateDto,
+  ImportExportTemplateMappingDto,
+} from '../../contracts/data-import-export';
+import type {
+  IntegrationDto,
+  IntegrationConnectionDto,
   ProductListingDto,
   ImageTransformOptionsDto,
   ImageRetryPresetDto,
   TemplateDto,
   TemplateMappingDto,
-  ImportExportTemplateDto,
-  ImportExportTemplateMappingDto,
   BaseInventoryDto,
   BaseWarehouseDto,
   BaseCategoryDto
-} from '../dtos';
+} from '../../contracts/integrations';
 
 export type Integration = IntegrationDto;
 export type IntegrationConnection = IntegrationConnectionDto;

@@ -1,8 +1,8 @@
 'use client';
 
 import { api } from '@/shared/lib/api-client';
-import { chatbotKeys } from '@/shared/lib/query-key-exports';
 import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
+import { chatbotKeys } from '@/shared/lib/query-key-exports';
 import type { ChatSession } from '@/shared/types/domain/chatbot';
 import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 

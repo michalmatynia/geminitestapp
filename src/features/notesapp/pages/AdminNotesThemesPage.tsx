@@ -80,7 +80,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       setForm(defaultTheme);
       toast('Theme created', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesThemesPage', action: 'createTheme', name: form.name, notebookId: selectedNotebookId } });
+      logClientError(error, { context: { source: 'AdminNotesThemesPage', action: 'createTheme', name: form['name'], notebookId: selectedNotebookId } });
       toast('Failed to create theme', { variant: 'error' });
     }
   };
@@ -100,7 +100,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
     setEditingId(theme.id);
     setEditingForm({
       name: theme.name,
-      notebookId: theme.notebookId ?? null,
+      notebookId: (theme.notebookId) ?? null,
       textColor: theme.textColor,
       backgroundColor: theme.backgroundColor,
       markdownHeadingColor: theme.markdownHeadingColor,
@@ -120,7 +120,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
   };
 
   const handleUpdate = async (themeId: string): Promise<void> => {
-    if (!editingForm.name.trim()) {
+    if (!editingForm['name'].trim()) {
       toast('Theme name is required', { variant: 'error' });
       return;
     }
@@ -128,7 +128,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       await updateTheme.mutateAsync({
         id: themeId,
         ...editingForm,
-        name: editingForm.name.trim(),
+        name: editingForm['name'].trim(),
       });
       toast('Theme updated', { variant: 'success' });
       handleEditCancel();
@@ -291,25 +291,25 @@ export function AdminNotesThemesPage(): React.JSX.Element {
           ) : (
             <div className='space-y-4'>
               {themes.map((theme: ThemeRecord): React.JSX.Element => {
-                const isEditing: boolean = editingId === theme.id;
+                const isEditing: boolean = editingId === theme['id'];
                 const values: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = isEditing ? editingForm : theme;
                 return (
                   <div
-                    key={theme.id}
+                    key={theme['id']}
                     className='rounded-lg border border-border bg-card/60 p-4'
                   >
                     <div className='flex flex-wrap items-center justify-between gap-3'>
                       <div className='flex items-center gap-2'>
-                        <div className='text-sm font-semibold text-white'>{theme.name}</div>
+                        <div className='text-sm font-semibold text-white'>{theme['name']}</div>
                         <div className='text-xs text-gray-500'>
-                          Updated {theme.updatedAt ? new Date(theme.updatedAt).toLocaleString() : '—'}
+                          Updated {theme['updatedAt'] ? new Date(theme['updatedAt']).toLocaleString() : '—'}
                         </div>
                       </div>
                       <div className='flex items-center gap-2'>
                         {isEditing ? (
                           <>
                             <Button
-                              onClick={(): void => { void handleUpdate(theme.id); }}
+                              onClick={(): void => { void handleUpdate(theme['id']); }}
                               disabled={isUpdating}
                               size='sm'
                             >
@@ -325,7 +325,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           </Button>
                         )}
                         <Button
-                          onClick={(): void => { void handleDelete(theme.id); }}
+                          onClick={(): void => { void handleDelete(theme['id']); }}
                           variant='outline'
                           size='sm'
                           className='border-red-500/40 text-red-300 hover:text-red-200'

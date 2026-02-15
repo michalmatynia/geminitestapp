@@ -2,16 +2,17 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import { api } from '@/shared/lib/api-client';
 import { createCreateMutation, createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/types/query-result-types';
 import type { AiPathRuntimeAnalyticsSummary } from '@/shared/types/domain/ai-paths';
+import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/types/query-result-types';
+
 import { 
   fetchAiPathsSettingsCached, 
   invalidateAiPathsSettingsCache, 
   updateAiPathsSetting 
 } from '../lib/settings-store-client';
-import { api } from '@/shared/lib/api-client';
 
 export function useAiPathsSettingsQuery(): ListQuery<{ key: string; value: string }> {
   return createListQuery({

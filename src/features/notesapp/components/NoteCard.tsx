@@ -10,6 +10,8 @@ import type {
   RelatedNote,
   NoteFileRecord,
   NoteWithRelations,
+  NoteRelationWithTarget,
+  NoteRelationWithSource,
 } from '@/shared/types/domain/notes';
 import { BreadcrumbScroller, Button, CopyButton, Tag, Badge } from '@/shared/ui';
 import { cn, setNoteDragData, sanitizeHtml } from '@/shared/utils';
@@ -123,9 +125,9 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     ): RelatedNote | null => (id ? { id, title: title ?? 'Untitled note', color: color ?? null } : null);
 
     const fromRelations = (note.relationsFrom ?? [])
-      .map((relation) =>
+      .map((relation: NoteRelationWithTarget) =>
         build(
-          relation.targetNote?.id ?? (relation as unknown as { targetNoteId?: string }).targetNoteId,
+          relation.targetNote?.id ?? relation.targetNoteId,
           relation.targetNote?.title,
           relation.targetNote?.color
         )
@@ -133,9 +135,9 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
       .filter((item: RelatedNote | null): item is RelatedNote => Boolean(item));
 
     const toRelations = (note.relationsTo ?? [])
-      .map((relation) =>
+      .map((relation: NoteRelationWithSource) =>
         build(
-          relation.sourceNote?.id ?? (relation as unknown as { sourceNoteId?: string }).sourceNoteId,
+          relation.sourceNote?.id ?? relation.sourceNoteId,
           relation.sourceNote?.title,
           relation.sourceNote?.color
         )

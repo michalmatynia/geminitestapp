@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 
-import { AppModal, Button, IntegrationSelector } from '@/shared/ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
+import { AppModal, Button, IntegrationSelector } from '@/shared/ui';
 
 import { useIntegrationSelection } from './hooks/useIntegrationSelection';
 

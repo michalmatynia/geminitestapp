@@ -4,13 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 
 import type { ExpandedImageFile } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
-import { invalidateFiles } from '@/shared/lib/query-invalidation';
-import { fileKeys } from '@/shared/lib/query-key-exports';
 import {
   createListQuery,
   createDeleteMutation,
   createUpdateMutation,
 } from '@/shared/lib/query-factories';
+import { invalidateFiles } from '@/shared/lib/query-invalidation';
+import { fileKeys } from '@/shared/lib/query-key-exports';
 import type { 
   ListQuery, 
   DeleteMutation, 

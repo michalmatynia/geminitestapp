@@ -18,7 +18,7 @@ import type {
 import { api } from '@/shared/lib/api-client';
 import {
   createListQuery,
-  createSaveMutation,
+  createMutation,
   createDeleteMutation,
 } from '@/shared/lib/query-factories';
 import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
@@ -101,7 +101,7 @@ export function useProducers(): ListQuery<Producer> {
 
 export function useSaveProducerMutation(): SaveMutation<Producer, { id: string | undefined; data: { name: string; website: string | null } }> {
   const queryClient = useQueryClient();
-  return createSaveMutation({
+  return createMutation({
     mutationFn: ({ id, data }) =>
       id
         ? api.put<Producer>(`/api/products/producers/${id}`, data)

@@ -4,7 +4,7 @@ import type { NoteRepository } from '@/features/notesapp/services/notes/types/no
 import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
 import { configurationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import type { NoteWithRelations, RelatedNote, NoteUpdateInput, NoteCreateInput, NoteFilters, TagRecord, TagCreateInput, TagUpdateInput, CategoryRecord, CategoryCreateInput, CategoryUpdateInput, CategoryWithChildren, NotebookRecord, NotebookCreateInput, NotebookUpdateInput, ThemeRecord, ThemeCreateInput, ThemeUpdateInput, NoteFileRecord, NoteFileCreateInput } from '@/shared/types/domain/notes';
+import type { NoteWithRelations, RelatedNote, NoteUpdateInput, NoteCreateInput, NoteFilters, TagRecord, TagCreateInput, TagUpdateInput, CategoryRecord, CategoryCreateInput, CategoryUpdateInput, CategoryWithChildren, NotebookRecord, NotebookCreateInput, NotebookUpdateInput, ThemeRecord, ThemeCreateInput, ThemeUpdateInput, NoteFileRecord, NoteFileCreateInput, NoteRelationWithSource, NoteRelationWithTarget } from '@/shared/types/domain/notes';
 
 import { cleanupNoteFile } from './file-cleanup';
 
@@ -57,12 +57,12 @@ const repoCall = async <K extends keyof NoteRepository>(
 // Helper: Build Relations
 const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
   const fromRelations = (note.relationsFrom ?? [])
-    .map((rel) => rel.targetNote)
-    .filter((rel): rel is RelatedNote => !!rel);
+    .map((rel: NoteRelationWithTarget) => rel.targetNote)
+    .filter((rel: RelatedNote | undefined): rel is RelatedNote => !!rel);
     
   const toRelations = (note.relationsTo ?? [])
-    .map((rel) => rel.sourceNote)
-    .filter((rel): rel is RelatedNote => !!rel);
+    .map((rel: NoteRelationWithSource) => rel.sourceNote)
+    .filter((rel: RelatedNote | undefined): rel is RelatedNote => !!rel);
 
   const relations: RelatedNote[] = [...fromRelations, ...toRelations];
   const seen = new Set<string>();
@@ -128,8 +128,8 @@ export const noteService: NoteRepository = {
     if (Array.isArray(data.relatedNoteIds) && previousNote) {
       const previousRelatedIds =
         previousNote.relationsFrom
-          ?.map((rel) => rel.targetNote?.id)
-          .filter((rid): rid is string => !!rid) || [];
+          ?.map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
+          .filter((rid: string | undefined): rid is string => !!rid) || [];
       const nextRelatedIds = data.relatedNoteIds;
       const addedRelations = nextRelatedIds.filter(
         (relId: string) => !previousRelatedIds.includes(relId) && relId !== id
@@ -145,8 +145,8 @@ export const noteService: NoteRepository = {
           
           const currentIds =
             relatedNote.relationsFrom
-              ?.map((rel) => rel.targetNote?.id)
-              .filter((rid): rid is string => !!rid) || [];
+              ?.map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
+              .filter((rid: string | undefined): rid is string => !!rid) || [];
           
           let nextIds: string[];
           if (shouldAdd) {

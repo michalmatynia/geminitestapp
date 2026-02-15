@@ -4,9 +4,9 @@ import { Loader2 } from 'lucide-react';
 import React from 'react';
 
 import FileManager from '@/features/files/components/FileManager';
-import { AppModal, Button } from '@/shared/ui';
-import type { ModalStateProps } from '@/shared/types/modal-props';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
+import type { ModalStateProps } from '@/shared/types/modal-props';
+import { AppModal, Button } from '@/shared/ui';
 
 interface DriveImportModalProps extends ModalStateProps {
   title: string;

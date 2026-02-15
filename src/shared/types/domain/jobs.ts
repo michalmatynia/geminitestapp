@@ -1,4 +1,4 @@
-import type { ProductAiJobDto, ProductAiJobTypeDto, ProductAiJobResultDto } from '../dtos';
+import type { ProductAiJobDto, ProductAiJobTypeDto, ProductAiJobResultDto } from '../../contracts/jobs';
 
 export type { ProductAiJobDto, ProductAiJobTypeDto, ProductAiJobResultDto };
 

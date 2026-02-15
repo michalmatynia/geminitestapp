@@ -17,9 +17,8 @@ import {
 
 import { ChatbotContextModal } from '../components/ChatbotContextModal';
 import { useChatbotContextState } from '../hooks/useChatbotContextState';
-import type { ContextItem, ContextDraft } from '../hooks/useChatbotContextState';
 
-
+import type { ContextItem } from '../hooks/useChatbotContextState';
 import type { ColumnDef } from '@tanstack/react-table';
 
 function ChatbotContextPageInner(): React.JSX.Element {
@@ -245,7 +244,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
         onSuccess={() => {}}
         item={modalDraft}
         modalDraft={modalDraft!}
-        setModalDraft={setModalDraft as React.Dispatch<React.SetStateAction<ContextDraft | null>>}
+        setModalDraft={setModalDraft}
         tagDraft={tagDraft}
         setTagDraft={setTagDraft}
         isSaving={saving}

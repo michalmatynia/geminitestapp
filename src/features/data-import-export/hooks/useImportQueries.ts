@@ -2,21 +2,21 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+
+import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset, BaseInventory, WarehouseOption, ImportListItem, ImportResponse } from '@/features/data-import-export/types/imports';
+import type { IntegrationWithConnections } from '@/features/integrations';
+import { api } from '@/shared/lib/api-client';
 import {
   createListQuery,
   createSingleQuery,
   createCreateMutation,
 } from '@/shared/lib/query-factories';
+import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
 import type { 
   ListQuery, 
   SingleQuery, 
   MutationResult
 } from '@/shared/types/query-result-types';
-
-import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset, BaseInventory, WarehouseOption, ImportListItem, ImportResponse } from '@/features/data-import-export/types/imports';
-import type { IntegrationWithConnections } from '@/features/integrations';
-import { api } from '@/shared/lib/api-client';
-import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
 
 export type { CatalogRecord };
 
@@ -117,7 +117,7 @@ export function useTemplateMutation(scope: 'import' | 'export', id?: string): Mu
             const maybeTemplate = result as Partial<Template>;
             const templateId = typeof maybeTemplate.id === 'string' ? maybeTemplate.id : '';
             if (!templateId) return current;
-            const nextTemplate = maybeTemplate as Template;
+            const nextTemplate = maybeTemplate;
             const existingIndex = current.findIndex((template: Template) => template.id === templateId);
             if (existingIndex === -1) {
               return [nextTemplate, ...current];

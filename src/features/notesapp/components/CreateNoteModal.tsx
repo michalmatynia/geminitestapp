@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import type { NoteRecord } from '@/shared/types/domain/notes';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 import { FormModal } from '@/shared/ui';
 
@@ -18,13 +17,15 @@ export function CreateNoteModal({
 
   if (!isOpen) return null;
 
+  const handleSuccess = onSuccess ?? (() => {});
+
   return (
     <FormModal
       open={isOpen}
       onClose={onClose}
       title='Create Note'
       formRef={formRef}
-      onSave={onSuccess}
+      onSave={handleSuccess}
       saveText='Create'
       actions={
         <TriggerButtonBar location='note_modal' entityType='note' />
@@ -32,7 +33,7 @@ export function CreateNoteModal({
     >
       <NoteForm
         formRef={formRef}
-        onSuccess={onSuccess}
+        onSuccess={handleSuccess}
       />
     </FormModal>
   );

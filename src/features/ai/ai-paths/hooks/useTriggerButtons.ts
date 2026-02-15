@@ -3,9 +3,10 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { useAiPathTriggerEvent } from '@/features/ai/ai-paths/hooks/useAiPathTriggerEvent';
-import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
+
+import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';
 
 const TOGGLE_STORAGE_KEY = 'aiPathsTriggerButtonToggles';
 const SUCCESS_STORAGE_KEY = 'aiPathsTriggerButtonSuccess';

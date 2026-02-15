@@ -58,7 +58,7 @@ export function useUpdateProduct(): UpdateMutation<ProductWithImages, UpdateProd
   });
 }
 
-export function useDeleteProduct(): DeleteMutation {
+export function useDeleteProduct(): DeleteMutation<{ success: boolean }, string> {
   const queryClient = useQueryClient();
 
   return createDeleteMutation({
@@ -71,18 +71,17 @@ export function useDeleteProduct(): DeleteMutation {
   });
 }
 
-export function useBulkDeleteProducts(): UpdateMutation<{ success: boolean }, string[]> {
+export function useBulkDeleteProducts(): DeleteMutation<void, string[]> {
   const queryClient = useQueryClient();
 
-  return createUpdateMutation({
-    mutationFn: async (ids: string[]): Promise<{ success: boolean }> => {
+  return createDeleteMutation({
+    mutationFn: async (ids: string[]): Promise<void> => {
       const responses = await Promise.all(
         ids.map((id: string) => deleteProduct(id))
       );
       if (responses.some((r: { success: boolean }) => !r.success)) {
         throw operationFailedError('Failed to delete some products');
       }
-      return { success: true };
     },
     options: {
       onSuccess: async (): Promise<void> => {
@@ -145,8 +144,10 @@ export function useUpdateProductField(): UpdateMutation<void, { id: string; fiel
     mutationFn: async ({ id, field, value }): Promise<void> => {
       await api.patch<unknown>(`/api/products/${id}`, { [field]: value });
     },
-    onSuccess: async (_, variables): Promise<void> => {
-      await invalidateProductsAndDetail(queryClient, variables.id);
+    options: {
+      onSuccess: async (_, variables): Promise<void> => {
+        await invalidateProductsAndDetail(queryClient, variables.id);
+      },
     },
   });
 }

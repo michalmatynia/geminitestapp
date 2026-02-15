@@ -56,9 +56,9 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     categories,
     relationsFrom,
     relationsTo: Array.isArray(doc.relationsTo) ? doc.relationsTo : [],
-    tagIds: tags.map((t) => t.tagId),
-    categoryIds: categories.map((c) => c.categoryId),
-    relatedNoteIds: relationsFrom.map((r) => r.targetNoteId),
+    tagIds: tags.map((t: { tagId: string }) => t.tagId),
+    categoryIds: categories.map((c: { categoryId: string }) => c.categoryId),
+    relatedNoteIds: relationsFrom.map((r: { targetNoteId: string }) => r.targetNoteId),
   };
 };
 
@@ -200,41 +200,41 @@ export const buildIncomingRelationsMap = (
 
 export const buildSearchFilter = (filters: NoteFilters = {}): Filter<NoteDocument> => {
   const filter: Filter<NoteDocument> = {};
-  if (filters.notebookId) {
-    filter.notebookId = filters.notebookId;
+  if (filters['notebookId']) {
+    filter['notebookId'] = filters['notebookId'];
   }
 
-  if (filters.search) {
-    const regex = { $regex: filters.search, $options: 'i' };
-    const searchScope = filters.searchScope || 'both';
+  if (filters['search']) {
+    const regex = { $regex: filters['search'], $options: 'i' };
+    const searchScope = filters['searchScope'] || 'both';
 
     if (searchScope === 'both') {
       filter.$or = [{ title: regex }, { content: regex }];
     } else if (searchScope === 'title') {
-      filter.title = regex;
+      filter['title'] = regex;
     } else if (searchScope === 'content') {
-      filter.content = regex;
+      filter['content'] = regex;
     }
   }
 
-  if (typeof filters.isPinned === 'boolean') {
-    filter.isPinned = filters.isPinned;
+  if (typeof filters['isPinned'] === 'boolean') {
+    filter['isPinned'] = filters['isPinned'];
   }
 
-  if (typeof filters.isArchived === 'boolean') {
-    filter.isArchived = filters.isArchived;
+  if (typeof filters['isArchived'] === 'boolean') {
+    filter['isArchived'] = filters['isArchived'];
   }
 
-  if (typeof filters.isFavorite === 'boolean') {
-    filter.isFavorite = filters.isFavorite;
+  if (typeof filters['isFavorite'] === 'boolean') {
+    filter['isFavorite'] = filters['isFavorite'];
   }
 
-  if (filters.tagIds && filters.tagIds.length > 0) {
-    filter.tags = { $elemMatch: { tagId: { $in: filters.tagIds } } };
+  if (filters['tagIds'] && filters['tagIds'].length > 0) {
+    filter['tags'] = { $elemMatch: { tagId: { $in: filters['tagIds'] } } };
   }
 
-  if (filters.categoryIds && filters.categoryIds.length > 0) {
-    filter.categories = { $elemMatch: { categoryId: { $in: filters.categoryIds } } };
+  if (filters['categoryIds'] && filters['categoryIds'].length > 0) {
+    filter['categories'] = { $elemMatch: { categoryId: { $in: filters['categoryIds'] } } };
   }
 
   return filter;

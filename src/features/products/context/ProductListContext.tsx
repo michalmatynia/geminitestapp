@@ -9,7 +9,7 @@ import {
 } from 'react';
 
 import type { Catalog, PriceGroupWithDetails, ProductWithImages } from '@/features/products/types';
-import type { ProductDraft } from '@/features/products/types/drafts';
+import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { ColumnDef, RowSelectionState, OnChangeFn } from '@tanstack/react-table';
@@ -19,7 +19,7 @@ export interface ProductListContextType {
   // Actions
   onCreateProduct: () => void;
   onCreateFromDraft: (draftId: string) => void;
-  activeDrafts: ProductDraft[];
+  activeDrafts: ProductDraftDto[];
   
   // Pagination
   page: number;
@@ -95,7 +95,7 @@ export interface ProductListContextType {
   // Modal State
   isCreateOpen: boolean;
   initialSku: string;
-  createDraft: ProductDraft | null;
+  createDraft: ProductDraftDto | null;
   initialCatalogId: string | null;
   onCloseCreate: () => void;
   onCreateSuccess: (info?: { queued?: boolean }) => void;
@@ -183,7 +183,7 @@ export interface ProductListTableContextType {
 export interface ProductListActionsContextType {
   onCreateProduct: () => void;
   onCreateFromDraft: (draftId: string) => void;
-  activeDrafts: ProductDraft[];
+  activeDrafts: ProductDraftDto[];
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>;
   productNameKey: 'name_en' | 'name_pl' | 'name_de';
   priceGroups: PriceGroupWithDetails[];
@@ -203,7 +203,7 @@ export interface ProductListActionsContextType {
 export interface ProductListModalsContextType {
   isCreateOpen: boolean;
   initialSku: string;
-  createDraft: ProductDraft | null;
+  createDraft: ProductDraftDto | null;
   initialCatalogId: string | null;
   onCloseCreate: () => void;
   onCreateSuccess: (info?: { queued?: boolean }) => void;

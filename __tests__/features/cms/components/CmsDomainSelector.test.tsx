@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import React from 'react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
@@ -17,11 +17,11 @@ vi.mock('@/shared/ui', async () => {
     ...actual,
     SelectSimple: ({ value, onValueChange, options, disabled, label }: any) => (
       <select
-        data-testid="select-simple"
+        data-testid='select-simple'
         value={value}
         disabled={disabled}
         onChange={(e) => onValueChange(e.target.value)}
-        aria-label="Zone selector"
+        aria-label='Zone selector'
       >
         {options.map((opt: any) => (
           <option key={opt.value} value={opt.value}>
@@ -67,7 +67,7 @@ describe('CmsDomainSelector', () => {
       zoningEnabled: true,
     });
 
-    render(<CmsDomainSelector label="Test Zone" />);
+    render(<CmsDomainSelector label='Test Zone' />);
 
     expect(screen.getByText('Test Zone')).toBeInTheDocument();
     const select = screen.getByTestId('select-simple');

@@ -14,7 +14,7 @@ import {
 } from '@/features/products/context/ProductListContext';
 import { useConvertAllImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import type { Catalog } from '@/features/products/types';
-import type { ProductDraft } from '@/features/products/types/drafts';
+import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { Button, SelectSimple, useToast, Pagination, ConfirmDialog,  SectionHeader } from '@/shared/ui';
 
 interface ProductListHeaderProps {
@@ -23,7 +23,7 @@ interface ProductListHeaderProps {
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
-const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
+const resolveDraftIconColor = (draft: ProductDraftDto): string | undefined => {
   if (draft.iconColorMode !== 'custom') return undefined;
   if (typeof draft.iconColor !== 'string') return undefined;
   const normalized = draft.iconColor.trim();
@@ -104,7 +104,7 @@ export const ProductListHeader = memo(function ProductListHeader({
                 <PlusIcon className='h-6 w-6' />
               </Button>
               <div className='flex flex-wrap items-center gap-1.5'>
-                {activeDrafts.map((draft: ProductDraft) => {
+                {activeDrafts.map((draft: ProductDraftDto) => {
                   const IconComponent = draft.icon ? ICON_LIBRARY_MAP[draft.icon] : null;
                   const iconColor = resolveDraftIconColor(draft);
                   return (

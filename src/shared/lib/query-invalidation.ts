@@ -267,7 +267,7 @@ export const invalidateAuthSecurity = (queryClient: QueryClient, userId: string)
 export const invalidateUserPreferences = (queryClient: QueryClient) => {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.preferences.all }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userPreferences }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.userPreferences.all }),
   ]);
 };
 

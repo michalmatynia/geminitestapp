@@ -29,7 +29,7 @@ export function LanguageModal({
 
   const handleSaveClick = async (): Promise<void> => {
     await handleSubmit();
-    onSuccess();
+    onSuccess?.();
   };
 
   return (

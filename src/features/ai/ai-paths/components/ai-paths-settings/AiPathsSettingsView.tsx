@@ -19,6 +19,7 @@ import { CanvasBoard } from '../canvas-board';
 import { CanvasSidebar } from '../canvas-sidebar';
 import { ClusterPresetsPanel } from '../cluster-presets-panel';
 import { GraphModelDebugPanel } from '../graph-model-debug-panel';
+import { RenamePathModal } from '../modals/RenamePathModal';
 import { NodeConfigDialog } from '../node-config-dialog';
 import { PresetsDialog } from '../presets-dialog';
 import { RunDetailDialog } from '../run-detail-dialog';
@@ -26,7 +27,6 @@ import { RunHistoryPanel } from '../run-history-panel';
 import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { SimulationDialog } from '../simulation-dialog';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
-import { RenamePathModal } from '../modals/RenamePathModal';
 
 const formatDurationMs = (value: number | null | undefined): string => {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';

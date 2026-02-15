@@ -3,6 +3,7 @@
 import React from 'react';
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import {
   Button,
   Dialog,
@@ -13,7 +14,6 @@ import {
   Input,
   Label,
 } from '@/shared/ui';
-import type { EntityModalProps } from '@/shared/types/modal-props';
 
 interface SimulationDialogProps extends EntityModalProps<AiNode> {
   isPathLocked: boolean;

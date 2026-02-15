@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import { Checkbox, FormField, FormModal, Input, Label, StatusToggle } from '@/shared/ui';
 import type { EntityModalProps } from '@/shared/types/modal-props';
+import { Checkbox, FormField, FormModal, Input, Label, StatusToggle } from '@/shared/ui';
+
 import type { AuthUserSummary } from '../../types';
 
 interface UserEditModalProps extends EntityModalProps<AuthUserSummary> {

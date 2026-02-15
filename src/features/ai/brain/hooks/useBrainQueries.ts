@@ -1,8 +1,8 @@
 'use client';
 
-import { brainKeys } from '@/shared/lib/query-key-exports';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQuery } from '@/shared/lib/query-factories';
+import { brainKeys } from '@/shared/lib/query-key-exports';
 import type { 
   AiInsightRecord, 
   AiPathRuntimeAnalyticsSummary, 

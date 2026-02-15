@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 
 import {
   invalidateCatalogScopedData,
@@ -45,7 +45,7 @@ export function usePriceGroups(): ListQuery<PriceGroup> {
 }
 
 export function useCatalogs(): ListQuery<CatalogRecord> {
-  return useMetadataCatalogs() as ListQuery<CatalogRecord>;
+  return useMetadataCatalogs();
 }
 
 export function useCategories(catalogId: string | null): ListQuery<ProductCategoryWithChildren> {
@@ -57,11 +57,11 @@ export function useCategories(catalogId: string | null): ListQuery<ProductCatego
 }
 
 export function useTags(catalogId: string | null): ListQuery<ProductTag> {
-  return useMetadataTags(catalogId ?? undefined) as ListQuery<ProductTag>;
+  return useMetadataTags(catalogId ?? undefined);
 }
 
 export function useParameters(catalogId: string | null): ListQuery<ProductParameter> {
-  return useMetadataParameters(catalogId ?? undefined) as ListQuery<ProductParameter>;
+  return useMetadataParameters(catalogId ?? undefined);
 }
 
 export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {

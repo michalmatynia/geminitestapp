@@ -42,7 +42,7 @@ export function useCountryForm({
     if (country) {
       setForm({ code: country.code, name: country.name });
       setSelectedCurrencyIds(
-        country.currencies?.map((c) => c.currencyId) ?? [],
+        country.currencies?.map((c: { currencyId: string }) => c.currencyId) ?? [],
       );
     } else {
       setForm({

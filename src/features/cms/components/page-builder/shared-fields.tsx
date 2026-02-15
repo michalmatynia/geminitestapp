@@ -11,9 +11,9 @@ import type { Asset3DRecord } from '@/features/viewer3d/types';
 import { Input, SelectSimple, Checkbox, Button, useToast, FileUploadButton, FormField, type FileUploadHelpers } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { Asset3DPickerModal } from './Asset3DPickerModal';
 import { MediaLibraryPanel } from './MediaLibraryPanel';
 import { useUploadCmsMedia } from '../../hooks/useCmsQueries';
-import { Asset3DPickerModal } from './Asset3DPickerModal';
 
 
 interface FieldProps<T> {

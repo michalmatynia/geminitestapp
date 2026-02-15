@@ -1,4 +1,4 @@
-import type { Asset3dDto, Asset3dCategoryDto, Asset3dTagDto, Asset3dViewerConfigDto } from '../dtos';
+import type { Asset3dDto, Asset3dCategoryDto, Asset3dTagDto, Asset3dViewerConfigDto } from '../../contracts/viewer3d';
 
 export type { Asset3dDto, Asset3dCategoryDto, Asset3dTagDto, Asset3dViewerConfigDto };
 

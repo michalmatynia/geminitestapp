@@ -165,7 +165,7 @@ describe('useProductSettingsQueries invalidation', () => {
     });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.priceGroups,
+      queryKey: QUERY_KEYS.products.metadata.priceGroups(),
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.priceGroups(),
@@ -193,7 +193,7 @@ describe('useProductSettingsQueries invalidation', () => {
     });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.priceGroups,
+      queryKey: QUERY_KEYS.products.metadata.priceGroups(),
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.priceGroups(),
@@ -213,7 +213,7 @@ describe('useProductSettingsQueries invalidation', () => {
     expect(productSettingsApi.deletePriceGroup).toHaveBeenCalledWith('pg-2');
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.priceGroups,
+      queryKey: QUERY_KEYS.products.metadata.priceGroups(),
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.priceGroups(),
@@ -238,7 +238,7 @@ describe('useProductSettingsQueries invalidation', () => {
     });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.catalogs,
+      queryKey: QUERY_KEYS.products.metadata.catalogs(),
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.catalogs(),
@@ -256,7 +256,7 @@ describe('useProductSettingsQueries invalidation', () => {
     expect(productSettingsApi.deleteCatalog).toHaveBeenCalledWith('catalog-2');
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(2));
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: QUERY_KEYS.products.metadata.catalogs,
+      queryKey: QUERY_KEYS.products.metadata.catalogs(),
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.catalogs(),

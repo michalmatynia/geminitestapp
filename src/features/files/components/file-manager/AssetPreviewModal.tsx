@@ -2,9 +2,9 @@
 
 import React from 'react';
 
-import { AppModal } from '@/shared/ui';
-import type { EntityModalProps } from '@/shared/types/modal-props';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { EntityModalProps } from '@/shared/types/modal-props';
+import { AppModal } from '@/shared/ui';
 
 interface AssetPreviewModalProps extends EntityModalProps<ImageFileRecord> {}
 
@@ -23,7 +23,7 @@ export function AssetPreviewModal({
     >
       <div className='space-y-4 text-sm text-gray-200'>
         <div className='space-y-1'>
-          <div><strong>Filename:</strong> {previewAsset.filename}</div>
+          <div><strong>Filename:</strong> {previewAsset.filename ?? previewAsset.name ?? 'Unnamed File'}</div>
           <div><strong>Path:</strong> {previewAsset.filepath}</div>
           <div><strong>MIME Type:</strong> {previewAsset.mimetype}</div>
           <div><strong>Size:</strong> {(previewAsset.size / 1024).toFixed(2)} KB</div>
@@ -53,3 +53,4 @@ export function AssetPreviewModal({
     </AppModal>
   );
 }
+

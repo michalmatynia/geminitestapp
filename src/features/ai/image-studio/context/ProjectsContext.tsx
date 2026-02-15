@@ -23,7 +23,7 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { ApiError } from '@/shared/lib/api-client';
 import type {
   CreateMutation,
-  DeleteMutationResult,
+  DeleteMutation,
 } from '@/shared/types/query-result-types';
 import { useToast } from '@/shared/ui';
 
@@ -46,7 +46,7 @@ export interface ProjectsState {
 export interface ProjectsActions {
   setProjectId: (id: string) => void;
   createProjectMutation: CreateMutation<string, string>;
-  deleteProjectMutation: DeleteMutationResult<string, string>;
+  deleteProjectMutation: DeleteMutation<string, string>;
   handleDeleteProject: (id: string) => Promise<void>;
   setProjectSearch: (s: string) => void;
 }

@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import { FormField, FormModal, Input } from '@/shared/ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
+import { FormField, FormModal, Input } from '@/shared/ui';
 
 interface UserCreateModalProps extends ModalStateProps {
   createForm: any;

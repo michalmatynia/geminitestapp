@@ -61,13 +61,13 @@ export async function fetchPathSettings(
 
   let preferredActivePathId: string | null = null;
   const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
-    QUERY_KEYS.userPreferences
+    QUERY_KEYS.userPreferences.all
   );
   try {
     preferredActivePathId = resolvePreferredActivePathId(cachedPreferences);
     if (!cachedPreferences) {
       const preferencesResponse = await queryClient.fetchQuery({
-        queryKey: QUERY_KEYS.userPreferences,
+        queryKey: QUERY_KEYS.userPreferences.all,
         queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
           return await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
             logError: false,

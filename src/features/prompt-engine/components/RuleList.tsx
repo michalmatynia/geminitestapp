@@ -117,7 +117,9 @@ export function RuleList(): React.JSX.Element {
       ? 'Core'
       : exploderSubTab === 'image_studio_rules'
         ? 'Image Studio Rules'
-        : 'Prompt Exploder Rules';
+        : exploderSubTab === 'case_resolver_rules'
+          ? 'Case Resolver Rules'
+          : 'Prompt Exploder Rules';
 
   const sequencingLocked =
     query.trim().length > 0 ||

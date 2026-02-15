@@ -12,6 +12,7 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
+  const returnTarget = returnTo.startsWith('/admin/case-resolver') ? 'case-resolver' : 'image-studio';
   const { handleReloadFromStudio } = useDocumentActions();
 
   return (
@@ -26,7 +27,7 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
             onClick={handleReloadFromStudio}
           >
             <RefreshCcw className='mr-2 size-4' />
-            Reload Studio Draft
+            Reload Incoming Draft
           </Button>
           <Button size='xs'
             variant='outline'
@@ -43,7 +44,7 @@ export function PromptExploderHeaderBar(): React.JSX.Element {
               router.push(returnTo);
             }}
           >
-            Back to Image Studio
+            {returnTarget === 'case-resolver' ? 'Back to Case Resolver' : 'Back to Image Studio'}
           </Button>
         </div>
       }

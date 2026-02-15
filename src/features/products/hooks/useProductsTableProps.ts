@@ -6,11 +6,13 @@ import { useProductListTableContext } from '@/features/products/context/ProductL
 import type { ProductWithImages } from '@/features/products/types';
 
 import type { ColumnDef, OnChangeFn, RowSelectionState } from '@tanstack/react-table';
+import type { Row } from '@tanstack/react-table';
 import type { ReactNode } from 'react';
 
 export interface UseProductsTablePropsReturn {
   columns: ColumnDef<ProductWithImages>[];
   data: ProductWithImages[];
+  getRowClassName?: (row: Row<ProductWithImages>) => string | undefined;
   getRowId: (row: ProductWithImages) => string;
   rowSelection: RowSelectionState;
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
@@ -26,6 +28,7 @@ export function useProductsTableProps(): UseProductsTablePropsReturn {
     rowSelection,
     setRowSelection,
     tableColumns,
+    getRowClassName,
     getRowId,
     isLoading,
     skeletonRows,
@@ -37,6 +40,7 @@ export function useProductsTableProps(): UseProductsTablePropsReturn {
     () => ({
       columns: tableColumns,
       data,
+      getRowClassName,
       getRowId,
       rowSelection,
       onRowSelectionChange: setRowSelection,
@@ -48,6 +52,7 @@ export function useProductsTableProps(): UseProductsTablePropsReturn {
     [
       tableColumns,
       data,
+      getRowClassName,
       getRowId,
       rowSelection,
       setRowSelection,

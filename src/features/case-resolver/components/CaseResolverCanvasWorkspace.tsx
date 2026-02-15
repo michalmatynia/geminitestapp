@@ -1,9 +1,7 @@
 'use client';
 
 import {
-  Brain,
   Copy,
-  Plus,
   Save,
   Split,
   Sparkles,
@@ -44,7 +42,11 @@ import {
 
 import { compileCaseResolverPrompt } from '../composer';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-import { parseCaseResolverTreeDropPayload } from '../drag';
+import {
+  CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
+  parseCaseResolverTreeDropPayload,
+  type CaseResolverDropDocumentToCanvasDetail,
+} from '../drag';
 import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';
 import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
@@ -162,6 +164,25 @@ const ensureDocumentLinksByNode = (
   return next;
 };
 
+const ensureDocumentSourceFileByNode = (
+  nodes: AiNode[],
+  existing: Record<string, string>,
+  validFileIds: Set<string>
+): Record<string, string> => {
+  const nodeIds = new Set(nodes.map((node: AiNode) => node.id));
+  const next: Record<string, string> = {};
+
+  Object.entries(existing).forEach(([nodeId, fileId]: [string, string]) => {
+    if (!nodeIds.has(nodeId)) return;
+    if (typeof fileId !== 'string') return;
+    const normalizedFileId = fileId.trim();
+    if (!normalizedFileId || !validFileIds.has(normalizedFileId)) return;
+    next[nodeId] = normalizedFileId;
+  });
+
+  return next;
+};
+
 const resolveDocumentDropNodeId = (
   candidate: string | null,
   nodes: AiNode[]
@@ -220,17 +241,54 @@ const toHtmlParagraph = (value: string): string => {
 
 const hasHtmlMarkup = (value: string): boolean => /<\/?[a-z][^>]*>/i.test(value);
 
-const buildPromptTemplateFromDroppedAsset = (asset: CaseResolverDroppedAsset): string => {
-  if (asset.kind === 'node_file') {
-    const nodeFileText = asset.textContent.trim();
-    if (nodeFileText.length > 0) {
-      return hasHtmlMarkup(nodeFileText) ? nodeFileText : toHtmlParagraph(nodeFileText);
-    }
+const decodeHtmlEntity = (value: string): string => {
+  try {
+    if (typeof window === 'undefined') return value;
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = value;
+    return textarea.value;
+  } catch {
+    return value;
   }
+};
 
-  return toHtmlParagraph(
-    `Reference file: ${asset.name}${asset.filepath ? `\n${asset.filepath}` : ''}`
-  );
+const stripHtmlToPlainText = (html: string): string => {
+  const normalized = html
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote)>/gi, '\n')
+    .replace(/<li>/gi, '• ')
+    .replace(/<[^>]+>/g, '');
+  return decodeHtmlEntity(normalized)
+    .split('\n')
+    .map((line: string) => line.trim())
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+};
+
+const renderPromptNodeTextPreview = (
+  node: AiNode,
+  nodeMeta: CaseResolverNodeMeta
+): string => {
+  const promptTemplate = node.config?.prompt?.template;
+  const raw = typeof promptTemplate === 'string' ? promptTemplate : '';
+  const plainText = stripHtmlToPlainText(raw);
+  if (!plainText) return '';
+  const quoted =
+    nodeMeta.quoteMode === 'double'
+      ? `"${plainText}"`
+      : nodeMeta.quoteMode === 'single'
+        ? `'${plainText}'`
+        : plainText;
+  return `${nodeMeta.surroundPrefix}${quoted}${nodeMeta.surroundSuffix}`;
+};
+
+const buildPromptTemplateFromDroppedDocumentFile = (file: CaseResolverFile): string => {
+  const source = file.documentContent.trim();
+  if (source.length > 0) {
+    return hasHtmlMarkup(source) ? source : toHtmlParagraph(source);
+  }
+  return toHtmlParagraph(`Document: ${file.name}`);
 };
 
 const clampCanvasPosition = (position: { x: number; y: number }): { x: number; y: number } => ({
@@ -249,8 +307,6 @@ const normalizeExtractedPdfText = (value: string): string => {
   if (trimmed.length <= MAX_PDF_EXTRACT_CHARS) return trimmed;
   return `${trimmed.slice(0, MAX_PDF_EXTRACT_CHARS)}\n\n[TRUNCATED ${trimmed.length - MAX_PDF_EXTRACT_CHARS} chars]`;
 };
-
-type CaseResolverDropMode = 'file_node' | 'text_node';
 
 type CaseResolverDroppedAsset = {
   id: string;
@@ -280,6 +336,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     workspace,
     onUploadAssets,
     onGraphChange,
+    onEditFile,
   } = useCaseResolverPageContext();
   const graph = activeFile!.graph;
   const defaultDropFolder = activeFile!.folder;
@@ -293,7 +350,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const { selectNode, setConfigOpen } = useSelectionActions();
 
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database'>('prompt');
-  const [fileDropMode, setFileDropMode] = useState<CaseResolverDropMode>('file_node');
   const [pdfExtractionPresetId, setPdfExtractionPresetId] = useState<CaseResolverPdfExtractionPresetId>(
     graph.pdfExtractionPresetId ?? DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID
   );
@@ -335,6 +391,15 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       ),
     [availableFileIds, graph.documentFileLinksByNode, nodes]
   );
+  const normalizedDocumentSourceFileIdByNode = useMemo(
+    () =>
+      ensureDocumentSourceFileByNode(
+        nodes,
+        graph.documentSourceFileIdByNode ?? {},
+        availableFileIds
+      ),
+    [availableFileIds, graph.documentSourceFileIdByNode, nodes]
+  );
   const normalizedDocumentDropNodeId = useMemo(
     () => resolveDocumentDropNodeId(graph.documentDropNodeId ?? null, nodes),
     [graph.documentDropNodeId, nodes]
@@ -367,6 +432,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
           pdfExtractionPresetId,
           documentFileLinksByNode: normalizedDocumentFileLinksByNode,
           documentDropNodeId: normalizedDocumentDropNodeId,
+          documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
         },
         selectedNodeId
       ),
@@ -375,6 +441,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       nodes,
       normalizedDocumentDropNodeId,
       normalizedDocumentFileLinksByNode,
+      normalizedDocumentSourceFileIdByNode,
       normalizedEdgeMeta,
       normalizedNodeMeta,
       selectedNodeId,
@@ -400,6 +467,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       pdfExtractionPresetId,
       documentFileLinksByNode: normalizedDocumentFileLinksByNode,
       documentDropNodeId: normalizedDocumentDropNodeId,
+      documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
     };
     const nextHash = stableStringify(nextGraph);
     if (nextHash === lastEmittedHashRef.current) return;
@@ -410,6 +478,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     nodes,
     normalizedDocumentDropNodeId,
     normalizedDocumentFileLinksByNode,
+    normalizedDocumentSourceFileIdByNode,
     normalizedEdgeMeta,
     normalizedNodeMeta,
     onGraphChange,
@@ -641,6 +710,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         pdfExtractionPresetId,
         documentFileLinksByNode: normalizedDocumentFileLinksByNode,
         documentDropNodeId: normalizedDocumentDropNodeId,
+        documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
       });
     } catch (error) {
       toast(
@@ -666,48 +736,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       x: dropPosition.x + indexOffset * 28,
       y: dropPosition.y + indexOffset * 28,
     });
-    const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
     const templateDefinition = palette.find((entry: NodeDefinition) => entry.type === 'template');
-
-    if (fileDropMode === 'text_node') {
-      if (!promptDefinition) return;
-      const id = createNodeId();
-      const node = buildNode(promptDefinition, position, id, `Text: ${asset.name}`);
-      const promptConfig = resolvePromptConfig(node);
-      const promptNode: AiNode = {
-        ...node,
-        config: {
-          ...(node.config ?? {}),
-          prompt: {
-            ...promptConfig,
-            template: buildPromptTemplateFromDroppedAsset(asset),
-          },
-        },
-      };
-      addNode(promptNode);
-      selectNode(id);
-
-      onGraphChange({
-        nodes: [...nodes, promptNode],
-        edges,
-        nodeMeta: {
-          ...normalizedNodeMeta,
-          [id]: {
-            ...DEFAULT_CASE_RESOLVER_NODE_META,
-            role: 'text_note',
-            includeInOutput: true,
-            quoteMode: 'none',
-            surroundPrefix: '',
-            surroundSuffix: '',
-          },
-        },
-        edgeMeta: normalizedEdgeMeta,
-        pdfExtractionPresetId,
-        documentFileLinksByNode: normalizedDocumentFileLinksByNode,
-        documentDropNodeId: normalizedDocumentDropNodeId,
-      });
-      return;
-    }
 
     if (!templateDefinition) return;
     const id = createNodeId();
@@ -749,6 +778,81 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     );
     if (normalizedFileIds.length === 0) {
       toast('Dropped document is not available in this workspace.', { variant: 'warning' });
+      return;
+    }
+
+    const droppedFiles = normalizedFileIds
+      .map((fileId: string): CaseResolverFile | null => availableFilesById.get(fileId) ?? null)
+      .filter((file: CaseResolverFile | null): file is CaseResolverFile => file !== null);
+
+    const droppedDocumentFiles = droppedFiles.filter(
+      (file: CaseResolverFile): boolean => file.fileType === 'document'
+    );
+    if (droppedDocumentFiles.length > 0) {
+      const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
+      if (!promptDefinition) {
+        toast('Prompt node definition is missing.', { variant: 'error' });
+        return;
+      }
+
+      let nextNodes = [...nodes];
+      const nextNodeMeta = { ...normalizedNodeMeta };
+      const nextDocumentSourceFileIdByNode = { ...normalizedDocumentSourceFileIdByNode };
+      let lastCreatedNodeId: string | null = null;
+
+      droppedDocumentFiles.forEach((file: CaseResolverFile, index: number): void => {
+        const id = createNodeId();
+        const position = clampCanvasPosition({
+          x: dropPosition.x + index * 28,
+          y: dropPosition.y + index * 28,
+        });
+        const node = buildNode(promptDefinition, position, id, `Document: ${file.name}`);
+        const promptConfig = resolvePromptConfig(node);
+        const promptNode: AiNode = {
+          ...node,
+          config: {
+            ...(node.config ?? {}),
+            prompt: {
+              ...promptConfig,
+              template: buildPromptTemplateFromDroppedDocumentFile(file),
+            },
+          },
+        };
+        addNode(promptNode);
+        nextNodes = [...nextNodes, promptNode];
+        nextNodeMeta[id] = {
+          ...DEFAULT_CASE_RESOLVER_NODE_META,
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        };
+        nextDocumentSourceFileIdByNode[id] = file.id;
+        lastCreatedNodeId = id;
+      });
+
+      if (lastCreatedNodeId) {
+        selectNode(lastCreatedNodeId);
+      }
+
+      onGraphChange({
+        nodes: nextNodes,
+        edges,
+        nodeMeta: nextNodeMeta,
+        edgeMeta: normalizedEdgeMeta,
+        pdfExtractionPresetId,
+        documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+        documentDropNodeId: normalizedDocumentDropNodeId,
+        documentSourceFileIdByNode: nextDocumentSourceFileIdByNode,
+      });
+
+      toast(
+        droppedDocumentFiles.length === 1
+          ? 'Created document text node. Use Node Inspector for quote/surround options.'
+          : `Created ${droppedDocumentFiles.length} document text nodes.`,
+        { variant: 'success' }
+      );
       return;
     }
 
@@ -815,6 +919,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       pdfExtractionPresetId,
       documentFileLinksByNode: nextDocumentFileLinksByNode,
       documentDropNodeId: targetNodeId,
+      documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
     });
 
     toast(
@@ -825,17 +930,44 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     );
   };
 
-  const addPromptNode = (kind: 'text' | 'explanatory' | 'ai_prompt'): void => {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const listener = (event: Event): void => {
+      const customEvent = event as CustomEvent<CaseResolverDropDocumentToCanvasDetail>;
+      const detail = customEvent.detail;
+      if (!detail || typeof detail !== 'object') return;
+      const fileId = typeof detail.fileId === 'string' ? detail.fileId.trim() : '';
+      if (!fileId) return;
+      handleDroppedDocuments(
+        [
+          {
+            id: fileId,
+            name: typeof detail.name === 'string' ? detail.name : 'Document',
+            folder: typeof detail.folder === 'string' ? detail.folder : '',
+          },
+        ],
+        placePosition
+      );
+    };
+
+    window.addEventListener(
+      CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
+      listener as EventListener
+    );
+    return (): void => {
+      window.removeEventListener(
+        CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
+        listener as EventListener
+      );
+    };
+  }, [handleDroppedDocuments, placePosition]);
+
+  const addPromptNode = (): void => {
     const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
     if (!promptDefinition) return;
 
     const id = `node-${Math.random().toString(36).slice(2, 10)}`;
-    const title =
-      kind === 'text'
-        ? 'Text Note'
-        : kind === 'explanatory'
-          ? 'Explanatory Note'
-          : 'AI Prompt';
+    const title = 'Explanatory Note';
     const node = buildNode(promptDefinition, placePosition, id, title);
     const promptConfig = resolvePromptConfig(node);
     addNode({
@@ -851,14 +983,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     selectNode(id);
 
     const meta: CaseResolverNodeMeta = {
-      role:
-        kind === 'text'
-          ? 'text_note'
-          : kind === 'explanatory'
-            ? 'explanatory'
-            : 'ai_prompt',
-      includeInOutput: kind !== 'ai_prompt',
-      quoteMode: kind === 'text' ? 'double' : 'none',
+      role: 'explanatory',
+      includeInOutput: true,
+      quoteMode: 'none',
       surroundPrefix: '',
       surroundSuffix: '',
     };
@@ -876,6 +1003,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       pdfExtractionPresetId,
       documentFileLinksByNode: normalizedDocumentFileLinksByNode,
       documentDropNodeId: normalizedDocumentDropNodeId,
+      documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
     });
   };
 
@@ -920,6 +1048,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       pdfExtractionPresetId,
       documentFileLinksByNode: normalizedDocumentFileLinksByNode,
       documentDropNodeId: normalizedDocumentDropNodeId,
+      documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
     });
   };
 
@@ -941,6 +1070,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       pdfExtractionPresetId,
       documentFileLinksByNode: normalizedDocumentFileLinksByNode,
       documentDropNodeId: normalizedDocumentDropNodeId,
+      documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
     });
   };
 
@@ -1011,9 +1141,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         toast(
           droppedAsset.kind === 'pdf'
             ? `Created PDF extraction flow for ${payload.name}.`
-            : fileDropMode === 'text_node'
-              ? `Created text node from ${payload.name}.`
-              : `Created file node from ${payload.name}.`,
+            : `Created file node from ${payload.name}.`,
           { variant: 'success' }
         );
       } finally {
@@ -1055,9 +1183,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       toast(
         uploadedAssets.some((asset: CaseResolverAssetFile) => asset.kind === 'pdf')
           ? `Imported ${uploadedAssets.length} file(s), including PDF extraction flows.`
-          : fileDropMode === 'text_node'
-            ? `Imported ${uploadedAssets.length} file(s) as text nodes.`
-            : `Imported ${uploadedAssets.length} file(s) as file nodes.`,
+          : `Imported ${uploadedAssets.length} file(s) as file nodes.`,
         { variant: 'success' }
       );
     } catch (error: unknown) {
@@ -1074,6 +1200,14 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     selectedNode && selectedNode.type === 'prompt'
       ? normalizedNodeMeta[selectedNode.id] ?? DEFAULT_CASE_RESOLVER_NODE_META
       : null;
+
+  const selectedPromptSourceFileId =
+    selectedNode && selectedNode.type === 'prompt'
+      ? normalizedDocumentSourceFileIdByNode[selectedNode.id] ?? null
+      : null;
+  const selectedPromptSourceFile = selectedPromptSourceFileId
+    ? availableFilesById.get(selectedPromptSourceFileId) ?? null
+    : null;
 
   const selectedPromptTemplate =
     selectedNode && selectedNode.type === 'prompt'
@@ -1092,33 +1226,57 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     [pdfExtractionPresetId]
   );
 
+  const resolveConnectorTooltip = React.useCallback(
+    (input: {
+      direction: 'input' | 'output';
+      node: AiNode;
+      port: string;
+    }): {
+      content: React.ReactNode;
+      maxWidth?: string | undefined;
+    } | null => {
+      if (input.direction !== 'output') return null;
+      if (input.node.type !== 'prompt') return null;
+      if (input.port !== 'prompt') return null;
+
+      const sourceFileId = normalizedDocumentSourceFileIdByNode[input.node.id] ?? null;
+      if (!sourceFileId) return null;
+
+      const sourceFile = availableFilesById.get(sourceFileId) ?? null;
+      const nodeMeta = normalizedNodeMeta[input.node.id] ?? DEFAULT_CASE_RESOLVER_NODE_META;
+      const renderedText = renderPromptNodeTextPreview(input.node, nodeMeta);
+
+      return {
+        maxWidth: '720px',
+        content: (
+          <div className='space-y-2'>
+            <div className='text-[11px] text-gray-400'>Rendered document text output</div>
+            {sourceFile ? (
+              <div className='text-[10px] text-gray-500'>
+                Source: {sourceFile.name}
+              </div>
+            ) : null}
+            <div className='max-h-80 overflow-auto rounded border border-gray-700 bg-white p-3 text-[11px] leading-relaxed text-slate-900 whitespace-pre-wrap'>
+              {renderedText || '(empty)'}
+            </div>
+          </div>
+        ),
+      };
+    },
+    [availableFilesById, normalizedDocumentSourceFileIdByNode, normalizedNodeMeta]
+  );
+
   return (
     <div className='h-[calc(100vh-120px)] w-full'>
       <div className='flex min-h-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
         <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
           <Button
             type='button'
-            onClick={() => addPromptNode('text')}
-            className='h-8 rounded-md border border-sky-500/40 text-xs text-sky-100 hover:bg-sky-500/15'
-          >
-            <Plus className='mr-1 size-3.5' />
-            Text Node
-          </Button>
-          <Button
-            type='button'
-            onClick={() => addPromptNode('explanatory')}
+            onClick={addPromptNode}
             className='h-8 rounded-md border border-emerald-500/40 text-xs text-emerald-100 hover:bg-emerald-500/15'
           >
             <Sparkles className='mr-1 size-3.5' />
             Explanatory Node
-          </Button>
-          <Button
-            type='button'
-            onClick={() => addPromptNode('ai_prompt')}
-            className='h-8 rounded-md border border-violet-500/40 text-xs text-violet-100 hover:bg-violet-500/15'
-          >
-            <Brain className='mr-1 size-3.5' />
-            AI Prompt Node
           </Button>
 
           <div className='mx-1 h-6 w-px bg-border/60' />
@@ -1154,20 +1312,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
           <div className='mx-1 h-6 w-px bg-border/60' />
 
-          <SelectSimple size='sm'
-            value={fileDropMode}
-            onValueChange={(value: string): void => {
-              if (value === 'file_node' || value === 'text_node') {
-                setFileDropMode(value);
-              }
-            }}
-            options={[
-              { value: 'file_node', label: 'Drop as File Node' },
-              { value: 'text_node', label: 'Drop as WYSIWYG Text Node' },
-            ]}
-            className='w-[220px]'
-            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-          />
           <SelectSimple size='sm'
             value={pdfExtractionPresetId}
             onValueChange={(value: string): void => {
@@ -1231,6 +1375,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                   pdfExtractionPresetId,
                   documentFileLinksByNode: normalizedDocumentFileLinksByNode,
                   documentDropNodeId: normalizedDocumentDropNodeId,
+                  documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
                 })
               }
               className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
@@ -1248,7 +1393,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
             void handleCanvasDropCapture(event);
           }}
         >
-          <CanvasBoard />
+          <CanvasBoard resolveConnectorTooltip={resolveConnectorTooltip} />
         </div>
       </div>
 
@@ -1277,6 +1422,24 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
               {selectedNode.type === 'prompt' && selectedPromptMeta ? (
                 <>
+                  {selectedPromptSourceFile ? (
+                    <div className='space-y-2 rounded border border-sky-500/30 bg-sky-500/10 p-3'>
+                      <div className='flex items-center justify-between gap-2 text-xs'>
+                        <span className='text-sky-100'>Source Document</span>
+                        <span className='truncate text-[11px] text-sky-200'>{selectedPromptSourceFile.name}</span>
+                      </div>
+                      <Button
+                        type='button'
+                        className='h-8 rounded-md border border-sky-400/50 px-2 text-xs text-sky-100 hover:bg-sky-500/20'
+                        onClick={(): void => {
+                          onEditFile(selectedPromptSourceFile.id);
+                        }}
+                      >
+                        Open Edit Document
+                      </Button>
+                    </div>
+                  ) : null}
+
                   <div className='space-y-2'>
                     <Label className='text-xs text-gray-400'>Node Role</Label>
                     <SelectSimple size='sm'

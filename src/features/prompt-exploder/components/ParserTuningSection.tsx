@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import React from 'react';
 
 import { Button, FormSection } from '@/shared/ui';
@@ -10,13 +9,9 @@ import { PromptExploderParserTuningPanel } from './PromptExploderParserTuningPan
 import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 
 export function ParserTuningSection(): React.JSX.Element {
-  const router = useRouter();
-  const { parserTuningDrafts, isParserTuningOpen, isBusy } = useSettingsState();
+  const { isParserTuningOpen } = useSettingsState();
   const {
     setIsParserTuningOpen,
-    patchParserTuningDraft,
-    handleSaveParserTuningRules,
-    handleResetParserTuningDrafts,
   } = useSettingsActions();
 
   return (
@@ -39,20 +34,7 @@ export function ParserTuningSection(): React.JSX.Element {
       )}
     >
       {isParserTuningOpen ? (
-        <PromptExploderParserTuningProvider
-          value={{
-            drafts: parserTuningDrafts,
-            onPatchDraft: patchParserTuningDraft,
-            onSave: () => {
-              void handleSaveParserTuningRules();
-            },
-            onResetToPackDefaults: handleResetParserTuningDrafts,
-            onOpenValidationPatterns: () => {
-              router.push('/admin/validator?scope=prompt-exploder');
-            },
-            isBusy,
-          }}
-        >
+        <PromptExploderParserTuningProvider>
           <PromptExploderParserTuningPanel />
         </PromptExploderParserTuningProvider>
       ) : (

@@ -9,6 +9,7 @@ export type PromptValidationScope =
   | 'image_studio_extraction'
   | 'image_studio_generation'
   | 'prompt_exploder'
+  | 'case_resolver_prompt_exploder'
   | 'global';
 export type PromptValidationLaunchScopeBehavior = 'gate' | 'bypass';
 export type PromptValidationLaunchOperator =
@@ -40,6 +41,7 @@ export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
   'image_studio_extraction',
   'image_studio_generation',
   'prompt_exploder',
+  'case_resolver_prompt_exploder',
   'global',
 ];
 
@@ -63,6 +65,7 @@ export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, strin
   image_studio_extraction: 'Image Studio Extraction',
   image_studio_generation: 'Image Studio Generation',
   prompt_exploder: 'Prompt Exploder',
+  case_resolver_prompt_exploder: 'Case Resolver Prompt Exploder',
   global: 'Global',
 };
 

@@ -2,6 +2,27 @@ import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 
 import type { CaseResolverAssetKind } from './types';
 
+export const CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT =
+  'case_resolver:drop-document-to-canvas';
+
+export type CaseResolverDropDocumentToCanvasDetail = {
+  fileId: string;
+  name: string;
+  folder: string;
+};
+
+export const emitCaseResolverDropDocumentToCanvas = (
+  detail: CaseResolverDropDocumentToCanvasDetail
+): void => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent<CaseResolverDropDocumentToCanvasDetail>(
+      CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
+      { detail }
+    )
+  );
+};
+
 export type CaseResolverTreeAssetDragPayload = {
   source: 'case_resolver_tree';
   entity: 'asset';

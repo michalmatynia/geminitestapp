@@ -66,6 +66,7 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
   workspace: CaseResolverWorkspace
 ): MasterTreeNode[] => {
   const nodes: MasterTreeNode[] = [];
+  const folderTimestampByPath = workspace.folderTimestamps ?? {};
   const resolveParentKey = (parentId: string | null): string => parentId ?? '__root__';
   const folderSortIndexByParent = new Map<string, number>();
 
@@ -95,6 +96,8 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
       metadata: {
         entity: 'folder',
         rawPath: folderPath,
+        createdAt: folderTimestampByPath[folderPath]?.createdAt ?? null,
+        updatedAt: folderTimestampByPath[folderPath]?.updatedAt ?? null,
       },
     });
   });
@@ -134,6 +137,8 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
             folder: file.folder,
             isLocked: file.isLocked,
             fileType: file.fileType,
+            createdAt: file.createdAt,
+            updatedAt: file.updatedAt,
           },
         };
       },
@@ -180,6 +185,8 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
             size: asset.size,
             textContent: asset.textContent,
             description: asset.description,
+            createdAt: asset.createdAt,
+            updatedAt: asset.updatedAt,
           },
         };
       },

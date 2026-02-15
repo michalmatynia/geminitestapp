@@ -38,7 +38,7 @@ const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, stri
 
 const shouldNotifyMasterTreePersistSuccessByInstance: Record<FolderTreeInstance, boolean> = {
   notes: false,
-  image_studio: true,
+  image_studio: false,
   product_categories: false,
   // CMS tree frequently rehydrates from external builder state; suppress noisy success toasts.
   cms_page_builder: false,

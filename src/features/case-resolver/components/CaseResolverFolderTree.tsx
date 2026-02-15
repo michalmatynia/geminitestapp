@@ -35,6 +35,10 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 import { createCaseResolverMasterTreeAdapter } from '../adapter';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
+  emitCaseResolverDropDocumentToCanvas,
+  type CaseResolverTreeDragPayload,
+} from '../drag';
+import {
   buildMasterNodesFromCaseResolverWorkspace,
   decodeCaseResolverMasterNodeId,
   fromCaseResolverAssetNodeId,
@@ -44,8 +48,6 @@ import {
   toCaseResolverFileNodeId,
   toCaseResolverFolderNodeId,
 } from '../master-tree';
-
-import type { CaseResolverTreeDragPayload } from '../drag';
 
 type PaletteEntry = {
   id: string;
@@ -123,6 +125,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onDeleteFile,
     onToggleFileLock,
     onEditFile,
+    activeFile,
   } = useCaseResolverPageContext();
   const { toast } = useToast();
   const [isUploadingAssets, setIsUploadingAssets] = useState(false);
@@ -590,6 +593,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               Boolean(fileId) &&
               (node.kind === 'case_file' || node.kind === 'case_file_scan');
             const isScanCaseFile = Boolean(fileId) && node.kind === 'case_file_scan';
+            const isDocumentCaseFile = Boolean(fileId) && node.kind === 'case_file';
             const isFileLocked = fileId ? fileLockById.get(fileId) === true : false;
             const isFolder = folderPath !== null;
             const folderStats = folderPath ? folderCaseFileStatsByPath.get(folderPath) ?? null : null;
@@ -634,10 +638,13 @@ export function CaseResolverFolderTree(): React.JSX.Element {
 
             return (
               <div
-                className={`group flex items-center gap-1 rounded px-2 py-1.5 text-sm ${stateClassName}`}
+                className={`group flex items-center gap-1 rounded px-2 py-1.5 text-sm ${stateClassName} ${
+                  isDocumentCaseFile ? 'cursor-grab active:cursor-grabbing' : ''
+                }`}
                 style={{ paddingLeft: `${depth * 16 + 8}px` }}
                 role='button'
                 tabIndex={0}
+                title={isDocumentCaseFile ? 'Drag document to canvas' : node.name}
                 onClick={(): void => {
                   setIsRootExplicitlySelected(false);
                   if (!isSelected) {
@@ -679,7 +686,13 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   }
                 }}
               >
-                <DragHandleIcon className='size-3 shrink-0 text-gray-500' />
+                <DragHandleIcon
+                  className={`size-3 shrink-0 ${
+                    isDocumentCaseFile
+                      ? 'text-sky-300/90 opacity-0 transition-opacity group-hover:opacity-100'
+                      : 'text-gray-500'
+                  }`}
+                />
                 {canToggle ? (
                   <button
                     type='button'
@@ -812,6 +825,31 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 ) : null}
                 {!isRenaming && isCaseFile && fileId ? (
                   <div className='flex shrink-0 items-center gap-1'>
+                    {isDocumentCaseFile ? (
+                      <button
+                        type='button'
+                        className='inline-flex size-6 items-center justify-center rounded border border-sky-500/40 bg-sky-500/10 text-sky-200 transition hover:bg-sky-500/20 hover:text-sky-100'
+                        title='Drop document onto canvas'
+                        aria-label='Drop document onto canvas'
+                        onClick={(event): void => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          if (activeFile?.fileType !== 'document') {
+                            toast('Open a document canvas file to drop document text nodes.', {
+                              variant: 'warning',
+                            });
+                            return;
+                          }
+                          emitCaseResolverDropDocumentToCanvas({
+                            fileId,
+                            name: node.name,
+                            folder: parseString(node.metadata?.['folder']),
+                          });
+                        }}
+                      >
+                        <Sparkles className='size-3.5' />
+                      </button>
+                    ) : null}
                     <button
                       type='button'
                       className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white'

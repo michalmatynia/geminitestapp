@@ -72,9 +72,25 @@ type RuntimeHashes = {
   outputs: Record<string, Record<string, string>>;
 };
 
+export type CanvasBoardConnectorTooltipOverrideInput = {
+  direction: 'input' | 'output';
+  node: AiNode;
+  port: string;
+};
+
+export type CanvasBoardConnectorTooltipOverride = {
+  content: React.ReactNode;
+  maxWidth?: string | undefined;
+};
+
 type CanvasBoardProps = {
   /** Optional class name for the viewport container */
   viewportClassName?: string | undefined;
+  resolveConnectorTooltip?:
+    | ((
+        input: CanvasBoardConnectorTooltipOverrideInput
+      ) => CanvasBoardConnectorTooltipOverride | null | undefined)
+    | undefined;
 };
 
 const formatRuntimeStatusLabel = (status: string): string =>
@@ -119,6 +135,7 @@ const BLOCKER_PROCESSING_STATUSES = new Set<string>([
 
 export function CanvasBoard({
   viewportClassName,
+  resolveConnectorTooltip,
 }: CanvasBoardProps): React.JSX.Element {
   // --- Context Hooks ---
   const { view, panState, dragState, lastDrop, connecting, connectingPos } = useCanvasState();
@@ -1141,12 +1158,17 @@ export function CanvasBoard({
                       const isHovered = hoveredConnectorKey === connectorKey;
                       const isTooltipOpen = isPinned || isHovered;
                       const hasMismatch = connectorInfo.hasMismatch;
+                      const tooltipOverride = resolveConnectorTooltip?.({
+                        direction: 'input',
+                        node,
+                        port: input,
+                      }) ?? null;
                       return (
                         <>
                           <Tooltip
-                            content={renderConnectorTooltip(connectorInfo)}
+                            content={tooltipOverride?.content ?? renderConnectorTooltip(connectorInfo)}
                             side='right'
-                            maxWidth='360px'
+                            maxWidth={tooltipOverride?.maxWidth ?? '360px'}
                             open={isTooltipOpen}
                             disableHover
                           >
@@ -1239,6 +1261,11 @@ export function CanvasBoard({
                       const isHovered = hoveredConnectorKey === connectorKey;
                       const isTooltipOpen = isPinned || isHovered;
                       const hasMismatch = connectorInfo.hasMismatch;
+                      const tooltipOverride = resolveConnectorTooltip?.({
+                        direction: 'output',
+                        node,
+                        port: output,
+                      }) ?? null;
                       return (
                         <>
                           <span
@@ -1251,9 +1278,9 @@ export function CanvasBoard({
                             {formatPortLabel(output)}
                           </span>
                           <Tooltip
-                            content={renderConnectorTooltip(connectorInfo)}
+                            content={tooltipOverride?.content ?? renderConnectorTooltip(connectorInfo)}
                             side='left'
-                            maxWidth='360px'
+                            maxWidth={tooltipOverride?.maxWidth ?? '360px'}
                             open={isTooltipOpen}
                             disableHover
                           >
@@ -1276,7 +1303,8 @@ export function CanvasBoard({
                                   setPinnedConnectorKey((prev) =>
                                     prev === connectorKey ? null : connectorKey
                                   );
-                                }}                                onContextMenu={(event) => {
+                                }}
+                                onContextMenu={(event) => {
                                   event.preventDefault();
                                   event.stopPropagation();
                                   handleDisconnectPort('output', node.id, output);

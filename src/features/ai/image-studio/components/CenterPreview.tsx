@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Camera, Eye, EyeOff, Loader2, Locate, Trash2 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
@@ -91,6 +91,7 @@ export function CenterPreview(): React.JSX.Element {
   const [leftSplitZoom, setLeftSplitZoom] = useState(1);
   const [rightSplitZoom, setRightSplitZoom] = useState(1);
   const [dismissedVariantKeys, setDismissedVariantKeys] = useState<Set<string>>(new Set());
+  const pendingDismissedVariantHydrationKeyRef = useRef<string | null>(null);
   const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
   const [variantTooltip, setVariantTooltip] = useState<{
     variant: VariantThumbnailInfo;
@@ -101,6 +102,13 @@ export function CenterPreview(): React.JSX.Element {
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+
+  const dismissedVariantStorageKey = useMemo((): string | null => {
+    const normalizedProjectId = projectId?.trim() ?? '';
+    const normalizedRunId = activeRunId?.trim() ?? '';
+    if (!normalizedProjectId || !normalizedRunId) return null;
+    return `image_studio_dismissed_variants:${normalizedProjectId}:${normalizedRunId}`;
+  }, [activeRunId, projectId]);
 
   const workingSlotImageSrc = useMemo(() => {
     return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
@@ -234,8 +242,44 @@ export function CenterPreview(): React.JSX.Element {
   }, [canCompareWithSource]);
 
   useEffect(() => {
-    setDismissedVariantKeys(new Set());
-  }, [activeRunId]);
+    if (typeof window === 'undefined') return;
+    if (!dismissedVariantStorageKey) {
+      pendingDismissedVariantHydrationKeyRef.current = null;
+      setDismissedVariantKeys(new Set());
+      return;
+    }
+    pendingDismissedVariantHydrationKeyRef.current = dismissedVariantStorageKey;
+    const raw = window.localStorage.getItem(dismissedVariantStorageKey);
+    if (!raw) {
+      setDismissedVariantKeys(new Set());
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) {
+        setDismissedVariantKeys(new Set());
+        return;
+      }
+      const keys = parsed
+        .filter((value: unknown): value is string => typeof value === 'string')
+        .map((value: string) => value.trim())
+        .filter(Boolean);
+      setDismissedVariantKeys(new Set(keys));
+    } catch {
+      setDismissedVariantKeys(new Set());
+    }
+  }, [dismissedVariantStorageKey]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!dismissedVariantStorageKey) return;
+    if (pendingDismissedVariantHydrationKeyRef.current === dismissedVariantStorageKey) {
+      pendingDismissedVariantHydrationKeyRef.current = null;
+      return;
+    }
+    const serialized = JSON.stringify(Array.from(dismissedVariantKeys));
+    window.localStorage.setItem(dismissedVariantStorageKey, serialized);
+  }, [dismissedVariantKeys, dismissedVariantStorageKey]);
 
   const buildVariantDismissKeys = useCallback(
     (variant: VariantThumbnailInfo): string[] => {

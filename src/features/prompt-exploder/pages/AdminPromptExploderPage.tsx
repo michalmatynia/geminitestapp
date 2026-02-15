@@ -44,9 +44,10 @@ import {
 import { applyBenchmarkSuggestions } from '../benchmark-apply';
 import { prepareBenchmarkSuggestionsForApply } from '../benchmark-suggestions';
 import {
-  consumePromptExploderDraftPrompt,
-  readPromptExploderDraftPrompt,
+  consumePromptExploderDraftPayload,
+  readPromptExploderDraftPayload,
   savePromptExploderApplyPrompt,
+  savePromptExploderApplyPromptForCaseResolver,
 } from '../bridge';
 import { PromptExploderHierarchyTreeProvider } from '../components/PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from '../components/PromptExploderHierarchyTreeEditor';
@@ -271,8 +272,16 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const [draggingListItemIndex, setDraggingListItemIndex] = useState<number | null>(null);
   const [listItemDropTargetIndex, setListItemDropTargetIndex] = useState<number | null>(null);
   const [listItemDropPosition, setListItemDropPosition] = useState<'before' | 'after' | null>(null);
+  const [incomingBridgeSource, setIncomingBridgeSource] =
+    useState<'image-studio' | 'case-resolver' | null>(null);
+  const [incomingCaseResolverContext, setIncomingCaseResolverContext] = useState<{
+    fileId: string;
+    fileName: string;
+  } | null>(null);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
+  const returnTarget = returnTo.startsWith('/admin/case-resolver') ? 'case-resolver' : 'image-studio';
+  const incomingLabel = incomingBridgeSource === 'case-resolver' ? 'Case Resolver' : 'Image Studio';
 
   const rawPromptSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const rawExploderSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
@@ -670,9 +679,19 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   }, [bindingDraft.toSegmentId, segmentById]);
 
   useEffect(() => {
-    const fromStorage = readPromptExploderDraftPrompt();
-    if (fromStorage && !promptText.trim()) {
-      setPromptText(fromStorage);
+    const draftPayload = readPromptExploderDraftPayload();
+    if (
+      draftPayload &&
+      (!draftPayload.target || draftPayload.target === 'prompt-exploder') &&
+      !promptText.trim()
+    ) {
+      setPromptText(draftPayload.prompt);
+      if (draftPayload.source === 'case-resolver' || draftPayload.source === 'image-studio') {
+        setIncomingBridgeSource(draftPayload.source);
+      } else {
+        setIncomingBridgeSource(null);
+      }
+      setIncomingCaseResolverContext(draftPayload.caseResolverContext ?? null);
       return;
     }
 
@@ -1914,19 +1933,31 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }
 
     const reassembled = reassemblePromptSegments(documentState.segments);
-    savePromptExploderApplyPrompt(reassembled);
-    toast('Reassembled prompt sent to Image Studio.', { variant: 'success' });
+    if (returnTarget === 'case-resolver') {
+      savePromptExploderApplyPromptForCaseResolver(reassembled, incomingCaseResolverContext);
+      toast('Restructured text sent to Case Resolver.', { variant: 'success' });
+    } else {
+      savePromptExploderApplyPrompt(reassembled);
+      toast('Reassembled prompt sent to Image Studio.', { variant: 'success' });
+    }
     router.push(returnTo);
   };
 
   const handleReloadFromStudio = (): void => {
-    const nextPrompt = consumePromptExploderDraftPrompt();
-    if (!nextPrompt) {
-      toast('No draft prompt was received from Image Studio.', { variant: 'info' });
+    const draftPayload = consumePromptExploderDraftPayload('prompt-exploder');
+    if (!draftPayload) {
+      toast(`No draft prompt was received from ${incomingLabel}.`, { variant: 'info' });
       return;
     }
-    setPromptText(nextPrompt);
-    toast('Loaded latest prompt draft from Image Studio.', { variant: 'success' });
+    const sourceLabel = draftPayload.source === 'case-resolver' ? 'Case Resolver' : 'Image Studio';
+    setPromptText(draftPayload.prompt);
+    if (draftPayload.source === 'case-resolver' || draftPayload.source === 'image-studio') {
+      setIncomingBridgeSource(draftPayload.source);
+    } else {
+      setIncomingBridgeSource(null);
+    }
+    setIncomingCaseResolverContext(draftPayload.caseResolverContext ?? null);
+    toast(`Loaded latest prompt draft from ${sourceLabel}.`, { variant: 'success' });
   };
 
   const persistPromptLibraryItems = async (
@@ -2428,7 +2459,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               onClick={handleReloadFromStudio}
             >
               <RefreshCcw className='mr-2 size-4' />
-              Reload Studio Draft
+              Reload Incoming Draft
             </Button>
             <Button
               size='xs'
@@ -2447,7 +2478,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                 router.push(returnTo);
               }}
             >
-              Back to Image Studio
+              {returnTarget === 'case-resolver' ? 'Back to Case Resolver' : 'Back to Image Studio'}
             </Button>
           </div>
         }

@@ -1,0 +1,369 @@
+'use client';
+
+import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import { DocumentSearchPage } from '@/features/document-search';
+import { Button, EmptyState, Pagination, SearchInput, SelectSimple } from '@/shared/ui';
+
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+
+import type { CaseResolverCategory, CaseResolverFile, CaseResolverTag } from '../types';
+
+type SortKey = 'updated' | 'created' | 'name';
+type SortOrder = 'asc' | 'desc';
+type FileTypeFilter = 'all' | 'document' | 'scanfile';
+
+type FileSearchRow = {
+  file: CaseResolverFile;
+  normalizedName: string;
+  normalizedFolder: string;
+  normalizedTag: string;
+  normalizedCategory: string;
+  normalizedContent: string;
+};
+
+const stripHtml = (value: string): string =>
+  value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const toDateLabel = (value: string): string => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown';
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
+};
+
+const buildPathLabelMap = <T extends { id: string; name: string; parentId: string | null }>(
+  items: T[]
+): Map<string, string> => {
+  const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
+  const cache = new Map<string, string>();
+
+  const resolveLabel = (id: string, visited: Set<string>): string => {
+    const cached = cache.get(id);
+    if (cached) return cached;
+    const item = byId.get(id);
+    if (!item) return '';
+    if (visited.has(id)) {
+      cache.set(id, item.name);
+      return item.name;
+    }
+    if (!item.parentId || !byId.has(item.parentId)) {
+      cache.set(id, item.name);
+      return item.name;
+    }
+    const nextVisited = new Set(visited);
+    nextVisited.add(id);
+    const parentLabel = resolveLabel(item.parentId, nextVisited);
+    const label = `${parentLabel} / ${item.name}`;
+    cache.set(id, label);
+    return label;
+  };
+
+  items.forEach((item: T): void => {
+    resolveLabel(item.id, new Set<string>());
+  });
+
+  return cache;
+};
+
+export function CaseResolverDocumentSearchPage(): React.JSX.Element {
+  const {
+    workspace,
+    caseResolverTags: tags,
+    caseResolverCategories: categories,
+    onCreateDocumentFromSearch,
+    onOpenFileFromSearch,
+    onEditFileFromSearch,
+  } = useCaseResolverPageContext();
+  const files = workspace.files;
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFileType, setSelectedFileType] = useState<FileTypeFilter>('all');
+  const [selectedTagId, setSelectedTagId] = useState<string>('__all__');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('__all__');
+  const [sortBy, setSortBy] = useState<SortKey>('updated');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(24);
+
+  const tagPathById = useMemo(() => buildPathLabelMap(tags), [tags]);
+  const categoryPathById = useMemo(() => buildPathLabelMap(categories), [categories]);
+  const tagOptions = useMemo(
+    () => [
+      { value: '__all__', label: 'All tags' },
+      ...tags.map((tag: CaseResolverTag) => ({
+        value: tag.id,
+        label: tagPathById.get(tag.id) ?? tag.name,
+      })),
+    ],
+    [tagPathById, tags]
+  );
+  const categoryOptions = useMemo(
+    () => [
+      { value: '__all__', label: 'All categories' },
+      ...categories.map((category: CaseResolverCategory) => ({
+        value: category.id,
+        label: categoryPathById.get(category.id) ?? category.name,
+      })),
+    ],
+    [categories, categoryPathById]
+  );
+
+  const indexedRows = useMemo(
+    (): FileSearchRow[] =>
+      files.map((file: CaseResolverFile): FileSearchRow => ({
+        file,
+        normalizedName: file.name.toLowerCase(),
+        normalizedFolder: file.folder.toLowerCase(),
+        normalizedTag: (file.tagId ? (tagPathById.get(file.tagId) ?? '') : '').toLowerCase(),
+        normalizedCategory: (file.categoryId ? (categoryPathById.get(file.categoryId) ?? '') : '').toLowerCase(),
+        normalizedContent: stripHtml(file.documentContent).toLowerCase(),
+      })),
+    [categoryPathById, files, tagPathById]
+  );
+
+  const filteredFiles = useMemo((): CaseResolverFile[] => {
+    const query = searchQuery.trim().toLowerCase();
+    const tagFilter = selectedTagId === '__all__' ? null : selectedTagId;
+    const categoryFilter = selectedCategoryId === '__all__' ? null : selectedCategoryId;
+
+    const filtered = indexedRows
+      .filter((row: FileSearchRow): boolean => {
+        if (selectedFileType !== 'all' && row.file.fileType !== selectedFileType) return false;
+        if (tagFilter && row.file.tagId !== tagFilter) return false;
+        if (categoryFilter && row.file.categoryId !== categoryFilter) return false;
+        if (!query) return true;
+        return (
+          row.normalizedName.includes(query) ||
+          row.normalizedFolder.includes(query) ||
+          row.normalizedTag.includes(query) ||
+          row.normalizedCategory.includes(query) ||
+          row.normalizedContent.includes(query)
+        );
+      })
+      .map((row: FileSearchRow): CaseResolverFile => row.file);
+
+    filtered.sort((left: CaseResolverFile, right: CaseResolverFile): number => {
+      let delta = 0;
+      if (sortBy === 'name') {
+        delta = left.name.localeCompare(right.name);
+      } else if (sortBy === 'created') {
+        delta = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+      } else {
+        delta = new Date(left.updatedAt).getTime() - new Date(right.updatedAt).getTime();
+      }
+      return sortOrder === 'asc' ? delta : -delta;
+    });
+
+    return filtered;
+  }, [indexedRows, searchQuery, selectedFileType, selectedTagId, selectedCategoryId, sortBy, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredFiles.length / pageSize));
+  useEffect(() => {
+    if (page <= totalPages) return;
+    setPage(totalPages);
+  }, [page, totalPages]);
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedFileType, selectedTagId, selectedCategoryId, sortBy, sortOrder, pageSize]);
+
+  const pagedFiles = useMemo((): CaseResolverFile[] => {
+    const start = (page - 1) * pageSize;
+    return filteredFiles.slice(start, start + pageSize);
+  }, [filteredFiles, page, pageSize]);
+
+  return (
+    <DocumentSearchPage
+      title='Document Search'
+      startAdornment={(
+        <>
+          <Button
+            type='button'
+            onClick={onCreateDocumentFromSearch}
+            className='size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90'
+            aria-label='Create document'
+            title='Create document'
+          >
+            <Plus className='size-5' />
+          </Button>
+        </>
+      )}
+      titleAdornment={(
+        <div className='rounded-md border border-border/50 bg-card/40 px-2 py-1 text-xs text-gray-300'>
+          {filteredFiles.length} result{filteredFiles.length === 1 ? '' : 's'}
+        </div>
+      )}
+      endAdornment={(
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          pageSizeOptions={[12, 24, 48]}
+          showPageSize
+          variant='compact'
+        />
+      )}
+      filters={(
+        <div className='space-y-3'>
+          <SearchInput
+            value={searchQuery}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+              setSearchQuery(event.target.value);
+            }}
+            onClear={(): void => {
+              setSearchQuery('');
+            }}
+            placeholder='Search documents by name, folder, tag, category, or content...'
+            className='h-10 border-border bg-card/60 text-sm text-white'
+          />
+          <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-5'>
+            <SelectSimple
+              size='sm'
+              value={selectedFileType}
+              onValueChange={(value: string): void => {
+                setSelectedFileType(value === 'document' || value === 'scanfile' ? value : 'all');
+              }}
+              options={[
+                { value: 'all', label: 'All file types' },
+                { value: 'document', label: 'Document' },
+                { value: 'scanfile', label: 'Scan File' },
+              ]}
+              triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
+            />
+            <SelectSimple
+              size='sm'
+              value={selectedTagId}
+              onValueChange={setSelectedTagId}
+              options={tagOptions}
+              triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
+            />
+            <SelectSimple
+              size='sm'
+              value={selectedCategoryId}
+              onValueChange={setSelectedCategoryId}
+              options={categoryOptions}
+              triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
+            />
+            <SelectSimple
+              size='sm'
+              value={sortBy}
+              onValueChange={(value: string): void => {
+                setSortBy(value === 'created' || value === 'name' ? value : 'updated');
+              }}
+              options={[
+                { value: 'updated', label: 'Sort: Modified' },
+                { value: 'created', label: 'Sort: Created' },
+                { value: 'name', label: 'Sort: Name' },
+              ]}
+              triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
+            />
+            <Button
+              type='button'
+              variant='outline'
+              onClick={(): void => {
+                setSortOrder((current: SortOrder) => (current === 'asc' ? 'desc' : 'asc'));
+              }}
+              className='h-9 border-border bg-card/60 text-xs text-gray-200 hover:bg-muted/60'
+              title={`Sorting ${sortOrder === 'asc' ? 'ascending' : 'descending'}`}
+            >
+              {sortOrder === 'asc' ? <ArrowUp className='mr-1.5 size-3.5' /> : <ArrowDown className='mr-1.5 size-3.5' />}
+              {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+            </Button>
+          </div>
+        </div>
+      )}
+      loading={false}
+      hasResults={filteredFiles.length > 0}
+      emptyState={(
+        <EmptyState
+          title='No documents found'
+          description='Adjust search filters or create a new document.'
+          icon={<FolderOpen className='size-10' />}
+          action={(
+            <Button type='button' onClick={onCreateDocumentFromSearch}>
+              <Plus className='mr-2 size-4' />
+              Create Document
+            </Button>
+          )}
+        />
+      )}
+    >
+      <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+        {pagedFiles.map((file: CaseResolverFile) => {
+          const previewText = stripHtml(file.documentContent).slice(0, 220);
+          const tagLabel = file.tagId ? tagPathById.get(file.tagId) ?? 'Unknown tag' : 'No tag';
+          const categoryLabel = file.categoryId ? categoryPathById.get(file.categoryId) ?? 'Unknown category' : 'No category';
+          return (
+            <div key={file.id} className='rounded-lg border border-border/60 bg-card/45 p-3'>
+              <div className='mb-1 flex items-start justify-between gap-2'>
+                <button
+                  type='button'
+                  className='line-clamp-2 text-left text-sm font-semibold text-white hover:text-cyan-200'
+                  onClick={(): void => {
+                    onOpenFileFromSearch(file.id);
+                  }}
+                >
+                  {file.name}
+                </button>
+                <div className='shrink-0 rounded border border-border/60 bg-black/30 px-2 py-0.5 text-[10px] uppercase tracking-wide text-gray-300'>
+                  {file.fileType}
+                </div>
+              </div>
+              <div className='mb-2 text-[11px] text-gray-500'>{file.folder || '(root)'}</div>
+              <div className='mb-2 line-clamp-3 text-xs text-gray-300'>
+                {previewText || 'No content yet.'}
+              </div>
+              <div className='space-y-1 text-[11px] text-gray-400'>
+                <div>Tag: {tagLabel}</div>
+                <div>Category: {categoryLabel}</div>
+                <div>Modified: {toDateLabel(file.updatedAt)}</div>
+              </div>
+              <div className='mt-3 flex items-center justify-end gap-2'>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  className='h-8 border-white/20 px-2 text-xs'
+                  onClick={(): void => {
+                    onOpenFileFromSearch(file.id);
+                  }}
+                >
+                  {file.fileType === 'scanfile' ? (
+                    <FileImage className='mr-1.5 size-3.5' />
+                  ) : (
+                    <FileText className='mr-1.5 size-3.5' />
+                  )}
+                  Open
+                </Button>
+                <Button
+                  type='button'
+                  size='sm'
+                  className='h-8 border border-white/20 px-2 text-xs'
+                  onClick={(): void => {
+                    onEditFileFromSearch(file.id);
+                  }}
+                >
+                  Edit
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </DocumentSearchPage>
+  );
+}

@@ -1,12 +1,14 @@
 'use client';
 
-import { ChevronRight, Eye, EyeOff, FileImage, FileText, FolderOpen, Plus, Trash2, Upload, Users } from 'lucide-react';
+import { Check, ChevronDown, Eye, EyeOff, FileImage, FileText, Link2, Plus, Trash2, Upload, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { CaseResolverCanvasWorkspace } from '@/features/case-resolver/components/CaseResolverCanvasWorkspace';
+import { CaseResolverDocumentSearchPage } from '@/features/case-resolver/components/CaseResolverDocumentSearchPage';
 import { CaseResolverFileViewer } from '@/features/case-resolver/components/CaseResolverFileViewer';
 import { CaseResolverFolderTree } from '@/features/case-resolver/components/CaseResolverFolderTree';
 import { CaseResolverRichTextEditor } from '@/features/case-resolver/components/CaseResolverRichTextEditor';
@@ -22,6 +24,10 @@ import {
   parseFilemakerDatabase,
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
+import {
+  consumePromptExploderApplyPromptForCaseResolver,
+  savePromptExploderDraftPromptFromCaseResolver,
+} from '@/features/prompt-exploder/bridge';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { AppModal, Button, Input, Label, Textarea, SelectSimple, useToast } from '@/shared/ui';
@@ -45,6 +51,7 @@ import {
 import type {
   CaseResolverAssetFile,
   CaseResolverCategory,
+  CaseResolverDocumentVersion,
   CaseResolverFile,
   CaseResolverFileType,
   CaseResolverGraph,
@@ -108,6 +115,133 @@ const promptForName = (label: string, fallback: string): string | null => {
   return normalized;
 };
 
+const createUniqueDocumentName = (existingFiles: CaseResolverFile[], baseName: string): string => {
+  const normalizedBase = baseName.trim() || 'Exploded Document';
+  const existingNames = new Set(
+    existingFiles.map((file: CaseResolverFile): string => file.name.trim().toLowerCase())
+  );
+  if (!existingNames.has(normalizedBase.toLowerCase())) {
+    return normalizedBase;
+  }
+
+  let index = 2;
+  while (index < 10000) {
+    const candidate = `${normalizedBase} ${index}`;
+    if (!existingNames.has(candidate.toLowerCase())) {
+      return candidate;
+    }
+    index += 1;
+  }
+
+  return `${normalizedBase} ${Date.now()}`;
+};
+
+type CaseResolverTagPickerOption = {
+  id: string;
+  label: string;
+  pathIds: string[];
+  pathNames: string[];
+  searchLabel: string;
+};
+
+const buildCaseResolverTagPickerOptions = (
+  tags: CaseResolverTag[]
+): CaseResolverTagPickerOption[] => {
+  const byId = new Map<string, CaseResolverTag>(
+    tags.map((tag: CaseResolverTag): [string, CaseResolverTag] => [tag.id, tag])
+  );
+  const cache = new Map<string, { ids: string[]; names: string[] }>();
+
+  const resolvePath = (tagId: string, trail: Set<string>): { ids: string[]; names: string[] } => {
+    const cached = cache.get(tagId);
+    if (cached) return cached;
+    const tag = byId.get(tagId);
+    if (!tag) return { ids: [], names: [] };
+    if (trail.has(tagId)) {
+      const fallback = { ids: [tag.id], names: [tag.name] };
+      cache.set(tagId, fallback);
+      return fallback;
+    }
+    if (!tag.parentId || !byId.has(tag.parentId)) {
+      const rootPath = { ids: [tag.id], names: [tag.name] };
+      cache.set(tagId, rootPath);
+      return rootPath;
+    }
+    const nextTrail = new Set(trail);
+    nextTrail.add(tagId);
+    const parentPath = resolvePath(tag.parentId, nextTrail);
+    const path = {
+      ids: [...parentPath.ids, tag.id],
+      names: [...parentPath.names, tag.name],
+    };
+    cache.set(tagId, path);
+    return path;
+  };
+
+  return tags
+    .map((tag: CaseResolverTag): CaseResolverTagPickerOption => {
+      const path = resolvePath(tag.id, new Set<string>());
+      const label = path.names.join(' / ');
+      return {
+        id: tag.id,
+        label,
+        pathIds: path.ids,
+        pathNames: path.names,
+        searchLabel: label.toLowerCase(),
+      };
+    })
+    .sort((left: CaseResolverTagPickerOption, right: CaseResolverTagPickerOption) =>
+      left.label.localeCompare(right.label)
+    );
+};
+
+const toActiveDocumentContent = ({
+  activeDocumentVersion,
+  originalDocumentContent,
+  explodedDocumentContent,
+}: {
+  activeDocumentVersion: CaseResolverDocumentVersion;
+  originalDocumentContent: string;
+  explodedDocumentContent: string;
+}): string =>
+  activeDocumentVersion === 'exploded' && explodedDocumentContent.trim().length > 0
+    ? explodedDocumentContent
+    : originalDocumentContent;
+
+const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEditDraft => {
+  const originalDocumentContent = file.originalDocumentContent ?? file.documentContent;
+  const explodedDocumentContent = file.explodedDocumentContent ?? '';
+  const requestedVersion: CaseResolverDocumentVersion = file.activeDocumentVersion === 'exploded'
+    ? 'exploded'
+    : 'original';
+  const activeDocumentVersion: CaseResolverDocumentVersion =
+    requestedVersion === 'exploded' && explodedDocumentContent.trim().length === 0
+      ? 'original'
+      : requestedVersion;
+  return {
+    id: file.id,
+    fileType: file.fileType,
+    name: file.name,
+    folder: file.folder,
+    createdAt: file.createdAt,
+    updatedAt: file.updatedAt,
+    documentDate: file.documentDate,
+    originalDocumentContent,
+    explodedDocumentContent,
+    activeDocumentVersion,
+    documentContent: toActiveDocumentContent({
+      activeDocumentVersion,
+      originalDocumentContent,
+      explodedDocumentContent,
+    }),
+    scanSlots: file.scanSlots,
+    addresser: file.addresser,
+    addressee: file.addressee,
+    tagId: file.tagId,
+    categoryId: file.categoryId,
+  };
+};
+
 type UploadedCaseResolverAsset = {
   id: string;
   filename: string;
@@ -124,7 +258,12 @@ type CaseResolverFileEditDraft = {
   fileType: CaseResolverFileType;
   name: string;
   folder: string;
+  createdAt: string;
+  updatedAt: string;
   documentDate: string;
+  originalDocumentContent: string;
+  explodedDocumentContent: string;
+  activeDocumentVersion: CaseResolverDocumentVersion;
   documentContent: string;
   scanSlots: CaseResolverScanSlot[];
   addresser: CaseResolverPartyReference | null;
@@ -144,6 +283,23 @@ const buildCombinedOcrText = (slots: CaseResolverScanSlot[]): string => {
     })
     .filter((value: string): boolean => value.length > 0);
   return parts.join('\n\n');
+};
+
+const hashString32 = (value: string, seed: number): number => {
+  let hash = seed >>> 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash >>> 0;
+};
+
+const buildCaseResolverDocumentHash = (id: string, createdAt: string): string => {
+  const source = `${id.trim()}|${createdAt.trim()}`;
+  const reversed = source.split('').reverse().join('');
+  const partA = hashString32(source, 0x811c9dc5);
+  const partB = hashString32(reversed, 0x9e3779b1);
+  return `DOC-${partA.toString(16).padStart(8, '0')}${partB.toString(16).padStart(8, '0')}`.toUpperCase();
 };
 
 const formatFileSize = (size: number | null): string => {
@@ -192,21 +348,35 @@ const toLocalDateLabel = (value: string): string => {
   return parsed.toLocaleDateString();
 };
 
+const toLocalDateTimeLabel = (value: string): string => {
+  const normalized = value.trim();
+  if (!normalized) return 'Not specified';
+  const parsed = new Date(normalized);
+  if (Number.isNaN(parsed.getTime())) return normalized;
+  return parsed.toLocaleString();
+};
+
 const buildDocumentPdfMarkup = ({
-  folderPath,
   documentDate,
+  documentHash,
+  createdAt,
+  updatedAt,
   addresserLabel,
   addresseeLabel,
   documentContent,
 }: {
-  folderPath: string;
   documentDate: string;
+  documentHash: string;
+  createdAt: string;
+  updatedAt: string;
   addresserLabel: string;
   addresseeLabel: string;
   documentContent: string;
 }): string => {
-  const normalizedFolder = normalizeFolderPath(folderPath) || '(root)';
   const normalizedDocumentDate = toLocalDateLabel(documentDate);
+  const normalizedCreatedAt = toLocalDateTimeLabel(createdAt);
+  const normalizedUpdatedAt = toLocalDateTimeLabel(updatedAt);
+  const normalizedDocumentHash = documentHash.trim() || 'DOC-UNKNOWN';
   const normalizedAddresser = addresserLabel.trim() || 'Not selected';
   const normalizedAddressee = addresseeLabel.trim() || 'Not selected';
 
@@ -334,6 +504,26 @@ const buildDocumentPdfMarkup = ({
         height: auto;
       }
 
+      .document-footer {
+        margin-top: 16px;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .document-footer-meta {
+        text-align: right;
+        color: #4b5563;
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .document-id {
+        margin-top: 3px;
+        font-family: "Courier New", Courier, monospace;
+        letter-spacing: 0.04em;
+        color: #111827;
+      }
+
       @media print {
         body {
           background: #ffffff;
@@ -356,10 +546,6 @@ const buildDocumentPdfMarkup = ({
       </header>
       <section class="meta">
         <article class="meta-card">
-          <div class="meta-label">Folder</div>
-          <div class="meta-value">${escapeHtml(normalizedFolder)}</div>
-        </article>
-        <article class="meta-card">
           <div class="meta-label">Addresser</div>
           <div class="meta-value">${escapeHtml(normalizedAddresser)}</div>
         </article>
@@ -369,6 +555,13 @@ const buildDocumentPdfMarkup = ({
         </article>
       </section>
       <section class="content">${documentContent}</section>
+      <footer class="document-footer">
+        <div class="document-footer-meta">
+          <div>Created: ${escapeHtml(normalizedCreatedAt)}</div>
+          <div>Modified: ${escapeHtml(normalizedUpdatedAt)}</div>
+          <div class="document-id">${escapeHtml(normalizedDocumentHash)}</div>
+        </div>
+      </footer>
     </main>
   </body>
 </html>`;
@@ -379,8 +572,10 @@ const removeLinkedDocumentFileId = (
   fileId: string
 ): CaseResolverGraph => {
   const source = graph.documentFileLinksByNode ?? {};
+  const sourceByNode = graph.documentSourceFileIdByNode ?? {};
   let changed = false;
   const nextLinks: Record<string, string[]> = {};
+  const nextSourceByNode: Record<string, string> = {};
 
   Object.entries(source).forEach(([nodeId, links]: [string, string[]]) => {
     const filtered = links.filter((linkedFileId: string) => linkedFileId !== fileId);
@@ -390,6 +585,14 @@ const removeLinkedDocumentFileId = (
     nextLinks[nodeId] = filtered;
   });
 
+  Object.entries(sourceByNode).forEach(([nodeId, linkedFileId]: [string, string]) => {
+    if (linkedFileId === fileId) {
+      changed = true;
+      return;
+    }
+    nextSourceByNode[nodeId] = linkedFileId;
+  });
+
   if (!changed) {
     return graph;
   }
@@ -397,14 +600,16 @@ const removeLinkedDocumentFileId = (
   return {
     ...graph,
     documentFileLinksByNode: nextLinks,
+    documentSourceFileIdByNode: nextSourceByNode,
   };
 };
 
 export function AdminCaseResolverPage(): React.JSX.Element {
+  const router = useRouter();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
-  const { isMenuCollapsed } = useAdminLayout();
+  const { isMenuCollapsed, setIsMenuCollapsed } = useAdminLayout();
   const searchParams = useSearchParams();
   const requestedFileId = searchParams.get('fileId');
 
@@ -432,12 +637,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     () => buildFilemakerPartyOptions(filemakerDatabase),
     [filemakerDatabase]
   );
-  const caseResolverTagOptions = useMemo(
-    () =>
-      caseResolverTags.map((tag: CaseResolverTag) => ({
-        value: tag.id,
-        label: tag.name,
-      })),
+  const caseResolverTagPickerOptions = useMemo(
+    (): CaseResolverTagPickerOption[] => buildCaseResolverTagPickerOptions(caseResolverTags),
     [caseResolverTags]
   );
   const caseResolverCategoryOptions = useMemo(() => {
@@ -472,13 +673,34 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(false);
+  const [activeMainView, setActiveMainView] = useState<'workspace' | 'search'>('workspace');
   const [isPreviewPageVisible, setIsPreviewPageVisible] = useState(false);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
   const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
   const [isUploadingScanDraftFiles, setIsUploadingScanDraftFiles] = useState(false);
   const [uploadingScanSlotId, setUploadingScanSlotId] = useState<string | null>(null);
+  const [isDocumentTagDropdownOpen, setIsDocumentTagDropdownOpen] = useState(false);
+  const [documentTagSearchQuery, setDocumentTagSearchQuery] = useState('');
   const scanBulkUploadInputRef = useRef<HTMLInputElement | null>(null);
   const scanSlotUploadInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const documentTagDropdownRef = useRef<HTMLDivElement | null>(null);
+  const documentTagSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const selectedDocumentTagOption = useMemo((): CaseResolverTagPickerOption | null => {
+    const tagId = editingDocumentDraft?.tagId ?? null;
+    if (!tagId) return null;
+    return (
+      caseResolverTagPickerOptions.find(
+        (option: CaseResolverTagPickerOption): boolean => option.id === tagId
+      ) ?? null
+    );
+  }, [caseResolverTagPickerOptions, editingDocumentDraft?.tagId]);
+  const filteredDocumentTagOptions = useMemo((): CaseResolverTagPickerOption[] => {
+    const query = documentTagSearchQuery.trim().toLowerCase();
+    if (!query) return caseResolverTagPickerOptions;
+    return caseResolverTagPickerOptions.filter((option: CaseResolverTagPickerOption): boolean =>
+      option.searchLabel.includes(query)
+    );
+  }, [caseResolverTagPickerOptions, documentTagSearchQuery]);
 
   useEffect(() => {
     setWorkspace(parsedWorkspace);
@@ -521,6 +743,37 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     scanSlotUploadInputRefs.current = {};
   }, [editingDocumentDraft]);
 
+  useEffect(() => {
+    if (editingDocumentDraft) return;
+    setIsDocumentTagDropdownOpen(false);
+    setDocumentTagSearchQuery('');
+  }, [editingDocumentDraft]);
+
+  useEffect(() => {
+    if (!isDocumentTagDropdownOpen) return;
+    const listener = (event: MouseEvent): void => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (documentTagDropdownRef.current?.contains(target)) return;
+      setIsDocumentTagDropdownOpen(false);
+      setDocumentTagSearchQuery('');
+    };
+    document.addEventListener('mousedown', listener);
+    return () => {
+      document.removeEventListener('mousedown', listener);
+    };
+  }, [isDocumentTagDropdownOpen]);
+
+  useEffect(() => {
+    if (!isDocumentTagDropdownOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      documentTagSearchInputRef.current?.focus();
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [isDocumentTagDropdownOpen]);
+
   const activeFile = useMemo(
     (): CaseResolverFile | null =>
       workspace.activeFileId
@@ -535,10 +788,89 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         : null,
     [selectedAssetId, workspace.assets]
   );
+  useEffect(() => {
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    if (!payload?.prompt?.trim()) return;
+
+    const targetFileId = payload.caseResolverContext?.fileId ?? workspace.activeFileId ?? null;
+    if (!targetFileId) {
+      toast('Received Prompt Exploder output, but no target document was found.', { variant: 'warning' });
+      return;
+    }
+
+    const targetExists = workspace.files.some((file: CaseResolverFile): boolean => file.id === targetFileId);
+    if (!targetExists) {
+      toast('Received Prompt Exploder output, but the target document no longer exists.', {
+        variant: 'warning',
+      });
+      return;
+    }
+
+    const nextExplodedContent = payload.prompt;
+    const now = new Date().toISOString();
+    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
+      normalizeCaseResolverWorkspace({
+        ...current,
+        activeFileId: targetFileId,
+        files: current.files.map((file: CaseResolverFile): CaseResolverFile => {
+          if (file.id !== targetFileId) return file;
+          const originalDocumentContent = file.originalDocumentContent ?? file.documentContent;
+          return {
+            ...file,
+            originalDocumentContent,
+            explodedDocumentContent: nextExplodedContent,
+            activeDocumentVersion: 'exploded',
+            documentContent: nextExplodedContent,
+            updatedAt: now,
+          };
+        }),
+      })
+    );
+
+    setSelectedFileId(targetFileId);
+    setSelectedAssetId(null);
+    setSelectedFolderPath(null);
+    setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) => {
+      if (current?.id !== targetFileId) return current;
+      const originalDocumentContent = current.originalDocumentContent || current.documentContent;
+      return {
+        ...current,
+        originalDocumentContent,
+        explodedDocumentContent: nextExplodedContent,
+        activeDocumentVersion: 'exploded',
+        documentContent: nextExplodedContent,
+        updatedAt: now,
+      };
+    });
+    toast('Exploded text returned to Case Resolver.', { variant: 'success' });
+  }, [toast, workspace.activeFileId, workspace.files]);
   const isNodeFileSelected = selectedAsset?.kind === 'node_file';
   const shouldShowAssetPreview = Boolean(selectedAsset) && !isNodeFileSelected;
   const canTogglePreviewPage = isNodeFileSelected || Boolean(activeFile);
   const shouldShowPreviewPage = shouldShowAssetPreview || (canTogglePreviewPage && isPreviewPageVisible);
+  const areSidePanelsCollapsed = folderPanelCollapsed && isMenuCollapsed;
+
+  const handleToggleCaseResolverPanels = useCallback((): void => {
+    const shouldCollapsePanels = !areSidePanelsCollapsed;
+    setFolderPanelCollapsed(shouldCollapsePanels);
+    setIsMenuCollapsed(shouldCollapsePanels);
+  }, [areSidePanelsCollapsed, setIsMenuCollapsed]);
+
+  const panelVisibilityToggleButton = typeof document !== 'undefined'
+    ? createPortal(
+      <Button size='xs'
+        type='button'
+        variant='outline'
+        onClick={handleToggleCaseResolverPanels}
+        title={areSidePanelsCollapsed ? 'Show folder tree and menu' : 'Show canvas only'}
+        aria-label={areSidePanelsCollapsed ? 'Show folder tree and menu' : 'Show canvas only'}
+        className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+      >
+        {areSidePanelsCollapsed ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+      </Button>,
+      document.body
+    )
+    : null;
 
   useEffect(() => {
     if (!isPreviewPageVisible) return;
@@ -1179,19 +1511,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           return;
         }
 
-        setEditingDocumentDraft({
-          id: target.id,
-          fileType: target.fileType,
-          name: target.name,
-          folder: target.folder,
-          documentDate: target.documentDate,
-          documentContent: target.documentContent,
-          scanSlots: target.scanSlots,
-          addresser: target.addresser,
-          addressee: target.addressee,
-          tagId: target.tagId,
-          categoryId: target.categoryId,
-        });
+        setEditingDocumentDraft(buildFileEditDraft(target));
         setSelectedFileId(fileId);
         setSelectedAssetId(null);
         setSelectedFolderPath(null);
@@ -1215,6 +1535,29 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     },
     [toast, updateWorkspace, workspace.files]
   );
+
+  const handleOpenFileFromSearch = useCallback(
+    (fileId: string): void => {
+      setActiveMainView('workspace');
+      setIsPreviewPageVisible(false);
+      handleSelectFile(fileId);
+    },
+    [handleSelectFile]
+  );
+
+  const handleEditFileFromSearch = useCallback(
+    (fileId: string): void => {
+      setActiveMainView('workspace');
+      setIsPreviewPageVisible(false);
+      handleOpenFileEditor(fileId);
+    },
+    [handleOpenFileEditor]
+  );
+
+  const handleCreateDocumentFromSearch = useCallback((): void => {
+    setActiveMainView('workspace');
+    handleCreateFile(null);
+  }, [handleCreateFile]);
 
   const handleCloseFileEditor = useCallback((): void => {
     setEditingDocumentDraft(null);
@@ -1326,9 +1669,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         resolveFilemakerPartyLabel(filemakerDatabase, draft.addresser) ?? 'Not selected';
       const addresseeLabel =
         resolveFilemakerPartyLabel(filemakerDatabase, draft.addressee) ?? 'Not selected';
+      const documentHash = buildCaseResolverDocumentHash(draft.id, draft.createdAt);
       return buildDocumentPdfMarkup({
-        folderPath: draft.folder,
         documentDate: draft.documentDate,
+        documentHash,
+        createdAt: draft.createdAt,
+        updatedAt: draft.updatedAt,
         addresserLabel,
         addresseeLabel,
         documentContent: sanitizeRichTextForPdf(draft.documentContent),
@@ -1377,6 +1723,131 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     if (editingDocumentDraft?.fileType !== 'document') return;
     openPdfWindow(buildPdfMarkupFromDraft(editingDocumentDraft), { autoPrint: true });
   }, [buildPdfMarkupFromDraft, editingDocumentDraft, openPdfWindow]);
+
+  const handleCopyDocumentHash = useCallback(
+    (hash: string): void => {
+      if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+        toast('Clipboard is not available in this browser.', { variant: 'error' });
+        return;
+      }
+      void navigator.clipboard
+        .writeText(hash)
+        .then((): void => {
+          toast('Document ID copied.', { variant: 'success' });
+        })
+        .catch((): void => {
+          toast('Failed to copy document ID.', { variant: 'error' });
+        });
+    },
+    [toast]
+  );
+
+  const handleSelectDocumentTag = useCallback((nextTagId: string | null): void => {
+    setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
+      current
+        ? {
+          ...current,
+          tagId: nextTagId,
+        }
+        : current
+    );
+    setDocumentTagSearchQuery('');
+    setIsDocumentTagDropdownOpen(false);
+  }, []);
+
+  const handleSelectDraftDocumentVersion = useCallback(
+    (version: CaseResolverDocumentVersion): void => {
+      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) => {
+        if (current?.fileType !== 'document') return current;
+        if (version === 'exploded' && current.explodedDocumentContent.trim().length === 0) {
+          return current;
+        }
+        return {
+          ...current,
+          activeDocumentVersion: version,
+          documentContent: toActiveDocumentContent({
+            activeDocumentVersion: version,
+            originalDocumentContent: current.originalDocumentContent,
+            explodedDocumentContent: current.explodedDocumentContent,
+          }),
+        };
+      });
+    },
+    []
+  );
+
+  const handleUpdateDraftDocumentContent = useCallback((nextValue: string): void => {
+    setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) => {
+      if (current?.fileType !== 'document') return current;
+      if (current.activeDocumentVersion === 'exploded') {
+        return {
+          ...current,
+          explodedDocumentContent: nextValue,
+          documentContent: nextValue,
+        };
+      }
+      return {
+        ...current,
+        originalDocumentContent: nextValue,
+        documentContent: nextValue,
+      };
+    });
+  }, []);
+
+  const handleSendDraftToPromptExploder = useCallback((): void => {
+    if (editingDocumentDraft?.fileType !== 'document') return;
+    const prompt = editingDocumentDraft.documentContent;
+    if (!prompt.trim()) {
+      toast('Document content is empty.', { variant: 'info' });
+      return;
+    }
+    savePromptExploderDraftPromptFromCaseResolver(prompt, {
+      fileId: editingDocumentDraft.id,
+      fileName: editingDocumentDraft.name,
+    });
+    router.push('/admin/prompt-exploder?returnTo=/admin/case-resolver');
+  }, [editingDocumentDraft, router, toast]);
+
+  const handleCreateDocumentFromExplodedDraft = useCallback((): void => {
+    if (editingDocumentDraft?.fileType !== 'document') return;
+    const explodedContent = editingDocumentDraft.explodedDocumentContent;
+    if (!explodedContent.trim()) {
+      toast('No exploded version is available yet.', { variant: 'info' });
+      return;
+    }
+
+    const normalizedFolder = normalizeFolderPath(editingDocumentDraft.folder);
+    const newFile = createCaseResolverFile({
+      id: createId('case-file'),
+      fileType: 'document',
+      name: createUniqueDocumentName(workspace.files, `${editingDocumentDraft.name} (Exploded)`),
+      folder: normalizedFolder,
+      documentDate: editingDocumentDraft.documentDate,
+      originalDocumentContent: explodedContent,
+      explodedDocumentContent: '',
+      activeDocumentVersion: 'original',
+      documentContent: explodedContent,
+      addresser: editingDocumentDraft.addresser,
+      addressee: editingDocumentDraft.addressee,
+      tagId: editingDocumentDraft.tagId,
+      categoryId: editingDocumentDraft.categoryId,
+    });
+
+    updateWorkspace(
+      (current: CaseResolverWorkspace): CaseResolverWorkspace => ({
+        ...current,
+        activeFileId: newFile.id,
+        files: [...current.files, newFile],
+        folders: normalizeFolderPaths([...current.folders, normalizedFolder]),
+      }),
+      { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST }
+    );
+    setSelectedFileId(newFile.id);
+    setSelectedAssetId(null);
+    setSelectedFolderPath(null);
+    setEditingDocumentDraft(buildFileEditDraft(newFile));
+    toast('Created a new document from the exploded version.', { variant: 'success' });
+  }, [editingDocumentDraft, toast, updateWorkspace, workspace.files]);
 
   const handleToggleFileLock = useCallback(
     (fileId: string): void => {
@@ -1484,6 +1955,22 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     }
     const normalizedFolder = normalizeFolderPath(editingDocumentDraft.folder);
     const now = new Date().toISOString();
+    const normalizedOriginalDocumentContent = editingDocumentDraft.originalDocumentContent;
+    const normalizedExplodedDocumentContent = editingDocumentDraft.explodedDocumentContent;
+    const normalizedActiveDocumentVersion: CaseResolverDocumentVersion =
+      editingDocumentDraft.fileType === 'document' &&
+      editingDocumentDraft.activeDocumentVersion === 'exploded' &&
+      normalizedExplodedDocumentContent.trim().length > 0
+        ? 'exploded'
+        : 'original';
+    const normalizedDocumentContent =
+      editingDocumentDraft.fileType === 'document'
+        ? toActiveDocumentContent({
+          activeDocumentVersion: normalizedActiveDocumentVersion,
+          originalDocumentContent: normalizedOriginalDocumentContent,
+          explodedDocumentContent: normalizedExplodedDocumentContent,
+        })
+        : editingDocumentDraft.documentContent;
 
     updateWorkspace(
       (current: CaseResolverWorkspace): CaseResolverWorkspace => ({
@@ -1496,7 +1983,19 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               fileType: editingDocumentDraft.fileType,
               folder: normalizedFolder,
               documentDate: editingDocumentDraft.documentDate,
-              documentContent: editingDocumentDraft.documentContent,
+              originalDocumentContent:
+                editingDocumentDraft.fileType === 'document'
+                  ? normalizedOriginalDocumentContent
+                  : normalizedDocumentContent,
+              explodedDocumentContent:
+                editingDocumentDraft.fileType === 'document'
+                  ? normalizedExplodedDocumentContent
+                  : '',
+              activeDocumentVersion:
+                editingDocumentDraft.fileType === 'document'
+                  ? normalizedActiveDocumentVersion
+                  : 'original',
+              documentContent: normalizedDocumentContent,
               scanSlots:
                 editingDocumentDraft.fileType === 'scanfile'
                   ? editingDocumentDraft.scanSlots
@@ -1593,6 +2092,11 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     onDeleteFile: handleDeleteFile,
     onToggleFileLock: handleToggleFileLock,
     onEditFile: handleOpenFileEditor,
+    caseResolverTags,
+    caseResolverCategories,
+    onCreateDocumentFromSearch: handleCreateDocumentFromSearch,
+    onOpenFileFromSearch: handleOpenFileFromSearch,
+    onEditFileFromSearch: handleEditFileFromSearch,
     activeFile,
     selectedAsset,
     onUpdateSelectedAsset: handleUpdateSelectedAsset,
@@ -1602,6 +2106,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   return (
     <CaseResolverPageProvider value={caseResolverPageContextValue}>
       <div className='w-full space-y-4'>
+        {panelVisibilityToggleButton}
         <div
           className={`grid gap-4 ${
             folderPanelCollapsed
@@ -1618,19 +2123,31 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           ) : null}
 
           <div className='min-h-0 w-full'>
-            {folderPanelCollapsed || canTogglePreviewPage ? (
+            <div className='mb-2 flex flex-wrap items-center gap-2'>
+              <Button
+                type='button'
+                variant={activeMainView === 'workspace' ? 'default' : 'outline'}
+                onClick={(): void => {
+                  setActiveMainView('workspace');
+                }}
+                className='h-8 border border-border px-2 text-xs'
+              >
+                Workspace
+              </Button>
+              <Button
+                type='button'
+                variant={activeMainView === 'search' ? 'default' : 'outline'}
+                onClick={(): void => {
+                  setActiveMainView('search');
+                  setIsPreviewPageVisible(false);
+                }}
+                className='h-8 border border-border px-2 text-xs'
+              >
+                Document Search
+              </Button>
+            </div>
+            {activeMainView === 'workspace' && (folderPanelCollapsed || canTogglePreviewPage) ? (
               <div className='mb-2 flex flex-wrap items-center gap-2'>
-                {folderPanelCollapsed ? (
-                  <Button
-                    type='button'
-                    onClick={(): void => setFolderPanelCollapsed(false)}
-                    className='h-8 rounded-md border border-border text-xs text-gray-200 hover:bg-muted/60'
-                  >
-                    <FolderOpen className='mr-1 size-3.5' />
-                  Show Case Tree
-                    <ChevronRight className='ml-1 size-3.5 -scale-x-100' />
-                  </Button>
-                ) : null}
                 {canTogglePreviewPage ? (
                   <Button
                     type='button'
@@ -1679,119 +2196,125 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               </div>
             ) : null}
 
-            {selectedAsset && isNodeFileSelected && !shouldShowPreviewPage ? (
-              <div className='mb-3 space-y-3 rounded-lg border border-border/60 bg-card/35 p-4'>
-                <div className='space-y-1'>
-                  <div className='text-sm font-semibold text-white'>Asset Editor</div>
-                  <div className='text-[11px] text-gray-400'>
-                  Edit reusable node-file text. Dropping this asset as WYSIWYG Text Node will use this content.
-                  </div>
-                </div>
-
-                <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
-                  <div className='flex items-center justify-between gap-2'>
-                    <span className='text-gray-500'>Asset</span>
-                    <span className='font-medium text-gray-100'>{selectedAsset.name}</span>
-                  </div>
-                  <div className='mt-1 flex items-center justify-between gap-2'>
-                    <span className='text-gray-500'>Kind</span>
-                    <span className='uppercase text-[10px] text-gray-200'>{selectedAsset.kind}</span>
-                  </div>
-                  <div className='mt-1 flex items-center justify-between gap-2'>
-                    <span className='text-gray-500'>Folder</span>
-                    <span className='font-mono text-[10px] text-gray-300'>
-                      {selectedAsset.folder || '(root)'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Description</Label>
-                  <Textarea
-                    value={selectedAsset.description}
-                    onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                      handleUpdateSelectedAsset({ description: event.target.value });
-                    }}
-                    className='min-h-[72px] border-border bg-card/60 text-xs text-white'
-                    placeholder='Optional description to keep file context.'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Node File Text (WYSIWYG)</Label>
-                  <CaseResolverRichTextEditor
-                    value={selectedAsset.textContent}
-                    onChange={(nextValue: string): void => {
-                      handleUpdateSelectedAsset({ textContent: nextValue });
-                    }}
-                    placeholder='Write reusable prompt fragments in this node file...'
-                  />
-                </div>
-              </div>
-            ) : null}
-
-            {shouldShowPreviewPage ? (
-              <CaseResolverFileViewer />
-            ) : activeFile ? (
-              activeFile.fileType === 'scanfile' ? (
-                <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-4'>
-                  <div className='flex flex-wrap items-center justify-between gap-3'>
+            {activeMainView === 'search' ? (
+              <CaseResolverDocumentSearchPage />
+            ) : (
+              <>
+                {selectedAsset && isNodeFileSelected && !shouldShowPreviewPage ? (
+                  <div className='mb-3 space-y-3 rounded-lg border border-border/60 bg-card/35 p-4'>
                     <div className='space-y-1'>
-                      <div className='text-sm font-semibold text-white'>Scan File Workspace</div>
+                      <div className='text-sm font-semibold text-white'>Asset Editor</div>
                       <div className='text-[11px] text-gray-400'>
-                        Manage scanned image slots and OCR fragments in the editor.
+                  Edit reusable node-file text. Dropping this asset as WYSIWYG Text Node will use this content.
                       </div>
                     </div>
-                    <Button
-                      type='button'
-                      onClick={(): void => {
-                        handleOpenFileEditor(activeFile.id);
-                      }}
-                      className='h-8 border border-white/20 text-xs'
-                    >
-                      <FileImage className='mr-1.5 size-3.5' />
-                      Open Scan Editor
-                    </Button>
-                  </div>
-                  <div className='space-y-1'>
-                    <Label className='text-xs text-gray-400'>Combined OCR Text</Label>
-                    <Textarea
-                      value={activeFile.documentContent}
-                      readOnly
-                      className='min-h-[140px] border-border bg-card/60 text-xs text-white'
-                      placeholder='No combined OCR text yet.'
-                    />
-                  </div>
-                  <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-                    {activeFile.scanSlots.map((slot: CaseResolverScanSlot) => (
-                      <div key={slot.id} className='space-y-1 rounded border border-border/60 bg-card/30 p-2'>
-                        <div className='text-[11px] font-medium text-gray-200'>{slot.name}</div>
-                        <div className='aspect-[4/3] overflow-hidden rounded border border-border/60 bg-card/20'>
-                          {slot.filepath ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={slot.filepath}
-                              alt={slot.name}
-                              className='h-full w-full object-cover'
-                            />
-                          ) : (
-                            <div className='flex h-full items-center justify-center px-2 text-[11px] text-gray-500'>
-                              No image
-                            </div>
-                          )}
-                        </div>
-                        <div className='line-clamp-4 whitespace-pre-wrap text-[11px] text-gray-400'>
-                          {slot.ocrText.trim() || 'OCR text empty.'}
-                        </div>
+
+                    <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
+                      <div className='flex items-center justify-between gap-2'>
+                        <span className='text-gray-500'>Asset</span>
+                        <span className='font-medium text-gray-100'>{selectedAsset.name}</span>
                       </div>
-                    ))}
+                      <div className='mt-1 flex items-center justify-between gap-2'>
+                        <span className='text-gray-500'>Kind</span>
+                        <span className='uppercase text-[10px] text-gray-200'>{selectedAsset.kind}</span>
+                      </div>
+                      <div className='mt-1 flex items-center justify-between gap-2'>
+                        <span className='text-gray-500'>Folder</span>
+                        <span className='font-mono text-[10px] text-gray-300'>
+                          {selectedAsset.folder || '(root)'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Description</Label>
+                      <Textarea
+                        value={selectedAsset.description}
+                        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                          handleUpdateSelectedAsset({ description: event.target.value });
+                        }}
+                        className='min-h-[72px] border-border bg-card/60 text-xs text-white'
+                        placeholder='Optional description to keep file context.'
+                      />
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Node File Text (WYSIWYG)</Label>
+                      <CaseResolverRichTextEditor
+                        value={selectedAsset.textContent}
+                        onChange={(nextValue: string): void => {
+                          handleUpdateSelectedAsset({ textContent: nextValue });
+                        }}
+                        placeholder='Write reusable prompt fragments in this node file...'
+                      />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <CaseResolverCanvasWorkspace />
-              )
-            ) : (
-              <CaseResolverFileViewer />
+                ) : null}
+
+                {shouldShowPreviewPage ? (
+                  <CaseResolverFileViewer />
+                ) : activeFile ? (
+                  activeFile.fileType === 'scanfile' ? (
+                    <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-4'>
+                      <div className='flex flex-wrap items-center justify-between gap-3'>
+                        <div className='space-y-1'>
+                          <div className='text-sm font-semibold text-white'>Scan File Workspace</div>
+                          <div className='text-[11px] text-gray-400'>
+                        Manage scanned image slots and OCR fragments in the editor.
+                          </div>
+                        </div>
+                        <Button
+                          type='button'
+                          onClick={(): void => {
+                            handleOpenFileEditor(activeFile.id);
+                          }}
+                          className='h-8 border border-white/20 text-xs'
+                        >
+                          <FileImage className='mr-1.5 size-3.5' />
+                      Open Scan Editor
+                        </Button>
+                      </div>
+                      <div className='space-y-1'>
+                        <Label className='text-xs text-gray-400'>Combined OCR Text</Label>
+                        <Textarea
+                          value={activeFile.documentContent}
+                          readOnly
+                          className='min-h-[140px] border-border bg-card/60 text-xs text-white'
+                          placeholder='No combined OCR text yet.'
+                        />
+                      </div>
+                      <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+                        {activeFile.scanSlots.map((slot: CaseResolverScanSlot) => (
+                          <div key={slot.id} className='space-y-1 rounded border border-border/60 bg-card/30 p-2'>
+                            <div className='text-[11px] font-medium text-gray-200'>{slot.name}</div>
+                            <div className='aspect-[4/3] overflow-hidden rounded border border-border/60 bg-card/20'>
+                              {slot.filepath ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={slot.filepath}
+                                  alt={slot.name}
+                                  className='h-full w-full object-cover'
+                                />
+                              ) : (
+                                <div className='flex h-full items-center justify-center px-2 text-[11px] text-gray-500'>
+                              No image
+                                </div>
+                              )}
+                            </div>
+                            <div className='line-clamp-4 whitespace-pre-wrap text-[11px] text-gray-400'>
+                              {slot.ocrText.trim() || 'OCR text empty.'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <CaseResolverCanvasWorkspace />
+                  )
+                ) : (
+                  <CaseResolverFileViewer />
+                )}
+              </>
             )}
           </div>
         </div>
@@ -1873,6 +2396,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     <Button
                       type='button'
                       variant='outline'
+                      onClick={handleSendDraftToPromptExploder}
+                      className='min-w-[170px] border border-white/20 hover:border-white/40'
+                    >
+                      <Link2 className='mr-1.5 size-3.5' />
+                      Send to Prompt Exploder
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
                       onClick={handlePreviewPdf}
                       className='min-w-[120px] border border-white/20 hover:border-white/40'
                     >
@@ -1903,7 +2435,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         >
           {editingDocumentDraft ? (
             <div className='space-y-4'>
-              <div className='grid gap-3 md:grid-cols-4'>
+              <div className='grid gap-3 md:grid-cols-3'>
                 <div className='space-y-1'>
                   <Label className='text-xs text-gray-400'>Document Name</Label>
                   <Input
@@ -1943,32 +2475,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                   />
                 </div>
                 <div className='space-y-1'>
-                  <Label className='text-xs text-gray-400'>File Type</Label>
-                  <SelectSimple size='sm'
-                    value={editingDocumentDraft.fileType}
-                    onValueChange={(value: string): void => {
-                      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
-                        current
-                          ? {
-                            ...current,
-                            fileType: value === 'scanfile' ? 'scanfile' : 'document',
-                            scanSlots:
-                              value === 'scanfile'
-                                ? current.scanSlots
-                                : [],
-                          }
-                          : current
-                      );
-                    }}
-                    options={[
-                      { value: 'document', label: 'Document' },
-                      { value: 'scanfile', label: 'Scan File' },
-                    ]}
-                    placeholder='Select file type'
-                    triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-                  />
-                </div>
-                <div className='space-y-1'>
                   <Label className='text-xs text-gray-400'>Document Date</Label>
                   <Input
                     type='date'
@@ -1997,26 +2503,111 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                       Manage Tags
                     </Link>
                   </div>
-                  <SelectSimple size='sm'
-                    value={editingDocumentDraft.tagId ?? '__none__'}
-                    onValueChange={(value: string): void => {
-                      const nextTagId = value === '__none__' ? null : value;
-                      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
-                        current
-                          ? {
-                            ...current,
-                            tagId: nextTagId,
-                          }
-                          : current
-                      );
-                    }}
-                    options={[
-                      { value: '__none__', label: caseResolverTags.length > 0 ? 'Select tag' : 'No tags configured' },
-                      ...caseResolverTagOptions,
-                    ]}
-                    placeholder='Select tag'
-                    triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-                  />
+                  <div ref={documentTagDropdownRef} className='relative'>
+                    <button
+                      type='button'
+                      onClick={(): void => {
+                        if (caseResolverTagPickerOptions.length === 0) return;
+                        if (isDocumentTagDropdownOpen) {
+                          setIsDocumentTagDropdownOpen(false);
+                          setDocumentTagSearchQuery('');
+                          return;
+                        }
+                        setIsDocumentTagDropdownOpen(true);
+                      }}
+                      className='flex h-9 w-full items-center justify-between rounded-md border border-border bg-card/60 px-3 text-left text-xs text-white transition-colors hover:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40'
+                    >
+                      <span className={selectedDocumentTagOption ? 'truncate text-white' : 'truncate text-gray-400'}>
+                        {selectedDocumentTagOption
+                          ? selectedDocumentTagOption.label
+                          : caseResolverTagPickerOptions.length > 0
+                            ? 'Select tag'
+                            : 'No tags configured'}
+                      </span>
+                      <ChevronDown
+                        className={`size-3.5 shrink-0 text-gray-500 transition-transform ${isDocumentTagDropdownOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+
+                    {isDocumentTagDropdownOpen ? (
+                      <div className='absolute z-50 mt-1 w-full rounded-md border border-border bg-popover/95 p-2 shadow-lg backdrop-blur-md'>
+                        <Input
+                          ref={documentTagSearchInputRef}
+                          size='sm'
+                          value={documentTagSearchQuery}
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                            setDocumentTagSearchQuery(event.target.value);
+                          }}
+                          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                            if (event.key === 'Escape') {
+                              setIsDocumentTagDropdownOpen(false);
+                              setDocumentTagSearchQuery('');
+                            }
+                          }}
+                          placeholder='Search tags...'
+                          className='border-border/70 bg-card/60 text-xs text-white'
+                        />
+                        <div className='mt-2 max-h-56 space-y-1 overflow-y-auto'>
+                          <button
+                            type='button'
+                            onClick={(): void => {
+                              handleSelectDocumentTag(null);
+                            }}
+                            className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors ${
+                              editingDocumentDraft.tagId === null
+                                ? 'bg-cyan-500/20 text-cyan-100'
+                                : 'text-gray-200 hover:bg-muted/50'
+                            }`}
+                          >
+                            <span>No tag</span>
+                            {editingDocumentDraft.tagId === null ? <Check className='size-3.5' /> : null}
+                          </button>
+                          {filteredDocumentTagOptions.length === 0 ? (
+                            <div className='px-2 py-1.5 text-xs text-gray-500'>No matching tags.</div>
+                          ) : (
+                            filteredDocumentTagOptions.map((option: CaseResolverTagPickerOption) => (
+                              <button
+                                key={option.id}
+                                type='button'
+                                onClick={(): void => {
+                                  handleSelectDocumentTag(option.id);
+                                }}
+                                className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors ${
+                                  editingDocumentDraft.tagId === option.id
+                                    ? 'bg-cyan-500/20 text-cyan-100'
+                                    : 'text-gray-200 hover:bg-muted/50'
+                                }`}
+                              >
+                                <span className='truncate'>{option.label}</span>
+                                {editingDocumentDraft.tagId === option.id ? <Check className='size-3.5 shrink-0' /> : null}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                  {selectedDocumentTagOption ? (
+                    <div className='flex flex-wrap items-center gap-1 rounded-md border border-border/50 bg-black/20 px-2 py-1'>
+                      {selectedDocumentTagOption.pathIds.map((segmentId: string, index: number) => {
+                        const segmentName = selectedDocumentTagOption.pathNames[index] ?? segmentId;
+                        return (
+                          <React.Fragment key={segmentId}>
+                            {index > 0 ? <span className='text-[10px] text-gray-500'>/</span> : null}
+                            <button
+                              type='button'
+                              onClick={(): void => {
+                                handleSelectDocumentTag(segmentId);
+                              }}
+                              className='text-[11px] text-cyan-200 underline-offset-2 hover:text-cyan-100 hover:underline'
+                            >
+                              {segmentName}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                 </div>
                 <div className='space-y-1'>
                   <div className='flex items-center justify-between gap-2'>
@@ -2069,8 +2660,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
                   />
                 </div>
-                <div className='space-y-1'>
-                  <Label className='text-xs text-gray-400'>Addressee</Label>
+                <div className='space-y-1 md:text-right'>
+                  <Label className='text-xs text-gray-400 md:block md:text-right'>Addressee</Label>
                   <SelectSimple size='sm'
                     value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
                     onValueChange={(value: string): void => {
@@ -2086,28 +2677,86 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     }}
                     options={filemakerPartyOptions}
                     placeholder='Select addressee'
-                    triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
+                    triggerClassName='h-9 border-border bg-card/60 text-xs text-white [&>span]:text-right'
                   />
                 </div>
               </div>
 
               {editingDocumentDraft.fileType === 'document' ? (
                 <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Document Content (WYSIWYG)</Label>
-                  <CaseResolverRichTextEditor
-                    value={editingDocumentDraft.documentContent}
-                    onChange={(nextValue: string): void => {
-                      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
-                        current
-                          ? {
-                            ...current,
-                            documentContent: nextValue,
-                          }
-                          : current
-                      );
-                    }}
-                    placeholder='Write or edit this document with rich text formatting...'
-                  />
+                  {((): React.JSX.Element => {
+                    const documentHash = buildCaseResolverDocumentHash(
+                      editingDocumentDraft.id,
+                      editingDocumentDraft.createdAt
+                    );
+                    return (
+                      <>
+                        <div className='flex flex-wrap items-center justify-between gap-2'>
+                          <Label className='text-xs text-gray-400'>Document Content (WYSIWYG)</Label>
+                          <div className='flex flex-wrap items-center gap-2'>
+                            <Button
+                              type='button'
+                              size='sm'
+                              variant={editingDocumentDraft.activeDocumentVersion === 'original' ? 'default' : 'outline'}
+                              className='h-8 min-w-[84px] border-white/20 px-2 text-xs'
+                              onClick={(): void => {
+                                handleSelectDraftDocumentVersion('original');
+                              }}
+                            >
+                              Original
+                            </Button>
+                            <Button
+                              type='button'
+                              size='sm'
+                              variant={editingDocumentDraft.activeDocumentVersion === 'exploded' ? 'default' : 'outline'}
+                              className='h-8 min-w-[84px] border-white/20 px-2 text-xs disabled:opacity-50'
+                              onClick={(): void => {
+                                handleSelectDraftDocumentVersion('exploded');
+                              }}
+                              disabled={editingDocumentDraft.explodedDocumentContent.trim().length === 0}
+                            >
+                              Exploded
+                            </Button>
+                            <Button
+                              type='button'
+                              size='sm'
+                              variant='outline'
+                              className='h-8 border-white/20 px-2 text-xs disabled:opacity-50'
+                              onClick={handleCreateDocumentFromExplodedDraft}
+                              disabled={editingDocumentDraft.explodedDocumentContent.trim().length === 0}
+                            >
+                              Create New Document From Exploded
+                            </Button>
+                          </div>
+                        </div>
+                        <div className='text-[11px] text-gray-500'>
+                          Active version: {editingDocumentDraft.activeDocumentVersion === 'exploded' ? 'Exploded' : 'Original'}
+                        </div>
+                        <CaseResolverRichTextEditor
+                          value={editingDocumentDraft.documentContent}
+                          onChange={handleUpdateDraftDocumentContent}
+                          placeholder='Write or edit this document with rich text formatting...'
+                          appearance='document-preview'
+                        />
+                        <div className='flex justify-end'>
+                          <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-right text-[11px] text-gray-400'>
+                            <div>Created: {toLocalDateTimeLabel(editingDocumentDraft.createdAt)}</div>
+                            <div>Modified: {toLocalDateTimeLabel(editingDocumentDraft.updatedAt)}</div>
+                            <button
+                              type='button'
+                              className='mt-1 font-mono tracking-wide text-gray-200 hover:text-white'
+                              title='Double-click to copy document ID'
+                              onDoubleClick={(): void => {
+                                handleCopyDocumentHash(documentHash);
+                              }}
+                            >
+                              {documentHash}
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               ) : (
                 <div className='space-y-4'>

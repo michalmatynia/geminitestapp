@@ -35,7 +35,8 @@ Add Error Boundary components to catch uncaught UI errors and forward them to yo
 -Add a ‘safe error serializer’ for client responses: keep user-facing error codes/messages stable; never include raw stack traces or DB error strings.
 
 ---
-Refetching is a problem CSRF check on network
+NETWORK
+-Scan *** feature for a potential problem with unnecessary Refetching and CSRF related problems.
 
 VALIDATION
 - expand mutation-invalidation matrix QUERY KEYS. 

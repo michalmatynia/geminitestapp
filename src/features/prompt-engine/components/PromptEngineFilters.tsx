@@ -45,7 +45,9 @@ export function PromptEngineFilters(): React.JSX.Element {
       ? 'Core'
       : exploderSubTab === 'image_studio_rules'
         ? 'Image Studio Rules'
-        : 'Prompt Exploder Rules';
+        : exploderSubTab === 'case_resolver_rules'
+          ? 'Case Resolver Rules'
+          : 'Prompt Exploder Rules';
   const showPatternTabSwitch = !patternTabLocked;
   const showExploderSubTabSwitch = patternTab === 'prompt_exploder' && !exploderSubTabLocked;
 
@@ -106,12 +108,15 @@ export function PromptEngineFilters(): React.JSX.Element {
             setExploderSubTab(value as ExploderPatternSubTab);
           }}
         >
-          <TabsList className='grid w-full max-w-md grid-cols-2'>
+          <TabsList className='grid w-full max-w-2xl grid-cols-3'>
             <TabsTrigger value='prompt_exploder_rules'>
               Prompt Exploder
             </TabsTrigger>
             <TabsTrigger value='image_studio_rules'>
               Image Studio
+            </TabsTrigger>
+            <TabsTrigger value='case_resolver_rules'>
+              Case Resolver
             </TabsTrigger>
           </TabsList>
         </Tabs>

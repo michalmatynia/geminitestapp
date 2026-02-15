@@ -68,6 +68,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
   const normalizedListingStatus = (listing.status ?? '').trim().toLowerCase();
   const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(normalizedListingStatus);
   const isExportRunningStatus = ['running', 'processing', 'in_progress', 'pending', 'queued'].includes(normalizedListingStatus);
+  const isTerminalBaseStatus = ['removed', 'deleted', 'archived'].includes(normalizedListingStatus);
   const canRetryExport = isBaseListing && !isExportRunningStatus;
   const traderaFailureReason = (listing.failureReason ?? '').trim().toLowerCase();
   const traderaNeedsManualLogin =
@@ -202,7 +203,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                 {isSuccessStatus ? 'Re-export product' : 'Export again'}
               </Button>
             )}
-            {listing.status !== 'removed' && (
+            {!isTerminalBaseStatus && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -281,7 +282,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
                 </Button>
               </div>
             )}
-            {listing.status !== 'removed' && (
+            {!isTerminalBaseStatus && (
               <Button
                 type='button'
                 variant='outline'

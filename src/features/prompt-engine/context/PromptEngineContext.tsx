@@ -23,7 +23,10 @@ import {
 export type SeverityFilter = PromptValidationSeverity | 'all';
 export type ScopeFilter = PromptValidationScope | 'all';
 export type PatternCollectionTab = 'core' | 'prompt_exploder';
-export type ExploderPatternSubTab = 'prompt_exploder_rules' | 'image_studio_rules';
+export type ExploderPatternSubTab =
+  | 'prompt_exploder_rules'
+  | 'image_studio_rules'
+  | 'case_resolver_rules';
 
 type PromptEngineProviderProps = {
   children: React.ReactNode;
@@ -166,6 +169,31 @@ const isImageStudioRule = (rule: PromptValidationRule): boolean => {
   return hasOnlyImageStudioScopes(appliesToScopes) || hasOnlyImageStudioScopes(launchScopes);
 };
 
+const isCaseResolverPromptExploderRule = (rule: PromptValidationRule): boolean => {
+  const id = rule.id.toLowerCase();
+  if (id.includes('case_resolver') || id.includes('case-resolver')) {
+    return true;
+  }
+
+  const appliesToScopes = normalizeRuleScopes(rule.appliesToScopes);
+  const launchScopes = normalizeRuleScopes(rule.launchAppliesToScopes);
+  const hasCaseResolverScope = appliesToScopes.includes('case_resolver_prompt_exploder');
+  const hasOnlyCaseResolverOrGlobal =
+    hasCaseResolverScope &&
+    appliesToScopes.every(
+      (scope: PromptValidationScope) => scope === 'case_resolver_prompt_exploder' || scope === 'global'
+    );
+  if (hasOnlyCaseResolverOrGlobal) return true;
+
+  const hasCaseResolverLaunchScope = launchScopes.includes('case_resolver_prompt_exploder');
+  const hasOnlyCaseResolverLaunchOrGlobal =
+    hasCaseResolverLaunchScope &&
+    launchScopes.every(
+      (scope: PromptValidationScope) => scope === 'case_resolver_prompt_exploder' || scope === 'global'
+    );
+  return hasOnlyCaseResolverLaunchOrGlobal;
+};
+
 const sortRuleDraftsBySequence = (drafts: RuleDraft[]): RuleDraft[] =>
   drafts
     .map((draft: RuleDraft, index: number) => ({ draft, index }))
@@ -192,7 +220,7 @@ const applyRulePatch = (draft: RuleDraft, patch: RulePatch): RuleDraft => {
 };
 
 const createNewRule = (
-  preset: 'core' | 'prompt_exploder' | 'image_studio' = 'core'
+  preset: 'core' | 'prompt_exploder' | 'image_studio' | 'case_resolver' = 'core'
 ): PromptValidationRule => {
   const now = Date.now();
   const baseRule: PromptValidationRule = {
@@ -231,6 +259,17 @@ const createNewRule = (
       description: 'Rule scoped to Image Studio prompt, extraction, and generation.',
       appliesToScopes: [...IMAGE_STUDIO_SCOPE_VALUES],
       launchAppliesToScopes: [...IMAGE_STUDIO_SCOPE_VALUES],
+    };
+  }
+
+  if (preset === 'case_resolver') {
+    return {
+      ...baseRule,
+      id: `case_resolver_prompt_exploder.rule.${now}`,
+      title: 'Case Resolver Prompt Exploder rule',
+      description: 'Rule scoped to Case Resolver Prompt Exploder.',
+      appliesToScopes: ['case_resolver_prompt_exploder'],
+      launchAppliesToScopes: ['case_resolver_prompt_exploder'],
     };
   }
 
@@ -386,15 +425,25 @@ export function PromptEngineProvider({
           return false;
         }
         if (
+          activeExploderSubTab === 'case_resolver_rules' &&
+          !isCaseResolverPromptExploderRule(rule)
+        ) {
+          return false;
+        }
+        if (
           activeExploderSubTab === 'prompt_exploder_rules' &&
-          !isPromptExploderRule(rule)
+          (!isPromptExploderRule(rule) ||
+            isImageStudioRule(rule) ||
+            isCaseResolverPromptExploderRule(rule))
         ) {
           return false;
         }
       }
       if (
         activePatternTab === 'core' &&
-        (isPromptExploderRule(rule) || isImageStudioRule(rule))
+        (isPromptExploderRule(rule) ||
+          isImageStudioRule(rule) ||
+          isCaseResolverPromptExploderRule(rule))
       ) {
         return false;
       }
@@ -436,15 +485,25 @@ export function PromptEngineProvider({
           return false;
         }
         if (
+          activeExploderSubTab === 'case_resolver_rules' &&
+          !isCaseResolverPromptExploderRule(rule)
+        ) {
+          return false;
+        }
+        if (
           activeExploderSubTab === 'prompt_exploder_rules' &&
-          !isPromptExploderRule(rule)
+          (!isPromptExploderRule(rule) ||
+            isImageStudioRule(rule) ||
+            isCaseResolverPromptExploderRule(rule))
         ) {
           return false;
         }
       }
       if (
         activePatternTab === 'core' &&
-        (isPromptExploderRule(rule) || isImageStudioRule(rule))
+        (isPromptExploderRule(rule) ||
+          isImageStudioRule(rule) ||
+          isCaseResolverPromptExploderRule(rule))
       ) {
         return false;
       }
@@ -699,7 +758,9 @@ export function PromptEngineProvider({
       activePatternTab === 'prompt_exploder'
         ? activeExploderSubTab === 'image_studio_rules'
           ? 'image_studio'
-          : 'prompt_exploder'
+          : activeExploderSubTab === 'case_resolver_rules'
+            ? 'case_resolver'
+            : 'prompt_exploder'
         : 'core';
     const newRule = createNewRule(preset);
     setDrafts((prev: RuleDraft[]) => [createRuleDraft(newRule), ...prev]);

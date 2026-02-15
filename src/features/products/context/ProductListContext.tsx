@@ -13,6 +13,7 @@ import type { ProductDraft } from '@/features/products/types/drafts';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { ColumnDef, RowSelectionState, OnChangeFn } from '@tanstack/react-table';
+import type { Row } from '@tanstack/react-table';
 
 export interface ProductListContextType {
   // Actions
@@ -71,6 +72,7 @@ export interface ProductListContextType {
   // Table Configuration
   handleProductsTableRender: ProfilerOnRenderCallback;
   tableColumns: ColumnDef<ProductWithImages>[];
+  getRowClassName?: (row: Row<ProductWithImages>) => string | undefined;
   getRowId: (row: ProductWithImages) => string;
   skeletonRows: ReactNode;
   maxHeight?: string | number | undefined;
@@ -170,6 +172,7 @@ export interface ProductListTableContextType {
   setRowSelection: OnChangeFn<RowSelectionState>;
   handleProductsTableRender: ProfilerOnRenderCallback;
   tableColumns: ColumnDef<ProductWithImages>[];
+  getRowClassName?: (row: Row<ProductWithImages>) => string | undefined;
   getRowId: (row: ProductWithImages) => string;
   isLoading: boolean;
   skeletonRows: ReactNode;
@@ -359,6 +362,7 @@ export function ProductListProvider({
       setRowSelection: value.setRowSelection,
       handleProductsTableRender: value.handleProductsTableRender,
       tableColumns: value.tableColumns,
+      getRowClassName: value.getRowClassName,
       getRowId: value.getRowId,
       isLoading: value.isLoading,
       skeletonRows: value.skeletonRows,

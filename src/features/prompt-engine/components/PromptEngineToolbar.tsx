@@ -52,7 +52,9 @@ export function PromptEngineToolbar({
     patternTab === 'prompt_exploder'
       ? exploderSubTab === 'image_studio_rules'
         ? 'Add Image Studio Rule'
-        : 'Add Exploder Rule'
+        : exploderSubTab === 'case_resolver_rules'
+          ? 'Add Case Resolver Rule'
+          : 'Add Exploder Rule'
       : 'Add rule';
 
   return (

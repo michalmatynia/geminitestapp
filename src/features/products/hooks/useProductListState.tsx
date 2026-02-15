@@ -1,8 +1,8 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
-import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useState } from 'react';
+import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useDrafts, draftKeys } from '@/features/drafter/hooks/useDrafts';
 import {
@@ -38,18 +38,46 @@ import {
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductCategory, ProductWithImages } from '@/features/products/types';
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { ApiError, api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { ProductListContextType } from '../context/ProductListContext';
+import type { Row } from '@tanstack/react-table';
 
 type RowSelectionState = Record<string, boolean>;
 const EDIT_PRODUCT_DETAIL_STALE_TIME_MS = 30_000;
+const PRODUCT_ROW_HIGHLIGHT_DURATION_MS = 900;
+const PRODUCT_ROW_HIGHLIGHT_REPEAT_COUNT = 2;
+const PRODUCT_ROW_HIGHLIGHT_TOTAL_MS =
+  PRODUCT_ROW_HIGHLIGHT_DURATION_MS * PRODUCT_ROW_HIGHLIGHT_REPEAT_COUNT;
+const LISTING_IN_FLIGHT_STATUSES = new Set([
+  'queued',
+  'queued_relist',
+  'pending',
+  'running',
+  'processing',
+  'in_progress',
+]);
+const LISTING_COMPLETED_STATUSES = new Set([
+  'active',
+  'success',
+  'completed',
+  'listed',
+  'ok',
+  'failed',
+  'error',
+  'needs_login',
+  'auth_required',
+]);
+
+const normalizeListingStatus = (status: string | undefined): string =>
+  (status ?? '').trim().toLowerCase();
 
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
@@ -72,8 +100,12 @@ export function useProductListState(): ProductListContextType & {
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [jobCompletionHighlights, setJobCompletionHighlights] = useState<Record<string, number>>({});
   const [createDraft, setCreateDraft] = useState<ProductDraft | null>(null);
   const [productToDelete, setProductToDelete] = useState<ProductWithImages | null>(null);
+  const previousQueuedProductIdsRef = useRef<Set<string> | null>(null);
+  const previousListingBadgeStatusesRef = useRef<Map<string, string> | null>(null);
+  const jobHighlightTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const queryClient = useQueryClient();
 
   const prefetchIntegrationSelectionData = useCallback((): void => {
@@ -171,6 +203,45 @@ export function useProductListState(): ProductListContextType & {
     priceGroups,
     searchLanguage: preferences.nameLocale,
   });
+  const visibleProductIdSet = useMemo(
+    () => new Set(data.map((product: ProductWithImages) => product.id)),
+    [data]
+  );
+  const categoryLookupCatalogIds = useMemo((): string[] => {
+    const ids = new Set<string>();
+    data.forEach((product: ProductWithImages) => {
+      const categoryId = (product.categoryId ?? '').trim();
+      const catalogId = (product.catalogId ?? '').trim();
+      if (!categoryId || !catalogId) return;
+      ids.add(catalogId);
+    });
+    return Array.from(ids);
+  }, [data]);
+  const categoryQueries = useQueries({
+    queries: categoryLookupCatalogIds.map((catalogId: string) => ({
+      queryKey: QUERY_KEYS.products.metadata.categories(catalogId),
+      queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductCategory[]> =>
+        api.get<ProductCategory[]>(
+          `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`,
+          { signal }
+        ),
+      staleTime: 1000 * 60 * 5,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    })),
+  });
+  const categoryNameById = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    categoryQueries.forEach((queryResult) => {
+      const categories = queryResult.data ?? [];
+      categories.forEach((category: ProductCategory) => {
+        if (!category.id || !category.name || map.has(category.id)) return;
+        map.set(category.id, category.name);
+      });
+    });
+    return map;
+  }, [categoryQueries]);
 
   // Enable background sync for product list
   useProductListSync({
@@ -191,7 +262,6 @@ export function useProductListState(): ProductListContextType & {
     initialSku,
     editingProduct,
     setEditingProduct,
-    lastEditedId,
     actionError,
     setActionError,
     handleOpenCreateModal,
@@ -232,6 +302,20 @@ export function useProductListState(): ProductListContextType & {
     refreshListingBadges,
     handleListProductSuccess: baseHandleListProductSuccess,
   } = useIntegrationOperations();
+  const visibleListingBadgeStatuses = useMemo(() => {
+    const statuses = new Map<string, string>();
+    for (const product of data) {
+      const baseStatus = normalizeListingStatus(integrationBadgeStatuses.get(product.id));
+      if (baseStatus) {
+        statuses.set(`${product.id}:base`, baseStatus);
+      }
+      const traderaStatus = normalizeListingStatus(traderaBadgeStatuses.get(product.id));
+      if (traderaStatus) {
+        statuses.set(`${product.id}:tradera`, traderaStatus);
+      }
+    }
+    return statuses;
+  }, [data, integrationBadgeStatuses, traderaBadgeStatuses]);
 
   // Initialize currency code from preferences
   useEffect(() => {
@@ -327,6 +411,32 @@ export function useProductListState(): ProductListContextType & {
     setCatalogFilter(filter);
     void updateCatalogFilter(filter);
   }, [setCatalogFilter, updateCatalogFilter]);
+
+  const triggerJobCompletionHighlight = useCallback((productId: string): void => {
+    if (!productId) return;
+
+    setJobCompletionHighlights((prev: Record<string, number>) => ({
+      ...prev,
+      [productId]: (prev[productId] ?? 0) + 1,
+    }));
+
+    const existingTimeout = jobHighlightTimeoutsRef.current.get(productId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    const timeoutId = setTimeout(() => {
+      setJobCompletionHighlights((prev: Record<string, number>) => {
+        if (!(productId in prev)) return prev;
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
+      jobHighlightTimeoutsRef.current.delete(productId);
+    }, PRODUCT_ROW_HIGHLIGHT_TOTAL_MS);
+
+    jobHighlightTimeoutsRef.current.set(productId, timeoutId);
+  }, []);
 
   useEffect(() => {
     if (!languageOptions.length) return;
@@ -518,15 +628,58 @@ export function useProductListState(): ProductListContextType & {
   }, []);
 
   useEffect(() => {
-    if (!lastEditedId) return;
-    if (data.length === 0) return;
-    const target = document.querySelector(`[data-row-id="${lastEditedId}"]`);
-    if (target instanceof HTMLElement) {
-      requestAnimationFrame(() => {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const previousQueuedProductIds = previousQueuedProductIdsRef.current;
+    if (previousQueuedProductIds) {
+      previousQueuedProductIds.forEach((productId: string) => {
+        if (!queuedProductIds.has(productId) && visibleProductIdSet.has(productId)) {
+          triggerJobCompletionHighlight(productId);
+        }
       });
     }
-  }, [data, lastEditedId]);
+    previousQueuedProductIdsRef.current = new Set(queuedProductIds);
+  }, [queuedProductIds, triggerJobCompletionHighlight, visibleProductIdSet]);
+
+  useEffect(() => {
+    const previousStatuses = previousListingBadgeStatusesRef.current;
+    if (previousStatuses) {
+      const completedProductIds = new Set<string>();
+
+      previousStatuses.forEach((previousStatus: string, key: string) => {
+        if (!LISTING_IN_FLIGHT_STATUSES.has(previousStatus)) return;
+
+        const currentStatus = visibleListingBadgeStatuses.get(key);
+        if (!currentStatus || !LISTING_COMPLETED_STATUSES.has(currentStatus)) return;
+
+        const productId = key.split(':')[0];
+        if (!productId || !visibleProductIdSet.has(productId)) return;
+        completedProductIds.add(productId);
+      });
+
+      completedProductIds.forEach((productId: string) => {
+        triggerJobCompletionHighlight(productId);
+      });
+    }
+
+    previousListingBadgeStatusesRef.current = new Map(visibleListingBadgeStatuses);
+  }, [triggerJobCompletionHighlight, visibleListingBadgeStatuses, visibleProductIdSet]);
+
+  useEffect(() => {
+    return (): void => {
+      jobHighlightTimeoutsRef.current.forEach((timeoutId: ReturnType<typeof setTimeout>) => {
+        clearTimeout(timeoutId);
+      });
+      jobHighlightTimeoutsRef.current.clear();
+    };
+  }, []);
+
+  const getRowClassName = useCallback((row: Row<ProductWithImages>): string | undefined => {
+    const highlightToken = jobCompletionHighlights[row.original.id];
+    if (!highlightToken) return undefined;
+
+    return highlightToken % 2 === 0
+      ? 'product-list-row-job-complete-highlight-a'
+      : 'product-list-row-job-complete-highlight-b';
+  }, [jobCompletionHighlights]);
 
   const tableSkeletonRows = isMounted ? pageSize : 12;
   const tableSkeleton = useMemo(
@@ -546,8 +699,8 @@ export function useProductListState(): ProductListContextType & {
   );
 
   const columns = useMemo(
-    () => getProductColumns(preferences.thumbnailSource ?? 'file', productImageBaseUrl),
-    [preferences.thumbnailSource, productImageBaseUrl]
+    () => getProductColumns(preferences.thumbnailSource ?? 'file', productImageBaseUrl, categoryNameById),
+    [categoryNameById, preferences.thumbnailSource, productImageBaseUrl]
   );
 
   return useMemo(() => ({
@@ -594,6 +747,7 @@ export function useProductListState(): ProductListContextType & {
     onAddToMarketplace: handleAddToMarketplace,
     handleProductsTableRender,
     tableColumns: columns,
+    getRowClassName,
     setRefreshTrigger,
     productNameKey: preferences.nameLocale,
     priceGroups,
@@ -689,6 +843,7 @@ export function useProductListState(): ProductListContextType & {
     handleOpenExportSettings,
     handleOpenIntegrationsModal,
     handleProductsTableRender,
+    getRowClassName,
     handleSelectAllGlobal,
     handleSelectIntegrationFromModal,
     handleSetCatalogFilter,

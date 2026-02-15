@@ -183,8 +183,9 @@ function ProductFormModal({
   closeOnSubmit?: boolean;
   validationInstanceScopeOverride?: 'draft_template' | 'product_create' | 'product_edit';
 }): React.JSX.Element {
-  const { showFileManager, handleMultiFileSelect, handleSubmit, uploading, getValues, product } =
+  const { showFileManager, handleMultiFileSelect, handleSubmit, uploading, getValues, product, draft } =
     useProductFormContext();
+  const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-create';
 
   const getEntityJson = (): Record<string, unknown> => {
     const values = getValues() as unknown as Record<string, unknown>;
@@ -242,6 +243,7 @@ function ProductFormModal({
         <FileManager onSelectFile={handleMultiFileSelect} />
       ) : (
         <ProductForm
+          key={formInstanceKey}
           submitButtonText={submitButtonText}
           {...(
             validationInstanceScopeOverride

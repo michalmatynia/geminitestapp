@@ -12,6 +12,7 @@ import {
   type CaseResolverEdgeMeta,
   type CaseResolverFile,
   type CaseResolverFileType,
+  type CaseResolverFolderTimestamp,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverPartyReference,
@@ -64,6 +65,48 @@ export const normalizeFolderPaths = (folders: string[]): string[] => {
 
 const normalizeTimestamp = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
+
+const toTimestampMs = (value: string | null | undefined): number | null => {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+};
+
+const pickEarliestTimestamp = (
+  values: Array<string | null | undefined>,
+  fallback: string
+): string => {
+  let best = fallback;
+  let bestMs = toTimestampMs(fallback);
+  values.forEach((value: string | null | undefined): void => {
+    if (typeof value !== 'string') return;
+    const valueMs = toTimestampMs(value);
+    if (valueMs === null) return;
+    if (bestMs === null || valueMs < bestMs) {
+      best = value;
+      bestMs = valueMs;
+    }
+  });
+  return best;
+};
+
+const pickLatestTimestamp = (
+  values: Array<string | null | undefined>,
+  fallback: string
+): string => {
+  let best = fallback;
+  let bestMs = toTimestampMs(fallback);
+  values.forEach((value: string | null | undefined): void => {
+    if (typeof value !== 'string') return;
+    const valueMs = toTimestampMs(value);
+    if (valueMs === null) return;
+    if (bestMs === null || valueMs > bestMs) {
+      best = value;
+      bestMs = valueMs;
+    }
+  });
+  return best;
+};
 
 const sanitizeOptionalId = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -182,6 +225,24 @@ const sanitizeDocumentFileLinksByNode = (
   return result;
 };
 
+const sanitizeDocumentSourceFileIdByNode = (
+  source: unknown,
+  validNodeIds: Set<string>
+): Record<string, string> => {
+  if (!source || typeof source !== 'object' || Array.isArray(source)) {
+    return {};
+  }
+  const result: Record<string, string> = {};
+  Object.entries(source as Record<string, unknown>).forEach(([nodeId, rawFileId]: [string, unknown]) => {
+    if (!validNodeIds.has(nodeId)) return;
+    if (typeof rawFileId !== 'string') return;
+    const normalizedFileId = rawFileId.trim();
+    if (!normalizedFileId) return;
+    result[nodeId] = normalizedFileId;
+  });
+  return result;
+};
+
 const sanitizePartyReference = (value: unknown): CaseResolverPartyReference | null => {
   if (!value || typeof value !== 'object') return null;
   const record = value as Record<string, unknown>;
@@ -245,7 +306,7 @@ export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => 
   if (!Array.isArray(input)) return [];
 
   const seen = new Set<string>();
-  const tags: CaseResolverTag[] = [];
+  const raw: CaseResolverTag[] = [];
 
   input.forEach((entry: unknown, index: number): void => {
     if (!entry || typeof entry !== 'object') return;
@@ -258,17 +319,68 @@ export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => 
     seen.add(rawId);
 
     const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
-    tags.push({
+    raw.push({
       id: rawId,
-      name: rawName || `Tag ${tags.length + 1}`,
+      name: rawName || `Tag ${raw.length + 1}`,
+      parentId: sanitizeOptionalId(record['parentId']),
       color: normalizeHexColor(record['color'], '#38bdf8'),
       createdAt: normalizeTimestamp(record['createdAt'], now),
       updatedAt: normalizeTimestamp(record['updatedAt'], now),
     });
   });
 
-  return tags.sort((left: CaseResolverTag, right: CaseResolverTag) => left.name.localeCompare(right.name));
+  const byId = new Map<string, CaseResolverTag>(
+    raw.map((tag: CaseResolverTag): [string, CaseResolverTag] => [tag.id, tag])
+  );
+  const normalizedParents = raw.map((tag: CaseResolverTag): CaseResolverTag => ({
+    ...tag,
+    parentId: resolveSafeTagParentId(tag.id, tag.parentId, byId),
+  }));
+
+  const grouped = new Map<string, CaseResolverTag[]>();
+  const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
+  normalizedParents.forEach((tag: CaseResolverTag): void => {
+    const key = getGroupKey(tag.parentId);
+    const current = grouped.get(key) ?? [];
+    current.push(tag);
+    grouped.set(key, current);
+  });
+
+  const output: CaseResolverTag[] = [];
+  const visit = (parentId: string | null): void => {
+    const group = grouped.get(getGroupKey(parentId)) ?? [];
+    group
+      .sort((left: CaseResolverTag, right: CaseResolverTag) => {
+        const nameDelta = left.name.localeCompare(right.name);
+        if (nameDelta !== 0) return nameDelta;
+        return left.id.localeCompare(right.id);
+      })
+      .forEach((tag: CaseResolverTag): void => {
+        output.push(tag);
+        visit(tag.id);
+      });
+  };
+
+  visit(null);
+  return output;
 };
+
+function resolveSafeTagParentId(
+  tagId: string,
+  parentId: string | null,
+  tagMap: Map<string, CaseResolverTag>
+): string | null {
+  if (!parentId || !tagMap.has(parentId) || parentId === tagId) return null;
+  let current: string | null = parentId;
+  const visited = new Set<string>();
+  while (current) {
+    if (current === tagId || visited.has(current)) return null;
+    visited.add(current);
+    const parent = tagMap.get(current);
+    current = parent?.parentId ?? null;
+  }
+  return parentId;
+}
 
 const resolveSafeCategoryParentId = (
   categoryId: string,
@@ -451,6 +563,10 @@ const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     graphRecord['documentFileLinksByNode'],
     validNodeIds
   );
+  const documentSourceFileIdByNode = sanitizeDocumentSourceFileIdByNode(
+    graphRecord['documentSourceFileIdByNode'],
+    validNodeIds
+  );
   const rawDocumentDropNodeId = graphRecord['documentDropNodeId'];
   const documentDropNodeId =
     typeof rawDocumentDropNodeId === 'string' &&
@@ -471,6 +587,7 @@ const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     pdfExtractionPresetId,
     documentFileLinksByNode,
     documentDropNodeId,
+    documentSourceFileIdByNode,
   };
 };
 
@@ -482,6 +599,7 @@ export const createEmptyCaseResolverGraph = (): CaseResolverGraph => ({
   pdfExtractionPresetId: DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
   documentFileLinksByNode: {},
   documentDropNodeId: null,
+  documentSourceFileIdByNode: {},
 });
 
 export const createCaseResolverFile = (input: {
@@ -505,6 +623,8 @@ export const createCaseResolverFile = (input: {
   updatedAt?: string;
 }): CaseResolverFile => {
   const now = new Date().toISOString();
+  const createdAt = normalizeTimestamp(input.createdAt, now);
+  const updatedAt = normalizeTimestamp(input.updatedAt, createdAt);
   const fallbackDocumentContent =
     typeof input.documentContent === 'string' ? input.documentContent : '';
   const originalDocumentContent =
@@ -536,8 +656,8 @@ export const createCaseResolverFile = (input: {
     addressee: sanitizePartyReference(input.addressee),
     tagId: sanitizeOptionalId(input.tagId),
     categoryId: sanitizeOptionalId(input.categoryId),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
+    createdAt,
+    updatedAt,
     graph: sanitizeGraph({
       nodes: input.graph?.nodes ?? [],
       edges: input.graph?.edges ?? [],
@@ -546,6 +666,7 @@ export const createCaseResolverFile = (input: {
       pdfExtractionPresetId: input.graph?.pdfExtractionPresetId,
       documentFileLinksByNode: input.graph?.documentFileLinksByNode ?? {},
       documentDropNodeId: input.graph?.documentDropNodeId ?? null,
+      documentSourceFileIdByNode: input.graph?.documentSourceFileIdByNode ?? {},
     }),
   };
 };
@@ -639,6 +760,8 @@ export const createCaseResolverAssetFile = (input: {
   updatedAt?: string;
 }): CaseResolverAssetFile => {
   const now = new Date().toISOString();
+  const createdAt = normalizeTimestamp(input.createdAt, now);
+  const updatedAt = normalizeTimestamp(input.updatedAt, createdAt);
   return {
     id: input.id,
     name: input.name.trim() || 'Untitled File',
@@ -668,9 +791,88 @@ export const createCaseResolverAssetFile = (input: {
       typeof input.description === 'string'
         ? input.description
         : '',
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
+    createdAt,
+    updatedAt,
   };
+};
+
+const normalizeCaseResolverFolderTimestamps = ({
+  source,
+  folders,
+  files,
+  assets,
+  fallbackTimestamp,
+}: {
+  source: unknown;
+  folders: string[];
+  files: CaseResolverFile[];
+  assets: CaseResolverAssetFile[];
+  fallbackTimestamp: string;
+}): Record<string, CaseResolverFolderTimestamp> => {
+  const sourceRecord =
+    source && typeof source === 'object' && !Array.isArray(source)
+      ? (source as Record<string, unknown>)
+      : {};
+
+  const contentStatsByFolder = new Map<string, { createdAt: string; updatedAt: string }>();
+  const registerContentTimestamps = (folderPath: string, createdAt: string, updatedAt: string): void => {
+    const ancestors = expandFolderPath(folderPath);
+    ancestors.forEach((ancestor: string): void => {
+      const current = contentStatsByFolder.get(ancestor);
+      if (!current) {
+        contentStatsByFolder.set(ancestor, { createdAt, updatedAt });
+        return;
+      }
+      contentStatsByFolder.set(ancestor, {
+        createdAt: pickEarliestTimestamp([current.createdAt, createdAt], current.createdAt),
+        updatedAt: pickLatestTimestamp([current.updatedAt, updatedAt], current.updatedAt),
+      });
+    });
+  };
+
+  files.forEach((file: CaseResolverFile): void => {
+    registerContentTimestamps(
+      file.folder,
+      normalizeTimestamp(file.createdAt, fallbackTimestamp),
+      normalizeTimestamp(file.updatedAt, normalizeTimestamp(file.createdAt, fallbackTimestamp))
+    );
+  });
+  assets.forEach((asset: CaseResolverAssetFile): void => {
+    registerContentTimestamps(
+      asset.folder,
+      normalizeTimestamp(asset.createdAt, fallbackTimestamp),
+      normalizeTimestamp(asset.updatedAt, normalizeTimestamp(asset.createdAt, fallbackTimestamp))
+    );
+  });
+
+  const folderTimestamps: Record<string, CaseResolverFolderTimestamp> = {};
+  folders.forEach((folderPath: string): void => {
+    const rawEntry = sourceRecord[folderPath];
+    const entryRecord =
+      rawEntry && typeof rawEntry === 'object' && !Array.isArray(rawEntry)
+        ? (rawEntry as Record<string, unknown>)
+        : {};
+
+    const recordedCreatedAt = normalizeTimestamp(entryRecord['createdAt'], fallbackTimestamp);
+    const recordedUpdatedAt = normalizeTimestamp(entryRecord['updatedAt'], recordedCreatedAt);
+    const contentStats = contentStatsByFolder.get(folderPath);
+
+    const createdAt = pickEarliestTimestamp(
+      [recordedCreatedAt, contentStats?.createdAt],
+      recordedCreatedAt
+    );
+    const updatedAt = pickLatestTimestamp(
+      [recordedUpdatedAt, contentStats?.updatedAt, createdAt],
+      recordedUpdatedAt
+    );
+
+    folderTimestamps[folderPath] = {
+      createdAt,
+      updatedAt,
+    };
+  });
+
+  return folderTimestamps;
 };
 
 export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
@@ -683,6 +885,7 @@ export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
   return {
     version: 2,
     folders: [],
+    folderTimestamps: {},
     files: [firstFile],
     assets: [],
     activeFileId: firstFile.id,
@@ -695,6 +898,8 @@ export const normalizeCaseResolverWorkspace = (
   if (!workspace || typeof workspace !== 'object') {
     return createDefaultCaseResolverWorkspace();
   }
+  const workspaceRecord = workspace as unknown as Record<string, unknown>;
+  const now = new Date().toISOString();
 
   const rawFiles = Array.isArray(workspace.files) ? workspace.files : [];
   const fileIds = new Set<string>();
@@ -730,7 +935,6 @@ export const normalizeCaseResolverWorkspace = (
     .filter((file: CaseResolverFile | null): file is CaseResolverFile => Boolean(file));
 
   const normalizedFiles = files.length > 0 ? files : createDefaultCaseResolverWorkspace().files;
-  const workspaceRecord = workspace as unknown as Record<string, unknown>;
   const rawAssets = Array.isArray(workspaceRecord['assets'])
     ? (workspaceRecord['assets'] as CaseResolverAssetFile[])
     : [];
@@ -766,6 +970,13 @@ export const normalizeCaseResolverWorkspace = (
     ...assets.map((asset: CaseResolverAssetFile) => asset.folder),
   ];
   const folders = normalizeFolderPaths(folderCandidates);
+  const folderTimestamps = normalizeCaseResolverFolderTimestamps({
+    source: workspaceRecord['folderTimestamps'],
+    folders,
+    files: normalizedFiles,
+    assets,
+    fallbackTimestamp: now,
+  });
 
   const activeCandidate =
     typeof workspace.activeFileId === 'string' && workspace.activeFileId.trim().length > 0
@@ -779,6 +990,7 @@ export const normalizeCaseResolverWorkspace = (
   return {
     version: 2,
     folders,
+    folderTimestamps,
     files: normalizedFiles,
     assets,
     activeFileId,

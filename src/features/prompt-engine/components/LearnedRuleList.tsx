@@ -14,7 +14,9 @@ export function LearnedRuleList(): React.JSX.Element {
       ? 'Core'
       : exploderSubTab === 'image_studio_rules'
         ? 'Image Studio Rules'
-        : 'Prompt Exploder Rules';
+        : exploderSubTab === 'case_resolver_rules'
+          ? 'Case Resolver Rules'
+          : 'Prompt Exploder Rules';
 
   return (
     <div className='space-y-4'>

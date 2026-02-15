@@ -197,13 +197,21 @@ export default function ProductForm({
   }, [draft?.id, draft?.openProductFormTab]);
 
   useEffect(() => {
-    if (!draft) return;
-    const nextValidatorEnabled = draft.validatorEnabled ?? true;
-    setValidatorEnabled(nextValidatorEnabled);
-    setFormatterEnabled(nextValidatorEnabled ? (draft.formatterEnabled ?? false) : false);
-    setValidatorInitialized(true);
+    if (draft) {
+      const nextValidatorEnabled = draft.validatorEnabled ?? true;
+      setValidatorEnabled(nextValidatorEnabled);
+      setFormatterEnabled(nextValidatorEnabled ? (draft.formatterEnabled ?? false) : false);
+      setValidatorInitialized(true);
+      setValidatorManuallyChanged(false);
+      return;
+    }
+
+    // Non-draft forms should reset per entity instance and let global defaults initialize once.
+    setValidatorEnabled(true);
+    setFormatterEnabled(false);
+    setValidatorInitialized(false);
     setValidatorManuallyChanged(false);
-  }, [draft?.id, draft?.validatorEnabled, draft?.formatterEnabled]);
+  }, [draft?.id, product?.id]);
 
   useEffect(() => {
     if (validatorEnabled) return;

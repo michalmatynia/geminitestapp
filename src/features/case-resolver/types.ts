@@ -18,6 +18,7 @@ export type CaseResolverPartyReference = {
 export type CaseResolverTag = {
   id: string;
   name: string;
+  parentId: string | null;
   color: string;
   createdAt: string;
   updatedAt: string;
@@ -64,6 +65,7 @@ export type CaseResolverGraph = {
   pdfExtractionPresetId: CaseResolverPdfExtractionPresetId;
   documentFileLinksByNode: Record<string, string[]>;
   documentDropNodeId: string | null;
+  documentSourceFileIdByNode?: Record<string, string>;
 };
 
 export type CaseResolverFile = {
@@ -102,9 +104,15 @@ export type CaseResolverAssetFile = {
   updatedAt: string;
 };
 
+export type CaseResolverFolderTimestamp = {
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CaseResolverWorkspace = {
   version: 2;
   folders: string[];
+  folderTimestamps: Record<string, CaseResolverFolderTimestamp>;
   files: CaseResolverFile[];
   assets: CaseResolverAssetFile[];
   activeFileId: string | null;

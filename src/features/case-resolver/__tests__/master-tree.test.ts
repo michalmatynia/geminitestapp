@@ -10,6 +10,7 @@ describe('case-resolver master tree', () => {
     const workspace: CaseResolverWorkspace = {
       version: 2,
       folders: ['beta', 'alpha', 'alpha/sub'],
+      folderTimestamps: {},
       files: [
         createCaseResolverFile({ id: 'file-root-z', name: 'zeta', folder: '' }),
         createCaseResolverFile({ id: 'file-root-a', name: 'apple', folder: '' }),

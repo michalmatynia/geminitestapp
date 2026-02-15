@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Folder, FolderOpen, GripVertical, LayoutGrid, Trash2 } from 'lucide-react';
+import { Folder, FolderOpen, GripVertical, LayoutGrid, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
@@ -9,7 +9,7 @@ import {
   MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
-import { TreeCaret, TreeContextMenu, TreeRow, Button, useToast } from '@/shared/ui';
+import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
   cn,
@@ -299,6 +299,11 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
   }, [clearSelection, clearSelectionOnAwayClick]);
 
   useEffect(() => {
+    if (!panelCollapsed) return;
+    setPanelCollapsed(false);
+  }, [panelCollapsed, setPanelCollapsed]);
+
+  useEffect(() => {
     if (!revealRequest?.slotId) return;
     if (revealRequest.nonce === lastHandledRevealNonceRef.current) return;
 
@@ -323,26 +328,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     });
   }, [controller.nodes, expandNode, panelCollapsed, revealRequest, setPanelCollapsed]);
 
-  if (panelCollapsed) {
-    return (
-      <div className='relative h-full w-full min-w-0 overflow-hidden rounded border border-border bg-card/40 p-2'>
-        <div className='flex h-full items-center justify-center'>
-          <Button size='xs'
-            type='button'
-            variant='outline'
-            className='h-8 px-3 text-xs'
-            onClick={(): void => setPanelCollapsed(false)}
-            title='Show card tree'
-            aria-label='Show card tree'
-          >
-            <ChevronRight className='mr-1 size-4 -scale-x-100' />
-            Show Card Tree
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div
       ref={treeRef}
@@ -361,23 +346,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         clearSelection();
       }}
     >
-      <div className='absolute right-2 top-2 z-20' data-preserve-slot-selection='true'>
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          className='size-6'
-          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-            event.preventDefault();
-            event.stopPropagation();
-            setPanelCollapsed(true);
-          }}
-          title='Collapse card tree'
-          aria-label='Collapse card tree'
-          data-preserve-slot-selection='true'
-        >
-          <ChevronLeft className='size-3.5' />
-        </Button>
-      </div>
       <MasterFolderTree
         controller={controller}
         className='space-y-0.5'

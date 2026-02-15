@@ -267,6 +267,29 @@
 }
 
 @layer utilities {
+  @keyframes product-list-job-complete-highlight {
+    0%,
+    100% {
+      background-color: transparent;
+    }
+    45% {
+      background-color: hsl(var(--primary) / 0.14);
+    }
+  }
+
+  .product-list-row-job-complete-highlight-a,
+  .product-list-row-job-complete-highlight-b {
+    animation: product-list-job-complete-highlight 900ms ease-in-out 2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .product-list-row-job-complete-highlight-a,
+    .product-list-row-job-complete-highlight-b {
+      animation: none;
+      background-color: hsl(var(--primary) / 0.08);
+    }
+  }
+
   .scrollbar-hidden {
     scrollbar-width: none;
     -ms-overflow-style: none;

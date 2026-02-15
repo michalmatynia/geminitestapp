@@ -14,6 +14,7 @@ import {
   FormModal,
   FormSection,
   Input,
+  SelectSimple,
   SectionHeader,
   Skeleton,
   Tag as UiTag,
@@ -28,6 +29,7 @@ import type { CaseResolverTag } from '../types';
 type TagFormData = {
   name: string;
   color: string;
+  parentId: string | null;
 };
 
 const createTagId = (): string => {
@@ -35,6 +37,73 @@ const createTagId = (): string => {
     return `case-tag-${crypto.randomUUID()}`;
   }
   return `case-tag-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+type TagPathOption = {
+  id: string;
+  label: string;
+  pathIds: string[];
+};
+
+const buildTagPathOptions = (tags: CaseResolverTag[]): TagPathOption[] => {
+  const byId = new Map<string, CaseResolverTag>(
+    tags.map((tag: CaseResolverTag): [string, CaseResolverTag] => [tag.id, tag])
+  );
+  const cache = new Map<string, { ids: string[]; names: string[] }>();
+
+  const resolvePath = (tagId: string, trail: Set<string>): { ids: string[]; names: string[] } => {
+    const cached = cache.get(tagId);
+    if (cached) return cached;
+    const tag = byId.get(tagId);
+    if (!tag) return { ids: [], names: [] };
+    if (trail.has(tagId)) {
+      const fallback = { ids: [tag.id], names: [tag.name] };
+      cache.set(tagId, fallback);
+      return fallback;
+    }
+
+    if (!tag.parentId || !byId.has(tag.parentId)) {
+      const rootPath = { ids: [tag.id], names: [tag.name] };
+      cache.set(tagId, rootPath);
+      return rootPath;
+    }
+
+    const nextTrail = new Set(trail);
+    nextTrail.add(tagId);
+    const parentPath = resolvePath(tag.parentId, nextTrail);
+    const fullPath = {
+      ids: [...parentPath.ids, tag.id],
+      names: [...parentPath.names, tag.name],
+    };
+    cache.set(tagId, fullPath);
+    return fullPath;
+  };
+
+  return tags
+    .map((tag: CaseResolverTag): TagPathOption => {
+      const path = resolvePath(tag.id, new Set<string>());
+      return {
+        id: tag.id,
+        label: path.names.join(' / '),
+        pathIds: path.ids,
+      };
+    })
+    .sort((left: TagPathOption, right: TagPathOption) => left.label.localeCompare(right.label));
+};
+
+const collectDescendantTagIds = (tags: CaseResolverTag[], rootTagId: string): Set<string> => {
+  const descendants = new Set<string>([rootTagId]);
+  let expanded = true;
+  while (expanded) {
+    expanded = false;
+    tags.forEach((tag: CaseResolverTag): void => {
+      if (!tag.parentId || descendants.has(tag.id)) return;
+      if (!descendants.has(tag.parentId)) return;
+      descendants.add(tag.id);
+      expanded = true;
+    });
+  }
+  return descendants;
 };
 
 export function AdminCaseResolverTagsPage(): React.JSX.Element {
@@ -51,11 +120,34 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
   const [formData, setFormData] = useState<TagFormData>({
     name: '',
     color: '#38bdf8',
+    parentId: null,
   });
+  const tagPathOptions = useMemo((): TagPathOption[] => buildTagPathOptions(tags), [tags]);
+  const tagPathById = useMemo(() => {
+    const map = new Map<string, string>();
+    tagPathOptions.forEach((option: TagPathOption): void => {
+      map.set(option.id, option.label);
+    });
+    return map;
+  }, [tagPathOptions]);
+  const blockedParentIds = useMemo(
+    () => (editingTag ? collectDescendantTagIds(tags, editingTag.id) : new Set<string>()),
+    [editingTag, tags]
+  );
+  const parentTagOptions = useMemo(
+    () =>
+      tagPathOptions
+        .filter((option: TagPathOption): boolean => !blockedParentIds.has(option.id))
+        .map((option: TagPathOption) => ({
+          value: option.id,
+          label: option.label,
+        })),
+    [blockedParentIds, tagPathOptions]
+  );
 
   const openCreateModal = (): void => {
     setEditingTag(null);
-    setFormData({ name: '', color: '#38bdf8' });
+    setFormData({ name: '', color: '#38bdf8', parentId: null });
     setShowModal(true);
   };
 
@@ -64,6 +156,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
     setFormData({
       name: tag.name,
       color: tag.color,
+      parentId: tag.parentId,
     });
     setShowModal(true);
   };
@@ -76,16 +169,20 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
     }
 
     const now = new Date().toISOString();
+    const normalizedParentId =
+      formData.parentId && formData.parentId !== editingTag?.id ? formData.parentId : null;
     const nextTag: CaseResolverTag = editingTag
       ? {
         ...editingTag,
         name: normalizedName,
+        parentId: normalizedParentId,
         color: formData.color.trim() || '#38bdf8',
         updatedAt: now,
       }
       : {
         id: createTagId(),
         name: normalizedName,
+        parentId: normalizedParentId,
         color: formData.color.trim() || '#38bdf8',
         createdAt: now,
         updatedAt: now,
@@ -106,11 +203,22 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       logClientError(error, { context: { source: 'AdminCaseResolverTagsPage', action: 'saveTag', tagId: editingTag?.id } });
       toast(error instanceof Error ? error.message : 'Failed to save tag.', { variant: 'error' });
     }
-  }, [editingTag, formData.color, formData.name, tags, toast, updateSetting]);
+  }, [editingTag, formData.color, formData.name, formData.parentId, tags, toast, updateSetting]);
 
   const handleConfirmDelete = useCallback(async (): Promise<void> => {
     if (!tagToDelete) return;
-    const nextTags = tags.filter((tag: CaseResolverTag) => tag.id !== tagToDelete.id);
+    const now = new Date().toISOString();
+    const nextTags = tags
+      .filter((tag: CaseResolverTag) => tag.id !== tagToDelete.id)
+      .map((tag: CaseResolverTag): CaseResolverTag =>
+        tag.parentId === tagToDelete.id
+          ? {
+            ...tag,
+            parentId: null,
+            updatedAt: now,
+          }
+          : tag
+      );
     try {
       await updateSetting.mutateAsync({
         key: CASE_RESOLVER_TAGS_KEY,
@@ -177,6 +285,9 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
                       color={tag.color || '#38bdf8'}
                       dot
                     />
+                    <p className='mt-1 truncate text-[11px] text-gray-400'>
+                      {tagPathById.get(tag.id) ?? tag.name}
+                    </p>
                   </div>
                   <div className='flex items-center gap-2'>
                     <Button
@@ -267,6 +378,24 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
                   placeholder='#38bdf8'
                 />
               </div>
+            </FormField>
+            <FormField label='Parent Tag'>
+              <SelectSimple
+                size='sm'
+                value={formData.parentId ?? '__none__'}
+                onValueChange={(value: string): void => {
+                  setFormData((current: TagFormData) => ({
+                    ...current,
+                    parentId: value === '__none__' ? null : value,
+                  }));
+                }}
+                options={[
+                  { value: '__none__', label: 'No parent (root tag)' },
+                  ...parentTagOptions,
+                ]}
+                placeholder='Select parent tag'
+                triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
+              />
             </FormField>
           </div>
         </FormModal>

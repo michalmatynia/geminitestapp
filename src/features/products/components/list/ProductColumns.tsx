@@ -421,7 +421,8 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
 
 export const getProductColumns = (
   thumbnailSource: 'file' | 'link' | 'base64' = 'file',
-  imageExternalBaseUrl: string | null = null
+  imageExternalBaseUrl: string | null = null,
+  categoryNameById: ReadonlyMap<string, string> = new Map<string, string>()
 ): ColumnDef<ProductWithImages>[] => [
   {
     id: 'select',
@@ -510,6 +511,11 @@ export const getProductColumns = (
 
       const isImported: boolean = !!product.baseProductId;
       const isQueued: boolean = queuedProductIds?.has(product.id) ?? false;
+      const normalizedSku = (product.sku ?? '').trim();
+      const normalizedCategoryId = (product.categoryId ?? '').trim();
+      const categoryLabel = normalizedCategoryId
+        ? (categoryNameById.get(normalizedCategoryId) ?? normalizedCategoryId)
+        : 'Unassigned';
 
       return (
         <div>
@@ -530,30 +536,32 @@ export const getProductColumns = (
             {nameValue || '—'}
           </span>
 
-          {product.sku && (
-            <div className='flex items-center gap-1.5 text-sm text-gray-500'>
-              <span
-                className={[
-                  'select-text cursor-text',
-                ].join(' ')}
-              >
-                {product.sku}
+          <div className='flex items-center gap-1.5 text-sm text-gray-500'>
+            <span
+              className={[
+                'select-text cursor-text',
+              ].join(' ')}
+            >
+              {normalizedSku || 'No SKU'}
+            </span>
+            <span aria-hidden='true' className='text-gray-600'>|</span>
+            <span className='max-w-[14rem] truncate' title={categoryLabel}>
+              {categoryLabel}
+            </span>
+            {isImported && (
+              <span title='Imported product'>
+                <Download
+                  className='size-3 text-blue-400'
+                  aria-label='Imported product'
+                />
               </span>
-              {isImported && (
-                <span title='Imported product'>
-                  <Download
-                    className='size-3 text-blue-400'
-                    aria-label='Imported product'
-                  />
-                </span>
-              )}
-              {isQueued && (
-                <Badge variant='processing' className='ml-1'>
-                  Queued
-                </Badge>
-              )}
-            </div>
-          )}
+            )}
+            {isQueued && (
+              <Badge variant='processing' className='ml-1'>
+                Queued
+              </Badge>
+            )}
+          </div>
         </div>
       );
     },

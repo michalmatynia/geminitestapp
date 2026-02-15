@@ -2,9 +2,10 @@ import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText } from 'lucide-
 import React from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { DocumentSearchPage } from '@/features/document-search';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, ThemeRecord } from '@/shared/types/domain/notes';
-import { Button, ListPanel, EmptyState, Pagination, SelectSimple } from '@/shared/ui';
+import { Button, EmptyState, Pagination, SelectSimple } from '@/shared/ui';
 
 import { NoteCard } from './NoteCard';
 import { NotesFilters } from './NotesFilters';
@@ -52,12 +53,15 @@ export function NoteListView(): React.JSX.Element {
   };
 
   return (
-    <ListPanel
-      variant='flat'
-      className='flex min-h-0 flex-1 flex-col'
-      header={
-        <div className='flex items-center gap-3'>
-          {isFolderTreeCollapsed && (
+    <DocumentSearchPage
+      title={
+        settings.selectedFolderId
+          ? buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).slice(-1)[0]?.name ?? 'Notes'
+          : 'Notes'
+      }
+      startAdornment={(
+        <>
+          {isFolderTreeCollapsed ? (
             <Button
               onClick={onExpandFolderTree}
               variant='outline'
@@ -67,7 +71,7 @@ export function NoteListView(): React.JSX.Element {
               <ChevronLeft className='-scale-x-100' size={16} />
               <span className='ml-2'>Show Folders</span>
             </Button>
-          )}
+          ) : null}
           <Button
             onClick={onCreateNote}
             className='size-11 rounded-full bg-primary p-0 text-primary-foreground hover:bg-primary/90'
@@ -75,45 +79,44 @@ export function NoteListView(): React.JSX.Element {
           >
             <Plus className='size-5' />
           </Button>
-          <h1 className='text-3xl font-bold text-white'>
-            {settings.selectedFolderId
-              ? buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).slice(-1)[0]?.name
-              : 'Notes'}
-          </h1>
-          <div className='flex items-center gap-2'>
-            <span className='text-xs text-gray-500'>Theme</span>
-            <SelectSimple
-              value={selectedFolderThemeId || ''}
-              onValueChange={(val: string) => {
-                void handleThemeChange(val || null);
-              }}
-              options={[
-                { value: '', label: 'Default' },
-                ...themes.map((theme: ThemeRecord) => ({
-                  value: theme.id,
-                  label: theme.name,
-                })),
-              ]}
-              size='sm'
-              className='w-32'
-            />
-          </div>
-          <div className='ml-auto flex items-center gap-2'>
-            <TriggerButtonBar location='note_list' entityType='note' />
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
-              pageSizeOptions={[12, 24, 48]}
-              showPageSize
-              variant='compact'
-            />
-          </div>
+        </>
+      )}
+      titleAdornment={(
+        <div className='flex items-center gap-2'>
+          <span className='text-xs text-gray-500'>Theme</span>
+          <SelectSimple
+            value={selectedFolderThemeId || ''}
+            onValueChange={(val: string) => {
+              void handleThemeChange(val || null);
+            }}
+            options={[
+              { value: '', label: 'Default' },
+              ...themes.map((theme: ThemeRecord) => ({
+                value: theme.id,
+                label: theme.name,
+              })),
+            ]}
+            size='sm'
+            className='w-32'
+          />
         </div>
-      }
-      filters={
+      )}
+      endAdornment={(
+        <>
+          <TriggerButtonBar location='note_list' entityType='note' />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={[12, 24, 48]}
+            showPageSize
+            variant='compact'
+          />
+        </>
+      )}
+      filters={(
         <div className='flex gap-4'>
           <NotesFilters />
           <Button
@@ -137,38 +140,35 @@ export function NoteListView(): React.JSX.Element {
             <Archive size={20} />
           </Button>
         </div>
-      }
-      contentClassName='flex min-h-0 flex-1 flex-col overflow-y-auto pr-1'
-    >
-      {/* Breadcrumb */}
-      {settings.selectedFolderId && (
-        <div className='mb-6 flex items-center gap-2 text-sm text-gray-400'>
-          {buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
-            <React.Fragment key={index}>
-              <Button
-                variant='ghost'
-                size='xs'
-                onClick={(): void => {
-                  if (crumb.id) setSelectedFolderId(crumb.id);
-                  setSelectedNote(null);
-                  setIsEditing(false);
-                }}
-                className='hover:text-blue-400 transition'
-              >
-                {crumb.name}
-              </Button>
-              {index < array.length - 1 && (
-                <ChevronRight size={16} className='text-gray-600' />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
       )}
-
-      {/* Notes Grid */}
-      {loading ? (
-        <div className='text-center text-gray-400'>Loading...</div>
-      ) : sortedNotes.length === 0 ? (
+      breadcrumb={
+        settings.selectedFolderId ? (
+          <div className='mb-6 flex items-center gap-2 text-sm text-gray-400'>
+            {buildBreadcrumbPath(settings.selectedFolderId, null, folderTree).map((crumb: BreadcrumbItem, index: number, array: BreadcrumbItem[]) => (
+              <React.Fragment key={index}>
+                <Button
+                  variant='ghost'
+                  size='xs'
+                  onClick={(): void => {
+                    if (crumb.id) setSelectedFolderId(crumb.id);
+                    setSelectedNote(null);
+                    setIsEditing(false);
+                  }}
+                  className='hover:text-blue-400 transition'
+                >
+                  {crumb.name}
+                </Button>
+                {index < array.length - 1 ? (
+                  <ChevronRight size={16} className='text-gray-600' />
+                ) : null}
+              </React.Fragment>
+            ))}
+          </div>
+        ) : null
+      }
+      loading={loading}
+      hasResults={sortedNotes.length > 0}
+      emptyState={(
         <EmptyState
           title='No notes found'
           description='Create your first note to get started!'
@@ -180,13 +180,13 @@ export function NoteListView(): React.JSX.Element {
             </Button>
           }
         />
-      ) : (
-        <div className={noteLayoutClassName}>
-          {pagedNotes.map((note: NoteWithRelations) => (
-            <NoteCard key={note.id} note={note} />
-          ))}
-        </div>
       )}
-    </ListPanel>
+    >
+      <div className={noteLayoutClassName}>
+        {pagedNotes.map((note: NoteWithRelations) => (
+          <NoteCard key={note.id} note={note} />
+        ))}
+      </div>
+    </DocumentSearchPage>
   );
 }

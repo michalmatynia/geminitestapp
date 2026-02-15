@@ -48,7 +48,8 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           <TabsList>
             <TabsTrigger value='products'>Product Patterns</TabsTrigger>
             <TabsTrigger value='image-studio'>Image Studio Patterns</TabsTrigger>
-            <TabsTrigger value='prompt-exploder'>Prompt Exploder Patterns</TabsTrigger>
+            <TabsTrigger value='prompt-exploder'>Image Studio - Prompt Exploder</TabsTrigger>
+            <TabsTrigger value='case-resolver-prompt-exploder'>Case Resolver - Prompt Exploder</TabsTrigger>
           </TabsList>
 
           <TabsContent value='products' className='space-y-4'>
@@ -72,17 +73,33 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           <TabsContent value='prompt-exploder' className='space-y-4'>
             <FormSection variant='subtle' className='p-4'>
               <p className='text-sm text-gray-300'>
-                Prompt Exploder patterns control prompt segmentation, subsection recognition,
-                and parser behavior for exploded prompt editing.
+                Image Studio Prompt Exploder patterns control prompt segmentation, subsection recognition,
+                and parser behavior for exploded prompt editing in Image Studio workflows.
               </p>
             </FormSection>
             <AdminPromptEngineValidationPatternsPage
               embedded
-              eyebrow='AI · Prompt Exploder'
+              eyebrow='AI · Image Studio Prompt Exploder'
               initialPatternTab='prompt_exploder'
               initialExploderSubTab='prompt_exploder_rules'
               lockedPatternTab='prompt_exploder'
               lockedExploderSubTab='prompt_exploder_rules'
+            />
+          </TabsContent>
+
+          <TabsContent value='case-resolver-prompt-exploder' className='space-y-4'>
+            <FormSection variant='subtle' className='p-4'>
+              <p className='text-sm text-gray-300'>
+                Case Resolver Prompt Exploder patterns are isolated for Case Resolver document workflows.
+              </p>
+            </FormSection>
+            <AdminPromptEngineValidationPatternsPage
+              embedded
+              eyebrow='AI · Case Resolver Prompt Exploder'
+              initialPatternTab='prompt_exploder'
+              initialExploderSubTab='case_resolver_rules'
+              lockedPatternTab='prompt_exploder'
+              lockedExploderSubTab='case_resolver_rules'
             />
           </TabsContent>
         </Tabs>

@@ -4,8 +4,10 @@ import React from 'react';
 
 import type {
   CaseResolverAssetFile,
+  CaseResolverCategory,
   CaseResolverFile,
   CaseResolverGraph,
+  CaseResolverTag,
   CaseResolverWorkspace,
 } from '../types';
 
@@ -42,6 +44,11 @@ export type CaseResolverPageContextValue = {
   onDeleteFile: (fileId: string) => void;
   onToggleFileLock: (fileId: string) => void;
   onEditFile: (fileId: string) => void;
+  caseResolverTags: CaseResolverTag[];
+  caseResolverCategories: CaseResolverCategory[];
+  onCreateDocumentFromSearch: () => void;
+  onOpenFileFromSearch: (fileId: string) => void;
+  onEditFileFromSearch: (fileId: string) => void;
   activeFile: CaseResolverFile | null;
   selectedAsset: CaseResolverAssetFile | null;
   onUpdateSelectedAsset: (patch: CaseResolverAssetPatch) => void;

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   inferCaseResolverAssetKind,
+  normalizeCaseResolverTags,
   parseCaseResolverSettings,
   parseCaseResolverWorkspace,
   resolveCaseResolverUploadFolder,
@@ -30,6 +31,8 @@ describe('case-resolver settings', () => {
           id: 'dup-file',
           name: 'Case One',
           folder: 'Root A/Sub *',
+          createdAt: '',
+          updatedAt: '',
           addresser: { kind: 'person', id: 'p-1' },
           addressee: { kind: 'invalid', id: 'x-1' },
           graph: {
@@ -79,15 +82,22 @@ describe('case-resolver settings', () => {
     expect(workspace.files[0]?.addressee).toBeNull();
     expect(workspace.folders).toEqual(['Root_A', 'Root_A/Sub__']);
     expect(workspace.activeFileId).toBe('dup-file');
+    expect(workspace.files[0]?.createdAt).not.toBe('');
+    expect(workspace.files[0]?.updatedAt).not.toBe('');
+    expect(Object.keys(workspace.folderTimestamps).sort()).toEqual(['Root_A', 'Root_A/Sub__']);
+    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A']?.createdAt ?? ''))).toBe(false);
+    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A']?.updatedAt ?? ''))).toBe(false);
+    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A/Sub__']?.createdAt ?? ''))).toBe(false);
+    expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A/Sub__']?.updatedAt ?? ''))).toBe(false);
 
-    expect(workspace.files[0]?.graph.nodeMeta.n1).toEqual({
+    expect(workspace.files[0]?.graph.nodeMeta['n1']).toEqual({
       role: 'text_note',
       includeInOutput: true,
       quoteMode: 'double',
       surroundPrefix: '«',
       surroundSuffix: '»',
     });
-    expect(workspace.files[0]?.graph.nodeMeta.n2).toEqual({
+    expect(workspace.files[0]?.graph.nodeMeta['n2']).toEqual({
       role: DEFAULT_CASE_RESOLVER_NODE_META.role,
       includeInOutput: DEFAULT_CASE_RESOLVER_NODE_META.includeInOutput,
       quoteMode: DEFAULT_CASE_RESOLVER_NODE_META.quoteMode,
@@ -197,5 +207,25 @@ describe('case-resolver settings', () => {
 
     expect(parseCaseResolverSettings(JSON.stringify({})).ocrModel).toBe('');
     expect(parseCaseResolverSettings(null).ocrModel).toBe('');
+  });
+
+  it('normalizes hierarchical tags and removes invalid parent references', () => {
+    const tags = normalizeCaseResolverTags([
+      { id: 'child', name: 'Child', parentId: 'parent' },
+      { id: 'parent', name: 'Parent' },
+      { id: 'orphan', name: 'Orphan', parentId: 'missing' },
+      { id: 'self', name: 'Self', parentId: 'self' },
+      { id: 'cycle-a', name: 'Cycle A', parentId: 'cycle-b' },
+      { id: 'cycle-b', name: 'Cycle B', parentId: 'cycle-a' },
+    ]);
+
+    const byId = new Map(tags.map((tag) => [tag.id, tag]));
+    expect(byId.get('child')?.parentId).toBe('parent');
+    expect(byId.get('parent')?.parentId).toBeNull();
+    expect(byId.get('orphan')?.parentId).toBeNull();
+    expect(byId.get('self')?.parentId).toBeNull();
+    expect(byId.get('cycle-a')?.parentId).toBeNull();
+    expect(byId.get('cycle-b')?.parentId).toBeNull();
+    expect(tags.map((tag) => tag.id)).toEqual(['cycle-a', 'cycle-b', 'orphan', 'parent', 'child', 'self']);
   });
 });

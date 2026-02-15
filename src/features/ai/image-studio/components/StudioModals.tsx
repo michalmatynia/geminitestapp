@@ -169,10 +169,14 @@ function InlineImagePreviewCanvas({
   const resetViewport = (): void => {
     setZoom(1);
     setOffset({ x: 0, y: 0 });
+    dragRef.current = null;
+    setIsDragging(false);
   };
 
   const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
     if (!imageSrc || event.button !== 0) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('[data-inline-preview-controls="true"]')) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     dragRef.current = {
@@ -245,7 +249,13 @@ function InlineImagePreviewCanvas({
       onPointerCancel={handlePointerRelease}
       style={{ cursor: imageSrc ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
     >
-      <div className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded border border-border/60 bg-black/65 px-1 py-1 backdrop-blur'>
+      <div
+        data-inline-preview-controls='true'
+        className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded border border-border/60 bg-black/65 px-1 py-1 backdrop-blur'
+        onPointerDown={(event): void => {
+          event.stopPropagation();
+        }}
+      >
         <Button
           size='xs'
           type='button'
@@ -1095,6 +1105,33 @@ export function StudioModals(): React.JSX.Element {
       : driveImportMode === 'temporary-object'
         ? 'Select Object Image'
         : 'Import Images';
+  const editCardModalHeader = (
+    <div className='flex items-center justify-between gap-3'>
+      <div className='flex items-center gap-4'>
+        <Button
+          onClick={() => {
+            void handleSaveInlineSlot();
+          }}
+          disabled={slotUpdateBusy || !selectedSlot}
+          className='min-w-[100px] border border-white/20 hover:border-white/40'
+        >
+          {slotUpdateBusy ? 'Saving...' : 'Save Card'}
+        </Button>
+        <div className='flex items-center gap-2'>
+          <h2 className='text-2xl font-bold text-white'>Edit Card</h2>
+        </div>
+      </div>
+      <div className='flex items-center gap-2'>
+        <Button
+          type='button'
+          onClick={() => setSlotInlineEditOpen(false)}
+          className='min-w-[100px] border border-white/20 hover:border-white/40'
+        >
+          Close
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -1196,6 +1233,8 @@ export function StudioModals(): React.JSX.Element {
         onClose={() => setSlotInlineEditOpen(false)}
         title='Edit Card'
         size='lg'
+        className='md:min-w-[63rem] max-w-[66rem]'
+        header={editCardModalHeader}
       >
         {selectedSlot ? (
           <div className='space-y-4'>
@@ -1424,16 +1463,6 @@ export function StudioModals(): React.JSX.Element {
                 disabled={slotUpdateBusy}
               >
                 Clear Image
-              </Button>
-              <Button size='xs'
-                type='button'
-                onClick={() => {
-                  void handleSaveInlineSlot();
-                }}
-                disabled={slotUpdateBusy}
-              >
-                {slotUpdateBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                Save Card
               </Button>
             </div>
           </div>

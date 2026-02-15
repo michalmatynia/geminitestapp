@@ -153,7 +153,7 @@ export function IntegrationModal(): React.JSX.Element {
           onSuccess={() => {}}
           success={showTestSuccessModal}
           message={showTestSuccessModal ? testSuccessMessage : testError}
-          meta={testErrorMeta === undefined ? undefined : testErrorMeta}
+          meta={testErrorMeta ?? undefined}
         />
 
         <SessionModal

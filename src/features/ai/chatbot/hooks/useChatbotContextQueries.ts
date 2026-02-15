@@ -10,7 +10,9 @@ import type { FileUploadHelpers } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
 
-export function useChatbotContextSettingsQuery(): ListQuery<any> {
+import type { SettingRecord } from '../types';
+
+export function useChatbotContextSettingsQuery(): ListQuery<SettingRecord> {
   return createListQuery({
     queryKey: QUERY_KEYS.ai.chatbot.settings.allSettings('global-context'),
     queryFn: chatbotApi.fetchSettings,
@@ -21,11 +23,11 @@ export function useChatbotContextSettingsQuery(): ListQuery<any> {
 }
 
 export function useSaveChatbotContextMutation(): MutationResult<
-  { key: string; value: string },
+  SettingRecord,
   { key: string; value: string; errorLabel: string }
   > {
   const queryClient = useQueryClient();
-  return createCreateMutation<any, { key: string; value: string; errorLabel: string }>({
+  return createCreateMutation<SettingRecord, { key: string; value: string; errorLabel: string }>({
     mutationFn: ({ key, value, errorLabel }) => chatbotApi.saveSetting(key, value, errorLabel),
     options: {
       onSuccess: () => {

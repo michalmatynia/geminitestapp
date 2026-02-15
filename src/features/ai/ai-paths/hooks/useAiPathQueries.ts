@@ -6,6 +6,7 @@ import { api } from '@/shared/lib/api-client';
 import { createCreateMutation, createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiPathRuntimeAnalyticsSummary } from '@/shared/types/domain/ai-paths';
+import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/types/query-result-types';
 
 import { 
@@ -36,10 +37,10 @@ export function useUpdateAiPathsSettingMutation(): VoidMutation<{ key: string; v
   });
 }
 
-export function useAiPathsTriggerButtonsQuery(): SingleQuery<any[]> {
+export function useAiPathsTriggerButtonsQuery(): SingleQuery<AiTriggerButtonRecord[]> {
   return createSingleQuery({
     queryKey: () => QUERY_KEYS.ai.aiPaths.triggerButtons(),
-    queryFn: () => api.get<any[]>('/api/ai-paths/trigger-buttons'),
+    queryFn: () => api.get<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons'),
     id: 'trigger-buttons',
   });
 }

@@ -5,9 +5,15 @@ import React from 'react';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 import { FormField, FormModal, Input } from '@/shared/ui';
 
+export interface UserCreateFormState {
+  name: string;
+  email: string;
+  password: string;
+}
+
 interface UserCreateModalProps extends ModalStateProps {
-  createForm: any;
-  setCreateForm: React.Dispatch<React.SetStateAction<any>>;
+  createForm: UserCreateFormState;
+  setCreateForm: React.Dispatch<React.SetStateAction<UserCreateFormState>>;
   isSaving: boolean;
   onSave: () => void;
 }
@@ -36,7 +42,7 @@ export function UserCreateModal({
           <Input 
             value={createForm.name} 
             onChange={(e) => {
-              setCreateForm((p: any) => ({ ...p, name: e.target.value }));
+              setCreateForm((p) => ({ ...p, name: e.target.value }));
             }}
             placeholder='Optional display name' 
           />
@@ -45,7 +51,7 @@ export function UserCreateModal({
           <Input 
             value={createForm.email} 
             onChange={(e) => {
-              setCreateForm((p: any) => ({ ...p, email: e.target.value }));
+              setCreateForm((p) => ({ ...p, email: e.target.value }));
             }}
             placeholder='user@example.com' 
           />
@@ -55,7 +61,7 @@ export function UserCreateModal({
             type='password' 
             value={createForm.password} 
             onChange={(e) => {
-              setCreateForm((p: any) => ({ ...p, password: e.target.value }));
+              setCreateForm((p) => ({ ...p, password: e.target.value }));
             }}
             placeholder='Minimum 8 characters' 
           />

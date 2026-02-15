@@ -4,10 +4,11 @@ import Link from 'next/link';
 import React from 'react';
 
 import { getStatusIcon } from '@/features/jobs/utils/job-icons';
+import type { ExportJobDetail } from '@/shared/types/domain/integrations';
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { AppModal, StatusBadge } from '@/shared/ui';
 
-interface ExportJobDetailModalProps extends EntityModalProps<any> {}
+interface ExportJobDetailModalProps extends EntityModalProps<ExportJobDetail> {}
 
 export function ExportJobDetailModal({
   isOpen,

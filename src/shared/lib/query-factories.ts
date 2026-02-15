@@ -5,7 +5,7 @@ import {
   useMutation,
   type QueryKey,
   type UseMutationOptions,
-  type UseQueryOptions
+  type UseQueryOptions,
 } from '@tanstack/react-query';
 
 import type { ListQuery, SingleQuery, MutationResult } from '@/shared/types/query-result-types';
@@ -36,19 +36,19 @@ export function createListQuery<TData, TQueryFnData = TData[]>(
 /**
  * Standard configuration for single item queries
  */
-export interface SingleQueryConfig<TData> {
+export interface SingleQueryConfig<TData, TTransformedData = TData> {
   queryKey: QueryKey | ((id: string) => QueryKey);
   queryFn: () => Promise<TData>;
   id?: string | null | undefined;
-  options?: Omit<UseQueryOptions<TData, Error, TData, QueryKey>, 'queryKey' | 'queryFn'>;
+  options?: Omit<UseQueryOptions<TData, Error, TTransformedData, QueryKey>, 'queryKey' | 'queryFn'>;
 }
 
 /**
  * Factory for creating standardized single item queries
  */
-export function createSingleQuery<TData>(
-  config: SingleQueryConfig<TData>
-): SingleQuery<TData> {
+export function createSingleQuery<TData, TTransformedData = TData>(
+  config: SingleQueryConfig<TData, TTransformedData>
+): SingleQuery<TTransformedData> {
   const resolvedKey = typeof config.queryKey === 'function' 
     ? config.queryKey(config.id ?? 'none') 
     : config.queryKey;
@@ -59,7 +59,7 @@ export function createSingleQuery<TData>(
     staleTime: 5 * 60 * 1000,
     ...config.options,
     enabled: (config.options?.enabled ?? true) && (config.id !== null && config.id !== undefined),
-  }) as SingleQuery<TData>;
+  }) as SingleQuery<TTransformedData>;
 }
 
 /**

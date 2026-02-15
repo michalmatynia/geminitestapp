@@ -2,6 +2,7 @@
 
 import React from 'react';
 
+import type { AuthUserSecurityDto } from '@/shared/contracts/auth';
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { Checkbox, FormField, FormModal, Input, Label, StatusToggle } from '@/shared/ui';
 
@@ -12,7 +13,7 @@ interface UserEditModalProps extends EntityModalProps<AuthUserSummary> {
   isSaving: boolean;
   loadingSecurity: boolean;
   canManageSecurity: boolean;
-  userSecurity: any;
+  userSecurity: AuthUserSecurityDto | null;
   onSave: () => void;
 }
 

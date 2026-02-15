@@ -15,6 +15,9 @@ export type {
   ProductCategoryDto,
   CreateProductDto,
   UpdateProductDto,
+  ProductDraftDto,
+  CreateProductDraftDto,
+  UpdateProductDraftDto,
 } from '@/shared/contracts/products';
 
 export type {
@@ -37,10 +40,3 @@ export type {
   UploadFileDto,
   UpdateFileDto,
 } from '@/shared/contracts/files';
-
-// Re-export feature-specific standardized DTOs
-export type {
-  ProductDraftDto,
-  CreateProductDraftDto,
-  UpdateProductDraftDto,
-} from '@/features/products/types/drafts';

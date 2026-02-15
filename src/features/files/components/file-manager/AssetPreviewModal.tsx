@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-import type { ImageFileRecord } from '@/shared/types/domain/files';
+import type { Asset3DRecord } from '@/features/viewer3d/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { AppModal } from '@/shared/ui';
 
-interface AssetPreviewModalProps extends EntityModalProps<ImageFileRecord> {}
+interface AssetPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 
 export function AssetPreviewModal({
   isOpen,

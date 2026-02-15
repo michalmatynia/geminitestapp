@@ -39,6 +39,12 @@ export type AiPathRunRecord = AiPathRunDto & {
 
 export type AiPathRunNodeRecord = AiPathRunNodeDto;
 
+export interface AiPathRunDetail {
+  run: AiPathRunRecord;
+  nodes: AiPathRunNodeRecord[];
+  events: AiPathRuntimeEvent[];
+}
+
 export type ParserConfig = {
   mappings: Record<string, string>;
   outputMode?: 'individual' | 'bundle';

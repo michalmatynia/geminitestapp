@@ -489,7 +489,7 @@ export const mongoNoteRepository: NoteRepository = {
     // Remove tag from all notes
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
     const pullTags: UpdateFilter<NoteDocument> = {
-      $pull: { tags: { tagId: id } } as any,
+      $pull: { tags: { tagId: id } } as unknown as UpdateFilter<NoteDocument>['$pull'],
     };
     await noteCollection.updateMany({ 'tags.tagId': id } as Filter<NoteDocument>, pullTags);
     
@@ -664,7 +664,7 @@ export const mongoNoteRepository: NoteRepository = {
 
       // Remove category from all notes
       const pullCategories: UpdateFilter<NoteDocument> = {
-        $pull: { categories: { categoryId: id } } as any,
+        $pull: { categories: { categoryId: id } } as unknown as UpdateFilter<NoteDocument>['$pull'],
       };
       await noteCollection.updateMany(
         { 'categories.categoryId': id } as Filter<NoteDocument>,

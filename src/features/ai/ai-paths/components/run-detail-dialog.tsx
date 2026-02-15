@@ -3,9 +3,10 @@
 import { useMemo } from 'react';
 
 import type {
+  AiPathRunDetail,
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/types/domain/ai-paths';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 import {
   Button,
@@ -29,7 +30,7 @@ import { RunHistoryEntries } from './RunHistoryEntries';
 
 interface RunDetailDialogProps extends ModalStateProps {
   loading: boolean;
-  runDetail: any;
+  runDetail: AiPathRunDetail | null;
   runStreamStatus: string;
   runStreamPaused: boolean;
   runEventsOverflow: boolean;

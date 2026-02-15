@@ -85,7 +85,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
           setSelectedInventoryId(preferredInventoryId);
           hasInitializedInventory.current = true;
         } else {
-          setSelectedInventoryId(inventories[0]?.inventory_id ?? '');
+          setSelectedInventoryId(inventories[0]?.id ?? '');
           hasInitializedInventory.current = true;
         }
       }, 0);

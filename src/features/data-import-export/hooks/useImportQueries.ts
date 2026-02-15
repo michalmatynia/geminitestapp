@@ -117,7 +117,7 @@ export function useTemplateMutation(scope: 'import' | 'export', id?: string): Mu
             const maybeTemplate = result as Partial<Template>;
             const templateId = typeof maybeTemplate.id === 'string' ? maybeTemplate.id : '';
             if (!templateId) return current;
-            const nextTemplate = maybeTemplate;
+            const nextTemplate = result as Template;
             const existingIndex = current.findIndex((template: Template) => template.id === templateId);
             if (existingIndex === -1) {
               return [nextTemplate, ...current];

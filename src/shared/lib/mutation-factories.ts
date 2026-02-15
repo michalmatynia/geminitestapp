@@ -12,7 +12,7 @@ import type { DtoBase } from '@/shared/types/dto-base';
 /**
  * Factory for creating standardized save mutations (create or update)
  */
-export function createSaveMutation<T extends DtoBase, TVariables = { id?: string; data: any }>(
+export function createSaveMutation<T extends DtoBase, TVariables = { id?: string; data: unknown }>(
   config: {
     saveFn: (variables: TVariables) => Promise<T>;
     invalidateFn: (queryClient: QueryClient, data: T, variables: TVariables) => void | Promise<void>;
@@ -50,7 +50,7 @@ export function createDeleteMutation<T = void, TVariables = string>(
 /**
  * Factory for creating standardized create mutations
  */
-export function createCreateMutation<T extends DtoBase, TVariables = any>(
+export function createCreateMutation<T extends DtoBase, TVariables = unknown>(
   config: {
     createFn: (variables: TVariables) => Promise<T>;
     invalidateFn: (queryClient: QueryClient, data: T, variables: TVariables) => void | Promise<void>;

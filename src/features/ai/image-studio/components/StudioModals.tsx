@@ -1962,7 +1962,7 @@ export function StudioModals(): React.JSX.Element {
         onClose={() => setSlotInlineEditOpen(false)}
         onSuccess={() => {}}
         selectedSlot={selectedSlot}
-        onCopyId={handleCopyCardId}
+        onCopyId={(id) => { void handleCopyCardId(id); }}
         header={editCardModalHeader}
       >
         <Tabs

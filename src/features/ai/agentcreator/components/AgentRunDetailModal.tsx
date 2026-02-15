@@ -8,6 +8,11 @@ import type {
   AgentAuditLog,
   AgentBrowserLog,
   AgentSnapshot,
+  AgentGoal,
+  AgentSubgoal,
+  AgentStep,
+  AgentSessionContext,
+  AgentLoginCandidates,
 } from '@/shared/types/domain/chatbot';
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { Button, Tabs, TabsContent, TabsList, TabsTrigger, AppModal } from '@/shared/ui';
@@ -41,69 +46,52 @@ export function AgentRunDetailModal({
     [agentBrowserLogs]
   );
   const plannerContextAudits = useMemo(
-    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.['type'] === 'planner-context'),
+    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === 'planner-context'),
     [agentAuditLogs]
   );
   const planAudits = useMemo(
-    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.['type'] === 'plan'),
+    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === 'plan'),
     [agentAuditLogs]
   );
   const planUpdateAudits = useMemo(
     () =>
       agentAuditLogs.filter((audit: AgentAuditLog) => {
-        const auditType = typeof audit.metadata?.['type'] === 'string' ? audit.metadata['type'] : '';
+        const auditType = typeof audit.metadata?.type === 'string' ? audit.metadata.type : '';
         return ['plan', 'plan-update'].includes(auditType);
       }),
     [agentAuditLogs]
   );
   const branchAudits = useMemo(
-    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.['type'] === 'plan-branch'),
+    () => agentAuditLogs.filter((audit: AgentAuditLog) => audit.metadata?.type === 'plan-branch'),
     [agentAuditLogs]
   );
   const replanAudits = useMemo(
     () =>
       agentAuditLogs.filter((audit: AgentAuditLog) => {
-        const auditType = typeof audit.metadata?.['type'] === 'string' ? audit.metadata['type'] : '';
+        const auditType = typeof audit.metadata?.type === 'string' ? audit.metadata.type : '';
         return ['plan-replan', 'plan-adapt', 'self-check-replan'].includes(auditType);
       }),
     [agentAuditLogs]
   );
 
-  const latestSessionContext = (sessionContextLogs.at(-1)?.metadata as Record<string, unknown> | null) ?? null;
-  const latestLoginCandidates = (loginCandidateLogs.at(-1)?.metadata as Record<string, unknown> | null) ?? null;
+  const latestSessionContext = (sessionContextLogs.at(-1)?.metadata as AgentSessionContext | null) ?? null;
+  const latestLoginCandidates = (loginCandidateLogs.at(-1)?.metadata as AgentLoginCandidates | null) ?? null;
   const latestPlannerContext = (plannerContextAudits.at(-1)?.metadata as Record<string, unknown> | null) ?? null;
-  const latestPlanHierarchy =
-    (
-      planAudits.at(-1)?.metadata as {
-        hierarchy?: { goals?: unknown[] };
-      } | null
-    )?.hierarchy ?? null;
+  const latestPlanHierarchy = planAudits.at(-1)?.metadata?.hierarchy ?? null;
 
   const latestPlanSteps = useMemo(() => {
     const latestPlan = planUpdateAudits.find((audit: AgentAuditLog) =>
-      Array.isArray((audit.metadata as Record<string, unknown>)?.['steps'])
+      Array.isArray(audit.metadata?.steps)
     );
-    return Array.isArray((latestPlan?.metadata as Record<string, unknown>)?.['steps'])
-      ? ((latestPlan?.metadata as Record<string, unknown>)?.['steps'] as Array<{
-          id?: string;
-          title?: string;
-          status?: string;
-          tool?: string | null;
-          expectedObservation?: string | null;
-          successCriteria?: string | null;
-          phase?: string | null;
-        }>)
+    return Array.isArray(latestPlan?.metadata?.steps)
+      ? (latestPlan.metadata.steps)
       : [];
   }, [planUpdateAudits]);
 
   const planningEventsByStep = useMemo(() => {
     const map = new Map<string, AgentAuditLog[]>();
     [...branchAudits, ...replanAudits].forEach((audit: AgentAuditLog) => {
-      const meta = audit.metadata as {
-        stepId?: string;
-        failedStepId?: string;
-        activeStepId?: string;
-      } | null;
+      const meta = audit.metadata;
       const stepId = meta?.stepId ?? meta?.failedStepId ?? meta?.activeStepId ?? null;
       if (!stepId) return;
       const list = map.get(stepId) ?? [];
@@ -224,17 +212,17 @@ export function AgentRunDetailModal({
             <p className='text-[11px] text-gray-500'>Plan hierarchy</p>
             {latestPlanHierarchy?.goals?.length ? (
               <div className='mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200'>
-                {(latestPlanHierarchy.goals as any[]).map((goal, goalIndex) => (
+                {latestPlanHierarchy.goals.map((goal: AgentGoal, goalIndex: number) => (
                   <div key={goal.id ?? `goal-${goalIndex}`} className='rounded-md border border-border bg-card p-2'>
                     <p className='text-xs text-slate-200'>Goal {goalIndex + 1}: {goal.title}</p>
                     {goal.successCriteria ? <p className='mt-1 text-[10px] text-gray-400'>Success: {goal.successCriteria}</p> : null}
                     <div className='mt-2 space-y-2 pl-3'>
-                      {goal.subgoals?.map((subgoal: any, subIndex: number) => (
+                      {goal.subgoals?.map((subgoal: AgentSubgoal, subIndex: number) => (
                         <div key={subgoal.id ?? `subgoal-${goalIndex}-${subIndex}`} className='rounded-md border border-border bg-gray-900 p-2'>
                           <p className='text-[11px] text-slate-100'>Subgoal {goalIndex + 1}.{subIndex + 1}: {subgoal.title}</p>
                           {subgoal.successCriteria ? <p className='mt-1 text-[10px] text-gray-400'>Success: {subgoal.successCriteria}</p> : null}
                           <ul className='mt-2 space-y-1 pl-3 text-[10px] text-gray-300'>
-                            {subgoal.steps?.map((step: any, stepIndex: number) => (
+                            {subgoal.steps?.map((step: AgentStep, stepIndex: number) => (
                               <li key={`${goalIndex}-${subIndex}-${stepIndex}`}>
                                 <span className='text-slate-100'>Step {goalIndex + 1}.{subIndex + 1}.{stepIndex + 1}:</span> {step.title}
                                 {step.tool ? <span className='ml-2 text-[9px] text-gray-500'>({step.tool})</span> : null}
@@ -291,7 +279,7 @@ export function AgentRunDetailModal({
             {branchAudits.length ? (
               <div className='mt-2 max-h-48 space-y-2 overflow-y-auto rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200'>
                 {branchAudits.map((audit, index) => {
-                  const meta = audit.metadata as any;
+                  const meta = audit.metadata;
                   return (
                     <div key={audit.id ?? `branch-${index}`} className='rounded-md border border-border bg-card p-2'>
                       <div className='flex items-center justify-between text-[10px] text-gray-500'>
@@ -302,7 +290,7 @@ export function AgentRunDetailModal({
                       {meta?.failedStepId ? <p className='mt-1 text-[10px] text-gray-400'>Failed step: {meta.failedStepId}</p> : null}
                       {meta?.branchSteps?.length ? (
                         <ul className='mt-2 space-y-1 pl-3 text-[10px] text-gray-300'>
-                          {meta.branchSteps.map((step: any, stepIndex: number) => (
+                          {meta.branchSteps.map((step: AgentStep, stepIndex: number) => (
                             <li key={step.id ?? `branch-step-${stepIndex}`}>
                               <span className='text-slate-100'>Step {stepIndex + 1}:</span> {step.title}
                               {step.tool ? <span className='ml-2 text-[9px] text-gray-500'>({step.tool})</span> : null}
@@ -382,7 +370,7 @@ export function AgentRunDetailModal({
                 <div className='rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200'>
                   <p className='text-[10px] uppercase tracking-wide text-gray-500'>Cookies</p>
                   <div className='mt-1 max-h-36 overflow-y-auto'>
-                    {(latestSessionContext['cookies'] as any[])?.map((cookie, index) => (
+                    {latestSessionContext.cookies?.map((cookie, index) => (
                       <div key={`${cookie.name}-${index}`} className='mt-1'>
                         <span className='text-slate-100'>{cookie.name}</span> <span className='text-gray-500'>{cookie.domain}</span>
                         <span className='ml-2 text-gray-500'>len {cookie.valueLength}</span>
@@ -393,9 +381,9 @@ export function AgentRunDetailModal({
                 <div className='rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200'>
                   <p className='text-[10px] uppercase tracking-wide text-gray-500'>Storage keys</p>
                   <div className='mt-1 text-gray-300'>
-                    <p>Local: {(latestSessionContext['storage'] as any)?.localCount ?? 0} · Session: {(latestSessionContext['storage'] as any)?.sessionCount ?? 0}</p>
+                    <p>Local: {latestSessionContext.storage?.localCount ?? 0} · Session: {latestSessionContext.storage?.sessionCount ?? 0}</p>
                     <div className='mt-1 max-h-20 overflow-y-auto text-[10px] text-gray-400'>
-                      {(latestSessionContext['storage'] as any)?.localKeys?.join(', ') || 'No localStorage keys.'}
+                      {latestSessionContext.storage?.localKeys?.join(', ') || 'No localStorage keys.'}
                     </div>
                   </div>
                 </div>
@@ -412,7 +400,7 @@ export function AgentRunDetailModal({
                 <div className='rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200'>
                   <p className='text-[10px] uppercase tracking-wide text-gray-500'>Inputs</p>
                   <div className='mt-1 max-h-36 space-y-1 overflow-y-auto'>
-                    {(latestLoginCandidates['inputs'] as any[])?.map((input, index) => (
+                    {latestLoginCandidates.inputs?.map((input, index) => (
                       <div key={`${input.name}-${index}`}>
                         <span className='text-slate-100'>{input.name || input.id || input.type || 'input'}</span> <span className='text-gray-500'>score {input.score}</span>
                       </div>
@@ -422,7 +410,7 @@ export function AgentRunDetailModal({
                 <div className='rounded-md border border-border bg-gray-900 p-2 text-[11px] text-gray-200'>
                   <p className='text-[10px] uppercase tracking-wide text-gray-500'>Buttons</p>
                   <div className='mt-1 max-h-36 space-y-1 overflow-y-auto'>
-                    {(latestLoginCandidates['buttons'] as any[])?.map((button, index) => (
+                    {latestLoginCandidates.buttons?.map((button, index) => (
                       <div key={`${button.text}-${index}`}>
                         <span className='text-slate-100'>{button.text || button.id || button.name || 'button'}</span> <span className='text-gray-500'>score {button.score}</span>
                       </div>

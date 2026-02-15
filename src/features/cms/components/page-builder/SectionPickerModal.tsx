@@ -9,11 +9,17 @@ import { AppModal, Button } from '@/shared/ui';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
 
+interface SectionTemplate {
+  name: string;
+  description?: string;
+  create?: () => void;
+}
+
 interface SectionPickerModalProps extends ModalStateProps {
   primitives: SectionDefinition[];
   elements: SectionDefinition[];
   templates: SectionDefinition[];
-  groupedTemplates: Record<string, any[]>;
+  groupedTemplates: Record<string, SectionTemplate[]>;
   onSelect: (type: string) => void;
   onDeleteTemplate: (name: string) => void;
 }

@@ -58,7 +58,7 @@ export function AttachSlugModal({
       setSelectedIds([]);
       setSearch('');
       onClose();
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to attach slugs. Please try again.');
     } finally {
       setIsAttaching(false);

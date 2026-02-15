@@ -61,7 +61,7 @@ export function useTriggerButtons({
   const triggerButtonsQuery = useAiPathsTriggerButtonsQuery();
 
   const buttons = useMemo(() => {
-    const all = (triggerButtonsQuery.data ?? []) as AiTriggerButtonRecord[];
+    const all = triggerButtonsQuery.data ?? [];
     return all.filter((button: AiTriggerButtonRecord) => button.locations.includes(location));
   }, [triggerButtonsQuery.data, location]);
 

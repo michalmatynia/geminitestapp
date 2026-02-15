@@ -28,7 +28,7 @@ export const smoothPoints = (points: VectorPoint[], iterations: number = 1): Vec
       const r = { x: 0.25 * p0.x + 0.75 * p1.x, y: 0.25 * p0.y + 0.75 * p1.y };
       next.push(q, r);
     }
-    next.push(result[result.length - 1]);
+    next.push(result[result.length - 1]!);
     result = next;
   }
   return result;

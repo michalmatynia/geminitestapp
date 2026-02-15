@@ -78,7 +78,7 @@ async function updateUserPreferences(
 
 export function useUpdateUserPreferences(): UseMutationResult<void, Error, Partial<ProductListPreferences>> {
   const queryClient = useQueryClient();
-  return useOfflineMutation(
+  return useOfflineMutation<void, Error, Partial<ProductListPreferences>>(
     updateUserPreferences,
     {
       queryKey: userPreferencesQueryKey,
@@ -90,7 +90,7 @@ export function useUpdateUserPreferences(): UseMutationResult<void, Error, Parti
       },
       errorMessage: 'Failed to update preferences',
     }
-  ) as UseMutationResult<void, Error, Partial<ProductListPreferences>>;
+  );
 }
 
 export interface UserPreferencesHookResult {
@@ -103,7 +103,7 @@ export interface UserPreferencesHookResult {
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {
-  const query = createSingleQuery<ProductListPreferences>({
+  const query = createSingleQuery<SharedUserPreferences, ProductListPreferences>({
     id: 'current',
     queryKey: userPreferencesQueryKey,
     queryFn: () => fetchUserPreferences(),
@@ -117,7 +117,8 @@ export function useUserPreferences(): UserPreferencesHookResult {
     },
   });
 
-  const { data = DEFAULT_PREFERENCES, isLoading } = query;
+  const { data, isLoading } = query;
+  const preferences = data || DEFAULT_PREFERENCES;
 
   const { mutateAsync: updateBulk } = useUpdateUserPreferences();
 
@@ -160,7 +161,7 @@ export function useUserPreferences(): UserPreferencesHookResult {
   );
 
   return {
-    preferences: data,
+    preferences,
     loading: isLoading,
     setNameLocale,
     setCatalogFilter,

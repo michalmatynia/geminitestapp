@@ -1,0 +1,156 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries.ts
+  137:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/presets-dialog.tsx
+  17:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/hooks/useAiPathQueries.ts
+  39:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:3   error  Unsafe return of a value of type error    @typescript-eslint/no-unsafe-return
+  42:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:3   error  Unsafe return of a value of type error    @typescript-eslint/no-unsafe-return
+  62:3   error  Unsafe return of a value of type error    @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/hooks/useBrainQueries.ts
+  27:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  39:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  52:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  69:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  89:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/chatbot/hooks/useChatbotContextQueries.ts
+  13:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/chatbot/hooks/useChatbotQueries.ts
+   81:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+   97:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  141:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/StudioModals.tsx
+  1965:18  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/hooks/useImageStudioQueries.ts
+  41:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  56:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/analytics/hooks/useAnalyticsQueries.ts
+  26:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  40:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/components/admin/UserCreateModal.tsx
+   9:15  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  10:54  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  37:20  error  Unsafe assignment of an `any` value               @typescript-eslint/no-unsafe-assignment
+  37:31  error  Unsafe member access .name on an `any` value      @typescript-eslint/no-unsafe-member-access
+  39:33  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  39:42  error  Unsafe return of a value of type `any`            @typescript-eslint/no-unsafe-return
+  46:20  error  Unsafe assignment of an `any` value               @typescript-eslint/no-unsafe-assignment
+  46:31  error  Unsafe member access .email on an `any` value     @typescript-eslint/no-unsafe-member-access
+  48:33  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  48:42  error  Unsafe return of a value of type `any`            @typescript-eslint/no-unsafe-return
+  56:20  error  Unsafe assignment of an `any` value               @typescript-eslint/no-unsafe-assignment
+  56:31  error  Unsafe member access .password on an `any` value  @typescript-eslint/no-unsafe-member-access
+  58:33  error  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  58:42  error  Unsafe return of a value of type `any`            @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/components/admin/UserEditModal.tsx
+  15:17  error  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  84:92  error  Unsafe member access .disabledAt on an `any` value  @typescript-eslint/no-unsafe-member-access
+  86:59  error  Unsafe member access .disabledAt on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/auth/hooks/useAuthQueries.ts
+  42:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  53:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/SectionPickerModal.tsx
+   16:36  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  149:39  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  149:48  error  Unsafe member access .name on an `any` value                            @typescript-eslint/no-unsafe-member-access
+  153:35  error  Unsafe call of an `any` typed value                                     @typescript-eslint/no-unsafe-call
+  153:44  error  Unsafe member access .create on an `any` value                          @typescript-eslint/no-unsafe-member-access
+  154:44  error  Unsafe argument of type `any` assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  154:53  error  Unsafe member access .name on an `any` value                            @typescript-eslint/no-unsafe-member-access
+  158:95  error  Unsafe member access .name on an `any` value                            @typescript-eslint/no-unsafe-member-access
+  159:89  error  Unsafe member access .description on an `any` value                     @typescript-eslint/no-unsafe-member-access
+  161:85  error  Unsafe argument of type `any` assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  161:94  error  Unsafe member access .name on an `any` value                            @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/hooks/useCmsQueries.ts
+   70:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  150:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  161:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  307:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/hooks/useImportQueries.ts
+   60:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  148:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  163:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  187:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/hooks/useDatabaseQueries.ts
+  169:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  224:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  232:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  240:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  253:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  266:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  331:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  398:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/drafter/hooks/useDraftQueries.ts
+  40:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/files/hooks/useFileUploadEvents.ts
+  60:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/jobs/hooks/useJobQueries.ts
+  50:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  82:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  89:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts
+  492:7   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  492:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  667:9   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  667:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/observability/hooks/useLogQueries.ts
+   43:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+   68:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+   82:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  104:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+  111:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useProductAiJobQueries.ts
+  19:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useProductListState.tsx
+  342:9   error  Unsafe assignment of an error typed value                                                                       @typescript-eslint/no-unsafe-assignment
+  399:11  error  Unsafe assignment of an error typed value                                                                       @typescript-eslint/no-unsafe-assignment
+  399:45  error  Unsafe member access .data on a type that cannot be resolved                                                    @typescript-eslint/no-unsafe-member-access
+  401:15  error  Unsafe member access .id on a type that cannot be resolved                                                      @typescript-eslint/no-unsafe-member-access
+  402:16  error  Unsafe member access .updatedAt on a type that cannot be resolved                                               @typescript-eslint/no-unsafe-member-access
+  403:23  error  Unsafe argument of type error typed assigned to a parameter of type `SetStateAction<ProductWithImages | null>`  @typescript-eslint/no-unsafe-argument
+  404:49  error  Unsafe member access .data on a type that cannot be resolved                                                    @typescript-eslint/no-unsafe-member-access
+  437:36  error  Unsafe member access .error on a type that cannot be resolved                                                   @typescript-eslint/no-unsafe-member-access
+  438:11  error  Unsafe assignment of an error typed value                                                                       @typescript-eslint/no-unsafe-assignment
+  438:45  error  Unsafe member access .error on a type that cannot be resolved                                                   @typescript-eslint/no-unsafe-member-access
+  444:53  error  Unsafe member access .error on a type that cannot be resolved                                                   @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/hooks/useUserPreferences.ts
+  106:9  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  120:9  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  121:9  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  164:5  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  165:5  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/viewer3d/hooks/useAsset3dQueries.ts
+  51:3  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/query-factories.ts
+  11:26  warning  'SingleQuery' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 101 problems (100 errors, 1 warning)
+

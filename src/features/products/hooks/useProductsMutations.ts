@@ -11,7 +11,6 @@ import {
   createUpdateMutation,
   createDeleteMutation,
 } from '@/shared/lib/query-factories';
-import type { DeleteResponse } from '@/shared/types/api/api';
 import type { 
   CreateMutation, 
   UpdateMutation, 

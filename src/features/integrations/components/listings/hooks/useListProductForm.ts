@@ -178,10 +178,14 @@ export function useListProductForm(productId: string): UseListProductFormResult 
       setError(null);
       setExportLogs([]);
       setLogsOpen(true);
-      await exportToBase({
-        imageBase64Mode: preset.imageBase64Mode,
-        imageTransform: preset.transform,
-      });
+      const exportOptions: {
+        imageBase64Mode?: 'base-only' | 'full-data-uri';
+        imageTransform?: ImageTransformOptions | null;
+      } = {};
+      if (preset.imageBase64Mode) exportOptions.imageBase64Mode = preset.imageBase64Mode;
+      if (preset.transform) exportOptions.imageTransform = preset.transform;
+      
+      await exportToBase(exportOptions);
       onSuccess();
     } catch (err: unknown) {
       logClientError(err, {

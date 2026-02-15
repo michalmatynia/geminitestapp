@@ -360,7 +360,7 @@ export function ExportTab(): React.JSX.Element {
                   className='rounded-md border border-border/60 bg-card/30 p-3'
                 >
                   <div className='text-xs font-semibold text-gray-200'>
-                    {preset.label}
+                    {preset.name}
                   </div>
                   <div className='mt-1 text-[11px] text-gray-500'>
                     {preset.description}
@@ -373,13 +373,15 @@ export function ExportTab(): React.JSX.Element {
                       <Input
                         type='number'
                         min={1}
-                        value={preset.transform.maxDimension ?? ''}
+                        value={preset.transform?.maxDimension ?? ''}
                         onChange={(
                           event: React.ChangeEvent<HTMLInputElement>,
                         ): void => {
                           const raw = event.target.value;
                           updateImageRetryPreset(preset.id, {
-                            ...(raw ? { maxDimension: Number(raw) } : {}),
+                            maxDimension: raw ? Number(raw) : undefined,
+                            width: raw ? Number(raw) : undefined,
+                            height: raw ? Number(raw) : undefined,
                           });
                         }}
                         className='mt-1 h-8'
@@ -393,13 +395,14 @@ export function ExportTab(): React.JSX.Element {
                         type='number'
                         min={10}
                         max={100}
-                        value={preset.transform.jpegQuality ?? ''}
+                        value={preset.transform?.jpegQuality ?? ''}
                         onChange={(
                           event: React.ChangeEvent<HTMLInputElement>,
                         ): void => {
                           const raw = event.target.value;
                           updateImageRetryPreset(preset.id, {
-                            ...(raw ? { jpegQuality: Number(raw) } : {}),
+                            jpegQuality: raw ? Number(raw) : undefined,
+                            quality: raw ? Number(raw) : undefined,
                           });
                         }}
                         className='mt-1 h-8'
@@ -408,7 +411,7 @@ export function ExportTab(): React.JSX.Element {
                   </div>
                   <div className='mt-2 flex items-center gap-2 text-[11px] text-gray-400'>
                     <Checkbox
-                      checked={preset.transform.forceJpeg ?? true}
+                      checked={preset.transform?.forceJpeg ?? true}
                       onCheckedChange={(
                         checked: boolean | 'indeterminate',
                       ): void =>

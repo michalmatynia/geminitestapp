@@ -1,5 +1,6 @@
 'use client';
 
+import type { ClusterPreset } from '@/shared/types/domain/ai-paths';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 import {
   Button,
@@ -14,7 +15,7 @@ import {
 interface PresetsDialogProps extends ModalStateProps {
   presetsJson: string;
   setPresetsJson: (value: string) => void;
-  clusterPresets: any;
+  clusterPresets: ClusterPreset[];
   onImport: (mode: 'merge' | 'replace') => Promise<void>;
   onCopyJson: (value: string) => void;
 }

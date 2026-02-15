@@ -39,6 +39,11 @@ export type ProductJob = {
   listings: ListingJob[];
 };
 
+export type ExportJobDetail = {
+  job: ProductJob;
+  listing: ListingJob;
+};
+
 export type IntegrationConnectionBasic = {
   id: string;
   name: string;

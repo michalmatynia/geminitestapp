@@ -408,10 +408,15 @@ export function ProductListingsProvider({
       setError(null);
       setExportLogs([]);
       setLogsOpen(true);
-      await exportListingToBase(lastExportListingId, {
-        imageBase64Mode: preset.imageBase64Mode,
-        imageTransform: preset.transform,
-      });
+      
+      const exportOptions: {
+        imageBase64Mode?: 'base-only' | 'full-data-uri';
+        imageTransform?: ImageTransformOptions | null;
+      } = {};
+      if (preset.imageBase64Mode) exportOptions.imageBase64Mode = preset.imageBase64Mode;
+      if (preset.transform) exportOptions.imageTransform = preset.transform;
+      
+      await exportListingToBase(lastExportListingId, exportOptions);
       onListingsUpdated?.();
     } catch (err: unknown) {
       logClientError(err, { context: { source: 'ProductListingsContext', action: 'imageRetry', productId: product.id } });

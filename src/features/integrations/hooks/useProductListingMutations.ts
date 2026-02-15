@@ -55,6 +55,15 @@ type GenericExportToBaseVariables = ExportToBaseVariables & {
   requestId?: string;
 };
 
+interface ListingBadgeContext {
+  previousListingBadges?: ListingBadgesPayload | undefined;
+}
+
+interface ProductListingAndJobsContext {
+  previousListings: ProductListingWithDetails[] | undefined;
+  previousIntegrationJobs: ProductJob[] | undefined;
+}
+
 const toBadgeEntry = (value: unknown): MarketplaceBadgeEntry =>
   value && typeof value === 'object'
     ? (value as MarketplaceBadgeEntry)
@@ -126,15 +135,13 @@ export function useGenericExportToBaseMutation(): UpdateMutation<
       }
     },
     options: {
-      onMutate: async (vars: GenericExportToBaseVariables): Promise<{
-        previousListingBadges?: ListingBadgesPayload | undefined;
-      }> => {
+      onMutate: async (vars: GenericExportToBaseVariables): Promise<ListingBadgeContext> => {
         await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
         const previousListingBadges = queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
         setListingBadgeStatus(queryClient, vars.productId, 'base', 'pending');
         return { previousListingBadges };
       },
-      onError: (_error, vars, context: any): void => {
+      onError: (_error, vars, context: ListingBadgeContext | undefined): void => {
         if (context?.previousListingBadges) {
           queryClient.setQueryData(listingBadgesQueryKey, context.previousListingBadges);
           return;
@@ -186,10 +193,7 @@ export function useDeleteFromBaseMutation(productId: string): UpdateMutation<
         { inventoryId }
       ),
     options: {
-      onMutate: async ({ listingId }): Promise<{
-        previousListings: ProductListingWithDetails[] | undefined;
-        previousIntegrationJobs: ProductJob[] | undefined;
-      }> => {
+      onMutate: async ({ listingId }): Promise<ProductListingAndJobsContext> => {
         await cancelProductListingsAndJobs(queryClient, productId);
 
         const previousListings = queryClient.getQueryData<ProductListingWithDetails[]>(
@@ -228,7 +232,7 @@ export function useDeleteFromBaseMutation(productId: string): UpdateMutation<
 
         return { previousListings, previousIntegrationJobs };
       },
-      onError: (_error, _variables, context: any): void => {
+      onError: (_error, _variables, context: ProductListingAndJobsContext | undefined): void => {
         if (context?.previousListings) {
           queryClient.setQueryData(listingQueryKey, context.previousListings);
         }
@@ -322,15 +326,13 @@ export function useExportToBaseMutation(productId: string): UpdateMutation<
       }
     },
     options: {
-      onMutate: async (): Promise<{
-        previousListingBadges?: ListingBadgesPayload | undefined;
-      }> => {
+      onMutate: async (): Promise<ListingBadgeContext> => {
         await queryClient.cancelQueries({ queryKey: listingBadgesQueryKey });
         const previousListingBadges = queryClient.getQueryData<ListingBadgesPayload>(listingBadgesQueryKey);
         setListingBadgeStatus(queryClient, productId, 'base', 'pending');
         return { previousListingBadges };
       },
-      onError: (_error, _vars, context: any): void => {
+      onError: (_error, _vars, context: ListingBadgeContext | undefined): void => {
         if (context?.previousListingBadges) {
           queryClient.setQueryData(listingBadgesQueryKey, context.previousListingBadges);
           return;

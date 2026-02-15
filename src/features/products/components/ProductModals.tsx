@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic';
 
-import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { ListProductModal } from '@/features/integrations/components/listings/ListProductModal';
 import { MassListProductModal } from '@/features/integrations/components/listings/MassListProductModal';
 import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
@@ -13,9 +12,6 @@ import { AppModal } from '@/shared/ui';
 import { ProductFormModal } from './modals/ProductFormModal';
 
 
-const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
-  ssr: false,
-});
 const SelectIntegrationModal = dynamic(
   () => import('@/features/integrations/components/listings/SelectIntegrationModal'),
   {

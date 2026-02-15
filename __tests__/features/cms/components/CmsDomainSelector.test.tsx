@@ -1,5 +1,4 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
@@ -15,7 +14,7 @@ vi.mock('@/shared/ui', async () => {
   const actual = await vi.importActual('@/shared/ui');
   return {
     ...actual,
-    SelectSimple: ({ value, onValueChange, options, disabled, label }: any) => (
+    SelectSimple: ({ value, onValueChange, options, disabled }: any) => (
       <select
         data-testid='select-simple'
         value={value}

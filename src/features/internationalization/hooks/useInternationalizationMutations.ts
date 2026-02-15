@@ -48,7 +48,7 @@ export function useDeleteLanguageMutation(): VoidMutation<string> {
   });
 }
 
-export function useSaveCurrencyMutation(): SaveMutation<CurrencyOption, SaveCurrencyInput> {
+export function useSaveCurrencyMutation(): SaveMutation<CurrencyOption, { id: string | undefined; data: SaveCurrencyInput }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string | undefined; data: SaveCurrencyInput }) => saveCurrency(id, data),
@@ -58,7 +58,7 @@ export function useSaveCurrencyMutation(): SaveMutation<CurrencyOption, SaveCurr
   });
 }
 
-export function useSaveCountryMutation(): SaveMutation<CountryOption, SaveCountryInput> {
+export function useSaveCountryMutation(): SaveMutation<CountryOption, { id: string | undefined; data: SaveCountryInput }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string | undefined; data: SaveCountryInput }) => saveCountry(id, data),
@@ -68,7 +68,7 @@ export function useSaveCountryMutation(): SaveMutation<CountryOption, SaveCountr
   });
 }
 
-export function useSaveLanguageMutation(): SaveMutation<Language, SaveLanguageInput> {
+export function useSaveLanguageMutation(): SaveMutation<Language, { id: string | undefined; data: SaveLanguageInput }> {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: string | undefined; data: SaveLanguageInput }) => saveLanguage(id, data),

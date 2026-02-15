@@ -19,7 +19,6 @@ import type {
   NoteRelationWithSource,
   NoteRelationWithTarget,
 } from '@/shared/types/domain/notes';
-import type { ListQuery } from '@/shared/types/query-result-types';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

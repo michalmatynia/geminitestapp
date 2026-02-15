@@ -33,7 +33,7 @@ export function useProductListings(productId: string): ListQuery<ProductListingW
           'processing',
           'in_progress',
         ]);
-        const hasInFlight = data.some((listing) =>
+        const hasInFlight = data.some((listing: ProductListingWithDetails) =>
           activeStatuses.has((listing.status ?? '').trim().toLowerCase())
         );
         return hasInFlight ? 2500 : false;

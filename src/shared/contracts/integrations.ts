@@ -13,13 +13,16 @@ export const imageTransformOptionsSchema = z.object({
   forceJpeg: z.boolean().optional(),
   maxDimension: z.number().optional(),
   jpegQuality: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
 });
 
 export type ImageTransformOptionsDto = z.infer<typeof imageTransformOptionsSchema>;
 
 export const imageRetryPresetSchema = z.object({
   id: z.string(),
-  label: z.string(),
+  name: z.string(),
+  label: z.string().optional(),
   description: z.string(),
   imageBase64Mode: z.enum(['base-only', 'full-data-uri']),
   transform: imageTransformOptionsSchema,
@@ -194,7 +197,7 @@ export type UpdateTemplateDto = Partial<CreateTemplateDto>;
  */
 
 export const baseInventorySchema = z.object({
-  inventory_id: z.string(),
+  id: z.string(),
   name: z.string(),
   is_default: z.boolean(),
 });
@@ -202,7 +205,7 @@ export const baseInventorySchema = z.object({
 export type BaseInventoryDto = z.infer<typeof baseInventorySchema>;
 
 export const baseWarehouseSchema = z.object({
-  warehouse_id: z.string(),
+  id: z.string(),
   name: z.string(),
   is_default: z.boolean(),
 });
@@ -210,9 +213,9 @@ export const baseWarehouseSchema = z.object({
 export type BaseWarehouseDto = z.infer<typeof baseWarehouseSchema>;
 
 export const baseCategorySchema = z.object({
-  category_id: z.string(),
+  id: z.string(),
   name: z.string(),
-  parent_id: z.string(),
+  parentId: z.string().nullable(),
 });
 
 export type BaseCategoryDto = z.infer<typeof baseCategorySchema>;

@@ -5,7 +5,6 @@ import Link from 'next/link';
 
 import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContext';
 import { useProductListingJobsProps } from '@/features/jobs/hooks/useProductListingJobsProps';
-import { getStatusIcon } from '@/features/jobs/utils/job-icons';
 import { Button, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField, FormSection, Alert } from '@/shared/ui';
 
 import { ProductListingJobsPanelViewProvider, useProductListingJobsPanelView } from './context/ProductListingJobsPanelViewContext';

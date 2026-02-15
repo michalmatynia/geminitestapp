@@ -1,0 +1,46 @@
+__tests__/features/ai/ai-paths/components/SignalDots.test.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/CmsDomainSelector.test.tsx(2,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/CmsDomainSelector.test.tsx(18,63): error TS6133: 'label' is declared but its value is never read.
+__tests__/features/notesapp/services/note-service.test.ts(156,55): error TS2345: Argument of type '(r: { targetNote?: { id: string; }; }) => string | undefined' is not assignable to parameter of type '(value: { sourceNoteId: string; targetNoteId: string; assignedAt: string; targetNote?: { id: string; title: string; color: string | null; content?: string | undefined; } | undefined; sourceNote?: { ...; } | undefined; }, index: number, array: { ...; }[]) => string | undefined'.
+  Types of parameters 'r' and 'value' are incompatible.
+    Type '{ sourceNoteId: string; targetNoteId: string; assignedAt: string; targetNote?: { id: string; title: string; color: string | null; content?: string | undefined; } | undefined; sourceNote?: { ...; } | undefined; }' is not assignable to type '{ targetNote?: { id: string; }; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+      Types of property 'targetNote' are incompatible.
+        Type '{ id: string; title: string; color: string | null; content?: string | undefined; } | undefined' is not assignable to type '{ id: string; }'.
+          Type 'undefined' is not assignable to type '{ id: string; }'.
+src/features/integrations/components/connections/IntegrationModal.tsx(156,11): error TS2412: Type '{ errorId?: string; integrationId?: string | null; connectionId?: string | null; } | null | undefined' is not assignable to type '{ errorId?: string; integrationId?: string; connectionId?: string; } | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+src/features/jobs/components/ProductListingJobsPanel.tsx(8,1): error TS6133: 'getStatusIcon' is declared but its value is never read.
+src/features/notesapp/context/NoteFormContext.tsx(22,1): error TS6133: 'ListQuery' is declared but its value is never read.
+src/features/notesapp/hooks/useNoteOperations.ts(130,37): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/products/components/modals/ProductFormModal.tsx(7,10): error TS6133: 'ProductFormProvider' is declared but its value is never read.
+src/features/products/components/ProductModals.tsx(5,1): error TS6133: 'TriggerButtonBar' is declared but its value is never read.
+src/features/products/components/ProductModals.tsx(16,7): error TS6133: 'FileManager' is declared but its value is never read.
+src/features/products/hooks/useProductsMutations.ts(14,1): error TS6133: 'DeleteResponse' is declared but its value is never read.
+src/features/products/hooks/useUserPreferences.ts(111,7): error TS2322: Type '(data: { id: string; createdAt: string; updatedAt: string | null; userId: string; productListNameLocale: string; productListCatalogFilter: string; productListCurrencyCode: string | null; ... 17 more ...; cmsSlideshowPauseOnHoverInEditor: boolean | null; }) => ProductListPreferences' is not assignable to type '(data: { id: string; createdAt: string; updatedAt: string | null; userId: string; productListNameLocale: string; productListCatalogFilter: string; productListCurrencyCode: string | null; ... 17 more ...; cmsSlideshowPauseOnHoverInEditor: boolean | null; }) => { ...; }'.
+  Type 'ProductListPreferences' is missing the following properties from type '{ id: string; createdAt: string; updatedAt: string | null; userId: string; productListNameLocale: string; productListCatalogFilter: string; productListCurrencyCode: string | null; productListPageSize: number; ... 16 more ...; cmsSlideshowPauseOnHoverInEditor: boolean | null; }': id, createdAt, updatedAt, userId, and 21 more.
+src/features/vector-drawing/geometry.ts(31,15): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/features/vector-drawing/geometry.ts(47,44): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(302,24): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(303,24): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(316,24): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(317,24): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(329,26): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(400,24): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(401,24): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(408,24): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(409,24): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(416,28): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.
+src/shared/ui/vector-canvas.tsx(433,30): error TS2345: Argument of type '{ x: number; y: number; } | undefined' is not assignable to parameter of type '{ x: number; y: number; }'.
+  Type 'undefined' is not assignable to type '{ x: number; y: number; }'.

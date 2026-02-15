@@ -39,6 +39,12 @@ export const authUserAccessSchema = dtoBaseSchema.extend({
 
 export type AuthUserAccessDto = z.infer<typeof authUserAccessSchema>;
 
+export const authUserSecuritySchema = z.object({
+  disabledAt: z.string().nullable().optional(),
+});
+
+export type AuthUserSecurityDto = z.infer<typeof authUserSecuritySchema>;
+
 export const authUserPageSettingsSchema = z.object({
   defaultPage: z.string(),
   allowedPages: z.array(z.string()),

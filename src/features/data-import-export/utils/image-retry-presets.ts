@@ -8,24 +8,24 @@ const clonePreset = (preset: ImageRetryPreset): ImageRetryPreset => ({
 export const DEFAULT_IMAGE_RETRY_PRESETS: ImageRetryPreset[] = [
   {
     id: 'lower-dimension',
-    label: 'Lower max dimension (1200px)',
+    name: 'Lower max dimension (1200px)',
     description: 'Resize down to 1200px and convert to JPEG.',
     imageBase64Mode: 'base-only' as const,
-    transform: { forceJpeg: true, maxDimension: 1200, jpegQuality: 85 },
+    transform: { forceJpeg: true, maxDimension: 1200, jpegQuality: 85, width: 1200, height: 1200 },
   },
   {
     id: 'lower-quality',
-    label: 'Lower JPEG quality (70)',
+    name: 'Lower JPEG quality (70)',
     description: 'Compress harder without resizing.',
     imageBase64Mode: 'base-only' as const,
     transform: { forceJpeg: true, jpegQuality: 70 },
   },
   {
     id: 'lower-both',
-    label: 'Lower dimension + quality (1200px, 70)',
+    name: 'Lower dimension + quality (1200px, 70)',
     description: 'Resize and compress for maximum compatibility.',
     imageBase64Mode: 'base-only' as const,
-    transform: { forceJpeg: true, maxDimension: 1200, jpegQuality: 70 },
+    transform: { forceJpeg: true, maxDimension: 1200, jpegQuality: 70, width: 1200, height: 1200 },
   },
 ].map(clonePreset);
 
@@ -47,7 +47,7 @@ export const buildImageRetryPresetLabel = (
         jpegQuality ?? 'auto'
       })`;
     default:
-      return preset.label?.trim() || 'Image retry preset';
+      return preset.name?.trim() || 'Image retry preset';
   }
 };
 
@@ -76,7 +76,7 @@ export const withImageRetryPresetLabels = (
   preset: ImageRetryPreset,
 ): ImageRetryPreset => ({
   ...preset,
-  label: buildImageRetryPresetLabel(preset),
+  name: buildImageRetryPresetLabel(preset),
   description: buildImageRetryPresetDescription(preset),
 });
 
@@ -95,6 +95,7 @@ export const normalizeImageRetryPresets = (
     .map((entry: unknown) => {
       const record = entry as Partial<ImageRetryPreset> & {
         transform?: Partial<ImageRetryPreset['transform']>;
+        label?: string;
       };
       const id = typeof record.id === 'string' ? record.id : null;
       if (!id) return null;
@@ -105,10 +106,10 @@ export const normalizeImageRetryPresets = (
       };
       const preset: ImageRetryPreset = {
         id,
-        label:
-          typeof record.label === 'string' && record.label.trim()
-            ? record.label
-            : (fallback?.label ?? 'Image retry preset'),
+        name:
+          typeof record.name === 'string' && record.name.trim()
+            ? record.name
+            : (typeof record.label === 'string' && record.label.trim() ? record.label : (fallback?.name ?? 'Image retry preset')),
         description:
           typeof record.description === 'string' && record.description.trim()
             ? record.description

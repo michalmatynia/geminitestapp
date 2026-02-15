@@ -308,7 +308,7 @@ export function useProductData({
     queries: [
       {
         queryKey: normalizeQueryKey(getProductListQueryKey(filters)),
-        queryFn: ({ signal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
+        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
         enabled: preferencesLoaded,
         staleTime: 10_000,
         refetchOnMount: false,
@@ -317,7 +317,7 @@ export function useProductData({
       },
       {
         queryKey: normalizeQueryKey(getProductCountQueryKey(filters)),
-        queryFn: ({ signal }): Promise<number> => countProducts(filters, signal),
+        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<number> => countProducts(filters, signal),
         enabled: preferencesLoaded,
         staleTime: 10_000,
         refetchOnMount: false,

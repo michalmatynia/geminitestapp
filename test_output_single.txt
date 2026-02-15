@@ -1,0 +1,17 @@
+
+> libapp2@0.1.0 test
+> vitest __tests__/features/notesapp/services/note-service.test.ts
+
+
+ DEV  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+
+ ✓ __tests__/features/notesapp/services/note-service.test.ts (11 tests) 1193ms
+   ✓ NoteService > CRUD Operations > creates a note in the default notebook 382ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  20:43:58
+   Duration  2.58s (transform 233ms, setup 219ms, collect 273ms, tests 1.19s, environment 427ms, prepare 61ms)
+
+ PASS  Waiting for file changes...
+       press h to show help, press q to quit

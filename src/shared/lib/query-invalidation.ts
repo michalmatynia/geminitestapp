@@ -88,7 +88,7 @@ export const invalidateValidatorConfig = (queryClient: QueryClient) => {
 // --- CMS ---
 
 export const invalidateCmsPages = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.pages.lists() });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.pages.all });
 };
 
 export const invalidateCmsPageDetail = (queryClient: QueryClient, pageId: string) => {

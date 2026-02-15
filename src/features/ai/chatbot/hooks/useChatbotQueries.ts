@@ -79,6 +79,7 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
  */
 export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): SingleQuery<ChatSession | null> {
   return createSingleQuery({
+    id: sessionId,
     queryKey: sessionId ? chatbotKeys.session(sessionId) : [...chatbotKeys.all, 'session', 'none'],
     queryFn: async () => {
       if (!sessionId) return null;
@@ -95,6 +96,7 @@ export function useChatbotSession(sessionId: string | null, options?: { enabled?
  */
 export function useChatbotSettings(key?: string, options?: { enabled?: boolean }): SingleQuery<{ settings?: { settings?: unknown } | null }> {
   return createSingleQuery({
+    id: key,
     queryKey: chatbotKeys.settings.all(key),
     queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
     options: {

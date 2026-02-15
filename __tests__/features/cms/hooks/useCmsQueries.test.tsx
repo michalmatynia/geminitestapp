@@ -129,7 +129,7 @@ describe('useCmsQueries Hooks', () => {
         await result.current.mutateAsync({ name: 'New Page', slugIds: [] });
 
         expect(pagesApi.createPage).toHaveBeenCalledWith({ name: 'New Page', slugIds: [] });
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.lists() });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.all });
       });
 
       it('should throw error if create fails', async () => {
@@ -153,7 +153,7 @@ describe('useCmsQueries Hooks', () => {
         await result.current.mutateAsync({ id: '1', input: mockPage as any });
 
         expect(pagesApi.updatePage).toHaveBeenCalledWith('1', mockPage);
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.lists() });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.all });
         expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.detail('1') });
       });
     });
@@ -169,7 +169,7 @@ describe('useCmsQueries Hooks', () => {
         await result.current.mutateAsync('1');
 
         expect(pagesApi.deletePage).toHaveBeenCalledWith('1');
-        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.lists() });
+        expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.cms.pages.all });
       });
     });
   });

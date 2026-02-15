@@ -7,16 +7,32 @@ import {
   DEFAULT_CASE_RESOLVER_NODE_META,
   type CaseResolverAssetFile,
   type CaseResolverAssetKind,
+  type CaseResolverCategory,
+  type CaseResolverDocumentVersion,
   type CaseResolverEdgeMeta,
   type CaseResolverFile,
+  type CaseResolverFileType,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverPartyReference,
+  type CaseResolverScanSlot,
+  type CaseResolverTag,
   type CaseResolverPdfExtractionPresetId,
   type CaseResolverWorkspace,
 } from './types';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
+export const CASE_RESOLVER_TAGS_KEY = 'case_resolver_tags_v1';
+export const CASE_RESOLVER_CATEGORIES_KEY = 'case_resolver_categories_v1';
+export const CASE_RESOLVER_SETTINGS_KEY = 'case_resolver_settings_v1';
+
+export type CaseResolverSettings = {
+  ocrModel: string;
+};
+
+export const DEFAULT_CASE_RESOLVER_SETTINGS: CaseResolverSettings = {
+  ocrModel: '',
+};
 
 export const normalizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -44,6 +60,29 @@ export const normalizeFolderPaths = (folders: string[]): string[] => {
       if (folder) set.add(folder);
     });
   return Array.from(set).sort((left: string, right: string) => left.localeCompare(right));
+};
+
+const normalizeTimestamp = (value: unknown, fallback: string): string =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
+
+const sanitizeOptionalId = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const sanitizeOptionalMimeType = (value: unknown): string | null => {
+  const normalized = sanitizeOptionalId(value);
+  return normalized ? normalized.toLowerCase() : null;
+};
+
+const normalizeHexColor = (value: unknown, fallback: string): string => {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(normalized) || /^#[0-9a-fA-F]{3}$/.test(normalized)) {
+    return normalized;
+  }
+  return fallback;
 };
 
 const toLocalDateValue = (date: Date): string => {
@@ -157,6 +196,234 @@ const sanitizePartyReference = (value: unknown): CaseResolverPartyReference | nu
   };
 };
 
+const normalizeCaseResolverFileType = (value: unknown): CaseResolverFileType =>
+  value === 'scanfile' ? 'scanfile' : 'document';
+
+const normalizeCaseResolverDocumentVersion = (
+  value: unknown
+): CaseResolverDocumentVersion => (value === 'exploded' ? 'exploded' : 'original');
+
+const normalizeCaseResolverScanSlots = (input: unknown): CaseResolverScanSlot[] => {
+  if (!Array.isArray(input)) return [];
+
+  const seen = new Set<string>();
+  const slots: CaseResolverScanSlot[] = [];
+
+  input.forEach((entry: unknown, index: number): void => {
+    if (!entry || typeof entry !== 'object') return;
+    const record = entry as Record<string, unknown>;
+
+    const rawId =
+      typeof record['id'] === 'string' && record['id'].trim().length > 0
+        ? record['id'].trim()
+        : `scan-slot-${index + 1}`;
+    if (seen.has(rawId)) return;
+    seen.add(rawId);
+
+    const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
+    slots.push({
+      id: rawId,
+      name: rawName || `Scan ${slots.length + 1}`,
+      filepath: sanitizeOptionalId(record['filepath']),
+      sourceFileId: sanitizeOptionalId(record['sourceFileId']),
+      mimeType: sanitizeOptionalMimeType(record['mimeType']),
+      size:
+        typeof record['size'] === 'number' &&
+          Number.isFinite(record['size']) &&
+          record['size'] >= 0
+          ? Math.round(record['size'])
+          : null,
+      ocrText: typeof record['ocrText'] === 'string' ? record['ocrText'] : '',
+    });
+  });
+
+  return slots;
+};
+
+export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => {
+  const now = new Date().toISOString();
+  if (!Array.isArray(input)) return [];
+
+  const seen = new Set<string>();
+  const tags: CaseResolverTag[] = [];
+
+  input.forEach((entry: unknown, index: number): void => {
+    if (!entry || typeof entry !== 'object') return;
+    const record = entry as Record<string, unknown>;
+    const rawId =
+      typeof record['id'] === 'string' && record['id'].trim().length > 0
+        ? record['id'].trim()
+        : `tag-${index + 1}`;
+    if (seen.has(rawId)) return;
+    seen.add(rawId);
+
+    const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
+    tags.push({
+      id: rawId,
+      name: rawName || `Tag ${tags.length + 1}`,
+      color: normalizeHexColor(record['color'], '#38bdf8'),
+      createdAt: normalizeTimestamp(record['createdAt'], now),
+      updatedAt: normalizeTimestamp(record['updatedAt'], now),
+    });
+  });
+
+  return tags.sort((left: CaseResolverTag, right: CaseResolverTag) => left.name.localeCompare(right.name));
+};
+
+const resolveSafeCategoryParentId = (
+  categoryId: string,
+  parentId: string | null,
+  categoryMap: Map<string, CaseResolverCategory>
+): string | null => {
+  if (!parentId || !categoryMap.has(parentId) || parentId === categoryId) return null;
+  let current: string | null = parentId;
+  while (current) {
+    if (current === categoryId) return null;
+    const parent = categoryMap.get(current);
+    current = parent?.parentId ?? null;
+  }
+  return parentId;
+};
+
+export const normalizeCaseResolverCategories = (input: unknown): CaseResolverCategory[] => {
+  const now = new Date().toISOString();
+  if (!Array.isArray(input)) return [];
+
+  const seen = new Set<string>();
+  const raw: CaseResolverCategory[] = [];
+  input.forEach((entry: unknown, index: number): void => {
+    if (!entry || typeof entry !== 'object') return;
+    const record = entry as Record<string, unknown>;
+    const rawId =
+      typeof record['id'] === 'string' && record['id'].trim().length > 0
+        ? record['id'].trim()
+        : `category-${index + 1}`;
+    if (seen.has(rawId)) return;
+    seen.add(rawId);
+
+    const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
+    raw.push({
+      id: rawId,
+      name: rawName || `Category ${raw.length + 1}`,
+      parentId: sanitizeOptionalId(record['parentId']),
+      sortOrder:
+        typeof record['sortOrder'] === 'number' && Number.isFinite(record['sortOrder'])
+          ? record['sortOrder']
+          : index,
+      description: typeof record['description'] === 'string' ? record['description'] : '',
+      color: normalizeHexColor(record['color'], '#10b981'),
+      createdAt: normalizeTimestamp(record['createdAt'], now),
+      updatedAt: normalizeTimestamp(record['updatedAt'], now),
+    });
+  });
+
+  const byId = new Map<string, CaseResolverCategory>(
+    raw.map((category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category])
+  );
+  const normalizedParents = raw.map((category: CaseResolverCategory): CaseResolverCategory => ({
+    ...category,
+    parentId: resolveSafeCategoryParentId(category.id, category.parentId, byId),
+  }));
+
+  const grouped = new Map<string, CaseResolverCategory[]>();
+  const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
+  normalizedParents.forEach((category: CaseResolverCategory): void => {
+    const key = getGroupKey(category.parentId);
+    const current = grouped.get(key) ?? [];
+    current.push(category);
+    grouped.set(key, current);
+  });
+
+  const output: CaseResolverCategory[] = [];
+  const visit = (parentId: string | null): void => {
+    const key = getGroupKey(parentId);
+    const group = grouped.get(key) ?? [];
+    group
+      .sort((left: CaseResolverCategory, right: CaseResolverCategory) => {
+        const sortDelta = left.sortOrder - right.sortOrder;
+        if (sortDelta !== 0) return sortDelta;
+        const nameDelta = left.name.localeCompare(right.name);
+        if (nameDelta !== 0) return nameDelta;
+        return left.id.localeCompare(right.id);
+      })
+      .forEach((category: CaseResolverCategory, index: number): void => {
+        output.push({
+          ...category,
+          sortOrder: index,
+        });
+        visit(category.id);
+      });
+  };
+
+  visit(null);
+  return output;
+};
+
+export type CaseResolverCategoryTreeNode = CaseResolverCategory & {
+  children: CaseResolverCategoryTreeNode[];
+};
+
+export const buildCaseResolverCategoryTree = (
+  categories: CaseResolverCategory[]
+): CaseResolverCategoryTreeNode[] => {
+  const byId = new Map<string, CaseResolverCategoryTreeNode>();
+  categories.forEach((category: CaseResolverCategory): void => {
+    byId.set(category.id, { ...category, children: [] });
+  });
+
+  const roots: CaseResolverCategoryTreeNode[] = [];
+  categories.forEach((category: CaseResolverCategory): void => {
+    const current = byId.get(category.id);
+    if (!current) return;
+    if (!category.parentId) {
+      roots.push(current);
+      return;
+    }
+    const parent = byId.get(category.parentId);
+    if (!parent) {
+      roots.push(current);
+      return;
+    }
+    parent.children.push(current);
+  });
+
+  const sortNodes = (nodes: CaseResolverCategoryTreeNode[]): void => {
+    nodes.sort((left: CaseResolverCategoryTreeNode, right: CaseResolverCategoryTreeNode) => {
+      const sortDelta = left.sortOrder - right.sortOrder;
+      if (sortDelta !== 0) return sortDelta;
+      const nameDelta = left.name.localeCompare(right.name);
+      if (nameDelta !== 0) return nameDelta;
+      return left.id.localeCompare(right.id);
+    });
+    nodes.forEach((node: CaseResolverCategoryTreeNode): void => {
+      if (node.children.length > 0) sortNodes(node.children);
+    });
+  };
+  sortNodes(roots);
+
+  return roots;
+};
+
+export const parseCaseResolverTags = (raw: string | null | undefined): CaseResolverTag[] =>
+  normalizeCaseResolverTags(parseJsonSetting<unknown>(raw, []));
+
+export const parseCaseResolverCategories = (raw: string | null | undefined): CaseResolverCategory[] =>
+  normalizeCaseResolverCategories(parseJsonSetting<unknown>(raw, []));
+
+const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return DEFAULT_CASE_RESOLVER_SETTINGS;
+  }
+  const record = input as Record<string, unknown>;
+  const ocrModel = typeof record['ocrModel'] === 'string' ? record['ocrModel'].trim() : '';
+  return {
+    ocrModel,
+  };
+};
+
+export const parseCaseResolverSettings = (raw: string | null | undefined): CaseResolverSettings =>
+  normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
+
 const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const graphRecord = graph && typeof graph === 'object' ? (graph as Record<string, unknown>) : {};
   const nodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
@@ -219,30 +486,56 @@ export const createEmptyCaseResolverGraph = (): CaseResolverGraph => ({
 
 export const createCaseResolverFile = (input: {
   id: string;
+  fileType?: CaseResolverFileType | null | undefined;
   name: string;
   folder?: string;
   documentDate?: string | null | undefined;
+  originalDocumentContent?: string | null | undefined;
+  explodedDocumentContent?: string | null | undefined;
+  activeDocumentVersion?: CaseResolverDocumentVersion | null | undefined;
   documentContent?: string | null | undefined;
+  scanSlots?: CaseResolverScanSlot[] | null | undefined;
   isLocked?: boolean | null | undefined;
   graph?: Partial<CaseResolverGraph> | null;
   addresser?: CaseResolverPartyReference | null | undefined;
   addressee?: CaseResolverPartyReference | null | undefined;
+  tagId?: string | null | undefined;
+  categoryId?: string | null | undefined;
   createdAt?: string;
   updatedAt?: string;
 }): CaseResolverFile => {
   const now = new Date().toISOString();
+  const fallbackDocumentContent =
+    typeof input.documentContent === 'string' ? input.documentContent : '';
+  const originalDocumentContent =
+    typeof input.originalDocumentContent === 'string'
+      ? input.originalDocumentContent
+      : fallbackDocumentContent;
+  const explodedDocumentContent =
+    typeof input.explodedDocumentContent === 'string' ? input.explodedDocumentContent : '';
+  const requestedVersion = normalizeCaseResolverDocumentVersion(input.activeDocumentVersion);
+  const activeDocumentVersion: CaseResolverDocumentVersion =
+    requestedVersion === 'exploded' && explodedDocumentContent.trim().length === 0
+      ? 'original'
+      : requestedVersion;
+  const activeDocumentContent =
+    activeDocumentVersion === 'exploded' ? explodedDocumentContent : originalDocumentContent;
   return {
     id: input.id,
+    fileType: normalizeCaseResolverFileType(input.fileType),
     name: input.name.trim() || 'Untitled Case',
     folder: normalizeFolderPath(input.folder ?? ''),
     documentDate: normalizeDocumentDate(input.documentDate),
-    documentContent:
-      typeof input.documentContent === 'string'
-        ? input.documentContent
-        : '',
+    originalDocumentContent,
+    explodedDocumentContent,
+    activeDocumentVersion,
+    documentContent: activeDocumentContent,
+    scanSlots: normalizeCaseResolverScanSlots(input.scanSlots),
     isLocked: input.isLocked === true,
     addresser: sanitizePartyReference(input.addresser),
     addressee: sanitizePartyReference(input.addressee),
+    tagId: sanitizeOptionalId(input.tagId),
+    categoryId: sanitizeOptionalId(input.categoryId),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
     graph: sanitizeGraph({
@@ -415,14 +708,21 @@ export const normalizeCaseResolverWorkspace = (
       fileIds.add(id);
       return createCaseResolverFile({
         id,
+        fileType: file.fileType,
         name: file.name,
         folder: file.folder,
         documentDate: file.documentDate,
+        originalDocumentContent: file.originalDocumentContent,
+        explodedDocumentContent: file.explodedDocumentContent,
+        activeDocumentVersion: file.activeDocumentVersion,
         documentContent: file.documentContent,
+        scanSlots: file.scanSlots,
         isLocked: file.isLocked,
         graph: file.graph,
         addresser: file.addresser,
         addressee: file.addressee,
+        tagId: file.tagId,
+        categoryId: file.categoryId,
         createdAt: file.createdAt,
         updatedAt: file.updatedAt,
       });

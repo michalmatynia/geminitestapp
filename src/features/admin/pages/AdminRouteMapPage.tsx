@@ -35,6 +35,12 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
     'Build case flows with folder-organized files, WYSIWYG prompt nodes, and node-map composition.',
   '/admin/case-resolver/cases':
     'List, add, open, edit, and remove Case Resolver cases.',
+  '/admin/case-resolver/tags':
+    'Manage tags used by Case Resolver documents.',
+  '/admin/case-resolver/categories':
+    'Manage the Case Resolver document category tree.',
+  '/admin/case-resolver/settings':
+    'Configure Case Resolver OCR model settings.',
   '/admin/filemaker':
     'Manage persons and organizations used as addresser/addressee in Case Resolver documents.',
   '/admin/filemaker/list':

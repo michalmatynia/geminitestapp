@@ -6,18 +6,28 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button, FormSection, Input, SectionHeader, useToast } from '@/shared/ui';
+import { Badge, Button, FormSection, Input, SectionHeader, SelectSimple, useToast } from '@/shared/ui';
 
 import {
+  CASE_RESOLVER_CATEGORIES_KEY,
+  CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverFile,
   normalizeCaseResolverWorkspace,
   normalizeFolderPath,
   normalizeFolderPaths,
+  parseCaseResolverCategories,
+  parseCaseResolverTags,
   parseCaseResolverWorkspace,
 } from '../settings';
 
-import type { CaseResolverFile, CaseResolverWorkspace } from '../types';
+import type {
+  CaseResolverCategory,
+  CaseResolverFile,
+  CaseResolverFileType,
+  CaseResolverTag,
+  CaseResolverWorkspace,
+} from '../types';
 
 const createId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -39,21 +49,89 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const { toast } = useToast();
 
   const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
+  const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
+  const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
   const parsedWorkspace = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
     [rawWorkspace]
   );
+  const caseResolverTags = useMemo(
+    (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
+    [rawCaseResolverTags]
+  );
+  const caseResolverCategories = useMemo(
+    (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
+    [rawCaseResolverCategories]
+  );
+  const caseResolverTagOptions = useMemo(
+    () =>
+      caseResolverTags.map((tag: CaseResolverTag) => ({
+        value: tag.id,
+        label: tag.name,
+      })),
+    [caseResolverTags]
+  );
+  const caseResolverCategoryOptions = useMemo(() => {
+    const byId = new Map<string, CaseResolverCategory>(
+      caseResolverCategories.map(
+        (category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category]
+      )
+    );
+    const resolveDepth = (category: CaseResolverCategory): number => {
+      let depth = 0;
+      let parentId = category.parentId;
+      while (parentId) {
+        const parent = byId.get(parentId);
+        if (!parent) break;
+        depth += 1;
+        parentId = parent.parentId;
+      }
+      return depth;
+    };
+    return caseResolverCategories
+      .map((category: CaseResolverCategory) => ({
+        value: category.id,
+        label: `${' '.repeat(resolveDepth(category) * 2)}${category.name}`,
+      }))
+      .sort((left, right) => left.label.localeCompare(right.label));
+  }, [caseResolverCategories]);
+  const defaultTagId = caseResolverTags[0]?.id ?? null;
+  const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
   const [workspace, setWorkspace] = useState<CaseResolverWorkspace>(parsedWorkspace);
 
   const [newCaseName, setNewCaseName] = useState('');
   const [newCaseFolder, setNewCaseFolder] = useState('');
+  const [newCaseFileType, setNewCaseFileType] = useState<CaseResolverFileType>('document');
+  const [newCaseTagId, setNewCaseTagId] = useState<string | null>(defaultTagId);
+  const [newCaseCategoryId, setNewCaseCategoryId] = useState<string | null>(defaultCategoryId);
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
   const [editingCaseName, setEditingCaseName] = useState('');
   const [editingCaseFolder, setEditingCaseFolder] = useState('');
+  const [editingCaseFileType, setEditingCaseFileType] = useState<CaseResolverFileType>('document');
+  const [editingCaseTagId, setEditingCaseTagId] = useState<string | null>(null);
+  const [editingCaseCategoryId, setEditingCaseCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     setWorkspace(parsedWorkspace);
   }, [parsedWorkspace]);
+
+  useEffect(() => {
+    setNewCaseTagId((current: string | null) => {
+      if (!current) return defaultTagId;
+      return caseResolverTags.some((tag: CaseResolverTag) => tag.id === current)
+        ? current
+        : defaultTagId;
+    });
+  }, [caseResolverTags, defaultTagId]);
+
+  useEffect(() => {
+    setNewCaseCategoryId((current: string | null) => {
+      if (!current) return defaultCategoryId;
+      return caseResolverCategories.some((category: CaseResolverCategory) => category.id === current)
+        ? current
+        : defaultCategoryId;
+    });
+  }, [caseResolverCategories, defaultCategoryId]);
 
   const files = useMemo(
     () =>
@@ -93,11 +171,31 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       return;
     }
 
+    const normalizedTagId =
+      newCaseTagId && caseResolverTags.some((tag: CaseResolverTag) => tag.id === newCaseTagId)
+        ? newCaseTagId
+        : null;
+    const normalizedCategoryId =
+      newCaseCategoryId && caseResolverCategories.some((category: CaseResolverCategory) => category.id === newCaseCategoryId)
+        ? newCaseCategoryId
+        : null;
+    if (caseResolverTags.length > 0 && !normalizedTagId) {
+      toast('Select a document tag.', { variant: 'error' });
+      return;
+    }
+    if (caseResolverCategories.length > 0 && !normalizedCategoryId) {
+      toast('Select a document category.', { variant: 'error' });
+      return;
+    }
+
     const normalizedFolder = normalizeFolderPath(newCaseFolder);
     const file = createCaseResolverFile({
       id: createId('case-file'),
+      fileType: newCaseFileType,
       name: normalizedName,
       folder: normalizedFolder,
+      tagId: normalizedTagId,
+      categoryId: normalizedCategoryId,
     });
 
     const nextWorkspace: CaseResolverWorkspace = {
@@ -110,18 +208,40 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     await persistWorkspace(nextWorkspace, 'Case created.');
     setNewCaseName('');
     setNewCaseFolder('');
-  }, [newCaseFolder, newCaseName, persistWorkspace, toast, workspace]);
+    setNewCaseFileType('document');
+    setNewCaseTagId(defaultTagId);
+    setNewCaseCategoryId(defaultCategoryId);
+  }, [
+    caseResolverCategories,
+    caseResolverTags,
+    defaultCategoryId,
+    defaultTagId,
+    newCaseCategoryId,
+    newCaseFolder,
+    newCaseFileType,
+    newCaseName,
+    newCaseTagId,
+    persistWorkspace,
+    toast,
+    workspace,
+  ]);
 
   const handleStartEditCase = useCallback((file: CaseResolverFile): void => {
     setEditingCaseId(file.id);
     setEditingCaseName(file.name);
     setEditingCaseFolder(file.folder);
+    setEditingCaseFileType(file.fileType);
+    setEditingCaseTagId(file.tagId);
+    setEditingCaseCategoryId(file.categoryId);
   }, []);
 
   const handleCancelEditCase = useCallback((): void => {
     setEditingCaseId(null);
     setEditingCaseName('');
     setEditingCaseFolder('');
+    setEditingCaseFileType('document');
+    setEditingCaseTagId(null);
+    setEditingCaseCategoryId(null);
   }, []);
 
   const handleSaveCase = useCallback(async (): Promise<void> => {
@@ -129,6 +249,23 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     const normalizedName = editingCaseName.trim();
     if (!normalizedName) {
       toast('Case name is required.', { variant: 'error' });
+      return;
+    }
+    const normalizedTagId =
+      editingCaseTagId && caseResolverTags.some((tag: CaseResolverTag) => tag.id === editingCaseTagId)
+        ? editingCaseTagId
+        : null;
+    const normalizedCategoryId =
+      editingCaseCategoryId &&
+      caseResolverCategories.some((category: CaseResolverCategory) => category.id === editingCaseCategoryId)
+        ? editingCaseCategoryId
+        : null;
+    if (caseResolverTags.length > 0 && !normalizedTagId) {
+      toast('Select a document tag.', { variant: 'error' });
+      return;
+    }
+    if (caseResolverCategories.length > 0 && !normalizedCategoryId) {
+      toast('Select a document category.', { variant: 'error' });
       return;
     }
     const normalizedFolder = normalizeFolderPath(editingCaseFolder);
@@ -141,6 +278,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             ...file,
             name: normalizedName,
             folder: normalizedFolder,
+            fileType: editingCaseFileType,
+            scanSlots: editingCaseFileType === 'scanfile' ? file.scanSlots : [],
+            tagId: normalizedTagId,
+            categoryId: normalizedCategoryId,
             updatedAt: new Date().toISOString(),
           }
           : file
@@ -154,7 +295,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     editingCaseFolder,
     editingCaseId,
     editingCaseName,
+    editingCaseCategoryId,
+    editingCaseTagId,
+    editingCaseFileType,
     handleCancelEditCase,
+    caseResolverCategories,
+    caseResolverTags,
     persistWorkspace,
     toast,
     workspace,
@@ -206,7 +352,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       />
 
       <FormSection title='Add Case' className='space-y-4 p-4'>
-        <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_auto]'>
+        <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_200px_160px_200px_240px_auto]'>
           <Input
             value={newCaseName}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -222,6 +368,42 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             }}
             placeholder='Folder (optional)'
             className='h-9'
+          />
+          <SelectSimple size='sm'
+            value={newCaseFileType}
+            onValueChange={(value: string): void => {
+              setNewCaseFileType(value === 'scanfile' ? 'scanfile' : 'document');
+            }}
+            options={[
+              { value: 'document', label: 'Document' },
+              { value: 'scanfile', label: 'Scan File' },
+            ]}
+            placeholder='File type'
+            triggerClassName='h-9'
+          />
+          <SelectSimple size='sm'
+            value={newCaseTagId ?? '__none__'}
+            onValueChange={(value: string): void => {
+              setNewCaseTagId(value === '__none__' ? null : value);
+            }}
+            options={[
+              { value: '__none__', label: caseResolverTags.length > 0 ? 'Select tag' : 'No tags' },
+              ...caseResolverTagOptions,
+            ]}
+            placeholder='Select tag'
+            triggerClassName='h-9'
+          />
+          <SelectSimple size='sm'
+            value={newCaseCategoryId ?? '__none__'}
+            onValueChange={(value: string): void => {
+              setNewCaseCategoryId(value === '__none__' ? null : value);
+            }}
+            options={[
+              { value: '__none__', label: caseResolverCategories.length > 0 ? 'Select category' : 'No categories' },
+              ...caseResolverCategoryOptions,
+            ]}
+            placeholder='Select category'
+            triggerClassName='h-9'
           />
           <Button
             type='button'
@@ -260,7 +442,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                   className='rounded-lg border border-border/60 bg-card/35 p-3'
                 >
                   {isEditing ? (
-                    <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_auto] md:items-center'>
+                    <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_200px_160px_200px_240px_auto] md:items-center'>
                       <Input
                         value={editingCaseName}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -276,6 +458,42 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         }}
                         placeholder='Folder (optional)'
                         className='h-9'
+                      />
+                      <SelectSimple size='sm'
+                        value={editingCaseFileType}
+                        onValueChange={(value: string): void => {
+                          setEditingCaseFileType(value === 'scanfile' ? 'scanfile' : 'document');
+                        }}
+                        options={[
+                          { value: 'document', label: 'Document' },
+                          { value: 'scanfile', label: 'Scan File' },
+                        ]}
+                        placeholder='File type'
+                        triggerClassName='h-9'
+                      />
+                      <SelectSimple size='sm'
+                        value={editingCaseTagId ?? '__none__'}
+                        onValueChange={(value: string): void => {
+                          setEditingCaseTagId(value === '__none__' ? null : value);
+                        }}
+                        options={[
+                          { value: '__none__', label: caseResolverTags.length > 0 ? 'Select tag' : 'No tags' },
+                          ...caseResolverTagOptions,
+                        ]}
+                        placeholder='Select tag'
+                        triggerClassName='h-9'
+                      />
+                      <SelectSimple size='sm'
+                        value={editingCaseCategoryId ?? '__none__'}
+                        onValueChange={(value: string): void => {
+                          setEditingCaseCategoryId(value === '__none__' ? null : value);
+                        }}
+                        options={[
+                          { value: '__none__', label: caseResolverCategories.length > 0 ? 'Select category' : 'No categories' },
+                          ...caseResolverCategoryOptions,
+                        ]}
+                        placeholder='Select category'
+                        triggerClassName='h-9'
                       />
                       <div className='flex items-center gap-2'>
                         <Button
@@ -307,6 +525,19 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                             <Badge variant='outline' className='text-[10px] text-amber-300'>
                               <Lock className='mr-1 size-3' />
                               Locked
+                            </Badge>
+                          ) : null}
+                          <Badge variant='outline' className='text-[10px]'>
+                            {file.fileType === 'scanfile' ? 'Scan File' : 'Document'}
+                          </Badge>
+                          {file.tagId ? (
+                            <Badge variant='outline' className='text-[10px]'>
+                              {caseResolverTags.find((tag: CaseResolverTag) => tag.id === file.tagId)?.name ?? 'Tag'}
+                            </Badge>
+                          ) : null}
+                          {file.categoryId ? (
+                            <Badge variant='outline' className='text-[10px]'>
+                              {caseResolverCategories.find((category: CaseResolverCategory) => category.id === file.categoryId)?.name ?? 'Category'}
                             </Badge>
                           ) : null}
                         </div>

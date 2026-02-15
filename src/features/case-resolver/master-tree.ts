@@ -113,16 +113,17 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
   };
 
   workspace.files.forEach((file: CaseResolverFile) => {
+    const isScanFile = file.fileType === 'scanfile';
     appendFileEntry(file.folder, {
       id: file.id,
       name: file.name,
-      kindSortKey: 'case_file',
+      kindSortKey: isScanFile ? 'case_file_scan' : 'case_file_document',
       toNode: (sortOrder: number, parentNodeId: string | null): MasterTreeNode => {
         const filePath = file.folder ? `${file.folder}/${file.name}` : file.name;
         return {
           id: toCaseResolverFileNodeId(file.id),
           type: 'file',
-          kind: 'case_file',
+          kind: isScanFile ? 'case_file_scan' : 'case_file',
           parentId: parentNodeId,
           name: file.name,
           path: filePath,
@@ -132,6 +133,7 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
             rawId: file.id,
             folder: file.folder,
             isLocked: file.isLocked,
+            fileType: file.fileType,
           },
         };
       },

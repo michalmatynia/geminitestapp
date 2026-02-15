@@ -17,6 +17,7 @@ import {
   useToast,
 } from '@/shared/ui';
 
+import { AdminImageStudioPromptsPage } from './AdminImageStudioPromptsPage';
 import { AdminImageStudioSettingsPage } from './AdminImageStudioSettingsPage';
 import { AdminImageStudioValidationPatternsPage } from './AdminImageStudioValidationPatternsPage';
 import { ImageStudioDocsContent } from '../components/ImageStudioDocsContent';
@@ -29,7 +30,7 @@ import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import { useUiState } from '../context/UiContext';
 
-type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'docs';
+type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'prompts' | 'docs';
 
 function AdminImageStudioPageContent(): React.JSX.Element {
   const { handleRefreshSettings } = useSettingsActions();
@@ -51,6 +52,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
       rawTab === 'projects' ||
       rawTab === 'settings' ||
       rawTab === 'validation' ||
+      rawTab === 'prompts' ||
       rawTab === 'docs'
         ? rawTab
         : 'studio';
@@ -80,6 +82,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
       value === 'projects' ||
       value === 'settings' ||
       value === 'validation' ||
+      value === 'prompts' ||
       value === 'docs'
         ? value
         : 'studio';
@@ -134,6 +137,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='projects'>Projects</TabsTrigger>
                   <TabsTrigger value='settings'>Settings</TabsTrigger>
                   <TabsTrigger value='validation'>Validation</TabsTrigger>
+                  <TabsTrigger value='prompts'>Prompts</TabsTrigger>
                   <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
                 <div className='ml-auto flex min-w-0 items-center gap-2'>
@@ -193,6 +197,10 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                 embedded
                 onSaved={handleRefreshSettings}
               />
+            </TabsContent>
+
+            <TabsContent value='prompts' className='h-full m-0 overflow-y-auto p-4'>
+              <AdminImageStudioPromptsPage />
             </TabsContent>
 
             <TabsContent value='docs' className='h-full m-0 overflow-y-auto p-4'>

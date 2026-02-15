@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   inferCaseResolverAssetKind,
+  parseCaseResolverSettings,
   parseCaseResolverWorkspace,
   resolveCaseResolverUploadFolder,
 } from '@/features/case-resolver/settings';
@@ -185,5 +186,16 @@ describe('case-resolver settings', () => {
         name: 'scan-01.png',
       })
     ).toBe('image');
+  });
+
+  it('parses OCR settings safely', () => {
+    expect(
+      parseCaseResolverSettings(
+        JSON.stringify({ ocrModel: '  llama3.2-vision  ' })
+      ).ocrModel
+    ).toBe('llama3.2-vision');
+
+    expect(parseCaseResolverSettings(JSON.stringify({})).ocrModel).toBe('');
+    expect(parseCaseResolverSettings(null).ocrModel).toBe('');
   });
 });

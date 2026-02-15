@@ -1,5 +1,6 @@
 'use client';
 
+import { Mark, mergeAttributes, type AnyExtension } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import { Table } from '@tiptap/extension-table';
@@ -25,18 +26,58 @@ import {
   Minus,
   Quote,
   Redo,
+  Strikethrough,
   Table as TableIcon,
   Undo,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { RichTextEditorVariant } from '../types';
-import type { AnyExtension } from '@tiptap/core';
 
 type HeadingLevel = 1 | 2 | 3;
+type RichTextEditorFontOption = { value: string; label: string };
+
+const defaultFontFamilyOptions: RichTextEditorFontOption[] = [
+  { value: '"Times New Roman", Georgia, serif', label: 'Times' },
+  { value: 'Georgia, serif', label: 'Georgia' },
+  { value: '"Trebuchet MS", sans-serif', label: 'Trebuchet' },
+  { value: '"Helvetica Neue", Arial, sans-serif', label: 'Helvetica' },
+  { value: '"Courier New", monospace', label: 'Courier' },
+];
+
+const fontFamilyMark = Mark.create({
+  name: 'fontFamilyStyle',
+  inclusive: true,
+  parseHTML() {
+    return [{ tag: 'span[style*="font-family"]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes), 0];
+  },
+  addAttributes() {
+    return {
+      fontFamily: {
+        default: null,
+        parseHTML: (element: HTMLElement) => {
+          const value = element.style.fontFamily?.trim();
+          return value && value.length > 0 ? value : null;
+        },
+        renderHTML: (attributes: Record<string, unknown>) => {
+          const fontFamily = typeof attributes['fontFamily'] === 'string'
+            ? attributes['fontFamily'].trim()
+            : '';
+          if (!fontFamily) {
+            return {};
+          }
+          return { style: `font-family: ${fontFamily}` };
+        },
+      },
+    };
+  },
+});
 
 export interface RichTextEditorProps {
   value: string;
@@ -47,6 +88,8 @@ export interface RichTextEditorProps {
   allowImage?: boolean | undefined;
   allowTable?: boolean | undefined;
   allowTaskList?: boolean | undefined;
+  allowFontFamily?: boolean | undefined;
+  fontFamilyOptions?: RichTextEditorFontOption[] | undefined;
   loadingLabel?: string | undefined;
   containerClassName?: string | undefined;
   toolbarClassName?: string | undefined;
@@ -128,6 +171,8 @@ export function RichTextEditor({
   allowImage = false,
   allowTable = false,
   allowTaskList = false,
+  allowFontFamily = false,
+  fontFamilyOptions,
   loadingLabel = 'Loading editor...',
   containerClassName,
   toolbarClassName,
@@ -137,6 +182,15 @@ export function RichTextEditor({
 }: RichTextEditorProps): React.JSX.Element {
   const lastValueRef = useRef(value);
   const headingLevelsSignature = headingLevels.join(',');
+  const normalizedFontFamilyOptions = useMemo<RichTextEditorFontOption[]>(
+    () => {
+      if (fontFamilyOptions && fontFamilyOptions.length > 0) {
+        return fontFamilyOptions;
+      }
+      return defaultFontFamilyOptions;
+    },
+    [fontFamilyOptions]
+  );
 
   const normalizedHeadingLevels = useMemo<HeadingLevel[]>(() => {
     const normalized = headingLevels
@@ -158,6 +212,10 @@ export function RichTextEditor({
         },
       }),
     ];
+
+    if (allowFontFamily) {
+      activeExtensions.push(fontFamilyMark);
+    }
 
     if (allowImage) {
       activeExtensions.push(
@@ -190,7 +248,7 @@ export function RichTextEditor({
     }
 
     return activeExtensions;
-  }, [allowImage, allowTable, allowTaskList, normalizedHeadingLevels]);
+  }, [allowFontFamily, allowImage, allowTable, allowTaskList, normalizedHeadingLevels]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -246,6 +304,21 @@ export function RichTextEditor({
       .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
       .run();
   }, [allowTable, editor]);
+
+  const activeFontFamilyValue = useMemo((): string => {
+    if (!allowFontFamily || !editor) return '__default__';
+    const attributes = editor.getAttributes('fontFamilyStyle');
+    const value = typeof attributes['fontFamily'] === 'string' ? attributes['fontFamily'] : '';
+    return value.trim() || '__default__';
+  }, [allowFontFamily, editor, value]);
+
+  const fontFamilySelectOptions = useMemo(
+    () => [
+      { value: '__default__', label: 'Font' },
+      ...normalizedFontFamilyOptions,
+    ],
+    [normalizedFontFamilyOptions]
+  );
 
   if (!editor) {
     return (
@@ -303,6 +376,14 @@ export function RichTextEditor({
           variant={variant}
         >
           <Italic className='size-4' />
+        </ToolbarButton>
+        <ToolbarButton
+          title='Strikethrough'
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          isActive={editor.isActive('strike')}
+          variant={variant}
+        >
+          <Strikethrough className='size-4' />
         </ToolbarButton>
         <ToolbarButton
           title='Code'
@@ -425,6 +506,28 @@ export function RichTextEditor({
           >
             <TableIcon className='size-4' />
           </ToolbarButton>
+        ) : null}
+        {allowFontFamily ? (
+          <SelectSimple
+            size='sm'
+            value={activeFontFamilyValue}
+            onValueChange={(nextValue: string): void => {
+              if (nextValue === '__default__') {
+                editor.chain().focus().unsetMark('fontFamilyStyle').run();
+                return;
+              }
+              editor.chain().focus().setMark('fontFamilyStyle', { fontFamily: nextValue }).run();
+            }}
+            options={fontFamilySelectOptions}
+            placeholder='Font'
+            triggerClassName={cn(
+              variant === 'full'
+                ? 'h-8 min-w-[140px] border-border/60 bg-gray-800 text-xs text-gray-100'
+                : 'h-7 min-w-[120px] border-border/60 bg-card/60 text-xs text-gray-100'
+            )}
+            contentClassName='border-border bg-card text-white'
+            ariaLabel='Select font family'
+          />
         ) : null}
       </div>
 

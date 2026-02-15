@@ -79,6 +79,250 @@ const formatLinkedVariantTimestamp = (value: string): string => {
   return parsed.toLocaleString();
 };
 
+const INLINE_PREVIEW_ZOOM_MIN = 0.35;
+const INLINE_PREVIEW_ZOOM_MAX = 8;
+const INLINE_PREVIEW_ZOOM_STEP = 0.15;
+const INLINE_PREVIEW_WHEEL_SENSITIVITY = 0.0012;
+const INLINE_PREVIEW_MAX_WHEEL_DELTA = 0.45;
+
+const clampInlinePreviewZoom = (value: number): number =>
+  Math.min(INLINE_PREVIEW_ZOOM_MAX, Math.max(INLINE_PREVIEW_ZOOM_MIN, Number(value.toFixed(3))));
+
+const normalizeWheelDelta = (deltaY: number, deltaMode: number): number => {
+  if (deltaMode === 1) return deltaY * 16;
+  if (deltaMode === 2) return deltaY * 100;
+  return deltaY;
+};
+
+const formatBytes = (value: number | null): string => {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 'n/a';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let size = value;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  const precision = unitIndex === 0 ? 0 : size >= 10 ? 1 : 2;
+  return `${size.toFixed(precision)} ${units[unitIndex]}`;
+};
+
+const formatDateTime = (value: string | null | undefined): string => {
+  if (!value || typeof value !== 'string') return 'n/a';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString();
+};
+
+const estimateBase64Bytes = (value: string): number | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const payload = trimmed.includes(',') ? trimmed.slice(trimmed.indexOf(',') + 1) : trimmed;
+  const compact = payload.replace(/\s+/g, '');
+  if (!compact) return null;
+  const padding = compact.endsWith('==') ? 2 : compact.endsWith('=') ? 1 : 0;
+  const estimated = Math.floor((compact.length * 3) / 4) - padding;
+  return estimated > 0 ? estimated : null;
+};
+
+const extractDataUrlMimeType = (value: string): string | null => {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^data:([^;,]+)[;,]/i);
+  if (!match?.[1]) return null;
+  return match[1];
+};
+
+type InlineImagePreviewCanvasProps = {
+  imageSrc: string | null;
+  imageAlt: string;
+  onImageDimensionsChange: (dimensions: { width: number; height: number } | null) => void;
+};
+
+function InlineImagePreviewCanvas({
+  imageSrc,
+  imageAlt,
+  onImageDimensionsChange,
+}: InlineImagePreviewCanvasProps): React.JSX.Element {
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{
+    pointerId: number;
+    startClientX: number;
+    startClientY: number;
+    startOffsetX: number;
+    startOffsetY: number;
+  } | null>(null);
+
+  useEffect(() => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+    setIsDragging(false);
+    dragRef.current = null;
+    onImageDimensionsChange(null);
+  }, [imageSrc, onImageDimensionsChange]);
+
+  const applyZoomDelta = (delta: number): void => {
+    setZoom((currentZoom) => clampInlinePreviewZoom(currentZoom + delta));
+  };
+
+  const resetViewport = (): void => {
+    setZoom(1);
+    setOffset({ x: 0, y: 0 });
+  };
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>): void => {
+    if (!imageSrc || event.button !== 0) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startOffsetX: offset.x,
+      startOffsetY: offset.y,
+    };
+    setIsDragging(true);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>): void => {
+    const activeDrag = dragRef.current;
+    if (activeDrag?.pointerId !== event.pointerId) return;
+    const dx = event.clientX - activeDrag.startClientX;
+    const dy = event.clientY - activeDrag.startClientY;
+    setOffset({
+      x: activeDrag.startOffsetX + dx,
+      y: activeDrag.startOffsetY + dy,
+    });
+  };
+
+  const handlePointerRelease = (event: React.PointerEvent<HTMLDivElement>): void => {
+    const activeDrag = dragRef.current;
+    if (activeDrag?.pointerId !== event.pointerId) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    dragRef.current = null;
+    setIsDragging(false);
+  };
+
+  const handleWheel = (event: React.WheelEvent<HTMLDivElement>): void => {
+    if (!imageSrc) return;
+    event.preventDefault();
+    const normalizedDelta = normalizeWheelDelta(event.deltaY, event.deltaMode);
+    const zoomDelta = Math.max(
+      -INLINE_PREVIEW_MAX_WHEEL_DELTA,
+      Math.min(INLINE_PREVIEW_MAX_WHEEL_DELTA, -normalizedDelta * INLINE_PREVIEW_WHEEL_SENSITIVITY)
+    );
+    if (Math.abs(zoomDelta) < 0.0005) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const pointerX = event.clientX - rect.left - rect.width / 2;
+    const pointerY = event.clientY - rect.top - rect.height / 2;
+
+    setZoom((currentZoom) => {
+      const nextZoom = clampInlinePreviewZoom(currentZoom + zoomDelta);
+      if (nextZoom === currentZoom) return currentZoom;
+      setOffset((currentOffset) => {
+        const worldX = (pointerX - currentOffset.x) / currentZoom;
+        const worldY = (pointerY - currentOffset.y) / currentZoom;
+        return {
+          x: pointerX - worldX * nextZoom,
+          y: pointerY - worldY * nextZoom,
+        };
+      });
+      return nextZoom;
+    });
+  };
+
+  return (
+    <div
+      className='relative h-72 overflow-hidden rounded-lg border border-border/60 bg-black/35 touch-none'
+      onWheel={handleWheel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerRelease}
+      onPointerCancel={handlePointerRelease}
+      style={{ cursor: imageSrc ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+    >
+      <div className='absolute right-2 top-2 z-10 flex items-center gap-1 rounded border border-border/60 bg-black/65 px-1 py-1 backdrop-blur'>
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          className='h-6 w-6 px-0'
+          onClick={() => applyZoomDelta(-INLINE_PREVIEW_ZOOM_STEP)}
+          disabled={!imageSrc}
+          title='Zoom out'
+          aria-label='Zoom out image preview'
+        >
+          -
+        </Button>
+        <div className='min-w-10 text-center text-[10px] text-gray-200'>
+          {Math.round(zoom * 100)}%
+        </div>
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          className='h-6 w-6 px-0'
+          onClick={() => applyZoomDelta(INLINE_PREVIEW_ZOOM_STEP)}
+          disabled={!imageSrc}
+          title='Zoom in'
+          aria-label='Zoom in image preview'
+        >
+          +
+        </Button>
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          className='h-6 px-2 text-[10px]'
+          onClick={resetViewport}
+          disabled={!imageSrc}
+          title='Reset viewport'
+          aria-label='Reset image viewport'
+        >
+          Reset
+        </Button>
+      </div>
+
+      {imageSrc ? (
+        <>
+          <div className='absolute inset-0 flex items-center justify-center overflow-hidden'>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageSrc}
+              alt={imageAlt}
+              draggable={false}
+              onLoad={(event): void => {
+                onImageDimensionsChange({
+                  width: event.currentTarget.naturalWidth,
+                  height: event.currentTarget.naturalHeight,
+                });
+              }}
+              onError={() => onImageDimensionsChange(null)}
+              className='pointer-events-none max-h-full max-w-full select-none object-contain'
+              style={{
+                transform: `translate3d(${offset.x}px, ${offset.y}px, 0) scale(${zoom})`,
+                transformOrigin: 'center center',
+                transition: isDragging ? 'none' : 'transform 80ms ease-out',
+              }}
+            />
+          </div>
+          <div className='pointer-events-none absolute bottom-2 left-2 rounded border border-border/60 bg-black/60 px-2 py-1 text-[10px] text-gray-200'>
+            Drag to pan, mouse wheel to zoom
+          </div>
+        </>
+      ) : (
+        <div className='flex h-full items-center justify-center text-xs text-gray-500'>
+          No source image available for this card.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function StudioModals(): React.JSX.Element {
   const { toast } = useToast();
   const { projectId } = useProjectsState();
@@ -143,6 +387,7 @@ export function StudioModals(): React.JSX.Element {
   const [localUploadMode, setLocalUploadMode] = useState<'create' | 'replace' | 'temporary-object'>('create');
   const [localUploadTargetId, setLocalUploadTargetId] = useState<string | null>(null);
   const [linkedVariantApplyBusyKey, setLinkedVariantApplyBusyKey] = useState<string | null>(null);
+  const [inlinePreviewNaturalSize, setInlinePreviewNaturalSize] = useState<{ width: number; height: number } | null>(null);
 
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -200,6 +445,85 @@ export function StudioModals(): React.JSX.Element {
     });
   }, [linkedRunsQuery.data?.runs, productImagesExternalBaseUrl]);
 
+  const inlinePreviewSource = useMemo(() => {
+    const normalizedDraftBase64 = slotBase64Draft.trim();
+    if (normalizedDraftBase64) {
+      return {
+        src: normalizedDraftBase64,
+        sourceType: 'Draft Base64',
+        rawSource: '(inline base64)',
+        resolvedSource: '(inline base64)',
+      };
+    }
+
+    const normalizedDraftUrl = slotImageUrlDraft.trim();
+    if (normalizedDraftUrl) {
+      const resolved = resolveProductImageUrl(normalizedDraftUrl, productImagesExternalBaseUrl) ?? normalizedDraftUrl;
+      return {
+        src: resolved,
+        sourceType: 'Draft URL',
+        rawSource: normalizedDraftUrl,
+        resolvedSource: resolved,
+      };
+    }
+
+    const filePath = selectedSlot?.imageFile?.filepath?.trim() ?? '';
+    if (filePath) {
+      const resolved = resolveProductImageUrl(filePath, productImagesExternalBaseUrl) ?? filePath;
+      return {
+        src: resolved,
+        sourceType: 'Attached File',
+        rawSource: filePath,
+        resolvedSource: resolved,
+      };
+    }
+
+    const storedUrl = selectedSlot?.imageUrl?.trim() ?? '';
+    if (storedUrl) {
+      const resolved = resolveProductImageUrl(storedUrl, productImagesExternalBaseUrl) ?? storedUrl;
+      return {
+        src: resolved,
+        sourceType: 'Stored URL',
+        rawSource: storedUrl,
+        resolvedSource: resolved,
+      };
+    }
+
+    return {
+      src: null,
+      sourceType: 'None',
+      rawSource: 'n/a',
+      resolvedSource: 'n/a',
+    };
+  }, [selectedSlot, slotBase64Draft, slotImageUrlDraft, productImagesExternalBaseUrl]);
+
+  const inlinePreviewBase64Bytes = useMemo(
+    () => estimateBase64Bytes(slotBase64Draft),
+    [slotBase64Draft]
+  );
+
+  const inlinePreviewMimeType = useMemo(() => {
+    const fromFile = selectedSlot?.imageFile?.mimetype?.trim() ?? '';
+    if (fromFile) return fromFile;
+    const fromBase64 = extractDataUrlMimeType(slotBase64Draft);
+    if (fromBase64) return fromBase64;
+    return 'n/a';
+  }, [selectedSlot?.imageFile?.mimetype, slotBase64Draft]);
+
+  const inlinePreviewDimensions = useMemo(() => {
+    const width = selectedSlot?.imageFile?.width ?? inlinePreviewNaturalSize?.width ?? null;
+    const height = selectedSlot?.imageFile?.height ?? inlinePreviewNaturalSize?.height ?? null;
+    if (typeof width === 'number' && Number.isFinite(width) && typeof height === 'number' && Number.isFinite(height)) {
+      return `${width} x ${height}`;
+    }
+    return 'n/a';
+  }, [
+    selectedSlot?.imageFile?.width,
+    selectedSlot?.imageFile?.height,
+    inlinePreviewNaturalSize?.width,
+    inlinePreviewNaturalSize?.height,
+  ]);
+
   const previewLeaves = useMemo(
     () => (previewParams ? flattenParams(previewParams).filter((leaf) => Boolean(leaf.path)) : []),
     [previewParams]
@@ -241,6 +565,12 @@ export function StudioModals(): React.JSX.Element {
     setSlotImageUrlDraft,
     setSlotBase64Draft,
   ]);
+
+  useEffect(() => {
+    if (!slotInlineEditOpen) {
+      setInlinePreviewNaturalSize(null);
+    }
+  }, [slotInlineEditOpen]);
 
   useEffect(() => {
     if (!extractReviewOpen) return;
@@ -869,6 +1199,80 @@ export function StudioModals(): React.JSX.Element {
       >
         {selectedSlot ? (
           <div className='space-y-4'>
+            <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='space-y-0.5'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>Image Slot Preview</div>
+                  <div className='text-xs text-gray-200'>
+                    Source: {inlinePreviewSource.sourceType}
+                  </div>
+                </div>
+                <div className='text-[10px] text-gray-400'>
+                  Card ID: <span className='font-mono text-gray-300'>{selectedSlot.id}</span>
+                </div>
+              </div>
+
+              <InlineImagePreviewCanvas
+                imageSrc={inlinePreviewSource.src}
+                imageAlt={slotNameDraft.trim() || selectedSlot.name || 'Card preview'}
+                onImageDimensionsChange={setInlinePreviewNaturalSize}
+              />
+
+              <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
+                <div>
+                  <span className='text-gray-500'>Source type:</span> {inlinePreviewSource.sourceType}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Dimensions:</span> {inlinePreviewDimensions}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Image file id:</span>{' '}
+                  <span className='font-mono text-[10px]'>
+                    {selectedSlot.imageFile?.id || selectedSlot.imageFileId || 'n/a'}
+                  </span>
+                </div>
+                <div>
+                  <span className='text-gray-500'>Mime type:</span> {inlinePreviewMimeType}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Filename:</span> {selectedSlot.imageFile?.filename || 'n/a'}
+                </div>
+                <div>
+                  <span className='text-gray-500'>File size:</span> {formatBytes(selectedSlot.imageFile?.size ?? inlinePreviewBase64Bytes ?? null)}
+                </div>
+                {slotBase64Draft.trim() ? (
+                  <div className='sm:col-span-2'>
+                    <span className='text-gray-500'>Base64 payload:</span>{' '}
+                    {`${slotBase64Draft.trim().length.toLocaleString()} chars (~${formatBytes(inlinePreviewBase64Bytes)})`}
+                  </div>
+                ) : null}
+                <div className='sm:col-span-2'>
+                  <span className='text-gray-500'>Raw source:</span>{' '}
+                  <span className='break-all font-mono text-[10px] text-gray-300'>
+                    {inlinePreviewSource.rawSource}
+                  </span>
+                </div>
+                <div className='sm:col-span-2'>
+                  <span className='text-gray-500'>Resolved preview source:</span>{' '}
+                  <span className='break-all font-mono text-[10px] text-gray-300'>
+                    {inlinePreviewSource.resolvedSource}
+                  </span>
+                </div>
+                <div className='sm:col-span-2'>
+                  <span className='text-gray-500'>Tags:</span>{' '}
+                  {selectedSlot.imageFile?.tags?.length
+                    ? selectedSlot.imageFile.tags.join(', ')
+                    : 'n/a'}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Created:</span> {formatDateTime(selectedSlot.imageFile?.createdAt)}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Updated:</span> {formatDateTime(selectedSlot.imageFile?.updatedAt)}
+                </div>
+              </div>
+            </div>
+
             <div className='grid gap-3 sm:grid-cols-2'>
               <div className='space-y-1'>
                 <Label className='text-xs text-gray-400'>Card Name</Label>

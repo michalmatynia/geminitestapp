@@ -381,10 +381,19 @@ export function MasterFolderTree({
                 enableDnd
                   ? (event: React.DragEvent<HTMLDivElement>): void => {
                     const draggedNodeId = resolveDraggedNode(event);
-                    if (!draggedNodeId) return;
+                    if (!draggedNodeId) {
+                      // DEBUG: drag node not resolved
+                      console.debug('[MasterTree:dragover] no draggedNodeId for target', node.id, 'dragState:', controller.dragState);
+                      return;
+                    }
                     setRootDropHoverZone(null);
                     const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, node);
-                    if (!resolvedPosition) return;
+                    if (!resolvedPosition) {
+                      // DEBUG: drop not allowed
+                      const defaultCheck = controller.canDropNode(draggedNodeId, node.id, 'inside');
+                      console.debug('[MasterTree:dragover] resolvedPosition=null for', draggedNodeId, '→', node.id, 'defaultCheck:', defaultCheck, 'nodeType:', node.type, 'parentId:', node.parentId);
+                      return;
+                    }
                     event.preventDefault();
                     event.stopPropagation();
                     if (!controller.dragState) {

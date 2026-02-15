@@ -25,6 +25,7 @@ export type CaseResolverPageContextValue = {
   onSelectFolder: (folderPath: string | null) => void;
   onCreateFolder: (targetFolderPath: string | null) => void;
   onCreateFile: (targetFolderPath: string | null) => void;
+  onCreateScanFile: (targetFolderPath: string | null) => void;
   onCreateNodeFile: (targetFolderPath: string | null) => void;
   onUploadAssets: (
     files: File[],

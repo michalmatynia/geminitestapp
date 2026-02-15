@@ -16,13 +16,13 @@ import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge
 import {
   VectorDrawingToolbar,
 } from '@/features/vector-drawing';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
   AppModal,
   Label,
   MultiSelect,
-  
   Textarea,
   SelectSimple,
   ValidatorFormatterToggle,
@@ -46,6 +46,14 @@ import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
+import {
+  IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+  getImageStudioProjectSessionKey,
+  saveImageStudioProjectSessionLocal,
+  serializeImageStudioActiveProject,
+  serializeImageStudioProjectSession,
+  type ImageStudioProjectSession,
+} from '../utils/project-session';
 import { buildRunRequestPreview } from '../utils/run-request-preview';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
@@ -89,6 +97,7 @@ const resolveModelCostProfile = (model: string): ModelCostProfile => {
 
 export function RightSidebar(): React.JSX.Element {
   const router = useRouter();
+  const updateSetting = useUpdateSetting();
   const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
   const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
   const { projectId } = useProjectsState();
@@ -111,11 +120,15 @@ export function RightSidebar(): React.JSX.Element {
   const {
     workingSlot,
     slots,
+    selectedFolder,
+    selectedSlotId,
+    workingSlotId,
+    previewMode,
     compositeAssetIds,
     compositeAssetOptions,
   } = useSlotsState();
   const { setCompositeAssetIds } = useSlotsActions();
-  const { promptText, paramsState } = usePromptState();
+  const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
   const { studioSettings } = useSettingsState();
   const { runMutation, isRunInFlight, activeRunStatus } = useGenerationState();
@@ -126,6 +139,7 @@ export function RightSidebar(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
   const [promptControlOpen, setPromptControlOpen] = useState(false);
+  const [promptSaveBusy, setPromptSaveBusy] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph' | 'sequencing' | 'history'>('controls');
   const switchToControls = useCallback(() => setSidebarTab('controls'), []);
@@ -217,6 +231,127 @@ export function RightSidebar(): React.JSX.Element {
     [requestPreview]
   );
 
+  const cloneSettingValue = <T,>(value: T): T => {
+    const seen = new WeakSet<object>();
+    const serialized = JSON.stringify(value, (_key: string, candidate: unknown): unknown => {
+      if (typeof candidate === 'bigint') return candidate.toString();
+      if (typeof candidate === 'function' || typeof candidate === 'symbol') return undefined;
+      if (candidate instanceof Date) return candidate.toISOString();
+      if (candidate && typeof candidate === 'object') {
+        if (seen.has(candidate)) return undefined;
+        seen.add(candidate);
+      }
+      return candidate;
+    });
+    if (typeof serialized !== 'string') {
+      return value;
+    }
+    return JSON.parse(serialized) as T;
+  };
+
+  const handleSavePromptToProject = useCallback((): void => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      toast('Select a project first.', { variant: 'info' });
+      return;
+    }
+    const projectSessionKey = getImageStudioProjectSessionKey(normalizedProjectId);
+    if (!projectSessionKey) {
+      toast('Invalid project id.', { variant: 'error' });
+      return;
+    }
+    if (promptSaveBusy) return;
+
+    const projectSession: ImageStudioProjectSession = {
+      version: 1,
+      projectId: normalizedProjectId,
+      savedAt: new Date().toISOString(),
+      selectedFolder,
+      selectedSlotId,
+      workingSlotId,
+      compositeAssetIds: cloneSettingValue(compositeAssetIds),
+      previewMode,
+      promptText,
+      paramsState: cloneSettingValue(paramsState),
+      paramSpecs: cloneSettingValue((paramSpecs ?? null) as Record<string, unknown> | null),
+      paramUiOverrides: cloneSettingValue((paramUiOverrides ?? {}) as Record<string, unknown>),
+    };
+
+    setPromptSaveBusy(true);
+    void (async (): Promise<void> => {
+      let serializedSession: string;
+      try {
+        serializedSession = serializeImageStudioProjectSession(projectSession);
+      } catch (error: unknown) {
+        throw new Error(
+          error instanceof Error
+            ? `Failed to serialize prompt session: ${error.message}`
+            : 'Failed to serialize prompt session.'
+        );
+      }
+
+      try {
+        saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
+      } catch {
+        // Local cache is best-effort.
+      }
+
+      await updateSetting.mutateAsync({
+        key: projectSessionKey,
+        value: serializedSession,
+      });
+
+      // Keep active project in sync (legacy key) for reload consistency.
+      void updateSetting.mutateAsync({
+        key: IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+        value: serializeImageStudioActiveProject(normalizedProjectId),
+      }).catch(() => {});
+
+      toast(`Prompt saved to project "${normalizedProjectId}".`, { variant: 'success' });
+    })()
+      .catch((error: unknown) => {
+        let localFallbackSaved = false;
+        try {
+          saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
+          localFallbackSaved = true;
+        } catch {
+          localFallbackSaved = false;
+        }
+        if (localFallbackSaved) {
+          toast(
+            error instanceof Error
+              ? `Cloud save failed. Prompt saved locally: ${error.message}`
+              : 'Cloud save failed. Prompt saved locally.',
+            { variant: 'warning' }
+          );
+          return;
+        }
+        toast(
+          error instanceof Error
+            ? `Failed to save prompt: ${error.message}`
+            : 'Failed to save prompt.',
+          { variant: 'error' }
+        );
+      })
+      .finally(() => {
+        setPromptSaveBusy(false);
+      });
+  }, [
+    projectId,
+    promptSaveBusy,
+    selectedFolder,
+    selectedSlotId,
+    workingSlotId,
+    compositeAssetIds,
+    previewMode,
+    promptText,
+    paramsState,
+    paramSpecs,
+    paramUiOverrides,
+    updateSetting,
+    toast,
+  ]);
+
   const preparePromptForExtraction = (): string => {
     const trimmedPrompt = promptText.trim();
     if (!trimmedPrompt) return promptText;
@@ -290,6 +425,33 @@ export function RightSidebar(): React.JSX.Element {
       '/admin/prompt-exploder?source=image-studio&returnTo=%2Fadmin%2Fimage-studio'
     );
   };
+
+  const promptControlHeader = (
+    <div className='flex items-center justify-between gap-3'>
+      <div className='flex items-center gap-4'>
+        <Button
+          type='button'
+          onClick={handleSavePromptToProject}
+          disabled={promptSaveBusy || !projectId.trim()}
+          className='min-w-[100px] border border-white/20 hover:border-white/40'
+        >
+          {promptSaveBusy ? 'Saving...' : 'Save'}
+        </Button>
+        <div className='flex items-center gap-2'>
+          <h2 className='text-2xl font-bold text-white'>Control Prompt</h2>
+        </div>
+      </div>
+      <div className='flex items-center gap-2'>
+        <Button
+          type='button'
+          onClick={() => setPromptControlOpen(false)}
+          className='min-w-[100px] border border-white/20 hover:border-white/40'
+        >
+          Close
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -406,12 +568,12 @@ export function RightSidebar(): React.JSX.Element {
                       {generationLabel}
                     </Button>
                   </div>
-                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px]'>
-                    <span className='rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'>
+                  <div className='mt-2 flex flex-wrap items-center gap-3 text-[11px] text-gray-400'>
+                    <span className='text-gray-300'>
                     Tokens ~{estimatedPromptTokens.toLocaleString()}
                     </span>
                     <span
-                      className='max-w-full truncate rounded border border-border/50 bg-card/40 px-2 py-1 text-gray-300'
+                      className='max-w-full truncate text-gray-300'
                       title={`Estimated generation cost for ${selectedModelId}`}
                     >
                     Est. Cost ({selectedModelId}) ${estimatedGenerationCost.toFixed(3)}
@@ -543,12 +705,10 @@ export function RightSidebar(): React.JSX.Element {
         onClose={() => setPromptControlOpen(false)}
         title='Control Prompt'
         size='md'
+        header={promptControlHeader}
+        className='md:min-w-[63rem] max-w-[66rem] [&>div:first-child]:border-b-0'
       >
         <div className='space-y-4 text-sm text-gray-200'>
-          <div className='rounded border border-border/60 bg-card/40 p-3 text-xs text-gray-300'>
-            Configure prompt validation and formatting, then open extraction review.
-          </div>
-
           <div className='space-y-2'>
             <Label className='text-xs text-gray-400'>Prompt</Label>
             <Textarea size='sm'
@@ -573,12 +733,6 @@ export function RightSidebar(): React.JSX.Element {
           </div>
 
           <div className='flex items-center justify-end gap-2'>
-            <Button size='xs'
-              variant='outline'
-              onClick={() => setPromptControlOpen(false)}
-            >
-              Close
-            </Button>
             <Button size='xs'
               variant='outline'
               title='Open Prompt Exploder with current prompt'

@@ -109,6 +109,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onSelectFolder,
     onCreateFolder,
     onCreateFile,
+    onCreateScanFile,
     onCreateNodeFile,
     onUploadAssets,
     onMoveFile,
@@ -125,6 +126,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   } = useCaseResolverPageContext();
   const { toast } = useToast();
   const [isUploadingAssets, setIsUploadingAssets] = useState(false);
+  const [isRootExplicitlySelected, setIsRootExplicitlySelected] = useState(true);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const masterNodes = useMemo(
@@ -187,6 +189,12 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     }
   }, [panelCollapsed, persistedCollapsed, setPanelCollapsed]);
 
+  useEffect(() => {
+    if (selectedFileId || selectedAssetId || selectedFolderPath !== null) {
+      setIsRootExplicitlySelected(false);
+    }
+  }, [selectedAssetId, selectedFileId, selectedFolderPath]);
+
   const selectedFolderForCreate = useMemo((): string | null => {
     if (!controller.selectedNodeId) return selectedFolderPath;
     const folderPath = fromCaseResolverFolderNodeId(controller.selectedNodeId);
@@ -228,6 +236,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     FolderClosedIcon,
     FolderOpenIcon,
     DefaultFileIcon,
+    ScanCaseFileIcon,
     NodeFileIcon,
     ImageFileIcon,
     PdfFileIcon,
@@ -252,6 +261,12 @@ export function CaseResolverFolderTree(): React.JSX.Element {
         kind: 'case_file',
         fallback: FileText,
         fallbackId: 'FileText',
+      }),
+      ScanCaseFileIcon: resolveIcon({
+        slot: 'file',
+        kind: 'case_file_scan',
+        fallback: FileImage,
+        fallbackId: 'FileImage',
       }),
       NodeFileIcon: resolveIcon({
         slot: 'file',
@@ -355,6 +370,18 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               <Button
                 type='button'
                 onClick={(): void => {
+                  onCreateScanFile(selectedFolderForCreate);
+                }}
+                size='sm'
+                variant='outline'
+                className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
+                title='Add scan file'
+              >
+                <FileImage className='size-4' />
+              </Button>
+              <Button
+                type='button'
+                onClick={(): void => {
                   onCreateNodeFile(selectedFolderForCreate);
                 }}
                 size='sm'
@@ -396,9 +423,10 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             onClick={(): void => {
               onSelectFolder(null);
               controller.selectNode(null);
+              setIsRootExplicitlySelected(true);
             }}
             className={`w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
-              !selectedFileId && !selectedAssetId && selectedFolderPath === null
+              !selectedFileId && !selectedAssetId && selectedFolderPath === null && isRootExplicitlySelected
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-300 hover:bg-muted/50'
             }`}
@@ -546,6 +574,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               hasChildren,
               isExpanded,
               isSelected,
+              isRenaming,
               isDragging,
               isDropTarget,
               dropPosition,
@@ -557,7 +586,10 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             const folderPath = fromCaseResolverFolderNodeId(node.id);
             const fileId = fromCaseResolverFileNodeId(node.id);
             const assetId = fromCaseResolverAssetNodeId(node.id);
-            const isCaseFile = Boolean(fileId) && node.kind === 'case_file';
+            const isCaseFile =
+              Boolean(fileId) &&
+              (node.kind === 'case_file' || node.kind === 'case_file_scan');
+            const isScanCaseFile = Boolean(fileId) && node.kind === 'case_file_scan';
             const isFileLocked = fileId ? fileLockById.get(fileId) === true : false;
             const isFolder = folderPath !== null;
             const folderStats = folderPath ? folderCaseFileStatsByPath.get(folderPath) ?? null : null;
@@ -569,17 +601,24 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               folderStats.total === folderStats.locked
             );
             const canToggle = isFolder && hasChildren;
-            const Icon = isFolder
-              ? isExpanded
-                ? FolderOpenIcon
-                : FolderClosedIcon
-              : node.kind === 'node_file'
-                ? NodeFileIcon
-                : node.kind === 'asset_image'
-                  ? ImageFileIcon
-                  : node.kind === 'asset_pdf'
-                    ? PdfFileIcon
-                    : DefaultFileIcon;
+            const Icon = (() => {
+              if (isFolder) {
+                return canToggle && isExpanded ? FolderOpenIcon : FolderClosedIcon;
+              }
+              if (node.kind === 'node_file') {
+                return NodeFileIcon;
+              }
+              if (node.kind === 'case_file_scan') {
+                return ScanCaseFileIcon;
+              }
+              if (node.kind === 'asset_image') {
+                return ImageFileIcon;
+              }
+              if (node.kind === 'asset_pdf') {
+                return PdfFileIcon;
+              }
+              return DefaultFileIcon;
+            })();
 
             const stateClassName = isSelected
               ? 'bg-blue-600 text-white'
@@ -600,6 +639,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 role='button'
                 tabIndex={0}
                 onClick={(): void => {
+                  setIsRootExplicitlySelected(false);
                   if (!isSelected) {
                     select();
                   }
@@ -621,6 +661,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
+                    setIsRootExplicitlySelected(false);
                     if (!isSelected) {
                       select();
                     }
@@ -667,24 +708,57 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
                 ) : null}
                 <div className='min-w-0 flex flex-1 items-center gap-1'>
-                  <span className='min-w-0 flex-1 truncate'>{node.name}</span>
-                  {isCaseFile && fileId ? (
-                    <button
-                      type='button'
-                      className='inline-flex size-4 shrink-0 items-center justify-center rounded text-gray-300/80 transition hover:bg-muted/60 hover:text-white'
-                      title='Edit document'
-                      aria-label='Edit document'
-                      onClick={(event): void => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onEditFile(fileId);
+                  {isRenaming ? (
+                    <input
+                      autoFocus
+                      value={controller.renameDraft}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        controller.updateRenameDraft(event.target.value);
                       }}
-                    >
-                      <Pencil className='size-3' />
-                    </button>
-                  ) : null}
+                      onBlur={(): void => {
+                        void controller.commitRename();
+                      }}
+                      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          void controller.commitRename();
+                        } else if (event.key === 'Escape') {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          controller.cancelRename();
+                        }
+                      }}
+                      onClick={(event: React.MouseEvent<HTMLInputElement>): void => {
+                        event.stopPropagation();
+                      }}
+                      onDoubleClick={(event: React.MouseEvent<HTMLInputElement>): void => {
+                        event.stopPropagation();
+                      }}
+                      className='min-w-0 flex-1 rounded border border-blue-500 bg-gray-800 px-1.5 py-0.5 text-sm text-white outline-none'
+                    />
+                  ) : (
+                    <>
+                      <span className='min-w-0 flex-1 truncate'>{node.name}</span>
+                      {isCaseFile && fileId ? (
+                        <button
+                          type='button'
+                          className='inline-flex size-4 shrink-0 items-center justify-center rounded text-gray-300/80 transition hover:bg-muted/60 hover:text-white'
+                          title={isScanCaseFile ? 'Edit scan file' : 'Edit document'}
+                          aria-label={isScanCaseFile ? 'Edit scan file' : 'Edit document'}
+                          onClick={(event): void => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            onEditFile(fileId);
+                          }}
+                        >
+                          <Pencil className='size-3' />
+                        </button>
+                      ) : null}
+                    </>
+                  )}
                 </div>
-                {isFolder && folderPath !== null ? (
+                {!isRenaming && isFolder && folderPath !== null ? (
                   <div
                     className={`flex shrink-0 items-center gap-1 transition ${
                       isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -736,7 +810,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                     </button>
                   </div>
                 ) : null}
-                {isCaseFile && fileId ? (
+                {!isRenaming && isCaseFile && fileId ? (
                   <div className='flex shrink-0 items-center gap-1'>
                     <button
                       type='button'

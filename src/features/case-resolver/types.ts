@@ -4,6 +4,8 @@ export type CaseResolverNodeRole = 'text_note' | 'explanatory' | 'ai_prompt';
 export type CaseResolverQuoteMode = 'none' | 'double' | 'single';
 export type CaseResolverJoinMode = 'newline' | 'tab' | 'space' | 'none';
 export type CaseResolverAssetKind = 'node_file' | 'image' | 'pdf' | 'file';
+export type CaseResolverFileType = 'document' | 'scanfile';
+export type CaseResolverDocumentVersion = 'original' | 'exploded';
 export type CaseResolverPdfExtractionPresetId =
   | 'plain_text'
   | 'structured_sections'
@@ -11,6 +13,35 @@ export type CaseResolverPdfExtractionPresetId =
 export type CaseResolverPartyReference = {
   kind: 'person' | 'organization';
   id: string;
+};
+
+export type CaseResolverTag = {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CaseResolverCategory = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  sortOrder: number;
+  description: string;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CaseResolverScanSlot = {
+  id: string;
+  name: string;
+  filepath: string | null;
+  sourceFileId: string | null;
+  mimeType: string | null;
+  size: number | null;
+  ocrText: string;
 };
 
 export type CaseResolverNodeMeta = {
@@ -37,14 +68,21 @@ export type CaseResolverGraph = {
 
 export type CaseResolverFile = {
   id: string;
+  fileType: CaseResolverFileType;
   name: string;
   folder: string;
   documentDate: string;
+  originalDocumentContent: string;
+  explodedDocumentContent: string;
+  activeDocumentVersion: CaseResolverDocumentVersion;
   documentContent: string;
+  scanSlots: CaseResolverScanSlot[];
   isLocked: boolean;
   graph: CaseResolverGraph;
   addresser: CaseResolverPartyReference | null;
   addressee: CaseResolverPartyReference | null;
+  tagId: string | null;
+  categoryId: string | null;
   createdAt: string;
   updatedAt: string;
 };

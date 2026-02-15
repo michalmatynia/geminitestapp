@@ -751,6 +751,9 @@ export const buildAdminNav = (handlers: {
             children: [
               { id: 'ai/ai-paths/case-resolver/studio', label: 'Studio', href: '/admin/case-resolver', exact: true },
               { id: 'ai/ai-paths/case-resolver/cases', label: 'Cases', href: '/admin/case-resolver/cases' },
+              { id: 'ai/ai-paths/case-resolver/tags', label: 'Tags', href: '/admin/case-resolver/tags' },
+              { id: 'ai/ai-paths/case-resolver/categories', label: 'Categories', href: '/admin/case-resolver/categories' },
+              { id: 'ai/ai-paths/case-resolver/settings', label: 'Settings', href: '/admin/case-resolver/settings' },
             ],
           },
         ],

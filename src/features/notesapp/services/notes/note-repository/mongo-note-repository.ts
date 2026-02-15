@@ -488,9 +488,9 @@ export const mongoNoteRepository: NoteRepository = {
 
     // Remove tag from all notes
     const noteCollection = db.collection<NoteDocument>(noteCollectionName);
-    const pullTags: UpdateFilter<NoteDocument> = {
-      $pull: { tags: { tagId: id } } as unknown as UpdateFilter<NoteDocument>['$pull'],
-    };
+    const pullTags = {
+      $pull: { tags: { tagId: id } },
+    } as UpdateFilter<NoteDocument>;
     await noteCollection.updateMany({ 'tags.tagId': id } as Filter<NoteDocument>, pullTags);
     
     return result.deletedCount > 0;
@@ -663,9 +663,9 @@ export const mongoNoteRepository: NoteRepository = {
       await collection.deleteOne({ $or: [{ id }, { _id: id }] } as Filter<CategoryDocument>);
 
       // Remove category from all notes
-      const pullCategories: UpdateFilter<NoteDocument> = {
-        $pull: { categories: { categoryId: id } } as unknown as UpdateFilter<NoteDocument>['$pull'],
-      };
+      const pullCategories = {
+        $pull: { categories: { categoryId: id } },
+      } as UpdateFilter<NoteDocument>;
       await noteCollection.updateMany(
         { 'categories.categoryId': id } as Filter<NoteDocument>,
         pullCategories

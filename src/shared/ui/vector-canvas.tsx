@@ -430,7 +430,7 @@ export function VectorCanvas({
 
       // Draw "M" badge on mask-eligible shapes
       if (isMaskEligible) {
-        const firstPt = toPx(shape.points[0]);
+        const firstPt = toPx(shape.points[0]!);
         ctx.font = 'bold 10px sans-serif';
         ctx.fillStyle = 'rgba(56, 189, 248, 0.95)';
         ctx.fillText('M', firstPt.x + 8, firstPt.y - 6);

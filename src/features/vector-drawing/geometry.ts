@@ -44,7 +44,7 @@ export const simplifyPoints = (points: VectorPoint[], tolerance: number = 0.0025
     const a = pts[start]!;
     const b = pts[end]!;
     for (let i = start + 1; i < end; i += 1) {
-      const dist = perpendicularDistanceSq(pts[i], a, b);
+      const dist = perpendicularDistanceSq(pts[i]!, a, b);
       if (dist > maxDist) {
         index = i;
         maxDist = dist;

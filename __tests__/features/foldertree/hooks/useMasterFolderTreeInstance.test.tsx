@@ -24,6 +24,9 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 vi.mock('@/shared/ui/toast', () => ({
   useToast: vi.fn(() => ({ toast: vi.fn() })),
 }));
+vi.mock('@/features/foldertree/hooks/useMasterFolderTreeConfig', () => ({
+  useMasterFolderTreeConfig: vi.fn(),
+}));
 
 const createNodes = (suffix: string): MasterTreeNode[] => [
   {

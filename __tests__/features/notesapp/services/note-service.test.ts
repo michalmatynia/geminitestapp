@@ -153,7 +153,7 @@ describe('NoteService', () => {
 
       // Check B -> A relation was created automatically by service
       const updatedB = await noteService.getById(noteB.id);
-      const bRelations = updatedB?.relationsFrom?.map((r: { targetNote?: { id: string } }) => r.targetNote?.id) || [];
+      const bRelations = updatedB?.relationsFrom?.map((r: any) => r.targetNote?.id) || [];
       expect(bRelations).toContain(noteA.id);
       
       // Check population helper

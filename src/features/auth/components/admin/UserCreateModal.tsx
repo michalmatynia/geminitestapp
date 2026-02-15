@@ -9,6 +9,8 @@ export interface UserCreateFormState {
   name: string;
   email: string;
   password: string;
+  roleId: string;
+  verified: boolean;
 }
 
 interface UserCreateModalProps extends ModalStateProps {

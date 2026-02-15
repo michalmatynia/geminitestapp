@@ -578,6 +578,7 @@ export type AiPathRuntimeNodeStatusMap = Record<string, AiPathRuntimeNodeStatus>
 export type AiPathRuntimeEvent = {
   id: string;
   timestamp: string;
+  createdAt?: string;
   source: AiPathRuntimeEventSource;
   kind: AiPathRuntimeEventKind;
   level: AiPathRuntimeEventLevel;

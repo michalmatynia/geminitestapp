@@ -124,6 +124,11 @@ export interface AgentPlanningMeta {
   branchSteps?: AgentStep[];
   steps?: AgentStep[];
   hierarchy?: AgentPlanHierarchy;
+  items?: unknown[];
+  names?: unknown[];
+  url?: string;
+  extractionType?: string;
+  summary?: string;
 }
 
 export interface AgentSessionContext {

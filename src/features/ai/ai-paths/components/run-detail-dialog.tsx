@@ -6,6 +6,7 @@ import type {
   AiPathRunDetail,
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,
+  AiPathRunEventRecord,
 } from '@/shared/types/domain/ai-paths';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 import {
@@ -174,7 +175,7 @@ export function RunDetailDialog({
             <RunTimeline
               run={runDetail.run}
               nodes={runDetail.nodes}
-              events={runDetail.events}
+              events={runDetail.events as unknown as AiPathRunEventRecord[]}
               eventsOverflow={runEventsOverflow}
               eventsBatchLimit={runEventsBatchLimit}
             />

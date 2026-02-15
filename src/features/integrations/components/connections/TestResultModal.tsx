@@ -11,9 +11,9 @@ interface TestResultModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   message: string | null;
   meta?: {
     errorId?: string;
-    integrationId?: string;
-    connectionId?: string;
-  };
+    integrationId?: string | null;
+    connectionId?: string | null;
+  } | undefined;
 }
 
 export function TestResultModal({

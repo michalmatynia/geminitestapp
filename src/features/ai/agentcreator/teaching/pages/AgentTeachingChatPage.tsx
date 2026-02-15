@@ -7,12 +7,12 @@ import type { AgentTeachingAgentRecord, AgentTeachingChatSource, AgentTeachingEm
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import { Button, SectionHeader, Textarea, useToast, FormSection, FormField } from '@/shared/ui';
 
-import { useAgentTeachingContext } from '../context/AgentTeachingContext';
-import { useTeachingChatMutation } from '../hooks/useAgentTeaching';
+import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
+import { useTeachingChatMutation } from '../hooks/useAgentTeachingQueries';
 
 export function AgentTeachingChatPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { agents, collections, isLoading: loadingAgents } = useAgentTeachingContext();
+  const { agents, collections, isLoading: loadingAgents } = useAgentTeachingQueriesContext();
   const chatMutation = useTeachingChatMutation();
 
   const [selectedAgentId, setSelectedAgentId] = React.useState<string>('');

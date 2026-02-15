@@ -4,7 +4,7 @@ import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useDrafts, draftKeys } from '@/features/drafter/hooks/useDrafts';
+import { useDraftQueries, draftKeys } from '@/features/drafter/hooks/useDraftQueries';
 import {
   fetchIntegrationsWithConnections,
   fetchPreferredBaseConnection,
@@ -205,7 +205,7 @@ export function useProductListState(): ProductListContextType & {
     });
   }, [queryClient]);
 
-  const { data: allDrafts = [] } = useDrafts();
+  const { data: allDrafts = [] } = useDraftQueries();
   const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraft) => d.active !== false), [allDrafts]);
 
   const queuedProductIds = useQueuedProductIds();

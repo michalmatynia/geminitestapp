@@ -3,7 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import React, { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
-import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
+import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/features/cms/types/theme-settings';

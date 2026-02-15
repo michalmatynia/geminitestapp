@@ -1,8 +1,9 @@
 'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { createCreateMutation } from '@/shared/lib/query-factories';
 import {
   invalidateMarketplaceCategories,
   invalidateMarketplaceMappings,
@@ -11,60 +12,63 @@ import {
   invalidateMarketplaceTagMappings,
   invalidateMarketplaceTags,
 } from '@/shared/lib/query-invalidation';
+import type { UpdateMutation } from '@/shared/types/query-result-types';
 
-export function useFetchExternalCategoriesMutation(): UseMutationResult<
+export function useFetchExternalCategoriesMutation(): UpdateMutation<
   { fetched: number; message: string },
-  Error,
   { connectionId: string }
   > {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createCreateMutation({
     mutationFn: (payload: { connectionId: string }) => api.post<{ fetched: number; message: string }>('/api/marketplace/categories/fetch', payload),
-    onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
-      void invalidateMarketplaceCategories(queryClient, connectionId);
+    options: {
+      onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
+        void invalidateMarketplaceCategories(queryClient, connectionId);
+      },
     },
   });
 }
 
-export function useSaveMappingsMutation(): UseMutationResult<
+export function useSaveMappingsMutation(): UpdateMutation<
   { upserted: number; message: string },
-  Error,
   { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }
   > {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createCreateMutation({
     mutationFn: (payload: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => 
       api.post<{ upserted: number; message: string }>('/api/marketplace/mappings/bulk', payload),
-    onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => {
-      void invalidateMarketplaceMappings(queryClient, connectionId, catalogId);
+    options: {
+      onSuccess: (_: { upserted: number; message: string }, { connectionId, catalogId }: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => {
+        void invalidateMarketplaceMappings(queryClient, connectionId, catalogId);
+      },
     },
   });
 }
 
-export function useFetchExternalProducersMutation(): UseMutationResult<
+export function useFetchExternalProducersMutation(): UpdateMutation<
   { fetched: number; message: string },
-  Error,
   { connectionId: string }
   > {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createCreateMutation({
     mutationFn: (payload: { connectionId: string }) =>
       api.post<{ fetched: number; message: string }>(
         '/api/marketplace/producers/fetch',
         payload
       ),
-    onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
-      void invalidateMarketplaceProducers(queryClient, connectionId);
+    options: {
+      onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
+        void invalidateMarketplaceProducers(queryClient, connectionId);
+      },
     },
   });
 }
 
-export function useSaveProducerMappingsMutation(): UseMutationResult<
+export function useSaveProducerMappingsMutation(): UpdateMutation<
   { upserted: number; message: string },
-  Error,
   {
     connectionId: string;
     mappings: { internalProducerId: string; externalProducerId: string | null }[];
@@ -72,7 +76,7 @@ export function useSaveProducerMappingsMutation(): UseMutationResult<
   > {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createCreateMutation({
     mutationFn: (payload: {
       connectionId: string;
       mappings: { internalProducerId: string; externalProducerId: string | null }[];
@@ -81,34 +85,36 @@ export function useSaveProducerMappingsMutation(): UseMutationResult<
         '/api/marketplace/producer-mappings/bulk',
         payload
       ),
-    onSuccess: (_: { upserted: number; message: string }, { connectionId }) => {
-      void invalidateMarketplaceProducerMappings(queryClient, connectionId);
+    options: {
+      onSuccess: (_: { upserted: number; message: string }, { connectionId }) => {
+        void invalidateMarketplaceProducerMappings(queryClient, connectionId);
+      },
     },
   });
 }
 
-export function useFetchExternalTagsMutation(): UseMutationResult<
+export function useFetchExternalTagsMutation(): UpdateMutation<
   { fetched: number; message: string },
-  Error,
   { connectionId: string }
   > {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createCreateMutation({
     mutationFn: (payload: { connectionId: string }) =>
       api.post<{ fetched: number; message: string }>(
         '/api/marketplace/tags/fetch',
         payload
       ),
-    onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
-      void invalidateMarketplaceTags(queryClient, connectionId);
+    options: {
+      onSuccess: (_: { fetched: number; message: string }, { connectionId }: { connectionId: string }) => {
+        void invalidateMarketplaceTags(queryClient, connectionId);
+      },
     },
   });
 }
 
-export function useSaveTagMappingsMutation(): UseMutationResult<
+export function useSaveTagMappingsMutation(): UpdateMutation<
   { upserted: number; message: string },
-  Error,
   {
     connectionId: string;
     mappings: { internalTagId: string; externalTagId: string | null }[];
@@ -116,7 +122,7 @@ export function useSaveTagMappingsMutation(): UseMutationResult<
   > {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createCreateMutation({
     mutationFn: (payload: {
       connectionId: string;
       mappings: { internalTagId: string; externalTagId: string | null }[];
@@ -125,8 +131,10 @@ export function useSaveTagMappingsMutation(): UseMutationResult<
         '/api/marketplace/tag-mappings/bulk',
         payload
       ),
-    onSuccess: (_: { upserted: number; message: string }, { connectionId }) => {
-      void invalidateMarketplaceTagMappings(queryClient, connectionId);
+    options: {
+      onSuccess: (_: { upserted: number; message: string }, { connectionId }) => {
+        void invalidateMarketplaceTagMappings(queryClient, connectionId);
+      },
     },
   });
 }

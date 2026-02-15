@@ -6,20 +6,19 @@ import React, { Suspense, useMemo } from 'react';
 import { 
   Button, 
   Input, 
-  Textarea, 
-  FormModal, 
-  Checkbox, 
   SectionHeader, 
   Tag, 
   FileUploadTrigger, 
   type FileUploadHelpers, 
   DataTable, 
-  FormField,
   StatusToggle,
   useToast
 } from '@/shared/ui';
 
-import { useChatbotContextState, type ContextItem } from '../hooks/useChatbotContextState';
+import { ChatbotContextModal } from '../components/ChatbotContextModal';
+import { useChatbotContextState } from '../hooks/useChatbotContextState';
+import type { ContextItem, ContextDraft } from '../hooks/useChatbotContextState';
+
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -240,132 +239,18 @@ function ChatbotContextPageInner(): React.JSX.Element {
         </div>
       </div>
 
-      {isModalOpen && modalDraft ? (
-        <FormModal
-          open={isModalOpen}
-          onClose={closeModal}
-          title={
-            filteredContexts.some((item) => item.id === modalDraft.id)
-              ? 'Edit context'
-              : 'New context'
-          }
-          onSave={handleSaveDraft}
-          isSaving={saving}
-          saveText='Save context'
-          size='lg'
-        >
-          <div className='space-y-4'>
-            <FormField label='Title'>
-              <Input
-                value={modalDraft.title}
-                onChange={(event) =>
-                  setModalDraft((prev) =>
-                    prev ? { ...prev, title: event.target.value } : prev
-                  )
-                }
-                disabled={saving}
-              />
-            </FormField>
-
-            <FormField label='Tags'>
-              <div className='flex flex-wrap gap-2 mb-2'>
-                {(modalDraft.tags || []).map((tag: string) => (
-                  <Tag
-                    key={tag}
-                    label={tag}
-                    onRemove={() => {
-                      setModalDraft((prev) =>
-                        prev
-                          ? {
-                            ...prev,
-                            tags: (prev.tags || []).filter(
-                              (existing) => existing !== tag
-                            ),
-                          }
-                          : prev
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-              <div className='flex gap-2'>
-                <Input
-                  placeholder='Add tag'
-                  value={tagDraft}
-                  onChange={(event) => setTagDraft(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      event.preventDefault();
-                      const nextTag = tagDraft.trim();
-                      if (!nextTag) return;
-                      setModalDraft((prev) =>
-                        prev
-                          ? {
-                            ...prev,
-                            tags: Array.from(
-                              new Set([...(prev.tags || []), nextTag])
-                            ),
-                          }
-                          : prev
-                      );
-                      setTagDraft('');
-                    }
-                  }}
-                  disabled={saving}
-                />
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
-                    const nextTag = tagDraft.trim();
-                    if (!nextTag) return;
-                    setModalDraft((prev) =>
-                      prev
-                        ? {
-                          ...prev,
-                          tags: Array.from(
-                            new Set([...(prev.tags || []), nextTag])
-                          ),
-                        }
-                        : prev
-                    );
-                    setTagDraft('');
-                  }}
-                  disabled={saving}
-                >
-                  Add
-                </Button>
-              </div>
-            </FormField>
-
-            <FormField label='Content'>
-              <Textarea
-                placeholder='Add instructions...'
-                value={modalDraft.content}
-                onChange={(event) =>
-                  setModalDraft((prev) =>
-                    prev ? { ...prev, content: event.target.value } : prev
-                  )
-                }
-                className='min-h-[240px] font-mono text-xs'
-                disabled={saving}
-              />
-            </FormField>
-
-            <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
-              <Checkbox
-                checked={modalDraft.active}
-                onCheckedChange={(checked) =>
-                  setModalDraft((prev) =>
-                    prev ? { ...prev, active: Boolean(checked) } : prev
-                  )
-                }
-              />
-              Active in global context
-            </label>
-          </div>
-        </FormModal>
-      ) : null}
+      <ChatbotContextModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onSuccess={() => {}}
+        item={modalDraft}
+        modalDraft={modalDraft!}
+        setModalDraft={setModalDraft as React.Dispatch<React.SetStateAction<ContextDraft | null>>}
+        tagDraft={tagDraft}
+        setTagDraft={setTagDraft}
+        isSaving={saving}
+        onSave={handleSaveDraft}
+      />
     </div>
   );
 }

@@ -132,40 +132,16 @@ export const diagnosticsKeys = QUERY_KEYS.system.diagnostics;
 export const playwrightKeys = QUERY_KEYS.playwright;
 
 /**
+ * AI query keys (from ai)
+ * This includes chatbot, aiPaths, agentTeaching, etc.
+ */
+export const aiKeys = QUERY_KEYS.ai;
+
+/**
  * AI Paths query keys (from ai.aiPaths)
  * Used in: AI paths query hooks
  */
 export const aiPathKeys = QUERY_KEYS.ai.aiPaths;
-
-/**
- * Agent runs query keys (from agentRuns)
- * Used in: agent creator query hooks
- */
-export const agentRunsKeys = QUERY_KEYS.agentRuns;
-
-/**
- * Brain query keys (from brain)
- * Used in: brain/knowledge base query hooks
- */
-export const brainKeys = QUERY_KEYS.brain;
-
-/**
- * Image studio query keys (from imageStudio)
- * Used in: image studio query hooks
- */
-export const studioKeys = QUERY_KEYS.imageStudio;
-
-/**
- * Category query keys (from products.categories)
- * Used in: product category query hooks
- */
-export const categoryKeys = QUERY_KEYS.products;
-
-/**
- * Internationalization query keys (from internationalization)
- * Used in: internationalization query hooks
- */
-export const i18nKeys = QUERY_KEYS.internationalization;
 
 /**
  * Chatbot query keys (from ai.chatbot)
@@ -176,3 +152,27 @@ export const chatbotKeys = QUERY_KEYS.ai.chatbot;
  * Agent teaching query keys (from ai.agentTeaching)
  */
 export const agentTeachingKeys = QUERY_KEYS.ai.agentTeaching;
+
+/**
+ * Agent runs query keys (from agentRuns)
+ * Used in: useAgentRunsQueries.ts
+ */
+export const agentRunsKeys = QUERY_KEYS.agentRuns;
+
+/**
+ * Brain query keys (from brain)
+ * Used in: useBrainQueries.ts
+ */
+export const brainKeys = QUERY_KEYS.brain;
+
+/**
+ * Internationalization query keys (from internationalization)
+ * Used in: useInternationalizationQueries.ts
+ */
+export const i18nKeys = QUERY_KEYS.internationalization;
+
+/**
+ * Image Studio query keys (from imageStudio)
+ * Used in: useImageStudioQueries.ts
+ */
+export const studioKeys = QUERY_KEYS.imageStudio;

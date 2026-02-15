@@ -6,10 +6,10 @@ import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-butt
 import { ListProductModal } from '@/features/integrations/components/listings/ListProductModal';
 import { MassListProductModal } from '@/features/integrations/components/listings/MassListProductModal';
 import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
-import ProductForm from '@/features/products/components/ProductForm';
-import { ProductFormProvider, useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
-import { AppModal, Button } from '@/shared/ui';
+import { AppModal } from '@/shared/ui';
+import { ProductFormModal } from './modals/ProductFormModal';
 
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
@@ -64,11 +64,10 @@ export function ProductModals(): React.JSX.Element {
           draft={createDraft ?? undefined}
         >
           <ProductFormModal
-            open={isCreateOpen}
+            isOpen={isCreateOpen}
             onClose={onCloseCreate}
             title='Create Product'
             submitButtonText='Create'
-            closeOnSubmit
             validationInstanceScopeOverride={createDraft?.id ? 'draft_template' : 'product_create'}
           />
         </ProductFormProvider>
@@ -82,11 +81,10 @@ export function ProductModals(): React.JSX.Element {
           onEditSave={onEditSave}
         >
           <ProductFormModal
-            open={!!editingProduct}
+            isOpen={!!editingProduct}
             onClose={onCloseEdit}
             title='Edit Product'
             submitButtonText='Update'
-            closeOnSubmit={false}
             validationInstanceScopeOverride='product_edit'
           />
         </ProductFormProvider>
@@ -131,109 +129,24 @@ export function ProductModals(): React.JSX.Element {
       >
         {massListIntegration && massListProductIds && onCloseMassList && onMassListSuccess && (
           <MassListProductModal
+            isOpen={true}
+            onSuccess={onMassListSuccess}
             integrationId={massListIntegration.integrationId}
             connectionId={massListIntegration.connectionId}
             productIds={massListProductIds}
             onClose={onCloseMassList}
-            onSuccess={onMassListSuccess}
           />
         )}
       </AppModal>
 
       {showIntegrationModal && (
         <SelectIntegrationModal
+          isOpen={showIntegrationModal}
+          onSuccess={() => {}}
           onClose={onCloseIntegrationModal}
           onSelect={onSelectIntegrationFromModal}
         />
       )}
     </>
-  );
-}
-
-function ProductFormModal({ 
-  open,
-  onClose, 
-  title, 
-  submitButtonText,
-  closeOnSubmit: _closeOnSubmit = false,
-  validationInstanceScopeOverride,
-}: { 
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  submitButtonText: string;
-  closeOnSubmit?: boolean;
-  validationInstanceScopeOverride?: 'draft_template' | 'product_create' | 'product_edit';
-}): React.JSX.Element {
-  const { showFileManager, handleMultiFileSelect, handleSubmit, uploading, getValues, product, draft } =
-    useProductFormContext();
-  const formInstanceKey = product?.id?.trim() || draft?.id?.trim() || 'product-create';
-
-  const getEntityJson = (): Record<string, unknown> => {
-    const values = getValues() as unknown as Record<string, unknown>;
-    const base = (product ?? {}) as unknown as Record<string, unknown>;
-    return {
-      ...base,
-      ...values,
-      ...(product?.id ? { id: product.id } : {}),
-    };
-  };
-
-  const header = (
-    <div className='flex items-center justify-between gap-3'>
-      <div className='flex items-center gap-4'>
-        <Button
-          onClick={() => {
-            void handleSubmit();
-          }}
-          disabled={uploading}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          {uploading ? 'Saving...' : submitButtonText}
-        </Button>
-        <div className='flex items-center gap-2'>
-          <h2 className='text-2xl font-bold text-white'>{title}</h2>
-        </div>
-      </div>
-      <div className='flex items-center gap-2'>
-        <TriggerButtonBar
-          location='product_modal'
-          entityType='product'
-          entityId={product?.id ?? null}
-          getEntityJson={getEntityJson}
-        />
-        <Button
-          type='button'
-          onClick={onClose}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          Close
-        </Button>
-      </div>
-    </div>
-  );
-
-  return (
-    <AppModal 
-      open={open}
-      onClose={onClose}
-      title={title} 
-      header={header}
-      className='md:min-w-[63rem] max-w-[66rem]'
-    >
-      {showFileManager ? (
-        <FileManager onSelectFile={handleMultiFileSelect} />
-      ) : (
-        <ProductForm
-          key={formInstanceKey}
-          submitButtonText={submitButtonText}
-          {...(
-            validationInstanceScopeOverride
-              ? { validationInstanceScopeOverride }
-              : {}
-          )}
-        />
-      )}
-    </AppModal>
   );
 }

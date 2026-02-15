@@ -6,14 +6,14 @@ import { buildModelProfile } from '@/features/ai/chatbot/utils';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
 import { useToast } from '@/shared/ui';
 
-import { useAgentTeachingContext } from '../context/AgentTeachingContext';
-import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeaching';
+import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
+import { useDeleteEmbeddingCollectionMutation, useUpsertEmbeddingCollectionMutation } from '../hooks/useAgentTeachingQueries';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
 
-export function useAgentTeachingCollectionsState() {
+export function useAgentTeachingQueriesCollectionsState() {
   const { toast } = useToast();
-  const { collections, agents, modelOptions, isLoading } = useAgentTeachingContext();
+  const { collections, agents, modelOptions, isLoading } = useAgentTeachingQueriesContext();
 
   const embeddingModels = useMemo(
     () => modelOptions.filter((m: string) => m.trim().length > 0 && isEmbeddingModel(m)),

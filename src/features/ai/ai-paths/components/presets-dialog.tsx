@@ -9,24 +9,27 @@ import {
   DialogTitle,
   Textarea,
 } from '@/shared/ui';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 
-import { usePresetsActions, usePresetsState } from '../context';
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+interface PresetsDialogProps extends ModalStateProps {
+  presetsJson: string;
+  setPresetsJson: (value: string) => void;
+  clusterPresets: any;
+  onImport: (mode: 'merge' | 'replace') => Promise<void>;
+  onCopyJson: (value: string) => void;
+}
 
-export function PresetsDialog(): React.JSX.Element {
-  const orchestrator = useAiPathsSettingsOrchestrator();
-  const { presetsModalOpen, presetsJson, clusterPresets } = usePresetsState();
-  const { setPresetsModalOpen, setPresetsJson } = usePresetsActions();
-
-  const handleImportPresets = (mode: 'merge' | 'replace'): void => {
-    void orchestrator.handleImportPresets(mode).catch(() => {});
-  };
-
-  const showToast = orchestrator.toast;
-  const reportError = orchestrator.reportAiPathsError;
-
+export function PresetsDialog({
+  isOpen,
+  onClose,
+  presetsJson,
+  setPresetsJson,
+  clusterPresets,
+  onImport,
+  onCopyJson,
+}: PresetsDialogProps): React.JSX.Element {
   return (
-    <Dialog open={presetsModalOpen} onOpenChange={setPresetsModalOpen}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className='max-w-2xl border border-border bg-card text-white'>
         <DialogHeader>
           <DialogTitle className='text-lg'>Export / Import Presets</DialogTitle>
@@ -53,14 +56,14 @@ export function PresetsDialog(): React.JSX.Element {
             <Button
               type='button'
               className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10'
-              onClick={() => handleImportPresets('merge')}
+              onClick={() => { void onImport('merge'); }}
             >
               Import (Merge)
             </Button>
             <Button
               type='button'
               className='rounded-md border border-rose-500/40 text-xs text-rose-200 hover:bg-rose-500/10'
-              onClick={() => handleImportPresets('replace')}
+              onClick={() => { void onImport('replace'); }}
             >
               Replace Existing
             </Button>
@@ -69,17 +72,7 @@ export function PresetsDialog(): React.JSX.Element {
               className='rounded-md border text-xs text-white hover:bg-muted/60'
               onClick={() => {
                 const value = presetsJson || JSON.stringify(clusterPresets, null, 2);
-                navigator.clipboard
-                  .writeText(value)
-                  .then(() => showToast('Presets copied to clipboard.', { variant: 'success' }))
-                  .catch((error: Error) => {
-                    reportError(
-                      error,
-                      { action: 'copyPresets' },
-                      'Failed to copy presets:'
-                    );
-                    showToast('Failed to copy presets.', { variant: 'error' });
-                  });
+                onCopyJson(value);
               }}
             >
               Copy JSON
@@ -90,5 +83,3 @@ export function PresetsDialog(): React.JSX.Element {
     </Dialog>
   );
 }
-
-export const PresetsDialogWithContext = PresetsDialog;

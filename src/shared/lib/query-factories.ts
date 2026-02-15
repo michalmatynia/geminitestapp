@@ -1,202 +1,83 @@
-import { useMutation, useQuery, useQueryClient, type UseQueryOptions, type UseMutationOptions, type QueryKey } from '@tanstack/react-query';
+'use client';
 
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import type { ListQuery, SingleQuery, PagedQuery, CreateMutation, UpdateMutation, DeleteMutation, SaveMutation, ListResponse } from '@/shared/types';
+import { 
+  useQuery, 
+  useMutation,
+  type QueryKey,
+  type UseMutationOptions,
+  type UseQueryOptions
+} from '@tanstack/react-query';
 
-export type QueryKeyFactory<TInput = void> = QueryKey | ((input: TInput) => QueryKey);
-export type InvalidateKeysFactory<TData = unknown, TInput = unknown> =
-  | QueryKey
-  | QueryKey[]
-  | ((data: TData, input: TInput) => QueryKey | QueryKey[]);
+import type { ListQuery, SingleQuery, MutationResult } from '@/shared/types/query-result-types';
 
-export interface CreateListQueryConfig<T, TInput = void> {
-  queryKey: QueryKeyFactory<TInput>;
-  queryFn: (input: TInput) => Promise<T[]>;
-  options?: Partial<UseQueryOptions<T[]>>;
+/**
+ * Standard configuration for list queries
+ */
+export interface ListQueryConfig<TData, TQueryFnData = TData[]> {
+  queryKey: QueryKey;
+  queryFn: () => Promise<TQueryFnData>;
+  options?: Omit<UseQueryOptions<TQueryFnData, Error, TQueryFnData, QueryKey>, 'queryKey' | 'queryFn'>;
 }
 
-type SimplePagedResult<T> = { items: T[]; total: number; page: number };
-
-export interface CreatePagedQueryConfig<T, TInput = void> {
-  queryKey: QueryKeyFactory<TInput>;
-  queryFn: (page: number, limit: number, input: TInput) => Promise<SimplePagedResult<T>>;
-  options?: Partial<UseQueryOptions<ListResponse<T>>>;
+/**
+ * Factory for creating standardized list queries
+ */
+export function createListQuery<TData, TQueryFnData = TData[]>(
+  config: ListQueryConfig<TData, TQueryFnData>
+): ListQuery<TData, TQueryFnData> {
+  return useQuery({
+    queryKey: config.queryKey,
+    queryFn: config.queryFn,
+    staleTime: 5 * 60 * 1000,
+    ...config.options,
+  }) as ListQuery<TData, TQueryFnData>;
 }
 
-export interface CreateSingleQueryConfig<T, TInput = void> {
-  queryKey: QueryKeyFactory<TInput>;
-  queryFn: (input: TInput) => Promise<T>;
-  options?: Partial<UseQueryOptions<T>>;
+/**
+ * Standard configuration for single item queries
+ */
+export interface SingleQueryConfig<TData> {
+  queryKey: QueryKey | ((id: string) => QueryKey);
+  queryFn: () => Promise<TData>;
+  id?: string | null | undefined;
+  options?: Omit<UseQueryOptions<TData, Error, TData, QueryKey>, 'queryKey' | 'queryFn'>;
 }
 
-export interface CreateCreateMutationConfig<T, TInput> {
-  mutationFn: (input: TInput) => Promise<T>;
-  invalidateKeys?: InvalidateKeysFactory<T, TInput>;
-  options?: Partial<UseMutationOptions<T, Error, TInput>>;
+/**
+ * Factory for creating standardized single item queries
+ */
+export function createSingleQuery<TData>(
+  config: SingleQueryConfig<TData>
+): SingleQuery<TData> {
+  const resolvedKey = typeof config.queryKey === 'function' 
+    ? config.queryKey(config.id ?? 'none') 
+    : config.queryKey;
+
+  return useQuery({
+    queryKey: resolvedKey,
+    queryFn: config.queryFn,
+    staleTime: 5 * 60 * 1000,
+    ...config.options,
+    enabled: (config.options?.enabled ?? true) && (config.id !== null && config.id !== undefined),
+  }) as SingleQuery<TData>;
 }
 
-export interface CreateUpdateMutationConfig<T, TInput> {
-  mutationFn: (input: TInput) => Promise<T>;
-  invalidateKeys?: InvalidateKeysFactory<T, TInput>;
-  options?: Partial<UseMutationOptions<T, Error, TInput>>;
-}
-
-export interface CreateDeleteMutationConfig {
-  mutationFn: (id: string) => Promise<void>;
-  invalidateKeys?: InvalidateKeysFactory<void, string>;
-  options?: Partial<UseMutationOptions<void, Error, string>>;
-}
-
-export interface CreateSaveMutationConfig<T, TInput> {
-  mutationFn: (input: TInput) => Promise<T>;
-  invalidateKeys?: InvalidateKeysFactory<T, TInput>;
-  options?: Partial<UseMutationOptions<T, Error, TInput>>;
-}
-
-function mergeOnSuccess<T, TInput>(
-  baseOnSuccess: ((data: T, variables: TInput, context: unknown) => void) | undefined,
-  customOnSuccess: ((data: T, variables: TInput, context: unknown) => unknown) | undefined,
-) {
-  return (data: T, variables: TInput, context: unknown) => {
-    baseOnSuccess?.(data, variables, context);
-    customOnSuccess?.(data, variables, context);
-  };
-}
-
-function resolveQueryKey<TInput>(factory: QueryKeyFactory<TInput>, input: TInput): QueryKey {
-  const resolved = typeof factory === 'function' ? factory(input) : factory;
-  return normalizeQueryKey(resolved);
-}
-
-function resolveInvalidateKeys<T, TInput>(factory: InvalidateKeysFactory<T, TInput>, data: T, input: TInput): QueryKey[] {
-  const resolved = typeof factory === 'function' ? factory(data, input) : factory;
-  if (!resolved) return [];
-  if (Array.isArray(resolved) && Array.isArray(resolved[0])) {
-    return (resolved as unknown[]).map((key) => normalizeQueryKey(key));
+/**
+ * Factory for creating standardized mutations
+ */
+export function createMutation<TData, TVariables>(
+  config: {
+    mutationFn: (variables: TVariables) => Promise<TData>;
+    options?: UseMutationOptions<TData, Error, TVariables>;
   }
-  return [normalizeQueryKey(resolved)];
-}
-
-export function createListQuery<T, TInput = void>(
-  config: CreateListQueryConfig<T, TInput>,
-  input: TInput = undefined as TInput
-): ListQuery<T> {
-  return useQuery({
-    queryKey: resolveQueryKey(config.queryKey, input),
-    queryFn: () => config.queryFn(input),
-    ...config.options,
-  });
-}
-
-export function createPagedQuery<T, TInput = void>(
-  config: CreatePagedQueryConfig<T, TInput>,
-  input: TInput = undefined as TInput
-): PagedQuery<T> {
-  return useQuery({
-    queryKey: resolveQueryKey(config.queryKey, input),
-    queryFn: async () => {
-      const page = 1;
-      const limit = 10;
-      const result = await config.queryFn(page, limit, input);
-      return {
-        items: result.items,
-        total: result.total,
-        page: result.page,
-        pageSize: limit,
-        hasMore: result.total > result.page * limit,
-      };
-    },
-    ...config.options,
-  });
-}
-
-export function createSingleQuery<T, TInput = void>(
-  config: CreateSingleQueryConfig<T, TInput>,
-  input: TInput = undefined as TInput
-): SingleQuery<T> {
-  return useQuery({
-    queryKey: resolveQueryKey(config.queryKey, input),
-    queryFn: () => config.queryFn(input),
-    ...config.options,
-  });
-}
-
-export function createCreateMutation<T, TInput>(config: CreateCreateMutationConfig<T, TInput>): CreateMutation<T, TInput> {
-  const queryClient = useQueryClient();
-
+): MutationResult<TData, TVariables> {
   return useMutation({
     mutationFn: config.mutationFn,
     ...config.options,
-    onSuccess: mergeOnSuccess(
-      (data: T, variables: TInput) => {
-        if (config.invalidateKeys) {
-          const keys = resolveInvalidateKeys(config.invalidateKeys, data, variables);
-          keys.forEach((key) => {
-            void queryClient.invalidateQueries({ queryKey: key });
-          });
-        }
-      },
-      config.options?.onSuccess as ((data: T, variables: TInput, context: unknown) => unknown) | undefined,
-    ) as (data: T, variables: TInput, context: unknown) => void,
   });
 }
 
-export function createUpdateMutation<T, TInput>(config: CreateUpdateMutationConfig<T, TInput>): UpdateMutation<T, TInput> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: config.mutationFn,
-    ...config.options,
-    onSuccess: mergeOnSuccess(
-      (data: T, variables: TInput) => {
-        if (config.invalidateKeys) {
-          const keys = resolveInvalidateKeys(config.invalidateKeys, data, variables);
-          keys.forEach((key) => {
-            void queryClient.invalidateQueries({ queryKey: key });
-          });
-        }
-      },
-      config.options?.onSuccess as ((data: T, variables: TInput, context: unknown) => unknown) | undefined,
-    ) as (data: T, variables: TInput, context: unknown) => void,
-  });
-}
-
-export function createDeleteMutation(config: CreateDeleteMutationConfig): DeleteMutation {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: config.mutationFn,
-    ...config.options,
-    onSuccess: mergeOnSuccess(
-      (data: void, variables: string) => {
-        if (config.invalidateKeys) {
-          const keys = resolveInvalidateKeys(config.invalidateKeys, data, variables);
-          keys.forEach((key) => {
-            void queryClient.invalidateQueries({ queryKey: key });
-          });
-        }
-      },
-      config.options?.onSuccess as ((data: void, variables: string, context: unknown) => unknown) | undefined,
-    ) as (data: void, variables: string, context: unknown) => void,
-  });
-}
-
-export function createSaveMutation<T, TInput>(config: CreateSaveMutationConfig<T, TInput>): SaveMutation<T, TInput> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: config.mutationFn,
-    ...config.options,
-    onSuccess: mergeOnSuccess(
-      (data: T, variables: TInput) => {
-        if (config.invalidateKeys) {
-          const keys = resolveInvalidateKeys(config.invalidateKeys, data, variables);
-          keys.forEach((key) => {
-            void queryClient.invalidateQueries({ queryKey: key });
-          });
-        }
-      },
-      config.options?.onSuccess as ((data: T, variables: TInput, context: unknown) => unknown) | undefined,
-    ) as (data: T, variables: TInput, context: unknown) => void,
-  });
-}
+// Aliases for convenience and consistency
+export const createCreateMutation = createMutation;
+export const createUpdateMutation = createMutation;
+export const createDeleteMutation = createMutation;

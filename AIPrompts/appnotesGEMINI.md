@@ -44,6 +44,7 @@ VALIDATION
 - expand mutation-invalidation matrix QUERY KEYS. 
 - extend support for QUERY KEYS
 - improve mutation-invalidation matrix
+standardize the QUERY_KEYS hierarchy, migrate key hooks to centralized factories
 
 STATE MANAGEMENT
  Update feature hooks to use centralized query keys from @/shared/lib/query-key-exports

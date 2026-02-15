@@ -150,18 +150,20 @@ export function IntegrationModal(): React.JSX.Element {
         <TestResultModal
           isOpen={showTestErrorModal || showTestSuccessModal}
           onClose={showTestSuccessModal ? () => setShowTestSuccessModal(false) : () => setShowTestErrorModal(false)}
+          onSuccess={() => {}}
           success={showTestSuccessModal}
           message={showTestSuccessModal ? testSuccessMessage : testError}
-          meta={testErrorMeta}
+          meta={testErrorMeta || undefined}
         />
 
         <SessionModal
           isOpen={showSessionModal}
           onClose={() => setShowSessionModal(false)}
+          onSuccess={() => {}}
           loading={sessionLoading}
           error={sessionError}
           cookies={sessionCookies}
-          origins={sessionOrigins}
+          origins={(sessionOrigins || []) as string[]}
           updatedAt={sessionUpdatedAt}
         />
 

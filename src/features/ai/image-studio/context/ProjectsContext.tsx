@@ -1,15 +1,30 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   useCreateStudioProject,
   useDeleteStudioProject,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
-import { useUpdateUserPreferencesMutation, useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
+import {
+  useUpdateUserPreferencesMutation,
+  useUserPreferences,
+} from '@/features/auth/hooks/useUserPreferences';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { ApiError } from '@/shared/lib/api-client';
+import type {
+  CreateMutation,
+  DeleteMutationResult,
+} from '@/shared/types/query-result-types';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -18,7 +33,7 @@ import {
   serializeImageStudioActiveProject,
 } from '../utils/project-session';
 
-import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import type { UseQueryResult } from '@tanstack/react-query';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,8 +45,8 @@ export interface ProjectsState {
 
 export interface ProjectsActions {
   setProjectId: (id: string) => void;
-  createProjectMutation: UseMutationResult<string, Error, string>;
-  deleteProjectMutation: UseMutationResult<string, Error, string>;
+  createProjectMutation: CreateMutation<string, string>;
+  deleteProjectMutation: DeleteMutationResult<string, string>;
   handleDeleteProject: (id: string) => Promise<void>;
   setProjectSearch: (s: string) => void;
 }

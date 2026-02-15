@@ -60,13 +60,13 @@ const resolveSlotImageSource = (slot: ImageStudioSlotRecord): string | null =>
 const normalizeShapeToPolygons = (shape: VectorShape): Array<Array<{ x: number; y: number }>> => {
   if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
     if (!shape.closed || shape.points.length < 3) return [];
-    return [shape.points.map((point) => ({ x: clamp01(point.x), y: clamp01(point.y) }))];
+    return [shape.points.map((point: { x: number; y: number }) => ({ x: clamp01(point.x), y: clamp01(point.y) }))];
   }
 
   if (shape.type === 'rect') {
     if (shape.points.length < 2) return [];
-    const xs = shape.points.map((point) => point.x);
-    const ys = shape.points.map((point) => point.y);
+    const xs = shape.points.map((point: { x: number; y: number }) => point.x);
+    const ys = shape.points.map((point: { x: number; y: number }) => point.y);
     const minX = clamp01(Math.min(...xs));
     const maxX = clamp01(Math.max(...xs));
     const minY = clamp01(Math.min(...ys));
@@ -82,8 +82,8 @@ const normalizeShapeToPolygons = (shape: VectorShape): Array<Array<{ x: number; 
 
   if (shape.type === 'ellipse') {
     if (shape.points.length < 2) return [];
-    const xs = shape.points.map((point) => point.x);
-    const ys = shape.points.map((point) => point.y);
+    const xs = shape.points.map((point: { x: number; y: number }) => point.x);
+    const ys = shape.points.map((point: { x: number; y: number }) => point.y);
     const minX = clamp01(Math.min(...xs));
     const maxX = clamp01(Math.max(...xs));
     const minY = clamp01(Math.min(...ys));

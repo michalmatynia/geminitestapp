@@ -1,11 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
 import { useAiPathTriggerEvent } from '@/features/ai/ai-paths/hooks/useAiPathTriggerEvent';
-import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { useAiPathsTriggerButtonsQuery } from './useAiPathQueries';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
 
@@ -59,20 +57,10 @@ export function useTriggerButtons({
   const [successMap, setSuccessMap] = useState<Record<string, boolean>>(() => readMapFromStorage(SUCCESS_STORAGE_KEY));
   const [runStates, setRunStates] = useState<Record<string, TriggerRunState>>({});
 
-  const triggerButtonsQuery = useQuery({
-    queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
-    queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
-      const result = await triggerButtonsApi.list();
-      if (!result.ok) return [];
-      return Array.isArray(result.data) ? result.data : [];
-    },
-    staleTime: 5 * 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
+  const triggerButtonsQuery = useAiPathsTriggerButtonsQuery();
 
   const buttons = useMemo(() => {
-    const all = triggerButtonsQuery.data ?? [];
+    const all = (triggerButtonsQuery.data ?? []) as AiTriggerButtonRecord[];
     return all.filter((button: AiTriggerButtonRecord) => button.locations.includes(location));
   }, [triggerButtonsQuery.data, location]);
 

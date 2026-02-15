@@ -5,7 +5,8 @@ import React from 'react';
 import { ContentDisplayModal } from '@/shared/ui/templates';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 
-interface TestResultModalProps extends ModalStateProps {
+interface TestResultModalProps extends Omit<ModalStateProps, 'onSuccess'> {
+  onSuccess?: () => void;
   success: boolean;
   message: string | null;
   meta?: {

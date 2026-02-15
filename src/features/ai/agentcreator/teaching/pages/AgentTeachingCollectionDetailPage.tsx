@@ -17,7 +17,7 @@ import {
   Badge
 } from '@/shared/ui';
 
-import { useAgentTeachingCollectionDetailState } from '../hooks/useAgentTeachingCollectionDetailState';
+import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -43,7 +43,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
     handleAdd,
     handleDelete,
     handleSearch,
-  } = useAgentTeachingCollectionDetailState();
+  } = useAgentTeachingQueriesCollectionDetailState();
 
   const columns = useMemo<ColumnDef<AgentTeachingEmbeddingDocumentListItem>[]>(() => [
     {

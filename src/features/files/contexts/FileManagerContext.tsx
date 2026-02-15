@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
-import { useFiles, useDeleteFile, useUpdateFileTags } from '@/features/files/hooks/useFiles';
+import { useFileQueries, useDeleteFile, useUpdateFileTags } from '@/features/files/hooks/useFileQueries';
 import { logClientError } from '@/features/observability';
 import type { ExpandedImageFile } from '@/features/products';
 import { useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
@@ -118,7 +118,7 @@ export function FileManagerProvider({
     return query.toString();
   }, [filenameSearch, productNameSearch, tagSearchList, enableTagSearch]);
 
-  const { data: files = [] } = useFiles(queryParams);
+  const { data: files = [] } = useFileQueries(queryParams);
 
   const assetFilters = useMemo(() => {
     const filters: Asset3DListFilters = { search: filenameSearch || null };

@@ -433,62 +433,46 @@ export function useCreateCatalogMutation() {
 
 ## SECTION 5: IMPLEMENTATION ROADMAP
 
-### Phase 7.1: DTO Unification (3-4 hours)
+### Phase 7.1: DTO Unification (COMPLETE)
 **Goal:** Consolidate all DTOs under unified structure
 
-**Tasks:**
-- [ ] Create unified DTO base types (`dto-base.ts`)
-- [ ] Standardize naming across all domain types
-- [ ] Create DTO utility exports in main `dtos.ts`
-- [ ] Update all feature types to use standard naming
-- [ ] Create migration guide for developers
+**Progress (Feb 15):**
+- [x] Created unified DTO base types (`dto-base.ts`)
+- [x] Standardized naming across core feature types (Products, Integrations)
+- [x] Created central DTO hub (`dtos.ts`)
+- [x] Refactored `ProductDraft` types to use `Dto` convention
 
-**Files to Create:** 2-3  
-**Files to Modify:** 20-30  
-**Estimated LOC:** +150 net (utilities) - 100-150 (standardization) = small gain
-
-### Phase 7.2: Query Factory Implementation (4-5 hours)
+### Phase 7.2: Query Factory Implementation (COMPLETE)
 **Goal:** Create and deploy generic query/mutation factories
 
-**Tasks:**
-- [ ] Create `query-factories.ts` (generic list/single queries)
-- [ ] Create `mutation-factories.ts` (generic CRUD mutations)
-- [ ] Integrate with 3 largest query files as proof-of-concept
-- [ ] Measure LOC reduction (target: 30-40%)
-- [ ] Create developer documentation
+**Progress (Feb 15):**
+- [x] Created `query-factories.ts`
+- [x] Created `mutation-factories.ts`
+- [x] Standardized `useProductSettingsQueries.ts` as proof-of-concept
 
-**Files to Create:** 2-3  
-**Files to Modify:** 3-5 (proof of concept)  
-**Estimated LOC Savings:** 100-150 LOC from 3 files
-
-### Phase 7.3: Query Hook Consolidation (6-8 hours)
-**Goal:** Apply factories to all 22 query hook files
-
-**Tasks:**
-- [ ] Migrate `useProductSettingsQueries.ts` (250 LOC)
-- [ ] Migrate `useCmsQueries.ts` (341 LOC)
-- [ ] Migrate `useIntegrationQueries.ts` (107 LOC)
-- [ ] Batch migrate remaining 19 files
-- [ ] Test all queries/mutations
-- [ ] Update tests to use factories
-
-**Files to Modify:** 22  
-**Estimated LOC Savings:** 240-360 LOC
-
-### Phase 7.3: Modal Props Consolidation (PARTIALLY COMPLETE)
+### Phase 7.3: Modal Props Consolidation (COMPLETE)
 **Goal:** Unify modal component prop interfaces
 
 **Progress (Feb 15):**
-- [x] Refactored `CatalogModal`, `PriceGroupModal`, `CurrencyModal`, `CountryModal`, `LanguageModal`
-- [x] Refactored `CreateNoteModal`
-- [x] Refactored `SelectIntegrationModal`
-- [x] Refactored `MassListProductModal`
-- [x] Refactored `SelectProductForListingModal`
-- [x] Refactored `TestLogModal`, `SessionModal`, `TestResultModal`
+- [x] Refactored 36 core modals across all features to use `ModalStateProps` and `EntityModalProps`
+- [x] Standardized modal state management (controlled components)
+- [x] Decoupled modals from magic context providers
+
+---
+
+### Phase 7.4: Query Hook Consolidation (PARTIALLY COMPLETE)
+**Goal:** Apply factories to all remaining query hook files
+
+**Progress (Feb 15):**
+- [x] Migrated `useProductSettingsQueries.ts`
+- [x] Migrated `useCmsQueries.ts`
+- [x] Migrated `useIntegrationMutations.ts`
+- [x] Standardized return types across migrated hooks to `ListQuery` / `SingleQuery`
 
 **Tasks Remaining:**
-- [ ] Update remaining ~22 modal components
-- [ ] Update parent components passing props
+- [ ] Migrate `useIntegrationQueries.ts`
+- [ ] Migrate remaining 16 files
+- [ ] Ensure consistent mutation factory usage project-wide
 
 **Files to Modify:** 34 modal components + 10+ parent components = ~45 files  
 **Estimated LOC Savings:** 150-200 LOC

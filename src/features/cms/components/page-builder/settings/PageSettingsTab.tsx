@@ -5,7 +5,7 @@ import { Globe, FileText, Pencil, Check, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 
-import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
+import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';

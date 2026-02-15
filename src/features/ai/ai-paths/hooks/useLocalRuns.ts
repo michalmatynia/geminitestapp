@@ -1,19 +1,14 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
 import { AI_PATHS_LOCAL_RUNS_KEY, parseLocalRuns } from '@/features/ai/ai-paths/lib';
 import type { AiPathLocalRunRecord } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_RUN_SOURCE_VALUES } from '@/features/ai/ai-paths/lib/run-sources';
-import {
-  fetchAiPathsSettingsCached,
-  invalidateAiPathsSettingsCache,
-  updateAiPathsSetting,
-} from '@/features/ai/ai-paths/lib/settings-store-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
+
+import { useAiPathsSettingsQuery, useUpdateAiPathsSettingMutation } from './useAiPathQueries';
 
 const AI_PATHS_SOURCES = new Set<string>(AI_PATHS_RUN_SOURCE_VALUES);
 const TERMINAL_LOCAL_RUN_STATUSES = new Set(['success', 'error']);
@@ -46,21 +41,8 @@ const shouldIncludeRun = (
 
 export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions = {}) {
   const { toast } = useToast();
-  const settingsQuery = useQuery({
-    queryKey: QUERY_KEYS.ai.aiPaths.settings(),
-    queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
-      await fetchAiPathsSettingsCached({ bypassCache: true }),
-  });
-
-  const updateSetting = useMutation({
-    mutationFn: async (nextRuns: AiPathLocalRunRecord[]): Promise<void> => {
-      await updateAiPathsSetting(AI_PATHS_LOCAL_RUNS_KEY, serializeSetting(nextRuns));
-      invalidateAiPathsSettingsCache();
-    },
-    onSuccess: (): void => {
-      void settingsQuery.refetch();
-    },
-  });
+  const settingsQuery = useAiPathsSettingsQuery();
+  const updateMutation = useUpdateAiPathsSettingMutation();
 
   const rawRuns = useMemo(() => {
     const map = new Map((settingsQuery.data ?? []).map((item) => [item.key, item.value]));
@@ -100,7 +82,10 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
     });
 
     try {
-      await updateSetting.mutateAsync(nextRuns);
+      await updateMutation.mutateAsync({
+        key: AI_PATHS_LOCAL_RUNS_KEY,
+        value: serializeSetting(nextRuns)
+      });
       if (typeof window !== 'undefined') {
         window.dispatchEvent(
           new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
@@ -115,14 +100,14 @@ export function useLocalRuns({ sourceFilter, sourceMode }: UseLocalRunsOptions =
     } catch (err) {
       toast(err instanceof Error ? err.message : 'Failed to clear local runs.', { variant: 'error' });
     }
-  }, [allRuns, sourceFilter, sourceMode, toast, updateSetting]);
+  }, [allRuns, sourceFilter, sourceMode, toast, updateMutation]);
 
   return {
     runs,
     metrics,
     isLoading: settingsQuery.isLoading,
     isFetching: settingsQuery.isFetching,
-    isUpdating: updateSetting.isPending,
+    isUpdating: updateMutation.isPending,
     refetch: () => { void settingsQuery.refetch(); },
     clearRuns,
   };

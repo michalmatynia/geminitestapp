@@ -10,15 +10,14 @@ import {
 import type { Integration, IntegrationConnection } from '@/features/integrations/types/integrations-ui';
 import { api } from '@/shared/lib/api-client';
 import { invalidateIntegrations } from '@/shared/lib/query-invalidation';
+import { createCreateMutation, createDeleteMutation } from '@/shared/lib/mutation-factories';
 
 import { invalidateIntegrationConnections } from './integrationCache';
 
 export function useCreateIntegration(): UseMutationResult<Integration, Error, { name: string; slug: string }> {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (payload: { name: string; slug: string }) => api.post<Integration>('/api/integrations', payload),
-    onSuccess: (): void => {
+  return createCreateMutation({
+    createFn: (payload: { name: string; slug: string }) => api.post<Integration>('/api/integrations', payload),
+    invalidateFn: (queryClient) => {
       void invalidateIntegrations(queryClient);
     },
   });
@@ -63,13 +62,11 @@ export function useUpsertConnection(): UseMutationResult<IntegrationConnection, 
 }
 
 export function useDeleteConnection(): UseMutationResult<Record<string, unknown>, Error, DeleteConnectionVariables> {
-  const queryClient = useQueryClient();
-
-  return useMutation<Record<string, unknown>, Error, DeleteConnectionVariables>({
-    mutationFn: ({ 
+  return createDeleteMutation({
+    deleteFn: ({ 
       connectionId 
     }: DeleteConnectionVariables) => api.delete<Record<string, unknown>>(`/api/integrations/connections/${connectionId}`),
-    onSuccess: (_data: Record<string, unknown>, variables: DeleteConnectionVariables): void => {
+    invalidateFn: (queryClient, variables) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
   });

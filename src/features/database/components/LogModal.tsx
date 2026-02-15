@@ -3,13 +3,13 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-import type { SimpleModalProps } from '@/shared/types/modal-props';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 import { ContentDisplayModal } from '@/shared/ui/templates';
 
-interface LogModalProps extends Omit<SimpleModalProps, 'title' | 'onSuccess'> {
-  title?: string;
-  onSuccess?: () => void;
+interface LogModalProps extends ModalStateProps {
   content: string;
+  title?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
 }
 
 export const LogModal = ({ 

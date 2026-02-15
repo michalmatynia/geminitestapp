@@ -5,7 +5,7 @@ import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
 
-import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeaching';
+import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeachingQueries';
 
 interface AgentTeachingContextType {
   agents: AgentTeachingAgentRecord[];
@@ -18,10 +18,10 @@ interface AgentTeachingContextType {
 
 const AgentTeachingContext = createContext<AgentTeachingContextType | null>(null);
 
-export const useAgentTeachingContext = (): AgentTeachingContextType => {
+export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
   const context = useContext(AgentTeachingContext);
   if (!context) {
-    throw new Error('useAgentTeachingContext must be used within an AgentTeachingProvider');
+    throw new Error('useAgentTeachingQueriesContext must be used within an AgentTeachingProvider');
   }
   return context;
 };

@@ -2,7 +2,7 @@
 import { useQueries } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDrafts';
+import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDraftQueries';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';

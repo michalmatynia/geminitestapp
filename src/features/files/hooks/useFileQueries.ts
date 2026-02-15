@@ -19,7 +19,7 @@ import type {
 
 export { fileKeys };
 
-export function useFiles(params: string = ''): ListQuery<ExpandedImageFile> {
+export function useFileQueries(params: string = ''): ListQuery<ExpandedImageFile> {
   return createListQuery({
     queryKey: fileKeys.list(params),
     queryFn: () => api.get<ExpandedImageFile[]>(`/api/files?${params}`),

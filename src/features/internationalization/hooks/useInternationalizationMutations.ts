@@ -1,124 +1,74 @@
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+'use client';
 
+import { createDeleteMutation, createSaveMutation } from '@/shared/lib/mutation-factories';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
+import type { SaveMutation, VoidMutation } from '@/shared/types/query-result-types';
 
-import { deleteCurrency, deleteCountry, deleteLanguage, saveCurrency, saveCountry, saveLanguage, type SaveCurrencyInput, type SaveCountryInput, type SaveLanguageInput } from '../api';
+import { 
+  deleteCurrency, 
+  deleteCountry, 
+  deleteLanguage, 
+  saveCurrency, 
+  saveCountry, 
+  saveLanguage, 
+  type SaveCurrencyInput, 
+  type SaveCountryInput, 
+  type SaveLanguageInput 
+} from '../api';
 
-export function useDeleteCurrencyMutation(): UseMutationResult<void, Error, string> {
+const i18nKeys = QUERY_KEYS.internationalization;
 
-  const queryClient = useQueryClient();
-
-  return useMutation({
-
-    mutationFn: deleteCurrency,
-
-    onSuccess: () => {
-
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.internationalization.currencies() });
-
+export function useDeleteCurrencyMutation(): VoidMutation<string> {
+  return createDeleteMutation({
+    deleteFn: deleteCurrency,
+    invalidateFn: (queryClient) => {
+      void queryClient.invalidateQueries({ queryKey: i18nKeys.currencies() });
     },
-
   });
-
 }
 
-
-
-export function useDeleteCountryMutation(): UseMutationResult<void, Error, string> {
-
-  const queryClient = useQueryClient();
-
-  return useMutation({
-
-    mutationFn: deleteCountry,
-
-    onSuccess: () => {
-
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.internationalization.countries() });
-
+export function useDeleteCountryMutation(): VoidMutation<string> {
+  return createDeleteMutation({
+    deleteFn: deleteCountry,
+    invalidateFn: (queryClient) => {
+      void queryClient.invalidateQueries({ queryKey: i18nKeys.countries() });
     },
-
   });
-
 }
 
-
-
-export function useDeleteLanguageMutation(): UseMutationResult<void, Error, string> {
-
-  const queryClient = useQueryClient();
-
-  return useMutation({
-
-    mutationFn: deleteLanguage,
-
-    onSuccess: () => {
-
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.internationalization.languages() });
-
+export function useDeleteLanguageMutation(): VoidMutation<string> {
+  return createDeleteMutation({
+    deleteFn: deleteLanguage,
+    invalidateFn: (queryClient) => {
+      void queryClient.invalidateQueries({ queryKey: i18nKeys.languages() });
     },
-
   });
-
 }
 
-
-
-export function useSaveCurrencyMutation(): UseMutationResult<CurrencyOption, Error, { id: string | undefined; data: SaveCurrencyInput }> {
-
-  const queryClient = useQueryClient();
-
-  return useMutation({
-
-    mutationFn: ({ id, data }: { id: string | undefined; data: SaveCurrencyInput }) => saveCurrency(id, data),
-
-    onSuccess: () => {
-
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.internationalization.currencies() });
-
+export function useSaveCurrencyMutation(): SaveMutation<CurrencyOption, SaveCurrencyInput> {
+  return createSaveMutation({
+    saveFn: saveCurrency,
+    invalidateFn: (queryClient) => {
+      void queryClient.invalidateQueries({ queryKey: i18nKeys.currencies() });
     },
-
   });
-
 }
 
-
-
-export function useSaveCountryMutation(): UseMutationResult<CountryOption, Error, { id: string | undefined; data: SaveCountryInput }> {
-
-  const queryClient = useQueryClient();
-
-  return useMutation({
-
-    mutationFn: ({ id, data }: { id: string | undefined; data: SaveCountryInput }) => saveCountry(id, data),
-
-    onSuccess: () => {
-
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.internationalization.countries() });
-
+export function useSaveCountryMutation(): SaveMutation<CountryOption, SaveCountryInput> {
+  return createSaveMutation({
+    saveFn: saveCountry,
+    invalidateFn: (queryClient) => {
+      void queryClient.invalidateQueries({ queryKey: i18nKeys.countries() });
     },
-
   });
-
 }
 
-
-
-export function useSaveLanguageMutation(): UseMutationResult<Language, Error, { id: string | undefined; data: SaveLanguageInput }> {
-
-  const queryClient = useQueryClient();
-
-  return useMutation({
-
-    mutationFn: ({ id, data }: { id: string | undefined; data: SaveLanguageInput }) => saveLanguage(id, data),
-
-    onSuccess: () => {
-
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.internationalization.languages() });
-
+export function useSaveLanguageMutation(): SaveMutation<Language, SaveLanguageInput> {
+  return createSaveMutation({
+    saveFn: saveLanguage,
+    invalidateFn: (queryClient) => {
+      void queryClient.invalidateQueries({ queryKey: i18nKeys.languages() });
     },
-
   });
-
 }

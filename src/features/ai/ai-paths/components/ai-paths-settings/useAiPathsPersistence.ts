@@ -346,7 +346,7 @@ export function useAiPathsPersistence({
         aiPathsActivePathId: nextPathId,
       });
       queryClient.setQueryData<AiPathsUserPreferences>(
-        QUERY_KEYS.userPreferences,
+        QUERY_KEYS.userPreferences.all,
         updateCachedPreferences
       );
       queryClient.setQueryData<AiPathsUserPreferences>(
@@ -374,14 +374,14 @@ export function useAiPathsPersistence({
   const resolveUserPreferences = useCallback(
     async (): Promise<AiPathsUserPreferences | null> => {
       const cachedPreferences = queryClient.getQueryData<AiPathsUserPreferences>(
-        QUERY_KEYS.userPreferences
+        QUERY_KEYS.userPreferences.all
       );
       if (cachedPreferences && typeof cachedPreferences === 'object') {
         return cachedPreferences;
       }
       try {
         return await queryClient.fetchQuery({
-          queryKey: QUERY_KEYS.userPreferences,
+          queryKey: QUERY_KEYS.userPreferences.all,
           queryFn: async (): Promise<AiPathsUserPreferences> => {
             return await api.get<AiPathsUserPreferences>('/api/user/preferences', {
               logError: false,

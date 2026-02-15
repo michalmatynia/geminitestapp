@@ -3,12 +3,12 @@ import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import FileManager from '@/features/files/components/FileManager';
-import { useFiles, useDeleteFile, useUpdateFileTags } from '@/features/files/hooks/useFiles';
+import { useFileQueries, useDeleteFile, useUpdateFileTags } from '@/features/files/hooks/useFileQueries';
 
 
 // Mock hooks
-vi.mock('@/features/files/hooks/useFiles', () => ({
-  useFiles: vi.fn(),
+vi.mock('@/features/files/hooks/useFileQueries', () => ({
+  useFileQueries: vi.fn(),
   useDeleteFile: vi.fn(),
   useUpdateFileTags: vi.fn(),
 }));
@@ -59,7 +59,7 @@ describe('FileManager Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useFiles as any).mockReturnValue({ data: mockFiles, isLoading: false });
+    (useFileQueries as any).mockReturnValue({ data: mockFiles, isLoading: false });
     (useDeleteFile as any).mockReturnValue({ mutateAsync: vi.fn() });
     (useUpdateFileTags as any).mockReturnValue({ mutateAsync: vi.fn() });
   });

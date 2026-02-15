@@ -1,0 +1,505 @@
+__tests__/features/ai/ai-paths/components/SignalDots.test.tsx(3,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/CmsDomainSelector.test.tsx(3,1): error TS6133: 'React' is declared but its value is never read.
+__tests__/features/cms/components/CmsDomainSelector.test.tsx(18,63): error TS6133: 'label' is declared but its value is never read.
+__tests__/features/database/api/engine-operations-jobs.test.ts(84,51): error TS2352: Conversion of type '({ id: string; productId: string; status: string; type: string; payload: { dbType: string; source: string; }; result: { message: string; }; errorMessage: null; createdAt: string; startedAt: string; finishedAt: string; } | { ...; })[]' to type '(Omit<ProductAiJobDto, "product"> & { product: ProductSummary | null; })[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: string; productId: string; status: string; type: string; payload: { dbType: string; source: string; }; result: { message: string; }; errorMessage: null; createdAt: string; startedAt: string; finishedAt: string; } | { ...; }' is not comparable to type 'Omit<ProductAiJobDto, "product"> & { product: ProductSummary | null; }'.
+    Type '{ id: string; productId: string; status: string; type: string; payload: {}; result: null; errorMessage: null; createdAt: string; startedAt: null; finishedAt: null; }' is not comparable to type 'Omit<ProductAiJobDto, "product"> & { product: ProductSummary | null; }'.
+      Property 'product' is missing in type '{ id: string; productId: string; status: string; type: string; payload: {}; result: null; errorMessage: null; createdAt: string; startedAt: null; finishedAt: null; }' but required in type '{ product: ProductSummary | null; }'.
+__tests__/features/notesapp/pages/notes-page.test.tsx(201,31): error TS7006: Parameter 'id' implicitly has an 'any' type.
+__tests__/features/notesapp/services/note-service.test.ts(220,42): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/app/api/databases/engine/operations/jobs/[jobId]/cancel/route.ts(44,37): error TS2345: Argument of type 'Omit<ProductAiJobDto, "product"> & { product: Record<string, unknown> | null; }' is not assignable to parameter of type 'DatabaseEngineCancelableJob'.
+  Property 'type' is missing in type 'Omit<ProductAiJobDto, "product"> & { product: Record<string, unknown> | null; }' but required in type 'DatabaseEngineCancelableJob'.
+src/app/api/databases/engine/operations/jobs/[jobId]/cancel/route.ts(47,22): error TS4111: Property 'productId' comes from an index signature, so it must be accessed with ['productId'].
+src/app/api/databases/engine/operations/jobs/[jobId]/cancel/route.ts(48,17): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
+src/app/api/databases/engine/operations/jobs/route.ts(25,7): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
+src/app/api/databases/engine/operations/jobs/route.ts(25,35): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
+src/app/api/databases/engine/operations/jobs/route.ts(29,9): error TS4111: Property 'payload' comes from an index signature, so it must be accessed with ['payload'].
+src/app/api/databases/engine/operations/jobs/route.ts(29,31): error TS4111: Property 'payload' comes from an index signature, so it must be accessed with ['payload'].
+src/app/api/databases/engine/operations/jobs/route.ts(30,13): error TS4111: Property 'payload' comes from an index signature, so it must be accessed with ['payload'].
+src/app/api/databases/engine/operations/jobs/route.ts(33,9): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/app/api/databases/engine/operations/jobs/route.ts(33,30): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/app/api/databases/engine/operations/jobs/route.ts(34,13): error TS4111: Property 'result' comes from an index signature, so it must be accessed with ['result'].
+src/app/api/databases/engine/operations/jobs/route.ts(54,13): error TS4111: Property 'id' comes from an index signature, so it must be accessed with ['id'].
+src/app/api/databases/engine/operations/jobs/route.ts(55,15): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
+src/app/api/databases/engine/operations/jobs/route.ts(56,17): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
+src/app/api/databases/engine/operations/jobs/route.ts(60,29): error TS4111: Property 'createdAt' comes from an index signature, so it must be accessed with ['createdAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(62,18): error TS4111: Property 'updatedAt' comes from an index signature, so it must be accessed with ['updatedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(62,48): error TS4111: Property 'updatedAt' comes from an index signature, so it must be accessed with ['updatedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(63,24): error TS4111: Property 'updatedAt' comes from an index signature, so it must be accessed with ['updatedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(66,18): error TS4111: Property 'startedAt' comes from an index signature, so it must be accessed with ['startedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(66,48): error TS4111: Property 'startedAt' comes from an index signature, so it must be accessed with ['startedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(67,15): error TS4111: Property 'startedAt' comes from an index signature, so it must be accessed with ['startedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(70,18): error TS4111: Property 'finishedAt' comes from an index signature, so it must be accessed with ['finishedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(70,49): error TS4111: Property 'finishedAt' comes from an index signature, so it must be accessed with ['finishedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(71,15): error TS4111: Property 'finishedAt' comes from an index signature, so it must be accessed with ['finishedAt'].
+src/app/api/databases/engine/operations/jobs/route.ts(73,23): error TS4111: Property 'errorMessage' comes from an index signature, so it must be accessed with ['errorMessage'].
+src/app/api/drafts/[id]/route.ts(9,15): error TS2724: '"@/features/products/server"' has no exported member named 'UpdateProductDraftInput'. Did you mean 'UpdateProductDraftDto'?
+src/app/api/drafts/route.ts(9,15): error TS2724: '"@/features/products/server"' has no exported member named 'CreateProductDraftInput'. Did you mean 'CreateProductDraftDto'?
+src/app/api/products/ai-jobs/route.ts(47,22): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
+src/app/api/products/ai-jobs/route.ts(47,50): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
+src/app/api/products/ai-jobs/route.ts(49,74): error TS4111: Property 'payload' comes from an index signature, so it must be accessed with ['payload'].
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(135,28): error TS6133: 'setRunDetailLoading' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(136,21): error TS6133: 'setRunDetail' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(137,27): error TS6133: 'setRunStreamStatus' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(139,29): error TS6133: 'setRunEventsOverflow' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(140,31): error TS6133: 'setRunEventsBatchLimit' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(145,26): error TS6133: 'setClusterPresets' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(152,26): error TS6133: 'setAnalyticsRange' is declared but its value is never read.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(153,9): error TS6133: 'analyticsQuery' is declared but its value is never read.
+src/features/ai/ai-paths/hooks/useLocalRuns.ts(3,1): error TS6192: All imports in import declaration are unused.
+src/features/ai/ai-paths/hooks/useLocalRuns.ts(9,1): error TS6192: All imports in import declaration are unused.
+src/features/ai/ai-paths/hooks/useLocalRuns.ts(14,1): error TS6133: 'QUERY_KEYS' is declared but its value is never read.
+src/features/ai/image-studio/components/modals/SlotInlineEditModal.tsx(21,3): error TS6133: 'busy' is declared but its value is never read.
+src/features/ai/image-studio/components/modals/SlotInlineEditModal.tsx(22,3): error TS6133: 'onSave' is declared but its value is never read.
+src/features/ai/image-studio/components/SequencingPanel.tsx(63,31): error TS7006: Parameter 'point' implicitly has an 'any' type.
+src/features/ai/image-studio/components/SequencingPanel.tsx(68,34): error TS7006: Parameter 'point' implicitly has an 'any' type.
+src/features/ai/image-studio/components/SequencingPanel.tsx(69,34): error TS7006: Parameter 'point' implicitly has an 'any' type.
+src/features/ai/image-studio/components/SequencingPanel.tsx(85,34): error TS7006: Parameter 'point' implicitly has an 'any' type.
+src/features/ai/image-studio/components/SequencingPanel.tsx(86,34): error TS7006: Parameter 'point' implicitly has an 'any' type.
+src/features/ai/image-studio/components/StudioModals.tsx(7,1): error TS6133: 'FileManager' is declared but its value is never read.
+src/features/ai/image-studio/components/StudioModals.tsx(2057,83): error TS2345: Argument of type 'string | Date | undefined' is not assignable to parameter of type 'string | null | undefined'.
+  Type 'Date' is not assignable to type 'string'.
+src/features/ai/image-studio/components/StudioModals.tsx(2060,83): error TS2345: Argument of type 'string | Date | null | undefined' is not assignable to parameter of type 'string | null | undefined'.
+  Type 'Date' is not assignable to type 'string'.
+src/features/ai/image-studio/components/StudioModals.tsx(2405,83): error TS2345: Argument of type 'string | Date | null' is not assignable to parameter of type 'string | null | undefined'.
+  Type 'Date' is not assignable to type 'string'.
+src/features/ai/image-studio/components/StudioModals.tsx(2516,50): error TS2345: Argument of type 'string | Date | null' is not assignable to parameter of type 'string | null | undefined'.
+  Type 'Date' is not assignable to type 'string'.
+src/features/ai/image-studio/components/StudioModals.tsx(2575,46): error TS2345: Argument of type 'string | Date | null' is not assignable to parameter of type 'string | null | undefined'.
+  Type 'Date' is not assignable to type 'string'.
+src/features/ai/image-studio/components/StudioModals.tsx(2637,52): error TS2345: Argument of type 'string | Date | null' is not assignable to parameter of type 'string | null | undefined'.
+  Type 'Date' is not assignable to type 'string'.
+src/features/ai/insights/context/InsightsContext.tsx(3,1): error TS6192: All imports in import declaration are unused.
+src/features/ai/insights/context/InsightsContext.tsx(6,1): error TS6133: 'api' is declared but its value is never read.
+src/features/ai/insights/context/InsightsContext.tsx(7,1): error TS6133: 'QUERY_KEYS' is declared but its value is never read.
+src/features/ai/insights/context/InsightsContext.tsx(11,6): error TS6196: 'InsightResponse' is declared but never used.
+src/features/ai/insights/hooks/useInsightQueries.ts(13,46): error TS2314: Generic type 'ListQuery' requires 1 type argument(s).
+src/features/ai/insights/hooks/useInsightQueries.ts(22,40): error TS2314: Generic type 'ListQuery' requires 1 type argument(s).
+src/features/auth/pages/admin/UsersPage.tsx(22,3): error TS6133: 'FormField' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(26,3): error TS6133: 'StatusToggle' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(27,3): error TS6133: 'FormModal' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(28,3): error TS6133: 'Checkbox' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(29,3): error TS6133: 'Label' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(212,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; item: { id: string; createdAt: string; updatedAt: string | null; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; password?: string | undefined; } | null; ... 5 more ...; onSave: () => void; }' but required in type 'UserEditModalProps'.
+src/features/auth/pages/admin/UsersPage.tsx(239,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; createForm: CreateUserForm; setCreateForm: Dispatch<SetStateAction<CreateUserForm>>; isSaving: boolean; onSave: () => void; }' but required in type 'UserCreateModalProps'.
+src/features/auth/pages/admin/UsersPage.tsx(269,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; email: string; setEmail: Dispatch<SetStateAction<string>>; password: string; setPassword: Dispatch<SetStateAction<string>>; isSaving: boolean; onSave: () => void; }' but required in type 'MockSignInModalProps'.
+src/features/case-resolver/components/modals/CaseFileEditorModal.tsx(7,15): error TS2305: Module '"../../types"' has no exported member 'CaseResolverFileEditDraft'.
+src/features/case-resolver/components/modals/CaseFileEditorModal.tsx(29,7): error TS2322: Type '"full"' is not assignable to type '"sm" | "lg" | "md" | "xl" | undefined'.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(13,3): error TS6133: 'FormField' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(14,3): error TS6133: 'FormModal' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(16,3): error TS6133: 'Input' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(18,3): error TS6133: 'SelectSimple' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(20,3): error TS6133: 'Textarea' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(401,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; item: CaseResolverCategory | null; formData: CategoryFormData; setFormData: Dispatch<SetStateAction<CategoryFormData>>; parentOptions: { ...; }[]; isSaving: boolean; onSave: () => void; }' but required in type 'CaseResolverCategoryModalProps'.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(13,3): error TS6133: 'FormField' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(14,3): error TS6133: 'FormModal' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(16,3): error TS6133: 'Input' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(17,3): error TS6133: 'SelectSimple' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(331,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; item: CaseResolverTag | null; formData: TagFormData; setFormData: Dispatch<SetStateAction<TagFormData>>; parentTagOptions: { ...; }[]; isSaving: boolean; onSave: () => void; }' but required in type 'CaseResolverTagModalProps'.
+src/features/cms/components/page-builder/shared-fields.tsx(9,10): error TS6133: 'useAssets3D' is declared but its value is never read.
+src/features/cms/components/page-builder/shared-fields.tsx(9,23): error TS6133: 'useAsset3DCategories' is declared but its value is never read.
+src/features/cms/components/page-builder/shared-fields.tsx(9,45): error TS6133: 'useAsset3DTags' is declared but its value is never read.
+src/features/cms/components/page-builder/shared-fields.tsx(10,15): error TS6196: 'Asset3DListFilters' is declared but never used.
+src/features/database/components/DatabaseBackupsPanel.tsx(102,27): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; content: string; onClose: () => void; }' but required in type 'LogModalProps'.
+src/features/database/components/DatabaseBackupsPanel.tsx(105,10): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; backupName: string; onClose: () => void; onConfirm: (truncate: boolean) => void; }' but required in type 'RestoreModalProps'.
+src/features/database/components/LogModal.tsx(29,7): error TS2322: Type '"sm" | "lg" | "md" | "xl" | "full"' is not assignable to type '"sm" | "lg" | "md" | "xl"'.
+  Type '"full"' is not assignable to type '"sm" | "lg" | "md" | "xl"'.
+src/features/database/components/RestoreModal.tsx(35,7): error TS2322: Type '"sm" | "lg" | "md" | "xl" | "full"' is not assignable to type '"sm" | "lg" | "md" | "xl"'.
+  Type '"full"' is not assignable to type '"sm" | "lg" | "md" | "xl"'.
+src/features/database/pages/DatabaseControlPanelPage.tsx(212,10): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; content: string; onClose: () => void; }' but required in type 'LogModalProps'.
+src/features/database/pages/DatabasesPage.tsx(261,10): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; content: string; onClose: () => void; }' but required in type 'LogModalProps'.
+src/features/database/pages/DatabasesPage.tsx(265,10): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; backupName: string; onClose: () => void; onConfirm: (t: boolean) => void; }' but required in type 'RestoreModalProps'.
+src/features/drafter/components/DraftList.tsx(14,15): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/drafter/hooks/useDraftQueries.ts(5,15): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/drafter/hooks/useDraftQueries.ts(5,29): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'CreateProductDraftInput'. Did you mean 'CreateProductDraftDto'?
+src/features/drafter/hooks/useDraftQueries.ts(5,54): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'UpdateProductDraftInput'. Did you mean 'UpdateProductDraftDto'?
+src/features/drafter/pages/AdminDraftsPage.tsx(3,1): error TS6192: All imports in import declaration are unused.
+src/features/drafter/pages/AdminDraftsPage.tsx(5,10): error TS6133: 'AppModal' is declared but its value is never read.
+src/features/drafter/pages/AdminDraftsPage.tsx(5,20): error TS6133: 'Button' is declared but its value is never read.
+src/features/drafter/pages/AdminDraftsPage.tsx(29,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; editingDraftId: string | null; formRef: RefObject<HTMLFormElement | null>; }' but required in type 'DraftCreatorModalProps'.
+src/features/drafter/services/draft-repository.ts(11,8): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/drafter/services/draft-repository.ts(12,8): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'CreateProductDraftInput'. Did you mean 'CreateProductDraftDto'?
+src/features/drafter/services/draft-repository.ts(13,8): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'UpdateProductDraftInput'. Did you mean 'UpdateProductDraftDto'?
+src/features/drafter/services/draft-repository.ts(312,50): error TS2538: Type 'symbol' cannot be used as an index type.
+src/features/drafter/services/draft-service.ts(4,15): error TS2724: '"@/features/products/server"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/drafter/services/draft-service.ts(4,29): error TS2724: '"@/features/products/server"' has no exported member named 'CreateProductDraftInput'. Did you mean 'CreateProductDraftDto'?
+src/features/drafter/services/draft-service.ts(4,54): error TS2724: '"@/features/products/server"' has no exported member named 'UpdateProductDraftInput'. Did you mean 'UpdateProductDraftDto'?
+src/features/files/components/file-manager/AssetPreviewModal.tsx(22,27): error TS2339: Property 'name' does not exist on type 'ImageFileRecord'.
+src/features/files/components/file-manager/AssetPreviewModal.tsx(30,57): error TS2339: Property 'categoryId' does not exist on type 'ImageFileRecord'.
+src/features/files/components/file-manager/AssetPreviewModal.tsx(31,55): error TS2339: Property 'isPublic' does not exist on type 'ImageFileRecord'.
+src/features/files/components/file-manager/AssetPreviewModal.tsx(38,23): error TS2339: Property 'description' does not exist on type 'ImageFileRecord'.
+src/features/files/components/file-manager/AssetPreviewModal.tsx(41,83): error TS2339: Property 'description' does not exist on type 'ImageFileRecord'.
+src/features/files/components/file-manager/AssetPreviewModal.tsx(49,42): error TS2339: Property 'metadata' does not exist on type 'ImageFileRecord'.
+src/features/files/components/file-manager/FileManagerModals.tsx(39,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; item: any; }' but required in type 'EntityModalProps<ImageFileRecord, ImageFileRecord>'.
+src/features/integrations/components/connections/IntegrationModal.tsx(156,11): error TS2412: Type '{ errorId?: string; integrationId?: string | null; connectionId?: string | null; } | undefined' is not assignable to type '{ errorId?: string; integrationId?: string; connectionId?: string; } | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+src/features/integrations/hooks/useIntegrationMutations.ts(18,3): error TS2322: Type 'UseMutationResult<DtoBase, Error, any>' is not assignable to type 'UseMutationResult<Integration, Error, { name: string; slug: string; }>'.
+  Type 'Override<MutationObserverIdleResult<DtoBase, Error, any, unknown>, { mutate: UseMutateFunction<DtoBase, Error, any, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<Integration, Error, { name: string; slug: string; }>'.
+    Type 'Override<MutationObserverIdleResult<DtoBase, Error, any, unknown>, { mutate: UseMutateFunction<DtoBase, Error, any, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<Integration, Error, { name: string; slug: string; }, unknown>, { mutate: UseMutateFunction<Integration, Error, { ...; }, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<DtoBase, Error, any, unknown>, { mutate: UseMutateFunction<DtoBase, Error, any, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<Integration, Error, { name: string; slug: string; }, unknown>, { mutate: UseMutateFunction<Integration, Error, { ...; }, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<DtoBase, Error, any, unknown>' is not assignable to type 'UseMutateFunction<Integration, Error, { name: string; slug: string; }, unknown>'.
+            Types of parameters 'options' and 'options' are incompatible.
+              Type 'MutateOptions<Integration, Error, { name: string; slug: string; }, unknown> | undefined' is not assignable to type 'MutateOptions<DtoBase, Error, any, unknown> | undefined'.
+                Type 'MutateOptions<Integration, Error, { name: string; slug: string; }, unknown>' is not assignable to type 'MutateOptions<DtoBase, Error, any, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Type 'DtoBase' is missing the following properties from type 'Integration': name, slug
+src/features/integrations/hooks/useIntegrationMutations.ts(18,10): error TS2554: Expected 2 arguments, but got 1.
+src/features/integrations/hooks/useIntegrationMutations.ts(20,20): error TS7006: Parameter 'queryClient' implicitly has an 'any' type.
+src/features/integrations/hooks/useIntegrationMutations.ts(65,10): error TS2554: Expected 2 arguments, but got 1.
+src/features/integrations/hooks/useIntegrationMutations.ts(69,20): error TS7006: Parameter 'queryClient' implicitly has an 'any' type.
+src/features/integrations/hooks/useIntegrationMutations.ts(69,33): error TS7006: Parameter 'variables' implicitly has an 'any' type.
+src/features/integrations/hooks/useListingQueries.ts(12,7): error TS6133: 'PRODUCT_LISTINGS_GC_TIME_MS' is declared but its value is never read.
+src/features/integrations/hooks/useListingQueries.ts(24,5): error TS2353: Object literal may only specify known properties, and 'enabled' does not exist in type 'ListQueryConfig<unknown, ProductListingWithDetails[]>'.
+src/features/integrations/hooks/useListingQueries.ts(26,23): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/features/internationalization/components/country-modal/hooks/useCountryForm.ts(45,34): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(23,10): error TS2554: Expected 2 arguments, but got 1.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(25,20): error TS7006: Parameter 'queryClient' implicitly has an 'any' type.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(32,10): error TS2554: Expected 2 arguments, but got 1.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(34,20): error TS7006: Parameter 'queryClient' implicitly has an 'any' type.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(41,10): error TS2554: Expected 2 arguments, but got 1.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(43,20): error TS7006: Parameter 'queryClient' implicitly has an 'any' type.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(50,10): error TS2554: Expected 2 arguments, but got 1.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(52,20): error TS7006: Parameter 'queryClient' implicitly has an 'any' type.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(59,10): error TS2554: Expected 2 arguments, but got 1.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(61,20): error TS7006: Parameter 'queryClient' implicitly has an 'any' type.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(68,10): error TS2554: Expected 2 arguments, but got 1.
+src/features/internationalization/hooks/useInternationalizationMutations.ts(70,20): error TS7006: Parameter 'queryClient' implicitly has an 'any' type.
+src/features/internationalization/hooks/useLanguageForm.ts(39,54): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/features/jobs/components/ProductListingJobsPanel.tsx(8,1): error TS6133: 'getStatusIcon' is declared but its value is never read.
+src/features/jobs/components/ProductListingJobsPanel.tsx(166,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; item: { job: ProductJob; listing: ListingJob; } | null; }' but required in type 'EntityModalProps<any, any>'.
+src/features/notesapp/api/useNoteMutations.ts(65,3): error TS2322: Type 'MutationResult<DeleteResponse, string>' is not assignable to type 'DeleteMutation'.
+  Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'DeleteMutation'.
+    Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<DeleteResponse, Error, string, unknown>' is not assignable to type 'UseMutateFunction<void, Error, string, unknown>'.
+            Type 'DeleteResponse' is not assignable to type 'void'.
+src/features/notesapp/api/useNoteMutations.ts(103,3): error TS2322: Type 'MutationResult<DeleteResponse, string>' is not assignable to type 'DeleteMutation'.
+  Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'DeleteMutation'.
+    Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<DeleteResponse, Error, string, unknown>' is not assignable to type 'UseMutateFunction<void, Error, string, unknown>'.
+            Type 'DeleteResponse' is not assignable to type 'void'.
+src/features/notesapp/api/useNoteMutations.ts(142,3): error TS2322: Type 'MutationResult<DeleteResponse, string>' is not assignable to type 'DeleteMutation'.
+  Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'DeleteMutation'.
+    Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<DeleteResponse, Error, string, unknown>' is not assignable to type 'UseMutateFunction<void, Error, string, unknown>'.
+            Type 'DeleteResponse' is not assignable to type 'void'.
+src/features/notesapp/api/useNoteMutations.ts(181,3): error TS2322: Type 'MutationResult<DeleteResponse, string>' is not assignable to type 'DeleteMutation'.
+  Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'DeleteMutation'.
+    Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<DeleteResponse, Error, string, unknown>' is not assignable to type 'UseMutateFunction<void, Error, string, unknown>'.
+            Type 'DeleteResponse' is not assignable to type 'void'.
+src/features/notesapp/api/useNoteMutations.ts(220,3): error TS2322: Type 'MutationResult<DeleteResponse, string>' is not assignable to type 'DeleteMutation'.
+  Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'DeleteMutation'.
+    Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<DeleteResponse, Error, string, unknown>' is not assignable to type 'UseMutateFunction<void, Error, string, unknown>'.
+            Type 'DeleteResponse' is not assignable to type 'void'.
+src/features/notesapp/components/CreateNoteModal.tsx(4,1): error TS6133: 'NoteRecord' is declared but its value is never read.
+src/features/notesapp/components/NoteCard.tsx(126,13): error TS7006: Parameter 'relation' implicitly has an 'any' type.
+src/features/notesapp/components/NoteCard.tsx(136,13): error TS7006: Parameter 'relation' implicitly has an 'any' type.
+src/features/notesapp/components/NoteDetailView.tsx(60,13): error TS7006: Parameter 'relation' implicitly has an 'any' type.
+src/features/notesapp/components/NoteDetailView.tsx(70,13): error TS7006: Parameter 'relation' implicitly has an 'any' type.
+src/features/notesapp/context/NoteFormContext.tsx(302,15): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/context/NoteFormContext.tsx(303,18): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/features/notesapp/context/NoteFormContext.tsx(305,15): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/context/NoteFormContext.tsx(306,18): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/features/notesapp/hooks/NotesAppContext.tsx(266,19): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/hooks/NotesAppContext.tsx(267,22): error TS7006: Parameter 'rid' implicitly has an 'any' type.
+src/features/notesapp/hooks/NotesAppContext.tsx(269,19): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/hooks/NotesAppContext.tsx(270,22): error TS7006: Parameter 'rid' implicitly has an 'any' type.
+src/features/notesapp/hooks/useNoteData.ts(137,3): error TS2322: Type 'DeleteMutation' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+  Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+    Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<void, Error, string, unknown>' is not assignable to type 'UseMutateFunction<DeleteResponse, Error, string, unknown>'.
+            Types of parameters 'options' and 'options' are incompatible.
+              Type 'MutateOptions<DeleteResponse, Error, string, unknown> | undefined' is not assignable to type 'MutateOptions<void, Error, string, unknown> | undefined'.
+                Type 'MutateOptions<DeleteResponse, Error, string, unknown>' is not assignable to type 'MutateOptions<void, Error, string, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Type 'void' is not assignable to type 'DeleteResponse'.
+src/features/notesapp/hooks/useNoteData.ts(149,3): error TS2322: Type 'DeleteMutation' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+  Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+    Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<void, Error, string, unknown>' is not assignable to type 'UseMutateFunction<DeleteResponse, Error, string, unknown>'.
+            Types of parameters 'options' and 'options' are incompatible.
+              Type 'MutateOptions<DeleteResponse, Error, string, unknown> | undefined' is not assignable to type 'MutateOptions<void, Error, string, unknown> | undefined'.
+                Type 'MutateOptions<DeleteResponse, Error, string, unknown>' is not assignable to type 'MutateOptions<void, Error, string, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Type 'void' is not assignable to type 'DeleteResponse'.
+src/features/notesapp/hooks/useNoteData.ts(161,3): error TS2322: Type 'DeleteMutation' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+  Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+    Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<void, Error, string, unknown>' is not assignable to type 'UseMutateFunction<DeleteResponse, Error, string, unknown>'.
+            Types of parameters 'options' and 'options' are incompatible.
+              Type 'MutateOptions<DeleteResponse, Error, string, unknown> | undefined' is not assignable to type 'MutateOptions<void, Error, string, unknown> | undefined'.
+                Type 'MutateOptions<DeleteResponse, Error, string, unknown>' is not assignable to type 'MutateOptions<void, Error, string, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Type 'void' is not assignable to type 'DeleteResponse'.
+src/features/notesapp/hooks/useNoteData.ts(173,3): error TS2322: Type 'DeleteMutation' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+  Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+    Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<void, Error, string, unknown>' is not assignable to type 'UseMutateFunction<DeleteResponse, Error, string, unknown>'.
+            Types of parameters 'options' and 'options' are incompatible.
+              Type 'MutateOptions<DeleteResponse, Error, string, unknown> | undefined' is not assignable to type 'MutateOptions<void, Error, string, unknown> | undefined'.
+                Type 'MutateOptions<DeleteResponse, Error, string, unknown>' is not assignable to type 'MutateOptions<void, Error, string, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Type 'void' is not assignable to type 'DeleteResponse'.
+src/features/notesapp/hooks/useNoteData.ts(185,3): error TS2322: Type 'DeleteMutation' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+  Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'UseMutationResult<DeleteResponse, Error, string>'.
+    Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<DeleteResponse, Error, string, unknown>, { mutate: UseMutateFunction<DeleteResponse, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<void, Error, string, unknown>' is not assignable to type 'UseMutateFunction<DeleteResponse, Error, string, unknown>'.
+            Types of parameters 'options' and 'options' are incompatible.
+              Type 'MutateOptions<DeleteResponse, Error, string, unknown> | undefined' is not assignable to type 'MutateOptions<void, Error, string, unknown> | undefined'.
+                Type 'MutateOptions<DeleteResponse, Error, string, unknown>' is not assignable to type 'MutateOptions<void, Error, string, unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+                  Type 'void' is not assignable to type 'DeleteResponse'.
+src/features/notesapp/hooks/useNoteOperations.ts(315,18): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/hooks/useNoteOperations.ts(316,20): error TS7006: Parameter 'rid' implicitly has an 'any' type.
+src/features/notesapp/hooks/useNoteOperations.ts(327,18): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/hooks/useNoteOperations.ts(328,20): error TS7006: Parameter 'rid' implicitly has an 'any' type.
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(60,15): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(67,20): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(69,25): error TS4111: Property 'textColor' comes from an index signature, so it must be accessed with ['textColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(70,31): error TS4111: Property 'backgroundColor' comes from an index signature, so it must be accessed with ['backgroundColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(71,36): error TS4111: Property 'markdownHeadingColor' comes from an index signature, so it must be accessed with ['markdownHeadingColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(72,33): error TS4111: Property 'markdownLinkColor' comes from an index signature, so it must be accessed with ['markdownLinkColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(73,38): error TS4111: Property 'markdownCodeBackground' comes from an index signature, so it must be accessed with ['markdownCodeBackground'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(74,32): error TS4111: Property 'markdownCodeText' comes from an index signature, so it must be accessed with ['markdownCodeText'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(75,38): error TS4111: Property 'relatedNoteBorderWidth' comes from an index signature, so it must be accessed with ['relatedNoteBorderWidth'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(76,38): error TS4111: Property 'relatedNoteBorderColor' comes from an index signature, so it must be accessed with ['relatedNoteBorderColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(77,42): error TS4111: Property 'relatedNoteBackgroundColor' comes from an index signature, so it must be accessed with ['relatedNoteBackgroundColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(78,36): error TS4111: Property 'relatedNoteTextColor' comes from an index signature, so it must be accessed with ['relatedNoteTextColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(83,108): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(123,22): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(131,27): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(155,29): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(164,29): error TS4111: Property 'textColor' comes from an index signature, so it must be accessed with ['textColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(174,29): error TS4111: Property 'backgroundColor' comes from an index signature, so it must be accessed with ['backgroundColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(184,29): error TS4111: Property 'markdownHeadingColor' comes from an index signature, so it must be accessed with ['markdownHeadingColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(194,29): error TS4111: Property 'markdownLinkColor' comes from an index signature, so it must be accessed with ['markdownLinkColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(204,29): error TS4111: Property 'markdownCodeBackground' comes from an index signature, so it must be accessed with ['markdownCodeBackground'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(214,29): error TS4111: Property 'markdownCodeText' comes from an index signature, so it must be accessed with ['markdownCodeText'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(226,29): error TS4111: Property 'relatedNoteBorderWidth' comes from an index signature, so it must be accessed with ['relatedNoteBorderWidth'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(239,29): error TS4111: Property 'relatedNoteBorderColor' comes from an index signature, so it must be accessed with ['relatedNoteBorderColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(249,29): error TS4111: Property 'relatedNoteBackgroundColor' comes from an index signature, so it must be accessed with ['relatedNoteBackgroundColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(262,29): error TS4111: Property 'relatedNoteTextColor' comes from an index signature, so it must be accessed with ['relatedNoteTextColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(341,41): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(353,41): error TS4111: Property 'textColor' comes from an index signature, so it must be accessed with ['textColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(364,41): error TS4111: Property 'backgroundColor' comes from an index signature, so it must be accessed with ['backgroundColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(378,41): error TS4111: Property 'markdownHeadingColor' comes from an index signature, so it must be accessed with ['markdownHeadingColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(392,41): error TS4111: Property 'markdownLinkColor' comes from an index signature, so it must be accessed with ['markdownLinkColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(406,41): error TS4111: Property 'markdownCodeBackground' comes from an index signature, so it must be accessed with ['markdownCodeBackground'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(420,41): error TS4111: Property 'markdownCodeText' comes from an index signature, so it must be accessed with ['markdownCodeText'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(436,41): error TS4111: Property 'relatedNoteBorderWidth' comes from an index signature, so it must be accessed with ['relatedNoteBorderWidth'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(450,41): error TS4111: Property 'relatedNoteBorderColor' comes from an index signature, so it must be accessed with ['relatedNoteBorderColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(464,41): error TS4111: Property 'relatedNoteBackgroundColor' comes from an index signature, so it must be accessed with ['relatedNoteBackgroundColor'].
+src/features/notesapp/pages/AdminNotesThemesPage.tsx(478,41): error TS4111: Property 'relatedNoteTextColor' comes from an index signature, so it must be accessed with ['relatedNoteTextColor'].
+src/features/notesapp/services/notes/index.ts(60,11): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/services/notes/index.ts(61,14): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/services/notes/index.ts(64,11): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/services/notes/index.ts(65,14): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/services/notes/index.ts(131,18): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/services/notes/index.ts(132,20): error TS7006: Parameter 'rid' implicitly has an 'any' type.
+src/features/notesapp/services/notes/index.ts(148,22): error TS7006: Parameter 'rel' implicitly has an 'any' type.
+src/features/notesapp/services/notes/index.ts(149,24): error TS7006: Parameter 'rid' implicitly has an 'any' type.
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(59,23): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(60,34): error TS7006: Parameter 'c' implicitly has an 'any' type.
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(61,40): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(204,12): error TS4111: Property 'notebookId' comes from an index signature, so it must be accessed with ['notebookId'].
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(214,14): error TS4111: Property 'title' comes from an index signature, so it must be accessed with ['title'].
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(216,14): error TS4111: Property 'content' comes from an index signature, so it must be accessed with ['content'].
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(221,12): error TS4111: Property 'isPinned' comes from an index signature, so it must be accessed with ['isPinned'].
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(225,12): error TS4111: Property 'isArchived' comes from an index signature, so it must be accessed with ['isArchived'].
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(229,12): error TS4111: Property 'isFavorite' comes from an index signature, so it must be accessed with ['isFavorite'].
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(233,12): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
+src/features/notesapp/services/notes/note-repository/mongo-note-repository-utils.ts(237,12): error TS4111: Property 'categories' comes from an index signature, so it must be accessed with ['categories'].
+src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts(492,7): error TS2322: Type '{ tags: { tagId: string; }; }' is not assignable to type 'PullOperator<any>'.
+  Type '{ tags: { tagId: string; }; }' is not assignable to type 'NotAcceptedFields<any, readonly any[]>'.
+    Property 'tags' is incompatible with index signature.
+      Type '{ tagId: string; }' is not assignable to type 'undefined'.
+src/features/notesapp/services/notes/note-repository/mongo-note-repository.ts(667,9): error TS2322: Type '{ categories: { categoryId: string; }; }' is not assignable to type 'PullOperator<any>'.
+  Type '{ categories: { categoryId: string; }; }' is not assignable to type 'NotAcceptedFields<any, readonly any[]>'.
+    Property 'categories' is incompatible with index signature.
+      Type '{ categoryId: string; }' is not assignable to type 'undefined'.
+src/features/products/components/list/ProductListHeader.tsx(17,15): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/products/components/modals/ProductFormModal.tsx(6,10): error TS6133: 'ProductFormProvider' is declared but its value is never read.
+src/features/products/components/ProductModals.tsx(5,1): error TS6133: 'TriggerButtonBar' is declared but its value is never read.
+src/features/products/components/ProductModals.tsx(15,7): error TS6133: 'FileManager' is declared but its value is never read.
+src/features/products/components/ProductModals.tsx(66,12): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; onClose: () => void; title: string; submitButtonText: string; validationInstanceScopeOverride: "draft_template" | "product_create"; }' but required in type 'ProductFormModalProps'.
+src/features/products/components/ProductModals.tsx(83,12): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; onClose: () => void; title: string; submitButtonText: string; validationInstanceScopeOverride: "product_edit"; }' but required in type 'ProductFormModalProps'.
+src/features/products/context/ProductListContext.tsx(12,15): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/products/hooks/useAiPathSettings.ts(64,5): error TS2345: Argument of type '{ readonly all: readonly ["user-preferences"]; }' is not assignable to parameter of type 'readonly unknown[]'.
+  Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+src/features/products/hooks/useAiPathSettings.ts(67,58): error TS2345: Argument of type 'InferDataFromTag<TQueryFnData, TTaggedQueryKey> | undefined' is not assignable to parameter of type '{ aiPathsActivePathId?: unknown; } | null | undefined'.
+  Type 'InferDataFromTag<TQueryFnData, TTaggedQueryKey>' is not assignable to type '{ aiPathsActivePathId?: unknown; } | null | undefined'.
+    Type 'TQueryFnData' is not assignable to type '{ aiPathsActivePathId?: unknown; } | null | undefined'.
+src/features/products/hooks/useAiPathSettings.ts(70,9): error TS2740: Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+src/features/products/hooks/useProductListState.tsx(42,15): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/products/hooks/useProductMetadataQueries.ts(21,3): error TS2724: '"@/shared/lib/query-factories"' has no exported member named 'createSaveMutation'. Did you mean 'createMutation'?
+src/features/products/hooks/useProductMetadataQueries.ts(105,20): error TS7031: Binding element 'id' implicitly has an 'any' type.
+src/features/products/hooks/useProductMetadataQueries.ts(105,24): error TS7031: Binding element 'data' implicitly has an 'any' type.
+src/features/products/hooks/useProductOperations.ts(10,15): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/products/hooks/useProductSettingsQueries.ts(6,3): error TS2724: '"@/shared/lib/query-factories"' has no exported member named 'createSaveMutation'. Did you mean 'createMutation'?
+src/features/products/hooks/useProductSettingsQueries.ts(63,5): error TS2353: Object literal may only specify known properties, and 'enabled' does not exist in type 'ListQueryConfig<unknown, ProductCategoryWithChildren[]>'.
+src/features/products/hooks/useProductSettingsQueries.ts(83,17): error TS2323: Cannot redeclare exported variable 'useValidationPatterns'.
+src/features/products/hooks/useProductSettingsQueries.ts(83,17): error TS2393: Duplicate function implementation.
+src/features/products/hooks/useProductSettingsQueries.ts(90,17): error TS2323: Cannot redeclare exported variable 'useProductValidatorConfig'.
+src/features/products/hooks/useProductSettingsQueries.ts(90,17): error TS2393: Duplicate function implementation.
+src/features/products/hooks/useProductSettingsQueries.ts(98,17): error TS2323: Cannot redeclare exported variable 'useValidationPatterns'.
+src/features/products/hooks/useProductSettingsQueries.ts(98,17): error TS2393: Duplicate function implementation.
+src/features/products/hooks/useProductSettingsQueries.ts(98,42): error TS2304: Cannot find name 'UseQueryResult'.
+src/features/products/hooks/useProductSettingsQueries.ts(99,10): error TS2304: Cannot find name 'useQuery'.
+src/features/products/hooks/useProductSettingsQueries.ts(105,17): error TS2323: Cannot redeclare exported variable 'useProductValidatorConfig'.
+src/features/products/hooks/useProductSettingsQueries.ts(105,17): error TS2393: Duplicate function implementation.
+src/features/products/hooks/useProductSettingsQueries.ts(105,78): error TS2304: Cannot find name 'UseQueryResult'.
+src/features/products/hooks/useProductSettingsQueries.ts(106,10): error TS2304: Cannot find name 'useQuery'.
+src/features/products/hooks/useProductsMutations.ts(14,1): error TS6133: 'DeleteResponse' is declared but its value is never read.
+src/features/products/hooks/useProductsMutations.ts(64,3): error TS2322: Type 'MutationResult<{ success: boolean; }, string>' is not assignable to type 'DeleteMutation'.
+  Type 'Override<MutationObserverIdleResult<{ success: boolean; }, Error, string, unknown>, { mutate: UseMutateFunction<{ success: boolean; }, Error, string, unknown>; }> & { ...; }' is not assignable to type 'DeleteMutation'.
+    Type 'Override<MutationObserverIdleResult<{ success: boolean; }, Error, string, unknown>, { mutate: UseMutateFunction<{ success: boolean; }, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }> & { ...; }'.
+      Type 'Override<MutationObserverIdleResult<{ success: boolean; }, Error, string, unknown>, { mutate: UseMutateFunction<{ success: boolean; }, Error, string, unknown>; }> & { ...; }' is not assignable to type 'Override<MutationObserverIdleResult<void, Error, string, unknown>, { mutate: UseMutateFunction<void, Error, string, unknown>; }>'.
+        Types of property 'mutate' are incompatible.
+          Type 'UseMutateFunction<{ success: boolean; }, Error, string, unknown>' is not assignable to type 'UseMutateFunction<void, Error, string, unknown>'.
+            Type '{ success: boolean; }' is not assignable to type 'void'.
+src/features/products/hooks/useProductsMutations.ts(148,5): error TS2353: Object literal may only specify known properties, and 'onSuccess' does not exist in type '{ mutationFn: (variables: { id: string; field: string; value: unknown; }) => Promise<void>; options?: UseMutationOptions<void, Error, { id: string; field: string; value: unknown; }, unknown>; }'.
+src/features/products/hooks/useProductsMutations.ts(148,23): error TS7006: Parameter '_' implicitly has an 'any' type.
+src/features/products/hooks/useProductsMutations.ts(148,26): error TS7006: Parameter 'variables' implicitly has an 'any' type.
+src/features/products/hooks/useUserPreferences.ts(83,7): error TS2740: Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+src/features/products/hooks/useUserPreferences.ts(106,5): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<any, Error, ProductListPreferences, readonly unknown[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>', gave the following error.
+    Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<any, Error, ProductListPreferences, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+  Overload 3 of 3, '(options: UseQueryOptions<any, Error, ProductListPreferences, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+src/features/vector-drawing/useShapeHistory.ts(45,73): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/features/vector-drawing/useShapeHistory.ts(90,73): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/features/viewer3d/pages/Admin3DAssetsPage.tsx(113,47): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+src/features/viewer3d/pages/Asset3DListPage.tsx(96,47): error TS7006: Parameter 'tag' implicitly has an 'any' type.
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(52,20): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(53,27): error TS4111: Property 'description' comes from an index signature, so it must be accessed with ['description'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(54,24): error TS4111: Property 'filename' comes from an index signature, so it must be accessed with ['filename'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(55,24): error TS4111: Property 'filepath' comes from an index signature, so it must be accessed with ['filepath'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(56,24): error TS4111: Property 'mimetype' comes from an index signature, so it must be accessed with ['mimetype'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(57,20): error TS4111: Property 'size' comes from an index signature, so it must be accessed with ['size'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(58,20): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(59,24): error TS4111: Property 'categoryId' comes from an index signature, so it must be accessed with ['categoryId'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(60,24): error TS4111: Property 'metadata' comes from an index signature, so it must be accessed with ['metadata'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(60,41): error TS4111: Property 'metadata' comes from an index signature, so it must be accessed with ['metadata'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(61,24): error TS4111: Property 'isPublic' comes from an index signature, so it must be accessed with ['isPublic'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(115,16): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(115,59): error TS4111: Property 'name' comes from an index signature, so it must be accessed with ['name'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(116,16): error TS4111: Property 'description' comes from an index signature, so it must be accessed with ['description'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(116,73): error TS4111: Property 'description' comes from an index signature, so it must be accessed with ['description'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(117,16): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(117,59): error TS4111: Property 'tags' comes from an index signature, so it must be accessed with ['tags'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(118,16): error TS4111: Property 'categoryId' comes from an index signature, so it must be accessed with ['categoryId'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(118,69): error TS4111: Property 'categoryId' comes from an index signature, so it must be accessed with ['categoryId'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(119,16): error TS4111: Property 'metadata' comes from an index signature, so it must be accessed with ['metadata'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(120,36): error TS4111: Property 'metadata' comes from an index signature, so it must be accessed with ['metadata'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(120,53): error TS4111: Property 'metadata' comes from an index signature, so it must be accessed with ['metadata'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(122,16): error TS4111: Property 'isPublic' comes from an index signature, so it must be accessed with ['isPublic'].
+src/features/viewer3d/services/asset3d-repository/prisma-asset3d-repository.ts(122,67): error TS4111: Property 'isPublic' comes from an index signature, so it must be accessed with ['isPublic'].
+src/shared/hooks/sync/useSystemSync.ts(83,33): error TS7053: Element implicitly has an 'any' type because expression of type '0' can't be used to index type '{ readonly all: readonly ["user-preferences"]; }'.
+  Property '0' does not exist on type '{ readonly all: readonly ["user-preferences"]; }'.
+src/shared/hooks/useUserPreferences.ts(41,5): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<unknown, Error, unknown, readonly unknown[]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<unknown, Error>', gave the following error.
+    Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<unknown, Error, unknown, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<unknown, Error>', gave the following error.
+    Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+  Overload 3 of 3, '(options: UseQueryOptions<unknown, Error, unknown, readonly unknown[]>, queryClient?: QueryClient | undefined): UseQueryResult<unknown, Error>', gave the following error.
+    Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+src/shared/hooks/useUserPreferences.ts(67,65): error TS2345: Argument of type '{ readonly all: readonly ["user-preferences"]; }' is not assignable to parameter of type 'readonly unknown[]'.
+  Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+src/shared/hooks/useUserPreferences.ts(78,9): error TS2345: Argument of type '{ readonly all: readonly ["user-preferences"]; }' is not assignable to parameter of type 'readonly unknown[]'.
+  Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+src/shared/lib/mutation-factories.ts(10,24): error TS6196: 'CreatePayload' is declared but never used.
+src/shared/lib/mutation-factories.ts(10,39): error TS6196: 'UpdatePayload' is declared but never used.
+src/shared/lib/offline-support.ts(62,3): error TS7053: Element implicitly has an 'any' type because expression of type '0' can't be used to index type '{ readonly all: readonly ["user-preferences"]; }'.
+  Property '0' does not exist on type '{ readonly all: readonly ["user-preferences"]; }'.
+src/shared/lib/query-factories.ts(27,4): error TS2314: Generic type 'ListQuery' requires 1 type argument(s).
+src/shared/lib/query-factories.ts(33,9): error TS2314: Generic type 'ListQuery' requires 1 type argument(s).
+src/shared/lib/query-invalidation.ts(270,37): error TS2740: Type '{ readonly all: readonly ["user-preferences"]; }' is missing the following properties from type 'readonly unknown[]': length, concat, join, slice, and 26 more.
+src/shared/providers/QueryProvider.tsx(87,11): error TS2488: Type '{ readonly all: readonly ["user-preferences"]; }' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/shared/types/domain/analytics.ts(2,3): error TS2305: Module '"../dtos"' has no exported member 'AnalyticsEventDto'.
+src/shared/types/domain/analytics.ts(3,3): error TS2305: Module '"../dtos"' has no exported member 'AnalyticsSummaryDto'.
+src/shared/types/domain/analytics.ts(4,3): error TS2305: Module '"../dtos"' has no exported member 'CreateAnalyticsEventDto'.
+src/shared/types/domain/analytics.ts(5,3): error TS2305: Module '"../dtos"' has no exported member 'AnalyticsScopeDto'.
+src/shared/types/domain/analytics.ts(6,3): error TS2305: Module '"../dtos"' has no exported member 'AnalyticsEventTypeDto'.
+src/shared/types/domain/analytics.ts(7,3): error TS2305: Module '"../dtos"' has no exported member 'AnalyticsUtmDto'.
+src/shared/types/domain/analytics.ts(8,3): error TS2305: Module '"../dtos"' has no exported member 'AnalyticsViewportDto'.
+src/shared/types/domain/analytics.ts(9,3): error TS2305: Module '"../dtos"' has no exported member 'AnalyticsScreenDto'.
+src/shared/types/domain/analytics.ts(10,3): error TS2305: Module '"../dtos"' has no exported member 'AnalyticsConnectionInfoDto'.
+src/shared/types/domain/files.ts(4,3): error TS2305: Module '"../dtos"' has no exported member 'FileDto'.
+src/shared/types/domain/files.ts(5,3): error TS2305: Module '"../dtos"' has no exported member 'ImageFileDto'.
+src/shared/types/domain/files.ts(6,3): error TS2305: Module '"../dtos"' has no exported member 'UploadFileDto'.
+src/shared/types/domain/files.ts(7,3): error TS2724: '"../dtos"' has no exported member named 'UpdateFileDto'. Did you mean 'UpdateDto'?
+src/shared/types/domain/integrations.ts(5,3): error TS2305: Module '"../dtos"' has no exported member 'ImageTransformOptionsDto'.
+src/shared/types/domain/integrations.ts(6,3): error TS2305: Module '"../dtos"' has no exported member 'ImageRetryPresetDto'.
+src/shared/types/domain/integrations.ts(7,3): error TS2305: Module '"../dtos"' has no exported member 'TemplateDto'.
+src/shared/types/domain/integrations.ts(8,3): error TS2305: Module '"../dtos"' has no exported member 'TemplateMappingDto'.
+src/shared/types/domain/integrations.ts(9,3): error TS2305: Module '"../dtos"' has no exported member 'ImportExportTemplateDto'.
+src/shared/types/domain/integrations.ts(10,3): error TS2305: Module '"../dtos"' has no exported member 'ImportExportTemplateMappingDto'.
+src/shared/types/domain/integrations.ts(11,3): error TS2305: Module '"../dtos"' has no exported member 'BaseInventoryDto'.
+src/shared/types/domain/integrations.ts(12,3): error TS2305: Module '"../dtos"' has no exported member 'BaseWarehouseDto'.
+src/shared/types/domain/integrations.ts(13,3): error TS2305: Module '"../dtos"' has no exported member 'BaseCategoryDto'.
+src/shared/types/domain/internationalization.ts(2,3): error TS2305: Module '"../dtos"' has no exported member 'LanguageDto'.
+src/shared/types/domain/internationalization.ts(3,3): error TS2305: Module '"../dtos"' has no exported member 'CountryDto'.
+src/shared/types/domain/internationalization.ts(4,3): error TS2305: Module '"../dtos"' has no exported member 'CurrencyDto'.
+src/shared/types/domain/internationalization.ts(5,3): error TS2305: Module '"../dtos"' has no exported member 'TranslationDto'.
+src/shared/types/domain/internationalization.ts(6,3): error TS2305: Module '"../dtos"' has no exported member 'CreateLanguageDto'.
+src/shared/types/domain/internationalization.ts(7,3): error TS2305: Module '"../dtos"' has no exported member 'UpdateLanguageDto'.
+src/shared/types/domain/internationalization.ts(8,3): error TS2305: Module '"../dtos"' has no exported member 'CreateCountryDto'.
+src/shared/types/domain/internationalization.ts(9,3): error TS2305: Module '"../dtos"' has no exported member 'UpdateCountryDto'.
+src/shared/types/domain/internationalization.ts(10,3): error TS2305: Module '"../dtos"' has no exported member 'CreateCurrencyDto'.
+src/shared/types/domain/internationalization.ts(11,3): error TS2305: Module '"../dtos"' has no exported member 'UpdateCurrencyDto'.
+src/shared/types/domain/internationalization.ts(12,3): error TS2305: Module '"../dtos"' has no exported member 'CreateTranslationDto'.
+src/shared/types/domain/internationalization.ts(13,3): error TS2305: Module '"../dtos"' has no exported member 'UpdateTranslationDto'.
+src/shared/types/domain/jobs.ts(1,15): error TS2724: '"../dtos"' has no exported member named 'ProductAiJobDto'. Did you mean 'ProductDto'?
+src/shared/types/domain/jobs.ts(1,32): error TS2305: Module '"../dtos"' has no exported member 'ProductAiJobTypeDto'.
+src/shared/types/domain/jobs.ts(1,53): error TS2305: Module '"../dtos"' has no exported member 'ProductAiJobResultDto'.
+src/shared/types/domain/notes.ts(3,3): error TS2305: Module '"../dtos"' has no exported member 'NoteDto'.
+src/shared/types/domain/notes.ts(4,3): error TS2305: Module '"../dtos"' has no exported member 'NotebookDto'.
+src/shared/types/domain/notes.ts(5,3): error TS2305: Module '"../dtos"' has no exported member 'NoteCategoryDto'.
+src/shared/types/domain/notes.ts(6,3): error TS2305: Module '"../dtos"' has no exported member 'NoteTagDto'.
+src/shared/types/domain/notes.ts(7,3): error TS2305: Module '"../dtos"' has no exported member 'NoteThemeDto'.
+src/shared/types/domain/notes.ts(8,3): error TS2724: '"../dtos"' has no exported member named 'CreateNoteDto'. Did you mean 'CreateDto'?
+src/shared/types/domain/notes.ts(9,3): error TS2724: '"../dtos"' has no exported member named 'UpdateNoteDto'. Did you mean 'UpdateDto'?
+src/shared/types/domain/notes.ts(10,3): error TS2305: Module '"../dtos"' has no exported member 'CreateNotebookDto'.
+src/shared/types/domain/notes.ts(11,3): error TS2305: Module '"../dtos"' has no exported member 'UpdateNotebookDto'.
+src/shared/types/domain/notes.ts(12,3): error TS2305: Module '"../dtos"' has no exported member 'CreateNoteCategoryDto'.
+src/shared/types/domain/notes.ts(13,3): error TS2305: Module '"../dtos"' has no exported member 'UpdateNoteCategoryDto'.
+src/shared/types/domain/notes.ts(14,3): error TS2305: Module '"../dtos"' has no exported member 'CreateNoteTagDto'.
+src/shared/types/domain/notes.ts(15,3): error TS2305: Module '"../dtos"' has no exported member 'UpdateNoteTagDto'.
+src/shared/types/domain/notes.ts(16,3): error TS2305: Module '"../dtos"' has no exported member 'CreateNoteThemeDto'.
+src/shared/types/domain/notes.ts(17,3): error TS2305: Module '"../dtos"' has no exported member 'UpdateNoteThemeDto'.
+src/shared/types/domain/notes.ts(18,3): error TS2305: Module '"../dtos"' has no exported member 'NoteEditorType'.
+src/shared/types/domain/notes.ts(19,3): error TS2305: Module '"../dtos"' has no exported member 'NoteWithRelationsDto'.
+src/shared/types/domain/notes.ts(20,3): error TS2724: '"../dtos"' has no exported member named 'NoteTagRelationDto'. Did you mean 'IntegrationDto'?
+src/shared/types/domain/notes.ts(21,3): error TS2305: Module '"../dtos"' has no exported member 'NoteCategoryRelationDto'.
+src/shared/types/domain/notes.ts(22,3): error TS2724: '"../dtos"' has no exported member named 'NoteRelationDto'. Did you mean 'IntegrationDto'?
+src/shared/types/domain/notes.ts(23,3): error TS2305: Module '"../dtos"' has no exported member 'RelatedNoteDto'.
+src/shared/types/domain/user-preferences.ts(1,15): error TS2305: Module '"../dtos"' has no exported member 'UserPreferencesDto'.
+src/shared/types/domain/user-preferences.ts(1,35): error TS2305: Module '"../dtos"' has no exported member 'UpdateUserPreferencesDto'.
+src/shared/types/domain/user-preferences.ts(1,61): error TS2305: Module '"../dtos"' has no exported member 'JsonValue'.
+src/shared/types/domain/vector.ts(2,3): error TS2305: Module '"../dtos"' has no exported member 'VectorToolModeDto'.
+src/shared/types/domain/vector.ts(3,3): error TS2305: Module '"../dtos"' has no exported member 'VectorPointDto'.
+src/shared/types/domain/vector.ts(4,3): error TS2305: Module '"../dtos"' has no exported member 'VectorShapeTypeDto'.
+src/shared/types/domain/vector.ts(5,3): error TS2305: Module '"../dtos"' has no exported member 'VectorShapeRoleDto'.
+src/shared/types/domain/vector.ts(6,3): error TS2305: Module '"../dtos"' has no exported member 'VectorShapeDto'.
+src/shared/types/domain/viewer3d.ts(1,15): error TS2305: Module '"../dtos"' has no exported member 'Asset3dDto'.
+src/shared/types/domain/viewer3d.ts(1,27): error TS2305: Module '"../dtos"' has no exported member 'Asset3dCategoryDto'.
+src/shared/types/domain/viewer3d.ts(1,47): error TS2305: Module '"../dtos"' has no exported member 'Asset3dTagDto'.
+src/shared/types/domain/viewer3d.ts(1,62): error TS2305: Module '"../dtos"' has no exported member 'Asset3dViewerConfigDto'.
+src/shared/ui/vector-canvas.tsx(1046,24): error TS18047: 'dragRef.current' is possibly 'null'.

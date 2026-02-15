@@ -8,7 +8,7 @@ import type {
   AiNode,
 } from '@/features/ai/ai-paths/lib';
 import type { PathMeta } from '@/shared/types/domain/ai-paths';
-import { Button, Input, Label, AppModal, SelectSimple, useToast } from '@/shared/ui';
+import { Button, Label, SelectSimple, useToast } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
@@ -26,6 +26,7 @@ import { RunHistoryPanel } from '../run-history-panel';
 import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { SimulationDialog } from '../simulation-dialog';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
+import { RenamePathModal } from '../modals/RenamePathModal';
 
 const formatDurationMs = (value: number | null | undefined): string => {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
@@ -128,6 +129,21 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const [renameDraft, setRenameDraft] = useState('');
   const isFocusMode = isFocusModeProp ?? isFocusModeInternal;
   const setIsFocusMode = onFocusModeChange ?? setIsFocusModeInternal;
+
+  // State for dialogs
+  const [runDetailOpen, setRunDetailOpen] = useState(false);
+  const [runStreamPaused, setRunStreamPaused] = useState(false);
+  const [runHistoryNodeId, setRunHistoryNodeId] = useState<string | null>(null);
+
+  const [presetsModalOpen, setPresetsModalOpen] = useState(false);
+
+  const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<string | null>(null);
+  const simulationNode = useMemo(() => 
+    nodes.find(n => n.id === simulationOpenNodeId) ?? null, 
+  [nodes, simulationOpenNodeId]);
+
+  const { setNodes } = useGraphActions();
+  const { runSimulation } = useRuntimeActions();
 
   const sortedPaths = useMemo(
     () =>
@@ -513,56 +529,27 @@ export function AiPathsSettingsView(): React.JSX.Element {
             )
             : null}
 
-          <AppModal
-            open={renameOpen}
+          <RenamePathModal
+            isOpen={renameOpen}
             onClose={() => setRenameOpen(false)}
-            title='Rename Path'
-            size='sm'
-            footer={
-              <div className='flex w-full justify-end gap-2'>
-                <Button
-                  type='button'
-                  className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
-                  onClick={() => setRenameOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type='button'
-                  className='rounded-md border text-sm text-white hover:bg-muted/60'
-                  onClick={() => {
-                    const nextName = renameDraft.trim();
-                    if (!nextName) {
-                      toast('Path name is required.', { variant: 'error' });
-                      return;
-                    }
-                    setPathName(nextName);
-                    if (activePathId) {
-                      const updatedAt = new Date().toISOString();
-                      setPaths((prev) => prev.map((p) => p.id === activePathId ? { ...p, name: nextName, updatedAt } : p));
-                    }
-                    setRenameOpen(false);
-                    void savePathConfig({ pathNameOverride: nextName });
-                  }}
-                >
-                  Save
-                </Button>
-              </div>
-            }
-          >
-            <div className='space-y-2'>
-              <div className='space-y-1'>
-                <Label className='text-xs text-gray-400'>Name</Label>
-                <Input
-                  className='h-9 w-full rounded-md border border-border bg-card/60 px-3 text-sm text-white'
-                  value={renameDraft}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setRenameDraft(event.target.value)}
-                  placeholder='Path name'
-                  autoFocus
-                />
-              </div>
-            </div>
-          </AppModal>
+            onSuccess={() => {}}
+            draftName={renameDraft}
+            setDraftName={setRenameDraft}
+            onSave={() => {
+              const nextName = renameDraft.trim();
+              if (!nextName) {
+                toast('Path name is required.', { variant: 'error' });
+                return;
+              }
+              setPathName(nextName);
+              if (activePathId) {
+                const updatedAt = new Date().toISOString();
+                setPaths((prev) => prev.map((p) => p.id === activePathId ? { ...p, name: nextName, updatedAt } : p));
+              }
+              setRenameOpen(false);
+              void savePathConfig({ pathNameOverride: nextName });
+            }}
+          />
 
           <div
             className={`grid grid-cols-1 min-h-0 transition-[grid-template-columns] duration-300 ease-in-out ${
@@ -731,9 +718,105 @@ export function AiPathsSettingsView(): React.JSX.Element {
       {activeTab === 'docs' && <DocsTabPanel />}
 
       <NodeConfigDialog />
-      <RunDetailDialog />
-      <PresetsDialog />
-      <SimulationDialog />
+      <RunDetailDialog
+        isOpen={runDetailOpen}
+        onClose={() => setRunDetailOpen(false)}
+        onSuccess={() => {}}
+        loading={false}
+        runDetail={null}
+        runStreamStatus='idle'
+        runStreamPaused={runStreamPaused}
+        runEventsOverflow={false}
+        runEventsBatchLimit={100}
+        runHistoryNodeId={runHistoryNodeId}
+        onStreamPauseToggle={setRunStreamPaused}
+        onHistoryNodeSelect={setRunHistoryNodeId}
+      />
+      <PresetsDialog
+        isOpen={presetsModalOpen}
+        onClose={() => setPresetsModalOpen(false)}
+        onSuccess={() => {}}
+        presetsJson=''
+        setPresetsJson={() => {}}
+        clusterPresets={[]}
+        onImport={async (mode) => {
+          await state.handleImportPresets(mode).catch(() => {});
+        }}
+        onCopyJson={(value) => {
+          navigator.clipboard
+            .writeText(value)
+            .then(() => state.toast('Presets copied to clipboard.', { variant: 'success' }))
+            .catch((error: Error) => {
+              state.reportAiPathsError(
+                error,
+                { action: 'copyPresets' },
+                'Failed to copy presets:'
+              );
+              state.toast('Failed to copy presets.', { variant: 'error' });
+            });
+        }}
+      />
+      <SimulationDialog
+        isOpen={Boolean(simulationOpenNodeId)}
+        onClose={() => setSimulationOpenNodeId(null)}
+        onSuccess={() => {}}
+        item={simulationNode}
+        isPathLocked={isPathLocked}
+        onSimulate={async (node, entityId) => {
+          const runNode: AiNode = {
+            ...node,
+            config: {
+              ...node.config,
+              simulation: {
+                ...node.config?.simulation,
+                productId: entityId,
+                entityId,
+                entityType: node.config?.simulation?.entityType ?? 'product',
+              },
+            },
+          };
+          setNodes((prev: AiNode[]): AiNode[] =>
+            prev.map((n: AiNode): AiNode =>
+              n.id === node.id ? runNode : n
+            )
+          );
+          void savePathConfig({
+            silent: true,
+            includeNodeConfig: true,
+            force: true,
+            nodeOverride: runNode,
+          });
+          void runSimulation(runNode);
+        }}
+        onConfigChange={async (nodeId, entityId) => {
+          setNodes((prev: AiNode[]): AiNode[] => {
+            const next = prev.map((node: AiNode): AiNode =>
+              node.id === nodeId
+                ? {
+                  ...node,
+                  config: {
+                    ...node.config,
+                    simulation: {
+                      ...node.config?.simulation,
+                      productId: entityId,
+                      entityId,
+                      entityType: node.config?.simulation?.entityType ?? 'product',
+                    },
+                  },
+                }
+                : node
+            );
+            const persistedNode = next.find((node: AiNode): boolean => node.id === nodeId);
+            void savePathConfig({
+              silent: true,
+              includeNodeConfig: true,
+              force: true,
+              ...(persistedNode ? { nodeOverride: persistedNode } : {}),
+            });
+            return next;
+          });
+        }}
+      />
     </div>
   );
 }

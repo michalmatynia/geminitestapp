@@ -45,8 +45,11 @@ export type {
 
 export type { ProductFormData } from './forms';
 export type {
-  ProductDraft,
-  CreateProductDraftInput,
-  UpdateProductDraftInput,
+  ProductDraftDto,
+  CreateProductDraftDto,
+  UpdateProductDraftDto,
+  ProductDraftDto as ProductDraft,
+  CreateProductDraftDto as CreateProductDraftInput,
+  UpdateProductDraftDto as UpdateProductDraftInput,
 } from './drafts';
 export type { ProductStudioSequencingConfig } from './product-studio';

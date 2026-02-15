@@ -7,8 +7,8 @@ import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord }
 import { Input, ItemLibrary, SelectSimple, Textarea, useToast, Checkbox, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { useAgentTeachingContext } from '../context/AgentTeachingContext';
-import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeaching';
+import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
+import { useDeleteTeachingAgentMutation, useUpsertTeachingAgentMutation } from '../hooks/useAgentTeachingQueries';
 
 const isEmbeddingModel = (model: string): boolean => buildModelProfile(model).isEmbedding;
 type AgentTeachingLibraryItem = Omit<AgentTeachingAgentRecord, 'description'> & {
@@ -17,7 +17,7 @@ type AgentTeachingLibraryItem = Omit<AgentTeachingAgentRecord, 'description'> & 
 
 export function AgentTeachingAgentsPage(): React.JSX.Element {
   const { toast } = useToast();
-  const { agents, collections, modelOptions, isLoading: isLoadingContext } = useAgentTeachingContext();
+  const { agents, collections, modelOptions, isLoading: isLoadingContext } = useAgentTeachingQueriesContext();
 
   const { mutateAsync: upsert, isPending: saving } = useUpsertTeachingAgentMutation();
   const { mutateAsync: remove } = useDeleteTeachingAgentMutation();

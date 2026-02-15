@@ -1,32 +1,39 @@
-// Consolidated DTO exports for the domain type layer.
-// Domain types import from `../dtos` (relative to `src/shared/types/domain/*`).
+/**
+ * Consolidated DTO types for the entire application
+ * 
+ * This file serves as the single source of truth for Data Transfer Objects.
+ * It re-exports types from specialized contract files and provides base utilities.
+ */
 
 export * from './dto-base';
 
-export * from '@/shared/contracts/admin';
-export * from '@/shared/contracts/agents';
-export * from '@/shared/contracts/analytics';
-export * from '@/shared/contracts/ai-paths';
-export * from '@/shared/contracts/ai-trigger-buttons';
-export * from '@/shared/contracts/app-embeds';
-export * from '@/shared/contracts/auth';
-export * from '@/shared/contracts/chatbot';
-export * from '@/shared/contracts/cms';
-export * from '@/shared/contracts/base';
-export * from '@/shared/contracts/data-import-export';
-export * from '@/shared/contracts/database';
-export * from '@/shared/contracts/drafter';
-export * from '@/shared/contracts/files';
-export * from '@/shared/contracts/foldertree';
-export * from '@/shared/contracts/gsap';
-export * from '@/shared/contracts/http';
-export * from '@/shared/contracts/internationalization';
-export * from '@/shared/contracts/integrations';
-export * from '@/shared/contracts/jobs';
-export * from '@/shared/contracts/notes';
-export * from '@/shared/contracts/observability';
-export * from '@/shared/contracts/playwright';
-export * from '@/shared/contracts/products';
-export * from '@/shared/contracts/settings';
-export * from '@/shared/contracts/vector';
-export * from '@/shared/contracts/viewer3d';
+// Re-export core domain DTOs
+export type {
+  ProductDto,
+  CatalogDto,
+  PriceGroupDto,
+  ProductCategoryDto,
+  CreateProductDto,
+  UpdateProductDto,
+} from '@/shared/contracts/products';
+
+export type {
+  CmsPageDto,
+  CmsSlugDto,
+  CmsThemeDto,
+  CmsDomainDto,
+} from '@/shared/contracts/cms';
+
+export type {
+  IntegrationDto,
+  IntegrationConnectionDto,
+  ProductListingDto,
+  CategoryMappingDto,
+} from '@/shared/contracts/integrations';
+
+// Re-export feature-specific standardized DTOs
+export type {
+  ProductDraftDto,
+  CreateProductDraftDto,
+  UpdateProductDraftDto,
+} from '@/features/products/types/drafts';

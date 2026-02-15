@@ -24,9 +24,10 @@ export type InsightsSnapshot = {
 };
 
 export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
-  return createSingleQuery({
-    queryKey: brainKeys.ollamaModels(),
+  return createSingleQuery<ChatbotModelsResponse>({
+    queryKey: () => brainKeys.ollamaModels(),
     queryFn: () => api.get<ChatbotModelsResponse>('/api/chatbot'),
+    id: 'ollama-models',
     options: {
       staleTime: 1000 * 60,
       refetchInterval: 1000 * 60,
@@ -35,11 +36,12 @@ export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
 }
 
 export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummaryDto> {
-  return createSingleQuery({
-    queryKey: brainKeys.analyticsSummary(),
+  return createSingleQuery<AnalyticsSummaryDto>({
+    queryKey: () => brainKeys.analyticsSummary(),
     queryFn: () => api.get<AnalyticsSummaryDto>('/api/analytics/summary', {
       params: { range: '24h', scope: 'all' }
     }),
+    id: 'analytics-summary',
     options: {
       refetchInterval: 30_000,
     },
@@ -47,8 +49,8 @@ export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummaryDto> {
 }
 
 export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
-  return createSingleQuery({
-    queryKey: brainKeys.logMetrics(),
+  return createSingleQuery<SystemLogMetrics>({
+    queryKey: () => brainKeys.logMetrics(),
     queryFn: async (): Promise<SystemLogMetrics> => {
       const data = await api.get<{ metrics?: SystemLogMetrics }>('/api/system/logs/metrics', {
         params: { level: 'error' }
@@ -56,6 +58,7 @@ export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
       if (!data.metrics) throw new Error('Missing metrics payload.');
       return data.metrics;
     },
+    id: 'log-metrics',
     options: {
       refetchInterval: 30_000,
     },
@@ -63,8 +66,8 @@ export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
 }
 
 export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
-  return createSingleQuery({
-    queryKey: brainKeys.insights(),
+  return createSingleQuery<InsightsSnapshot>({
+    queryKey: () => brainKeys.insights(),
     queryFn: async (): Promise<InsightsSnapshot> => {
       const [analyticsData, logsData] = await Promise.all([
         api.get<{ insights?: AiInsightRecord[] }>('/api/analytics/insights', { params: { limit: 5 } }),
@@ -75,6 +78,7 @@ export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
         logs: logsData.insights ?? [],
       };
     },
+    id: 'insights',
     options: {
       refetchInterval: 30_000,
     },
@@ -82,8 +86,8 @@ export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
 }
 
 export function useBrainRuntimeAnalytics(): SingleQuery<AiPathRuntimeAnalyticsSummary> {
-  return createSingleQuery({
-    queryKey: brainKeys.runtimeAnalytics(),
+  return createSingleQuery<AiPathRuntimeAnalyticsSummary>({
+    queryKey: () => brainKeys.runtimeAnalytics(),
     queryFn: async (): Promise<AiPathRuntimeAnalyticsSummary> => {
       const data = await api.get<{ summary?: AiPathRuntimeAnalyticsSummary }>('/api/ai-paths/runtime-analytics/summary', {
         params: { range: '24h' }
@@ -91,6 +95,7 @@ export function useBrainRuntimeAnalytics(): SingleQuery<AiPathRuntimeAnalyticsSu
       if (!data.summary) throw new Error('Missing runtime analytics payload.');
       return data.summary;
     },
+    id: 'runtime-analytics',
     options: {
       refetchInterval: 30_000,
     },

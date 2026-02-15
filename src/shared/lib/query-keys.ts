@@ -203,9 +203,20 @@ export const QUERY_KEYS = {
       analytics: () => [...QUERY_KEYS.ai.insights.lists(), 'analytics'] as const,
       logs: () => [...QUERY_KEYS.ai.insights.lists(), 'logs'] as const,
       notifications: () => [...QUERY_KEYS.ai.insights.lists(), 'notifications'] as const,
-    }
+    },
+    agentTeaching: {
+      all: ['ai', 'agent-teaching'] as const,
+      lists: () => [...QUERY_KEYS.ai.agentTeaching.all, 'list'] as const,
+      agents: () => [...QUERY_KEYS.ai.agentTeaching.lists(), 'agents'] as const,
+      collections: () => [...QUERY_KEYS.ai.agentTeaching.lists(), 'collections'] as const,
+      details: () => [...QUERY_KEYS.ai.agentTeaching.all, 'detail'] as const,
+      documents: (collectionId: string) =>
+        [...QUERY_KEYS.ai.agentTeaching.details(), 'collections', collectionId, 'documents'] as const,
+    },
   },
-  userPreferences: ['user-preferences'] as const,
+  userPreferences: {
+    all: ['user-preferences'] as const,
+  },
   auth: {
     all: ['auth'] as const,
     user: () => [...QUERY_KEYS.auth.all, 'user'] as const,
@@ -324,15 +335,6 @@ export const QUERY_KEYS = {
   agentPersonas: {
     all: ['agent-personas'] as const,
     lists: () => [...QUERY_KEYS.agentPersonas.all, 'list'] as const,
-  },
-  agentTeaching: {
-    all: ['agent-teaching'] as const,
-    lists: () => [...QUERY_KEYS.agentTeaching.all, 'list'] as const,
-    agents: () => [...QUERY_KEYS.agentTeaching.lists(), 'agents'] as const,
-    collections: () => [...QUERY_KEYS.agentTeaching.lists(), 'collections'] as const,
-    details: () => [...QUERY_KEYS.agentTeaching.all, 'detail'] as const,
-    documents: (collectionId: string) =>
-      [...QUERY_KEYS.agentTeaching.details(), 'collections', collectionId, 'documents'] as const,
   },
   brain: {
     all: ['brain'] as const,

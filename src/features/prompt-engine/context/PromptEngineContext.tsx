@@ -7,6 +7,7 @@ import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { useOptionalPromptEngineValidationPageContext } from './PromptEngineValidationPageContext';
 import {
   DEFAULT_PROMPT_VALIDATION_SCOPES,
   PROMPT_ENGINE_SETTINGS_KEY,
@@ -353,6 +354,14 @@ export function PromptEngineProvider({
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
+  const pageContext = useOptionalPromptEngineValidationPageContext();
+  const resolvedOnSaved = onSaved ?? pageContext?.onSaved;
+  const resolvedInitialPatternTab = initialPatternTab ?? pageContext?.initialPatternTab;
+  const resolvedInitialExploderSubTab =
+    initialExploderSubTab ?? pageContext?.initialExploderSubTab;
+  const resolvedLockedPatternTab = lockedPatternTab ?? pageContext?.lockedPatternTab;
+  const resolvedLockedExploderSubTab =
+    lockedExploderSubTab ?? pageContext?.lockedExploderSubTab;
 
   const rawSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const promptEngineSettings = useMemo(() => parsePromptEngineSettings(rawSettings), [rawSettings]);
@@ -361,11 +370,13 @@ export function PromptEngineProvider({
   const [severity, setSeverity] = useState<SeverityFilter>('all');
   const [scope, setScope] = useState<ScopeFilter>('all');
   const [patternTab, setPatternTab] = useState<PatternCollectionTab>(
-    lockedPatternTab ?? initialPatternTab ?? 'core'
+    resolvedLockedPatternTab ?? resolvedInitialPatternTab ?? 'core'
   );
   const [exploderSubTab, setExploderSubTab] =
     useState<ExploderPatternSubTab>(
-      lockedExploderSubTab ?? initialExploderSubTab ?? 'prompt_exploder_rules'
+      resolvedLockedExploderSubTab ??
+        resolvedInitialExploderSubTab ??
+        'prompt_exploder_rules'
     );
   const [includeDisabled, setIncludeDisabled] = useState<boolean>(true);
   const [drafts, setDrafts] = useState<RuleDraft[]>([]);
@@ -374,22 +385,22 @@ export function PromptEngineProvider({
   const [isDirty, setIsDirty] = useState<boolean>(false);
   const [learnedDrafts, setLearnedDrafts] = useState<RuleDraft[]>([]);
   const [learnedDirty, setLearnedDirty] = useState<boolean>(false);
-  const activePatternTab = lockedPatternTab ?? patternTab;
-  const activeExploderSubTab = lockedExploderSubTab ?? exploderSubTab;
-  const patternTabLocked = Boolean(lockedPatternTab);
-  const exploderSubTabLocked = Boolean(lockedExploderSubTab);
+  const activePatternTab = resolvedLockedPatternTab ?? patternTab;
+  const activeExploderSubTab = resolvedLockedExploderSubTab ?? exploderSubTab;
+  const patternTabLocked = Boolean(resolvedLockedPatternTab);
+  const exploderSubTabLocked = Boolean(resolvedLockedExploderSubTab);
 
   useEffect(() => {
-    if (lockedPatternTab && patternTab !== lockedPatternTab) {
-      setPatternTab(lockedPatternTab);
+    if (resolvedLockedPatternTab && patternTab !== resolvedLockedPatternTab) {
+      setPatternTab(resolvedLockedPatternTab);
     }
-  }, [lockedPatternTab, patternTab]);
+  }, [resolvedLockedPatternTab, patternTab]);
 
   useEffect(() => {
-    if (lockedExploderSubTab && exploderSubTab !== lockedExploderSubTab) {
-      setExploderSubTab(lockedExploderSubTab);
+    if (resolvedLockedExploderSubTab && exploderSubTab !== resolvedLockedExploderSubTab) {
+      setExploderSubTab(resolvedLockedExploderSubTab);
     }
-  }, [lockedExploderSubTab, exploderSubTab]);
+  }, [resolvedLockedExploderSubTab, exploderSubTab]);
 
   // Sync state with settings query
   useEffect(() => {
@@ -744,14 +755,14 @@ export function PromptEngineProvider({
   }, []);
 
   const handleSetPatternTab = useCallback((tab: PatternCollectionTab): void => {
-    if (lockedPatternTab) return;
+    if (resolvedLockedPatternTab) return;
     setPatternTab(tab);
-  }, [lockedPatternTab]);
+  }, [resolvedLockedPatternTab]);
 
   const handleSetExploderSubTab = useCallback((subTab: ExploderPatternSubTab): void => {
-    if (lockedExploderSubTab) return;
+    if (resolvedLockedExploderSubTab) return;
     setExploderSubTab(subTab);
-  }, [lockedExploderSubTab]);
+  }, [resolvedLockedExploderSubTab]);
 
   const handleAddRule = useCallback((): void => {
     const preset =
@@ -933,12 +944,12 @@ export function PromptEngineProvider({
       setIsDirty(false);
       setLearnedDirty(false);
       toast('Validation patterns saved.', { variant: 'success' });
-      onSaved?.();
+      resolvedOnSaved?.();
     } catch (error) {
       logClientError(error, { context: { source: 'PromptEngineContext', action: 'saveRules' } });
       toast('Failed to save rules.', { variant: 'error' });
     }
-  }, [drafts, learnedDrafts, onSaved, rawSettings, toast, updateSetting]);
+  }, [drafts, learnedDrafts, resolvedOnSaved, rawSettings, toast, updateSetting]);
 
   const handleCopy = async (value: string, label: string): Promise<void> => {
     try {

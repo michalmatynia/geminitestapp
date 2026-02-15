@@ -32,6 +32,10 @@ import {
 
 import { useUsersState } from '../../hooks/useUsersState';
 
+import { UserEditModal } from '../../components/admin/UserEditModal';
+import { UserCreateModal } from '../../components/admin/UserCreateModal';
+import { MockSignInModal } from '../../components/admin/MockSignInModal';
+
 import type { AuthUserSummary } from '../../types';
 import type { AuthRole } from '../../utils/auth-management';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -205,11 +209,15 @@ export default function AuthUsersPage(): React.JSX.Element {
         </div>
       </ListPanel>
 
-      {/* Edit User Modal */}
-      <FormModal
-        open={Boolean(editingUser)}
+      <UserEditModal
+        isOpen={Boolean(editingUser)}
         onClose={() => setEditingUser(null)}
-        title='Identity Inspector'
+        item={editingUser}
+        setEditingUser={setEditingUser}
+        isSaving={mutations.updateUser.isPending}
+        loadingSecurity={loadingSecurity}
+        canManageSecurity={canManageSecurity}
+        userSecurity={userSecurity}
         onSave={() => {
           const handleSave = async () => {
             if (!editingUser) return;
@@ -226,74 +234,14 @@ export default function AuthUsersPage(): React.JSX.Element {
           };
           void handleSave();
         }}
-        isSaving={mutations.updateUser.isPending}
-        size='md'
-      >
-        <div className='space-y-6'>
-          <div className='grid gap-4 md:grid-cols-2'>
-            <FormField label='Full Name'>
-              <Input
-                value={editingUser?.name ?? ''}
-                onChange={(e) => {
-                  setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, name: e.target.value } : null);
-                }}
-                placeholder='Display name'
-              />
-            </FormField>
-            <FormField label='Email Address'>
-              <Input
-                value={editingUser?.email ?? ''}
-                onChange={(e) => {
-                  setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, email: e.target.value } : null);
-                }}
-                placeholder='user@example.com'
-              />
-            </FormField>
-          </div>
+      />
 
-          <div className='p-4 rounded-md border border-white/5 bg-white/5'>
-            {loadingSecurity ? (
-              <div className='py-4 text-center text-xs text-gray-500 animate-pulse'>Fetching security profile...</div>
-            ) : (
-              <div className='space-y-4'>
-                <div className='flex items-center gap-3'>
-                  <Checkbox 
-                    id='verified' 
-                    checked={Boolean(editingUser?.emailVerified)}
-                    onCheckedChange={(v) => {
-                      setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, emailVerified: v ? new Date().toISOString() : null } : null);
-                    }}
-                  />
-                  <Label htmlFor='verified' className='text-xs font-medium cursor-pointer text-gray-300'>Manually verify email address</Label>
-                </div>
-                
-                {canManageSecurity && (
-                  <div className='grid gap-3 pt-2 border-t border-white/5'>
-                    <div className='flex items-center justify-between p-2 rounded bg-black/20'>
-                      <div className='flex flex-col'>
-                        <span className='text-xs font-medium text-gray-200'>Account Status</span>
-                        <span className='text-[10px] text-gray-500 uppercase'>{userSecurity?.disabledAt ? 'Disabled' : 'Active'}</span>
-                      </div>
-                      <StatusToggle enabled={!userSecurity?.disabledAt} onToggle={() => {}} disabled />
-                    </div>
-                  </div>
-                )}
-
-                <div className='p-3 rounded border border-white/5 bg-black/20 text-[10px] text-gray-500 uppercase font-bold flex justify-between items-center'>
-                  <span>System ID</span>
-                  <span className='font-mono text-gray-400 select-all'>{editingUser?.id}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </FormModal>
-
-      {/* Create User Modal */}
-      <FormModal
-        open={createOpen}
+      <UserCreateModal
+        isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
-        title='Provision New Account'
+        createForm={createForm}
+        setCreateForm={setCreateForm}
+        isSaving={mutations.register.isPending}
         onSave={() => {
           const handleSave = async () => {
             if (!createForm.email || !createForm.password) {
@@ -316,50 +264,16 @@ export default function AuthUsersPage(): React.JSX.Element {
           };
           void handleSave();
         }}
-        isSaving={mutations.register.isPending}
-        size='sm'
-      >
-        <div className='space-y-4'>
-          <FormField label='Full Name'>
-            <Input 
-              value={createForm.name} 
-              onChange={(e) => {
-                setCreateForm(p => ({ ...p, name: e.target.value }));
-              }}
-              placeholder='Optional display name' 
-            />
-          </FormField>
-          <FormField label='Email Address'>
-            <Input 
-              value={createForm.email} 
-              onChange={(e) => {
-                setCreateForm(p => ({ ...p, email: e.target.value }));
-              }}
-              placeholder='user@example.com' 
-            />
-          </FormField>
-          <FormField label='Initial Password'>
-            <Input 
-              type='password' 
-              value={createForm.password} 
-              onChange={(e) => {
-                setCreateForm(p => ({ ...p, password: e.target.value }));
-              }}
-              placeholder='Minimum 8 characters' 
-            />
-          </FormField>
-          <div className='p-3 rounded border border-amber-500/20 bg-amber-500/5 text-[11px] text-amber-300'>
-            New users will be created with the Default Access Policy. You can adjust their specific roles after creation.
-          </div>
-        </div>
-      </FormModal>
+      />
 
-      {/* Mock Sign-in Modal */}
-      <FormModal
-        open={mockOpen}
+      <MockSignInModal
+        isOpen={mockOpen}
         onClose={() => setMockOpen(false)}
-        title='Identity Validator'
-        saveText='Verify Credentials'
+        email={mockEmail}
+        setEmail={setMockEmail}
+        password={mockPassword}
+        setPassword={setMockPassword}
+        isSaving={mutations.mockSignIn.isPending}
         onSave={() => {
           const handleSave = async () => {
             try {
@@ -372,19 +286,7 @@ export default function AuthUsersPage(): React.JSX.Element {
           };
           void handleSave();
         }}
-        isSaving={mutations.mockSignIn.isPending}
-        size='sm'
-      >
-        <div className='space-y-4'>
-          <p className='text-xs text-gray-500'>Test authentication against the live identity provider without affecting your current session.</p>
-          <FormField label='Email'>
-            <Input value={mockEmail} onChange={(e) => setMockEmail(e.target.value)} />
-          </FormField>
-          <FormField label='Password'>
-            <Input type='password' value={mockPassword} onChange={(e) => setMockPassword(e.target.value)} />
-          </FormField>
-        </div>
-      </FormModal>
+      />
 
       <ConfirmDialog
         open={Boolean(userToDelete)}

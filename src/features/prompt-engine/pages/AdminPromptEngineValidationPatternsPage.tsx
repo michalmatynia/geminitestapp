@@ -12,10 +12,8 @@ import {
   type ExploderPatternSubTab,
   type PatternCollectionTab,
 } from '../context/PromptEngineContext';
-import { PromptEnginePageChromeProvider } from '../context/PromptEnginePageChromeContext';
 import {
   PromptEngineValidationPageProvider,
-  usePromptEngineValidationPageContext,
 } from '../context/PromptEngineValidationPageContext';
 
 type AdminPromptEngineValidationPatternsPageProps = {
@@ -73,25 +71,9 @@ function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
 }
 
 function AdminPromptEngineValidationPatternsProviders(): React.JSX.Element {
-  const page = usePromptEngineValidationPageContext();
-  const pageChrome = React.useMemo(() => ({
-    ...(page.embedded !== undefined && { embedded: page.embedded }),
-    ...(page.eyebrow !== undefined && { eyebrow: page.eyebrow }),
-    ...(page.backLinkHref !== undefined && { backLinkHref: page.backLinkHref }),
-    ...(page.backLinkLabel !== undefined && { backLinkLabel: page.backLinkLabel }),
-  }), [page.backLinkHref, page.backLinkLabel, page.embedded, page.eyebrow]);
-
   return (
-    <PromptEngineProvider
-      onSaved={page.onSaved}
-      initialPatternTab={page.initialPatternTab}
-      initialExploderSubTab={page.initialExploderSubTab}
-      lockedPatternTab={page.lockedPatternTab}
-      lockedExploderSubTab={page.lockedExploderSubTab}
-    >
-      <PromptEnginePageChromeProvider value={pageChrome}>
-        <AdminPromptEngineValidationPatternsContent />
-      </PromptEnginePageChromeProvider>
+    <PromptEngineProvider>
+      <AdminPromptEngineValidationPatternsContent />
     </PromptEngineProvider>
   );
 }

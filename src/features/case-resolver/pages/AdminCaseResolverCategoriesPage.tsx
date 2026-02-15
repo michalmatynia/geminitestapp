@@ -22,6 +22,7 @@ import {
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
+import { CaseResolverCategoryModal } from '../components/modals/CaseResolverCategoryModal';
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   buildCaseResolverCategoryTree,
@@ -397,90 +398,18 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
         variant='destructive'
       />
 
-      {showModal ? (
-        <FormModal
-          open={showModal}
-          onClose={(): void => setShowModal(false)}
-          title={editableCategory ? 'Edit Category' : 'Create Category'}
-          onSave={(): void => {
-            void handleSaveCategory();
-          }}
-          isSaving={updateSetting.isPending}
-          size='md'
-        >
-          <div className='space-y-4'>
-            <FormField label='Name'>
-              <Input
-                className='h-9'
-                value={formData.name}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setFormData((current: CategoryFormData) => ({
-                    ...current,
-                    name: event.target.value,
-                  }));
-                }}
-                placeholder='Category name'
-              />
-            </FormField>
-            <FormField label='Parent Category'>
-              <SelectSimple size='sm'
-                value={formData.parentId ?? '__root__'}
-                onValueChange={(value: string): void => {
-                  setFormData((current: CategoryFormData) => ({
-                    ...current,
-                    parentId: value === '__root__' ? null : value,
-                  }));
-                }}
-                options={[
-                  { value: '__root__', label: 'Root' },
-                  ...parentOptions,
-                ]}
-                placeholder='Root'
-              />
-            </FormField>
-            <FormField label='Description'>
-              <Textarea
-                value={formData.description}
-                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                  setFormData((current: CategoryFormData) => ({
-                    ...current,
-                    description: event.target.value,
-                  }));
-                }}
-                className='min-h-[88px]'
-                placeholder='Optional description'
-              />
-            </FormField>
-            <FormField label='Color'>
-              <div className='flex items-center gap-3'>
-                <Input
-                  type='color'
-                  className='h-10 w-20 cursor-pointer rounded border border-border bg-gray-900 p-0'
-                  value={formData.color}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    setFormData((current: CategoryFormData) => ({
-                      ...current,
-                      color: event.target.value,
-                    }));
-                  }}
-                />
-                <Input
-                  type='text'
-                  className='h-10 flex-1 font-mono'
-                  value={formData.color}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                    setFormData((current: CategoryFormData) => ({
-                      ...current,
-                      color: event.target.value,
-                    }));
-                  }}
-                  placeholder='#10b981'
-                />
-              </div>
-            </FormField>
-          </div>
-        </FormModal>
-      ) : null}
+      <CaseResolverCategoryModal
+        isOpen={showModal}
+        onClose={(): void => setShowModal(false)}
+        item={editableCategory}
+        formData={formData}
+        setFormData={setFormData}
+        parentOptions={parentOptions}
+        isSaving={updateSetting.isPending}
+        onSave={(): void => {
+          void handleSaveCategory();
+        }}
+      />
     </div>
   );
 }

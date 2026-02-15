@@ -1,6 +1,9 @@
 'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { createCreateMutation, createDeleteMutation } from '@/shared/lib/query-factories';
+import type { UpdateMutation, VoidMutation } from '@/shared/types/query-result-types';
 
 import { 
   performProductAiJobAction, 
@@ -13,72 +16,86 @@ import {
 } from '../api';
 import { jobKeys } from './useJobQueries';
 
-export function useProductAiJobMutation(): UseMutationResult<unknown, Error, { jobId: string; action: 'retry' | 'cancel' }> {
+export function useProductAiJobMutation(): UpdateMutation<unknown, { jobId: string; action: 'retry' | 'cancel' }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: ({ jobId, action }) => performProductAiJobAction(jobId, action),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      },
     },
   });
 }
 
-export function useDeleteProductAiJobMutation(): UseMutationResult<void, Error, string> {
+export function useDeleteProductAiJobMutation(): VoidMutation<string> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createDeleteMutation({
     mutationFn: (jobId) => deleteProductAiJob(jobId).then(() => {}),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      },
     },
   });
 }
 
-export function useClearProductAiJobsMutation(): UseMutationResult<void, Error, { scope: string }> {
+export function useClearProductAiJobsMutation(): VoidMutation<{ scope: string }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createDeleteMutation({
     mutationFn: ({ scope }) => clearProductAiJobs(scope).then(() => {}),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      },
     },
   });
 }
 
-export function useChatbotJobMutation(): UseMutationResult<unknown, Error, { jobId: string; action: 'retry' | 'cancel' }> {
+export function useChatbotJobMutation(): UpdateMutation<unknown, { jobId: string; action: 'retry' | 'cancel' }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: ({ jobId, action }) => updateChatbotJob(jobId, action),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      },
     },
   });
 }
 
-export function useDeleteChatbotJobMutation(): UseMutationResult<void, Error, { jobId: string; force?: boolean }> {
+export function useDeleteChatbotJobMutation(): VoidMutation<{ jobId: string; force?: boolean }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createDeleteMutation({
     mutationFn: ({ jobId, force }) => deleteChatbotJob(jobId, force),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      },
     },
   });
 }
 
-export function useClearChatbotJobsMutation(): UseMutationResult<void, Error, { scope: string }> {
+export function useClearChatbotJobsMutation(): VoidMutation<{ scope: string }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createDeleteMutation({
     mutationFn: ({ scope }) => clearChatbotJobs(scope).then(() => {}),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: jobKeys.all });
+      },
     },
   });
 }
 
-export function useCancelListingMutation(): UseMutationResult<void, Error, { productId: string; listingId: string }> {
+export function useCancelListingMutation(): VoidMutation<{ productId: string; listingId: string }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createDeleteMutation({
     mutationFn: ({ productId, listingId }) => cancelListing(productId, listingId),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: jobKeys.integrations() });
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: jobKeys.integrations() });
+      },
     },
   });
 }

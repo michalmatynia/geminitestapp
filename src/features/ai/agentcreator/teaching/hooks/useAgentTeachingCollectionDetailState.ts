@@ -9,20 +9,20 @@ import type {
 } from '@/shared/types/domain/agent-teaching';
 import { useToast } from '@/shared/ui';
 
-import { useAgentTeachingContext } from '../context/AgentTeachingContext';
+import { useAgentTeachingQueriesContext } from '../context/AgentTeachingContext';
 import { 
   useAddEmbeddingDocumentMutation, 
   useDeleteEmbeddingDocumentMutation, 
   useEmbeddingDocuments, 
   useSearchEmbeddingCollectionMutation 
-} from '../hooks/useAgentTeaching';
+} from '../hooks/useAgentTeachingQueries';
 
-export function useAgentTeachingCollectionDetailState() {
+export function useAgentTeachingQueriesCollectionDetailState() {
   const { toast } = useToast();
   const params = useParams<{ collectionId: string }>();
   const collectionId = params?.collectionId ?? null;
 
-  const { collections, isLoading: loadingCollections } = useAgentTeachingContext();
+  const { collections, isLoading: loadingCollections } = useAgentTeachingQueriesContext();
   const collection = useMemo(
     () => collectionId ? collections.find((c) => c.id === collectionId) ?? null : null,
     [collectionId, collections]

@@ -326,7 +326,7 @@ export function useAiPathTriggerEvent(): {
 
   const resolvePreferredActivePathId = async (): Promise<string | null> => {
     const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
-      QUERY_KEYS.userPreferences
+      QUERY_KEYS.userPreferences.all
     );
     const cachedPathId =
       typeof cachedPreferences?.aiPathsActivePathId === 'string' &&
@@ -338,7 +338,7 @@ export function useAiPathTriggerEvent(): {
     }
     try {
       const data = await queryClient.fetchQuery({
-        queryKey: QUERY_KEYS.userPreferences,
+        queryKey: QUERY_KEYS.userPreferences.all,
         queryFn: async (): Promise<{ aiPathsActivePathId?: unknown }> => {
           return await api.get<{ aiPathsActivePathId?: unknown }>('/api/user/preferences', {
             logError: false,

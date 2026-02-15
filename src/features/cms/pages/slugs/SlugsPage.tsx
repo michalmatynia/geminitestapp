@@ -20,21 +20,18 @@ import {
   Button,
   ListPanel,
   Label,
-  Checkbox,
   Switch,
   ConfirmDialog,
   EmptyState,
-  SearchInput,
-  AppModal,
   PageLayout,
   SelectSimple,
   DataTable,
   Badge,
-  FormField
 } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
+import { AttachSlugModal } from '@/features/cms/components/slugs/AttachSlugModal';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export default function SlugsPage(): React.JSX.Element {
@@ -63,10 +60,7 @@ export default function SlugsPage(): React.JSX.Element {
   );
   const zoningToggleValue = domainSettings.zoningEnabled;
   const [attachOpen, setAttachOpen] = useState(false);
-  const [attachSelectedIds, setAttachSelectedIds] = useState<string[]>([]);
   const [slugToDelete, setSlugToDelete] = useState<Slug | null>(null);
-  const [attachSearch, setAttachSearch] = useState('');
-  const [attachError, setAttachError] = useState('');
   const slugsQuery = useCmsSlugs(activeDomainId);
   const allSlugsQuery = useCmsAllSlugs(attachOpen);
   const createSlug = useCreateSlug();
@@ -96,50 +90,6 @@ export default function SlugsPage(): React.JSX.Element {
     return (href: string): string =>
       activeDomainId ? `${href}?domainId=${encodeURIComponent(activeDomainId)}` : href;
   }, [activeDomainId]);
-
-  const availableAttachSlugs = useMemo((): Slug[] => {
-    const assigned = new Set(slugs.map((slug: Slug) => slug.id));
-    const base = allSlugs.filter((slug: Slug) => !assigned.has(slug.id));
-    const term = attachSearch.trim().toLowerCase();
-    if (!term) return base;
-    return base.filter((slug: Slug) => slug.slug.toLowerCase().includes(term));
-  }, [allSlugs, slugs, attachSearch]);
-
-  const selectedAttachCount = useMemo((): number => attachSelectedIds.length, [attachSelectedIds]);
-
-  const toggleAttachSelection = (slugId: string): void => {
-    setAttachSelectedIds((prev: string[]): string[] =>
-      prev.includes(slugId) ? prev.filter((id: string): boolean => id !== slugId) : [...prev, slugId]
-    );
-  };
-
-  const selectAllVisible = (): void => {
-    const visibleIds = availableAttachSlugs.map((slug: Slug) => slug.id);
-    setAttachSelectedIds((prev: string[]): string[] => Array.from(new Set([...prev, ...visibleIds])));
-  };
-
-  const clearSelection = (): void => {
-    setAttachSelectedIds([]);
-  };
-
-  const handleAttach = async (): Promise<void> => {
-    if (!attachSelectedIds.length) {
-      setAttachError('Select at least one slug to attach.');
-      return;
-    }
-    const selected = allSlugs.filter((item: Slug) => attachSelectedIds.includes(item.id));
-    if (!selected.length) {
-      setAttachError('Selected slugs are no longer available.');
-      return;
-    }
-    setAttachError('');
-    for (const slug of selected) {
-      await createSlug.mutateAsync({ slug: slug.slug, domainId: activeDomainId });
-    }
-    setAttachSelectedIds([]);
-    setAttachSearch('');
-    setAttachOpen(false);
-  };
 
   const handleDelete = useCallback((slug: Slug): void => {
     setSlugToDelete(slug);
@@ -287,82 +237,21 @@ export default function SlugsPage(): React.JSX.Element {
         )}
       </ListPanel>
 
-      <AppModal
-        open={attachOpen}
-        onClose={(): void => {
+      <AttachSlugModal
+        isOpen={attachOpen}
+        onClose={() => setAttachOpen(false)}
+        onSuccess={() => setAttachOpen(false)}
+        items={allSlugs}
+        loading={allSlugsQuery.isLoading}
+        alreadyAssignedIds={new Set(slugs.map(s => s.id))}
+        onAttach={async (selectedIds) => {
+          const selected = allSlugs.filter((item: Slug) => selectedIds.includes(item.id));
+          for (const slug of selected) {
+            await createSlug.mutateAsync({ slug: slug.slug, domainId: activeDomainId });
+          }
           setAttachOpen(false);
-          setAttachSelectedIds([]);
-          setAttachSearch('');
-          setAttachError('');
         }}
-        title='Attach Existing Slug'
-        size='md'
-        footer={
-          <div className='flex justify-end gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => {
-                setAttachOpen(false);
-                setAttachSelectedIds([]);
-                setAttachSearch('');
-                setAttachError('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              size='sm'
-              onClick={() => { void handleAttach(); }}
-              disabled={selectedAttachCount === 0}
-            >
-              Attach {selectedAttachCount > 0 ? `(${selectedAttachCount})` : ''}
-            </Button>
-          </div>
-        }
-      >
-        <div className='space-y-4'>
-          <FormField label='Search Available Routes'>
-            <SearchInput
-              value={attachSearch}
-              onChange={(e) => setAttachSearch(e.target.value)}
-              onClear={() => setAttachSearch('')}
-              placeholder='Filter slugs...'
-              className='h-9'
-            />
-          </FormField>
-          
-          <div className='space-y-2'>
-            <div className='flex items-center justify-between'>
-              <span className='text-[10px] uppercase font-bold text-gray-500'>Available Slugs</span>
-              <div className='flex items-center gap-3 text-[10px] uppercase font-bold'>
-                <button type='button' className='text-blue-400 hover:text-blue-300' onClick={selectAllVisible}>All</button>
-                <button type='button' className='text-gray-500 hover:text-gray-400' onClick={clearSelection}>None</button>
-              </div>
-            </div>
-            
-            <div className='max-h-60 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
-              {allSlugsQuery.isLoading ? (
-                <div className='py-8 text-center text-xs text-gray-500 animate-pulse'>Fetching global slug index...</div>
-              ) : availableAttachSlugs.length === 0 ? (
-                <div className='py-8 text-center text-xs text-gray-600 italic'>No unassigned routes found matching your criteria.</div>
-              ) : (
-                availableAttachSlugs.map((slug) => (
-                  <label key={slug.id} className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'>
-                    <Checkbox
-                      checked={attachSelectedIds.includes(slug.id)}
-                      onCheckedChange={() => toggleAttachSelection(slug.id)}
-                    />
-                    <span className='text-sm text-gray-300'>/{slug.slug}</span>
-                  </label>
-                ))
-              )}
-            </div>
-            
-            {attachError && <p className='text-xs text-rose-400 font-medium'>{attachError}</p>}
-          </div>
-        </div>
-      </AppModal>
+      />
 
       <ConfirmDialog
         open={!!slugToDelete}

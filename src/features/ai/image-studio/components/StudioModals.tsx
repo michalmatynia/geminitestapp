@@ -44,6 +44,9 @@ import { studioKeys } from '../hooks/useImageStudioQueries';
 import { isParamUiControl, type ParamUiControl } from '../utils/param-ui';
 
 import type { ImageStudioSlotRecord } from '../types';
+import { DriveImportModal } from './modals/DriveImportModal';
+import { SlotCreateModal } from './modals/SlotCreateModal';
+import { SlotInlineEditModal } from './modals/SlotInlineEditModal';
 
 type LinkedGeneratedRunRecord = {
   id: string;
@@ -94,7 +97,7 @@ type LinkedMaskSlot = {
   width: number | null;
   height: number | null;
   size: number | null;
-  updatedAt: string | null;
+  updatedAt: string | Date | null;
 };
 
 type CompositeTabImage = {
@@ -111,7 +114,7 @@ type CompositeTabImage = {
   width: number | null;
   height: number | null;
   size: number | null;
-  updatedAt: string | null;
+  updatedAt: string | Date | null;
 };
 
 type EnvironmentReferenceDraft = {
@@ -122,7 +125,7 @@ type EnvironmentReferenceDraft = {
   size: number | null;
   width: number | null;
   height: number | null;
-  updatedAt: string | null;
+  updatedAt: string | Date | null;
 };
 
 const EMPTY_ENVIRONMENT_REFERENCE_DRAFT: EnvironmentReferenceDraft = {
@@ -209,10 +212,10 @@ const formatBytes = (value: number | null): string => {
   return `${size.toFixed(precision)} ${units[unitIndex]}`;
 };
 
-const formatDateTime = (value: string | null | undefined): string => {
-  if (!value || typeof value !== 'string') return 'n/a';
+const formatDateTime = (value: string | Date | null | undefined): string => {
+  if (!value) return 'n/a';
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
+  if (Number.isNaN(parsed.getTime())) return 'n/a';
   return parsed.toLocaleString();
 };
 
@@ -640,8 +643,8 @@ export function StudioModals(): React.JSX.Element {
         };
       })
       .sort((a, b) => {
-        const aTs = a.updatedAt ? Date.parse(a.updatedAt) : Number.NaN;
-        const bTs = b.updatedAt ? Date.parse(b.updatedAt) : Number.NaN;
+        const aTs = a.updatedAt ? new Date(a.updatedAt).getTime() : Number.NaN;
+        const bTs = b.updatedAt ? new Date(b.updatedAt).getTime() : Number.NaN;
         if (Number.isFinite(aTs) && Number.isFinite(bTs) && aTs !== bTs) {
           return bTs - aTs;
         }
@@ -1285,7 +1288,7 @@ export function StudioModals(): React.JSX.Element {
       size?: number | null;
       width?: number | null;
       height?: number | null;
-      updatedAt?: string | null;
+      updatedAt?: string | Date | null;
     }): void => {
       setEnvironmentReferenceDraft({
         imageFileId: asset.id,
@@ -1898,21 +1901,6 @@ export function StudioModals(): React.JSX.Element {
       </div>
     </div>
   );
-  const editCardModalFooter = selectedSlot ? (
-    <Button
-      size='xs'
-      type='button'
-      variant='outline'
-      className='bg-card/90 font-mono text-[11px] text-gray-200 hover:text-white'
-      onClick={() => {
-        void handleCopyCardId(selectedSlot.id);
-      }}
-      title='Click to copy Card ID'
-      aria-label='Copy Card ID to clipboard'
-    >
-      Card ID: {selectedSlot.id}
-    </Button>
-  ) : null;
 
   return (
     <>
@@ -1926,601 +1914,689 @@ export function StudioModals(): React.JSX.Element {
           void handleLocalUpload(event.target.files);
         }}
       />
-      <AppModal
-        open={driveImportOpen}
+      <DriveImportModal
+        isOpen={driveImportOpen}
         onClose={() => {
           setDriveImportOpen(false);
           setDriveImportMode('create');
           setDriveImportTargetId(null);
         }}
+        onSuccess={() => {}}
         title={driveImportTitle}
-        size='xl'
-      >
-        <div className='mb-3 flex flex-wrap items-center gap-2'>
-          <Button size='xs'
-            type='button'
-            variant='outline'
-            onClick={() => {
-              setLocalUploadMode(driveImportMode);
-              setLocalUploadTargetId(
-                driveImportMode === 'replace' || driveImportMode === 'environment'
-                  ? (driveImportTargetId ?? selectedSlot?.id ?? null)
-                  : null
-              );
-              window.setTimeout(() => localUploadInputRef.current?.click(), 0);
-            }}
-            disabled={uploadMutation.isPending}
-          >
-            {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            Upload From Computer
-          </Button>
-          <span className='text-xs text-gray-400'>
-            Or select existing files below.
-          </span>
-        </div>
-        <FileManager
-          mode='select'
-          selectionMode='single'
-          onSelectFile={(files) => {
-            void handleDriveSelection(files);
-          }}
-        />
-      </AppModal>
+        isUploading={uploadMutation.isPending}
+        onLocalUploadTrigger={() => {
+          setLocalUploadMode(driveImportMode);
+          setLocalUploadTargetId(
+            driveImportMode === 'replace' || driveImportMode === 'environment'
+              ? (driveImportTargetId ?? selectedSlot?.id ?? null)
+              : null
+          );
+          window.setTimeout(() => localUploadInputRef.current?.click(), 0);
+        }}
+        onSelectFile={(files) => {
+          void handleDriveSelection(files);
+        }}
+      />
 
-      <AppModal
-        open={slotCreateOpen}
+      <SlotCreateModal
+        isOpen={slotCreateOpen}
         onClose={() => setSlotCreateOpen(false)}
-        title='New Card'
-        size='md'
-      >
-        <div className='space-y-4 text-sm text-gray-200'>
-          <Button size='xs'
-            variant='outline'
-            onClick={() => {
-              void handleCreateEmptySlot();
-            }}
-            disabled={!projectId}
-            className='w-full'
-          >
-            Create Empty Card
-          </Button>
-          <Button size='xs'
-            onClick={() => {
-              setSlotCreateOpen(false);
-              setDriveImportMode('create');
-              setDriveImportTargetId(null);
-              setDriveImportOpen(true);
-            }}
-            disabled={!projectId}
-            className='w-full'
-          >
-            Create Card From Image
-          </Button>
-          <Button size='xs'
-            variant='outline'
-            onClick={() => {
-              setSlotCreateOpen(false);
-              triggerLocalUpload('create', null);
-            }}
-            disabled={!projectId || uploadMutation.isPending}
-            className='w-full'
-          >
-            {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            Create Card From Local Upload
-          </Button>
-        </div>
-      </AppModal>
+        onSuccess={() => {}}
+        disabled={!projectId}
+        onSelectMode={(mode) => {
+          if (mode === 'empty') {
+            void handleCreateEmptySlot();
+          } else if (mode === 'image') {
+            setSlotCreateOpen(false);
+            setDriveImportMode('create');
+            setDriveImportTargetId(null);
+            setDriveImportOpen(true);
+          } else if (mode === 'local') {
+            setSlotCreateOpen(false);
+            triggerLocalUpload('create', null);
+          }
+        }}
+      />
 
-      <AppModal
-        open={slotInlineEditOpen}
+      <SlotInlineEditModal
+        isOpen={slotInlineEditOpen}
         onClose={() => setSlotInlineEditOpen(false)}
-        title='Edit Card'
-        size='lg'
-        className='md:min-w-[63rem] max-w-[66rem]'
+        onSuccess={() => {}}
+        selectedSlot={selectedSlot}
+        busy={slotUpdateBusy}
+        onSave={handleSaveInlineSlot}
+        onCopyId={handleCopyCardId}
         header={editCardModalHeader}
-        footer={editCardModalFooter}
       >
-        {selectedSlot ? (
-          <Tabs
-            value={editCardTab}
-            onValueChange={(value: string) => {
-              if (
-                value === 'card' ||
-                value === 'generations' ||
-                value === 'environment' ||
-                value === 'masks' ||
-                value === 'composites'
-              ) {
-                setEditCardTab(value);
-              }
-            }}
-            className='space-y-4'
-          >
-            <TabsList className='grid w-full grid-cols-5 bg-card/50'>
-              <TabsTrigger value='card' className='text-xs'>Card</TabsTrigger>
-              <TabsTrigger value='generations' className='text-xs'>Generations</TabsTrigger>
-              <TabsTrigger value='environment' className='text-xs'>Environment</TabsTrigger>
-              <TabsTrigger value='masks' className='text-xs'>Masks</TabsTrigger>
-              <TabsTrigger value='composites' className='text-xs'>Composites</TabsTrigger>
-            </TabsList>
-            <TabsContent value='card' className='mt-0 space-y-4'>
-              <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='flex flex-wrap items-center justify-between gap-2'>
-                  <div className='space-y-0.5'>
-                    <div className='text-[10px] uppercase tracking-wide text-gray-500'>Image Slot Preview</div>
-                    <div className='text-xs text-gray-200'>
-                    Source: {inlinePreviewSource.sourceType}
-                    </div>
+        <Tabs
+          value={editCardTab}
+          onValueChange={(value: string) => {
+            if (
+              value === 'card' ||
+              value === 'generations' ||
+              value === 'environment' ||
+              value === 'masks' ||
+              value === 'composites'
+            ) {
+              setEditCardTab(value);
+            }
+          }}
+          className='space-y-4'
+        >
+          <TabsList className='grid w-full grid-cols-5 bg-card/50'>
+            <TabsTrigger value='card' className='text-xs'>Card</TabsTrigger>
+            <TabsTrigger value='generations' className='text-xs'>Generations</TabsTrigger>
+            <TabsTrigger value='environment' className='text-xs'>Environment</TabsTrigger>
+            <TabsTrigger value='masks' className='text-xs'>Masks</TabsTrigger>
+            <TabsTrigger value='composites' className='text-xs'>Composites</TabsTrigger>
+          </TabsList>
+          <TabsContent value='card' className='mt-0 space-y-4'>
+            <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='space-y-0.5'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>Image Slot Preview</div>
+                  <div className='text-xs text-gray-200'>
+                  Source: {inlinePreviewSource.sourceType}
                   </div>
                 </div>
+              </div>
 
-                <InlineImagePreviewCanvas
-                  imageSrc={inlinePreviewSource.src}
-                  imageAlt={slotNameDraft.trim() || selectedSlot.name || 'Card preview'}
-                  onImageDimensionsChange={setInlinePreviewNaturalSize}
+              <InlineImagePreviewCanvas
+                imageSrc={inlinePreviewSource.src}
+                imageAlt={slotNameDraft.trim() || selectedSlot?.name || 'Card preview'}
+                onImageDimensionsChange={setInlinePreviewNaturalSize}
+              />
+
+              <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
+                <div>
+                  <span className='text-gray-500'>Source type:</span> {inlinePreviewSource.sourceType}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Dimensions:</span> {inlinePreviewDimensions}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Image file id:</span>{' '}
+                  <span className='font-mono text-[10px]'>
+                    {selectedSlot?.imageFile?.id || selectedSlot?.imageFileId || 'n/a'}
+                  </span>
+                </div>
+                <div>
+                  <span className='text-gray-500'>Mime type:</span> {inlinePreviewMimeType}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Filename:</span> {selectedSlot?.imageFile?.filename || 'n/a'}
+                </div>
+                <div>
+                  <span className='text-gray-500'>File size:</span> {formatBytes(selectedSlot?.imageFile?.size ?? inlinePreviewBase64Bytes ?? null)}
+                </div>
+                {slotBase64Draft.trim() ? (
+                  <div className='sm:col-span-2'>
+                    <span className='text-gray-500'>Base64 payload:</span>{' '}
+                    {`${slotBase64Draft.trim().length.toLocaleString()} chars (~${formatBytes(inlinePreviewBase64Bytes)})`}
+                  </div>
+                ) : null}
+                <div className='sm:col-span-2'>
+                  <span className='text-gray-500'>Raw source:</span>{' '}
+                  <span className='break-all font-mono text-[10px] text-gray-300'>
+                    {inlinePreviewSource.rawSource}
+                  </span>
+                </div>
+                <div className='sm:col-span-2'>
+                  <span className='text-gray-500'>Resolved preview source:</span>{' '}
+                  <span className='break-all font-mono text-[10px] text-gray-300'>
+                    {inlinePreviewSource.resolvedSource}
+                  </span>
+                </div>
+                <div className='sm:col-span-2'>
+                  <span className='text-gray-500'>Tags:</span>{' '}
+                  {selectedSlot?.imageFile?.tags?.length
+                    ? selectedSlot.imageFile.tags.join(', ')
+                    : 'n/a'}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Created:</span> {formatDateTime(selectedSlot?.imageFile?.createdAt)}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Updated:</span> {formatDateTime(selectedSlot?.imageFile?.updatedAt)}
+                </div>
+              </div>
+            </div>
+
+            <div className='grid gap-3 sm:grid-cols-2'>
+              <div className='space-y-1'>
+                <Label className='text-xs text-gray-400'>Card Name</Label>
+                <Input size='sm'
+                  value={slotNameDraft}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotNameDraft(event.target.value)}
+                  className='h-9'
                 />
-
-                <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
-                  <div>
-                    <span className='text-gray-500'>Source type:</span> {inlinePreviewSource.sourceType}
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>Dimensions:</span> {inlinePreviewDimensions}
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>Image file id:</span>{' '}
-                    <span className='font-mono text-[10px]'>
-                      {selectedSlot.imageFile?.id || selectedSlot.imageFileId || 'n/a'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>Mime type:</span> {inlinePreviewMimeType}
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>Filename:</span> {selectedSlot.imageFile?.filename || 'n/a'}
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>File size:</span> {formatBytes(selectedSlot.imageFile?.size ?? inlinePreviewBase64Bytes ?? null)}
-                  </div>
-                  {slotBase64Draft.trim() ? (
-                    <div className='sm:col-span-2'>
-                      <span className='text-gray-500'>Base64 payload:</span>{' '}
-                      {`${slotBase64Draft.trim().length.toLocaleString()} chars (~${formatBytes(inlinePreviewBase64Bytes)})`}
-                    </div>
-                  ) : null}
-                  <div className='sm:col-span-2'>
-                    <span className='text-gray-500'>Raw source:</span>{' '}
-                    <span className='break-all font-mono text-[10px] text-gray-300'>
-                      {inlinePreviewSource.rawSource}
-                    </span>
-                  </div>
-                  <div className='sm:col-span-2'>
-                    <span className='text-gray-500'>Resolved preview source:</span>{' '}
-                    <span className='break-all font-mono text-[10px] text-gray-300'>
-                      {inlinePreviewSource.resolvedSource}
-                    </span>
-                  </div>
-                  <div className='sm:col-span-2'>
-                    <span className='text-gray-500'>Tags:</span>{' '}
-                    {selectedSlot.imageFile?.tags?.length
-                      ? selectedSlot.imageFile.tags.join(', ')
-                      : 'n/a'}
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>Created:</span> {formatDateTime(selectedSlot.imageFile?.createdAt)}
-                  </div>
-                  <div>
-                    <span className='text-gray-500'>Updated:</span> {formatDateTime(selectedSlot.imageFile?.updatedAt)}
-                  </div>
-                </div>
               </div>
-
-              <div className='grid gap-3 sm:grid-cols-2'>
-                <div className='space-y-1'>
-                  <Label className='text-xs text-gray-400'>Card Name</Label>
-                  <Input size='sm'
-                    value={slotNameDraft}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotNameDraft(event.target.value)}
-                    className='h-9'
-                  />
-                </div>
-                <div className='space-y-1'>
-                  <Label className='text-xs text-gray-400'>Folder Path</Label>
-                  <Input size='sm'
-                    value={slotFolderDraft}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotFolderDraft(event.target.value)}
-                    placeholder='e.g. variants/red'
-                    className='h-9'
-                  />
-                </div>
+              <div className='space-y-1'>
+                <Label className='text-xs text-gray-400'>Folder Path</Label>
+                <Input size='sm'
+                  value={slotFolderDraft}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotFolderDraft(event.target.value)}
+                  placeholder='e.g. variants/red'
+                  className='h-9'
+                />
               </div>
+            </div>
 
-              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-                  Image Slot
-                </div>
-                <ProductImageManagerControllerProvider value={inlineCardImageManagerController}>
-                  <ProductImageManager />
-                </ProductImageManagerControllerProvider>
+            <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+                Image Slot
               </div>
+              <ProductImageManagerControllerProvider value={inlineCardImageManagerController}>
+                <ProductImageManager />
+              </ProductImageManagerControllerProvider>
+            </div>
 
-              <div className='space-y-2'>
-                <div className='flex items-center justify-between gap-2'>
-                  <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
-                  <Button size='xs'
-                    type='button'
-                    variant='outline'
-                    onClick={() => {
-                      void linkedRunsQuery.refetch();
-                    }}
-                    disabled={linkedRunsQuery.isFetching}
-                  >
-                    {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                  Refresh
-                  </Button>
-                </div>
-                <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
-                  {linkedRunsQuery.isLoading ? (
-                    <div className='flex items-center gap-2 px-1 py-2 text-xs text-gray-400'>
-                      <Loader2 className='size-4 animate-spin' />
-                    Loading linked variants...
-                    </div>
-                  ) : linkedRunsQuery.isError ? (
-                    <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
-                      {linkedRunsQuery.error instanceof Error
-                        ? linkedRunsQuery.error.message
-                        : 'Failed to load linked variants.'}
-                    </div>
-                  ) : linkedGeneratedVariants.length === 0 ? (
-                    <div className='px-1 py-2 text-xs text-gray-500'>
-                    No generated variants linked to this card yet.
-                    </div>
-                  ) : (
-                    linkedGeneratedVariants.map((variant) => {
-                      const isApplying = linkedVariantApplyBusyKey === variant.key && slotUpdateBusy;
-                      return (
-                        <div
-                          key={variant.key}
-                          className='flex items-center gap-3 rounded border border-border/60 bg-card/50 p-2'
-                        >
-                          <div className='size-14 overflow-hidden rounded-md border border-border/60 bg-black/30'>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={variant.imageSrc}
-                              alt={variant.output.filename || `Linked variant ${variant.outputIndex}`}
-                              className='h-full w-full object-cover'
-                              loading='lazy'
-                            />
-                          </div>
-                          <div className='min-w-0 flex-1 text-[11px] text-gray-300'>
-                            <div className='truncate text-xs text-gray-100'>
-                              {variant.output.filename || `Variant ${variant.outputIndex}`}
-                            </div>
-                            <div className='truncate text-[10px] text-gray-400'>
-                            Run {variant.runId.slice(0, 8)} • Variant {variant.outputIndex}/{variant.outputCount}
-                            </div>
-                            <div className='truncate text-[10px] text-gray-500'>
-                              {formatLinkedVariantTimestamp(variant.runCreatedAt)}
-                            </div>
-                          </div>
-                          <Button size='xs'
-                            type='button'
-                            variant='outline'
-                            onClick={() => {
-                              void handleApplyLinkedVariantToCard(variant);
-                            }}
-                            disabled={slotUpdateBusy}
-                          >
-                            {isApplying ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                          Use On Card
-                          </Button>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              <div className='flex flex-wrap items-center gap-2'>
+            <div className='space-y-2'>
+              <div className='flex items-center justify-between gap-2'>
+                <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
                 <Button size='xs'
                   type='button'
                   variant='outline'
                   onClick={() => {
+                    void linkedRunsQuery.refetch();
+                  }}
+                  disabled={linkedRunsQuery.isFetching}
+                >
+                  {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                Refresh
+                </Button>
+              </div>
+              <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
+                {linkedRunsQuery.isLoading ? (
+                  <div className='flex items-center gap-2 px-1 py-2 text-xs text-gray-400'>
+                    <Loader2 className='size-4 animate-spin' />
+                  Loading linked variants...
+                  </div>
+                ) : linkedRunsQuery.isError ? (
+                  <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
+                    {linkedRunsQuery.error instanceof Error
+                      ? linkedRunsQuery.error.message
+                      : 'Failed to load linked variants.'}
+                  </div>
+                ) : linkedGeneratedVariants.length === 0 ? (
+                  <div className='px-1 py-2 text-xs text-gray-500'>
+                  No generated variants linked to this card yet.
+                  </div>
+                ) : (
+                  linkedGeneratedVariants.map((variant) => {
+                    const isApplying = linkedVariantApplyBusyKey === variant.key && slotUpdateBusy;
+                    return (
+                      <div
+                        key={variant.key}
+                        className='flex items-center gap-3 rounded border border-border/60 bg-card/50 p-2'
+                      >
+                        <div className='size-14 overflow-hidden rounded-md border border-border/60 bg-black/30'>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={variant.imageSrc}
+                            alt={variant.output.filename || `Linked variant ${variant.outputIndex}`}
+                            className='h-full w-full object-cover'
+                            loading='lazy'
+                          />
+                        </div>
+                        <div className='min-w-0 flex-1 text-[11px] text-gray-300'>
+                          <div className='truncate text-xs text-gray-100'>
+                            {variant.output.filename || `Variant ${variant.outputIndex}`}
+                          </div>
+                          <div className='truncate text-[10px] text-gray-400'>
+                          Run {variant.runId.slice(0, 8)} • Variant {variant.outputIndex}/{variant.outputCount}
+                          </div>
+                          <div className='truncate text-[10px] text-gray-500'>
+                            {formatLinkedVariantTimestamp(variant.runCreatedAt)}
+                          </div>
+                        </div>
+                        <Button size='xs'
+                          type='button'
+                          variant='outline'
+                          onClick={() => {
+                            void handleApplyLinkedVariantToCard(variant);
+                          }}
+                          disabled={slotUpdateBusy}
+                        >
+                          {isApplying ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                        Use On Card
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  if (selectedSlot) {
                     setSlotInlineEditOpen(false);
                     setDriveImportMode('replace');
                     setDriveImportTargetId(selectedSlot.id);
                     setDriveImportOpen(true);
-                  }}
-                >
-                Replace From Drive
-                </Button>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
+                  }
+                }}
+              >
+              Replace From Drive
+              </Button>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  if (selectedSlot) {
                     setSlotInlineEditOpen(false);
                     triggerLocalUpload('replace', selectedSlot.id);
-                  }}
-                  disabled={uploadMutation.isPending}
-                >
-                  {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                Replace From Local Upload
-                </Button>
-                <Button size='xs'
+                  }
+                }}
+                disabled={uploadMutation.isPending}
+              >
+                {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+              Replace From Local Upload
+              </Button>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  void handleClearSlotImage();
+                }}
+                disabled={slotUpdateBusy}
+              >
+              Clear Image
+              </Button>
+            </div>
+          </TabsContent>
+          <TabsContent value='generations' className='mt-0 space-y-4'>
+            <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='space-y-0.5'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>Generation Preview</div>
+                  <div className='text-xs text-gray-200'>
+                    {selectedGenerationPreview
+                      ? `Run ${selectedGenerationPreview.runId.slice(0, 8)} • Variant ${selectedGenerationPreview.outputIndex}/${selectedGenerationPreview.outputCount}`
+                      : 'No generated variants available for this card.'}
+                  </div>
+                </div>
+                <Button
+                  size='xs'
                   type='button'
                   variant='outline'
                   onClick={() => {
-                    void handleClearSlotImage();
+                    void linkedRunsQuery.refetch();
                   }}
-                  disabled={slotUpdateBusy}
+                  disabled={linkedRunsQuery.isFetching}
                 >
-                Clear Image
+                  {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                  Refresh
                 </Button>
               </div>
-            </TabsContent>
-            <TabsContent value='generations' className='mt-0 space-y-4'>
-              <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='flex flex-wrap items-center justify-between gap-2'>
-                  <div className='space-y-0.5'>
-                    <div className='text-[10px] uppercase tracking-wide text-gray-500'>Generation Preview</div>
-                    <div className='text-xs text-gray-200'>
-                      {selectedGenerationPreview
-                        ? `Run ${selectedGenerationPreview.runId.slice(0, 8)} • Variant ${selectedGenerationPreview.outputIndex}/${selectedGenerationPreview.outputCount}`
-                        : 'No generated variants available for this card.'}
-                    </div>
-                  </div>
-                  <Button
-                    size='xs'
-                    type='button'
-                    variant='outline'
-                    onClick={() => {
-                      void linkedRunsQuery.refetch();
-                    }}
-                    disabled={linkedRunsQuery.isFetching}
-                  >
-                    {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                    Refresh
-                  </Button>
-                </div>
 
-                <InlineImagePreviewCanvas
-                  imageSrc={selectedGenerationPreview?.imageSrc ?? null}
-                  imageAlt={
-                    selectedGenerationPreview?.output.filename ||
-                    `${slotNameDraft.trim() || selectedSlot.name || 'Card'} generation preview`
-                  }
-                  onImageDimensionsChange={setGenerationPreviewNaturalSize}
-                />
+              <InlineImagePreviewCanvas
+                imageSrc={selectedGenerationPreview?.imageSrc ?? null}
+                imageAlt={
+                  selectedGenerationPreview?.output.filename ||
+                  `${slotNameDraft.trim() || selectedSlot?.name || 'Card'} generation preview`
+                }
+                onImageDimensionsChange={setGenerationPreviewNaturalSize}
+              />
 
-                {selectedGenerationPreview ? (
-                  <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
-                    <div>
-                      <span className='text-gray-500'>Run:</span>{' '}
-                      <span className='font-mono text-[10px]'>{selectedGenerationPreview.runId}</span>
-                    </div>
-                    <div>
-                      <span className='text-gray-500'>Variant:</span>{' '}
-                      {selectedGenerationPreview.outputIndex}/{selectedGenerationPreview.outputCount}
-                    </div>
-                    <div>
-                      <span className='text-gray-500'>Output file id:</span>{' '}
-                      <span className='font-mono text-[10px]'>{selectedGenerationPreview.output.id}</span>
-                    </div>
-                    <div>
-                      <span className='text-gray-500'>Dimensions:</span> {selectedGenerationPreviewDimensions}
-                    </div>
-                    <div>
-                      <span className='text-gray-500'>Filename:</span>{' '}
-                      {selectedGenerationPreview.output.filename || 'n/a'}
-                    </div>
-                    <div>
-                      <span className='text-gray-500'>Size:</span>{' '}
-                      {formatBytes(selectedGenerationPreview.output.size)}
-                    </div>
-                    <div className='sm:col-span-2'>
-                      <span className='text-gray-500'>Path:</span>{' '}
-                      <span className='break-all font-mono text-[10px] text-gray-300'>
-                        {selectedGenerationPreview.output.filepath}
-                      </span>
-                    </div>
-                    <div className='sm:col-span-2'>
-                      <span className='text-gray-500'>Generated:</span>{' '}
-                      {formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}
-                    </div>
-                  </div>
-                ) : (
-                  <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-400'>
-                    Generate or attach variants to this card to populate generation slots.
-                  </div>
-                )}
-              </div>
-
-              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='flex items-center justify-between gap-2'>
-                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-                    Generated Image Slots
-                  </div>
-                  <div className='text-[11px] text-gray-400'>
-                    {linkedGeneratedVariants.length} image{linkedGeneratedVariants.length === 1 ? '' : 's'}
-                  </div>
-                </div>
-                <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
-                  {linkedRunsQuery.isLoading ? (
-                    <div className='col-span-full flex items-center gap-2 rounded border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
-                      <Loader2 className='size-4 animate-spin' />
-                      Loading generation slots...
-                    </div>
-                  ) : linkedRunsQuery.isError ? (
-                    <div className='col-span-full rounded border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs text-red-200'>
-                      {linkedRunsQuery.error instanceof Error
-                        ? linkedRunsQuery.error.message
-                        : 'Failed to load generated images.'}
-                    </div>
-                  ) : linkedGeneratedVariants.length === 0 ? (
-                    <div className='col-span-full rounded border border-border/50 bg-card/40 px-3 py-2 text-xs text-gray-400'>
-                      No generated image slots are linked to this card yet.
-                    </div>
-                  ) : (
-                    linkedGeneratedVariants.map((variant) => {
-                      const isSelected = selectedGenerationPreview?.key === variant.key;
-                      return (
-                        <button
-                          key={variant.key}
-                          type='button'
-                          onClick={() => {
-                            handleOpenGenerationPreviewModal(variant);
-                          }}
-                          className={`group overflow-hidden rounded-md border text-left transition-colors ${
-                            isSelected
-                              ? 'border-emerald-400/70 bg-emerald-500/10'
-                              : 'border-border/60 bg-card/40 hover:border-border'
-                          }`}
-                          title='Open generation preview'
-                        >
-                          <div className='relative aspect-square overflow-hidden bg-black/35'>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={variant.imageSrc}
-                              alt={variant.output.filename || `Generation ${variant.outputIndex}`}
-                              className='h-full w-full object-cover'
-                              loading='lazy'
-                            />
-                            <div className='absolute left-1 top-1 rounded border border-border/60 bg-black/65 px-1 py-0.5 text-[10px] text-gray-200'>
-                              {variant.outputIndex}/{variant.outputCount}
-                            </div>
-                          </div>
-                          <div className='truncate border-t border-border/50 px-2 py-1 text-[10px] text-gray-200'>
-                            {variant.output.filename || `Variant ${variant.outputIndex}`}
-                          </div>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value='environment' className='mt-0 space-y-4'>
-              <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='flex flex-wrap items-center justify-between gap-2'>
-                  <div className='space-y-0.5'>
-                    <div className='text-[10px] uppercase tracking-wide text-gray-500'>Environment Reference</div>
-                    <div className='text-xs text-gray-200'>
-                      Source: {environmentPreviewSource.sourceType}
-                    </div>
-                  </div>
-                </div>
-
-                <InlineImagePreviewCanvas
-                  imageSrc={environmentPreviewSource.src}
-                  imageAlt={`${slotNameDraft.trim() || selectedSlot.name || 'Card'} environment reference`}
-                  onImageDimensionsChange={setEnvironmentPreviewNaturalSize}
-                />
-
+              {selectedGenerationPreview ? (
                 <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
                   <div>
-                    <span className='text-gray-500'>Source type:</span> {environmentPreviewSource.sourceType}
+                    <span className='text-gray-500'>Run:</span>{' '}
+                    <span className='font-mono text-[10px]'>{selectedGenerationPreview.runId}</span>
                   </div>
                   <div>
-                    <span className='text-gray-500'>Dimensions:</span> {environmentPreviewDimensions}
+                    <span className='text-gray-500'>Variant:</span>{' '}
+                    {selectedGenerationPreview.outputIndex}/{selectedGenerationPreview.outputCount}
                   </div>
                   <div>
-                    <span className='text-gray-500'>Image file id:</span>{' '}
-                    <span className='font-mono text-[10px]'>
-                      {environmentReferenceDraft.imageFileId || 'n/a'}
-                    </span>
+                    <span className='text-gray-500'>Output file id:</span>{' '}
+                    <span className='font-mono text-[10px]'>{selectedGenerationPreview.output.id}</span>
                   </div>
                   <div>
-                    <span className='text-gray-500'>Mime type:</span> {environmentReferenceDraft.mimetype || 'n/a'}
+                    <span className='text-gray-500'>Dimensions:</span> {selectedGenerationPreviewDimensions}
                   </div>
                   <div>
-                    <span className='text-gray-500'>Filename:</span> {environmentReferenceDraft.filename || 'n/a'}
+                    <span className='text-gray-500'>Filename:</span>{' '}
+                    {selectedGenerationPreview.output.filename || 'n/a'}
                   </div>
                   <div>
-                    <span className='text-gray-500'>File size:</span> {formatBytes(environmentReferenceDraft.size)}
+                    <span className='text-gray-500'>Size:</span>{' '}
+                    {formatBytes(selectedGenerationPreview.output.size)}
                   </div>
                   <div className='sm:col-span-2'>
-                    <span className='text-gray-500'>Raw source:</span>{' '}
+                    <span className='text-gray-500'>Path:</span>{' '}
                     <span className='break-all font-mono text-[10px] text-gray-300'>
-                      {environmentPreviewSource.rawSource}
+                      {selectedGenerationPreview.output.filepath}
                     </span>
                   </div>
                   <div className='sm:col-span-2'>
-                    <span className='text-gray-500'>Resolved preview source:</span>{' '}
-                    <span className='break-all font-mono text-[10px] text-gray-300'>
-                      {environmentPreviewSource.resolvedSource}
-                    </span>
+                    <span className='text-gray-500'>Generated:</span>{' '}
+                    {formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}
                   </div>
-                  <div>
-                    <span className='text-gray-500'>Updated:</span> {formatDateTime(environmentReferenceDraft.updatedAt)}
+                </div>
+              ) : (
+                <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-400'>
+                  Generate or attach variants to this card to populate generation slots.
+                </div>
+              )}
+            </div>
+
+            <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='flex items-center justify-between gap-2'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+                  Generated Image Slots
+                </div>
+                <div className='text-[11px] text-gray-400'>
+                  {linkedGeneratedVariants.length} image{linkedGeneratedVariants.length === 1 ? '' : 's'}
+                </div>
+              </div>
+              <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
+                {linkedRunsQuery.isLoading ? (
+                  <div className='col-span-full flex items-center gap-2 rounded border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
+                    <Loader2 className='size-4 animate-spin' />
+                    Loading generation slots...
                   </div>
-                  <div />
+                ) : linkedRunsQuery.isError ? (
+                  <div className='col-span-full rounded border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs text-red-200'>
+                    {linkedRunsQuery.error instanceof Error
+                      ? linkedRunsQuery.error.message
+                      : 'Failed to load generated images.'}
+                  </div>
+                ) : linkedGeneratedVariants.length === 0 ? (
+                  <div className='col-span-full rounded border border-border/50 bg-card/40 px-3 py-2 text-xs text-gray-400'>
+                    No generated image slots are linked to this card yet.
+                  </div>
+                ) : (
+                  linkedGeneratedVariants.map((variant) => {
+                    const isSelected = selectedGenerationPreview?.key === variant.key;
+                    return (
+                      <button
+                        key={variant.key}
+                        type='button'
+                        onClick={() => {
+                          handleOpenGenerationPreviewModal(variant);
+                        }}
+                        className={`group overflow-hidden rounded-md border text-left transition-colors ${
+                          isSelected
+                            ? 'border-emerald-400/70 bg-emerald-500/10'
+                            : 'border-border/60 bg-card/40 hover:border-border'
+                        }`}
+                        title='Open generation preview'
+                      >
+                        <div className='relative aspect-square overflow-hidden bg-black/35'>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={variant.imageSrc}
+                            alt={variant.output.filename || `Generation ${variant.outputIndex}`}
+                            className='h-full w-full object-cover'
+                            loading='lazy'
+                          />
+                          <div className='absolute left-1 top-1 rounded border border-border/60 bg-black/65 px-1 py-0.5 text-[10px] text-gray-200'>
+                            {variant.outputIndex}/{variant.outputCount}
+                          </div>
+                        </div>
+                        <div className='truncate border-t border-border/50 px-2 py-1 text-[10px] text-gray-200'>
+                          {variant.output.filename || `Variant ${variant.outputIndex}`}
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value='environment' className='mt-0 space-y-4'>
+            <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='space-y-0.5'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>Environment Reference</div>
+                  <div className='text-xs text-gray-200'>
+                    Source: {environmentPreviewSource.sourceType}
+                  </div>
                 </div>
               </div>
 
-              <div className='rounded-lg border border-border/60 bg-card/30 p-3 text-xs text-gray-300'>
-                Upload a reference image for the card environment. Save Card to persist changes.
-              </div>
+              <InlineImagePreviewCanvas
+                imageSrc={environmentPreviewSource.src}
+                imageAlt={`${slotNameDraft.trim() || selectedSlot?.name || 'Card'} environment reference`}
+                onImageDimensionsChange={setEnvironmentPreviewNaturalSize}
+              />
 
-              <div className='flex flex-wrap items-center gap-2'>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
+              <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
+                <div>
+                  <span className='text-gray-500'>Source type:</span> {environmentPreviewSource.sourceType}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Dimensions:</span> {environmentPreviewDimensions}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Image file id:</span>{' '}
+                  <span className='font-mono text-[10px]'>
+                    {environmentReferenceDraft.imageFileId || 'n/a'}
+                  </span>
+                </div>
+                <div>
+                  <span className='text-gray-500'>Mime type:</span> {environmentReferenceDraft.mimetype || 'n/a'}
+                </div>
+                <div>
+                  <span className='text-gray-500'>Filename:</span> {environmentReferenceDraft.filename || 'n/a'}
+                </div>
+                <div>
+                  <span className='text-gray-500'>File size:</span> {formatBytes(environmentReferenceDraft.size)}
+                </div>
+                <div className='sm:col-span-2'>
+                  <span className='text-gray-500'>Raw source:</span>{' '}
+                  <span className='break-all font-mono text-[10px] text-gray-300'>
+                    {environmentPreviewSource.rawSource}
+                  </span>
+                </div>
+                <div className='sm:col-span-2'>
+                  <span className='text-gray-500'>Resolved preview source:</span>{' '}
+                  <span className='break-all font-mono text-[10px] text-gray-300'>
+                    {environmentPreviewSource.resolvedSource}
+                  </span>
+                </div>
+                <div>
+                  <span className='text-gray-500'>Updated:</span> {formatDateTime(environmentReferenceDraft.updatedAt)}
+                </div>
+                <div />
+              </div>
+            </div>
+
+            <div className='rounded-lg border border-border/60 bg-card/30 p-3 text-xs text-gray-300'>
+              Upload a reference image for the card environment. Save Card to persist changes.
+            </div>
+
+            <div className='flex flex-wrap items-center gap-2'>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  if (selectedSlot) {
                     setDriveImportMode('environment');
                     setDriveImportTargetId(selectedSlot.id);
                     setDriveImportOpen(true);
-                  }}
-                >
-                  Upload Environment From Drive
-                </Button>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
+                  }
+                }}
+              >
+                Upload Environment From Drive
+              </Button>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  if (selectedSlot) {
                     triggerLocalUpload('environment', selectedSlot.id);
-                  }}
-                  disabled={uploadMutation.isPending}
-                >
-                  {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                  Upload Environment From Local
-                </Button>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
-                    setEnvironmentReferenceDraft({ ...EMPTY_ENVIRONMENT_REFERENCE_DRAFT });
-                    setEnvironmentPreviewNaturalSize(null);
-                  }}
-                  disabled={!environmentReferenceDraft.imageFileId && !environmentReferenceDraft.imageUrl.trim()}
-                >
-                  Clear Environment Image
-                </Button>
+                  }
+                }}
+                disabled={uploadMutation.isPending}
+              >
+                {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                Upload Environment From Local
+              </Button>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  setEnvironmentReferenceDraft({ ...EMPTY_ENVIRONMENT_REFERENCE_DRAFT });
+                  setEnvironmentPreviewNaturalSize(null);
+                }}
+                disabled={!environmentReferenceDraft.imageFileId && !environmentReferenceDraft.imageUrl.trim()}
+              >
+                Clear Environment Image
+              </Button>
+            </div>
+          </TabsContent>
+          <TabsContent value='masks' className='mt-0 space-y-4'>
+            <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='text-[10px] uppercase tracking-wide text-gray-500'>Linked Masks</div>
+              <div className='text-xs text-gray-300'>
+                Masks attached to this card via mask metadata links.
               </div>
-            </TabsContent>
-            <TabsContent value='masks' className='mt-0 space-y-4'>
-              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='text-[10px] uppercase tracking-wide text-gray-500'>Linked Masks</div>
-                <div className='text-xs text-gray-300'>
-                  Masks attached to this card via mask metadata links.
+            </div>
+            <div className='max-h-[34rem] space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/35 p-2'>
+              {linkedMaskSlots.length === 0 ? (
+                <div className='rounded border border-border/50 bg-card/40 px-3 py-3 text-xs text-gray-400'>
+                  No linked masks found for this card.
+                </div>
+              ) : (
+                linkedMaskSlots.map((mask) => (
+                  <div
+                    key={mask.slotId}
+                    className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'
+                  >
+                    <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
+                      {mask.imageSrc ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={mask.imageSrc}
+                          alt={mask.name}
+                          className='h-full w-full object-cover'
+                          loading='lazy'
+                        />
+                      ) : (
+                        <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
+                          No image
+                        </div>
+                      )}
+                    </div>
+                    <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
+                      <div className='truncate text-xs text-gray-100'>{mask.name}</div>
+                      <div className='text-[10px] text-gray-400'>
+                        Variant: <span className='text-gray-200'>{mask.variant}</span>
+                        {' '}• Inverted: <span className='text-gray-200'>{mask.inverted ? 'Yes' : 'No'}</span>
+                        {' '}• Mode: <span className='text-gray-200'>{mask.generationMode}</span>
+                      </div>
+                      <div className='text-[10px] text-gray-400'>
+                        Relation: <span className='font-mono text-gray-300'>{mask.relationType || 'mask'}</span>
+                      </div>
+                      <div className='text-[10px] text-gray-400'>
+                        Mask Slot: <span className='font-mono text-gray-300'>{mask.slotId}</span>
+                      </div>
+                      <div className='text-[10px] text-gray-400'>
+                        File ID: <span className='font-mono text-gray-300'>{mask.imageFileId || 'n/a'}</span>
+                      </div>
+                      <div className='text-[10px] text-gray-400'>
+                        File: <span className='text-gray-300'>{mask.filename || 'n/a'}</span>
+                        {' '}• Size: <span className='text-gray-300'>{formatBytes(mask.size)}</span>
+                        {' '}• Dimensions:{' '}
+                        <span className='text-gray-300'>
+                          {mask.width && mask.height ? `${mask.width} x ${mask.height}` : 'n/a'}
+                        </span>
+                      </div>
+                      <div className='truncate text-[10px] text-gray-500'>
+                        Path: <span className='font-mono text-gray-400'>{mask.filepath || 'n/a'}</span>
+                      </div>
+                      <div className='text-[10px] text-gray-500'>
+                        Updated: {formatDateTime(mask.updatedAt)}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value='composites' className='mt-0 space-y-4'>
+            <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='text-[10px] uppercase tracking-wide text-gray-500'>Composite Inputs</div>
+              <div className='text-xs text-gray-300'>
+                {compositeTabInputSourceLabel}
+              </div>
+            </div>
+
+            <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='text-[10px] uppercase tracking-wide text-gray-500'>Source Image</div>
+              <div className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'>
+                <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
+                  {sourceCompositeImage.imageSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={sourceCompositeImage.imageSrc}
+                      alt={sourceCompositeImage.name}
+                      className='h-full w-full object-cover'
+                      loading='lazy'
+                    />
+                  ) : (
+                    <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
+                      No image
+                    </div>
+                  )}
+                </div>
+                <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
+                  <div className='truncate text-xs text-gray-100'>{sourceCompositeImage.name}</div>
+                  <div className='text-[10px] text-gray-400'>
+                    Source: <span className='text-gray-200'>{sourceCompositeImage.sourceType}</span>
+                  </div>
+                  <div className='text-[10px] text-gray-400'>
+                    Card Slot: <span className='font-mono text-gray-300'>{sourceCompositeImage.slotId || 'n/a'}</span>
+                  </div>
+                  <div className='text-[10px] text-gray-400'>
+                    File ID: <span className='font-mono text-gray-300'>{sourceCompositeImage.imageFileId || 'n/a'}</span>
+                  </div>
+                  <div className='text-[10px] text-gray-400'>
+                    File: <span className='text-gray-300'>{sourceCompositeImage.filename || 'n/a'}</span>
+                    {' '}• Size: <span className='text-gray-300'>{formatBytes(sourceCompositeImage.size)}</span>
+                    {' '}• Dimensions:{' '}
+                    <span className='text-gray-300'>
+                      {sourceCompositeImage.width && sourceCompositeImage.height
+                        ? `${sourceCompositeImage.width} x ${sourceCompositeImage.height}`
+                        : 'n/a'}
+                    </span>
+                  </div>
+                  <div className='truncate text-[10px] text-gray-500'>
+                    Path: <span className='font-mono text-gray-400'>{sourceCompositeImage.filepath || 'n/a'}</span>
+                  </div>
+                  <div className='text-[10px] text-gray-500'>
+                    Updated: {formatDateTime(sourceCompositeImage.updatedAt)}
+                  </div>
                 </div>
               </div>
-              <div className='max-h-[34rem] space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/35 p-2'>
-                {linkedMaskSlots.length === 0 ? (
+            </div>
+
+            <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='text-[10px] uppercase tracking-wide text-gray-500'>Composite Images</div>
+              <div className='max-h-[28rem] space-y-2 overflow-y-auto rounded border border-border/60 bg-card/35 p-2'>
+                {compositeTabInputImages.length === 0 ? (
                   <div className='rounded border border-border/50 bg-card/40 px-3 py-3 text-xs text-gray-400'>
-                    No linked masks found for this card.
+                    No composite images to show.
                   </div>
                 ) : (
-                  linkedMaskSlots.map((mask) => (
+                  compositeTabInputImages.map((entry) => (
                     <div
-                      key={mask.slotId}
+                      key={entry.key}
                       className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'
                     >
                       <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
-                        {mask.imageSrc ? (
+                        {entry.imageSrc ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={mask.imageSrc}
-                            alt={mask.name}
+                            src={entry.imageSrc}
+                            alt={entry.name}
                             className='h-full w-full object-cover'
                             loading='lazy'
                           />
@@ -2531,168 +2607,44 @@ export function StudioModals(): React.JSX.Element {
                         )}
                       </div>
                       <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
-                        <div className='truncate text-xs text-gray-100'>{mask.name}</div>
+                        <div className='truncate text-xs text-gray-100'>{entry.name}</div>
                         <div className='text-[10px] text-gray-400'>
-                          Variant: <span className='text-gray-200'>{mask.variant}</span>
-                          {' '}• Inverted: <span className='text-gray-200'>{mask.inverted ? 'Yes' : 'No'}</span>
-                          {' '}• Mode: <span className='text-gray-200'>{mask.generationMode}</span>
+                          Type: <span className='text-gray-200'>{entry.sourceType}</span>
+                          {entry.order !== null ? (
+                            <>
+                              {' '}• Layer order: <span className='text-gray-200'>{entry.order + 1}</span>
+                            </>
+                          ) : null}
                         </div>
                         <div className='text-[10px] text-gray-400'>
-                          Relation: <span className='font-mono text-gray-300'>{mask.relationType || 'mask'}</span>
+                          Slot: <span className='font-mono text-gray-300'>{entry.slotId || 'n/a'}</span>
                         </div>
                         <div className='text-[10px] text-gray-400'>
-                          Mask Slot: <span className='font-mono text-gray-300'>{mask.slotId}</span>
+                          File ID: <span className='font-mono text-gray-300'>{entry.imageFileId || 'n/a'}</span>
                         </div>
                         <div className='text-[10px] text-gray-400'>
-                          File ID: <span className='font-mono text-gray-300'>{mask.imageFileId || 'n/a'}</span>
-                        </div>
-                        <div className='text-[10px] text-gray-400'>
-                          File: <span className='text-gray-300'>{mask.filename || 'n/a'}</span>
-                          {' '}• Size: <span className='text-gray-300'>{formatBytes(mask.size)}</span>
+                          File: <span className='text-gray-300'>{entry.filename || 'n/a'}</span>
+                          {' '}• Size: <span className='text-gray-300'>{formatBytes(entry.size)}</span>
                           {' '}• Dimensions:{' '}
                           <span className='text-gray-300'>
-                            {mask.width && mask.height ? `${mask.width} x ${mask.height}` : 'n/a'}
+                            {entry.width && entry.height ? `${entry.width} x ${entry.height}` : 'n/a'}
                           </span>
                         </div>
                         <div className='truncate text-[10px] text-gray-500'>
-                          Path: <span className='font-mono text-gray-400'>{mask.filepath || 'n/a'}</span>
+                          Path: <span className='font-mono text-gray-400'>{entry.filepath || 'n/a'}</span>
                         </div>
                         <div className='text-[10px] text-gray-500'>
-                          Updated: {formatDateTime(mask.updatedAt)}
+                          Updated: {formatDateTime(entry.updatedAt)}
                         </div>
                       </div>
                     </div>
                   ))
                 )}
               </div>
-            </TabsContent>
-            <TabsContent value='composites' className='mt-0 space-y-4'>
-              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='text-[10px] uppercase tracking-wide text-gray-500'>Composite Inputs</div>
-                <div className='text-xs text-gray-300'>
-                  {compositeTabInputSourceLabel}
-                </div>
-              </div>
-
-              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='text-[10px] uppercase tracking-wide text-gray-500'>Source Image</div>
-                <div className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'>
-                  <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
-                    {sourceCompositeImage.imageSrc ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={sourceCompositeImage.imageSrc}
-                        alt={sourceCompositeImage.name}
-                        className='h-full w-full object-cover'
-                        loading='lazy'
-                      />
-                    ) : (
-                      <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
-                        No image
-                      </div>
-                    )}
-                  </div>
-                  <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
-                    <div className='truncate text-xs text-gray-100'>{sourceCompositeImage.name}</div>
-                    <div className='text-[10px] text-gray-400'>
-                      Source: <span className='text-gray-200'>{sourceCompositeImage.sourceType}</span>
-                    </div>
-                    <div className='text-[10px] text-gray-400'>
-                      Card Slot: <span className='font-mono text-gray-300'>{sourceCompositeImage.slotId || 'n/a'}</span>
-                    </div>
-                    <div className='text-[10px] text-gray-400'>
-                      File ID: <span className='font-mono text-gray-300'>{sourceCompositeImage.imageFileId || 'n/a'}</span>
-                    </div>
-                    <div className='text-[10px] text-gray-400'>
-                      File: <span className='text-gray-300'>{sourceCompositeImage.filename || 'n/a'}</span>
-                      {' '}• Size: <span className='text-gray-300'>{formatBytes(sourceCompositeImage.size)}</span>
-                      {' '}• Dimensions:{' '}
-                      <span className='text-gray-300'>
-                        {sourceCompositeImage.width && sourceCompositeImage.height
-                          ? `${sourceCompositeImage.width} x ${sourceCompositeImage.height}`
-                          : 'n/a'}
-                      </span>
-                    </div>
-                    <div className='truncate text-[10px] text-gray-500'>
-                      Path: <span className='font-mono text-gray-400'>{sourceCompositeImage.filepath || 'n/a'}</span>
-                    </div>
-                    <div className='text-[10px] text-gray-500'>
-                      Updated: {formatDateTime(sourceCompositeImage.updatedAt)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
-                <div className='text-[10px] uppercase tracking-wide text-gray-500'>Composite Images</div>
-                <div className='max-h-[28rem] space-y-2 overflow-y-auto rounded border border-border/60 bg-card/35 p-2'>
-                  {compositeTabInputImages.length === 0 ? (
-                    <div className='rounded border border-border/50 bg-card/40 px-3 py-3 text-xs text-gray-400'>
-                      No composite images to show.
-                    </div>
-                  ) : (
-                    compositeTabInputImages.map((entry) => (
-                      <div
-                        key={entry.key}
-                        className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'
-                      >
-                        <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
-                          {entry.imageSrc ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={entry.imageSrc}
-                              alt={entry.name}
-                              className='h-full w-full object-cover'
-                              loading='lazy'
-                            />
-                          ) : (
-                            <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
-                              No image
-                            </div>
-                          )}
-                        </div>
-                        <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
-                          <div className='truncate text-xs text-gray-100'>{entry.name}</div>
-                          <div className='text-[10px] text-gray-400'>
-                            Type: <span className='text-gray-200'>{entry.sourceType}</span>
-                            {entry.order !== null ? (
-                              <>
-                                {' '}• Layer order: <span className='text-gray-200'>{entry.order + 1}</span>
-                              </>
-                            ) : null}
-                          </div>
-                          <div className='text-[10px] text-gray-400'>
-                            Slot: <span className='font-mono text-gray-300'>{entry.slotId || 'n/a'}</span>
-                          </div>
-                          <div className='text-[10px] text-gray-400'>
-                            File ID: <span className='font-mono text-gray-300'>{entry.imageFileId || 'n/a'}</span>
-                          </div>
-                          <div className='text-[10px] text-gray-400'>
-                            File: <span className='text-gray-300'>{entry.filename || 'n/a'}</span>
-                            {' '}• Size: <span className='text-gray-300'>{formatBytes(entry.size)}</span>
-                            {' '}• Dimensions:{' '}
-                            <span className='text-gray-300'>
-                              {entry.width && entry.height ? `${entry.width} x ${entry.height}` : 'n/a'}
-                            </span>
-                          </div>
-                          <div className='truncate text-[10px] text-gray-500'>
-                            Path: <span className='font-mono text-gray-400'>{entry.filepath || 'n/a'}</span>
-                          </div>
-                          <div className='text-[10px] text-gray-500'>
-                            Updated: {formatDateTime(entry.updatedAt)}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <div className='text-sm text-gray-400'>Select a card first.</div>
-        )}
-      </AppModal>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </SlotInlineEditModal>
 
       <AppModal
         open={generationPreviewModalOpen}

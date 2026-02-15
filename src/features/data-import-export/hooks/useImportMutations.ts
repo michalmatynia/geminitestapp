@@ -1,16 +1,17 @@
 'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
+import { createCreateMutation } from '@/shared/lib/query-factories';
+import type { CreateMutation } from '@/shared/types/query-result-types';
 
-export function useCsvImportMutation(): UseMutationResult<
+export function useCsvImportMutation(): CreateMutation<
   unknown,
-  Error,
   { file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: async ({ file, onProgress }: { file: File; onProgress?: (loaded: number, total?: number) => void }): Promise<unknown> => {
       const formData = new FormData();
       formData.append('file', file);
@@ -23,9 +24,11 @@ export function useCsvImportMutation(): UseMutationResult<
       if (!result.ok) throw new Error('Failed to import CSV');
       return result.data;
     },
-    onSuccess: () => {
-      // Invalidate products as they might have been added/updated
-      void invalidateProductsAndCounts(queryClient);
+    options: {
+      onSuccess: () => {
+        // Invalidate products as they might have been added/updated
+        void invalidateProductsAndCounts(queryClient);
+      },
     },
   });
 }

@@ -1,13 +1,19 @@
 'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import {
+  createCreateMutation,
+  createUpdateMutation,
+  createDeleteMutation,
+} from '@/shared/lib/query-factories';
 import {
   invalidateImageStudioProjects,
   invalidateImageStudioSlots,
 } from '@/shared/lib/query-invalidation';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
+import type { CreateMutation, UpdateMutation, DeleteMutationResult } from '@/shared/types/query-result-types';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
@@ -89,23 +95,25 @@ export interface StudioAssetImportResult {
   failures: Array<{ filename?: string; filepath?: string; error: string }>;
 }
 
-export function useCreateStudioProject(): UseMutationResult<string, Error, string> {
+export function useCreateStudioProject(): CreateMutation<string, string> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: async (id: string): Promise<string> => {
       const data = await api.post<{ projectId?: string }>('/api/image-studio/projects', { projectId: id });
       if (!data.projectId) throw new Error('Failed to create project');
       return data.projectId;
     },
-    onSuccess: () => {
-      void invalidateImageStudioProjects(queryClient);
+    options: {
+      onSuccess: () => {
+        void invalidateImageStudioProjects(queryClient);
+      },
     },
   });
 }
 
-export function useDeleteStudioProject(): UseMutationResult<string, Error, string> {
+export function useDeleteStudioProject(): DeleteMutationResult<string, string> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createDeleteMutation<string, string>({
     mutationFn: async (id: string): Promise<string> => {
       await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
         // Recursive folder deletion can take longer for large projects.
@@ -113,30 +121,32 @@ export function useDeleteStudioProject(): UseMutationResult<string, Error, strin
       });
       return id;
     },
-    onSuccess: (id: string) => {
-      void invalidateImageStudioProjects(queryClient);
-      void invalidateImageStudioSlots(queryClient, id);
+    options: {
+      onSuccess: (id: string) => {
+        void invalidateImageStudioProjects(queryClient);
+        void invalidateImageStudioSlots(queryClient, id);
+      },
     },
   });
 }
 
-export function useCreateStudioSlots(projectId: string) {
+export function useCreateStudioSlots(projectId: string): CreateMutation<StudioSlotsResponse, Array<Partial<ImageStudioSlotRecord>>> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: (slots: Array<Partial<ImageStudioSlotRecord>>) => 
       api.post<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, { slots }),
-    onSuccess: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
+    options: {
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
     },
   });
 }
 
-export function useUpdateStudioSlot(projectId: string) {
+export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStudioSlotRecord, { id: string; data: Partial<ImageStudioSlotRecord> }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createUpdateMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
-      // Keep the raw slot id (including legacy prefixes like `card:`) and let
-      // the API resolve compatibility candidates.
       const slotId = normalizeStudioSlotId(id);
       const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`, data);
       if (!response.slot) {
@@ -144,30 +154,32 @@ export function useUpdateStudioSlot(projectId: string) {
       }
       return response.slot;
     },
-    onSuccess: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
+    options: {
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
     },
   });
 }
 
-export function useDeleteStudioSlot(projectId: string) {
+export function useDeleteStudioSlot(projectId: string): DeleteMutationResult<void, string> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createDeleteMutation<void, string>({
     mutationFn: (id: string) => {
-      // Keep the raw slot id (including legacy prefixes like `card:`) and let
-      // the API resolve compatibility candidates.
       const slotId = normalizeStudioSlotId(id);
       return api.delete<void>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`);
     },
-    onSuccess: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
+    options: {
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
     },
   });
 }
 
-export function useUploadStudioAssets(projectId: string) {
+export function useUploadStudioAssets(projectId: string): CreateMutation<StudioAssetImportResult, { files: File[]; folder: string }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: ({ files, folder }: { files: File[]; folder: string }) => {
       const formData = new FormData();
       files.forEach((file: File) => formData.append('files', file));
@@ -176,25 +188,29 @@ export function useUploadStudioAssets(projectId: string) {
       }
       return api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, formData);
     },
-    onSuccess: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
+    options: {
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
     },
   });
 }
 
-export function useImportStudioAssetsFromDrive(projectId: string) {
+export function useImportStudioAssetsFromDrive(projectId: string): CreateMutation<StudioAssetImportResult, { files: ImageFileSelection[]; folder: string }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) =>
       api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, { files, folder }),
-    onSuccess: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
+    options: {
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
     },
   });
 }
 
-export function useRunStudio(): UseMutationResult<RunStudioEnqueueResult, Error, RunStudioPayload> {
-  return useMutation({
+export function useRunStudio(): CreateMutation<RunStudioEnqueueResult, RunStudioPayload> {
+  return createCreateMutation({
     mutationFn: async (payload: RunStudioPayload): Promise<RunStudioEnqueueResult> => {
       return api.post<RunStudioEnqueueResult>('/api/image-studio/run', payload);
     },

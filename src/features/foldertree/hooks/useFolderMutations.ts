@@ -1,9 +1,11 @@
 'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import type { FolderNode } from '@/features/foldertree/utils/folderImporter';
+import { createCreateMutation } from '@/shared/lib/query-factories';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { CreateMutation } from '@/shared/types/query-result-types';
 
 interface ImportFolderPayload {
   notebookId: string;
@@ -17,10 +19,10 @@ interface ImportFolderResponse {
   data?: unknown;
 }
 
-export function useImportFolderMutation(): UseMutationResult<ImportFolderResponse, Error, ImportFolderPayload> {
+export function useImportFolderMutation(): CreateMutation<ImportFolderResponse, ImportFolderPayload> {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createCreateMutation({
     mutationFn: async (payload: ImportFolderPayload): Promise<ImportFolderResponse> => {
       const response = await fetch('/api/notes/import-folder', {
         method: 'POST',
@@ -35,19 +37,21 @@ export function useImportFolderMutation(): UseMutationResult<ImportFolderRespons
 
       return response.json() as Promise<ImportFolderResponse>;
     },
-    onSuccess: (_data: ImportFolderResponse, variables: ImportFolderPayload) => {
-      // Invalidate folder tree for the specific notebook
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.folderTree(variables.notebookId),
-      });
-      // Invalidate notes list as new notes are added
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.all,
-      });
-      // Also invalidate stats or other related queries if they exist
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.notebooks(),
-      });
+    options: {
+      onSuccess: (_data: ImportFolderResponse, variables: ImportFolderPayload) => {
+        // Invalidate folder tree for the specific notebook
+        void queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.notes.folderTree(variables.notebookId),
+        });
+        // Invalidate notes list as new notes are added
+        void queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.notes.all,
+        });
+        // Also invalidate stats or other related queries if they exist
+        void queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.notes.notebooks(),
+        });
+      },
     },
   });
 }

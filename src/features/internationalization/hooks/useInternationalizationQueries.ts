@@ -1,11 +1,13 @@
 'use client';
 
-import { i18nKeys } from '@/shared/lib/query-key-exports';
 import { createListQuery } from '@/shared/lib/query-factories';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
 import type { ListQuery } from '@/shared/types/query-result-types';
 
 import { getCurrencies, getCountries, getLanguages } from '../api';
+
+const i18nKeys = QUERY_KEYS.internationalization;
 
 export function useCurrencies(): ListQuery<CurrencyOption> {
   return createListQuery({

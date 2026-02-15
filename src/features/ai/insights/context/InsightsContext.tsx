@@ -1,20 +1,16 @@
 'use client';
 
-import { useMutation, useQuery, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 import React, { createContext, useContext } from 'react';
 
-import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AiInsightRecord } from '@/shared/types';
 import { useToast } from '@/shared/ui';
 
-type InsightResponse = { insights: AiInsightRecord[] };
+import { useAnalyticsInsightsQuery, useLogInsightsQuery, useRunAnalyticsInsightMutation, useRunLogInsightMutation } from '../hooks/useInsightQueries';
 
 interface InsightsContextValue {
-  analyticsQuery: UseQueryResult<InsightResponse>;
-  logsQuery: UseQueryResult<InsightResponse>;
-  runAnalyticsMutation: UseMutationResult<AiInsightRecord | null, Error, void>;
-  runLogsMutation: UseMutationResult<AiInsightRecord | null, Error, void>;
+  analyticsQuery: ReturnType<typeof useAnalyticsInsightsQuery>;
+  logsQuery: ReturnType<typeof useLogInsightsQuery>;
+  runAnalyticsMutation: ReturnType<typeof useRunAnalyticsInsightMutation>;
+  runLogsMutation: ReturnType<typeof useRunLogInsightMutation>;
 }
 
 const InsightsContext = createContext<InsightsContextValue | undefined>(undefined);
@@ -30,47 +26,36 @@ export function useInsights(): InsightsContextValue {
 export function InsightsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
 
-  const analyticsQuery = useQuery({
-    queryKey: QUERY_KEYS.ai.insights.analytics(),
-    queryFn: () => api.get<InsightResponse>('/api/analytics/insights', {
-      params: { limit: 10 }
-    }),
-  });
+  const analyticsQuery = useAnalyticsInsightsQuery();
+  const logsQuery = useLogInsightsQuery();
 
-  const logsQuery = useQuery({
-    queryKey: QUERY_KEYS.ai.insights.logs(),
-    queryFn: () => api.get<InsightResponse>('/api/system/logs/insights', {
-      params: { limit: 10 }
-    }),
-  });
+  const runAnalyticsMutation = useRunAnalyticsInsightMutation();
+  const runLogsMutation = useRunLogInsightMutation();
 
-  const runAnalyticsMutation = useMutation<AiInsightRecord | null, Error, void>({
-    mutationFn: async () => {
-      const data = await api.post<{ insight?: AiInsightRecord }>('/api/analytics/insights', {});
-      return data?.insight ?? null;
-    },
-    onSuccess: () => {
+  // Handle toast notifications via useEffect for mutations
+  React.useEffect(() => {
+    if (runAnalyticsMutation.isSuccess) {
       toast('AI analytics insight generated.', { variant: 'success' });
-      void analyticsQuery.refetch();
-    },
-    onError: (error: Error) => {
-      toast(error.message, { variant: 'error' });
-    },
-  });
+    }
+  }, [runAnalyticsMutation.isSuccess, toast]);
 
-  const runLogsMutation = useMutation<AiInsightRecord | null, Error, void>({
-    mutationFn: async () => {
-      const data = await api.post<{ insight?: AiInsightRecord }>('/api/system/logs/insights', {});
-      return data?.insight ?? null;
-    },
-    onSuccess: () => {
+  React.useEffect(() => {
+    if (runAnalyticsMutation.isError) {
+      toast(runAnalyticsMutation.error.message, { variant: 'error' });
+    }
+  }, [runAnalyticsMutation.isError, runAnalyticsMutation.error, toast]);
+
+  React.useEffect(() => {
+    if (runLogsMutation.isSuccess) {
       toast('AI log insight generated.', { variant: 'success' });
-      void logsQuery.refetch();
-    },
-    onError: (error: Error) => {
-      toast(error.message, { variant: 'error' });
-    },
-  });
+    }
+  }, [runLogsMutation.isSuccess, toast]);
+
+  React.useEffect(() => {
+    if (runLogsMutation.isError) {
+      toast(runLogsMutation.error.message, { variant: 'error' });
+    }
+  }, [runLogsMutation.isError, runLogsMutation.error, toast]);
 
   const value = {
     analyticsQuery,

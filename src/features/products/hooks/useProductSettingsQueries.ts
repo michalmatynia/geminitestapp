@@ -1,10 +1,12 @@
-import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   createUpdateMutation,
   createDeleteMutation,
   createSaveMutation,
   createCreateMutation,
+  createListQuery,
+  createSingleQuery,
 } from '@/shared/lib/query-factories';
 import {
   invalidateCatalogScopedData,
@@ -23,7 +25,9 @@ import type {
   UpdateMutation, 
   DeleteMutation, 
   SaveMutation, 
-  CreateMutation 
+  CreateMutation,
+  ListQuery,
+  SingleQuery,
 } from '@/shared/types/query-result-types';
 
 import * as api from '../api/settings';
@@ -44,34 +48,50 @@ import {
 } from './useProductMetadataQueries';
 
 
-export function usePriceGroups(): UseQueryResult<PriceGroup[], Error> {
-  return useMetadataPriceGroups() as UseQueryResult<PriceGroup[], Error>;
+export function usePriceGroups(): ListQuery<PriceGroup> {
+  return useMetadataPriceGroups() as ListQuery<PriceGroup>;
 }
 
-export function useCatalogs(): UseQueryResult<CatalogRecord[], Error> {
-  return useMetadataCatalogs();
+export function useCatalogs(): ListQuery<CatalogRecord> {
+  return useMetadataCatalogs() as ListQuery<CatalogRecord>;
 }
 
-export function useCategories(catalogId: string | null): UseQueryResult<ProductCategoryWithChildren[], Error> {
-  return useQuery({
+export function useCategories(catalogId: string | null): ListQuery<ProductCategoryWithChildren> {
+  return createListQuery({
     queryKey: productSettingsKeys.categoryTree(catalogId),
     queryFn: () => api.getCategories(catalogId),
     enabled: !!catalogId,
   });
 }
 
-export function useTags(catalogId: string | null): UseQueryResult<ProductTag[], Error> {
-  return useMetadataTags(catalogId ?? undefined);
+export function useTags(catalogId: string | null): ListQuery<ProductTag> {
+  return useMetadataTags(catalogId ?? undefined) as ListQuery<ProductTag>;
 }
 
-export function useParameters(catalogId: string | null): UseQueryResult<ProductParameter[], Error> {
-  return useMetadataParameters(catalogId ?? undefined);
+export function useParameters(catalogId: string | null): ListQuery<ProductParameter> {
+  return useMetadataParameters(catalogId ?? undefined) as ListQuery<ProductParameter>;
 }
 
-export function useValidatorSettings(): UseQueryResult<ProductValidatorSettings, Error> {
-  return useQuery({
-    queryKey: productSettingsKeys.validatorSettings(),
+export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {
+  return createSingleQuery({
+    id: 'global', // Constant ID for global settings
+    queryKey: () => productSettingsKeys.validatorSettings(),
     queryFn: api.getValidatorSettings,
+  });
+}
+
+export function useValidationPatterns(): ListQuery<ProductValidationPattern> {
+  return createListQuery({
+    queryKey: productSettingsKeys.validatorPatterns(),
+    queryFn: api.getValidationPatterns,
+  });
+}
+
+export function useProductValidatorConfig(includeDisabled: boolean = false): SingleQuery<ProductValidatorConfig> {
+  return createSingleQuery({
+    id: includeDisabled ? 'config-all' : 'config-active',
+    queryKey: () => productSettingsKeys.validatorConfig(includeDisabled),
+    queryFn: () => api.getProductValidatorConfig(includeDisabled),
   });
 }
 

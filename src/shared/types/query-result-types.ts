@@ -18,7 +18,7 @@ import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
  * }
  * ```
  */
-export type ListQuery<T> = UseQueryResult<T[], Error>;
+export type ListQuery<T, TResponse = T[]> = UseQueryResult<TResponse, Error>;
 
 /**
  * Standard result type for single-item queries
@@ -72,7 +72,7 @@ export type CreateMutation<T, TInput = Omit<T, 'id' | 'createdAt' | 'updatedAt'>
 export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }> = UseMutationResult<T, Error, TInput>;
 
 /**
- * Standard result type for delete mutations
+ * Standard result type for delete mutations (legacy void return)
  * 
  * @example
  * ```typescript
@@ -82,6 +82,11 @@ export type UpdateMutation<T, TInput = { id: string; data: Partial<T> }> = UseMu
  * ```
  */
 export type DeleteMutation = UseMutationResult<void, Error, string>;
+
+/**
+ * Modern result type for delete mutations that may return data
+ */
+export type DeleteMutationResult<TResponse = void, TInput = string> = UseMutationResult<TResponse, Error, TInput>;
 
 /**
  * Standard result type for save mutations (create-or-update)

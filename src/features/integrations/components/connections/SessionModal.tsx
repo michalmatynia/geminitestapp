@@ -6,7 +6,8 @@ import { SessionCookie } from '@/features/integrations/types/integrations-ui';
 import { AppModal, Badge } from '@/shared/ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 
-interface SessionModalProps extends ModalStateProps {
+interface SessionModalProps extends Omit<ModalStateProps, 'onSuccess'> {
+  onSuccess?: () => void;
   loading: boolean;
   error: string | null;
   cookies: SessionCookie[];

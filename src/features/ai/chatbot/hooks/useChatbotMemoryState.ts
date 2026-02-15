@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 
-import { useChatbotMemory } from '../hooks/useChatbotMemory';
+import { useChatbotMemory } from '../hooks/useChatbotMemoryQueries';
 
 import type { ChatbotMemoryItem } from '../types';
 

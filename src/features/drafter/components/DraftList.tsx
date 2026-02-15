@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { useDrafts, useDeleteDraft } from '@/features/drafter/hooks/useDrafts';
+import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDraftQueries';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type { ProductDraft } from '@/features/products/types/drafts';
@@ -29,7 +29,7 @@ const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
 
 export function DraftList(): React.JSX.Element {
   const { openCreator } = useDrafterContext();
-  const { data: drafts = [], isLoading: loading } = useDrafts();
+  const { data: drafts = [], isLoading: loading } = useDraftQueries();
   const deleteDraftMutation = useDeleteDraft();
   const [deleting, setDeleting] = useState<string | null>(null);
   const [draftToDelete, setDraftToDelete] = useState<string | null>(null);

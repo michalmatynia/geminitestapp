@@ -17,6 +17,15 @@ const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
+const toTimestamp = (value: string | Date | null | undefined): number => {
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
 function normalizeStudioPublicPath(filepath: string | null | undefined): string | null {
   const raw = typeof filepath === 'string' ? filepath.trim() : '';
   if (!raw) return null;
@@ -183,7 +192,11 @@ async function GET_handler(
     }
   });
 
-  const result = Array.from(byFilepath.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const result = Array.from(byFilepath.values()).sort((a, b) => {
+    const diff = toTimestamp(b.createdAt) - toTimestamp(a.createdAt);
+    if (diff !== 0) return diff;
+    return b.filepath.localeCompare(a.filepath);
+  });
 
   return NextResponse.json({ assets: result, folders: diskFolders });
 }

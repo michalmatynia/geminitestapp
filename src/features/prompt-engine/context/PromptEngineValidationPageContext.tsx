@@ -44,3 +44,7 @@ export function usePromptEngineValidationPageContext(): PromptEngineValidationPa
   }
   return context;
 }
+
+export function useOptionalPromptEngineValidationPageContext(): PromptEngineValidationPageContextValue | null {
+  return React.useContext(PromptEngineValidationPageContext);
+}

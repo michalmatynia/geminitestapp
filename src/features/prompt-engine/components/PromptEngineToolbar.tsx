@@ -12,26 +12,18 @@ import {
 import { cn } from '@/shared/utils';
 
 import { usePromptEngine } from '../context/PromptEngineContext';
-import { useOptionalPromptEnginePageChrome } from '../context/PromptEnginePageChromeContext';
+import { useOptionalPromptEngineValidationPageContext } from '../context/PromptEngineValidationPageContext';
 
-type PromptEngineToolbarProps = {
-  embedded?: boolean | undefined;
-  eyebrow?: string | undefined;
-  backLinkHref?: string | undefined;
-  backLinkLabel?: string | undefined;
-};
+const DEFAULT_EYEBROW = 'AI · Prompt Engine';
+const DEFAULT_BACK_LINK_HREF = '/admin/prompt-engine';
+const DEFAULT_BACK_LINK_LABEL = 'Back to Prompt Engine';
 
-export function PromptEngineToolbar({
-  embedded = false,
-  eyebrow = 'AI · Prompt Engine',
-  backLinkHref = '/admin/prompt-engine',
-  backLinkLabel = 'Back to Prompt Engine',
-}: PromptEngineToolbarProps): React.JSX.Element {
-  const pageChrome = useOptionalPromptEnginePageChrome();
-  const resolvedEmbedded = pageChrome?.embedded ?? embedded;
-  const resolvedEyebrow = pageChrome?.eyebrow ?? eyebrow;
-  const resolvedBackLinkHref = pageChrome?.backLinkHref ?? backLinkHref;
-  const resolvedBackLinkLabel = pageChrome?.backLinkLabel ?? backLinkLabel;
+export function PromptEngineToolbar(): React.JSX.Element {
+  const pageContext = useOptionalPromptEngineValidationPageContext();
+  const resolvedEmbedded = pageContext?.embedded ?? false;
+  const resolvedEyebrow = pageContext?.eyebrow ?? DEFAULT_EYEBROW;
+  const resolvedBackLinkHref = pageContext?.backLinkHref ?? DEFAULT_BACK_LINK_HREF;
+  const resolvedBackLinkLabel = pageContext?.backLinkLabel ?? DEFAULT_BACK_LINK_LABEL;
   const {
     patternTab,
     exploderSubTab,

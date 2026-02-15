@@ -15,7 +15,7 @@ export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS = [
 export type ProductDraftOpenFormTab =
   (typeof PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS)[number];
 
-export type ProductDraft = {
+export type ProductDraftDto = {
   id: string;
   name: string;
   description?: string | null;
@@ -77,7 +77,7 @@ export type ProductDraft = {
   updatedAt: Date | string;
 };
 
-export interface CreateProductDraftInput
+export interface CreateProductDraftDto
   extends Partial<Omit<CreateProductDto, 'sku' | 'name' | 'description'>> {
   name: string; // Draft internal name
   description?: string | null; // Draft internal description
@@ -106,4 +106,4 @@ export interface CreateProductDraftInput
   asin?: string | null;
 }
 
-export type UpdateProductDraftInput = Partial<CreateProductDraftInput>;
+export type UpdateProductDraftDto = Partial<CreateProductDraftDto>;

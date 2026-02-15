@@ -18,14 +18,14 @@ import * as api from '../api/client';
 export { agentRunsKeys };
 
 export function useAgentRuns(): ListQuery<AiPathRunRecord> {
-  return createListQuery({
+  return createListQuery<AiPathRunRecord>({
     queryKey: agentRunsKeys.lists(),
     queryFn: api.getAgentRuns,
   });
 }
 
 export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot> {
-  return createListQuery({
+  return createListQuery<AgentSnapshot>({
     queryKey: agentRunsKeys.snapshots(runId || ''),
     queryFn: () => api.getAgentSnapshots(runId!),
     options: {
@@ -34,31 +34,31 @@ export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot
   });
 }
 
-export function useAgentLogs(runId: string | null, options?: { refetchInterval?: number }): ListQuery<AgentBrowserLog> {
-  return createListQuery({
+export function useAgentLogs(runId: string | null, options?: { refetchInterval?: number | false }): ListQuery<AgentBrowserLog> {
+  return createListQuery<AgentBrowserLog>({
     queryKey: agentRunsKeys.logs(runId || ''),
     queryFn: () => api.getAgentLogs(runId!),
     options: {
       enabled: !!runId,
-      refetchInterval: options?.refetchInterval || false,
+      refetchInterval: options?.refetchInterval ?? false,
     }
   });
 }
 
-export function useAgentAudits(runId: string | null, options?: { refetchInterval?: number }): ListQuery<AgentAuditLog> {
-  return createListQuery({
+export function useAgentAudits(runId: string | null, options?: { refetchInterval?: number | false }): ListQuery<AgentAuditLog> {
+  return createListQuery<AgentAuditLog>({
     queryKey: agentRunsKeys.audits(runId || ''),
     queryFn: () => api.getAgentAudits(runId!),
     options: {
       enabled: !!runId,
-      refetchInterval: options?.refetchInterval || false,
+      refetchInterval: options?.refetchInterval ?? false,
     }
   });
 }
 
 export function useDeleteAgentRunMutation(): MutationResult<void, { runId: string; force?: boolean }> {
   const queryClient = useQueryClient();
-  return createCreateMutation({
+  return createCreateMutation<void, { runId: string; force?: boolean }>({
     mutationFn: ({ runId, force }: { runId: string; force?: boolean }) => 
       api.deleteAgentRun(runId, force),
     options: {
@@ -71,7 +71,7 @@ export function useDeleteAgentRunMutation(): MutationResult<void, { runId: strin
 
 export function useDeleteCompletedAgentRunsMutation(): MutationResult<void, void> {
   const queryClient = useQueryClient();
-  return createCreateMutation({
+  return createCreateMutation<void, void>({
     mutationFn: api.deleteCompletedAgentRuns,
     options: {
       onSuccess: () => {

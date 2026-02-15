@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 
-import type { SimpleModalProps } from '@/shared/types/modal-props';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 import { Label, Checkbox, FormModal } from '@/shared/ui';
 
-interface RestoreModalProps extends Omit<SimpleModalProps, 'title' | 'onSuccess'> {
-  title?: string;
-  onSuccess?: () => void;
+interface RestoreModalProps extends ModalStateProps {
   backupName: string;
   onConfirm: (truncate: boolean) => void;
+  title?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
 }
 
 export const RestoreModal = ({

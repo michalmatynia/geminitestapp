@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect, useMemo } from 'react';
 
-import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeaching';
+import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';

@@ -14,7 +14,6 @@ import {
   createSingleQuery,
   createCreateMutation,
   createUpdateMutation,
-  createDeleteMutation,
 } from '@/shared/lib/query-factories';
 import type { 
   ListQuery, 
@@ -24,7 +23,7 @@ import type {
 
 export { draftKeys };
 
-export function useDrafts(): ListQuery<ProductDraft> {
+export function useDraftQueries(): ListQuery<ProductDraft> {
   return createListQuery({
     queryKey: draftKeys.lists(),
     queryFn: () => api.get<ProductDraft[]>('/api/drafts', { cache: 'no-store' }),

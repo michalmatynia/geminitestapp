@@ -21,30 +21,37 @@ import {
   SelectValue,
   Textarea,
 } from '@/shared/ui';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';
 import { RunHistoryEntries } from './RunHistoryEntries';
-import { useRunHistoryActions, useRunHistoryState } from '../context';
 
-export function RunDetailDialog(): React.JSX.Element {
-  const {
-    runDetailOpen,
-    runDetailLoading,
-    runDetail,
-    runStreamStatus,
-    runStreamPaused,
-    runEventsOverflow,
-    runEventsBatchLimit,
-    runHistoryNodeId,
-  } = useRunHistoryState();
+interface RunDetailDialogProps extends ModalStateProps {
+  loading: boolean;
+  runDetail: any;
+  runStreamStatus: string;
+  runStreamPaused: boolean;
+  runEventsOverflow: boolean;
+  runEventsBatchLimit: number | null;
+  runHistoryNodeId: string | null;
+  onStreamPauseToggle: (paused: boolean) => void;
+  onHistoryNodeSelect: (nodeId: string) => void;
+}
 
-  const {
-    setRunDetailOpen,
-    setRunStreamPaused,
-    setRunHistoryNodeId,
-  } = useRunHistoryActions();
-
+export function RunDetailDialog({
+  isOpen,
+  onClose,
+  loading: runDetailLoading,
+  runDetail,
+  runStreamStatus,
+  runStreamPaused,
+  runEventsOverflow,
+  runEventsBatchLimit,
+  runHistoryNodeId,
+  onStreamPauseToggle,
+  onHistoryNodeSelect,
+}: RunDetailDialogProps): React.JSX.Element {
   const runNodeSummary = useMemo(() => {
     if (!runDetail) return null;
     const counts: Record<string, number> = {};
@@ -77,18 +84,10 @@ export function RunDetailDialog(): React.JSX.Element {
     return runDetailHistory[selectedHistoryNodeId] ?? [];
   }, [selectedHistoryNodeId, runDetailHistory]);
 
-  const handleToggleStreamPause = (): void => {
-    setRunStreamPaused(!runStreamPaused);
-  };
-
-  const handleSelectHistoryNode = (nodeId: string): void => {
-    setRunHistoryNodeId(nodeId);
-  };
-
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
 
   return (
-    <Dialog open={runDetailOpen} onOpenChange={setRunDetailOpen}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className='max-w-3xl border border-border bg-card text-white'>
         <DialogHeader>
           <DialogTitle className='text-lg'>Run Details</DialogTitle>
@@ -116,7 +115,7 @@ export function RunDetailDialog(): React.JSX.Element {
                 <span className='text-[10px] uppercase text-gray-500'>Stream</span>
                 <div className='flex flex-wrap items-center gap-2 text-sm'>
                   <span>{runStreamStatus}</span>
-                  <Button variant='ghost' size='sm' onClick={handleToggleStreamPause}>
+                  <Button variant='ghost' size='sm' onClick={() => onStreamPauseToggle(!runStreamPaused)}>
                     {runStreamPaused ? 'Resume stream' : 'Pause stream'}
                   </Button>
                 </div>
@@ -184,7 +183,7 @@ export function RunDetailDialog(): React.JSX.Element {
                 {historyOptions.length > 1 ? (
                   <Select
                     {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
-                    onValueChange={handleSelectHistoryNode}
+                    onValueChange={onHistoryNodeSelect}
                   >
                     <SelectTrigger className='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'>
                       <SelectValue placeholder='Select node' />

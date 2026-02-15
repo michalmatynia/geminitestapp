@@ -3,7 +3,8 @@
 import { ContentDisplayModal } from '@/shared/ui/templates';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 
-interface TestLogModalProps extends ModalStateProps {
+interface TestLogModalProps extends Omit<ModalStateProps, 'onSuccess'> {
+  onSuccess?: () => void;
   selectedStep: {
     step: string;
     status: string;

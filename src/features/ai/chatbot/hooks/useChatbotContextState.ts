@@ -1,14 +1,14 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 
-import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast, type FileUploadHelpers } from '@/shared/ui';
-
-import * as chatbotApi from '../api';
+import { 
+  useChatbotContextSettingsQuery, 
+  useSaveChatbotContextMutation, 
+  useUploadChatbotContextPdfMutation 
+} from './useChatbotContextQueries';
 
 export type ContextItem = {
   id: string;
@@ -67,7 +67,6 @@ const buildActiveIds = (rawActive?: string, items?: ContextItem[]): string[] => 
 
 export function useChatbotContextState() {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const initializedFilters = useRef(false);
   const hasInitializedData = useRef(false);
@@ -80,57 +79,22 @@ export function useChatbotContextState() {
   const [modalDraft, setModalDraft] = useState<ContextDraft | null>(null);
   const [tagDraft, setTagDraft] = useState<string>('');
 
-  const contextSettingsQuery = useQuery({
-    queryKey: QUERY_KEYS.ai.chatbot.settings.allSettings('global-context'),
-    queryFn: chatbotApi.fetchSettings,
-    staleTime: 60_000,
-  });
-
-  const saveContextsMutation = useMutation({
-    mutationFn: async (payload: {
-      nextContexts: ContextItem[];
-      nextActiveIds: string[];
-    }): Promise<void> => {
-      await chatbotApi.saveSetting(
-        'chatbot_global_context_items',
-        JSON.stringify(payload.nextContexts),
-        'Failed to save contexts.'
-      );
-      await chatbotApi.saveSetting(
-        'chatbot_global_context_active',
-        JSON.stringify(payload.nextActiveIds),
-        'Failed to save active contexts.'
-      );
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.ai.chatbot.settings.allSettings('global-context'),
-      });
-    },
-  });
-
-  const uploadPdfMutation = useMutation({
-    mutationFn: async (payload: {
-      file: File;
-      helpers?: FileUploadHelpers;
-    }): Promise<{ segments: ChatbotContextSegmentDto[] }> =>
-      chatbotApi.uploadChatbotContextPdf(
-        payload.file,
-        (loaded: number, total?: number) => payload.helpers?.reportProgress(loaded, total)
-      ),
-  });
+  const contextSettingsQuery = useChatbotContextSettingsQuery();
+  const saveMutation = useSaveChatbotContextMutation();
+  const uploadPdfMutation = useUploadChatbotContextPdfMutation();
 
   useEffect(() => {
     if (!contextSettingsQuery.data || hasInitializedData.current) return;
 
-    const storedItems = contextSettingsQuery.data.find(
-      (item: { key: string; value?: string }) => item.key === 'chatbot_global_context_items'
+    const data = contextSettingsQuery.data as Array<{ key: string; value?: string }>;
+    const storedItems = data.find(
+      (item) => item.key === 'chatbot_global_context_items'
     );
-    const storedActive = contextSettingsQuery.data.find(
-      (item: { key: string; value?: string }) => item.key === 'chatbot_global_context_active'
+    const storedActive = data.find(
+      (item) => item.key === 'chatbot_global_context_active'
     );
-    const storedLegacy = contextSettingsQuery.data.find(
-      (item: { key: string; value?: string }) => item.key === 'chatbot_global_context'
+    const storedLegacy = data.find(
+      (item) => item.key === 'chatbot_global_context'
     );
 
     const items = buildContextItems(storedItems?.value, storedLegacy?.value);
@@ -247,9 +211,15 @@ export function useChatbotContextState() {
 
   const handleSaveContexts = async () => {
     try {
-      await saveContextsMutation.mutateAsync({
-        nextContexts: contexts,
-        nextActiveIds: activeIds,
+      await saveMutation.mutateAsync({
+        key: 'chatbot_global_context_items',
+        value: JSON.stringify(contexts),
+        errorLabel: 'Failed to save contexts.'
+      });
+      await saveMutation.mutateAsync({
+        key: 'chatbot_global_context_active',
+        value: JSON.stringify(activeIds),
+        errorLabel: 'Failed to save active contexts.'
       });
       toast('Global contexts saved', { variant: 'success' });
     } catch (error: unknown) {
@@ -299,7 +269,7 @@ export function useChatbotContextState() {
     tagDraft,
     setTagDraft,
     loading: contextSettingsQuery.isLoading && !hasInitializedData.current,
-    saving: saveContextsMutation.isPending,
+    saving: saveMutation.isPending,
     uploading: uploadPdfMutation.isPending,
     openCreateModal,
     openEditModal,

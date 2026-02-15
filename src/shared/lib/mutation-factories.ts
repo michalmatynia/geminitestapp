@@ -7,21 +7,23 @@ import {
   type QueryClient 
 } from '@tanstack/react-query';
 
-import type { DtoBase, CreatePayload, UpdatePayload } from '@/shared/types/dto-base';
+import type { DtoBase } from '@/shared/types/dto-base';
 
 /**
  * Factory for creating standardized save mutations (create or update)
  */
-export function createSaveMutation<T extends DtoBase>(
-  saveFn: (id: string | undefined, data: any) => Promise<T>,
-  invalidateFn: (queryClient: QueryClient, data: T) => void | Promise<void>
-): UseMutationResult<T, Error, { id?: string; data: any }> {
+export function createSaveMutation<T extends DtoBase, TVariables = { id?: string; data: any }>(
+  config: {
+    saveFn: (variables: TVariables) => Promise<T>;
+    invalidateFn: (queryClient: QueryClient, data: T, variables: TVariables) => void | Promise<void>;
+  }
+): UseMutationResult<T, Error, TVariables> {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: ({ id, data }) => saveFn(id, data),
-    onSuccess: async (data) => {
-      await invalidateFn(queryClient, data);
+    mutationFn: config.saveFn,
+    onSuccess: async (data, variables) => {
+      await config.invalidateFn(queryClient, data, variables);
     },
   });
 }
@@ -30,15 +32,17 @@ export function createSaveMutation<T extends DtoBase>(
  * Factory for creating standardized delete mutations
  */
 export function createDeleteMutation<T = void, TVariables = string>(
-  deleteFn: (variables: TVariables) => Promise<T>,
-  invalidateFn: (queryClient: QueryClient, variables: TVariables) => void | Promise<void>
+  config: {
+    deleteFn: (variables: TVariables) => Promise<T>;
+    invalidateFn: (queryClient: QueryClient, data: T, variables: TVariables) => void | Promise<void>;
+  }
 ): UseMutationResult<T, Error, TVariables> {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: deleteFn,
-    onSuccess: async (_data, variables) => {
-      await invalidateFn(queryClient, variables);
+    mutationFn: config.deleteFn,
+    onSuccess: async (data, variables) => {
+      await config.invalidateFn(queryClient, data, variables);
     },
   });
 }
@@ -46,16 +50,18 @@ export function createDeleteMutation<T = void, TVariables = string>(
 /**
  * Factory for creating standardized create mutations
  */
-export function createCreateMutation<T extends DtoBase>(
-  createFn: (data: any) => Promise<T>,
-  invalidateFn: (queryClient: QueryClient, data: T) => void | Promise<void>
-): UseMutationResult<T, Error, any> {
+export function createCreateMutation<T extends DtoBase, TVariables = any>(
+  config: {
+    createFn: (variables: TVariables) => Promise<T>;
+    invalidateFn: (queryClient: QueryClient, data: T, variables: TVariables) => void | Promise<void>;
+  }
+): UseMutationResult<T, Error, TVariables> {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: createFn,
-    onSuccess: async (data) => {
-      await invalidateFn(queryClient, data);
+    mutationFn: config.createFn,
+    onSuccess: async (data, variables) => {
+      await config.invalidateFn(queryClient, data, variables);
     },
   });
 }

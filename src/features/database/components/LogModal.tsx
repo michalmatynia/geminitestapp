@@ -9,7 +9,8 @@ import { ContentDisplayModal } from '@/shared/ui/templates';
 interface LogModalProps extends ModalStateProps {
   content: string;
   title?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  onSuccess?: () => void;
 }
 
 export const LogModal = ({ 

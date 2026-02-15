@@ -19,14 +19,9 @@ import {
   SelectSimple, 
   SectionHeader, 
   ListPanel, 
-  FormField, 
   Input, 
   ConfirmDialog,
   StatusBadge,
-  StatusToggle,
-  FormModal,
-  Checkbox,
-  Label,
   useToast
 } from '@/shared/ui';
 
@@ -212,6 +207,7 @@ export default function AuthUsersPage(): React.JSX.Element {
       <UserEditModal
         isOpen={Boolean(editingUser)}
         onClose={() => setEditingUser(null)}
+        onSuccess={() => {}}
         item={editingUser}
         setEditingUser={setEditingUser}
         isSaving={mutations.updateUser.isPending}
@@ -239,6 +235,7 @@ export default function AuthUsersPage(): React.JSX.Element {
       <UserCreateModal
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
+        onSuccess={() => {}}
         createForm={createForm}
         setCreateForm={setCreateForm}
         isSaving={mutations.register.isPending}
@@ -269,6 +266,7 @@ export default function AuthUsersPage(): React.JSX.Element {
       <MockSignInModal
         isOpen={mockOpen}
         onClose={() => setMockOpen(false)}
+        onSuccess={() => {}}
         email={mockEmail}
         setEmail={setMockEmail}
         password={mockPassword}

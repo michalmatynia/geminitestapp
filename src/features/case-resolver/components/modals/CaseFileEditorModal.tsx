@@ -15,6 +15,7 @@ interface CaseFileEditorModalProps extends EntityModalProps<CaseResolverFileEdit
 export function CaseFileEditorModal({
   isOpen,
   onClose,
+  onSuccess,
   item: draft,
   onSave,
   children,
@@ -26,7 +27,7 @@ export function CaseFileEditorModal({
       open={isOpen}
       onClose={onClose}
       title={draft.fileType === 'scanfile' ? 'Scan File Inspector' : 'Document Editor'}
-      size='full'
+      size='xl'
       bodyClassName='bg-background/95'
       header={
         <div className='flex items-center justify-between w-full'>
@@ -42,7 +43,7 @@ export function CaseFileEditorModal({
             <Button variant='outline' size='sm' onClick={onClose}>
               Close
             </Button>
-            <Button size='sm' onClick={onSave}>
+            <Button size='sm' onClick={() => { onSave(); onSuccess?.(); }}>
               Save Changes
             </Button>
           </div>

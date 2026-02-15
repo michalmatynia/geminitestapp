@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import FileManager from '@/features/files/components/FileManager';
 import ProductImageManager, {
   type ProductImageManagerController,
 } from '@/features/products/components/ProductImageManager';
@@ -1963,8 +1962,6 @@ export function StudioModals(): React.JSX.Element {
         onClose={() => setSlotInlineEditOpen(false)}
         onSuccess={() => {}}
         selectedSlot={selectedSlot}
-        busy={slotUpdateBusy}
-        onSave={handleSaveInlineSlot}
         onCopyId={handleCopyCardId}
         header={editCardModalHeader}
       >

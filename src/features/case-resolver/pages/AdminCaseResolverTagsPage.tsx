@@ -10,11 +10,7 @@ import {
   Button,
   ConfirmDialog,
   EmptyState,
-  FormField,
-  FormModal,
   FormSection,
-  Input,
-  SelectSimple,
   SectionHeader,
   Skeleton,
   Tag as UiTag,
@@ -331,6 +327,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       <CaseResolverTagModal
         isOpen={showModal}
         onClose={(): void => setShowModal(false)}
+        onSuccess={(): void => {}}
         item={editingTag}
         formData={formData}
         setFormData={setFormData}

@@ -22,7 +22,7 @@ export interface ModalStateProps {
   /** Callback fired when user closes the modal */
   onClose: () => void;
   /** Callback fired after successful save/delete */
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 /**

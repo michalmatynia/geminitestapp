@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDraftQueries';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
-import type { ProductDraft } from '@/features/products/types/drafts';
+import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { Button, ListPanel, useToast, EmptyState } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui';
 
@@ -19,7 +19,7 @@ import { useDrafterContext } from '../context/DrafterContext';
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
-const resolveDraftIconColor = (draft: ProductDraft): string | undefined => {
+const resolveDraftIconColor = (draft: ProductDraftDto): string | undefined => {
   if (draft.iconColorMode !== 'custom') return undefined;
   if (typeof draft.iconColor !== 'string') return undefined;
   const normalized = draft.iconColor.trim();
@@ -84,7 +84,7 @@ export function DraftList(): React.JSX.Element {
         />
       ) : (
         <div className='space-y-3'>
-          {drafts.map((draft: ProductDraft) => (
+          {drafts.map((draft: ProductDraftDto) => (
             <div
               key={draft.id}
               className='rounded-lg border border-border bg-card/50 p-4 transition-colors hover:border'

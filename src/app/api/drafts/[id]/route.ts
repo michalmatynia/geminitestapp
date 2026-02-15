@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getDraft, updateDraft, deleteDraft } from '@/features/drafter/server';
 import { resolveDraftCategoryId, updateDraftPayloadSchema } from '@/features/drafter/validations/draft-payload';
-import type { UpdateProductDraftInput } from '@/features/products/server';
+import type { UpdateProductDraftDto } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -41,7 +41,7 @@ async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { 
   }
   const data = parsed.data;
   const categoryId = resolveDraftCategoryId(data);
-  const draft = await updateDraft(id, { ...data, categoryId } as UpdateProductDraftInput);
+  const draft = await updateDraft(id, { ...data, categoryId } as UpdateProductDraftDto);
 
   if (!draft) {
     throw notFoundError('Draft not found', { id });

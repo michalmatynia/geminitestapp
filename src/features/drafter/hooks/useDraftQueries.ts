@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products/types/drafts';
+import type { ProductDraftDto, CreateProductDraftDto, UpdateProductDraftDto } from '@/features/products/types/drafts';
 import { api } from '@/shared/lib/api-client';
 import {
   invalidateDraftDetail,
@@ -23,10 +23,10 @@ import type {
 
 export { draftKeys };
 
-export function useDraftQueries(): ListQuery<ProductDraft> {
+export function useDraftQueries(): ListQuery<ProductDraftDto> {
   return createListQuery({
     queryKey: draftKeys.lists(),
-    queryFn: () => api.get<ProductDraft[]>('/api/drafts', { cache: 'no-store' }),
+    queryFn: () => api.get<ProductDraftDto[]>('/api/drafts', { cache: 'no-store' }),
     options: {
       staleTime: 0,
       refetchOnMount: 'always',
@@ -36,12 +36,12 @@ export function useDraftQueries(): ListQuery<ProductDraft> {
   });
 }
 
-export function useDraft(id: string | null): SingleQuery<ProductDraft> {
+export function useDraft(id: string | null): SingleQuery<ProductDraftDto> {
   return createSingleQuery({
-    queryKey: draftKeys.detail(id || ''),
-    queryFn: () => api.get<ProductDraft>(`/api/drafts/${id}`, { cache: 'no-store' }),
+    queryKey: (resolvedId) => draftKeys.detail(resolvedId),
+    queryFn: () => api.get<ProductDraftDto>(`/api/drafts/${id}`, { cache: 'no-store' }),
+    id,
     options: {
-      enabled: !!id,
       staleTime: 0,
       refetchOnMount: 'always',
       refetchOnWindowFocus: 'always',
@@ -50,41 +50,41 @@ export function useDraft(id: string | null): SingleQuery<ProductDraft> {
   });
 }
 
-export function useCreateDraft(): MutationResult<ProductDraft, CreateProductDraftInput> {
+export function useCreateDraft(): MutationResult<ProductDraftDto, CreateProductDraftDto> {
   const queryClient = useQueryClient();
   return createCreateMutation({
-    mutationFn: (input: CreateProductDraftInput) => api.post<ProductDraft>('/api/drafts', input),
+    mutationFn: (input: CreateProductDraftDto) => api.post<ProductDraftDto>('/api/drafts', input),
     options: {
-      onSuccess: (created: ProductDraft) => {
-        queryClient.setQueryData<ProductDraft[]>(draftKeys.lists(), (current: ProductDraft[] | undefined) => {
+      onSuccess: (created: ProductDraftDto) => {
+        queryClient.setQueryData<ProductDraftDto[]>(draftKeys.lists(), (current: ProductDraftDto[] | undefined) => {
           if (!current) return [created];
           return [created, ...current];
         });
-        queryClient.setQueryData<ProductDraft>(draftKeys.detail(created.id), created);
+        queryClient.setQueryData<ProductDraftDto>(draftKeys.detail(created.id), created);
         void invalidateDrafts(queryClient);
       },
     }
   });
 }
 
-export function useUpdateDraft(): MutationResult<ProductDraft, { id: string; input: UpdateProductDraftInput }> {
+export function useUpdateDraft(): MutationResult<ProductDraftDto, { id: string; input: UpdateProductDraftDto }> {
   const queryClient = useQueryClient();
   return createUpdateMutation({
-    mutationFn: ({ id, input }: { id: string; input: UpdateProductDraftInput }) => 
-      api.put<ProductDraft>(`/api/drafts/${id}`, input),
+    mutationFn: ({ id, input }: { id: string; input: UpdateProductDraftDto }) => 
+      api.put<ProductDraftDto>(`/api/drafts/${id}`, input),
     options: {
-      onSuccess: (data: ProductDraft) => {
-        queryClient.setQueryData<ProductDraft[]>(draftKeys.lists(), (current: ProductDraft[] | undefined) => {
+      onSuccess: (data: ProductDraftDto) => {
+        queryClient.setQueryData<ProductDraftDto[]>(draftKeys.lists(), (current: ProductDraftDto[] | undefined) => {
           if (!current) return [data];
-          const next = current.map((draft: ProductDraft) =>
+          const next = current.map((draft: ProductDraftDto) =>
             draft.id === data.id ? { ...draft, ...data } : draft
           );
-          if (next.some((draft: ProductDraft) => draft.id === data.id)) {
+          if (next.some((draft: ProductDraftDto) => draft.id === data.id)) {
             return next;
           }
           return [data, ...next];
         });
-        queryClient.setQueryData<ProductDraft>(draftKeys.detail(data.id), data);
+        queryClient.setQueryData<ProductDraftDto>(draftKeys.detail(data.id), data);
         void invalidateDrafts(queryClient);
         void invalidateDraftDetail(queryClient, data.id);
       },
@@ -101,9 +101,9 @@ export function useDeleteDraft(): MutationResult<string, string> {
     },
     options: {
       onSuccess: (deletedId: string): void => {
-        queryClient.setQueryData<ProductDraft[]>(draftKeys.lists(), (current: ProductDraft[] | undefined) => {
+        queryClient.setQueryData<ProductDraftDto[]>(draftKeys.lists(), (current: ProductDraftDto[] | undefined) => {
           if (!current) return current;
-          return current.filter((draft: ProductDraft) => draft.id !== deletedId);
+          return current.filter((draft: ProductDraftDto) => draft.id !== deletedId);
         });
         void invalidateDrafts(queryClient);
         queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });

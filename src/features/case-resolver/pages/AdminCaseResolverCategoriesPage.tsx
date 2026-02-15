@@ -10,14 +10,9 @@ import {
   Button,
   ConfirmDialog,
   EmptyState,
-  FormField,
-  FormModal,
   FormSection,
-  Input,
   SectionHeader,
-  SelectSimple,
   Skeleton,
-  Textarea,
   useToast,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -401,6 +396,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
       <CaseResolverCategoryModal
         isOpen={showModal}
         onClose={(): void => setShowModal(false)}
+        onSuccess={(): void => {}}
         item={editableCategory}
         formData={formData}
         setFormData={setFormData}

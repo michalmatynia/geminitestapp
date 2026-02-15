@@ -7,8 +7,6 @@ import type { ImageStudioSlotRecord } from '../../types';
 
 interface SlotInlineEditModalProps extends ModalStateProps {
   selectedSlot: ImageStudioSlotRecord | null;
-  busy: boolean;
-  onSave: () => Promise<void>;
   onCopyId: (id: string) => void;
   header: React.ReactNode;
   children: React.ReactNode;
@@ -18,8 +16,6 @@ export function SlotInlineEditModal({
   isOpen,
   onClose,
   selectedSlot,
-  busy,
-  onSave,
   onCopyId,
   header,
   children,

@@ -90,6 +90,25 @@ export type CaseResolverFile = {
   updatedAt: string;
 };
 
+export type CaseResolverFileEditDraft = {
+  id: string;
+  fileType: CaseResolverFileType;
+  name: string;
+  folder: string;
+  createdAt: string;
+  updatedAt: string;
+  documentDate: string;
+  originalDocumentContent: string;
+  explodedDocumentContent: string;
+  activeDocumentVersion: CaseResolverDocumentVersion;
+  documentContent: string;
+  scanSlots: CaseResolverScanSlot[];
+  addresser: CaseResolverPartyReference | null;
+  addressee: CaseResolverPartyReference | null;
+  tagId: string | null;
+  categoryId: string | null;
+};
+
 export type CaseResolverAssetFile = {
   id: string;
   name: string;

@@ -6,8 +6,8 @@ import React, { useState } from 'react';
 
 import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
-import { useAssets3D, useAsset3DCategories, useAsset3DTags, useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
-import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
+import { useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import type { Asset3DRecord } from '@/features/viewer3d/types';
 import { Input, SelectSimple, Checkbox, Button, useToast, FileUploadButton, FormField, type FileUploadHelpers } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -221,6 +221,7 @@ export function Asset3DPickerField({
         <Asset3DPreviewModal
           isOpen={Boolean(previewAsset)}
           onClose={() => setPreviewAsset(null)}
+          onSuccess={() => {}}
           item={previewAsset}
         />
       ) : null}

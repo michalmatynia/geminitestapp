@@ -65,15 +65,15 @@ export function createSingleQuery<TData>(
 /**
  * Factory for creating standardized mutations
  */
-export function createMutation<TData, TVariables>(
+export function createMutation<TData, TVariables, TContext = unknown>(
   config: {
     mutationFn: (variables: TVariables) => Promise<TData>;
-    options?: UseMutationOptions<TData, Error, TVariables>;
+    options?: UseMutationOptions<TData, Error, TVariables, TContext>;
   }
 ): MutationResult<TData, TVariables> {
   return useMutation({
-    mutationFn: config.mutationFn,
     ...config.options,
+    mutationFn: config.mutationFn,
   });
 }
 

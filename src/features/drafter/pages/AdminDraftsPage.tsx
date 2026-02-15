@@ -29,6 +29,7 @@ function AdminDraftsPageContent(): React.JSX.Element {
       <DraftCreatorModal
         isOpen={isCreatorOpen}
         onClose={closeCreator}
+        onSuccess={() => {}}
         editingDraftId={editingDraftId}
         formRef={formRef}
       />

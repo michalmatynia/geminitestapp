@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import type { BaseInventory } from '@/features/data-import-export';
@@ -21,7 +20,9 @@ import {
 } from '@/shared/contracts/integrations';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createQueryHook } from '@/shared/lib/api-hooks';
+import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
+import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';
@@ -49,8 +50,8 @@ export const useIntegrationsWithConnections = createQueryHook<IntegrationWithCon
   endpoint: '/api/integrations/with-connections',
 });
 
-export function usePlaywrightPersonas(): UseQueryResult<PlaywrightPersona[]> {
-  return useQuery({
+export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
+  return createListQuery<PlaywrightPersona>({
     queryKey: playwrightKeys.personas(),
     queryFn: async (): Promise<PlaywrightPersona[]> => {
       const data = await fetchSettingsCached();
@@ -123,6 +124,9 @@ export const getBaseInventoriesQueryOptions = (connectionId: string, enabled: bo
   refetchOnReconnect: false,
 });
 
-export function useBaseInventories(connectionId: string, enabled: boolean = true): UseQueryResult<BaseInventory[]> {
-  return useQuery(getBaseInventoriesQueryOptions(connectionId, enabled));
+export function useBaseInventories(connectionId: string, enabled: boolean = true): ListQuery<BaseInventory> {
+  return createListQuery<BaseInventory>({
+    ...getBaseInventoriesQueryOptions(connectionId, enabled),
+    options: getBaseInventoriesQueryOptions(connectionId, enabled),
+  });
 }

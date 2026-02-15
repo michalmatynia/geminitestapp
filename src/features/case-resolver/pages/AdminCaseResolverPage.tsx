@@ -60,7 +60,7 @@ import type {
   CaseResolverCategory,
   CaseResolverDocumentVersion,
   CaseResolverFile,
-  CaseResolverFileType,
+  CaseResolverFileEditDraft,
   CaseResolverGraph,
   CaseResolverPartyReference,
   CaseResolverScanSlot,
@@ -258,25 +258,6 @@ type UploadedCaseResolverAsset = {
   originalName?: string | null;
   folder?: string | null;
   kind?: string | null;
-};
-
-type CaseResolverFileEditDraft = {
-  id: string;
-  fileType: CaseResolverFileType;
-  name: string;
-  folder: string;
-  createdAt: string;
-  updatedAt: string;
-  documentDate: string;
-  originalDocumentContent: string;
-  explodedDocumentContent: string;
-  activeDocumentVersion: CaseResolverDocumentVersion;
-  documentContent: string;
-  scanSlots: CaseResolverScanSlot[];
-  addresser: CaseResolverPartyReference | null;
-  addressee: CaseResolverPartyReference | null;
-  tagId: string | null;
-  categoryId: string | null;
 };
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';

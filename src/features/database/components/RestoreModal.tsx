@@ -9,12 +9,13 @@ interface RestoreModalProps extends ModalStateProps {
   backupName: string;
   onConfirm: (truncate: boolean) => void;
   title?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export const RestoreModal = ({
   isOpen,
   onClose,
+  onSuccess,
   backupName,
   onConfirm,
   title = 'Restore Database',
@@ -29,7 +30,7 @@ export const RestoreModal = ({
       open={isOpen}
       onClose={onClose}
       title={title}
-      onSave={(): void => onConfirm(truncate)}
+      onSave={(): void => { onConfirm(truncate); onSuccess?.(); }}
       saveText='Restore'
       cancelText='Cancel'
       size={size}

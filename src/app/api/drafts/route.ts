@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { listDrafts, createDraft } from '@/features/drafter/server';
 import { createDraftPayloadSchema, resolveDraftCategoryId } from '@/features/drafter/validations/draft-payload';
-import type { CreateProductDraftInput } from '@/features/products/server';
+import type { CreateProductDraftDto } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -36,7 +36,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const draft = await createDraft({
     ...data,
     categoryId,
-  } as CreateProductDraftInput);
+  } as CreateProductDraftDto);
   return NextResponse.json(draft, { status: 201 });
 }
 

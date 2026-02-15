@@ -1,11 +1,12 @@
 'use client';
 
-import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQueries, type UseQueryResult } from '@tanstack/react-query';
 import React, { createContext, useContext, useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { useUndo } from '@/shared/hooks/ui/use-undo';
 import { api } from '@/shared/lib/api-client';
+import { createListQuery } from '@/shared/lib/query-factories';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { 
@@ -16,6 +17,7 @@ import type {
   CategoryWithChildren,
   RelatedNote,
 } from '@/shared/types/domain/notes';
+import type { ListQuery } from '@/shared/types/query-result-types';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -347,7 +349,7 @@ export function NoteFormProvider({
   const editorSplitRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const { data: relatedNoteResults = [], isFetching: isRelatedLoading } = useQuery({
+  const relatedNoteSearchQuery = createListQuery<NoteWithRelations>({
     queryKey: QUERY_KEYS.notes.search(relatedNoteQuery),
     queryFn: async (): Promise<NoteWithRelations[]> => {
       if (!relatedNoteQuery) return [];
@@ -360,8 +362,12 @@ export function NoteFormProvider({
         }
       });
     },
-    enabled: !!relatedNoteQuery,
+    options: {
+      enabled: !!relatedNoteQuery,
+    },
   });
+
+  const { data: relatedNoteResults = [], isFetching: isRelatedLoading } = relatedNoteSearchQuery;
 
   const handleSelectRelatedNote = useCallback((noteId: string): void => {
     if (!note) {

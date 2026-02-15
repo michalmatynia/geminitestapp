@@ -31,6 +31,13 @@ export type {
   CategoryMappingDto,
 } from '@/shared/contracts/integrations';
 
+export type {
+  FileDto,
+  ImageFileDto,
+  UploadFileDto,
+  UpdateFileDto,
+} from '@/shared/contracts/files';
+
 // Re-export feature-specific standardized DTOs
 export type {
   ProductDraftDto,

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/features/observability/server';
-import type { ProductDraft, CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products/server';
+import type { ProductDraftDto, CreateProductDraftDto, UpdateProductDraftDto } from '@/features/products/server';
 
 import * as repo from './draft-repository';
 
@@ -9,7 +9,7 @@ import * as repo from './draft-repository';
  * Service that wraps the Draft repository with error handling and logging.
  */
 
-export const listDrafts = async (): Promise<ProductDraft[]> => {
+export const listDrafts = async (): Promise<ProductDraftDto[]> => {
   try {
     return await repo.listDrafts();
   } catch (error) {
@@ -21,7 +21,7 @@ export const listDrafts = async (): Promise<ProductDraft[]> => {
   }
 };
 
-export const getDraft = async (id: string): Promise<ProductDraft | null> => {
+export const getDraft = async (id: string): Promise<ProductDraftDto | null> => {
   try {
     return await repo.getDraft(id);
   } catch (error) {
@@ -34,7 +34,7 @@ export const getDraft = async (id: string): Promise<ProductDraft | null> => {
   }
 };
 
-export const createDraft = async (input: CreateProductDraftInput): Promise<ProductDraft> => {
+export const createDraft = async (input: CreateProductDraftDto): Promise<ProductDraftDto> => {
   try {
     return await repo.createDraft(input);
   } catch (error) {
@@ -47,7 +47,7 @@ export const createDraft = async (input: CreateProductDraftInput): Promise<Produ
   }
 };
 
-export const updateDraft = async (id: string, input: UpdateProductDraftInput): Promise<ProductDraft | null> => {
+export const updateDraft = async (id: string, input: UpdateProductDraftDto): Promise<ProductDraftDto | null> => {
   try {
     return await repo.updateDraft(id, input);
   } catch (error) {

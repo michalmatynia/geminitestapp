@@ -22,6 +22,11 @@ export type ImageFileRecord = Entity & {
   width: number | null;
   height: number | null;
   tags: string[];
+  name?: string | null;
+  categoryId?: string | null;
+  isPublic?: boolean;
+  description?: string | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 export type ImageFileSelection = Pick<ImageFileRecord, 'id' | 'filepath'>;

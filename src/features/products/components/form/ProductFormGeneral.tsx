@@ -1,7 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { ArrowRight } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -33,6 +31,7 @@ import {
   sortValidatorPatterns,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
+import { createListQuery } from '@/shared/lib/query-factories';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
@@ -203,11 +202,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
       }),
     [validatorPatterns]
   );
-  const latestProductsQuery = useQuery({
+  const latestProductsQuery = createListQuery({
     queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
     queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
-    enabled: validatorEnabled && needsLatestProductSource,
-    staleTime: 60_000,
+    options: {
+      enabled: validatorEnabled && needsLatestProductSource,
+      staleTime: 60_000,
+    },
   });
   const latestProductValues = useMemo((): Record<string, unknown> | null => {
     const list = latestProductsQuery.data ?? [];

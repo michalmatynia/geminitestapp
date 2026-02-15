@@ -45,9 +45,9 @@ VALIDATION
 - extend support for QUERY KEYS
 - improve mutation-invalidation matrix
 standardize the QUERY_KEYS hierarchy, migrate key hooks to centralized factories
+ Update feature hooks to use centralized query keys
 
 STATE MANAGEMENT
- Update feature hooks to use centralized query keys from @/shared/lib/query-key-exports
 -Scan the application for potential areas of props-drilling and apply useContext as a refactor
 -Reduce prop drilling by leveraging React Context or other state-management. Where many nested components receive the same prop, create a Context provider so children can consume values directly
 .For example, the React docs note that “Context lets a parent component provide data to the entire tree below it…without passing it explicitly through props”

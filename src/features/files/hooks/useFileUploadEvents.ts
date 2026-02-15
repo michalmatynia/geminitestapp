@@ -1,8 +1,8 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-
+import { createSingleQuery } from '@/shared/lib/query-factories';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { SingleQuery } from '@/shared/types/query-result-types';
 
 export type FileUploadEventRecord = {
   id: string;
@@ -55,9 +55,9 @@ const buildQueryParams = (filters: FileUploadEventsFilters): string => {
 
 export function useFileUploadEvents(
   filters: FileUploadEventsFilters,
-): UseQueryResult<FileUploadEventsResponse, Error> {
+): SingleQuery<FileUploadEventsResponse> {
   const queryKey = QUERY_KEYS.system.uploadEvents.list(filters);
-  return useQuery({
+  return createSingleQuery<FileUploadEventsResponse>({
     queryKey,
     queryFn: async (): Promise<FileUploadEventsResponse> => {
       const query = buildQueryParams(filters);
@@ -65,5 +65,6 @@ export function useFileUploadEvents(
       if (!res.ok) throw new Error('Failed to load upload events.');
       return res.json() as Promise<FileUploadEventsResponse>;
     },
+    id: JSON.stringify(filters),
   });
 }

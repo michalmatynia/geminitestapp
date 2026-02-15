@@ -33,9 +33,39 @@ src/app/api/databases/engine/operations/jobs/route.ts(70,18): error TS4111: Prop
 src/app/api/databases/engine/operations/jobs/route.ts(70,49): error TS4111: Property 'finishedAt' comes from an index signature, so it must be accessed with ['finishedAt'].
 src/app/api/databases/engine/operations/jobs/route.ts(71,15): error TS4111: Property 'finishedAt' comes from an index signature, so it must be accessed with ['finishedAt'].
 src/app/api/databases/engine/operations/jobs/route.ts(73,23): error TS4111: Property 'errorMessage' comes from an index signature, so it must be accessed with ['errorMessage'].
+src/app/api/drafts/[id]/route.ts(9,15): error TS2724: '"@/features/products/server"' has no exported member named 'UpdateProductDraftInput'. Did you mean 'UpdateProductDraftDto'?
+src/app/api/drafts/route.ts(9,15): error TS2724: '"@/features/products/server"' has no exported member named 'CreateProductDraftInput'. Did you mean 'CreateProductDraftDto'?
 src/app/api/products/ai-jobs/route.ts(47,22): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
 src/app/api/products/ai-jobs/route.ts(47,50): error TS4111: Property 'status' comes from an index signature, so it must be accessed with ['status'].
 src/app/api/products/ai-jobs/route.ts(49,74): error TS4111: Property 'payload' comes from an index signature, so it must be accessed with ['payload'].
+src/features/ai/image-studio/components/modals/SlotInlineEditModal.tsx(21,3): error TS6133: 'busy' is declared but its value is never read.
+src/features/ai/image-studio/components/modals/SlotInlineEditModal.tsx(22,3): error TS6133: 'onSave' is declared but its value is never read.
+src/features/ai/image-studio/components/StudioModals.tsx(7,1): error TS6133: 'FileManager' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(22,3): error TS6133: 'FormField' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(26,3): error TS6133: 'StatusToggle' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(27,3): error TS6133: 'FormModal' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(28,3): error TS6133: 'Checkbox' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(29,3): error TS6133: 'Label' is declared but its value is never read.
+src/features/auth/pages/admin/UsersPage.tsx(212,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; item: { id: string; createdAt: string; updatedAt: string | null; name: string | null; email: string | null; image: string | null; emailVerified: string | null; provider: string; password?: string | undefined; } | null; ... 5 more ...; onSave: () => void; }' but required in type 'UserEditModalProps'.
+src/features/auth/pages/admin/UsersPage.tsx(239,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; createForm: CreateUserForm; setCreateForm: Dispatch<SetStateAction<CreateUserForm>>; isSaving: boolean; onSave: () => void; }' but required in type 'UserCreateModalProps'.
+src/features/auth/pages/admin/UsersPage.tsx(269,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; email: string; setEmail: Dispatch<SetStateAction<string>>; password: string; setPassword: Dispatch<SetStateAction<string>>; isSaving: boolean; onSave: () => void; }' but required in type 'MockSignInModalProps'.
+src/features/case-resolver/components/modals/CaseFileEditorModal.tsx(7,15): error TS2305: Module '"../../types"' has no exported member 'CaseResolverFileEditDraft'.
+src/features/case-resolver/components/modals/CaseFileEditorModal.tsx(29,7): error TS2322: Type '"full"' is not assignable to type '"sm" | "lg" | "md" | "xl" | undefined'.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(13,3): error TS6133: 'FormField' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(14,3): error TS6133: 'FormModal' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(16,3): error TS6133: 'Input' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(18,3): error TS6133: 'SelectSimple' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(20,3): error TS6133: 'Textarea' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverCategoriesPage.tsx(401,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; item: CaseResolverCategory | null; formData: CategoryFormData; setFormData: Dispatch<SetStateAction<CategoryFormData>>; parentOptions: { ...; }[]; isSaving: boolean; onSave: () => void; }' but required in type 'CaseResolverCategoryModalProps'.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(13,3): error TS6133: 'FormField' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(14,3): error TS6133: 'FormModal' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(16,3): error TS6133: 'Input' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(17,3): error TS6133: 'SelectSimple' is declared but its value is never read.
+src/features/case-resolver/pages/AdminCaseResolverTagsPage.tsx(331,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; item: CaseResolverTag | null; formData: TagFormData; setFormData: Dispatch<SetStateAction<TagFormData>>; parentTagOptions: { ...; }[]; isSaving: boolean; onSave: () => void; }' but required in type 'CaseResolverTagModalProps'.
+src/features/cms/components/page-builder/shared-fields.tsx(9,10): error TS6133: 'useAssets3D' is declared but its value is never read.
+src/features/cms/components/page-builder/shared-fields.tsx(9,23): error TS6133: 'useAsset3DCategories' is declared but its value is never read.
+src/features/cms/components/page-builder/shared-fields.tsx(9,45): error TS6133: 'useAsset3DTags' is declared but its value is never read.
+src/features/cms/components/page-builder/shared-fields.tsx(10,15): error TS6196: 'Asset3DListFilters' is declared but never used.
 src/features/database/components/DatabaseBackupsPanel.tsx(102,27): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; content: string; onClose: () => void; }' but required in type 'LogModalProps'.
 src/features/database/components/DatabaseBackupsPanel.tsx(105,10): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: true; backupName: string; onClose: () => void; onConfirm: (truncate: boolean) => void; }' but required in type 'RestoreModalProps'.
 src/features/database/components/LogModal.tsx(29,7): error TS2322: Type '"sm" | "lg" | "md" | "xl" | "full"' is not assignable to type '"sm" | "lg" | "md" | "xl"'.
@@ -53,6 +83,13 @@ src/features/drafter/pages/AdminDraftsPage.tsx(3,1): error TS6192: All imports i
 src/features/drafter/pages/AdminDraftsPage.tsx(5,10): error TS6133: 'AppModal' is declared but its value is never read.
 src/features/drafter/pages/AdminDraftsPage.tsx(5,20): error TS6133: 'Button' is declared but its value is never read.
 src/features/drafter/pages/AdminDraftsPage.tsx(29,8): error TS2741: Property 'onSuccess' is missing in type '{ isOpen: boolean; onClose: () => void; editingDraftId: string | null; formRef: RefObject<HTMLFormElement | null>; }' but required in type 'DraftCreatorModalProps'.
+src/features/drafter/services/draft-repository.ts(11,8): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/drafter/services/draft-repository.ts(12,8): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'CreateProductDraftInput'. Did you mean 'CreateProductDraftDto'?
+src/features/drafter/services/draft-repository.ts(13,8): error TS2724: '"@/features/products/types/drafts"' has no exported member named 'UpdateProductDraftInput'. Did you mean 'UpdateProductDraftDto'?
+src/features/drafter/services/draft-repository.ts(312,50): error TS2538: Type 'symbol' cannot be used as an index type.
+src/features/drafter/services/draft-service.ts(4,15): error TS2724: '"@/features/products/server"' has no exported member named 'ProductDraft'. Did you mean 'ProductDraftDto'?
+src/features/drafter/services/draft-service.ts(4,29): error TS2724: '"@/features/products/server"' has no exported member named 'CreateProductDraftInput'. Did you mean 'CreateProductDraftDto'?
+src/features/drafter/services/draft-service.ts(4,54): error TS2724: '"@/features/products/server"' has no exported member named 'UpdateProductDraftInput'. Did you mean 'UpdateProductDraftDto'?
 src/features/files/components/file-manager/AssetPreviewModal.tsx(22,27): error TS2339: Property 'name' does not exist on type 'ImageFileRecord'.
 src/features/files/components/file-manager/AssetPreviewModal.tsx(30,57): error TS2339: Property 'categoryId' does not exist on type 'ImageFileRecord'.
 src/features/files/components/file-manager/AssetPreviewModal.tsx(31,55): error TS2339: Property 'isPublic' does not exist on type 'ImageFileRecord'.

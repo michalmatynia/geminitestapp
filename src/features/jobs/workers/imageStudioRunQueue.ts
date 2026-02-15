@@ -13,6 +13,7 @@ import {
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
+  listImageStudioSlots,
   updateImageStudioSlot,
 } from '@/features/ai/image-studio/server/slot-repository';
 import {
@@ -48,6 +49,12 @@ const trimString = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const normalizeAssetPath = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
 const toJsonSafe = <T,>(value: T): T => {
   try {
     return JSON.parse(JSON.stringify(value)) as T;
@@ -62,20 +69,118 @@ const buildGenerationOutputRelationType = (runId: string, outputIndex: number): 
 const collectGenerationSourceContext = async (
   run: ImageStudioRunRecord
 ): Promise<GenerationSourceContext> => {
-  const sourceIds = new Set<string>();
+  const requestedSourceIds: string[] = [];
+  const seenRequestedSourceIds = new Set<string>();
+
+  const pushRequestedSourceId = (value: string | null): void => {
+    if (!value || seenRequestedSourceIds.has(value)) return;
+    seenRequestedSourceIds.add(value);
+    requestedSourceIds.push(value);
+  };
 
   const baseSourceId = trimString(run.request.asset?.id);
-  if (baseSourceId) sourceIds.add(baseSourceId);
+  pushRequestedSourceId(baseSourceId);
 
   (run.request.referenceAssets ?? []).forEach((asset: { id?: string | undefined }) => {
     const referenceId = trimString(asset.id);
-    if (referenceId) sourceIds.add(referenceId);
+    pushRequestedSourceId(referenceId);
   });
 
-  const sourceSlotIds = Array.from(sourceIds);
-  const primarySourceSlotId = sourceSlotIds[0] ?? null;
+  const sourceSlotsById = new Map<
+    string,
+    Awaited<ReturnType<typeof getImageStudioSlotById>>
+  >();
 
-  if (!primarySourceSlotId) {
+  if (requestedSourceIds.length > 0) {
+    const resolvedSlots = await Promise.all(
+      requestedSourceIds.map(async (slotId: string) => ({
+        slotId,
+        slot: await getImageStudioSlotById(slotId),
+      }))
+    );
+    resolvedSlots.forEach(({ slotId, slot }) => {
+      if (slot?.projectId !== run.projectId) return;
+      sourceSlotsById.set(slotId, slot);
+    });
+  }
+
+  const sourceSlotIds: string[] = [];
+  const seenSourceIds = new Set<string>();
+  const pushSourceId = (slotId: string | null): void => {
+    if (!slotId || seenSourceIds.has(slotId)) return;
+    seenSourceIds.add(slotId);
+    sourceSlotIds.push(slotId);
+  };
+
+  requestedSourceIds.forEach((slotId) => {
+    if (sourceSlotsById.has(slotId)) {
+      pushSourceId(slotId);
+    }
+  });
+
+  const baseAssetPath = normalizeAssetPath(run.request.asset?.filepath) ?? '';
+  const referenceAssetPaths = (run.request.referenceAssets ?? [])
+    .map((asset) => normalizeAssetPath(asset.filepath))
+    .filter((value): value is string => Boolean(value));
+
+  const needsPathFallback =
+    sourceSlotIds.length === 0 ||
+    (baseSourceId !== null && !sourceSlotsById.has(baseSourceId));
+
+  if (needsPathFallback) {
+    const projectSlots = await listImageStudioSlots(run.projectId);
+    const slotIdByPath = new Map<string, string>();
+    projectSlots.forEach((slot) => {
+      const imagePath = normalizeAssetPath(slot.imageFile?.filepath) ?? normalizeAssetPath(slot.imageUrl);
+      if (!imagePath || slotIdByPath.has(imagePath)) return;
+      slotIdByPath.set(imagePath, slot.id);
+    });
+
+    const baseSourceFromPath = baseAssetPath ? slotIdByPath.get(baseAssetPath) ?? null : null;
+    if (baseSourceFromPath) {
+      pushSourceId(baseSourceFromPath);
+      if (!sourceSlotsById.has(baseSourceFromPath)) {
+        const baseSlot = projectSlots.find((slot) => slot.id === baseSourceFromPath) ?? null;
+        if (baseSlot) {
+          sourceSlotsById.set(baseSourceFromPath, baseSlot);
+        }
+      }
+    }
+
+    referenceAssetPaths.forEach((referencePath) => {
+      const sourceId = slotIdByPath.get(referencePath) ?? null;
+      if (!sourceId) return;
+      pushSourceId(sourceId);
+      if (!sourceSlotsById.has(sourceId)) {
+        const sourceSlot = projectSlots.find((slot) => slot.id === sourceId) ?? null;
+        if (sourceSlot) {
+          sourceSlotsById.set(sourceId, sourceSlot);
+        }
+      }
+    });
+  }
+
+  const primarySourceSlotId =
+    (baseSourceId && sourceSlotIds.includes(baseSourceId) ? baseSourceId : null) ??
+    (baseAssetPath
+      ? sourceSlotIds.find((slotId) => {
+        const slot = sourceSlotsById.get(slotId);
+        if (!slot) return false;
+        const slotPath =
+          normalizeAssetPath(slot.imageFile?.filepath) ??
+          normalizeAssetPath(slot.imageUrl);
+        return slotPath === baseAssetPath;
+      }) ?? null
+      : null) ??
+    sourceSlotIds[0] ??
+    null;
+
+  const primarySourceSlot = primarySourceSlotId
+    ? sourceSlotsById.get(primarySourceSlotId) ??
+      (await getImageStudioSlotById(primarySourceSlotId))
+    : null;
+
+  if (primarySourceSlot?.projectId !== run.projectId) {
     return {
       sourceSlotIds,
       primarySourceSlotId: null,
@@ -84,19 +189,9 @@ const collectGenerationSourceContext = async (
     };
   }
 
-  const primarySourceSlot = await getImageStudioSlotById(primarySourceSlotId);
-  if (!primarySourceSlot) {
-    return {
-      sourceSlotIds,
-      primarySourceSlotId,
-      primarySourceSlotName: 'Generated',
-      primarySourceSlotFolderPath: '',
-    };
-  }
-
   return {
     sourceSlotIds,
-    primarySourceSlotId,
+    primarySourceSlotId: primarySourceSlot.id,
     primarySourceSlotName:
       primarySourceSlot.name?.trim() || primarySourceSlot.id || 'Generated',
     primarySourceSlotFolderPath: primarySourceSlot.folderPath?.trim() ?? '',

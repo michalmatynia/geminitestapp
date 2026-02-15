@@ -145,7 +145,7 @@ export interface SlotsState {
   // Slot UI
   slotCreateOpen: boolean;
   driveImportOpen: boolean;
-  driveImportMode: 'create' | 'replace' | 'temporary-object';
+  driveImportMode: 'create' | 'replace' | 'temporary-object' | 'environment';
   driveImportTargetId: string | null;
   temporaryObjectUpload: {
     id: string;
@@ -183,7 +183,7 @@ export interface SlotsActions {
   // Slot UI
   setSlotCreateOpen: (o: boolean) => void;
   setDriveImportOpen: (o: boolean) => void;
-  setDriveImportMode: (m: 'create' | 'replace' | 'temporary-object') => void;
+  setDriveImportMode: (m: 'create' | 'replace' | 'temporary-object' | 'environment') => void;
   setDriveImportTargetId: (id: string | null) => void;
   setTemporaryObjectUpload: React.Dispatch<React.SetStateAction<{
     id: string;
@@ -280,7 +280,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   // ── Slot UI state ──
   const [slotCreateOpen, setSlotCreateOpen] = useState<boolean>(false);
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
-  const [driveImportMode, setDriveImportMode] = useState<'create' | 'replace' | 'temporary-object'>('create');
+  const [driveImportMode, setDriveImportMode] = useState<'create' | 'replace' | 'temporary-object' | 'environment'>('create');
   const [driveImportTargetId, setDriveImportTargetId] = useState<string | null>(null);
   const [temporaryObjectUpload, setTemporaryObjectUpload] = useState<{
     id: string;

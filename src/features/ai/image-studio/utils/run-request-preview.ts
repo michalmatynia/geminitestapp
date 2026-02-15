@@ -32,6 +32,40 @@ export type RunRequestPreview = {
   images: RequestPreviewImage[];
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const readEnvironmentReferenceAsset = (
+  slot: ImageStudioSlotRecord | null
+): { id?: string; filepath: string; name: string } | null => {
+  const metadata = asRecord(slot?.metadata);
+  const environmentReference = asRecord(metadata?.['environmentReference']);
+  if (!environmentReference) return null;
+
+  const filepath =
+    typeof environmentReference['imageUrl'] === 'string'
+      ? environmentReference['imageUrl'].trim()
+      : '';
+  if (!filepath) return null;
+
+  const id =
+    typeof environmentReference['imageFileId'] === 'string'
+      ? environmentReference['imageFileId'].trim() || undefined
+      : undefined;
+  const name =
+    typeof environmentReference['filename'] === 'string' && environmentReference['filename'].trim()
+      ? environmentReference['filename'].trim()
+      : 'Environment Reference';
+
+  return {
+    ...(id ? { id } : {}),
+    filepath,
+    name,
+  };
+};
+
 function getValueAtPath(root: Record<string, unknown>, path: string): unknown {
   const keys = path.split('.').map((key) => key.trim()).filter(Boolean);
   let cursor: unknown = root;
@@ -117,6 +151,20 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
       filepath: slot.imageFile?.filepath || slot.imageUrl || '',
     }))
     .filter((asset) => Boolean(asset.filepath));
+  const environmentReferenceAsset = readEnvironmentReferenceAsset(workingSlot);
+  if (environmentReferenceAsset) {
+    const exists = referenceAssets.some(
+      (asset) =>
+        asset.filepath === environmentReferenceAsset.filepath ||
+        Boolean(asset.id && environmentReferenceAsset.id && asset.id === environmentReferenceAsset.id)
+    );
+    if (!exists) {
+      referenceAssets.push({
+        ...(environmentReferenceAsset.id ? { id: environmentReferenceAsset.id } : {}),
+        filepath: environmentReferenceAsset.filepath,
+      });
+    }
+  }
 
   const images: RequestPreviewImage[] = [];
   if (filepath) {
@@ -137,6 +185,21 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
       filepath: refPath,
     });
   });
+  if (environmentReferenceAsset) {
+    const exists = images.some(
+      (image) =>
+        image.filepath === environmentReferenceAsset.filepath ||
+        Boolean(image.id && environmentReferenceAsset.id && image.id === environmentReferenceAsset.id)
+    );
+    if (!exists) {
+      images.push({
+        kind: 'reference',
+        ...(environmentReferenceAsset.id ? { id: environmentReferenceAsset.id } : {}),
+        name: environmentReferenceAsset.name,
+        filepath: environmentReferenceAsset.filepath,
+      });
+    }
+  }
 
   if (errors.length > 0) {
     return {

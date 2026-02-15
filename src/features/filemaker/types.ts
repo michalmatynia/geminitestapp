@@ -9,7 +9,10 @@ export type FilemakerPerson = {
   id: string;
   firstName: string;
   lastName: string;
-  fullAddress: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
   nip: string;
   regon: string;
   phoneNumbers: string[];
@@ -20,7 +23,10 @@ export type FilemakerPerson = {
 export type FilemakerOrganization = {
   id: string;
   name: string;
-  fullAddress: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  country: string;
   createdAt: string;
   updatedAt: string;
 };

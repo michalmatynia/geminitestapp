@@ -2,13 +2,18 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import FileManager from '@/features/files/components/FileManager';
+import ProductImageManager, {
+  type ProductImageManagerController,
+} from '@/features/products/components/ProductImageManager';
+import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
+import type { ProductImageSlot } from '@/features/products/types/products-ui';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import {
   flattenParams,
@@ -18,7 +23,7 @@ import {
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
-import { Button, Input, Label, AppModal, Textarea, useToast } from '@/shared/ui';
+import { Button, Input, Label, AppModal, Tabs, TabsList, TabsTrigger, TabsContent, Textarea, useToast } from '@/shared/ui';
 
 import {
   buildHeuristicControls,
@@ -37,6 +42,8 @@ import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { isParamUiControl, type ParamUiControl } from '../utils/param-ui';
+
+import type { ImageStudioSlotRecord } from '../types';
 
 type LinkedGeneratedRunRecord = {
   id: string;
@@ -73,6 +80,108 @@ type LinkedGeneratedVariant = {
   };
 };
 
+type LinkedMaskSlot = {
+  slotId: string;
+  name: string;
+  variant: string;
+  inverted: boolean;
+  relationType: string;
+  generationMode: string;
+  imageSrc: string | null;
+  imageFileId: string | null;
+  filepath: string | null;
+  filename: string | null;
+  width: number | null;
+  height: number | null;
+  size: number | null;
+  updatedAt: string | null;
+};
+
+type CompositeTabImage = {
+  key: string;
+  source: 'source' | 'input';
+  name: string;
+  sourceType: string;
+  slotId: string | null;
+  order: number | null;
+  imageSrc: string | null;
+  imageFileId: string | null;
+  filepath: string | null;
+  filename: string | null;
+  width: number | null;
+  height: number | null;
+  size: number | null;
+  updatedAt: string | null;
+};
+
+type EnvironmentReferenceDraft = {
+  imageFileId: string | null;
+  imageUrl: string;
+  filename: string;
+  mimetype: string;
+  size: number | null;
+  width: number | null;
+  height: number | null;
+  updatedAt: string | null;
+};
+
+const EMPTY_ENVIRONMENT_REFERENCE_DRAFT: EnvironmentReferenceDraft = {
+  imageFileId: null,
+  imageUrl: '',
+  filename: '',
+  mimetype: '',
+  size: null,
+  width: null,
+  height: null,
+  updatedAt: null,
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const asFiniteNumber = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return value;
+};
+
+const readEnvironmentReferenceDraft = (
+  slot: ImageStudioSlotRecord | null
+): EnvironmentReferenceDraft => {
+  const metadata = asRecord(slot?.metadata);
+  const environmentReference = asRecord(metadata?.['environmentReference']);
+  if (!environmentReference) return { ...EMPTY_ENVIRONMENT_REFERENCE_DRAFT };
+
+  const imageUrl =
+    typeof environmentReference['imageUrl'] === 'string'
+      ? environmentReference['imageUrl'].trim()
+      : '';
+
+  return {
+    imageFileId:
+      typeof environmentReference['imageFileId'] === 'string'
+        ? environmentReference['imageFileId'].trim() || null
+        : null,
+    imageUrl,
+    filename:
+      typeof environmentReference['filename'] === 'string'
+        ? environmentReference['filename'].trim()
+        : '',
+    mimetype:
+      typeof environmentReference['mimetype'] === 'string'
+        ? environmentReference['mimetype'].trim()
+        : '',
+    size: asFiniteNumber(environmentReference['size']),
+    width: asFiniteNumber(environmentReference['width']),
+    height: asFiniteNumber(environmentReference['height']),
+    updatedAt:
+      typeof environmentReference['updatedAt'] === 'string'
+        ? environmentReference['updatedAt']
+        : null,
+  };
+};
+
 const formatLinkedVariantTimestamp = (value: string): string => {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
@@ -82,17 +191,10 @@ const formatLinkedVariantTimestamp = (value: string): string => {
 const INLINE_PREVIEW_ZOOM_MIN = 0.35;
 const INLINE_PREVIEW_ZOOM_MAX = 8;
 const INLINE_PREVIEW_ZOOM_STEP = 0.15;
-const INLINE_PREVIEW_WHEEL_SENSITIVITY = 0.0012;
-const INLINE_PREVIEW_MAX_WHEEL_DELTA = 0.45;
+const INLINE_CARD_IMAGE_SLOT_INDEX = 0;
 
 const clampInlinePreviewZoom = (value: number): number =>
   Math.min(INLINE_PREVIEW_ZOOM_MAX, Math.max(INLINE_PREVIEW_ZOOM_MIN, Number(value.toFixed(3))));
-
-const normalizeWheelDelta = (deltaY: number, deltaMode: number): number => {
-  if (deltaMode === 1) return deltaY * 16;
-  if (deltaMode === 2) return deltaY * 100;
-  return deltaY;
-};
 
 const formatBytes = (value: number | null): string => {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 'n/a';
@@ -210,39 +312,9 @@ function InlineImagePreviewCanvas({
     setIsDragging(false);
   };
 
-  const handleWheel = (event: React.WheelEvent<HTMLDivElement>): void => {
-    if (!imageSrc) return;
-    event.preventDefault();
-    const normalizedDelta = normalizeWheelDelta(event.deltaY, event.deltaMode);
-    const zoomDelta = Math.max(
-      -INLINE_PREVIEW_MAX_WHEEL_DELTA,
-      Math.min(INLINE_PREVIEW_MAX_WHEEL_DELTA, -normalizedDelta * INLINE_PREVIEW_WHEEL_SENSITIVITY)
-    );
-    if (Math.abs(zoomDelta) < 0.0005) return;
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    const pointerX = event.clientX - rect.left - rect.width / 2;
-    const pointerY = event.clientY - rect.top - rect.height / 2;
-
-    setZoom((currentZoom) => {
-      const nextZoom = clampInlinePreviewZoom(currentZoom + zoomDelta);
-      if (nextZoom === currentZoom) return currentZoom;
-      setOffset((currentOffset) => {
-        const worldX = (pointerX - currentOffset.x) / currentZoom;
-        const worldY = (pointerY - currentOffset.y) / currentZoom;
-        return {
-          x: pointerX - worldX * nextZoom,
-          y: pointerY - worldY * nextZoom,
-        };
-      });
-      return nextZoom;
-    });
-  };
-
   return (
     <div
       className='relative h-72 overflow-hidden rounded-lg border border-border/60 bg-black/35 touch-none'
-      onWheel={handleWheel}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerRelease}
@@ -321,7 +393,7 @@ function InlineImagePreviewCanvas({
             />
           </div>
           <div className='pointer-events-none absolute bottom-2 left-2 rounded border border-border/60 bg-black/60 px-2 py-1 text-[10px] text-gray-200'>
-            Drag to pan, mouse wheel to zoom
+            Drag to pan, use controls to zoom, scroll to move modal
           </div>
         </>
       ) : (
@@ -339,6 +411,7 @@ export function StudioModals(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const {
     slots,
+    compositeAssets,
     selectedFolder,
     selectedSlot,
     slotCreateOpen,
@@ -393,11 +466,36 @@ export function StudioModals(): React.JSX.Element {
   } | null>(null);
   const [extractHistory, setExtractHistory] = useState<PromptExtractHistoryEntry[]>([]);
   const [selectedExtractHistoryId, setSelectedExtractHistoryId] = useState<string | null>(null);
+  const [editCardTab, setEditCardTab] = useState<
+    'card' | 'generations' | 'environment' | 'masks' | 'composites'
+  >('card');
+  const [environmentReferenceDraft, setEnvironmentReferenceDraft] = useState<EnvironmentReferenceDraft>(
+    EMPTY_ENVIRONMENT_REFERENCE_DRAFT
+  );
+  const [environmentPreviewNaturalSize, setEnvironmentPreviewNaturalSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const localUploadInputRef = useRef<HTMLInputElement | null>(null);
-  const [localUploadMode, setLocalUploadMode] = useState<'create' | 'replace' | 'temporary-object'>('create');
+  const [localUploadMode, setLocalUploadMode] = useState<
+    'create' | 'replace' | 'temporary-object' | 'environment'
+  >('create');
   const [localUploadTargetId, setLocalUploadTargetId] = useState<string | null>(null);
   const [linkedVariantApplyBusyKey, setLinkedVariantApplyBusyKey] = useState<string | null>(null);
   const [inlinePreviewNaturalSize, setInlinePreviewNaturalSize] = useState<{ width: number; height: number } | null>(null);
+  const [generationPreviewKey, setGenerationPreviewKey] = useState<string | null>(null);
+  const [generationPreviewNaturalSize, setGenerationPreviewNaturalSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [generationPreviewModalOpen, setGenerationPreviewModalOpen] = useState(false);
+  const [generationModalPreviewNaturalSize, setGenerationModalPreviewNaturalSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [inlineSlotUploadError, setInlineSlotUploadError] = useState<string | null>(null);
+  const inlineSlotLinkSyncTimeoutRef = useRef<number | null>(null);
+  const inlineSlotBase64SyncTimeoutRef = useRef<number | null>(null);
 
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -454,6 +552,102 @@ export function StudioModals(): React.JSX.Element {
         .filter((variant): variant is LinkedGeneratedVariant => Boolean(variant));
     });
   }, [linkedRunsQuery.data?.runs, productImagesExternalBaseUrl]);
+
+  const selectedGenerationPreview = useMemo((): LinkedGeneratedVariant | null => {
+    if (linkedGeneratedVariants.length === 0) return null;
+    if (!generationPreviewKey) return linkedGeneratedVariants[0] ?? null;
+    return (
+      linkedGeneratedVariants.find((variant) => variant.key === generationPreviewKey) ??
+      linkedGeneratedVariants[0] ??
+      null
+    );
+  }, [generationPreviewKey, linkedGeneratedVariants]);
+
+  const selectedGenerationPreviewDimensions = useMemo((): string => {
+    const width = selectedGenerationPreview?.output.width ?? generationPreviewNaturalSize?.width ?? null;
+    const height = selectedGenerationPreview?.output.height ?? generationPreviewNaturalSize?.height ?? null;
+    if (typeof width === 'number' && Number.isFinite(width) && typeof height === 'number' && Number.isFinite(height)) {
+      return `${width} x ${height}`;
+    }
+    return 'n/a';
+  }, [
+    generationPreviewNaturalSize?.height,
+    generationPreviewNaturalSize?.width,
+    selectedGenerationPreview?.output.height,
+    selectedGenerationPreview?.output.width,
+  ]);
+
+  const selectedGenerationModalDimensions = useMemo((): string => {
+    const width = selectedGenerationPreview?.output.width ?? generationModalPreviewNaturalSize?.width ?? null;
+    const height = selectedGenerationPreview?.output.height ?? generationModalPreviewNaturalSize?.height ?? null;
+    if (typeof width === 'number' && Number.isFinite(width) && typeof height === 'number' && Number.isFinite(height)) {
+      return `${width} x ${height}`;
+    }
+    return 'n/a';
+  }, [
+    generationModalPreviewNaturalSize?.height,
+    generationModalPreviewNaturalSize?.width,
+    selectedGenerationPreview?.output.height,
+    selectedGenerationPreview?.output.width,
+  ]);
+
+  const linkedMaskSlots = useMemo((): LinkedMaskSlot[] => {
+    if (!selectedSlot?.id) return [];
+
+    const selectedId = selectedSlot.id;
+    return slots
+      .filter((slot) => {
+        const metadata = asRecord(slot.metadata);
+        if (!metadata) return false;
+        const role = typeof metadata['role'] === 'string' ? metadata['role'].trim().toLowerCase() : '';
+        const relationType =
+          typeof metadata['relationType'] === 'string' ? metadata['relationType'].trim().toLowerCase() : '';
+        const sourceSlotId =
+          typeof metadata['sourceSlotId'] === 'string' ? metadata['sourceSlotId'].trim() : '';
+        const sourceSlotIds = Array.isArray(metadata['sourceSlotIds'])
+          ? (metadata['sourceSlotIds'] as unknown[])
+            .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+            .map((value: string) => value.trim())
+          : [];
+        const linkedToSelected = sourceSlotId === selectedId || sourceSlotIds.includes(selectedId);
+        return linkedToSelected && (role === 'mask' || relationType.startsWith('mask:'));
+      })
+      .map((slot): LinkedMaskSlot => {
+        const metadata = asRecord(slot.metadata);
+        const relationType = typeof metadata?.['relationType'] === 'string' ? metadata['relationType'] : '';
+        const variant = typeof metadata?.['variant'] === 'string' ? metadata['variant'] : 'unknown';
+        const generationMode = typeof metadata?.['generationMode'] === 'string' ? metadata['generationMode'] : 'n/a';
+        const inverted = Boolean(metadata?.['inverted']);
+        const rawFilepath = slot.imageFile?.filepath?.trim() || slot.imageUrl?.trim() || null;
+        const imageSrc = rawFilepath
+          ? (resolveProductImageUrl(rawFilepath, productImagesExternalBaseUrl) ?? rawFilepath)
+          : null;
+        return {
+          slotId: slot.id,
+          name: slot.name?.trim() || slot.id,
+          variant,
+          inverted,
+          relationType,
+          generationMode,
+          imageSrc,
+          imageFileId: slot.imageFile?.id ?? slot.imageFileId ?? null,
+          filepath: rawFilepath,
+          filename: slot.imageFile?.filename ?? null,
+          width: slot.imageFile?.width ?? null,
+          height: slot.imageFile?.height ?? null,
+          size: slot.imageFile?.size ?? null,
+          updatedAt: slot.imageFile?.updatedAt ?? null,
+        };
+      })
+      .sort((a, b) => {
+        const aTs = a.updatedAt ? Date.parse(a.updatedAt) : Number.NaN;
+        const bTs = b.updatedAt ? Date.parse(b.updatedAt) : Number.NaN;
+        if (Number.isFinite(aTs) && Number.isFinite(bTs) && aTs !== bTs) {
+          return bTs - aTs;
+        }
+        return a.name.localeCompare(b.name);
+      });
+  }, [productImagesExternalBaseUrl, selectedSlot?.id, slots]);
 
   const inlinePreviewSource = useMemo(() => {
     const normalizedDraftBase64 = slotBase64Draft.trim();
@@ -534,6 +728,160 @@ export function StudioModals(): React.JSX.Element {
     inlinePreviewNaturalSize?.height,
   ]);
 
+  const environmentPreviewSource = useMemo(() => {
+    const normalizedUrl = environmentReferenceDraft.imageUrl.trim();
+    if (!normalizedUrl) {
+      return {
+        src: null,
+        sourceType: 'None',
+        rawSource: 'n/a',
+        resolvedSource: 'n/a',
+      };
+    }
+    const resolved = resolveProductImageUrl(normalizedUrl, productImagesExternalBaseUrl) ?? normalizedUrl;
+    return {
+      src: resolved,
+      sourceType: environmentReferenceDraft.imageFileId ? 'Uploaded File' : 'Stored URL',
+      rawSource: normalizedUrl,
+      resolvedSource: resolved,
+    };
+  }, [environmentReferenceDraft.imageFileId, environmentReferenceDraft.imageUrl, productImagesExternalBaseUrl]);
+
+  const environmentPreviewDimensions = useMemo(() => {
+    const width = environmentReferenceDraft.width ?? environmentPreviewNaturalSize?.width ?? null;
+    const height = environmentReferenceDraft.height ?? environmentPreviewNaturalSize?.height ?? null;
+    if (typeof width === 'number' && Number.isFinite(width) && typeof height === 'number' && Number.isFinite(height)) {
+      return `${width} x ${height}`;
+    }
+    return 'n/a';
+  }, [
+    environmentReferenceDraft.width,
+    environmentReferenceDraft.height,
+    environmentPreviewNaturalSize?.width,
+    environmentPreviewNaturalSize?.height,
+  ]);
+
+  const sourceCompositeImage = useMemo((): CompositeTabImage => {
+    const width = selectedSlot?.imageFile?.width ?? inlinePreviewNaturalSize?.width ?? null;
+    const height = selectedSlot?.imageFile?.height ?? inlinePreviewNaturalSize?.height ?? null;
+    const rawSource = inlinePreviewSource.rawSource;
+    return {
+      key: `source:${selectedSlot?.id ?? 'draft'}`,
+      source: 'source',
+      name: slotNameDraft.trim() || selectedSlot?.name?.trim() || selectedSlot?.id || 'Source Card',
+      sourceType: inlinePreviewSource.sourceType,
+      slotId: selectedSlot?.id ?? null,
+      order: null,
+      imageSrc: inlinePreviewSource.src,
+      imageFileId: selectedSlot?.imageFile?.id ?? selectedSlot?.imageFileId ?? null,
+      filepath: rawSource === '(inline base64)' || rawSource === 'n/a' ? null : rawSource,
+      filename: selectedSlot?.imageFile?.filename ?? null,
+      width: typeof width === 'number' && Number.isFinite(width) ? width : null,
+      height: typeof height === 'number' && Number.isFinite(height) ? height : null,
+      size: selectedSlot?.imageFile?.size ?? inlinePreviewBase64Bytes ?? null,
+      updatedAt: selectedSlot?.imageFile?.updatedAt ?? null,
+    };
+  }, [
+    inlinePreviewBase64Bytes,
+    inlinePreviewNaturalSize?.height,
+    inlinePreviewNaturalSize?.width,
+    inlinePreviewSource.rawSource,
+    inlinePreviewSource.sourceType,
+    inlinePreviewSource.src,
+    selectedSlot?.id,
+    selectedSlot?.imageFile?.filename,
+    selectedSlot?.imageFile?.height,
+    selectedSlot?.imageFile?.id,
+    selectedSlot?.imageFile?.size,
+    selectedSlot?.imageFile?.updatedAt,
+    selectedSlot?.imageFile?.width,
+    selectedSlot?.imageFileId,
+    selectedSlot?.name,
+    slotNameDraft,
+  ]);
+
+  const savedCompositeInputImages = useMemo((): CompositeTabImage[] => {
+    if (!selectedSlot) return [];
+    const metadata = asRecord(selectedSlot.metadata);
+    const compositeConfig = asRecord(metadata?.['compositeConfig']);
+    const rawLayers = Array.isArray(compositeConfig?.['layers']) ? (compositeConfig?.['layers'] as unknown[]) : [];
+    return rawLayers
+      .map((layer, layerIndex): CompositeTabImage | null => {
+        const layerRecord = asRecord(layer);
+        if (!layerRecord) return null;
+        const slotId = typeof layerRecord['slotId'] === 'string' ? layerRecord['slotId'].trim() : '';
+        const layerSlot = slotId ? slots.find((slot) => slot.id === slotId) ?? null : null;
+        const rawFilepath = layerSlot?.imageFile?.filepath?.trim() || layerSlot?.imageUrl?.trim() || null;
+        const imageSrc = rawFilepath
+          ? (resolveProductImageUrl(rawFilepath, productImagesExternalBaseUrl) ?? rawFilepath)
+          : null;
+        const order = asFiniteNumber(layerRecord['order']) ?? layerIndex;
+        return {
+          key: `saved:${slotId || `layer-${layerIndex}`}:${order}`,
+          source: 'input',
+          name: layerSlot?.name?.trim() || `Layer ${layerIndex + 1}`,
+          sourceType: 'Saved Composite Layer',
+          slotId: slotId || null,
+          order,
+          imageSrc,
+          imageFileId: layerSlot?.imageFile?.id ?? layerSlot?.imageFileId ?? null,
+          filepath: rawFilepath,
+          filename: layerSlot?.imageFile?.filename ?? null,
+          width: layerSlot?.imageFile?.width ?? null,
+          height: layerSlot?.imageFile?.height ?? null,
+          size: layerSlot?.imageFile?.size ?? null,
+          updatedAt: layerSlot?.imageFile?.updatedAt ?? null,
+        };
+      })
+      .filter((entry): entry is CompositeTabImage => Boolean(entry))
+      .sort((a, b) => {
+        const aOrder = a.order ?? Number.MAX_SAFE_INTEGER;
+        const bOrder = b.order ?? Number.MAX_SAFE_INTEGER;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return a.name.localeCompare(b.name);
+      });
+  }, [productImagesExternalBaseUrl, selectedSlot, slots]);
+
+  const activeCompositeInputImages = useMemo((): CompositeTabImage[] => {
+    return compositeAssets.map((slot, index): CompositeTabImage => {
+      const rawFilepath = slot.imageFile?.filepath?.trim() || slot.imageUrl?.trim() || null;
+      const imageSrc = rawFilepath
+        ? (resolveProductImageUrl(rawFilepath, productImagesExternalBaseUrl) ?? rawFilepath)
+        : null;
+      return {
+        key: `active:${slot.id}:${index}`,
+        source: 'input',
+        name: slot.name?.trim() || slot.id,
+        sourceType: 'Active Composite Input',
+        slotId: slot.id,
+        order: index,
+        imageSrc,
+        imageFileId: slot.imageFile?.id ?? slot.imageFileId ?? null,
+        filepath: rawFilepath,
+        filename: slot.imageFile?.filename ?? null,
+        width: slot.imageFile?.width ?? null,
+        height: slot.imageFile?.height ?? null,
+        size: slot.imageFile?.size ?? null,
+        updatedAt: slot.imageFile?.updatedAt ?? null,
+      };
+    });
+  }, [compositeAssets, productImagesExternalBaseUrl]);
+
+  const compositeTabInputImages = useMemo((): CompositeTabImage[] => {
+    if (savedCompositeInputImages.length > 0) return savedCompositeInputImages;
+    return activeCompositeInputImages;
+  }, [activeCompositeInputImages, savedCompositeInputImages]);
+
+  const compositeTabInputSourceLabel = useMemo((): string => {
+    if (savedCompositeInputImages.length > 0) {
+      return 'Showing saved composite layers from this card.';
+    }
+    if (activeCompositeInputImages.length > 0) {
+      return 'Showing active composite inputs selected in Studio.';
+    }
+    return 'No composite input images found for this card.';
+  }, [activeCompositeInputImages.length, savedCompositeInputImages.length]);
+
   const previewLeaves = useMemo(
     () => (previewParams ? flattenParams(previewParams).filter((leaf) => Boolean(leaf.path)) : []),
     [previewParams]
@@ -562,25 +910,353 @@ export function StudioModals(): React.JSX.Element {
     [selectedExtractHistory]
   );
 
+  const clearInlineSlotSyncTimeouts = useCallback((): void => {
+    if (inlineSlotLinkSyncTimeoutRef.current) {
+      window.clearTimeout(inlineSlotLinkSyncTimeoutRef.current);
+      inlineSlotLinkSyncTimeoutRef.current = null;
+    }
+    if (inlineSlotBase64SyncTimeoutRef.current) {
+      window.clearTimeout(inlineSlotBase64SyncTimeoutRef.current);
+      inlineSlotBase64SyncTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      clearInlineSlotSyncTimeouts();
+    };
+  }, [clearInlineSlotSyncTimeouts]);
+
+  const managedInlineCardImageSlot = useMemo<ProductImageSlot>(() => {
+    if (!selectedSlot?.imageFileId) return null;
+    const previewPath = selectedSlot.imageFile?.filepath?.trim() || selectedSlot.imageUrl?.trim() || '';
+    if (!previewPath) return null;
+    return {
+      type: 'existing',
+      data: {
+        id: selectedSlot.imageFileId,
+        filepath: previewPath,
+      },
+      previewUrl: previewPath,
+      slotId: selectedSlot.id,
+    };
+  }, [selectedSlot?.id, selectedSlot?.imageFile?.filepath, selectedSlot?.imageFileId, selectedSlot?.imageUrl]);
+
+  const scheduleInlineSlotLinkPersistence = useCallback(
+    (slotId: string, nextValue: string): void => {
+      if (inlineSlotLinkSyncTimeoutRef.current) {
+        window.clearTimeout(inlineSlotLinkSyncTimeoutRef.current);
+      }
+      inlineSlotLinkSyncTimeoutRef.current = window.setTimeout(() => {
+        inlineSlotLinkSyncTimeoutRef.current = null;
+        void updateSlotMutation
+          .mutateAsync({
+            id: slotId,
+            data: {
+              imageUrl: nextValue.trim() || null,
+            },
+          })
+          .catch(() => {
+            // Preserve local draft even when sync fails.
+          });
+      }, 450);
+    },
+    [updateSlotMutation]
+  );
+
+  const scheduleInlineSlotBase64Persistence = useCallback(
+    (slotId: string, nextValue: string): void => {
+      if (inlineSlotBase64SyncTimeoutRef.current) {
+        window.clearTimeout(inlineSlotBase64SyncTimeoutRef.current);
+      }
+      inlineSlotBase64SyncTimeoutRef.current = window.setTimeout(() => {
+        inlineSlotBase64SyncTimeoutRef.current = null;
+        const trimmed = nextValue.trim();
+        void updateSlotMutation
+          .mutateAsync({
+            id: slotId,
+            data: {
+              imageBase64: trimmed || null,
+              ...(trimmed ? { imageFileId: null } : {}),
+            },
+          })
+          .catch(() => {
+            // Preserve local draft even when sync fails.
+          });
+      }, 450);
+    },
+    [updateSlotMutation]
+  );
+
+  const flushInlineSlotDraftSync = useCallback(async (): Promise<void> => {
+    if (!selectedSlot?.id) return;
+    const pendingUpdates: Promise<unknown>[] = [];
+
+    if (inlineSlotLinkSyncTimeoutRef.current) {
+      window.clearTimeout(inlineSlotLinkSyncTimeoutRef.current);
+      inlineSlotLinkSyncTimeoutRef.current = null;
+      pendingUpdates.push(
+        updateSlotMutation.mutateAsync({
+          id: selectedSlot.id,
+          data: {
+            imageUrl: slotImageUrlDraft.trim() || null,
+          },
+        })
+      );
+    }
+
+    if (inlineSlotBase64SyncTimeoutRef.current) {
+      window.clearTimeout(inlineSlotBase64SyncTimeoutRef.current);
+      inlineSlotBase64SyncTimeoutRef.current = null;
+      const trimmedBase64 = slotBase64Draft.trim();
+      pendingUpdates.push(
+        updateSlotMutation.mutateAsync({
+          id: selectedSlot.id,
+          data: {
+            imageBase64: trimmedBase64 || null,
+            ...(trimmedBase64 ? { imageFileId: null } : {}),
+          },
+        })
+      );
+    }
+
+    if (pendingUpdates.length === 0) return;
+    const settled = await Promise.allSettled(pendingUpdates);
+    const rejected = settled.find(
+      (result: PromiseSettledResult<unknown>): result is PromiseRejectedResult =>
+        result.status === 'rejected'
+    );
+    if (rejected) {
+      throw rejected.reason;
+    }
+  }, [selectedSlot?.id, slotBase64Draft, slotImageUrlDraft, updateSlotMutation]);
+
+  const setInlineCardImageLinkAt = useCallback(
+    (index: number, value: string): void => {
+      if (index !== INLINE_CARD_IMAGE_SLOT_INDEX) return;
+      setSlotImageUrlDraft(value);
+      if (!selectedSlot?.id) return;
+      scheduleInlineSlotLinkPersistence(selectedSlot.id, value);
+    },
+    [scheduleInlineSlotLinkPersistence, selectedSlot?.id, setSlotImageUrlDraft]
+  );
+
+  const setInlineCardImageBase64At = useCallback(
+    (index: number, value: string): void => {
+      if (index !== INLINE_CARD_IMAGE_SLOT_INDEX) return;
+      setSlotBase64Draft(value);
+      if (!selectedSlot?.id) return;
+      scheduleInlineSlotBase64Persistence(selectedSlot.id, value);
+    },
+    [scheduleInlineSlotBase64Persistence, selectedSlot?.id, setSlotBase64Draft]
+  );
+
+  const handleInlineCardSlotImageChange = useCallback(
+    async (file: File | null, index: number): Promise<void> => {
+      if (index !== INLINE_CARD_IMAGE_SLOT_INDEX || !file) return;
+      if (!projectId) {
+        setInlineSlotUploadError('Select a project first.');
+        return;
+      }
+      if (!selectedSlot?.id) {
+        setInlineSlotUploadError('Select a card first.');
+        return;
+      }
+
+      setInlineSlotUploadError(null);
+      clearInlineSlotSyncTimeouts();
+      setSlotUpdateBusy(true);
+      try {
+        const result = await uploadMutation.mutateAsync({
+          files: [file],
+          folder: selectedFolder,
+        });
+        const uploaded = result.uploaded?.[0] ?? null;
+        if (!uploaded) {
+          throw new Error(result.failures?.[0]?.error || 'Upload failed');
+        }
+
+        await updateSlotMutation.mutateAsync({
+          id: selectedSlot.id,
+          data: {
+            imageFileId: uploaded.id,
+            imageUrl: uploaded.filepath,
+            imageBase64: null,
+          },
+        });
+        setSlotImageUrlDraft(uploaded.filepath);
+        setSlotBase64Draft('');
+      } catch (error: unknown) {
+        setInlineSlotUploadError(error instanceof Error ? error.message : 'Failed to upload image');
+      } finally {
+        setSlotUpdateBusy(false);
+      }
+    },
+    [
+      clearInlineSlotSyncTimeouts,
+      projectId,
+      selectedFolder,
+      selectedSlot?.id,
+      setSlotBase64Draft,
+      setSlotImageUrlDraft,
+      setSlotUpdateBusy,
+      updateSlotMutation,
+      uploadMutation,
+    ]
+  );
+
+  const handleInlineCardDisconnectImage = useCallback(
+    async (index: number): Promise<void> => {
+      if (index !== INLINE_CARD_IMAGE_SLOT_INDEX || !selectedSlot?.id) return;
+      setInlineSlotUploadError(null);
+      clearInlineSlotSyncTimeouts();
+      setSlotUpdateBusy(true);
+      try {
+        await updateSlotMutation.mutateAsync({
+          id: selectedSlot.id,
+          data: {
+            imageFileId: null,
+            imageUrl: null,
+            imageBase64: null,
+          },
+        });
+        setSlotImageUrlDraft('');
+        setSlotBase64Draft('');
+      } catch (error: unknown) {
+        setInlineSlotUploadError(error instanceof Error ? error.message : 'Failed to remove image');
+      } finally {
+        setSlotUpdateBusy(false);
+      }
+    },
+    [
+      clearInlineSlotSyncTimeouts,
+      selectedSlot?.id,
+      setSlotBase64Draft,
+      setSlotImageUrlDraft,
+      setSlotUpdateBusy,
+      updateSlotMutation,
+    ]
+  );
+
+  const openInlineCardFileManager = useCallback((): void => {
+    if (!projectId) {
+      setInlineSlotUploadError('Select a project first.');
+      return;
+    }
+    if (!selectedSlot?.id) {
+      setInlineSlotUploadError('Select a card first.');
+      return;
+    }
+    setInlineSlotUploadError(null);
+    setDriveImportMode('replace');
+    setDriveImportTargetId(selectedSlot.id);
+    setDriveImportOpen(true);
+  }, [projectId, selectedSlot?.id, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId]);
+
+  const setInlineCardShowFileManager = useCallback(
+    (show: boolean): void => {
+      if (!show) return;
+      openInlineCardFileManager();
+    },
+    [openInlineCardFileManager]
+  );
+
+  const inlineCardImageManagerController = useMemo<ProductImageManagerController>(
+    () => ({
+      imageSlots: [managedInlineCardImageSlot],
+      imageLinks: [slotImageUrlDraft],
+      imageBase64s: [slotBase64Draft],
+      setImageLinkAt: setInlineCardImageLinkAt,
+      setImageBase64At: setInlineCardImageBase64At,
+      handleSlotImageChange: (file: File | null, index: number): void => {
+        void handleInlineCardSlotImageChange(file, index);
+      },
+      handleSlotDisconnectImage: handleInlineCardDisconnectImage,
+      setShowFileManager: setInlineCardShowFileManager,
+      setShowFileManagerForSlot: (): void => {
+        openInlineCardFileManager();
+      },
+      slotLabels: [''],
+      swapImageSlots: (): void => {
+        // Single-slot manager: no reordering.
+      },
+      setImagesReordering: (): void => {
+        // Reordering is disabled in single-slot mode.
+      },
+      uploadError: inlineSlotUploadError,
+    }),
+    [
+      handleInlineCardDisconnectImage,
+      handleInlineCardSlotImageChange,
+      inlineSlotUploadError,
+      managedInlineCardImageSlot,
+      openInlineCardFileManager,
+      setInlineCardImageBase64At,
+      setInlineCardImageLinkAt,
+      setInlineCardShowFileManager,
+      slotBase64Draft,
+      slotImageUrlDraft,
+    ]
+  );
+
+  const handleOpenGenerationPreviewModal = useCallback(
+    (variant: LinkedGeneratedVariant): void => {
+      setGenerationPreviewKey(variant.key);
+      setGenerationPreviewNaturalSize(null);
+      setGenerationModalPreviewNaturalSize(null);
+      setGenerationPreviewModalOpen(true);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (linkedGeneratedVariants.length === 0) {
+      setGenerationPreviewKey(null);
+      setGenerationPreviewModalOpen(false);
+      return;
+    }
+    setGenerationPreviewKey((currentKey: string | null) => {
+      if (currentKey && linkedGeneratedVariants.some((variant) => variant.key === currentKey)) {
+        return currentKey;
+      }
+      return linkedGeneratedVariants[0]?.key ?? null;
+    });
+  }, [linkedGeneratedVariants]);
+
   useEffect(() => {
     if (!slotInlineEditOpen || !selectedSlot) return;
+    clearInlineSlotSyncTimeouts();
+    setInlineSlotUploadError(null);
+    setGenerationPreviewKey(null);
+    setGenerationPreviewNaturalSize(null);
+    setGenerationModalPreviewNaturalSize(null);
+    setGenerationPreviewModalOpen(false);
+    setEditCardTab('card');
     setSlotNameDraft(selectedSlot.name ?? '');
     setSlotFolderDraft(selectedSlot.folderPath ?? selectedFolder ?? '');
     setSlotImageUrlDraft(selectedSlot.imageUrl ?? selectedSlot.imageFile?.filepath ?? '');
     setSlotBase64Draft(selectedSlot.imageBase64 ?? '');
+    setEnvironmentReferenceDraft(readEnvironmentReferenceDraft(selectedSlot));
   }, [
     slotInlineEditOpen,
     selectedSlot,
     selectedFolder,
+    clearInlineSlotSyncTimeouts,
     setSlotImageUrlDraft,
     setSlotBase64Draft,
   ]);
 
   useEffect(() => {
     if (!slotInlineEditOpen) {
+      clearInlineSlotSyncTimeouts();
       setInlinePreviewNaturalSize(null);
+      setGenerationPreviewNaturalSize(null);
+      setGenerationModalPreviewNaturalSize(null);
+      setGenerationPreviewModalOpen(false);
+      setEnvironmentPreviewNaturalSize(null);
+      setEditCardTab('card');
     }
-  }, [slotInlineEditOpen]);
+  }, [clearInlineSlotSyncTimeouts, slotInlineEditOpen]);
 
   useEffect(() => {
     if (!extractReviewOpen) return;
@@ -599,6 +1275,33 @@ export function StudioModals(): React.JSX.Element {
       filepath: asset.filepath,
     });
   };
+
+  const applyEnvironmentReferenceAsset = useCallback(
+    (asset: {
+      id: string;
+      filepath: string;
+      filename?: string | null;
+      mimetype?: string | null;
+      size?: number | null;
+      width?: number | null;
+      height?: number | null;
+      updatedAt?: string | null;
+    }): void => {
+      setEnvironmentReferenceDraft({
+        imageFileId: asset.id,
+        imageUrl: asset.filepath,
+        filename: asset.filename?.trim() ?? '',
+        mimetype: asset.mimetype?.trim() ?? '',
+        size: typeof asset.size === 'number' && Number.isFinite(asset.size) ? asset.size : null,
+        width: typeof asset.width === 'number' && Number.isFinite(asset.width) ? asset.width : null,
+        height: typeof asset.height === 'number' && Number.isFinite(asset.height) ? asset.height : null,
+        updatedAt: asset.updatedAt ?? new Date().toISOString(),
+      });
+      setEnvironmentPreviewNaturalSize(null);
+      setEditCardTab('environment');
+    },
+    []
+  );
 
   const handleDriveSelection = async (files: ImageFileSelection[]) => {
     setDriveImportOpen(false);
@@ -628,6 +1331,15 @@ export function StudioModals(): React.JSX.Element {
           });
         }
         toast('Imported to temporary object slot. Load to canvas to create a card.', { variant: 'success' });
+      } else if (driveImportMode === 'environment') {
+        const targetId = driveImportTargetId ?? selectedSlot?.id ?? null;
+        if (!targetId) {
+          throw new Error('No target card selected for environment reference.');
+        }
+        const primary = imported[0]!;
+        setSelectedSlotId(targetId);
+        applyEnvironmentReferenceAsset(primary);
+        toast('Environment reference selected. Save Card to apply.', { variant: 'success' });
       } else if (driveImportMode === 'replace') {
         const targetId = driveImportTargetId ?? selectedSlot?.id ?? null;
         if (!targetId) {
@@ -685,7 +1397,10 @@ export function StudioModals(): React.JSX.Element {
     }
   };
 
-  const triggerLocalUpload = (mode: 'create' | 'replace' | 'temporary-object', targetId: string | null): void => {
+  const triggerLocalUpload = (
+    mode: 'create' | 'replace' | 'temporary-object' | 'environment',
+    targetId: string | null
+  ): void => {
     setLocalUploadMode(mode);
     setLocalUploadTargetId(targetId);
     window.setTimeout(() => localUploadInputRef.current?.click(), 0);
@@ -718,6 +1433,15 @@ export function StudioModals(): React.JSX.Element {
           });
         }
         toast('Uploaded to temporary object slot. Load to canvas to create a card.', { variant: 'success' });
+      } else if (localUploadMode === 'environment') {
+        const targetId = localUploadTargetId ?? selectedSlot?.id ?? null;
+        if (!targetId) {
+          throw new Error('No target card selected for environment reference.');
+        }
+        const primary = uploaded[0]!;
+        setSelectedSlotId(targetId);
+        applyEnvironmentReferenceAsset(primary);
+        toast('Environment reference uploaded. Save Card to apply.', { variant: 'success' });
       } else if (localUploadMode === 'replace') {
         const targetId = localUploadTargetId ?? selectedSlot?.id ?? null;
         if (!targetId) {
@@ -767,15 +1491,35 @@ export function StudioModals(): React.JSX.Element {
     if (!selectedSlot) return;
     setSlotUpdateBusy(true);
     try {
-      const hasManualImage = Boolean(slotImageUrlDraft.trim() || slotBase64Draft.trim());
+      await flushInlineSlotDraftSync();
+      const baseMetadata = asRecord(selectedSlot.metadata)
+        ? { ...(selectedSlot.metadata as Record<string, unknown>) }
+        : {};
+      const hasEnvironmentReference = Boolean(
+        environmentReferenceDraft.imageFileId ||
+        environmentReferenceDraft.imageUrl.trim()
+      );
+      if (hasEnvironmentReference) {
+        baseMetadata['environmentReference'] = {
+          imageFileId: environmentReferenceDraft.imageFileId,
+          imageUrl: environmentReferenceDraft.imageUrl.trim(),
+          filename: environmentReferenceDraft.filename.trim() || null,
+          mimetype: environmentReferenceDraft.mimetype.trim() || null,
+          size: environmentReferenceDraft.size,
+          width: environmentReferenceDraft.width,
+          height: environmentReferenceDraft.height,
+          updatedAt: environmentReferenceDraft.updatedAt ?? new Date().toISOString(),
+        };
+      } else {
+        delete baseMetadata['environmentReference'];
+      }
+
       await updateSlotMutation.mutateAsync({
         id: selectedSlot.id,
         data: {
           name: slotNameDraft.trim() || selectedSlot.name || `Card ${slots.length + 1}`,
           folderPath: slotFolderDraft.trim(),
-          imageUrl: slotImageUrlDraft.trim() || null,
-          imageBase64: slotBase64Draft.trim() || null,
-          ...(hasManualImage ? { imageFileId: null } : {}),
+          metadata: Object.keys(baseMetadata).length > 0 ? baseMetadata : null,
         },
       });
       setSlotInlineEditOpen(false);
@@ -791,6 +1535,7 @@ export function StudioModals(): React.JSX.Element {
     if (!selectedSlot) return;
     setSlotUpdateBusy(true);
     try {
+      clearInlineSlotSyncTimeouts();
       await updateSlotMutation.mutateAsync({
         id: selectedSlot.id,
         data: {
@@ -814,6 +1559,7 @@ export function StudioModals(): React.JSX.Element {
     setLinkedVariantApplyBusyKey(variant.key);
     setSlotUpdateBusy(true);
     try {
+      clearInlineSlotSyncTimeouts();
       await updateSlotMutation.mutateAsync({
         id: selectedSlot.id,
         data: {
@@ -1099,12 +1845,32 @@ export function StudioModals(): React.JSX.Element {
     toast('Prompt params applied.', { variant: 'success' });
   };
 
+  const handleCopyCardId = useCallback(
+    async (cardId: string): Promise<void> => {
+      const normalizedCardId = cardId.trim();
+      if (!normalizedCardId) return;
+      if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+        toast('Clipboard is unavailable in this browser.', { variant: 'error' });
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(normalizedCardId);
+        toast('Card ID copied to clipboard.', { variant: 'success' });
+      } catch {
+        toast('Failed to copy Card ID.', { variant: 'error' });
+      }
+    },
+    [toast]
+  );
+
   const driveImportTitle =
     driveImportMode === 'replace'
       ? 'Attach Image To Selected Card'
       : driveImportMode === 'temporary-object'
         ? 'Select Object Image'
-        : 'Import Images';
+        : driveImportMode === 'environment'
+          ? 'Select Environment Reference Image'
+          : 'Import Images';
   const editCardModalHeader = (
     <div className='flex items-center justify-between gap-3'>
       <div className='flex items-center gap-4'>
@@ -1132,6 +1898,21 @@ export function StudioModals(): React.JSX.Element {
       </div>
     </div>
   );
+  const editCardModalFooter = selectedSlot ? (
+    <Button
+      size='xs'
+      type='button'
+      variant='outline'
+      className='bg-card/90 font-mono text-[11px] text-gray-200 hover:text-white'
+      onClick={() => {
+        void handleCopyCardId(selectedSlot.id);
+      }}
+      title='Click to copy Card ID'
+      aria-label='Copy Card ID to clipboard'
+    >
+      Card ID: {selectedSlot.id}
+    </Button>
+  ) : null;
 
   return (
     <>
@@ -1162,7 +1943,9 @@ export function StudioModals(): React.JSX.Element {
             onClick={() => {
               setLocalUploadMode(driveImportMode);
               setLocalUploadTargetId(
-                driveImportMode === 'replace' ? (driveImportTargetId ?? selectedSlot?.id ?? null) : null
+                driveImportMode === 'replace' || driveImportMode === 'environment'
+                  ? (driveImportTargetId ?? selectedSlot?.id ?? null)
+                  : null
               );
               window.setTimeout(() => localUploadInputRef.current?.click(), 0);
             }}
@@ -1235,239 +2018,750 @@ export function StudioModals(): React.JSX.Element {
         size='lg'
         className='md:min-w-[63rem] max-w-[66rem]'
         header={editCardModalHeader}
+        footer={editCardModalFooter}
       >
         {selectedSlot ? (
-          <div className='space-y-4'>
-            <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
-              <div className='flex flex-wrap items-center justify-between gap-2'>
-                <div className='space-y-0.5'>
-                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>Image Slot Preview</div>
-                  <div className='text-xs text-gray-200'>
+          <Tabs
+            value={editCardTab}
+            onValueChange={(value: string) => {
+              if (
+                value === 'card' ||
+                value === 'generations' ||
+                value === 'environment' ||
+                value === 'masks' ||
+                value === 'composites'
+              ) {
+                setEditCardTab(value);
+              }
+            }}
+            className='space-y-4'
+          >
+            <TabsList className='grid w-full grid-cols-5 bg-card/50'>
+              <TabsTrigger value='card' className='text-xs'>Card</TabsTrigger>
+              <TabsTrigger value='generations' className='text-xs'>Generations</TabsTrigger>
+              <TabsTrigger value='environment' className='text-xs'>Environment</TabsTrigger>
+              <TabsTrigger value='masks' className='text-xs'>Masks</TabsTrigger>
+              <TabsTrigger value='composites' className='text-xs'>Composites</TabsTrigger>
+            </TabsList>
+            <TabsContent value='card' className='mt-0 space-y-4'>
+              <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <div className='space-y-0.5'>
+                    <div className='text-[10px] uppercase tracking-wide text-gray-500'>Image Slot Preview</div>
+                    <div className='text-xs text-gray-200'>
                     Source: {inlinePreviewSource.sourceType}
+                    </div>
                   </div>
                 </div>
-                <div className='text-[10px] text-gray-400'>
-                  Card ID: <span className='font-mono text-gray-300'>{selectedSlot.id}</span>
-                </div>
-              </div>
 
-              <InlineImagePreviewCanvas
-                imageSrc={inlinePreviewSource.src}
-                imageAlt={slotNameDraft.trim() || selectedSlot.name || 'Card preview'}
-                onImageDimensionsChange={setInlinePreviewNaturalSize}
-              />
+                <InlineImagePreviewCanvas
+                  imageSrc={inlinePreviewSource.src}
+                  imageAlt={slotNameDraft.trim() || selectedSlot.name || 'Card preview'}
+                  onImageDimensionsChange={setInlinePreviewNaturalSize}
+                />
 
-              <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
-                <div>
-                  <span className='text-gray-500'>Source type:</span> {inlinePreviewSource.sourceType}
-                </div>
-                <div>
-                  <span className='text-gray-500'>Dimensions:</span> {inlinePreviewDimensions}
-                </div>
-                <div>
-                  <span className='text-gray-500'>Image file id:</span>{' '}
-                  <span className='font-mono text-[10px]'>
-                    {selectedSlot.imageFile?.id || selectedSlot.imageFileId || 'n/a'}
-                  </span>
-                </div>
-                <div>
-                  <span className='text-gray-500'>Mime type:</span> {inlinePreviewMimeType}
-                </div>
-                <div>
-                  <span className='text-gray-500'>Filename:</span> {selectedSlot.imageFile?.filename || 'n/a'}
-                </div>
-                <div>
-                  <span className='text-gray-500'>File size:</span> {formatBytes(selectedSlot.imageFile?.size ?? inlinePreviewBase64Bytes ?? null)}
-                </div>
-                {slotBase64Draft.trim() ? (
+                <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
+                  <div>
+                    <span className='text-gray-500'>Source type:</span> {inlinePreviewSource.sourceType}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Dimensions:</span> {inlinePreviewDimensions}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Image file id:</span>{' '}
+                    <span className='font-mono text-[10px]'>
+                      {selectedSlot.imageFile?.id || selectedSlot.imageFileId || 'n/a'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Mime type:</span> {inlinePreviewMimeType}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Filename:</span> {selectedSlot.imageFile?.filename || 'n/a'}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>File size:</span> {formatBytes(selectedSlot.imageFile?.size ?? inlinePreviewBase64Bytes ?? null)}
+                  </div>
+                  {slotBase64Draft.trim() ? (
+                    <div className='sm:col-span-2'>
+                      <span className='text-gray-500'>Base64 payload:</span>{' '}
+                      {`${slotBase64Draft.trim().length.toLocaleString()} chars (~${formatBytes(inlinePreviewBase64Bytes)})`}
+                    </div>
+                  ) : null}
                   <div className='sm:col-span-2'>
-                    <span className='text-gray-500'>Base64 payload:</span>{' '}
-                    {`${slotBase64Draft.trim().length.toLocaleString()} chars (~${formatBytes(inlinePreviewBase64Bytes)})`}
+                    <span className='text-gray-500'>Raw source:</span>{' '}
+                    <span className='break-all font-mono text-[10px] text-gray-300'>
+                      {inlinePreviewSource.rawSource}
+                    </span>
                   </div>
-                ) : null}
-                <div className='sm:col-span-2'>
-                  <span className='text-gray-500'>Raw source:</span>{' '}
-                  <span className='break-all font-mono text-[10px] text-gray-300'>
-                    {inlinePreviewSource.rawSource}
-                  </span>
-                </div>
-                <div className='sm:col-span-2'>
-                  <span className='text-gray-500'>Resolved preview source:</span>{' '}
-                  <span className='break-all font-mono text-[10px] text-gray-300'>
-                    {inlinePreviewSource.resolvedSource}
-                  </span>
-                </div>
-                <div className='sm:col-span-2'>
-                  <span className='text-gray-500'>Tags:</span>{' '}
-                  {selectedSlot.imageFile?.tags?.length
-                    ? selectedSlot.imageFile.tags.join(', ')
-                    : 'n/a'}
-                </div>
-                <div>
-                  <span className='text-gray-500'>Created:</span> {formatDateTime(selectedSlot.imageFile?.createdAt)}
-                </div>
-                <div>
-                  <span className='text-gray-500'>Updated:</span> {formatDateTime(selectedSlot.imageFile?.updatedAt)}
+                  <div className='sm:col-span-2'>
+                    <span className='text-gray-500'>Resolved preview source:</span>{' '}
+                    <span className='break-all font-mono text-[10px] text-gray-300'>
+                      {inlinePreviewSource.resolvedSource}
+                    </span>
+                  </div>
+                  <div className='sm:col-span-2'>
+                    <span className='text-gray-500'>Tags:</span>{' '}
+                    {selectedSlot.imageFile?.tags?.length
+                      ? selectedSlot.imageFile.tags.join(', ')
+                      : 'n/a'}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Created:</span> {formatDateTime(selectedSlot.imageFile?.createdAt)}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Updated:</span> {formatDateTime(selectedSlot.imageFile?.updatedAt)}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <div className='space-y-1'>
-                <Label className='text-xs text-gray-400'>Card Name</Label>
-                <Input size='sm'
-                  value={slotNameDraft}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotNameDraft(event.target.value)}
-                  className='h-9'
-                />
+              <div className='grid gap-3 sm:grid-cols-2'>
+                <div className='space-y-1'>
+                  <Label className='text-xs text-gray-400'>Card Name</Label>
+                  <Input size='sm'
+                    value={slotNameDraft}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotNameDraft(event.target.value)}
+                    className='h-9'
+                  />
+                </div>
+                <div className='space-y-1'>
+                  <Label className='text-xs text-gray-400'>Folder Path</Label>
+                  <Input size='sm'
+                    value={slotFolderDraft}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotFolderDraft(event.target.value)}
+                    placeholder='e.g. variants/red'
+                    className='h-9'
+                  />
+                </div>
               </div>
-              <div className='space-y-1'>
-                <Label className='text-xs text-gray-400'>Folder Path</Label>
-                <Input size='sm'
-                  value={slotFolderDraft}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotFolderDraft(event.target.value)}
-                  placeholder='e.g. variants/red'
-                  className='h-9'
-                />
+
+              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+                  Image Slot
+                </div>
+                <ProductImageManagerControllerProvider value={inlineCardImageManagerController}>
+                  <ProductImageManager />
+                </ProductImageManagerControllerProvider>
               </div>
-            </div>
 
-            <div className='space-y-1'>
-              <Label className='text-xs text-gray-400'>Image URL</Label>
-              <Input size='sm'
-                value={slotImageUrlDraft}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotImageUrlDraft(event.target.value)}
-                placeholder='/uploads/... or https://...'
-                className='h-9'
-              />
-            </div>
+              <div className='space-y-2'>
+                <div className='flex items-center justify-between gap-2'>
+                  <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
+                  <Button size='xs'
+                    type='button'
+                    variant='outline'
+                    onClick={() => {
+                      void linkedRunsQuery.refetch();
+                    }}
+                    disabled={linkedRunsQuery.isFetching}
+                  >
+                    {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                  Refresh
+                  </Button>
+                </div>
+                <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
+                  {linkedRunsQuery.isLoading ? (
+                    <div className='flex items-center gap-2 px-1 py-2 text-xs text-gray-400'>
+                      <Loader2 className='size-4 animate-spin' />
+                    Loading linked variants...
+                    </div>
+                  ) : linkedRunsQuery.isError ? (
+                    <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
+                      {linkedRunsQuery.error instanceof Error
+                        ? linkedRunsQuery.error.message
+                        : 'Failed to load linked variants.'}
+                    </div>
+                  ) : linkedGeneratedVariants.length === 0 ? (
+                    <div className='px-1 py-2 text-xs text-gray-500'>
+                    No generated variants linked to this card yet.
+                    </div>
+                  ) : (
+                    linkedGeneratedVariants.map((variant) => {
+                      const isApplying = linkedVariantApplyBusyKey === variant.key && slotUpdateBusy;
+                      return (
+                        <div
+                          key={variant.key}
+                          className='flex items-center gap-3 rounded border border-border/60 bg-card/50 p-2'
+                        >
+                          <div className='size-14 overflow-hidden rounded-md border border-border/60 bg-black/30'>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={variant.imageSrc}
+                              alt={variant.output.filename || `Linked variant ${variant.outputIndex}`}
+                              className='h-full w-full object-cover'
+                              loading='lazy'
+                            />
+                          </div>
+                          <div className='min-w-0 flex-1 text-[11px] text-gray-300'>
+                            <div className='truncate text-xs text-gray-100'>
+                              {variant.output.filename || `Variant ${variant.outputIndex}`}
+                            </div>
+                            <div className='truncate text-[10px] text-gray-400'>
+                            Run {variant.runId.slice(0, 8)} • Variant {variant.outputIndex}/{variant.outputCount}
+                            </div>
+                            <div className='truncate text-[10px] text-gray-500'>
+                              {formatLinkedVariantTimestamp(variant.runCreatedAt)}
+                            </div>
+                          </div>
+                          <Button size='xs'
+                            type='button'
+                            variant='outline'
+                            onClick={() => {
+                              void handleApplyLinkedVariantToCard(variant);
+                            }}
+                            disabled={slotUpdateBusy}
+                          >
+                            {isApplying ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                          Use On Card
+                          </Button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
 
-            <div className='space-y-1'>
-              <Label className='text-xs text-gray-400'>Image Base64 (optional)</Label>
-              <Textarea size='sm'
-                value={slotBase64Draft}
-                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setSlotBase64Draft(event.target.value)}
-                className='h-28 font-mono text-[11px]'
-                placeholder='data:image/png;base64,...'
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <div className='flex items-center justify-between gap-2'>
-                <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
+              <div className='flex flex-wrap items-center gap-2'>
                 <Button size='xs'
                   type='button'
                   variant='outline'
                   onClick={() => {
-                    void linkedRunsQuery.refetch();
+                    setSlotInlineEditOpen(false);
+                    setDriveImportMode('replace');
+                    setDriveImportTargetId(selectedSlot.id);
+                    setDriveImportOpen(true);
                   }}
-                  disabled={linkedRunsQuery.isFetching}
                 >
-                  {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                  Refresh
+                Replace From Drive
+                </Button>
+                <Button size='xs'
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    setSlotInlineEditOpen(false);
+                    triggerLocalUpload('replace', selectedSlot.id);
+                  }}
+                  disabled={uploadMutation.isPending}
+                >
+                  {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                Replace From Local Upload
+                </Button>
+                <Button size='xs'
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    void handleClearSlotImage();
+                  }}
+                  disabled={slotUpdateBusy}
+                >
+                Clear Image
                 </Button>
               </div>
-              <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
-                {linkedRunsQuery.isLoading ? (
-                  <div className='flex items-center gap-2 px-1 py-2 text-xs text-gray-400'>
-                    <Loader2 className='size-4 animate-spin' />
-                    Loading linked variants...
+            </TabsContent>
+            <TabsContent value='generations' className='mt-0 space-y-4'>
+              <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <div className='space-y-0.5'>
+                    <div className='text-[10px] uppercase tracking-wide text-gray-500'>Generation Preview</div>
+                    <div className='text-xs text-gray-200'>
+                      {selectedGenerationPreview
+                        ? `Run ${selectedGenerationPreview.runId.slice(0, 8)} • Variant ${selectedGenerationPreview.outputIndex}/${selectedGenerationPreview.outputCount}`
+                        : 'No generated variants available for this card.'}
+                    </div>
                   </div>
-                ) : linkedRunsQuery.isError ? (
-                  <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
-                    {linkedRunsQuery.error instanceof Error
-                      ? linkedRunsQuery.error.message
-                      : 'Failed to load linked variants.'}
-                  </div>
-                ) : linkedGeneratedVariants.length === 0 ? (
-                  <div className='px-1 py-2 text-xs text-gray-500'>
-                    No generated variants linked to this card yet.
+                  <Button
+                    size='xs'
+                    type='button'
+                    variant='outline'
+                    onClick={() => {
+                      void linkedRunsQuery.refetch();
+                    }}
+                    disabled={linkedRunsQuery.isFetching}
+                  >
+                    {linkedRunsQuery.isFetching ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                    Refresh
+                  </Button>
+                </div>
+
+                <InlineImagePreviewCanvas
+                  imageSrc={selectedGenerationPreview?.imageSrc ?? null}
+                  imageAlt={
+                    selectedGenerationPreview?.output.filename ||
+                    `${slotNameDraft.trim() || selectedSlot.name || 'Card'} generation preview`
+                  }
+                  onImageDimensionsChange={setGenerationPreviewNaturalSize}
+                />
+
+                {selectedGenerationPreview ? (
+                  <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
+                    <div>
+                      <span className='text-gray-500'>Run:</span>{' '}
+                      <span className='font-mono text-[10px]'>{selectedGenerationPreview.runId}</span>
+                    </div>
+                    <div>
+                      <span className='text-gray-500'>Variant:</span>{' '}
+                      {selectedGenerationPreview.outputIndex}/{selectedGenerationPreview.outputCount}
+                    </div>
+                    <div>
+                      <span className='text-gray-500'>Output file id:</span>{' '}
+                      <span className='font-mono text-[10px]'>{selectedGenerationPreview.output.id}</span>
+                    </div>
+                    <div>
+                      <span className='text-gray-500'>Dimensions:</span> {selectedGenerationPreviewDimensions}
+                    </div>
+                    <div>
+                      <span className='text-gray-500'>Filename:</span>{' '}
+                      {selectedGenerationPreview.output.filename || 'n/a'}
+                    </div>
+                    <div>
+                      <span className='text-gray-500'>Size:</span>{' '}
+                      {formatBytes(selectedGenerationPreview.output.size)}
+                    </div>
+                    <div className='sm:col-span-2'>
+                      <span className='text-gray-500'>Path:</span>{' '}
+                      <span className='break-all font-mono text-[10px] text-gray-300'>
+                        {selectedGenerationPreview.output.filepath}
+                      </span>
+                    </div>
+                    <div className='sm:col-span-2'>
+                      <span className='text-gray-500'>Generated:</span>{' '}
+                      {formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}
+                    </div>
                   </div>
                 ) : (
-                  linkedGeneratedVariants.map((variant) => {
-                    const isApplying = linkedVariantApplyBusyKey === variant.key && slotUpdateBusy;
-                    return (
-                      <div
-                        key={variant.key}
-                        className='flex items-center gap-3 rounded border border-border/60 bg-card/50 p-2'
-                      >
-                        <div className='size-14 overflow-hidden rounded-md border border-border/60 bg-black/30'>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-400'>
+                    Generate or attach variants to this card to populate generation slots.
+                  </div>
+                )}
+              </div>
+
+              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='flex items-center justify-between gap-2'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+                    Generated Image Slots
+                  </div>
+                  <div className='text-[11px] text-gray-400'>
+                    {linkedGeneratedVariants.length} image{linkedGeneratedVariants.length === 1 ? '' : 's'}
+                  </div>
+                </div>
+                <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5'>
+                  {linkedRunsQuery.isLoading ? (
+                    <div className='col-span-full flex items-center gap-2 rounded border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
+                      <Loader2 className='size-4 animate-spin' />
+                      Loading generation slots...
+                    </div>
+                  ) : linkedRunsQuery.isError ? (
+                    <div className='col-span-full rounded border border-red-500/35 bg-red-500/10 px-3 py-2 text-xs text-red-200'>
+                      {linkedRunsQuery.error instanceof Error
+                        ? linkedRunsQuery.error.message
+                        : 'Failed to load generated images.'}
+                    </div>
+                  ) : linkedGeneratedVariants.length === 0 ? (
+                    <div className='col-span-full rounded border border-border/50 bg-card/40 px-3 py-2 text-xs text-gray-400'>
+                      No generated image slots are linked to this card yet.
+                    </div>
+                  ) : (
+                    linkedGeneratedVariants.map((variant) => {
+                      const isSelected = selectedGenerationPreview?.key === variant.key;
+                      return (
+                        <button
+                          key={variant.key}
+                          type='button'
+                          onClick={() => {
+                            handleOpenGenerationPreviewModal(variant);
+                          }}
+                          className={`group overflow-hidden rounded-md border text-left transition-colors ${
+                            isSelected
+                              ? 'border-emerald-400/70 bg-emerald-500/10'
+                              : 'border-border/60 bg-card/40 hover:border-border'
+                          }`}
+                          title='Open generation preview'
+                        >
+                          <div className='relative aspect-square overflow-hidden bg-black/35'>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={variant.imageSrc}
+                              alt={variant.output.filename || `Generation ${variant.outputIndex}`}
+                              className='h-full w-full object-cover'
+                              loading='lazy'
+                            />
+                            <div className='absolute left-1 top-1 rounded border border-border/60 bg-black/65 px-1 py-0.5 text-[10px] text-gray-200'>
+                              {variant.outputIndex}/{variant.outputCount}
+                            </div>
+                          </div>
+                          <div className='truncate border-t border-border/50 px-2 py-1 text-[10px] text-gray-200'>
+                            {variant.output.filename || `Variant ${variant.outputIndex}`}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value='environment' className='mt-0 space-y-4'>
+              <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <div className='space-y-0.5'>
+                    <div className='text-[10px] uppercase tracking-wide text-gray-500'>Environment Reference</div>
+                    <div className='text-xs text-gray-200'>
+                      Source: {environmentPreviewSource.sourceType}
+                    </div>
+                  </div>
+                </div>
+
+                <InlineImagePreviewCanvas
+                  imageSrc={environmentPreviewSource.src}
+                  imageAlt={`${slotNameDraft.trim() || selectedSlot.name || 'Card'} environment reference`}
+                  onImageDimensionsChange={setEnvironmentPreviewNaturalSize}
+                />
+
+                <div className='grid gap-2 rounded-md border border-border/60 bg-card/30 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
+                  <div>
+                    <span className='text-gray-500'>Source type:</span> {environmentPreviewSource.sourceType}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Dimensions:</span> {environmentPreviewDimensions}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Image file id:</span>{' '}
+                    <span className='font-mono text-[10px]'>
+                      {environmentReferenceDraft.imageFileId || 'n/a'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Mime type:</span> {environmentReferenceDraft.mimetype || 'n/a'}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Filename:</span> {environmentReferenceDraft.filename || 'n/a'}
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>File size:</span> {formatBytes(environmentReferenceDraft.size)}
+                  </div>
+                  <div className='sm:col-span-2'>
+                    <span className='text-gray-500'>Raw source:</span>{' '}
+                    <span className='break-all font-mono text-[10px] text-gray-300'>
+                      {environmentPreviewSource.rawSource}
+                    </span>
+                  </div>
+                  <div className='sm:col-span-2'>
+                    <span className='text-gray-500'>Resolved preview source:</span>{' '}
+                    <span className='break-all font-mono text-[10px] text-gray-300'>
+                      {environmentPreviewSource.resolvedSource}
+                    </span>
+                  </div>
+                  <div>
+                    <span className='text-gray-500'>Updated:</span> {formatDateTime(environmentReferenceDraft.updatedAt)}
+                  </div>
+                  <div />
+                </div>
+              </div>
+
+              <div className='rounded-lg border border-border/60 bg-card/30 p-3 text-xs text-gray-300'>
+                Upload a reference image for the card environment. Save Card to persist changes.
+              </div>
+
+              <div className='flex flex-wrap items-center gap-2'>
+                <Button size='xs'
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    setDriveImportMode('environment');
+                    setDriveImportTargetId(selectedSlot.id);
+                    setDriveImportOpen(true);
+                  }}
+                >
+                  Upload Environment From Drive
+                </Button>
+                <Button size='xs'
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    triggerLocalUpload('environment', selectedSlot.id);
+                  }}
+                  disabled={uploadMutation.isPending}
+                >
+                  {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                  Upload Environment From Local
+                </Button>
+                <Button size='xs'
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    setEnvironmentReferenceDraft({ ...EMPTY_ENVIRONMENT_REFERENCE_DRAFT });
+                    setEnvironmentPreviewNaturalSize(null);
+                  }}
+                  disabled={!environmentReferenceDraft.imageFileId && !environmentReferenceDraft.imageUrl.trim()}
+                >
+                  Clear Environment Image
+                </Button>
+              </div>
+            </TabsContent>
+            <TabsContent value='masks' className='mt-0 space-y-4'>
+              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-500'>Linked Masks</div>
+                <div className='text-xs text-gray-300'>
+                  Masks attached to this card via mask metadata links.
+                </div>
+              </div>
+              <div className='max-h-[34rem] space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/35 p-2'>
+                {linkedMaskSlots.length === 0 ? (
+                  <div className='rounded border border-border/50 bg-card/40 px-3 py-3 text-xs text-gray-400'>
+                    No linked masks found for this card.
+                  </div>
+                ) : (
+                  linkedMaskSlots.map((mask) => (
+                    <div
+                      key={mask.slotId}
+                      className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'
+                    >
+                      <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
+                        {mask.imageSrc ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={variant.imageSrc}
-                            alt={variant.output.filename || `Linked variant ${variant.outputIndex}`}
+                            src={mask.imageSrc}
+                            alt={mask.name}
                             className='h-full w-full object-cover'
                             loading='lazy'
                           />
-                        </div>
-                        <div className='min-w-0 flex-1 text-[11px] text-gray-300'>
-                          <div className='truncate text-xs text-gray-100'>
-                            {variant.output.filename || `Variant ${variant.outputIndex}`}
+                        ) : (
+                          <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
+                            No image
                           </div>
-                          <div className='truncate text-[10px] text-gray-400'>
-                            Run {variant.runId.slice(0, 8)} • Variant {variant.outputIndex}/{variant.outputCount}
-                          </div>
-                          <div className='truncate text-[10px] text-gray-500'>
-                            {formatLinkedVariantTimestamp(variant.runCreatedAt)}
-                          </div>
-                        </div>
-                        <Button size='xs'
-                          type='button'
-                          variant='outline'
-                          onClick={() => {
-                            void handleApplyLinkedVariantToCard(variant);
-                          }}
-                          disabled={slotUpdateBusy}
-                        >
-                          {isApplying ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                          Use On Card
-                        </Button>
+                        )}
                       </div>
-                    );
-                  })
+                      <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
+                        <div className='truncate text-xs text-gray-100'>{mask.name}</div>
+                        <div className='text-[10px] text-gray-400'>
+                          Variant: <span className='text-gray-200'>{mask.variant}</span>
+                          {' '}• Inverted: <span className='text-gray-200'>{mask.inverted ? 'Yes' : 'No'}</span>
+                          {' '}• Mode: <span className='text-gray-200'>{mask.generationMode}</span>
+                        </div>
+                        <div className='text-[10px] text-gray-400'>
+                          Relation: <span className='font-mono text-gray-300'>{mask.relationType || 'mask'}</span>
+                        </div>
+                        <div className='text-[10px] text-gray-400'>
+                          Mask Slot: <span className='font-mono text-gray-300'>{mask.slotId}</span>
+                        </div>
+                        <div className='text-[10px] text-gray-400'>
+                          File ID: <span className='font-mono text-gray-300'>{mask.imageFileId || 'n/a'}</span>
+                        </div>
+                        <div className='text-[10px] text-gray-400'>
+                          File: <span className='text-gray-300'>{mask.filename || 'n/a'}</span>
+                          {' '}• Size: <span className='text-gray-300'>{formatBytes(mask.size)}</span>
+                          {' '}• Dimensions:{' '}
+                          <span className='text-gray-300'>
+                            {mask.width && mask.height ? `${mask.width} x ${mask.height}` : 'n/a'}
+                          </span>
+                        </div>
+                        <div className='truncate text-[10px] text-gray-500'>
+                          Path: <span className='font-mono text-gray-400'>{mask.filepath || 'n/a'}</span>
+                        </div>
+                        <div className='text-[10px] text-gray-500'>
+                          Updated: {formatDateTime(mask.updatedAt)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
+            </TabsContent>
+            <TabsContent value='composites' className='mt-0 space-y-4'>
+              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-500'>Composite Inputs</div>
+                <div className='text-xs text-gray-300'>
+                  {compositeTabInputSourceLabel}
+                </div>
+              </div>
+
+              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-500'>Source Image</div>
+                <div className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'>
+                  <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
+                    {sourceCompositeImage.imageSrc ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={sourceCompositeImage.imageSrc}
+                        alt={sourceCompositeImage.name}
+                        className='h-full w-full object-cover'
+                        loading='lazy'
+                      />
+                    ) : (
+                      <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
+                        No image
+                      </div>
+                    )}
+                  </div>
+                  <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
+                    <div className='truncate text-xs text-gray-100'>{sourceCompositeImage.name}</div>
+                    <div className='text-[10px] text-gray-400'>
+                      Source: <span className='text-gray-200'>{sourceCompositeImage.sourceType}</span>
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      Card Slot: <span className='font-mono text-gray-300'>{sourceCompositeImage.slotId || 'n/a'}</span>
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      File ID: <span className='font-mono text-gray-300'>{sourceCompositeImage.imageFileId || 'n/a'}</span>
+                    </div>
+                    <div className='text-[10px] text-gray-400'>
+                      File: <span className='text-gray-300'>{sourceCompositeImage.filename || 'n/a'}</span>
+                      {' '}• Size: <span className='text-gray-300'>{formatBytes(sourceCompositeImage.size)}</span>
+                      {' '}• Dimensions:{' '}
+                      <span className='text-gray-300'>
+                        {sourceCompositeImage.width && sourceCompositeImage.height
+                          ? `${sourceCompositeImage.width} x ${sourceCompositeImage.height}`
+                          : 'n/a'}
+                      </span>
+                    </div>
+                    <div className='truncate text-[10px] text-gray-500'>
+                      Path: <span className='font-mono text-gray-400'>{sourceCompositeImage.filepath || 'n/a'}</span>
+                    </div>
+                    <div className='text-[10px] text-gray-500'>
+                      Updated: {formatDateTime(sourceCompositeImage.updatedAt)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-500'>Composite Images</div>
+                <div className='max-h-[28rem] space-y-2 overflow-y-auto rounded border border-border/60 bg-card/35 p-2'>
+                  {compositeTabInputImages.length === 0 ? (
+                    <div className='rounded border border-border/50 bg-card/40 px-3 py-3 text-xs text-gray-400'>
+                      No composite images to show.
+                    </div>
+                  ) : (
+                    compositeTabInputImages.map((entry) => (
+                      <div
+                        key={entry.key}
+                        className='grid gap-3 rounded border border-border/60 bg-card/50 p-3 md:grid-cols-[90px_1fr]'
+                      >
+                        <div className='h-[90px] w-[90px] overflow-hidden rounded border border-border/60 bg-black/40'>
+                          {entry.imageSrc ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={entry.imageSrc}
+                              alt={entry.name}
+                              className='h-full w-full object-cover'
+                              loading='lazy'
+                            />
+                          ) : (
+                            <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
+                              No image
+                            </div>
+                          )}
+                        </div>
+                        <div className='min-w-0 space-y-1 text-[11px] text-gray-300'>
+                          <div className='truncate text-xs text-gray-100'>{entry.name}</div>
+                          <div className='text-[10px] text-gray-400'>
+                            Type: <span className='text-gray-200'>{entry.sourceType}</span>
+                            {entry.order !== null ? (
+                              <>
+                                {' '}• Layer order: <span className='text-gray-200'>{entry.order + 1}</span>
+                              </>
+                            ) : null}
+                          </div>
+                          <div className='text-[10px] text-gray-400'>
+                            Slot: <span className='font-mono text-gray-300'>{entry.slotId || 'n/a'}</span>
+                          </div>
+                          <div className='text-[10px] text-gray-400'>
+                            File ID: <span className='font-mono text-gray-300'>{entry.imageFileId || 'n/a'}</span>
+                          </div>
+                          <div className='text-[10px] text-gray-400'>
+                            File: <span className='text-gray-300'>{entry.filename || 'n/a'}</span>
+                            {' '}• Size: <span className='text-gray-300'>{formatBytes(entry.size)}</span>
+                            {' '}• Dimensions:{' '}
+                            <span className='text-gray-300'>
+                              {entry.width && entry.height ? `${entry.width} x ${entry.height}` : 'n/a'}
+                            </span>
+                          </div>
+                          <div className='truncate text-[10px] text-gray-500'>
+                            Path: <span className='font-mono text-gray-400'>{entry.filepath || 'n/a'}</span>
+                          </div>
+                          <div className='text-[10px] text-gray-500'>
+                            Updated: {formatDateTime(entry.updatedAt)}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className='text-sm text-gray-400'>Select a card first.</div>
+        )}
+      </AppModal>
+
+      <AppModal
+        open={generationPreviewModalOpen}
+        onClose={() => setGenerationPreviewModalOpen(false)}
+        title='Generation Preview'
+        size='lg'
+        className='md:min-w-[58rem] max-w-[64rem]'
+      >
+        {selectedGenerationPreview ? (
+          <div className='space-y-4'>
+            <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='space-y-0.5'>
+                  <div className='text-[10px] uppercase tracking-wide text-gray-500'>Preview Canvas</div>
+                  <div className='text-xs text-gray-200'>
+                    Run {selectedGenerationPreview.runId.slice(0, 8)} • Variant {selectedGenerationPreview.outputIndex}/{selectedGenerationPreview.outputCount}
+                  </div>
+                </div>
+                <Button
+                  size='xs'
+                  type='button'
+                  variant='outline'
+                  onClick={() => {
+                    void handleApplyLinkedVariantToCard(selectedGenerationPreview);
+                  }}
+                  disabled={slotUpdateBusy}
+                >
+                  {slotUpdateBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+                  Use On Card
+                </Button>
+              </div>
+
+              <InlineImagePreviewCanvas
+                imageSrc={selectedGenerationPreview.imageSrc}
+                imageAlt={selectedGenerationPreview.output.filename || `Generation ${selectedGenerationPreview.outputIndex}`}
+                onImageDimensionsChange={setGenerationModalPreviewNaturalSize}
+              />
             </div>
 
-            <div className='flex flex-wrap items-center gap-2'>
-              <Button size='xs'
-                type='button'
-                variant='outline'
-                onClick={() => {
-                  setSlotInlineEditOpen(false);
-                  setDriveImportMode('replace');
-                  setDriveImportTargetId(selectedSlot.id);
-                  setDriveImportOpen(true);
-                }}
-              >
-                Replace From Drive
-              </Button>
-              <Button size='xs'
-                type='button'
-                variant='outline'
-                onClick={() => {
-                  setSlotInlineEditOpen(false);
-                  triggerLocalUpload('replace', selectedSlot.id);
-                }}
-                disabled={uploadMutation.isPending}
-              >
-                {uploadMutation.isPending ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-                Replace From Local Upload
-              </Button>
-              <Button size='xs'
-                type='button'
-                variant='outline'
-                onClick={() => {
-                  void handleClearSlotImage();
-                }}
-                disabled={slotUpdateBusy}
-              >
-                Clear Image
-              </Button>
+            <div className='grid gap-2 rounded-lg border border-border/60 bg-card/35 p-3 text-[11px] text-gray-300 sm:grid-cols-2'>
+              <div>
+                <span className='text-gray-500'>Output file id:</span>{' '}
+                <span className='font-mono text-[10px]'>{selectedGenerationPreview.output.id}</span>
+              </div>
+              <div>
+                <span className='text-gray-500'>Dimensions:</span> {selectedGenerationModalDimensions}
+              </div>
+              <div>
+                <span className='text-gray-500'>Filename:</span> {selectedGenerationPreview.output.filename || 'n/a'}
+              </div>
+              <div>
+                <span className='text-gray-500'>Size:</span> {formatBytes(selectedGenerationPreview.output.size)}
+              </div>
+              <div className='sm:col-span-2'>
+                <span className='text-gray-500'>Path:</span>{' '}
+                <span className='break-all font-mono text-[10px] text-gray-300'>
+                  {selectedGenerationPreview.output.filepath}
+                </span>
+              </div>
+              <div className='sm:col-span-2'>
+                <span className='text-gray-500'>Generated:</span>{' '}
+                {formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}
+              </div>
             </div>
           </div>
         ) : (
-          <div className='text-sm text-gray-400'>Select a card first.</div>
+          <div className='rounded-lg border border-border/60 bg-card/35 px-3 py-2 text-sm text-gray-400'>
+            No generation selected.
+          </div>
         )}
       </AppModal>
 

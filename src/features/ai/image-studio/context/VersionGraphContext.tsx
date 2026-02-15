@@ -390,9 +390,8 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
   const selectNode = useCallback(
     (slotId: string | null) => {
       setSelectedNodeId(slotId);
-      setSelectedSlotId(slotId);
     },
-    [setSelectedSlotId],
+    [],
   );
 
   const hoverNode = useCallback((slotId: string | null) => {

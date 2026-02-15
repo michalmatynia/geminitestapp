@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
+  Button,
   Label,
   SelectSimple,
+  useToast,
 } from '@/shared/ui';
+import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { usePromptState, usePromptActions } from '../context/PromptContext';
 import {
@@ -18,12 +21,30 @@ import {
 const NONE_OPTION_VALUE = '__none__';
 const CUSTOM_OPTION_VALUE = '__custom__';
 
+function createPromptId(): string {
+  return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID()
+    : `prompt_${Date.now().toString(36)}`;
+}
+
+function createDefaultPromptName(entries: ImageStudioPromptEntry[]): string {
+  const existing = new Set(entries.map((entry: ImageStudioPromptEntry) => entry.name.trim().toLowerCase()));
+  let index = entries.length + 1;
+  while (existing.has(`prompt ${index}`)) {
+    index += 1;
+  }
+  return `Prompt ${index}`;
+}
+
 export function UIPresetsPanel(): React.JSX.Element {
+  const { toast } = useToast();
+  const updateSetting = useUpdateSetting();
   const { promptText } = usePromptState();
   const { setPromptText } = usePromptActions();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
   const [selectedPromptId, setSelectedPromptId] = useState<string>(NONE_OPTION_VALUE);
   const [customPromptSnapshot, setCustomPromptSnapshot] = useState<string | null>(null);
+  const [saveAsNewBusy, setSaveAsNewBusy] = useState(false);
 
   const heavyMap = heavySettings.data ?? new Map<string, string>();
   const promptLibrary = useMemo<ImageStudioPromptEntry[]>(
@@ -49,6 +70,46 @@ export function UIPresetsPanel(): React.JSX.Element {
     if (promptLibrary.some((entry: ImageStudioPromptEntry) => entry.id === selectedPromptId)) return;
     setSelectedPromptId(NONE_OPTION_VALUE);
   }, [promptLibrary, selectedPromptId]);
+
+  const handleSavePromptAsNew = useCallback((): void => {
+    const trimmedPrompt = promptText.trim();
+    if (!trimmedPrompt) {
+      toast('Enter prompt text first.', { variant: 'info' });
+      return;
+    }
+    if (saveAsNewBusy) return;
+
+    const now = new Date().toISOString();
+    const nextEntry: ImageStudioPromptEntry = {
+      id: createPromptId(),
+      name: createDefaultPromptName(promptLibrary),
+      prompt: promptText,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const nextLibrary = [nextEntry, ...promptLibrary];
+
+    setSaveAsNewBusy(true);
+    void updateSetting
+      .mutateAsync({
+        key: IMAGE_STUDIO_PROMPT_LIBRARY_KEY,
+        value: serializeSetting(nextLibrary),
+      })
+      .then(() => {
+        toast(`Saved "${nextEntry.name}" to prompt list.`, { variant: 'success' });
+      })
+      .catch((error: unknown) => {
+        toast(
+          error instanceof Error
+            ? `Failed to save prompt: ${error.message}`
+            : 'Failed to save prompt.',
+          { variant: 'error' }
+        );
+      })
+      .finally(() => {
+        setSaveAsNewBusy(false);
+      });
+  }, [promptLibrary, promptText, saveAsNewBusy, toast, updateSetting]);
 
   return (
     <div className='grid grid-cols-1 gap-2 rounded border border-border/60 bg-card/40 p-2'>
@@ -90,6 +151,17 @@ export function UIPresetsPanel(): React.JSX.Element {
         triggerClassName='h-8 text-xs'
         ariaLabel='Choose prompt'
       />
+      <div className='flex justify-end'>
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          onClick={handleSavePromptAsNew}
+          disabled={saveAsNewBusy || !promptText.trim()}
+        >
+          {saveAsNewBusy ? 'Saving...' : 'Save As New Prompt'}
+        </Button>
+      </div>
     </div>
   );
 }

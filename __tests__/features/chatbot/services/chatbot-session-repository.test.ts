@@ -89,7 +89,13 @@ describe('Chatbot Session Repository', () => {
 
   describe('create', () => {
     it('creates a new session', async () => {
-      const input = { title: 'New Session', settings: { model: 'gpt-4' } };
+      const input = {
+        title: 'New Session',
+        userId: null,
+        messages: [],
+        messageCount: 0,
+        settings: { model: 'gpt-4' }
+      };
       const newId = new ObjectId('507f1f77bcf86cd799439013');
       mockCollection.insertOne.mockResolvedValue({ insertedId: newId });
 

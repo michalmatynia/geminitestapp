@@ -541,7 +541,7 @@ const compileRuntimePatterns = (
         50,
         Math.max(-50, Math.floor(Number(rule.promptExploderPriority ?? 0)))
       ),
-      sequence: Number.isFinite(rule.sequence) ? Math.floor(rule.sequence) : 0,
+      sequence: Number.isFinite(rule.sequence ?? 0) ? Math.floor(rule.sequence ?? 0) : 0,
       treatAsHeading: Boolean(rule.promptExploderTreatAsHeading),
     });
   });

@@ -21,8 +21,14 @@ const COLLECTION = 'product_categories';
 
 interface ProductCategoryDoc extends Document {
   _id: ObjectId | string;
-  name: string;
-  description: string | null;
+  name?: string;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+  description?: string | null;
+  description_en?: string | null;
+  description_pl?: string | null;
+  description_de?: string | null;
   color: string | null;
   parentId: ObjectId | string | null;
   catalogId: string;
@@ -85,6 +91,19 @@ const compareBySortIndexThenName = (
   if (a.sortIndex !== b.sortIndex) return a.sortIndex - b.sortIndex;
   return a.name.localeCompare(b.name);
 };
+
+const toOptionalTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const getPrimaryCategoryName = (doc: ProductCategoryDoc): string =>
+  toOptionalTrimmedString(doc.name) ??
+  toOptionalTrimmedString(doc.name_en) ??
+  toOptionalTrimmedString(doc.name_pl) ??
+  toOptionalTrimmedString(doc.name_de) ??
+  'Unnamed category';
 
 const normalizeSiblingOrder = async (
   catalogId: string,
@@ -164,8 +183,15 @@ const reorderSiblingsForCategory = async (
 
 const toCategoryDomain = (doc: ProductCategoryDoc): ProductCategory => ({
   id: doc._id.toString(),
-  name: doc.name,
-  description: doc.description ?? null,
+  name: getPrimaryCategoryName(doc),
+  name_en: toOptionalTrimmedString(doc.name_en) ?? toOptionalTrimmedString(doc.name),
+  name_pl: toOptionalTrimmedString(doc.name_pl),
+  name_de: toOptionalTrimmedString(doc.name_de),
+  description:
+    toOptionalTrimmedString(doc.description) ??
+    toOptionalTrimmedString(doc.description_en) ??
+    toOptionalTrimmedString(doc.description_pl) ??
+    toOptionalTrimmedString(doc.description_de),
   color: doc.color ?? null,
   parentId: doc.parentId?.toString() ?? null,
   catalogId: doc.catalogId?.toString(),
@@ -191,7 +217,13 @@ export const mongoCategoryRepository: CategoryRepository = {
       clauses.push({
         $or: [
           { name: { $regex: filters.search, $options: 'i' } },
+          { name_en: { $regex: filters.search, $options: 'i' } },
+          { name_pl: { $regex: filters.search, $options: 'i' } },
+          { name_de: { $regex: filters.search, $options: 'i' } },
           { description: { $regex: filters.search, $options: 'i' } },
+          { description_en: { $regex: filters.search, $options: 'i' } },
+          { description_pl: { $regex: filters.search, $options: 'i' } },
+          { description_de: { $regex: filters.search, $options: 'i' } },
         ],
       } as Filter<ProductCategoryDoc>);
     }
@@ -276,6 +308,9 @@ export const mongoCategoryRepository: CategoryRepository = {
     const now = new Date();
     const doc: Omit<ProductCategoryDoc, '_id'> = {
       name: data.name,
+      name_en: data.name,
+      name_pl: null,
+      name_de: null,
       description: data.description ?? null,
       color: data.color ?? null,
       parentId: (await resolveParentStorageId(data.parentId)) ?? null,
@@ -309,6 +344,7 @@ export const mongoCategoryRepository: CategoryRepository = {
     };
     
     if (data.name !== undefined) set.name = data.name;
+    if (data.name !== undefined) set.name_en = data.name;
     if (data.description !== undefined) set.description = data.description;
     if (data.color !== undefined) set.color = data.color;
     if (data.parentId !== undefined) {

@@ -141,9 +141,12 @@ describe('Database Engine operations jobs API', () => {
       payload: { direction: 'mongo_to_prisma' },
       result: null,
       errorMessage: null,
+      error: null, // Added
       createdAt: '2026-02-10T10:00:00.000Z',
+      updatedAt: '2026-02-10T10:00:00.000Z', // Added
       startedAt: '2026-02-10T10:00:01.000Z',
       finishedAt: null,
+      completedAt: null, // Added
     } as Awaited<ReturnType<typeof getProductAiJob>>);
     vi.mocked(cancelProductAiJob).mockResolvedValue({
       id: 'job-db-sync-1',

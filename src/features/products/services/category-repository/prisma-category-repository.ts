@@ -84,9 +84,19 @@ const reorderSiblingsForCategory = async (
   }
 };
 
+const toOptionalTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
 const toCategoryDomain = (category: PrismaProductCategory): ProductCategory => ({
+  // Prisma category storage is currently EN-only; keep localized keys populated for UI fallback logic.
+  name_en: toOptionalTrimmedString(category.name),
+  name_pl: null,
+  name_de: null,
   id: category.id,
-  name: category.name,
+  name: toOptionalTrimmedString(category.name) ?? category.name,
   description: category.description ?? null,
   color: category.color ?? null,
   parentId: category.parentId ?? null,

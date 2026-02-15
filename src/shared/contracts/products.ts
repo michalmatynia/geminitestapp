@@ -6,6 +6,9 @@ import { localizedSchema, dtoBaseSchema, namedDtoSchema } from './base';
  * Product Category Contract
  */
 export const productCategorySchema = namedDtoSchema.extend({
+  name_en: z.string().nullable().optional(),
+  name_pl: z.string().nullable().optional(),
+  name_de: z.string().nullable().optional(),
   color: z.string().nullable(),
   parentId: z.string().nullable(),
   catalogId: z.string(),

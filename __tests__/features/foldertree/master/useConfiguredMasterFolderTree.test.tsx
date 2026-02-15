@@ -32,7 +32,7 @@ describe('useConfiguredMasterFolderTree', () => {
       }) =>
         useConfiguredMasterFolderTree({
           nodes,
-          selectedNodeId,
+          ...(selectedNodeId !== undefined ? { selectedNodeId } : {}),
           profile,
         }),
       {
@@ -51,7 +51,7 @@ describe('useConfiguredMasterFolderTree', () => {
       selectedNodeId: null,
     });
 
-    expect(result.current.selectedNodeId).toBeNull();
+    expect(result.current.selectedNodeId as any).toBeNull();
     expect(result.current.nodes.map((node: MasterTreeNode) => node.id)).toEqual(['folder-b']);
   });
 });

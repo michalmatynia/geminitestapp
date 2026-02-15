@@ -84,6 +84,21 @@ const toTrimmedString = (value: unknown): string => {
   return value.trim();
 };
 
+const resolveCategoryLabelByLocale = (
+  category: ProductCategory,
+  locale: 'name_en' | 'name_pl' | 'name_de'
+): string => {
+  const localizedName = toTrimmedString(category[locale]);
+  if (localizedName) return localizedName;
+
+  return (
+    toTrimmedString(category.name_en) ||
+    toTrimmedString(category.name) ||
+    toTrimmedString(category.name_pl) ||
+    toTrimmedString(category.name_de)
+  );
+};
+
 const resolveProductCategoryId = (product: ProductWithImages): string => {
   const direct = toTrimmedString(product.categoryId);
   if (direct) return direct;
@@ -282,15 +297,18 @@ export function useProductListState(): ProductListContextType & {
   });
   const categoryNameById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
+    const locale = preferences.nameLocale ?? 'name_en';
     categoryQueries.forEach((queryResult) => {
       const categories = queryResult.data ?? [];
       categories.forEach((category: ProductCategory) => {
-        if (!category.id || !category.name || map.has(category.id)) return;
-        map.set(category.id, category.name);
+        if (!category.id || map.has(category.id)) return;
+        const label = resolveCategoryLabelByLocale(category, locale);
+        if (!label) return;
+        map.set(category.id, label);
       });
     });
     return map;
-  }, [categoryQueries]);
+  }, [categoryQueries, preferences.nameLocale]);
 
   // Enable background sync for product list
   useProductListSync({

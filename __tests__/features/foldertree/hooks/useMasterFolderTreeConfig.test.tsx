@@ -19,7 +19,34 @@ describe('useMasterFolderTreeConfig', () => {
   });
 
   it('loads profile for instance and derives appearance from it', () => {
-    const profile = { id: 'notes-profile' } as ReturnType<typeof useFolderTreeProfile>;
+    const profile = {
+      version: 2,
+      placeholders: {
+        preset: 'sublime',
+        style: 'ghost',
+        emphasis: 'subtle',
+        rootDropLabel: 'Drop to Root',
+        inlineDropLabel: 'Drop to folder',
+      },
+      icons: {
+        slots: {
+          folderClosed: 'Folder',
+          folderOpen: 'FolderOpen',
+          file: 'FileText',
+          root: 'Folder',
+          dragHandle: 'GripVertical',
+        },
+        byKind: {},
+      },
+      nesting: {
+        defaultAllow: false,
+        blockedTargetKinds: [],
+        rules: [],
+      },
+      interactions: {
+        selectionBehavior: 'click_away',
+      },
+    } as any;
     const appearance = {
       placeholderClasses: {
         lineIdle: 'line-idle',

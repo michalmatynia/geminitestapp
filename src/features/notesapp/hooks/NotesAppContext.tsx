@@ -264,10 +264,10 @@ export function NotesAppProvider({
         [
           ...(selectedNote.relationsFrom ?? [])
             .map((rel) => rel.targetNote?.id)
-            .filter((rid): rid is string => Boolean(rid)),
+            .filter((rid): rid is string => !!rid),
           ...(selectedNote.relationsTo ?? [])
             .map((rel) => rel.sourceNote?.id)
-            .filter((rid): rid is string => Boolean(rid)),
+            .filter((rid): rid is string => !!rid),
         ].filter(
           (id: string, index: number, array: string[]): boolean => array.indexOf(id) === index
         );

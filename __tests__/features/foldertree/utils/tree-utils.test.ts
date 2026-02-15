@@ -3,29 +3,32 @@ import { describe, it, expect } from 'vitest';
 import { findFolderById, findFolderParentId } from '@/features/foldertree/utils/tree';
 import type { CategoryWithChildren } from '@/shared/types/domain/notes';
 
+const createMockCategory = (
+  id: string,
+  name: string,
+  parentId: string | null = null,
+  children: CategoryWithChildren[] = []
+): CategoryWithChildren => ({
+  id,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  name,
+  description: null,
+  color: null,
+  parentId,
+  notebookId: null,
+  themeId: null,
+  sortIndex: null,
+  children,
+  notes: [],
+  _count: { notes: 0 },
+});
+
 const mockFolders: CategoryWithChildren[] = [
-  {
-    id: 'f1',
-    name: 'Folder 1',
-    children: [
-      {
-        id: 'f1.1',
-        name: 'Folder 1.1',
-        children: [],
-        _count: { notes: 0 },
-        notes: [],
-      },
-    ],
-    _count: { notes: 0 },
-    notes: [],
-  },
-  {
-    id: 'f2',
-    name: 'Folder 2',
-    children: [],
-    _count: { notes: 0 },
-    notes: [],
-  },
+  createMockCategory('f1', 'Folder 1', null, [
+    createMockCategory('f1.1', 'Folder 1.1', 'f1'),
+  ]),
+  createMockCategory('f2', 'Folder 2'),
 ];
 
 describe('foldertree utils', () => {

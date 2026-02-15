@@ -12,7 +12,7 @@ type UseSyncMasterFolderTreeExternalStateOptions = {
     'replaceNodes' | 'selectNode' | 'setExpandedNodeIds'
   >;
   nodes: MasterTreeNode[];
-  selectedNodeId?: MasterTreeId | null;
+  selectedNodeId?: MasterTreeId | null | undefined;
   expandedNodeIds?: MasterTreeId[] | undefined;
 };
 

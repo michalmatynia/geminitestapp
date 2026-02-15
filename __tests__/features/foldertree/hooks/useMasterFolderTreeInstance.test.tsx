@@ -14,9 +14,7 @@ import {
   createDefaultFolderTreeUiStateV1,
 } from '@/shared/utils/folder-tree-ui-state-v1';
 
-vi.mock('@/features/foldertree/hooks/useMasterFolderTreeConfig', () => ({
-  useMasterFolderTreeConfig: vi.fn(),
-}));
+
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: vi.fn(),
 }));
@@ -107,7 +105,7 @@ describe('useMasterFolderTreeInstance', () => {
     });
 
     expect(result.current.controller.nodes.map((node: MasterTreeNode) => node.id)).toEqual(['folder-b']);
-    expect(result.current.controller.selectedNodeId).toBeNull();
+    expect(result.current.controller.selectedNodeId as any).toEqual(null);
   });
 
   it('hydrates expanded state from persisted settings and exposes panel collapse control', () => {

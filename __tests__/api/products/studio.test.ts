@@ -141,6 +141,12 @@ describe('Product Studio API', () => {
         sourceSlotByImageIndex: { '0': 'slot-1' },
         updatedAt: '2026-02-13T10:00:00.000Z',
       },
+      sequencing: { // Added sequencing
+        enabled: false,
+        cropCenterBeforeGeneration: false,
+        upscaleOnAccept: false,
+        upscaleScale: 1,
+      },
       projectId: 'studio-a',
       imageSlotIndex: 0,
       sourceSlot: {

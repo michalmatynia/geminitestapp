@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React from 'react';
 
-import { AppModal, Button, SectionHeader } from '@/shared/ui';
+import { SectionHeader } from '@/shared/ui';
 
 import { DraftCreatorModal } from '../components/DraftCreatorModal';
 import { DraftList } from '../components/DraftList';

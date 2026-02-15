@@ -44,9 +44,9 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
     const queueStatus = await getQueueStatus();
     if (!queueStatus.running) {
       const hasActiveJobs = jobs.some(
-        (job) => job.status === 'pending' || job.status === 'running'
+        (job) => job['status'] === 'pending' || job['status'] === 'running'
       );
-      const hasScheduledJobs = jobs.some((job) => hasScheduledMarker(job.payload));
+      const hasScheduledJobs = jobs.some((job) => hasScheduledMarker(job['payload']));
       if (hasActiveJobs || hasScheduledJobs) {
         startProductAiJobQueue();
       }

@@ -164,7 +164,7 @@ export function ListProductModal(props: ListProductModalProps): React.JSX.Elemen
         value={{
           product,
           onClose,
-          onSuccess,
+          onSuccess: onSuccess ?? (() => {}),
           hasPresetSelection: Boolean(initialIntegrationId && initialConnectionId),
         }}
       >

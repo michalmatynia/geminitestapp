@@ -106,7 +106,7 @@ export function SelectProductForListingModal(props: SelectProductForListingModal
       <SelectProductForListingModalViewProvider
         value={{
           onClose,
-          onSuccess,
+          onSuccess: onSuccess ?? (() => {}),
         }}
       >
         <SelectProductForListingModalContent />

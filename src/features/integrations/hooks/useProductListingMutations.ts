@@ -250,7 +250,7 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
   const queryClient = useQueryClient();
 
   return createDeleteMutation({
-    mutationFn: ({ listingId }: { listingId: string }) => 
+    mutationFn: (listingId: string) => 
       api.delete<void>(`/api/integrations/products/${productId}/listings/${listingId}/purge`),
     options: {
       onSuccess: (): void => {

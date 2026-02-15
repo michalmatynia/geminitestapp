@@ -22,25 +22,25 @@ const parseLimit = (raw: string | null): number => {
 type DatabaseEngineOperationJobRecord = Awaited<ReturnType<typeof getProductAiJobs>>[number];
 
 const isDatabaseEngineOperationJob = (job: DatabaseEngineOperationJobRecord): boolean =>
-  job.type === 'db_backup' || job.type === 'db_sync';
+  job['type'] === 'db_backup' || job['type'] === 'db_sync';
 
 const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOperationJobDto => {
   const payload =
-    job.payload && typeof job.payload === 'object'
-      ? job.payload
+    job['payload'] && typeof job['payload'] === 'object'
+      ? (job['payload'] as Record<string, unknown>)
       : null;
   const result =
-    job.result && typeof job.result === 'object'
-      ? job.result
+    job['result'] && typeof job['result'] === 'object'
+      ? (job['result'] as Record<string, unknown>)
       : null;
 
   const rawDbType = payload?.['dbType'];
   const dbType =
-    rawDbType === 'mongodb' || rawDbType === 'postgresql' ? rawDbType : null;
+    rawDbType === 'mongodb' || rawDbType === 'postgresql' ? (rawDbType as DatabaseEngineOperationJobDto['dbType']) : null;
   const rawDirection = payload?.['direction'];
   const direction =
     rawDirection === 'mongo_to_prisma' || rawDirection === 'prisma_to_mongo'
-      ? rawDirection
+      ? (rawDirection as DatabaseEngineOperationJobDto['direction'])
       : null;
   const source = typeof payload?.['source'] === 'string' ? payload['source'] : null;
   const resultSummary =
@@ -51,26 +51,26 @@ const toOperationJob = (job: DatabaseEngineOperationJobRecord): DatabaseEngineOp
         : null;
 
   return {
-    id: job.id,
-    type: job.type as DatabaseEngineOperationJobDto['type'],
-    status: job.status as DatabaseEngineOperationJobDto['status'],
+    id: job['id'],
+    type: job['type'] as DatabaseEngineOperationJobDto['type'],
+    status: job['status'] as DatabaseEngineOperationJobDto['status'],
     dbType,
     direction,
     source,
-    createdAt: new Date(job.createdAt).toISOString(),
+    createdAt: new Date(job['createdAt'] as string).toISOString(),
     updatedAt:
-      typeof job.updatedAt === 'string' && job.updatedAt.length > 0
-        ? new Date(job.updatedAt).toISOString()
+      typeof job['updatedAt'] === 'string' && (job['updatedAt'] as string).length > 0
+        ? new Date(job['updatedAt'] as string).toISOString()
         : null,
     startedAt:
-      typeof job.startedAt === 'string' && job.startedAt.length > 0
-        ? job.startedAt
+      typeof job['startedAt'] === 'string' && (job['startedAt'] as string).length > 0
+        ? (job['startedAt'] as string)
         : null,
     finishedAt:
-      typeof job.finishedAt === 'string' && job.finishedAt.length > 0
-        ? job.finishedAt
+      typeof job['finishedAt'] === 'string' && (job['finishedAt'] as string).length > 0
+        ? (job['finishedAt'] as string)
         : null,
-    errorMessage: job.errorMessage ?? null,
+    errorMessage: (job['errorMessage'] as string) ?? null,
     resultSummary,
   };
 };

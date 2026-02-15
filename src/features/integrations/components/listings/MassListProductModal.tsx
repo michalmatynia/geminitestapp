@@ -141,7 +141,7 @@ export function MassListProductModal(props: MassListProductModalProps): React.JS
           integrationId,
           connectionId,
           onClose,
-          onSuccess,
+          onSuccess: onSuccess ?? (() => {}),
         }}
       >
         <MassListProductModalContent />

@@ -41,11 +41,11 @@ async function POST_handler(
   if (!job) {
     throw notFoundError('Job not found.', { jobId });
   }
-  if (!isDatabaseEngineOperationJob(job)) {
+  if (!isDatabaseEngineOperationJob(job as unknown as DatabaseEngineCancelableJob)) {
     throw badRequestError('Only Database Engine db_backup/db_sync jobs can be cancelled.', {
       jobId,
-      productId: job.productId,
-      type: job.type,
+      productId: job['productId'],
+      type: job['type'],
     });
   }
 

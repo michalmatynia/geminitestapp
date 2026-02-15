@@ -38,7 +38,8 @@ Add Error Boundary components to catch uncaught UI errors and forward them to yo
 NETWORK
 -Scan *** feature for a potential problem with unnecessary Refetching and CSRF related problems.
 
-Remove legact solutions and backwards compatibility I want only the newest
+Remove legacy solutions and backwards compatibility I want only the newest
+pursue project-wide standardization
 
 VALIDATION
 - expand mutation-invalidation matrix QUERY KEYS. 

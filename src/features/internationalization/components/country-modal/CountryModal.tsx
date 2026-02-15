@@ -32,7 +32,7 @@ export function CountryModal({
 
   const handleSave = async (): Promise<void> => {
     await handleSubmit(currencyOptions);
-    onSuccess();
+    onSuccess?.();
   };
 
   const toggleCurrency = (id: string): void => {

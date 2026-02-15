@@ -59,6 +59,28 @@ const folderBaseName = (path: string): string => {
   return normalized.slice(normalized.lastIndexOf('/') + 1);
 };
 
+const isPathWithinFolder = (candidatePath: string, folderPath: string): boolean => (
+  candidatePath === folderPath || candidatePath.startsWith(`${folderPath}/`)
+);
+
+const createUniqueFolderPath = (existingFolders: string[], targetFolderPath: string | null): string => {
+  const parent = normalizeFolderPath(targetFolderPath ?? '');
+  const existing = new Set(existingFolders.map((folder: string) => normalizeFolderPath(folder)));
+  const baseName = 'new-folder';
+
+  let index = 1;
+  while (index < 10000) {
+    const candidateName = index === 1 ? baseName : `${baseName}-${index}`;
+    const candidatePath = normalizeFolderPath(parent ? `${parent}/${candidateName}` : candidateName);
+    if (candidatePath && !existing.has(candidatePath)) {
+      return candidatePath;
+    }
+    index += 1;
+  }
+
+  return normalizeFolderPath(parent ? `${parent}/${baseName}-${Date.now()}` : `${baseName}-${Date.now()}`);
+};
+
 const promptForName = (label: string, fallback: string): string | null => {
   const result = window.prompt(label, fallback);
   if (!result) return null;
@@ -82,6 +104,7 @@ type CaseResolverFileEditDraft = {
   id: string;
   name: string;
   folder: string;
+  documentDate: string;
   documentContent: string;
   addresser: CaseResolverPartyReference | null;
   addressee: CaseResolverPartyReference | null;
@@ -116,21 +139,33 @@ const sanitizeRichTextForPdf = (value: string): string => {
   return parsed.body.innerHTML || '<p></p>';
 };
 
+const toLocalDateLabel = (value: string): string => {
+  const normalized = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return 'Not specified';
+  }
+  const parsed = new Date(`${normalized}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return normalized;
+  }
+  return parsed.toLocaleDateString();
+};
+
 const buildDocumentPdfMarkup = ({
-  documentName,
   folderPath,
+  documentDate,
   addresserLabel,
   addresseeLabel,
   documentContent,
 }: {
-  documentName: string;
   folderPath: string;
+  documentDate: string;
   addresserLabel: string;
   addresseeLabel: string;
   documentContent: string;
 }): string => {
-  const normalizedName = documentName.trim() || 'Untitled Document';
   const normalizedFolder = normalizeFolderPath(folderPath) || '(root)';
+  const normalizedDocumentDate = toLocalDateLabel(documentDate);
   const normalizedAddresser = addresserLabel.trim() || 'Not selected';
   const normalizedAddressee = addresseeLabel.trim() || 'Not selected';
 
@@ -139,7 +174,7 @@ const buildDocumentPdfMarkup = ({
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(normalizedName)} - PDF Preview</title>
+    <title>Case Resolver Document - PDF Preview</title>
     <style>
       @page {
         size: A4;
@@ -178,6 +213,17 @@ const buildDocumentPdfMarkup = ({
         margin-bottom: 18px;
       }
 
+      .document-header {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 14px;
+      }
+
+      .document-date {
+        font-size: 12px;
+        color: #111827;
+      }
+
       .meta-card {
         border: 1px solid #d1d5db;
         border-radius: 6px;
@@ -197,12 +243,6 @@ const buildDocumentPdfMarkup = ({
         line-height: 1.4;
         color: #111827;
         word-break: break-word;
-      }
-
-      .title {
-        margin: 0 0 14px 0;
-        font-size: 24px;
-        line-height: 1.2;
       }
 
       .content {
@@ -270,7 +310,9 @@ const buildDocumentPdfMarkup = ({
   </head>
   <body>
     <main class="sheet">
-      <h1 class="title">${escapeHtml(normalizedName)}</h1>
+      <header class="document-header">
+        <div class="document-date">Date: ${escapeHtml(normalizedDocumentDate)}</div>
+      </header>
       <section class="meta">
         <article class="meta-card">
           <div class="meta-label">Folder</div>
@@ -283,10 +325,6 @@ const buildDocumentPdfMarkup = ({
         <article class="meta-card">
           <div class="meta-label">Addressee</div>
           <div class="meta-value">${escapeHtml(normalizedAddressee)}</div>
-        </article>
-        <article class="meta-card">
-          <div class="meta-label">Generated</div>
-          <div class="meta-value">${escapeHtml(new Date().toLocaleString())}</div>
         </article>
       </section>
       <section class="content">${documentContent}</section>
@@ -345,6 +383,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   );
 
   const [workspace, setWorkspace] = useState<CaseResolverWorkspace>(parsedWorkspace);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(parsedWorkspace.activeFileId);
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [folderPanelCollapsed, setFolderPanelCollapsed] = useState(false);
@@ -373,6 +412,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     if (workspace.assets.some((asset: CaseResolverAssetFile) => asset.id === selectedAssetId)) return;
     setSelectedAssetId(null);
   }, [selectedAssetId, workspace.assets]);
+
+  useEffect(() => {
+    if (!selectedFileId) return;
+    if (workspace.files.some((file: CaseResolverFile) => file.id === selectedFileId)) return;
+    setSelectedFileId(null);
+  }, [selectedFileId, workspace.files]);
 
   useEffect(() => {
     if (!editingDocumentDraft) return;
@@ -482,12 +527,21 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         activeFileId: requestedFileId,
       };
     });
+    setSelectedFileId(requestedFileId);
     setSelectedFolderPath((current: string | null) => (current === null ? current : null));
     setSelectedAssetId((current: string | null) => (current === null ? current : null));
   }, [requestedFileId, updateWorkspace, workspace.files]);
 
   const handleSelectFile = useCallback(
     (fileId: string): void => {
+      if (selectedFileId === fileId) {
+        setSelectedFileId(null);
+        setSelectedFolderPath(null);
+        setSelectedAssetId(null);
+        return;
+      }
+
+      setSelectedFileId(fileId);
       updateWorkspace((current: CaseResolverWorkspace) => {
         if (current.activeFileId === fileId) {
           return current;
@@ -500,35 +554,38 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       setSelectedFolderPath((current: string | null) => (current === null ? current : null));
       setSelectedAssetId((current: string | null) => (current === null ? current : null));
     },
-    [updateWorkspace]
+    [selectedFileId, updateWorkspace]
   );
 
   const handleSelectAsset = useCallback((assetId: string): void => {
+    setSelectedFileId(null);
     setSelectedAssetId(assetId);
     setSelectedFolderPath(null);
   }, []);
 
   const handleSelectFolder = useCallback((folderPath: string | null): void => {
+    setSelectedFileId(null);
     setSelectedFolderPath(folderPath);
     setSelectedAssetId(null);
   }, []);
 
   const handleCreateFolder = useCallback(
     (targetFolderPath: string | null): void => {
-      const folderName = promptForName('Folder name', 'new-folder');
-      if (!folderName) return;
-      const parent = normalizeFolderPath(targetFolderPath ?? '');
-      const nextPath = normalizeFolderPath(parent ? `${parent}/${folderName}` : folderName);
-      if (!nextPath) return;
+      let createdPath: string | null = null;
 
       updateWorkspace((current: CaseResolverWorkspace) => {
+        const nextPath = createUniqueFolderPath(current.folders, targetFolderPath);
+        createdPath = nextPath;
         if (current.folders.includes(nextPath)) return current;
         return {
           ...current,
           folders: normalizeFolderPaths([...current.folders, nextPath]),
         };
       }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
-      setSelectedFolderPath(nextPath);
+      if (!createdPath) return;
+      setSelectedFileId(null);
+      setSelectedAssetId(null);
+      setSelectedFolderPath(createdPath);
     },
     [updateWorkspace]
   );
@@ -550,6 +607,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         activeFileId: file.id,
         folders: normalizeFolderPaths([...current.folders, folder]),
       }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+      setSelectedFileId(file.id);
       setSelectedFolderPath(null);
       setSelectedAssetId(null);
     },
@@ -574,6 +632,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         assets: [...current.assets, asset],
         folders: normalizeFolderPaths([...current.folders, folder]),
       }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+      setSelectedFileId(null);
       setSelectedAssetId(asset.id);
       setSelectedFolderPath(null);
     },
@@ -639,6 +698,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
 
         if (nextAssets[0]) {
+          setSelectedFileId(null);
           setSelectedAssetId(nextAssets[0].id);
         }
         setSelectedFolderPath(null);
@@ -792,6 +852,141 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     [selectedFolderPath, updateWorkspace]
   );
 
+  const handleToggleFolderLock = useCallback(
+    (folderPath: string): void => {
+      const normalizedFolder = normalizeFolderPath(folderPath);
+      if (!normalizedFolder) return;
+
+      updateWorkspace(
+        (current: CaseResolverWorkspace): CaseResolverWorkspace => {
+          const filesInFolder = current.files.filter((file: CaseResolverFile): boolean =>
+            isPathWithinFolder(file.folder, normalizedFolder)
+          );
+          if (filesInFolder.length === 0) {
+            return current;
+          }
+
+          const shouldLockFolder = filesInFolder.some((file: CaseResolverFile): boolean => !file.isLocked);
+          const now = new Date().toISOString();
+          let hasChanged = false;
+
+          const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
+            if (!isPathWithinFolder(file.folder, normalizedFolder)) {
+              return file;
+            }
+            if (file.isLocked === shouldLockFolder) {
+              return file;
+            }
+            hasChanged = true;
+            return {
+              ...file,
+              isLocked: shouldLockFolder,
+              updatedAt: now,
+            };
+          });
+
+          if (!hasChanged) return current;
+          return {
+            ...current,
+            files: nextFiles,
+          };
+        },
+        { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST }
+      );
+    },
+    [updateWorkspace]
+  );
+
+  const handleDeleteFolder = useCallback(
+    (folderPath: string): void => {
+      const normalizedFolder = normalizeFolderPath(folderPath);
+      if (!normalizedFolder) return;
+
+      const filesInFolder = workspace.files.filter((file: CaseResolverFile): boolean =>
+        isPathWithinFolder(file.folder, normalizedFolder)
+      );
+      const assetsInFolder = workspace.assets.filter((asset: CaseResolverAssetFile): boolean =>
+        isPathWithinFolder(asset.folder, normalizedFolder)
+      );
+
+      if (filesInFolder.some((file: CaseResolverFile): boolean => file.isLocked)) {
+        toast('Folder contains locked files. Unlock them before removing the folder.', { variant: 'warning' });
+        return;
+      }
+
+      if (
+        typeof window !== 'undefined' &&
+        !window.confirm(
+          `Delete folder "${normalizedFolder}" and all nested content (${filesInFolder.length} files, ${assetsInFolder.length} assets)?`
+        )
+      ) {
+        return;
+      }
+
+      const removedFileIds = new Set(filesInFolder.map((file: CaseResolverFile) => file.id));
+      const removedAssetIds = new Set(assetsInFolder.map((asset: CaseResolverAssetFile) => asset.id));
+      const now = new Date().toISOString();
+
+      updateWorkspace(
+        (current: CaseResolverWorkspace): CaseResolverWorkspace => {
+          const currentRemovedFileIds = new Set(
+            current.files
+              .filter((file: CaseResolverFile): boolean => isPathWithinFolder(file.folder, normalizedFolder))
+              .map((file: CaseResolverFile) => file.id)
+          );
+          const nextFilesBase = current.files.filter(
+            (file: CaseResolverFile): boolean => !isPathWithinFolder(file.folder, normalizedFolder)
+          );
+
+          const nextFiles = nextFilesBase.map((file: CaseResolverFile): CaseResolverFile => {
+            let nextGraph = file.graph;
+            currentRemovedFileIds.forEach((removedId: string) => {
+              nextGraph = removeLinkedDocumentFileId(nextGraph, removedId);
+            });
+            if (nextGraph === file.graph) {
+              return file;
+            }
+            return {
+              ...file,
+              graph: nextGraph,
+              updatedAt: now,
+            };
+          });
+
+          return {
+            ...current,
+            folders: current.folders.filter(
+              (path: string): boolean => !isPathWithinFolder(path, normalizedFolder)
+            ),
+            files: nextFiles,
+            assets: current.assets.filter(
+              (asset: CaseResolverAssetFile): boolean => !isPathWithinFolder(asset.folder, normalizedFolder)
+            ),
+            activeFileId:
+              current.activeFileId && currentRemovedFileIds.has(current.activeFileId)
+                ? (nextFiles[0]?.id ?? null)
+                : current.activeFileId,
+          };
+        },
+        { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST }
+      );
+
+      setSelectedFolderPath((current: string | null) =>
+        current && isPathWithinFolder(current, normalizedFolder) ? null : current
+      );
+      setSelectedFileId((current: string | null) =>
+        current && removedFileIds.has(current) ? null : current
+      );
+      setSelectedAssetId((current: string | null) =>
+        current && removedAssetIds.has(current) ? null : current
+      );
+      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
+        current && removedFileIds.has(current.id) ? null : current
+      );
+    },
+    [toast, updateWorkspace, workspace.assets, workspace.files, workspace.folders]
+  );
+
   const handleRenameFile = useCallback(
     async (fileId: string, nextName: string): Promise<void> => {
       const normalizedName = nextName.trim();
@@ -845,10 +1040,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           id: target.id,
           name: target.name,
           folder: target.folder,
+          documentDate: target.documentDate,
           documentContent: target.documentContent,
           addresser: target.addresser,
           addressee: target.addressee,
         });
+        setSelectedFileId(fileId);
         setSelectedAssetId(null);
         setSelectedFolderPath(null);
         updateWorkspace((current: CaseResolverWorkspace) => {
@@ -883,8 +1080,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       const addresseeLabel =
         resolveFilemakerPartyLabel(filemakerDatabase, draft.addressee) ?? 'Not selected';
       return buildDocumentPdfMarkup({
-        documentName: draft.name,
         folderPath: draft.folder,
+        documentDate: draft.documentDate,
         addresserLabel,
         addresseeLabel,
         documentContent: sanitizeRichTextForPdf(draft.documentContent),
@@ -1009,6 +1206,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
         current?.id === fileId ? null : current
       );
+      setSelectedFileId((current: string | null) => (current === fileId ? null : current));
     },
     [toast, updateWorkspace, workspace.files]
   );
@@ -1032,6 +1230,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               ...file,
               name: normalizedName,
               folder: normalizedFolder,
+              documentDate: editingDocumentDraft.documentDate,
               documentContent: editingDocumentDraft.documentContent,
               addresser: editingDocumentDraft.addresser,
               addressee: editingDocumentDraft.addressee,
@@ -1099,7 +1298,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const caseResolverPageContextValue: CaseResolverPageContextValue = {
     workspace,
-    selectedFileId: selectedAssetId ? null : (activeFile?.id ?? null),
+    selectedFileId: selectedAssetId ? null : selectedFileId,
     selectedAssetId,
     selectedFolderPath,
     panelCollapsed: folderPanelCollapsed,
@@ -1117,6 +1316,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     onRenameFile: handleRenameFile,
     onRenameAsset: handleRenameAsset,
     onRenameFolder: handleRenameFolder,
+    onDeleteFolder: handleDeleteFolder,
+    onToggleFolderLock: handleToggleFolderLock,
     onDeleteFile: handleDeleteFile,
     onToggleFileLock: handleToggleFileLock,
     onEditFile: handleOpenFileEditor,
@@ -1322,41 +1523,35 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           title='Edit Document File'
           subtitle='Edit case file metadata and WYSIWYG content.'
           size='xl'
-          footer={(
-            <>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handlePreviewPdf}
-              >
-              Preview PDF
-              </Button>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handleExportPdf}
-              >
-              Export PDF
-              </Button>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handleCloseFileEditor}
-              >
-              Cancel
-              </Button>
-              <Button
-                type='button'
-                onClick={handleSaveFileEditor}
-              >
-              Save
-              </Button>
-            </>
-          )}
         >
           {editingDocumentDraft ? (
             <div className='space-y-4'>
-              <div className='grid gap-3 md:grid-cols-2'>
+              <div className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 px-3 py-2'>
+                <Button
+                  type='button'
+                  onClick={handleSaveFileEditor}
+                >
+                Save
+                </Button>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={handlePreviewPdf}
+                  >
+                  Preview PDF
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={handleExportPdf}
+                  >
+                  Export to PDF
+                  </Button>
+                </div>
+              </div>
+
+              <div className='grid gap-3 md:grid-cols-3'>
                 <div className='space-y-1'>
                   <Label className='text-xs text-gray-400'>Document Name</Label>
                   <Input
@@ -1393,6 +1588,25 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     }}
                     className='h-9 border-border bg-card/60 text-sm text-white'
                     placeholder='Folder (optional)'
+                  />
+                </div>
+                <div className='space-y-1'>
+                  <Label className='text-xs text-gray-400'>Document Date</Label>
+                  <Input
+                    type='date'
+                    value={editingDocumentDraft.documentDate}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      const nextDate = event.target.value;
+                      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
+                        current
+                          ? {
+                            ...current,
+                            documentDate: nextDate,
+                          }
+                          : current
+                      );
+                    }}
+                    className='h-9 border-border bg-card/60 text-sm text-white'
                   />
                 </div>
               </div>

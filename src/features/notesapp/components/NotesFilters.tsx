@@ -35,12 +35,6 @@ export function NotesFilters(): React.JSX.Element {
     const tagOptions = tags.map((t: TagRecord) => ({ value: t.id, label: t.name }));
     return [
       {
-        key: 'search',
-        label: 'Search',
-        type: 'text',
-        placeholder: 'Search notes...',
-      },
-      {
         key: 'tags',
         label: 'Tags',
         type: 'select',

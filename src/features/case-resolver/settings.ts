@@ -46,6 +46,26 @@ export const normalizeFolderPaths = (folders: string[]): string[] => {
   return Array.from(set).sort((left: string, right: string) => left.localeCompare(right));
 };
 
+const toLocalDateValue = (date: Date): string => {
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const normalizeDocumentDate = (value: unknown): string => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return trimmed;
+    }
+    if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) {
+      return trimmed.slice(0, 10);
+    }
+  }
+  return toLocalDateValue(new Date());
+};
+
 const sanitizeNodeMeta = (
   source: Record<string, CaseResolverNodeMeta> | null | undefined
 ): Record<string, CaseResolverNodeMeta> => {
@@ -201,6 +221,7 @@ export const createCaseResolverFile = (input: {
   id: string;
   name: string;
   folder?: string;
+  documentDate?: string | null | undefined;
   documentContent?: string | null | undefined;
   isLocked?: boolean | null | undefined;
   graph?: Partial<CaseResolverGraph> | null;
@@ -214,6 +235,7 @@ export const createCaseResolverFile = (input: {
     id: input.id,
     name: input.name.trim() || 'Untitled Case',
     folder: normalizeFolderPath(input.folder ?? ''),
+    documentDate: normalizeDocumentDate(input.documentDate),
     documentContent:
       typeof input.documentContent === 'string'
         ? input.documentContent
@@ -395,6 +417,7 @@ export const normalizeCaseResolverWorkspace = (
         id,
         name: file.name,
         folder: file.folder,
+        documentDate: file.documentDate,
         documentContent: file.documentContent,
         isLocked: file.isLocked,
         graph: file.graph,

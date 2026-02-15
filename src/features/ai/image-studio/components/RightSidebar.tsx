@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, GitBranch, Loader2, Play, SlidersHorizontal, Sparkles, Workflow } from 'lucide-react';
+import { Clock3, Eye, GitBranch, Loader2, Play, SlidersHorizontal, Sparkles, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -30,10 +30,10 @@ import {
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { GenerationHistoryPanel } from './GenerationHistoryPanel';
 import { GenerationToolbar } from './GenerationToolbar';
 import { LabeledSlider } from './LabeledSlider';
 import { ParamRow } from './ParamRow';
+import { ProjectGenerationHistoryTab } from './ProjectGenerationHistoryTab';
 import { RightSidebarProvider } from './RightSidebarContext';
 import { SequencingPanel } from './SequencingPanel';
 import { StudioCard } from './StudioCard';
@@ -118,7 +118,7 @@ export function RightSidebar(): React.JSX.Element {
   const { promptText, paramsState } = usePromptState();
   const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
   const { studioSettings } = useSettingsState();
-  const { runMutation, isRunInFlight, activeRunStatus, generationHistory } = useGenerationState();
+  const { runMutation, isRunInFlight, activeRunStatus } = useGenerationState();
   const { handleRunGeneration } = useGenerationActions();
   const { setStudioSettings } = useSettingsActions();
 
@@ -127,7 +127,7 @@ export function RightSidebar(): React.JSX.Element {
   const [requestPreviewOpen, setRequestPreviewOpen] = useState(false);
   const [promptControlOpen, setPromptControlOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
-  const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph' | 'sequencing'>('controls');
+  const [sidebarTab, setSidebarTab] = useState<'controls' | 'graph' | 'sequencing' | 'history'>('controls');
   const switchToControls = useCallback(() => setSidebarTab('controls'), []);
 
   const promptValidationSettings = useMemo(
@@ -302,7 +302,7 @@ export function RightSidebar(): React.JSX.Element {
           aria-hidden={isFocusMode}
         >
           {/* Tab toggle */}
-          <div className='grid grid-cols-3 border-b border-border/40'>
+          <div className='grid grid-cols-4 border-b border-border/40'>
             <Button size='xs'
               type='button'
               variant='ghost'
@@ -344,12 +344,30 @@ export function RightSidebar(): React.JSX.Element {
               <Workflow className='mr-1 inline size-3' />
             Sequencing
             </Button>
+            <Button size='xs'
+              type='button'
+              variant='ghost'
+              className={cn(
+                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+                sidebarTab === 'history'
+                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                  : 'text-gray-500 hover:text-gray-300'
+              )}
+              onClick={() => setSidebarTab('history')}
+            >
+              <Clock3 className='mr-1 inline size-3' />
+            History
+            </Button>
           </div>
 
           {sidebarTab === 'graph' ? (
             <VersionNodeMapPanel />
           ) : sidebarTab === 'sequencing' ? (
             <SequencingPanel />
+          ) : sidebarTab === 'history' ? (
+            <div className='min-h-0 flex-1 overflow-y-auto px-4 py-3'>
+              <ProjectGenerationHistoryTab />
+            </div>
           ) : (
             <>
               <div className='space-y-2 px-4 py-2'>
@@ -514,11 +532,6 @@ export function RightSidebar(): React.JSX.Element {
                   </div>
                 </StudioCard>
 
-                {generationHistory.length > 0 ? (
-                  <StudioCard label='History' count={generationHistory.length}>
-                    <GenerationHistoryPanel />
-                  </StudioCard>
-                ) : null}
               </div>
             </>
           )}

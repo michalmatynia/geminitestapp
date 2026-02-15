@@ -62,6 +62,7 @@ describe('Notes Advanced UI', () => {
   let notes: NoteWithRelations[] = [];
 
   beforeEach(() => {
+    window.localStorage.clear();
     queryClient.clear();
     notes = [
       makeNote({ id: 'note-1', title: 'Apple', createdAt: '2023-01-01T00:00:00.000Z' }),
@@ -121,8 +122,8 @@ describe('Notes Advanced UI', () => {
     await user.click(grid4Button);
     
     // Grid 4 button should now be the 'default' variant
-    // In our implementation, default has bg-transparent, and outline has border-foreground/15
-    expect(grid4Button.className).not.toContain('border-foreground/15');
+    // In our implementation, default has text-foreground/90, and outline does not
+    expect(grid4Button.className).toContain('text-foreground/90');
   });
 
   it('sorts notes by title', async () => {

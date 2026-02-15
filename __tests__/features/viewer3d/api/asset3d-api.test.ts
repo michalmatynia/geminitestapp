@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 import {
   fetchAssets3D,
@@ -11,6 +11,14 @@ import {
   fetchTags,
 } from '@/features/viewer3d/api';
 import { server } from '@/mocks/server';
+
+vi.mock('@/shared/utils/upload-with-progress', () => ({
+  uploadWithProgress: vi.fn().mockResolvedValue({
+    ok: true,
+    status: 201,
+    data: { id: '1', name: 'New Asset' },
+  }),
+}));
 
 const mockAsset = {
   id: '1',
@@ -67,7 +75,7 @@ describe('Asset3D API', () => {
     expect(asset.id).toBe('1');
   });
 
-  it.skip('should upload a file', async () => {
+  it('should upload a file', async () => {
     server.use(
       http.post('/api/assets3d', () => {
         return HttpResponse.json(mockAsset, { status: 201 });

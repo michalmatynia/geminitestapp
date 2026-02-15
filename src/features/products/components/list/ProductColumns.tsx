@@ -375,11 +375,13 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className='inline-flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/50 hover:text-white'
+            variant='ghost'
+            size='icon'
+            className='size-8 text-muted-foreground hover:bg-muted/50 hover:text-white'
             aria-label='Open row actions'
             type='button'
           >
-            <MoreVertical className='size-4' />
+            <MoreVertical className='size-4' aria-hidden='true' />
           </Button>
         </DropdownMenuTrigger>
 

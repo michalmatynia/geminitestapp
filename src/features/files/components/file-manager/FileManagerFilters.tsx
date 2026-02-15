@@ -89,7 +89,10 @@ export const FileManagerFilters = memo(function FileManagerFilters(): React.JSX.
     <FilterPanel
       filters={filterConfig}
       values={filterValues}
+      search={filenameSearch}
+      searchPlaceholder='Search by filename...'
       onFilterChange={handleFilterChange}
+      onSearchChange={setFilenameSearch}
       onReset={handleReset}
       showHeader={false}
       compact

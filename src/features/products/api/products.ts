@@ -1,5 +1,5 @@
 import { ProductWithImages } from '@/features/products/types';
-import { api } from '@/shared/lib/api-client';
+import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 
 // This function fetches a list of products from the API.
 export async function getProducts(filters: {
@@ -14,7 +14,7 @@ export async function getProducts(filters: {
   catalogId?: string | undefined;
   searchLanguage?: string | undefined;
 }, signal?: AbortSignal): Promise<ProductWithImages[]> {
-  return api.get<ProductWithImages[]>('/api/products', {
+  const options: ApiClientOptions = {
     params: {
       search: filters.search,
       sku: filters.sku,
@@ -28,8 +28,9 @@ export async function getProducts(filters: {
       searchLanguage: filters.searchLanguage,
     },
     cache: 'no-store',
-    signal,
-  });
+  };
+  if (signal) options.signal = signal;
+  return api.get<ProductWithImages[]>('/api/products', options);
 }
 
 export async function countProducts(filters: {
@@ -43,7 +44,7 @@ export async function countProducts(filters: {
   searchLanguage?: string | undefined;
 }, signal?: AbortSignal): Promise<number> {
   try {
-    const data = await api.get<{ count: number }>('/api/products/count', {
+    const options: ApiClientOptions = {
       params: {
         search: filters.search,
         sku: filters.sku,
@@ -55,8 +56,9 @@ export async function countProducts(filters: {
         searchLanguage: filters.searchLanguage,
       },
       cache: 'no-store',
-      signal,
-    });
+    };
+    if (signal) options.signal = signal;
+    const data = await api.get<{ count: number }>('/api/products/count', options);
     return data.count ?? 0;
   } catch (_error) {
     return 0;

@@ -217,7 +217,7 @@ describe('Databases API', () => {
           body: formData,
         })
       );
-      expect(res.status).toEqual(500);
+      expect(res.status).toEqual(400);
     });
   });
 

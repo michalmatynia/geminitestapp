@@ -289,8 +289,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const { view } = useCanvasState();
   const { nodes, edges } = useGraphState();
   const { addNode, addEdge, updateNode } = useGraphActions();
-  const { selectedNodeId, selectedEdgeId } = useSelectionState();
-  const { selectNode } = useSelectionActions();
+  const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
+  const { selectNode, setConfigOpen } = useSelectionActions();
 
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database'>('prompt');
   const [fileDropMode, setFileDropMode] = useState<CaseResolverDropMode>('file_node');
@@ -300,6 +300,12 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const [isDropImporting, setIsDropImporting] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
   const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    if (!configOpen) return;
+    setIsNodeInspectorOpen(true);
+    setConfigOpen(false);
+  }, [configOpen, setConfigOpen]);
 
   const normalizedNodeMeta = useMemo(
     () => ensureNodeMeta(nodes, graph.nodeMeta),

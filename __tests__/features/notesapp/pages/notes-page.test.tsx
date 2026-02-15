@@ -119,6 +119,7 @@ describe('Notes page UI', () => {
   let notes: NoteWithRelations[] = [];
   
   beforeEach(() => {
+    window.localStorage.clear();
     notes = [makeNote(), makeNote({ id: 'note-2', title: 'Beta' })];
     const tags = [...baseTags];
     const categories = [...baseCategories];

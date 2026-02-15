@@ -59,7 +59,7 @@ describe('useProductMetadataQueries invalidation', () => {
     });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(1));
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productMetadataKeys.producers,
+      queryKey: productMetadataKeys.all,
     });
   });
 
@@ -84,7 +84,7 @@ describe('useProductMetadataQueries invalidation', () => {
     });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(1));
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productMetadataKeys.producers,
+      queryKey: productMetadataKeys.all,
     });
   });
 
@@ -99,7 +99,7 @@ describe('useProductMetadataQueries invalidation', () => {
     expect(api.delete).toHaveBeenCalledWith('/api/products/producers/producer-1');
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(1));
     expect(invalidateSpy).toHaveBeenCalledWith({
-      queryKey: productMetadataKeys.producers,
+      queryKey: productMetadataKeys.all,
     });
   });
 });

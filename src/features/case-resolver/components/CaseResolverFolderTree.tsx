@@ -56,6 +56,11 @@ type PaletteEntry = {
   Icon: React.ComponentType<{ className?: string }>;
 };
 
+type FolderCaseFileStats = {
+  total: number;
+  locked: number;
+};
+
 const resolveAssetKind = (kind: unknown): 'node_file' | 'image' | 'pdf' | 'file' => {
   if (kind === 'node_file' || kind === 'image' || kind === 'pdf' || kind === 'file') {
     return kind;
@@ -112,6 +117,8 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onRenameFile,
     onRenameAsset,
     onRenameFolder,
+    onDeleteFolder,
+    onToggleFolderLock,
     onDeleteFile,
     onToggleFileLock,
     onEditFile,
@@ -195,6 +202,25 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     return new Map(
       workspace.files.map((file): [string, boolean] => [file.id, file.isLocked])
     );
+  }, [workspace.files]);
+
+  const folderCaseFileStatsByPath = useMemo((): Map<string, FolderCaseFileStats> => {
+    const stats = new Map<string, FolderCaseFileStats>();
+    workspace.files.forEach((file): void => {
+      const normalizedFolder = file.folder.trim();
+      if (!normalizedFolder) return;
+      const segments = normalizedFolder.split('/').filter(Boolean);
+      for (let index = 0; index < segments.length; index += 1) {
+        const path = segments.slice(0, index + 1).join('/');
+        const current = stats.get(path) ?? { total: 0, locked: 0 };
+        const next: FolderCaseFileStats = {
+          total: current.total + 1,
+          locked: current.locked + (file.isLocked ? 1 : 0),
+        };
+        stats.set(path, next);
+      }
+    });
+    return stats;
   }, [workspace.files]);
 
   const {
@@ -534,6 +560,14 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             const isCaseFile = Boolean(fileId) && node.kind === 'case_file';
             const isFileLocked = fileId ? fileLockById.get(fileId) === true : false;
             const isFolder = folderPath !== null;
+            const folderStats = folderPath ? folderCaseFileStatsByPath.get(folderPath) ?? null : null;
+            const folderHasCaseFiles = Boolean(folderStats && folderStats.total > 0);
+            const folderHasLockedFiles = Boolean(folderStats && folderStats.locked > 0);
+            const isFolderLocked = Boolean(
+              folderStats &&
+              folderStats.total > 0 &&
+              folderStats.total === folderStats.locked
+            );
             const canToggle = isFolder && hasChildren;
             const Icon = isFolder
               ? isExpanded
@@ -626,15 +660,18 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
                 )}
                 <Icon className='size-4 shrink-0' />
+                {isFolder && isFolderLocked ? (
+                  <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
+                ) : null}
                 {isCaseFile && isFileLocked ? (
                   <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
                 ) : null}
-                <span className='min-w-0 flex-1 truncate'>{node.name}</span>
-                {isCaseFile && fileId ? (
-                  <div className='flex shrink-0 items-center gap-1'>
+                <div className='min-w-0 flex flex-1 items-center gap-1'>
+                  <span className='min-w-0 flex-1 truncate'>{node.name}</span>
+                  {isCaseFile && fileId ? (
                     <button
                       type='button'
-                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white'
+                      className='inline-flex size-4 shrink-0 items-center justify-center rounded text-gray-300/80 transition hover:bg-muted/60 hover:text-white'
                       title='Edit document'
                       aria-label='Edit document'
                       onClick={(event): void => {
@@ -643,8 +680,64 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                         onEditFile(fileId);
                       }}
                     >
-                      <Pencil className='size-3.5' />
+                      <Pencil className='size-3' />
                     </button>
+                  ) : null}
+                </div>
+                {isFolder && folderPath !== null ? (
+                  <div
+                    className={`flex shrink-0 items-center gap-1 transition ${
+                      isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    }`}
+                  >
+                    <button
+                      type='button'
+                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-50'
+                      title={
+                        !folderHasCaseFiles
+                          ? 'No case files in folder'
+                          : isFolderLocked
+                            ? 'Unlock folder files'
+                            : 'Lock folder files'
+                      }
+                      aria-label={
+                        !folderHasCaseFiles
+                          ? 'No case files in folder'
+                          : isFolderLocked
+                            ? 'Unlock folder files'
+                            : 'Lock folder files'
+                      }
+                      disabled={!folderHasCaseFiles}
+                      onClick={(event): void => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onToggleFolderLock(folderPath);
+                      }}
+                    >
+                      {isFolderLocked ? (
+                        <Unlock className='size-3.5' />
+                      ) : (
+                        <Lock className='size-3.5' />
+                      )}
+                    </button>
+                    <button
+                      type='button'
+                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50'
+                      title={folderHasLockedFiles ? 'Unlock folder files before removing' : 'Remove folder'}
+                      aria-label='Remove folder'
+                      disabled={folderHasLockedFiles}
+                      onClick={(event): void => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onDeleteFolder(folderPath);
+                      }}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </button>
+                  </div>
+                ) : null}
+                {isCaseFile && fileId ? (
+                  <div className='flex shrink-0 items-center gap-1'>
                     <button
                       type='button'
                       className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white'

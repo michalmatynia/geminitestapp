@@ -68,13 +68,15 @@ vi.mock("next/server", () => {
 
   class MockResponse extends Response {
     static override json(data: any, init?: ResponseInit) {
-      return new MockResponse(JSON.stringify(data), {
+      const res = new MockResponse(JSON.stringify(data), {
         ...init,
         headers: {
           'Content-Type': 'application/json',
           ...(init?.headers || {}),
         },
       });
+      console.log('[DEBUG] MockResponse.json status:', res.status);
+      return res;
     }
   }
   return {
@@ -97,13 +99,15 @@ vi.mock("next/server.js", () => {
 
   class MockResponse extends Response {
     static override json(data: any, init?: ResponseInit) {
-      return new MockResponse(JSON.stringify(data), {
+      const res = new MockResponse(JSON.stringify(data), {
         ...init,
         headers: {
           'Content-Type': 'application/json',
           ...(init?.headers || {}),
         },
       });
+      console.log('[DEBUG] MockResponse.json status:', res.status);
+      return res;
     }
   }
   return {

@@ -215,6 +215,11 @@ export function MasterFolderTree({
     setRootDropHoverZone(null);
   }, []);
 
+  const clearAllDragState = React.useCallback((): void => {
+    controller.clearDrag();
+    clearDragIndicators();
+  }, [clearDragIndicators, controller]);
+
   const applyRootDrop = React.useCallback(
     async (
       draggedNodeId: MasterTreeId,
@@ -368,8 +373,7 @@ export function MasterFolderTree({
               onDragEnd={
                 enableDnd
                   ? (): void => {
-                    controller.clearDrag();
-                    clearDragIndicators();
+                    clearAllDragState();
                   }
                   : undefined
               }
@@ -402,24 +406,27 @@ export function MasterFolderTree({
                     if (!resolvedPosition) return;
                     event.preventDefault();
                     event.stopPropagation();
-                    clearDragIndicators();
                     void (async (): Promise<void> => {
-                      if (onNodeDrop) {
-                        await onNodeDrop(
-                          {
-                            draggedNodeId,
-                            targetId: node.id,
-                            position: resolvedPosition,
-                          },
-                          controller
-                        );
-                        return;
+                      try {
+                        if (onNodeDrop) {
+                          await onNodeDrop(
+                            {
+                              draggedNodeId,
+                              targetId: node.id,
+                              position: resolvedPosition,
+                            },
+                            controller
+                          );
+                          return;
+                        }
+                        if (resolvedPosition === 'inside') {
+                          await controller.moveNode(draggedNodeId, node.id);
+                          return;
+                        }
+                        await controller.reorderNode(draggedNodeId, node.id, resolvedPosition);
+                      } finally {
+                        clearAllDragState();
                       }
-                      if (resolvedPosition === 'inside') {
-                        await controller.moveNode(draggedNodeId, node.id);
-                        return;
-                      }
-                      await controller.reorderNode(draggedNodeId, node.id, resolvedPosition);
                     })();
                   }
                   : undefined
@@ -475,9 +482,12 @@ export function MasterFolderTree({
               if (!draggedNodeId) return;
               if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
-              clearDragIndicators();
               void (async (): Promise<void> => {
-                await applyRootDrop(draggedNodeId);
+                try {
+                  await applyRootDrop(draggedNodeId);
+                } finally {
+                  clearAllDragState();
+                }
               })();
             }
             : undefined
@@ -485,7 +495,7 @@ export function MasterFolderTree({
         onDragEnd={
           enableDnd
             ? (): void => {
-              clearDragIndicators();
+              clearAllDragState();
             }
             : undefined
         }
@@ -520,8 +530,13 @@ export function MasterFolderTree({
               if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
               event.stopPropagation();
-              clearDragIndicators();
-              void applyRootDrop(draggedNodeId, 'top');
+              void (async (): Promise<void> => {
+                try {
+                  await applyRootDrop(draggedNodeId, 'top');
+                } finally {
+                  clearAllDragState();
+                }
+              })();
             }}
             className={`flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
               rootDropHoverZone === 'top'
@@ -568,8 +583,13 @@ export function MasterFolderTree({
               if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
               event.preventDefault();
               event.stopPropagation();
-              clearDragIndicators();
-              void applyRootDrop(draggedNodeId, 'bottom');
+              void (async (): Promise<void> => {
+                try {
+                  await applyRootDrop(draggedNodeId, 'bottom');
+                } finally {
+                  clearAllDragState();
+                }
+              })();
             }}
             className={`flex h-8 items-center justify-center rounded-md border border-dashed text-[10px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
               rootDropHoverZone === 'bottom'

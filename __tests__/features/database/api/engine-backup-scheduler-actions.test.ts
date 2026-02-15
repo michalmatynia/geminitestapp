@@ -183,6 +183,7 @@ describe('Database Engine backup scheduler actions', () => {
         { dbType: 'mongodb', jobId: 'job-mongo-1' },
         { dbType: 'postgresql', jobId: 'job-pg-1' },
       ],
+      inlineProcessed: [],
     });
     expect(enqueueProductAiJob).toHaveBeenCalledTimes(2);
     expect(markDatabaseBackupJobQueued).toHaveBeenCalledTimes(2);

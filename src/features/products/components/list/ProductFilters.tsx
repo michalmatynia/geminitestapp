@@ -1,14 +1,15 @@
 'use client';
 
-import { Store } from 'lucide-react';
-import { memo, useMemo, useCallback } from 'react';
+import { Image as ImageIcon, Store } from 'lucide-react';
+import { memo, useCallback, useMemo } from 'react';
 
 import {
   useProductListFiltersContext,
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
+import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
-import { SelectionBar, DropdownMenuItem } from '@/shared/ui';
+import { DropdownMenuItem, SelectionBar, useToast } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
@@ -114,8 +115,30 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     onDeleteSelected,
     onAddToMarketplace,
   } = useProductListSelectionContext();
+  const { toast } = useToast();
+  const {
+    mutateAsync: convertSelectedToBase64,
+    isPending: isConvertingSelected,
+  } = useBulkConvertImagesToBase64();
 
   const getRowId = useCallback((p: ProductWithImages) => p.id, []);
+  const handleConvertSelected = useCallback(async (): Promise<void> => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to convert.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      await convertSelectedToBase64(selectedProductIds);
+      toast('Base64 images generated for selected products.', { variant: 'success' });
+      setRowSelection({});
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'An error occurred during base64 conversion.', {
+        variant: 'error',
+      });
+    }
+  }, [convertSelectedToBase64, rowSelection, setRowSelection, toast]);
 
   return (
     <SelectionBar
@@ -128,15 +151,25 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
       onDeleteSelected={onDeleteSelected}
       className='border-t pt-3'
       actions={
-        <DropdownMenuItem
-          onClick={() => {
-            if (onAddToMarketplace) onAddToMarketplace();
-          }}
-          className='cursor-pointer gap-2'
-        >
-          <Store className='h-4 w-4' />
-          Add to Marketplace
-        </DropdownMenuItem>
+        <>
+          <DropdownMenuItem
+            onClick={() => {
+              if (onAddToMarketplace) onAddToMarketplace();
+            }}
+            className='cursor-pointer gap-2'
+          >
+            <Store className='h-4 w-4' />
+            Add to Marketplace
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => { void handleConvertSelected(); }}
+            className='cursor-pointer gap-2'
+            disabled={isConvertingSelected}
+          >
+            <ImageIcon className='h-4 w-4' />
+            {isConvertingSelected ? 'Converting selected...' : 'Convert selected products'}
+          </DropdownMenuItem>
+        </>
       }
     />
   );

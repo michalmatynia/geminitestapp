@@ -3,11 +3,13 @@ import { ErrorCategory, type SuggestedAction } from '@/shared/types/observabilit
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
 import { getTraceId } from '@/shared/utils/observability/trace';
 
-export interface ApiClientOptions extends RequestInit {
-  params?: Record<string, string | number | boolean | undefined>;
-  logError?: boolean;
-  timeout?: number;
-}
+export type ApiClientOptions = {
+  [K in keyof RequestInit]?: RequestInit[K] | undefined;
+} & {
+  params?: Record<string, string | number | boolean | undefined> | undefined;
+  logError?: boolean | undefined;
+  timeout?: number | undefined;
+};
 
 export class ApiError extends Error {
   status: number;
@@ -39,6 +41,19 @@ const isAbortSignalInstance = (value: unknown): value is AbortSignal => {
   return value instanceof AbortSignal;
 };
 
+/**
+ * Removes undefined keys from an object to satisfy exactOptionalPropertyTypes
+ */
+function cleanConfig<T extends Record<string, any>>(obj: T): T {
+  const result = { ...obj };
+  Object.keys(result).forEach((key) => {
+    if (result[key] === undefined) {
+      delete result[key];
+    }
+  });
+  return result;
+}
+
 export async function apiClient<T>(
   endpoint: string,
   { params, logError = true, timeout = 15000, ...customConfig }: ApiClientOptions = {}
@@ -61,7 +76,7 @@ export async function apiClient<T>(
     }
   }
 
-  const config: RequestInit = {
+  const config = cleanConfig({
     method: customConfig.method || (customConfig.body ? 'POST' : 'GET'),
     ...customConfig,
     headers: withCsrfHeaders({
@@ -69,7 +84,7 @@ export async function apiClient<T>(
       'X-Trace-Id': getTraceId(),
       ...customConfig.headers,
     } as Record<string, string>),
-  };
+  }) as RequestInit;
   if (isAbortSignalInstance(customConfig.signal)) {
     config.signal = customConfig.signal;
   }

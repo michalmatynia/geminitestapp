@@ -77,7 +77,9 @@
       "Bash(npx vitest run __tests__/features/notesapp/pages/notes-advanced.test.tsx)",
       "Bash(npx vitest run:*)",
       "Bash(npx prisma:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
     ]
   }
 }

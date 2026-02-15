@@ -39,6 +39,7 @@ export type CaseResolverFile = {
   id: string;
   name: string;
   folder: string;
+  documentDate: string;
   documentContent: string;
   isLocked: boolean;
   graph: CaseResolverGraph;

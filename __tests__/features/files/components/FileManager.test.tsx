@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import FileManager from '@/features/files/components/FileManager';
@@ -126,10 +126,10 @@ describe('FileManager Component', () => {
     expect(mockDelete).toHaveBeenCalledWith('file-1');
   });
 
-  it('should filter files by search input', () => {
+  it('should filter files by search input', async () => {
     render(<FileManager />, { wrapper });
-    const searchInput = screen.getByPlaceholderText('Search by filename');
+    const searchInput = screen.getByPlaceholderText('Search by filename...');
     fireEvent.change(searchInput, { target: { value: 'test' } });
-    expect(searchInput).toHaveValue('test');
+    await waitFor(() => expect(searchInput).toHaveValue('test'));
   });
 });

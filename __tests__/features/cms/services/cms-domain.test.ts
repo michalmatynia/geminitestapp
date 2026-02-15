@@ -106,7 +106,7 @@ describe('CMS Domain Service', () => {
   describe('Management', () => {
     it('should create a new domain', async () => {
       const now = new Date();
-      mockCollection.findOne.mockResolvedValue(null);
+      mockCollection.findOne.mockResolvedValueOnce(null);
       mockCollection.insertOne.mockResolvedValue({ insertedId: 'mock-domain-uuid' });
       // We also need findOne to return the newly created domain for the final response mapping
       mockCollection.findOne.mockResolvedValue({

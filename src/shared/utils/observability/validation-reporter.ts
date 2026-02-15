@@ -22,7 +22,7 @@ export async function reportValidationError(
     const errorPayload = {
       message,
       name: 'ValidationError',
-      ...context,
+      context,
     };
 
     await fetch('/api/client-errors', {
@@ -30,7 +30,7 @@ export async function reportValidationError(
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ error: errorPayload, context }),
+      body: JSON.stringify(errorPayload),
       keepalive: true,
     });
   } catch (err) {

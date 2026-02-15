@@ -8,6 +8,7 @@ import { PageBuilderLayout } from '@/features/cms/components/page-builder/PageBu
 import { useCmsPages, useCmsPage, useCmsSlugs } from '@/features/cms/hooks/useCmsQueries';
 import { initialState } from '@/features/cms/hooks/usePageBuilderContext';
 import { server } from '@/mocks/server';
+import { ToastProvider } from '@/shared/ui/toast';
 
 // Mock dependencies
 vi.mock('next/navigation', () => ({
@@ -87,7 +88,9 @@ const queryClient = new QueryClient({
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={queryClient}>
     <AdminLayoutProvider>
-      {children}
+      <ToastProvider>
+        {children}
+      </ToastProvider>
     </AdminLayoutProvider>
   </QueryClientProvider>
 );

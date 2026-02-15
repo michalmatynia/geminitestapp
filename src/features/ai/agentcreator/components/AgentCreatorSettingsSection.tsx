@@ -69,7 +69,7 @@ export function AgentCreatorSettingsSection(): React.ReactElement {
 
             </FormField>
 
-            <FormField label='Max Steps'>
+            <FormField label='Max Steps' id='agent-max-steps'>
 
               <Input
 

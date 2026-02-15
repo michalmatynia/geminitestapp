@@ -73,7 +73,7 @@ export default function ThemesPage(): React.ReactNode {
       cell: ({ row }) => (
         <div className='flex justify-end gap-2'>
           <Link href={`/admin/cms/themes/${row.original.id}/edit`}>
-            <Button variant='ghost' size='xs' className='h-7 w-7 p-0'>
+            <Button variant='ghost' size='xs' className='h-7 w-7 p-0' aria-label='Edit theme'>
               <Edit className='size-3.5' />
             </Button>
           </Link>
@@ -82,6 +82,7 @@ export default function ThemesPage(): React.ReactNode {
             size='xs' 
             className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
             onClick={() => void handleDelete(row.original.id)}
+            aria-label='Delete theme'
           >
             <Trash2 className='size-3.5' />
           </Button>
@@ -102,7 +103,8 @@ export default function ThemesPage(): React.ReactNode {
           </Button>
         }
         isLoading={themesQuery.isLoading}
-        emptyState={
+      >
+        {themes.length === 0 && !themesQuery.isLoading ? (
           <EmptyState
             title='No themes defined'
             description='Themes allow you to maintain a consistent visual language across your storefront.'
@@ -112,14 +114,14 @@ export default function ThemesPage(): React.ReactNode {
               </Button>
             }
           />
-        }
-      >
-        <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-          <DataTable
-            columns={columns}
-            data={themes}
-          />
-        </div>
+        ) : (
+          <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+            <DataTable
+              columns={columns}
+              data={themes}
+            />
+          </div>
+        )}
       </ListPanel>
     </div>
   );

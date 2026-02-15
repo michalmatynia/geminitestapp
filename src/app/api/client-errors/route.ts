@@ -17,13 +17,71 @@ const clientErrorPayloadSchema = z.object({
   message: z.string().trim().min(1).max(2_000).optional(),
   name: z.string().trim().min(1).max(120).optional(),
   stack: z.string().trim().max(20_000).nullable().optional(),
-  url: z.string().trim().url().max(2_000).optional(),
-  timestamp: z.string().datetime().optional(),
+  url: z.string().trim().max(2_000).optional(),
+  timestamp: z.string().trim().max(200).optional(),
   digest: z.string().trim().max(256).optional(),
   userAgent: z.string().trim().max(1_000).optional(),
   componentStack: z.string().trim().max(8_000).nullable().optional(),
-  context: z.record(z.string(), z.unknown()).nullable().optional(),
+  context: z.unknown().optional(),
 });
+
+const CLIENT_ERROR_TOP_LEVEL_KEYS = new Set([
+  'message',
+  'name',
+  'stack',
+  'url',
+  'timestamp',
+  'digest',
+  'userAgent',
+  'componentStack',
+  'context',
+  'error',
+]);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const normalizeClientErrorPayload = (rawBody: unknown): Record<string, unknown> => {
+  if (!isRecord(rawBody)) return {};
+
+  const nestedError = isRecord(rawBody['error']) ? rawBody['error'] : null;
+  const normalized: Record<string, unknown> = {};
+
+  const pull = (key: string): void => {
+    if (rawBody[key] !== undefined) {
+      normalized[key] = rawBody[key];
+      return;
+    }
+    if (nestedError?.[key] !== undefined) {
+      normalized[key] = nestedError[key];
+    }
+  };
+
+  pull('message');
+  pull('name');
+  pull('stack');
+  pull('url');
+  pull('timestamp');
+  pull('digest');
+  pull('userAgent');
+  pull('componentStack');
+  pull('context');
+
+  if (nestedError) {
+    const legacyExtras = Object.fromEntries(
+      Object.entries(nestedError).filter(([key]) => !CLIENT_ERROR_TOP_LEVEL_KEYS.has(key))
+    );
+    if (Object.keys(legacyExtras).length > 0) {
+      const existingContext = isRecord(normalized['context']) ? normalized['context'] : {};
+      normalized['context'] = {
+        ...existingContext,
+        ...legacyExtras,
+      };
+    }
+  }
+
+  return normalized;
+};
 
 const sanitizeClientContext = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -67,34 +125,47 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   }
 
   const rawBody = (await req.json().catch(() => null)) as unknown;
-  const parsed = clientErrorPayloadSchema.safeParse(rawBody);
+  const normalizedBody = normalizeClientErrorPayload(rawBody);
+  const parsed = clientErrorPayloadSchema.safeParse(normalizedBody);
   const payload = parsed.success ? parsed.data : {};
   const sanitizedContext = sanitizeClientContext(payload.context ?? null);
 
-  const message =
-    typeof payload.message === 'string' && payload.message.trim().length > 0
-      ? payload.message
-      : 'Unknown client error';
+  const fallbackMessage = typeof normalizedBody['message'] === 'string' ? normalizedBody['message'] : null;
+  const fallbackName = typeof normalizedBody['name'] === 'string' ? normalizedBody['name'] : null;
+  const fallbackStack = typeof normalizedBody['stack'] === 'string' ? normalizedBody['stack'] : null;
+  const resolveStringField = (
+    primary: unknown,
+    fallback: unknown,
+    maxLength: number,
+    defaultValue: string
+  ): string => {
+    if (typeof primary === 'string' && primary.trim().length > 0) return primary;
+    if (typeof fallback === 'string' && fallback.trim().length > 0) {
+      return truncateString(fallback, maxLength);
+    }
+    return defaultValue;
+  };
+
+  const message = resolveStringField(payload.message, fallbackMessage, 2_000, 'Unknown client error');
   const normalizedError = new Error(message);
-  normalizedError.name =
-    typeof payload.name === 'string' && payload.name.trim().length > 0
-      ? payload.name
-      : 'ClientError';
+  normalizedError.name = resolveStringField(payload.name, fallbackName, 120, 'ClientError');
   if (typeof payload.stack === 'string' && payload.stack.trim().length > 0) {
     normalizedError.stack = payload.stack;
+  } else if (typeof fallbackStack === 'string' && fallbackStack.trim().length > 0) {
+    normalizedError.stack = truncateString(fallbackStack, 20_000);
   }
 
   const context: ErrorContext = {
-    source: 'client.error.reporter',
-    service: 'client-error-reporter',
+    ...(sanitizedContext ?? {}),
     ...(typeof payload.url === 'string' ? { url: payload.url } : {}),
     ...(typeof payload.digest === 'string' ? { digest: payload.digest } : {}),
     ...(typeof payload.timestamp === 'string' ? { clientTimestamp: payload.timestamp } : {}),
     ...(typeof payload.userAgent === 'string' ? { clientUserAgent: payload.userAgent } : {}),
     ...(typeof payload.componentStack === 'string' ? { componentStack: payload.componentStack } : {}),
-    ...(sanitizedContext ?? {}),
     ...(!parsed.success ? { payloadInvalid: true } : {}),
     extra: sanitizedContext ?? {},
+    source: 'client.error.reporter',
+    service: 'client-error-reporter',
   };
 
   await ErrorSystem.captureException(normalizedError, {

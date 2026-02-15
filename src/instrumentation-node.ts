@@ -3,6 +3,69 @@ type InstrumentationGlobal = typeof globalThis & {
   __cmsProcessHandlersRegistered?: boolean;
 };
 
+const IGNORABLE_PROCESS_ERROR_CODES = new Set([
+  'ECONNRESET',
+  'ECONNABORTED',
+  'EPIPE',
+]);
+
+const hasIgnorableAbortMessage = (value: string): boolean => {
+  const normalized = value.toLowerCase();
+  return (
+    normalized === 'aborted' ||
+    normalized.includes('socket hang up') ||
+    normalized.includes('request aborted') ||
+    normalized.includes('client disconnected')
+  );
+};
+
+const isIgnorableUncaughtException = (error: Error): boolean => {
+  const errorWithCode = error as Error & { code?: unknown };
+  const code = typeof errorWithCode.code === 'string' ? errorWithCode.code : null;
+
+  if (code && IGNORABLE_PROCESS_ERROR_CODES.has(code)) {
+    return true;
+  }
+
+  if (hasIgnorableAbortMessage(error.message)) {
+    return true;
+  }
+
+  const stack = typeof error.stack === 'string' ? error.stack.toLowerCase() : '';
+  return stack.includes('abortincoming (node:_http_server') ||
+    stack.includes('socketonclose (node:_http_server');
+};
+
+const isIgnorableProcessFailure = (reason: unknown): boolean => {
+  if (reason instanceof Error) {
+    return isIgnorableUncaughtException(reason);
+  }
+
+  if (typeof reason === 'string') {
+    return hasIgnorableAbortMessage(reason);
+  }
+
+  if (reason && typeof reason === 'object') {
+    const reasonWithCode = reason as { code?: unknown; message?: unknown; stack?: unknown };
+    const code = typeof reasonWithCode.code === 'string' ? reasonWithCode.code : null;
+    if (code && IGNORABLE_PROCESS_ERROR_CODES.has(code)) {
+      return true;
+    }
+    if (typeof reasonWithCode.message === 'string' && hasIgnorableAbortMessage(reasonWithCode.message)) {
+      return true;
+    }
+    if (typeof reasonWithCode.stack === 'string') {
+      const stack = reasonWithCode.stack.toLowerCase();
+      if (stack.includes('abortincoming (node:_http_server') ||
+        stack.includes('socketonclose (node:_http_server')) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
 export async function registerNodeInstrumentation() {
   const globalScope = globalThis as InstrumentationGlobal;
   if (globalScope.__nodeInstrumentationRegistered) {
@@ -54,6 +117,10 @@ export async function registerNodeInstrumentation() {
 
   // Set up global error handlers for the Node.js process.
   process.on('unhandledRejection', (reason: unknown) => {
+    if (isIgnorableProcessFailure(reason)) {
+      return;
+    }
+
     void (async () => {
       try {
         const { logSystemError } = await import('@/features/observability/server');
@@ -70,6 +137,10 @@ export async function registerNodeInstrumentation() {
   });
 
   process.on('uncaughtException', (error: Error) => {
+    if (isIgnorableUncaughtException(error)) {
+      return;
+    }
+
     void (async () => {
       try {
         const { logSystemError } = await import('@/features/observability/server');

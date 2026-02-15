@@ -8,7 +8,7 @@ export const reportClientError = async (error: unknown, context: ErrorContext = 
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : 'ClientError',
-      ...context,
+      context,
     };
 
     await fetch('/api/client-errors', {
@@ -16,7 +16,7 @@ export const reportClientError = async (error: unknown, context: ErrorContext = 
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ error: errorPayload, context }),
+      body: JSON.stringify(errorPayload),
       // Optional: Add keepalive to ensure request is sent even if page unloads
       keepalive: true,
     });

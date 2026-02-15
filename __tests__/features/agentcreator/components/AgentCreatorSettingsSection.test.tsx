@@ -47,7 +47,7 @@ describe('AgentCreatorSettingsSection Component', () => {
     
     rerender(<AgentCreatorSettingsSection />);
     expect(screen.getByText('Browser')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Max Steps/i)).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', { name: /Max Steps/i })).toBeInTheDocument();
   });
 
   it('should call setAgentModeEnabled when checkbox is clicked', () => {
@@ -66,7 +66,7 @@ describe('AgentCreatorSettingsSection Component', () => {
     });
     render(<AgentCreatorSettingsSection />);
     
-    const input = screen.getByLabelText(/Max Steps/i);
+    const input = screen.getByRole('spinbutton', { name: /Max Steps/i });
     fireEvent.change(input, { target: { value: '20' } });
     
     expect(mockSetAgentMaxSteps).toHaveBeenCalledWith(20);

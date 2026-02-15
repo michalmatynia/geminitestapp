@@ -4,6 +4,8 @@
 import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+
 // Hook for dependent queries - execute queries in sequence
 export function useDependentQueries<T1, T2, T3>(
   firstQuery: { queryKey: unknown[]; queryFn: () => Promise<T1>; enabled?: boolean },
@@ -18,19 +20,19 @@ export function useDependentQueries<T1, T2, T3>(
   error: Error | null;
 } {
   const first = useQuery<T1, Error>({
-    queryKey: firstQuery.queryKey,
+    queryKey: normalizeQueryKey(firstQuery.queryKey),
     queryFn: firstQuery.queryFn,
     enabled: firstQuery.enabled !== false,
   });
 
   const second = useQuery<T2, Error>({
-    queryKey: [...secondQuery.queryKey, first.data],
+    queryKey: normalizeQueryKey([...secondQuery.queryKey, first.data]),
     queryFn: () => secondQuery.queryFn(first.data!),
     enabled: !!first.data && first.isSuccess,
   });
 
   const third = useQuery<T3, Error>({
-    queryKey: thirdQuery ? [...thirdQuery.queryKey, second.data] : ['__empty_third__'],
+    queryKey: normalizeQueryKey(thirdQuery ? [...thirdQuery.queryKey, second.data] : ['__empty_third__']),
     queryFn: thirdQuery ? () => thirdQuery.queryFn(second.data!) : () => Promise.resolve(null as unknown as T3),
     enabled: !!thirdQuery && !!second.data && second.isSuccess,
   });
@@ -66,7 +68,7 @@ export function useParallelQueries<T extends Record<string, unknown>>(
   const keys = Object.keys(queries) as Array<keyof T>;
   const queryResults = useQueries({
     queries: keys.map((key) => ({
-      queryKey: queries[key].queryKey,
+      queryKey: normalizeQueryKey(queries[key].queryKey),
       queryFn: queries[key].queryFn,
       enabled: queries[key].enabled !== false,
     })),
@@ -142,7 +144,7 @@ export function useConditionalQuery<T>(
   }, [conditions]);
 
   return useQuery({
-    queryKey,
+    queryKey: normalizeQueryKey(queryKey),
     queryFn,
     enabled,
   });

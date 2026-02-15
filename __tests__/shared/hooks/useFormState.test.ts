@@ -5,6 +5,7 @@ import { useFormState } from '@/shared/hooks/useFormState';
 
 describe('useFormState', () => {
   interface TestFormData {
+    [key: string]: unknown;
     name: string;
     email: string;
   }
@@ -72,7 +73,7 @@ describe('useFormState', () => {
     });
 
     expect(validate).toHaveBeenCalledWith(initialValues);
-    expect(result.current.state.errors.name).toBe('Name is required');
+    expect(result.current.state.errors['name']).toBe('Name is required');
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -109,7 +110,7 @@ describe('useFormState', () => {
       result.current.actions.setFieldError('name', 'Error message');
     });
 
-    expect(result.current.state.errors.name).toBe('Error message');
+    expect(result.current.state.errors['name']).toBe('Error message');
   });
 
   it('clears field error', () => {
@@ -124,13 +125,13 @@ describe('useFormState', () => {
       result.current.actions.setFieldError('name', 'Error message');
     });
 
-    expect(result.current.state.errors.name).toBe('Error message');
+    expect(result.current.state.errors['name']).toBe('Error message');
 
     act(() => {
       result.current.actions.clearFieldError('name');
     });
 
-    expect(result.current.state.errors.name).toBeUndefined();
+    expect(result.current.state.errors['name']).toBeUndefined();
   });
 
   it('resets form to initial values', () => {

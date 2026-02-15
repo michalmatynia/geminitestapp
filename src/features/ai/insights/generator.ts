@@ -12,7 +12,8 @@ import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/features/analytics/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { listSystemLogs, getSystemLogMetrics } from '@/features/observability/server';
-import { getSettingValue } from '@/features/products/services/aiDescriptionService';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/types';
 import type { AiInsightRecord, AiInsightSource, AiInsightStatus, AiInsightType } from '@/shared/types/ai-insights';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/types/domain/ai-paths';
@@ -28,6 +29,51 @@ import {
 } from './settings';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
+const AI_INSIGHTS_USE_MONGO_SETTINGS =
+  process.env['AI_INSIGHTS_USE_MONGO_SETTINGS'] === 'true' ||
+  !process.env['DATABASE_URL'];
+
+type SettingDoc = { key?: string; value?: string; _id?: string };
+
+const canUsePrismaSettings = (): boolean =>
+  Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
+
+const readPrismaSettingValue = async (key: string): Promise<string | null> => {
+  if (!canUsePrismaSettings()) return null;
+  const setting = await prisma.setting.findUnique({
+    where: { key },
+    select: { value: true },
+  });
+  return setting?.value ?? null;
+};
+
+const readMongoSettingValue = async (key: string): Promise<string | null> => {
+  if (!process.env['MONGODB_URI']) return null;
+  const mongo = await getMongoDb();
+  const doc = await mongo
+    .collection<SettingDoc>('settings')
+    .findOne({ $or: [{ _id: key }, { key }] });
+  return typeof doc?.value === 'string' ? doc.value : null;
+};
+
+const readInsightSettingValue = async (key: string): Promise<string | null> => {
+  try {
+    const prismaValue = await readPrismaSettingValue(key);
+    if (prismaValue !== null) return prismaValue;
+  } catch {
+    // Fall back to defaults when settings storage is temporarily unavailable.
+  }
+
+  if (!AI_INSIGHTS_USE_MONGO_SETTINGS) {
+    return null;
+  }
+
+  try {
+    return await readMongoSettingValue(key);
+  } catch {
+    return null;
+  }
+};
 
 const parseBooleanSetting = (value: string | null | undefined, fallback: boolean): boolean => {
   if (value == null) return fallback;
@@ -228,7 +274,7 @@ const resolveInsightSystemPrompt = async (type: AiInsightType): Promise<string> 
     : type === 'runtime_analytics'
       ? AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem
       : AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem;
-  const configured = (await getSettingValue(key))?.trim();
+  const configured = (await readInsightSettingValue(key))?.trim();
   if (configured) return configured;
   if (type === 'analytics') return DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
   if (type === 'runtime_analytics') return DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT;
@@ -277,12 +323,12 @@ const runInsightModel = async (params: {
 
   const modelId =
     params.modelId?.trim() ||
-    (await getSettingValue('openai_model'))?.trim() ||
+    (await readInsightSettingValue('openai_model'))?.trim() ||
     'gpt-4o-mini';
   if (!modelId) throw new Error('Model id is required.');
   if (isAnthropicModel(modelId)) {
     const anthropicKey =
-      (await getSettingValue('anthropic_api_key')) ?? process.env['ANTHROPIC_API_KEY'] ?? null;
+      (await readInsightSettingValue('anthropic_api_key')) ?? process.env['ANTHROPIC_API_KEY'] ?? null;
     if (!anthropicKey) {
       throw new Error('Anthropic API key is missing.');
     }
@@ -291,7 +337,7 @@ const runInsightModel = async (params: {
 
   if (isGeminiModel(modelId)) {
     const geminiKey =
-      (await getSettingValue('gemini_api_key')) ?? process.env['GEMINI_API_KEY'] ?? null;
+      (await readInsightSettingValue('gemini_api_key')) ?? process.env['GEMINI_API_KEY'] ?? null;
     if (!geminiKey) {
       throw new Error('Gemini API key is missing.');
     }
@@ -299,7 +345,7 @@ const runInsightModel = async (params: {
   }
 
   const apiKey =
-    (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
+    (await readInsightSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
   const { openai } = getClient(modelId, apiKey);
   const response = await openai.chat.completions.create({
     model: modelId,
@@ -321,8 +367,8 @@ export const generateAnalyticsInsight = async (params: {
     throw new Error('AI Brain is disabled for Analytics.');
   }
   const provider = brainAssignment.provider;
-  const modelId = brainAssignment.modelId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsModel));
-  const agentId = brainAssignment.agentId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsAgentId));
+  const modelId = brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsModel));
+  const agentId = brainAssignment.agentId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsAgentId));
 
   const rangeHours = params.rangeHours ?? 24;
   const to = new Date();
@@ -404,8 +450,8 @@ export const generateLogsInsight = async (params: {
     throw new Error('AI Brain is disabled for System Logs.');
   }
   const provider = brainAssignment.provider;
-  const modelId = brainAssignment.modelId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
-  const agentId = brainAssignment.agentId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
+  const modelId = brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
+  const agentId = brainAssignment.agentId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
   const windowHours = params.windowHours ?? 24;
   const to = new Date();
   const from = new Date(to.getTime() - windowHours * 60 * 60 * 1000);
@@ -482,8 +528,8 @@ export const generateRuntimeAnalyticsInsight = async (params: {
     throw new Error('AI Brain is disabled for Runtime Analytics.');
   }
   const provider = brainAssignment.provider;
-  const modelId = brainAssignment.modelId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsModel));
-  const agentId = brainAssignment.agentId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsAgentId));
+  const modelId = brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsModel));
+  const agentId = brainAssignment.agentId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsAgentId));
   const range = params.range ?? '24h';
   const { from, to } = resolveRuntimeAnalyticsRangeWindow(range);
   const runtimeSummary = await getRuntimeAnalyticsSummary({ from, to, range });
@@ -565,8 +611,8 @@ export const generateLogInterpretation = async (params: {
     throw new Error('AI Brain is disabled for Error Logs.');
   }
   const provider = brainAssignment.provider;
-  const modelId = brainAssignment.modelId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
-  const agentId = brainAssignment.agentId || (await getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
+  const modelId = brainAssignment.modelId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsModel));
+  const agentId = brainAssignment.agentId || (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAgentId));
 
   const payload = {
     log: {
@@ -630,13 +676,13 @@ export const getScheduleSettings = async (): Promise<{
     logsAutoRaw,
   ] =
     await Promise.all([
-      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled),
-      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes),
-      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
-      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes),
-      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled),
-      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes),
-      getSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError),
+      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleEnabled),
+      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsScheduleMinutes),
+      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleEnabled),
+      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsScheduleMinutes),
+      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleEnabled),
+      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsScheduleMinutes),
+      readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsAutoOnError),
     ]);
 
   return {

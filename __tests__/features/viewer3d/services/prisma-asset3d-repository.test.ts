@@ -24,6 +24,11 @@ describe('prismaAsset3DRepository', () => {
       tags: ['test', '3d'],
       categoryId: 'test-category',
       isPublic: true,
+      format: 'glb',
+      metadata: {},
+      fileUrl: '/uploads/test.glb',
+      thumbnailUrl: null,
+      fileSize: 1024,
     };
 
     const asset = await prismaAsset3DRepository.createAsset3D(data);

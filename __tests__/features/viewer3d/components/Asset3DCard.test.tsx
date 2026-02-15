@@ -96,7 +96,7 @@ describe('Asset3DCard', () => {
   });
 
   it('should fallback to filename if name is missing', () => {
-    const unnamedAsset = { ...mockAsset, name: null, filename: '12345-my-model.glb' };
+    const unnamedAsset = { ...mockAsset, name: '', filename: '12345-my-model.glb' };
     render(<Asset3DCard {...defaultProps} asset={unnamedAsset} />);
 
     expect(screen.getByText('my-model.glb')).toBeInTheDocument();

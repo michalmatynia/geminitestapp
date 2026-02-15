@@ -5,9 +5,9 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
-interface StreamConfig {
+interface StreamConfig<T = unknown> {
   endpoint: string;
-  onMessage?: (data: any) => void;
+  onMessage?: (data: T) => void;
   onError?: (error: Error) => void;
   reconnectAttempts?: number;
   reconnectDelay?: number;
@@ -16,7 +16,7 @@ interface StreamConfig {
 // Hook for streaming data with automatic reconnection
 export function useStreamingQuery<T>(
   queryKey: unknown[],
-  config: StreamConfig
+  config: StreamConfig<T>
 ): UseQueryResult<T | null, Error> {
   const queryClient = useQueryClient();
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -81,7 +81,7 @@ export function useWebSocketQuery<T>(
     reconnect?: boolean;
   }
 ): {
-  sendMessage: (message: any) => void;
+  sendMessage: (message: unknown) => void;
   isConnected: boolean;
 } {
   const queryClient = useQueryClient();
@@ -106,7 +106,7 @@ export function useWebSocketQuery<T>(
     };
 
     wsRef.current.onerror = (error: Event): void => {
-      logClientError(error, { context: { source: 'WebSocketQuery', url: wsUrl, queryKey } });
+      logClientError(new Error('WebSocket error'), { context: { source: 'WebSocketQuery', url: wsUrl, queryKey } });
       options?.onError?.(error);
     };
 
@@ -131,7 +131,7 @@ export function useWebSocketQuery<T>(
     };
   }, [connect]);
 
-  const sendMessage = useCallback((message: any): void => {
+  const sendMessage = useCallback((message: unknown): void => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     }

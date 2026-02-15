@@ -47,7 +47,7 @@ export const refetchProductsAndCounts = (queryClient: QueryClient) => {
 };
 
 export const invalidateCatalogs = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs() });
 };
 
 export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId: string | null) => {
@@ -64,14 +64,14 @@ export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId:
 
 export const invalidatePriceGroups = (queryClient: QueryClient) => {
   return Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.priceGroups }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.priceGroups() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.priceGroups() }),
   ]);
 };
 
 export const invalidateProductSettingsCatalogs = (queryClient: QueryClient) => {
   return Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.catalogs() }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.catalogs() }),
   ]);
 };
@@ -88,7 +88,7 @@ export const invalidateValidatorConfig = (queryClient: QueryClient) => {
 // --- CMS ---
 
 export const invalidateCmsPages = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.pages.all });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.pages.lists() });
 };
 
 export const invalidateCmsPageDetail = (queryClient: QueryClient, pageId: string) => {
@@ -96,7 +96,7 @@ export const invalidateCmsPageDetail = (queryClient: QueryClient, pageId: string
 };
 
 export const invalidateCmsSlugs = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.all });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.slugs.lists() });
 };
 
 export const invalidateCmsSlugDetail = (queryClient: QueryClient, slugId: string) => {
@@ -107,11 +107,11 @@ export const invalidateCmsSlugDetail = (queryClient: QueryClient, slugId: string
 };
 
 export const invalidateCmsDomains = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.domains.all });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.domains.lists() });
 };
 
 export const invalidateCmsThemes = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.themes.all });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cms.themes.lists() });
 };
 
 export const invalidateCmsThemeDetail = (queryClient: QueryClient, themeId: string) => {
@@ -125,7 +125,7 @@ export const invalidateNotes = (queryClient: QueryClient) => {
 };
 
 export const invalidateNotebooks = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.notebooks });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.notebooks() });
 };
 
 export const invalidateNoteDetail = (queryClient: QueryClient, noteId: string) => {
@@ -334,7 +334,7 @@ export const invalidateAgentRuns = (queryClient: QueryClient) => {
 };
 
 export const invalidateAgentPersonas = (queryClient: QueryClient) => {
-  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.agentPersonas.all });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.agentPersonas.lists() });
 };
 
 // --- Image Studio ---

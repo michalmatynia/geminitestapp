@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import {
   generateAnalyticsInsight,
   generateLogsInsight,
@@ -79,6 +80,11 @@ export async function tick(): Promise<void> {
   }
 
   const schedule = await getScheduleSettings();
+  const [analyticsBrain, runtimeAnalyticsBrain, logsBrain] = await Promise.all([
+    getBrainAssignmentForFeature('analytics'),
+    getBrainAssignmentForFeature('runtime_analytics'),
+    getBrainAssignmentForFeature('system_logs'),
+  ]);
   const analyticsLastRun = parseDate(
     await getAiInsightsMeta(AI_INSIGHTS_SETTINGS_KEYS.analyticsLastRunAt),
   );
@@ -90,32 +96,47 @@ export async function tick(): Promise<void> {
   );
   const executedJobs: string[] = [];
 
-  if (schedule.analyticsEnabled && shouldRun(analyticsLastRun, schedule.analyticsMinutes)) {
+  if (
+    schedule.analyticsEnabled &&
+    analyticsBrain.enabled &&
+    shouldRun(analyticsLastRun, schedule.analyticsMinutes)
+  ) {
     await appendRunEvent('Generating analytics insight.');
     await generateAnalyticsInsight({ source: 'scheduled' });
     executedJobs.push('analytics');
     await appendRunEvent('Analytics insight generated.');
+  } else if (schedule.analyticsEnabled && !analyticsBrain.enabled) {
+    await appendRunEvent('Skipping analytics insight: disabled in Brain settings.', 'info');
   }
 
   if (
     schedule.runtimeAnalyticsEnabled &&
+    runtimeAnalyticsBrain.enabled &&
     shouldRun(runtimeAnalyticsLastRun, schedule.runtimeAnalyticsMinutes)
   ) {
     await appendRunEvent('Generating runtime analytics insight.');
     await generateRuntimeAnalyticsInsight({ source: 'scheduled', range: '24h' });
     executedJobs.push('runtime_analytics');
     await appendRunEvent('Runtime analytics insight generated.');
+  } else if (schedule.runtimeAnalyticsEnabled && !runtimeAnalyticsBrain.enabled) {
+    await appendRunEvent('Skipping runtime analytics insight: disabled in Brain settings.', 'info');
   }
 
-  if (schedule.logsEnabled && shouldRun(logsLastRun, schedule.logsMinutes)) {
+  if (
+    schedule.logsEnabled &&
+    logsBrain.enabled &&
+    shouldRun(logsLastRun, schedule.logsMinutes)
+  ) {
     await appendRunEvent('Generating logs insight.');
     await generateLogsInsight({ source: 'scheduled' });
     executedJobs.push('logs');
     await appendRunEvent('Logs insight generated.');
+  } else if (schedule.logsEnabled && !logsBrain.enabled) {
+    await appendRunEvent('Skipping logs insight: disabled in Brain settings.', 'info');
   }
 
   try {
-    if (schedule.logsAutoOnError) {
+    if (schedule.logsAutoOnError && logsBrain.enabled) {
       const latestError = await listSystemLogs({ level: 'error', page: 1, pageSize: 1 });
       const latest = latestError.logs[0];
       const lastErrorSeen = parseDate(
@@ -132,6 +153,8 @@ export async function tick(): Promise<void> {
         executedJobs.push('logs_auto');
         await appendRunEvent('Auto logs insight generated.');
       }
+    } else if (schedule.logsAutoOnError && !logsBrain.enabled) {
+      await appendRunEvent('Skipping auto logs insight: disabled in Brain settings.', 'info');
     }
 
     if (runId) {

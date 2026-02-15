@@ -258,11 +258,12 @@ function DatabasesContent(): React.JSX.Element {
       }}
     >
       {isLogModalOpen && (
-        <LogModal content={logModalContent} onClose={closeLogModal} />
+        <LogModal isOpen={true} content={logModalContent} onClose={closeLogModal} />
       )}
 
       {isRestoreModalOpen && selectedBackupForRestore && (
         <RestoreModal
+          isOpen={true}
           backupName={selectedBackupForRestore}
           onClose={(): void => {
             setIsRestoreModalOpen(false);

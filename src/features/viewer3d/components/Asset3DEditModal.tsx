@@ -2,6 +2,7 @@
 
 import { Plus } from 'lucide-react';
 
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import {
   Button,
   Input,
@@ -18,10 +19,8 @@ import { useAsset3DForm } from '../hooks/useAsset3DForm';
 
 import type { Asset3DRecord } from '../types';
 
-interface Asset3DEditModalProps {
-  open: boolean;
-  onClose: () => void;
-  asset: Asset3DRecord;
+interface Asset3DEditModalProps extends Omit<EntityModalProps<Asset3DRecord>, 'onSuccess'> {
+  onSuccess?: () => void;
   onSave: (updated: Asset3DRecord) => void;
   existingCategories?: string[];
   existingTags?: string[];
@@ -34,13 +33,15 @@ const formatFileSize = (bytes: number): string => {
 };
 
 export function Asset3DEditModal({
-  open,
+  isOpen,
   onClose,
-  asset,
+  item: asset,
   onSave,
   existingCategories = [],
   existingTags = [],
-}: Asset3DEditModalProps): React.JSX.Element {
+}: Asset3DEditModalProps): React.JSX.Element | null {
+  if (!asset) return null;
+
   const {
     name,
     setName,
@@ -62,7 +63,7 @@ export function Asset3DEditModal({
 
   return (
     <FormModal
-      open={open}
+      open={isOpen}
       onClose={onClose}
       title='Edit 3D Asset'
       onSave={(): void => { void handleSave(); }}

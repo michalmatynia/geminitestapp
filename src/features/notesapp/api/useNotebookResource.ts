@@ -11,6 +11,6 @@ import type { NotebookDto } from '@/shared/types/domain/notes';
 export function useNotebookResource() {
   return useResource<NotebookDto>(
     '/api/notes/notebooks',
-    QUERY_KEYS.notes.notebooks
+    QUERY_KEYS.notes.notebooks()
   );
 }

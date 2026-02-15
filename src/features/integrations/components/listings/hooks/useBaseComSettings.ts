@@ -12,6 +12,7 @@ import {
   getDefaultExportInventoryQueryOptions,
   getBaseInventoriesQueryOptions,
 } from '@/features/integrations/hooks/useIntegrationQueries';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 // Why: Base.com has complex, interconnected setup:
 // - Templates define field mapping
@@ -42,7 +43,10 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
       getActiveExportTemplateQueryOptions(),
       getDefaultExportInventoryQueryOptions(),
       getBaseInventoriesQueryOptions(connectionId, isBaseComIntegration),
-    ],
+    ].map((query) => ({
+      ...query,
+      queryKey: normalizeQueryKey(query.queryKey),
+    })),
   });
 
   const [templatesQuery, activeTemplateQuery, defaultInventoryQuery, inventoriesQuery] = results;
@@ -51,10 +55,10 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   const updatePreferredTemplateMutation = useUpdatePreferredTemplate();
   const updatePreferredInventoryMutation = useUpdatePreferredInventory();
 
-  const templates = (templatesQuery.data as Template[]) ?? [];
-  const inventories = useMemo(() => (inventoriesQuery.data as BaseInventory[]) ?? [], [inventoriesQuery.data]);
-  const preferredTemplateId = (activeTemplateQuery.data as { templateId?: string | null } | undefined)?.templateId ?? null;
-  const preferredInventoryId = (defaultInventoryQuery.data as { inventoryId?: string | null } | undefined)?.inventoryId ?? null;
+  const templates = (templatesQuery?.data as Template[]) ?? [];
+  const inventories = useMemo(() => (inventoriesQuery?.data as BaseInventory[]) ?? [], [inventoriesQuery?.data]);
+  const preferredTemplateId = (activeTemplateQuery?.data as { templateId?: string | null } | undefined)?.templateId ?? null;
+  const preferredInventoryId = (defaultInventoryQuery?.data as { inventoryId?: string | null } | undefined)?.inventoryId ?? null;
 
   // Auto-select preferred template
   useEffect(() => {
@@ -75,7 +79,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
   // Auto-select preferred inventory or first available
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (isBaseComIntegration && !selectedInventoryId && inventories.length > 0 && !inventoriesQuery.isLoading && !hasInitializedInventory.current) {
+    if (isBaseComIntegration && !selectedInventoryId && inventories.length > 0 && !inventoriesQuery?.isLoading && !hasInitializedInventory.current) {
       timer = setTimeout(() => {
         if (preferredInventoryId && inventories.some((inv: BaseInventory) => inv.inventory_id === preferredInventoryId)) {
           setSelectedInventoryId(preferredInventoryId);
@@ -89,7 +93,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     return (): void => {
       if (timer) clearTimeout(timer);
     };
-  }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, inventoriesQuery.isLoading]);
+  }, [isBaseComIntegration, inventories, preferredInventoryId, selectedInventoryId, inventoriesQuery?.isLoading]);
 
   // Sync template preference when selected changes
   useEffect((): void => {
@@ -114,7 +118,7 @@ export function useBaseComSettings(isBaseComIntegration: boolean, connectionId: 
     inventories,
     selectedInventoryId,
     setSelectedInventoryId,
-    loadingInventories: inventoriesQuery.isLoading,
+    loadingInventories: inventoriesQuery?.isLoading ?? false,
     allowDuplicateSku,
     setAllowDuplicateSku,
   };

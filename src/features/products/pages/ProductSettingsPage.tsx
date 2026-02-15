@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { InternationalizationSettings, InternationalizationProvider } from '@/features/internationalization';
+import { InternationalizationSettings, InternationalizationProvider, useInternationalizationContext } from '@/features/internationalization';
 import { logClientError } from '@/features/observability';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';
 import { CategoriesSettings } from '@/features/products/components/settings/CategoriesSettings';
@@ -23,6 +23,39 @@ import { Button, SectionHeader, useToast } from '@/shared/ui';
 import {
   settingSections,
 } from './ProductSettingsConstants';
+
+function InternationalizationModals(): React.JSX.Element | null {
+  const intCtx = useInternationalizationContext();
+  if (!intCtx) return null;
+
+  return (
+    <>
+      <LanguageModal
+        isOpen={intCtx.showLanguageModal}
+        onClose={() => intCtx.setLanguageModalOpen(false)}
+        onSuccess={() => intCtx.setLanguageModalOpen(false)}
+        item={intCtx.editingLanguage}
+        items={intCtx.countries}
+      />
+
+      <CurrencyModal
+        isOpen={intCtx.showCurrencyModal}
+        onClose={() => intCtx.setCurrencyModalOpen(false)}
+        onSuccess={() => intCtx.setCurrencyModalOpen(false)}
+        item={intCtx.editingCurrency}
+      />
+
+      <CountryModal
+        isOpen={intCtx.showCountryModal}
+        onClose={() => intCtx.setCountryModalOpen(false)}
+        onSuccess={() => intCtx.setCountryModalOpen(false)}
+        item={intCtx.editingCountry}
+        items={intCtx.currencies}
+        loading={intCtx.loadingCurrencies}
+      />
+    </>
+  );
+}
 
 export function ProductSettingsPage(): React.JSX.Element {
   const [activeSection, setActiveSection] =
@@ -227,25 +260,21 @@ export function ProductSettingsPage(): React.JSX.Element {
           isOpen={showCatalogModal}
           onClose={() => setShowCatalogModal(false)}
           onSuccess={(): void => { setShowCatalogModal(false); }}
-          catalog={editingCatalog}
-          priceGroups={priceGroups}
-          loadingGroups={loadingGroups}
-          defaultGroupId={defaultGroupId}
+          item={editingCatalog}
+          items={priceGroups}
+          loading={loadingGroups}
+          defaultId={defaultGroupId}
         />
-
-        <LanguageModal />
 
         <PriceGroupModal
           isOpen={showPriceGroupModal}
           onClose={() => setShowPriceGroupModal(false)}
           onSuccess={(): void => { setShowPriceGroupModal(false); }}
-          priceGroup={editingPriceGroup}
-          priceGroups={priceGroups}
+          item={editingPriceGroup}
+          items={priceGroups}
         />
 
-        <CurrencyModal />
-
-        <CountryModal />
+        <InternationalizationModals />
       </div>
     </InternationalizationProvider>
   );

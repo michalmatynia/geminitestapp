@@ -5,8 +5,16 @@ import { updateAsset3D } from '@/features/viewer3d/api';
 import { Asset3DEditModal } from '@/features/viewer3d/components/Asset3DEditModal';
 import type { Asset3DRecord } from '@/features/viewer3d/types';
 
+const { logClientErrorMock } = vi.hoisted(() => ({
+  logClientErrorMock: vi.fn(),
+}));
+
 vi.mock('@/features/viewer3d/api', () => ({
   updateAsset3D: vi.fn(),
+}));
+
+vi.mock('@/features/observability', () => ({
+  logClientError: logClientErrorMock,
 }));
 
 const mockAsset: Asset3DRecord = {
@@ -31,9 +39,10 @@ const mockAsset: Asset3DRecord = {
 
 describe('Asset3DEditModal', () => {
   const defaultProps = {
-    open: true,
+    isOpen: true,
     onClose: vi.fn(),
-    asset: mockAsset,
+    onSuccess: vi.fn(),
+    item: mockAsset,
     onSave: vi.fn(),
     existingCategories: ['Cat A', 'Cat B'],
     existingTags: ['tag A', 'tag B'],
@@ -96,5 +105,6 @@ describe('Asset3DEditModal', () => {
     fireEvent.click(saveButton);
 
     await waitFor(() => expect(screen.getByText('API Error')).toBeInTheDocument());
+    expect(logClientErrorMock).toHaveBeenCalled();
   });
 });

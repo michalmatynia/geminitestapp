@@ -62,14 +62,14 @@ export const useDeleteNoteFolder = createMutationHook({
 
 export const useCreateNotebook = createMutationHook({
   mutationFn: (payload: NotebookCreateInput) => api.post<NotebookRecord>('/api/notes/notebooks', payload),
-  invalidateKeys: [QUERY_KEYS.notes.notebooks],
+  invalidateKeys: [QUERY_KEYS.notes.notebooks()],
 });
 
 export const useUpdateNotebook = createMutationHook({
   mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) =>
     api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, data),
   invalidateKeys: (_data, variables) => [
-    QUERY_KEYS.notes.notebooks,
+    QUERY_KEYS.notes.notebooks(),
     QUERY_KEYS.notes.detail(variables.id),
   ],
 });

@@ -2,23 +2,27 @@
 
 import React from 'react';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { ContentDisplayModal } from '@/shared/ui/templates';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 
-export function TestResultModal(): React.JSX.Element | null {
-  const {
-    showTestSuccessModal: success,
-    testSuccessMessage,
-    testError,
-    testErrorMeta: meta,
-    setShowTestSuccessModal,
-    setShowTestErrorModal,
-  } = useIntegrationsContext();
+interface TestResultModalProps extends ModalStateProps {
+  success: boolean;
+  message: string | null;
+  meta?: {
+    errorId?: string;
+    integrationId?: string;
+    connectionId?: string;
+  };
+}
 
-  const message = success ? testSuccessMessage : testError;
-  const onClose = success ? () => setShowTestSuccessModal(false) : () => setShowTestErrorModal(false);
-
-  if (!message) return null;
+export function TestResultModal({
+  isOpen,
+  onClose,
+  success,
+  message,
+  meta,
+}: TestResultModalProps): React.JSX.Element | null {
+  if (!isOpen || !message) return null;
 
   const metaLines = [
     meta?.errorId ? `Error ID: ${meta.errorId}` : null,
@@ -43,7 +47,7 @@ export function TestResultModal(): React.JSX.Element | null {
 
   return (
     <ContentDisplayModal
-      open={true}
+      open={isOpen}
       onClose={onClose}
       title={success ? 'Playwright Test Success' : 'Playwright Test Error'}
     >

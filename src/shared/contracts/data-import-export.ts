@@ -64,7 +64,9 @@ export const createImportExportTemplateSchema = importExportTemplateSchema.omit(
 });
 
 export type CreateImportExportTemplateDto = z.infer<typeof createImportExportTemplateSchema>;
+export type ImportExportTemplateCreateInput = CreateImportExportTemplateDto;
 export type UpdateImportExportTemplateDto = Partial<CreateImportExportTemplateDto>;
+export type ImportExportTemplateUpdateInput = UpdateImportExportTemplateDto;
 
 export const createImportTemplateSchema = importTemplateSchema.omit({
   id: true,
@@ -73,7 +75,9 @@ export const createImportTemplateSchema = importTemplateSchema.omit({
 });
 
 export type CreateImportTemplateDto = z.infer<typeof createImportTemplateSchema>;
+export type ImportTemplateCreateInput = CreateImportTemplateDto;
 export type UpdateImportTemplateDto = Partial<CreateImportTemplateDto>;
+export type ImportTemplateUpdateInput = UpdateImportTemplateDto;
 
 export const createImportJobBaseSchema = importJobSchema.omit({
   id: true,

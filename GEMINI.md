@@ -82,6 +82,10 @@ src/app/
   auth/                 # Sign-in/register UI routes
 ```
 
+### Development Standards
+- **UI Components**: Follow patterns defined in [docs/COMPONENT_PATTERNS.md](docs/COMPONENT_PATTERNS.md) for DataTable, ListPanel, and FormSection.
+- **Data Access**: Use `createQueryHook` from `src/shared/lib/api-hooks.ts` for unified fetching.
+
 Notable API route groups:
 - `/api/products`, `/api/drafts`, `/api/notes`
 - `/api/integrations` (imports/exports, connections, jobs)

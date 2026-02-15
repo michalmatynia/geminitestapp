@@ -2,30 +2,37 @@
 
 import { useState } from 'react';
 
+import type { SimpleModalProps } from '@/shared/types/modal-props';
 import { Label, Checkbox, FormModal } from '@/shared/ui';
 
-type RestoreModalProps = {
+interface RestoreModalProps extends Omit<SimpleModalProps, 'title' | 'onSuccess'> {
+  title?: string;
+  onSuccess?: () => void;
   backupName: string;
-  onClose: () => void;
   onConfirm: (truncate: boolean) => void;
-};
+}
 
 export const RestoreModal = ({
-  backupName,
+  isOpen,
   onClose,
+  backupName,
   onConfirm,
-}: RestoreModalProps): React.JSX.Element => {
+  title = 'Restore Database',
+  size = 'sm',
+}: RestoreModalProps): React.JSX.Element | null => {
   const [truncate, setTruncate] = useState(true);
+
+  if (!isOpen) return null;
 
   return (
     <FormModal
-      open={true}
+      open={isOpen}
       onClose={onClose}
-      title='Restore Database'
+      title={title}
       onSave={(): void => onConfirm(truncate)}
       saveText='Restore'
       cancelText='Cancel'
-      size='sm'
+      size={size}
     >
       <p className='mb-4 text-gray-300'>
         Are you sure you want to restore backup <strong>{backupName}</strong>?

@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
+import type { CountryOption, CurrencyOption } from '@/shared/types/domain/internationalization';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { SettingsFormModal } from '@/shared/ui';
 
 import { CountryCurrencySection } from './CountryCurrencySection';
@@ -11,22 +12,20 @@ import { CountryFormFields } from './CountryFormFields';
 import { CountryModalProvider } from './CountryModalContext';
 import { useCountryForm } from './hooks/useCountryForm';
 
-export function CountryModal(): React.JSX.Element {
-  const {
-    showCountryModal: isOpen,
-    setCountryModalOpen,
-    editingCountry: country,
-    currencies: currencyOptions,
-    loadingCurrencies,
-  } = useInternationalizationContext();
+interface CountryModalProps extends EntityModalProps<CountryOption, CurrencyOption> {}
 
-  const onClose = () => setCountryModalOpen(false);
-  const onSuccess = () => setCountryModalOpen(false);
-
+export function CountryModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  item: country,
+  items: currencyOptions = [],
+  loading: loadingCurrencies = false,
+}: CountryModalProps): React.JSX.Element {
   const defaultOption = countryCodeOptions[0];
   const { form, setForm, selectedCurrencyIds, setSelectedCurrencyIds, saveMutation, handleSubmit } =
     useCountryForm({
-      country,
+      country: country ?? null,
       defaultCountryCode: defaultOption?.code ?? '',
       defaultCountryName: defaultOption?.name ?? '',
     });

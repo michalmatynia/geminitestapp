@@ -38,7 +38,7 @@ describe('useConfiguredMasterFolderTree', () => {
       {
         initialProps: {
           nodes: initialNodes,
-          selectedNodeId: 'folder-a',
+          selectedNodeId: 'folder-a' as string | null,
         },
       }
     );
@@ -48,7 +48,7 @@ describe('useConfiguredMasterFolderTree', () => {
 
     rerender({
       nodes: createNodes('b'),
-      selectedNodeId: null,
+      selectedNodeId: null as string | null,
     });
 
     expect(result.current.selectedNodeId as any).toBeNull();

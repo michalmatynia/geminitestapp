@@ -6,6 +6,7 @@ import React, { createContext, useContext, useState, useMemo, useEffect, useRef,
 import { internalError } from '@/shared/errors/app-error';
 import { useUndo } from '@/shared/hooks/ui/use-undo';
 import { api } from '@/shared/lib/api-client';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { 
   NoteWithRelations, 
@@ -310,7 +311,7 @@ export function NoteFormProvider({
 
   const relatedNotesQueries = useQueries({
     queries: selectedRelatedNotes.map((rel: RelatedNoteItem) => ({
-      queryKey: QUERY_KEYS.notes.detail(rel.id),
+      queryKey: normalizeQueryKey(QUERY_KEYS.notes.detail(rel.id)),
       queryFn: () => api.get<NoteWithRelations>(`/api/notes/${rel.id}`),
       staleTime: 1000 * 60 * 5,
     }))

@@ -42,6 +42,7 @@ import type { ProductCategory, ProductWithImages } from '@/features/products/typ
 import type { ProductDraft } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { ApiError, api } from '@/shared/lib/api-client';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
@@ -175,12 +176,12 @@ export function useProductListState(): ProductListContextType & {
   const prefetchIntegrationSelectionData = useCallback((): void => {
     void import('@/features/integrations/components/listings/SelectIntegrationModal');
     void queryClient.prefetchQuery({
-      queryKey: integrationSelectionQueryKeys.withConnections,
+      queryKey: normalizeQueryKey(integrationSelectionQueryKeys.withConnections),
       queryFn: fetchIntegrationsWithConnections,
       staleTime: 5 * 60 * 1000,
     });
     void queryClient.prefetchQuery({
-      queryKey: integrationSelectionQueryKeys.defaultConnection,
+      queryKey: normalizeQueryKey(integrationSelectionQueryKeys.defaultConnection),
       queryFn: fetchPreferredBaseConnection,
       staleTime: 5 * 60 * 1000,
     });
@@ -189,7 +190,7 @@ export function useProductListState(): ProductListContextType & {
   const prefetchProductListingsData = useCallback((productId: string): void => {
     if (!productId) return;
     void queryClient.prefetchQuery({
-      queryKey: productListingsQueryKey(productId),
+      queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
       queryFn: () => fetchProductListings(productId),
       staleTime: 30 * 1000,
     });
@@ -198,7 +199,7 @@ export function useProductListState(): ProductListContextType & {
   const refreshProductListingsData = useCallback((productId: string): void => {
     if (!productId) return;
     void queryClient.fetchQuery({
-      queryKey: productListingsQueryKey(productId),
+      queryKey: normalizeQueryKey(productListingsQueryKey(productId)),
       queryFn: () => fetchProductListings(productId),
       staleTime: 0,
     });
@@ -283,7 +284,7 @@ export function useProductListState(): ProductListContextType & {
   }, [data]);
   const categoryQueries = useQueries({
     queries: categoryLookupCatalogIds.map((catalogId: string) => ({
-      queryKey: QUERY_KEYS.products.metadata.categories(catalogId),
+      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.categories(catalogId)),
       queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductCategory[]> =>
         api.get<ProductCategory[]>(
           `/api/products/categories?catalogId=${encodeURIComponent(catalogId)}`,
@@ -339,9 +340,11 @@ export function useProductListState(): ProductListContextType & {
   } = useProductOperations(setRefreshTrigger);
 
   const editingProductDetailQuery = useQuery({
-    queryKey: editingProduct
-      ? getProductDetailQueryKey(editingProduct.id)
-      : inactiveProductDetailQueryKey,
+    queryKey: normalizeQueryKey(
+      editingProduct
+        ? getProductDetailQueryKey(editingProduct.id)
+        : inactiveProductDetailQueryKey
+    ),
     queryFn: ({ signal }) =>
       api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`, { signal }),
     enabled: Boolean(editingProduct?.id),
@@ -404,7 +407,7 @@ export function useProductListState(): ProductListContextType & {
     setActionError(null);
     void queryClient
       .fetchQuery({
-        queryKey: getProductDetailQueryKey(product.id),
+        queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),
         queryFn: ({ signal }) =>
           api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}`, {
             signal,
@@ -519,7 +522,7 @@ export function useProductListState(): ProductListContextType & {
     const run = async (): Promise<void> => {
       try {
         const draft = await queryClient.fetchQuery({
-          queryKey: draftKeys.detail(draftId),
+          queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
           queryFn: () => api.get<ProductDraft>(`/api/drafts/${draftId}`)
         });
         setCreateDraft(draft);
@@ -629,7 +632,7 @@ export function useProductListState(): ProductListContextType & {
       };
 
       const allProducts = await queryClient.fetchQuery({
-        queryKey: getProductListQueryKey({ scope: 'all', ...filters }),
+        queryKey: normalizeQueryKey(getProductListQueryKey({ scope: 'all', ...filters })),
         queryFn: () => getProducts(filters)
       });
 

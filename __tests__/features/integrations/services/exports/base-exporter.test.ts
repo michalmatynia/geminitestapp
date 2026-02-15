@@ -6,6 +6,8 @@ import type { ProductWithImages } from '@/shared/types/domain/products';
 const createProduct = (): ProductWithImages =>
   ({
     id: 'product-1',
+    name: {},
+    description: {},
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     sku: 'SKU-1',
@@ -38,7 +40,13 @@ const createProduct = (): ProductWithImages =>
     images: [],
     catalogs: [],
     tags: [],
-    producers: [{ producerId: 'producer-local-1' }],
+    producers: [
+      {
+        productId: 'product-1',
+        producerId: 'producer-local-1',
+        assignedAt: new Date().toISOString(),
+      },
+    ],
   }) as ProductWithImages;
 
 describe('buildBaseProductData producer mapping', () => {

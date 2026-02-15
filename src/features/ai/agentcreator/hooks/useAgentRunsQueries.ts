@@ -1,67 +1,82 @@
-import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
 import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/types/domain/chatbot';
+import {
+  createListQuery,
+  createCreateMutation,
+} from '@/shared/lib/query-factories';
+import type { 
+  ListQuery, 
+  MutationResult
+} from '@/shared/types/query-result-types';
 
 import * as api from '../api/client';
 
 export { agentRunsKeys };
 
-
-
-
-export function useAgentRuns(): UseQueryResult<AiPathRunRecord[], Error> {
-  return useQuery({
+export function useAgentRuns(): ListQuery<AiPathRunRecord> {
+  return createListQuery({
     queryKey: agentRunsKeys.lists(),
     queryFn: api.getAgentRuns,
   });
 }
 
-export function useAgentSnapshots(runId: string | null): UseQueryResult<AgentSnapshot[], Error> {
-  return useQuery({
+export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot> {
+  return createListQuery({
     queryKey: agentRunsKeys.snapshots(runId || ''),
     queryFn: () => api.getAgentSnapshots(runId!),
-    enabled: !!runId,
+    options: {
+      enabled: !!runId,
+    }
   });
 }
 
-export function useAgentLogs(runId: string | null, options?: { refetchInterval?: number }): UseQueryResult<AgentBrowserLog[], Error> {
-  return useQuery({
+export function useAgentLogs(runId: string | null, options?: { refetchInterval?: number }): ListQuery<AgentBrowserLog> {
+  return createListQuery({
     queryKey: agentRunsKeys.logs(runId || ''),
     queryFn: () => api.getAgentLogs(runId!),
-    enabled: !!runId,
-    refetchInterval: options?.refetchInterval || false,
+    options: {
+      enabled: !!runId,
+      refetchInterval: options?.refetchInterval || false,
+    }
   });
 }
 
-export function useAgentAudits(runId: string | null, options?: { refetchInterval?: number }): UseQueryResult<AgentAuditLog[], Error> {
-  return useQuery({
+export function useAgentAudits(runId: string | null, options?: { refetchInterval?: number }): ListQuery<AgentAuditLog> {
+  return createListQuery({
     queryKey: agentRunsKeys.audits(runId || ''),
     queryFn: () => api.getAgentAudits(runId!),
-    enabled: !!runId,
-    refetchInterval: options?.refetchInterval || false,
+    options: {
+      enabled: !!runId,
+      refetchInterval: options?.refetchInterval || false,
+    }
   });
 }
 
-export function useDeleteAgentRunMutation(): UseMutationResult<void, Error, { runId: string; force?: boolean }> {
+export function useDeleteAgentRunMutation(): MutationResult<void, { runId: string; force?: boolean }> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: ({ runId, force }: { runId: string; force?: boolean }) => 
       api.deleteAgentRun(runId, force),
-    onSuccess: () => {
-      void invalidateAgentRuns(queryClient);
+    options: {
+      onSuccess: () => {
+        void invalidateAgentRuns(queryClient);
+      },
     },
   });
 }
 
-export function useDeleteCompletedAgentRunsMutation(): UseMutationResult<void, Error, void> {
+export function useDeleteCompletedAgentRunsMutation(): MutationResult<void, void> {
   const queryClient = useQueryClient();
-  return useMutation({
+  return createCreateMutation({
     mutationFn: api.deleteCompletedAgentRuns,
-    onSuccess: () => {
-      void invalidateAgentRuns(queryClient);
+    options: {
+      onSuccess: () => {
+        void invalidateAgentRuns(queryClient);
+      },
     },
   });
 }

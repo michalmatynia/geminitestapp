@@ -9,6 +9,7 @@ import {
 import { z } from 'zod';
 
 import { api, type ApiClientOptions } from './api-client';
+import { normalizeQueryKey } from './query-key-utils';
 
 /**
  * Factory for creating typed and validated TanStack Query hooks.
@@ -25,7 +26,7 @@ export interface QueryConfig<TData, TParams = void> {
 export function createQueryHook<TData, TParams = void>(config: QueryConfig<TData, TParams>) {
   return (params: TParams, options?: Partial<UseQueryOptions<TData>>) => {
     return useQuery({
-      queryKey: config.queryKeyFactory(params),
+      queryKey: normalizeQueryKey(config.queryKeyFactory(params)),
       queryFn: async ({ signal }) => {
         const url = typeof config.endpoint === 'function' ? config.endpoint(params) : config.endpoint;
         const method = config.apiOptions?.method ?? 'GET';
@@ -82,7 +83,9 @@ export function createMutationHook<TData, TVariables, TContext = unknown>(
               : config.invalidateKeys;
 
           await Promise.all(
-            keys.map((key) => queryClient.invalidateQueries({ queryKey: key }))
+            keys.map((key) =>
+              queryClient.invalidateQueries({ queryKey: normalizeQueryKey(key) })
+            )
           );
         }
 

@@ -7,6 +7,7 @@ import { logClientError } from '@/features/observability';
 import type { Catalog } from '@/features/products/types';
 import type { PriceGroupWithDetails } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 type LanguageRecord = { id: string; code: string; name: string };
@@ -59,7 +60,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
   const results = useQueries({
     queries: [
       {
-        queryKey: QUERY_KEYS.products.metadata.catalogs,
+        queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.catalogs()),
         queryFn: ({ signal }): Promise<Catalog[]> => fetchCatalogs(signal),
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnMount: false,
@@ -67,7 +68,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
         refetchOnReconnect: false,
       },
       {
-        queryKey: QUERY_KEYS.products.metadata.priceGroups,
+        queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.priceGroups()),
         queryFn: ({ signal }): Promise<PriceGroupWithDetails[]> => fetchPriceGroups(signal),
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
@@ -75,7 +76,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
         refetchOnReconnect: false,
       },
       {
-        queryKey: QUERY_KEYS.products.metadata.languages,
+        queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.languages()),
         queryFn: ({ signal }): Promise<LanguageRecord[]> => fetchLanguages(signal),
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
@@ -83,7 +84,7 @@ export function useCatalogSync(catalogFilter: string): UseCatalogSyncResult {
         refetchOnReconnect: false,
       },
       {
-        queryKey: QUERY_KEYS.internationalization.currencies,
+        queryKey: normalizeQueryKey(QUERY_KEYS.internationalization.currencies()),
         queryFn: ({ signal }): Promise<CurrencyRecord[]> => fetchCurrencies(signal),
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,

@@ -1,17 +1,28 @@
 'use client';
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { ContentDisplayModal } from '@/shared/ui/templates';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 
-export function TestLogModal(): React.JSX.Element | null {
-  const { selectedStep, setShowTestLogModal } = useIntegrationsContext();
+interface TestLogModalProps extends ModalStateProps {
+  selectedStep: {
+    step: string;
+    status: string;
+    timestamp: string;
+    detail?: string;
+  };
+}
 
-  if (!selectedStep) return null;
+export function TestLogModal({
+  isOpen,
+  onClose,
+  selectedStep,
+}: TestLogModalProps): React.JSX.Element | null {
+  if (!isOpen || !selectedStep) return null;
 
   return (
     <ContentDisplayModal
-      open={true}
-      onClose={() => setShowTestLogModal(false)}
+      open={isOpen}
+      onClose={onClose}
       title='Playwright Log'
       size='md'
     >

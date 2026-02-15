@@ -18,7 +18,7 @@ const dbKeys = QUERY_KEYS.system.databases;
 export const databaseSettingsQueryOptions = {
   providerDiagnostics: () =>
     queryOptions({
-      queryKey: dbKeys.providerDiagnostics,
+      queryKey: dbKeys.providerDiagnostics(),
       queryFn: fetchProviderDiagnostics,
       staleTime: 15_000,
       refetchInterval: 30_000,

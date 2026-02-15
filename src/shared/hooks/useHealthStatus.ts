@@ -11,7 +11,7 @@ interface HealthStatus {
 
 export function useHealthStatus() {
   return useQuery<HealthStatus, Error>({
-    queryKey: QUERY_KEYS.health.status,
+    queryKey: QUERY_KEYS.health.status(),
     queryFn: async (): Promise<HealthStatus> =>
       await api.get<HealthStatus>('/api/health'),
     // Optional: add specific TanStack Query options for this hook

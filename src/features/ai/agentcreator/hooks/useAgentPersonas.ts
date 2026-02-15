@@ -15,7 +15,7 @@ export const agentPersonaKeys = QUERY_KEYS.agentPersonas;
 
 export function useAgentPersonas(): UseQueryResult<AgentPersona[], Error> {
   return useQuery({
-    queryKey: agentPersonaKeys.list(),
+    queryKey: agentPersonaKeys.lists(),
     queryFn: fetchAgentPersonas,
   });
 }

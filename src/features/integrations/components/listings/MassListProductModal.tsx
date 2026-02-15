@@ -13,14 +13,13 @@ import { ExportLogViewer } from './ExportLogViewer';
 import { useMassListForm } from './hooks/useMassListForm';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { MassListProductModalViewProvider, useMassListProductModalViewContext } from './mass-list-modal/context/MassListProductModalViewContext';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 
-type MassListProductModalProps = {
+interface MassListProductModalProps extends ModalStateProps {
   productIds: string[];
   integrationId: string;
   connectionId: string;
-  onClose: () => void;
-  onSuccess: () => void;
-};
+}
 
 function MassListProductModalContent(): React.JSX.Element {
   const {
@@ -119,14 +118,18 @@ function MassListProductModalContent(): React.JSX.Element {
   );
 }
 
-export function MassListProductModal(props: MassListProductModalProps): React.JSX.Element {
+export function MassListProductModal(props: MassListProductModalProps): React.JSX.Element | null {
   const {
+    isOpen,
     integrationId,
     connectionId,
     productIds,
     onClose,
     onSuccess,
   } = props;
+
+  if (!isOpen) return null;
+
   return (
     <ListingSettingsProvider
       initialIntegrationId={integrationId}

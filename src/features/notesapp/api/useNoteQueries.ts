@@ -19,7 +19,7 @@ import { noteKeys } from '@/shared/lib/query-key-exports';
 const NOTES_STALE_MS = 10_000;
 
 export const useNotebooks = createQueryHook({
-  queryKeyFactory: () => noteKeys.notebooks,
+  queryKeyFactory: () => noteKeys.notebooks(),
   endpoint: '/api/notes/notebooks',
   schema: z.array(notebookSchema),
   staleTime: NOTES_STALE_MS,

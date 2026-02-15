@@ -1,9 +1,20 @@
 // Core types - single sources of truth
-export * from './core/base-types';
+export type { 
+  DtoBase, 
+  NamedDto, 
+  Localized, 
+  CreateDto, 
+  UpdateDto, 
+  ListResponse, 
+  SavePayload, 
+  CreatePayload, 
+  UpdatePayload, 
+  ApiResponse, 
+  ApiError 
+} from './dto-base';
 export * from './core/errors';
 
 // DTO utilities and query result types
-export * from './dto-utils';
 export * from './query-result-types';
 
 // Modal props types
@@ -17,7 +28,15 @@ export * from './domain/integrations';
 export * from './domain/viewer3d';
 
 // API types
-export * from './api/api';
+export type {
+  DeleteResponse,
+  ApiHandlerContext,
+  ApiHandlerOptions,
+  ApiRouteHandler,
+  ApiRouteHandlerWithParams,
+  JsonParseResult,
+  ParseJsonOptions
+} from './api/api';
 export * from './domain/system-logs';
 export * from './domain/listing-jobs';
 export * from './domain/jobs';

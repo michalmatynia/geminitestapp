@@ -300,9 +300,9 @@ export function Asset3DListPage(): React.JSX.Element {
 
       {previewAsset && (
         <Asset3DPreviewModal
-          open={true}
+          isOpen={true}
           onClose={() => setPreviewAsset(null)}
-          asset={previewAsset}
+          item={previewAsset}
         />
       )}
     </ListPanel>

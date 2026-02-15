@@ -166,4 +166,13 @@ export const categoryKeys = QUERY_KEYS.products;
  * Used in: internationalization query hooks
  */
 export const i18nKeys = QUERY_KEYS.internationalization;
+
+/**
+ * Chatbot query keys (from ai.chatbot)
+ */
 export const chatbotKeys = QUERY_KEYS.ai.chatbot;
+
+/**
+ * Agent teaching query keys (from ai.agentTeaching)
+ */
+export const agentTeachingKeys = QUERY_KEYS.ai.agentTeaching;

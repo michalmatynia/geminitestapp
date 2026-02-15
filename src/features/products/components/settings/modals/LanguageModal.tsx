@@ -4,21 +4,20 @@ import React from 'react';
 
 import { LanguageFormFields } from '@/features/internationalization/components/language-modal/LanguageFormFields';
 import { LanguageModalProvider } from '@/features/internationalization/components/language-modal/LanguageModalContext';
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { useLanguageForm } from '@/features/internationalization/hooks/useLanguageForm';
+import type { CountryOption, Language } from '@/shared/types/domain/internationalization';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { SettingsFormModal } from '@/shared/ui';
 
-export function LanguageModal(): React.JSX.Element {
-  const {
-    showLanguageModal: isOpen,
-    setLanguageModalOpen,
-    editingLanguage: language,
-    countries,
-  } = useInternationalizationContext();
+interface LanguageModalProps extends EntityModalProps<Language, CountryOption> {}
 
-  const onClose = () => setLanguageModalOpen(false);
-  const onSuccess = () => setLanguageModalOpen(false);
-
+export function LanguageModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  item: language,
+  items: countries = [],
+}: LanguageModalProps): React.JSX.Element {
   const {
     form,
     setForm,

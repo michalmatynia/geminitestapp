@@ -4,26 +4,21 @@ import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization';
 import type { PriceGroup } from '@/features/products/types';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { SettingsFormModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
 import { usePriceGroupForm } from './hooks/usePriceGroupForm';
 import { PriceGroupFormFields } from './PriceGroupFormFields';
 import { PriceGroupModalProvider } from './PriceGroupModalContext';
 
-interface PriceGroupModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  priceGroup?: PriceGroup | null;
-  priceGroups: PriceGroup[];
-}
+interface PriceGroupModalProps extends EntityModalProps<PriceGroup> {}
 
 export function PriceGroupModal({
   isOpen,
   onClose,
   onSuccess,
-  priceGroup,
-  priceGroups: _priceGroups,
+  item: priceGroup,
+  items: _priceGroups,
 }: PriceGroupModalProps): React.JSX.Element {
   const {
     currencies: currencyOptions,

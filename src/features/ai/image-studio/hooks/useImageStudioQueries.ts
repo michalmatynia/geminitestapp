@@ -1,9 +1,15 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-
+import {
+  createListQuery,
+  createSingleQuery,
+} from '@/shared/lib/query-factories';
 import { api } from '@/shared/lib/api-client';
 import { studioKeys } from '@/shared/lib/query-key-exports';
+import type { 
+  ListQuery, 
+  SingleQuery 
+} from '@/shared/types/query-result-types';
 
 import type { StudioProjectsResponse, StudioSlotsResponse } from '../types';
 
@@ -15,42 +21,46 @@ export type StudioImageModelsResponse = {
   warning?: string;
 };
 
-export function useStudioProjects(): UseQueryResult<string[], Error> {
-  return useQuery({
+export function useStudioProjects(): ListQuery<string> {
+  return createListQuery({
     queryKey: studioKeys.projects(),
-    queryFn: async ({ signal }): Promise<string[]> => {
-      const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects', { signal });
+    queryFn: async (): Promise<string[]> => {
+      const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects');
       return Array.isArray(data.projects) ? data.projects : [];
     },
-    staleTime: 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    options: {
+      staleTime: 60_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    }
   });
 }
 
-export function useStudioSlots(projectId: string): UseQueryResult<StudioSlotsResponse, Error> {
-  return useQuery({
+export function useStudioSlots(projectId: string): SingleQuery<StudioSlotsResponse> {
+  return createSingleQuery({
     queryKey: studioKeys.slots(projectId),
-    queryFn: ({ signal }) =>
-      api.get<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, {
-        signal,
-      }),
-    enabled: !!projectId,
-    staleTime: 15_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    queryFn: () =>
+      api.get<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`),
+    options: {
+      enabled: !!projectId,
+      staleTime: 15_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    }
   });
 }
 
-export function useStudioImageModels(): UseQueryResult<StudioImageModelsResponse, Error> {
-  return useQuery({
+export function useStudioImageModels(): SingleQuery<StudioImageModelsResponse> {
+  return createSingleQuery({
     queryKey: studioKeys.models(),
-    queryFn: ({ signal }) => api.get<StudioImageModelsResponse>('/api/image-studio/models', { signal }),
-    staleTime: 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    queryFn: () => api.get<StudioImageModelsResponse>('/api/image-studio/models'),
+    options: {
+      staleTime: 60_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    }
   });
 }

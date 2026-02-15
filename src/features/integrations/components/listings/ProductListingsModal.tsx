@@ -10,6 +10,7 @@ import {
 import { ProductListingsProvider, useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import type { ProductWithImages } from '@/features/products/types';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { AppModal } from '@/shared/ui';
 
 import {
@@ -27,13 +28,12 @@ import { ProductListingsError } from './product-listings-modal/ProductListingsEr
 import { ProductListingsLoading } from './product-listings-modal/ProductListingsLoading';
 import { ProductListingsStartPanel } from './product-listings-modal/ProductListingsStartPanel';
 
-type ProductListingsModalProps = {
-  product: ProductWithImages;
-  onClose: () => void;
+interface ProductListingsModalProps extends Omit<EntityModalProps<ProductWithImages>, 'onSuccess'> {
+  onSuccess?: () => void;
   onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
   filterIntegrationSlug?: string | null | undefined;
   onListingsUpdated?: (() => void) | undefined;
-};
+}
 
 const normalizeSlug = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
@@ -162,15 +162,16 @@ function ProductListingsModalProviders(): React.JSX.Element {
 }
 
 export function ProductListingsModal({
-  product,
+  isOpen = true,
+  item: product,
   onClose,
   onStartListing,
   filterIntegrationSlug,
   onListingsUpdated,
-}: ProductListingsModalProps): React.JSX.Element {
+}: ProductListingsModalProps): React.JSX.Element | null {
   const viewContextValue = React.useMemo(
     () => ({
-      product,
+      product: product!,
       onClose,
       ...(onStartListing !== undefined && { onStartListing }),
       ...(filterIntegrationSlug !== undefined && { filterIntegrationSlug }),
@@ -178,6 +179,8 @@ export function ProductListingsModal({
     }),
     [filterIntegrationSlug, onClose, onListingsUpdated, onStartListing, product]
   );
+
+  if (!product || !isOpen) return null;
 
   return (
     <ProductListingsModalViewProvider value={viewContextValue}>

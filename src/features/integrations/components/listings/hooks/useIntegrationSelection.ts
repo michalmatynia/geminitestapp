@@ -4,6 +4,7 @@ import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from '
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import { api } from '@/shared/lib/api-client';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const INTEGRATION_SELECTION_STALE_TIME_MS = 5 * 60 * 1000;
@@ -56,7 +57,7 @@ export function useIntegrationSelection(
   const results = useQueries({
     queries: [
       {
-        queryKey: integrationSelectionKeys.defaultConnection,
+        queryKey: normalizeQueryKey(integrationSelectionKeys.defaultConnection),
         queryFn: fetchPreferredBaseConnection,
         staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
         gcTime: INTEGRATION_SELECTION_GC_TIME_MS,
@@ -65,7 +66,7 @@ export function useIntegrationSelection(
         refetchOnReconnect: false,
       },
       {
-        queryKey: integrationSelectionKeys.withConnections,
+        queryKey: normalizeQueryKey(integrationSelectionKeys.withConnections),
         queryFn: fetchIntegrationsWithConnections,
         staleTime: INTEGRATION_SELECTION_STALE_TIME_MS,
         gcTime: INTEGRATION_SELECTION_GC_TIME_MS,

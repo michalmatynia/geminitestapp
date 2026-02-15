@@ -1,10 +1,10 @@
 // Base types for common patterns across the application
 import type {
-  ApiEnvelopeDto,
   LegacyPaginatedResponseDto,
 } from '@/shared/contracts/http';
 
 import type { BaseRecord } from './common';
+import type { DtoBase, NamedDto, ApiResponse } from './dto-base';
 
 /**
  * Base interface for all entities in the system
@@ -16,15 +16,6 @@ export interface BaseEntity extends BaseRecord {
 }
 
 /**
- * Base interface for all DTOs (Data Transfer Objects)
- */
-export interface DtoBase {
-  id: string;
-  createdAt: string;
-  updatedAt: string | null;
-}
-
-/**
  * Base interface for named entities
  */
 export interface NamedEntity extends BaseEntity {
@@ -32,15 +23,7 @@ export interface NamedEntity extends BaseEntity {
   description?: string | null;
 }
 
-/**
- * Base interface for named DTOs
- */
-export interface NamedDto extends DtoBase {
-  name: string;
-  description?: string | null;
-}
-
+export type { DtoBase, NamedDto, ApiResponse };
 export type PaginatedResponse<T> = LegacyPaginatedResponseDto<T>;
-export type ApiResponse<T = unknown> = ApiEnvelopeDto<T>;
 
 export * from './dto-utils';

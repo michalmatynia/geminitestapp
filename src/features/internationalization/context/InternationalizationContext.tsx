@@ -46,7 +46,7 @@ interface InternationalizationContextType {
   handleDeleteCountry: (country: CountryOption) => Promise<void>;
 }
 
-const InternationalizationContext = createContext<InternationalizationContextType | null>(null);
+export const InternationalizationContext = createContext<InternationalizationContextType | null>(null);
 
 export function useInternationalizationContext(): InternationalizationContextType {
   const context = useContext(InternationalizationContext);

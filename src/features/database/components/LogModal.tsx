@@ -3,30 +3,42 @@
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
+import type { SimpleModalProps } from '@/shared/types/modal-props';
 import { ContentDisplayModal } from '@/shared/ui/templates';
 
-type LogModalProps = {
+interface LogModalProps extends Omit<SimpleModalProps, 'title' | 'onSuccess'> {
+  title?: string;
+  onSuccess?: () => void;
   content: string;
-  onClose: () => void;
-};
+}
 
-export const LogModal = ({ content, onClose }: LogModalProps): React.JSX.Element => (
-  <ContentDisplayModal
-    open={true}
-    onClose={onClose}
-    title='Operation Log'
-    size='md'
-  >
-    <SyntaxHighlighter
-      language='bash'
-      style={atomDark}
-      customStyle={{
-        margin: 0,
-        borderRadius: '0.5rem',
-        fontSize: '0.875rem',
-      }}
+export const LogModal = ({ 
+  isOpen, 
+  onClose, 
+  content, 
+  title = 'Operation Log',
+  size = 'md',
+}: LogModalProps): React.JSX.Element | null => {
+  if (!isOpen) return null;
+
+  return (
+    <ContentDisplayModal
+      open={isOpen}
+      onClose={onClose}
+      title={title}
+      size={size}
     >
-      {content}
-    </SyntaxHighlighter>
-  </ContentDisplayModal>
-);
+      <SyntaxHighlighter
+        language='bash'
+        style={atomDark}
+        customStyle={{
+          margin: 0,
+          borderRadius: '0.5rem',
+          fontSize: '0.875rem',
+        }}
+      >
+        {content}
+      </SyntaxHighlighter>
+    </ContentDisplayModal>
+  );
+};

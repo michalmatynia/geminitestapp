@@ -44,7 +44,9 @@ export const createChatSessionSchema = chatbotSessionSchema.omit({
 });
 
 export type CreateChatSessionDto = z.infer<typeof createChatSessionSchema>;
+export type ChatSessionCreateInput = CreateChatSessionDto;
 export type UpdateChatSessionDto = Partial<CreateChatSessionDto>;
+export type ChatSessionUpdateInput = UpdateChatSessionDto;
 
 /**
  * Chatbot Memory Item Contract

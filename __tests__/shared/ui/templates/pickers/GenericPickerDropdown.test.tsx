@@ -15,11 +15,11 @@ describe('GenericPickerDropdown', () => {
   const mockGroups: PickerGroup[] = [
     {
       label: 'Layout',
-      options: [mockOptions[0]],
+      options: [mockOptions[0]!],
     },
     {
       label: 'Content',
-      options: [mockOptions[1], mockOptions[2]],
+      options: [mockOptions[1]!, mockOptions[2]!],
     },
   ];
 

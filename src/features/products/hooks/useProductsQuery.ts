@@ -12,6 +12,7 @@ import { getProducts, countProducts } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
 import { productSchema } from '@/shared/contracts/products';
 import { createQueryHook } from '@/shared/lib/api-hooks';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
@@ -78,7 +79,7 @@ export function useProductsWithCount(
   const results = useQueries({
     queries: [
       {
-        queryKey: getProductListQueryKey(filters),
+        queryKey: normalizeQueryKey(getProductListQueryKey(filters)),
         queryFn: ({ signal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
         enabled,
         staleTime: PRODUCTS_STALE_MS,
@@ -87,7 +88,7 @@ export function useProductsWithCount(
         refetchOnReconnect: false,
       },
       {
-        queryKey: getProductCountQueryKey(filters),
+        queryKey: normalizeQueryKey(getProductCountQueryKey(filters)),
         queryFn: ({ signal }): Promise<number> => countProducts(filters, signal),
         enabled,
         staleTime: PRODUCTS_STALE_MS,

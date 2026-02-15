@@ -1,43 +1,47 @@
-/* eslint-disable */
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
 
 // Hook for query normalization and relationships
 export function useNormalizedQuery<T extends { id: string }>(
   queryKey: readonly unknown[],
   queryFn: () => Promise<T[]>
-): any {
+): UseQueryResult<T[], Error> & {
+  selectById: (id: string) => T | undefined;
+  selectMany: (ids: string[]) => T[];
+  normalized: { byId: Record<string, T>; allIds: string[] } | undefined;
+} {
   const query = useQuery({
     queryKey,
     queryFn,
-    select: (data: T[]) => {
-      // Normalize data by ID
-      const byId = data.reduce((acc: Record<string, T>, item: T) => {
-        acc[item.id] = item;
-        return acc;
-      }, {} as Record<string, T>);
-
-      const allIds = data.map((item: T) => item.id);
-
-      return { byId, allIds };
-    },
+    select: (data: T[]) => data, // Keep original data structure for the main query result
   });
 
-  const selectById = useCallback((id: string): T | undefined => {
-    return query.data?.byId[id];
+  // Derived normalized state
+  const normalized = useMemo(() => {
+    if (!query.data) return undefined;
+    const byId = query.data.reduce((acc: Record<string, T>, item: T) => {
+      acc[item.id] = item;
+      return acc;
+    }, {} as Record<string, T>);
+    const allIds = query.data.map((item: T) => item.id);
+    return { byId, allIds };
   }, [query.data]);
 
+  const selectById = useCallback((id: string): T | undefined => {
+    return normalized?.byId[id];
+  }, [normalized]);
+
   const selectMany = useCallback((ids: string[]): T[] => {
-    return ids.map((id: string) => query.data?.byId[id]).filter((item): item is T => Boolean(item));
-  }, [query.data]);
+    return ids.map((id: string) => normalized?.byId[id]).filter((item): item is T => Boolean(item));
+  }, [normalized]);
 
   return {
     ...query,
     selectById,
     selectMany,
-    normalized: query.data,
+    normalized,
   };
 }
 
@@ -46,7 +50,7 @@ export function useComposedQuery<T, R>(
   baseQuery: { queryKey: readonly unknown[]; queryFn: () => Promise<T> },
   transformer: (data: T) => R,
   dependencies: readonly unknown[] = []
-): any {
+): UseQueryResult<R, Error> {
   return useQuery({
     queryKey: [...baseQuery.queryKey, 'composed', ...dependencies],
     queryFn: baseQuery.queryFn,
@@ -55,15 +59,20 @@ export function useComposedQuery<T, R>(
 }
 
 // Hook for query aggregation
-export function useAggregatedQuery<T>(
+export function useAggregatedQuery<T, R>(
   queries: Array<{ queryKey: readonly unknown[]; queryFn: () => Promise<T> }>,
-  aggregator: (results: T[]) => any
-): any {
+  aggregator: (results: T[]) => R
+): {
+  data: R | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+} {
   const queryResults = queries.map(({ queryKey, queryFn }) =>
     useQuery({ queryKey, queryFn })
   );
 
-  return useMemo((): any => {
+  return useMemo(() => {
     const allLoaded = queryResults.every(q => q.isSuccess);
     const anyLoading = queryResults.some(q => q.isLoading);
     const anyError = queryResults.some(q => q.isError);
@@ -77,7 +86,7 @@ export function useAggregatedQuery<T>(
       };
     }
 
-    const aggregatedData = aggregator(queryResults.map(q => q.data!));
+    const aggregatedData = aggregator(queryResults.map(q => q.data as T));
 
     return {
       data: aggregatedData,

@@ -21,7 +21,9 @@ export const createLanguageSchema = languageSchema.omit({
 });
 
 export type CreateLanguageDto = z.infer<typeof createLanguageSchema>;
+export type LanguageCreateInput = CreateLanguageDto;
 export type UpdateLanguageDto = Partial<CreateLanguageDto>;
+export type LanguageUpdateInput = UpdateLanguageDto;
 
 /**
  * Country Contract
@@ -40,7 +42,9 @@ export const createCountrySchema = countrySchema.omit({
 });
 
 export type CreateCountryDto = z.infer<typeof createCountrySchema>;
+export type CountryCreateInput = CreateCountryDto;
 export type UpdateCountryDto = Partial<CreateCountryDto>;
+export type CountryUpdateInput = UpdateCountryDto;
 
 /**
  * Currency Contract
@@ -62,7 +66,9 @@ export const createCurrencySchema = currencySchema.omit({
 });
 
 export type CreateCurrencyDto = z.infer<typeof createCurrencySchema>;
+export type CurrencyCreateInput = CreateCurrencyDto;
 export type UpdateCurrencyDto = Partial<CreateCurrencyDto>;
+export type CurrencyUpdateInput = UpdateCurrencyDto;
 
 /**
  * Translation Contract

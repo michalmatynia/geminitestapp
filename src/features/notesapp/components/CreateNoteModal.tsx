@@ -1,27 +1,30 @@
 import { useRef } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import type { NoteRecord } from '@/shared/types/domain/notes';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 import { FormModal } from '@/shared/ui';
-
-
 
 import { NoteForm } from './NoteForm';
 
+interface CreateNoteModalProps extends ModalStateProps {}
 
-export function CreateNoteModal(): React.JSX.Element | null {
-  const { isCreating, setIsCreating, handleCreateSuccess } = useNotesAppContext();
+export function CreateNoteModal({
+  isOpen,
+  onClose,
+  onSuccess,
+}: CreateNoteModalProps): React.JSX.Element | null {
   const formRef = useRef<HTMLFormElement>(null);
 
-  if (!isCreating) return null;
+  if (!isOpen) return null;
 
   return (
     <FormModal
-      open={isCreating}
-      onClose={(): void => setIsCreating(false)}
+      open={isOpen}
+      onClose={onClose}
       title='Create Note'
-      formRef={formRef} // Pass the ref here
-      onSave={handleCreateSuccess} // Pass onSuccess as the onSave callback if formRef is not used
+      formRef={formRef}
+      onSave={onSuccess}
       saveText='Create'
       actions={
         <TriggerButtonBar location='note_modal' entityType='note' />
@@ -29,7 +32,7 @@ export function CreateNoteModal(): React.JSX.Element | null {
     >
       <NoteForm
         formRef={formRef}
-        onSuccess={handleCreateSuccess}
+        onSuccess={onSuccess}
       />
     </FormModal>
   );

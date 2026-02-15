@@ -1,10 +1,12 @@
 'use client';
 
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
 import { chatbotKeys } from '@/shared/lib/query-key-exports';
+import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
 import type { ChatSession } from '@/shared/types/domain/chatbot';
+import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 
 import {
   fetchChatbotSessions,
@@ -42,22 +44,24 @@ const normalizeModelList = (payload: unknown): string[] => {
 /**
  * Query hook for fetching all chatbot sessions
  */
-export function useChatbotSessions(options?: { enabled?: boolean }): UseQueryResult<ChatbotSessionListItem[]> {
-  return useQuery({
+export function useChatbotSessions(options?: { enabled?: boolean }): ListQuery<ChatbotSessionListItem> {
+  return createListQuery({
     queryKey: chatbotKeys.sessions(),
     queryFn: async (): Promise<ChatbotSessionListItem[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>();
       return data.sessions ?? [];
     },
-    enabled: options?.enabled ?? true,
+    options: {
+      enabled: options?.enabled ?? true,
+    },
   });
 }
 
 /**
  * Query hook for fetching session IDs only (lightweight)
  */
-export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }): UseQueryResult<string[]> {
-  return useQuery({
+export function useChatbotSessionIds(query?: string, options?: { enabled?: boolean }): ListQuery<string> {
+  return createListQuery({
     queryKey: chatbotKeys.sessionIds(query),
     queryFn: async (): Promise<string[]> => {
       const data = await fetchChatbotSessions<ChatbotSessionListItem>({
@@ -66,39 +70,45 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
       });
       return data.ids ?? [];
     },
-    enabled: options?.enabled ?? true,
+    options: {
+      enabled: options?.enabled ?? true,
+    },
   });
 }
 
 /**
  * Query hook for fetching a single chatbot session with messages
  */
-export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): UseQueryResult<ChatSession | null> {
-  return useQuery({
+export function useChatbotSession(sessionId: string | null, options?: { enabled?: boolean }): SingleQuery<ChatSession | null> {
+  return createSingleQuery({
     queryKey: sessionId ? chatbotKeys.session(sessionId) : [...chatbotKeys.all, 'session', 'none'],
     queryFn: async () => {
       if (!sessionId) return null;
       return fetchChatbotSession(sessionId);
     },
-    enabled: (options?.enabled ?? true) && !!sessionId,
+    options: {
+      enabled: (options?.enabled ?? true) && !!sessionId,
+    },
   });
 }
 
 /**
  * Query hook for fetching chatbot settings
  */
-export function useChatbotSettings(key?: string, options?: { enabled?: boolean }): UseQueryResult<{ settings?: { settings?: unknown } | null }> {
-  return useQuery({
+export function useChatbotSettings(key?: string, options?: { enabled?: boolean }): SingleQuery<{ settings?: { settings?: unknown } | null }> {
+  return createSingleQuery({
     queryKey: chatbotKeys.settings.all(key),
     queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
-    enabled: (options?.enabled ?? true) && !!key,
+    options: {
+      enabled: (options?.enabled ?? true) && !!key,
+    },
   });
 }
 
 /**
  * Query hook for fetching available models from the chatbot API
  */
-export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResult<string[]> {
+export function useChatbotModels(options?: { enabled?: boolean }): ListQuery<string> {
   return useQuery<unknown, Error, string[]>({
     queryKey: chatbotKeys.models(),
     queryFn: async (): Promise<unknown> => {
@@ -107,28 +117,32 @@ export function useChatbotModels(options?: { enabled?: boolean }): UseQueryResul
     select: (raw: unknown): string[] => normalizeModelList(raw),
     staleTime: 1000 * 60 * 5, // 5 minutes
     enabled: options?.enabled ?? true,
-  });
+  }) as ListQuery<string>;
 }
 
 /**
  * Query hook for fetching Ollama models from a custom base URL
  */
-export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }): UseQueryResult<string[]> {
-  return useQuery({
+export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }): ListQuery<string> {
+  return createListQuery({
     queryKey: chatbotKeys.ollamaModels(baseUrl),
     queryFn: (): Promise<string[]> => fetchOllamaModels(baseUrl),
-    enabled: (options?.enabled ?? true) && !!baseUrl,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    options: {
+      enabled: (options?.enabled ?? true) && !!baseUrl,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    },
   });
 }
 
 /**
  * Query hook for fetching chatbot memory/context
  */
-export function useChatbotMemory(query?: string, options?: { enabled?: boolean }): UseQueryResult<unknown> {
-  return useQuery({
+export function useChatbotMemory(query?: string, options?: { enabled?: boolean }): SingleQuery<unknown> {
+  return createSingleQuery({
     queryKey: chatbotKeys.memory(query),
     queryFn: (): Promise<unknown> => fetchChatbotMemory(query ?? ''),
-    enabled: options?.enabled ?? true,
+    options: {
+      enabled: options?.enabled ?? true,
+    },
   });
 }

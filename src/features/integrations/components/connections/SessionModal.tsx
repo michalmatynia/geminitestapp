@@ -2,24 +2,33 @@
 
 
 
-import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { SessionCookie } from '@/features/integrations/types/integrations-ui';
 import { AppModal, Badge } from '@/shared/ui';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 
-export function SessionModal(): React.JSX.Element {
-  const {
-    sessionLoading: loading,
-    sessionError: error,
-    sessionCookies: cookies,
-    sessionOrigins: origins,
-    sessionUpdatedAt: updatedAt,
-    setShowSessionModal,
-  } = useIntegrationsContext();
+interface SessionModalProps extends ModalStateProps {
+  loading: boolean;
+  error: string | null;
+  cookies: SessionCookie[];
+  origins: string[];
+  updatedAt: string | null;
+}
+
+export function SessionModal({
+  isOpen,
+  onClose,
+  loading,
+  error,
+  cookies,
+  origins,
+  updatedAt,
+}: SessionModalProps): React.JSX.Element | null {
+  if (!isOpen) return null;
 
   return (
     <AppModal
-      open={true}
-      onClose={() => setShowSessionModal(false)}
+      open={isOpen}
+      onClose={onClose}
       title='Session cookies'
       size='lg'
     >

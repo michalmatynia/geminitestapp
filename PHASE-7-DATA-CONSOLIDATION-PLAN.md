@@ -475,13 +475,19 @@ export function useCreateCatalogMutation() {
 **Files to Modify:** 22  
 **Estimated LOC Savings:** 240-360 LOC
 
-### Phase 7.4: Modal Props Consolidation (2-3 hours)
+### Phase 7.3: Modal Props Consolidation (PARTIALLY COMPLETE)
 **Goal:** Unify modal component prop interfaces
 
-**Tasks:**
-- [ ] Create unified modal prop types (`modal-props.ts`)
-- [ ] Update all 34 modal components
-- [ ] Update modal hook signatures
+**Progress (Feb 15):**
+- [x] Refactored `CatalogModal`, `PriceGroupModal`, `CurrencyModal`, `CountryModal`, `LanguageModal`
+- [x] Refactored `CreateNoteModal`
+- [x] Refactored `SelectIntegrationModal`
+- [x] Refactored `MassListProductModal`
+- [x] Refactored `SelectProductForListingModal`
+- [x] Refactored `TestLogModal`, `SessionModal`, `TestResultModal`
+
+**Tasks Remaining:**
+- [ ] Update remaining ~22 modal components
 - [ ] Update parent components passing props
 
 **Files to Modify:** 34 modal components + 10+ parent components = ~45 files  

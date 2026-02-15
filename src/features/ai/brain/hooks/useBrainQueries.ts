@@ -1,15 +1,15 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-
-import { api } from '@/shared/lib/api-client';
 import { brainKeys } from '@/shared/lib/query-key-exports';
+import { api } from '@/shared/lib/api-client';
+import { createSingleQuery } from '@/shared/lib/query-factories';
 import type { 
   AiInsightRecord, 
   AiPathRuntimeAnalyticsSummary, 
   AnalyticsSummaryDto, 
   SystemLogMetrics 
 } from '@/shared/types';
+import type { SingleQuery } from '@/shared/types/query-result-types';
 
 export { brainKeys };
 
@@ -23,27 +23,31 @@ export type InsightsSnapshot = {
   logs: AiInsightRecord[];
 };
 
-export function useOllamaModels(): UseQueryResult<ChatbotModelsResponse, Error> {
-  return useQuery({
+export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
+  return createSingleQuery({
     queryKey: brainKeys.ollamaModels(),
     queryFn: () => api.get<ChatbotModelsResponse>('/api/chatbot'),
-    staleTime: 1000 * 60,
-    refetchInterval: 1000 * 60,
+    options: {
+      staleTime: 1000 * 60,
+      refetchInterval: 1000 * 60,
+    },
   });
 }
 
-export function useBrainAnalyticsSummary(): UseQueryResult<AnalyticsSummaryDto, Error> {
-  return useQuery({
+export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummaryDto> {
+  return createSingleQuery({
     queryKey: brainKeys.analyticsSummary(),
     queryFn: () => api.get<AnalyticsSummaryDto>('/api/analytics/summary', {
       params: { range: '24h', scope: 'all' }
     }),
-    refetchInterval: 30_000,
+    options: {
+      refetchInterval: 30_000,
+    },
   });
 }
 
-export function useBrainLogMetrics(): UseQueryResult<SystemLogMetrics, Error> {
-  return useQuery({
+export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
+  return createSingleQuery({
     queryKey: brainKeys.logMetrics(),
     queryFn: async (): Promise<SystemLogMetrics> => {
       const data = await api.get<{ metrics?: SystemLogMetrics }>('/api/system/logs/metrics', {
@@ -52,12 +56,14 @@ export function useBrainLogMetrics(): UseQueryResult<SystemLogMetrics, Error> {
       if (!data.metrics) throw new Error('Missing metrics payload.');
       return data.metrics;
     },
-    refetchInterval: 30_000,
+    options: {
+      refetchInterval: 30_000,
+    },
   });
 }
 
-export function useBrainInsights(): UseQueryResult<InsightsSnapshot, Error> {
-  return useQuery({
+export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
+  return createSingleQuery({
     queryKey: brainKeys.insights(),
     queryFn: async (): Promise<InsightsSnapshot> => {
       const [analyticsData, logsData] = await Promise.all([
@@ -69,12 +75,14 @@ export function useBrainInsights(): UseQueryResult<InsightsSnapshot, Error> {
         logs: logsData.insights ?? [],
       };
     },
-    refetchInterval: 30_000,
+    options: {
+      refetchInterval: 30_000,
+    },
   });
 }
 
-export function useBrainRuntimeAnalytics(): UseQueryResult<AiPathRuntimeAnalyticsSummary, Error> {
-  return useQuery({
+export function useBrainRuntimeAnalytics(): SingleQuery<AiPathRuntimeAnalyticsSummary> {
+  return createSingleQuery({
     queryKey: brainKeys.runtimeAnalytics(),
     queryFn: async (): Promise<AiPathRuntimeAnalyticsSummary> => {
       const data = await api.get<{ summary?: AiPathRuntimeAnalyticsSummary }>('/api/ai-paths/runtime-analytics/summary', {
@@ -83,6 +91,8 @@ export function useBrainRuntimeAnalytics(): UseQueryResult<AiPathRuntimeAnalytic
       if (!data.summary) throw new Error('Missing runtime analytics payload.');
       return data.summary;
     },
-    refetchInterval: 30_000,
+    options: {
+      refetchInterval: 30_000,
+    },
   });
 }

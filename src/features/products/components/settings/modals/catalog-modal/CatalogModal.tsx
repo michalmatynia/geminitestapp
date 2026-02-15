@@ -4,6 +4,7 @@ import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import type { Catalog, PriceGroup } from '@/features/products/types';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { Alert, SettingsFormModal } from '@/shared/ui';
 
 import { CatalogFormFields } from './CatalogFormFields';
@@ -13,24 +14,16 @@ import { CatalogModalProvider } from './context/CatalogModalContext';
 import { useCatalogForm } from './hooks/useCatalogForm';
 import { toggleLanguage, moveLanguage, togglePriceGroup } from './utils/catalogModalUtils';
 
-interface CatalogModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  catalog?: Catalog | null;
-  priceGroups: PriceGroup[];
-  loadingGroups: boolean;
-  defaultGroupId: string;
-}
+interface CatalogModalProps extends EntityModalProps<Catalog, PriceGroup> {}
 
 export function CatalogModal({
   isOpen,
   onClose,
   onSuccess,
-  catalog,
-  priceGroups,
-  loadingGroups,
-  defaultGroupId,
+  item: catalog,
+  items: priceGroups = [],
+  loading: loadingGroups = false,
+  defaultId: defaultGroupId = '',
 }: CatalogModalProps): React.JSX.Element {
   const {
     languages,

@@ -389,7 +389,7 @@ export function useNoteData({
 
   const setNotebook = useCallback((newNotebook: NotebookRecord): void => {
     // This might need to update the notebook in the list
-    queryClient.setQueryData(QUERY_KEYS.notes.notebooks, (old: NotebookRecord[] | undefined) => {
+    queryClient.setQueryData(QUERY_KEYS.notes.notebooks(), (old: NotebookRecord[] | undefined) => {
       if (!old) return [newNotebook];
       return old.map((n: NotebookRecord) => n.id === newNotebook.id ? newNotebook : n);
     });

@@ -362,17 +362,17 @@ export function Admin3DAssetsPage(): React.JSX.Element {
 
       {previewAsset && (
         <Asset3DPreviewModal
-          open={true}
+          isOpen={true}
           onClose={() => setPreviewAsset(null)}
-          asset={previewAsset}
+          item={previewAsset}
         />
       )}
 
       {editAsset && (
         <Asset3DEditModal
-          open={true}
+          isOpen={true}
           onClose={() => setEditAsset(null)}
-          asset={editAsset}
+          item={editAsset}
           onSave={handleEdit}
           existingCategories={categories}
           existingTags={allTags}

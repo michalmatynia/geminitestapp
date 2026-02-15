@@ -360,9 +360,9 @@ export function Asset3DPickerField({
 
       {previewAsset ? (
         <Asset3DPreviewModal
-          open={Boolean(previewAsset)}
+          isOpen={Boolean(previewAsset)}
           onClose={() => setPreviewAsset(null)}
-          asset={previewAsset}
+          item={previewAsset}
         />
       ) : null}
     </FormField>

@@ -1,12 +1,12 @@
 /**
  * Centralized Query Keys Factory for TanStack Query
  * 
- * Follows the pattern:
- * - all: base key
- * - lists: key for lists
- * - list: key for a specific list with filters
- * - details: key for all details
- * - detail: key for a specific detail by id
+ * Pattern Guidelines:
+ * - all: ['feature'] as const (base key for invalidating EVERYTHING in a feature)
+ * - lists: () => [...all, 'list'] as const (base for all lists)
+ * - list: (filters: unknown) => [...lists(), { filters }] as const (specific list)
+ * - details: () => [...all, 'detail'] as const (base for all single items)
+ * - detail: (id: string) => [...details(), id] as const (specific single item)
  */
 
 export const QUERY_KEYS = {
@@ -27,17 +27,19 @@ export const QUERY_KEYS = {
       [...QUERY_KEYS.products.all, 'validator', 'latest-product-source'] as const,
     aiJobs: {
       all: ['products', 'ai-jobs'] as const,
-      detail: (id: string) => [...QUERY_KEYS.products.aiJobs.all, id] as const,
+      lists: () => [...QUERY_KEYS.products.aiJobs.all, 'list'] as const,
+      details: () => [...QUERY_KEYS.products.aiJobs.all, 'detail'] as const,
+      detail: (id: string) => [...QUERY_KEYS.products.aiJobs.details(), id] as const,
     },
     metadata: {
       all: ['products', 'metadata'] as const,
-      catalogs: ['products', 'metadata', 'catalogs'] as const,
-      categories: (catalogId: string | null) => ['products', 'metadata', 'categories', catalogId] as const,
-      tags: (catalogId: string | null) => ['products', 'metadata', 'tags', catalogId] as const,
-      producers: ['products', 'metadata', 'producers'] as const,
-      parameters: (catalogId: string | null) => ['products', 'metadata', 'parameters', catalogId] as const,
-      languages: ['products', 'metadata', 'languages'] as const,
-      priceGroups: ['products', 'metadata', 'price-groups'] as const,
+      catalogs: () => [...QUERY_KEYS.products.metadata.all, 'catalogs'] as const,
+      categories: (catalogId: string | null) => [...QUERY_KEYS.products.metadata.all, 'categories', catalogId] as const,
+      tags: (catalogId: string | null) => [...QUERY_KEYS.products.metadata.all, 'tags', catalogId] as const,
+      producers: () => [...QUERY_KEYS.products.metadata.all, 'producers'] as const,
+      parameters: (catalogId: string | null) => [...QUERY_KEYS.products.metadata.all, 'parameters', catalogId] as const,
+      languages: () => [...QUERY_KEYS.products.metadata.all, 'languages'] as const,
+      priceGroups: () => [...QUERY_KEYS.products.metadata.all, 'price-groups'] as const,
     },
     settings: {
       all: ['products', 'settings'] as const,
@@ -68,48 +70,60 @@ export const QUERY_KEYS = {
     all: ['notes'] as const,
     lists: () => [...QUERY_KEYS.notes.all, 'list'] as const,
     list: (filters: unknown) => [...QUERY_KEYS.notes.lists(), { filters }] as const,
-    detail: (id: string) => [...QUERY_KEYS.notes.all, 'detail', id] as const,
+    details: () => [...QUERY_KEYS.notes.all, 'detail'] as const,
+    detail: (id: string) => [...QUERY_KEYS.notes.details(), id] as const,
     search: (query: string) => [...QUERY_KEYS.notes.all, 'search', { query }] as const,
     lookup: (ids: string[]) => [...QUERY_KEYS.notes.all, 'lookup', { ids }] as const,
-    notebooks: ['notes', 'notebooks'] as const,
-    tags: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'tags', notebookId] as const,
-    categories: (notebookId?: string | null) => [...QUERY_KEYS.notes.all, 'categories', notebookId] as const,
-    folderTree: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'folder-tree', notebookId] as const,
-    themes: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'themes', notebookId] as const,
+    notebooks: () => [...QUERY_KEYS.notes.all, 'notebooks'] as const,
+    tags: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'tags', notebookId ?? 'all'] as const,
+    categories: (notebookId?: string | null) => [...QUERY_KEYS.notes.all, 'categories', notebookId ?? 'all'] as const,
+    folderTree: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'folder-tree', notebookId ?? 'all'] as const,
+    themes: (notebookId?: string) => [...QUERY_KEYS.notes.all, 'themes', notebookId ?? 'all'] as const,
   },
   cms: {
     all: ['cms'] as const,
     pages: {
       all: ['cms', 'pages'] as const,
-      list: (domainId?: string | null) => [...QUERY_KEYS.cms.pages.all, domainId ?? 'all'] as const,
-      detail: (id: string) => ['cms', 'page', id] as const,
+      lists: () => [...QUERY_KEYS.cms.pages.all, 'list'] as const,
+      list: (domainId?: string | null) => [...QUERY_KEYS.cms.pages.lists(), domainId ?? 'all'] as const,
+      details: () => [...QUERY_KEYS.cms.pages.all, 'detail'] as const,
+      detail: (id: string) => [...QUERY_KEYS.cms.pages.details(), id] as const,
     },
     slugs: {
       all: ['cms', 'slugs'] as const,
-      list: (domainId?: string | null) => [...QUERY_KEYS.cms.slugs.all, domainId ?? 'all'] as const,
-      allSlugs: () => [...QUERY_KEYS.cms.slugs.all, 'all'] as const,
-      detail: (id: string) => ['cms', 'slug', id] as const,
-      detailWithDomain: (id: string, domainId?: string) => [...QUERY_KEYS.cms.slugs.detail(id), domainId ?? 'current'] as const,
-      domains: (id: string) => ['cms', 'slug-domains', id] as const,
+      lists: () => [...QUERY_KEYS.cms.slugs.all, 'list'] as const,
+      list: (domainId?: string | null) => [...QUERY_KEYS.cms.slugs.lists(), domainId ?? 'all'] as const,
+      allSlugs: () => [...QUERY_KEYS.cms.slugs.lists(), 'all-slugs'] as const,
+      details: () => [...QUERY_KEYS.cms.slugs.all, 'detail'] as const,
+      detail: (id: string) => [...QUERY_KEYS.cms.slugs.details(), id] as const,
+      detailWithDomain: (id: string, domainId?: string) => [...QUERY_KEYS.cms.slugs.detail(id), { domainId: domainId ?? 'current' }] as const,
+      domains: (id: string) => [...QUERY_KEYS.cms.slugs.detail(id), 'domains'] as const,
     },
     domains: {
       all: ['cms', 'domains'] as const,
+      lists: () => [...QUERY_KEYS.cms.domains.all, 'list'] as const,
     },
     themes: {
       all: ['cms', 'themes'] as const,
-      detail: (id: string) => ['cms', 'theme', id] as const,
+      lists: () => [...QUERY_KEYS.cms.themes.all, 'list'] as const,
+      details: () => [...QUERY_KEYS.cms.themes.all, 'detail'] as const,
+      detail: (id: string) => [...QUERY_KEYS.cms.themes.details(), id] as const,
     },
-    blocks: () => [...QUERY_KEYS.cms.all, 'blocks'] as const,
+    blocks: {
+      all: ['cms', 'blocks'] as const,
+      lists: () => [...QUERY_KEYS.cms.blocks.all, 'list'] as const,
+    }
   },
   integrations: {
     all: ['integrations'] as const,
+    lists: () => [...QUERY_KEYS.integrations.all, 'list'] as const,
     connections: (integrationId?: string) =>
-      [...QUERY_KEYS.integrations.all, 'connections', integrationId ?? 'all'] as const,
+      [...QUERY_KEYS.integrations.lists(), 'connections', integrationId ?? 'all'] as const,
     connectionSession: (connectionId?: string) =>
       [...QUERY_KEYS.integrations.all, 'connection-session', connectionId ?? 'all'] as const,
-    withConnections: () => [...QUERY_KEYS.integrations.all, 'with-connections'] as const,
-    marketplaces: () => [...QUERY_KEYS.integrations.all, 'marketplaces'] as const,
-    exportTemplates: () => [...QUERY_KEYS.integrations.all, 'export-templates'] as const,
+    withConnections: () => [...QUERY_KEYS.integrations.lists(), 'with-connections'] as const,
+    marketplaces: () => [...QUERY_KEYS.integrations.lists(), 'marketplaces'] as const,
+    exportTemplates: () => [...QUERY_KEYS.integrations.lists(), 'export-templates'] as const,
     activeExportTemplate: () =>
       [...QUERY_KEYS.integrations.all, 'active-export-template'] as const,
     defaultExportInventory: () =>
@@ -128,35 +142,39 @@ export const QUERY_KEYS = {
     },
     marketplace: {
       all: ['marketplace'] as const,
-      categories: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'categories', connectionId] as const,
-      mappings: (connectionId: string, catalogId?: string | null) => [...QUERY_KEYS.integrations.marketplace.all, 'mappings', connectionId, catalogId ?? 'all'] as const,
-      producers: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'producers', connectionId] as const,
-      producerMappings: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'producer-mappings', connectionId] as const,
-      tags: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'tags', connectionId] as const,
-      tagMappings: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.all, 'tag-mappings', connectionId] as const,
+      lists: () => [...QUERY_KEYS.integrations.marketplace.all, 'list'] as const,
+      categories: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.lists(), 'categories', connectionId] as const,
+      mappings: (connectionId: string, catalogId?: string | null) => [...QUERY_KEYS.integrations.marketplace.lists(), 'mappings', connectionId, catalogId ?? 'all'] as const,
+      producers: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.lists(), 'producers', connectionId] as const,
+      producerMappings: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.lists(), 'producer-mappings', connectionId] as const,
+      tags: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.lists(), 'tags', connectionId] as const,
+      tagMappings: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.lists(), 'tag-mappings', connectionId] as const,
     },
     listings: (id: string) => [...QUERY_KEYS.integrations.all, 'listings', id] as const,
     importExport: {
       all: ['import-export'] as const,
-      templates: (scope: 'import' | 'export') => [...QUERY_KEYS.integrations.importExport.all, 'templates', scope] as const,
+      lists: () => [...QUERY_KEYS.integrations.importExport.all, 'list'] as const,
+      templates: (scope: 'import' | 'export') => [...QUERY_KEYS.integrations.importExport.lists(), 'templates', scope] as const,
       preferences: () => [...QUERY_KEYS.integrations.importExport.all, 'preferences'] as const,
       pref: (key: string) => [...QUERY_KEYS.integrations.importExport.preferences(), key] as const,
-      inventories: (connectionId?: string) => [...QUERY_KEYS.integrations.importExport.all, 'inventories', { connectionId }] as const,
+      inventories: (connectionId?: string) => [...QUERY_KEYS.integrations.importExport.lists(), 'inventories', { connectionId }] as const,
       warehouses: (inventoryId: string, connectionId?: string, includeAll?: boolean) => 
-        [...QUERY_KEYS.integrations.importExport.all, 'warehouses', { inventoryId, connectionId, includeAll }] as const,
+        [...QUERY_KEYS.integrations.importExport.lists(), 'warehouses', { inventoryId, connectionId, includeAll }] as const,
       parameters: (inventoryId: string, productId: string) => 
-        [...QUERY_KEYS.integrations.importExport.all, 'parameters', { inventoryId, productId }] as const,
+        [...QUERY_KEYS.integrations.importExport.lists(), 'parameters', { inventoryId, productId }] as const,
       importList: (inventoryId: string, params: Record<string, unknown>) =>
-        [...QUERY_KEYS.integrations.importExport.all, 'import-list', { inventoryId, ...params }] as const,
+        [...QUERY_KEYS.integrations.importExport.lists(), 'import-list', { inventoryId, ...params }] as const,
     }
   },
   ai: {
     all: ['ai'] as const,
     chatbot: {
-      all: ['chatbot'] as const,
-      sessions: () => [...QUERY_KEYS.ai.chatbot.all, 'sessions'] as const,
+      all: ['ai', 'chatbot'] as const,
+      lists: () => [...QUERY_KEYS.ai.chatbot.all, 'list'] as const,
+      sessions: () => [...QUERY_KEYS.ai.chatbot.lists(), 'sessions'] as const,
       sessionIds: (query?: string) => [...QUERY_KEYS.ai.chatbot.sessions(), 'ids', query ?? 'all'] as const,
-      session: (id: string) => [...QUERY_KEYS.ai.chatbot.sessions(), id] as const,
+      details: () => [...QUERY_KEYS.ai.chatbot.all, 'detail'] as const,
+      session: (id: string) => [...QUERY_KEYS.ai.chatbot.details(), id] as const,
       memory: (query?: string) => [...QUERY_KEYS.ai.chatbot.all, 'memory', query ?? 'all'] as const,
       context: () => [...QUERY_KEYS.ai.chatbot.all, 'context'] as const,
       settings: {
@@ -168,82 +186,97 @@ export const QUERY_KEYS = {
     },
     aiPaths: {
       all: ['ai', 'ai-paths'] as const,
+      lists: () => [...QUERY_KEYS.ai.aiPaths.all, 'list'] as const,
       settings: () => [...QUERY_KEYS.ai.aiPaths.all, 'settings'] as const,
       triggerButtons: () => [...QUERY_KEYS.ai.aiPaths.all, 'trigger-buttons'] as const,
-      runs: (filters?: unknown) => [...QUERY_KEYS.ai.aiPaths.all, 'runs', filters ? { filters } : 'all'] as const,
-      run: (id: string) => [...QUERY_KEYS.ai.aiPaths.all, 'runs', 'detail', id] as const,
-      deadLetter: (filters: unknown) => [...QUERY_KEYS.ai.aiPaths.all, 'dead-letter', filters] as const,
+      runs: (filters?: unknown) => [...QUERY_KEYS.ai.aiPaths.lists(), 'runs', filters ? { filters } : 'all'] as const,
+      details: () => [...QUERY_KEYS.ai.aiPaths.all, 'detail'] as const,
+      run: (id: string) => [...QUERY_KEYS.ai.aiPaths.details(), id] as const,
+      deadLetter: (filters: unknown) => [...QUERY_KEYS.ai.aiPaths.lists(), 'dead-letter', filters] as const,
       runtimeAnalytics: (range: string) => [...QUERY_KEYS.ai.aiPaths.all, 'runtime-analytics', { range }] as const,
-      jobQueue: (filters: unknown) => [...QUERY_KEYS.ai.aiPaths.all, 'job-queue', { filters }] as const,
+      jobQueue: (filters: unknown) => [...QUERY_KEYS.ai.aiPaths.lists(), 'job-queue', { filters }] as const,
       queueStatus: () => [...QUERY_KEYS.ai.aiPaths.all, 'queue-status'] as const,
     },
     insights: {
       all: ['ai', 'insights'] as const,
-      analytics: () => [...QUERY_KEYS.ai.insights.all, 'analytics'] as const,
-      logs: () => [...QUERY_KEYS.ai.insights.all, 'logs'] as const,
-      notifications: () => [...QUERY_KEYS.ai.insights.all, 'notifications'] as const,
+      lists: () => [...QUERY_KEYS.ai.insights.all, 'list'] as const,
+      analytics: () => [...QUERY_KEYS.ai.insights.lists(), 'analytics'] as const,
+      logs: () => [...QUERY_KEYS.ai.insights.lists(), 'logs'] as const,
+      notifications: () => [...QUERY_KEYS.ai.insights.lists(), 'notifications'] as const,
     }
   },
   userPreferences: ['user-preferences'] as const,
   auth: {
-    user: ['auth', 'user'] as const,
-    session: ['auth', 'session'] as const,
+    all: ['auth'] as const,
+    user: () => [...QUERY_KEYS.auth.all, 'user'] as const,
+    session: () => [...QUERY_KEYS.auth.all, 'session'] as const,
     users: {
       all: ['auth', 'users'] as const,
-      detail: (id: string) => [...QUERY_KEYS.auth.users.all, 'detail', id] as const,
-      security: (id: string) => [...QUERY_KEYS.auth.users.all, 'security', id] as const,
+      lists: () => [...QUERY_KEYS.auth.users.all, 'list'] as const,
+      details: () => [...QUERY_KEYS.auth.users.all, 'detail'] as const,
+      detail: (id: string) => [...QUERY_KEYS.auth.users.details(), id] as const,
+      security: (id: string) => [...QUERY_KEYS.auth.users.detail(id), 'security'] as const,
     },
     preferences: {
       all: ['auth', 'preferences'] as const,
-      detail: (key: string) => [...QUERY_KEYS.auth.preferences.all, key] as const,
+      lists: () => [...QUERY_KEYS.auth.preferences.all, 'list'] as const,
+      detail: (key: string) => [...QUERY_KEYS.auth.preferences.all, 'item', key] as const,
     },
   },
   system: {
+    all: ['system'] as const,
     logs: {
       all: ['system', 'logs'] as const,
-      list: (filters: unknown) => [...QUERY_KEYS.system.logs.all, 'list', filters] as const,
+      lists: () => [...QUERY_KEYS.system.logs.all, 'list'] as const,
+      list: (filters: unknown) => [...QUERY_KEYS.system.logs.lists(), filters] as const,
       metrics: (filters: unknown) => [...QUERY_KEYS.system.logs.all, 'metrics', filters] as const,
       insights: (limit?: number) => [...QUERY_KEYS.system.logs.all, 'insights', { limit }] as const,
     },
     uploadEvents: {
       all: ['system', 'upload-events'] as const,
-      list: (filters: unknown) => [...QUERY_KEYS.system.uploadEvents.all, filters] as const,
+      lists: () => [...QUERY_KEYS.system.uploadEvents.all, 'list'] as const,
+      list: (filters: unknown) => [...QUERY_KEYS.system.uploadEvents.lists(), filters] as const,
     },
     diagnostics: {
       all: ['system', 'diagnostics'] as const,
-      mongo: ['system', 'diagnostics', 'mongo'] as const,
+      mongo: () => [...QUERY_KEYS.system.diagnostics.all, 'mongo'] as const,
     },
     activity: {
       all: ['system', 'activity'] as const,
-      list: (filters: unknown) => [...QUERY_KEYS.system.activity.all, 'list', filters] as const,
+      lists: () => [...QUERY_KEYS.system.activity.all, 'list'] as const,
+      list: (filters: unknown) => [...QUERY_KEYS.system.activity.lists(), filters] as const,
     },
     databases: {
       all: ['system', 'databases'] as const,
-      backups: (dbType: string) => [...QUERY_KEYS.system.databases.all, 'backups', dbType] as const,
-      providerDiagnostics: ['system', 'databases', 'provider-diagnostics'] as const,
+      lists: () => [...QUERY_KEYS.system.databases.all, 'list'] as const,
+      backups: (dbType: string) => [...QUERY_KEYS.system.databases.lists(), 'backups', dbType] as const,
+      providerDiagnostics: () => [...QUERY_KEYS.system.databases.all, 'provider-diagnostics'] as const,
       preview: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'preview', params] as const,
       crudRows: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'crud-rows', params] as const,
       schema: (params: Record<string, unknown>) => [...QUERY_KEYS.system.databases.all, 'schema', params] as const,
       redisOverview: (params: Record<string, unknown>) =>
         [...QUERY_KEYS.system.databases.all, 'redis-overview', params] as const,
-      engineStatus: [...['system', 'databases'], 'engine-status'] as const,
-      engineBackupSchedulerStatus: [...['system', 'databases'], 'engine-backup-scheduler-status'] as const,
+      engineStatus: () => [...QUERY_KEYS.system.databases.all, 'engine-status'] as const,
+      engineBackupSchedulerStatus: () => [...QUERY_KEYS.system.databases.all, 'engine-backup-scheduler-status'] as const,
       engineOperationsJobs: (params: Record<string, unknown>) =>
         [...QUERY_KEYS.system.databases.all, 'engine-operations-jobs', params] as const,
       engineProviderPreview: (params: Record<string, unknown>) =>
         [...QUERY_KEYS.system.databases.all, 'engine-provider-preview', params] as const,
-      controlPanel: [...['system', 'databases'], 'control-panel'] as const,
-      jsonBackups: [...['system', 'databases'], 'json-backups'] as const,
+      controlPanel: () => [...QUERY_KEYS.system.databases.all, 'control-panel'] as const,
+      jsonBackups: () => [...QUERY_KEYS.system.databases.all, 'json-backups'] as const,
     },
   },
   internationalization: {
-    currencies: ['currencies'] as const,
-    countries: ['countries'] as const,
-    languages: ['languages'] as const,
+    all: ['internationalization'] as const,
+    currencies: () => [...QUERY_KEYS.internationalization.all, 'currencies'] as const,
+    countries: () => [...QUERY_KEYS.internationalization.all, 'countries'] as const,
+    languages: () => [...QUERY_KEYS.internationalization.all, 'languages'] as const,
   },
   drafts: {
     all: ['drafts'] as const,
-    detail: (id: string) => ['drafts', id] as const,
+    lists: () => [...QUERY_KEYS.drafts.all, 'list'] as const,
+    details: () => [...QUERY_KEYS.drafts.all, 'detail'] as const,
+    detail: (id: string) => [...QUERY_KEYS.drafts.details(), id] as const,
   },
   analytics: {
     all: ['analytics'] as const,
@@ -254,48 +287,57 @@ export const QUERY_KEYS = {
   },
   playwright: {
     all: ['playwright'] as const,
-    personas: () => [...QUERY_KEYS.playwright.all, 'personas'] as const,
+    lists: () => [...QUERY_KEYS.playwright.all, 'list'] as const,
+    personas: () => [...QUERY_KEYS.playwright.lists(), 'personas'] as const,
   },
   jobs: {
     all: ['jobs'] as const,
-    integrations: () => [...QUERY_KEYS.jobs.all, 'integrations'] as const,
+    lists: () => [...QUERY_KEYS.jobs.all, 'list'] as const,
+    integrations: () => [...QUERY_KEYS.jobs.lists(), 'integrations'] as const,
     traderaQueueHealth: () =>
       [...QUERY_KEYS.jobs.integrations(), 'tradera-queue-health'] as const,
-    productAi: (scope: string) => [...QUERY_KEYS.jobs.all, 'product-ai', scope] as const,
-    chatbot: (scope: string) => [...QUERY_KEYS.jobs.all, 'chatbot', scope] as const,
-    realtime: () => [...QUERY_KEYS.jobs.all, 'realtime'] as const,
-    status: (id: string) => [...QUERY_KEYS.jobs.all, 'status', id] as const,
+    productAi: (scope: string) => [...QUERY_KEYS.jobs.lists(), 'product-ai', scope] as const,
+    chatbot: (scope: string) => [...QUERY_KEYS.jobs.lists(), 'chatbot', scope] as const,
+    realtime: () => [...QUERY_KEYS.jobs.lists(), 'realtime'] as const,
+    details: () => [...QUERY_KEYS.jobs.all, 'detail'] as const,
+    status: (id: string) => [...QUERY_KEYS.jobs.details(), id] as const,
   },
   imageStudio: {
     all: ['image-studio'] as const,
-    projects: () => [...QUERY_KEYS.imageStudio.all, 'projects'] as const,
-    slots: (projectId: string) => [...QUERY_KEYS.imageStudio.all, 'slots', projectId] as const,
+    lists: () => [...QUERY_KEYS.imageStudio.all, 'list'] as const,
+    projects: () => [...QUERY_KEYS.imageStudio.lists(), 'projects'] as const,
+    slots: (projectId: string) => [...QUERY_KEYS.imageStudio.lists(), 'slots', projectId] as const,
     models: () => [...QUERY_KEYS.imageStudio.all, 'models'] as const,
-    runs: (filters: unknown) => [...QUERY_KEYS.imageStudio.all, 'runs', { filters }] as const,
-    run: (id: string) => [...QUERY_KEYS.imageStudio.all, 'runs', 'detail', id] as const,
+    runs: (filters: unknown) => [...QUERY_KEYS.imageStudio.lists(), 'runs', { filters }] as const,
+    details: () => [...QUERY_KEYS.imageStudio.all, 'detail'] as const,
+    run: (id: string) => [...QUERY_KEYS.imageStudio.details(), id] as const,
   },
   agentRuns: {
     all: ['agent-runs'] as const,
     lists: () => [...QUERY_KEYS.agentRuns.all, 'list'] as const,
-    detail: (id: string) => [...QUERY_KEYS.agentRuns.all, 'detail', id] as const,
+    details: () => [...QUERY_KEYS.agentRuns.all, 'detail'] as const,
+    detail: (id: string) => [...QUERY_KEYS.agentRuns.details(), id] as const,
     snapshots: (id: string) => [...QUERY_KEYS.agentRuns.detail(id), 'snapshots'] as const,
     logs: (id: string) => [...QUERY_KEYS.agentRuns.detail(id), 'logs'] as const,
     audits: (id: string) => [...QUERY_KEYS.agentRuns.detail(id), 'audits'] as const,
   },
   agentPersonas: {
     all: ['agent-personas'] as const,
-    list: () => [...QUERY_KEYS.agentPersonas.all, 'list'] as const,
+    lists: () => [...QUERY_KEYS.agentPersonas.all, 'list'] as const,
   },
   agentTeaching: {
     all: ['agent-teaching'] as const,
-    agents: () => [...QUERY_KEYS.agentTeaching.all, 'agents'] as const,
-    collections: () => [...QUERY_KEYS.agentTeaching.all, 'collections'] as const,
+    lists: () => [...QUERY_KEYS.agentTeaching.all, 'list'] as const,
+    agents: () => [...QUERY_KEYS.agentTeaching.lists(), 'agents'] as const,
+    collections: () => [...QUERY_KEYS.agentTeaching.lists(), 'collections'] as const,
+    details: () => [...QUERY_KEYS.agentTeaching.all, 'detail'] as const,
     documents: (collectionId: string) =>
-      [...QUERY_KEYS.agentTeaching.all, 'collections', collectionId, 'documents'] as const,
+      [...QUERY_KEYS.agentTeaching.details(), 'collections', collectionId, 'documents'] as const,
   },
   brain: {
     all: ['brain'] as const,
-    ollamaModels: () => [...QUERY_KEYS.brain.all, 'ollama-models'] as const,
+    lists: () => [...QUERY_KEYS.brain.all, 'list'] as const,
+    ollamaModels: () => [...QUERY_KEYS.brain.lists(), 'ollama-models'] as const,
     metrics: () => [...QUERY_KEYS.brain.all, 'metrics'] as const,
     analyticsSummary: () => [...QUERY_KEYS.brain.metrics(), 'analytics-summary'] as const,
     logMetrics: () => [...QUERY_KEYS.brain.metrics(), 'logs'] as const,
@@ -304,10 +346,12 @@ export const QUERY_KEYS = {
   },
   viewer3d: {
     all: ['assets3d'] as const,
-    list: (filters: unknown) => [...QUERY_KEYS.viewer3d.all, 'list', filters] as const,
-    detail: (id: string | null) => [...QUERY_KEYS.viewer3d.all, 'detail', id] as const,
-    categories: ['assets3d', 'categories'] as const,
-    tags: ['assets3d', 'tags'] as const,
+    lists: () => [...QUERY_KEYS.viewer3d.all, 'list'] as const,
+    list: (filters: unknown) => [...QUERY_KEYS.viewer3d.lists(), { filters }] as const,
+    details: () => [...QUERY_KEYS.viewer3d.all, 'detail'] as const,
+    detail: (id: string | null) => [...QUERY_KEYS.viewer3d.details(), id] as const,
+    categories: () => [...QUERY_KEYS.viewer3d.all, 'categories'] as const,
+    tags: () => [...QUERY_KEYS.viewer3d.all, 'tags'] as const,
   },
   search: {
     all: ['search'] as const,
@@ -317,7 +361,8 @@ export const QUERY_KEYS = {
   },
   files: {
     all: ['files'] as const,
-    list: (params: string) => [...QUERY_KEYS.files.all, 'list', params] as const,
+    lists: () => [...QUERY_KEYS.files.all, 'list'] as const,
+    list: (params: string) => [...QUERY_KEYS.files.lists(), params] as const,
   },
   navigation: {
     all: ['navigation'] as const,
@@ -329,6 +374,7 @@ export const QUERY_KEYS = {
     settings: (userId: string) => [...QUERY_KEYS.user.all, 'settings', userId] as const,
   },
   health: {
-    status: ['health-status'] as const,
+    all: ['health'] as const,
+    status: () => [...QUERY_KEYS.health.all, 'status'] as const,
   }
 } as const;

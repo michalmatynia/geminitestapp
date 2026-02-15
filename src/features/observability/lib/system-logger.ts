@@ -241,31 +241,40 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
       return;
     }
 
-    const createSystemLog = await loadCreateSystemLog();
-    if (!createSystemLog) {
-      return;
-    }
-    const created: SystemLogRecord = await createSystemLog({
-      level: input.level ?? 'info',
-      message: input.message,
-      source: input.source ?? null,
-      context: sanitizeValue(context),
-      stack: errorInfo?.stack ?? null,
-      path: input.request?.url ? requestInfo.path : undefined,
-      method: requestInfo.method,
-      statusCode: input.statusCode ?? null,
-      requestId: input.requestId ?? requestInfo.requestId ?? null,
-      userId: input.userId ?? null,
-    });
+    // Fire-and-forget background task for DB persistence
+    // This ensures request handling is not blocked by DB writes
+    void (async () => {
+      try {
+        const createSystemLog = await loadCreateSystemLog();
+        if (!createSystemLog) {
+          return;
+        }
+        const created: SystemLogRecord = await createSystemLog({
+          level: input.level ?? 'info',
+          message: input.message,
+          source: input.source ?? null,
+          context: sanitizeValue(context),
+          stack: errorInfo?.stack ?? null,
+          path: input.request?.url ? requestInfo.path : undefined,
+          method: requestInfo.method,
+          statusCode: input.statusCode ?? null,
+          requestId: input.requestId ?? requestInfo.requestId ?? null,
+          userId: input.userId ?? null,
+        });
 
-    if (critical) {
-      const notifyCriticalError = await loadNotifyCriticalError();
-      if (notifyCriticalError) {
-        await notifyCriticalError(created, critical);
+        if (critical) {
+          const notifyCriticalError = await loadNotifyCriticalError();
+          if (notifyCriticalError) {
+            await notifyCriticalError(created, critical);
+          }
+        }
+      } catch (err) {
+        console.error('[system-logger] Failed to persist log asynchronously', err);
       }
-    }
+    })();
+
   } catch (error) {
-    console.error('[system-logger] Failed to write system log', error);
+    console.error('[system-logger] Failed to process system log', error);
   }
 }
 

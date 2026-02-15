@@ -2,26 +2,24 @@
 
 import React from 'react';
 
-
-import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
+import type { CurrencyOption } from '@/shared/types/domain/internationalization';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { SettingsFormModal } from '@/shared/ui';
 
 import { CurrencyFormFields } from './CurrencyFormFields';
 import { CurrencyModalProvider } from './CurrencyModalContext';
 import { useCurrencyForm } from './hooks/useCurrencyForm';
 
-export function CurrencyModal(): React.JSX.Element {
-  const {
-    showCurrencyModal: isOpen,
-    setCurrencyModalOpen,
-    editingCurrency: currency,
-  } = useInternationalizationContext();
+interface CurrencyModalProps extends EntityModalProps<CurrencyOption> {}
 
-  const onClose = () => setCurrencyModalOpen(false);
-  const onSuccess = () => setCurrencyModalOpen(false);
-
+export function CurrencyModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  item: currency,
+}: CurrencyModalProps): React.JSX.Element {
   const { form, setForm, saveMutation, handleSubmit: handleFormSubmit } =
-    useCurrencyForm({ currency });
+    useCurrencyForm({ currency: currency ?? null });
 
   const handleSave = async (): Promise<void> => {
     await handleFormSubmit();

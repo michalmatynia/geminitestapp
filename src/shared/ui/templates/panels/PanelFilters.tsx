@@ -4,7 +4,7 @@ import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 
-import { Button } from '@/shared/ui';
+import { Button, Label } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import { MultiSelect } from '@/shared/ui/multi-select';
@@ -215,7 +215,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
       if (field.multi) {
         return (
           <div style={containerStyle} className='flex flex-col gap-1'>
-            <label className='text-xs font-medium text-gray-600'>{field.label}</label>
+            <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
             <MultiSelect
               options={options}
               selected={getMultiSelectValues(value)}
@@ -229,7 +229,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
 
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
           <Select value={getSingleSelectValue(value)} onValueChange={(val) => onChange(val)}>
             <SelectTrigger className='h-8' aria-label={field.label}>
               <SelectValue placeholder={field.placeholder} />
@@ -263,7 +263,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     case 'number':
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
           <Input
             type='number'
             placeholder={field.placeholder}
@@ -277,7 +277,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     case 'date':
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
           <Input
             type='date'
             value={(value as string) || ''}
@@ -291,7 +291,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
       const rangeValue = value as { from?: string; to?: string } | undefined;
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
           <div className='flex gap-1'>
             <Input
               type='date'
@@ -326,7 +326,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     default:
       return (
         <div style={containerStyle} className='flex flex-col gap-1'>
-          <label className='text-xs font-medium text-gray-600'>{field.label}</label>
+          <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
           <Input
             type='text'
             placeholder={field.placeholder}

@@ -23,12 +23,34 @@ const csp = [
 const nextConfig = {
   reactStrictMode: true,
   devIndicators: false,
+  compress: true, // Ensure gzip compression is enabled
   output: "standalone", // Docker-friendly build output
   outputFileTracingRoot: __dirname,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
   experimental: {
     // Default proxy body clone limit (~10MB) is too low for multi-image product forms.
     // Raise it so multipart requests don't fail before route handlers read formData().
     proxyClientMaxBodySize: "50mb",
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-collapsible',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-label',
+      '@radix-ui/react-radio-group',
+      '@radix-ui/react-select',
+      '@radix-ui/react-slot',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-toast',
+      'date-fns',
+      'lodash',
+    ],
   },
   serverExternalPackages: [
     '@prisma/client',

@@ -110,7 +110,9 @@ export const createAiPathSchema = aiPathSchema.omit({
 });
 
 export type CreateAiPathDto = z.infer<typeof createAiPathSchema>;
+export type AiPathCreateInput = CreateAiPathDto;
 export type UpdateAiPathDto = Partial<CreateAiPathDto>;
+export type AiPathUpdateInput = UpdateAiPathDto;
 
 /**
  * AI Path Run Status
@@ -164,6 +166,17 @@ export const aiPathRunSchema = dtoBaseSchema.extend({
 });
 
 export type AiPathRunDto = z.infer<typeof aiPathRunSchema>;
+
+export const createAiPathRunSchema = aiPathRunSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreateAiPathRunDto = z.infer<typeof createAiPathRunSchema>;
+export type AiPathRunCreateInput = CreateAiPathRunDto;
+export type UpdateAiPathRunDto = Partial<CreateAiPathRunDto>;
+export type AiPathRunUpdateInput = UpdateAiPathRunDto;
 
 /**
  * AI Path Node Status

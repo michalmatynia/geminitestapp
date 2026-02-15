@@ -7,6 +7,7 @@ import {
 } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationWithConnections } from '@/features/integrations/types/listings';
 import type { ProductWithImages } from '@/features/products/types';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { FormModal } from '@/shared/ui';
 
 import { BaseListingSettings } from './BaseListingSettings';
@@ -19,13 +20,10 @@ import { IntegrationSelection } from './list-product-modal/IntegrationSelection'
 import { ListProductErrorPanel } from './list-product-modal/ListProductErrorPanel';
 import { TraderaListingSettings } from './TraderaListingSettings';
 
-type ListProductModalProps = {
-  product: ProductWithImages;
-  onClose: () => void;
-  onSuccess: () => void;
+interface ListProductModalProps extends EntityModalProps<ProductWithImages> {
   initialIntegrationId?: string | null;
   initialConnectionId?: string | null;
-};
+}
 
 function ListProductModalContent(): React.JSX.Element {
   const {
@@ -145,14 +143,18 @@ function ListProductModalContent(): React.JSX.Element {
   );
 }
 
-export function ListProductModal(props: ListProductModalProps): React.JSX.Element {
+export function ListProductModal(props: ListProductModalProps): React.JSX.Element | null {
   const {
+    isOpen = true,
     initialIntegrationId,
     initialConnectionId,
-    product,
+    item: product,
     onClose,
     onSuccess,
   } = props;
+
+  if (!product || !isOpen) return null;
+
   return (
     <ListingSettingsProvider
       initialIntegrationId={initialIntegrationId ?? null}

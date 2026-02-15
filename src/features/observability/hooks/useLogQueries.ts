@@ -1,11 +1,13 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-
-import type { ActivityLogDto } from '@/shared/contracts/system';
+import {
+  createSingleQuery,
+} from '@/shared/lib/query-factories';
 import { api } from '@/shared/lib/api-client';
 import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
+import type { SingleQuery } from '@/shared/types/query-result-types';
+import type { ActivityLogDto } from '@/shared/contracts/system';
 
 export type LogFilters = {
   page?: number;
@@ -37,8 +39,8 @@ export interface SystemActivityResponse {
   pageSize: number;
 }
 
-export function useSystemLogs(filters: LogFilters): UseQueryResult<SystemLogsResponse, Error> {
-  return useQuery({
+export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsResponse> {
+  return createSingleQuery({
     queryKey: logsKeys.list(filters),
     queryFn: () => 
       api.get<SystemLogsResponse>('/api/system/logs', {
@@ -61,9 +63,9 @@ export function useSystemLogs(filters: LogFilters): UseQueryResult<SystemLogsRes
   });
 }
 
-export function useSystemActivity(params: { page?: number; pageSize?: number; search?: string } = {}): UseQueryResult<SystemActivityResponse, Error> {
+export function useSystemActivity(params: { page?: number; pageSize?: number; search?: string } = {}): SingleQuery<SystemActivityResponse> {
   const { page = 1, pageSize = 10, search } = params;
-  return useQuery({
+  return createSingleQuery({
     queryKey: activityKeys.list({ page, pageSize, search }),
     queryFn: () => 
       api.get<SystemActivityResponse>('/api/system/activity', {
@@ -76,8 +78,8 @@ export interface SystemLogMetricsResponse {
   metrics?: SystemLogMetrics;
 }
 
-export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize'>): UseQueryResult<SystemLogMetricsResponse, Error> {
-  return useQuery({
+export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize'>): SingleQuery<SystemLogMetricsResponse> {
+  return createSingleQuery({
     queryKey: logsKeys.metrics(filters),
     queryFn: () => 
       api.get<SystemLogMetricsResponse>('/api/system/logs/metrics', {
@@ -98,20 +100,22 @@ export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize
   });
 }
 
-export function useMongoDiagnostics(): UseQueryResult<unknown, Error> {
-  return useQuery({
+export function useMongoDiagnostics(): SingleQuery<unknown> {
+  return createSingleQuery({
     queryKey: diagnosticsKeys.mongo,
     queryFn: () => api.get<unknown>('/api/system/diagnostics/mongo-indexes'),
   });
 }
 
-export function useLogInsights(options: { limit?: number; enabled?: boolean } = {}): UseQueryResult<{ insights: AiInsightRecord[] }, Error> {
-  return useQuery<{ insights: AiInsightRecord[] }, Error>({
+export function useLogInsights(options: { limit?: number; enabled?: boolean } = {}): SingleQuery<{ insights: AiInsightRecord[] }> {
+  return createSingleQuery({
     queryKey: logsKeys.insights(options.limit),
     queryFn: () => 
       api.get<{ insights: AiInsightRecord[] }>('/api/system/logs/insights', {
         params: { limit: options.limit ?? 5 }
       }),
-    enabled: options.enabled ?? true,
+    options: {
+      enabled: options.enabled ?? true,
+    }
   });
 }

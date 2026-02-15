@@ -23,6 +23,7 @@ import type {
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
+import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import type { DeleteResponse } from '@/shared/types/api/api';
 
 import {
@@ -306,7 +307,7 @@ export function useProductData({
   const results = useQueries({
     queries: [
       {
-        queryKey: getProductListQueryKey(filters),
+        queryKey: normalizeQueryKey(getProductListQueryKey(filters)),
         queryFn: ({ signal }): Promise<ProductWithImages[]> => getProducts(filters, signal),
         enabled: preferencesLoaded,
         staleTime: 10_000,
@@ -315,7 +316,7 @@ export function useProductData({
         refetchOnReconnect: false,
       },
       {
-        queryKey: getProductCountQueryKey(filters),
+        queryKey: normalizeQueryKey(getProductCountQueryKey(filters)),
         queryFn: ({ signal }): Promise<number> => countProducts(filters, signal),
         enabled: preferencesLoaded,
         staleTime: 10_000,

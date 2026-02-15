@@ -69,6 +69,15 @@ describe('Mongo Note Repository', () => {
       const note = await mongoNoteRepository.create({
         title: 'New Note',
         content: 'Content',
+        color: null,
+        notebookId: 'default-n',
+        editorType: 'markdown',
+        isPinned: false,
+        isArchived: false,
+        isFavorite: false,
+        tagIds: [],
+        categoryIds: [],
+        relatedNoteIds: [],
       });
 
       expect(mockDb.collection).toHaveBeenCalledWith('notes');
@@ -117,7 +126,7 @@ describe('Mongo Note Repository', () => {
       mockCollection.toArray.mockResolvedValue([{ _id: 'default-n', id: 'default-n' }]);
       mockCollection.insertOne.mockResolvedValue({ insertedId: 'mock-uuid' });
 
-      const tag = await mongoNoteRepository.createTag({ name: 'Urgent' });
+      const tag = await mongoNoteRepository.createTag({ name: 'Urgent', color: null, notebookId: 'default-n' });
 
       expect(mockDb.collection).toHaveBeenCalledWith('tags');
       expect(tag.name).toBe('Urgent');

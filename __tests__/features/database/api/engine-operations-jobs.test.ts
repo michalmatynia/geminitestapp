@@ -147,8 +147,8 @@ describe('Database Engine operations jobs API', () => {
       startedAt: '2026-02-10T10:00:01.000Z',
       finishedAt: null,
       completedAt: null, // Added
-    } as Awaited<ReturnType<typeof getProductAiJob>>);
-    vi.mocked(cancelProductAiJob).mockResolvedValue({
+      product: null,
+    } as Awaited<ReturnType<typeof getProductAiJob>>);    vi.mocked(cancelProductAiJob).mockResolvedValue({
       id: 'job-db-sync-1',
       productId: 'system',
       status: 'cancelled',

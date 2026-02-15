@@ -1,6 +1,8 @@
 // Consolidated DTO exports for the domain type layer.
 // Domain types import from `../dtos` (relative to `src/shared/types/domain/*`).
 
+export * from './dto-base';
+
 export * from '@/shared/contracts/admin';
 export * from '@/shared/contracts/agents';
 export * from '@/shared/contracts/analytics';

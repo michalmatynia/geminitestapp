@@ -27,7 +27,9 @@ export const createJobSchema = jobSchema.omit({
 });
 
 export type CreateJobDto = z.infer<typeof createJobSchema>;
+export type JobCreateInput = CreateJobDto;
 export type UpdateJobDto = Partial<CreateJobDto>;
+export type JobUpdateInput = UpdateJobDto;
 
 /**
  * Product AI Job Contract
@@ -94,7 +96,9 @@ export const createProductAiJobSchema = productAiJobSchema.omit({
 });
 
 export type CreateProductAiJobDto = z.infer<typeof createProductAiJobSchema>;
+export type ProductAiJobCreateInput = CreateProductAiJobDto;
 export type UpdateProductAiJobDto = Partial<CreateProductAiJobDto>;
+export type ProductAiJobUpdateInput = UpdateProductAiJobDto;
 
 /**
  * Job Queue Stats Contract

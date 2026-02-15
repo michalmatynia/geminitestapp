@@ -101,7 +101,7 @@ describe('useMasterFolderTreeInstance', () => {
 
     rerender({
       nodes: createNodes('b'),
-      selectedNodeId: null,
+      selectedNodeId: null as any,
     });
 
     expect(result.current.controller.nodes.map((node: MasterTreeNode) => node.id)).toEqual(['folder-b']);

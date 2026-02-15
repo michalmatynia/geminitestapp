@@ -1,16 +1,13 @@
 'use client';
 
-import {
-  mutationOptions,
-  queryOptions,
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-  type UseMutationResult,
-  type UseQueryResult,
-} from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 
+import {
+  createListQuery,
+  createSingleQuery,
+  createCreateMutation,
+  createUpdateMutation,
+} from '@/shared/lib/query-factories';
 import type {
   DatabaseBackupFileDto as DatabaseInfoResponse,
   DatabaseBackupOperationResponseDto as DatabaseBackupResponse,
@@ -28,6 +25,12 @@ import type {
 import { ApiError } from '@/shared/lib/api-client';
 import { resolvePayloadErrorMessage, unwrapMutationResult } from '@/shared/lib/mutation-error-handler';
 import { dbKeys } from '@/shared/lib/query-key-exports';
+import type { 
+  ListQuery, 
+  SingleQuery, 
+  MutationResult, 
+  UpdateMutation
+} from '@/shared/types/query-result-types';
 
 import {
   cancelDatabaseEngineOperationJob,
@@ -63,15 +66,6 @@ import type {
   SqlQueryResult,
 } from '../types';
 
-
-type DatabasePreviewQueryInput = {
-  backupName?: string | undefined;
-  mode?: DatabasePreviewMode | undefined;
-  type?: DatabaseType | undefined;
-  page?: number | undefined;
-  pageSize?: number | undefined;
-};
-
 const invalidateBackups = (queryClient: QueryClient, dbType: DatabaseType): void => {
   void queryClient.invalidateQueries({ queryKey: dbKeys.backups(dbType) });
 };
@@ -83,265 +77,83 @@ const invalidateSchemaAll = (queryClient: QueryClient): void => {
 };
 
 const invalidateEngineSchedulerStatus = (queryClient: QueryClient): void => {
-  void queryClient.invalidateQueries({ queryKey: dbKeys.engineBackupSchedulerStatus });
-};
-
-export const databaseQueryOptions = {
-  backups: (dbType: DatabaseType) =>
-    queryOptions({
-      queryKey: dbKeys.backups(dbType),
-      queryFn: () => fetchDatabaseBackups(dbType),
-    }),
-
-  preview: (input: DatabasePreviewQueryInput) =>
-    queryOptions({
-      queryKey: dbKeys.preview({
-        backupName: input.backupName,
-        mode: input.mode,
-        type: input.type,
-        page: input.page,
-        pageSize: input.pageSize,
-      }),
-      queryFn: async (): Promise<DatabasePreviewPayload> => {
-        const result = await fetchDatabasePreview({
-          backupName: input.backupName,
-          mode: input.mode,
-          type: input.type,
-          page: input.page,
-          pageSize: input.pageSize,
-        });
-        if (!result.ok) {
-          const message = resolvePayloadErrorMessage(result.payload, 'Failed to fetch database preview.');
-          throw new ApiError(message, 400);
-        }
-        return result.payload;
-      },
-    }),
-
-  allCollectionsSchema: () =>
-    queryOptions({
-      queryKey: dbKeys.schema({ provider: 'all', includeCounts: true }),
-      queryFn: fetchAllCollectionsSchema,
-      staleTime: 30_000,
-    }),
-
-  redisOverview: (limit = 200) =>
-    queryOptions({
-      queryKey: dbKeys.redisOverview({ limit }),
-      queryFn: () => fetchRedisOverview(limit),
-      staleTime: 15_000,
-    }),
-
-  engineStatus: () =>
-    queryOptions({
-      queryKey: dbKeys.engineStatus,
-      queryFn: fetchDatabaseEngineStatus,
-      staleTime: 10_000,
-      refetchInterval: 20_000,
-    }),
-
-  backupSchedulerStatus: () =>
-    queryOptions({
-      queryKey: dbKeys.engineBackupSchedulerStatus,
-      queryFn: fetchDatabaseEngineBackupSchedulerStatus,
-      staleTime: 10_000,
-      refetchInterval: 20_000,
-    }),
-
-  engineOperationsJobs: (limit = 30) =>
-    queryOptions({
-      queryKey: dbKeys.engineOperationsJobs({ limit }),
-      queryFn: () => fetchDatabaseEngineOperationsJobs(limit),
-      staleTime: 10_000,
-      refetchInterval: 20_000,
-    }),
-
-  engineProviderPreview: (collections?: string[]) =>
-    queryOptions({
-      queryKey: dbKeys.engineProviderPreview({
-        collections: collections ?? [],
-      }),
-      queryFn: () => fetchDatabaseEngineProviderPreview(collections),
-      staleTime: 10_000,
-      refetchInterval: 20_000,
-    }),
-
-  jsonBackups: () =>
-    queryOptions({
-      queryKey: dbKeys.jsonBackups,
-      queryFn: fetchJsonBackups,
-    }),
-};
-
-export const databaseMutationOptions = {
-  createBackup: (queryClient: QueryClient) =>
-    mutationOptions({
-      mutationFn: (dbType: DatabaseType) => createDatabaseBackup(dbType),
-      onSuccess: (_result, dbType) => {
-        invalidateBackups(queryClient, dbType);
-      },
-    }),
-
-  restoreBackup: () =>
-    mutationOptions({
-      mutationFn: (variables: {
-        dbType: DatabaseType;
-        backupName: string;
-        truncateBeforeRestore: boolean;
-      }) =>
-        restoreDatabaseBackup(variables.dbType, {
-          backupName: variables.backupName,
-          truncateBeforeRestore: variables.truncateBeforeRestore,
-        }),
-    }),
-
-  uploadBackup: (queryClient: QueryClient) =>
-    mutationOptions({
-      mutationFn: (variables: {
-        dbType: DatabaseType;
-        file: File;
-        onProgress?: (loaded: number, total?: number) => void;
-      }) => uploadDatabaseBackup(variables.dbType, variables.file, variables.onProgress),
-      onSuccess: (_result, variables) => {
-        invalidateBackups(queryClient, variables.dbType);
-      },
-    }),
-
-  deleteBackup: (queryClient: QueryClient) =>
-    mutationOptions({
-      mutationFn: (variables: { dbType: DatabaseType; backupName: string }) =>
-        deleteDatabaseBackup(variables.dbType, variables.backupName),
-      onSuccess: (_result, variables) => {
-        invalidateBackups(queryClient, variables.dbType);
-      },
-    }),
-
-  sqlQuery: () =>
-    mutationOptions({
-      mutationFn: (input: {
-        sql?: string;
-        type: DatabaseType;
-        collection?: string;
-        operation?: string;
-        filter?: Record<string, unknown>;
-        document?: Record<string, unknown>;
-        update?: Record<string, unknown>;
-        pipeline?: Record<string, unknown>[];
-      }) => executeSqlQuery(input),
-    }),
-
-  crud: () =>
-    mutationOptions({
-      mutationFn: (input: CrudRequest) => executeCrudOperation(input),
-    }),
-
-  backupSchedulerTick: (queryClient: QueryClient) =>
-    mutationOptions({
-      mutationFn: runDatabaseEngineBackupSchedulerTick,
-      onSuccess: () => {
-        invalidateEngineSchedulerStatus(queryClient);
-      },
-    }),
-
-  backupRunNow: (queryClient: QueryClient) =>
-    mutationOptions({
-      mutationFn: (variables: { dbType: 'mongodb' | 'postgresql' | 'all' }) =>
-        runDatabaseEngineBackupNow(variables.dbType),
-      onSuccess: (payload) => {
-        invalidateEngineSchedulerStatus(queryClient);
-        payload.queued.forEach((item) => {
-          invalidateBackups(queryClient, item.dbType);
-        });
-      },
-    }),
-
-  cancelEngineOperationJob: (queryClient: QueryClient) =>
-    mutationOptions({
-      mutationFn: (variables: { jobId: string }) =>
-        cancelDatabaseEngineOperationJob(variables.jobId),
-      onSuccess: () => {
-        void queryClient.invalidateQueries({
-          queryKey: dbKeys.engineOperationsJobs({ limit: 30 }),
-        });
-      },
-    }),
-
-  copyCollection: (queryClient: QueryClient) =>
-    mutationOptions({
-      mutationFn: async (variables: {
-        collection: string;
-        direction: 'mongo_to_prisma' | 'prisma_to_mongo';
-      }): Promise<CollectionCopyResult> => {
-        const result = await copyCollectionBetweenProviders(
-          variables.collection,
-          variables.direction
-        );
-        return unwrapMutationResult(result, 'Failed to copy collection between providers.');
-      },
-      onSuccess: () => {
-        invalidateSchemaAll(queryClient);
-      },
-    }),
-
-  createJsonBackup: (queryClient: QueryClient) =>
-    mutationOptions({
-      mutationFn: async (): Promise<DatabaseBackupResponse> => {
-        const result = await createJsonBackup();
-        return unwrapMutationResult(result, 'Failed to create JSON backup.');
-      },
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: dbKeys.jsonBackups });
-      },
-    }),
-
-  restoreJsonBackup: () =>
-    mutationOptions({
-      mutationFn: async (backupName: string): Promise<DatabaseRestoreResponse> => {
-        const result = await restoreJsonBackup(backupName);
-        return unwrapMutationResult(result, 'Failed to restore JSON backup.');
-      },
-    }),
+  void queryClient.invalidateQueries({ queryKey: dbKeys.engineBackupSchedulerStatus() });
 };
 
 export function useDatabaseBackups(
   dbType: DatabaseType
-): UseQueryResult<DatabaseInfoResponse[], Error> {
-  return useQuery(databaseQueryOptions.backups(dbType));
+): ListQuery<DatabaseInfoResponse> {
+  return createListQuery({
+    queryKey: dbKeys.backups(dbType),
+    queryFn: () => fetchDatabaseBackups(dbType),
+  });
 }
 
-export function useCreateBackupMutation(): UseMutationResult<
+export function useCreateBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
-  Error,
   DatabaseType
-  > {
+> {
   const queryClient = useQueryClient();
-  return useMutation(databaseMutationOptions.createBackup(queryClient));
+  return createCreateMutation({
+    mutationFn: (dbType: DatabaseType) => createDatabaseBackup(dbType),
+    options: {
+      onSuccess: (_result, dbType) => {
+        invalidateBackups(queryClient, dbType);
+      },
+    },
+  });
 }
 
-export function useRestoreBackupMutation(): UseMutationResult<
+export function useRestoreBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseRestoreResponse>,
-  Error,
   { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }
-  > {
-  return useMutation(databaseMutationOptions.restoreBackup());
+> {
+  return createCreateMutation({
+    mutationFn: (variables: {
+      dbType: DatabaseType;
+      backupName: string;
+      truncateBeforeRestore: boolean;
+    }) =>
+      restoreDatabaseBackup(variables.dbType, {
+        backupName: variables.backupName,
+        truncateBeforeRestore: variables.truncateBeforeRestore,
+      }),
+  });
 }
 
-export function useUploadBackupMutation(): UseMutationResult<
+export function useUploadBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
-  Error,
   { dbType: DatabaseType; file: File; onProgress?: (loaded: number, total?: number) => void }
-  > {
+> {
   const queryClient = useQueryClient();
-  return useMutation(databaseMutationOptions.uploadBackup(queryClient));
+  return createCreateMutation({
+    mutationFn: (variables: {
+      dbType: DatabaseType;
+      file: File;
+      onProgress?: (loaded: number, total?: number) => void;
+    }) => uploadDatabaseBackup(variables.dbType, variables.file, variables.onProgress),
+    options: {
+      onSuccess: (_result, variables) => {
+        invalidateBackups(queryClient, variables.dbType);
+      },
+    },
+  });
 }
 
-export function useDeleteBackupMutation(): UseMutationResult<
+export function useDeleteBackupMutation(): MutationResult<
   ApiPayloadResult<DatabaseBackupResponse>,
-  Error,
   { dbType: DatabaseType; backupName: string }
-  > {
+> {
   const queryClient = useQueryClient();
-  return useMutation(databaseMutationOptions.deleteBackup(queryClient));
+  return createCreateMutation({
+    mutationFn: (variables: { dbType: DatabaseType; backupName: string }) =>
+      deleteDatabaseBackup(variables.dbType, variables.backupName),
+    options: {
+      onSuccess: (_result, variables) => {
+        invalidateBackups(queryClient, variables.dbType);
+      },
+    },
+  });
 }
 
 export function useDatabasePreview(input: {
@@ -351,24 +163,39 @@ export function useDatabasePreview(input: {
   page?: number;
   pageSize?: number;
   enabled?: boolean;
-}): UseQueryResult<DatabasePreviewPayload, Error> {
+}): SingleQuery<DatabasePreviewPayload> {
   const { backupName, mode, type, page, pageSize, enabled = true } = input;
-  const options = databaseQueryOptions.preview({
-    backupName,
-    mode,
-    type,
-    page,
-    pageSize,
-  });
-  return useQuery({
-    ...options,
-    enabled: enabled && (!!backupName || mode === 'current'),
+  
+  return createSingleQuery({
+    queryKey: dbKeys.preview({
+      backupName,
+      mode,
+      type,
+      page,
+      pageSize,
+    }),
+    queryFn: async (): Promise<DatabasePreviewPayload> => {
+      const result = await fetchDatabasePreview({
+        backupName,
+        mode,
+        type,
+        page,
+        pageSize,
+      });
+      if (!result.ok) {
+        const message = resolvePayloadErrorMessage(result.payload, 'Failed to fetch database preview.');
+        throw new ApiError(message, 400);
+      }
+      return result.payload;
+    },
+    options: {
+      enabled: enabled && (!!backupName || mode === 'current'),
+    }
   });
 }
 
-export function useSqlQueryMutation(): UseMutationResult<
+export function useSqlQueryMutation(): MutationResult<
   SqlQueryResult,
-  Error,
   {
     sql?: string;
     type: DatabaseType;
@@ -379,100 +206,197 @@ export function useSqlQueryMutation(): UseMutationResult<
     update?: Record<string, unknown>;
     pipeline?: Record<string, unknown>[];
   }
-  > {
-  return useMutation(databaseMutationOptions.sqlQuery());
+> {
+  return createCreateMutation({
+    mutationFn: (input) => executeSqlQuery(input),
+  });
 }
 
-export function useCrudMutation(): UseMutationResult<CrudResult, Error, CrudRequest> {
-  return useMutation(databaseMutationOptions.crud());
+export function useCrudMutation(): MutationResult<CrudResult, CrudRequest> {
+  return createCreateMutation({
+    mutationFn: (input: CrudRequest) => executeCrudOperation(input),
+  });
 }
 
 // ── Control Panel hooks ──
 
-export function useAllCollectionsSchema(): UseQueryResult<MultiSchemaResponse, Error> {
-  return useQuery(databaseQueryOptions.allCollectionsSchema());
+export function useAllCollectionsSchema(): SingleQuery<MultiSchemaResponse> {
+  return createSingleQuery({
+    queryKey: dbKeys.schema({ provider: 'all', includeCounts: true }),
+    queryFn: fetchAllCollectionsSchema,
+    options: { staleTime: 30_000 },
+  });
 }
 
-export function useRedisOverview(limit = 200): UseQueryResult<RedisOverviewResponse, Error> {
-  return useQuery(databaseQueryOptions.redisOverview(limit));
+export function useRedisOverview(limit = 200): SingleQuery<RedisOverviewResponse> {
+  return createSingleQuery({
+    queryKey: dbKeys.redisOverview({ limit }),
+    queryFn: () => fetchRedisOverview(limit),
+    options: { staleTime: 15_000 },
+  });
 }
 
-export function useDatabaseEngineStatus(): UseQueryResult<DatabaseEngineStatusResponse, Error> {
-  return useQuery(databaseQueryOptions.engineStatus());
+export function useDatabaseEngineStatus(): SingleQuery<DatabaseEngineStatusResponse> {
+  return createSingleQuery({
+    queryKey: dbKeys.engineStatus(),
+    queryFn: fetchDatabaseEngineStatus,
+    options: {
+      staleTime: 10_000,
+      refetchInterval: 20_000,
+    },
+  });
 }
 
-export function useDatabaseBackupSchedulerStatus(): UseQueryResult<
-  DatabaseEngineBackupSchedulerStatusResponse,
-  Error
-  > {
-  return useQuery(databaseQueryOptions.backupSchedulerStatus());
+export function useDatabaseBackupSchedulerStatus(): SingleQuery<
+  DatabaseEngineBackupSchedulerStatusResponse
+> {
+  return createSingleQuery({
+    queryKey: dbKeys.engineBackupSchedulerStatus(),
+    queryFn: fetchDatabaseEngineBackupSchedulerStatus,
+    options: {
+      staleTime: 10_000,
+      refetchInterval: 20_000,
+    },
+  });
 }
 
 export function useDatabaseEngineOperationsJobs(
   limit = 30
-): UseQueryResult<DatabaseEngineOperationsJobsResponse, Error> {
-  return useQuery(databaseQueryOptions.engineOperationsJobs(limit));
+): SingleQuery<DatabaseEngineOperationsJobsResponse> {
+  return createSingleQuery({
+    queryKey: dbKeys.engineOperationsJobs({ limit }),
+    queryFn: () => fetchDatabaseEngineOperationsJobs(limit),
+    options: {
+      staleTime: 10_000,
+      refetchInterval: 20_000,
+    },
+  });
 }
 
-export function useDatabaseBackupSchedulerTickMutation(): UseMutationResult<
+export function useDatabaseBackupSchedulerTickMutation(): UpdateMutation<
   DatabaseEngineBackupSchedulerTickResponse,
-  Error,
   void
-  > {
+> {
   const queryClient = useQueryClient();
-  return useMutation(databaseMutationOptions.backupSchedulerTick(queryClient));
+  return createUpdateMutation({
+    mutationFn: runDatabaseEngineBackupSchedulerTick,
+    options: {
+      onSuccess: () => {
+        invalidateEngineSchedulerStatus(queryClient);
+      },
+    },
+  });
 }
 
-export function useDatabaseBackupRunNowMutation(): UseMutationResult<
+export function useDatabaseBackupRunNowMutation(): UpdateMutation<
   DatabaseEngineBackupRunNowResponse,
-  Error,
   { dbType: 'mongodb' | 'postgresql' | 'all' }
-  > {
+> {
   const queryClient = useQueryClient();
-  return useMutation(databaseMutationOptions.backupRunNow(queryClient));
+  return createUpdateMutation({
+    mutationFn: (variables) =>
+      runDatabaseEngineBackupNow(variables.dbType),
+    options: {
+      onSuccess: (payload) => {
+        invalidateEngineSchedulerStatus(queryClient);
+        payload.queued.forEach((item) => {
+          invalidateBackups(queryClient, item.dbType);
+        });
+      },
+    },
+  });
 }
 
-export function useCancelDatabaseEngineOperationJobMutation(): UseMutationResult<
+export function useCancelDatabaseEngineOperationJobMutation(): MutationResult<
   { success: boolean; job: unknown },
-  Error,
   { jobId: string }
-  > {
+> {
   const queryClient = useQueryClient();
-  return useMutation(databaseMutationOptions.cancelEngineOperationJob(queryClient));
+  return createCreateMutation({
+    mutationFn: (variables: { jobId: string }) =>
+      cancelDatabaseEngineOperationJob(variables.jobId),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({
+          queryKey: dbKeys.engineOperationsJobs({ limit: 30 }),
+        });
+      },
+    },
+  });
 }
 
 export function useDatabaseEngineProviderPreview(
   collections?: string[]
-): UseQueryResult<DatabaseEngineProviderPreviewResponse, Error> {
-  return useQuery(databaseQueryOptions.engineProviderPreview(collections));
+): SingleQuery<DatabaseEngineProviderPreviewResponse> {
+  return createSingleQuery({
+    queryKey: dbKeys.engineProviderPreview({
+      collections: collections ?? [],
+    }),
+    queryFn: () => fetchDatabaseEngineProviderPreview(collections),
+    options: {
+      staleTime: 10_000,
+      refetchInterval: 20_000,
+    },
+  });
 }
 
-export function useCopyCollectionMutation(): UseMutationResult<
+export function useCopyCollectionMutation(): MutationResult<
   CollectionCopyResult,
-  Error,
   { collection: string; direction: 'mongo_to_prisma' | 'prisma_to_mongo' }
-  > {
+> {
   const queryClient = useQueryClient();
-  return useMutation(databaseMutationOptions.copyCollection(queryClient));
+  return createCreateMutation({
+    mutationFn: async (variables: {
+      collection: string;
+      direction: 'mongo_to_prisma' | 'prisma_to_mongo';
+    }): Promise<CollectionCopyResult> => {
+      const result = await copyCollectionBetweenProviders(
+        variables.collection,
+        variables.direction
+      );
+      return unwrapMutationResult(result, 'Failed to copy collection between providers.');
+    },
+    options: {
+      onSuccess: () => {
+        invalidateSchemaAll(queryClient);
+      },
+    },
+  });
 }
 
-export function useCreateJsonBackupMutation(): UseMutationResult<
+export function useCreateJsonBackupMutation(): UpdateMutation<
   DatabaseBackupResponse,
-  Error,
   void
-  > {
+> {
   const queryClient = useQueryClient();
-  return useMutation(databaseMutationOptions.createJsonBackup(queryClient));
+  return createUpdateMutation({
+    mutationFn: async (): Promise<DatabaseBackupResponse> => {
+      const result = await createJsonBackup();
+      return unwrapMutationResult(result, 'Failed to create JSON backup.');
+    },
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: dbKeys.jsonBackups() });
+      },
+    },
+  });
 }
 
-export function useRestoreJsonBackupMutation(): UseMutationResult<
+export function useRestoreJsonBackupMutation(): UpdateMutation<
   DatabaseRestoreResponse,
-  Error,
   string
-  > {
-  return useMutation(databaseMutationOptions.restoreJsonBackup());
+> {
+  return createUpdateMutation({
+    mutationFn: async (backupName: string): Promise<DatabaseRestoreResponse> => {
+      const result = await restoreJsonBackup(backupName);
+      return unwrapMutationResult(result, 'Failed to restore JSON backup.');
+    },
+  });
 }
 
-export function useJsonBackups(): UseQueryResult<{ backups: string[] }, Error> {
-  return useQuery(databaseQueryOptions.jsonBackups());
+export function useJsonBackups(): SingleQuery<{ backups: string[] }> {
+  return createSingleQuery({
+    queryKey: dbKeys.jsonBackups(),
+    queryFn: fetchJsonBackups,
+  });
 }

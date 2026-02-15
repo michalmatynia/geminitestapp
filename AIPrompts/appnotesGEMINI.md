@@ -42,6 +42,8 @@ Remove legact solutions and backwards compatibility I want only the newest
 
 VALIDATION
 - expand mutation-invalidation matrix QUERY KEYS. 
+- extend support for QUERY KEYS
+- improve mutation-invalidation matrix
 
 STATE MANAGEMENT
  Update feature hooks to use centralized query keys from @/shared/lib/query-key-exports

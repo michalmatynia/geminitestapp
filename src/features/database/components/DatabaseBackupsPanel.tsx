@@ -99,10 +99,11 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         </div>
       </div>
 
-      {isLogModalOpen && <LogModal content={logModalContent} onClose={closeLogModal} />}
+      {isLogModalOpen && <LogModal isOpen={true} content={logModalContent} onClose={closeLogModal} />}
 
       {isRestoreModalOpen && selectedBackupForRestore && (
         <RestoreModal
+          isOpen={true}
           backupName={selectedBackupForRestore}
           onClose={(): void => {
             setIsRestoreModalOpen(false);

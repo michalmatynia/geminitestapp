@@ -29,8 +29,10 @@ export const createAsset3dSchema = asset3dSchema.omit({
   updatedAt: true,
 });
 
-export type CreateAsset3dDto_Base = z.infer<typeof createAsset3dSchema>;
-export type UpdateAsset3dDto = Partial<CreateAsset3dDto_Base>;
+export type CreateAsset3dDto = z.infer<typeof createAsset3dSchema>;
+export type Asset3dCreateInput = CreateAsset3dDto;
+export type UpdateAsset3dDto = Partial<CreateAsset3dDto>;
+export type Asset3dUpdateInput = UpdateAsset3dDto;
 
 // Browser-native File object
 export const uploadAsset3dSchema = z.object({

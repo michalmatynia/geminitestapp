@@ -24,7 +24,29 @@ import { TestLogModal } from './TestLogModal';
 import { TestResultModal } from './TestResultModal';
 
 export function IntegrationModal(): React.JSX.Element {
-  const { activeIntegration, onCloseModal, showTestLogModal, selectedStep, showTestErrorModal, testError, showTestSuccessModal, testSuccessMessage, showSessionModal, showPlaywrightSaved, onOpenSessionModal } = useIntegrationsContext();
+  const {
+    activeIntegration,
+    onCloseModal,
+    showTestLogModal,
+    selectedStep,
+    showTestErrorModal,
+    testError,
+    testErrorMeta,
+    showTestSuccessModal,
+    testSuccessMessage,
+    setShowTestSuccessModal,
+    setShowTestErrorModal,
+    setShowTestLogModal,
+    showSessionModal,
+    setShowSessionModal,
+    showPlaywrightSaved,
+    onOpenSessionModal,
+    sessionLoading,
+    sessionError,
+    sessionCookies,
+    sessionOrigins,
+    sessionUpdatedAt,
+  } = useIntegrationsContext();
 
   const {
     activeTab,
@@ -119,13 +141,29 @@ export function IntegrationModal(): React.JSX.Element {
           )}
         </Tabs>
 
-        {showTestLogModal && selectedStep && <TestLogModal />}
+        <TestLogModal
+          isOpen={showTestLogModal}
+          onClose={() => setShowTestLogModal(false)}
+          selectedStep={selectedStep!}
+        />
 
-        {(showTestErrorModal || showTestSuccessModal) && (testError || testSuccessMessage) && (
-          <TestResultModal />
-        )}
+        <TestResultModal
+          isOpen={showTestErrorModal || showTestSuccessModal}
+          onClose={showTestSuccessModal ? () => setShowTestSuccessModal(false) : () => setShowTestErrorModal(false)}
+          success={showTestSuccessModal}
+          message={showTestSuccessModal ? testSuccessMessage : testError}
+          meta={testErrorMeta}
+        />
 
-        {showSessionModal && <SessionModal />}
+        <SessionModal
+          isOpen={showSessionModal}
+          onClose={() => setShowSessionModal(false)}
+          loading={sessionLoading}
+          error={sessionError}
+          cookies={sessionCookies}
+          origins={sessionOrigins}
+          updatedAt={sessionUpdatedAt}
+        />
 
         {showPlaywrightSaved && (
           <div className='fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg'>

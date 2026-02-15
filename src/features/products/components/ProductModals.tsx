@@ -92,54 +92,36 @@ export function ProductModals(): React.JSX.Element {
         </ProductFormProvider>
       )}
 
-      <AppModal
-        open={!!integrationsProduct && !showListProductModal}
-        onClose={onCloseIntegrations}
-        title='Product Listings'
-        size='md'
-      >
-        {integrationsProduct && (
-          <ProductListingsModal
-            product={integrationsProduct}
-            onClose={onCloseIntegrations}
-            onStartListing={onStartListing}
-            onListingsUpdated={onListingsUpdated}
-          />
-        )}
-      </AppModal>
+      {integrationsProduct && !showListProductModal && (
+        <ProductListingsModal
+          isOpen={!!integrationsProduct}
+          item={integrationsProduct}
+          onClose={onCloseIntegrations}
+          onStartListing={onStartListing}
+          onListingsUpdated={onListingsUpdated}
+        />
+      )}
 
-      <AppModal
-        open={!!integrationsProduct && showListProductModal}
-        onClose={onCloseListProduct}
-        title='List Product'
-        size='md'
-      >
-        {integrationsProduct && (
-          <ListProductModal
-            product={integrationsProduct}
-            onClose={onCloseListProduct}
-            onSuccess={onListProductSuccess}
-            initialIntegrationId={listProductPreset?.integrationId ?? null}
-            initialConnectionId={listProductPreset?.connectionId ?? null}
-          />
-        )}
-      </AppModal>
+      {integrationsProduct && showListProductModal && (
+        <ListProductModal
+          isOpen={!!integrationsProduct}
+          item={integrationsProduct}
+          onClose={onCloseListProduct}
+          onSuccess={onListProductSuccess}
+          initialIntegrationId={listProductPreset?.integrationId ?? null}
+          initialConnectionId={listProductPreset?.connectionId ?? null}
+        />
+      )}
 
-      <AppModal
-        open={!!exportSettingsProduct && !!onCloseExportSettings}
-        onClose={() => onCloseExportSettings?.()}
-        title='Export Settings'
-        size='md'
-      >
-        {exportSettingsProduct && onCloseExportSettings && (
-          <ProductListingsModal
-            product={exportSettingsProduct}
-            onClose={onCloseExportSettings}
-            filterIntegrationSlug='baselinker'
-            onListingsUpdated={onListingsUpdated}
-          />
-        )}
-      </AppModal>
+      {exportSettingsProduct && onCloseExportSettings && (
+        <ProductListingsModal
+          isOpen={!!exportSettingsProduct}
+          item={exportSettingsProduct}
+          onClose={onCloseExportSettings}
+          filterIntegrationSlug='baselinker'
+          onListingsUpdated={onListingsUpdated}
+        />
+      )}
 
       <AppModal
         open={!!massListIntegration && !!massListProductIds && massListProductIds.length > 0}

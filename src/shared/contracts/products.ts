@@ -24,7 +24,9 @@ export const createProductCategorySchema = productCategorySchema.omit({
 });
 
 export type CreateProductCategoryDto = z.infer<typeof createProductCategorySchema>;
+export type ProductCategoryCreateInput = CreateProductCategoryDto;
 export type UpdateProductCategoryDto = Partial<CreateProductCategoryDto>;
+export type ProductCategoryUpdateInput = UpdateProductCategoryDto;
 
 /**
  * Product Tag Contract
@@ -43,7 +45,9 @@ export const createProductTagSchema = productTagSchema.omit({
 });
 
 export type CreateProductTagDto = z.infer<typeof createProductTagSchema>;
+export type ProductTagCreateInput = CreateProductTagDto;
 export type UpdateProductTagDto = Partial<CreateProductTagDto>;
+export type ProductTagUpdateInput = UpdateProductTagDto;
 
 /**
  * Catalog Contract
@@ -65,7 +69,9 @@ export const createCatalogSchema = catalogSchema.omit({
 });
 
 export type CreateCatalogDto = z.infer<typeof createCatalogSchema>;
+export type CatalogCreateInput = CreateCatalogDto;
 export type UpdateCatalogDto = Partial<CreateCatalogDto>;
+export type CatalogUpdateInput = UpdateCatalogDto;
 
 /**
  * Price Group Contract
@@ -92,7 +98,9 @@ export const createPriceGroupSchema = priceGroupSchema.omit({
 });
 
 export type CreatePriceGroupDto = z.infer<typeof createPriceGroupSchema>;
+export type PriceGroupCreateInput = CreatePriceGroupDto;
 export type UpdatePriceGroupDto = Partial<CreatePriceGroupDto>;
+export type PriceGroupUpdateInput = UpdatePriceGroupDto;
 
 /**
  * Producer Contract
@@ -240,10 +248,12 @@ export const createProductSchema = productSchema.omit({
 });
 
 export type CreateProductDto = z.infer<typeof createProductSchema>;
+export type ProductCreateInput = CreateProductDto;
 
 export const updateProductSchema = createProductSchema.partial();
 
 export type UpdateProductDto = z.infer<typeof updateProductSchema>;
+export type ProductUpdateInput = UpdateProductDto;
 
 /**
  * Validation Contracts

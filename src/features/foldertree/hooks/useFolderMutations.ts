@@ -46,7 +46,7 @@ export function useImportFolderMutation(): UseMutationResult<ImportFolderRespons
       });
       // Also invalidate stats or other related queries if they exist
       void queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.notes.notebooks,
+        queryKey: QUERY_KEYS.notes.notebooks(),
       });
     },
   });

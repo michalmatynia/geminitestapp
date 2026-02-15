@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { AppModal, Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -20,10 +21,8 @@ import { Viewer3DProvider, useViewer3D } from '../context/Viewer3DContext';
 
 import type { Asset3DRecord } from '../types';
 
-interface Asset3DPreviewModalProps {
-  open: boolean;
-  onClose: () => void;
-  asset: Asset3DRecord;
+interface Asset3DPreviewModalProps extends Omit<EntityModalProps<Asset3DRecord>, 'onSuccess'> {
+  onSuccess?: () => void;
 }
 
 function Asset3DPreviewModalContent(): React.JSX.Element {
@@ -120,10 +119,12 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
 }
 
 export function Asset3DPreviewModal({
-  open,
+  isOpen,
   onClose,
-  asset,
-}: Asset3DPreviewModalProps): React.JSX.Element {
+  item: asset,
+}: Asset3DPreviewModalProps): React.JSX.Element | null {
+  if (!asset) return null;
+
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -132,7 +133,7 @@ export function Asset3DPreviewModal({
 
   return (
     <AppModal 
-      open={open} 
+      open={isOpen} 
       onClose={onClose} 
       title={asset.name || asset.filename}
       subtitle={formatFileSize(asset.size)}

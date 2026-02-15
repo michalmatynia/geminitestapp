@@ -2,19 +2,20 @@
 
 import Link from 'next/link';
 
-import { AppModal, Button,  IntegrationSelector } from '@/shared/ui';
+import { AppModal, Button, IntegrationSelector } from '@/shared/ui';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 
 import { useIntegrationSelection } from './hooks/useIntegrationSelection';
 
-export type SelectIntegrationModalProps = {
-  onClose: () => void;
+export interface SelectIntegrationModalProps extends ModalStateProps {
   onSelect: (integrationId: string, connectionId: string) => void;
-};
+}
 
 export default function SelectIntegrationModal({
+  isOpen,
   onClose,
   onSelect,
-}: SelectIntegrationModalProps): React.JSX.Element {
+}: SelectIntegrationModalProps): React.JSX.Element | null {
   const {
     integrations,
     loading,
@@ -24,6 +25,8 @@ export default function SelectIntegrationModal({
     setSelectedConnectionId,
   } = useIntegrationSelection();
 
+  if (!isOpen) return null;
+
   const handleContinue = (): void => {
     if (selectedIntegrationId && selectedConnectionId) {
       onSelect(selectedIntegrationId, selectedConnectionId);
@@ -32,7 +35,7 @@ export default function SelectIntegrationModal({
 
   return (
     <AppModal
-      open={true}
+      open={isOpen}
       onClose={onClose}
       title='Select Marketplace / Integration'
       size='md'

@@ -1,15 +1,9 @@
 import { NextRequest } from 'next/server';
 
-import type { ApiResponse, PaginatedResponse } from '../base';
+import type { ApiResponse, ListResponse as PaginatedResponse, ApiError } from '../dto-base';
 import type { ZodSchema } from 'zod';
 
-export type { ApiResponse, PaginatedResponse };
-
-export interface ApiError {
-  message: string;
-  code?: string;
-  status?: number;
-}
+export type { ApiResponse, PaginatedResponse, ApiError };
 
 export interface DeleteResponse {
   success: boolean;

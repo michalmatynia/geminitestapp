@@ -14,6 +14,9 @@ function AdminNotesPageContent(): React.JSX.Element {
   const {
     selectedNote,
     isFolderTreeCollapsed,
+    isCreating,
+    setIsCreating,
+    handleCreateSuccess,
   } = useNotesAppContext();
 
   return (
@@ -42,7 +45,11 @@ function AdminNotesPageContent(): React.JSX.Element {
         </div>
 
         {/* Modals */}
-        <CreateNoteModal />
+        <CreateNoteModal
+          isOpen={isCreating}
+          onClose={() => setIsCreating(false)}
+          onSuccess={handleCreateSuccess}
+        />
       </div>
     </div>
   );

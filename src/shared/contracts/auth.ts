@@ -26,7 +26,9 @@ export const createUserSchema = authUserSchema.omit({
 });
 
 export type CreateUserDto = z.infer<typeof createUserSchema>;
+export type AuthUserCreateInput = CreateUserDto;
 export type UpdateUserDto = Partial<CreateUserDto>;
+export type AuthUserUpdateInput = UpdateUserDto;
 
 export const authUserAccessSchema = dtoBaseSchema.extend({
   userId: z.string(),

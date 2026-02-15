@@ -1,7 +1,5 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/features/integrations/types/category-mapping';
 import type {
   ExternalProducer,
@@ -13,18 +11,23 @@ import type {
 } from '@/features/integrations/types/tag-mapping';
 import { api } from '@/shared/lib/api-client';
 import { marketplaceKeys } from '@/shared/lib/query-key-exports';
+import {
+  createListQuery,
+} from '@/shared/lib/query-factories';
+import type { ListQuery } from '@/shared/types/query-result-types';
 
-
-export function useExternalCategories(connectionId: string): UseQueryResult<ExternalCategory[]> {
-  return useQuery({
+export function useExternalCategories(connectionId: string): ListQuery<ExternalCategory> {
+  return createListQuery({
     queryKey: marketplaceKeys.categories(connectionId),
     queryFn: () => api.get<ExternalCategory[]>(`/api/marketplace/categories?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    options: {
+      enabled: !!connectionId,
+    }
   });
 }
 
-export function useCategoryMappings(connectionId: string, catalogId?: string | null): UseQueryResult<CategoryMappingWithDetails[]> {
-  return useQuery({
+export function useCategoryMappings(connectionId: string, catalogId?: string | null): ListQuery<CategoryMappingWithDetails> {
+  return createListQuery({
     queryKey: marketplaceKeys.mappings(connectionId, catalogId),
     queryFn: async (): Promise<CategoryMappingWithDetails[]> => {
       if (!catalogId) return [];
@@ -32,62 +35,74 @@ export function useCategoryMappings(connectionId: string, catalogId?: string | n
         `/api/marketplace/mappings?connectionId=${connectionId}&catalogId=${catalogId}`
       );
     },
-    enabled: !!connectionId && !!catalogId,
+    options: {
+      enabled: !!connectionId && !!catalogId,
+    }
   });
 }
 
 export function useCategoryMappingsByConnection(
   connectionId: string,
   options?: { enabled?: boolean }
-): UseQueryResult<CategoryMappingWithDetails[]> {
+): ListQuery<CategoryMappingWithDetails> {
   const isEnabled = options?.enabled ?? !!connectionId;
 
-  return useQuery({
+  return createListQuery({
     queryKey: marketplaceKeys.mappings(connectionId, 'all'),
     queryFn: () => api.get<CategoryMappingWithDetails[]>(`/api/marketplace/mappings?connectionId=${connectionId}`),
-    enabled: isEnabled && !!connectionId,
+    options: {
+      enabled: isEnabled && !!connectionId,
+    }
   });
 }
 
-export function useExternalProducers(connectionId: string): UseQueryResult<ExternalProducer[]> {
-  return useQuery({
+export function useExternalProducers(connectionId: string): ListQuery<ExternalProducer> {
+  return createListQuery({
     queryKey: marketplaceKeys.producers(connectionId),
     queryFn: () =>
       api.get<ExternalProducer[]>(`/api/marketplace/producers?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    options: {
+      enabled: !!connectionId,
+    }
   });
 }
 
 export function useProducerMappings(
   connectionId: string
-): UseQueryResult<ProducerMappingWithDetails[]> {
-  return useQuery({
+): ListQuery<ProducerMappingWithDetails> {
+  return createListQuery({
     queryKey: marketplaceKeys.producerMappings(connectionId),
     queryFn: () =>
       api.get<ProducerMappingWithDetails[]>(
         `/api/marketplace/producer-mappings?connectionId=${connectionId}`
       ),
-    enabled: !!connectionId,
+    options: {
+      enabled: !!connectionId,
+    }
   });
 }
 
-export function useExternalTags(connectionId: string): UseQueryResult<ExternalTag[]> {
-  return useQuery({
+export function useExternalTags(connectionId: string): ListQuery<ExternalTag> {
+  return createListQuery({
     queryKey: marketplaceKeys.tags(connectionId),
     queryFn: () => api.get<ExternalTag[]>(`/api/marketplace/tags?connectionId=${connectionId}`),
-    enabled: !!connectionId,
+    options: {
+      enabled: !!connectionId,
+    }
   });
 }
 
 export function useTagMappings(
   connectionId: string
-): UseQueryResult<TagMappingWithDetails[]> {
-  return useQuery({
+): ListQuery<TagMappingWithDetails> {
+  return createListQuery({
     queryKey: marketplaceKeys.tagMappings(connectionId),
     queryFn: () =>
       api.get<TagMappingWithDetails[]>(
         `/api/marketplace/tag-mappings?connectionId=${connectionId}`
       ),
-    enabled: !!connectionId,
+    options: {
+      enabled: !!connectionId,
+    }
   });
 }

@@ -10,11 +10,11 @@ import {
   Button,
   useToast,
   
-  ConfirmDialog,
   FileUploadButton,
   type FileUploadHelpers,
   PageLayout,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { getDatabaseColumns } from '../components/DatabaseColumns';
 import { LogModal } from '../components/LogModal';
@@ -273,14 +273,14 @@ function DatabasesContent(): React.JSX.Element {
         />
       )}
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!backupToDelete}
-        onOpenChange={(open: boolean) => !open && setBackupToDelete(null)}
-        onConfirm={(): void => { handleConfirmDelete().catch(() => {}); }}
+        onClose={() => setBackupToDelete(null)}
+        onConfirm={handleConfirmDelete}
         title='Delete Backup'
-        description={`Are you sure you want to delete backup "${backupToDelete}"? This cannot be undone.`}
+        message={`Are you sure you want to delete backup "${backupToDelete}"? This cannot be undone.`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
       />
 
       {isProd ? (

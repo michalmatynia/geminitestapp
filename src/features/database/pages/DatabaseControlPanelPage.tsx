@@ -8,13 +8,13 @@ import {
   PageLayout,
   Button,
   DataTable,
-  ConfirmDialog,
   useToast,
   FormSection,
   RefreshButton,
   SelectSimple,
   FormField,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import {
   getControlPanelColumns,
@@ -216,18 +216,18 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
         />
       )}
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!pendingCopy}
-        onOpenChange={(open: boolean) => !open && setPendingCopy(null)}
-        onConfirm={(): void => { void handleConfirmCopy(); }}
+        onClose={() => setPendingCopy(null)}
+        onConfirm={handleConfirmCopy}
         title='Copy Collection'
-        description={
+        message={
           pendingCopy
             ? `Copy "${pendingCopy.collection}" (${pendingCopy.label})? This will overwrite the target collection.`
             : ''
         }
         confirmText='Copy'
-        variant='destructive'
+        isDangerous={true}
       />
 
       {/* Collections Table */}

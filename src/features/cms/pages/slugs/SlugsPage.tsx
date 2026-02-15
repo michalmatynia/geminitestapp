@@ -22,13 +22,13 @@ import {
   ListPanel,
   Label,
   Switch,
-  ConfirmDialog,
   EmptyState,
   PageLayout,
   SelectSimple,
   DataTable,
   Badge,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
@@ -253,14 +253,14 @@ export default function SlugsPage(): React.JSX.Element {
         }}
       />
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!slugToDelete}
-        onOpenChange={(open) => !open && setSlugToDelete(null)}
-        onConfirm={(): void => { void handleConfirmDelete(); }}
+        onClose={() => setSlugToDelete(null)}
+        onConfirm={handleConfirmDelete}
         title='Remove Slug from Zone'
-        description='This route will be detached from the current domain. It will remain active in other domains if previously assigned.'
+        message='This route will be detached from the current domain. It will remain active in other domains if previously assigned.'
         confirmText='Detach Route'
-        variant='destructive'
+        isDangerous={true}
       />
     </PageLayout>
   );

@@ -10,7 +10,8 @@ import {
   useSaveProducerMutation,
 } from '@/features/products/hooks/useProductMetadataQueries';
 import type { Producer } from '@/features/products/types';
-import { Button, ConfirmDialog, EmptyState, Input, Label, AppModal, useToast } from '@/shared/ui';
+import { Button, EmptyState, Input, Label, AppModal, useToast } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 type ProducerFormState = {
   name: string;
@@ -210,21 +211,15 @@ export function AdminProductProducersPage(): React.JSX.Element {
         </div>
       </AppModal>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!toDelete}
-        onOpenChange={(next: boolean) => {
-          if (!next) setToDelete(null);
-        }}
+        onClose={() => setToDelete(null)}
+        onConfirm={handleConfirmDelete}
         title='Delete producer?'
-        description={`This will delete "${toDelete?.name ?? ''}".`}
+        message={`This will delete "${toDelete?.name ?? ''}".`}
         confirmText='Delete'
-        cancelText='Cancel'
-        variant='destructive'
+        isDangerous={true}
         loading={deleteMutation.isPending}
-        onCancel={() => setToDelete(null)}
-        onConfirm={() => {
-          void handleConfirmDelete();
-        }}
       />
     </div>
   );

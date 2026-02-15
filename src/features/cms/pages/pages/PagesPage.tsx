@@ -12,13 +12,13 @@ import type { PageStatus, PageSummary, PageSlugLink, Slug } from '@/features/cms
 import {
   Button,
   ListPanel,
-  ConfirmDialog,
   StatusBadge,
   SelectSimple,
   DataTable,
   Badge,
   SectionHeader
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { ColumnDef } from '@tanstack/react-table';

@@ -19,12 +19,12 @@ import {
   DataTable, 
   Pagination, 
   StatusBadge, 
-  ConfirmDialog, 
   PageLayout, 
   FormSection,
   Badge,
   type StatusVariant
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
@@ -645,22 +645,22 @@ function SystemLogsContent(): React.JSX.Element {
         <LogList />
       </div>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={isClearLogsConfirmOpen}
-        onOpenChange={setIsClearLogsConfirmOpen}
-        onConfirm={(): void => { void handleClearLogs(); }}
+        onClose={() => setIsClearLogsConfirmOpen(false)}
+        onConfirm={handleClearLogs}
         title='Wipe Observation Logs'
-        description='Permanently delete all captured telemetry data. This action is irreversible.'
+        message='Permanently delete all captured telemetry data. This action is irreversible.'
         confirmText='Confirm Wipe'
-        variant='destructive'
+        isDangerous={true}
       />
       
-      <ConfirmDialog
+      <ConfirmModal
         open={isRebuildIndexesConfirmOpen}
-        onOpenChange={setIsRebuildIndexesConfirmOpen}
-        onConfirm={(): void => { void handleRebuildMongoIndexes(); }}
+        onClose={() => setIsRebuildIndexesConfirmOpen(false)}
+        onConfirm={handleRebuildMongoIndexes}
         title='Restore Index Health'
-        description='Initiate a background scan and reconstruction of missing telemetry indexes.'
+        message='Initiate a background scan and reconstruction of missing telemetry indexes.'
         confirmText='Begin Rebuild'
       />
     </PageLayout>

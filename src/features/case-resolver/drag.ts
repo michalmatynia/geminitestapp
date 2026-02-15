@@ -4,11 +4,18 @@ import type { CaseResolverAssetKind } from './types';
 
 export const CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT =
   'case_resolver:drop-document-to-canvas';
+export const CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT =
+  'case_resolver:show-document-in-canvas';
 
 export type CaseResolverDropDocumentToCanvasDetail = {
   fileId: string;
   name: string;
   folder: string;
+};
+
+export type CaseResolverShowDocumentInCanvasDetail = {
+  fileId: string;
+  nodeId?: string | null;
 };
 
 export const emitCaseResolverDropDocumentToCanvas = (
@@ -18,6 +25,18 @@ export const emitCaseResolverDropDocumentToCanvas = (
   window.dispatchEvent(
     new CustomEvent<CaseResolverDropDocumentToCanvasDetail>(
       CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
+      { detail }
+    )
+  );
+};
+
+export const emitCaseResolverShowDocumentInCanvas = (
+  detail: CaseResolverShowDocumentInCanvasDetail
+): void => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent<CaseResolverShowDocumentInCanvasDetail>(
+      CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
       { detail }
     )
   );

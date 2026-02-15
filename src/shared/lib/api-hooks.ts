@@ -5,6 +5,7 @@ import {
   type UseQueryOptions,
   type UseMutationOptions,
   type QueryKey,
+  type QueryClient, // Added QueryClient import
 } from '@tanstack/react-query';
 import { z } from 'zod';
 
@@ -58,7 +59,7 @@ export function createQueryHook<TData, TParams = void>(config: QueryConfig<TData
 
 export interface MutationConfig<TData, TVariables, TContext = unknown> {
   mutationFn: (variables: TVariables) => Promise<TData>;
-  onSuccess?: (data: TData, variables: TVariables, context: TContext) => void | Promise<void>;
+  onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
   invalidateKeys?: QueryKey[] | ((data: TData, variables: TVariables) => QueryKey[]);
 }
 
@@ -67,7 +68,7 @@ export function createMutationHook<TData, TVariables, TContext = unknown>(
 ) {
   return (
     options?: Partial<UseMutationOptions<TData, Error, TVariables, TContext>> & {
-      onSuccess?: (data: TData, variables: TVariables, context: TContext) => void | Promise<void>;
+      onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
     }
   ) => {
     const queryClient = useQueryClient();
@@ -90,14 +91,116 @@ export function createMutationHook<TData, TVariables, TContext = unknown>(
         }
 
         if (config.onSuccess) {
-          await (config.onSuccess as (data: TData, variables: TVariables, context: TContext) => Promise<void>)(data, variables, context);
+          await (config.onSuccess as (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => Promise<void>)(data, variables, context, queryClient);
         }
 
         if (onSuccess) {
-          await (onSuccess as (data: TData, variables: TVariables, context: TContext) => Promise<void>)(data, variables, context);
+          await (onSuccess as (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => Promise<void>)(data, variables, context, queryClient);
         }
       },
       ...mutationOptions,
     });
   };
 }
+
+/**
+ * Factory for creating typed and validated TanStack Mutation hooks based on API endpoints.
+ */
+export interface MutationEndpointConfig<TData, TVariables, TError = Error> {
+  endpoint: string | ((variables: TVariables) => string);
+  responseSchema?: z.ZodType<TData>;
+  apiOptions?: ApiClientOptions;
+  invalidateKeys?: QueryKey[] | ((data: TData, variables: TVariables) => QueryKey[]);
+  onSuccess?: (data: TData, variables: TVariables, context: unknown, queryClient: QueryClient) => void | Promise<void>;
+}
+
+type HttpMethod = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+function createEndpointMutation<TData, TVariables, TError = Error>(
+  method: HttpMethod,
+  config: MutationEndpointConfig<TData, TVariables, TError>
+) {
+  return createMutationHook<TData, TVariables, unknown>({
+    mutationFn: async (variables) => {
+      const url = typeof config.endpoint === 'function' ? config.endpoint(variables) : config.endpoint;
+      let data: TData;
+
+      switch (method) {
+        case 'POST':
+          data = await api.post<TData>(url, variables, config.apiOptions);
+          break;
+        case 'PUT':
+          data = await api.put<TData>(url, variables, config.apiOptions);
+          break;
+        case 'PATCH':
+          data = await api.patch<TData>(url, variables, config.apiOptions);
+          break;
+        case 'DELETE':
+          data = await api.delete<TData>(url, config.apiOptions);
+          break;
+        default:
+          throw new Error(`Unsupported HTTP method: ${method}`);
+      }
+
+      if (config.responseSchema) {
+        return config.responseSchema.parse(data);
+      }
+      return data;
+    },
+    onSuccess: config.onSuccess,
+    invalidateKeys: config.invalidateKeys,
+  });
+}
+
+export function createPostMutation<TData, TVariables, TError = Error>(
+  config: MutationEndpointConfig<TData, TVariables, TError>
+) {
+  return createEndpointMutation('POST', config);
+}
+
+export function createPutMutation<TData, TVariables, TError = Error>(
+  config: MutationEndpointConfig<TData, TVariables, TError>
+) {
+  return createEndpointMutation('PUT', config);
+}
+
+export function createPatchMutation<TData, TVariables, TError = Error>(
+  config: MutationEndpointConfig<TData, TVariables, TError>
+) {
+  return createEndpointMutation('PATCH', config);
+}
+
+export function createDeleteMutation<TData, TVariables, TError = Error>(
+  config: MutationEndpointConfig<TData, TVariables, TError>
+) {
+  return createEndpointMutation('DELETE', config);
+}
+
+export function createSaveMutation<TData, TVariables extends { id?: string | number }, TError = Error>(
+  config: Omit<MutationEndpointConfig<TData, TVariables, TError>, 'endpoint'> & {
+    createEndpoint: string | ((variables: TVariables) => string);
+    updateEndpoint: string | ((variables: TVariables) => string);
+  }
+) {
+  return createMutationHook<TData, TVariables, unknown>({
+    mutationFn: async (variables) => {
+      let data: TData;
+      if (variables.id) {
+        const url = typeof config.updateEndpoint === 'function' ? config.updateEndpoint(variables) : config.updateEndpoint;
+        data = await api.patch<TData>(url, variables, config.apiOptions);
+      } else {
+        const url = typeof config.createEndpoint === 'function' ? config.createEndpoint(variables) : config.createEndpoint;
+        data = await api.post<TData>(url, variables, config.apiOptions);
+      }
+
+      if (config.responseSchema) {
+        return config.responseSchema.parse(data);
+      }
+      return data;
+    },
+    onSuccess: config.onSuccess,
+    invalidateKeys: config.invalidateKeys,
+  });
+}
+
+

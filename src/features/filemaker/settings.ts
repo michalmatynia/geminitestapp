@@ -1,6 +1,7 @@
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import type {
+  FilemakerAddress,
   FilemakerDatabase,
   FilemakerEntityKind,
   FilemakerOrganization,
@@ -38,16 +39,20 @@ const normalizePhoneNumbers = (value: unknown): string[] => {
 
 type FilemakerAddressFields = {
   street: string;
+  streetNumber: string;
   city: string;
   postalCode: string;
   country: string;
+  countryId: string;
 };
 
 const EMPTY_ADDRESS: FilemakerAddressFields = {
   street: '',
+  streetNumber: '',
   city: '',
   postalCode: '',
   country: '',
+  countryId: '',
 };
 
 const parseLegacyFullAddress = (value: unknown): FilemakerAddressFields => {
@@ -60,32 +65,38 @@ const parseLegacyFullAddress = (value: unknown): FilemakerAddressFields => {
   if (parts.length === 0) return EMPTY_ADDRESS;
   return {
     street: parts[0] ?? '',
+    streetNumber: '',
     city: parts[1] ?? '',
     postalCode: parts[2] ?? '',
     country: parts.slice(3).join(', ').trim(),
+    countryId: '',
   };
 };
 
 const normalizeAddressFields = (value: {
   street?: unknown;
+  streetNumber?: unknown;
   city?: unknown;
   postalCode?: unknown;
   country?: unknown;
+  countryId?: unknown;
   fullAddress?: unknown;
 }): FilemakerAddressFields => {
   const legacy = parseLegacyFullAddress(value.fullAddress);
   return {
     street: normalizeString(value.street) || legacy.street,
+    streetNumber: normalizeString(value.streetNumber) || legacy.streetNumber,
     city: normalizeString(value.city) || legacy.city,
     postalCode: normalizeString(value.postalCode) || legacy.postalCode,
     country: normalizeString(value.country) || legacy.country,
+    countryId: normalizeString(value.countryId) || legacy.countryId,
   };
 };
 
 export const formatFilemakerAddress = (
-  value: Pick<FilemakerAddressFields, 'street' | 'city' | 'postalCode' | 'country'>
+  value: Pick<FilemakerAddressFields, 'street' | 'streetNumber' | 'city' | 'postalCode' | 'country'>
 ): string =>
-  [value.street, value.city, value.postalCode, value.country]
+  [[value.street, value.streetNumber].map((entry: string) => normalizeString(entry)).filter(Boolean).join(' '), value.city, value.postalCode, value.country]
     .map((entry: string) => normalizeString(entry))
     .filter(Boolean)
     .join(', ');
@@ -100,14 +111,62 @@ const sanitizeReference = (value: unknown): FilemakerPartyReference | null => {
   return { kind, id };
 };
 
+const hasAnyAddressData = (value: FilemakerAddressFields): boolean =>
+  Boolean(
+    value.street ||
+      value.streetNumber ||
+      value.city ||
+      value.postalCode ||
+      value.country ||
+      value.countryId
+  );
+
+export const createFilemakerAddress = (input: {
+  id: string;
+  street?: unknown;
+  streetNumber?: unknown;
+  city?: unknown;
+  postalCode?: unknown;
+  country?: unknown;
+  countryId?: unknown;
+  fullAddress?: unknown;
+  createdAt?: string | undefined;
+  updatedAt?: string | undefined;
+}): FilemakerAddress => {
+  const now = new Date().toISOString();
+  const address = normalizeAddressFields({
+    street: input.street,
+    streetNumber: input.streetNumber,
+    city: input.city,
+    postalCode: input.postalCode,
+    country: input.country,
+    countryId: input.countryId,
+    fullAddress: input.fullAddress,
+  });
+  return {
+    id: normalizeString(input.id),
+    street: address.street,
+    streetNumber: address.streetNumber,
+    city: address.city,
+    postalCode: address.postalCode,
+    country: address.country,
+    countryId: address.countryId,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
 export const createFilemakerPerson = (input: {
   id: string;
   firstName: unknown;
   lastName: unknown;
+  addressId?: unknown;
   street?: unknown;
+  streetNumber?: unknown;
   city?: unknown;
   postalCode?: unknown;
   country?: unknown;
+  countryId?: unknown;
   fullAddress?: unknown;
   nip?: unknown;
   regon?: unknown;
@@ -118,19 +177,24 @@ export const createFilemakerPerson = (input: {
   const now = new Date().toISOString();
   const address = normalizeAddressFields({
     street: input.street,
+    streetNumber: input.streetNumber,
     city: input.city,
     postalCode: input.postalCode,
     country: input.country,
+    countryId: input.countryId,
     fullAddress: input.fullAddress,
   });
   return {
     id: normalizeString(input.id),
     firstName: normalizeString(input.firstName),
     lastName: normalizeString(input.lastName),
+    addressId: normalizeString(input.addressId),
     street: address.street,
+    streetNumber: address.streetNumber,
     city: address.city,
     postalCode: address.postalCode,
     country: address.country,
+    countryId: address.countryId,
     nip: normalizeString(input.nip),
     regon: normalizeString(input.regon),
     phoneNumbers: normalizePhoneNumbers(input.phoneNumbers),
@@ -142,10 +206,13 @@ export const createFilemakerPerson = (input: {
 export const createFilemakerOrganization = (input: {
   id: string;
   name: unknown;
+  addressId?: unknown;
   street?: unknown;
+  streetNumber?: unknown;
   city?: unknown;
   postalCode?: unknown;
   country?: unknown;
+  countryId?: unknown;
   fullAddress?: unknown;
   createdAt?: string | undefined;
   updatedAt?: string | undefined;
@@ -153,28 +220,116 @@ export const createFilemakerOrganization = (input: {
   const now = new Date().toISOString();
   const address = normalizeAddressFields({
     street: input.street,
+    streetNumber: input.streetNumber,
     city: input.city,
     postalCode: input.postalCode,
     country: input.country,
+    countryId: input.countryId,
     fullAddress: input.fullAddress,
   });
   return {
     id: normalizeString(input.id),
     name: normalizeString(input.name),
+    addressId: normalizeString(input.addressId),
     street: address.street,
+    streetNumber: address.streetNumber,
     city: address.city,
     postalCode: address.postalCode,
     country: address.country,
+    countryId: address.countryId,
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };
 };
 
 export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
-  version: 1,
+  version: 2,
   persons: [],
   organizations: [],
+  addresses: [],
 });
+
+const defaultAddressIdForEntity = (kind: 'person' | 'organization', entityId: string): string =>
+  `${kind}-address-${entityId}`;
+
+const attachAddressToPerson = (
+  person: FilemakerPerson,
+  addressesById: Map<string, FilemakerAddress>
+): FilemakerPerson => {
+  const addressId = normalizeString(person.addressId) || defaultAddressIdForEntity('person', person.id);
+  const existing = addressesById.get(addressId);
+  const fromPerson = createFilemakerAddress({
+    id: addressId,
+    street: person.street,
+    streetNumber: person.streetNumber,
+    city: person.city,
+    postalCode: person.postalCode,
+    country: person.country,
+    countryId: person.countryId,
+    createdAt: existing?.createdAt ?? person.createdAt,
+    updatedAt: person.updatedAt,
+  });
+  if (hasAnyAddressData(fromPerson)) {
+    addressesById.set(addressId, fromPerson);
+  }
+  const resolvedAddress = addressesById.get(addressId);
+  if (!resolvedAddress) {
+    return {
+      ...person,
+      addressId,
+    };
+  }
+  return {
+    ...person,
+    addressId,
+    street: resolvedAddress.street,
+    streetNumber: resolvedAddress.streetNumber,
+    city: resolvedAddress.city,
+    postalCode: resolvedAddress.postalCode,
+    country: resolvedAddress.country,
+    countryId: resolvedAddress.countryId,
+  };
+};
+
+const attachAddressToOrganization = (
+  organization: FilemakerOrganization,
+  addressesById: Map<string, FilemakerAddress>
+): FilemakerOrganization => {
+  const addressId = normalizeString(organization.addressId) ||
+    defaultAddressIdForEntity('organization', organization.id);
+  const existing = addressesById.get(addressId);
+  const fromOrganization = createFilemakerAddress({
+    id: addressId,
+    street: organization.street,
+    streetNumber: organization.streetNumber,
+    city: organization.city,
+    postalCode: organization.postalCode,
+    country: organization.country,
+    countryId: organization.countryId,
+    createdAt: existing?.createdAt ?? organization.createdAt,
+    updatedAt: organization.updatedAt,
+  });
+  if (hasAnyAddressData(fromOrganization)) {
+    addressesById.set(addressId, fromOrganization);
+  }
+  const resolvedAddress = addressesById.get(addressId);
+  if (!resolvedAddress) {
+    return {
+      ...organization,
+      addressId,
+    };
+  }
+  return {
+    ...organization,
+    addressId,
+    street: resolvedAddress.street,
+    streetNumber: resolvedAddress.streetNumber,
+    city: resolvedAddress.city,
+    postalCode: resolvedAddress.postalCode,
+    country: resolvedAddress.country,
+    countryId: resolvedAddress.countryId,
+  };
+};
 
 export const normalizeFilemakerDatabase = (
   value: FilemakerDatabase | null | undefined
@@ -182,6 +337,32 @@ export const normalizeFilemakerDatabase = (
   if (!value || typeof value !== 'object') {
     return createDefaultFilemakerDatabase();
   }
+
+  const rawAddresses: unknown[] = Array.isArray((value as { addresses?: unknown[] }).addresses)
+    ? (value as { addresses?: unknown[] }).addresses ?? []
+    : [];
+  const addressesById = new Map<string, FilemakerAddress>();
+  rawAddresses
+    .filter((entry: unknown): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object')
+    .forEach((entry: Record<string, unknown>) => {
+      const id = normalizeString(entry['id']);
+      if (!id || addressesById.has(id)) return;
+      addressesById.set(
+        id,
+        createFilemakerAddress({
+          id,
+          street: normalizeString(entry['street']),
+          streetNumber: normalizeString(entry['streetNumber']),
+          city: normalizeString(entry['city']),
+          postalCode: normalizeString(entry['postalCode']),
+          country: normalizeString(entry['country']),
+          countryId: normalizeString(entry['countryId']),
+          fullAddress: normalizeString(entry['fullAddress']),
+          createdAt: normalizeString(entry['createdAt']) || undefined,
+          updatedAt: normalizeString(entry['updatedAt']) || undefined,
+        })
+      );
+    });
 
   const rawPersons: unknown[] = Array.isArray(value.persons) ? value.persons : [];
   const personIds = new Set<string>();
@@ -195,10 +376,13 @@ export const normalizeFilemakerDatabase = (
         id,
         firstName: normalizeString(entry['firstName']),
         lastName: normalizeString(entry['lastName']),
+        addressId: normalizeString(entry['addressId']),
         street: normalizeString(entry['street']),
+        streetNumber: normalizeString(entry['streetNumber']),
         city: normalizeString(entry['city']),
         postalCode: normalizeString(entry['postalCode']),
         country: normalizeString(entry['country']),
+        countryId: normalizeString(entry['countryId']),
         fullAddress: normalizeString(entry['fullAddress']),
         nip: normalizeString(entry['nip']),
         regon: normalizeString(entry['regon']),
@@ -207,7 +391,8 @@ export const normalizeFilemakerDatabase = (
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
     })
-    .filter((entry: FilemakerPerson | null): entry is FilemakerPerson => Boolean(entry));
+    .filter((entry: FilemakerPerson | null): entry is FilemakerPerson => Boolean(entry))
+    .map((entry: FilemakerPerson) => attachAddressToPerson(entry, addressesById));
 
   const rawOrganizations: unknown[] = Array.isArray(value.organizations) ? value.organizations : [];
   const organizationIds = new Set<string>();
@@ -220,21 +405,26 @@ export const normalizeFilemakerDatabase = (
       return createFilemakerOrganization({
         id,
         name: normalizeString(entry['name']),
+        addressId: normalizeString(entry['addressId']),
         street: normalizeString(entry['street']),
+        streetNumber: normalizeString(entry['streetNumber']),
         city: normalizeString(entry['city']),
         postalCode: normalizeString(entry['postalCode']),
         country: normalizeString(entry['country']),
+        countryId: normalizeString(entry['countryId']),
         fullAddress: normalizeString(entry['fullAddress']),
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
     })
-    .filter((entry: FilemakerOrganization | null): entry is FilemakerOrganization => Boolean(entry));
+    .filter((entry: FilemakerOrganization | null): entry is FilemakerOrganization => Boolean(entry))
+    .map((entry: FilemakerOrganization) => attachAddressToOrganization(entry, addressesById));
 
   return {
-    version: 1,
+    version: 2,
     persons,
     organizations,
+    addresses: Array.from(addressesById.values()),
   };
 };
 
@@ -243,6 +433,15 @@ export const parseFilemakerDatabase = (
 ): FilemakerDatabase => {
   const parsed = parseJsonSetting<FilemakerDatabase | null>(raw, null);
   return normalizeFilemakerDatabase(parsed);
+};
+
+export const getFilemakerAddressById = (
+  database: FilemakerDatabase,
+  addressId: string | null | undefined
+): FilemakerAddress | null => {
+  const normalizedAddressId = normalizeString(addressId);
+  if (!normalizedAddressId) return null;
+  return database.addresses.find((address: FilemakerAddress) => address.id === normalizedAddressId) ?? null;
 };
 
 export const encodeFilemakerPartyReference = (

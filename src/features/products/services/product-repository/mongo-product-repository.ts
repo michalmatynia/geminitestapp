@@ -393,6 +393,17 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
     }
   }
 
+  if (filters.description) {
+    const regex = { $regex: filters.description, $options: 'i' };
+    andConditions.push({
+      $or: [
+        { description_en: regex },
+        { description_pl: regex },
+        { description_de: regex },
+      ],
+    });
+  }
+
   if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
     filter.price = {};
     if (filters.minPrice !== undefined) {
@@ -428,6 +439,15 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
         ],
       });
     }
+  }
+
+  if (filters.categoryId) {
+    andConditions.push({
+      $or: [
+        { categoryId: filters.categoryId },
+        { 'categories.categoryId': filters.categoryId },
+      ],
+    });
   }
 
   if (andConditions.length === 1) {

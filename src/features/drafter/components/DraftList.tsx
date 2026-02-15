@@ -13,7 +13,7 @@ import { ICON_LIBRARY_MAP } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { Button, ListPanel, useToast, EmptyState } from '@/shared/ui';
-import { ConfirmDialog } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 import { useDrafterContext } from '../context/DrafterContext';
 
@@ -60,14 +60,15 @@ export function DraftList(): React.JSX.Element {
         </Button>
       }
     >
-      <ConfirmDialog
+      <ConfirmModal
         open={!!draftToDelete}
-        onOpenChange={(open: boolean) => !open && setDraftToDelete(null)}
-        onConfirm={(): void => { void handleConfirmDelete(); }}
+        onClose={() => setDraftToDelete(null)}
+        onConfirm={handleConfirmDelete}
         title='Delete Draft'
-        description='Are you sure you want to delete this draft? This action cannot be undone.'
+        message='Are you sure you want to delete this draft? This action cannot be undone.'
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
+        loading={!!deleting}
       />
       {loading ? (
         <p className='text-sm text-gray-400'>Loading drafts...</p>

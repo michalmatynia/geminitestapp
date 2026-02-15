@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import { IntegrationList } from '@/features/integrations/components/connections/IntegrationList';
 import { IntegrationModal } from '@/features/integrations/components/connections/IntegrationModal';
 import { IntegrationsProvider, useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { ConfirmDialog } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 function IntegrationsContent(): React.JSX.Element {
   const {
@@ -18,14 +18,14 @@ function IntegrationsContent(): React.JSX.Element {
 
   return (
     <div className='container mx-auto py-10'>
-      <ConfirmDialog
+      <ConfirmModal
         open={!!connectionToDelete}
-        onOpenChange={(open: boolean) => !open && setConnectionToDelete(null)}
-        onConfirm={(): void => { void handleConfirmDeleteConnection(); }}
+        onClose={() => setConnectionToDelete(null)}
+        onConfirm={handleConfirmDeleteConnection}
         title='Delete Connection'
-        description={`Are you sure you want to delete connection "${connectionToDelete?.name}"? This cannot be undone.`}
+        message={`Are you sure you want to delete connection "${connectionToDelete?.name}"? This cannot be undone.`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
       />
       <IntegrationList />
 

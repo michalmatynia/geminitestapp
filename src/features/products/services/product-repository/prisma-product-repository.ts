@@ -40,6 +40,7 @@ const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
 
 const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput => {
   const where: Prisma.ProductWhereInput = {};
+  const andConditions: Prisma.ProductWhereInput[] = [];
 
   if (filters.sku) {
     where.sku = {
@@ -50,19 +51,31 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
 
   if (filters.search) {
     if (filters.searchLanguage) {
-      where.OR = [
-        { [filters.searchLanguage]: { contains: filters.search, mode: 'insensitive' } },
-      ];
+      andConditions.push({
+        OR: [{ [filters.searchLanguage]: { contains: filters.search, mode: 'insensitive' } }],
+      });
     } else {
-      where.OR = [
-        { name_en: { contains: filters.search, mode: 'insensitive' } },
-        { name_pl: { contains: filters.search, mode: 'insensitive' } },
-        { name_de: { contains: filters.search, mode: 'insensitive' } },
-        { description_en: { contains: filters.search, mode: 'insensitive' } },
-        { description_pl: { contains: filters.search, mode: 'insensitive' } },
-        { description_de: { contains: filters.search, mode: 'insensitive' } },
-      ];
+      andConditions.push({
+        OR: [
+          { name_en: { contains: filters.search, mode: 'insensitive' } },
+          { name_pl: { contains: filters.search, mode: 'insensitive' } },
+          { name_de: { contains: filters.search, mode: 'insensitive' } },
+          { description_en: { contains: filters.search, mode: 'insensitive' } },
+          { description_pl: { contains: filters.search, mode: 'insensitive' } },
+          { description_de: { contains: filters.search, mode: 'insensitive' } },
+        ],
+      });
     }
+  }
+
+  if (filters.description) {
+    andConditions.push({
+      OR: [
+        { description_en: { contains: filters.description, mode: 'insensitive' } },
+        { description_pl: { contains: filters.description, mode: 'insensitive' } },
+        { description_de: { contains: filters.description, mode: 'insensitive' } },
+      ],
+    });
   }
 
   if (filters.minPrice !== undefined) {
@@ -96,6 +109,19 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
     } else {
       where.catalogs = { some: { catalogId: filters.catalogId } };
     }
+  }
+
+  if (filters.categoryId) {
+    andConditions.push({
+      OR: [
+        { categoryId: filters.categoryId },
+        { categories: { some: { categoryId: filters.categoryId } } },
+      ],
+    });
+  }
+
+  if (andConditions.length > 0) {
+    where.AND = andConditions;
   }
 
   return where;

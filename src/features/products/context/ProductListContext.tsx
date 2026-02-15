@@ -35,6 +35,7 @@ export interface ProductListContextType {
   currencyCode: string;
   setCurrencyCode: (code: string) => void;
   currencyOptions: string[];
+  filtersCollapsedByDefault: boolean;
   
   // Filters
   catalogFilter: string;
@@ -44,6 +45,10 @@ export interface ProductListContextType {
   setSearch: (value: string) => void;
   sku: string;
   setSku: (value: string) => void;
+  description: string;
+  setDescription: (value: string) => void;
+  categoryId: string;
+  setCategoryId: (value: string) => void;
   minPrice: number | undefined;
   setMinPrice: (value: number | undefined) => void;
   maxPrice: number | undefined;
@@ -136,6 +141,7 @@ export interface ProductListFiltersContextType {
   currencyCode: string;
   setCurrencyCode: (code: string) => void;
   currencyOptions: string[];
+  filtersCollapsedByDefault: boolean;
   catalogFilter: string;
   setCatalogFilter: (filter: string) => void;
   catalogs: Catalog[];
@@ -143,6 +149,10 @@ export interface ProductListFiltersContextType {
   setSearch: (value: string) => void;
   sku: string;
   setSku: (value: string) => void;
+  description: string;
+  setDescription: (value: string) => void;
+  categoryId: string;
+  setCategoryId: (value: string) => void;
   minPrice: number | undefined;
   setMinPrice: (value: number | undefined) => void;
   maxPrice: number | undefined;
@@ -320,6 +330,7 @@ export function ProductListProvider({
       currencyCode: value.currencyCode,
       setCurrencyCode: value.setCurrencyCode,
       currencyOptions: value.currencyOptions,
+      filtersCollapsedByDefault: value.filtersCollapsedByDefault,
       catalogFilter: value.catalogFilter,
       setCatalogFilter: value.setCatalogFilter,
       catalogs: value.catalogs,
@@ -327,6 +338,10 @@ export function ProductListProvider({
       setSearch: value.setSearch,
       sku: value.sku,
       setSku: value.setSku,
+      description: value.description,
+      setDescription: value.setDescription,
+      categoryId: value.categoryId,
+      setCategoryId: value.setCategoryId,
       minPrice: value.minPrice,
       setMinPrice: value.setMinPrice,
       maxPrice: value.maxPrice,

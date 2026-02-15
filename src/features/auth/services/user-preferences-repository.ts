@@ -22,6 +22,7 @@ export type UserPreferencesData = {
   productListCurrencyCode?: string | null;
   productListPageSize?: number | null;
   productListThumbnailSource?: 'file' | 'link' | 'base64' | null;
+  productListFiltersCollapsedByDefault?: boolean | null;
   productListDraftIconColorMode?: 'theme' | 'custom' | null;
   productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
@@ -48,6 +49,7 @@ type UserPreferencesRecord = {
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
   productListThumbnailSource: 'file' | 'link' | 'base64' | null;
+  productListFiltersCollapsedByDefault: boolean | null;
   productListDraftIconColorMode: 'theme' | 'custom' | null;
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
@@ -76,6 +78,7 @@ type UserPreferencesDocument = {
   productListCurrencyCode: string | null;
   productListPageSize: number | null;
   productListThumbnailSource: 'file' | 'link' | 'base64' | null;
+  productListFiltersCollapsedByDefault: boolean | null;
   productListDraftIconColorMode: 'theme' | 'custom' | null;
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
@@ -176,6 +179,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   productListCurrencyCode: doc.productListCurrencyCode,
   productListPageSize: doc.productListPageSize,
   productListThumbnailSource: doc.productListThumbnailSource ?? 'file',
+  productListFiltersCollapsedByDefault: doc.productListFiltersCollapsedByDefault ?? false,
   productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme',
   productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
@@ -205,6 +209,7 @@ const defaultPreferences = (
   productListCurrencyCode: 'PLN',
   productListPageSize: 12,
   productListThumbnailSource: 'file',
+  productListFiltersCollapsedByDefault: false,
   productListDraftIconColorMode: 'theme',
   productListDraftIconColor: '#60a5fa',
   aiPathsActivePathId: null,

@@ -67,8 +67,15 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
 }) => {
   const isActiveFilterValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
-    if (typeof value === 'string') return value !== '';
-    if (Array.isArray(value)) return value.length > 0;
+    if (typeof value === 'string') return value.trim() !== '';
+    if (typeof value === 'number') return Number.isFinite(value);
+    if (typeof value === 'boolean') return value;
+    if (Array.isArray(value)) return value.some((entry) => isActiveFilterValue(entry));
+    if (typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>).some((entry) =>
+        isActiveFilterValue(entry)
+      );
+    }
     return true;
   };
 

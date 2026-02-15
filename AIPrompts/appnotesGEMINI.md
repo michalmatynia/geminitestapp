@@ -40,6 +40,7 @@ NETWORK
 
 Remove legacy solutions and backwards compatibility I want only the newest
 pursue project-wide standardization
+apply the standardized mutation factories
 
 VALIDATION
 - expand mutation-invalidation matrix QUERY KEYS. 

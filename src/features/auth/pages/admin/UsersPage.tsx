@@ -20,10 +20,10 @@ import {
   SectionHeader, 
   ListPanel, 
   Input, 
-  ConfirmDialog,
   StatusBadge,
   useToast
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { MockSignInModal } from '../../components/admin/MockSignInModal';
 import { UserCreateModal } from '../../components/admin/UserCreateModal';
@@ -286,14 +286,14 @@ export default function AuthUsersPage(): React.JSX.Element {
         }}
       />
 
-      <ConfirmDialog
+      <ConfirmModal
         open={Boolean(userToDelete)}
-        onOpenChange={(open) => !open && setUserToDelete(null)}
+        onClose={() => setUserToDelete(null)}
         title='Permanently Delete User?'
-        description={`This will terminate all active sessions for ${userToDelete?.email} and remove their identity record. This action is irreversible.`}
+        message={`This will terminate all active sessions for ${userToDelete?.email} and remove their identity record. This action is irreversible.`}
         confirmText='Destroy Record'
-        variant='destructive'
-        onConfirm={() => { void deleteUser(); }}
+        isDangerous={true}
+        onConfirm={deleteUser}
       />
     </div>
   );

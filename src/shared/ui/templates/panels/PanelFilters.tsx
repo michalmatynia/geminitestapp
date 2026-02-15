@@ -21,8 +21,15 @@ import { FilterField } from './types';
 
 const isActiveFilterValue = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;
-  if (typeof value === 'string') return value !== '';
-  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'string') return value.trim() !== '';
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value === 'boolean') return value;
+  if (Array.isArray(value)) return value.some((entry) => isActiveFilterValue(entry));
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).some((entry) =>
+      isActiveFilterValue(entry)
+    );
+  }
   return true;
 };
 
@@ -111,47 +118,46 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   const activeFilterCount = Object.values(values).filter((value) => isActiveFilterValue(value)).length;
 
   const filterFieldsToRender = filters;
+  const showToggleButton = filterFieldsToRender.length > 0 && (compact || collapsible);
 
   return (
     <div className={cn('space-y-3', className)}>
-      {/* Search Bar */}
-      {searchPlaceholder && (
-        <div className='relative'>
-          <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-400' />
-          <Input
-            type='text'
-            placeholder={searchPlaceholder}
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            className='pl-8 pr-8'
-          />
-          {localSearch && (
-            <button
-              onClick={() => {
-                setLocalSearch('');
-                onSearchChange?.('');
-              }}
-              className='absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600'
-              aria-label='Clear search'
-            >
-              <X className='h-4 w-4' />
-            </button>
+      {(searchPlaceholder || showToggleButton) && (
+        <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+          {/* Search Bar */}
+          {searchPlaceholder && (
+            <div className='relative flex-1'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-gray-400' />
+              <Input
+                type='text'
+                placeholder={searchPlaceholder}
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                className='pl-8 pr-8'
+              />
+              {localSearch && (
+                <button
+                  onClick={() => {
+                    setLocalSearch('');
+                    onSearchChange?.('');
+                  }}
+                  className='absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600'
+                  aria-label='Clear search'
+                >
+                  <X className='h-4 w-4' />
+                </button>
+              )}
+            </div>
           )}
-        </div>
-      )}
 
-      {/* Filter Controls */}
-      {filterFieldsToRender.length > 0 && (
-        <>
-          {/* Toggle button (compact or explicit collapsible mode) */}
-          {compact || collapsible ? (
+          {showToggleButton ? (
             <Button
               type='button'
               size='xs'
               variant={hasActiveFilters ? 'default' : 'outline'}
               onClick={() => setIsExpanded(!isExpanded)}
               className={cn(
-                'h-8 px-2',
+                'h-8 px-2 shrink-0 sm:ml-auto',
                 hasActiveFilters && 'bg-blue-600 text-white hover:bg-blue-500'
               )}
             >
@@ -159,7 +165,12 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
               {hasActiveFilters && <span> ({activeFilterCount})</span>}
             </Button>
           ) : null}
+        </div>
+      )}
 
+      {/* Filter Controls */}
+      {filterFieldsToRender.length > 0 && (
+        <>
           {isExpanded && (
             <div className='flex flex-wrap gap-2'>
               {filterFieldsToRender.map((field) => (

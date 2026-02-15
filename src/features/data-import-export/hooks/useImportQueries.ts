@@ -58,6 +58,7 @@ export function useImportPreference<T>(
   options?: ImportPreferenceOptions<T>
 ): SingleQuery<T> {
   return createSingleQuery({
+    id: key,
     queryKey: importExportKeys.pref(key),
     queryFn: async (): Promise<T> => {
       try {
@@ -67,9 +68,7 @@ export function useImportPreference<T>(
         throw error;
       }
     },
-    options: {
-      enabled: options?.enabled ?? true,
-    },
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -140,12 +139,13 @@ export function useInventories(connectionId?: string, enabled: boolean = true): 
       const data = await api.post<{ inventories: BaseInventory[] }>('/api/integrations/imports/base', { action: 'inventories', connectionId });
       return data.inventories;
     },
-    options: { enabled },
+    enabled,
   });
 }
 
 export function useWarehouses(inventoryId: string, connectionId?: string, includeAll: boolean = false, enabled: boolean = true): SingleQuery<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }> {
   return createSingleQuery({
+    id: inventoryId,
     queryKey: importExportKeys.warehouses(inventoryId, connectionId, includeAll),
     queryFn: () => api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>('/api/integrations/imports/base', { 
       action: 'warehouses', 
@@ -153,22 +153,19 @@ export function useWarehouses(inventoryId: string, connectionId?: string, includ
       connectionId, 
       includeAllWarehouses: includeAll 
     }),
-    options: {
-      enabled: enabled && !!inventoryId,
-    },
+    enabled: enabled && !!inventoryId,
   });
 }
 
 export function useParameters(inventoryId: string, productId: string, enabled: boolean = true): SingleQuery<{ parameters?: Array<{ id: string; name: string }> }> {
   return createSingleQuery({
+    id: `${inventoryId}-${productId}`,
     queryKey: importExportKeys.parameters(inventoryId, productId),
     queryFn: () => api.post<{ parameters?: Array<{ id: string; name: string }> }>('/api/integrations/imports/base/parameters', { 
       inventoryId, 
       productId 
     }),
-    options: {
-      enabled: enabled && !!inventoryId && !!productId,
-    },
+    enabled: enabled && !!inventoryId && !!productId,
   });
 }
 
@@ -185,6 +182,7 @@ export function useImportList(
   enabled: boolean = true
 ): SingleQuery<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number; page?: number; pageSize?: number; totalPages?: number }> {
   return createSingleQuery({
+    id: inventoryId,
     queryKey: importExportKeys.importList(inventoryId, params),
     queryFn: () => {
       const { limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
@@ -211,9 +209,7 @@ export function useImportList(
         }
       });
     },
-    options: {
-      enabled: enabled && !!inventoryId,
-    },
+    enabled: enabled && !!inventoryId,
   });
 }
 

@@ -21,7 +21,7 @@ export type CaseResolverCompiledSegment = {
 export type CaseResolverCompileResult = {
   prompt: string;
   segments: CaseResolverCompiledSegment[];
-  outputsByNode: Record<string, { textfield: string; content: string }>;
+  outputsByNode: Record<string, { textfield: string; content: string; plainText: string }>;
 };
 
 const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
@@ -33,6 +33,7 @@ const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
 
 const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
 const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
+const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 const LEGACY_PROMPT_PORT = 'prompt';
 const LEGACY_RESULT_PORT = 'result';
 
@@ -139,9 +140,9 @@ const sortEdgesBySourcePosition = (
 };
 
 const resolveSourceOutputValue = (
-  sourceOutputs: { textfield: string; content: string } | null | undefined,
+  sourceOutputs: { textfield: string; content: string; plainText: string } | null | undefined,
   fromPort: string | undefined,
-  fallback: 'textfield' | 'content'
+  fallback: 'textfield' | 'content' | 'plainText'
 ): string => {
   if (!sourceOutputs) return '';
   if (fromPort === DOCUMENT_TEXTFIELD_PORT || fromPort === LEGACY_PROMPT_PORT) {
@@ -149,6 +150,12 @@ const resolveSourceOutputValue = (
   }
   if (fromPort === DOCUMENT_CONTENT_PORT || fromPort === LEGACY_RESULT_PORT) {
     return sourceOutputs.content;
+  }
+  if (fromPort === DOCUMENT_PLAIN_TEXT_PORT) {
+    return sourceOutputs.plainText;
+  }
+  if (fallback === 'plainText') {
+    return sourceOutputs.plainText;
   }
   return fallback === 'textfield' ? sourceOutputs.textfield : sourceOutputs.content;
 };
@@ -159,12 +166,17 @@ const isTextfieldInputPort = (port: string | undefined): boolean =>
 const isContentInputPort = (port: string | undefined): boolean =>
   port === DOCUMENT_CONTENT_PORT || port === LEGACY_RESULT_PORT || !port;
 
+const isPlainTextInputPort = (port: string | undefined): boolean =>
+  port === DOCUMENT_PLAIN_TEXT_PORT;
+
 const hasDocumentPortFlow = (edges: Edge[]): boolean =>
   edges.some((edge: Edge): boolean =>
     edge.fromPort === DOCUMENT_TEXTFIELD_PORT ||
     edge.fromPort === DOCUMENT_CONTENT_PORT ||
+    edge.fromPort === DOCUMENT_PLAIN_TEXT_PORT ||
     edge.toPort === DOCUMENT_TEXTFIELD_PORT ||
-    edge.toPort === DOCUMENT_CONTENT_PORT
+    edge.toPort === DOCUMENT_CONTENT_PORT ||
+    edge.toPort === DOCUMENT_PLAIN_TEXT_PORT
   );
 
 export const compileCaseResolverPrompt = (
@@ -236,7 +248,7 @@ export const compileCaseResolverPrompt = (
     }
 
     const segments: CaseResolverCompiledSegment[] = [];
-    const outputsByNode: Record<string, { textfield: string; content: string }> = {};
+    const outputsByNode: Record<string, { textfield: string; content: string; plainText: string }> = {};
     const outputParts: string[] = [];
     const usesDocumentPortFlow = hasDocumentPortFlow(graph.edges);
     const visitedNodeIds = new Set<string>(visitOrder.map((entry) => entry.nodeId));
@@ -252,7 +264,7 @@ export const compileCaseResolverPrompt = (
       );
 
       const collectIncoming = (
-        type: 'textfield' | 'content'
+        type: 'textfield' | 'content' | 'plainText'
       ): { value: string; firstJoinMode: CaseResolverJoinMode | null } => {
         let value = '';
         let firstJoinMode: CaseResolverJoinMode | null = null;
@@ -261,10 +273,14 @@ export const compileCaseResolverPrompt = (
           const acceptsEdge =
             type === 'textfield'
               ? isTextfieldInputPort(edge.toPort)
-              : isContentInputPort(edge.toPort);
+              : type === 'content'
+                ? isContentInputPort(edge.toPort)
+                : isPlainTextInputPort(edge.toPort);
           if (!acceptsEdge) return;
           const sourceOutputs = outputsByNode[edge.from];
-          const sourceValue = resolveSourceOutputValue(sourceOutputs, edge.fromPort, type);
+          const rawSourceValue = resolveSourceOutputValue(sourceOutputs, edge.fromPort, type);
+          const sourceValue =
+            type === 'plainText' ? stripHtml(rawSourceValue) : rawSourceValue;
           if (!sourceValue) return;
           const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta).joinMode;
           if (!firstJoinMode) firstJoinMode = edgeJoinMode;
@@ -276,8 +292,14 @@ export const compileCaseResolverPrompt = (
 
       const incomingTextfield = collectIncoming('textfield');
       const incomingContent = collectIncoming('content');
+      const incomingPlainText = collectIncoming('plainText');
       const resolvedTextfield =
-        incomingTextfield.value.trim().length > 0 ? incomingTextfield.value : nodeText;
+        incomingTextfield.value.trim().length > 0
+          ? incomingTextfield.value
+          : incomingPlainText.value.trim().length > 0
+            ? incomingPlainText.value
+            : nodeText;
+      const plainTextOutput = stripHtml(resolvedTextfield);
       const wrappedText = wrapByQuoteMode(resolvedTextfield, meta);
       let contentOutput = incomingContent.value;
       if (meta.includeInOutput && wrappedText.trim().length > 0) {
@@ -288,6 +310,7 @@ export const compileCaseResolverPrompt = (
       outputsByNode[node.id] = {
         textfield: resolvedTextfield,
         content: contentOutput,
+        plainText: plainTextOutput,
       };
 
       segments.push({

@@ -16,6 +16,6 @@ export {
   fetchSettings,
   saveSetting,
 } from './settings';
-export { fetchOllamaModels } from './models';
+export { fetchOllamaModels, fetchChatbotModels } from './models';
 export { fetchChatbotMemory } from './memory';
 export { uploadChatbotContextPdf } from './context';

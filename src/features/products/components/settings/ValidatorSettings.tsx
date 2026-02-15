@@ -1,6 +1,6 @@
 'use client';
 
-import { ConfirmDialog } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useValidatorSettingsController } from './validator-settings/useValidatorSettingsController';
 import { ValidatorDefaultPanel } from './validator-settings/ValidatorDefaultPanel';
@@ -19,18 +19,14 @@ export function ValidatorSettings(): React.JSX.Element {
         <ValidatorInstanceBehaviorPanel />
         <ValidatorPatternTablePanel />
 
-        <ConfirmDialog
+        <ConfirmModal
           open={!!controller.patternToDelete}
-          onOpenChange={(open: boolean) => {
-            if (!open) controller.setPatternToDelete(null);
-          }}
-          onConfirm={() => {
-            void controller.handleDelete();
-          }}
+          onClose={() => controller.setPatternToDelete(null)}
+          onConfirm={controller.handleDelete}
           title='Delete Pattern'
-          description={`Delete validator pattern "${controller.patternToDelete?.label}"? This cannot be undone.`}
+          message={`Delete validator pattern "${controller.patternToDelete?.label}"? This cannot be undone.`}
           confirmText='Delete'
-          variant='destructive'
+          isDangerous={true}
         />
 
         <ValidatorPatternModal />

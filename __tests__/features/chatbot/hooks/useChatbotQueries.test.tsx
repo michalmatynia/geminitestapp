@@ -16,6 +16,7 @@ vi.mock('@/features/ai/chatbot/api', () => ({
   fetchChatbotSessions: vi.fn(),
   fetchChatbotSession: vi.fn(),
   fetchChatbotSettings: vi.fn(),
+  fetchChatbotModels: vi.fn(),
   fetchOllamaModels: vi.fn(),
 }));
 
@@ -23,19 +24,23 @@ const createQueryClient = () => new QueryClient({
   defaultOptions: {
     queries: {
       retry: false,
+      staleTime: 0,
     },
   },
 });
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
-  <QueryClientProvider client={createQueryClient()}>{children}</QueryClientProvider>
-);
-
 describe('Chatbot Queries Hooks', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
+    queryClient = createQueryClient();
   });
+
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  );
 
   describe('useChatbotSessions', () => {
     it('fetches and returns sessions', async () => {
@@ -75,12 +80,9 @@ describe('Chatbot Queries Hooks', () => {
 
   describe('useChatbotModels', () => {
     it('fetches models from API', async () => {
-      vi.mocked(global.fetch).mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ models: ['m1', 'm2'] }),
-      } as any);
+      vi.mocked(chatbotApi.fetchChatbotModels).mockResolvedValue({ models: ['m1', 'm2'] });
 
-      const { result } = renderHook(() => useChatbotModels(), { wrapper });
+      const { result } = renderHook(() => useChatbotModels({ staleTime: 0 } as any), { wrapper });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(result.current.data).toEqual(['m1', 'm2']);

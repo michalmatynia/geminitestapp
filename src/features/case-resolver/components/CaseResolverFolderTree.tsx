@@ -8,6 +8,7 @@ import {
   FileImage,
   FilePlus,
   FileText,
+  Eye,
   Folder,
   FolderOpen,
   FolderPlus,
@@ -19,6 +20,7 @@ import {
   Unlock,
   Upload,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { palette, type NodeDefinition } from '@/features/ai/ai-paths/lib';
@@ -36,6 +38,7 @@ import { createCaseResolverMasterTreeAdapter } from '../adapter';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   emitCaseResolverDropDocumentToCanvas,
+  emitCaseResolverShowDocumentInCanvas,
   type CaseResolverTreeDragPayload,
 } from '../drag';
 import {
@@ -99,6 +102,7 @@ const CASE_RESOLVER_PALETTE: PaletteEntry[] = [
 ];
 
 export function CaseResolverFolderTree(): React.JSX.Element {
+  const router = useRouter();
   const {
     workspace,
     selectedFileId,
@@ -233,6 +237,22 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     });
     return stats;
   }, [workspace.files]);
+
+  const documentNodeIdsBySourceFileId = useMemo((): Map<string, string[]> => {
+    const byFileId = new Map<string, string[]>();
+    if (activeFile?.fileType !== 'document') return byFileId;
+    const activeNodeIds = new Set(activeFile.graph.nodes.map((node: { id: string }) => node.id));
+    const sourceByNode = activeFile.graph.documentSourceFileIdByNode ?? {};
+    Object.entries(sourceByNode).forEach(([nodeId, sourceFileId]: [string, string]) => {
+      if (!activeNodeIds.has(nodeId)) return;
+      const normalizedFileId = sourceFileId.trim();
+      if (!normalizedFileId) return;
+      const current = byFileId.get(normalizedFileId) ?? [];
+      current.push(nodeId);
+      byFileId.set(normalizedFileId, current);
+    });
+    return byFileId;
+  }, [activeFile]);
 
   const {
     RootIcon,
@@ -424,9 +444,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
           <Button
             type='button'
             onClick={(): void => {
-              onSelectFolder(null);
-              controller.selectNode(null);
-              setIsRootExplicitlySelected(true);
+              router.push('/admin/case-resolver/cases');
             }}
             className={`w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
               !selectedFileId && !selectedAssetId && selectedFolderPath === null && isRootExplicitlySelected
@@ -594,6 +612,10 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               (node.kind === 'case_file' || node.kind === 'case_file_scan');
             const isScanCaseFile = Boolean(fileId) && node.kind === 'case_file_scan';
             const isDocumentCaseFile = Boolean(fileId) && node.kind === 'case_file';
+            const linkedDocumentNodeIds = fileId
+              ? documentNodeIdsBySourceFileId.get(fileId) ?? []
+              : [];
+            const hasDocumentNodeInCanvas = linkedDocumentNodeIds.length > 0;
             const isFileLocked = fileId ? fileLockById.get(fileId) === true : false;
             const isFolder = folderPath !== null;
             const folderStats = folderPath ? folderCaseFileStatsByPath.get(folderPath) ?? null : null;
@@ -829,14 +851,21 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       <button
                         type='button'
                         className='inline-flex size-6 items-center justify-center rounded border border-sky-500/40 bg-sky-500/10 text-sky-200 transition hover:bg-sky-500/20 hover:text-sky-100'
-                        title='Drop document onto canvas'
-                        aria-label='Drop document onto canvas'
+                        title={hasDocumentNodeInCanvas ? 'Show document in canvas' : 'Drop document onto canvas'}
+                        aria-label={hasDocumentNodeInCanvas ? 'Show document in canvas' : 'Drop document onto canvas'}
                         onClick={(event): void => {
                           event.preventDefault();
                           event.stopPropagation();
                           if (activeFile?.fileType !== 'document') {
-                            toast('Open a document canvas file to drop document text nodes.', {
+                            toast('Open a document canvas file to manage document text nodes.', {
                               variant: 'warning',
+                            });
+                            return;
+                          }
+                          if (hasDocumentNodeInCanvas) {
+                            emitCaseResolverShowDocumentInCanvas({
+                              fileId,
+                              nodeId: linkedDocumentNodeIds[linkedDocumentNodeIds.length - 1] ?? null,
                             });
                             return;
                           }
@@ -847,7 +876,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                           });
                         }}
                       >
-                        <Sparkles className='size-3.5' />
+                        {hasDocumentNodeInCanvas ? (
+                          <Eye className='size-3.5' />
+                        ) : (
+                          <Sparkles className='size-3.5' />
+                        )}
                       </button>
                     ) : null}
                     <button

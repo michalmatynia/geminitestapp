@@ -255,9 +255,11 @@ AI_PATHS_ACTION_RATE_LIMIT_MAX=120
   - CMS (Pages, Slugs, Themes, Zones)
 - **State Management**: Extracted complex state logic into dedicated hooks (e.g., `useDatabaseEngineState`, `useUsersState`, `useAsset3DListState`) to improve component maintainability and testability.
 - **Observability**: Enhanced system logs with AI interpretation, structured metadata display, and detailed stack trace formatting.
-- **Type Safety**: Refactored data access layers and components to use strict TypeScript types, eliminating `any` usage in key administrative views.
-- **Performance**: Reduced bundle size by optimizing imports and removing duplicate `size` attributes in Image Studio components.
+- **Type Safety**: Refactored data access layers and components to use strict TypeScript types, eliminating `any` usage in key administrative views (AI Paths, Agent Creator, Auth, Jobs).
+- **DTO Consolidation**: Centralized DTO definitions into `src/shared/contracts/` using Zod schemas as the single source of truth, eliminating feature-to-feature restricted path imports.
+- **API Robustness**: Enhanced `apiClient` with better generic support and `patchFormData` method.
+- **Code Quality**: Resolved ~200 ESLint issues and established clean `tsc` and `eslint` baselines for the core application.
 
 ---
 
-**Last Updated**: February 14, 2026
+**Last Updated**: February 15, 2026

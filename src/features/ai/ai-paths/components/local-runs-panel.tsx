@@ -3,7 +3,8 @@
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, ConfirmDialog, DataTable } from '@/shared/ui';
+import { Button, DataTable } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useLocalRuns, type LocalRunsScope } from '../hooks/useLocalRuns';
 import { useLocalRunsTableProps } from '../hooks/useLocalRunsTableProps';
@@ -126,25 +127,25 @@ export function LocalRunsPanel({
         <DataTable {...tableProps} />
       </div>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={clearScope === 'terminal'}
-        onOpenChange={(open: boolean): void => setClearScope(open ? 'terminal' : null)}
-        onConfirm={() => { void clearRuns('terminal'); }}
+        onClose={() => setClearScope(null)}
+        onConfirm={() => clearRuns('terminal')}
         title='Clear finished local runs'
-        description='Delete completed local run history for this tab.'
+        message='Delete completed local run history for this tab.'
         confirmText='Clear Finished'
-        variant='destructive'
+        isDangerous={true}
         loading={isUpdating}
       />
 
-      <ConfirmDialog
+      <ConfirmModal
         open={clearScope === 'all'}
-        onOpenChange={(open: boolean): void => setClearScope(open ? 'all' : null)}
-        onConfirm={() => { void clearRuns('all'); }}
+        onClose={() => setClearScope(null)}
+        onConfirm={() => clearRuns('all')}
         title='Clear all local runs'
-        description='Delete all local run records for this tab.'
+        message='Delete all local run records for this tab.'
         confirmText='Clear All'
-        variant='destructive'
+        isDangerous={true}
         loading={isUpdating}
       />
     </div>

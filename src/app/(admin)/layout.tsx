@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
 
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
@@ -8,6 +9,7 @@ import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider'
 import type { JSX } from 'react';
 
 export const dynamic = 'force-dynamic';
+const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
 const ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS = (() => {
   const parsed = Number(process.env['ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS']);
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1200;
@@ -43,6 +45,13 @@ export default async function Layout({
       }
     } catch {
       // Fallback to cookie-derived value when preferences are unavailable.
+      const cookieStore = await cookies();
+      const cookieValue = cookieStore.get(ADMIN_MENU_COLLAPSED_COOKIE_KEY)?.value;
+      if (cookieValue === '1' || cookieValue === 'true') {
+        initialMenuCollapsed = true;
+      } else if (cookieValue === '0' || cookieValue === 'false') {
+        initialMenuCollapsed = false;
+      }
     }
   } catch {
     redirect('/auth/signin');

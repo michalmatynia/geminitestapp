@@ -36,9 +36,11 @@ export function AdminFilemakerListPage(): React.JSX.Element {
               person.firstName,
               person.lastName,
               person.street,
+              person.streetNumber,
               person.city,
               person.postalCode,
               person.country,
+              person.countryId,
               person.nip,
               person.regon,
               person.phoneNumbers.join(' '),
@@ -60,9 +62,11 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             [
               organization.name,
               organization.street,
+              organization.streetNumber,
               organization.city,
               organization.postalCode,
               organization.country,
+              organization.countryId,
             ],
             deferredQuery
           )
@@ -84,6 +88,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
         <div className='flex items-center gap-2'>
           <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
           <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+          <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
         </div>
         <div className='w-full max-w-sm'>
           <SearchInput

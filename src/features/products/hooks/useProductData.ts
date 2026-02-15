@@ -240,6 +240,10 @@ export interface ProductDataHookResult {
   setSearch: (s: string) => void;
   sku: string;
   setSku: (s: string) => void;
+  description: string;
+  setDescription: (s: string) => void;
+  categoryId: string;
+  setCategoryId: (id: string) => void;
   minPrice: number | undefined;
   setMinPrice: (p: number | undefined) => void;
   maxPrice: number | undefined;
@@ -269,6 +273,8 @@ export function useProductData({
   const [pageSize, setPageSize] = useState(initialPageSize || 20);
   const [search, setSearch] = useState('');
   const [sku, setSku] = useState('');
+  const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
@@ -293,6 +299,8 @@ export function useProductData({
   const filters: UseProductsFilters = useMemo(() => ({
     search: search || undefined,
     sku: sku || undefined,
+    description: description || undefined,
+    categoryId: categoryId || undefined,
     minPrice,
     maxPrice,
     startDate: startDate || undefined,
@@ -301,7 +309,7 @@ export function useProductData({
     pageSize,
     catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
     searchLanguage: searchLanguage || undefined,
-  }), [search, sku, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, searchLanguage]);
+  }), [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, searchLanguage]);
 
   // Use parallel queries
   const results = useQueries({
@@ -338,7 +346,7 @@ export function useProductData({
   // Keep pagination valid when filters change.
   useEffect(() => {
     setPage(1);
-  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, pageSize]);
+  }, [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, pageSize]);
 
   // Clamp page when current page no longer exists after count change.
   useEffect(() => {
@@ -362,6 +370,8 @@ export function useProductData({
   const handleSetPageSize = useCallback((size: number) => setPageSize(size), []);
   const handleSetSearch = useCallback((s: string) => setSearch(s), []);
   const handleSetSku = useCallback((s: string) => setSku(s), []);
+  const handleSetDescription = useCallback((s: string) => setDescription(s), []);
+  const handleSetCategoryId = useCallback((id: string) => setCategoryId(id), []);
   const handleSetMinPrice = useCallback((p: number | undefined) => setMinPrice(p), []);
   const handleSetMaxPrice = useCallback((p: number | undefined) => setMaxPrice(p), []);
   const handleSetStartDate = useCallback((s: string | undefined) => setStartDate(s), []);
@@ -379,6 +389,10 @@ export function useProductData({
     setSearch: handleSetSearch,
     sku,
     setSku: handleSetSku,
+    description,
+    setDescription: handleSetDescription,
+    categoryId,
+    setCategoryId: handleSetCategoryId,
     minPrice,
     setMinPrice: handleSetMinPrice,
     maxPrice,

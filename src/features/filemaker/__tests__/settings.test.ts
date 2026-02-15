@@ -4,6 +4,7 @@ import {
   buildFilemakerPartyOptions,
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
+  getFilemakerAddressById,
   parseFilemakerDatabase,
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
@@ -48,11 +49,16 @@ describe('filemaker settings', () => {
     });
 
     const database = parseFilemakerDatabase(raw);
+    expect(database.version).toBe(2);
     expect(database.persons).toHaveLength(1);
     expect(database.organizations).toHaveLength(1);
+    expect(database.addresses).toHaveLength(2);
     expect(database.persons[0]?.phoneNumbers).toEqual(['+48 123']);
     expect(database.persons[0]?.city).toBe('Warsaw');
     expect(database.organizations[0]?.country).toBe('Poland');
+    expect(database.persons[0]?.addressId).toBe('person-address-p-1');
+    expect(database.organizations[0]?.addressId).toBe('organization-address-o-1');
+    expect(getFilemakerAddressById(database, database.persons[0]?.addressId)?.country).toBe('Poland');
   });
 
   it('encodes and decodes party references', () => {
@@ -124,12 +130,15 @@ describe('filemaker settings', () => {
     );
 
     expect(database.persons[0]?.street).toBe('Main Street 1');
+    expect(database.persons[0]?.streetNumber).toBe('');
     expect(database.persons[0]?.city).toBe('Warsaw');
     expect(database.persons[0]?.postalCode).toBe('00-003');
     expect(database.persons[0]?.country).toBe('Poland');
     expect(database.organizations[0]?.street).toBe('Business Road 2');
+    expect(database.organizations[0]?.streetNumber).toBe('');
     expect(database.organizations[0]?.city).toBe('Gdynia');
     expect(database.organizations[0]?.postalCode).toBe('81-001');
     expect(database.organizations[0]?.country).toBe('Poland');
+    expect(database.addresses).toHaveLength(2);
   });
 });

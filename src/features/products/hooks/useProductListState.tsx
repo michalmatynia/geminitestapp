@@ -245,6 +245,10 @@ export function useProductListState(): ProductListContextType & {
     setSearch,
     sku,
     setSku,
+    description,
+    setDescription,
+    categoryId,
+    setCategoryId,
     minPrice,
     setMinPrice,
     maxPrice,
@@ -315,6 +319,8 @@ export function useProductListState(): ProductListContextType & {
   useProductListSync({
     search,
     sku,
+    description,
+    categoryId,
     minPrice,
     maxPrice,
     startDate,
@@ -623,6 +629,8 @@ export function useProductListState(): ProductListContextType & {
       const filters = {
         search,
         sku,
+        description,
+        categoryId: categoryId || undefined,
         minPrice,
         maxPrice,
         startDate: startDate || undefined,
@@ -648,7 +656,7 @@ export function useProductListState(): ProductListContextType & {
     } finally {
       setLoadingGlobalSelection(false);
     }
-  }, [search, sku, minPrice, maxPrice, startDate, endDate, catalogFilter, preferences.nameLocale, toast, queryClient]);
+  }, [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, preferences.nameLocale, toast, queryClient]);
 
   const handleMassDelete = useCallback(async () => {
     const selectedProductIds = Object.keys(rowSelection).filter(
@@ -788,6 +796,7 @@ export function useProductListState(): ProductListContextType & {
     currencyCode,
     setCurrencyCode: handleSetCurrencyCode,
     currencyOptions,
+    filtersCollapsedByDefault: preferences.filtersCollapsedByDefault ?? false,
     catalogFilter,
     setCatalogFilter: handleSetCatalogFilter,
     catalogs,
@@ -798,6 +807,10 @@ export function useProductListState(): ProductListContextType & {
     setSearch,
     sku,
     setSku,
+    description,
+    setDescription,
+    categoryId,
+    setCategoryId,
     minPrice,
     setMinPrice,
     maxPrice,
@@ -943,6 +956,7 @@ export function useProductListState(): ProductListContextType & {
     page,
     pageSize,
     preferences.nameLocale,
+    preferences.filtersCollapsedByDefault,
     priceGroups,
     productToDelete,
     queuedProductIds,
@@ -952,6 +966,8 @@ export function useProductListState(): ProductListContextType & {
     showIntegrationModal,
     showListProductModal,
     sku,
+    description,
+    categoryId,
     startDate,
     tableSkeleton,
     totalPages,

@@ -5,6 +5,8 @@ import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 export async function getProducts(filters: {
   search?: string | undefined;
   sku?: string | undefined;
+  description?: string | undefined;
+  categoryId?: string | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
   startDate?: string | undefined;
@@ -18,6 +20,8 @@ export async function getProducts(filters: {
     params: {
       search: filters.search,
       sku: filters.sku,
+      description: filters.description,
+      categoryId: filters.categoryId,
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
       startDate: filters.startDate,
@@ -36,6 +40,8 @@ export async function getProducts(filters: {
 export async function countProducts(filters: {
   search?: string | undefined;
   sku?: string | undefined;
+  description?: string | undefined;
+  categoryId?: string | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
   startDate?: string | undefined;
@@ -48,6 +54,8 @@ export async function countProducts(filters: {
       params: {
         search: filters.search,
         sku: filters.sku,
+        description: filters.description,
+        categoryId: filters.categoryId,
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,
         startDate: filters.startDate,

@@ -8,7 +8,6 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
-  ConfirmDialog,
   EmptyState,
   FormSection,
   SectionHeader,
@@ -16,6 +15,7 @@ import {
   Tag as UiTag,
   useToast,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverTagModal } from '../components/modals/CaseResolverTagModal';
@@ -310,18 +310,14 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={Boolean(tagToDelete)}
-        onOpenChange={(open: boolean): void => {
-          if (!open) setTagToDelete(null);
-        }}
-        onConfirm={(): void => {
-          void handleConfirmDelete();
-        }}
+        onClose={() => setTagToDelete(null)}
+        onConfirm={handleConfirmDelete}
         title='Delete Tag'
-        description={`Delete tag "${tagToDelete?.name ?? ''}"? This action cannot be undone.`}
+        message={`Delete tag "${tagToDelete?.name ?? ''}"? This action cannot be undone.`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
       />
 
       <CaseResolverTagModal

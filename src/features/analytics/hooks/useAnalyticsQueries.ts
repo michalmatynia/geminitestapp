@@ -24,12 +24,11 @@ export function useAnalyticsSummary(input?: {
   const enabled = input?.enabled ?? true;
 
   return createSingleQuery({
+    id: `${range}-${scope}`,
     queryKey: analyticsKeys.summary(range, scope),
     queryFn: () => fetchAnalyticsSummary({ range, scope }),
-    options: {
-      enabled,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    }
+    enabled,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 
@@ -38,13 +37,12 @@ export function useAnalyticsInsights(options: { limit?: number; enabled?: boolea
   const enabled = options.enabled ?? true;
 
   return createSingleQuery({
+    id: String(limit),
     queryKey: analyticsKeys.insights(limit),
     queryFn: () => api.get<{ insights: AiInsightRecord[] }>('/api/analytics/insights', {
       params: { limit }
     }),
-    options: {
-      enabled,
-    }
+    enabled,
   });
 }
 

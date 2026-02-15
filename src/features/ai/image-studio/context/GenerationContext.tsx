@@ -114,6 +114,39 @@ const buildLandingSlotsFromRun = (run: ImageStudioRunRecord): GenerationLandingS
   });
 };
 
+const toGenerationRecordFromRun = (run: ImageStudioRunRecord): GenerationRecord | null => {
+  const outputs = Array.isArray(run.outputs) ? run.outputs : [];
+  if (outputs.length === 0) return null;
+
+  const requestMask = run.request?.mask;
+  const maskShapeCount = requestMask?.type === 'polygons'
+    ? (Array.isArray(requestMask.polygons) ? requestMask.polygons.length : 0)
+    : requestMask?.type === 'polygon'
+      ? (Array.isArray(requestMask.points) && requestMask.points.length >= 3 ? 1 : 0)
+      : 0;
+  const maskInvert = requestMask?.type === 'polygons'
+    ? Boolean(requestMask.invert)
+    : false;
+  const maskFeather = requestMask?.type === 'polygons'
+    ? Number(requestMask.feather ?? 0) || 0
+    : 0;
+
+  return {
+    id: run.id,
+    timestamp: run.finishedAt ?? run.updatedAt ?? run.createdAt,
+    prompt: run.request?.prompt ?? '',
+    maskShapeCount,
+    maskInvert,
+    maskFeather,
+    outputs,
+    slotId: run.request?.asset?.id ?? '',
+    slotName:
+      run.request?.asset?.id ??
+      run.request?.asset?.filepath ??
+      run.id,
+  };
+};
+
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 export function GenerationProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -221,8 +254,8 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           }));
 
           const record: GenerationRecord = {
-            id: `gen_${Date.now().toString(36)}`,
-            timestamp: new Date().toISOString(),
+            id: run.id,
+            timestamp: run.finishedAt ?? new Date().toISOString(),
             prompt: params.resolvedPrompt,
             maskShapeCount: params.maskShapeCount,
             maskInvert: params.submittedMaskInvert,
@@ -231,7 +264,10 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
             slotId: params.submittedSlotId,
             slotName: params.submittedSlotName,
           };
-          setGenerationHistory((prev) => [record, ...prev].slice(0, 50));
+          setGenerationHistory((prev) => {
+            const deduped = prev.filter((entry) => entry.id !== record.id);
+            return [record, ...deduped].slice(0, 50);
+          });
           settle();
           toast(`Generated ${outputs.length} image(s).`, { variant: 'success' });
           return true;
@@ -340,6 +376,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
     if (!projectId) {
       setRunOutputs([]);
+      setGenerationHistory([]);
       setLandingSlots([]);
       setActiveRunId(null);
       setActiveRunStatus(null);
@@ -353,14 +390,22 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     const hydrateLatestRun = async (): Promise<void> => {
       try {
         const response = await api.get<{ runs?: ImageStudioRunRecord[] }>(
-          `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=1`,
+          `/api/image-studio/runs?projectId=${encodeURIComponent(projectId)}&limit=25`,
           { signal: hydrationAbortController.signal }
         );
         if (cancelled) return;
 
-        const latestRun = Array.isArray(response.runs) ? response.runs[0] ?? null : null;
+        const runs = Array.isArray(response.runs) ? response.runs : [];
+        const historyRecords = runs
+          .map((run: ImageStudioRunRecord) => toGenerationRecordFromRun(run))
+          .filter((record: GenerationRecord | null): record is GenerationRecord => Boolean(record))
+          .slice(0, 50);
+        setGenerationHistory(historyRecords);
+
+        const latestRun = runs[0] ?? null;
         if (!latestRun) {
           setRunOutputs([]);
+          setGenerationHistory([]);
           setLandingSlots([]);
           setActiveRunId(null);
           setActiveRunStatus(null);

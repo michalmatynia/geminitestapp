@@ -7,11 +7,11 @@ import React, { useMemo } from 'react';
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/types/domain/agent-teaching';
 import { 
   Button, 
-  ConfirmDialog, 
   SectionHeader, 
   DataTable, 
   FormSection 
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { AgentTeachingCollectionModal } from '../components/AgentTeachingCollectionModal';
 import { useAgentTeachingQueriesCollectionsState } from '../hooks/useAgentTeachingQueriesCollectionsState';
@@ -130,14 +130,14 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!itemToDelete}
-        onOpenChange={(open) => !open && setItemToDelete(null)}
+        onClose={() => setItemToDelete(null)}
         title='Delete collection?'
-        description={`This will permanently delete "${itemToDelete?.name}" and all associated document embeddings. Agents using this collection will lose access to this knowledge.`}
+        message={`This will permanently delete "${itemToDelete?.name}" and all associated document embeddings. Agents using this collection will lose access to this knowledge.`}
         confirmText='Delete'
-        variant='destructive'
-        onConfirm={() => { void handleDelete(); }}
+        isDangerous={true}
+        onConfirm={handleDelete}
       />
 
       <AgentTeachingCollectionModal

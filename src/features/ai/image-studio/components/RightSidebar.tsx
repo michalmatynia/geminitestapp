@@ -443,6 +443,20 @@ export function RightSidebar(): React.JSX.Element {
       </div>
       <div className='flex items-center gap-2'>
         <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          title='Open Prompt Exploder with current prompt'
+          aria-label='Open Prompt Exploder with current prompt'
+          disabled={!promptText.trim()}
+          onClick={() => {
+            setPromptControlOpen(false);
+            handleOpenPromptExploder();
+          }}
+        >
+          Prompt Exploder
+        </Button>
+        <Button
           type='button'
           onClick={() => setPromptControlOpen(false)}
           className='min-w-[100px] border border-white/20 hover:border-white/40'
@@ -739,18 +753,6 @@ export function RightSidebar(): React.JSX.Element {
           </div>
 
           <div className='flex items-center justify-end gap-2'>
-            <Button size='xs'
-              variant='outline'
-              title='Open Prompt Exploder with current prompt'
-              aria-label='Open Prompt Exploder with current prompt'
-              disabled={!promptText.trim()}
-              onClick={() => {
-                setPromptControlOpen(false);
-                handleOpenPromptExploder();
-              }}
-            >
-              Prompt Exploder
-            </Button>
             <Button size='xs'
               variant='outline'
               title='Extract functions and selectors from prompt'

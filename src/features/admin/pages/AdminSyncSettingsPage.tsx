@@ -14,10 +14,10 @@ import {
   SectionHeader,
   Switch,
   useToast,
-  ConfirmDialog,
   FormSection,
   FormField,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 const BACKGROUND_SYNC_KEYS = {
   enabled: 'background_sync_enabled',
@@ -119,14 +119,14 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
         className='mb-8'
       />
 
-      <ConfirmDialog
+      <ConfirmModal
         open={isClearQueueConfirmOpen}
-        onOpenChange={setIsClearQueueConfirmOpen}
+        onClose={() => setIsClearQueueConfirmOpen(false)}
         onConfirm={handleClearQueue}
         title='Clear Offline Queue'
-        description="This will remove all pending mutations that haven't been synced to the server yet. This action cannot be undone."
+        message="This will remove all pending mutations that haven't been synced to the server yet. This action cannot be undone."
         confirmText='Clear All'
-        variant='destructive'
+        isDangerous={true}
       />
 
       <div className='grid gap-6 lg:grid-cols-2'>

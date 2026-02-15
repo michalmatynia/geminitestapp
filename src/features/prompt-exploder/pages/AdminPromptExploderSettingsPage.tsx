@@ -68,6 +68,58 @@ const toSettingsDraft = (settings: PromptExploderSettings): SettingsDraft => ({
   ai: settings.ai,
 });
 
+const normalizeModelValues = (values: unknown): string[] => {
+  const seen = new Set<string>();
+  const output: string[] = [];
+
+  const append = (value: unknown): void => {
+    if (typeof value === 'string') {
+      const normalized = value.trim();
+      if (!normalized || seen.has(normalized)) return;
+      seen.add(normalized);
+      output.push(normalized);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((entry: unknown) => {
+        append(entry);
+      });
+      return;
+    }
+
+    if (!value || typeof value !== 'object') return;
+
+    const record = value as Record<string, unknown>;
+    if ('models' in record) {
+      append(record['models']);
+      return;
+    }
+    if ('data' in record) {
+      append(record['data']);
+      return;
+    }
+    if ('id' in record) {
+      append(record['id']);
+      return;
+    }
+    if ('model' in record) {
+      append(record['model']);
+      return;
+    }
+    if ('name' in record) {
+      append(record['name']);
+      return;
+    }
+    if ('value' in record) {
+      append(record['value']);
+    }
+  };
+
+  append(values);
+  return output;
+};
+
 export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'heavy' });
@@ -103,8 +155,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     const options: Array<{ value: string; label: string; description: string }> = [];
     const seen = new Set<string>();
 
-    const append = (values: string[], source: string): void => {
-      values.forEach((value) => {
+    const append = (values: unknown, source: string): void => {
+      normalizeModelValues(values).forEach((value) => {
         const model = value.trim();
         if (!model || seen.has(model)) return;
         seen.add(model);
@@ -122,12 +174,12 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     append(chatbotModelsQuery.data ?? [], 'live discovery');
 
     const openAiModel = settingsQuery.data?.get('openai_model') ?? '';
-    if (openAiModel.trim()) append([openAiModel], 'system openai_model');
+    if (openAiModel.trim()) append(openAiModel, 'system openai_model');
 
     const modelId = draft?.ai.modelId ?? '';
     const fallbackModelId = draft?.ai.fallbackModelId ?? '';
-    append([modelId], 'current model');
-    append([fallbackModelId], 'fallback model');
+    append(modelId, 'current model');
+    append(fallbackModelId, 'fallback model');
 
     return options;
   }, [
@@ -141,15 +193,15 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   ]);
 
   const modelDiscoverySummary = useMemo(() => {
-    const discovered = chatbotModelsQuery.data?.length ?? 0;
+    const discovered = normalizeModelValues(chatbotModelsQuery.data).length;
     const catalog = new Set([
-      ...providerCatalog.modelPresets,
-      ...providerCatalog.paidModels,
-      ...providerCatalog.ollamaModels,
+      ...normalizeModelValues(providerCatalog.modelPresets),
+      ...normalizeModelValues(providerCatalog.paidModels),
+      ...normalizeModelValues(providerCatalog.ollamaModels),
     ]).size;
     return `Catalog ${catalog} + live ${discovered} = ${modelOptions.length} unique model option(s)`;
   }, [
-    chatbotModelsQuery.data?.length,
+    chatbotModelsQuery.data,
     modelOptions.length,
     providerCatalog.modelPresets,
     providerCatalog.ollamaModels,

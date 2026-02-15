@@ -25,7 +25,6 @@ import {
 import type { ProductCategoryWithChildren, Catalog, ProductCategory } from '@/features/products/types';
 import {
   Button,
-  ConfirmDialog,
   EmptyState,
   FolderTreePanel,
   
@@ -36,6 +35,7 @@ import {
   SelectSimple,
   useToast,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import {
   cn,
   type MasterTreeNode,
@@ -578,18 +578,18 @@ export function CategoriesSettings(): React.JSX.Element {
         />
       )}
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!categoryToDelete}
-        onOpenChange={(open: boolean) => !open && setCategoryToDelete(null)}
-        onConfirm={(): void => { void handleConfirmDelete(); }}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={handleConfirmDelete}
         title='Delete Category'
-        description={
+        message={
           categoryToDelete?.children && categoryToDelete.children.length > 0
             ? `Are you sure you want to delete category "${categoryToDelete.name}" and ALL its subcategories? This cannot be undone.`
             : `Are you sure you want to delete category "${categoryToDelete?.name}"? This cannot be undone.`
         }
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
       />
 
       <CategoryFormProvider

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { ConfirmDialog } from '../confirm-dialog';
+import { ConfirmModal } from './modals/ConfirmModal';
 
 
 export interface ConfirmDialogConfig {
@@ -44,26 +44,20 @@ export interface ConfirmDialogBatchProps {
 export function ConfirmDialogBatch({
   dialogs,
 }: ConfirmDialogBatchProps): React.JSX.Element {
-  const handleConfirm =
-    (onConfirm: () => Promise<void> | void) =>
-      (): void => {
-        void onConfirm();
-      };
-
   return (
     <>
       {dialogs.map((dialog) => (
-        <ConfirmDialog
+        <ConfirmModal
           key={dialog.id}
           open={dialog.open}
-          onOpenChange={dialog.onOpenChange}
+          onClose={() => dialog.onOpenChange(false)}
           title={dialog.title}
-          description={dialog.description}
-          onConfirm={handleConfirm(dialog.onConfirm)}
-          variant={dialog.isDestructive ? 'destructive' : 'default'}
-          {...(dialog.confirmText !== undefined ? { confirmText: dialog.confirmText } : {})}
-          {...(dialog.cancelText !== undefined ? { cancelText: dialog.cancelText } : {})}
-          {...(dialog.isLoading !== undefined ? { loading: dialog.isLoading } : {})}
+          message={dialog.description}
+          onConfirm={dialog.onConfirm}
+          isDangerous={dialog.isDestructive}
+          confirmText={dialog.confirmText}
+          cancelText={dialog.cancelText}
+          loading={dialog.isLoading}
         />
       ))}
     </>

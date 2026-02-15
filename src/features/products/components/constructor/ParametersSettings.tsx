@@ -6,7 +6,8 @@ import { useState, useCallback } from 'react';
 import { useSaveParameterMutation, useDeleteParameterMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { CatalogRecord } from '@/features/products/types';
 import type { ProductParameter } from '@/features/products/types';
-import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, ConfirmDialog, Skeleton, FormSection, FormField } from '@/shared/ui';
+import { useToast, Button, Input, SelectSimple, FormModal, EmptyState, Skeleton, FormSection, FormField } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 type ParametersSettingsProps = {
   loading: boolean;
@@ -230,14 +231,14 @@ export function ParametersSettings({
         />
       )}
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!parameterToDelete}
-        onOpenChange={(open: boolean) => !open && setParameterToDelete(null)}
-        onConfirm={(): void => { handleConfirmDelete().catch(() => {}); }}
+        onClose={() => setParameterToDelete(null)}
+        onConfirm={handleConfirmDelete}
         title='Delete Parameter'
-        description={`Are you sure you want to delete parameter "${parameterToDelete?.name_en}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete parameter "${parameterToDelete?.name_en}"? This action cannot be undone.`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
       />
 
       {showModal && (

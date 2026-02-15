@@ -23,6 +23,7 @@ import {
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
   FILEMAKER_DATABASE_KEY,
+  normalizeFilemakerDatabase,
   parseFilemakerDatabase,
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
@@ -37,7 +38,7 @@ import type {
 } from '@/features/prompt-exploder/bridge';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { AppModal, Button, Input, Label, Textarea, SelectSimple, useToast } from '@/shared/ui';
+import { AppModal, Button, Input, Label, MultiSelect, Textarea, SelectSimple, useToast } from '@/shared/ui';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
@@ -230,6 +231,8 @@ const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEditDraft =
     fileType: file.fileType,
     name: file.name,
     folder: file.folder,
+    parentCaseId: file.parentCaseId,
+    referenceCaseIds: file.referenceCaseIds,
     createdAt: file.createdAt,
     updatedAt: file.updatedAt,
     documentDate: file.documentDate,
@@ -344,6 +347,8 @@ const findExistingFilemakerPartyReference = (
   database: FilemakerDatabase,
   candidate: PromptExploderCaseResolverPartyCandidate
 ): CaseResolverPartyReference | null => {
+  const composeStreet = (street: string, streetNumber: string): string =>
+    [street.trim(), streetNumber.trim()].filter((value: string) => value.length > 0).join(' ');
   const kindHint = candidate.kind ?? null;
   const firstName = (candidate.firstName ?? '').trim();
   const lastName = (candidate.lastName ?? '').trim();
@@ -357,7 +362,13 @@ const findExistingFilemakerPartyReference = (
       if (normalizeComparablePartyValue(person.lastName) !== normalizeComparablePartyValue(lastName)) {
         return false;
       }
-      if (!isOptionalPartyFieldMatch(candidate.street, person.street)) return false;
+      const personStreet = composeStreet(person.street, person.streetNumber);
+      if (
+        !isOptionalPartyFieldMatch(candidate.street, personStreet) &&
+        !isOptionalPartyFieldMatch(candidate.street, person.street)
+      ) {
+        return false;
+      }
       if (!isOptionalPartyFieldMatch(candidate.city, person.city)) return false;
       if (!isOptionalPartyFieldMatch(candidate.postalCode, person.postalCode)) return false;
       if (!isOptionalPartyFieldMatch(candidate.country, person.country)) return false;
@@ -379,7 +390,13 @@ const findExistingFilemakerPartyReference = (
       ) {
         return false;
       }
-      if (!isOptionalPartyFieldMatch(candidate.street, organization.street)) return false;
+      const organizationStreet = composeStreet(organization.street, organization.streetNumber);
+      if (
+        !isOptionalPartyFieldMatch(candidate.street, organizationStreet) &&
+        !isOptionalPartyFieldMatch(candidate.street, organization.street)
+      ) {
+        return false;
+      }
       if (!isOptionalPartyFieldMatch(candidate.city, organization.city)) return false;
       if (!isOptionalPartyFieldMatch(candidate.postalCode, organization.postalCode)) return false;
       if (!isOptionalPartyFieldMatch(candidate.country, organization.country)) return false;
@@ -945,6 +962,22 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         : null,
     [selectedAssetId, workspace.assets]
   );
+  const caseReferenceOptions = useMemo(
+    () =>
+      workspace.files
+        .filter((file: CaseResolverFile): boolean => file.id !== activeFile?.id)
+        .map((file: CaseResolverFile) => ({
+          value: file.id,
+          label: file.folder ? `${file.name} (${file.folder})` : file.name,
+        }))
+        .sort((left, right) => left.label.localeCompare(right.label)),
+    [activeFile?.id, workspace.files]
+  );
+  const activeFileReferenceIds = useMemo((): string[] => {
+    if (!activeFile) return [];
+    const optionSet = new Set<string>(caseReferenceOptions.map((option) => option.value));
+    return (activeFile.referenceCaseIds ?? []).filter((id: string): boolean => optionSet.has(id));
+  }, [activeFile, caseReferenceOptions]);
   useEffect(() => {
     const payload = consumePromptExploderApplyPromptForCaseResolver();
     if (!payload?.prompt?.trim()) return;
@@ -1985,6 +2018,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               id: createId('organization'),
               name: organizationName,
               street: proposal.candidate.street ?? '',
+              streetNumber: '',
               city: proposal.candidate.city ?? '',
               postalCode: proposal.candidate.postalCode ?? '',
               country: proposal.candidate.country ?? '',
@@ -2012,6 +2046,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               firstName,
               lastName,
               street: proposal.candidate.street ?? '',
+              streetNumber: '',
               city: proposal.candidate.city ?? '',
               postalCode: proposal.candidate.postalCode ?? '',
               country: proposal.candidate.country ?? '',
@@ -2035,9 +2070,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       upsertPartyForProposal(promptExploderPartyProposal.addressee);
 
       if (databaseChanged) {
+        const normalizedDatabase = normalizeFilemakerDatabase(nextDatabase);
         await updateSetting.mutateAsync({
           key: FILEMAKER_DATABASE_KEY,
-          value: JSON.stringify(nextDatabase),
+          value: JSON.stringify(normalizedDatabase),
         });
       }
 
@@ -2424,18 +2460,35 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   );
 
   const handleUpdateActiveFileParties = useCallback(
-    (patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee'>>): void => {
+    (patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>): void => {
       if (!activeFile) return;
       updateWorkspace((current: CaseResolverWorkspace) => ({
         ...current,
         files: current.files.map((file: CaseResolverFile) =>
           file.id === activeFile.id
-            ? {
-              ...file,
-              ...(patch.addresser !== undefined ? { addresser: patch.addresser } : {}),
-              ...(patch.addressee !== undefined ? { addressee: patch.addressee } : {}),
-              updatedAt: new Date().toISOString(),
-            }
+            ? (() => {
+              const validCaseIds = new Set(current.files.map((entry: CaseResolverFile) => entry.id));
+              const normalizedReferenceCaseIds = Array.isArray(patch.referenceCaseIds)
+                ? Array.from(
+                  new Set(
+                    patch.referenceCaseIds
+                      .map((id: string): string => id.trim())
+                      .filter(
+                        (id: string): boolean => id.length > 0 && id !== activeFile.id && validCaseIds.has(id)
+                      )
+                  )
+                )
+                : undefined;
+              return {
+                ...file,
+                ...(patch.addresser !== undefined ? { addresser: patch.addresser } : {}),
+                ...(patch.addressee !== undefined ? { addressee: patch.addressee } : {}),
+                ...(normalizedReferenceCaseIds !== undefined
+                  ? { referenceCaseIds: normalizedReferenceCaseIds }
+                  : {}),
+                updatedAt: new Date().toISOString(),
+              };
+            })()
             : file
         ),
       }));
@@ -2522,56 +2575,56 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               >
                 Document Search
               </Button>
-            </div>
-            {activeMainView === 'workspace' && (folderPanelCollapsed || canTogglePreviewPage) ? (
-              <div className='mb-2 flex flex-wrap items-center gap-2'>
-                {canTogglePreviewPage ? (
-                  <Button
-                    type='button'
-                    onClick={(): void => setIsPreviewPageVisible((current) => !current)}
-                    title={shouldShowPreviewPage && !shouldShowAssetPreview ? 'Return to editor' : 'Show preview page'}
-                    aria-label={shouldShowPreviewPage && !shouldShowAssetPreview ? 'Return to editor' : 'Show preview page'}
-                    className='h-8 w-8 rounded-md border border-border px-0 text-gray-200 hover:bg-muted/60'
-                  >
-                    {shouldShowPreviewPage && !shouldShowAssetPreview ? (
-                      <EyeOff className='size-3.5' />
-                    ) : (
-                      <Eye className='size-3.5' />
-                    )}
-                  </Button>
-                ) : null}
-                {activeFile ? (
-                  <Button
-                    type='button'
-                    onClick={(): void => {
-                      setIsPreviewPageVisible(false);
-                      handleOpenFileEditor(activeFile.id);
-                    }}
-                    title={activeFile.fileType === 'scanfile' ? 'Open scan editor' : 'Open document editor'}
-                    aria-label={activeFile.fileType === 'scanfile' ? 'Open scan editor' : 'Open document editor'}
-                    className='h-8 w-8 rounded-md border border-border px-0 text-gray-200 hover:bg-muted/60'
-                  >
-                    {activeFile.fileType === 'scanfile' ? (
-                      <FileImage className='size-3.5' />
-                    ) : (
-                      <FileText className='size-3.5' />
-                    )}
-                  </Button>
-                ) : null}
-                {activeFile ? (
-                  <Button
-                    type='button'
-                    onClick={(): void => {
-                      setIsPartiesModalOpen(true);
-                    }}
-                    className='h-8 rounded-md border border-border px-2 text-xs text-gray-200 hover:bg-muted/60'
-                  >
-                    <Users className='mr-1 size-3.5' />
+              {activeMainView === 'workspace' && (folderPanelCollapsed || canTogglePreviewPage) ? (
+                <div className='ml-auto flex flex-wrap items-center gap-2'>
+                  {canTogglePreviewPage ? (
+                    <Button
+                      type='button'
+                      onClick={(): void => setIsPreviewPageVisible((current) => !current)}
+                      title={shouldShowPreviewPage && !shouldShowAssetPreview ? 'Return to editor' : 'Show preview page'}
+                      aria-label={shouldShowPreviewPage && !shouldShowAssetPreview ? 'Return to editor' : 'Show preview page'}
+                      className='h-8 w-8 rounded-md border border-border px-0 text-gray-200 hover:bg-muted/60'
+                    >
+                      {shouldShowPreviewPage && !shouldShowAssetPreview ? (
+                        <EyeOff className='size-3.5' />
+                      ) : (
+                        <Eye className='size-3.5' />
+                      )}
+                    </Button>
+                  ) : null}
+                  {activeFile ? (
+                    <Button
+                      type='button'
+                      onClick={(): void => {
+                        setIsPreviewPageVisible(false);
+                        handleOpenFileEditor(activeFile.id);
+                      }}
+                      title={activeFile.fileType === 'scanfile' ? 'Open scan editor' : 'Open document editor'}
+                      aria-label={activeFile.fileType === 'scanfile' ? 'Open scan editor' : 'Open document editor'}
+                      className='h-8 w-8 rounded-md border border-border px-0 text-gray-200 hover:bg-muted/60'
+                    >
+                      {activeFile.fileType === 'scanfile' ? (
+                        <FileImage className='size-3.5' />
+                      ) : (
+                        <FileText className='size-3.5' />
+                      )}
+                    </Button>
+                  ) : null}
+                  {activeFile ? (
+                    <Button
+                      type='button'
+                      onClick={(): void => {
+                        setIsPartiesModalOpen(true);
+                      }}
+                      className='h-8 rounded-md border border-border px-2 text-xs text-gray-200 hover:bg-muted/60'
+                    >
+                      <Users className='mr-1 size-3.5' />
                   Parties
-                  </Button>
-                ) : null}
-              </div>
-            ) : null}
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
 
             {activeMainView === 'search' ? (
               <CaseResolverDocumentSearchPage />
@@ -2799,8 +2852,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           onOpenChange={(open: boolean): void => {
             setIsPartiesModalOpen(open);
           }}
-          title='Case Parties'
-          subtitle='Manage addresser and addressee for the active case.'
+          title='Case Parties & References'
+          subtitle='Manage addresser, addressee, and linked reference cases for the active case.'
           size='lg'
         >
           {activeFile ? (
@@ -2838,6 +2891,50 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 <div className='text-[11px] text-gray-500'>
                   {resolveFilemakerPartyLabel(filemakerDatabase, activeFile.addressee) ?? 'No addressee selected.'}
                 </div>
+              </div>
+              <div className='space-y-1 md:col-span-2'>
+                <Label className='text-xs text-gray-400'>Reference Cases</Label>
+                <MultiSelect
+                  options={caseReferenceOptions}
+                  selected={activeFileReferenceIds}
+                  onChange={(nextReferenceCaseIds: string[]): void => {
+                    handleUpdateActiveFileParties({
+                      referenceCaseIds: nextReferenceCaseIds,
+                    });
+                  }}
+                  placeholder='Link reference cases'
+                  searchPlaceholder='Search cases...'
+                  emptyMessage='No other cases available.'
+                  className='w-full'
+                />
+                <div className='text-[11px] text-gray-500'>
+                  Linked references help you jump between related cases quickly.
+                </div>
+                {activeFileReferenceIds.length > 0 ? (
+                  <div className='flex flex-wrap gap-2'>
+                    {activeFileReferenceIds.map((referenceCaseId: string) => {
+                      const referenceCase = workspace.files.find(
+                        (file: CaseResolverFile): boolean => file.id === referenceCaseId
+                      );
+                      if (!referenceCase) return null;
+                      return (
+                        <Button
+                          key={referenceCaseId}
+                          type='button'
+                          variant='outline'
+                          className='h-7 border-border/60 px-2 text-[11px]'
+                          onClick={(): void => {
+                            setIsPartiesModalOpen(false);
+                            router.push(`/admin/case-resolver?fileId=${encodeURIComponent(referenceCaseId)}`);
+                          }}
+                        >
+                          <Link2 className='mr-1 size-3.5' />
+                          {referenceCase.name}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null}

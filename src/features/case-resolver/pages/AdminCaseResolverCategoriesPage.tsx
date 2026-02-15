@@ -8,13 +8,13 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
-  ConfirmDialog,
   EmptyState,
   FormSection,
   SectionHeader,
   Skeleton,
   useToast,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { CaseResolverCategoryModal } from '../components/modals/CaseResolverCategoryModal';
@@ -375,22 +375,18 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={Boolean(categoryToDelete)}
-        onOpenChange={(open: boolean): void => {
-          if (!open) setCategoryToDelete(null);
-        }}
-        onConfirm={(): void => {
-          void handleDeleteCategory();
-        }}
+        onClose={() => setCategoryToDelete(null)}
+        onConfirm={handleDeleteCategory}
         title='Delete Category'
-        description={
+        message={
           categoryToDelete
             ? `Delete category "${categoryToDelete.name}" and all its subcategories?`
             : 'Delete category?'
         }
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
       />
 
       <CaseResolverCategoryModal

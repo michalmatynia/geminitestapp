@@ -26,4 +26,5 @@ export type ProductListPreferences = {
   currencyCode: string | null;
   pageSize: number;
   thumbnailSource: 'file' | 'link' | 'base64';
+  filtersCollapsedByDefault: boolean;
 };

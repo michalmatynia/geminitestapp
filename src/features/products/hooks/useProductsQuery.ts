@@ -24,6 +24,8 @@ import {
 export interface UseProductsFilters {
   search?: string | undefined;
   sku?: string | undefined;
+  description?: string | undefined;
+  categoryId?: string | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
   startDate?: string | undefined;

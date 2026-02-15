@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 
-import { Button, SectionHeader,  useToast, ConfirmDialog } from '@/shared/ui';
+import { Button, SectionHeader,  useToast } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';
 
 import { useSyncAllBaseImagesMutation } from '../../hooks/useIntegrationMutations';
 
@@ -86,14 +87,13 @@ export default function MarketplacesPage(): React.JSX.Element {
         </div>
       </div>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={showSyncConfirm}
-        onOpenChange={setShowSyncConfirm}
+        onClose={() => setShowSyncConfirm(false)}
+        onConfirm={handleSyncBaseImages}
         title='Sync Base.com images for all listings?'
-        description='This will enqueue a background job to pull image URLs from Base.com for every listing.'
-        onConfirm={() => void handleSyncBaseImages()}
+        message='This will enqueue a background job to pull image URLs from Base.com for every listing.'
         confirmText='Queue Sync'
-        variant='success'
         loading={syncMutation.isPending}
       />
     </div>

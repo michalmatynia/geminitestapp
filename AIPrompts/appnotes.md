@@ -16,6 +16,10 @@ Address groups linked to persons via many to many relations ships but as a separ
 Programmable Playwright, program explosion capability and step by step execution
 Address Validation goes via prompt exploder
 in CMS everything can have file uploadeable background
+
+ Queries: Factory-based
+   - Mutations: Factory-based 
+   
 ---
 * Backup MongoDB
 

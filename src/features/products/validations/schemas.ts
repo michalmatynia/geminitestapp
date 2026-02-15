@@ -12,6 +12,8 @@ const nullishTrimmedString = trimmedString.nullish();
  */
 export const productFilterSchema = commonListQuerySchema.extend({
   sku: z.string().trim().optional(),
+  description: z.string().trim().optional(),
+  categoryId: z.string().trim().optional(),
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
   catalogId: z.string().trim().optional(),

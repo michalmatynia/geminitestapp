@@ -1,7 +1,6 @@
 'use client';
 
-import { api } from '@/shared/lib/api-client';
-import { createMutationHook } from '@/shared/lib/api-hooks';
+import { createPostMutation, createPatchMutation, createDeleteMutation } from '@/shared/lib/api-hooks';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
@@ -23,98 +22,89 @@ import type {
 } from '@/shared/types/domain/notes';
 
 
-export const useCreateNote = createMutationHook({
-  mutationFn: (payload: NoteCreateInput) => api.post<NoteWithRelations>('/api/notes', payload),
+export const useCreateNote = createPostMutation<NoteWithRelations, NoteCreateInput>({
+  endpoint: '/api/notes',
   invalidateKeys: [QUERY_KEYS.notes.all],
 });
 
-export const useUpdateNote = createMutationHook({
-  mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) =>
-    api.patch<NoteWithRelations>(`/api/notes/${id}`, data),
+export const useUpdateNote = createPatchMutation<NoteWithRelations, NoteUpdateInput & { id: string }>({
+  endpoint: ({ id }) => `/api/notes/${id}`,
   invalidateKeys: (_data, variables) => [
     QUERY_KEYS.notes.all,
     QUERY_KEYS.notes.detail(variables.id),
   ],
 });
 
-export const useDeleteNote = createMutationHook({
-  mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
+export const useDeleteNote = createDeleteMutation<DeleteResponse, string>({
+  endpoint: (id) => `/api/notes/${id}`,
   invalidateKeys: [QUERY_KEYS.notes.all],
 });
 
-export const useCreateNoteFolder = createMutationHook({
-  mutationFn: (payload: CategoryCreateInput) =>
-    api.post<CategoryRecord>('/api/notes/categories', payload),
+export const useCreateNoteFolder = createPostMutation<CategoryRecord, CategoryCreateInput>({
+  endpoint: '/api/notes/categories',
   invalidateKeys: [QUERY_KEYS.notes.all],
 });
 
-export const useUpdateNoteFolder = createMutationHook({
-  mutationFn: ({ id, ...data }: CategoryUpdateInput & { id: string }) =>
-    api.patch<CategoryRecord>(`/api/notes/categories/${id}`, data),
+export const useUpdateNoteFolder = createPatchMutation<CategoryRecord, CategoryUpdateInput & { id: string }>({
+  endpoint: ({ id }) => `/api/notes/categories/${id}`,
   invalidateKeys: [QUERY_KEYS.notes.all],
 });
 
-export const useDeleteNoteFolder = createMutationHook({
-  mutationFn: (folderId: string) =>
-    api.delete<DeleteResponse>(`/api/notes/categories/${folderId}`),
+export const useDeleteNoteFolder = createDeleteMutation<DeleteResponse, string>({
+  endpoint: (folderId) => `/api/notes/categories/${folderId}`,
   invalidateKeys: [QUERY_KEYS.notes.all],
 });
 
-export const useCreateNotebook = createMutationHook({
-  mutationFn: (payload: NotebookCreateInput) => api.post<NotebookRecord>('/api/notes/notebooks', payload),
+export const useCreateNotebook = createPostMutation<NotebookRecord, NotebookCreateInput>({
+  endpoint: '/api/notes/notebooks',
   invalidateKeys: [QUERY_KEYS.notes.notebooks()],
 });
 
-export const useUpdateNotebook = createMutationHook({
-  mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) =>
-    api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, data),
+export const useUpdateNotebook = createPatchMutation<NotebookRecord, NotebookUpdateInput & { id: string }>({
+  endpoint: ({ id }) => `/api/notes/notebooks/${id}`,
   invalidateKeys: (_data, variables) => [
     QUERY_KEYS.notes.notebooks(),
     QUERY_KEYS.notes.detail(variables.id),
   ],
 });
 
-export const useDeleteNotebook = createMutationHook({
-  mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
+export const useDeleteNotebook = createDeleteMutation<DeleteResponse, string>({
+  endpoint: (id) => `/api/notes/notebooks/${id}`,
   invalidateKeys: [QUERY_KEYS.notes.all],
 });
 
-export const useCreateNoteTag = createMutationHook({
-  mutationFn: (payload: TagCreateInput) =>
-    api.post<TagRecord>('/api/notes/tags', payload),
+export const useCreateNoteTag = createPostMutation<TagRecord, TagCreateInput>({
+  endpoint: '/api/notes/tags',
   invalidateKeys: (_data, variables) => [
     QUERY_KEYS.notes.tags(),
     QUERY_KEYS.notes.tags(variables.notebookId ?? undefined),
   ],
 });
 
-export const useUpdateNoteTag = createMutationHook({
-  mutationFn: ({ id, ...data }: TagUpdateInput & { id: string }) =>
-    api.patch<TagRecord>(`/api/notes/tags/${id}`, data),
+export const useUpdateNoteTag = createPatchMutation<TagRecord, TagUpdateInput & { id: string }>({
+  endpoint: ({ id }) => `/api/notes/tags/${id}`,
   invalidateKeys: [QUERY_KEYS.notes.tags()],
 });
 
-export const useDeleteNoteTag = createMutationHook({
-  mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
+export const useDeleteNoteTag = createDeleteMutation<DeleteResponse, string>({
+  endpoint: (id) => `/api/notes/tags/${id}`,
   invalidateKeys: [QUERY_KEYS.notes.tags()],
 });
 
-export const useCreateNoteTheme = createMutationHook({
-  mutationFn: (payload: ThemeCreateInput) =>
-    api.post<ThemeRecord>('/api/notes/themes', payload),
+export const useCreateNoteTheme = createPostMutation<ThemeRecord, ThemeCreateInput>({
+  endpoint: '/api/notes/themes',
   invalidateKeys: (_data, variables) => [
     QUERY_KEYS.notes.themes(),
     QUERY_KEYS.notes.themes(variables.notebookId ?? undefined),
   ],
 });
 
-export const useUpdateNoteTheme = createMutationHook({
-  mutationFn: ({ id, ...data }: ThemeUpdateInput & { id: string }) =>
-    api.patch<ThemeRecord>(`/api/notes/themes/${id}`, data),
+export const useUpdateNoteTheme = createPatchMutation<ThemeRecord, ThemeUpdateInput & { id: string }>({
+  endpoint: ({ id }) => `/api/notes/themes/${id}`,
   invalidateKeys: [QUERY_KEYS.notes.themes()],
 });
 
-export const useDeleteNoteTheme = createMutationHook({
-  mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
+export const useDeleteNoteTheme = createDeleteMutation<DeleteResponse, string>({
+  endpoint: (id) => `/api/notes/themes/${id}`,
   invalidateKeys: [QUERY_KEYS.notes.themes()],
 });

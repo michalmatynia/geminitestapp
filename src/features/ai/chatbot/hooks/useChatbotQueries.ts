@@ -49,9 +49,7 @@ export function useChatbotSessions(options?: { enabled?: boolean }): ListQuery<C
       const data = await fetchChatbotSessions<ChatbotSessionListItem>();
       return data.sessions ?? [];
     },
-    options: {
-      enabled: options?.enabled ?? true,
-    },
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -68,9 +66,7 @@ export function useChatbotSessionIds(query?: string, options?: { enabled?: boole
       });
       return data.ids ?? [];
     },
-    options: {
-      enabled: options?.enabled ?? true,
-    },
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -85,9 +81,7 @@ export function useChatbotSession(sessionId: string | null, options?: { enabled?
       if (!sessionId) return null;
       return fetchChatbotSession(sessionId);
     },
-    options: {
-      enabled: (options?.enabled ?? true) && !!sessionId,
-    },
+    enabled: (options?.enabled ?? true) && !!sessionId,
   });
 }
 
@@ -99,9 +93,7 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
     id: key,
     queryKey: chatbotKeys.settings.all(key),
     queryFn: (): Promise<{ settings?: { settings?: unknown } | null }> => key ? fetchChatbotSettings(key) : Promise.resolve({ settings: null }),
-    options: {
-      enabled: (options?.enabled ?? true) && !!key,
-    },
+    enabled: (options?.enabled ?? true) && !!key,
   });
 }
 
@@ -112,13 +104,11 @@ export function useChatbotModels(options?: { enabled?: boolean }): ListQuery<str
   return createListQuery({
     queryKey: chatbotKeys.models(),
     queryFn: async (): Promise<string[]> => {
-      const raw = await api.get<unknown>('/api/chatbot');
+      const raw = await fetchChatbotModels();
       return normalizeModelList(raw);
     },
-    options: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      enabled: options?.enabled ?? true,
-    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -129,10 +119,8 @@ export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }
   return createListQuery({
     queryKey: chatbotKeys.ollamaModels(baseUrl),
     queryFn: (): Promise<string[]> => fetchOllamaModels(baseUrl),
-    options: {
-      enabled: (options?.enabled ?? true) && !!baseUrl,
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    },
+    enabled: (options?.enabled ?? true) && !!baseUrl,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
 
@@ -141,10 +129,9 @@ export function useOllamaModels(baseUrl: string, options?: { enabled?: boolean }
  */
 export function useChatbotMemory(query?: string, options?: { enabled?: boolean }): SingleQuery<unknown> {
   return createSingleQuery({
+    id: query || 'global',
     queryKey: chatbotKeys.memory(query),
     queryFn: (): Promise<unknown> => fetchChatbotMemory(query ?? ''),
-    options: {
-      enabled: options?.enabled ?? true,
-    },
+    enabled: options?.enabled ?? true,
   });
 }

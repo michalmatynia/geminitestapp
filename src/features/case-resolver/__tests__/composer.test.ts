@@ -139,6 +139,7 @@ describe('case-resolver composer', () => {
     expect(compiled.outputsByNode['focus']).toEqual({
       textfield: 'Quoted text',
       content: '<<\'Quoted text\'>>',
+      plainText: 'Quoted text',
     });
   });
 
@@ -190,11 +191,71 @@ describe('case-resolver composer', () => {
     expect(compiled.outputsByNode['doc-a']).toEqual({
       textfield: 'Alpha',
       content: 'Alpha',
+      plainText: 'Alpha',
     });
     expect(compiled.outputsByNode['doc-b']).toEqual({
       textfield: 'Beta',
       content: 'Alpha\n"Beta"',
+      plainText: 'Beta',
     });
     expect(compiled.prompt).toBe('Alpha\n"Beta"');
+  });
+
+  it('supports plainText input/output and strips HTML-like wrappers', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 }),
+        createPromptNode({ id: 'target', title: 'Target', template: '<p>Fallback</p>', x: 150, y: 0 }),
+      ],
+      edges: [
+        createEdge({
+          id: 'plain-flow',
+          from: 'source',
+          to: 'target',
+          fromPort: 'content',
+          toPort: 'plainText',
+        }),
+      ],
+      nodeMeta: {
+        source: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '<b>',
+          surroundSuffix: '</b>',
+        },
+        target: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+      },
+      edgeMeta: {
+        'plain-flow': { joinMode: 'newline' },
+      },
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        source: 'file-source',
+        target: 'file-target',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'source');
+
+    expect(compiled.outputsByNode['source']).toEqual({
+      textfield: 'Alpha',
+      content: '<b>Alpha</b>',
+      plainText: 'Alpha',
+    });
+    expect(compiled.outputsByNode['target']).toEqual({
+      textfield: 'Alpha',
+      content: 'Alpha',
+      plainText: 'Alpha',
+    });
+    expect(compiled.prompt).toBe('Alpha');
   });
 });

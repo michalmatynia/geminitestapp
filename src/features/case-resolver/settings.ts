@@ -116,6 +116,18 @@ const sanitizeOptionalId = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const sanitizeOptionalIdArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const unique = new Set<string>();
+  value.forEach((entry: unknown): void => {
+    if (typeof entry !== 'string') return;
+    const normalized = entry.trim();
+    if (!normalized) return;
+    unique.add(normalized);
+  });
+  return Array.from(unique);
+};
+
 const sanitizeOptionalMimeType = (value: unknown): string | null => {
   const normalized = sanitizeOptionalId(value);
   return normalized ? normalized.toLowerCase() : null;
@@ -265,6 +277,23 @@ const normalizeCaseResolverFileType = (value: unknown): CaseResolverFileType =>
 const normalizeCaseResolverDocumentVersion = (
   value: unknown
 ): CaseResolverDocumentVersion => (value === 'exploded' ? 'exploded' : 'original');
+
+const resolveSafeCaseParentId = (
+  caseId: string,
+  parentCaseId: string | null,
+  caseMap: Map<string, CaseResolverFile>
+): string | null => {
+  if (!parentCaseId || !caseMap.has(parentCaseId) || parentCaseId === caseId) return null;
+  let current: string | null = parentCaseId;
+  const visited = new Set<string>();
+  while (current) {
+    if (current === caseId || visited.has(current)) return null;
+    visited.add(current);
+    const parent = caseMap.get(current);
+    current = parent?.parentCaseId ?? null;
+  }
+  return parentCaseId;
+};
 
 const normalizeCaseResolverScanSlots = (input: unknown): CaseResolverScanSlot[] => {
   if (!Array.isArray(input)) return [];
@@ -573,16 +602,19 @@ const sanitizeTextNodeEdgePorts = (
   if (edges.length === 0 || textNodeIds.size === 0) return edges;
   const textfieldPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
   const contentPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
+  const plainTextPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 
   const normalizeInputPort = (value: string | undefined): string => {
-    if (value === textfieldPort || value === contentPort) return value;
+    if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
     if (value === 'prompt') return textfieldPort;
+    if (value === 'result') return contentPort;
     return contentPort;
   };
 
   const normalizeOutputPort = (value: string | undefined): string => {
-    if (value === textfieldPort || value === contentPort) return value;
+    if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
     if (value === 'prompt') return textfieldPort;
+    if (value === 'result') return contentPort;
     return contentPort;
   };
 
@@ -694,6 +726,8 @@ export const createCaseResolverFile = (input: {
   fileType?: CaseResolverFileType | null | undefined;
   name: string;
   folder?: string;
+  parentCaseId?: string | null | undefined;
+  referenceCaseIds?: string[] | null | undefined;
   documentDate?: string | null | undefined;
   originalDocumentContent?: string | null | undefined;
   explodedDocumentContent?: string | null | undefined;
@@ -727,11 +761,17 @@ export const createCaseResolverFile = (input: {
       : requestedVersion;
   const activeDocumentContent =
     activeDocumentVersion === 'exploded' ? explodedDocumentContent : originalDocumentContent;
+  const parentCaseId = sanitizeOptionalId(input.parentCaseId);
+  const referenceCaseIds = sanitizeOptionalIdArray(input.referenceCaseIds).filter(
+    (referenceId: string): boolean => referenceId !== input.id
+  );
   return {
     id: input.id,
     fileType: normalizeCaseResolverFileType(input.fileType),
     name: input.name.trim() || 'Untitled Case',
     folder: normalizeFolderPath(input.folder ?? ''),
+    parentCaseId,
+    referenceCaseIds,
     documentDate: normalizeDocumentDate(input.documentDate),
     originalDocumentContent,
     explodedDocumentContent,
@@ -1003,6 +1043,8 @@ export const normalizeCaseResolverWorkspace = (
         fileType: file.fileType,
         name: file.name,
         folder: file.folder,
+        parentCaseId: file.parentCaseId,
+        referenceCaseIds: file.referenceCaseIds,
         documentDate: file.documentDate,
         originalDocumentContent: file.originalDocumentContent,
         explodedDocumentContent: file.explodedDocumentContent,
@@ -1021,7 +1063,22 @@ export const normalizeCaseResolverWorkspace = (
     })
     .filter((file: CaseResolverFile | null): file is CaseResolverFile => Boolean(file));
 
-  const normalizedFiles = files.length > 0 ? files : createDefaultCaseResolverWorkspace().files;
+  const normalizedFilesBase = files.length > 0 ? files : createDefaultCaseResolverWorkspace().files;
+  const filesById = new Map<string, CaseResolverFile>(
+    normalizedFilesBase.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+  );
+  const validFileIds = new Set<string>(filesById.keys());
+  const normalizedFiles = normalizedFilesBase.map((file: CaseResolverFile): CaseResolverFile => {
+    const parentCaseId = resolveSafeCaseParentId(file.id, file.parentCaseId, filesById);
+    const referenceCaseIds = file.referenceCaseIds
+      .filter((referenceId: string): boolean => referenceId !== file.id && validFileIds.has(referenceId));
+    const uniqueReferenceCaseIds = Array.from(new Set(referenceCaseIds));
+    return {
+      ...file,
+      parentCaseId,
+      referenceCaseIds: uniqueReferenceCaseIds,
+    };
+  });
   const rawAssets = Array.isArray(workspaceRecord['assets'])
     ? (workspaceRecord['assets'] as CaseResolverAssetFile[])
     : [];

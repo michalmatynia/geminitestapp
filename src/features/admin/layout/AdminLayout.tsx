@@ -19,6 +19,9 @@ import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';
 
 import type { Session } from 'next-auth';
 
+const ADMIN_MENU_COLLAPSED_STORAGE_KEY = 'adminMenuCollapsed';
+const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
+
 function AdminLayoutContent({ children }: { children: React.ReactNode }): React.ReactNode {
   const {
     isMenuCollapsed,
@@ -37,13 +40,42 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }): React.
   const { data: preferences } = useUserPreferences();
   const updatePreferencesMutation = useUpdateUserPreferencesMutation();
 
+  const persistMenuCollapsedFallbacks = useCallback((collapsed: boolean): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(ADMIN_MENU_COLLAPSED_STORAGE_KEY, String(collapsed));
+    } catch {
+      // ignore storage failures
+    }
+    try {
+      document.cookie = `${ADMIN_MENU_COLLAPSED_COOKIE_KEY}=${collapsed ? '1' : '0'}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    } catch {
+      // ignore cookie failures
+    }
+  }, []);
+
   const persistMenuCollapsed = useCallback(async (collapsed: boolean): Promise<void> => {
+    persistMenuCollapsedFallbacks(collapsed);
     try {
       await updatePreferencesMutation.mutateAsync({ adminMenuCollapsed: collapsed });
     } catch (error) {
       logClientError(error, { context: { source: 'AdminLayout', action: 'persistMenuCollapsed' } });
     }
-  }, [updatePreferencesMutation]);
+  }, [persistMenuCollapsedFallbacks, updatePreferencesMutation]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = window.localStorage.getItem(ADMIN_MENU_COLLAPSED_STORAGE_KEY);
+      if (stored !== 'true' && stored !== 'false') return;
+      const storedCollapsed = stored === 'true';
+      preferredMenuCollapsedRef.current = storedCollapsed;
+      didUserToggleRef.current = true;
+      setIsMenuCollapsed(storedCollapsed);
+    } catch {
+      // ignore storage failures
+    }
+  }, [setIsMenuCollapsed]);
 
   useEffect(() => {
     programmaticCollapsedRef.current = isProgrammaticallyCollapsed;

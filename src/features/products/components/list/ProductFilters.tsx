@@ -7,8 +7,9 @@ import {
   useProductListFiltersContext,
   useProductListSelectionContext,
 } from '@/features/products/context/ProductListContext';
+import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
-import type { ProductWithImages } from '@/features/products/types';
+import type { ProductCategory, ProductWithImages } from '@/features/products/types';
 import { DropdownMenuItem, SelectionBar, useToast } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
@@ -32,6 +33,12 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     setSearch,
     sku,
     setSku,
+    description,
+    setDescription,
+    categoryId,
+    setCategoryId,
+    nameLocale,
+    catalogFilter,
     minPrice,
     setMinPrice,
     maxPrice,
@@ -40,29 +47,57 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     setStartDate,
     endDate,
     setEndDate,
+    filtersCollapsedByDefault,
   } = useProductListFiltersContext();
+
+  const selectedCatalogId =
+    catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : undefined;
+  const { data: categories = [] } = useProductCategories(selectedCatalogId);
+
+  const categoryOptions = useMemo(() => {
+    const options = [{ value: '__all__', label: 'All categories' }];
+    categories.forEach((category: ProductCategory) => {
+      const localizedName = category[nameLocale];
+      const fallbackName = category.name_en || category.name || category.name_pl || category.name_de;
+      options.push({
+        value: category.id,
+        label: localizedName || fallbackName || category.id,
+      });
+    });
+    return options;
+  }, [categories, nameLocale]);
 
   // Filter configuration
   const filterConfig: FilterField[] = useMemo(() => [
     { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
+    { key: 'description', label: 'Description', type: 'text', placeholder: 'Search by description...', width: '16rem' },
+    { key: 'categoryId', label: 'Category', type: 'select', placeholder: 'All categories', options: categoryOptions, width: '16rem' },
     { key: 'minPrice', label: 'Min Price', type: 'number', placeholder: 'Min price', width: '9rem' },
     { key: 'maxPrice', label: 'Max Price', type: 'number', placeholder: 'Max price', width: '9rem' },
     { key: 'createdAt', label: 'Date Range', type: 'dateRange', width: '22rem' },
-  ], []);
+  ], [categoryOptions]);
 
   // Filter values (combined date range into single object)
   const filterValues = useMemo(() => ({
     sku,
+    description,
+    categoryId,
     minPrice,
     maxPrice,
     createdAt: { from: startDate, to: endDate },
-  }), [sku, minPrice, maxPrice, startDate, endDate]);
+  }), [sku, description, categoryId, minPrice, maxPrice, startDate, endDate]);
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: unknown) => {
     switch (key) {
       case 'sku':
         setSku(typeof value === 'string' ? value : '');
+        break;
+      case 'description':
+        setDescription(typeof value === 'string' ? value : '');
+        break;
+      case 'categoryId':
+        setCategoryId(typeof value === 'string' && value && value !== '__all__' ? value : '');
         break;
       case 'minPrice':
         setMinPrice(value ? Number(value) : undefined);
@@ -90,13 +125,15 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
       onReset={() => {
         setSearch('');
         setSku('');
+        setDescription('');
+        setCategoryId('');
         setMinPrice(undefined);
         setMaxPrice(undefined);
         setStartDate('');
         setEndDate('');
       }}
       collapsible
-      defaultExpanded
+      defaultExpanded={!filtersCollapsedByDefault}
       showHeader={false}
     />
   );

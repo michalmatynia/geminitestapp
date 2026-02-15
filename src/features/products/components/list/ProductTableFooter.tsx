@@ -6,7 +6,8 @@ import React, { JSX, memo, useState } from 'react';
 import { logClientError } from '@/features/observability';
 import { useBulkDeleteProducts, useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { ProductWithImages } from '@/features/products/types';
-import { Button, useToast, ConfirmDialog } from '@/shared/ui';
+import { Button, useToast } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logger } from '@/shared/utils/logger';
 
 interface ProductTableFooterProps<TData> {
@@ -121,25 +122,24 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       </div>
 
       {/* Delete confirmation dialog */}
-      <ConfirmDialog
+      <ConfirmModal
         open={showDeleteConfirm}
-        onOpenChange={setShowDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleMassDelete}
         title='Delete selected products?'
-        description={`Are you sure you want to delete ${selectedCount} selected ${selectedCount === 1 ? 'product' : 'products'}? This action cannot be undone.`}
-        onConfirm={() => void handleMassDelete()}
+        message={`Are you sure you want to delete ${selectedCount} selected ${selectedCount === 1 ? 'product' : 'products'}? This action cannot be undone.`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
         loading={isDeleting}
       />
 
-      <ConfirmDialog
+      <ConfirmModal
         open={showBase64Confirm}
-        onOpenChange={setShowBase64Confirm}
+        onClose={() => setShowBase64Confirm(false)}
+        onConfirm={handleMassBase64}
         title='Generate Base64 images?'
-        description={`Create Base64-encoded image links for ${selectedCount} selected ${selectedCount === 1 ? 'product' : 'products'}? This can be heavy for large images.`}
-        onConfirm={() => void handleMassBase64()}
+        message={`Create Base64-encoded image links for ${selectedCount} selected ${selectedCount === 1 ? 'product' : 'products'}? This can be heavy for large images.`}
         confirmText='Convert'
-        variant='success'
         loading={isConverting}
       />
     </>

@@ -4,7 +4,7 @@ import {
   PlusIcon,
   Package,
 } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
@@ -12,10 +12,9 @@ import {
   useProductListActionsContext,
   useProductListFiltersContext,
 } from '@/features/products/context/ProductListContext';
-import { useConvertAllImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import type { Catalog } from '@/features/products/types';
 import type { ProductDraftDto } from '@/features/products/types/drafts';
-import { Button, SelectSimple, useToast, Pagination, ConfirmDialog,  SectionHeader } from '@/shared/ui';
+import { Button, SelectSimple, Pagination, SectionHeader } from '@/shared/ui';
 
 interface ProductListHeaderProps {
   showHeader?: boolean;
@@ -56,41 +55,66 @@ export const ProductListHeader = memo(function ProductListHeader({
     catalogs,
   } = useProductListFiltersContext();
 
-  const { toast } = useToast();
-  const [showBase64AllConfirm, setShowBase64AllConfirm] = useState(false);
-  const { mutateAsync: convertAll, isPending: isConvertingAll } = useConvertAllImagesToBase64();
-
-  const handleConvertAllBase64 = async (): Promise<void> => {
-    try {
-      await convertAll();
-      toast('Base64 images generated for all products.', { variant: 'success' });
-    } catch (error) {
-      toast(
-        error instanceof Error ? error.message : 'An error occurred during conversion',
-        { variant: 'error' }
-      );
-    } finally {
-      setShowBase64AllConfirm(false);
-    }
-  };
-
   return (
     <div className='space-y-4'>
       {showHeader && (
         <SectionHeader
+          className='relative'
           title='Products'
           actions={
-            <div className='flex items-center gap-3'>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={() => setShowBase64AllConfirm(true)}
-                disabled={isConvertingAll}
-              >
-                {isConvertingAll ? 'Converting...' : 'Convert all products'}
-              </Button>
-              <TriggerButtonBar location='product_list' entityType='product' />
+            <div className='relative flex w-full items-start lg:min-h-9'>
+              <div className='flex w-full justify-center lg:absolute lg:left-1/2 lg:top-1/2 lg:w-auto lg:-translate-x-1/2 lg:-translate-y-1/2'>
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  pageSize={pageSize}
+                  onPageSizeChange={setPageSize}
+                  pageSizeOptions={[12, 24, 48, 96]}
+                  showPageSize
+                  showLabels={false}
+                  variant='compact'
+                />
+              </div>
+              <div className='flex w-full justify-end gap-2 max-sm:flex-wrap lg:absolute lg:right-0 lg:top-0 lg:w-auto lg:flex-nowrap'>
+                <SelectSimple
+                  size='sm'
+                  value={nameLocale}
+                  onValueChange={(value: string) =>
+                    setNameLocale(value as 'name_en' | 'name_pl' | 'name_de')
+                  }
+                  options={languageOptions}
+                  placeholder='Language'
+                  triggerClassName='w-40'
+                  ariaLabel='Select product name language'
+                />
+
+                <SelectSimple
+                  size='sm'
+                  value={currencyCode}
+                  onValueChange={setCurrencyCode}
+                  options={currencyOptions.map((code: string) => ({ value: code, label: code }))}
+                  placeholder='Currency'
+                  triggerClassName='w-28'
+                  ariaLabel='Select currency'
+                />
+
+                <SelectSimple
+                  size='sm'
+                  value={catalogFilter}
+                  onValueChange={setCatalogFilter}
+                  options={[
+                    { value: 'all', label: 'All catalogs' },
+                    { value: 'unassigned', label: 'Unassigned' },
+                    ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name })),
+                  ]}
+                  placeholder='Catalog'
+                  triggerClassName='w-48'
+                  ariaLabel='Filter by catalog'
+                />
+
+                <TriggerButtonBar location='product_list' entityType='product' />
+              </div>
             </div>
           }
           eyebrow={
@@ -128,66 +152,6 @@ export const ProductListHeader = memo(function ProductListHeader({
           }
         />
       )}
-
-      {/* Controls section */}
-      <div className='flex flex-col gap-4 rounded-lg border border-border/60 bg-card/40 p-4 sm:flex-row sm:items-center sm:justify-between'>
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[12, 24, 48, 96]}
-          showPageSize
-        />
-
-        {/* Filter selectors */}
-        <div className='flex flex-col gap-2 sm:flex-row sm:gap-3'>
-          <SelectSimple size='sm'
-            value={nameLocale}
-            onValueChange={(value: string) =>
-              setNameLocale(value as 'name_en' | 'name_pl' | 'name_de')
-            }
-            options={languageOptions}
-            placeholder='Language'
-            triggerClassName='w-full sm:w-44'
-            ariaLabel='Select product name language'
-          />
-
-          <SelectSimple size='sm'
-            value={currencyCode}
-            onValueChange={setCurrencyCode}
-            options={currencyOptions.map((code: string) => ({ value: code, label: code }))}
-            placeholder='Currency'
-            triggerClassName='w-full sm:w-32'
-            ariaLabel='Select currency'
-          />
-
-          <SelectSimple size='sm'
-            value={catalogFilter}
-            onValueChange={setCatalogFilter}
-            options={[
-              { value: 'all', label: 'All catalogs' },
-              { value: 'unassigned', label: 'Unassigned' },
-              ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name }))
-            ]}
-            placeholder='Catalog'
-            triggerClassName='w-full sm:w-52'
-            ariaLabel='Filter by catalog'
-          />
-        </div>
-      </div>
-
-      <ConfirmDialog
-        open={showBase64AllConfirm}
-        onOpenChange={setShowBase64AllConfirm}
-        title='Generate Base64 images for all products?'
-        description='This will generate Base64 images for every product and may take time on large catalogs.'
-        onConfirm={() => void handleConvertAllBase64()}
-        confirmText='Convert'
-        variant='success'
-        loading={isConvertingAll}
-      />
     </div>
   );
 });

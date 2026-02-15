@@ -3,7 +3,7 @@ import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 export type CaseResolverNodeRole = 'text_note' | 'explanatory' | 'ai_prompt';
 export type CaseResolverQuoteMode = 'none' | 'double' | 'single';
 export type CaseResolverJoinMode = 'newline' | 'tab' | 'space' | 'none';
-export type CaseResolverDocumentNodePort = 'textfield' | 'content';
+export type CaseResolverDocumentNodePort = 'textfield' | 'content' | 'plainText';
 export type CaseResolverAssetKind = 'node_file' | 'image' | 'pdf' | 'file';
 export type CaseResolverFileType = 'document' | 'scanfile';
 export type CaseResolverDocumentVersion = 'original' | 'exploded';
@@ -74,6 +74,8 @@ export type CaseResolverFile = {
   fileType: CaseResolverFileType;
   name: string;
   folder: string;
+  parentCaseId: string | null;
+  referenceCaseIds: string[];
   documentDate: string;
   originalDocumentContent: string;
   explodedDocumentContent: string;
@@ -95,6 +97,8 @@ export type CaseResolverFileEditDraft = {
   fileType: CaseResolverFileType;
   name: string;
   folder: string;
+  parentCaseId: string | null;
+  referenceCaseIds: string[];
   createdAt: string;
   updatedAt: string;
   documentDate: string;
@@ -169,11 +173,13 @@ export const CASE_RESOLVER_JOIN_MODE_OPTIONS: Array<{
 export const CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS: CaseResolverDocumentNodePort[] = [
   'textfield',
   'content',
+  'plainText',
 ];
 
 export const CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS: CaseResolverDocumentNodePort[] = [
   'textfield',
   'content',
+  'plainText',
 ];
 
 export type CaseResolverPdfExtractionPreset = {

@@ -16,6 +16,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   currencyCode: 'PLN',
   pageSize: 50,
   thumbnailSource: 'file',
+  filtersCollapsedByDefault: false,
 };
 
 export function ProductPreferencesPage(): React.JSX.Element {
@@ -196,6 +197,27 @@ export function ProductPreferencesPage(): React.JSX.Element {
                   }))
                 }
                 options={['10', '25', '50', '100', '200'].map((size: string) => ({ value: size, label: size }))}
+              />
+            </FormField>
+
+            {/* Filter Toggle Default */}
+            <FormField
+              label='Filters Button Default'
+              description='Choose whether the Product List starts with filters shown or hidden'
+            >
+              <SelectSimple
+                size='sm'
+                value={preferences.filtersCollapsedByDefault ? 'hidden' : 'shown'}
+                onValueChange={(value: string) =>
+                  setPreferences((prev: ProductListPreferences) => ({
+                    ...prev,
+                    filtersCollapsedByDefault: value === 'hidden',
+                  }))
+                }
+                options={[
+                  { value: 'shown', label: 'Show Filters' },
+                  { value: 'hidden', label: 'Hide Filters' },
+                ]}
               />
             </FormField>
           </div>

@@ -7,7 +7,6 @@ import React, { useMemo } from 'react';
 import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentListItem } from '@/shared/types/domain/agent-teaching';
 import { 
   Button, 
-  ConfirmDialog, 
   Input, 
   SectionHeader, 
   DataTable, 
@@ -16,6 +15,7 @@ import {
   FormField,
   Badge
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
 

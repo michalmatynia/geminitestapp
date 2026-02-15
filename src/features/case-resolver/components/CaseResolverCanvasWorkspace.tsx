@@ -11,6 +11,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import {
   AiPathsProvider,
+  useCanvasActions,
   useCanvasRefs,
   useCanvasState,
   useGraphActions,
@@ -44,8 +45,10 @@ import { compileCaseResolverPrompt } from '../composer';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
+  CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
   parseCaseResolverTreeDropPayload,
   type CaseResolverDropDocumentToCanvasDetail,
+  type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
@@ -115,16 +118,31 @@ const ensureDocumentPromptPorts = (node: AiNode): AiNode => {
 
 const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
 const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
+const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 
 const normalizeTextNodeInputPort = (value: string | undefined): string => {
-  if (value === DOCUMENT_TEXTFIELD_PORT || value === DOCUMENT_CONTENT_PORT) return value;
+  if (
+    value === DOCUMENT_TEXTFIELD_PORT ||
+    value === DOCUMENT_CONTENT_PORT ||
+    value === DOCUMENT_PLAIN_TEXT_PORT
+  ) {
+    return value;
+  }
   if (value === 'prompt') return DOCUMENT_TEXTFIELD_PORT;
+  if (value === 'result') return DOCUMENT_CONTENT_PORT;
   return DOCUMENT_CONTENT_PORT;
 };
 
 const normalizeTextNodeOutputPort = (value: string | undefined): string => {
-  if (value === DOCUMENT_TEXTFIELD_PORT || value === DOCUMENT_CONTENT_PORT) return value;
+  if (
+    value === DOCUMENT_TEXTFIELD_PORT ||
+    value === DOCUMENT_CONTENT_PORT ||
+    value === DOCUMENT_PLAIN_TEXT_PORT
+  ) {
+    return value;
+  }
   if (value === 'prompt') return DOCUMENT_TEXTFIELD_PORT;
+  if (value === 'result') return DOCUMENT_CONTENT_PORT;
   return DOCUMENT_CONTENT_PORT;
 };
 
@@ -398,6 +416,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const { toast } = useToast();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
+  const { setView } = useCanvasActions();
   const { nodes, edges } = useGraphState();
   const { addNode, addEdge, updateNode, setEdges } = useGraphActions();
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
@@ -984,6 +1003,45 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     );
   };
 
+  const showDocumentNodeInCanvas = React.useCallback((
+    fileId: string,
+    preferredNodeId?: string | null
+  ): void => {
+    const normalizedFileId = fileId.trim();
+    if (!normalizedFileId) return;
+
+    const isLinkedNode = (node: AiNode): boolean =>
+      normalizedDocumentSourceFileIdByNode[node.id] === normalizedFileId;
+
+    let targetNode: AiNode | null = null;
+    if (preferredNodeId) {
+      const preferred = nodes.find((node: AiNode): boolean => node.id === preferredNodeId) ?? null;
+      if (preferred && isLinkedNode(preferred)) {
+        targetNode = preferred;
+      }
+    }
+
+    if (!targetNode) {
+      const reverseNodes = [...nodes].reverse();
+      targetNode = reverseNodes.find(isLinkedNode) ?? null;
+    }
+
+    if (!targetNode) {
+      toast('Document node is no longer on canvas.', { variant: 'warning' });
+      return;
+    }
+
+    selectNode(targetNode.id);
+
+    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+    if (!viewport) return;
+    setView({
+      x: viewport.width / 2 - (targetNode.position.x + NODE_WIDTH / 2) * view.scale,
+      y: viewport.height / 2 - (targetNode.position.y + NODE_MIN_HEIGHT / 2) * view.scale,
+      scale: view.scale,
+    });
+  }, [nodes, normalizedDocumentSourceFileIdByNode, selectNode, setView, toast, view.scale, viewportRef]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const listener = (event: Event): void => {
@@ -1015,6 +1073,32 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       );
     };
   }, [handleDroppedDocuments, placePosition]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const listener = (event: Event): void => {
+      const customEvent = event as CustomEvent<CaseResolverShowDocumentInCanvasDetail>;
+      const detail = customEvent.detail;
+      if (!detail || typeof detail !== 'object') return;
+      const fileId = typeof detail.fileId === 'string' ? detail.fileId : '';
+      const preferredNodeId =
+        typeof detail.nodeId === 'string' && detail.nodeId.trim().length > 0
+          ? detail.nodeId
+          : undefined;
+      showDocumentNodeInCanvas(fileId, preferredNodeId);
+    };
+
+    window.addEventListener(
+      CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
+      listener as EventListener
+    );
+    return (): void => {
+      window.removeEventListener(
+        CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
+        listener as EventListener
+      );
+    };
+  }, [showDocumentNodeInCanvas]);
 
   const addPromptNode = (): void => {
     const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
@@ -1299,7 +1383,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       if (
         input.port !== 'prompt' &&
         input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] &&
-        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1]
+        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] &&
+        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2]
       ) {
         return null;
       }
@@ -1310,9 +1395,19 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       const computedOutputs = compiled.outputsByNode[input.node.id];
       const textfieldOutput = computedOutputs?.textfield ?? renderPromptNodeTextPreview(input.node, nodeMeta);
       const contentOutput = computedOutputs?.content ?? '';
+      const plainTextOutput = computedOutputs?.plainText ?? stripHtmlToPlainText(textfieldOutput);
       const isContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
-      const renderedText = isContentPort ? contentOutput : textfieldOutput;
-      const outputLabel = isContentPort ? 'Content output' : 'Text field output';
+      const isPlainTextPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];
+      const renderedText = isPlainTextPort
+        ? plainTextOutput
+        : isContentPort
+          ? contentOutput
+          : textfieldOutput;
+      const outputLabel = isPlainTextPort
+        ? 'Plain text output'
+        : isContentPort
+          ? 'Content output'
+          : 'Text field output';
 
       return {
         maxWidth: '720px',
@@ -1577,8 +1672,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                   ) : null}
 
                   <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-400'>
-                    Document nodes support <span className='text-gray-200'>textfield</span> and <span className='text-gray-200'>content</span> I/O.
-                    Use <span className='text-gray-200'>Open Edit Document</span> to edit source text, or feed <span className='text-gray-200'>textfield</span> directly from upstream.
+                    Document nodes support <span className='text-gray-200'>textfield</span>, <span className='text-gray-200'>content</span>, and <span className='text-gray-200'>plainText</span> I/O.
+                    Use <span className='text-gray-200'>plainText</span> input to strip incoming HTML to clean text automatically.
                   </div>
                 </>
               ) : (

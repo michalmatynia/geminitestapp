@@ -187,6 +187,8 @@ export const api = {
     apiClient<T>(endpoint, { ...options, method: 'PUT', body: body instanceof FormData ? body : JSON.stringify(body) }),
   patch: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'PATCH', body: body instanceof FormData ? body : JSON.stringify(body) }),
+  patchFormData: <T>(endpoint: string, body: FormData, options?: ApiClientOptions) =>
+    apiClient<T>(endpoint, { ...options, method: 'PATCH', body }),
   delete: <T>(endpoint: string, options?: ApiClientOptions) => 
     apiClient<T>(endpoint, { ...options, method: 'DELETE' }),
 };

@@ -25,6 +25,7 @@ export const userPreferencesUpdateSchema = z.object({
   productListCurrencyCode: nullableTrimmedStringSchema,
   productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
   productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
+  productListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
   productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
   productListDraftIconColor: z
     .string()
@@ -56,6 +57,7 @@ export const userPreferencesResponseSchema = z
     productListCurrencyCode: z.string().optional().nullable(),
     productListPageSize: z.number().int().optional().nullable(),
     productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
+    productListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
     productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
     productListDraftIconColor: z.string().regex(USER_PREFERENCES_HEX_COLOR_PATTERN).optional().nullable(),
     aiPathsActivePathId: z.string().optional().nullable(),
@@ -112,6 +114,9 @@ export const normalizeUserPreferencesUpdatePayload = (
   }
   if (payload.productListThumbnailSource !== undefined) {
     normalized.productListThumbnailSource = payload.productListThumbnailSource;
+  }
+  if (payload.productListFiltersCollapsedByDefault !== undefined) {
+    normalized.productListFiltersCollapsedByDefault = payload.productListFiltersCollapsedByDefault;
   }
   if (payload.productListDraftIconColorMode !== undefined) {
     normalized.productListDraftIconColorMode = payload.productListDraftIconColorMode;

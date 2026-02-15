@@ -18,7 +18,6 @@ import {
   type ImageStudioPromptEntry,
 } from '../utils/prompt-library';
 
-const NONE_OPTION_VALUE = '__none__';
 const CUSTOM_OPTION_VALUE = '__custom__';
 
 function createPromptId(): string {
@@ -42,7 +41,7 @@ export function UIPresetsPanel(): React.JSX.Element {
   const { promptText } = usePromptState();
   const { setPromptText } = usePromptActions();
   const heavySettings = useSettingsMap({ scope: 'heavy' });
-  const [selectedPromptId, setSelectedPromptId] = useState<string>(NONE_OPTION_VALUE);
+  const [selectedPromptId, setSelectedPromptId] = useState<string>('');
   const [customPromptSnapshot, setCustomPromptSnapshot] = useState<string | null>(null);
   const [saveAsNewBusy, setSaveAsNewBusy] = useState(false);
 
@@ -54,7 +53,6 @@ export function UIPresetsPanel(): React.JSX.Element {
 
   const promptOptions = useMemo(
     () => ([
-      { value: NONE_OPTION_VALUE, label: 'Choose prompt' },
       ...(customPromptSnapshot !== null ? [{ value: CUSTOM_OPTION_VALUE, label: 'Custom' }] : []),
       ...promptLibrary.map((entry: ImageStudioPromptEntry) => ({
         value: entry.id,
@@ -65,10 +63,10 @@ export function UIPresetsPanel(): React.JSX.Element {
   );
 
   useEffect(() => {
-    if (selectedPromptId === NONE_OPTION_VALUE) return;
+    if (!selectedPromptId) return;
     if (selectedPromptId === CUSTOM_OPTION_VALUE) return;
     if (promptLibrary.some((entry: ImageStudioPromptEntry) => entry.id === selectedPromptId)) return;
-    setSelectedPromptId(NONE_OPTION_VALUE);
+    setSelectedPromptId('');
   }, [promptLibrary, selectedPromptId]);
 
   const handleSavePromptAsNew = useCallback((): void => {
@@ -123,10 +121,6 @@ export function UIPresetsPanel(): React.JSX.Element {
         size='sm'
         value={selectedPromptId}
         onValueChange={(value: string) => {
-          if (value === NONE_OPTION_VALUE) {
-            setSelectedPromptId(NONE_OPTION_VALUE);
-            return;
-          }
           if (value === CUSTOM_OPTION_VALUE) {
             if (customPromptSnapshot !== null) {
               setPromptText(customPromptSnapshot);
@@ -137,7 +131,7 @@ export function UIPresetsPanel(): React.JSX.Element {
 
           const selected = promptLibrary.find((entry: ImageStudioPromptEntry) => entry.id === value);
           if (!selected) {
-            setSelectedPromptId(NONE_OPTION_VALUE);
+            setSelectedPromptId('');
             return;
           }
           if (customPromptSnapshot === null) {

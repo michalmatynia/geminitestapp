@@ -15,10 +15,10 @@ import {
   Pagination,
   DataTable,
   FormModal,
-  ConfirmDialog,
   SelectSimple,
   FormField,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useCrudPanelState } from '../hooks/useCrudPanelState';
 
@@ -314,14 +314,14 @@ export function CrudPanel(props: {
         />
       )}
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!deletingRow}
-        onOpenChange={(open) => !open && setDeletingRow(null)}
+        onClose={() => setDeletingRow(null)}
         onConfirm={handleDelete}
         title='Delete Row'
-        description='Are you sure you want to delete this row? This action cannot be undone.'
+        message='Are you sure you want to delete this row? This action cannot be undone.'
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
         loading={crudMutation.isPending}
       />
     </div>

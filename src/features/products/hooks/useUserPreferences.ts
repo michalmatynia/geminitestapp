@@ -22,6 +22,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   currencyCode: 'PLN',
   pageSize: 12,
   thumbnailSource: 'file',
+  filtersCollapsedByDefault: false,
 };
 
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
@@ -34,6 +35,7 @@ const mapProductListPreferences = (
   currencyCode: data?.productListCurrencyCode ?? 'PLN',
   pageSize: data?.productListPageSize || 12,
   thumbnailSource: data?.productListThumbnailSource || 'file',
+  filtersCollapsedByDefault: data?.productListFiltersCollapsedByDefault ?? false,
 });
 
 async function fetchUserPreferences(signal?: AbortSignal): Promise<SharedUserPreferences> {

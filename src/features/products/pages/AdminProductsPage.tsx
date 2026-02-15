@@ -5,7 +5,7 @@ import { ProductListPanel } from '@/features/products/components/ProductListPane
 import { ProductModals } from '@/features/products/components/ProductModals';
 import { ProductListProvider } from '@/features/products/context/ProductListContext';
 import { useProductListState } from '@/features/products/hooks/useProductListState';
-import { ConfirmDialog } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 export function AdminProductsPage(): React.JSX.Element {
   const state = useProductListState();
@@ -13,30 +13,24 @@ export function AdminProductsPage(): React.JSX.Element {
   return (
     <>
       {state.isDebugOpen && <DebugPanel />}
-      <ConfirmDialog
+      <ConfirmModal
         open={state.isMassDeleteConfirmOpen}
-        onOpenChange={(open: boolean): void => state.setIsMassDeleteConfirmOpen(open)}
-        onConfirm={(): void => {
-          void state.handleMassDelete();
-        }}
+        onClose={() => state.setIsMassDeleteConfirmOpen(false)}
+        onConfirm={state.handleMassDelete}
         title='Delete Products'
-        description={`Are you sure you want to delete ${Object.keys(state.rowSelection).filter((id: string) => state.rowSelection[id]).length} selected products? This action cannot be undone.`}
+        message={`Are you sure you want to delete ${Object.keys(state.rowSelection).filter((id: string) => state.rowSelection[id]).length} selected products? This action cannot be undone.`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
         loading={state.bulkDeletePending}
       />
-      <ConfirmDialog
+      <ConfirmModal
         open={!!state.productToDelete}
-        onOpenChange={(open: boolean): void => {
-          if (!open) state.setProductToDelete(null);
-        }}
-        onConfirm={(): void => {
-          void state.handleConfirmSingleDelete();
-        }}
+        onClose={() => state.setProductToDelete(null)}
+        onConfirm={state.handleConfirmSingleDelete}
         title='Delete Product'
-        description={`Are you sure you want to delete product "${state.productToDelete?.name_en || state.productToDelete?.name_pl || 'this product'}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete product "${state.productToDelete?.name_en || state.productToDelete?.name_pl || 'this product'}"? This action cannot be undone.`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
         loading={state.bulkDeletePending}
       />
       <ProductListProvider value={state}>

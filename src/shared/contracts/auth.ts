@@ -116,6 +116,7 @@ export const userPreferencesSchema = dtoBaseSchema.extend({
   productListCurrencyCode: z.string().nullable(),
   productListPageSize: z.number(),
   productListThumbnailSource: z.enum(['file', 'link', 'base64']),
+  productListFiltersCollapsedByDefault: z.boolean(),
   productListDraftIconColorMode: z.enum(['theme', 'custom']),
   productListDraftIconColor: z.string().nullable(),
   aiPathsActivePathId: z.string().nullable(),

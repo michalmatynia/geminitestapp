@@ -10,11 +10,11 @@ import {
   Checkbox, 
   ListPanel, 
   SectionHeader, 
-  ConfirmDialog, 
   EmptyState, 
   SearchInput, 
   DataTable
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useChatbotSessionsState } from '../hooks/useChatbotSessionsState';
 
@@ -238,24 +238,24 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
         )}
       </ListPanel>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!sessionToDelete}
-        onOpenChange={(open) => !open && setSessionToDelete(null)}
+        onClose={() => setSessionToDelete(null)}
         onConfirm={() => { if (sessionToDelete) void deleteSession(sessionToDelete); }}
         title='Delete Session'
-        description={`Are you sure you want to delete "${sessionToDelete?.title || 'this session'}"?`}
+        message={`Are you sure you want to delete "${sessionToDelete?.title || 'this session'}"?`}
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
       />
 
-      <ConfirmDialog
+      <ConfirmModal
         open={isBulkDeleteConfirmOpen}
-        onOpenChange={setIsBulkDeleteConfirmOpen}
-        onConfirm={() => { void bulkDelete(); }}
+        onClose={() => setIsBulkDeleteConfirmOpen(false)}
+        onConfirm={bulkDelete}
         title='Delete Sessions'
-        description={`Are you sure you want to delete ${selectedIds.size} sessions?`}
+        message={`Are you sure you want to delete ${selectedIds.size} sessions?`}
         confirmText='Delete All'
-        variant='destructive'
+        isDangerous={true}
       />
     </div>
   );

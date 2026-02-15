@@ -335,6 +335,7 @@ export const handlers = [
       productListNameLocale: 'name_en',
       productListCurrencyCode: 'USD',
       productListThumbnailSource: 'file',
+      productListFiltersCollapsedByDefault: false,
       cmsLastPageId: null,
       cmsThemeOpenSections: [],
       cmsThemeLogoWidth: null,

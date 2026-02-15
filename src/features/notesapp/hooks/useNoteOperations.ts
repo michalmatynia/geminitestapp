@@ -313,7 +313,7 @@ export function useNoteOperations({
       const sourceRelatedIds =
         sourceNote.relationsFrom
           ?.map((rel) => rel.targetNote?.id)
-          .filter((rid): rid is string => Boolean(rid)) || [];
+          .filter((rid): rid is string => !!rid) || [];
       const alreadyLinked = sourceRelatedIds.includes(targetNoteId);
       if (alreadyLinked) {
         toast('Notes are already linked', { variant: 'info' });
@@ -325,7 +325,7 @@ export function useNoteOperations({
       const targetRelatedIds =
         targetNote.relationsFrom
           ?.map((rel) => rel.targetNote?.id)
-          .filter((rid): rid is string => Boolean(rid)) || [];
+          .filter((rid): rid is string => !!rid) || [];
       const nextTargetIds = Array.from(new Set([...targetRelatedIds, sourceNoteId]));
 
       await Promise.all([

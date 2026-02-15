@@ -6,6 +6,7 @@ import type {
   PromptExploderLearnedTemplate,
   PromptExploderSegmentType,
 } from './types';
+import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
 export const PROMPT_EXPLODER_BENCHMARK_RECALL_TARGET = 0.95;
 export const PROMPT_EXPLODER_DEFAULT_LOW_CONFIDENCE_THRESHOLD = 0.55;
@@ -455,6 +456,7 @@ export function runPromptExploderBenchmark(args: {
   validationRules: PromptValidationRule[];
   learnedTemplates?: PromptExploderLearnedTemplate[] | null;
   similarityThreshold?: number;
+  validationScope?: PromptExploderRuntimeValidationScope;
   suite?: PromptExploderBenchmarkSuite;
   lowConfidenceThreshold?: number;
   suggestionLimit?: number;
@@ -493,6 +495,7 @@ export function runPromptExploderBenchmark(args: {
       prompt: benchmarkCase.prompt,
       validationRules: args.validationRules,
       learnedTemplates: args.learnedTemplates ?? [],
+      ...(args.validationScope ? { validationScope: args.validationScope } : {}),
       ...(args.similarityThreshold !== undefined ? { similarityThreshold: args.similarityThreshold } : {}),
     });
 

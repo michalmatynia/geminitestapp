@@ -6,6 +6,8 @@ import {
   type PromptValidationScope,
 } from '@/features/prompt-engine/settings';
 
+import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+
 const PROMPT_EXPLODER_SCOPE = ['prompt_exploder'] as const;
 
 const createRegexRule = (rule: {
@@ -702,40 +704,49 @@ export const PROMPT_EXPLODER_PATTERN_PACK_IDS = new Set(
 );
 
 export function ensurePromptExploderPatternPack(
-  settings: PromptEngineSettings
+  settings: PromptEngineSettings,
+  options?: {
+    scope?: PromptExploderRuntimeValidationScope;
+  }
 ): PromptExploderPatternPackResult {
   const baseSettings = settings?.promptValidation
     ? settings
     : defaultPromptEngineSettings;
-
-  const existingById = new Map(
-    baseSettings.promptValidation.rules.map((rule) => [rule.id, rule])
-  );
+  const targetScope = options?.scope ?? 'prompt_exploder';
 
   const nextRules = [...baseSettings.promptValidation.rules];
   const addedRuleIds: string[] = [];
   const updatedRuleIds: string[] = [];
 
   PROMPT_EXPLODER_PATTERN_PACK.forEach((packRule) => {
-    const existing = existingById.get(packRule.id);
+    const existingIndex = nextRules.findIndex((rule) => {
+      if (rule.id !== packRule.id) return false;
+      const scopes = rule.appliesToScopes ?? [];
+      return scopes.includes(targetScope);
+    });
+    const existing = existingIndex >= 0 ? nextRules[existingIndex] : null;
     if (!existing) {
-      nextRules.push(packRule);
+      nextRules.push({
+        ...packRule,
+        appliesToScopes: [targetScope],
+        launchAppliesToScopes: [targetScope],
+      });
       addedRuleIds.push(packRule.id);
       return;
     }
 
     const existingScopes = existing.appliesToScopes ?? [];
-    const missingPromptExploderScope = !existingScopes.includes('prompt_exploder');
+    const missingPromptExploderScope = !existingScopes.includes(targetScope);
     const existingLaunchScopes = existing.launchAppliesToScopes ?? [];
     const missingPromptExploderLaunchScope =
-      !existingLaunchScopes.includes('prompt_exploder');
+      !existingLaunchScopes.includes(targetScope);
     const merged: PromptValidationRule = {
       ...existing,
       appliesToScopes: (missingPromptExploderScope
-        ? [...new Set([...existingScopes, 'prompt_exploder'])]
+        ? [...new Set([...existingScopes, targetScope])]
         : existing.appliesToScopes) as PromptValidationScope[],
       launchAppliesToScopes: (missingPromptExploderLaunchScope
-        ? [...new Set([...existingLaunchScopes, 'prompt_exploder'])]
+        ? [...new Set([...existingLaunchScopes, targetScope])]
         : existing.launchAppliesToScopes) as PromptValidationScope[],
       promptExploderSegmentType:
         existing.promptExploderSegmentType ??
@@ -766,8 +777,7 @@ export function ensurePromptExploderPatternPack(
       existing.promptExploderTreatAsHeading;
 
     if (changed) {
-      const index = nextRules.findIndex((rule) => rule.id === existing.id);
-      if (index >= 0) nextRules[index] = merged;
+      nextRules[existingIndex] = merged;
       updatedRuleIds.push(existing.id);
     }
   });
@@ -786,7 +796,8 @@ export function ensurePromptExploderPatternPack(
 }
 
 export function getPromptExploderScopedRules(
-  settings: PromptEngineSettings
+  settings: PromptEngineSettings,
+  scope: PromptExploderRuntimeValidationScope = 'prompt_exploder'
 ): PromptValidationRule[] {
   const mergedRules = [
     ...settings.promptValidation.rules,
@@ -794,6 +805,6 @@ export function getPromptExploderScopedRules(
   ];
   return mergedRules.filter((rule) => {
     const scopes = rule.appliesToScopes ?? [];
-    return scopes.includes('prompt_exploder') || scopes.includes('global');
+    return scopes.length === 0 || scopes.includes(scope) || scopes.includes('global');
   });
 }

@@ -12,14 +12,14 @@ import type { ReactNode } from 'react';
 export interface UseProductsTablePropsReturn {
   columns: ColumnDef<ProductWithImages>[];
   data: ProductWithImages[];
-  getRowClassName?: (row: Row<ProductWithImages>) => string | undefined;
+  getRowClassName?: ((row: Row<ProductWithImages>) => string | undefined) | undefined;
   getRowId: (row: ProductWithImages) => string;
   rowSelection: RowSelectionState;
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
   isLoading: boolean;
   skeletonRows: ReactNode;
-  maxHeight?: string | number;
-  stickyHeader?: boolean;
+  maxHeight?: string | number | undefined;
+  stickyHeader?: boolean | undefined;
 }
 
 export function useProductsTableProps(): UseProductsTablePropsReturn {

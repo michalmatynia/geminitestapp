@@ -1,6 +1,6 @@
 'use client';
 
-import { Mark, mergeAttributes, type AnyExtension } from '@tiptap/core';
+import { Extension, Mark, mergeAttributes, type AnyExtension } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import { Table } from '@tiptap/extension-table';
@@ -12,6 +12,9 @@ import TaskList from '@tiptap/extension-task-list';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   Bold,
   CheckSquare,
   Code,
@@ -38,6 +41,7 @@ import { cn } from '@/shared/utils';
 import type { RichTextEditorVariant } from '../types';
 
 type HeadingLevel = 1 | 2 | 3;
+type TextAlignOption = 'left' | 'right' | 'justify';
 type RichTextEditorFontOption = { value: string; label: string };
 
 const defaultFontFamilyOptions: RichTextEditorFontOption[] = [
@@ -79,6 +83,39 @@ const fontFamilyMark = Mark.create({
   },
 });
 
+const TEXT_ALIGN_OPTIONS: TextAlignOption[] = ['left', 'right', 'justify'];
+
+const textAlignExtension = Extension.create({
+  name: 'textAlign',
+  addGlobalAttributes() {
+    return [
+      {
+        types: ['heading', 'paragraph'],
+        attributes: {
+          textAlign: {
+            default: 'left',
+            parseHTML: (element: HTMLElement) => {
+              const value = element.style.textAlign?.trim().toLowerCase();
+              return TEXT_ALIGN_OPTIONS.includes(value as TextAlignOption)
+                ? (value as TextAlignOption)
+                : 'left';
+            },
+            renderHTML: (attributes: Record<string, unknown>) => {
+              const textAlign = typeof attributes['textAlign'] === 'string'
+                ? attributes['textAlign'].trim().toLowerCase()
+                : '';
+              if (!TEXT_ALIGN_OPTIONS.includes(textAlign as TextAlignOption) || textAlign === 'left') {
+                return {};
+              }
+              return { style: `text-align: ${textAlign}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+});
+
 export interface RichTextEditorProps {
   value: string;
   onChange: (nextValue: string) => void;
@@ -89,6 +126,7 @@ export interface RichTextEditorProps {
   allowTable?: boolean | undefined;
   allowTaskList?: boolean | undefined;
   allowFontFamily?: boolean | undefined;
+  allowTextAlign?: boolean | undefined;
   fontFamilyOptions?: RichTextEditorFontOption[] | undefined;
   loadingLabel?: string | undefined;
   containerClassName?: string | undefined;
@@ -172,6 +210,7 @@ export function RichTextEditor({
   allowTable = false,
   allowTaskList = false,
   allowFontFamily = false,
+  allowTextAlign = false,
   fontFamilyOptions,
   loadingLabel = 'Loading editor...',
   containerClassName,
@@ -217,6 +256,10 @@ export function RichTextEditor({
       activeExtensions.push(fontFamilyMark);
     }
 
+    if (allowTextAlign) {
+      activeExtensions.push(textAlignExtension);
+    }
+
     if (allowImage) {
       activeExtensions.push(
         Image.configure({
@@ -248,7 +291,7 @@ export function RichTextEditor({
     }
 
     return activeExtensions;
-  }, [allowFontFamily, allowImage, allowTable, allowTaskList, normalizedHeadingLevels]);
+  }, [allowFontFamily, allowImage, allowTable, allowTaskList, allowTextAlign, normalizedHeadingLevels]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -304,6 +347,23 @@ export function RichTextEditor({
       .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
       .run();
   }, [allowTable, editor]);
+
+  const setTextAlign = useCallback((nextValue: TextAlignOption): void => {
+    if (!allowTextAlign || !editor) return;
+    if (editor.isActive('heading')) {
+      editor.chain().focus().updateAttributes('heading', { textAlign: nextValue }).run();
+      return;
+    }
+    editor.chain().focus().updateAttributes('paragraph', { textAlign: nextValue }).run();
+  }, [allowTextAlign, editor]);
+
+  const isTextAlignActive = useCallback((alignment: TextAlignOption): boolean => {
+    if (!allowTextAlign || !editor) return false;
+    return (
+      editor.isActive('paragraph', { textAlign: alignment }) ||
+      editor.isActive('heading', { textAlign: alignment })
+    );
+  }, [allowTextAlign, editor]);
 
   const activeFontFamilyValue = useMemo((): string => {
     if (!allowFontFamily || !editor) return '__default__';
@@ -528,6 +588,34 @@ export function RichTextEditor({
             contentClassName='border-border bg-card text-white'
             ariaLabel='Select font family'
           />
+        ) : null}
+        {allowTextAlign ? (
+          <>
+            <ToolbarButton
+              title='Align left'
+              onClick={() => setTextAlign('left')}
+              isActive={isTextAlignActive('left')}
+              variant={variant}
+            >
+              <AlignLeft className='size-4' />
+            </ToolbarButton>
+            <ToolbarButton
+              title='Align right'
+              onClick={() => setTextAlign('right')}
+              isActive={isTextAlignActive('right')}
+              variant={variant}
+            >
+              <AlignRight className='size-4' />
+            </ToolbarButton>
+            <ToolbarButton
+              title='Justify'
+              onClick={() => setTextAlign('justify')}
+              isActive={isTextAlignActive('justify')}
+              variant={variant}
+            >
+              <AlignJustify className='size-4' />
+            </ToolbarButton>
+          </>
         ) : null}
       </div>
 

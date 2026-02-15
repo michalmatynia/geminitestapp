@@ -91,6 +91,10 @@ const buildListProjectStage = (filters: ProductFilters): Document | null => {
     sku: 1,
     baseProductId: 1,
     defaultPriceGroupId: 1,
+    categoryId: 1,
+    categories: { $slice: ['$categories', 1] },
+    catalogId: 1,
+    catalogs: { $slice: ['$catalogs', 1] },
     name_en: 1,
     name_pl: 1,
     name_de: 1,
@@ -135,10 +139,23 @@ const toTrimmedString = (value: unknown): string | null => {
 const resolveCategoryId = (doc: ProductDocument): string | null => {
   const direct = toTrimmedString(doc.categoryId);
   if (direct) return direct;
-  if (!Array.isArray(doc.categories)) return null;
-  for (const entry of doc.categories as unknown[]) {
-    if (!entry || typeof entry !== 'object') continue;
-    const record = entry as Record<string, unknown>;
+
+  if (Array.isArray(doc.categories)) {
+    for (const entry of doc.categories as unknown[]) {
+      if (!entry || typeof entry !== 'object') continue;
+      const record = entry as Record<string, unknown>;
+      const categoryId =
+        toTrimmedString(record['categoryId']) ??
+        toTrimmedString(record['category_id']) ??
+        toTrimmedString(record['id']) ??
+        toTrimmedString(record['value']);
+      if (categoryId) return categoryId;
+    }
+    return null;
+  }
+
+  if (doc.categories && typeof doc.categories === 'object') {
+    const record = doc.categories as Record<string, unknown>;
     const categoryId =
       toTrimmedString(record['categoryId']) ??
       toTrimmedString(record['category_id']) ??
@@ -146,6 +163,7 @@ const resolveCategoryId = (doc: ProductDocument): string | null => {
       toTrimmedString(record['value']);
     if (categoryId) return categoryId;
   }
+
   return null;
 };
 

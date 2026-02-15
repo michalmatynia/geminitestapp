@@ -8,7 +8,11 @@ import {
   parseCaseResolverWorkspace,
   resolveCaseResolverUploadFolder,
 } from '@/features/case-resolver/settings';
-import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/features/case-resolver/types';
+import {
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
+  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  DEFAULT_CASE_RESOLVER_NODE_META,
+} from '@/features/case-resolver/types';
 
 const createPromptNode = (id: string): AiNode => ({
   id,
@@ -227,5 +231,118 @@ describe('case-resolver settings', () => {
     expect(byId.get('cycle-a')?.parentId).toBeNull();
     expect(byId.get('cycle-b')?.parentId).toBeNull();
     expect(tags.map((tag) => tag.id)).toEqual(['cycle-a', 'cycle-b', 'orphan', 'parent', 'child', 'self']);
+  });
+
+  it('adds document textfield/content ports for linked document nodes', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        folders: [],
+        files: [
+          {
+            id: 'case-ports',
+            name: 'Case Ports',
+            folder: '',
+            graph: {
+              nodes: [createPromptNode('doc-node'), createPromptNode('generic-node')],
+              edges: [],
+              nodeMeta: {},
+              edgeMeta: {},
+              documentSourceFileIdByNode: {
+                'doc-node': 'file-1',
+              },
+            },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-ports',
+      })
+    );
+
+    const graph = workspace.files[0]?.graph;
+    const docNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'doc-node');
+    const genericNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'generic-node');
+
+    expect(docNode?.inputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS);
+    expect(docNode?.outputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS);
+    expect(genericNode?.inputs).not.toEqual(
+      expect.arrayContaining(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS)
+    );
+    expect(genericNode?.outputs).not.toEqual(
+      expect.arrayContaining(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS)
+    );
+  });
+
+  it('normalizes text node edge ports to textfield/content only', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        folders: [],
+        files: [
+          {
+            id: 'case-edge-ports',
+            name: 'Case Edge Ports',
+            folder: '',
+            graph: {
+              nodes: [
+                createPromptNode('upstream'),
+                createPromptNode('doc-node'),
+                createPromptNode('downstream'),
+              ],
+              edges: [
+                {
+                  id: 'edge-in-prompt',
+                  from: 'upstream',
+                  to: 'doc-node',
+                  fromPort: 'result',
+                  toPort: 'prompt',
+                },
+                {
+                  id: 'edge-in-unknown',
+                  from: 'upstream',
+                  to: 'doc-node',
+                  fromPort: 'result',
+                  toPort: 'custom',
+                },
+                {
+                  id: 'edge-out-result',
+                  from: 'doc-node',
+                  to: 'downstream',
+                  fromPort: 'result',
+                  toPort: 'prompt',
+                },
+                {
+                  id: 'edge-out-prompt',
+                  from: 'doc-node',
+                  to: 'downstream',
+                  fromPort: 'prompt',
+                  toPort: 'prompt',
+                },
+              ],
+              nodeMeta: {
+                'doc-node': {
+                  role: 'text_note',
+                  includeInOutput: true,
+                  quoteMode: 'none',
+                  surroundPrefix: '',
+                  surroundSuffix: '',
+                },
+              },
+              edgeMeta: {},
+            },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-edge-ports',
+      })
+    );
+
+    const graph = workspace.files[0]?.graph;
+    const edgeById = new Map((graph?.edges ?? []).map((edge) => [edge.id, edge]));
+
+    expect(edgeById.get('edge-in-prompt')?.toPort).toBe('textfield');
+    expect(edgeById.get('edge-in-unknown')?.toPort).toBe('content');
+    expect(edgeById.get('edge-out-result')?.fromPort).toBe('content');
+    expect(edgeById.get('edge-out-prompt')?.fromPort).toBe('textfield');
   });
 });

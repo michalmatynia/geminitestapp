@@ -18,15 +18,22 @@ import {
 } from '@/features/case-resolver/context/CaseResolverPageContext';
 import {
   buildFilemakerPartyOptions,
+  createFilemakerOrganization,
+  createFilemakerPerson,
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
+import type { FilemakerDatabase } from '@/features/filemaker/types';
 import {
   consumePromptExploderApplyPromptForCaseResolver,
   savePromptExploderDraftPromptFromCaseResolver,
+} from '@/features/prompt-exploder/bridge';
+import type {
+  PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidate,
 } from '@/features/prompt-exploder/bridge';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -273,6 +280,171 @@ type CaseResolverFileEditDraft = {
 };
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
+
+type CaseResolverPromptExploderPartyAction = 'database' | 'text' | 'ignore';
+
+type CaseResolverPromptExploderPartyProposal = {
+  role: 'addresser' | 'addressee';
+  candidate: PromptExploderCaseResolverPartyCandidate;
+  existingReference: CaseResolverPartyReference | null;
+  action: CaseResolverPromptExploderPartyAction;
+};
+
+type CaseResolverPromptExploderPartyProposalState = {
+  targetFileId: string;
+  addresser: CaseResolverPromptExploderPartyProposal | null;
+  addressee: CaseResolverPromptExploderPartyProposal | null;
+};
+
+const normalizeComparablePartyValue = (value: string): string =>
+  value.trim().toLowerCase().replace(/\s+/g, ' ');
+
+const isOptionalPartyFieldMatch = (candidate: string | undefined, current: string): boolean => {
+  const normalizedCandidate = normalizeComparablePartyValue(candidate ?? '');
+  if (!normalizedCandidate) return true;
+  return normalizedCandidate === normalizeComparablePartyValue(current);
+};
+
+const appendTextBlock = (source: string, addition: string): string => {
+  const normalizedSource = source.trim();
+  const normalizedAddition = addition.trim();
+  if (!normalizedAddition) return source;
+  if (!normalizedSource) return normalizedAddition;
+  return `${normalizedSource}\n\n${normalizedAddition}`;
+};
+
+const appendTextToCaseResolverFile = (file: CaseResolverFile, addition: string): CaseResolverFile => {
+  const normalizedAddition = addition.trim();
+  if (!normalizedAddition) return file;
+  const canUseExploded =
+    file.activeDocumentVersion === 'exploded' && file.explodedDocumentContent.trim().length > 0;
+  if (canUseExploded) {
+    const nextExploded = appendTextBlock(file.explodedDocumentContent, normalizedAddition);
+    return {
+      ...file,
+      explodedDocumentContent: nextExploded,
+      documentContent: nextExploded,
+    };
+  }
+  const baseOriginal = file.originalDocumentContent ?? file.documentContent;
+  const nextOriginal = appendTextBlock(baseOriginal, normalizedAddition);
+  return {
+    ...file,
+    originalDocumentContent: nextOriginal,
+    documentContent: nextOriginal,
+  };
+};
+
+const appendTextToCaseResolverDraft = (
+  draft: CaseResolverFileEditDraft,
+  addition: string
+): CaseResolverFileEditDraft => {
+  const normalizedAddition = addition.trim();
+  if (!normalizedAddition) return draft;
+  const canUseExploded =
+    draft.activeDocumentVersion === 'exploded' && draft.explodedDocumentContent.trim().length > 0;
+  if (canUseExploded) {
+    const nextExploded = appendTextBlock(draft.explodedDocumentContent, normalizedAddition);
+    return {
+      ...draft,
+      explodedDocumentContent: nextExploded,
+      documentContent: nextExploded,
+    };
+  }
+  const nextOriginal = appendTextBlock(draft.originalDocumentContent, normalizedAddition);
+  return {
+    ...draft,
+    originalDocumentContent: nextOriginal,
+    documentContent: nextOriginal,
+  };
+};
+
+const findExistingFilemakerPartyReference = (
+  database: FilemakerDatabase,
+  candidate: PromptExploderCaseResolverPartyCandidate
+): CaseResolverPartyReference | null => {
+  const kindHint = candidate.kind ?? null;
+  const firstName = (candidate.firstName ?? '').trim();
+  const lastName = (candidate.lastName ?? '').trim();
+  const organizationName = (candidate.organizationName ?? '').trim();
+
+  if (kindHint !== 'organization' && firstName && lastName) {
+    const match = database.persons.find((person) => {
+      if (normalizeComparablePartyValue(person.firstName) !== normalizeComparablePartyValue(firstName)) {
+        return false;
+      }
+      if (normalizeComparablePartyValue(person.lastName) !== normalizeComparablePartyValue(lastName)) {
+        return false;
+      }
+      if (!isOptionalPartyFieldMatch(candidate.street, person.street)) return false;
+      if (!isOptionalPartyFieldMatch(candidate.city, person.city)) return false;
+      if (!isOptionalPartyFieldMatch(candidate.postalCode, person.postalCode)) return false;
+      if (!isOptionalPartyFieldMatch(candidate.country, person.country)) return false;
+      return true;
+    });
+    if (match) {
+      return {
+        kind: 'person',
+        id: match.id,
+      };
+    }
+  }
+
+  if (kindHint !== 'person' && organizationName) {
+    const match = database.organizations.find((organization) => {
+      if (
+        normalizeComparablePartyValue(organization.name) !==
+        normalizeComparablePartyValue(organizationName)
+      ) {
+        return false;
+      }
+      if (!isOptionalPartyFieldMatch(candidate.street, organization.street)) return false;
+      if (!isOptionalPartyFieldMatch(candidate.city, organization.city)) return false;
+      if (!isOptionalPartyFieldMatch(candidate.postalCode, organization.postalCode)) return false;
+      if (!isOptionalPartyFieldMatch(candidate.country, organization.country)) return false;
+      return true;
+    });
+    if (match) {
+      return {
+        kind: 'organization',
+        id: match.id,
+      };
+    }
+  }
+
+  return null;
+};
+
+const buildPromptExploderPartyProposal = (
+  role: 'addresser' | 'addressee',
+  candidate: PromptExploderCaseResolverPartyCandidate | undefined,
+  database: FilemakerDatabase
+): CaseResolverPromptExploderPartyProposal | null => {
+  if (!candidate) return null;
+  if (!candidate.rawText.trim() && !candidate.displayName.trim()) return null;
+  return {
+    role,
+    candidate,
+    existingReference: findExistingFilemakerPartyReference(database, candidate),
+    action: 'database',
+  };
+};
+
+const buildPromptExploderPartyProposalState = (
+  payload: PromptExploderCaseResolverPartyBundle | undefined,
+  targetFileId: string,
+  database: FilemakerDatabase
+): CaseResolverPromptExploderPartyProposalState | null => {
+  if (!payload) return null;
+  const addresser = buildPromptExploderPartyProposal('addresser', payload.addresser, database);
+  const addressee = buildPromptExploderPartyProposal('addressee', payload.addressee, database);
+  if (!addresser && !addressee) return null;
+  return {
+    targetFileId,
+    addresser,
+    addressee,
+  };
+};
 
 const buildCombinedOcrText = (slots: CaseResolverScanSlot[]): string => {
   const parts = slots
@@ -676,6 +848,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const [activeMainView, setActiveMainView] = useState<'workspace' | 'search'>('workspace');
   const [isPreviewPageVisible, setIsPreviewPageVisible] = useState(false);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
+  const [promptExploderPartyProposal, setPromptExploderPartyProposal] =
+    useState<CaseResolverPromptExploderPartyProposalState | null>(null);
+  const [isPromptExploderPartyProposalOpen, setIsPromptExploderPartyProposalOpen] = useState(false);
+  const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposal] = useState(false);
   const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
   const [isUploadingScanDraftFiles, setIsUploadingScanDraftFiles] = useState(false);
   const [uploadingScanSlotId, setUploadingScanSlotId] = useState<string | null>(null);
@@ -842,8 +1018,17 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         updatedAt: now,
       };
     });
+    const proposalState = buildPromptExploderPartyProposalState(
+      payload.caseResolverParties,
+      targetFileId,
+      filemakerDatabase
+    );
+    if (proposalState) {
+      setPromptExploderPartyProposal(proposalState);
+      setIsPromptExploderPartyProposalOpen(true);
+    }
     toast('Exploded text returned to Case Resolver.', { variant: 'success' });
-  }, [toast, workspace.activeFileId, workspace.files]);
+  }, [filemakerDatabase, toast, workspace.activeFileId, workspace.files]);
   const isNodeFileSelected = selectedAsset?.kind === 'node_file';
   const shouldShowAssetPreview = Boolean(selectedAsset) && !isNodeFileSelected;
   const canTogglePreviewPage = isNodeFileSelected || Boolean(activeFile);
@@ -1742,6 +1927,217 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     [toast]
   );
 
+  const handlePromptExploderPartyActionChange = useCallback(
+    (
+      role: 'addresser' | 'addressee',
+      action: CaseResolverPromptExploderPartyAction
+    ): void => {
+      setPromptExploderPartyProposal((current: CaseResolverPromptExploderPartyProposalState | null) => {
+        if (!current) return current;
+        const proposal = current[role];
+        if (!proposal) return current;
+        return {
+          ...current,
+          [role]: {
+            ...proposal,
+            action,
+          },
+        };
+      });
+    },
+    []
+  );
+
+  const handleClosePromptExploderPartyProposal = useCallback((): void => {
+    setIsPromptExploderPartyProposalOpen(false);
+    setPromptExploderPartyProposal(null);
+    setIsApplyingPromptExploderPartyProposal(false);
+  }, []);
+
+  const handleApplyPromptExploderPartyProposal = useCallback(async (): Promise<void> => {
+    if (!promptExploderPartyProposal) {
+      handleClosePromptExploderPartyProposal();
+      return;
+    }
+    const targetFileId = promptExploderPartyProposal.targetFileId;
+    const targetExists = workspace.files.some((file: CaseResolverFile): boolean => file.id === targetFileId);
+    if (!targetExists) {
+      toast('Target document no longer exists.', { variant: 'warning' });
+      handleClosePromptExploderPartyProposal();
+      return;
+    }
+
+    setIsApplyingPromptExploderPartyProposal(true);
+    try {
+      let nextDatabase = filemakerDatabase;
+      let databaseChanged = false;
+      const partyPatch: Partial<Record<'addresser' | 'addressee', CaseResolverPartyReference | null>> = {};
+      const textAdditions: string[] = [];
+
+      const upsertPartyForProposal = (
+        proposal: CaseResolverPromptExploderPartyProposal | null
+      ): void => {
+        if (!proposal) return;
+        if (proposal.action === 'ignore') return;
+        if (proposal.action === 'text') {
+          if (proposal.candidate.rawText.trim()) {
+            textAdditions.push(proposal.candidate.rawText.trim());
+          }
+          return;
+        }
+
+        let reference =
+          findExistingFilemakerPartyReference(nextDatabase, proposal.candidate) ??
+          proposal.existingReference;
+        if (!reference) {
+          const candidateKind = proposal.candidate.kind ?? null;
+          const shouldCreateOrganization =
+            candidateKind === 'organization' ||
+            (!(proposal.candidate.firstName ?? '').trim() &&
+              !(proposal.candidate.lastName ?? '').trim());
+          if (shouldCreateOrganization) {
+            const organizationName =
+              proposal.candidate.organizationName?.trim() ||
+              proposal.candidate.displayName.trim() ||
+              'Organization';
+            const organization = createFilemakerOrganization({
+              id: createId('organization'),
+              name: organizationName,
+              street: proposal.candidate.street ?? '',
+              city: proposal.candidate.city ?? '',
+              postalCode: proposal.candidate.postalCode ?? '',
+              country: proposal.candidate.country ?? '',
+            });
+            nextDatabase = {
+              ...nextDatabase,
+              organizations: [...nextDatabase.organizations, organization],
+            };
+            databaseChanged = true;
+            reference = {
+              kind: 'organization',
+              id: organization.id,
+            };
+          } else {
+            const firstName =
+              proposal.candidate.firstName?.trim() ||
+              proposal.candidate.displayName.trim().split(/\s+/)[0] ||
+              'Unknown';
+            const lastName =
+              proposal.candidate.lastName?.trim() ||
+              proposal.candidate.displayName.trim().split(/\s+/).slice(1).join(' ').trim() ||
+              'Unknown';
+            const person = createFilemakerPerson({
+              id: createId('person'),
+              firstName,
+              lastName,
+              street: proposal.candidate.street ?? '',
+              city: proposal.candidate.city ?? '',
+              postalCode: proposal.candidate.postalCode ?? '',
+              country: proposal.candidate.country ?? '',
+            });
+            nextDatabase = {
+              ...nextDatabase,
+              persons: [...nextDatabase.persons, person],
+            };
+            databaseChanged = true;
+            reference = {
+              kind: 'person',
+              id: person.id,
+            };
+          }
+        }
+
+        partyPatch[proposal.role] = reference;
+      };
+
+      upsertPartyForProposal(promptExploderPartyProposal.addresser);
+      upsertPartyForProposal(promptExploderPartyProposal.addressee);
+
+      if (databaseChanged) {
+        await updateSetting.mutateAsync({
+          key: FILEMAKER_DATABASE_KEY,
+          value: JSON.stringify(nextDatabase),
+        });
+      }
+
+      const now = new Date().toISOString();
+      const combinedAddition = textAdditions.join('\n\n').trim();
+
+      setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
+        normalizeCaseResolverWorkspace({
+          ...current,
+          activeFileId: targetFileId,
+          files: current.files.map((file: CaseResolverFile): CaseResolverFile => {
+            if (file.id !== targetFileId) return file;
+            let nextFile: CaseResolverFile = file;
+            if (partyPatch.addresser !== undefined) {
+              nextFile = {
+                ...nextFile,
+                addresser: partyPatch.addresser ?? null,
+              };
+            }
+            if (partyPatch.addressee !== undefined) {
+              nextFile = {
+                ...nextFile,
+                addressee: partyPatch.addressee ?? null,
+              };
+            }
+            if (combinedAddition) {
+              nextFile = appendTextToCaseResolverFile(nextFile, combinedAddition);
+            }
+            return {
+              ...nextFile,
+              updatedAt: now,
+            };
+          }),
+        })
+      );
+
+      setSelectedFileId(targetFileId);
+      setSelectedAssetId(null);
+      setSelectedFolderPath(null);
+      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) => {
+        if (current?.id !== targetFileId) return current;
+        let nextDraft: CaseResolverFileEditDraft = current;
+        if (partyPatch.addresser !== undefined) {
+          nextDraft = {
+            ...nextDraft,
+            addresser: partyPatch.addresser ?? null,
+          };
+        }
+        if (partyPatch.addressee !== undefined) {
+          nextDraft = {
+            ...nextDraft,
+            addressee: partyPatch.addressee ?? null,
+          };
+        }
+        if (combinedAddition) {
+          nextDraft = appendTextToCaseResolverDraft(nextDraft, combinedAddition);
+        }
+        return {
+          ...nextDraft,
+          updatedAt: now,
+        };
+      });
+
+      handleClosePromptExploderPartyProposal();
+      toast('Addresser/addressee proposal applied.', { variant: 'success' });
+    } catch (error) {
+      setIsApplyingPromptExploderPartyProposal(false);
+      toast(
+        error instanceof Error ? error.message : 'Failed to apply Prompt Exploder party proposal.',
+        { variant: 'error' }
+      );
+    }
+  }, [
+    filemakerDatabase,
+    handleClosePromptExploderPartyProposal,
+    promptExploderPartyProposal,
+    toast,
+    updateSetting,
+    workspace.files,
+  ]);
+
   const handleSelectDocumentTag = useCallback((nextTagId: string | null): void => {
     setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
       current
@@ -2318,6 +2714,104 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             )}
           </div>
         </div>
+
+        <AppModal
+          open={isPromptExploderPartyProposalOpen && Boolean(promptExploderPartyProposal)}
+          onOpenChange={(open: boolean): void => {
+            if (!open) {
+              handleClosePromptExploderPartyProposal();
+            }
+          }}
+          title='Prompt Exploder Party Proposal'
+          subtitle='Choose how to handle addresser and addressee returned from Prompt Exploder.'
+          size='lg'
+        >
+          {promptExploderPartyProposal ? (
+            <div className='space-y-3'>
+              {(['addresser', 'addressee'] as const).map((role) => {
+                const proposal = promptExploderPartyProposal[role];
+                if (!proposal) return null;
+                const existingLabel =
+                  proposal.existingReference
+                    ? resolveFilemakerPartyLabel(filemakerDatabase, proposal.existingReference)
+                    : null;
+                return (
+                  <div
+                    key={role}
+                    className='space-y-2 rounded-lg border border-border/60 bg-card/25 p-3'
+                  >
+                    <div className='flex flex-wrap items-center justify-between gap-2'>
+                      <div className='text-sm font-semibold text-white'>
+                        {role === 'addresser' ? 'Addresser' : 'Addressee'}
+                      </div>
+                      <div className='w-full min-w-[220px] max-w-[320px]'>
+                        <SelectSimple
+                          size='sm'
+                          value={proposal.action}
+                          onValueChange={(value: string): void => {
+                            if (value !== 'database' && value !== 'text' && value !== 'ignore') return;
+                            handlePromptExploderPartyActionChange(role, value);
+                          }}
+                          options={[
+                            {
+                              value: 'database',
+                              label: proposal.existingReference
+                                ? 'Attach existing database entry'
+                                : 'Add to database and attach',
+                            },
+                            {
+                              value: 'text',
+                              label: 'Add as normal text to document',
+                            },
+                            {
+                              value: 'ignore',
+                              label: 'Do not add',
+                            },
+                          ]}
+                          triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+                        />
+                      </div>
+                    </div>
+                    <div className='text-[11px] text-gray-400'>
+                      Detected: {proposal.candidate.displayName || 'Unnamed party'}
+                    </div>
+                    <div className='text-[11px] text-gray-500'>
+                      {existingLabel
+                        ? `Existing database match: ${existingLabel}`
+                        : 'No matching Filemaker entry was found.'}
+                    </div>
+                    <Textarea
+                      value={proposal.candidate.rawText}
+                      readOnly
+                      className='min-h-[110px] border-border bg-card/60 text-xs text-white'
+                    />
+                  </div>
+                );
+              })}
+              <div className='flex justify-end gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={handleClosePromptExploderPartyProposal}
+                  className='h-8 border-white/20 px-3 text-xs'
+                  disabled={isApplyingPromptExploderPartyProposal}
+                >
+                  Skip
+                </Button>
+                <Button
+                  type='button'
+                  onClick={(): void => {
+                    void handleApplyPromptExploderPartyProposal();
+                  }}
+                  className='h-8 border border-white/20 px-3 text-xs'
+                  disabled={isApplyingPromptExploderPartyProposal}
+                >
+                  {isApplyingPromptExploderPartyProposal ? 'Applying...' : 'Apply Proposal'}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </AppModal>
 
         <AppModal
           open={isPartiesModalOpen && Boolean(activeFile)}

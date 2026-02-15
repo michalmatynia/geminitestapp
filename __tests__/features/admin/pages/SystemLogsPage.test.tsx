@@ -163,11 +163,6 @@ describe('SystemLogsPage', () => {
     const clearButton = screen.getByText('Wipe Logs');
     fireEvent.click(clearButton);
 
-    const confirmButton =
-      screen.queryByText('Wipe Logs') ??
-      screen.queryByText('Confirm') ??
-      screen.queryByRole('button', { name: /wipe/i });
-    
     expect(clearButton).toBeInTheDocument();
   });
 

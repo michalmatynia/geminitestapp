@@ -67,11 +67,11 @@ export type NoteRelationRecord = NoteRelationDto;
 export type RelatedNote = RelatedNoteDto;
 
 export type NoteRelationWithTarget = NoteRelationRecord & {
-  targetNote?: RelatedNote;
+  targetNote?: RelatedNote | undefined;
 };
 
 export type NoteRelationWithSource = NoteRelationRecord & {
-  sourceNote?: RelatedNote;
+  sourceNote?: RelatedNote | undefined;
 };
 
 export type NoteWithRelations = NoteWithRelationsDto & {

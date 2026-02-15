@@ -144,9 +144,46 @@ const toProductImageRecord = (image: PrismaProductImage & { imageFile?: PrismaIm
 type FullPrismaProduct = PrismaProduct & {
   images?: (PrismaProductImage & { imageFile: PrismaImageFile | null })[];
   catalogs?: (PrismaProductCatalog & { catalog: PrismaCatalog & { languages?: { languageId: string }[] } })[];
-  categories?: { categoryId: string } | null;
+  categories?: { categoryId: string } | { categoryId: string }[] | null;
   tags?: (Prisma.ProductTagAssignmentGetPayload<{}>)[];
   producers?: (Prisma.ProductProducerAssignmentGetPayload<{}>)[];
+};
+
+const toTrimmedString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const resolveCategoryId = (product: FullPrismaProduct): string | null => {
+  const direct = toTrimmedString((product as FullPrismaProduct & { categoryId?: unknown }).categoryId);
+  if (direct) return direct;
+
+  const relation = (product as FullPrismaProduct & { categories?: unknown }).categories;
+  if (Array.isArray(relation)) {
+    for (const entry of relation) {
+      if (!entry || typeof entry !== 'object') continue;
+      const record = entry as Record<string, unknown>;
+      const categoryId =
+        toTrimmedString(record['categoryId']) ||
+        toTrimmedString(record['category_id']) ||
+        toTrimmedString(record['id']) ||
+        toTrimmedString(record['value']);
+      if (categoryId) return categoryId;
+    }
+    return null;
+  }
+
+  if (relation && typeof relation === 'object') {
+    const record = relation as Record<string, unknown>;
+    const categoryId =
+      toTrimmedString(record['categoryId']) ||
+      toTrimmedString(record['category_id']) ||
+      toTrimmedString(record['id']) ||
+      toTrimmedString(record['value']);
+    return categoryId || null;
+  }
+
+  return null;
 };
 
 const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
@@ -198,7 +235,7 @@ const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
     noteIds: product.noteIds ?? [],
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
-    categoryId: product.categories?.categoryId ?? null,
+    categoryId: resolveCategoryId(product),
     tags: product.tags?.map(t => ({ 
       productId: t.productId,
       tagId: t.tagId,

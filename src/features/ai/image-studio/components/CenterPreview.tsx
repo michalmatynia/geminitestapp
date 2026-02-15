@@ -16,6 +16,7 @@ import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, Input, useToast } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
@@ -53,7 +54,7 @@ export function CenterPreview(): React.JSX.Element {
   const { isFocusMode, maskPreviewEnabled } = useUiState();
   const { toggleFocusMode } = useUiActions();
   const { projectId } = useProjectsState();
-  const { workingSlot, previewMode, captureRef, slots } = useSlotsState();
+  const { workingSlot, selectedSlot, selectedSlotId, previewMode, captureRef, slots } = useSlotsState();
   const {
     setPreviewMode,
     setSelectedSlotId,
@@ -118,6 +119,10 @@ export function CenterPreview(): React.JSX.Element {
     () => asObjectRecord(workingSlot?.metadata) as SlotGenerationMetadata | null,
     [workingSlot?.metadata]
   );
+  const selectedSlotMetadata = useMemo(
+    () => asObjectRecord(selectedSlot?.metadata) as SlotGenerationMetadata | null,
+    [selectedSlot?.metadata]
+  );
 
   // Composite preview override
   const { compositeResultCache, compositeLoading } = useVersionGraphState();
@@ -136,6 +141,24 @@ export function CenterPreview(): React.JSX.Element {
     );
     return fallbackSourceSlotId ?? null;
   }, [workingSlotMetadata]);
+  const selectedSourceSlotId = useMemo(() => {
+    const primarySourceSlotId =
+      typeof selectedSlotMetadata?.sourceSlotId === 'string'
+        ? selectedSlotMetadata.sourceSlotId.trim()
+        : '';
+    if (primarySourceSlotId) return primarySourceSlotId;
+    if (!Array.isArray(selectedSlotMetadata?.sourceSlotIds)) return null;
+    const fallbackSourceSlotId = selectedSlotMetadata.sourceSlotIds.find((id): id is string =>
+      typeof id === 'string' && id.trim().length > 0
+    );
+    return fallbackSourceSlotId ?? null;
+  }, [selectedSlotMetadata]);
+  const rootVariantSourceSlotId = useMemo(() => {
+    const normalizedSelectedSlotId = selectedSlotId?.trim() ?? '';
+    if (!normalizedSelectedSlotId) return null;
+    return selectedSourceSlotId ?? normalizedSelectedSlotId;
+  }, [selectedSlotId, selectedSourceSlotId]);
+  const showVariantPanel = Boolean(selectedSlotId?.trim());
 
   const sourceSlot = useMemo(
     () => (sourceSlotId ? slots.find((slot) => slot.id === sourceSlotId) ?? null : null),
@@ -306,7 +329,24 @@ export function CenterPreview(): React.JSX.Element {
   );
 
   const variantThumbnails = useMemo((): VariantThumbnailInfo[] => {
-    const rootSourceSlotId = sourceSlotId ?? workingSlot?.id ?? null;
+    const rootSourceSlotId = rootVariantSourceSlotId;
+    if (!rootSourceSlotId) return [];
+
+    const isGenerationSlotLinkedToRoot = (slot: (typeof slots)[number]): boolean => {
+      const metadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
+      if (!metadata) return false;
+      const relationType = typeof metadata.relationType === 'string' ? metadata.relationType : '';
+      const source = typeof metadata.sourceSlotId === 'string' ? metadata.sourceSlotId.trim() : '';
+      const sourceIds = Array.isArray(metadata.sourceSlotIds)
+        ? metadata.sourceSlotIds.filter(
+          (value): value is string => typeof value === 'string' && value.trim().length > 0
+        )
+        : [];
+      const linkedToSource = source === rootSourceSlotId || sourceIds.includes(rootSourceSlotId);
+      const isGeneration = metadata.role === 'generation' || relationType === 'generation:output';
+      const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
+      return linkedToSource && isGeneration && Boolean(imageSrc || slot.imageFileId || slot.imageUrl);
+    };
 
     const buildVariantFromSlot = (
       slot: (typeof slots)[number],
@@ -395,33 +435,17 @@ export function CenterPreview(): React.JSX.Element {
       };
     };
 
-    const historicalVariants: VariantThumbnailInfo[] = rootSourceSlotId
-      ? slots
-        .filter((slot) => {
-          const metadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
-          if (!metadata) return false;
-          const relationType = typeof metadata.relationType === 'string' ? metadata.relationType : '';
-          const source = typeof metadata.sourceSlotId === 'string' ? metadata.sourceSlotId.trim() : '';
-          const sourceIds = Array.isArray(metadata.sourceSlotIds)
-            ? metadata.sourceSlotIds.filter(
-              (value): value is string => typeof value === 'string' && value.trim().length > 0
-            )
-            : [];
-          const linkedToSource = source === rootSourceSlotId || sourceIds.includes(rootSourceSlotId);
-          const isGeneration = metadata.role === 'generation' || relationType === 'generation:output';
-          const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
-          return linkedToSource && isGeneration && Boolean(imageSrc || slot.imageFileId || slot.imageUrl);
-        })
-        .map((slot, index) => buildVariantFromSlot(slot, index + 1))
-        .sort((a, b) => {
-          const aTs = a.timestamp ? Date.parse(a.timestamp) : Number.NaN;
-          const bTs = b.timestamp ? Date.parse(b.timestamp) : Number.NaN;
-          if (Number.isFinite(aTs) && Number.isFinite(bTs) && aTs !== bTs) {
-            return bTs - aTs;
-          }
-          return b.index - a.index;
-        })
-      : [];
+    const historicalVariants: VariantThumbnailInfo[] = slots
+      .filter((slot) => isGenerationSlotLinkedToRoot(slot))
+      .map((slot, index) => buildVariantFromSlot(slot, index + 1))
+      .sort((a, b) => {
+        const aTs = a.timestamp ? Date.parse(a.timestamp) : Number.NaN;
+        const bTs = b.timestamp ? Date.parse(b.timestamp) : Number.NaN;
+        if (Number.isFinite(aTs) && Number.isFinite(bTs) && aTs !== bTs) {
+          return bTs - aTs;
+        }
+        return b.index - a.index;
+      });
 
     const historicalSlotIds = new Set<string>(
       historicalVariants
@@ -432,23 +456,7 @@ export function CenterPreview(): React.JSX.Element {
     const transientVariants = landingSlots
       .map((landingSlot): VariantThumbnailInfo | null => {
         const output = landingSlot.output ?? null;
-        if (!output) {
-          return {
-            id: `landing:${landingSlot.id}`,
-            index: landingSlot.index,
-            status: landingSlot.status,
-            imageSrc: null,
-            output: null,
-            slotId: null,
-            model: null,
-            timestamp: null,
-            timestampLabel: 'n/a',
-            timestampSearchText: '',
-            tokenCostUsd: null,
-            actualCostUsd: null,
-            costEstimated: true,
-          };
-        }
+        if (!output) return null;
 
         const normalizedOutputPath = normalizeImagePath(output.filepath);
         const matchingSlots = slots.filter((slot) => {
@@ -482,16 +490,21 @@ export function CenterPreview(): React.JSX.Element {
             : null;
           return Boolean(activeRunId && runId === activeRunId && outputIndex === landingSlot.index);
         }) ?? matchingSlots[0] ?? null;
+        if (!matchedSlot) {
+          return null;
+        }
+        if (!isGenerationSlotLinkedToRoot(matchedSlot)) {
+          return null;
+        }
 
-        if (matchedSlot?.id && historicalSlotIds.has(matchedSlot.id)) {
+        if (historicalSlotIds.has(matchedSlot.id)) {
           return null;
         }
 
         const imageSrc =
-          getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ||
-          output.filepath;
+          getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ?? output.filepath;
 
-        const metadata = asObjectRecord(matchedSlot?.metadata) as SlotGenerationMetadata | null;
+        const metadata = asObjectRecord(matchedSlot.metadata) as SlotGenerationMetadata | null;
         const generationParams = asObjectRecord(metadata?.generationParams);
         const generationRequest = asObjectRecord(metadata?.generationRequest);
         const generationCosts = asObjectRecord(metadata?.generationCosts);
@@ -530,7 +543,7 @@ export function CenterPreview(): React.JSX.Element {
         }
 
         return {
-          id: matchedSlot ? `slot:${matchedSlot.id}` : `landing:${landingSlot.id}`,
+          id: `slot:${matchedSlot.id}`,
           index: landingSlot.index,
           status: landingSlot.status,
           imageSrc,
@@ -542,7 +555,7 @@ export function CenterPreview(): React.JSX.Element {
             width: output.width,
             height: output.height,
           },
-          slotId: matchedSlot?.id ?? null,
+          slotId: matchedSlot.id,
           model,
           timestamp,
           timestampLabel: formatTimestamp(timestamp),
@@ -566,9 +579,8 @@ export function CenterPreview(): React.JSX.Element {
     activeRunId,
     landingSlots,
     productImagesExternalBaseUrl,
+    rootVariantSourceSlotId,
     slots,
-    sourceSlotId,
-    workingSlot?.id,
   ]);
 
   const visibleVariantThumbnails = useMemo(
@@ -1041,7 +1053,12 @@ export function CenterPreview(): React.JSX.Element {
       {focusToggleButton}
       {variantPointerTooltip}
       <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-3 pt-0'>
-        <div className='grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-3'>
+        <div
+          className={cn(
+            'grid min-h-0 flex-1 gap-3',
+            showVariantPanel ? 'grid-rows-[minmax(0,1fr)_auto]' : 'grid-rows-[minmax(0,1fr)]',
+          )}
+        >
           <div className='relative min-h-0'>
             <VectorDrawingProvider value={vectorContextValue}>
               {previewMode === '3d' && workingSlot?.asset3dId ? (
@@ -1103,106 +1120,108 @@ export function CenterPreview(): React.JSX.Element {
               </Button>
             </div>
           </div>
-          <div className='shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
-            <div className='mb-2 flex items-center gap-2'>
-              <Input size='sm'
-                value={variantTimestampQuery}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setVariantTimestampQuery(event.target.value);
-                }}
-                placeholder='Search variants by timestamp'
-                className='h-8 text-xs'
-                aria-label='Search generated variants by timestamp'
-              />
-              <span className='shrink-0 text-[11px] text-gray-400'>
-                {filteredVariantThumbnails.length}/{visibleVariantThumbnails.length}
-              </span>
-            </div>
-            <div className='overflow-x-auto overflow-y-hidden pb-1 pr-1'>
-              {filteredVariantThumbnails.length > 0 ? (
-                <div className='flex w-max min-w-full gap-2'>
-                  {filteredVariantThumbnails.map((variant) => {
-                    const isActive = activeVariantId === variant.id;
-                    const canDeleteVariant =
-                      variant.status !== 'pending' &&
-                      (variant.status === 'failed' || Boolean(variant.output) || Boolean(variant.slotId));
-                    const statusClasses =
-                      variant.status === 'completed'
-                        ? 'border-emerald-400/40 bg-emerald-500/5'
-                        : variant.status === 'failed'
-                          ? 'border-red-400/40 bg-red-500/5'
-                          : 'border-border/60 bg-card/30';
-                    const activeClasses = isActive
-                      ? 'border-sky-400/80 bg-sky-500/15 ring-2 ring-sky-400/70'
-                      : '';
+          {showVariantPanel ? (
+            <div className='shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>
+              <div className='mb-2 flex items-center gap-2'>
+                <Input size='sm'
+                  value={variantTimestampQuery}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setVariantTimestampQuery(event.target.value);
+                  }}
+                  placeholder='Search variants by timestamp'
+                  className='h-8 text-xs'
+                  aria-label='Search generated variants by timestamp'
+                />
+                <span className='shrink-0 text-[11px] text-gray-400'>
+                  {filteredVariantThumbnails.length}/{visibleVariantThumbnails.length}
+                </span>
+              </div>
+              <div className='overflow-x-auto overflow-y-hidden pb-1 pr-1'>
+                {filteredVariantThumbnails.length > 0 ? (
+                  <div className='flex w-max min-w-full gap-2'>
+                    {filteredVariantThumbnails.map((variant) => {
+                      const isActive = activeVariantId === variant.id;
+                      const canDeleteVariant =
+                        variant.status !== 'pending' &&
+                        (variant.status === 'failed' || Boolean(variant.output) || Boolean(variant.slotId));
+                      const statusClasses =
+                        variant.status === 'completed'
+                          ? 'border-emerald-400/40 bg-emerald-500/5'
+                          : variant.status === 'failed'
+                            ? 'border-red-400/40 bg-red-500/5'
+                            : 'border-border/60 bg-card/30';
+                      const activeClasses = isActive
+                        ? 'border-sky-400/80 bg-sky-500/15 ring-2 ring-sky-400/70'
+                        : '';
 
-                    return (
-                      <div key={variant.id} className='relative w-28 shrink-0'>
-                        <button
-                          type='button'
-                          onClick={(): void => {
-                            void handleLoadVariantToCanvas(variant);
-                          }}
-                          onMouseEnter={(event): void => handleVariantTooltipMove(event, variant)}
-                          onMouseMove={(event): void => handleVariantTooltipMove(event, variant)}
-                          onMouseLeave={(): void => setVariantTooltip(null)}
-                          onBlur={(): void => setVariantTooltip(null)}
-                          disabled={!variant.output || variantLoadingId === variant.id}
-                          aria-pressed={isActive}
-                          className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${statusClasses} ${activeClasses}`}
-                        >
-                          <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
-                          {variant.output ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={variant.imageSrc || variant.output.filepath}
-                              alt={variant.output.filename || `Generated ${variant.index}`}
-                              className='h-20 w-full rounded object-cover'
-                            />
-                          ) : (
-                            <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
-                              {variant.status === 'pending' ? (
-                                <span className='inline-flex items-center gap-1'>
-                                  {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
-                                  Waiting
-                                </span>
-                              ) : (
-                                <span>Failed</span>
-                              )}
-                            </div>
-                          )}
-                        </button>
-                        {canDeleteVariant ? (
-                          <Button size='xs'
+                      return (
+                        <div key={variant.id} className='relative w-28 shrink-0'>
+                          <button
                             type='button'
-                            variant='ghost'
-                            onClick={(): void => handleDeleteVariant(variant)}
-                            disabled={deleteSlotMutation.isPending}
-                            aria-label={`Delete variant ${variant.index}`}
-                            title='Delete variant'
-                            className='absolute right-1 top-1 z-10 size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
+                            onClick={(): void => {
+                              void handleLoadVariantToCanvas(variant);
+                            }}
+                            onMouseEnter={(event): void => handleVariantTooltipMove(event, variant)}
+                            onMouseMove={(event): void => handleVariantTooltipMove(event, variant)}
+                            onMouseLeave={(): void => setVariantTooltip(null)}
+                            onBlur={(): void => setVariantTooltip(null)}
+                            disabled={!variant.output || variantLoadingId === variant.id}
+                            aria-pressed={isActive}
+                            className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${statusClasses} ${activeClasses}`}
                           >
-                            <Trash2 className='size-3.5' />
-                          </Button>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : visibleVariantThumbnails.length > 0 ? (
-                <div className='px-2 py-3 text-xs text-gray-500'>
-                  No variants match this timestamp search.
-                </div>
-              ) : (
-                <div className='px-2 py-3 text-xs text-gray-500'>
-                  Start generation to prepare output slots under the canvas.
-                </div>
-              )}
-              {activeRunError ? (
-                <div className='mt-2 text-[11px] text-red-300'>{activeRunError}</div>
-              ) : null}
+                            <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
+                            {variant.output ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={variant.imageSrc || variant.output.filepath}
+                                alt={variant.output.filename || `Generated ${variant.index}`}
+                                className='h-20 w-full rounded object-cover'
+                              />
+                            ) : (
+                              <div className='flex h-20 w-full items-center justify-center rounded border border-dashed border-border/70 text-[10px] text-gray-500'>
+                                {variant.status === 'pending' ? (
+                                  <span className='inline-flex items-center gap-1'>
+                                    {isRunInFlight ? <Loader2 className='size-3 animate-spin' /> : null}
+                                    Waiting
+                                  </span>
+                                ) : (
+                                  <span>Failed</span>
+                                )}
+                              </div>
+                            )}
+                          </button>
+                          {canDeleteVariant ? (
+                            <Button size='xs'
+                              type='button'
+                              variant='ghost'
+                              onClick={(): void => handleDeleteVariant(variant)}
+                              disabled={deleteSlotMutation.isPending}
+                              aria-label={`Delete variant ${variant.index}`}
+                              title='Delete variant'
+                              className='absolute right-1 top-1 z-10 size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
+                            >
+                              <Trash2 className='size-3.5' />
+                            </Button>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : visibleVariantThumbnails.length > 0 ? (
+                  <div className='px-2 py-3 text-xs text-gray-500'>
+                    No variants match this timestamp search.
+                  </div>
+                ) : (
+                  <div className='px-2 py-3 text-xs text-gray-500'>
+                    Start generation to prepare output slots under the canvas.
+                  </div>
+                )}
+                {activeRunError ? (
+                  <div className='mt-2 text-[11px] text-red-300'>{activeRunError}</div>
+                ) : null}
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </div>
     </div>

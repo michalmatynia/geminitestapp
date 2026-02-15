@@ -8,12 +8,14 @@ import { useBenchmarkState } from '../context/hooks/useBenchmark';
 import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
 import { PROMPT_EXPLODER_PATTERN_PACK } from '../pattern-pack';
+import { PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS } from '../validation-stack';
 
 import type { PromptExploderLearnedTemplate } from '../types';
 
 export function PatternRuntimePanel(): React.JSX.Element {
   const {
     runtimeValidationRules,
+    activeValidationRuleStack,
     effectiveLearnedTemplates,
     runtimeLearnedTemplates,
     templateMergeThreshold,
@@ -45,7 +47,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
   return (
     <FormSection
       title='Pattern Runtime'
-      description='Prompt Exploder uses Prompt Validator rules scoped to prompt_exploder.'
+      description='Prompt Exploder uses Prompt Validator rules from the selected validation stack.'
       variant='subtle'
       className='p-4'
       actions={
@@ -57,6 +59,12 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <span className='text-gray-200'>{runtimeLearnedTemplates.length}</span>
           {' '}· profile:{' '}
           <span className='text-gray-200'>{learningDraft.runtimeRuleProfile}</span>
+          {' '}· stack:{' '}
+          <span className='text-gray-200'>
+            {PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.find(
+              (option) => option.value === activeValidationRuleStack
+            )?.label ?? activeValidationRuleStack}
+          </span>
           {' '}· merge:{' '}
           <span className='text-gray-200'>{templateMergeThreshold.toFixed(2)}</span>
           {' '}· bench template upsert:{' '}
@@ -91,7 +99,24 @@ export function PatternRuntimePanel(): React.JSX.Element {
           Advanced pack includes {PROMPT_EXPLODER_PATTERN_PACK.length} segmentation patterns.
         </div>
       </div>
-      <div className='mt-3 grid gap-2 md:grid-cols-8'>
+      <div className='mt-3 grid gap-2 md:grid-cols-9'>
+        <div className='space-y-1'>
+          <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
+          <SelectSimple
+            size='sm'
+            value={learningDraft.runtimeValidationRuleStack}
+            onValueChange={(value: string) => {
+              setLearningDraft((previous) => ({
+                ...previous,
+                runtimeValidationRuleStack: value as typeof previous.runtimeValidationRuleStack,
+              }));
+            }}
+            options={PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.map((option) => ({
+              value: option.value,
+              label: option.label,
+            }))}
+          />
+        </div>
         <div className='space-y-1'>
           <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
           <SelectSimple size='sm'

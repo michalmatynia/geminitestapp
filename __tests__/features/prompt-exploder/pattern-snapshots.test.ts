@@ -112,4 +112,27 @@ describe('prompt exploder pattern snapshots', () => {
       'prompt_exploder',
     ]);
   });
+
+  it('merges restored rules for case resolver scope without removing image stack rules', () => {
+    const existingRules = [
+      buildRule('segment.pipeline.image', { appliesToScopes: ['prompt_exploder'] }),
+      buildRule('segment.pipeline.case', { appliesToScopes: ['case_resolver_prompt_exploder'] }),
+    ];
+    const restoredRules = [buildRule('segment.pipeline.case', { appliesToScopes: [] })];
+
+    const merged = mergeRestoredPromptExploderRules({
+      existingRules,
+      restoredRules,
+      scope: 'case_resolver_prompt_exploder',
+      isPromptExploderManagedRule: (rule) => rule.id.startsWith('segment.'),
+    });
+
+    expect(merged.map((rule) => rule.id)).toEqual([
+      'segment.pipeline.image',
+      'segment.pipeline.case',
+    ]);
+    const restored = merged.find((rule) => rule.id === 'segment.pipeline.case');
+    expect(restored?.appliesToScopes).toContain('case_resolver_prompt_exploder');
+    expect(restored?.appliesToScopes).not.toContain('prompt_exploder');
+  });
 });

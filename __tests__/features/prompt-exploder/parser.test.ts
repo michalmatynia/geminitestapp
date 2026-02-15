@@ -446,6 +446,7 @@ Rejected when visual coherence does not hold.`;
           anchorTokens: ['acceptance', 'accepted', 'rejected'],
           sampleText: 'Accepted when ... Rejected when ...',
           approvals: 2,
+          state: 'active',
           createdAt: '2026-02-13T00:00:00.000Z',
           updatedAt: '2026-02-13T00:00:00.000Z',
         },
@@ -711,5 +712,104 @@ Rejected when visual coherence does not hold.`;
     expect(rl3?.code).toBe('RL3');
     expect(rl3?.title).toBe('Specular control');
     expect(rl3?.condition).toBe('If the product is reflective:');
+  });
+
+  it('applies Case Resolver scoped rules only when case_resolver scope is selected', () => {
+    const caseResolverRule: PromptValidationRule = {
+      ...createRegexRule({
+        id: 'segment.boundary.pipeline',
+        pattern: '^\\s*WORKSTEPS\\b',
+        title: 'Case Resolver Pipeline Override',
+        message: 'Case Resolver pipeline override',
+        segmentType: 'hierarchical_list',
+      }),
+      appliesToScopes: ['case_resolver_prompt_exploder'],
+      launchAppliesToScopes: ['case_resolver_prompt_exploder'],
+    };
+
+    const withoutCaseScope = explodePromptText({
+      prompt: CUSTOM_BOUNDARY_PROMPT,
+      validationRules: [caseResolverRule],
+      validationScope: 'prompt_exploder',
+    });
+    const withoutCaseScopeSegment = withoutCaseScope.segments.find(
+      (segment) => segment.title === 'WORKSTEPS'
+    );
+    expect(withoutCaseScopeSegment?.type).not.toBe('hierarchical_list');
+
+    const withCaseScope = explodePromptText({
+      prompt: CUSTOM_BOUNDARY_PROMPT,
+      validationRules: [caseResolverRule],
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+    const withCaseScopeSegment = withCaseScope.segments.find(
+      (segment) => segment.title === 'WORKSTEPS'
+    );
+    expect(withCaseScopeSegment?.type).toBe('hierarchical_list');
+  });
+
+  it('normalizes WYSIWYG HTML and segments Case Resolver input using scoped heading rules', () => {
+    const htmlPrompt = '<p>Szczecin 25.01.2026</p><p></p><p><strong>Wniosek o umorzenie zadłużenia</strong></p><p><strong>Dotyczy: postępowanie administracyjne</strong></p><p>Niniejszym wnoszę o umorzenie powstałego zadłużenia.</p><p><strong>Uzasadnienie</strong></p><p>Przez kilka lat nie nastąpiło skuteczne doręczenie informacji.</p><p>Z poważaniem,</p>';
+    const toCaseScopedRule = (rule: PromptValidationRule): PromptValidationRule => ({
+      ...rule,
+      appliesToScopes: ['case_resolver_prompt_exploder'],
+      launchAppliesToScopes: ['case_resolver_prompt_exploder'],
+    });
+    const caseRules: PromptValidationRule[] = [
+      toCaseScopedRule(
+        createRegexRule({
+          id: 'segment.case.heading.date',
+          pattern: '^\\s*Szczecin\\s+\\d{2}\\.\\d{2}\\.\\d{4}\\s*$',
+          title: 'Case Date Heading',
+          message: 'Case date heading',
+          segmentType: 'metadata',
+        })
+      ),
+      toCaseScopedRule(
+        createRegexRule({
+          id: 'segment.case.heading.main',
+          pattern: '^\\s*Wniosek\\b',
+          title: 'Case Main Heading',
+          message: 'Case main heading',
+          segmentType: 'sequence',
+        })
+      ),
+      toCaseScopedRule(
+        createRegexRule({
+          id: 'segment.case.heading.subject',
+          pattern: '^\\s*Dotyczy:',
+          title: 'Case Subject Heading',
+          message: 'Case subject heading',
+          segmentType: 'assigned_text',
+        })
+      ),
+      toCaseScopedRule(
+        createRegexRule({
+          id: 'segment.case.heading.reasoning',
+          pattern: '^\\s*Uzasadnienie\\s*$',
+          title: 'Case Reasoning Heading',
+          message: 'Case reasoning heading',
+          segmentType: 'sequence',
+        })
+      ),
+    ];
+
+    const document = explodePromptText({
+      prompt: htmlPrompt,
+      validationRules: caseRules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    expect(document.sourcePrompt).toContain('Szczecin 25.01.2026');
+    expect(document.sourcePrompt).toContain('Wniosek o umorzenie zadłużenia');
+    expect(document.sourcePrompt).not.toContain('<p>');
+    expect(document.segments.map((segment) => segment.title)).toEqual(
+      expect.arrayContaining([
+        'Szczecin 25.01.2026',
+        'Wniosek o umorzenie zadłużenia',
+        'Dotyczy: postępowanie administracyjne',
+        'Uzasadnienie',
+      ])
+    );
   });
 });

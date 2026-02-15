@@ -98,6 +98,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   const { toast } = useToast();
 
   const {
+    activeValidationScope,
     effectiveRules,
     effectiveLearnedTemplates,
     templateMergeThreshold,
@@ -468,6 +469,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
           validationRules: runtimeRulesAfterApproval,
           learnedTemplates: runtimeTemplatesAfterApproval,
           similarityThreshold: nextExploderSettings.learning.similarityThreshold,
+          validationScope: activeValidationScope,
         });
         setManualBindings([]);
         setDocumentState(refreshed);
@@ -493,6 +495,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   }, [
     approvalDraft,
     documentState?.sourcePrompt,
+    activeValidationScope,
     effectiveLearnedTemplates,
     learningDraft,
     promptExploderSettings,

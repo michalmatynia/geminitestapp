@@ -12,7 +12,6 @@ import {
   Input,
   Label,
   SectionHeader,
-  Textarea,
   useToast,
 } from '@/shared/ui';
 
@@ -20,6 +19,7 @@ import {
   createFilemakerOrganization,
   createFilemakerPerson,
   FILEMAKER_DATABASE_KEY,
+  formatFilemakerAddress,
   normalizeFilemakerDatabase,
   parseFilemakerDatabase,
 } from '../settings';
@@ -43,6 +43,13 @@ const formatTimestamp = (value: string): string => {
   return new Date(parsed).toLocaleString();
 };
 
+const hasAddressFields = (
+  street: string,
+  city: string,
+  postalCode: string,
+  country: string
+): boolean => Boolean(street && city && postalCode && country);
+
 export function AdminFilemakerPage(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
@@ -57,25 +64,37 @@ export function AdminFilemakerPage(): React.JSX.Element {
 
   const [personFirstName, setPersonFirstName] = useState('');
   const [personLastName, setPersonLastName] = useState('');
-  const [personAddress, setPersonAddress] = useState('');
+  const [personStreet, setPersonStreet] = useState('');
+  const [personCity, setPersonCity] = useState('');
+  const [personPostalCode, setPersonPostalCode] = useState('');
+  const [personCountry, setPersonCountry] = useState('');
   const [personNip, setPersonNip] = useState('');
   const [personRegon, setPersonRegon] = useState('');
   const [personPhones, setPersonPhones] = useState('');
 
   const [organizationName, setOrganizationName] = useState('');
-  const [organizationAddress, setOrganizationAddress] = useState('');
+  const [organizationStreet, setOrganizationStreet] = useState('');
+  const [organizationCity, setOrganizationCity] = useState('');
+  const [organizationPostalCode, setOrganizationPostalCode] = useState('');
+  const [organizationCountry, setOrganizationCountry] = useState('');
 
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
   const [editingPersonFirstName, setEditingPersonFirstName] = useState('');
   const [editingPersonLastName, setEditingPersonLastName] = useState('');
-  const [editingPersonAddress, setEditingPersonAddress] = useState('');
+  const [editingPersonStreet, setEditingPersonStreet] = useState('');
+  const [editingPersonCity, setEditingPersonCity] = useState('');
+  const [editingPersonPostalCode, setEditingPersonPostalCode] = useState('');
+  const [editingPersonCountry, setEditingPersonCountry] = useState('');
   const [editingPersonNip, setEditingPersonNip] = useState('');
   const [editingPersonRegon, setEditingPersonRegon] = useState('');
   const [editingPersonPhones, setEditingPersonPhones] = useState('');
 
   const [editingOrganizationId, setEditingOrganizationId] = useState<string | null>(null);
   const [editingOrganizationName, setEditingOrganizationName] = useState('');
-  const [editingOrganizationAddress, setEditingOrganizationAddress] = useState('');
+  const [editingOrganizationStreet, setEditingOrganizationStreet] = useState('');
+  const [editingOrganizationCity, setEditingOrganizationCity] = useState('');
+  const [editingOrganizationPostalCode, setEditingOrganizationPostalCode] = useState('');
+  const [editingOrganizationCountry, setEditingOrganizationCountry] = useState('');
 
   useEffect(() => {
     setDatabase(parsedDatabase);
@@ -119,9 +138,14 @@ export function AdminFilemakerPage(): React.JSX.Element {
   const handleAddPerson = useCallback(async (): Promise<void> => {
     const firstName = personFirstName.trim();
     const lastName = personLastName.trim();
-    const fullAddress = personAddress.trim();
-    if (!firstName || !lastName || !fullAddress) {
-      toast('Person requires first name, last name, and full address.', { variant: 'error' });
+    const street = personStreet.trim();
+    const city = personCity.trim();
+    const postalCode = personPostalCode.trim();
+    const country = personCountry.trim();
+    if (!firstName || !lastName || !hasAddressFields(street, city, postalCode, country)) {
+      toast('Person requires first name, last name, street, city, postal code, and country.', {
+        variant: 'error',
+      });
       return;
     }
 
@@ -129,7 +153,10 @@ export function AdminFilemakerPage(): React.JSX.Element {
       id: createId('person'),
       firstName,
       lastName,
-      fullAddress,
+      street,
+      city,
+      postalCode,
+      country,
       nip: personNip,
       regon: personRegon,
       phoneNumbers: personPhones,
@@ -145,18 +172,24 @@ export function AdminFilemakerPage(): React.JSX.Element {
 
     setPersonFirstName('');
     setPersonLastName('');
-    setPersonAddress('');
+    setPersonStreet('');
+    setPersonCity('');
+    setPersonPostalCode('');
+    setPersonCountry('');
     setPersonNip('');
     setPersonRegon('');
     setPersonPhones('');
   }, [
     database,
-    personAddress,
+    personCity,
+    personCountry,
     personFirstName,
     personLastName,
     personNip,
+    personPostalCode,
     personPhones,
     personRegon,
+    personStreet,
     persistDatabase,
     toast,
   ]);
@@ -188,7 +221,10 @@ export function AdminFilemakerPage(): React.JSX.Element {
     setEditingPersonId(person.id);
     setEditingPersonFirstName(person.firstName);
     setEditingPersonLastName(person.lastName);
-    setEditingPersonAddress(person.fullAddress);
+    setEditingPersonStreet(person.street);
+    setEditingPersonCity(person.city);
+    setEditingPersonPostalCode(person.postalCode);
+    setEditingPersonCountry(person.country);
     setEditingPersonNip(person.nip);
     setEditingPersonRegon(person.regon);
     setEditingPersonPhones(person.phoneNumbers.join(', '));
@@ -198,7 +234,10 @@ export function AdminFilemakerPage(): React.JSX.Element {
     setEditingPersonId(null);
     setEditingPersonFirstName('');
     setEditingPersonLastName('');
-    setEditingPersonAddress('');
+    setEditingPersonStreet('');
+    setEditingPersonCity('');
+    setEditingPersonPostalCode('');
+    setEditingPersonCountry('');
     setEditingPersonNip('');
     setEditingPersonRegon('');
     setEditingPersonPhones('');
@@ -208,9 +247,14 @@ export function AdminFilemakerPage(): React.JSX.Element {
     if (!editingPersonId) return;
     const firstName = editingPersonFirstName.trim();
     const lastName = editingPersonLastName.trim();
-    const fullAddress = editingPersonAddress.trim();
-    if (!firstName || !lastName || !fullAddress) {
-      toast('Person requires first name, last name, and full address.', { variant: 'error' });
+    const street = editingPersonStreet.trim();
+    const city = editingPersonCity.trim();
+    const postalCode = editingPersonPostalCode.trim();
+    const country = editingPersonCountry.trim();
+    if (!firstName || !lastName || !hasAddressFields(street, city, postalCode, country)) {
+      toast('Person requires first name, last name, street, city, postal code, and country.', {
+        variant: 'error',
+      });
       return;
     }
 
@@ -223,7 +267,10 @@ export function AdminFilemakerPage(): React.JSX.Element {
               id: person.id,
               firstName,
               lastName,
-              fullAddress,
+              street,
+              city,
+              postalCode,
+              country,
               nip: editingPersonNip,
               regon: editingPersonRegon,
               phoneNumbers: editingPersonPhones,
@@ -238,13 +285,16 @@ export function AdminFilemakerPage(): React.JSX.Element {
     handleCancelEditPerson();
   }, [
     database,
-    editingPersonAddress,
+    editingPersonCity,
+    editingPersonCountry,
     editingPersonFirstName,
     editingPersonId,
     editingPersonLastName,
     editingPersonNip,
+    editingPersonPostalCode,
     editingPersonPhones,
     editingPersonRegon,
+    editingPersonStreet,
     handleCancelEditPerson,
     persistDatabase,
     toast,
@@ -252,16 +302,24 @@ export function AdminFilemakerPage(): React.JSX.Element {
 
   const handleAddOrganization = useCallback(async (): Promise<void> => {
     const name = organizationName.trim();
-    const fullAddress = organizationAddress.trim();
-    if (!name || !fullAddress) {
-      toast('Organization requires name and full address.', { variant: 'error' });
+    const street = organizationStreet.trim();
+    const city = organizationCity.trim();
+    const postalCode = organizationPostalCode.trim();
+    const country = organizationCountry.trim();
+    if (!name || !hasAddressFields(street, city, postalCode, country)) {
+      toast('Organization requires name, street, city, postal code, and country.', {
+        variant: 'error',
+      });
       return;
     }
 
     const organization = createFilemakerOrganization({
       id: createId('organization'),
       name,
-      fullAddress,
+      street,
+      city,
+      postalCode,
+      country,
     });
 
     await persistDatabase(
@@ -272,8 +330,20 @@ export function AdminFilemakerPage(): React.JSX.Element {
       'Organization added.'
     );
     setOrganizationName('');
-    setOrganizationAddress('');
-  }, [database, organizationAddress, organizationName, persistDatabase, toast]);
+    setOrganizationStreet('');
+    setOrganizationCity('');
+    setOrganizationPostalCode('');
+    setOrganizationCountry('');
+  }, [
+    database,
+    organizationCity,
+    organizationCountry,
+    organizationName,
+    organizationPostalCode,
+    organizationStreet,
+    persistDatabase,
+    toast,
+  ]);
 
   const handleDeleteOrganization = useCallback(
     async (organizationId: string): Promise<void> => {
@@ -305,21 +375,32 @@ export function AdminFilemakerPage(): React.JSX.Element {
   const handleStartEditOrganization = useCallback((organization: FilemakerOrganization): void => {
     setEditingOrganizationId(organization.id);
     setEditingOrganizationName(organization.name);
-    setEditingOrganizationAddress(organization.fullAddress);
+    setEditingOrganizationStreet(organization.street);
+    setEditingOrganizationCity(organization.city);
+    setEditingOrganizationPostalCode(organization.postalCode);
+    setEditingOrganizationCountry(organization.country);
   }, []);
 
   const handleCancelEditOrganization = useCallback((): void => {
     setEditingOrganizationId(null);
     setEditingOrganizationName('');
-    setEditingOrganizationAddress('');
+    setEditingOrganizationStreet('');
+    setEditingOrganizationCity('');
+    setEditingOrganizationPostalCode('');
+    setEditingOrganizationCountry('');
   }, []);
 
   const handleSaveOrganization = useCallback(async (): Promise<void> => {
     if (!editingOrganizationId) return;
     const name = editingOrganizationName.trim();
-    const fullAddress = editingOrganizationAddress.trim();
-    if (!name || !fullAddress) {
-      toast('Organization requires name and full address.', { variant: 'error' });
+    const street = editingOrganizationStreet.trim();
+    const city = editingOrganizationCity.trim();
+    const postalCode = editingOrganizationPostalCode.trim();
+    const country = editingOrganizationCountry.trim();
+    if (!name || !hasAddressFields(street, city, postalCode, country)) {
+      toast('Organization requires name, street, city, postal code, and country.', {
+        variant: 'error',
+      });
       return;
     }
 
@@ -331,7 +412,10 @@ export function AdminFilemakerPage(): React.JSX.Element {
             ? createFilemakerOrganization({
               id: organization.id,
               name,
-              fullAddress,
+              street,
+              city,
+              postalCode,
+              country,
               createdAt: organization.createdAt,
               updatedAt: new Date().toISOString(),
             })
@@ -343,9 +427,12 @@ export function AdminFilemakerPage(): React.JSX.Element {
     handleCancelEditOrganization();
   }, [
     database,
-    editingOrganizationAddress,
+    editingOrganizationCity,
+    editingOrganizationCountry,
     editingOrganizationId,
     editingOrganizationName,
+    editingOrganizationPostalCode,
+    editingOrganizationStreet,
     handleCancelEditOrganization,
     persistDatabase,
     toast,
@@ -403,15 +490,48 @@ export function AdminFilemakerPage(): React.JSX.Element {
               className='h-9'
             />
           </div>
-          <div className='space-y-2 md:col-span-2'>
-            <Label className='text-xs text-gray-400'>Full Address</Label>
-            <Textarea
-              value={personAddress}
-              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                setPersonAddress(event.target.value);
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Street</Label>
+            <Input
+              value={personStreet}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setPersonStreet(event.target.value);
               }}
-              placeholder='Street, city, postal code, country'
-              className='min-h-[72px]'
+              placeholder='Street and number'
+              className='h-9'
+            />
+          </div>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>City</Label>
+            <Input
+              value={personCity}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setPersonCity(event.target.value);
+              }}
+              placeholder='City'
+              className='h-9'
+            />
+          </div>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Postal Code</Label>
+            <Input
+              value={personPostalCode}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setPersonPostalCode(event.target.value);
+              }}
+              placeholder='Postal code'
+              className='h-9'
+            />
+          </div>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Country</Label>
+            <Input
+              value={personCountry}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setPersonCountry(event.target.value);
+              }}
+              placeholder='Country'
+              className='h-9'
             />
           </div>
           <div className='space-y-2'>
@@ -477,13 +597,37 @@ export function AdminFilemakerPage(): React.JSX.Element {
                         placeholder='Last name'
                         className='h-9'
                       />
-                      <Textarea
-                        value={editingPersonAddress}
-                        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                          setEditingPersonAddress(event.target.value);
+                      <Input
+                        value={editingPersonStreet}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingPersonStreet(event.target.value);
                         }}
-                        placeholder='Full address'
-                        className='min-h-[72px] md:col-span-2'
+                        placeholder='Street'
+                        className='h-9'
+                      />
+                      <Input
+                        value={editingPersonCity}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingPersonCity(event.target.value);
+                        }}
+                        placeholder='City'
+                        className='h-9'
+                      />
+                      <Input
+                        value={editingPersonPostalCode}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingPersonPostalCode(event.target.value);
+                        }}
+                        placeholder='Postal code'
+                        className='h-9'
+                      />
+                      <Input
+                        value={editingPersonCountry}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingPersonCountry(event.target.value);
+                        }}
+                        placeholder='Country'
+                        className='h-9'
                       />
                       <Input
                         value={editingPersonNip}
@@ -538,7 +682,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
                         <div className='text-sm font-semibold text-white'>
                           {person.firstName} {person.lastName}
                         </div>
-                        <div className='text-xs text-gray-300'>{person.fullAddress}</div>
+                        <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
                         <div className='text-[11px] text-gray-500'>
                           NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
                         </div>
@@ -610,14 +754,47 @@ export function AdminFilemakerPage(): React.JSX.Element {
             />
           </div>
           <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Full Address</Label>
-            <Textarea
-              value={organizationAddress}
-              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                setOrganizationAddress(event.target.value);
+            <Label className='text-xs text-gray-400'>Street</Label>
+            <Input
+              value={organizationStreet}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setOrganizationStreet(event.target.value);
               }}
-              placeholder='Street, city, postal code, country'
-              className='min-h-[72px]'
+              placeholder='Street and number'
+              className='h-9'
+            />
+          </div>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>City</Label>
+            <Input
+              value={organizationCity}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setOrganizationCity(event.target.value);
+              }}
+              placeholder='City'
+              className='h-9'
+            />
+          </div>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Postal Code</Label>
+            <Input
+              value={organizationPostalCode}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setOrganizationPostalCode(event.target.value);
+              }}
+              placeholder='Postal code'
+              className='h-9'
+            />
+          </div>
+          <div className='space-y-2'>
+            <Label className='text-xs text-gray-400'>Country</Label>
+            <Input
+              value={organizationCountry}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setOrganizationCountry(event.target.value);
+              }}
+              placeholder='Country'
+              className='h-9'
             />
           </div>
         </div>
@@ -642,13 +819,37 @@ export function AdminFilemakerPage(): React.JSX.Element {
                         placeholder='Organization name'
                         className='h-9'
                       />
-                      <Textarea
-                        value={editingOrganizationAddress}
-                        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                          setEditingOrganizationAddress(event.target.value);
+                      <Input
+                        value={editingOrganizationStreet}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingOrganizationStreet(event.target.value);
                         }}
-                        placeholder='Full address'
-                        className='min-h-[72px]'
+                        placeholder='Street'
+                        className='h-9'
+                      />
+                      <Input
+                        value={editingOrganizationCity}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingOrganizationCity(event.target.value);
+                        }}
+                        placeholder='City'
+                        className='h-9'
+                      />
+                      <Input
+                        value={editingOrganizationPostalCode}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingOrganizationPostalCode(event.target.value);
+                        }}
+                        placeholder='Postal code'
+                        className='h-9'
+                      />
+                      <Input
+                        value={editingOrganizationCountry}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingOrganizationCountry(event.target.value);
+                        }}
+                        placeholder='Country'
+                        className='h-9'
                       />
                       <div className='md:col-span-2 flex items-center gap-2'>
                         <Button
@@ -677,7 +878,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
                     <div className='flex flex-wrap items-start justify-between gap-3'>
                       <div className='min-w-0 flex-1 space-y-1'>
                         <div className='text-sm font-semibold text-white'>{organization.name}</div>
-                        <div className='text-xs text-gray-300'>{organization.fullAddress}</div>
+                        <div className='text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
                         <div className='text-[10px] text-gray-600'>
                           Updated: {formatTimestamp(organization.updatedAt)}
                         </div>

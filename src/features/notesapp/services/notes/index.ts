@@ -56,14 +56,15 @@ const repoCall = async <K extends keyof NoteRepository>(
 
 // Helper: Build Relations
 const buildRelations = (note: NoteWithRelations): RelatedNote[] => {
-  const relations: RelatedNote[] = [
-    ...(note.relationsFrom ?? [])
-      .map((rel) => rel.targetNote)
-      .filter((rel): rel is RelatedNote => Boolean(rel)),
-    ...(note.relationsTo ?? [])
-      .map((rel) => rel.sourceNote)
-      .filter((rel): rel is RelatedNote => Boolean(rel)),
-  ];
+  const fromRelations = (note.relationsFrom ?? [])
+    .map((rel) => rel.targetNote)
+    .filter((rel): rel is RelatedNote => !!rel);
+    
+  const toRelations = (note.relationsTo ?? [])
+    .map((rel) => rel.sourceNote)
+    .filter((rel): rel is RelatedNote => !!rel);
+
+  const relations: RelatedNote[] = [...fromRelations, ...toRelations];
   const seen = new Set<string>();
   return relations.filter((rel: RelatedNote) => {
     if (!rel?.id || seen.has(rel.id)) return false;
@@ -128,7 +129,7 @@ export const noteService: NoteRepository = {
       const previousRelatedIds =
         previousNote.relationsFrom
           ?.map((rel) => rel.targetNote?.id)
-          .filter((rid): rid is string => Boolean(rid)) || [];
+          .filter((rid): rid is string => !!rid) || [];
       const nextRelatedIds = data.relatedNoteIds;
       const addedRelations = nextRelatedIds.filter(
         (relId: string) => !previousRelatedIds.includes(relId) && relId !== id
@@ -145,7 +146,7 @@ export const noteService: NoteRepository = {
           const currentIds =
             relatedNote.relationsFrom
               ?.map((rel) => rel.targetNote?.id)
-              .filter((rid): rid is string => Boolean(rid)) || [];
+              .filter((rid): rid is string => !!rid) || [];
           
           let nextIds: string[];
           if (shouldAdd) {

@@ -94,6 +94,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
 
   const {
+    activeValidationScope,
     runtimeValidationRules,
     runtimeLearnedTemplates,
     learningDraft,
@@ -372,6 +373,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       validationRules: runtimeValidationRules,
       learnedTemplates: runtimeLearnedTemplates,
       similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
+      validationScope: activeValidationScope,
     });
     setManualBindings([]);
     setDocumentState(nextDocument);
@@ -382,6 +384,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     promptText,
     runtimeLearnedTemplates,
     runtimeValidationRules,
+    activeValidationScope,
     toast,
   ]);
 

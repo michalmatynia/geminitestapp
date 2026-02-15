@@ -145,7 +145,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
     .map((id: string) => slots.find((slot) => slot.id === id))
     .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot));
 
-  const referenceAssets = referenceSlots
+  const referenceAssets: Array<{ filepath: string; id?: string }> = referenceSlots
     .map((slot: ImageStudioSlotRecord) => ({
       id: slot.id,
       filepath: slot.imageFile?.filepath || slot.imageUrl || '',

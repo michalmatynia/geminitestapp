@@ -7,6 +7,8 @@ import type {
   PromptExploderDocument,
   PromptExploderLearnedTemplate,
 } from './types';
+import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+
 
 const clampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -80,12 +82,14 @@ export const reexplodePromptWithRuntime = (args: {
   validationRules: PromptValidationRule[];
   learnedTemplates: PromptExploderLearnedTemplate[];
   similarityThreshold: number;
+  validationScope?: PromptExploderRuntimeValidationScope;
 }): PromptExploderDocument => {
   return explodePromptText({
     prompt: args.prompt,
     validationRules: args.validationRules,
     learnedTemplates: args.learnedTemplates,
     similarityThreshold: args.similarityThreshold,
+    ...(args.validationScope ? { validationScope: args.validationScope } : {}),
   });
 };
 

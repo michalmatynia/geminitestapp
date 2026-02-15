@@ -25,10 +25,18 @@ const createPromptNode = (input: {
   },
 });
 
-const createEdge = (input: { id: string; from: string; to: string }): Edge => ({
+const createEdge = (input: {
+  id: string;
+  from: string;
+  to: string;
+  fromPort?: string;
+  toPort?: string;
+}): Edge => ({
   id: input.id,
   from: input.from,
   to: input.to,
+  fromPort: input.fromPort,
+  toPort: input.toPort,
 });
 
 describe('case-resolver composer', () => {
@@ -90,6 +98,8 @@ describe('case-resolver composer', () => {
     expect(compiled.prompt).toBe('Alpha\n"Beta"');
     expect(compiled.segments.map((segment) => segment.nodeId)).toEqual(['a', 'b', 'c']);
     expect(compiled.segments[2]?.includeInOutput).toBe(false);
+    expect(compiled.outputsByNode['a']?.content).toBe('Alpha');
+    expect(compiled.outputsByNode['b']?.content).toBe('Alpha\n"Beta"');
   });
 
   it('supports custom surround text around compiled node values', () => {
@@ -126,5 +136,65 @@ describe('case-resolver composer', () => {
     expect(compiled.prompt).toBe('<<\'Quoted text\'>>');
     expect(compiled.segments).toHaveLength(1);
     expect(compiled.segments[0]?.text).toBe('<<\'Quoted text\'>>');
+    expect(compiled.outputsByNode['focus']).toEqual({
+      textfield: 'Quoted text',
+      content: '<<\'Quoted text\'>>',
+    });
+  });
+
+  it('supports document-node textfield/content flow outputs', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'doc-a', title: 'Doc A', template: 'Alpha', x: 0, y: 0 }),
+        createPromptNode({ id: 'doc-b', title: 'Doc B', template: 'Beta', x: 150, y: 0 }),
+      ],
+      edges: [
+        createEdge({
+          id: 'content-flow',
+          from: 'doc-a',
+          to: 'doc-b',
+          fromPort: 'content',
+          toPort: 'content',
+        }),
+      ],
+      nodeMeta: {
+        'doc-a': {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+        'doc-b': {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'double',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+      },
+      edgeMeta: {
+        'content-flow': { joinMode: 'newline' },
+      },
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        'doc-a': 'file-a',
+        'doc-b': 'file-b',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'doc-a');
+
+    expect(compiled.outputsByNode['doc-a']).toEqual({
+      textfield: 'Alpha',
+      content: 'Alpha',
+    });
+    expect(compiled.outputsByNode['doc-b']).toEqual({
+      textfield: 'Beta',
+      content: 'Alpha\n"Beta"',
+    });
+    expect(compiled.prompt).toBe('Alpha\n"Beta"');
   });
 });

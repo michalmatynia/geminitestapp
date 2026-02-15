@@ -26,6 +26,8 @@ const PORT_DATA_TYPES: Record<string, PortDataType | PortDataType[]> = {
   description: 'string',
   description_en: 'string',
   content_en: 'string',
+  content: 'string',
+  textfield: 'string',
   analysis: 'string',
   prompt: 'string',
   aiPrompt: 'string',

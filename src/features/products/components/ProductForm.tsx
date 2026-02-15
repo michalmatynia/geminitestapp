@@ -530,7 +530,7 @@ export default function ProductForm({
             <TabsTrigger value='note-link'>Note Link</TabsTrigger>
             <TabsTrigger value='validation'>Validation</TabsTrigger>
           </TabsList>
-          <TabsContent value='general' className='mt-4'>
+          <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormGeneral />
           </TabsContent>
           <TabsContent value='other' className='mt-4'>

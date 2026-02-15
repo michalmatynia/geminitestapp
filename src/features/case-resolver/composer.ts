@@ -1,6 +1,7 @@
 import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 
 import {
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type CaseResolverEdgeMeta,
@@ -20,6 +21,7 @@ export type CaseResolverCompiledSegment = {
 export type CaseResolverCompileResult = {
   prompt: string;
   segments: CaseResolverCompiledSegment[];
+  outputsByNode: Record<string, { textfield: string; content: string }>;
 };
 
 const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
@@ -28,6 +30,11 @@ const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   space: ' ',
   none: '',
 };
+
+const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
+const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
+const LEGACY_PROMPT_PORT = 'prompt';
+const LEGACY_RESULT_PORT = 'result';
 
 const resolveNodeMeta = (
   nodeId: string,
@@ -97,6 +104,69 @@ const sortNodeIdsByPosition = (nodes: AiNode[]): string[] =>
     })
     .map((node: AiNode) => node.id);
 
+const appendWithJoin = (
+  current: string,
+  value: string,
+  joinMode: CaseResolverJoinMode
+): string => {
+  if (!value) return current;
+  if (!current) return value;
+  return `${current}${JOIN_VALUE_MAP[joinMode]}${value}`;
+};
+
+const sortEdgesBySourcePosition = (
+  edges: Edge[],
+  nodeById: Map<string, AiNode>
+): Edge[] => {
+  return [...edges].sort((left: Edge, right: Edge) => {
+    const leftNode = nodeById.get(left.from);
+    const rightNode = nodeById.get(right.from);
+    if (leftNode && rightNode) {
+      if (leftNode.position.y !== rightNode.position.y) {
+        return leftNode.position.y - rightNode.position.y;
+      }
+      if (leftNode.position.x !== rightNode.position.x) {
+        return leftNode.position.x - rightNode.position.x;
+      }
+      if (leftNode.id !== rightNode.id) {
+        return leftNode.id.localeCompare(rightNode.id);
+      }
+    } else if (leftNode || rightNode) {
+      return leftNode ? -1 : 1;
+    }
+    return left.id.localeCompare(right.id);
+  });
+};
+
+const resolveSourceOutputValue = (
+  sourceOutputs: { textfield: string; content: string } | null | undefined,
+  fromPort: string | undefined,
+  fallback: 'textfield' | 'content'
+): string => {
+  if (!sourceOutputs) return '';
+  if (fromPort === DOCUMENT_TEXTFIELD_PORT || fromPort === LEGACY_PROMPT_PORT) {
+    return sourceOutputs.textfield;
+  }
+  if (fromPort === DOCUMENT_CONTENT_PORT || fromPort === LEGACY_RESULT_PORT) {
+    return sourceOutputs.content;
+  }
+  return fallback === 'textfield' ? sourceOutputs.textfield : sourceOutputs.content;
+};
+
+const isTextfieldInputPort = (port: string | undefined): boolean =>
+  port === DOCUMENT_TEXTFIELD_PORT;
+
+const isContentInputPort = (port: string | undefined): boolean =>
+  port === DOCUMENT_CONTENT_PORT || port === LEGACY_RESULT_PORT || !port;
+
+const hasDocumentPortFlow = (edges: Edge[]): boolean =>
+  edges.some((edge: Edge): boolean =>
+    edge.fromPort === DOCUMENT_TEXTFIELD_PORT ||
+    edge.fromPort === DOCUMENT_CONTENT_PORT ||
+    edge.toPort === DOCUMENT_TEXTFIELD_PORT ||
+    edge.toPort === DOCUMENT_CONTENT_PORT
+  );
+
 export const compileCaseResolverPrompt = (
   graph: CaseResolverGraph,
   selectedNodeId: string | null
@@ -106,11 +176,13 @@ export const compileCaseResolverPrompt = (
       graph.nodes.map((node: AiNode): [string, AiNode] => [node.id, node])
     );
     const outgoingByNode = new Map<string, Edge[]>();
+    const incomingByNode = new Map<string, Edge[]>();
     const incomingCount = new Map<string, number>();
 
     graph.nodes.forEach((node: AiNode) => {
       incomingCount.set(node.id, 0);
       outgoingByNode.set(node.id, []);
+      incomingByNode.set(node.id, []);
     });
 
     graph.edges.forEach((edge: Edge) => {
@@ -118,6 +190,9 @@ export const compileCaseResolverPrompt = (
       const outgoing = outgoingByNode.get(edge.from) ?? [];
       outgoing.push(edge);
       outgoingByNode.set(edge.from, outgoing);
+      const incoming = incomingByNode.get(edge.to) ?? [];
+      incoming.push(edge);
+      incomingByNode.set(edge.to, incoming);
       incomingCount.set(edge.to, (incomingCount.get(edge.to) ?? 0) + 1);
     });
 
@@ -161,44 +236,112 @@ export const compileCaseResolverPrompt = (
     }
 
     const segments: CaseResolverCompiledSegment[] = [];
+    const outputsByNode: Record<string, { textfield: string; content: string }> = {};
     const outputParts: string[] = [];
+    const usesDocumentPortFlow = hasDocumentPortFlow(graph.edges);
+    const visitedNodeIds = new Set<string>(visitOrder.map((entry) => entry.nodeId));
 
     visitOrder.forEach(({ nodeId, incomingEdgeId }) => {
       const node = nodeById.get(nodeId);
       if (!node) return;
       const meta = resolveNodeMeta(node.id, graph.nodeMeta);
-      const resolvedText = wrapByQuoteMode(resolveNodeText(node), meta);
+      const nodeText = resolveNodeText(node);
+      const incomingEdges = sortEdgesBySourcePosition(
+        incomingByNode.get(node.id) ?? [],
+        nodeById
+      );
+
+      const collectIncoming = (
+        type: 'textfield' | 'content'
+      ): { value: string; firstJoinMode: CaseResolverJoinMode | null } => {
+        let value = '';
+        let firstJoinMode: CaseResolverJoinMode | null = null;
+
+        incomingEdges.forEach((edge: Edge): void => {
+          const acceptsEdge =
+            type === 'textfield'
+              ? isTextfieldInputPort(edge.toPort)
+              : isContentInputPort(edge.toPort);
+          if (!acceptsEdge) return;
+          const sourceOutputs = outputsByNode[edge.from];
+          const sourceValue = resolveSourceOutputValue(sourceOutputs, edge.fromPort, type);
+          if (!sourceValue) return;
+          const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta).joinMode;
+          if (!firstJoinMode) firstJoinMode = edgeJoinMode;
+          value = appendWithJoin(value, sourceValue, edgeJoinMode);
+        });
+
+        return { value, firstJoinMode };
+      };
+
+      const incomingTextfield = collectIncoming('textfield');
+      const incomingContent = collectIncoming('content');
+      const resolvedTextfield =
+        incomingTextfield.value.trim().length > 0 ? incomingTextfield.value : nodeText;
+      const wrappedText = wrapByQuoteMode(resolvedTextfield, meta);
+      let contentOutput = incomingContent.value;
+      if (meta.includeInOutput && wrappedText.trim().length > 0) {
+        const joinMode = incomingContent.firstJoinMode ?? DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
+        contentOutput = appendWithJoin(contentOutput, wrappedText, joinMode);
+      }
+
+      outputsByNode[node.id] = {
+        textfield: resolvedTextfield,
+        content: contentOutput,
+      };
 
       segments.push({
         nodeId: node.id,
         title: node.title,
-        text: resolvedText,
+        text: wrappedText,
         role: meta.role,
         includeInOutput: meta.includeInOutput,
       });
 
-      if (!meta.includeInOutput || resolvedText.trim().length === 0) return;
+      if (!meta.includeInOutput || wrappedText.trim().length === 0) return;
 
       if (outputParts.length === 0) {
-        outputParts.push(resolvedText);
+        outputParts.push(wrappedText);
         return;
       }
 
       const joinMode = incomingEdgeId
         ? resolveEdgeMeta(incomingEdgeId, graph.edgeMeta).joinMode
         : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
-      outputParts.push(`${JOIN_VALUE_MAP[joinMode]}${resolvedText}`);
+      outputParts.push(`${JOIN_VALUE_MAP[joinMode]}${wrappedText}`);
     });
 
+    const legacyPrompt = outputParts.join('').trim();
+    const flowPrompt = (() => {
+      if (!usesDocumentPortFlow) return '';
+      const leafNodeIds = visitOrder
+        .map((entry): string => entry.nodeId)
+        .filter((nodeId: string): boolean => {
+          const outgoing = outgoingByNode.get(nodeId) ?? [];
+          return !outgoing.some((edge: Edge): boolean => visitedNodeIds.has(edge.to));
+        });
+      const dedupedLeafOutputs: string[] = [];
+      const seenLeafOutputs = new Set<string>();
+      leafNodeIds.forEach((nodeId: string): void => {
+        const output = outputsByNode[nodeId]?.content?.trim();
+        if (!output || seenLeafOutputs.has(output)) return;
+        seenLeafOutputs.add(output);
+        dedupedLeafOutputs.push(output);
+      });
+      return dedupedLeafOutputs.join('\n\n').trim();
+    })();
+
     return {
-      prompt: outputParts.join('').trim(),
+      prompt: flowPrompt || legacyPrompt,
       segments,
+      outputsByNode,
     };
   } catch (error) {
     console.error('Failed to compile Case Resolver prompt:', error);
     return {
       prompt: '',
       segments: [],
+      outputsByNode: {},
     };
   }
 };

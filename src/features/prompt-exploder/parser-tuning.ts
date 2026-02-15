@@ -6,6 +6,8 @@ import {
   type PromptValidationScope,
 } from '@/features/prompt-engine/settings';
 
+import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+
 export const PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS = [
   'segment.boundary.requirements',
   'segment.boundary.studio_relighting',
@@ -68,7 +70,8 @@ const coerceRuleId = (value: string): PromptExploderParserTuningRuleId | null =>
 };
 
 const buildFallbackRegexRule = (
-  id: PromptExploderParserTuningRuleId
+  id: PromptExploderParserTuningRuleId,
+  scope: PromptExploderRuntimeValidationScope
 ): Extract<PromptValidationRule, { kind: 'regex' }> => {
   if (id === 'segment.not_heading.rule_line') {
     return {
@@ -93,9 +96,9 @@ const buildFallbackRegexRule = (
       chainMode: 'continue',
       maxExecutions: 1,
       passOutputToNext: true,
-      appliesToScopes: ['prompt_exploder'],
+      appliesToScopes: [scope],
       launchEnabled: false,
-      launchAppliesToScopes: ['prompt_exploder'],
+      launchAppliesToScopes: [scope],
       launchScopeBehavior: 'gate',
       launchOperator: 'contains',
       launchValue: null,
@@ -129,9 +132,9 @@ const buildFallbackRegexRule = (
     chainMode: 'continue',
     maxExecutions: 1,
     passOutputToNext: true,
-    appliesToScopes: ['prompt_exploder'],
+    appliesToScopes: [scope],
     launchEnabled: false,
-    launchAppliesToScopes: ['prompt_exploder'],
+    launchAppliesToScopes: [scope],
     launchScopeBehavior: 'gate',
     launchOperator: 'contains',
     launchValue: null,
@@ -148,16 +151,21 @@ const normalizeRuleFlags = (flags: string | null | undefined): string => {
   return normalized || 'mi';
 };
 
-const normalizeScopes = (scopes: string[] | null | undefined): PromptValidationScope[] => {
+const normalizeScopes = (
+  scopes: string[] | null | undefined,
+  scope: PromptExploderRuntimeValidationScope
+): PromptValidationScope[] => {
   const next = new Set<string>((scopes ?? []).filter(Boolean));
-  next.add('prompt_exploder');
+  next.add(scope);
   return Array.from(next) as PromptValidationScope[];
 };
 
 export const buildPromptExploderParserTuningDrafts = (args: {
   scopedRules: PromptValidationRule[];
   patternPackRules: PromptValidationRule[];
+  scope?: PromptExploderRuntimeValidationScope;
 }): PromptExploderParserTuningRuleDraft[] => {
+  const scope = args.scope ?? 'prompt_exploder';
   const scopedById = new Map(
     args.scopedRules
       .filter(isRegexRule)
@@ -170,7 +178,7 @@ export const buildPromptExploderParserTuningDrafts = (args: {
   );
 
   return PROMPT_EXPLODER_PARSER_TUNING_RULE_IDS.map((id) => {
-    const rule = scopedById.get(id) ?? packById.get(id) ?? buildFallbackRegexRule(id);
+    const rule = scopedById.get(id) ?? packById.get(id) ?? buildFallbackRegexRule(id, scope);
     return {
       id,
       label: PARSER_TUNING_RULE_LABELS[id],
@@ -221,7 +229,9 @@ export const applyPromptExploderParserTuningDrafts = (args: {
   settings: PromptEngineSettings;
   drafts: PromptExploderParserTuningRuleDraft[];
   patternPackRules: PromptValidationRule[];
+  scope?: PromptExploderRuntimeValidationScope;
 }): PromptEngineSettings => {
+  const scope = args.scope ?? 'prompt_exploder';
   const baseSettings = args.settings?.promptValidation
     ? args.settings
     : defaultPromptEngineSettings;
@@ -239,7 +249,7 @@ export const applyPromptExploderParserTuningDrafts = (args: {
     const existingRule = existingIndex >= 0 ? nextRules[existingIndex] : null;
     const baseRule = isRegexRule(existingRule)
       ? existingRule
-      : (packById.get(ruleId) ?? buildFallbackRegexRule(ruleId));
+      : (packById.get(ruleId) ?? buildFallbackRegexRule(ruleId, scope));
 
     const nextRule: Extract<PromptValidationRule, { kind: 'regex' }> = {
       ...baseRule,
@@ -249,8 +259,8 @@ export const applyPromptExploderParserTuningDrafts = (args: {
       description: draft.description?.trim() || null,
       pattern: draft.pattern.trim(),
       flags: normalizeRuleFlags(draft.flags),
-      appliesToScopes: normalizeScopes(baseRule.appliesToScopes),
-      launchAppliesToScopes: normalizeScopes(baseRule.launchAppliesToScopes),
+      appliesToScopes: normalizeScopes(baseRule.appliesToScopes, scope),
+      launchAppliesToScopes: normalizeScopes(baseRule.launchAppliesToScopes, scope),
       promptExploderSegmentType: draft.promptExploderSegmentType,
       promptExploderPriority: Math.min(
         50,

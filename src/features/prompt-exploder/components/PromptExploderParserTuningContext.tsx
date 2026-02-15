@@ -8,6 +8,7 @@ import {
   SettingsStateContext,
 } from '@/features/prompt-exploder/context/SettingsContext';
 import type { PromptExploderParserTuningRuleDraft } from '@/features/prompt-exploder/parser-tuning';
+import { promptExploderValidatorScopeFromStack } from '@/features/prompt-exploder/validation-stack';
 
 type PromptExploderParserTuningContextValue = {
   drafts: PromptExploderParserTuningRuleDraft[];
@@ -51,7 +52,10 @@ export function PromptExploderParserTuningProvider({
       },
       onResetToPackDefaults: settingsActions.handleResetParserTuningDrafts,
       onOpenValidationPatterns: () => {
-        router.push('/admin/validator?scope=prompt-exploder');
+        const validatorScope = promptExploderValidatorScopeFromStack(
+          settingsState.activeValidationRuleStack
+        );
+        router.push(`/admin/validator?scope=${validatorScope}`);
       },
       isBusy: settingsState.isBusy,
     };

@@ -1,5 +1,7 @@
 import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 
+import type { PromptExploderValidationRuleStack } from './validation-stack';
+
 export type PromptExploderSegmentType =
   | 'metadata'
   | 'assigned_text'
@@ -166,6 +168,7 @@ export type PromptExploderSettings = {
   version: 1;
   runtime: {
     ruleProfile: 'all' | 'pattern_pack' | 'learned_only';
+    validationRuleStack: PromptExploderValidationRuleStack;
     benchmarkSuite: PromptExploderBenchmarkSuite;
     benchmarkLowConfidenceThreshold: number;
     benchmarkSuggestionLimit: number;

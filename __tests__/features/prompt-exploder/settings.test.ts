@@ -35,6 +35,7 @@ describe('prompt exploder settings schema', () => {
 
     const parsed = parsePromptExploderSettings(legacyRaw);
     expect(parsed.runtime.ruleProfile).toBe('all');
+    expect(parsed.runtime.validationRuleStack).toBe('image_studio_prompt_exploder');
     expect(parsed.runtime.benchmarkSuite).toBe('default');
     expect(parsed.runtime.benchmarkLowConfidenceThreshold).toBe(0.55);
     expect(parsed.runtime.benchmarkSuggestionLimit).toBe(4);

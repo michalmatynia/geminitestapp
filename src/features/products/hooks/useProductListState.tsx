@@ -79,6 +79,55 @@ const LISTING_COMPLETED_STATUSES = new Set([
 const normalizeListingStatus = (status: string | undefined): string =>
   (status ?? '').trim().toLowerCase();
 
+const toTrimmedString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const resolveProductCategoryId = (product: ProductWithImages): string => {
+  const direct = toTrimmedString(product.categoryId);
+  if (direct) return direct;
+
+  const relations = (product as ProductWithImages & { categories?: unknown }).categories;
+  if (Array.isArray(relations)) {
+    for (const relation of relations) {
+      if (!relation || typeof relation !== 'object') continue;
+      const record = relation as Record<string, unknown>;
+      const relationCategoryId =
+        toTrimmedString(record['categoryId']) ||
+        toTrimmedString(record['category_id']) ||
+        toTrimmedString(record['id']) ||
+        toTrimmedString(record['value']);
+      if (relationCategoryId) return relationCategoryId;
+    }
+  } else if (relations && typeof relations === 'object') {
+    const record = relations as Record<string, unknown>;
+    const relationCategoryId =
+      toTrimmedString(record['categoryId']) ||
+      toTrimmedString(record['category_id']) ||
+      toTrimmedString(record['id']) ||
+      toTrimmedString(record['value']);
+    if (relationCategoryId) return relationCategoryId;
+  }
+
+  return '';
+};
+
+const resolveProductCatalogId = (product: ProductWithImages): string => {
+  const direct = toTrimmedString(product.catalogId);
+  if (direct) return direct;
+
+  const firstCatalog = Array.isArray(product.catalogs) ? product.catalogs[0] : null;
+  if (!firstCatalog || typeof firstCatalog !== 'object') return '';
+
+  const byField = toTrimmedString((firstCatalog as { catalogId?: unknown }).catalogId);
+  if (byField) return byField;
+
+  const catalogRecord = (firstCatalog as { catalog?: unknown }).catalog;
+  if (!catalogRecord || typeof catalogRecord !== 'object') return '';
+  return toTrimmedString((catalogRecord as { id?: unknown }).id);
+};
+
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
   isMounted: boolean;
@@ -210,8 +259,8 @@ export function useProductListState(): ProductListContextType & {
   const categoryLookupCatalogIds = useMemo((): string[] => {
     const ids = new Set<string>();
     data.forEach((product: ProductWithImages) => {
-      const categoryId = (product.categoryId ?? '').trim();
-      const catalogId = (product.catalogId ?? '').trim();
+      const categoryId = resolveProductCategoryId(product);
+      const catalogId = resolveProductCatalogId(product);
       if (!categoryId || !catalogId) return;
       ids.add(catalogId);
     });

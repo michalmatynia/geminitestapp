@@ -36,6 +36,12 @@ import {
 } from '../pattern-snapshots';
 import { filterTemplatesForRuntime } from '../runtime-refresh';
 import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
+import {
+  DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+  promptExploderValidationScopeFromStack,
+  type PromptExploderRuntimeValidationScope,
+  type PromptExploderValidationRuleStack,
+} from '../validation-stack';
 
 import type {
   PromptExploderLearnedTemplate,
@@ -46,6 +52,7 @@ import type {
 
 export interface LearningDraft {
   runtimeRuleProfile: 'all' | 'pattern_pack' | 'learned_only';
+  runtimeValidationRuleStack: PromptExploderValidationRuleStack;
   enabled: boolean;
   similarityThreshold: number;
   templateMergeThreshold: number;
@@ -58,6 +65,8 @@ export interface LearningDraft {
 export interface SettingsState {
   promptSettings: PromptEngineSettings;
   promptExploderSettings: ReturnType<typeof parsePromptExploderSettings>;
+  activeValidationScope: PromptExploderRuntimeValidationScope;
+  activeValidationRuleStack: PromptExploderValidationRuleStack;
   scopedRules: PromptValidationRule[];
   effectiveRules: PromptValidationRule[];
   runtimeValidationRules: PromptValidationRule[];
@@ -117,6 +126,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const [learningDraft, setLearningDraft] = useState<LearningDraft>({
     runtimeRuleProfile: 'all',
+    runtimeValidationRuleStack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
     enabled: true,
     similarityThreshold: 0.68,
     templateMergeThreshold: 0.63,
@@ -146,9 +156,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     [rawExploderSettings]
   );
 
+  const activeValidationScope = useMemo<PromptExploderRuntimeValidationScope>(
+    () => promptExploderValidationScopeFromStack(learningDraft.runtimeValidationRuleStack),
+    [learningDraft.runtimeValidationRuleStack]
+  );
+
   const scopedRules = useMemo<PromptValidationRule[]>(
-    () => getPromptExploderScopedRules(promptSettings),
-    [promptSettings]
+    () => getPromptExploderScopedRules(promptSettings, activeValidationScope),
+    [activeValidationScope, promptSettings]
   );
 
   const parserTuningBaseDrafts = useMemo(
@@ -156,8 +171,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       buildPromptExploderParserTuningDrafts({
         scopedRules,
         patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+        scope: activeValidationScope,
       }),
-    [scopedRules]
+    [activeValidationScope, scopedRules]
   );
 
   useEffect(() => {
@@ -227,6 +243,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   useEffect(() => {
     setLearningDraft({
       runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile,
+      runtimeValidationRuleStack: promptExploderSettings.runtime.validationRuleStack,
       enabled: promptExploderSettings.learning.enabled,
       similarityThreshold: promptExploderSettings.learning.similarityThreshold,
       templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
@@ -239,6 +256,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     });
   }, [
     promptExploderSettings.runtime.ruleProfile,
+    promptExploderSettings.runtime.validationRuleStack,
     promptExploderSettings.learning.autoActivateLearnedTemplates,
     promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates,
     promptExploderSettings.learning.enabled,
@@ -272,7 +290,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const handleInstallPatternPack = useCallback(async () => {
     try {
-      const result = ensurePromptExploderPatternPack(promptSettings);
+      const result = ensurePromptExploderPatternPack(promptSettings, {
+        scope: activeValidationScope,
+      });
       if (result.addedRuleIds.length === 0 && result.updatedRuleIds.length === 0) {
         toast('Prompt Exploder pattern pack is already installed.', { variant: 'info' });
         return;
@@ -290,17 +310,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         variant: 'error',
       });
     }
-  }, [promptSettings, toast, updateSetting]);
+  }, [activeValidationScope, promptSettings, toast, updateSetting]);
 
   const handleResetParserTuningDrafts = useCallback(() => {
     setParserTuningDrafts(
       buildPromptExploderParserTuningDrafts({
         scopedRules: PROMPT_EXPLODER_PATTERN_PACK,
         patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+        scope: activeValidationScope,
       })
     );
     toast('Parser tuning drafts reset to pattern-pack defaults.', { variant: 'info' });
-  }, [toast]);
+  }, [activeValidationScope, toast]);
 
   const handleSaveParserTuningRules = useCallback(async () => {
     const validation = validatePromptExploderParserTuningDrafts(parserTuningDrafts);
@@ -313,6 +334,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         settings: promptSettings,
         drafts: parserTuningDrafts,
         patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+        scope: activeValidationScope,
       });
       await updateSetting.mutateAsync({
         key: PROMPT_ENGINE_SETTINGS_KEY,
@@ -325,7 +347,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         { variant: 'error' }
       );
     }
-  }, [parserTuningDrafts, promptSettings, toast, updateSetting]);
+  }, [activeValidationScope, parserTuningDrafts, promptSettings, toast, updateSetting]);
 
   const handleSaveLearningSettings = useCallback(async () => {
     try {
@@ -334,6 +356,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         runtime: {
           ...promptExploderSettings.runtime,
           ruleProfile: learningDraft.runtimeRuleProfile,
+          validationRuleStack: learningDraft.runtimeValidationRuleStack,
           benchmarkLowConfidenceThreshold: promptExploderClampNumber(
             promptExploderSettings.runtime.benchmarkLowConfidenceThreshold,
             0.3,
@@ -381,9 +404,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const handleCapturePatternSnapshot = useCallback(async () => {
     try {
-      const scopedPromptRules = promptSettings.promptValidation.rules.filter((rule) =>
-        isPromptExploderManagedRule(rule)
-      );
+      const scopedPromptRules = promptSettings.promptValidation.rules.filter((rule) => {
+        if (!isPromptExploderManagedRule(rule)) return false;
+        const scopes = rule.appliesToScopes ?? [];
+        return (
+          scopes.length === 0 ||
+          scopes.includes(activeValidationScope) ||
+          scopes.includes('global')
+        );
+      });
       const now = new Date().toISOString();
       const snapshot = buildPatternSnapshot({
         rules: scopedPromptRules,
@@ -413,7 +442,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         { variant: 'error' }
       );
     }
-  }, [promptExploderSettings, promptSettings, snapshotDraftName, toast, updateSetting]);
+  }, [activeValidationScope, promptExploderSettings, promptSettings, snapshotDraftName, toast, updateSetting]);
 
   const handleRestorePatternSnapshot = useCallback(async () => {
     if (!selectedSnapshot) {
@@ -433,6 +462,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         existingRules: basePromptSettings.promptValidation.rules,
         restoredRules: parsed.rules,
         isPromptExploderManagedRule,
+        scope: activeValidationScope,
       });
       const nextPromptSettings = {
         ...basePromptSettings,
@@ -457,7 +487,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         { variant: 'error' }
       );
     }
-  }, [promptSettings, selectedSnapshot, toast, updateSetting]);
+  }, [activeValidationScope, promptSettings, selectedSnapshot, toast, updateSetting]);
 
   const handleDeletePatternSnapshot = useCallback(async () => {
     if (!selectedSnapshot) {
@@ -555,6 +585,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     () => ({
       promptSettings,
       promptExploderSettings,
+      activeValidationScope,
+      activeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
       scopedRules,
       effectiveRules,
       runtimeValidationRules,
@@ -575,6 +607,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     [
       promptSettings,
       promptExploderSettings,
+      activeValidationScope,
       scopedRules,
       effectiveRules,
       runtimeValidationRules,

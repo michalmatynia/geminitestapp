@@ -281,7 +281,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const sessionOrigins = sessionPayload?.origins ?? [];
   const sessionUpdatedAt = sessionPayload?.updatedAt ?? null;
   const sessionError = sessionQuery.isError
-    ? (sessionQuery.error as Error)?.message ?? 'Failed to load session cookies.'
+    ? sessionQuery.error?.message ?? 'Failed to load session cookies.'
     : sessionPayload?.error ?? null;
 
   // Playwright State

@@ -2,6 +2,8 @@ import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import {
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
+  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
@@ -536,16 +538,88 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
 export const parseCaseResolverSettings = (raw: string | null | undefined): CaseResolverSettings =>
   normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
 
+const ensureDocumentPromptPorts = (
+  nodes: AiNode[],
+  nodeMeta: Record<string, CaseResolverNodeMeta>,
+  documentSourceFileIdByNode: Record<string, string>
+): AiNode[] =>
+  nodes.map((node: AiNode): AiNode => {
+    if (node.type !== 'prompt') return node;
+    const isTextNode =
+      nodeMeta[node.id]?.role === 'text_note' || Boolean(documentSourceFileIdByNode[node.id]);
+    if (!isTextNode) return node;
+    const currentInputs = Array.isArray(node.inputs) ? node.inputs : [];
+    const currentOutputs = Array.isArray(node.outputs) ? node.outputs : [];
+    const nextInputs = [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS];
+    const nextOutputs = [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS];
+    const sameInputs =
+      nextInputs.length === currentInputs.length &&
+      nextInputs.every((port: string, index: number): boolean => port === currentInputs[index]);
+    const sameOutputs =
+      nextOutputs.length === currentOutputs.length &&
+      nextOutputs.every((port: string, index: number): boolean => port === currentOutputs[index]);
+    if (sameInputs && sameOutputs) return node;
+    return {
+      ...node,
+      inputs: nextInputs,
+      outputs: nextOutputs,
+    };
+  });
+
+const sanitizeTextNodeEdgePorts = (
+  edges: Edge[],
+  textNodeIds: Set<string>
+): Edge[] => {
+  if (edges.length === 0 || textNodeIds.size === 0) return edges;
+  const textfieldPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
+  const contentPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
+
+  const normalizeInputPort = (value: string | undefined): string => {
+    if (value === textfieldPort || value === contentPort) return value;
+    if (value === 'prompt') return textfieldPort;
+    return contentPort;
+  };
+
+  const normalizeOutputPort = (value: string | undefined): string => {
+    if (value === textfieldPort || value === contentPort) return value;
+    if (value === 'prompt') return textfieldPort;
+    return contentPort;
+  };
+
+  return edges.map((edge: Edge): Edge => {
+    let nextFromPort = edge.fromPort;
+    let nextToPort = edge.toPort;
+    if (textNodeIds.has(edge.from)) {
+      const normalized = normalizeOutputPort(edge.fromPort);
+      if (normalized !== edge.fromPort) {
+        nextFromPort = normalized;
+      }
+    }
+    if (textNodeIds.has(edge.to)) {
+      const normalized = normalizeInputPort(edge.toPort);
+      if (normalized !== edge.toPort) {
+        nextToPort = normalized;
+      }
+    }
+    if (nextFromPort === edge.fromPort && nextToPort === edge.toPort) return edge;
+    return {
+      ...edge,
+      fromPort: nextFromPort,
+      toPort: nextToPort,
+    };
+  });
+};
+
 const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   const graphRecord = graph && typeof graph === 'object' ? (graph as Record<string, unknown>) : {};
-  const nodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
+  const rawNodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
   const edges = Array.isArray(graphRecord['edges']) ? (graphRecord['edges'] as Edge[]) : [];
   const validNodeIds = new Set<string>(
-    nodes
+    rawNodes
       .map((node: AiNode) => (typeof node?.id === 'string' ? node.id : ''))
       .filter(Boolean)
   );
-  const sanitizedEdges = edges.filter(
+  const edgesByNodeId = edges.filter(
     (edge: Edge): boolean =>
       typeof edge?.id === 'string' &&
       typeof edge.from === 'string' &&
@@ -567,6 +641,21 @@ const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
     graphRecord['documentSourceFileIdByNode'],
     validNodeIds
   );
+  const sanitizedNodeMeta = sanitizeNodeMeta(
+    graphRecord['nodeMeta'] as Record<string, CaseResolverNodeMeta> | null | undefined
+  );
+  const nodes = ensureDocumentPromptPorts(rawNodes, sanitizedNodeMeta, documentSourceFileIdByNode);
+  const textNodeIds = new Set<string>(
+    nodes
+      .filter((node: AiNode): boolean => {
+        if (node.type !== 'prompt') return false;
+        return (
+          sanitizedNodeMeta[node.id]?.role === 'text_note' || Boolean(documentSourceFileIdByNode[node.id])
+        );
+      })
+      .map((node: AiNode): string => node.id)
+  );
+  const sanitizedEdges = sanitizeTextNodeEdgePorts(edgesByNodeId, textNodeIds);
   const rawDocumentDropNodeId = graphRecord['documentDropNodeId'];
   const documentDropNodeId =
     typeof rawDocumentDropNodeId === 'string' &&
@@ -578,9 +667,7 @@ const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
   return {
     nodes,
     edges: sanitizedEdges,
-    nodeMeta: sanitizeNodeMeta(
-      graphRecord['nodeMeta'] as Record<string, CaseResolverNodeMeta> | null | undefined
-    ),
+    nodeMeta: sanitizedNodeMeta,
     edgeMeta: sanitizeEdgeMeta(
       graphRecord['edgeMeta'] as Record<string, CaseResolverEdgeMeta> | null | undefined
     ),

@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import { SectionTemplatePicker } from '@/features/cms/components/page-builder/SectionTemplatePicker';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
 
 // Mock hooks
 vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({

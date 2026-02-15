@@ -26,6 +26,7 @@ import {
   parsePromptExploderSettings,
   PROMPT_EXPLODER_SETTINGS_KEY,
 } from '../settings';
+import { PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS } from '../validation-stack';
 
 import type {
   PromptExploderAiProvider,
@@ -480,7 +481,31 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         variant='subtle'
         className='p-4'
       >
-        <div className='grid gap-3 md:grid-cols-4'>
+        <div className='grid gap-3 md:grid-cols-5'>
+          <div className='space-y-1'>
+            <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
+            <SelectSimple
+              value={draft.runtime.validationRuleStack}
+              onValueChange={(value: string) => {
+                setDraft((previous) =>
+                  previous
+                    ? {
+                      ...previous,
+                      runtime: {
+                        ...previous.runtime,
+                        validationRuleStack: value as PromptExploderSettings['runtime']['validationRuleStack'],
+                      },
+                    }
+                    : previous
+                );
+              }}
+              options={PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+              size='sm'
+            />
+          </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
             <SelectSimple

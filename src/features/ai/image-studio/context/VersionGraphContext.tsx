@@ -189,7 +189,7 @@ function matchesFilter(
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 export function VersionGraphProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const { slots, selectedSlotId, workingSlotId } = useSlotsState();
+  const { slots, selectedSlotId } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId, createSlots, updateSlotMutation } = useSlotsActions();
   const { toast } = useToast();
 
@@ -224,8 +224,8 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
   const [compareNodeIds, setCompareNodeIds] = useState<[string, string] | null>(null);
 
   const activeSlotId = useMemo(
-    () => workingSlotId ?? selectedSlotId ?? null,
-    [workingSlotId, selectedSlotId],
+    () => selectedSlotId ?? null,
+    [selectedSlotId],
   );
 
   const scopedSlots = useMemo(() => {

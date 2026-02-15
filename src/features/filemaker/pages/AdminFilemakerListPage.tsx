@@ -6,7 +6,11 @@ import React, { useDeferredValue, useMemo, useState } from 'react';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Badge, Button, FormSection, SearchInput, SectionHeader } from '@/shared/ui';
 
-import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../settings';
+import {
+  FILEMAKER_DATABASE_KEY,
+  formatFilemakerAddress,
+  parseFilemakerDatabase,
+} from '../settings';
 
 import type { FilemakerOrganization, FilemakerPerson } from '../types';
 
@@ -31,7 +35,10 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             [
               person.firstName,
               person.lastName,
-              person.fullAddress,
+              person.street,
+              person.city,
+              person.postalCode,
+              person.country,
               person.nip,
               person.regon,
               person.phoneNumbers.join(' '),
@@ -49,7 +56,16 @@ export function AdminFilemakerListPage(): React.JSX.Element {
     () =>
       [...database.organizations]
         .filter((organization: FilemakerOrganization) =>
-          includeQuery([organization.name, organization.fullAddress], deferredQuery)
+          includeQuery(
+            [
+              organization.name,
+              organization.street,
+              organization.city,
+              organization.postalCode,
+              organization.country,
+            ],
+            deferredQuery
+          )
         )
         .sort((left: FilemakerOrganization, right: FilemakerOrganization) =>
           left.name.localeCompare(right.name)
@@ -95,7 +111,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
                 <div className='text-sm font-semibold text-white'>
                   {person.firstName} {person.lastName}
                 </div>
-                <div className='text-xs text-gray-300'>{person.fullAddress}</div>
+                <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
                 <div className='text-[11px] text-gray-500'>
                   NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
                 </div>
@@ -118,7 +134,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             {organizations.map((organization: FilemakerOrganization) => (
               <div key={organization.id} className='rounded border border-border/60 bg-card/35 px-3 py-2'>
                 <div className='text-sm font-semibold text-white'>{organization.name}</div>
-                <div className='text-xs text-gray-300'>{organization.fullAddress}</div>
+                <div className='text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
               </div>
             ))}
           </div>

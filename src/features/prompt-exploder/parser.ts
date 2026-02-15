@@ -18,6 +18,8 @@ import type {
   PromptExploderSegmentType,
   PromptExploderSubsection,
 } from './types';
+import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+
 
 const REFERENCE_CODE_RE = /\b(P\d+|RL\d+|QA(?:_R)?\d+)\b/g;
 const PARAM_REFERENCE_RE = /\b([a-z_]+(?:\.[a-z_]+)+)\b/g;
@@ -61,6 +63,7 @@ const PIPELINE_BOUNDARY_FALLBACK_RE = /^(PIPELINE|WORKFLOW|PROCESS|EXECUTION\s+T
 const FINAL_QA_BOUNDARY_FALLBACK_RE = /^FINAL\s+QA\b/i;
 
 type PatternRuntime = {
+  allowDefaultFallback: boolean;
   byId: Map<string, RegExp>;
   scopedRules: PromptValidationRule[];
   regexRules: RuntimeRegexRule[];
@@ -74,6 +77,7 @@ type RuntimeRegexRule = {
   segmentTypeHint: PromptExploderSegmentType | null;
   confidenceBoost: number;
   priority: number;
+  sequence: number;
   treatAsHeading: boolean;
 };
 
@@ -130,6 +134,56 @@ const bindingId = (() => {
 const trimTrailingBlankLines = (value: string): string => value.replace(/\n{3,}$/g, '\n\n').trimEnd();
 
 const normalizeMultiline = (value: string): string => value.replace(/\r\n/g, '\n');
+
+const NEVER_MATCH_RE = /$a/;
+
+const containsLikelyHtmlMarkup = (value: string): boolean => /<\/?[a-z][^>]*>/i.test(value);
+
+const decodeHtmlEntities = (value: string): string => {
+  const named: Record<string, string> = {
+    amp: '&',
+    lt: '<',
+    gt: '>',
+    quot: '"',
+    apos: '\'',
+    nbsp: ' ',
+  };
+
+  return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (full, entity): string => {
+    const normalized = String(entity ?? '').trim().toLowerCase();
+    if (!normalized) return full;
+    if (normalized.startsWith('#x')) {
+      const code = Number.parseInt(normalized.slice(2), 16);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : full;
+    }
+    if (normalized.startsWith('#')) {
+      const code = Number.parseInt(normalized.slice(1), 10);
+      return Number.isFinite(code) ? String.fromCodePoint(code) : full;
+    }
+    return named[normalized] ?? full;
+  });
+};
+
+const normalizePromptSource = (value: string): string => {
+  const normalized = normalizeMultiline(value ?? '');
+  if (!containsLikelyHtmlMarkup(normalized)) {
+    return normalized;
+  }
+
+  const plain = normalized
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h[1-6]|li|ul|ol|blockquote|section|article|tr|table)>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '* ')
+    .replace(/<[^>]+>/g, '');
+
+  const decoded = decodeHtmlEntities(plain)
+    .replace(/\u00a0/g, ' ')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{3,}/g, '\n\n');
+
+  return decoded.trim();
+};
 
 const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -336,6 +390,30 @@ const inferTypeFromRuleHints = (
   );
 };
 
+const inferTypeFromRuleSequence = (
+  matchedRules: RuntimeRegexRule[],
+  fallbackType: PromptExploderSegmentType
+): PromptExploderSegmentType => {
+  const typedMatches = matchedRules
+    .filter((rule) => rule.segmentTypeHint)
+    .sort((left, right) => {
+      if (left.sequence !== right.sequence) return left.sequence - right.sequence;
+      if (right.priority !== left.priority) return right.priority - left.priority;
+      if (right.confidenceBoost !== left.confidenceBoost) {
+        return right.confidenceBoost - left.confidenceBoost;
+      }
+      return left.id.localeCompare(right.id);
+    });
+
+  const preferred = typedMatches[0]?.segmentTypeHint;
+  if (preferred) return preferred;
+
+  return inferTypeFromPatternIds(
+    matchedRules.map((rule) => rule.id),
+    fallbackType
+  );
+};
+
 const inferTypeFromLearnedTemplates = (
   segment: PromptExploderSegment,
   templates: PromptExploderLearnedTemplate[],
@@ -408,27 +486,41 @@ const inferTypeFromLearnedTemplates = (
   };
 };
 
-const compileRuntimePatterns = (rules: PromptValidationRule[] | null | undefined): PatternRuntime => {
+const normalizeRuntimeValidationScope = (
+  scope: PromptExploderRuntimeValidationScope | null | undefined
+): PromptExploderRuntimeValidationScope =>
+  scope === 'case_resolver_prompt_exploder'
+    ? 'case_resolver_prompt_exploder'
+    : 'prompt_exploder';
+
+const compileRuntimePatterns = (
+  rules: PromptValidationRule[] | null | undefined,
+  scope: PromptExploderRuntimeValidationScope
+): PatternRuntime => {
+  const allowDefaultFallback = scope !== 'case_resolver_prompt_exploder';
   const byId = new Map<string, RegExp>();
   const runtimeRulesById = new Map<string, RuntimeRegexRule>();
 
-  Object.entries(DEFAULT_PATTERN_IDS).forEach(([id, regex]) => {
-    byId.set(id, regex);
-    runtimeRulesById.set(id, {
-      id,
-      regex,
-      segmentTypeHint: typeFromPatternId(id),
-      confidenceBoost: 0,
-      priority: 0,
-      treatAsHeading: false,
+  if (allowDefaultFallback) {
+    Object.entries(DEFAULT_PATTERN_IDS).forEach(([id, regex]) => {
+      byId.set(id, regex);
+      runtimeRulesById.set(id, {
+        id,
+        regex,
+        segmentTypeHint: typeFromPatternId(id),
+        confidenceBoost: 0,
+        priority: 0,
+        sequence: 0,
+        treatAsHeading: false,
+      });
     });
-  });
+  }
 
   const scopedRules = (rules ?? []).filter((rule) => {
     if (!rule.enabled) return false;
     if (rule.kind !== 'regex') return false;
     const scopes = rule.appliesToScopes ?? [];
-    return scopes.length === 0 || scopes.includes('prompt_exploder') || scopes.includes('global');
+    return scopes.length === 0 || scopes.includes(scope) || scopes.includes('global');
   });
 
   scopedRules.forEach((rule) => {
@@ -449,6 +541,7 @@ const compileRuntimePatterns = (rules: PromptValidationRule[] | null | undefined
         50,
         Math.max(-50, Math.floor(Number(rule.promptExploderPriority ?? 0)))
       ),
+      sequence: Number.isFinite(rule.sequence) ? Math.floor(rule.sequence) : 0,
       treatAsHeading: Boolean(rule.promptExploderTreatAsHeading),
     });
   });
@@ -460,6 +553,7 @@ const compileRuntimePatterns = (rules: PromptValidationRule[] | null | undefined
   );
 
   return {
+    allowDefaultFallback,
     byId,
     scopedRules,
     regexRules,
@@ -469,7 +563,7 @@ const compileRuntimePatterns = (rules: PromptValidationRule[] | null | undefined
 };
 
 const testPattern = (runtime: PatternRuntime, patternId: string, value: string): boolean => {
-  const regex = runtime.byId.get(patternId) ?? DEFAULT_PATTERN_IDS[patternId];
+  const regex = runtime.byId.get(patternId) ?? (runtime.allowDefaultFallback ? DEFAULT_PATTERN_IDS[patternId] : undefined);
   if (!regex) return false;
   return regex.test(value);
 };
@@ -479,7 +573,7 @@ const resolveBoundaryRegex = (
   patternId: string,
   fallback: RegExp
 ): RegExp => {
-  return runtime.byId.get(patternId) ?? fallback;
+  return runtime.byId.get(patternId) ?? (runtime.allowDefaultFallback ? fallback : NEVER_MATCH_RE);
 };
 
 const resolveBoundaryRegexOptional = (
@@ -487,7 +581,8 @@ const resolveBoundaryRegexOptional = (
   patternId: string,
   fallback: RegExp
 ): RegExp => {
-  return runtime?.byId.get(patternId) ?? fallback;
+  if (!runtime) return fallback;
+  return runtime.byId.get(patternId) ?? (runtime.allowDefaultFallback ? fallback : NEVER_MATCH_RE);
 };
 
 const matchesBoundaryHeading = (
@@ -1633,6 +1728,199 @@ const buildBindings = (
   return dedupeBindings([...autoBindings, ...normalizedManual]);
 };
 
+const selectHeadingRuleForLine = (
+  runtime: PatternRuntime,
+  line: string
+): RuntimeRegexRule | null => {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+  const matches = runtime.headingRules.filter((rule) => rule.regex.test(trimmed));
+  if (matches.length === 0) return null;
+  matches.sort((left, right) => {
+    if (left.sequence !== right.sequence) return left.sequence - right.sequence;
+    if (right.priority !== left.priority) return right.priority - left.priority;
+    if (right.confidenceBoost !== left.confidenceBoost) {
+      return right.confidenceBoost - left.confidenceBoost;
+    }
+    return left.id.localeCompare(right.id);
+  });
+  return matches[0] ?? null;
+};
+
+const createRuleDrivenSegment = (args: {
+  runtime: PatternRuntime;
+  blockLines: string[];
+  headingLine: string | null;
+  headingRule: RuntimeRegexRule | null;
+}): PromptExploderSegment => {
+  const raw = trimTrailingBlankLines(args.blockLines.join('\n'));
+  const headingTitle = normalizeHeadingLabel(args.headingLine ?? '');
+  const parsedTitle = parseCodeFromLine(
+    headingTitle || (args.headingLine ?? '').trim()
+  );
+  const title =
+    parsedTitle.title ||
+    headingTitle ||
+    normalizeHeadingLabel(args.blockLines[0] ?? '') ||
+    'Section';
+  const matchedRules = collectMatchedRules(args.runtime, raw);
+  const fallbackType = args.headingRule?.segmentTypeHint ?? 'assigned_text';
+  const type = inferTypeFromRuleSequence(matchedRules, fallbackType);
+  const contentLines = args.headingLine ? args.blockLines.slice(1) : args.blockLines;
+
+  if (type === 'metadata') {
+    return createSegment({
+      runtime: args.runtime,
+      type,
+      lockType: true,
+      title,
+      raw,
+      includeInOutput: false,
+    });
+  }
+
+  if (type === 'parameter_block') {
+    return createSegment({
+      runtime: args.runtime,
+      type,
+      lockType: true,
+      title,
+      raw,
+      paramsText: raw,
+    });
+  }
+
+  if (type === 'sequence') {
+    return createSegment({
+      runtime: args.runtime,
+      type,
+      lockType: true,
+      title,
+      raw,
+      subsections: parseSequenceSubsections(contentLines, args.runtime),
+    });
+  }
+
+  if (type === 'qa_matrix') {
+    return createSegment({
+      runtime: args.runtime,
+      type,
+      lockType: true,
+      title,
+      raw,
+      listItems: parseListLines(contentLines),
+      subsections: parseQaSubsections(contentLines, args.runtime),
+    });
+  }
+
+  if (
+    type === 'list' ||
+    type === 'referential_list' ||
+    type === 'hierarchical_list' ||
+    type === 'conditional_list'
+  ) {
+    return createSegment({
+      runtime: args.runtime,
+      type,
+      lockType: true,
+      title,
+      raw,
+      code: type === 'referential_list' ? parsedTitle.code : null,
+      listItems: parseListLines(contentLines),
+    });
+  }
+
+  return createSegment({
+    runtime: args.runtime,
+    type,
+    lockType: true,
+    title,
+    raw,
+  });
+};
+
+const parseSegmentsRuleDriven = (
+  prompt: string,
+  runtime: PatternRuntime
+): PromptExploderSegment[] => {
+  const lines = normalizeMultiline(prompt).split('\n');
+  const headingRuleByIndex = new Map<number, RuntimeRegexRule>();
+
+  lines.forEach((line, index) => {
+    const rule = selectHeadingRuleForLine(runtime, line);
+    if (rule) {
+      headingRuleByIndex.set(index, rule);
+    }
+  });
+
+  const segments: PromptExploderSegment[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    while (index < lines.length && toLine(lines[index]).trim().length === 0) {
+      index += 1;
+    }
+    if (index >= lines.length) break;
+
+    const headingRule = headingRuleByIndex.get(index) ?? null;
+    const start = index;
+
+    if (headingRule) {
+      index += 1;
+      while (index < lines.length) {
+        const trimmed = toLine(lines[index]).trim();
+        if (!trimmed) {
+          index += 1;
+          continue;
+        }
+        if (headingRuleByIndex.has(index)) break;
+        index += 1;
+      }
+      const blockLines = lines.slice(start, index);
+      if (blockLines.length > 0) {
+        segments.push(
+          createRuleDrivenSegment({
+            runtime,
+            blockLines,
+            headingLine: toLine(lines[start]),
+            headingRule,
+          })
+        );
+      }
+      continue;
+    }
+
+    index += 1;
+    while (index < lines.length) {
+      const trimmed = toLine(lines[index]).trim();
+      if (!trimmed) {
+        let next = index + 1;
+        while (next < lines.length && toLine(lines[next]).trim().length === 0) {
+          next += 1;
+        }
+        index = next;
+        break;
+      }
+      if (headingRuleByIndex.has(index)) break;
+      index += 1;
+    }
+
+    const blockLines = lines.slice(start, index);
+    if (blockLines.length > 0) {
+      segments.push(
+        createRuleDrivenSegment({
+          runtime,
+          blockLines,
+          headingLine: null,
+          headingRule: null,
+        })
+      );
+    }
+  }
+
+  return segments;
+};
+
 const parseSegments = (prompt: string, runtime: PatternRuntime): PromptExploderSegment[] => {
   const lines = normalizeMultiline(prompt).split('\n');
   const cursor: ParseCursor = {
@@ -2029,10 +2317,18 @@ export function explodePromptText(args: {
   validationRules?: PromptValidationRule[] | null;
   learnedTemplates?: PromptExploderLearnedTemplate[] | null;
   similarityThreshold?: number;
+  validationScope?: PromptExploderRuntimeValidationScope | null;
 }): PromptExploderDocument {
-  const prompt = normalizeMultiline(args.prompt);
-  const runtime = compileRuntimePatterns(args.validationRules);
-  const parsedSegments = parseSegments(prompt, runtime);
+  const prompt = normalizePromptSource(args.prompt);
+  const validationScope = normalizeRuntimeValidationScope(args.validationScope);
+  const runtime = compileRuntimePatterns(
+    args.validationRules,
+    validationScope
+  );
+  const parsedSegments =
+    validationScope === 'case_resolver_prompt_exploder'
+      ? parseSegmentsRuleDriven(prompt, runtime)
+      : parseSegments(prompt, runtime);
   const segments = applyLearnedTemplateTypes(
     parsedSegments,
     args.learnedTemplates ?? [],
@@ -2045,12 +2341,14 @@ export function explodePromptText(args: {
     warnings.push('No segments were detected.');
   }
 
-  if (!segments.some((segment) => segment.type === 'parameter_block')) {
-    warnings.push('No PARAMS block was detected.');
-  }
+  if (validationScope === 'prompt_exploder') {
+    if (!segments.some((segment) => segment.type === 'parameter_block')) {
+      warnings.push('No PARAMS block was detected.');
+    }
 
-  if (!segments.some((segment) => segment.type === 'qa_matrix')) {
-    warnings.push('No FINAL QA matrix was detected.');
+    if (!segments.some((segment) => segment.type === 'qa_matrix')) {
+      warnings.push('No FINAL QA matrix was detected.');
+    }
   }
 
   const reassembledPrompt = reassemblePromptSegments(segments);

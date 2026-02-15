@@ -163,6 +163,14 @@ describe('isPromptExploderManagedRule', () => {
     expect(isPromptExploderManagedRule(rule)).toBe(true);
   });
 
+  it('returns true for rules scoped to case_resolver_prompt_exploder', () => {
+    const rule = {
+      id: 'test',
+      appliesToScopes: ['case_resolver_prompt_exploder'],
+    } as unknown as PromptValidationRule;
+    expect(isPromptExploderManagedRule(rule)).toBe(true);
+  });
+
   it('returns true for rules with exploder in ID', () => {
     const rule = { id: 'segment.prompt_exploder.test' } as unknown as PromptValidationRule;
     expect(isPromptExploderManagedRule(rule)).toBe(true);

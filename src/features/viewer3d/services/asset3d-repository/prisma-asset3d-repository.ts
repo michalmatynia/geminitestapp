@@ -9,7 +9,7 @@ import type {
 } from '@/features/viewer3d/types';
 import prisma from '@/shared/lib/db/prisma';
 
-const toRecord = (asset: {
+type PrismaAsset3D = {
   id: string;
   name: string | null;
   description: string | null;
@@ -19,11 +19,13 @@ const toRecord = (asset: {
   size: number;
   tags: string[];
   category: string | null;
-  metadata: unknown;
+  metadata: Prisma.JsonValue;
   isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
-}): Asset3DRecord => ({
+};
+
+const toRecord = (asset: PrismaAsset3D): Asset3DRecord => ({
   id: asset.id,
   name: asset.name ?? '',
   description: asset.description,
@@ -44,7 +46,7 @@ const toRecord = (asset: {
 });
 
 export const prismaAsset3DRepository: Asset3DRepository = {
-  async createAsset3D(data: Asset3DCreateInput) {
+  async createAsset3D(data: Asset3DCreateInput): Promise<Asset3DRecord> {
     const asset = await prisma.asset3D.create({
       data: {
         name: data.name ?? null,
@@ -62,12 +64,12 @@ export const prismaAsset3DRepository: Asset3DRepository = {
     return toRecord(asset);
   },
 
-  async getAsset3DById(id: string) {
+  async getAsset3DById(id: string): Promise<Asset3DRecord | null> {
     const asset = await prisma.asset3D.findUnique({ where: { id } });
     return asset ? toRecord(asset) : null;
   },
 
-  async listAssets3D(filters?: Asset3DListFilters) {
+  async listAssets3D(filters?: Asset3DListFilters): Promise<Asset3DRecord[]> {
     const where: Prisma.Asset3DWhereInput = {};
 
     if (filters?.filename?.trim()) {
@@ -107,7 +109,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
     return assets.map(toRecord);
   },
 
-  async updateAsset3D(id: string, data: Asset3DUpdateInput) {
+  async updateAsset3D(id: string, data: Asset3DUpdateInput): Promise<Asset3DRecord | null> {
     try {
       const updateData: Prisma.Asset3DUpdateInput = {};
       if (data.name !== undefined) updateData.name = data.name;
@@ -129,7 +131,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
     }
   },
 
-  async deleteAsset3D(id: string) {
+  async deleteAsset3D(id: string): Promise<Asset3DRecord | null> {
     try {
       const asset = await prisma.asset3D.delete({ where: { id } });
       return toRecord(asset);
@@ -138,7 +140,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
     }
   },
 
-  async getCategories() {
+  async getCategories(): Promise<string[]> {
     const results = await prisma.asset3D.findMany({
       where: { category: { not: null } },
       select: { category: true },
@@ -149,7 +151,7 @@ export const prismaAsset3DRepository: Asset3DRepository = {
       .filter((c: string | null): c is string => c !== null);
   },
 
-  async getTags() {
+  async getTags(): Promise<string[]> {
     const assets = await prisma.asset3D.findMany({
       where: { tags: { isEmpty: false } },
       select: { tags: true },

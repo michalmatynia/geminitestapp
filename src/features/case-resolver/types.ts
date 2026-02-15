@@ -3,6 +3,7 @@ import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 export type CaseResolverNodeRole = 'text_note' | 'explanatory' | 'ai_prompt';
 export type CaseResolverQuoteMode = 'none' | 'double' | 'single';
 export type CaseResolverJoinMode = 'newline' | 'tab' | 'space' | 'none';
+export type CaseResolverDocumentNodePort = 'textfield' | 'content';
 export type CaseResolverAssetKind = 'node_file' | 'image' | 'pdf' | 'file';
 export type CaseResolverFileType = 'document' | 'scanfile';
 export type CaseResolverDocumentVersion = 'original' | 'exploded';
@@ -144,6 +145,16 @@ export const CASE_RESOLVER_JOIN_MODE_OPTIONS: Array<{
   { value: 'tab', label: 'Tab' },
   { value: 'space', label: 'Space' },
   { value: 'none', label: 'No Separator' },
+];
+
+export const CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS: CaseResolverDocumentNodePort[] = [
+  'textfield',
+  'content',
+];
+
+export const CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS: CaseResolverDocumentNodePort[] = [
+  'textfield',
+  'content',
 ];
 
 export type CaseResolverPdfExtractionPreset = {

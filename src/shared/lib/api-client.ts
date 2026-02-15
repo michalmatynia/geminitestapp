@@ -44,7 +44,7 @@ const isAbortSignalInstance = (value: unknown): value is AbortSignal => {
 /**
  * Removes undefined keys from an object to satisfy exactOptionalPropertyTypes
  */
-function cleanConfig<T extends Record<string, any>>(obj: T): T {
+function cleanConfig<T extends Record<string, unknown>>(obj: T): T {
   const result = { ...obj };
   Object.keys(result).forEach((key) => {
     if (result[key] === undefined) {

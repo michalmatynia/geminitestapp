@@ -371,23 +371,29 @@ export default function ProductFormGeneral(): React.JSX.Element {
           const allowWithoutRegexMatch = isLatestPriceStockMirrorPattern(pattern);
           if (!hasMatch && !allowWithoutRegexMatch) break;
           matched = true;
-          const replacement = resolvePatternReplacementValue({
-            pattern,
-            fieldValue: candidateValue,
-            values: allValues,
-            latestProductValues,
-          });
-          const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
-            pattern.replacementAppliesToScopes,
-            validationInstanceScope,
-            pattern.appliesToScopes
-          );
-          const effectiveReplacement = replacementEnabledForScope ? replacement : null;
-          const replacedValue = applyResolvedReplacement({
-            value: candidateValue,
-            pattern,
-            replacement: effectiveReplacement,
-          });
+          let replacedValue = candidateValue;
+          try {
+            const replacement = resolvePatternReplacementValue({
+              pattern,
+              fieldValue: candidateValue,
+              values: allValues,
+              latestProductValues,
+            });
+            const replacementEnabledForScope = isPatternReplacementEnabledForValidationScope(
+              pattern.replacementAppliesToScopes,
+              validationInstanceScope,
+              pattern.appliesToScopes
+            );
+            const effectiveReplacement = replacementEnabledForScope ? replacement : null;
+            replacedValue = applyResolvedReplacement({
+              value: candidateValue,
+              pattern,
+              replacement: effectiveReplacement,
+            });
+          } catch {
+            // If replacement evaluation fails (e.g. unresolved value), keep the current field value unchanged.
+            break;
+          }
           if (replacedValue === candidateValue) break;
           replaced = true;
           candidateValue = replacedValue;

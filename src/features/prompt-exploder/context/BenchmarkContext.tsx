@@ -84,6 +84,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   const { toast } = useToast();
 
   const {
+    activeValidationScope,
     runtimeValidationRules,
     runtimeLearnedTemplates,
     learningDraft,
@@ -158,6 +159,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
       validationRules: runtimeValidationRules,
       learnedTemplates: runtimeLearnedTemplates,
       similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
+      validationScope: activeValidationScope,
       suite: benchmarkSuiteDraft === 'extended' ? 'extended' : 'default',
       lowConfidenceThreshold: benchmarkLowConfidenceThreshold,
       suggestionLimit: benchmarkSuggestionLimit,
@@ -176,6 +178,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
       }
     );
   }, [
+    activeValidationScope,
     benchmarkLowConfidenceThresholdDraft,
     benchmarkSuggestionLimitDraft,
     benchmarkSuiteDraft,
@@ -364,6 +367,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
             validationRules: nextRuntimeRules,
             learnedTemplates: nextRuntimeTemplates,
             similarityThreshold: nextExploderSettings.learning.similarityThreshold,
+            validationScope: activeValidationScope,
           });
           setManualBindings([]);
           setDocumentState(refreshed);
@@ -398,6 +402,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
     [
       documentState?.sourcePrompt,
       effectiveLearnedTemplates,
+      activeValidationScope,
       learningDraft,
       promptExploderSettings,
       promptSettings,

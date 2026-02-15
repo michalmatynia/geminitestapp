@@ -9,15 +9,72 @@ export type PromptExploderCaseResolverContext = {
   fileName: string;
 };
 
+export type PromptExploderCaseResolverPartyRole = 'addresser' | 'addressee';
+export type PromptExploderCaseResolverPartyKind = 'person' | 'organization';
+
+export type PromptExploderCaseResolverPartyCandidate = {
+  role: PromptExploderCaseResolverPartyRole;
+  displayName: string;
+  rawText: string;
+  kind?: PromptExploderCaseResolverPartyKind | undefined;
+  firstName?: string | undefined;
+  lastName?: string | undefined;
+  organizationName?: string | undefined;
+  street?: string | undefined;
+  city?: string | undefined;
+  postalCode?: string | undefined;
+  country?: string | undefined;
+  sourceSegmentId?: string | undefined;
+  sourceSegmentTitle?: string | undefined;
+};
+
+export type PromptExploderCaseResolverPartyBundle = {
+  addresser?: PromptExploderCaseResolverPartyCandidate | undefined;
+  addressee?: PromptExploderCaseResolverPartyCandidate | undefined;
+};
+
 export type PromptExploderBridgePayload = {
   prompt: string;
   source: PromptExploderBridgeSource;
-  target?: PromptExploderBridgeTarget;
-  caseResolverContext?: PromptExploderCaseResolverContext;
+  target?: PromptExploderBridgeTarget | undefined;
+  caseResolverContext?: PromptExploderCaseResolverContext | undefined;
+  caseResolverParties?: PromptExploderCaseResolverPartyBundle | undefined;
   createdAt: string;
 };
 
 const hasWindow = (): boolean => typeof window !== 'undefined';
+
+const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
+const sanitizeCaseResolverPartyCandidate = (
+  value: unknown,
+  role: PromptExploderCaseResolverPartyRole
+): PromptExploderCaseResolverPartyCandidate | undefined => {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  const displayName = toTrimmedString(record['displayName']);
+  const rawText = toTrimmedString(record['rawText']);
+  if (!displayName && !rawText) return undefined;
+  const kindRaw = toTrimmedString(record['kind']);
+  const kind: PromptExploderCaseResolverPartyKind | undefined =
+    kindRaw === 'person' || kindRaw === 'organization' ? kindRaw : undefined;
+
+  return {
+    role,
+    displayName: displayName || rawText,
+    rawText: rawText || displayName,
+    kind,
+    firstName: toTrimmedString(record['firstName']) || undefined,
+    lastName: toTrimmedString(record['lastName']) || undefined,
+    organizationName: toTrimmedString(record['organizationName']) || undefined,
+    street: toTrimmedString(record['street']) || undefined,
+    city: toTrimmedString(record['city']) || undefined,
+    postalCode: toTrimmedString(record['postalCode']) || undefined,
+    country: toTrimmedString(record['country']) || undefined,
+    sourceSegmentId: toTrimmedString(record['sourceSegmentId']) || undefined,
+    sourceSegmentTitle: toTrimmedString(record['sourceSegmentTitle']) || undefined,
+  };
+};
 
 const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | null => {
   if (!raw) return null;
@@ -51,12 +108,24 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
         fileName,
       };
     })();
+    const caseResolverParties = (() => {
+      if (!parsed.caseResolverParties || typeof parsed.caseResolverParties !== 'object') return undefined;
+      const record = parsed.caseResolverParties as Record<string, unknown>;
+      const addresser = sanitizeCaseResolverPartyCandidate(record['addresser'], 'addresser');
+      const addressee = sanitizeCaseResolverPartyCandidate(record['addressee'], 'addressee');
+      if (!addresser && !addressee) return undefined;
+      return {
+        ...(addresser ? { addresser } : {}),
+        ...(addressee ? { addressee } : {}),
+      };
+    })();
 
     return {
       prompt: parsed.prompt,
       source,
       target,
       caseResolverContext,
+      caseResolverParties,
       createdAt,
     };
   } catch {
@@ -142,13 +211,15 @@ export function savePromptExploderApplyPrompt(prompt: string): void {
 
 export function savePromptExploderApplyPromptForCaseResolver(
   prompt: string,
-  context?: PromptExploderCaseResolverContext | null
+  context?: PromptExploderCaseResolverContext | null,
+  parties?: PromptExploderCaseResolverPartyBundle | null
 ): void {
   saveApplyPayload({
     prompt,
     source: 'prompt-exploder',
     target: 'case-resolver',
     caseResolverContext: context ?? undefined,
+    caseResolverParties: parties ?? undefined,
     createdAt: new Date().toISOString(),
   });
 }

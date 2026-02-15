@@ -523,7 +523,13 @@ export function RightSidebar(): React.JSX.Element {
           </div>
 
           {sidebarTab === 'graph' ? (
-            <VersionNodeMapPanel />
+            selectedSlotId ? (
+              <VersionNodeMapPanel />
+            ) : (
+              <div className='min-h-0 flex flex-1 items-center justify-center px-4 text-center text-xs text-gray-500'>
+                Select a card to view its version graph.
+              </div>
+            )
           ) : sidebarTab === 'sequencing' ? (
             <SequencingPanel />
           ) : sidebarTab === 'history' ? (

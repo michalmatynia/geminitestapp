@@ -1,6 +1,8 @@
 import type { PromptValidationRule, PromptValidationScope } from '@/features/prompt-engine/settings';
 
 import type { PromptExploderPatternSnapshot } from './types';
+import type { PromptExploderRuntimeValidationScope } from './validation-stack';
+
 
 export const buildPatternSnapshot = (args: {
   rules: PromptValidationRule[];
@@ -35,12 +37,13 @@ export const removePatternSnapshotById = (
 };
 
 export const ensurePromptExploderScopeOnRules = (
-  rules: PromptValidationRule[]
+  rules: PromptValidationRule[],
+  scope: PromptExploderRuntimeValidationScope = 'prompt_exploder'
 ): PromptValidationRule[] => {
   return rules.map((rule) => ({
     ...rule,
     appliesToScopes: [
-      ...new Set([...(rule.appliesToScopes ?? []), 'prompt_exploder']),
+      ...new Set([...(rule.appliesToScopes ?? []), scope]),
     ] as PromptValidationScope[],
   }));
 };
@@ -49,10 +52,17 @@ export const mergeRestoredPromptExploderRules = (args: {
   existingRules: PromptValidationRule[];
   restoredRules: PromptValidationRule[];
   isPromptExploderManagedRule: (rule: PromptValidationRule) => boolean;
+  scope?: PromptExploderRuntimeValidationScope;
 }): PromptValidationRule[] => {
+  const scope = args.scope ?? 'prompt_exploder';
+  const shouldReplaceManagedRule = (rule: PromptValidationRule): boolean => {
+    if (!args.isPromptExploderManagedRule(rule)) return false;
+    const scopes = rule.appliesToScopes ?? [];
+    return scopes.length === 0 || scopes.includes(scope) || scopes.includes('global');
+  };
   const keptRules = args.existingRules.filter(
-    (rule) => !args.isPromptExploderManagedRule(rule)
+    (rule) => !shouldReplaceManagedRule(rule)
   );
-  const normalizedRestoredRules = ensurePromptExploderScopeOnRules(args.restoredRules);
+  const normalizedRestoredRules = ensurePromptExploderScopeOnRules(args.restoredRules, scope);
   return [...keptRules, ...normalizedRestoredRules];
 };

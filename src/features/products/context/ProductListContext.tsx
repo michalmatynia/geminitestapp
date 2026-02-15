@@ -72,7 +72,7 @@ export interface ProductListContextType {
   // Table Configuration
   handleProductsTableRender: ProfilerOnRenderCallback;
   tableColumns: ColumnDef<ProductWithImages>[];
-  getRowClassName?: (row: Row<ProductWithImages>) => string | undefined;
+  getRowClassName?: ((row: Row<ProductWithImages>) => string | undefined) | undefined;
   getRowId: (row: ProductWithImages) => string;
   skeletonRows: ReactNode;
   maxHeight?: string | number | undefined;
@@ -172,7 +172,7 @@ export interface ProductListTableContextType {
   setRowSelection: OnChangeFn<RowSelectionState>;
   handleProductsTableRender: ProfilerOnRenderCallback;
   tableColumns: ColumnDef<ProductWithImages>[];
-  getRowClassName?: (row: Row<ProductWithImages>) => string | undefined;
+  getRowClassName?: ((row: Row<ProductWithImages>) => string | undefined) | undefined;
   getRowId: (row: ProductWithImages) => string;
   isLoading: boolean;
   skeletonRows: ReactNode;

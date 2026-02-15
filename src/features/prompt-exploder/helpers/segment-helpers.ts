@@ -135,7 +135,8 @@ export const createApprovalDraftFromSegment = promptExploderCreateApprovalDraftF
 
 export const promptExploderIsPromptExploderManagedRule = (rule: PromptValidationRule): boolean => {
   const scopes = rule.appliesToScopes ?? [];
-  const hasPromptExploderScope = scopes.includes('prompt_exploder');
+  const hasPromptExploderScope =
+    scopes.includes('prompt_exploder') || scopes.includes('case_resolver_prompt_exploder');
   if (hasPromptExploderScope) return true;
   if (rule.id.includes('prompt_exploder') || rule.id.includes('exploder') || rule.id.startsWith('segment.')) {
     return true;

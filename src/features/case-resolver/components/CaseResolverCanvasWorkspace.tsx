@@ -47,8 +47,9 @@ import {
   parseCaseResolverTreeDropPayload,
   type CaseResolverDropDocumentToCanvasDetail,
 } from '../drag';
-import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';
 import {
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
+  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
   CASE_RESOLVER_PDF_EXTRACTION_PRESETS,
@@ -91,6 +92,59 @@ const buildNode = (
     ...(mergedConfig ? { config: mergedConfig } : {}),
   };
 };
+
+const ensureDocumentPromptPorts = (node: AiNode): AiNode => {
+  if (node.type !== 'prompt') return node;
+  const nextInputs = [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS];
+  const nextOutputs = [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS];
+  const currentInputs = Array.isArray(node.inputs) ? node.inputs : [];
+  const currentOutputs = Array.isArray(node.outputs) ? node.outputs : [];
+  const sameInputs =
+    nextInputs.length === currentInputs.length &&
+    nextInputs.every((port: string, index: number): boolean => port === currentInputs[index]);
+  const sameOutputs =
+    nextOutputs.length === currentOutputs.length &&
+    nextOutputs.every((port: string, index: number): boolean => port === currentOutputs[index]);
+  if (sameInputs && sameOutputs) return node;
+  return {
+    ...node,
+    inputs: nextInputs,
+    outputs: nextOutputs,
+  };
+};
+
+const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
+const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
+
+const normalizeTextNodeInputPort = (value: string | undefined): string => {
+  if (value === DOCUMENT_TEXTFIELD_PORT || value === DOCUMENT_CONTENT_PORT) return value;
+  if (value === 'prompt') return DOCUMENT_TEXTFIELD_PORT;
+  return DOCUMENT_CONTENT_PORT;
+};
+
+const normalizeTextNodeOutputPort = (value: string | undefined): string => {
+  if (value === DOCUMENT_TEXTFIELD_PORT || value === DOCUMENT_CONTENT_PORT) return value;
+  if (value === 'prompt') return DOCUMENT_TEXTFIELD_PORT;
+  return DOCUMENT_CONTENT_PORT;
+};
+
+const normalizeEdgesForTextNode = (edges: Edge[], nodeId: string): Edge[] =>
+  edges.map((edge: Edge): Edge => {
+    let nextFromPort = edge.fromPort;
+    let nextToPort = edge.toPort;
+    if (edge.from === nodeId) {
+      nextFromPort = normalizeTextNodeOutputPort(edge.fromPort);
+    }
+    if (edge.to === nodeId) {
+      nextToPort = normalizeTextNodeInputPort(edge.toPort);
+    }
+    if (nextFromPort === edge.fromPort && nextToPort === edge.toPort) return edge;
+    return {
+      ...edge,
+      fromPort: nextFromPort,
+      toPort: nextToPort,
+    };
+  });
 
 const ensureNodeMeta = (
   nodes: AiNode[],
@@ -345,7 +399,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
   const { nodes, edges } = useGraphState();
-  const { addNode, addEdge, updateNode } = useGraphActions();
+  const { addNode, addEdge, updateNode, setEdges } = useGraphActions();
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
 
@@ -637,7 +691,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
       const outputPromptBase = buildNode(promptDefinition, outputPosition, outputNodeId, `WYSIWYG Output: ${asset.name}`);
       const outputPromptConfig = resolvePromptConfig(outputPromptBase);
-      const outputNode: AiNode = {
+      const outputNode: AiNode = ensureDocumentPromptPorts({
         ...outputPromptBase,
         config: {
           ...(outputPromptBase.config ?? {}),
@@ -646,7 +700,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
             template: '<p>{{result}}</p>',
           },
         },
-      };
+      });
 
       const edgePdfToPrompt: Edge = {
         id: createEdgeId(),
@@ -667,7 +721,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         from: modelNodeId,
         to: outputNodeId,
         fromPort: 'result',
-        toPort: 'result',
+        toPort: DOCUMENT_CONTENT_PORT,
       };
 
       addNode(pdfNode);
@@ -808,7 +862,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         });
         const node = buildNode(promptDefinition, position, id, `Document: ${file.name}`);
         const promptConfig = resolvePromptConfig(node);
-        const promptNode: AiNode = {
+        const promptNode = ensureDocumentPromptPorts({
           ...node,
           config: {
             ...(node.config ?? {}),
@@ -817,7 +871,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
               template: buildPromptTemplateFromDroppedDocumentFile(file),
             },
           },
-        };
+        });
         addNode(promptNode);
         nextNodes = [...nextNodes, promptNode];
         nextNodeMeta[id] = {
@@ -1016,23 +1070,33 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     selectNode(id);
   };
 
-  const updateSelectedPromptTemplate = (template: string): void => {
-    if (!selectedNode || selectedNode.type !== 'prompt') return;
-    const promptConfig = resolvePromptConfig(selectedNode);
-    updateNode(selectedNode.id, {
-      config: {
-        ...(selectedNode.config ?? {}),
-        prompt: {
-          ...promptConfig,
-          template,
-        },
-      },
-    });
-  };
-
   const updateSelectedNodeMeta = (patch: Partial<CaseResolverNodeMeta>): void => {
     if (!selectedNode) return;
     const current = normalizedNodeMeta[selectedNode.id] ?? DEFAULT_CASE_RESOLVER_NODE_META;
+    const nextRole = patch.role ?? current.role;
+    const shouldNormalizeTextPorts =
+      selectedNode.type === 'prompt' &&
+      nextRole === 'text_note';
+    const nextNodes = shouldNormalizeTextPorts
+      ? nodes.map((node: AiNode): AiNode => {
+        return node.id === selectedNode.id ? ensureDocumentPromptPorts(node) : node;
+      })
+      : nodes;
+    const nextEdges = shouldNormalizeTextPorts
+      ? normalizeEdgesForTextNode(edges, selectedNode.id)
+      : edges;
+    if (shouldNormalizeTextPorts) {
+      const normalizedSelectedNode = nextNodes.find(
+        (node: AiNode): boolean => node.id === selectedNode.id
+      );
+      if (normalizedSelectedNode) {
+        updateNode(selectedNode.id, {
+          inputs: normalizedSelectedNode.inputs,
+          outputs: normalizedSelectedNode.outputs,
+        });
+      }
+      setEdges(nextEdges);
+    }
     const nextNodeMeta = {
       ...normalizedNodeMeta,
       [selectedNode.id]: {
@@ -1041,8 +1105,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       },
     };
     onGraphChange({
-      nodes,
-      edges,
+      nodes: nextNodes,
+      edges: nextEdges,
       nodeMeta: nextNodeMeta,
       edgeMeta: normalizedEdgeMeta,
       pdfExtractionPresetId,
@@ -1209,11 +1273,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     ? availableFilesById.get(selectedPromptSourceFileId) ?? null
     : null;
 
-  const selectedPromptTemplate =
-    selectedNode && selectedNode.type === 'prompt'
-      ? resolvePromptConfig(selectedNode).template
-      : '';
-
   const selectedEdgeJoinMode = selectedEdge
     ? (normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
     : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
@@ -1237,20 +1296,29 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     } | null => {
       if (input.direction !== 'output') return null;
       if (input.node.type !== 'prompt') return null;
-      if (input.port !== 'prompt') return null;
+      if (
+        input.port !== 'prompt' &&
+        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] &&
+        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1]
+      ) {
+        return null;
+      }
 
       const sourceFileId = normalizedDocumentSourceFileIdByNode[input.node.id] ?? null;
-      if (!sourceFileId) return null;
-
-      const sourceFile = availableFilesById.get(sourceFileId) ?? null;
+      const sourceFile = sourceFileId ? availableFilesById.get(sourceFileId) ?? null : null;
       const nodeMeta = normalizedNodeMeta[input.node.id] ?? DEFAULT_CASE_RESOLVER_NODE_META;
-      const renderedText = renderPromptNodeTextPreview(input.node, nodeMeta);
+      const computedOutputs = compiled.outputsByNode[input.node.id];
+      const textfieldOutput = computedOutputs?.textfield ?? renderPromptNodeTextPreview(input.node, nodeMeta);
+      const contentOutput = computedOutputs?.content ?? '';
+      const isContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
+      const renderedText = isContentPort ? contentOutput : textfieldOutput;
+      const outputLabel = isContentPort ? 'Content output' : 'Text field output';
 
       return {
         maxWidth: '720px',
         content: (
           <div className='space-y-2'>
-            <div className='text-[11px] text-gray-400'>Rendered document text output</div>
+            <div className='text-[11px] text-gray-400'>{outputLabel}</div>
             {sourceFile ? (
               <div className='text-[10px] text-gray-500'>
                 Source: {sourceFile.name}
@@ -1263,7 +1331,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         ),
       };
     },
-    [availableFilesById, normalizedDocumentSourceFileIdByNode, normalizedNodeMeta]
+    [availableFilesById, compiled.outputsByNode, normalizedDocumentSourceFileIdByNode, normalizedNodeMeta]
   );
 
   return (
@@ -1508,15 +1576,14 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
                     </div>
                   ) : null}
 
-                  <CaseResolverRichTextEditor
-                    value={selectedPromptTemplate}
-                    onChange={updateSelectedPromptTemplate}
-                    placeholder='Paste or write your node text here...'
-                  />
+                  <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-400'>
+                    Document nodes support <span className='text-gray-200'>textfield</span> and <span className='text-gray-200'>content</span> I/O.
+                    Use <span className='text-gray-200'>Open Edit Document</span> to edit source text, or feed <span className='text-gray-200'>textfield</span> directly from upstream.
+                  </div>
                 </>
               ) : (
                 <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
-                  Select a Prompt node to edit text content with WYSIWYG.
+                  Select a Prompt node to configure metadata.
                 </div>
               )}
             </>

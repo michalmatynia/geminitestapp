@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+  PROMPT_EXPLODER_VALIDATION_RULE_STACK_VALUES,
+} from './validation-stack';
+
 import type {
   PromptExploderAiProvider,
   PromptExploderBenchmarkCaseConfig,
@@ -80,6 +85,9 @@ const promptExploderSettingsSchema: z.ZodType<PromptExploderSettings> = z.object
   runtime: z
     .object({
       ruleProfile: z.enum(['all', 'pattern_pack', 'learned_only']).default('all'),
+      validationRuleStack: z
+        .enum(PROMPT_EXPLODER_VALIDATION_RULE_STACK_VALUES)
+        .default(DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK),
       benchmarkSuite: z.enum(['default', 'extended', 'custom']).default('default'),
       benchmarkLowConfidenceThreshold: z.number().min(0.3).max(0.9).default(0.55),
       benchmarkSuggestionLimit: z.number().int().min(1).max(20).default(4),
@@ -88,6 +96,7 @@ const promptExploderSettingsSchema: z.ZodType<PromptExploderSettings> = z.object
     .optional()
     .default({
       ruleProfile: 'all',
+      validationRuleStack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
       benchmarkSuite: 'default',
       benchmarkLowConfidenceThreshold: 0.55,
       benchmarkSuggestionLimit: 4,
@@ -128,6 +137,7 @@ export const defaultPromptExploderSettings: PromptExploderSettings = {
   version: 1,
   runtime: {
     ruleProfile: 'all',
+    validationRuleStack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
     benchmarkSuite: 'default',
     benchmarkLowConfidenceThreshold: 0.55,
     benchmarkSuggestionLimit: 4,

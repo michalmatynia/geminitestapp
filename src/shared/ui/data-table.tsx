@@ -41,9 +41,9 @@ interface DataTableProps<TData> {
   skeletonRows?: React.ReactNode;
   meta?: Record<string, unknown>;
   className?: string;
-  getRowClassName?: (row: Row<TData>) => string | undefined;
-  maxHeight?: string | number;
-  stickyHeader?: boolean;
+  getRowClassName?: ((row: Row<TData>) => string | undefined) | undefined;
+  maxHeight?: string | number | undefined;
+  stickyHeader?: boolean | undefined;
 }
 
 declare module '@tanstack/react-table' {

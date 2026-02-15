@@ -173,8 +173,19 @@ import {
   upsertLearnedTemplate,
   type TemplateMergeMode,
 } from '../template-learning';
+import {
+  DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+  PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS,
+  promptExploderValidationScopeFromStack,
+  promptExploderValidationStackFromBridgeSource,
+  promptExploderValidatorScopeFromStack,
+} from '../validation-stack';
 
-
+import type {
+  PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidate,
+  PromptExploderCaseResolverPartyRole,
+} from '../bridge';
 import type { PromptExploderLibraryItem } from '../prompt-library';
 import type {
   PromptExploderBenchmarkSuite,
@@ -190,6 +201,167 @@ import type {
   PromptExploderListItem,
   PromptExploderSegment,
 } from '../types';
+
+type CaseResolverPartySegmentSelection = {
+  addresserSegmentId: string;
+  addresseeSegmentId: string;
+};
+
+const EMPTY_CASE_RESOLVER_PARTY_SELECTION: CaseResolverPartySegmentSelection = {
+  addresserSegmentId: '',
+  addresseeSegmentId: '',
+};
+
+const POSTAL_CITY_RE = /(\d{2}-\d{3})\s+(.+)/;
+const ORGANIZATION_HINT_RE =
+  /\b(sp\.|s\.a\.|sa|llc|inc|corp|company|inspektorat|urzad|urząd|organ|fundacja|stowarzyszenie|office|department|instytut)\b/i;
+
+const normalizeText = (value: string): string => value.trim().replace(/\s+/g, ' ');
+
+const normalizeComparable = (value: string): string => normalizeText(value).toLowerCase();
+
+const toSegmentSourceText = (segment: PromptExploderSegment): string => {
+  const source = segment.raw || segment.text || '';
+  return source.trim();
+};
+
+const splitSegmentLines = (segment: PromptExploderSegment): string[] =>
+  toSegmentSourceText(segment)
+    .split('\n')
+    .map((line: string): string => normalizeText(line))
+    .filter((line: string): boolean => line.length > 0);
+
+const inferPartyKindFromLines = (lines: string[]): 'person' | 'organization' => {
+  const firstLine = lines[0] ?? '';
+  if (ORGANIZATION_HINT_RE.test(firstLine)) return 'organization';
+  const tokens = firstLine.split(/\s+/).filter(Boolean);
+  const hasDigits = /\d/.test(firstLine);
+  if (hasDigits) return 'organization';
+  if (tokens.length >= 2 && tokens.length <= 4) return 'person';
+  return 'organization';
+};
+
+const extractAddressFields = (lines: string[]): {
+  street?: string | undefined;
+  city?: string | undefined;
+  postalCode?: string | undefined;
+  country?: string | undefined;
+} => {
+  const addressLines = lines.slice(1);
+  let street = '';
+  let city = '';
+  let postalCode = '';
+  let country = '';
+
+  addressLines.forEach((line: string, index: number) => {
+    const postalMatch = POSTAL_CITY_RE.exec(line);
+    if (postalMatch) {
+      postalCode = normalizeText(postalMatch[1] ?? '');
+      city = normalizeText(postalMatch[2] ?? '');
+      return;
+    }
+    if (!street && /\d/.test(line)) {
+      street = line;
+      return;
+    }
+    const isLast = index === addressLines.length - 1;
+    if (!country && isLast && !/\d/.test(line) && line.split(/\s+/).length <= 4) {
+      country = line;
+      return;
+    }
+    if (!city && !/\d/.test(line)) {
+      city = line;
+    }
+  });
+
+  return {
+    street: street || undefined,
+    city: city || undefined,
+    postalCode: postalCode || undefined,
+    country: country || undefined,
+  };
+};
+
+const scoreSegmentForPartyRole = (
+  segment: PromptExploderSegment,
+  role: PromptExploderCaseResolverPartyRole
+): number => {
+  const source = `${segment.title} ${toSegmentSourceText(segment)} ${segment.matchedPatternIds.join(' ')}`;
+  const normalized = normalizeComparable(source);
+  const keywords =
+    role === 'addresser'
+      ? ['addresser', 'nadawca', 'sender', 'from', 'wnioskodawca']
+      : ['addressee', 'adresat', 'recipient', 'odbiorca', 'to', 'organ'];
+  const lineCount = splitSegmentLines(segment).length;
+  let score = lineCount >= 2 ? 4 : 1;
+  keywords.forEach((keyword: string) => {
+    if (normalized.includes(keyword)) score += 12;
+  });
+  if (segment.type === 'assigned_text') score += 3;
+  return score;
+};
+
+const suggestCaseResolverPartySegmentIds = (
+  segments: PromptExploderSegment[]
+): CaseResolverPartySegmentSelection => {
+  const candidates = segments.filter(
+    (segment: PromptExploderSegment): boolean => splitSegmentLines(segment).length > 0
+  );
+  if (candidates.length === 0) return EMPTY_CASE_RESOLVER_PARTY_SELECTION;
+
+  const rankedAddresser = [...candidates].sort(
+    (left: PromptExploderSegment, right: PromptExploderSegment): number =>
+      scoreSegmentForPartyRole(right, 'addresser') - scoreSegmentForPartyRole(left, 'addresser')
+  );
+  const addresserSegmentId = rankedAddresser[0]?.id ?? '';
+  const rankedAddressee = [...candidates]
+    .filter((segment: PromptExploderSegment): boolean => segment.id !== addresserSegmentId)
+    .sort(
+      (left: PromptExploderSegment, right: PromptExploderSegment): number =>
+        scoreSegmentForPartyRole(right, 'addressee') - scoreSegmentForPartyRole(left, 'addressee')
+    );
+  const addresseeSegmentId = rankedAddressee[0]?.id ?? '';
+
+  return {
+    addresserSegmentId,
+    addresseeSegmentId,
+  };
+};
+
+const buildCaseResolverPartyCandidateFromSegment = (
+  segment: PromptExploderSegment,
+  role: PromptExploderCaseResolverPartyRole
+): PromptExploderCaseResolverPartyCandidate | null => {
+  const lines = splitSegmentLines(segment);
+  if (lines.length === 0) return null;
+  const kind = inferPartyKindFromLines(lines);
+  const firstLine = lines[0] ?? '';
+  const displayName = firstLine || segment.title || role;
+  const parsedAddress = extractAddressFields(lines);
+  const personTokens = firstLine.split(/\s+/).filter(Boolean);
+
+  const candidate: PromptExploderCaseResolverPartyCandidate = {
+    role,
+    kind,
+    displayName,
+    rawText: lines.join('\n'),
+    sourceSegmentId: segment.id,
+    sourceSegmentTitle: segment.title,
+    street: parsedAddress.street,
+    city: parsedAddress.city,
+    postalCode: parsedAddress.postalCode,
+    country: parsedAddress.country,
+  };
+
+  if (kind === 'person') {
+    candidate.firstName = personTokens[0] ?? '';
+    candidate.lastName = personTokens.slice(1).join(' ').trim() || '';
+  } else {
+    candidate.organizationName = firstLine;
+  }
+
+  return candidate;
+};
 
 export function AdminPromptExploderPage(): React.JSX.Element {
   const router = useRouter();
@@ -209,6 +381,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const [sessionLearnedTemplates, setSessionLearnedTemplates] = useState<PromptExploderLearnedTemplate[]>([]);
   const [learningDraft, setLearningDraft] = useState<{
     runtimeRuleProfile: 'all' | 'pattern_pack' | 'learned_only';
+    runtimeValidationRuleStack: 'image_studio_prompt_exploder' | 'case_resolver_prompt_exploder';
     enabled: boolean;
     similarityThreshold: number;
     templateMergeThreshold: number;
@@ -218,6 +391,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     autoActivateLearnedTemplates: boolean;
   }>({
     runtimeRuleProfile: 'all',
+    runtimeValidationRuleStack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
     enabled: true,
     similarityThreshold: 0.68,
     templateMergeThreshold: 0.63,
@@ -278,6 +452,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     fileId: string;
     fileName: string;
   } | null>(null);
+  const [caseResolverPartySelection, setCaseResolverPartySelection] =
+    useState<CaseResolverPartySegmentSelection>(EMPTY_CASE_RESOLVER_PARTY_SELECTION);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
   const returnTarget = returnTo.startsWith('/admin/case-resolver') ? 'case-resolver' : 'image-studio';
@@ -304,6 +480,21 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
     [promptLibraryState.items]
   );
+  const activeValidationScope = useMemo(
+    () => promptExploderValidationScopeFromStack(learningDraft.runtimeValidationRuleStack),
+    [learningDraft.runtimeValidationRuleStack]
+  );
+  const activeValidatorScope = useMemo(
+    () => promptExploderValidatorScopeFromStack(learningDraft.runtimeValidationRuleStack),
+    [learningDraft.runtimeValidationRuleStack]
+  );
+  const activeValidationStackLabel = useMemo(
+    () =>
+      PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.find(
+        (option) => option.value === learningDraft.runtimeValidationRuleStack
+      )?.label ?? learningDraft.runtimeValidationRuleStack,
+    [learningDraft.runtimeValidationRuleStack]
+  );
   const selectedLibraryItem = useMemo(() => {
     if (!selectedLibraryItemId) return null;
     return (
@@ -314,6 +505,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   useEffect(() => {
     setLearningDraft({
       runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile,
+      runtimeValidationRuleStack: promptExploderSettings.runtime.validationRuleStack,
       enabled: promptExploderSettings.learning.enabled,
       similarityThreshold: promptExploderSettings.learning.similarityThreshold,
       templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
@@ -340,6 +532,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     promptExploderSettings.runtime.benchmarkSuite,
     promptExploderSettings.runtime.customBenchmarkCases,
     promptExploderSettings.runtime.ruleProfile,
+    promptExploderSettings.runtime.validationRuleStack,
     promptExploderSettings.learning.autoActivateLearnedTemplates,
     promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates,
     promptExploderSettings.learning.enabled,
@@ -350,16 +543,17 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   ]);
 
   const scopedRules = useMemo<PromptValidationRule[]>(
-    () => getPromptExploderScopedRules(promptSettings),
-    [promptSettings]
+    () => getPromptExploderScopedRules(promptSettings, activeValidationScope),
+    [activeValidationScope, promptSettings]
   );
   const parserTuningBaseDrafts = useMemo(
     () =>
       buildPromptExploderParserTuningDrafts({
         scopedRules,
         patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+        scope: activeValidationScope,
       }),
-    [scopedRules]
+    [activeValidationScope, scopedRules]
   );
   useEffect(() => {
     setParserTuningDrafts(parserTuningBaseDrafts);
@@ -651,6 +845,54 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const segmentById = useMemo(() => {
     return new Map((documentState?.segments ?? []).map((segment) => [segment.id, segment]));
   }, [documentState?.segments]);
+  const caseResolverPartySegmentOptions = useMemo(
+    () => [
+      { value: '', label: 'None' },
+      ...(documentState?.segments ?? []).map((segment, index) => ({
+        value: segment.id,
+        label: `${index + 1}. ${segment.title}`,
+      })),
+    ],
+    [documentState?.segments]
+  );
+  const caseResolverPartyCandidates = useMemo<{
+    addresser: PromptExploderCaseResolverPartyCandidate | null;
+    addressee: PromptExploderCaseResolverPartyCandidate | null;
+  }>(() => {
+    if (returnTarget !== 'case-resolver' || !documentState) {
+      return { addresser: null, addressee: null };
+    }
+    const addresserSegment = documentState.segments.find(
+      (segment: PromptExploderSegment): boolean =>
+        segment.id === caseResolverPartySelection.addresserSegmentId
+    );
+    const addresseeSegment = documentState.segments.find(
+      (segment: PromptExploderSegment): boolean =>
+        segment.id === caseResolverPartySelection.addresseeSegmentId
+    );
+    return {
+      addresser: addresserSegment
+        ? buildCaseResolverPartyCandidateFromSegment(addresserSegment, 'addresser')
+        : null,
+      addressee: addresseeSegment
+        ? buildCaseResolverPartyCandidateFromSegment(addresseeSegment, 'addressee')
+        : null,
+    };
+  }, [
+    caseResolverPartySelection.addresseeSegmentId,
+    caseResolverPartySelection.addresserSegmentId,
+    documentState,
+    returnTarget,
+  ]);
+  const caseResolverPartyBundle = useMemo<PromptExploderCaseResolverPartyBundle | undefined>(() => {
+    const addresser = caseResolverPartyCandidates.addresser;
+    const addressee = caseResolverPartyCandidates.addressee;
+    if (!addresser && !addressee) return undefined;
+    return {
+      ...(addresser ? { addresser } : {}),
+      ...(addressee ? { addressee } : {}),
+    };
+  }, [caseResolverPartyCandidates.addressee, caseResolverPartyCandidates.addresser]);
 
   const fromSubsectionOptions = useMemo(() => {
     const segment = segmentById.get(bindingDraft.fromSegmentId);
@@ -688,6 +930,13 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       setPromptText(draftPayload.prompt);
       if (draftPayload.source === 'case-resolver' || draftPayload.source === 'image-studio') {
         setIncomingBridgeSource(draftPayload.source);
+        if (draftPayload.source === 'case-resolver') {
+          setLearningDraft((previous) => ({
+            ...previous,
+            runtimeValidationRuleStack:
+              promptExploderValidationStackFromBridgeSource(draftPayload.source),
+          }));
+        }
       } else {
         setIncomingBridgeSource(null);
       }
@@ -699,6 +948,50 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
     setPromptText('=== PROMPT EXPLODER DEMO ===\n\nROLE\nDefine your role here.\n\nPARAMS\nparams = {\n  "example": true\n}');
   }, [promptText]);
+
+  useEffect(() => {
+    if (returnTarget !== 'case-resolver') return;
+    const segments = documentState?.segments ?? [];
+    if (segments.length === 0) {
+      setCaseResolverPartySelection((previous) =>
+        previous.addresserSegmentId || previous.addresseeSegmentId
+          ? EMPTY_CASE_RESOLVER_PARTY_SELECTION
+          : previous
+      );
+      return;
+    }
+    const validIds = new Set(segments.map((segment: PromptExploderSegment): string => segment.id));
+    const suggested = suggestCaseResolverPartySegmentIds(segments);
+    setCaseResolverPartySelection((previous) => {
+      const nextAddresserSegmentId = validIds.has(previous.addresserSegmentId)
+        ? previous.addresserSegmentId
+        : suggested.addresserSegmentId;
+      let nextAddresseeSegmentId = validIds.has(previous.addresseeSegmentId)
+        ? previous.addresseeSegmentId
+        : suggested.addresseeSegmentId;
+      if (
+        nextAddresserSegmentId &&
+        nextAddresseeSegmentId &&
+        nextAddresserSegmentId === nextAddresseeSegmentId
+      ) {
+        nextAddresseeSegmentId =
+          segments.find(
+            (segment: PromptExploderSegment): boolean =>
+              segment.id !== nextAddresserSegmentId
+          )?.id ?? '';
+      }
+      if (
+        nextAddresserSegmentId === previous.addresserSegmentId &&
+        nextAddresseeSegmentId === previous.addresseeSegmentId
+      ) {
+        return previous;
+      }
+      return {
+        addresserSegmentId: nextAddresserSegmentId,
+        addresseeSegmentId: nextAddresseeSegmentId,
+      };
+    });
+  }, [documentState?.segments, returnTarget]);
 
   useEffect(() => {
     const segments = documentState?.segments ?? [];
@@ -1457,6 +1750,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       validationRules: runtimeValidationRules,
       learnedTemplates: runtimeLearnedTemplates,
       similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
+      validationScope: activeValidationScope,
     });
 
     setManualBindings([]);
@@ -1575,6 +1869,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       validationRules: runtimeValidationRules,
       learnedTemplates: runtimeLearnedTemplates,
       similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
+      validationScope: activeValidationScope,
       suite: benchmarkSuiteDraft === 'extended' ? 'extended' : 'default',
       lowConfidenceThreshold: benchmarkLowConfidenceThreshold,
       suggestionLimit: benchmarkSuggestionLimit,
@@ -1596,7 +1891,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
   const handleInstallPatternPack = async (): Promise<void> => {
     try {
-      const result = ensurePromptExploderPatternPack(promptSettings);
+      const result = ensurePromptExploderPatternPack(promptSettings, {
+        scope: activeValidationScope,
+      });
       if (result.addedRuleIds.length === 0 && result.updatedRuleIds.length === 0) {
         toast('Prompt Exploder pattern pack is already installed.', { variant: 'info' });
         return;
@@ -1639,6 +1936,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       buildPromptExploderParserTuningDrafts({
         scopedRules: PROMPT_EXPLODER_PATTERN_PACK,
         patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+        scope: activeValidationScope,
       })
     );
     toast('Parser tuning drafts reset to pattern-pack defaults.', { variant: 'info' });
@@ -1655,6 +1953,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         settings: promptSettings,
         drafts: parserTuningDrafts,
         patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
+        scope: activeValidationScope,
       });
       await updateSetting.mutateAsync({
         key: PROMPT_ENGINE_SETTINGS_KEY,
@@ -1695,6 +1994,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         runtime: {
           ...promptExploderSettings.runtime,
           ruleProfile: learningDraft.runtimeRuleProfile,
+          validationRuleStack: learningDraft.runtimeValidationRuleStack,
           benchmarkSuite: benchmarkSuiteDraft,
           benchmarkLowConfidenceThreshold: promptExploderClampNumber(
             benchmarkLowConfidenceThresholdDraft,
@@ -1745,9 +2045,15 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
   const handleCapturePatternSnapshot = async (): Promise<void> => {
     try {
-      const scopedPromptRules = promptSettings.promptValidation.rules.filter((rule) =>
-        isPromptExploderManagedRule(rule)
-      );
+      const scopedPromptRules = promptSettings.promptValidation.rules.filter((rule) => {
+        if (!isPromptExploderManagedRule(rule)) return false;
+        const scopes = rule.appliesToScopes ?? [];
+        return (
+          scopes.length === 0 ||
+          scopes.includes(activeValidationScope) ||
+          scopes.includes('global')
+        );
+      });
       const now = new Date().toISOString();
       const snapshot = buildPatternSnapshot({
         rules: scopedPromptRules,
@@ -1797,6 +2103,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         existingRules: basePromptSettings.promptValidation.rules,
         restoredRules: parsed.rules,
         isPromptExploderManagedRule: isPromptExploderManagedRule,
+        scope: activeValidationScope,
       });
       const nextPromptSettings = {
         ...basePromptSettings,
@@ -1926,6 +2233,23 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }
   };
 
+  const handleReassemblePrompt = (): void => {
+    if (!documentState) {
+      toast('Explode the prompt before reassembling.', { variant: 'info' });
+      return;
+    }
+    const reassembled = reassemblePromptSegments(documentState.segments);
+    setDocumentState((current: PromptExploderDocument | null) =>
+      current
+        ? {
+          ...current,
+          reassembledPrompt: reassembled,
+        }
+        : current
+    );
+    toast('Reassembled output refreshed.', { variant: 'success' });
+  };
+
   const handleApplyToImageStudio = (): void => {
     if (!documentState) {
       toast('Explode the prompt before applying it.', { variant: 'info' });
@@ -1934,7 +2258,11 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
     const reassembled = reassemblePromptSegments(documentState.segments);
     if (returnTarget === 'case-resolver') {
-      savePromptExploderApplyPromptForCaseResolver(reassembled, incomingCaseResolverContext);
+      savePromptExploderApplyPromptForCaseResolver(
+        reassembled,
+        incomingCaseResolverContext,
+        caseResolverPartyBundle
+      );
       toast('Restructured text sent to Case Resolver.', { variant: 'success' });
     } else {
       savePromptExploderApplyPrompt(reassembled);
@@ -1953,6 +2281,13 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     setPromptText(draftPayload.prompt);
     if (draftPayload.source === 'case-resolver' || draftPayload.source === 'image-studio') {
       setIncomingBridgeSource(draftPayload.source);
+      if (draftPayload.source === 'case-resolver') {
+        setLearningDraft((previous) => ({
+          ...previous,
+          runtimeValidationRuleStack:
+            promptExploderValidationStackFromBridgeSource(draftPayload.source),
+        }));
+      }
     } else {
       setIncomingBridgeSource(null);
     }
@@ -2236,6 +2571,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
           validationRules: nextRuntimeRules,
           learnedTemplates: runtimeTemplatesAfterApproval,
           similarityThreshold: nextExploderSettings.learning.similarityThreshold,
+          validationScope: activeValidationScope,
         });
         setManualBindings([]);
         setDocumentState(refreshed);
@@ -2375,6 +2711,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
           validationRules: nextRuntimeRules,
           learnedTemplates: nextRuntimeTemplates,
           similarityThreshold: nextExploderSettings.learning.similarityThreshold,
+          validationScope: activeValidationScope,
         });
         setManualBindings([]);
         setDocumentState(refreshed);
@@ -2444,6 +2781,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     if (!subsection) return segment.title;
     return `${segment.title} · ${formatSubsectionLabel(subsection)}`;
   };
+  const applyOutputLabel =
+    returnTarget === 'case-resolver' ? 'Apply to Case Resolver' : 'Apply to Image Studio';
 
   return (
     <div className='container mx-auto space-y-4 py-6'>
@@ -2486,7 +2825,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
       <FormSection
         title='Pattern Runtime'
-        description='Prompt Exploder uses Prompt Validator rules scoped to prompt_exploder.'
+        description='Prompt Exploder uses Prompt Validator rules from the selected validation stack.'
         variant='subtle'
         className='p-4'
         actions={
@@ -2498,6 +2837,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             <span className='text-gray-200'>{runtimeLearnedTemplates.length}</span>
             {' '}· profile:{' '}
             <span className='text-gray-200'>{learningDraft.runtimeRuleProfile}</span>
+            {' '}· stack:{' '}
+            <span className='text-gray-200'>{activeValidationStackLabel}</span>
             {' '}· merge:{' '}
             <span className='text-gray-200'>{templateMergeThreshold.toFixed(2)}</span>
             {' '}· bench template upsert:{' '}
@@ -2532,7 +2873,25 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             Advanced pack includes {PROMPT_EXPLODER_PATTERN_PACK.length} segmentation patterns.
           </div>
         </div>
-        <div className='mt-3 grid gap-2 md:grid-cols-8'>
+        <div className='mt-3 grid gap-2 md:grid-cols-9'>
+          <div className='space-y-1'>
+            <Label className='text-[11px] text-gray-400'>Validation Pattern Stack</Label>
+            <SelectSimple
+              size='sm'
+              value={learningDraft.runtimeValidationRuleStack}
+              onValueChange={(value: string) => {
+                setLearningDraft((previous) => ({
+                  ...previous,
+                  runtimeValidationRuleStack:
+                    value as typeof previous.runtimeValidationRuleStack,
+                }));
+              }}
+              options={PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+            />
+          </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
             <SelectSimple
@@ -2679,7 +3038,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             Save Learning Settings
           </Button>
           <div className='text-xs text-gray-500'>
-            Current runtime: similarity {learningDraft.similarityThreshold.toFixed(2)}, merge {learningDraft.templateMergeThreshold.toFixed(2)}, min approvals {learningDraft.minApprovalsForMatching}, cap {learningDraft.maxTemplates}, auto-activate {learningDraft.autoActivateLearnedTemplates ? 'on' : 'off'}, benchmark template upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}.
+            Current runtime: stack {activeValidationStackLabel}, similarity {learningDraft.similarityThreshold.toFixed(2)}, merge {learningDraft.templateMergeThreshold.toFixed(2)}, min approvals {learningDraft.minApprovalsForMatching}, cap {learningDraft.maxTemplates}, auto-activate {learningDraft.autoActivateLearnedTemplates ? 'on' : 'off'}, benchmark template upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}.
             {' '}Benchmark suite {benchmarkSuiteDraft}
             {benchmarkSuiteDraft === 'custom' && parsedCustomBenchmarkCases.ok
               ? ` (${parsedCustomBenchmarkCases.cases.length} custom case(s))`
@@ -2834,7 +3193,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               },
               onResetToPackDefaults: handleResetParserTuningDrafts,
               onOpenValidationPatterns: () => {
-                router.push('/admin/validator?scope=prompt-exploder');
+                router.push(`/admin/validator?scope=${activeValidatorScope}`);
               },
               isBusy: updateSetting.isPending,
             }}
@@ -2978,7 +3337,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                   onClick={handleApplyToImageStudio}
                   disabled={!documentState}
                 >
-                  Apply to Image Studio
+                  {applyOutputLabel}
                 </Button>
               </div>
             }
@@ -4906,16 +5265,83 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             variant='subtle'
             className='p-4'
             actions={
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handleApplyToImageStudio}
-                disabled={!documentState}
-              >
-                Apply to Image Studio
-              </Button>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={handleReassemblePrompt}
+                  disabled={!documentState}
+                >
+                  Reassemble Text
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={handleApplyToImageStudio}
+                  disabled={!documentState}
+                >
+                  {applyOutputLabel}
+                </Button>
+              </div>
             }
           >
+            {returnTarget === 'case-resolver' && documentState ? (
+              <div className='mb-3 space-y-3 rounded border border-border/60 bg-card/20 p-3'>
+                <div className='text-xs text-gray-300'>
+                  Map reassembled segments to Case Resolver party fields before applying.
+                </div>
+                <div className='grid gap-3 md:grid-cols-2'>
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-gray-400'>Addresser Segment</Label>
+                    <SelectSimple
+                      size='sm'
+                      value={caseResolverPartySelection.addresserSegmentId}
+                      onValueChange={(value: string) => {
+                        setCaseResolverPartySelection((previous) => ({
+                          ...previous,
+                          addresserSegmentId: value,
+                        }));
+                      }}
+                      options={caseResolverPartySegmentOptions}
+                    />
+                  </div>
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-gray-400'>Addressee Segment</Label>
+                    <SelectSimple
+                      size='sm'
+                      value={caseResolverPartySelection.addresseeSegmentId}
+                      onValueChange={(value: string) => {
+                        setCaseResolverPartySelection((previous) => ({
+                          ...previous,
+                          addresseeSegmentId: value,
+                        }));
+                      }}
+                      options={caseResolverPartySegmentOptions}
+                    />
+                  </div>
+                </div>
+                <div className='grid gap-3 md:grid-cols-2'>
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-gray-400'>Addresser Preview</Label>
+                    <Textarea
+                      readOnly
+                      value={caseResolverPartyCandidates.addresser?.rawText ?? ''}
+                      className='min-h-[120px] text-[11px]'
+                      placeholder='No addresser segment selected.'
+                    />
+                  </div>
+                  <div className='space-y-1'>
+                    <Label className='text-[11px] text-gray-400'>Addressee Preview</Label>
+                    <Textarea
+                      readOnly
+                      value={caseResolverPartyCandidates.addressee?.rawText ?? ''}
+                      className='min-h-[120px] text-[11px]'
+                      placeholder='No addressee segment selected.'
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <div className='mt-2'>
               <Textarea
                 className='min-h-[420px] font-mono text-[11px]'

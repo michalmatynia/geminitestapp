@@ -1,10 +1,11 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { executeSqlQuery } from '../api';
@@ -14,6 +15,11 @@ import {
   type DatabaseTableDetail,
   type DatabaseType,
 } from '../types';
+
+type CrudRowsResult = {
+  rows: Record<string, unknown>[];
+  totalRows: number;
+};
 
 export function useCrudPanelState(props: {
   tableDetails?: DatabaseTableDetail[];
@@ -57,7 +63,7 @@ export function useCrudPanelState(props: {
     }
   }, [props.defaultTable, selectedTable]);
 
-  const rowsQuery = useQuery({
+  const rowsQuery = createListQueryV2<CrudRowsResult, CrudRowsResult>({
     queryKey: dbKeys.crudRows({ dbType, selectedTable, page, pageSize }),
     enabled: Boolean(selectedTable),
     queryFn: async () => {
@@ -103,6 +109,17 @@ export function useCrudPanelState(props: {
         rows: mongoResult.rows,
         totalRows: mongoResult.rowCount ?? mongoResult.rows.length,
       };
+    },
+    staleTime: 30_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'database.hooks.useCrudPanelState.rows',
+      operation: 'list',
+      resource: 'database.crud-rows',
+      domain: 'global',
+      tags: ['database', 'crud', dbType],
     },
   });
 

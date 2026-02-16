@@ -1,12 +1,12 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, RefreshCcw, Settings2 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, FormSection, Input, Label, SectionHeader, SelectSimple, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -29,11 +29,20 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'heavy' });
   const updateSetting = useUpdateSetting();
-  const modelsQuery = useQuery({
+  const modelsQuery = createListQueryV2<ChatbotModelListResponse, ChatbotModelListResponse>({
     queryKey: QUERY_KEYS.ai.chatbot.models(),
-    queryFn: () => api.get<ChatbotModelListResponse>('/api/chatbot'),
+    queryFn: ({ signal }) => api.get<ChatbotModelListResponse>('/api/chatbot', { signal }),
     staleTime: 60_000,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'case-resolver.settings.models-query',
+      operation: 'list',
+      resource: 'ai.chatbot.models',
+      domain: 'global',
+      tags: ['case-resolver', 'settings', 'chatbot-models'],
+    },
   });
 
   const [draft, setDraft] = useState<CaseResolverSettings | null>(null);

@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/shared/lib/api-client';
 import {
-  createMutationHook,
-  createQueryHook,
-} from '@/shared/lib/api-hooks';
+  createListQueryV2,
+  createMutationV2,
+} from '@/shared/lib/query-factories-v2';
 
 import type { ReactElement, ReactNode } from 'react';
 
@@ -28,7 +28,7 @@ const createTestClient = (): QueryClient =>
     },
   });
 
-describe('api-hooks bridge', () => {
+describe('query-factories-v2', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -40,14 +40,22 @@ describe('api-hooks bridge', () => {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 
-  it('createQueryHook resolves GET request via legacy query factory bridge', async () => {
+  it('createListQueryV2 resolves GET request with params', async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ items: ['x'] });
-    const useHook = createQueryHook<{ items: string[] }, { page: number }>({
-      queryKeyFactory: (params) => ['items', params.page],
-      endpoint: '/api/items',
-    });
 
-    const { result } = renderHook(() => useHook({ page: 1 }), { wrapper });
+    const { result } = renderHook(
+      () =>
+        createListQueryV2<{ items: string[] }, { items: string[] }>({
+          queryKey: ['items', 1],
+          queryFn: () => api.get<{ items: string[] }>('/api/items', { params: { page: 1 } }),
+          meta: {
+            source: 'tests.shared.query-factories-v2.get',
+            operation: 'list',
+            resource: 'items',
+          },
+        }),
+      { wrapper }
+    );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(api.get).toHaveBeenCalledWith(
@@ -59,17 +67,22 @@ describe('api-hooks bridge', () => {
     expect(result.current.data).toEqual({ items: ['x'] });
   });
 
-  it('createQueryHook resolves POST request when method is POST', async () => {
+  it('createListQueryV2 resolves POST request in queryFn when needed', async () => {
     vi.mocked(api.post).mockResolvedValueOnce({ ids: ['a', 'b'] });
-    const useHook = createQueryHook<{ ids: string[] }, { query: string }>({
-      queryKeyFactory: (params) => ['search', params.query],
-      endpoint: '/api/search',
-      apiOptions: {
-        method: 'POST',
-      },
-    });
 
-    const { result } = renderHook(() => useHook({ query: 'abc' }), { wrapper });
+    const { result } = renderHook(
+      () =>
+        createListQueryV2<{ ids: string[] }, { ids: string[] }>({
+          queryKey: ['search', 'abc'],
+          queryFn: () => api.post<{ ids: string[] }>('/api/search', { query: 'abc' }, {}),
+          meta: {
+            source: 'tests.shared.query-factories-v2.post',
+            operation: 'list',
+            resource: 'search',
+          },
+        }),
+      { wrapper }
+    );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(api.post).toHaveBeenCalledWith(
@@ -80,14 +93,27 @@ describe('api-hooks bridge', () => {
     expect(result.current.data).toEqual({ ids: ['a', 'b'] });
   });
 
-  it('createMutationHook invalidates keys on success', async () => {
+  it('createMutationV2 can invalidate keys via onSuccess', async () => {
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
-    const useHook = createMutationHook<{ ok: boolean }, { id: string }>({
-      mutationFn: async () => ({ ok: true }),
-      invalidateKeys: [['items'], ['items', 'detail']],
-    });
-
-    const { result } = renderHook(() => useHook(), { wrapper });
+    const { result } = renderHook(
+      () => {
+        const client = queryClient;
+        return createMutationV2<{ ok: boolean }, { id: string }>({
+          mutationFn: async () => ({ ok: true }),
+          mutationKey: ['items', 'mutation'],
+          meta: {
+            source: 'tests.shared.query-factories-v2.mutation',
+            operation: 'action',
+            resource: 'items',
+          },
+          onSuccess: async () => {
+            await client.invalidateQueries({ queryKey: ['items'] });
+            await client.invalidateQueries({ queryKey: ['items', 'detail'] });
+          },
+        });
+      },
+      { wrapper }
+    );
     await result.current.mutateAsync({ id: '1' });
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['items'] });

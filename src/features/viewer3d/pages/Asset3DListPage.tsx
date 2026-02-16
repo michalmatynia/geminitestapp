@@ -19,7 +19,7 @@ import {
   SearchInput,
   Alert,
   EmptyState,
-  Badge
+  StatusBadge
 } from '@/shared/ui';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
@@ -83,9 +83,7 @@ export function Asset3DListPage(): React.JSX.Element {
       accessorKey: 'categoryId',
       header: 'Category',
       cell: ({ row }) => row.original.categoryId ? (
-        <Badge variant='outline' className='bg-blue-500/10 text-blue-300 border-blue-500/20'>
-          {row.original.categoryId}
-        </Badge>
+        <StatusBadge status={row.original.categoryId} variant='info' size='sm' className='font-medium' />
       ) : <span className='text-muted-foreground'>-</span>,
     },
     {
@@ -275,9 +273,7 @@ export function Asset3DListPage(): React.JSX.Element {
                 </p>
                 <div className='mt-2 flex items-center gap-2'>
                   {asset.categoryId && (
-                    <Badge variant='outline' className='text-[10px] bg-blue-500/10 text-blue-300 border-blue-500/20'>
-                      {asset.categoryId}
-                    </Badge>
+                    <StatusBadge status={asset.categoryId} variant='info' size='sm' className='font-medium' />
                   )}
                   <span className='text-xs text-muted-foreground'>
                     {formatFileSize(asset.size)}

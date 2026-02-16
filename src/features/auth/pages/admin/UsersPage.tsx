@@ -15,7 +15,6 @@ import React, { useMemo, useState } from 'react';
 import { 
   Button, 
   DataTable, 
-  Badge, 
   SelectSimple, 
   SectionHeader, 
   ListPanel, 

@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 
 import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
 import { createParserMappings } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea } from '@/shared/ui';
+import { Button, Input, Label, Textarea, StatusBadge } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import {
   useGraphState,
@@ -124,25 +125,25 @@ export function CanvasSidebar(): React.JSX.Element {
         <div className='mb-3 flex items-center gap-2'>
           <button
             type='button'
-            className={`rounded border px-2 py-1 text-[10px] transition ${
-              paletteMode === 'data'
-                ? 'border-sky-400/50 bg-sky-500/10 text-sky-200'
-                : 'border-border/60 text-gray-400 hover:bg-muted/40'
-            }`}
             onClick={() => setPaletteMode('data')}
           >
-            Data Signal
+            <StatusBadge
+              status='Data Signal'
+              variant={paletteMode === 'data' ? 'info' : 'neutral'}
+              size='sm'
+              className={cn('font-medium cursor-pointer', paletteMode !== 'data' && 'opacity-60')}
+            />
           </button>
           <button
             type='button'
-            className={`rounded border px-2 py-1 text-[10px] transition ${
-              paletteMode === 'sound'
-                ? 'border-violet-400/50 bg-violet-500/10 text-violet-200'
-                : 'border-border/60 text-gray-400 hover:bg-muted/40'
-            }`}
             onClick={() => setPaletteMode('sound')}
           >
-            Sound Signal
+            <StatusBadge
+              status='Sound Signal'
+              variant={paletteMode === 'sound' ? 'processing' : 'neutral'}
+              size='sm'
+              className={cn('font-medium cursor-pointer', paletteMode !== 'sound' && 'opacity-60')}
+            />
           </button>
         </div>
         {paletteCollapsed ? (
@@ -199,9 +200,7 @@ export function CanvasSidebar(): React.JSX.Element {
                                 </span>
                                 <div className='flex items-center gap-1'>
                                   {isScheduledTrigger ? (
-                                    <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
-                                      Scheduled
-                                    </span>
+                                    <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold h-4 px-1.5' />
                                   ) : null}
                                   <span className='text-[10px] uppercase text-gray-500'>
                                     {node.type}
@@ -234,9 +233,7 @@ export function CanvasSidebar(): React.JSX.Element {
                   <span className='uppercase text-gray-500'>Type</span>
                   <div className='flex items-center gap-1'>
                     {selectedIsScheduledTrigger ? (
-                      <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
-                        Scheduled
-                      </span>
+                      <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold h-4 px-1.5' />
                     ) : null}
                     <span className='text-[10px] uppercase text-gray-300'>
                       {selectedNode.type}
@@ -399,9 +396,15 @@ export function CanvasSidebar(): React.JSX.Element {
         <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <div className='mb-3 flex items-center justify-between'>
             <span className='text-sm font-semibold text-white'>Run Controls</span>
-            <span className='rounded border border-border/60 px-2 py-0.5 text-[10px] uppercase text-gray-400'>
-              {runStatusLabel}
-            </span>
+            <StatusBadge
+              status={runStatusLabel}
+              variant={
+                runStatus === 'running' || runStatus === 'stepping' ? 'processing' :
+                  runStatus === 'paused' ? 'warning' : 'neutral'
+              }
+              size='sm'
+              className='font-bold'
+            />
           </div>
           <div className='grid grid-cols-2 gap-2'>
             {runStatus === 'running' || runStatus === 'stepping' ? (

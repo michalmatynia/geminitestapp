@@ -16,7 +16,13 @@ import type {
   AiTriggerButtonMode,
   AiTriggerButtonDto,
 } from '@/shared/contracts/ai-trigger-buttons';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import {
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createListQueryV2,
+  createMutationV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { 
@@ -96,7 +102,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     }
   }, [triggerButtonsQuery.error, toast]);
 
-  const createMutation = createMutationV2<AiTriggerButtonDto, AiTriggerButtonCreatePayload>({
+  const createMutation = createCreateMutationV2<AiTriggerButtonDto, AiTriggerButtonCreatePayload>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.create'),
     mutationFn: async (payload: AiTriggerButtonCreatePayload): Promise<AiTriggerButtonDto> => {
       const result = await triggerButtonsApi.create(payload);
@@ -121,7 +127,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const updateMutation = createMutationV2<
+  const updateMutation = createUpdateMutationV2<
     AiTriggerButtonDto,
     {
       id: string;
@@ -164,7 +170,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const deleteMutation = createMutationV2<void, string>({
+  const deleteMutation = createDeleteMutationV2<void, string>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.delete'),
     mutationFn: async (id: string): Promise<void> => {
       const result = await triggerButtonsApi.remove(id);

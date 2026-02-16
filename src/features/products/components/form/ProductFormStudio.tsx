@@ -427,7 +427,8 @@ export default function ProductFormStudio(): React.JSX.Element {
               void handleAcceptVariant();
             }}
             disabled={!selectedVariant || accepting || sending}
-            className='border border-emerald-500/40 bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30'
+            variant='outline'
+            className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
           >
             {accepting ? (
               <Loader2 className='mr-2 size-4 animate-spin' />
@@ -452,7 +453,7 @@ export default function ProductFormStudio(): React.JSX.Element {
           </Button>
 
           {runStatus ? (
-            <StatusBadge status={`Run status: \${runStatus}`} variant='processing' size='sm' className='font-medium' />
+            <StatusBadge status={'Run status: ${runStatus}'} variant='processing' size='sm' className='font-medium' />
           ) : null}
           <StatusBadge
             status={`Pipeline: \${
@@ -552,7 +553,7 @@ export default function ProductFormStudio(): React.JSX.Element {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={src}
-                      alt={slot.name ?? `Variant \${index + 1}`}
+                      alt={slot.name ?? 'Variant ${index + 1}'}
                       className='h-24 w-full rounded object-contain bg-black/20'
                     />
                   ) : (
@@ -562,7 +563,7 @@ export default function ProductFormStudio(): React.JSX.Element {
                   )}
                   <div className='mt-1 space-y-0.5 text-[11px] text-gray-300'>
                     <div className='flex items-center justify-between'>
-                      <span className='truncate'>{slot.name ?? `Variant \${index + 1}`}</span>
+                      <span className='truncate'>{slot.name ?? 'Variant ${index + 1}'}</span>
                       {isSelected ? (
                         <StatusBadge status='Selected' variant='info' size='sm' className='font-bold' />
                       ) : null}

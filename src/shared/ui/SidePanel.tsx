@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+
 import { cn } from '@/shared/utils';
 
 type SidePanelPosition = 'left' | 'right';

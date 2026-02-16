@@ -84,7 +84,9 @@ src/app/
 
 ### Development Standards
 - **UI Components**: Follow patterns defined in [docs/COMPONENT_PATTERNS.md](docs/COMPONENT_PATTERNS.md) for DataTable, ListPanel, and FormSection.
-- **Data Access**: Use `createQueryHook` from `src/shared/lib/api-hooks.ts` for unified fetching.
+- **Data Access**: Use explicit v2 factories from `src/shared/lib/query-factories-v2.ts` (`createListQueryV2`, `createSingleQueryV2`, `createMutationV2` and operation-specific aliases).
+- **Factory Metadata**: Define explicit `meta` objects at each factory call site; legacy meta inference helpers are retired.
+- **Telemetry Guard**: Run `npm run check:factory-meta` to ensure every v2 factory call includes `meta`.
 
 Notable API route groups:
 - `/api/products`, `/api/drafts`, `/api/notes`

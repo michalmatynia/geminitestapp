@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
-import { Button, Input, FormSection, SelectSimple } from '@/shared/ui';
+import { Button, Input, FormSection, SelectSimple, Alert } from '@/shared/ui';
 
 
 const getParameterLabel = (
@@ -39,9 +39,9 @@ export default function ProductFormParameters(): React.JSX.Element {
 
   if (selectedCatalogIds.length === 0) {
     return (
-      <FormSection variant='subtle-compact' className='border-amber-500/40 bg-amber-500/10 text-amber-100'>
+      <Alert variant='warning' className='mb-6'>
         <p className='text-sm'>Select a catalog to manage product parameters.</p>
-      </FormSection>
+      </Alert>
     );
   }
 

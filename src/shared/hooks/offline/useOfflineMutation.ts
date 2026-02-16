@@ -2,7 +2,6 @@ import { useQueryClient, type QueryClient, type QueryKey, type UseMutationResult
 import { useCallback } from 'react';
 
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
-import { inferLegacyFactoryMeta } from '@/shared/lib/tanstack-factory-meta-inference';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -127,12 +126,15 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
 
   return createMutationV2<TData, TVariables, TContext>({
     mutationKey,
-    meta: inferLegacyFactoryMeta({
-      key: mutationKey,
+    meta: {
+      mutationKey,
       operation: 'action',
       source: 'shared.hooks.offline.useOfflineMutation',
-      kind: 'mutation',
-    }),
+      resource: 'offline-mutation',
+      domain: 'global',
+      samplingRate: 0.4,
+      tags: ['shared-hook', 'offline'],
+    },
     mutationFn: async (variables: TVariables): Promise<TData> => {
       const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
       if (!isOnline) {

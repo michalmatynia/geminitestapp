@@ -11,6 +11,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  StatusBadge,
+  Alert,
 } from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
@@ -121,18 +123,6 @@ export function RunHistoryPanel(): React.JSX.Element {
       ) : (
         <div className='space-y-2 text-xs text-gray-300'>
           {filteredRunList.slice(0, 6).map((run: AiPathRunRecord): React.JSX.Element => {
-            const statusClass =
-              run.status === 'completed'
-                ? 'text-emerald-200'
-                : run.status === 'failed'
-                  ? 'text-rose-200'
-                  : run.status === 'dead_lettered'
-                    ? 'text-rose-300'
-                    : run.status === 'running'
-                      ? 'text-sky-200'
-                      : run.status === 'queued'
-                        ? 'text-amber-200'
-                        : 'text-gray-300';
             const runHistory = (run.runtimeState?.history ?? undefined);
             const runHistoryOptions = buildHistoryNodeOptions(
               runHistory,
@@ -158,15 +148,13 @@ export function RunHistoryPanel(): React.JSX.Element {
               >
                 <div className='flex items-center justify-between'>
                   <div>
-                    <div className={`text-[10px] uppercase ${statusClass}`}>
-                      {run.status}
-                    </div>
+                    <StatusBadge status={run.status} size='sm' className='font-bold' />
                     {isScheduledRun ? (
-                      <div className='mt-1 inline-flex rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
-                        Scheduled
+                      <div className='mt-1'>
+                        <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold' />
                       </div>
                     ) : null}
-                    <div className='text-[11px] text-gray-400'>
+                    <div className='mt-1 text-[11px] text-gray-400'>
                       {new Date(run.createdAt).toLocaleString()}
                     </div>
                     {typeof run.retryCount === 'number' &&
@@ -176,8 +164,12 @@ export function RunHistoryPanel(): React.JSX.Element {
                       </div>
                     )}
                     {run.nextRetryAt && (
-                      <div className='text-[10px] text-amber-200'>
-                        Retry at {new Date(run.nextRetryAt).toLocaleString()}
+                      <div className='mt-1'>
+                        <StatusBadge
+                          status={`Retry at \${new Date(run.nextRetryAt).toLocaleString()}`}
+                          variant='warning'
+                          size='sm'
+                        />
                       </div>
                     )}
                   </div>
@@ -244,9 +236,9 @@ export function RunHistoryPanel(): React.JSX.Element {
                   </div>
                 </div>
                 {run.errorMessage && (
-                  <div className='mt-2 text-[10px] text-rose-300'>
+                  <Alert variant='error' className='mt-2 px-2 py-1 text-[10px]'>
                     {run.errorMessage}
-                  </div>
+                  </Alert>
                 )}
                 {historyOpen && (
                   <div className='mt-2 rounded-md border border-border/70 bg-black/20 p-3'>

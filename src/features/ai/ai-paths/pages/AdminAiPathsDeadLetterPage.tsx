@@ -18,9 +18,9 @@ import {
   ConfirmDialog,
   ListPanel,
   FormField,
-  StatusBadge
+  StatusBadge,
+  Alert
 } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
 import {
   PAGE_SIZES,
@@ -69,7 +69,6 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
     streamPaused,
     setStreamPaused,
     eventsOverflow,
-    eventsBatchLimit,
     loading,
     isFetching,
     refetch,
@@ -365,9 +364,9 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   
                   <div className='md:col-span-3 space-y-1'>
                     <div className='text-gray-500'>Error Message</div>
-                    <div className='text-rose-300 bg-rose-500/5 rounded border border-rose-500/20 p-2'>
+                    <Alert variant='error' className='px-2 py-2 text-xs'>
                       {detail.run.errorMessage || 'No error message provided.'}
-                    </div>
+                    </Alert>
                   </div>
 
                   {nodeStatusSummary && (
@@ -418,7 +417,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       {
                         accessorKey: 'status',
                         header: 'Status',
-                        cell: ({ row }) => <StatusBadge status={row.original.status} className='text-[9px] px-1.5 py-0' />
+                        cell: ({ row }) => <StatusBadge status={row.original.status} size='sm' className='font-bold' />
                       },
                       {
                         id: 'details',
@@ -494,9 +493,12 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                   <div className='flex items-center gap-2'>
                     <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Event Log</h3>
                     {eventsOverflow && (
-                      <span className='text-[9px] bg-amber-500/10 text-amber-400 px-1.5 rounded border border-amber-500/20'>
-                        Truncated {eventsBatchLimit ? `(Limit ${eventsBatchLimit})` : ''}
-                      </span>
+                      <StatusBadge
+                        status='Truncated'
+                        variant='warning'
+                        size='sm'
+                        className='font-bold'
+                      />
                     )}
                   </div>
                   <span className='text-[10px] text-gray-600'>{detail.events.length} Events</span>
@@ -508,13 +510,15 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       <div key={event.id} className='p-2 hover:bg-white/5 transition-colors'>
                         <div className='flex justify-between text-[10px] mb-1'>
                           <span className='text-gray-500'>{formatTimestamp(event.createdAt)}</span>
-                          <span className={cn(
-                            'uppercase font-bold',
-                            event.level === 'error' ? 'text-rose-400' : 
-                              event.level === 'warning' ? 'text-amber-400' : 'text-sky-400'
-                          )}>
-                            {event.level}
-                          </span>
+                          <StatusBadge
+                            status={event.level}
+                            variant={
+                              event.level === 'error' ? 'error' : 
+                                event.level === 'warning' ? 'warning' : 'info'
+                            }
+                            size='sm'
+                            className='font-bold'
+                          />
                         </div>
                         <div className='text-xs text-gray-300'>{event.message}</div>
                         {event.metadata && (

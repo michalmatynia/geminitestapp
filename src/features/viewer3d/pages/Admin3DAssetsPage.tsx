@@ -25,7 +25,7 @@ import {
   FormSection,
   FormField,
   EmptyState,
-  Badge
+  StatusBadge
 } from '@/shared/ui';
 
 import { Asset3DCard } from '../components/Asset3DCard';
@@ -100,9 +100,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       accessorKey: 'categoryId',
       header: 'Category',
       cell: ({ row }) => row.original.categoryId ? (
-        <Badge variant='outline' className='bg-blue-500/10 text-blue-300 border-blue-500/20'>
-          {row.original.categoryId}
-        </Badge>
+        <StatusBadge status={row.original.categoryId} variant='info' size='sm' className='font-medium' />
       ) : <span className='text-muted-foreground'>-</span>,
     },
     {

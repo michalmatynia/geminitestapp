@@ -9,7 +9,7 @@ import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks
 import type { Slug } from '@/features/cms/types';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
 import { logClientError } from '@/features/observability';
-import { Button, Input, SectionHeader, Checkbox, Switch, FormSection, FormField, Badge } from '@/shared/ui';
+import { Button, Input, SectionHeader, Checkbox, Switch, FormSection, FormField, Badge, Alert, StatusBadge } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function CreatePagePage(): React.JSX.Element {
@@ -68,6 +68,11 @@ export default function CreatePagePage(): React.JSX.Element {
       
       <form onSubmit={(e: React.FormEvent<HTMLFormElement>): void => { void handleSubmit(e); }}>
         <div className='space-y-6'>
+          {error && (
+            <Alert variant='error' className='mb-6'>
+              {error}
+            </Alert>
+          )}
           <FormSection title='General Information' className='p-6'>
             <FormField label='Page Name' error={error} required>
               <Input
@@ -130,7 +135,7 @@ export default function CreatePagePage(): React.JSX.Element {
                           <div className='flex flex-1 items-center justify-between'>
                             <span className='text-sm text-gray-300'>/{slug.slug}</span>
                             {isCrossZone && (
-                              <Badge variant='outline' className='text-[8px] bg-amber-500/5 text-amber-400 border-amber-500/20'>Cross-Zone</Badge>
+                              <StatusBadge status='Cross-Zone' variant='warning' size='sm' className='font-bold' />
                             )}
                           </div>
                         </label>

@@ -8,7 +8,7 @@ import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrati
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 import type { Integration } from '@/features/integrations/types/integrations-ui';
 import { logClientError } from '@/features/observability';
-import { useToast, Button, SectionHeader } from '@/shared/ui';
+import { useToast, Button, SectionHeader, StatusBadge } from '@/shared/ui';
 
 const AVAILABLE_INTEGRATIONS = [
   {
@@ -109,27 +109,24 @@ export default function AddIntegrationPage(): React.JSX.Element {
                 </p>
               </div>
               <div className='flex flex-col items-end gap-2'>
-                <span
-                  className={`rounded-full px-2 py-1 text-xs ${
-                    integration.type === 'marketplace'
-                      ? 'bg-emerald-500/20 text-emerald-200'
-                      : 'bg-purple-500/20 text-purple-200'
-                  }`}
-                >
-                  {integration.type === 'marketplace' ? 'Marketplace' : 'Platform'}
-                </span>
-                <span
-                  className={`rounded-full px-2 py-1 text-xs ${
-                    integration.method === 'api'
-                      ? 'bg-blue-500/20 text-blue-200'
-                      : 'bg-orange-500/20 text-orange-200'
-                  }`}
-                >
-                  {integration.method === 'api' ? 'API' : 'Browser'}
-                </span>
-                <span className='rounded-full bg-gray-800 px-2 py-1 text-xs text-gray-300'>
-                    Added: {integrationCounts[integration.slug] ?? 0}
-                </span>
+                <StatusBadge
+                  status={integration.type === 'marketplace' ? 'Marketplace' : 'Platform'}
+                  variant={integration.type === 'marketplace' ? 'success' : 'processing'}
+                  size='sm'
+                  className='font-semibold'
+                />
+                <StatusBadge
+                  status={integration.method === 'api' ? 'API' : 'Browser'}
+                  variant={integration.method === 'api' ? 'info' : 'warning'}
+                  size='sm'
+                  className='font-semibold'
+                />
+                <StatusBadge
+                  status={`Added: ${integrationCounts[integration.slug] ?? 0}`}
+                  variant='neutral'
+                  size='sm'
+                  className='font-semibold'
+                />
               </div>
             </div>
             <div className='mt-6 flex justify-end'>

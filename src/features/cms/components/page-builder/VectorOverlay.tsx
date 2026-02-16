@@ -14,7 +14,7 @@ import {
   type VectorShape,
   type VectorToolMode,
 } from '@/features/vector-drawing';
-import { Button } from '@/shared/ui';
+import { Button, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { VectorOverlayRequest } from '../../hooks/usePageBuilderContext';
@@ -173,9 +173,12 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
             <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200'>
               {request.title}
             </div>
-            <div className='rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200'>
-              ViewBox {DEFAULT_VECTOR_VIEWBOX}
-            </div>
+            <StatusBadge
+              status={`ViewBox \${DEFAULT_VECTOR_VIEWBOX}`}
+              variant='success'
+              size='sm'
+              className='font-bold'
+            />
           </div>
           {request.description ? (
             <div className='text-[11px] text-gray-400'>{request.description}</div>

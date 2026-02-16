@@ -28,6 +28,9 @@ import {
   SelectValue,
   Textarea,
   useToast,
+  StatusBadge,
+  Alert,
+  type StatusVariant,
 } from '@/shared/ui';
 
 import { safeJsonStringify } from './AiPathsSettingsUtils';
@@ -167,10 +170,10 @@ const formatDurationMs = (value?: number | null): string => {
   return `${minutes}m ${remaining}s`;
 };
 
-const getSloBadgeClass = (level?: 'ok' | 'warning' | 'critical'): string => {
-  if (level === 'critical') return 'border-rose-500/40 bg-rose-500/15 text-rose-100';
-  if (level === 'warning') return 'border-amber-500/40 bg-amber-500/15 text-amber-100';
-  return 'border-emerald-500/40 bg-emerald-500/15 text-emerald-100';
+const getSloVariant = (level?: 'ok' | 'warning' | 'critical'): 'error' | 'warning' | 'success' => {
+  if (level === 'critical') return 'error';
+  if (level === 'warning') return 'warning';
+  return 'success';
 };
 
 const safePrettyJson = (value: unknown): string => {
@@ -363,10 +366,10 @@ const getOriginLabel = (origin: RunOrigin): string => {
   return 'Unknown';
 };
 
-const getOriginBadgeClass = (origin: RunOrigin): string => {
-  if (origin === 'node') return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
-  if (origin === 'external') return 'border-amber-500/40 bg-amber-500/10 text-amber-200';
-  return 'border-border/60 bg-card/60 text-gray-300';
+const getOriginVariant = (origin: RunOrigin): StatusVariant => {
+  if (origin === 'node') return 'success';
+  if (origin === 'external') return 'warning';
+  return 'neutral';
 };
 
 const getExecutionLabel = (execution: RunExecutionKind): string => {
@@ -376,24 +379,28 @@ const getExecutionLabel = (execution: RunExecutionKind): string => {
   return 'Unknown';
 };
 
-const getExecutionBadgeClass = (execution: RunExecutionKind): string => {
-  if (execution === 'server') return 'border-sky-500/40 bg-sky-500/10 text-sky-200';
-  if (execution === 'local') return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200';
-  if (execution === 'other') return 'border-violet-500/40 bg-violet-500/10 text-violet-200';
-  return 'border-border/60 bg-card/60 text-gray-300';
+const getExecutionVariant = (execution: RunExecutionKind): StatusVariant => {
+  if (execution === 'server') return 'processing';
+  if (execution === 'local') return 'info';
+  if (execution === 'other') return 'neutral';
+  return 'neutral';
 };
 
 const isRunningStatus = (status: unknown): boolean =>
   typeof status === 'string' && status.trim().toLowerCase() === 'running';
 
 const RunningIndicator = ({ label = 'Running' }: { label?: string }): React.JSX.Element => (
-  <span className='inline-flex items-center gap-1 rounded-full border border-sky-500/40 bg-sky-500/10 px-2 py-[1px] text-[9px] uppercase text-sky-200'>
-    <span className='relative inline-flex h-2 w-2'>
-      <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/80' />
-      <span className='relative inline-flex h-2 w-2 rounded-full bg-sky-300' />
-    </span>
-    {label}
-  </span>
+  <StatusBadge
+    status={label}
+    variant='processing'
+    size='sm'
+    icon={(
+      <span className='relative inline-flex h-2 w-2'>
+        <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/80' />
+        <span className='relative inline-flex h-2 w-2 rounded-full bg-sky-300' />
+      </span>
+    )}
+  />
 );
 
 export function JobQueuePanel({
@@ -1068,11 +1075,12 @@ export function JobQueuePanel({
             </div>
           )}
           {queueStatus?.slo ? (
-            <div
-              className={`mt-2 inline-flex items-center rounded-md border px-2 py-1 text-[10px] uppercase tracking-wide ${getSloBadgeClass(queueStatus.slo.overall)}`}
-            >
-              SLO {queueStatus.slo.overall} · {queueStatus.slo.breachCount} breach{queueStatus.slo.breachCount === 1 ? '' : 'es'}
-            </div>
+            <StatusBadge
+              status={`SLO \${queueStatus.slo.overall} · \${queueStatus.slo.breachCount} breach\${queueStatus.slo.breachCount === 1 ? '' : 'es'}`}
+              variant={getSloVariant(queueStatus.slo.overall)}
+              size='sm'
+              className='mt-2 font-bold'
+            />
           ) : null}
         </div>
         <div className='rounded-md border border-border/60 bg-card/50 p-3 text-xs text-gray-300'>
@@ -1136,18 +1144,15 @@ export function JobQueuePanel({
       </div>
 
       {queueStatus?.queueLagMs && queueStatus.queueLagMs > lagThresholdMs ? (
-        <div className='mt-4 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100'>
+        <Alert variant='error' className='mt-4'>
           Queue lag is high: {formatDurationMs(queueStatus.queueLagMs)} (threshold {formatDurationMs(lagThresholdMs)}). Consider increasing concurrency or investigating slow nodes.
-        </div>
+        </Alert>
       ) : null}
 
       {queueStatus?.slo && queueStatus.slo.overall !== 'ok' ? (
-        <div
-          className={`mt-3 rounded-lg border px-4 py-3 text-sm ${
-            queueStatus.slo.overall === 'critical'
-              ? 'border-rose-500/40 bg-rose-500/10 text-rose-100'
-              : 'border-amber-500/40 bg-amber-500/10 text-amber-100'
-          }`}
+        <Alert
+          variant={getSloVariant(queueStatus.slo.overall)}
+          className='mt-3'
         >
           <div className='font-medium'>
             Runtime SLO is {queueStatus.slo.overall}.
@@ -1155,7 +1160,7 @@ export function JobQueuePanel({
           <div className='mt-1 text-xs opacity-90'>
             {queueStatus.slo.breaches.slice(0, 3).map((breach) => breach.message).join(' ')}
           </div>
-        </div>
+        </Alert>
       ) : null}
 
       <div className='mt-4 rounded-md border border-border/60 bg-card/40 p-3'>
@@ -1366,34 +1371,40 @@ export function JobQueuePanel({
                 <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div>
                     <div className='flex flex-wrap items-center gap-2'>
-                      <div className='text-[10px] uppercase text-gray-400'>{detailRun.status}</div>
+                      <StatusBadge status={detailRun.status} size='sm' className='font-bold' />
                       {isRunning ? <RunningIndicator /> : null}
                     </div>
                     {isScheduledRun ? (
-                      <div className='mt-1 inline-flex rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[9px] uppercase text-amber-200'>
-                        Scheduled
+                      <div className='mt-1'>
+                        <StatusBadge status='Scheduled' variant='warning' size='sm' className='font-bold' />
                       </div>
                     ) : null}
                     <div className='mt-1 flex flex-wrap items-center gap-1'>
-                      <span
-                        className={`rounded-full border px-2 py-[1px] text-[9px] uppercase ${getOriginBadgeClass(runOrigin)}`}
-                      >
-                        Origin: {getOriginLabel(runOrigin)}
-                      </span>
-                      <span
-                        className={`rounded-full border px-2 py-[1px] text-[9px] uppercase ${getExecutionBadgeClass(runExecution)}`}
-                      >
-                        Run: {getExecutionLabel(runExecution)}
-                      </span>
-                      <span className='rounded-full border border-border/60 bg-card/60 px-2 py-[1px] text-[9px] uppercase text-gray-300'>
-                        Source: {runSource}
-                      </span>
-                      <span
-                        className='rounded-full border border-sky-500/35 bg-sky-500/10 px-2 py-[1px] text-[9px] text-sky-200'
+                      <StatusBadge
+                        status={`Origin: \${getOriginLabel(runOrigin)}`}
+                        variant={getOriginVariant(runOrigin)}
+                        size='sm'
+                        className='font-medium'
+                      />
+                      <StatusBadge
+                        status={`Run: \${getExecutionLabel(runExecution)}`}
+                        variant={getExecutionVariant(runExecution)}
+                        size='sm'
+                        className='font-medium'
+                      />
+                      <StatusBadge
+                        status={`Source: \${runSource}`}
+                        variant='neutral'
+                        size='sm'
+                        className='font-medium'
+                      />
+                      <StatusBadge
+                        status={`Debug: \${runSourceDebug}`}
+                        variant='info'
+                        size='sm'
                         title={runSourceDebug}
-                      >
-                        Debug: {runSourceDebug}
-                      </span>
+                        className='font-medium'
+                      />
                     </div>
                     <div className='text-sm text-white'>{detailRun.pathName ?? 'AI Path'}</div>
                     <div className='text-[11px] text-gray-400'>
@@ -1411,9 +1422,9 @@ export function JobQueuePanel({
                       </div>
                     )}
                     {detailRun.errorMessage && (
-                      <div className='mt-1 rounded-md border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[11px] text-rose-200'>
+                      <Alert variant='error' className='mt-1 px-2 py-1 text-[11px]'>
                         Error: {detailRun.errorMessage}
-                      </div>
+                      </Alert>
                     )}
                   </div>
                   <div className='flex flex-wrap items-center gap-2'>

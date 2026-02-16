@@ -13,6 +13,7 @@ import {
   RefreshButton,
   SelectSimple,
   FormField,
+  Alert,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -262,9 +263,9 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
           )}
 
           {copyMutation.isPending && (
-            <div className='mt-3 rounded-md border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs text-blue-200'>
+            <Alert variant='info' className='mt-3 px-3 py-2 text-xs'>
               Copying collection... This may take a moment.
-            </div>
+            </Alert>
           )}
         </div>
       </FormSection>

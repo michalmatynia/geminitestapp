@@ -18,7 +18,15 @@ import type {
   ProductValidationInstanceScope,
   ProductValidationPattern,
 } from '@/shared/types/domain/products';
-import { Button, EmptyState, Input, StatusToggle, FormSection, FormField } from '@/shared/ui';
+import { 
+  Button, 
+  EmptyState, 
+  Input, 
+  StatusToggle, 
+  FormSection, 
+  FormField, 
+  StatusBadge 
+} from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
@@ -111,39 +119,44 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
           <Button
             onClick={onCreateSkuAutoIncrementSequence}
             disabled={patternActionsPending}
-            className='border border-cyan-500/40 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20'
+            variant='outline'
+            className='border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10'
           >
             + SKU Auto Sequence
           </Button>
           <Button
             onClick={onCreateLatestPriceStockSequence}
             disabled={patternActionsPending}
-            className='border border-emerald-500/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20'
+            variant='outline'
+            className='border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
           >
             + Latest Price & Stock
           </Button>
           <Button
             onClick={onCreateNameLengthMirrorPattern}
             disabled={patternActionsPending}
-            className='border border-teal-500/40 bg-teal-500/10 text-teal-100 hover:bg-teal-500/20'
+            variant='outline'
+            className='border-teal-500/40 text-teal-200 hover:bg-teal-500/10'
           >
             + Name Segment to Length + Height
           </Button>
           <Button
             onClick={onCreateNameCategoryMirrorPattern}
             disabled={patternActionsPending}
-            className='border border-lime-500/40 bg-lime-500/10 text-lime-100 hover:bg-lime-500/20'
+            variant='outline'
+            className='border-lime-500/40 text-lime-200 hover:bg-lime-500/10'
           >
             + Name Segment to Category
           </Button>
           <Button
             onClick={onCreateNameMirrorPolishSequence}
             disabled={patternActionsPending}
-            className='border border-indigo-500/40 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20'
+            variant='outline'
+            className='border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
           >
             + Name EN to PL
           </Button>
-          <Button onClick={openCreate} className='bg-white text-gray-900 hover:bg-gray-200'>
+          <Button onClick={openCreate} variant='default'>
             <Plus className='mr-2 size-4' />
             Add Pattern
           </Button>
@@ -184,7 +197,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                       title='Sequence / Group'
                       description={`${group.patternIds.length} pattern${group.patternIds.length === 1 ? '' : 's'}`}
                       variant='subtle-compact'
-                      className='border border-cyan-500/35 bg-cyan-500/8 p-3'
+                      className='border-cyan-500/35 bg-cyan-500/5 p-3'
                     >
                       <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto_auto]'>
                         <FormField label='Group Label'>
@@ -237,7 +250,9 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                           <Button
                             type='button'
                             disabled={patternActionsPending}
-                            className='h-8 rounded bg-slate-800 px-3 text-xs text-slate-100 hover:bg-slate-700'
+                            variant='outline'
+                            size='sm'
+                            className='h-8'
                             onClick={() => onSaveSequenceGroup(group.id)}
                           >
                             Save Group
@@ -247,7 +262,9 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                           <Button
                             type='button'
                             disabled={patternActionsPending}
-                            className='h-8 rounded border border-amber-500/45 bg-amber-500/15 px-3 text-xs text-amber-100 hover:bg-amber-500/25'
+                            variant='outline'
+                            size='sm'
+                            className='h-8 border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
                             onClick={() => onUngroup(group.id)}
                           >
                             Ungroup
@@ -312,23 +329,23 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                               <GripVertical className='size-3.5' />
                             </button>
                             <span className='truncate text-sm font-medium text-white'>{pattern.label}</span>
-                            <span className='rounded border border-blue-500/40 bg-blue-500/10 px-2 py-0.5 text-[10px] uppercase text-blue-200'>
-                              {pattern.target}
-                            </span>
-                            <span className='rounded border border-indigo-500/40 bg-indigo-500/10 px-2 py-0.5 text-[10px] uppercase text-indigo-200'>
-                              {pattern.target === 'name' || pattern.target === 'description'
-                                ? pattern.locale || 'any locale'
-                                : 'n/a'}
-                            </span>
-                            <span
-                              className={`rounded border px-2 py-0.5 text-[10px] uppercase ${
-                                pattern.severity === 'warning'
-                                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-200'
-                                  : 'border-red-500/40 bg-red-500/10 text-red-200'
-                              }`}
-                            >
-                              {pattern.severity}
-                            </span>
+                            <StatusBadge status={pattern.target} variant='info' size='sm' className='font-medium' />
+                            <StatusBadge
+                              status={
+                                pattern.target === 'name' || pattern.target === 'description'
+                                  ? pattern.locale || 'any locale'
+                                  : 'n/a'
+                              }
+                              variant='processing'
+                              size='sm'
+                              className='font-medium'
+                            />
+                            <StatusBadge
+                              status={pattern.severity}
+                              variant={pattern.severity === 'warning' ? 'warning' : 'error'}
+                              size='sm'
+                              className='font-bold'
+                            />
                           </div>
                           <div className='mt-1 truncate font-mono text-xs text-gray-300'>
                           /{pattern.regex}/{pattern.flags ?? ''}
@@ -425,27 +442,33 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                           <Button
                             type='button'
                             onClick={() => onDuplicatePattern(pattern)}
-                            className='rounded bg-slate-800 px-2 py-1 text-xs text-slate-100 hover:bg-slate-700'
+                            variant='outline'
+                            size='xs'
                             title='Duplicate pattern'
                             disabled={createPatternPending || reorderPending}
+                            className='h-7 w-7 p-0'
                           >
                             <Copy className='size-3' />
                           </Button>
                           <Button
                             type='button'
                             onClick={() => onEditPattern(pattern)}
-                            className='rounded bg-gray-800 px-2 py-1 text-xs text-gray-100 hover:bg-gray-700'
+                            variant='outline'
+                            size='xs'
                             title='Edit pattern'
                             disabled={reorderPending}
+                            className='h-7 w-7 p-0'
                           >
                             <Pencil className='size-3' />
                           </Button>
                           <Button
                             type='button'
                             onClick={() => onDeletePattern(pattern)}
-                            className='rounded bg-red-600/80 px-2 py-1 text-xs text-white hover:bg-red-600'
+                            variant='destructive'
+                            size='xs'
                             title='Delete pattern'
                             disabled={reorderPending}
+                            className='h-7 w-7 p-0'
                           >
                             <Trash2 className='size-3' />
                           </Button>

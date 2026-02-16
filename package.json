@@ -17,6 +17,7 @@
     "cleanup:cms-blocks": "tsx scripts/db/drop-cms-blocks.ts",
     "cleanup:category-mapping-duplicates": "tsx scripts/cleanup/reconcile-category-mapping-duplicates.ts",
     "check:api-error-sources": "tsx scripts/debug/check-api-error-sources.ts",
+    "check:factory-meta": "node scripts/query/check-factory-meta.cjs",
     "auth:indexes": "tsx scripts/db/ensure-auth-indexes.ts",
     "debug": "tsx scripts/debug/debug-script.ts",
     "test": "vitest",

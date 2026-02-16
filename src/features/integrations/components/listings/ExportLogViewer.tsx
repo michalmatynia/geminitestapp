@@ -3,7 +3,7 @@
 import { ChevronDown, Copy, Check } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { Button } from '@/shared/ui';
+import { Button, Alert } from '@/shared/ui';
 
 interface ExportLog {
   timestamp: string;
@@ -177,36 +177,36 @@ export function ExportLogViewer({
           )}
           <div className='space-y-2 font-mono text-xs'>
             {logs.map((log: ExportLog, index: number) => {
-              const bgColor =
+              const variant =
                 log.level === 'error'
-                  ? 'bg-red-900/10 text-red-300'
+                  ? 'error'
                   : log.level === 'warn'
-                    ? 'bg-yellow-900/10 text-yellow-300'
-                    : 'bg-gray-800/30 text-gray-300';
+                    ? 'warning'
+                    : 'info';
 
               return (
-                <div key={index} className={`p-2 rounded ${bgColor}`}>
+                <Alert key={index} variant={variant} className='p-2 font-mono text-[11px] border-none bg-card/40'>
                   <div className='flex justify-between items-start gap-2'>
                     <div className='flex-1'>
-                      <div className='text-gray-500'>
-                        [{log.timestamp}] <span className='font-semibold'>[{log.level.toUpperCase()}]</span>
+                      <div className='text-gray-500 opacity-70'>
+                        [{log.timestamp}] <span className='font-bold'>[{log.level.toUpperCase()}]</span>
                       </div>
-                      <div className='mt-1 break-words whitespace-pre-wrap'>
+                      <div className='mt-1 break-words whitespace-pre-wrap text-gray-200'>
                         {log.message}
                       </div>
                       {log.context && (
-                        <details className='mt-2 text-gray-400 cursor-pointer'>
+                        <details className='mt-2 text-gray-400 cursor-pointer opacity-80'>
                           <summary className='hover:text-gray-300 transition'>
                             Context Details
                           </summary>
-                          <pre className='mt-2 p-2 bg-card/50 rounded text-[11px] overflow-x-auto'>
+                          <pre className='mt-2 p-2 bg-black/40 rounded text-[10px] overflow-x-auto text-gray-300'>
                             {JSON.stringify(log.context, null, 2)}
                           </pre>
                         </details>
                       )}
                     </div>
                   </div>
-                </div>
+                </Alert>
               );
             })}
           </div>

@@ -260,9 +260,84 @@ module.exports = tseslint.config(
   },
   {
     files: [
+      'src/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-imports': ['error', {
+        'paths': [
+          {
+            'name': '@/shared/lib/api-hooks',
+            'message': 'Use explicit v2 factories from "@/shared/lib/query-factories-v2".',
+          },
+          {
+            'name': '@/shared/lib/mutation-factories',
+            'message': 'Use explicit v2 mutation factories from "@/shared/lib/query-factories-v2".',
+          },
+          {
+            'name': '@/shared/lib/query-factories',
+            'message': 'Use explicit v2 factories from "@/shared/lib/query-factories-v2".',
+          },
+          {
+            'name': '@/shared/lib/tanstack-factory-meta-inference',
+            'message': 'Define explicit v2 `meta` at call sites instead of using legacy inference.',
+          },
+          {
+            'name': '@/shared/lib/query-factories-v2',
+            'importNames': [
+              'createListQuery',
+              'createSingleQuery',
+              'createMutation',
+              'createCreateMutation',
+              'createUpdateMutation',
+              'createDeleteMutation',
+            ],
+            'message': 'Use explicit V2 factory exports (e.g. createListQueryV2/createMutationV2).',
+          },
+        ],
+      }],
+    },
+  },
+  {
+    files: [
       'src/features/**/*.{ts,tsx}',
     ],
     rules: {
+      'no-restricted-imports': ['error', {
+        'paths': [
+          {
+            'name': '@/shared/lib/api-hooks',
+            'message': 'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
+          },
+          {
+            'name': '@/shared/lib/mutation-factories',
+            'message': 'Use explicit v2 mutation factories from "@/shared/lib/query-factories-v2" in feature code.',
+          },
+          {
+            'name': '@/shared/lib/query-factories',
+            'message': 'Use explicit v2 factories from "@/shared/lib/query-factories-v2" in feature code.',
+          },
+          {
+            'name': '@/shared/lib/tanstack-factory-meta-inference',
+            'message': 'Define explicit v2 `meta` at call sites instead of using legacy inference.',
+          },
+          {
+            'name': '@/shared/lib/query-factories-v2',
+            'importNames': [
+              'createListQuery',
+              'createSingleQuery',
+              'createMutation',
+              'createCreateMutation',
+              'createUpdateMutation',
+              'createDeleteMutation',
+            ],
+            'message': 'Use explicit V2 factory exports (e.g. createListQueryV2/createMutationV2).',
+          },
+        ],
+        'patterns': [{
+          'group': ['use client', 'use server'],
+          'message': 'Prefer module-level directives over restricted imports.'
+        }]
+      }],
       'no-restricted-syntax': [
         'error',
         {

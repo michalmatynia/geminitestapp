@@ -10,7 +10,7 @@ import {
 import {
   Button,
   DataTable,
-  Badge
+  StatusBadge
 } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -126,9 +126,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       cell: ({ row }) => (
         <div className='flex flex-wrap gap-1'>
           {row.original.locations.map((loc: string, idx: number) => (
-            <Badge key={idx} variant='outline' className='text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/20'>
-              {loc}
-            </Badge>
+            <StatusBadge key={idx} status={loc} variant='info' size='sm' className='font-bold' />
           ))}
         </div>
       ),
@@ -136,7 +134,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     {
       accessorKey: 'mode',
       header: 'Mode',
-      cell: ({ row }) => <Badge variant='secondary' className='text-[10px]'>{row.original.mode}</Badge>,
+      cell: ({ row }) => <StatusBadge status={row.original.mode} variant='neutral' size='sm' />,
     },
     {
       id: 'display',

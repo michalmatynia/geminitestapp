@@ -1,0 +1,4 @@
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+⨯ Unable to acquire lock at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.next/lock, is another instance of next build running?

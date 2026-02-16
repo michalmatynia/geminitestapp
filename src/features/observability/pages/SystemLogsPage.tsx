@@ -100,9 +100,9 @@ function LogTriagePresets({
                   <span className='block text-xs font-semibold text-gray-100'>{preset.label}</span>
                   <span className='block text-[11px] text-gray-400'>{preset.description}</span>
                   {isActive ? (
-                    <span className='mt-1 inline-flex rounded border border-emerald-400/50 px-1.5 py-0.5 text-[10px] text-emerald-200'>
-                      Active
-                    </span>
+                    <div className='mt-1'>
+                      <StatusBadge status='Active' variant='success' size='sm' className='font-bold h-4' />
+                    </div>
                   ) : null}
                 </span>
               </span>
@@ -126,7 +126,9 @@ function LogDiagnostics(): React.JSX.Element {
     {
       accessorKey: 'name',
       header: 'Collection',
-      cell: ({ row }: { row: Row<MongoCollectionIndexStatus> }) => <span className='font-mono text-xs text-emerald-200'>{row.original.name}</span>,
+      cell: ({ row }: { row: Row<MongoCollectionIndexStatus> }) => (
+        <StatusBadge status={row.original.name} variant='success' size='sm' className='font-mono' />
+      ),
     },
     {
       accessorKey: 'expected',
@@ -138,15 +140,13 @@ function LogDiagnostics(): React.JSX.Element {
       header: 'Missing',
       cell: ({ row }: { row: Row<MongoCollectionIndexStatus> }) => {
         const missingCount = row.original.missing.length;
-        if (row.original.error) return <span className='text-rose-400 text-[10px]'>{row.original.error}</span>;
+        if (row.original.error) return <StatusBadge status={row.original.error} variant='error' size='sm' />;
         if (missingCount === 0) return <span className='text-gray-600'>0</span>;
         return (
-          <div className='flex flex-wrap gap-1'>
+          <div className='flex flex-wrap items-center gap-1'>
             <span className='text-amber-400 font-bold mr-2'>{missingCount}</span>
             {row.original.missing.map((m: MongoIndexInfo, i: number) => (
-              <Badge key={i} variant='outline' className='text-[9px] bg-amber-500/5 text-amber-300 border-amber-500/20'>
-                {JSON.stringify(m.key)}
-              </Badge>
+              <StatusBadge key={i} status={JSON.stringify(m.key)} variant='warning' size='sm' className='font-mono text-[9px]' />
             ))}
           </div>
         );
@@ -239,7 +239,7 @@ function LogMetrics(): React.JSX.Element {
             <div className='max-h-[100px] overflow-y-auto pr-2 space-y-1'>
               {metrics.topSources.map((item) => (
                 <div key={item.source} className='flex items-center justify-between text-[11px] bg-white/5 px-2 py-1 rounded'>
-                  <span className='truncate text-gray-300 font-mono'>{item.source}</span>
+                  <StatusBadge status={item.source} variant='neutral' size='sm' className='font-mono h-4' />
                   <span className='text-gray-500'>{item.count}</span>
                 </div>
               ))}
@@ -346,11 +346,15 @@ function LogList(): React.JSX.Element {
         <div className='flex flex-col gap-1 max-w-[500px]'>
           <span className='text-sm text-gray-200 font-medium truncate' title={row.original.message}>{row.original.message}</span>
           {(row.original.path || row.original.method) && (
-            <span className='text-[10px] text-gray-500 font-mono'>
-              {row.original.method && <span className='text-sky-400 mr-1'>{row.original.method}</span>}
-              {row.original.path}
-              {row.original.statusCode && <span className='ml-2 text-amber-400'>• {row.original.statusCode}</span>}
-            </span>
+            <div className='flex items-center gap-2'>
+              <span className='text-[10px] text-gray-500 font-mono'>
+                {row.original.method && <span className='text-sky-400 mr-1'>{row.original.method}</span>}
+                {row.original.path}
+              </span>
+              {row.original.statusCode && (
+                <StatusBadge status={String(row.original.statusCode)} variant={row.original.statusCode >= 400 ? 'error' : 'success'} size='sm' className='font-bold h-4' />
+              )}
+            </div>
           )}
         </div>
       ),
@@ -358,7 +362,7 @@ function LogList(): React.JSX.Element {
     {
       accessorKey: 'source',
       header: 'Source',
-      cell: ({ row }) => <Badge variant='outline' className='text-[9px] font-mono text-gray-400 uppercase'>{row.original.source || 'system'}</Badge>,
+      cell: ({ row }) => <StatusBadge status={row.original.source || 'system'} variant='neutral' size='sm' className='font-mono uppercase' />,
     },
     {
       id: 'actions',

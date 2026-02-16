@@ -8,6 +8,7 @@ import {
   SelectSimple,
   SectionHeader,
   PanelStats,
+  StatusBadge,
 } from '@/shared/ui';
 
 import { useImageStudioRuns, type ImageStudioRunRecord, type ImageStudioRunStatus } from '../hooks/useImageStudioRuns';
@@ -27,18 +28,6 @@ const toDateLabel = (value: string | null): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleString();
-};
-
-const getStatusClassName = (status: ImageStudioRunStatus): string => {
-  if (status === 'running') return 'border-sky-500/40 bg-sky-500/10 text-sky-200';
-  if (status === 'queued') return 'border-amber-500/40 bg-amber-500/10 text-amber-200';
-  if (status === 'completed') return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
-  return 'border-rose-500/40 bg-rose-500/10 text-rose-200';
-};
-
-const getDispatchModeClassName = (dispatchMode: ImageStudioRunRecord['dispatchMode']): string => {
-  if (dispatchMode === 'inline') return 'border-rose-500/40 bg-rose-500/10 text-rose-200';
-  return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
 };
 
 export function ImageStudioRunsQueuePanel(): React.JSX.Element {
@@ -68,18 +57,28 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => (
-        <span className={`inline-flex rounded-full border px-2 py-[1px] text-[10px] ${getStatusClassName(row.original.status)}`}>
-          {row.original.status}
-        </span>
+        <StatusBadge 
+          status={row.original.status} 
+          variant={
+            row.original.status === 'running' ? 'processing' :
+            row.original.status === 'queued' ? 'warning' :
+            row.original.status === 'completed' ? 'success' : 'error'
+          }
+          size='sm'
+          className='font-bold'
+        />
       ),
     },
     {
       accessorKey: 'dispatchMode',
       header: 'Runtime',
       cell: ({ row }) => (
-        <span className={`inline-flex rounded-full border px-2 py-[1px] text-[10px] ${getDispatchModeClassName(row.original.dispatchMode)}`}>
-          {row.original.dispatchMode === 'inline' ? 'Inline' : 'Redis'}
-        </span>
+        <StatusBadge
+          status={row.original.dispatchMode === 'inline' ? 'Inline' : 'Redis'}
+          variant={row.original.dispatchMode === 'inline' ? 'error' : 'success'}
+          size='sm'
+          className='font-medium'
+        />
       ),
     },
     {

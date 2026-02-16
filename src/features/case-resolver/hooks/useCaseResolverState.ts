@@ -1,15 +1,13 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,
-  resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
-import type { FilemakerDatabase, FilemakerEntityKind } from '@/features/filemaker/types';
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
 import {
   consumePromptExploderApplyPromptForCaseResolver,
@@ -19,148 +17,44 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
 import {
-  normalizeCaseResolverComparable,
-} from '../party-matching';
-import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   extractCaseResolverDocumentDate,
   parseCaseResolverCategories,
   parseCaseResolverTags,
-  createCaseResolverAssetFile,
   createCaseResolverFile,
   normalizeCaseResolverWorkspace,
   normalizeFolderPath,
   normalizeFolderPaths,
   parseCaseResolverWorkspace,
-  renameFolderPath,
 } from '../settings';
 
 import type {
   CaseResolverAssetFile,
   CaseResolverCategory,
-  CaseResolverDocumentVersion,
   CaseResolverFile,
   CaseResolverFileEditDraft,
-  CaseResolverGraph,
-  CaseResolverPartyReference,
-  CaseResolverScanSlot,
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '../types';
 
+import { 
+  createId, 
+  isPathWithinFolder, 
+  createUniqueFolderPath, 
+  promptForName, 
+  buildFileEditDraft,
+  buildPromptExploderPartyProposalState,
+  type CaseResolverPromptExploderPartyProposalState
+} from '../utils/caseResolverUtils';
+
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
-
-const createId = (prefix: string): string => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
-};
-
-const isPathWithinFolder = (candidatePath: string, folderPath: string): boolean => (
-  candidatePath === folderPath || candidatePath.startsWith(`${folderPath}/`)
-);
-
-const createUniqueFolderPath = (existingFolders: string[], targetFolderPath: string | null): string => {
-  const parent = normalizeFolderPath(targetFolderPath ?? '');
-  const existing = new Set(existingFolders.map((folder: string) => normalizeFolderPath(folder)));
-  const baseName = 'new-folder';
-
-  let index = 1;
-  while (index < 10000) {
-    const candidateName = index === 1 ? baseName : `${baseName}-${index}`;
-    const candidatePath = normalizeFolderPath(parent ? `${parent}/${candidateName}` : candidateName);
-    if (candidatePath && !existing.has(candidatePath)) {
-      return candidatePath;
-    }
-    index += 1;
-  }
-
-  return normalizeFolderPath(parent ? `${parent}/${baseName}-${Date.now()}` : `${baseName}-${Date.now()}`);
-};
-
-const promptForName = (label: string, fallback: string): string | null => {
-  const result = window.prompt(label, fallback);
-  if (!result) return null;
-  const normalized = result.trim();
-  if (!normalized) return null;
-  return normalized;
-};
-
-const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEditDraft => {
-  const originalDocumentContent = file.originalDocumentContent ?? file.documentContent;
-  const explodedDocumentContent = file.explodedDocumentContent ?? '';
-  const requestedVersion: CaseResolverDocumentVersion = file.activeDocumentVersion === 'exploded'
-    ? 'exploded'
-    : 'original';
-  const activeDocumentVersion: CaseResolverDocumentVersion =
-    requestedVersion === 'exploded' && explodedDocumentContent.trim().length === 0
-      ? 'original'
-      : requestedVersion;
-  return {
-    id: file.id,
-    fileType: file.fileType,
-    name: file.name,
-    folder: file.folder,
-    parentCaseId: file.parentCaseId,
-    referenceCaseIds: file.referenceCaseIds,
-    createdAt: file.createdAt,
-    updatedAt: file.updatedAt,
-    documentDate: file.documentDate,
-    originalDocumentContent,
-    explodedDocumentContent,
-    activeDocumentVersion,
-    documentContent: activeDocumentVersion === 'exploded' && explodedDocumentContent.trim().length > 0
-      ? explodedDocumentContent
-      : originalDocumentContent,
-    scanSlots: file.scanSlots,
-    addresser: file.addresser,
-    addressee: file.addressee,
-    tagId: file.tagId,
-    categoryId: file.categoryId,
-  };
-};
-
-const removeLinkedDocumentFileId = (
-  graph: CaseResolverGraph,
-  fileId: string
-): CaseResolverGraph => {
-  const source = graph.documentFileLinksByNode ?? {};
-  const sourceByNode = graph.documentSourceFileIdByNode ?? {};
-  let changed = false;
-  const nextLinks: Record<string, string[]> = {};
-  const nextSourceByNode: Record<string, string> = {};
-
-  Object.entries(source).forEach(([nodeId, links]: [string, string[]]) => {
-    const filtered = links.filter((linkedFileId: string) => linkedFileId !== fileId);
-    if (filtered.length !== links.length) changed = true;
-    nextLinks[nodeId] = filtered;
-  });
-
-  Object.entries(sourceByNode).forEach(([nodeId, linkedFileId]: [string, string]) => {
-    if (linkedFileId === fileId) {
-      changed = true;
-      return;
-    }
-    nextSourceByNode[nodeId] = linkedFileId;
-  });
-
-  if (!changed) return graph;
-
-  return {
-    ...graph,
-    documentFileLinksByNode: nextLinks,
-    documentSourceFileIdByNode: nextSourceByNode,
-  };
-};
 
 /**
  * Custom hook to manage the complex state and logic of the Case Resolver page.
  */
 export function useCaseResolverState() {
-  const router = useRouter();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
@@ -205,7 +99,10 @@ export function useCaseResolverState() {
   const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
   const [isUploadingScanDraftFiles, setIsUploadingScanDraftFiles] = useState(false);
   const [uploadingScanSlotId, setUploadingScanSlotId] = useState<string | null>(null);
-  const [hasHandledRequestedEditorOpen, setHasHandledRequestedEditorOpen] = useState(false);
+
+  const [promptExploderPartyProposal, setPromptExploderPartyProposal] = useState<CaseResolverPromptExploderPartyProposalState | null>(null);
+  const [isPromptExploderPartyProposalOpen, setIsPromptExploderPartyProposalOpen] = useState(false);
+  const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposal] = useState(false);
 
   const defaultTagId = caseResolverTags[0]?.id ?? null;
   const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
@@ -418,6 +315,47 @@ export function useCaseResolverState() {
     setEditingDocumentDraft(null);
   }, [editingDocumentDraft, updateWorkspace]);
 
+  // Prompt Exploder sync
+  useEffect(() => {
+    const payload = consumePromptExploderApplyPromptForCaseResolver();
+    if (!payload?.prompt?.trim()) return;
+
+    const targetFileId = payload.caseResolverContext?.fileId ?? workspace.activeFileId ?? null;
+    if (!targetFileId) return;
+
+    const nextExplodedContent = payload.prompt;
+    const extractedDocumentDate = extractCaseResolverDocumentDate(nextExplodedContent);
+    const now = new Date().toISOString();
+
+    updateWorkspace((current) => ({
+      ...current,
+      activeFileId: targetFileId,
+      files: current.files.map((file) => {
+        if (file.id !== targetFileId) return file;
+        return {
+          ...file,
+          originalDocumentContent: file.originalDocumentContent ?? file.documentContent,
+          explodedDocumentContent: nextExplodedContent,
+          activeDocumentVersion: 'exploded',
+          documentContent: nextExplodedContent,
+          documentDate: extractedDocumentDate ?? file.documentDate,
+          updatedAt: now,
+        };
+      }),
+    }));
+
+    const proposalState = buildPromptExploderPartyProposalState(
+      payload.caseResolverParties,
+      targetFileId,
+      filemakerDatabase
+    );
+    if (proposalState) {
+      setPromptExploderPartyProposal(proposalState);
+      setIsPromptExploderPartyProposalOpen(true);
+    }
+    toast('Exploded text returned to Case Resolver.', { variant: 'success' });
+  }, [filemakerDatabase, toast, workspace.activeFileId, updateWorkspace]);
+
   return {
     workspace,
     setWorkspace,
@@ -461,5 +399,11 @@ export function useCaseResolverState() {
     selectedAsset,
     handleUpdateActiveFileParties,
     handleSaveFileEditor,
+    promptExploderPartyProposal,
+    setPromptExploderPartyProposal,
+    isPromptExploderPartyProposalOpen,
+    setIsPromptExploderPartyProposalOpen,
+    isApplyingPromptExploderPartyProposal,
+    setIsApplyingPromptExploderPartyProposal
   };
 }

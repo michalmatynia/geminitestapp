@@ -4,7 +4,6 @@ import { useQueryClient, type MutationFunctionContext, type QueryKey, type UseMu
 import { useCallback } from 'react';
 
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
-import { inferLegacyFactoryMeta } from '@/shared/lib/tanstack-factory-meta-inference';
 
 interface OptimisticUpdateConfig<TData, TVariables> {
   queryKey: readonly unknown[];
@@ -22,12 +21,15 @@ export function useOptimisticMutation<TData, TError, TVariables, TCacheData = TD
 
   return createMutationV2<TData, TVariables, { previousData: TCacheData | undefined }>({
     mutationKey,
-    meta: inferLegacyFactoryMeta({
-      key: mutationKey,
+    meta: {
+      mutationKey,
       operation: 'update',
       source: 'shared.hooks.useOptimisticMutation',
-      kind: 'mutation',
-    }),
+      resource: 'optimistic-mutation',
+      domain: 'global',
+      samplingRate: 0.4,
+      tags: ['shared-hook', 'optimistic'],
+    },
     mutationFn,
     onMutate: async (variables: TVariables): Promise<{ previousData: TCacheData | undefined }> => {
       // Cancel outgoing refetches

@@ -8,7 +8,7 @@ import type {
   AiPathRunRecord,
 } from '@/features/ai/ai-paths/lib';
 import { formatDurationMs } from '@/features/ai/ai-paths/lib';
-import { Button, Tooltip } from '@/shared/ui';
+import { Button, Tooltip, StatusBadge, Alert, type StatusVariant } from '@/shared/ui';
 
 
 type TimelineItem = {
@@ -34,23 +34,23 @@ type NodeDurationRow = {
 const STATUS_SORT_STORAGE_KEY = 'ai-paths-run-timeline-status-sort';
 const FILTERS_STORAGE_KEY = 'ai-paths-run-timeline-filters';
 
-const statusBadgeStyles: Record<string, string> = {
-  queued: 'border-slate-500/40 bg-slate-500/10 text-slate-200',
-  running: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
-  paused: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-  completed: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200',
-  failed: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
-  canceled: 'border-orange-500/40 bg-orange-500/10 text-orange-200',
-  dead_lettered: 'border-purple-500/40 bg-purple-500/10 text-purple-200',
-  pending: 'border-slate-500/40 bg-slate-500/10 text-slate-200',
-  skipped: 'border-zinc-500/40 bg-zinc-500/10 text-zinc-200',
-  blocked: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
+const statusToVariant = (status: string | null | undefined): StatusVariant => {
+  const s = status?.toLowerCase() || '';
+  if (s === 'completed' || s === 'cached' || s === 'success') return 'success';
+  if (s === 'failed' || s === 'canceled' || s === 'timeout' || s === 'error') return 'error';
+  if (s === 'queued' || s === 'pending' || s === 'blocked') return 'warning';
+  if (s === 'running' || s === 'paused' || s === 'polling' || s === 'waiting_callback' || s === 'advance_pending' || s === 'processing') {
+    return 'processing';
+  }
+  return 'neutral';
 };
 
-const levelBadgeStyles: Record<string, string> = {
-  info: 'border-sky-500/40 bg-sky-500/10 text-sky-200',
-  warning: 'border-amber-500/40 bg-amber-500/10 text-amber-200',
-  error: 'border-rose-500/40 bg-rose-500/10 text-rose-200',
+const levelToVariant = (level: string): StatusVariant => {
+  const l = level.toLowerCase();
+  if (l === 'error') return 'error';
+  if (l === 'warning') return 'warning';
+  if (l === 'info') return 'info';
+  return 'neutral';
 };
 
 const toDate = (value?: Date | string | null): Date | null => {
@@ -175,7 +175,6 @@ export function RunTimeline({
   nodes,
   events,
   eventsOverflow,
-  eventsBatchLimit,
 }: {
   run: AiPathRunRecord;
   nodes: AiPathRunNodeRecord[];
@@ -372,9 +371,7 @@ export function RunTimeline({
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div className='text-[11px] uppercase text-gray-500'>Filters</div>
         <div className='flex flex-wrap items-center gap-2'>
-          <span className='rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200'>
-            Persisted
-          </span>
+          <StatusBadge status='Persisted' variant='success' size='sm' className='font-bold' />
           <Button
             type='button'
             className='rounded-md border px-2 py-1 text-[10px] text-gray-300 hover:bg-muted/60'
@@ -483,9 +480,6 @@ export function RunTimeline({
               </div>
               <div className='flex flex-wrap gap-2'>
                 {sortedDurationByStatus.map((bucket: { status: string; count: number; timedCount: number; totalMs: number; averageMs: number | null; min: NodeDurationRow | null; max: NodeDurationRow | null }): React.JSX.Element => {
-                  const badgeClass =
-                    statusBadgeStyles[bucket.status] ??
-                    'border-border bg-card/40 text-gray-200';
                   const tooltipContent =
                     bucket.min || bucket.max
                       ? [
@@ -506,9 +500,12 @@ export function RunTimeline({
                       key={bucket.status}
                       className='flex items-center gap-2 rounded-full border border-border/60 bg-black/30 px-3 py-1'
                     >
-                      <span className={`rounded-full border px-2 py-0.5 ${badgeClass}`}>
-                        {bucket.status}
-                      </span>
+                      <StatusBadge
+                        status={bucket.status}
+                        variant={statusToVariant(bucket.status)}
+                        size='sm'
+                        className='font-bold'
+                      />
                       <span>
                         Avg {formatDurationMs(bucket.averageMs) ?? '—'}
                       </span>
@@ -544,9 +541,6 @@ export function RunTimeline({
           ) : (
             <div className='mt-2 max-h-[200px] overflow-auto space-y-2'>
               {nodeDurationRows.map((row: NodeDurationRow): React.JSX.Element => {
-                const badgeClass =
-                  statusBadgeStyles[row.status ?? ''] ??
-                  'border-border bg-card/40 text-gray-200';
                 return (
                   <div
                     key={row.id}
@@ -556,9 +550,12 @@ export function RunTimeline({
                       {row.label}
                     </div>
                     <div className='flex items-center gap-2 text-[11px] text-gray-400'>
-                      <span className={`rounded-full border px-2 py-0.5 ${badgeClass}`}>
-                        {row.status ?? 'unknown'}
-                      </span>
+                      <StatusBadge
+                        status={row.status ?? 'unknown'}
+                        variant={statusToVariant(row.status)}
+                        size='sm'
+                        className='font-medium'
+                      />
                       <span>{row.durationLabel ?? '—'}</span>
                     </div>
                   </div>
@@ -584,9 +581,6 @@ export function RunTimeline({
           <div className='mt-3 max-h-[320px] overflow-auto rounded-md border border-border bg-black/20 p-4'>
             <div className='relative border-l border-border/60 pl-4'>
               {filteredTimelineItems.map((item: TimelineItem, index: number): React.JSX.Element => {
-                const badgeClass =
-                  statusBadgeStyles[item.status ?? ''] ??
-                  'border-border bg-card/40 text-gray-200';
                 return (
                   <div key={`${item.id}-${index}`} className='relative pb-4'>
                     <div className='absolute -left-[7px] top-2 h-2.5 w-2.5 rounded-full bg-gray-400' />
@@ -594,9 +588,12 @@ export function RunTimeline({
                       <span className='text-[11px] text-gray-500'>
                         {item.timestamp.toLocaleString()}
                       </span>
-                      <span className={`rounded-full border px-2 py-0.5 text-[11px] ${badgeClass}`}>
-                        {item.status ?? item.kind}
-                      </span>
+                      <StatusBadge
+                        status={item.status ?? item.kind}
+                        variant={statusToVariant(item.status ?? item.kind)}
+                        size='sm'
+                        className='font-medium'
+                      />
                       <span className='text-[11px] uppercase text-gray-500'>
                         {item.kind}
                       </span>
@@ -606,9 +603,9 @@ export function RunTimeline({
                       <div className='text-xs text-gray-400'>{item.description}</div>
                     ) : null}
                     {item.meta ? (
-                      <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200'>
+                      <Alert variant='error' className='mt-2 px-2 py-1 text-[11px]'>
                         {item.meta}
-                      </div>
+                      </Alert>
                     ) : null}
                   </div>
                 );
@@ -623,9 +620,12 @@ export function RunTimeline({
           <div className='flex items-center gap-2'>
             <div className='text-[11px] uppercase text-gray-500'>Logs</div>
             {eventsOverflow ? (
-              <span className='rounded border border-amber-400/50 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-200'>
-                Truncated{eventsBatchLimit ? ` (limit ${eventsBatchLimit})` : ''}
-              </span>
+              <StatusBadge
+                status={`Truncated\${eventsBatchLimit ? \` (limit \${eventsBatchLimit})\` : ''}`}
+                variant='warning'
+                size='sm'
+                className='font-bold'
+              />
             ) : null}
           </div>
           {sortedEvents.length === 0 ? (
@@ -636,17 +636,17 @@ export function RunTimeline({
             <div className='mt-3 max-h-[360px] overflow-auto rounded-md border border-border bg-black/20'>
               <div className='divide-y divide-border/70'>
                 {sortedEvents.map((event: AiPathRunEventRecord): React.JSX.Element => {
-                  const badgeClass =
-                    levelBadgeStyles[event.level] ??
-                    'border-border bg-card/40 text-gray-200';
                   const metadata = formatMetadata(event.metadata);
                   return (
                     <div key={event.id} className='p-3'>
                       <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
                         <span>{new Date(event.createdAt).toLocaleString()}</span>
-                        <span className={`rounded-full border px-2 py-0.5 text-[10px] ${badgeClass}`}>
-                          {event.level}
-                        </span>
+                        <StatusBadge
+                          status={event.level}
+                          variant={levelToVariant(event.level)}
+                          size='sm'
+                          className='font-bold'
+                        />
                       </div>
                       <div className='mt-1 text-sm text-white'>{event.message}</div>
                       {metadata ? (

@@ -1,10 +1,23 @@
 'use client';
 
-import { normalizeCaseResolverComparable, normalizeFolderPath } from '../party-matching';
+import { 
+  findExistingFilemakerPartyReference,
+  normalizeCaseResolverComparable, 
+} from '../party-matching';
+import { normalizeFolderPath } from '../settings';
+import type { FilemakerEntityKind } from '@/features/filemaker/types';
+import type {
+  PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidate,
+} from '@/features/prompt-exploder/bridge';
+
 import type { 
   CaseResolverFile, 
   CaseResolverScanSlot, 
-  CaseResolverDocumentVersion 
+  CaseResolverDocumentVersion,
+  CaseResolverTag,
+  CaseResolverPartyReference,
+  CaseResolverFileEditDraft
 } from '../types';
 
 export const createId = (prefix: string): string => {
@@ -96,9 +109,7 @@ export const buildCombinedOcrText = (slots: CaseResolverScanSlot[]): string => {
       return text;
     })
     .filter((value: string): boolean => value.length > 0);
-  return parts.join('
-
-');
+  return parts.join('\n\n');
 };
 
 const hashString32 = (value: string, seed: number): number => {
@@ -362,4 +373,226 @@ export const buildDocumentPdfMarkup = ({
     </main>
   </body>
 </html>`;
+};
+
+export const buildCaseResolverFilemakerPartySearchOptions = (
+  database: any,
+  kind: FilemakerEntityKind
+): any[] => {
+  if (kind === 'person') {
+    return (database.persons || [])
+      .map((person: any) => {
+        const label = `${person.firstName} ${person.lastName}`.trim() || person.id;
+        const details = buildFilemakerAddressLabel({
+          street: person.street || '',
+          streetNumber: person.streetNumber || '',
+          postalCode: person.postalCode || '',
+          city: person.city || '',
+          country: person.country || '',
+        });
+        return {
+          key: `person:${person.id}`,
+          reference: { kind: 'person', id: person.id } as CaseResolverPartyReference,
+          label,
+          details,
+          searchLabel: toNormalizedSearchValue(label, details, person.nip, person.regon, person.id),
+          value: encodeFilemakerPartyReference({ kind: 'person', id: person.id }),
+        };
+      })
+      .sort((left: any, right: any) => left.label.localeCompare(right.label));
+  }
+
+  return (database.organizations || [])
+    .map((organization: any) => {
+      const label = organization.name.trim() || organization.id;
+      const details = buildFilemakerAddressLabel({
+        street: organization.street || '',
+        streetNumber: organization.streetNumber || '',
+        postalCode: organization.postalCode || '',
+        city: organization.city || '',
+        country: organization.country || '',
+      });
+      return {
+        key: `organization:${organization.id}`,
+        reference: { kind: 'organization', id: organization.id } as CaseResolverPartyReference,
+        label,
+        details,
+        searchLabel: toNormalizedSearchValue(label, details, organization.id),
+        value: encodeFilemakerPartyReference({ kind: 'organization', id: organization.id }),
+      };
+    })
+    .sort((left: any, right: any) => left.label.localeCompare(right.label));
+};
+
+const encodeFilemakerPartyReference = (ref: CaseResolverPartyReference | null | undefined): string => {
+  if (!ref) return '';
+  return `${ref.kind}:${ref.id}`;
+};
+
+export const buildCaseResolverTagPickerOptions = (
+  tags: CaseResolverTag[]
+): any[] => {
+  const byId = new Map<string, CaseResolverTag>(
+    tags.map((tag: CaseResolverTag): [string, CaseResolverTag] => [tag.id, tag])
+  );
+  const cache = new Map<string, { ids: string[]; names: string[] }>();
+
+  const resolvePath = (tagId: string, trail: Set<string>): { ids: string[]; names: string[] } => {
+    const cached = cache.get(tagId);
+    if (cached) return cached;
+    const tag = byId.get(tagId);
+    if (!tag) return { ids: [], names: [] };
+    if (trail.has(tagId)) {
+      const fallback = { ids: [tag.id], names: [tag.name] };
+      cache.set(tagId, fallback);
+      return fallback;
+    }
+    if (!tag.parentId || !byId.has(tag.parentId)) {
+      const rootPath = { ids: [tag.id], names: [tag.name] };
+      cache.set(tagId, rootPath);
+      return rootPath;
+    }
+    const nextTrail = new Set(trail);
+    nextTrail.add(tagId);
+    const parentPath = resolvePath(tag.parentId, nextTrail);
+    const path = {
+      ids: [...parentPath.ids, tag.id],
+      names: [...parentPath.names, tag.name],
+    };
+    cache.set(tagId, path);
+    return path;
+  };
+
+  return tags
+    .map((tag: CaseResolverTag): any => {
+      const path = resolvePath(tag.id, new Set<string>());
+      const label = path.names.join(' / ');
+      return {
+        id: tag.id,
+        label,
+        pathIds: path.ids,
+        pathNames: path.names,
+        searchLabel: label.toLowerCase(),
+      };
+    })
+    .sort((left: any, right: any) =>
+      left.label.localeCompare(right.label)
+    );
+};
+
+export const promptForName = (label: string, fallback: string): string | null => {
+  const result = window.prompt(label, fallback);
+  if (!result) return null;
+  const normalized = result.trim();
+  if (!normalized) return null;
+  return normalized;
+};
+
+export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEditDraft => {
+  const originalDocumentContent = file.originalDocumentContent ?? file.documentContent;
+  const explodedDocumentContent = file.explodedDocumentContent ?? '';
+  const requestedVersion: CaseResolverDocumentVersion = file.activeDocumentVersion === 'exploded'
+    ? 'exploded'
+    : 'original';
+  const activeDocumentVersion: CaseResolverDocumentVersion =
+    requestedVersion === 'exploded' && explodedDocumentContent.trim().length === 0
+      ? 'original'
+      : requestedVersion;
+  return {
+    id: file.id,
+    fileType: file.fileType,
+    name: file.name,
+    folder: file.folder,
+    parentCaseId: file.parentCaseId,
+    referenceCaseIds: file.referenceCaseIds,
+    createdAt: file.createdAt,
+    updatedAt: file.updatedAt,
+    documentDate: file.documentDate,
+    originalDocumentContent,
+    explodedDocumentContent,
+    activeDocumentVersion,
+    documentContent: activeDocumentVersion === 'exploded' && explodedDocumentContent.trim().length > 0
+      ? explodedDocumentContent
+      : originalDocumentContent,
+    scanSlots: file.scanSlots,
+    addresser: file.addresser,
+    addressee: file.addressee,
+    tagId: file.tagId,
+    categoryId: file.categoryId,
+  };
+};
+
+export type CaseResolverPromptExploderPartyAction = 'database' | 'text' | 'ignore';
+
+export type CaseResolverPromptExploderPartyProposal = {
+  role: 'addresser' | 'addressee';
+  candidate: PromptExploderCaseResolverPartyCandidate;
+  existingReference: CaseResolverPartyReference | null;
+  action: CaseResolverPromptExploderPartyAction;
+};
+
+export type CaseResolverPromptExploderPartyProposalState = {
+  targetFileId: string;
+  addresser: CaseResolverPromptExploderPartyProposal | null;
+  addressee: CaseResolverPromptExploderPartyProposal | null;
+};
+
+const inferCandidateRoleFromLabels = (
+  candidate: PromptExploderCaseResolverPartyCandidate
+): 'addresser' | 'addressee' | null => {
+  const PROMPT_EXPLODER_ADDRESSER_LABEL_HINTS = ['addresser', 'nadawca', 'sender', 'wnioskodawca'];
+  const PROMPT_EXPLODER_ADDRESSEE_LABEL_HINTS = ['addressee', 'adresat', 'recipient', 'odbiorca', 'organ'];
+  
+  const source = normalizeCaseResolverComparable([
+    ...(candidate.sourcePatternLabels ?? []),
+    ...(candidate.sourceSequenceLabels ?? []),
+    candidate.sourceSegmentTitle ?? '',
+  ].join(' '));
+  if (!source) return null;
+
+  const countRoleHints = (src: string, hints: string[]): number =>
+    hints.reduce((total: number, hint: string): number => {
+      const normalizedHint = normalizeCaseResolverComparable(hint);
+      if (!normalizedHint) return total;
+      return src.includes(normalizedHint) ? total + 1 : total;
+    }, 0);
+
+  const addresserScore = countRoleHints(source, PROMPT_EXPLODER_ADDRESSER_LABEL_HINTS);
+  const addresseeScore = countRoleHints(source, PROMPT_EXPLODER_ADDRESSEE_LABEL_HINTS);
+  if (addresserScore === addresseeScore) return null;
+  return addresserScore > addresseeScore ? 'addresser' : 'addressee';
+};
+
+export const buildPromptExploderPartyProposalState = (
+  payload: PromptExploderCaseResolverPartyBundle | undefined,
+  targetFileId: string,
+  database: any
+): CaseResolverPromptExploderPartyProposalState | null => {
+  if (!payload) return null;
+  const resolvedCandidates: Partial<Record<'addresser' | 'addressee', PromptExploderCaseResolverPartyCandidate>> = {
+    ...(payload.addresser ? { addresser: payload.addresser } : {}),
+    ...(payload.addressee ? { addressee: payload.addressee } : {}),
+  };
+
+  [payload.addresser, payload.addressee].forEach((candidate) => {
+    if (!candidate) return;
+    const inferredRole = inferCandidateRoleFromLabels(candidate);
+    if (!inferredRole || resolvedCandidates[inferredRole]) return;
+    resolvedCandidates[inferredRole] = candidate;
+  });
+
+  const buildProposal = (role: 'addresser' | 'addressee', cand?: PromptExploderCaseResolverPartyCandidate) => {
+    if (!cand || (!cand.rawText.trim() && !cand.displayName.trim())) return null;
+    return {
+      role,
+      candidate: cand,
+      existingReference: findExistingFilemakerPartyReference(database, cand),
+      action: 'database' as const,
+    };
+  };
+
+  const addresser = buildProposal('addresser', resolvedCandidates.addresser);
+  const addressee = buildProposal('addressee', resolvedCandidates.addressee);
+  if (!addresser && !addressee) return null;
+  return { targetFileId, addresser, addressee };
 };

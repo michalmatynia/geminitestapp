@@ -9,8 +9,8 @@ import {
   createDeleteMutationV2,
   createMutationV2,
 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { invalidateIntegrations } from '@/shared/lib/query-invalidation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { MutationResult } from '@/shared/types/query-result-types';
 
 import { invalidateIntegrationConnections } from './integrationCache';

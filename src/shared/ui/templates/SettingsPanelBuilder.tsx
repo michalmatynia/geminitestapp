@@ -2,13 +2,13 @@
 
 import { ReactNode } from 'react';
 
-import { FormModal } from '../FormModal';
-import { FormField } from '../form-section';
-import { Input } from '../input';
-import { Textarea } from '../textarea';
 import { Checkbox } from '../checkbox';
-import { SelectSimple } from '../select-simple';
+import { FormField } from '../form-section';
+import { FormModal } from '../FormModal';
+import { Input } from '../input';
 import { Label } from '../label';
+import { SelectSimple } from '../select-simple';
+import { Textarea } from '../textarea';
 
 export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'custom';
 

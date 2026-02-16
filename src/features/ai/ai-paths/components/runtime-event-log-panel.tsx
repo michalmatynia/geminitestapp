@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { AiPathRuntimeEvent, AiPathRuntimeEventLevel } from '@/features/ai/ai-paths/lib';
-import { Button } from '@/shared/ui';
+import { Button, StatusBadge } from '@/shared/ui';
 
 import { useRuntimeState, useRuntimeActions } from '../context';
 
@@ -29,23 +29,6 @@ function formatTime(iso: string): string {
   } catch {
     return iso;
   }
-}
-
-function levelDotClass(level: AiPathRuntimeEventLevel): string {
-  switch (level) {
-    case 'error':
-      return 'mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-rose-400';
-    case 'warning':
-      return 'mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400';
-    default:
-      return 'mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-gray-500';
-  }
-}
-
-function kindBadgeClass(kind: string): string {
-  if (kind.startsWith('run_')) return 'border-blue-500/30 text-blue-300';
-  if (kind.startsWith('node_')) return 'border-emerald-500/30 text-emerald-300';
-  return 'border-gray-500/30 text-gray-300';
 }
 
 // ---------------------------------------------------------------------------
@@ -127,14 +110,10 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
           <span className='text-xs font-medium text-white'>Runtime Events</span>
           <span className='text-[10px] text-gray-500'>{runtimeEvents.length}</span>
           {errorCount > 0 && (
-            <span className='rounded-full bg-rose-500/20 px-1.5 text-[9px] text-rose-300'>
-              {errorCount} err
-            </span>
+            <StatusBadge status={`${errorCount} err`} variant='error' size='sm' className='font-bold h-4' />
           )}
           {warningCount > 0 && (
-            <span className='rounded-full bg-amber-500/20 px-1.5 text-[9px] text-amber-300'>
-              {warningCount} warn
-            </span>
+            <StatusBadge status={`${warningCount} warn`} variant='warning' size='sm' className='font-bold h-4' />
           )}
         </div>
         <div className='flex items-center gap-1.5'>
@@ -193,14 +172,21 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
                 className='flex items-start gap-2 rounded px-2 py-1 text-[11px] hover:bg-card/70'
               >
                 <span className='shrink-0 text-gray-500'>{formatTime(event.timestamp)}</span>
-                <span className={levelDotClass(event.level)} />
-                <span className='shrink-0 rounded border px-1 text-[9px]'>
-                  <span className={kindBadgeClass(event.kind)}>{event.kind}</span>
-                </span>
+                <StatusBadge 
+                  status='' 
+                  variant={event.level === 'error' ? 'error' : event.level === 'warning' ? 'warning' : 'neutral'} 
+                  size='sm' 
+                  hideLabel 
+                  className='mt-[5px] size-1.5 min-w-0 p-0 rounded-full' 
+                />
+                <StatusBadge 
+                  status={event.kind} 
+                  variant={event.kind.startsWith('run_') ? 'info' : event.kind.startsWith('node_') ? 'success' : 'neutral'} 
+                  size='sm' 
+                  className='h-4 px-1 font-mono' 
+                />
                 {event.source === 'server' && (
-                  <span className='shrink-0 rounded border border-purple-500/30 px-1 text-[9px] text-purple-300'>
-                    server
-                  </span>
+                  <StatusBadge status='server' variant='processing' size='sm' className='h-4 px-1' />
                 )}
                 {event.nodeTitle && (
                   <span className='shrink-0 text-gray-300'>[{event.nodeTitle}]</span>

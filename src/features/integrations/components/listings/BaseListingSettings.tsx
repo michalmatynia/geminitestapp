@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import { SelectSimple, Checkbox, FormField, Label } from '@/shared/ui';
+import { SelectSimple, Checkbox, FormField, Label, Alert } from '@/shared/ui';
 
 export function BaseListingSettings(): React.JSX.Element {
   const {
@@ -22,7 +22,7 @@ export function BaseListingSettings(): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <FormField 
-        label={`Base.com Inventory \${loadingInventories ? '(Loading...)' : ''}`}
+        label={'Base.com Inventory ${loadingInventories ? \'(Loading...)\' : \'\'}'}
         id='inventory'
       >
         <SelectSimple
@@ -38,9 +38,9 @@ export function BaseListingSettings(): React.JSX.Element {
           placeholder='Select inventory...'
         />
         {inventories.length === 0 && !loadingInventories && (
-          <p className='text-xs text-red-400 mt-1'>
+          <Alert variant='error' className='mt-2 py-1 text-xs'>
             No inventories found. Please check your Base.com account.
-          </p>
+          </Alert>
         )}
       </FormField>
 

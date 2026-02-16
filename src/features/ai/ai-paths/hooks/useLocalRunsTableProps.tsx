@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 
 import type { AiPathLocalRunRecord } from '@/features/ai/ai-paths/lib';
+import { StatusBadge } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -66,16 +67,13 @@ export function useLocalRunsTableProps(runs: AiPathLocalRunRecord[], isLoading: 
         accessorKey: 'status',
         header: 'Status',
         cell: ({ row }) => (
-          <span
-            className={`rounded-full border px-2 py-1 text-[10px] uppercase ${
-              row.original.status === 'success'
-                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
-                : 'border-rose-500/40 bg-rose-500/10 text-rose-200'
-            }`}
-            title={row.original.error ?? undefined}
-          >
-            {row.original.status}
-          </span>
+          <StatusBadge
+            status={row.original.status}
+            variant={row.original.status === 'success' ? 'success' : 'error'}
+            size='sm'
+            title={row.original.error ?? ''}
+            className='font-bold'
+          />
         ),
       },
       {

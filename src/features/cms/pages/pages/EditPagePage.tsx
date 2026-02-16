@@ -9,7 +9,7 @@ import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelectio
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
 import type { Page, Slug } from '@/features/cms/types';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
-import { Button, Checkbox, Input, SectionHeader, Switch, FormSection, Badge } from '@/shared/ui';
+import { Button, Checkbox, Input, SectionHeader, Switch, FormSection, Badge, Alert, StatusBadge } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 export default function EditPagePageLoader(): React.JSX.Element {
@@ -126,9 +126,9 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
         />
 
         {error && (
-          <div className='rounded-md border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-300'>
+          <Alert variant='error' className='mb-6'>
             {error}
-          </div>
+          </Alert>
         )}
 
         <div className='space-y-6'>
@@ -188,7 +188,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                           <div className='flex flex-1 items-center justify-between'>
                             <span className='text-sm text-gray-300'>/{slug.slug}</span>
                             {isCrossZone && (
-                              <Badge variant='outline' className='text-[8px] bg-amber-500/5 text-amber-400 border-amber-500/20'>Cross-Zone</Badge>
+                              <StatusBadge status='Cross-Zone' variant='warning' size='sm' className='font-bold' />
                             )}
                           </div>
                         </label>
@@ -204,7 +204,7 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
             <FormSection 
               title='External Assignments' 
               description='Routes from other zones currently pointing to this page.'
-              className='p-6 border-amber-500/20'
+              className='p-6'
             >
               <div className='flex flex-wrap gap-2'>
                 {crossZoneSlugs.map((slug) => (
@@ -217,10 +217,13 @@ function EditPageContent({ initialPage, id }: { initialPage: Page; id: string })
                         return current.filter((id) => id !== slug.id);
                       })
                     }
-                    className='group flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/5 px-3 py-1 text-[11px] text-amber-200 hover:bg-amber-500/10 transition-colors'
+                    className='group'
                   >
-                    /{slug.slug}
-                    <span className='text-amber-500 group-hover:text-amber-400'>×</span>
+                    <StatusBadge
+                      status={`/\${slug.slug} ×`}
+                      variant='warning'
+                      className='cursor-pointer hover:opacity-80 transition-opacity font-mono'
+                    />
                   </button>
                 ))}
               </div>

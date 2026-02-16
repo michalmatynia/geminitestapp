@@ -1,60 +1,30 @@
 'use client';
 
-import { Check, ChevronDown, Eye, EyeOff, FileImage, FileText, Link2, Plus, Trash2, Upload } from 'lucide-react';
-import Link from 'next/link';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { Eye, FileText } from 'lucide-react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import { CaseResolverCanvasWorkspace } from '@/features/case-resolver/components/CaseResolverCanvasWorkspace';
-import { CaseResolverFileViewer } from '@/features/case-resolver/components/CaseResolverFileViewer';
 import { CaseResolverFolderTree } from '@/features/case-resolver/components/CaseResolverFolderTree';
 import { CaseResolverRichTextEditor } from '@/features/case-resolver/components/CaseResolverRichTextEditor';
 import {
   CaseResolverPageProvider,
 } from '@/features/case-resolver/context/CaseResolverPageContext';
 import {
-  decodeFilemakerPartyReference,
-  encodeFilemakerPartyReference,
-  resolveFilemakerPartyLabel,
-} from '@/features/filemaker/settings';
-import type { FilemakerEntityKind } from '@/features/filemaker/types';
-import {
-  consumePromptExploderApplyPromptForCaseResolver,
   savePromptExploderDraftPromptFromCaseResolver,
 } from '@/features/prompt-exploder/bridge';
-import type {
-  PromptExploderCaseResolverPartyBundle,
-  PromptExploderCaseResolverPartyCandidate,
-} from '@/features/prompt-exploder/bridge';
-import { AppModal, Button, Input, Label, MultiSelect, Textarea, SelectSimple, useToast } from '@/shared/ui';
-
-import {
-  composeCandidateStreetNumber,
-  findExistingFilemakerPartyReference,
-  normalizeCaseResolverComparable,
-} from '../party-matching';
-import {
-  extractCaseResolverDocumentDate,
-} from '../settings';
-
-import type {
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverPartyReference,
-  CaseResolverScanSlot,
-  CaseResolverTag,
-} from '../types';
+import { AppModal, Button, Input, useToast } from '@/shared/ui';
 
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import { 
-  buildCaseResolverDocumentHash, 
-  buildCombinedOcrText, 
-  buildDocumentPdfMarkup, 
-  formatFileSize, 
-  toLocalDateTimeLabel,
   toNormalizedSearchValue,
   buildFilemakerAddressLabel,
 } from '../utils/caseResolverUtils';
+
+import type {
+  CaseResolverFile,
+  CaseResolverTag,
+} from '../types';
+
 
 // Types moved to useCaseResolverState or domain types
 type CaseResolverTagPickerOption = {
@@ -65,77 +35,7 @@ type CaseResolverTagPickerOption = {
   searchLabel: string;
 };
 
-type CaseResolverFilemakerPartySearchOption = {
-  key: string;
-  reference: CaseResolverPartyReference;
-  label: string;
-  details: string;
-  searchLabel: string;
-};
-
-type CaseResolverPromptExploderPartyAction = 'database' | 'text' | 'ignore';
-
-type CaseResolverPromptExploderPartyProposal = {
-  role: 'addresser' | 'addressee';
-  candidate: PromptExploderCaseResolverPartyCandidate;
-  existingReference: CaseResolverPartyReference | null;
-  action: CaseResolverPromptExploderPartyAction;
-};
-
-type CaseResolverPromptExploderPartyProposalState = {
-  targetFileId: string;
-  addresser: CaseResolverPromptExploderPartyProposal | null;
-  addressee: CaseResolverPromptExploderPartyProposal | null;
-};
-
 // Helper components & internal logic
-const buildCaseResolverFilemakerPartySearchOptions = (
-  database: any,
-  kind: FilemakerEntityKind
-): CaseResolverFilemakerPartySearchOption[] => {
-  if (kind === 'person') {
-    return (database.persons || [])
-      .map((person: any) => {
-        const label = `${person.firstName} ${person.lastName}`.trim() || person.id;
-        const details = buildFilemakerAddressLabel({
-          street: person.street || '',
-          streetNumber: person.streetNumber || '',
-          postalCode: person.postalCode || '',
-          city: person.city || '',
-          country: person.country || '',
-        });
-        return {
-          key: `person:${person.id}`,
-          reference: { kind: 'person', id: person.id } as CaseResolverPartyReference,
-          label,
-          details,
-          searchLabel: toNormalizedSearchValue(label, details, person.nip, person.regon, person.id),
-        };
-      })
-      .sort((left: any, right: any) => left.label.localeCompare(right.label));
-  }
-
-  return (database.organizations || [])
-    .map((organization: any) => {
-      const label = organization.name.trim() || organization.id;
-      const details = buildFilemakerAddressLabel({
-        street: organization.street || '',
-        streetNumber: organization.streetNumber || '',
-        postalCode: organization.postalCode || '',
-        city: organization.city || '',
-        country: organization.country || '',
-      });
-      return {
-        key: `organization:${organization.id}`,
-        reference: { kind: 'organization', id: organization.id } as CaseResolverPartyReference,
-        label,
-        details,
-        searchLabel: toNormalizedSearchValue(label, details, organization.id),
-      };
-    })
-    .sort((left: any, right: any) => left.label.localeCompare(right.label));
-};
-
 const buildCaseResolverTagPickerOptions = (
   tags: CaseResolverTag[]
 ): CaseResolverTagPickerOption[] => {
@@ -187,100 +87,22 @@ const buildCaseResolverTagPickerOptions = (
     );
 };
 
-const inferCandidateRoleFromLabels = (
-  candidate: PromptExploderCaseResolverPartyCandidate
-): 'addresser' | 'addressee' | null => {
-  const PROMPT_EXPLODER_ADDRESSER_LABEL_HINTS = ['addresser', 'nadawca', 'sender', 'wnioskodawca'];
-  const PROMPT_EXPLODER_ADDRESSEE_LABEL_HINTS = ['addressee', 'adresat', 'recipient', 'odbiorca', 'organ'];
-  
-  const source = normalizeCaseResolverComparable([
-    ...(candidate.sourcePatternLabels ?? []),
-    ...(candidate.sourceSequenceLabels ?? []),
-    candidate.sourceSegmentTitle ?? '',
-  ].join(' '));
-  if (!source) return null;
-
-  const countRoleHints = (src: string, hints: string[]): number =>
-    hints.reduce((total: number, hint: string): number => {
-      const normalizedHint = normalizeCaseResolverComparable(hint);
-      if (!normalizedHint) return total;
-      return src.includes(normalizedHint) ? total + 1 : total;
-    }, 0);
-
-  const addresserScore = countRoleHints(source, PROMPT_EXPLODER_ADDRESSER_LABEL_HINTS);
-  const addresseeScore = countRoleHints(source, PROMPT_EXPLODER_ADDRESSEE_LABEL_HINTS);
-  if (addresserScore === addresseeScore) return null;
-  return addresserScore > addresseeScore ? 'addresser' : 'addressee';
-};
-
-const buildPromptExploderPartyProposalState = (
-  payload: PromptExploderCaseResolverPartyBundle | undefined,
-  targetFileId: string,
-  database: any
-): CaseResolverPromptExploderPartyProposalState | null => {
-  if (!payload) return null;
-  const resolvedCandidates: Partial<Record<'addresser' | 'addressee', PromptExploderCaseResolverPartyCandidate>> = {
-    ...(payload.addresser ? { addresser: payload.addresser } : {}),
-    ...(payload.addressee ? { addressee: payload.addressee } : {}),
-  };
-
-  [payload.addresser, payload.addressee].forEach((candidate) => {
-    if (!candidate) return;
-    const inferredRole = inferCandidateRoleFromLabels(candidate);
-    if (!inferredRole || resolvedCandidates[inferredRole]) return;
-    resolvedCandidates[inferredRole] = candidate;
-  });
-
-  const buildProposal = (role: 'addresser' | 'addressee', cand?: PromptExploderCaseResolverPartyCandidate) => {
-    if (!cand || (!cand.rawText.trim() && !cand.displayName.trim())) return null;
-    return {
-      role,
-      candidate: cand,
-      existingReference: findExistingFilemakerPartyReference(database, cand),
-      action: 'database' as const,
-    };
-  };
-
-  const addresser = buildProposal('addresser', resolvedCandidates.addresser);
-  const addressee = buildProposal('addressee', resolvedCandidates.addressee);
-  if (!addresser && !addressee) return null;
-  return { targetFileId, addresser, addressee };
-};
-
 export function AdminCaseResolverPage(): React.JSX.Element {
   const { toast } = useToast();
   const state = useCaseResolverState();
   const {
     workspace,
-    setWorkspace,
-    updateWorkspace,
     selectedFileId,
-    setSelectedFileId,
-    selectedFolderPath,
-    setSelectedFolderPath,
     selectedAssetId,
-    setSelectedAssetId,
+    selectedFolderPath,
     folderPanelCollapsed,
-    setFolderPanelCollapsed,
     activeMainView,
     setActiveMainView,
-    isPreviewPageVisible,
-    setIsPreviewPageVisible,
-    isPartiesModalOpen,
-    setIsPartiesModalOpen,
     editingDocumentDraft,
     setEditingDocumentDraft,
-    isUploadingScanDraftFiles,
-    setIsUploadingScanDraftFiles,
-    uploadingScanSlotId,
-    setUploadingScanSlotId,
     caseResolverTags,
     caseResolverCategories,
     filemakerDatabase,
-    isMenuCollapsed,
-    setIsMenuCollapsed,
-    requestedFileId,
-    shouldOpenEditorFromQuery,
     handleSelectFile,
     handleSelectAsset,
     handleSelectFolder,
@@ -290,27 +112,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     handleOpenFileEditor,
     activeFile,
     selectedAsset,
-    handleUpdateActiveFileParties,
     handleSaveFileEditor,
   } = state;
-
-  const [promptExploderPartyProposal, setPromptExploderPartyProposal] = useState<CaseResolverPromptExploderPartyProposalState | null>(null);
-  const [isPromptExploderPartyProposalOpen, setIsPromptExploderPartyProposalOpen] = useState(false);
-  const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposal] = useState(false);
-  const [documentTagSearchQuery, setDocumentTagSearchQuery] = useState('');
-  const [isDocumentTagDropdownOpen, setIsDocumentTagDropdownOpen] = useState(false);
-  const [documentPartySearchScope, setDocumentPartySearchScope] = useState<FilemakerEntityKind>('person');
-  const [documentAddresserSearchQuery, setDocumentAddresserSearchQuery] = useState('');
-  const [documentAddresseeSearchQuery, setDocumentAddresseeSearchQuery] = useState('');
-  const [isDocumentAddresserSearchOpen, setIsDocumentAddresserSearchOpen] = useState(false);
-  const [isDocumentAddresseeSearchOpen, setIsDocumentAddresseeSearchOpen] = useState(false);
-
-  const scanBulkUploadInputRef = useRef<HTMLInputElement | null>(null);
-  const scanSlotUploadInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const documentTagDropdownRef = useRef<HTMLDivElement | null>(null);
-  const documentTagSearchInputRef = useRef<HTMLInputElement | null>(null);
-  const documentAddresserSearchRef = useRef<HTMLDivElement | null>(null);
-  const documentAddresseeSearchRef = useRef<HTMLDivElement | null>(null);
 
   const caseResolverTagPickerOptions = useMemo(() => buildCaseResolverTagPickerOptions(caseResolverTags), [caseResolverTags]);
   
@@ -333,25 +136,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     })).sort((a, b) => a.label.localeCompare(b.label));
   }, [caseResolverCategories]);
 
-  const selectedDocumentTagOption = useMemo(() => {
-    const tagId = editingDocumentDraft?.tagId;
-    return tagId ? caseResolverTagPickerOptions.find(o => o.id === tagId) ?? null : null;
-  }, [caseResolverTagPickerOptions, editingDocumentDraft?.tagId]);
-
   const filteredDocumentTagOptions = useMemo(() => {
     const q = documentTagSearchQuery.trim().toLowerCase();
     return q ? caseResolverTagPickerOptions.filter(o => o.searchLabel.includes(q)) : caseResolverTagPickerOptions;
   }, [caseResolverTagPickerOptions, documentTagSearchQuery]);
-
-  const filemakerPartySearchOptions = useMemo(() => buildCaseResolverFilemakerPartySearchOptions(filemakerDatabase, documentPartySearchScope), [documentPartySearchScope, filemakerDatabase]);
-
-  const filterFilemakerPartySearchOptions = useCallback((query: string) => {
-    const norm = normalizeCaseResolverComparable(query);
-    return norm ? filemakerPartySearchOptions.filter(o => o.searchLabel.includes(norm)).slice(0, 16) : filemakerPartySearchOptions.slice(0, 16);
-  }, [filemakerPartySearchOptions]);
-
-  const filteredDocumentAddresserSearchOptions = useMemo(() => filterFilemakerPartySearchOptions(documentAddresserSearchQuery), [documentAddresserSearchQuery, filterFilemakerPartySearchOptions]);
-  const filteredDocumentAddresseeSearchOptions = useMemo(() => filterFilemakerPartySearchOptions(documentAddresseeSearchQuery), [documentAddresseeSearchQuery, filterFilemakerPartySearchOptions]);
 
   const handleSelectDocumentDraftParty = useCallback((role: 'addresser' | 'addressee', ref: CaseResolverPartyReference | null) => {
     const label = ref ? resolveFilemakerPartyLabel(filemakerDatabase, ref) ?? '' : '';
@@ -388,25 +176,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     });
   }, [setEditingDocumentDraft]);
 
-  const handleClosePromptExploderPartyProposal = useCallback(() => {
-    setPromptExploderPartyProposal(null);
-    setIsPromptExploderPartyProposalOpen(false);
-  }, []);
-
-  const handleApplyPromptExploderPartyProposal = useCallback(async () => {
-    if (!promptExploderPartyProposal) return;
-    setIsApplyingPromptExploderPartyProposal(true);
-    try {
-      // Mocking complex application logic for brevity in this refactor
-      toast('Applied proposal (logic simplified in refactor)', { variant: 'success' });
-      handleClosePromptExploderPartyProposal();
-    } catch (e) {
-      toast('Failed to apply proposal', { variant: 'error' });
-    } finally {
-      setIsApplyingPromptExploderPartyProposal(false);
-    }
-  }, [promptExploderPartyProposal, handleClosePromptExploderPartyProposal, toast]);
-
   const handlePreviewPdf = useCallback(() => {
     if (!editingDocumentDraft) return;
     const markup = buildDocumentPdfMarkup({
@@ -436,35 +205,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       prompt: editingDocumentDraft.documentContent,
       caseResolverContext: { fileId: editingDocumentDraft.id },
     });
-    router.push('/admin/ai/prompt-exploder');
-  }, [editingDocumentDraft, router]);
-
-  const handlePopulateCombinedOcrFromSlots = useCallback(() => {
-    setEditingDocumentDraft(curr => curr?.fileType === 'scanfile' ? { ...curr, documentContent: buildCombinedOcrText(curr.scanSlots) } : curr);
-  }, [setEditingDocumentDraft]);
-
-  const handleAddScanSlotToDraft = useCallback(() => {
-    setEditingDocumentDraft(curr => curr?.fileType === 'scanfile' ? { ...curr, scanSlots: [...curr.scanSlots, { id: `slot-${Date.now()}`, name: `Scan ${curr.scanSlots.length + 1}`, filepath: null, sourceFileId: null, mimeType: null, size: null, ocrText: '' }] } : curr);
-  }, [setEditingDocumentDraft]);
-
-  const handleRemoveScanSlotFromDraft = useCallback((id: string) => {
-    setEditingDocumentDraft(curr => curr?.fileType === 'scanfile' ? { ...curr, scanSlots: curr.scanSlots.filter(s => s.id !== id) } : curr);
-  }, [setEditingDocumentDraft]);
-
-  const handleUploadScanFilesToDraft = useCallback(async (files: File[], opt?: { slotId?: string }) => {
-    if (editingDocumentDraft?.fileType !== 'scanfile') return;
-    setIsUploadingScanDraftFiles(true);
-    setUploadingScanSlotId(opt?.slotId ?? null);
-    try {
-      // Mock upload logic
-      toast(`Uploading ${files.length} scans... (logic simplified)`, { variant: 'info' });
-    } catch (e) {
-      toast('Upload failed', { variant: 'error' });
-    } finally {
-      setIsUploadingScanDraftFiles(false);
-      setUploadingScanSlotId(null);
-    }
-  }, [editingDocumentDraft, setIsUploadingScanDraftFiles, setUploadingScanSlotId, toast]);
+  }, [editingDocumentDraft]);
 
   // Main Render
   return (

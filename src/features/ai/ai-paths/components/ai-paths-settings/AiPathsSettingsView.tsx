@@ -8,7 +8,14 @@ import type {
   AiNode,
 } from '@/features/ai/ai-paths/lib';
 import type { PathMeta } from '@/shared/types/domain/ai-paths';
-import { Button, Label, SelectSimple, useToast } from '@/shared/ui';
+import { 
+  Button, 
+  Label, 
+  SelectSimple, 
+  useToast, 
+  StatusBadge, 
+  type StatusVariant 
+} from '@/shared/ui';
 
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
@@ -46,14 +53,22 @@ const formatStatusLabel = (status: string): string =>
     .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
     .join(' ');
 
-const statusBadgeClassName = (status: string): string => {
-  if (status === 'completed' || status === 'cached') return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200';
-  if (status === 'failed' || status === 'canceled' || status === 'timeout') return 'border-rose-500/40 bg-rose-500/10 text-rose-200';
-  if (status === 'queued') return 'border-amber-500/40 bg-amber-500/10 text-amber-200';
-  if (status === 'running' || status === 'polling' || status === 'waiting_callback' || status === 'advance_pending' || status === 'paused') {
-    return 'border-sky-500/40 bg-sky-500/10 text-sky-200';
+const statusToVariant = (status: string): StatusVariant => {
+  const s = status.toLowerCase();
+  if (s === 'completed' || s === 'cached' || s === 'success') return 'success';
+  if (s === 'failed' || s === 'canceled' || s === 'timeout' || s === 'error') return 'error';
+  if (s === 'queued' || s === 'pending') return 'warning';
+  if (
+    s === 'running' || 
+    s === 'polling' || 
+    s === 'waiting_callback' || 
+    s === 'advance_pending' || 
+    s === 'paused' ||
+    s === 'processing'
+  ) {
+    return 'processing';
   }
-  return 'border-border/60 bg-card/60 text-gray-300';
+  return 'neutral';
 };
 
 export function AiPathsSettingsView(): React.JSX.Element {
@@ -67,7 +82,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const state = useAiPathsSettingsOrchestrator();
 
   // Domain: Persistence — read from context
-  const { loading, saving, autoSaveStatus, autoSaveAt } = usePersistenceState();
+  const { loading, saving, autoSaveStatus } = usePersistenceState();
   const { incrementLoadNonce, savePathConfig } = usePersistenceActions();
 
   // Domain: Runtime — read from context
@@ -109,18 +124,18 @@ export function AiPathsSettingsView(): React.JSX.Element {
     : saving
       ? 'Saving...'
       : autoSaveStatus === 'saved'
-        ? `Saved${autoSaveAt ? ` at ${new Date(autoSaveAt).toLocaleTimeString()}` : ''}`
+        ? `Saved\${autoSaveAt ? \` at \${new Date(autoSaveAt).toLocaleTimeString()}\` : ''}`
         : autoSaveStatus === 'error'
           ? 'Save failed'
           : 'Manual save only';
-  const autoSaveClasses =
+  const autoSaveVariant: StatusVariant =
     autoSaveStatus === 'saved'
-      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+      ? 'success'
       : autoSaveStatus === 'error'
-        ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
+        ? 'error'
         : autoSaveStatus === 'saving'
-          ? 'border-sky-500/40 bg-sky-500/10 text-sky-200'
-          : 'border bg-card/60 text-gray-300';
+          ? 'processing'
+          : 'neutral';
 
   const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
 
@@ -433,13 +448,19 @@ export function AiPathsSettingsView(): React.JSX.Element {
           {!isFocusMode && typeof document !== 'undefined' && activePathId
             ? createPortal(
               <div className='flex items-center justify-end gap-2'>
-                <div className={`rounded-md border px-2 py-1 text-[10px] ${autoSaveClasses}`}>
-                  {autoSaveLabel}
-                </div>
+                <StatusBadge
+                  status={autoSaveLabel}
+                  variant={autoSaveVariant}
+                  size='sm'
+                  className='font-medium'
+                />
                 {lastRunAt && (
-                  <div className='rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-200'>
-                      Last run: {new Date(lastRunAt).toLocaleTimeString()}
-                  </div>
+                  <StatusBadge
+                    status={`Last run: \${new Date(lastRunAt).toLocaleTimeString()}`}
+                    variant='active'
+                    size='sm'
+                    className='font-medium'
+                  />
                 )}
                 <div className='flex flex-col items-end gap-1'>
                   <Label className='text-[10px] uppercase text-gray-500'>Execution</Label>
@@ -623,13 +644,14 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     <div className='text-[10px] uppercase text-gray-500'>Active Node States</div>
                     <div className='flex flex-wrap gap-1.5'>
                       {runtimeNodeLiveStates.map((entry: { nodeId: string; title: string; status: string }) => (
-                        <span
+                        <StatusBadge
                           key={entry.nodeId}
-                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] ${statusBadgeClassName(entry.status)}`}
+                          status={`${entry.title} · ${formatStatusLabel(entry.status)}`}
+                          variant={statusToVariant(entry.status)}
+                          size='sm'
                           title={entry.nodeId}
-                        >
-                          {entry.title} · {formatStatusLabel(entry.status)}
-                        </span>
+                          className='font-medium'
+                        />
                       ))}
                     </div>
                   </div>
@@ -672,16 +694,22 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       <div key={event.id} className='rounded-md border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-300'>
                         <div className='flex flex-wrap items-center gap-1.5 text-[10px]'>
                           <span className='text-gray-500'>{new Date(event.timestamp).toLocaleTimeString()}</span>
-                          <span className={`rounded-full border px-1.5 py-0.5 ${event.level === 'error' ? 'border-rose-500/40 text-rose-200' : event.level === 'warning' ? 'border-amber-500/40 text-amber-200' : 'border-sky-500/40 text-sky-200'}`}>
-                            {event.level}
-                          </span>
+                          <StatusBadge
+                            status={event.level}
+                            variant={event.level === 'error' ? 'error' : event.level === 'warning' ? 'warning' : 'info'}
+                            size='sm'
+                            className='font-bold'
+                          />
                           <span className='rounded-full border border-border/60 px-1.5 py-0.5 text-gray-400'>
                             {event.source}
                           </span>
                           {event.status ? (
-                            <span className={`rounded-full border px-1.5 py-0.5 ${statusBadgeClassName(event.status)}`}>
-                              {formatStatusLabel(event.status)}
-                            </span>
+                            <StatusBadge
+                              status={formatStatusLabel(event.status)}
+                              variant={statusToVariant(event.status)}
+                              size='sm'
+                              className='font-medium'
+                            />
                           ) : null}
                         </div>
                         <div className='mt-1 text-gray-200'>{event.message}</div>

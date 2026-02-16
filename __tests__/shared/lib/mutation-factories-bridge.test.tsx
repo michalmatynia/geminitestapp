@@ -3,11 +3,10 @@ import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  createCreateMutation,
-  createDeleteMutation,
-  createSaveMutation,
-  createUpdateMutation,
-} from '@/shared/lib/mutation-factories';
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 
 import type { ReactElement, ReactNode } from 'react';
 
@@ -20,7 +19,7 @@ const createTestClient = (): QueryClient =>
     },
   });
 
-describe('mutation-factories bridge', () => {
+describe('mutation-factories-v2', () => {
   let queryClient: QueryClient;
 
   beforeEach(() => {
@@ -36,9 +35,16 @@ describe('mutation-factories bridge', () => {
     const invalidateFn = vi.fn();
     const { result } = renderHook(
       () =>
-        createCreateMutation({
-          createFn: async (payload: { name: string }) => ({ id: '1', name: payload.name }),
-          invalidateFn,
+        createCreateMutationV2<{ id: string; name: string }, { name: string }>({
+          mutationFn: async (payload: { name: string }) => ({ id: '1', name: payload.name }),
+          meta: {
+            source: 'tests.shared.mutation-factories-v2.create',
+            operation: 'create',
+            resource: 'entity',
+          },
+          onSuccess: () => {
+            invalidateFn();
+          },
         }),
       { wrapper }
     );
@@ -47,28 +53,20 @@ describe('mutation-factories bridge', () => {
     expect(invalidateFn).toHaveBeenCalledTimes(1);
   });
 
-  it('runs invalidate callback for save/update/delete variants', async () => {
+  it('runs invalidate callback for update/delete variants', async () => {
     const invalidateFn = vi.fn();
-    const saveHook = renderHook(
-      () =>
-        createSaveMutation({
-          saveFn: async ({ id, data }: { id?: string; data: { name: string } }) => ({
-            id: id ?? 'new',
-            name: data.name,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          }),
-          invalidateFn,
-        }),
-      { wrapper }
-    );
-    await saveHook.result.current.mutateAsync({ data: { name: 'save' } });
-
     const updateHook = renderHook(
       () =>
-        createUpdateMutation({
-          updateFn: async (payload: { id: string; data: { name: string } }) => payload,
-          invalidateFn,
+        createUpdateMutationV2<{ id: string; data: { name: string } }, { id: string; data: { name: string } }>({
+          mutationFn: async (payload: { id: string; data: { name: string } }) => payload,
+          meta: {
+            source: 'tests.shared.mutation-factories-v2.update',
+            operation: 'update',
+            resource: 'entity',
+          },
+          onSuccess: () => {
+            invalidateFn();
+          },
         }),
       { wrapper }
     );
@@ -76,15 +74,21 @@ describe('mutation-factories bridge', () => {
 
     const deleteHook = renderHook(
       () =>
-        createDeleteMutation({
-          deleteFn: async (id: string) => ({ deleted: id }),
-          invalidateFn,
+        createDeleteMutationV2<{ deleted: string }, string>({
+          mutationFn: async (id: string) => ({ deleted: id }),
+          meta: {
+            source: 'tests.shared.mutation-factories-v2.delete',
+            operation: 'delete',
+            resource: 'entity',
+          },
+          onSuccess: () => {
+            invalidateFn();
+          },
         }),
       { wrapper }
     );
     await deleteHook.result.current.mutateAsync('1');
 
-    expect(invalidateFn).toHaveBeenCalledTimes(3);
+    expect(invalidateFn).toHaveBeenCalledTimes(2);
   });
 });
-

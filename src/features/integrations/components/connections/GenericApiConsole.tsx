@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Label, Alert, SelectSimple } from '@/shared/ui';
+import { Button, Input, Textarea, Label, Alert, SelectSimple, StatusBadge } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;
@@ -219,9 +219,12 @@ export function GenericApiConsole({
                 {response.status} {response.statusText}
               </span>
               {response.refreshed ? (
-                <span className='ml-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-200'>
-                  Token refreshed
-                </span>
+                <StatusBadge
+                  status='Token refreshed'
+                  variant='success'
+                  size='sm'
+                  className='ml-2 font-bold'
+                />
               ) : null}
             </div>
           )}

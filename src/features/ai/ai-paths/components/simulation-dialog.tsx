@@ -13,6 +13,7 @@ import {
   DialogTitle,
   Input,
   Label,
+  Alert,
 } from '@/shared/ui';
 
 interface SimulationDialogProps extends EntityModalProps<AiNode> {
@@ -71,13 +72,15 @@ export function SimulationDialog({
               }}
             />
             {isPathLocked ? (
-              <p className='mt-2 text-[11px] text-gray-500'>
+              <Alert variant='warning' className='mt-3 px-2 py-1 text-[11px]'>
                 This path is locked. Unlock it to change simulation inputs.
-              </p>
+              </Alert>
             ) : null}
-            <p className='mt-2 text-[11px] text-gray-500'>
-              Current entity type: {simulationConfig.entityType ?? 'product'}
-            </p>
+            <div className='mt-2'>
+              <Alert variant='info' className='px-2 py-1 text-[11px]'>
+                Current entity type: {simulationConfig.entityType ?? 'product'}
+              </Alert>
+            </div>
           </div>
           <Button
             className='w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10'

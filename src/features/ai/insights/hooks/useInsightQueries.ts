@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutation, createListQuery } from '@/shared/lib/query-factories';
+import { createCreateMutation, createListQuery } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiInsightRecord } from '@/shared/types';
 import type { ListQuery, MutationResult } from '@/shared/types/query-result-types';

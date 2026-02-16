@@ -1,7 +1,7 @@
 'use client';
 
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutation, createSingleQuery } from '@/shared/lib/query-factories';
+import { createCreateMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { MutationResult, SingleQuery } from '@/shared/types/query-result-types';
 
@@ -16,20 +16,29 @@ export interface AiJobStatus {
  * Hook to poll AI job status
  */
 export function useAiJobStatus(jobId: string | null): SingleQuery<{ job: AiJobStatus } | null> {
-  return createSingleQuery({
+  const queryKey = QUERY_KEYS.products.aiJobs.detail(jobId || 'none');
+  return createSingleQueryV2({
     id: jobId,
-    queryKey: QUERY_KEYS.products.aiJobs.detail(jobId || 'none'),
+    queryKey,
     queryFn: async (): Promise<{ job: AiJobStatus } | null> => {
       if (!jobId) return null;
       return await api.get<{ job: AiJobStatus }>(`/api/products/ai-jobs/${jobId}`);
     },
     enabled: !!jobId,
-    refetchInterval: (data) => {
-      const jobData = data as { job: AiJobStatus } | null;
+    refetchInterval: (query) => {
+      const jobData = query.state.data;
       if (jobData?.job?.status === 'completed' || jobData?.job?.status === 'failed' || jobData?.job?.status === 'canceled') {
         return false;
       }
       return 2000;
+    },
+    meta: {
+      source: 'products.hooks.useAiJobStatus',
+      operation: 'polling',
+      resource: 'products.ai-jobs.status',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'ai-jobs', 'status'],
     },
   });
 }
@@ -41,9 +50,19 @@ export function useEnqueueAiJobMutation(): MutationResult<
   { jobId: string },
   { productId: string; type: string; payload: unknown }
   > {
-  return createCreateMutation({
+  const mutationKey = QUERY_KEYS.products.aiJobs.lists();
+  return createCreateMutationV2({
     mutationFn: async (params) =>
       await api.post<{ jobId: string }>('/api/products/ai-jobs/enqueue', params),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useEnqueueAiJobMutation',
+      operation: 'create',
+      resource: 'products.ai-jobs',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'ai-jobs', 'enqueue'],
+    },
   });
 }
 
@@ -54,8 +73,18 @@ export function useBulkAiJobsMutation(): MutationResult<
   { count: number },
   { type: string; config: unknown }
   > {
-  return createCreateMutation({
+  const mutationKey = QUERY_KEYS.products.aiJobs.lists();
+  return createCreateMutationV2({
     mutationFn: async (params) =>
       await api.post<{ count: number }>('/api/products/ai-jobs/bulk', params),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useBulkAiJobsMutation',
+      operation: 'create',
+      resource: 'products.ai-jobs.bulk',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'ai-jobs', 'bulk'],
+    },
   });
 }

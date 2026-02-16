@@ -7,11 +7,11 @@ import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } fr
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQuery,
-  createSingleQuery,
-  createDeleteMutation,
-  createUpdateMutation,
-} from '@/shared/lib/query-factories';
+  createListQueryV2,
+  createSingleQueryV2,
+  createDeleteMutationV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import {
   invalidateAsset3d,
   invalidateAsset3dDetail,
@@ -77,80 +77,116 @@ export function useAssets3D(filters: Asset3DListFilters): ListQuery<Asset3DRecor
     ]
   );
 
-  return createListQuery({
-    queryKey: asset3dKeys.list(normalizedFilters),
+  const queryKey = asset3dKeys.list(normalizedFilters);
+  return createListQueryV2({
+    queryKey,
     queryFn: () => fetchAssets3D(normalizedFilters),
-    options: {
-      staleTime: ASSET_LIST_STALE_TIME_MS,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+    staleTime: ASSET_LIST_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'viewer3d.hooks.useAssets3D',
+      operation: 'list',
+      resource: 'viewer3d.assets',
+      queryKey,
+      tags: ['viewer3d', 'assets'],
     },
   });
 }
 
 export function useAsset3DCategories(): ListQuery<string> {
-  return createListQuery({
-    queryKey: asset3dKeys.categories(),
+  const queryKey = asset3dKeys.categories();
+  return createListQueryV2({
+    queryKey,
     queryFn: fetchCategories,
-    options: {
-      staleTime: ASSET_METADATA_STALE_TIME_MS,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+    staleTime: ASSET_METADATA_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'viewer3d.hooks.useAsset3DCategories',
+      operation: 'list',
+      resource: 'viewer3d.categories',
+      queryKey,
+      tags: ['viewer3d', 'categories'],
     },
   });
 }
 
 export function useAsset3DTags(): ListQuery<string> {
-  return createListQuery({
-    queryKey: asset3dKeys.tags(),
+  const queryKey = asset3dKeys.tags();
+  return createListQueryV2({
+    queryKey,
     queryFn: fetchTags,
-    options: {
-      staleTime: ASSET_METADATA_STALE_TIME_MS,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+    staleTime: ASSET_METADATA_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'viewer3d.hooks.useAsset3DTags',
+      operation: 'list',
+      resource: 'viewer3d.tags',
+      queryKey,
+      tags: ['viewer3d', 'tags'],
     },
   });
 }
 
 export function useAsset3DById(id: string | null): SingleQuery<Asset3DRecord> {
-  return createSingleQuery({
+  const queryKey = asset3dKeys.detail(id);
+  return createSingleQueryV2({
     id,
-    queryKey: asset3dKeys.detail(id),
+    queryKey,
     queryFn: () => api.get<Asset3DRecord>(`/api/assets3d/${id}`),
-    options: {
-      enabled: Boolean(id),
-      staleTime: ASSET_DETAIL_STALE_TIME_MS,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+    enabled: Boolean(id),
+    staleTime: ASSET_DETAIL_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'viewer3d.hooks.useAsset3DById',
+      operation: 'detail',
+      resource: 'viewer3d.asset',
+      queryKey,
+      tags: ['viewer3d', 'asset', 'detail'],
     },
   });
 }
 
 export function useDeleteAsset3DMutation(): DeleteMutation {
   const queryClient = useQueryClient();
-  return createDeleteMutation({
+  return createDeleteMutationV2({
     mutationFn: (id: string) => api.delete<void>(`/api/assets3d/${id}`),
-    options: {
-      onSuccess: () => {
-        void invalidateAsset3d(queryClient);
-      },
+    mutationKey: asset3dKeys.all,
+    meta: {
+      source: 'viewer3d.hooks.useDeleteAsset3DMutation',
+      operation: 'delete',
+      resource: 'viewer3d.asset',
+      mutationKey: asset3dKeys.all,
+      tags: ['viewer3d', 'asset', 'delete'],
+    },
+    onSuccess: () => {
+      void invalidateAsset3d(queryClient);
     },
   });
 }
 
 export function useUpdateAsset3DMutation(): UpdateMutation<Asset3DRecord, { id: string; data: Partial<Asset3DRecord> }> {
   const queryClient = useQueryClient();
-  return createUpdateMutation({
+  return createUpdateMutationV2({
     mutationFn: ({ id, data }: { id: string; data: Partial<Asset3DRecord> }) => api.patch<Asset3DRecord>(`/api/assets3d/${id}`, data),
-    options: {
-      onSuccess: (data: Asset3DRecord) => {
-        void invalidateAsset3d(queryClient);
-        void invalidateAsset3dDetail(queryClient, data.id);
-      },
+    mutationKey: asset3dKeys.all,
+    meta: {
+      source: 'viewer3d.hooks.useUpdateAsset3DMutation',
+      operation: 'update',
+      resource: 'viewer3d.asset',
+      mutationKey: asset3dKeys.all,
+      tags: ['viewer3d', 'asset', 'update'],
+    },
+    onSuccess: (data: Asset3DRecord) => {
+      void invalidateAsset3d(queryClient);
+      void invalidateAsset3dDetail(queryClient, data.id);
     },
   });
 }
@@ -167,12 +203,18 @@ export function useReindexAssets3DMutation(): UpdateMutation<
   void
   > {
   const queryClient = useQueryClient();
-  return createUpdateMutation({
+  return createUpdateMutationV2({
     mutationFn: () => reindexAssets3DFromDisk(),
-    options: {
-      onSuccess: () => {
-        void invalidateAsset3d(queryClient);
-      },
+    mutationKey: asset3dKeys.all,
+    meta: {
+      source: 'viewer3d.hooks.useReindexAssets3DMutation',
+      operation: 'update',
+      resource: 'viewer3d.assets.reindex',
+      mutationKey: asset3dKeys.all,
+      tags: ['viewer3d', 'assets', 'reindex'],
+    },
+    onSuccess: () => {
+      void invalidateAsset3d(queryClient);
     },
   });
 }

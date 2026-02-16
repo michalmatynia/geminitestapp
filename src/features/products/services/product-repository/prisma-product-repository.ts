@@ -115,10 +115,9 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
 
   if (filters.categoryId) {
     andConditions.push({
-      OR: [
-        { categoryId: filters.categoryId },
-        { categories: { some: { categoryId: filters.categoryId } } },
-      ],
+      categories: {
+        is: { categoryId: filters.categoryId },
+      },
     });
   }
 

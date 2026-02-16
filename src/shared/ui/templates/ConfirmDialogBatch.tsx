@@ -54,10 +54,10 @@ export function ConfirmDialogBatch({
           title={dialog.title}
           message={dialog.description}
           onConfirm={dialog.onConfirm}
-          isDangerous={dialog.isDestructive}
-          confirmText={dialog.confirmText}
-          cancelText={dialog.cancelText}
-          loading={dialog.isLoading}
+          {...(dialog.isDestructive !== undefined ? { isDangerous: dialog.isDestructive } : {})}
+          {...(dialog.confirmText !== undefined ? { confirmText: dialog.confirmText } : {})}
+          {...(dialog.cancelText !== undefined ? { cancelText: dialog.cancelText } : {})}
+          {...(dialog.isLoading !== undefined ? { loading: dialog.isLoading } : {})}
         />
       ))}
     </>

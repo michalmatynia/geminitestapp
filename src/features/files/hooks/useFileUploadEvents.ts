@@ -1,6 +1,6 @@
 'use client';
 
-import { createSingleQuery } from '@/shared/lib/query-factories';
+import { createSingleQuery } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SingleQuery } from '@/shared/types/query-result-types';
 

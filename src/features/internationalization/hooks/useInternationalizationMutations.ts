@@ -18,7 +18,7 @@ export function useDeleteCurrencyMutation() {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: i18nKeys.currencies() });
     },
-  });
+  })();
 }
 
 export function useDeleteCountryMutation() {
@@ -27,7 +27,7 @@ export function useDeleteCountryMutation() {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: i18nKeys.countries() });
     },
-  });
+  })();
 }
 
 export function useDeleteLanguageMutation() {
@@ -36,7 +36,7 @@ export function useDeleteLanguageMutation() {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: i18nKeys.languages() });
     },
-  });
+  })();
 }
 
 export function useSaveCurrencyMutation() {
@@ -47,7 +47,7 @@ export function useSaveCurrencyMutation() {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: i18nKeys.currencies() });
     },
-  });
+  })();
 }
 
 export function useSaveCountryMutation() {
@@ -58,7 +58,7 @@ export function useSaveCountryMutation() {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: i18nKeys.countries() });
     },
-  });
+  })();
 }
 
 export function useSaveLanguageMutation() {
@@ -69,6 +69,5 @@ export function useSaveLanguageMutation() {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: i18nKeys.languages() });
     },
-  });
+  })();
 }
-

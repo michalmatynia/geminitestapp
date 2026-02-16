@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
-import { createCreateMutation } from '@/shared/lib/query-factories';
+import { createCreateMutation } from '@/shared/lib/query-factories-v2';
 import type { CreateMutation } from '@/shared/types/query-result-types';
 
 export function useCsvImportMutation(): CreateMutation<

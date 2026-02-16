@@ -17,8 +17,7 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
   const { toast } = useToast();
   const notificationsQuery = useAiInsightsNotifications({ enabled: open });
 
-  const clearMutationHook = useClearAiInsightsNotifications();
-  const clearMutation = clearMutationHook();
+  const clearMutation = useClearAiInsightsNotifications();
 
   const handleClear = async () => {
     try {

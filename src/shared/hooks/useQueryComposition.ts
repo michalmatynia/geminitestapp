@@ -1,9 +1,10 @@
 'use client';
 
-import type { UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+
+import type { UseQueryResult } from '@tanstack/react-query';
 
 // Hook for query normalization and relationships
 export function useNormalizedQuery<T extends { id: string }>(
@@ -111,7 +112,7 @@ export function useAggregatedQuery<T, R>(
       };
     }
 
-    const aggregatedData = aggregator(queryResults.map(q => q.data as T));
+    const aggregatedData = aggregator(queryResults.map(q => q.data));
 
     return {
       data: aggregatedData,

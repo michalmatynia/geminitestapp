@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
-import { createCreateMutation, createListQuery } from '@/shared/lib/query-factories';
+import { createCreateMutation, createListQuery } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ListQuery, MutationResult } from '@/shared/types/query-result-types';
 import type { FileUploadHelpers } from '@/shared/ui';

@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { createCreateMutation, createUpdateMutation } from '@/shared/lib/query-factories';
+import { createCreateMutation, createUpdateMutation } from '@/shared/lib/query-factories-v2';
 import {
   invalidateChatbotSession,
   invalidateChatbotSessions,

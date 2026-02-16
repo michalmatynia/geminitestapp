@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { useRef, useEffect, useMemo, useCallback } from 'react';
 
 import {
   useCreateNote,
@@ -190,7 +190,7 @@ export const useUpdateNoteRelationsMutation = (noteId: string) => {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void invalidateNoteDetail(queryClient, noteId);
     },
-  });
+  })();
 };
 
 export const useCreateNoteFileMutation = (
@@ -233,7 +233,7 @@ export const useCreateNoteFileMutation = (
             void invalidateNoteDetail(queryClient, noteId);
           }
         },
-      });
+      })();
 };
 
 export const useDeleteNoteFileMutation = (noteId?: string) => {
@@ -247,7 +247,7 @@ export const useDeleteNoteFileMutation = (noteId?: string) => {
         void invalidateNoteDetail(queryClient, noteId);
       }
     },
-  });
+  })();
 };
 
 // --- Composite Hook ---

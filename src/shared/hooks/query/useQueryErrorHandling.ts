@@ -1,8 +1,9 @@
 /* eslint-disable */
 "use client";
 
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
+import { createListQueryV2 } from "@/shared/lib/query-factories-v2";
 import { useToast } from "@/shared/ui";
 import { logClientError, isLoggableObject } from "@/shared/utils/observability/client-error-logger";
 import { getTraceId } from "@/shared/utils/observability/trace";
@@ -190,7 +191,7 @@ export function useResilientQuery<TData>(
 ): any {
   const toast = typeof window !== 'undefined' ? useToast().toast : null;
   
-  const query = useQuery({
+  const query = createListQueryV2<TData, TData>({
     queryKey,
     queryFn,
     retry: (failureCount: number, error: Error): boolean => {
@@ -206,6 +207,13 @@ export function useResilientQuery<TData>(
       return Math.min(baseDelay * Math.pow(2, attemptIndex), 30000);
     },
     placeholderData: options?.fallbackData as any,
+    meta: {
+      source: 'shared.hooks.query.useResilientQuery',
+      operation: 'list',
+      resource: 'resilient-query',
+      domain: 'global',
+      tags: ['error-handling', 'resilient'],
+    },
   });
 
   useEffect((): void => {
@@ -246,7 +254,7 @@ export function useCircuitBreakerQuery<TData>(
     localStorage.setItem(circuitKey, JSON.stringify(state));
   }, [circuitKey]);
 
-  return useQuery({
+  return createListQueryV2<TData, TData>({
     queryKey,
     queryFn: async (): Promise<TData> => {
       const circuit = getCircuitState();
@@ -285,6 +293,13 @@ export function useCircuitBreakerQuery<TData>(
       }
     },
     retry: false, // Circuit breaker handles retries
+    meta: {
+      source: 'shared.hooks.query.useCircuitBreakerQuery',
+      operation: 'list',
+      resource: 'circuit-breaker-query',
+      domain: 'global',
+      tags: ['error-handling', 'circuit-breaker'],
+    },
   });
 }
 

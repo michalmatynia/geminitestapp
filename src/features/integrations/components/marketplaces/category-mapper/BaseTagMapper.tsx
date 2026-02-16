@@ -38,12 +38,8 @@ export function BaseTagMapper(): React.JSX.Element {
   const externalTagsQuery = useExternalTags(connectionId);
   const mappingsQuery = useTagMappings(connectionId);
 
-  // Invoke the hooks to get the mutation objects
-  const fetchMutationHook = useFetchExternalTagsMutation();
-  const fetchMutation = fetchMutationHook();
-
-  const saveMutationHook = useSaveTagMappingsMutation();
-  const saveMutation = saveMutationHook();
+  const fetchMutation = useFetchExternalTagsMutation();
+  const saveMutation = useSaveTagMappingsMutation();
 
   const catalogsById = useMemo(
     () =>

@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { FolderNode } from '@/features/foldertree/utils/folderImporter';
-import { createCreateMutation } from '@/shared/lib/query-factories';
+import { createCreateMutation } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { CreateMutation } from '@/shared/types/query-result-types';
 

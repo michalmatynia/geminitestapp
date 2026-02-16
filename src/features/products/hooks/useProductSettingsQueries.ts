@@ -1,18 +1,15 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import {
-  createListQuery,
-  createSingleQuery,
-  createCreateMutation,
-  createUpdateMutation,
-  createDeleteMutation,
-} from '@/shared/lib/query-factories';
-import {
-  createSaveMutation as createRobustSaveMutation,
-  createDeleteMutation as createRobustDeleteMutation,
-  createCreateMutation as createRobustCreateMutation,
-  createUpdateMutation as createRobustUpdateMutation,
-} from '@/shared/lib/mutation-factories';
+  createListQueryV2,
+  createSingleQueryV2,
+  createMutationV2,
+  createCreateMutationV2,
+  createUpdateMutationV2,
+  createDeleteMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import {
   invalidateCatalogScopedData,
   invalidatePriceGroups,
@@ -54,7 +51,7 @@ import {
 
 
 export function usePriceGroups(): ListQuery<PriceGroup> {
-  return useMetadataPriceGroups() as ListQuery<PriceGroup>;
+  return useMetadataPriceGroups();
 }
 
 export function useCatalogs(): ListQuery<CatalogRecord> {
@@ -62,95 +59,198 @@ export function useCatalogs(): ListQuery<CatalogRecord> {
 }
 
 export function useCategories(catalogId: string | null): ListQuery<ProductCategoryWithChildren> {
-  return createListQuery({
-    queryKey: productSettingsKeys.categoryTree(catalogId),
+  const queryKey = productSettingsKeys.categoryTree(catalogId);
+  return createListQueryV2({
+    queryKey,
     queryFn: () => api.getCategories(catalogId),
     enabled: !!catalogId,
+    meta: {
+      source: 'products.hooks.useCategories',
+      operation: 'list',
+      resource: 'products.settings.categories.tree',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'settings', 'categories', 'tree'],
+    },
   });
 }
 
 export function useTags(catalogId: string | null): ListQuery<ProductTag> {
-  return useMetadataTags(catalogId ?? undefined) as ListQuery<ProductTag>;
+  return useMetadataTags(catalogId ?? undefined);
 }
 
 export function useParameters(catalogId: string | null): ListQuery<ProductParameter> {
-  return useMetadataParameters(catalogId ?? undefined) as ListQuery<ProductParameter>;
+  return useMetadataParameters(catalogId ?? undefined);
 }
 
 export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {
-  return createSingleQuery({
+  const queryKey = productSettingsKeys.validatorSettings();
+  return createSingleQueryV2({
     id: 'global',
-    queryKey: () => productSettingsKeys.validatorSettings(),
+    queryKey,
     queryFn: api.getValidatorSettings,
+    meta: {
+      source: 'products.hooks.useValidatorSettings',
+      operation: 'detail',
+      resource: 'products.settings.validator',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'settings', 'validator'],
+    },
   });
 }
 
 export function useValidationPatterns(): ListQuery<ProductValidationPattern> {
-  return createListQuery({
-    queryKey: productSettingsKeys.validatorPatterns(),
+  const queryKey = productSettingsKeys.validatorPatterns();
+  return createListQueryV2({
+    queryKey,
     queryFn: api.getValidationPatterns,
+    meta: {
+      source: 'products.hooks.useValidationPatterns',
+      operation: 'list',
+      resource: 'products.settings.validator.patterns',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'settings', 'validator', 'patterns'],
+    },
   });
 }
 
 export function useProductValidatorConfig(includeDisabled: boolean = false): SingleQuery<ProductValidatorConfig> {
-  return createSingleQuery({
-    id: includeDisabled ? 'config-all' : 'config-active',
-    queryKey: () => productSettingsKeys.validatorConfig(includeDisabled),
+  const id = includeDisabled ? 'config-all' : 'config-active';
+  const queryKey = productSettingsKeys.validatorConfig(includeDisabled);
+  return createSingleQueryV2({
+    id,
+    queryKey,
     queryFn: () => api.getProductValidatorConfig(includeDisabled),
+    meta: {
+      source: 'products.hooks.useProductValidatorConfig',
+      operation: 'detail',
+      resource: 'products.settings.validator.config',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'settings', 'validator', 'config'],
+    },
   });
 }
 
 export function useUpdatePriceGroupMutation(): UpdateMutation<PriceGroup, PriceGroup> {
-  return createRobustUpdateMutation({
-    updateFn: (group: PriceGroup) => api.updatePriceGroup(group),
-    invalidateFn: (queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.priceGroups();
+  return createUpdateMutationV2({
+    mutationFn: (group: PriceGroup) => api.updatePriceGroup(group),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useUpdatePriceGroupMutation',
+      operation: 'update',
+      resource: 'products.settings.price-groups',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'price-groups', 'update'],
+    },
+    onSuccess: (_data: PriceGroup, _variables: PriceGroup, _context: unknown) => {
       void invalidatePriceGroups(queryClient);
     },
   });
 }
 
 export function useDeletePriceGroupMutation(): DeleteMutation {
-  return createRobustDeleteMutation({
-    deleteFn: (id: string) => api.deletePriceGroup(id),
-    invalidateFn: (queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.priceGroups();
+  return createDeleteMutationV2({
+    mutationFn: (id: string) => api.deletePriceGroup(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeletePriceGroupMutation',
+      operation: 'delete',
+      resource: 'products.settings.price-groups',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'price-groups', 'delete'],
+    },
+    onSuccess: () => {
       void invalidatePriceGroups(queryClient);
     },
   });
 }
 
 export function useSavePriceGroupMutation(): SaveMutation<PriceGroup> {
-  return createRobustSaveMutation({
-    saveFn: ({ id, data }: { id?: string; data: Partial<PriceGroup> }) => api.savePriceGroup(id, data),
-    invalidateFn: (queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.priceGroups();
+  return createMutationV2({
+    mutationFn: ({ id, data }: { id?: string; data: Partial<PriceGroup> }) => api.savePriceGroup(id, data),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSavePriceGroupMutation',
+      operation: 'action',
+      resource: 'products.settings.price-groups',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'price-groups', 'save'],
+    },
+    onSuccess: () => {
       void invalidatePriceGroups(queryClient);
     },
   });
 }
 
 export function useDeleteCatalogMutation(): DeleteMutation {
-  return createRobustDeleteMutation({
-    deleteFn: (id: string) => api.deleteCatalog(id),
-    invalidateFn: (queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.catalogs();
+  return createDeleteMutationV2({
+    mutationFn: (id: string) => api.deleteCatalog(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteCatalogMutation',
+      operation: 'delete',
+      resource: 'products.settings.catalogs',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'catalogs', 'delete'],
+    },
+    onSuccess: () => {
       void invalidateProductSettingsCatalogs(queryClient);
     },
   });
 }
 
 export function useSaveCatalogMutation(): SaveMutation<Catalog> {
-  return createRobustSaveMutation({
-    saveFn: ({ id, data }: { id?: string; data: Partial<Catalog> }) =>
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.catalogs();
+  return createMutationV2({
+    mutationFn: ({ id, data }: { id?: string; data: Partial<Catalog> }) =>
       id ? api.updateCatalog(id, data) : api.createCatalog(data),
-    invalidateFn: (queryClient) => {
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSaveCatalogMutation',
+      operation: 'action',
+      resource: 'products.settings.catalogs',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'catalogs', 'save'],
+    },
+    onSuccess: () => {
       void invalidateProductSettingsCatalogs(queryClient);
     },
   });
 }
 
 export function useSaveCategoryMutation(): SaveMutation<ProductCategory, { id: string | undefined; data: Partial<ProductCategory> }> {
-  return createRobustSaveMutation({
-    saveFn: ({ id, data }: { id: string | undefined; data: Partial<ProductCategory> }) =>
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.all;
+  return createMutationV2({
+    mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductCategory> }) =>
       id ? api.updateCategory(id, data) : api.createCategory(data),
-    invalidateFn: (queryClient, _data, variables) => {
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSaveCategoryMutation',
+      operation: 'action',
+      resource: 'products.settings.categories',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'categories', 'save'],
+    },
+    onSuccess: (_data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
@@ -158,23 +258,41 @@ export function useSaveCategoryMutation(): SaveMutation<ProductCategory, { id: s
 }
 
 export function useDeleteCategoryMutation(): UpdateMutation<void, { id: string; catalogId: string | null }> {
-  return createRobustUpdateMutation({
-    updateFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
-    invalidateFn: (queryClient, _data, variables) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.all;
+  return createDeleteMutationV2({
+    mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteCategoryMutation',
+      operation: 'delete',
+      resource: 'products.settings.categories',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'categories', 'delete'],
+    },
+    onSuccess: (_data, variables) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
 
 export function useReorderCategoryMutation(): UpdateMutation<ProductCategory, api.ReorderCategoryPayload> {
-  return createRobustUpdateMutation({
-    updateFn: (payload: api.ReorderCategoryPayload) =>
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.all;
+  return createUpdateMutationV2({
+    mutationFn: (payload: api.ReorderCategoryPayload) =>
       api.reorderCategory(payload),
-    invalidateFn: (
-      queryClient,
-      _data: ProductCategory,
-      variables: api.ReorderCategoryPayload
-    ) => {
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useReorderCategoryMutation',
+      operation: 'update',
+      resource: 'products.settings.categories.reorder',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'categories', 'reorder'],
+    },
+    onSuccess: (_data: ProductCategory, variables: api.ReorderCategoryPayload) => {
       const catalogId = variables.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
@@ -182,10 +300,21 @@ export function useReorderCategoryMutation(): UpdateMutation<ProductCategory, ap
 }
 
 export function useSaveTagMutation(): SaveMutation<ProductTag, { id: string | undefined; data: Partial<ProductTag> }> {
-  return createRobustSaveMutation({
-    saveFn: ({ id, data }: { id: string | undefined; data: Partial<ProductTag> }) =>
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.all;
+  return createMutationV2({
+    mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductTag> }) =>
       id ? api.updateTag(id, data) : api.createTag(data),
-    invalidateFn: (queryClient, _data, variables) => {
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSaveTagMutation',
+      operation: 'action',
+      resource: 'products.settings.tags',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'tags', 'save'],
+    },
+    onSuccess: (_data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
@@ -193,19 +322,41 @@ export function useSaveTagMutation(): SaveMutation<ProductTag, { id: string | un
 }
 
 export function useDeleteTagMutation(): UpdateMutation<void, { id: string; catalogId: string | null }> {
-  return createRobustUpdateMutation({
-    updateFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteTag(id),
-    invalidateFn: (queryClient, _data, variables) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.all;
+  return createDeleteMutationV2({
+    mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteTag(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteTagMutation',
+      operation: 'delete',
+      resource: 'products.settings.tags',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'tags', 'delete'],
+    },
+    onSuccess: (_data, variables) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
 
 export function useSaveParameterMutation(): SaveMutation<ProductParameter, { id: string | undefined; data: Partial<ProductParameter> }> {
-  return createRobustSaveMutation({
-    saveFn: ({ id, data }: { id: string | undefined; data: Partial<ProductParameter> }) =>
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.all;
+  return createMutationV2({
+    mutationFn: ({ id, data }: { id: string | undefined; data: Partial<ProductParameter> }) =>
       id ? api.updateParameter(id, data) : api.createParameter(data),
-    invalidateFn: (queryClient, _data, variables) => {
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useSaveParameterMutation',
+      operation: 'action',
+      resource: 'products.settings.parameters',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'parameters', 'save'],
+    },
+    onSuccess: (_data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
@@ -213,45 +364,100 @@ export function useSaveParameterMutation(): SaveMutation<ProductParameter, { id:
 }
 
 export function useDeleteParameterMutation(): UpdateMutation<void, { id: string; catalogId: string | null }> {
-  return createRobustUpdateMutation({
-    updateFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteParameter(id),
-    invalidateFn: (queryClient, _data, variables) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.all;
+  return createDeleteMutationV2({
+    mutationFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteParameter(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteParameterMutation',
+      operation: 'delete',
+      resource: 'products.settings.parameters',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'parameters', 'delete'],
+    },
+    onSuccess: (_data, variables) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
 
 export function useUpdateValidatorSettingsMutation(): UpdateMutation<ProductValidatorSettings, Partial<ProductValidatorSettings>> {
-  return createRobustUpdateMutation({
-    updateFn: api.updateValidatorSettings,
-    invalidateFn: (queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.validatorSettings();
+  return createUpdateMutationV2({
+    mutationFn: api.updateValidatorSettings,
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useUpdateValidatorSettingsMutation',
+      operation: 'update',
+      resource: 'products.settings.validator',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'validator', 'update'],
+    },
+    onSuccess: () => {
       void invalidateValidatorConfig(queryClient);
     },
   });
 }
 
 export function useCreateValidationPatternMutation(): CreateMutation<ProductValidationPattern, api.CreateValidationPatternPayload> {
-  return createRobustCreateMutation({
-    createFn: api.createValidationPattern,
-    invalidateFn: (queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.validatorPatterns();
+  return createCreateMutationV2({
+    mutationFn: api.createValidationPattern,
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useCreateValidationPatternMutation',
+      operation: 'create',
+      resource: 'products.settings.validator.patterns',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'validator', 'patterns', 'create'],
+    },
+    onSuccess: () => {
       void invalidateValidatorConfig(queryClient);
     },
   });
 }
 
 export function useUpdateValidationPatternMutation(): UpdateMutation<ProductValidationPattern, { id: string; data: api.UpdateValidationPatternPayload }> {
-  return createRobustUpdateMutation({
-    updateFn: ({ id, data }: { id: string; data: api.UpdateValidationPatternPayload }) => api.updateValidationPattern(id, data),
-    invalidateFn: (queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.validatorPatterns();
+  return createUpdateMutationV2({
+    mutationFn: ({ id, data }: { id: string; data: api.UpdateValidationPatternPayload }) => api.updateValidationPattern(id, data),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useUpdateValidationPatternMutation',
+      operation: 'update',
+      resource: 'products.settings.validator.patterns',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'validator', 'patterns', 'update'],
+    },
+    onSuccess: () => {
       void invalidateValidatorConfig(queryClient);
     },
   });
 }
 
 export function useDeleteValidationPatternMutation(): DeleteMutation {
-  return createRobustDeleteMutation({
-    deleteFn: (id: string) => api.deleteValidationPattern(id),
-    invalidateFn: (queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.validatorPatterns();
+  return createDeleteMutationV2({
+    mutationFn: (id: string) => api.deleteValidationPattern(id),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useDeleteValidationPatternMutation',
+      operation: 'delete',
+      resource: 'products.settings.validator.patterns',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'validator', 'patterns', 'delete'],
+    },
+    onSuccess: () => {
       void invalidateValidatorConfig(queryClient);
     },
   });

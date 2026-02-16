@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutation, createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
+import { createCreateMutation, createListQuery, createSingleQuery } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiPathRuntimeAnalyticsSummary } from '@/shared/types/domain/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';

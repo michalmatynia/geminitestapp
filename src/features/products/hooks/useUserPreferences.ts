@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import type { ProductListPreferences } from '@/features/products/types/products-ui';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { createSingleQuery } from '@/shared/lib/query-factories';
+import { createSingleQuery } from '@/shared/lib/query-factories-v2';
 import { invalidateUserPreferences } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { UserPreferences as SharedUserPreferences } from '@/shared/types/domain/user-preferences';

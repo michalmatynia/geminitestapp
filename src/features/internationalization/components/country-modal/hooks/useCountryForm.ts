@@ -60,14 +60,18 @@ export function useCountryForm({
     }
 
     try {
-      await saveMutation.mutateAsync({
-        id: country?.id,
+      const payload: { id?: string; data: { code: string; name: string; currencyIds: string[] } } = {
         data: {
           code: form.code.trim().toUpperCase(),
           name: form.name.trim(),
           currencyIds: selectedCurrencyIds,
         },
-      });
+      };
+      if (country?.id) {
+        payload.id = country.id;
+      }
+
+      await saveMutation.mutateAsync(payload);
 
       toast('Country saved.', { variant: 'success' });
     } catch (err) {

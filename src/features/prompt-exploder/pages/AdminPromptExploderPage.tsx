@@ -964,8 +964,8 @@ const applyCaptureFieldToPlaceDate = (
   overwrite: boolean
 ): void => {
   if (!value) return;
-  const setValue = <K extends keyof CaseResolverPlaceDateCandidate>(
-    key: K,
+  const setValue = (
+    key: 'city' | 'day' | 'month' | 'year',
     next: string
   ): void => {
     const current = candidate[key];

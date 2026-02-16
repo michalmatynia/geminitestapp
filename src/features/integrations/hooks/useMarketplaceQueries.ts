@@ -11,22 +11,32 @@ import type {
 } from '@/features/integrations/types/tag-mapping';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQuery,
-} from '@/shared/lib/query-factories';
+  createListQueryV2,
+} from '@/shared/lib/query-factories-v2';
 import { marketplaceKeys } from '@/shared/lib/query-key-exports';
 import type { ListQuery } from '@/shared/types/query-result-types';
 
 export function useExternalCategories(connectionId: string): ListQuery<ExternalCategory> {
-  return createListQuery({
-    queryKey: marketplaceKeys.categories(connectionId),
+  const queryKey = marketplaceKeys.categories(connectionId);
+  return createListQueryV2({
+    queryKey,
     queryFn: () => api.get<ExternalCategory[]>(`/api/marketplace/categories?connectionId=${connectionId}`),
     enabled: !!connectionId,
+    meta: {
+      source: 'integrations.hooks.useExternalCategories',
+      operation: 'list',
+      resource: 'marketplace.categories',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'marketplace', 'categories'],
+    },
   });
 }
 
 export function useCategoryMappings(connectionId: string, catalogId?: string | null): ListQuery<CategoryMappingWithDetails> {
-  return createListQuery({
-    queryKey: marketplaceKeys.mappings(connectionId, catalogId),
+  const queryKey = marketplaceKeys.mappings(connectionId, catalogId);
+  return createListQueryV2({
+    queryKey,
     queryFn: async (): Promise<CategoryMappingWithDetails[]> => {
       if (!catalogId) return [];
       return api.get<CategoryMappingWithDetails[]>(
@@ -34,6 +44,14 @@ export function useCategoryMappings(connectionId: string, catalogId?: string | n
       );
     },
     enabled: !!connectionId && !!catalogId,
+    meta: {
+      source: 'integrations.hooks.useCategoryMappings',
+      operation: 'list',
+      resource: 'marketplace.mappings',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'marketplace', 'mappings'],
+    },
   });
 }
 
@@ -43,52 +61,97 @@ export function useCategoryMappingsByConnection(
 ): ListQuery<CategoryMappingWithDetails> {
   const isEnabled = options?.enabled ?? !!connectionId;
 
-  return createListQuery({
-    queryKey: marketplaceKeys.mappings(connectionId, 'all'),
+  const queryKey = marketplaceKeys.mappings(connectionId, 'all');
+  return createListQueryV2({
+    queryKey,
     queryFn: () => api.get<CategoryMappingWithDetails[]>(`/api/marketplace/mappings?connectionId=${connectionId}`),
     enabled: isEnabled && !!connectionId,
+    meta: {
+      source: 'integrations.hooks.useCategoryMappingsByConnection',
+      operation: 'list',
+      resource: 'marketplace.mappings.connection',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'marketplace', 'mappings'],
+    },
   });
 }
 
 export function useExternalProducers(connectionId: string): ListQuery<ExternalProducer> {
-  return createListQuery({
-    queryKey: marketplaceKeys.producers(connectionId),
+  const queryKey = marketplaceKeys.producers(connectionId);
+  return createListQueryV2({
+    queryKey,
     queryFn: () =>
       api.get<ExternalProducer[]>(`/api/marketplace/producers?connectionId=${connectionId}`),
     enabled: !!connectionId,
+    meta: {
+      source: 'integrations.hooks.useExternalProducers',
+      operation: 'list',
+      resource: 'marketplace.producers',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'marketplace', 'producers'],
+    },
   });
 }
 
 export function useProducerMappings(
   connectionId: string
 ): ListQuery<ProducerMappingWithDetails> {
-  return createListQuery({
-    queryKey: marketplaceKeys.producerMappings(connectionId),
+  const queryKey = marketplaceKeys.producerMappings(connectionId);
+  return createListQueryV2({
+    queryKey,
     queryFn: () =>
       api.get<ProducerMappingWithDetails[]>(
         `/api/marketplace/producer-mappings?connectionId=${connectionId}`
       ),
     enabled: !!connectionId,
+    meta: {
+      source: 'integrations.hooks.useProducerMappings',
+      operation: 'list',
+      resource: 'marketplace.producer-mappings',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'marketplace', 'producer-mappings'],
+    },
   });
 }
 
 export function useExternalTags(connectionId: string): ListQuery<ExternalTag> {
-  return createListQuery({
-    queryKey: marketplaceKeys.tags(connectionId),
+  const queryKey = marketplaceKeys.tags(connectionId);
+  return createListQueryV2({
+    queryKey,
     queryFn: () => api.get<ExternalTag[]>(`/api/marketplace/tags?connectionId=${connectionId}`),
     enabled: !!connectionId,
+    meta: {
+      source: 'integrations.hooks.useExternalTags',
+      operation: 'list',
+      resource: 'marketplace.tags',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'marketplace', 'tags'],
+    },
   });
 }
 
 export function useTagMappings(
   connectionId: string
 ): ListQuery<TagMappingWithDetails> {
-  return createListQuery({
-    queryKey: marketplaceKeys.tagMappings(connectionId),
+  const queryKey = marketplaceKeys.tagMappings(connectionId);
+  return createListQueryV2({
+    queryKey,
     queryFn: () =>
       api.get<TagMappingWithDetails[]>(
         `/api/marketplace/tag-mappings?connectionId=${connectionId}`
       ),
     enabled: !!connectionId,
+    meta: {
+      source: 'integrations.hooks.useTagMappings',
+      operation: 'list',
+      resource: 'marketplace.tag-mappings',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'marketplace', 'tag-mappings'],
+    },
   });
 }

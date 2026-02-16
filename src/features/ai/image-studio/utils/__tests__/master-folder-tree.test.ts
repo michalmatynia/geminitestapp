@@ -49,8 +49,6 @@ describe('decodeImageStudioMasterNodeId', () => {
           imageFile: null,
           screenshotFile: null,
           asset3d: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         },
         {
           id: 'slot-generation',
@@ -71,8 +69,6 @@ describe('decodeImageStudioMasterNodeId', () => {
           imageFile: null,
           screenshotFile: null,
           asset3d: null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         },
       ],
       ['test']

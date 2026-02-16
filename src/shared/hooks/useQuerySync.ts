@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback } from 'react';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -60,16 +60,20 @@ export function useQueryDependency(
 ): void {
   const queryClient = useQueryClient();
 
-  const parentQuery = useQuery({
-    queryKey: parentQueryKey,
-    enabled: false, // Don't auto-fetch, just watch for changes
-  });
+  useEffect(() => {
+    if (options?.enabled === false) return;
 
-  useEffect((): void => {
-    if (options?.enabled !== false && parentQuery.data) {
+    const parentKeySnapshot = JSON.stringify(parentQueryKey);
+    const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
+      if (event.type !== 'updated') return;
+      if (JSON.stringify(event.query.queryKey) !== parentKeySnapshot) return;
+      if (event.query.state.data === undefined) return;
+
       dependentQueryKeys.forEach((queryKey: readonly unknown[]) => {
         void queryClient.invalidateQueries({ queryKey });
       });
-    }
-  }, [parentQuery.data, dependentQueryKeys, queryClient, options?.enabled]);
+    });
+
+    return (): void => unsubscribe();
+  }, [dependentQueryKeys, options?.enabled, parentQueryKey, queryClient]);
 }

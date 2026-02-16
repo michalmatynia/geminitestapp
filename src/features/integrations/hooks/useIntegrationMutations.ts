@@ -16,7 +16,7 @@ export function useCreateIntegration() {
     onSuccess: (_data, _variables, _context, queryClient): void => {
       void invalidateIntegrations(queryClient);
     },
-  });
+  })();
 }
 
 type UpsertConnectionVariables = {
@@ -33,7 +33,7 @@ export function useUpsertConnection() {
     onSuccess: (_data, variables, _context, queryClient): void => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
-  });
+  })();
 }
 
 type DeleteConnectionVariables = {
@@ -47,7 +47,7 @@ export function useDeleteConnection() {
     onSuccess: (_data, variables, _context, queryClient): void => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
-  });
+  })();
 }
 
 type TestConnectionType = 'test' | 'base/test' | 'allegro/test';
@@ -67,7 +67,7 @@ export function useTestConnection() {
       // Note: mapping body and timeout is handled by the caller or needs custom mutationFn
       // For now, keeping it simple as factories might need expansion for these options
     }
-  });
+  })();
 }
 
 export function useDisconnectAllegro() {
@@ -76,7 +76,7 @@ export function useDisconnectAllegro() {
     onSuccess: (_data, variables, _context, queryClient) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
-  });
+  })();
 }
 
 export function useBaseApiRequest() {
@@ -86,7 +86,7 @@ export function useBaseApiRequest() {
   >({
     endpoint: ({ integrationId, connectionId }) => 
       `/api/integrations/${integrationId}/connections/${connectionId}/base/request`,
-  });
+  })();
 }
 
 export function useAllegroApiRequest() {
@@ -96,24 +96,23 @@ export function useAllegroApiRequest() {
   >({
     endpoint: ({ integrationId, connectionId }) => 
       `/api/integrations/${integrationId}/connections/${connectionId}/allegro/request`,
-  });
+  })();
 }
 
 export function useUpdatePreferredTemplate() {
   return createPostMutation<void, { templateId: string }>({
     endpoint: '/api/integrations/exports/base/templates/preferred',
-  });
+  })();
 }
 
 export function useSyncAllBaseImagesMutation() {
   return createPostMutation<{ message?: string }, void>({
     endpoint: '/api/integrations/images/sync-base/all',
-  });
+  })();
 }
 
 export function useUpdatePreferredInventory() {
   return createPostMutation<void, { inventoryId: string; connectionId: string }>({
     endpoint: '/api/integrations/exports/base/inventories/preferred',
-  });
+  })();
 }
-

@@ -612,13 +612,15 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
         limit?: number;
         selectedIds?: string[];
       } = {
-        connectionId: selectedBaseConnectionId || undefined,
         inventoryId,
         catalogId,
         imageMode,
         uniqueOnly,
         allowDuplicateSku,
       };
+      if (selectedBaseConnectionId) {
+        importData.connectionId = selectedBaseConnectionId;
+      }
       if (importTemplateId) importData.templateId = importTemplateId;
       if (limit !== 'all') importData.limit = Number(limit);
       if (importListEnabled) {

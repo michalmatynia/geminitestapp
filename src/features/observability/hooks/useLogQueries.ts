@@ -3,8 +3,8 @@
 import type { ActivityLogDto } from '@/shared/contracts/system';
 import { api } from '@/shared/lib/api-client';
 import {
-  createSingleQuery,
-} from '@/shared/lib/query-factories';
+  createSingleQueryV2,
+} from '@/shared/lib/query-factories-v2';
 import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
 import type { SystemLogMetrics, SystemLogRecord, AiInsightRecord } from '@/shared/types';
 import type { SingleQuery } from '@/shared/types/query-result-types';
@@ -40,8 +40,10 @@ export interface SystemActivityResponse {
 }
 
 export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsResponse> {
-  return createSingleQuery({
-    queryKey: logsKeys.list(filters),
+  const queryKey = logsKeys.list(filters);
+  return createSingleQueryV2({
+    id: 'system-logs',
+    queryKey,
     queryFn: () => 
       api.get<SystemLogsResponse>('/api/system/logs', {
         params: {
@@ -60,17 +62,33 @@ export function useSystemLogs(filters: LogFilters): SingleQuery<SystemLogsRespon
           to: filters.to || undefined,
         }
       }),
+    meta: {
+      source: 'observability.hooks.useSystemLogs',
+      operation: 'detail',
+      resource: 'system.logs',
+      queryKey,
+      tags: ['observability', 'logs'],
+    },
   });
 }
 
 export function useSystemActivity(params: { page?: number; pageSize?: number; search?: string } = {}): SingleQuery<SystemActivityResponse> {
   const { page = 1, pageSize = 10, search } = params;
-  return createSingleQuery({
-    queryKey: activityKeys.list({ page, pageSize, search }),
+  const queryKey = activityKeys.list({ page, pageSize, search });
+  return createSingleQueryV2({
+    id: 'system-activity',
+    queryKey,
     queryFn: () => 
       api.get<SystemActivityResponse>('/api/system/activity', {
         params: { page, pageSize, search }
       }),
+    meta: {
+      source: 'observability.hooks.useSystemActivity',
+      operation: 'detail',
+      resource: 'system.activity',
+      queryKey,
+      tags: ['observability', 'activity'],
+    },
   });
 }
 
@@ -79,8 +97,10 @@ export interface SystemLogMetricsResponse {
 }
 
 export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize'>): SingleQuery<SystemLogMetricsResponse> {
-  return createSingleQuery({
-    queryKey: logsKeys.metrics(filters),
+  const queryKey = logsKeys.metrics(filters);
+  return createSingleQueryV2({
+    id: 'system-log-metrics',
+    queryKey,
     queryFn: () => 
       api.get<SystemLogMetricsResponse>('/api/system/logs/metrics', {
         params: {
@@ -97,25 +117,48 @@ export function useSystemLogMetrics(filters: Omit<LogFilters, 'page' | 'pageSize
           to: filters.to || undefined,
         }
       }),
+    meta: {
+      source: 'observability.hooks.useSystemLogMetrics',
+      operation: 'detail',
+      resource: 'system.logs.metrics',
+      queryKey,
+      tags: ['observability', 'logs', 'metrics'],
+    },
   });
 }
 
 export function useMongoDiagnostics(): SingleQuery<unknown> {
-  return createSingleQuery({
-    queryKey: diagnosticsKeys.mongo,
+  const queryKey = diagnosticsKeys.mongo();
+  return createSingleQueryV2({
+    id: 'mongo-diagnostics',
+    queryKey,
     queryFn: () => api.get<unknown>('/api/system/diagnostics/mongo-indexes'),
+    meta: {
+      source: 'observability.hooks.useMongoDiagnostics',
+      operation: 'detail',
+      resource: 'system.diagnostics.mongo-indexes',
+      queryKey,
+      tags: ['observability', 'diagnostics', 'mongo'],
+    },
   });
 }
 
 export function useLogInsights(options: { limit?: number; enabled?: boolean } = {}): SingleQuery<{ insights: AiInsightRecord[] }> {
-  return createSingleQuery({
-    queryKey: logsKeys.insights(options.limit),
+  const queryKey = logsKeys.insights(options.limit);
+  return createSingleQueryV2({
+    id: 'log-insights',
+    queryKey,
     queryFn: () => 
       api.get<{ insights: AiInsightRecord[] }>('/api/system/logs/insights', {
         params: { limit: options.limit ?? 5 }
       }),
-    options: {
-      enabled: options.enabled ?? true,
-    }
+    enabled: options.enabled ?? true,
+    meta: {
+      source: 'observability.hooks.useLogInsights',
+      operation: 'detail',
+      resource: 'system.logs.insights',
+      queryKey,
+      tags: ['observability', 'logs', 'insights'],
+    },
   });
 }

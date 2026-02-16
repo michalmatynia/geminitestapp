@@ -37,6 +37,7 @@ describe('ProductListHeader Component', () => {
     currencyCode: 'USD',
     setCurrencyCode: vi.fn(),
     currencyOptions: ['USD', 'PLN', 'EUR'],
+    filtersCollapsedByDefault: true,
     catalogFilter: 'all',
     setCatalogFilter: vi.fn(),
     catalogs: [
@@ -70,6 +71,10 @@ describe('ProductListHeader Component', () => {
     setSearch: vi.fn(),
     sku: '',
     setSku: vi.fn(),
+    description: '',
+    setDescription: vi.fn(),
+    categoryId: '',
+    setCategoryId: vi.fn(),
     minPrice: undefined,
     setMinPrice: vi.fn(),
     maxPrice: undefined,
@@ -78,6 +83,8 @@ describe('ProductListHeader Component', () => {
     setStartDate: vi.fn(),
     endDate: '',
     setEndDate: vi.fn(),
+    baseExported: '',
+    setBaseExported: vi.fn(),
     data: [],
     isLoading: false,
     loadError: null,
@@ -146,7 +153,7 @@ describe('ProductListHeader Component', () => {
   it('renders title and buttons', () => {
     renderWithContext(<ProductListHeader />);
 
-    expect(screen.getByText('Products')).toBeInTheDocument();
+    expect(screen.getAllByText('Products').length).toBeGreaterThan(0);
     expect(screen.getByLabelText('Create new product')).toBeInTheDocument();
   });
 
@@ -158,9 +165,9 @@ describe('ProductListHeader Component', () => {
 
   it('renders pagination info correctly', () => {
     renderWithContext(<ProductListHeader />);
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('/')).toBeInTheDocument();
-    expect(screen.getByText('5')).toBeInTheDocument();
+    expect(screen.getAllByText('1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('/').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('5').length).toBeGreaterThan(0);
   });
 
   it('calls setPage when Prev/Next buttons are clicked', () => {
@@ -171,11 +178,17 @@ describe('ProductListHeader Component', () => {
     
     // Check for previous button. Note: The exact label/text depends on the Pagination component implementation.
     // Assuming standard accessible labels or text.
-    const prevButton = screen.getByLabelText('Previous page'); // Adjust selector if needed based on Pagination component
+    const [prevButton] = screen.getAllByLabelText('Previous page'); // Adjust selector if needed based on Pagination component
+    if (!prevButton) {
+      throw new Error('Expected a previous page button');
+    }
     fireEvent.click(prevButton);
     expect(mockContextValue.setPage).toHaveBeenCalledWith(1);
 
-    const nextButton = screen.getByLabelText('Next page'); // Adjust selector if needed
+    const [nextButton] = screen.getAllByLabelText('Next page'); // Adjust selector if needed
+    if (!nextButton) {
+      throw new Error('Expected a next page button');
+    }
     fireEvent.click(nextButton);
     expect(mockContextValue.setPage).toHaveBeenCalledWith(3);
   });

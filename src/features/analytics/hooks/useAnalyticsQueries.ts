@@ -5,9 +5,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { fetchAnalyticsSummary, type AnalyticsRange } from '@/features/analytics/api';
 import { api } from '@/shared/lib/api-client';
 import {
-  createSingleQuery,
-  createCreateMutation,
-} from '@/shared/lib/query-factories';
+  createSingleQueryV2,
+  createCreateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import { analyticsKeys } from '@/shared/lib/query-key-exports';
 import type { AnalyticsScope, AiInsightRecord, AnalyticsSummaryDto } from '@/shared/types';
 import type { SingleQuery, MutationResult } from '@/shared/types/query-result-types';
@@ -23,12 +23,20 @@ export function useAnalyticsSummary(input?: {
   const scope = input?.scope ?? 'all';
   const enabled = input?.enabled ?? true;
 
-  return createSingleQuery({
+  const queryKey = analyticsKeys.summary(range, scope);
+  return createSingleQueryV2({
     id: `${range}-${scope}`,
-    queryKey: analyticsKeys.summary(range, scope),
+    queryKey,
     queryFn: () => fetchAnalyticsSummary({ range, scope }),
     enabled,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    meta: {
+      source: 'analytics.hooks.useAnalyticsSummary',
+      operation: 'detail',
+      resource: 'analytics.summary',
+      queryKey,
+      tags: ['analytics', 'summary'],
+    },
   });
 }
 
@@ -36,31 +44,45 @@ export function useAnalyticsInsights(options: { limit?: number; enabled?: boolea
   const limit = options.limit ?? 5;
   const enabled = options.enabled ?? true;
 
-  return createSingleQuery({
+  const queryKey = analyticsKeys.insights(limit);
+  return createSingleQueryV2({
     id: String(limit),
-    queryKey: analyticsKeys.insights(limit),
+    queryKey,
     queryFn: () => api.get<{ insights: AiInsightRecord[] }>('/api/analytics/insights', {
       params: { limit }
     }),
     enabled,
+    meta: {
+      source: 'analytics.hooks.useAnalyticsInsights',
+      operation: 'detail',
+      resource: 'analytics.insights',
+      queryKey,
+      tags: ['analytics', 'insights'],
+    },
   });
 }
 
 export function useRunAnalyticsInsight(): MutationResult<{ insight: AiInsightRecord }, void> {
   const queryClient = useQueryClient();
 
-  return createCreateMutation({
+  return createCreateMutationV2({
     mutationFn: () => api.post<{ insight: AiInsightRecord }>('/api/analytics/insights'),
-    options: {
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
-      },
+    mutationKey: analyticsKeys.all,
+    meta: {
+      source: 'analytics.hooks.useRunAnalyticsInsight',
+      operation: 'create',
+      resource: 'analytics.insights',
+      mutationKey: analyticsKeys.all,
+      tags: ['analytics', 'insights', 'create'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: analyticsKeys.all });
     },
   });
 }
 
 export function useTrackEventMutation(): MutationResult<void, Record<string, unknown>> {
-  return createCreateMutation({
+  return createCreateMutationV2({
     mutationFn: async (payload: Record<string, unknown>) => {
       const body = JSON.stringify(payload);
       
@@ -77,6 +99,14 @@ export function useTrackEventMutation(): MutationResult<void, Record<string, unk
         credentials: 'include',
         keepalive: true,
       });
+    },
+    mutationKey: analyticsKeys.all,
+    meta: {
+      source: 'analytics.hooks.useTrackEventMutation',
+      operation: 'create',
+      resource: 'analytics.events',
+      mutationKey: analyticsKeys.all,
+      tags: ['analytics', 'events'],
     },
   });
 }

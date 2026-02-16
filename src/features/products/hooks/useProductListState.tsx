@@ -41,7 +41,7 @@ import type { ProductCategory, ProductWithImages } from '@/features/products/typ
 import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { createSingleQuery } from '@/shared/lib/query-factories';
+import { createSingleQuery } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

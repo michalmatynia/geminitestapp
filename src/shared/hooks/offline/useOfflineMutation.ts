@@ -1,6 +1,8 @@
-import { useMutation, useQueryClient, type UseMutationResult, type QueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient, type QueryKey, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { inferLegacyFactoryMeta } from '@/shared/lib/tanstack-factory-meta-inference';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -112,6 +114,7 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
 ): UseMutationResult<TData, TError, TVariables, TContext> {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const mutationKey: QueryKey = options.queryKey;
   const resolveExtraKeys = useCallback(
     (variables: TVariables): readonly (readonly unknown[])[] => {
       if (!options.extraInvalidateKeys) return [];
@@ -122,7 +125,14 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
     [options]
   );
 
-  return useMutation({
+  return createMutationV2<TData, TVariables, TContext>({
+    mutationKey,
+    meta: inferLegacyFactoryMeta({
+      key: mutationKey,
+      operation: 'action',
+      source: 'shared.hooks.offline.useOfflineMutation',
+      kind: 'mutation',
+    }),
     mutationFn: async (variables: TVariables): Promise<TData> => {
       const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
       if (!isOnline) {
@@ -170,7 +180,7 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
         void queryClient.invalidateQueries({ queryKey: key });
       });
     },
-    onError: (error: TError): void => {
+    onError: (error: Error): void => {
       let message = options.errorMessage || 'An error occurred';
       if (error instanceof Error) {
         message = options.errorMessage 
@@ -179,7 +189,7 @@ export function useOfflineMutation<TData, TError = Error, TVariables = void, TCo
       }
       toast(message, { variant: 'error' });
     },
-  });
+  }) as unknown as UseMutationResult<TData, TError, TVariables, TContext>;
 }
 
 export interface OfflineSyncHookResult {

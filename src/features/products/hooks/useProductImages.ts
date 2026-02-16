@@ -106,7 +106,7 @@ export function useProductImages(
     onSuccess: (_data, _variables, _context, queryClient) => {
       void invalidateProducts(queryClient);
     }
-  });
+  })();
 
   // Effect to clean up object URLs when imageSlots change
   useEffect(() => {

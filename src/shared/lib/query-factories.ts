@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  useMutation,
-  useQuery,
   type QueryFunctionContext,
   type QueryKey,
   type UseMutationOptions,
@@ -14,7 +12,6 @@ import {
   createMutationV2,
   createSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
-import { isTanstackFactoryV2Enabled } from '@/shared/lib/tanstack-factory-flags';
 import { inferLegacyFactoryMeta } from '@/shared/lib/tanstack-factory-meta-inference';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/types/query-result-types';
 
@@ -58,18 +55,6 @@ type MutationFactoryConfig<TData, TVariables, TContext = unknown> = {
   options?: Omit<UseMutationOptions<TData, Error, TVariables, TContext>, 'mutationFn'> | undefined;
 };
 
-const DEFAULT_STALE_TIME_MS = 5 * 60 * 1000;
-
-const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
-  queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>,
-  context: QueryFunctionContext<TQueryKey>
-): Promise<TQueryFnData> => {
-  if (queryFn.length === 0) {
-    return (queryFn as () => Promise<TQueryFnData>)();
-  }
-  return (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
-};
-
 /**
  * Factory for creating standardized list queries.
  */
@@ -88,21 +73,12 @@ export function createListQuery<TData, TQueryFnData = TData[]>(
     kind: 'query',
   });
 
-  if (isTanstackFactoryV2Enabled(meta.domain)) {
-    return createListQueryV2({
-      queryKey,
-      queryFn,
-      ...mergedOptions,
-      meta,
-    });
-  }
-
-  return useQuery({
-    staleTime: mergedOptions.staleTime ?? DEFAULT_STALE_TIME_MS,
-    ...mergedOptions,
+  return createListQueryV2({
     queryKey,
-    queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
-  }) as ListQuery<TData, TQueryFnData>;
+    queryFn,
+    ...mergedOptions,
+    meta,
+  });
 }
 
 /**
@@ -133,24 +109,14 @@ export function createSingleQuery<TData, TTransformedData = TData>(
     kind: 'query',
   });
 
-  if (isTanstackFactoryV2Enabled(meta.domain)) {
-    return createSingleQueryV2({
-      id,
-      queryKey: resolvedKey,
-      queryFn,
-      ...mergedOptions,
-      enabled,
-      meta,
-    });
-  }
-
-  return useQuery({
-    staleTime: mergedOptions.staleTime ?? DEFAULT_STALE_TIME_MS,
-    ...mergedOptions,
+  return createSingleQueryV2({
+    id,
     queryKey: resolvedKey,
-    queryFn: (context) => invokeQueryFactoryFn(queryFn, context),
+    queryFn,
+    ...mergedOptions,
     enabled,
-  }) as SingleQuery<TTransformedData>;
+    meta,
+  });
 }
 
 const createMutationWithOperation = <TData, TVariables, TContext = unknown>(
@@ -166,17 +132,10 @@ const createMutationWithOperation = <TData, TVariables, TContext = unknown>(
     kind: 'mutation',
   });
 
-  if (isTanstackFactoryV2Enabled(meta.domain)) {
-    return createMutationV2<TData, TVariables, TContext>({
-      mutationFn: config.mutationFn,
-      ...options,
-      meta,
-    });
-  }
-
-  return useMutation({
-    ...options,
+  return createMutationV2<TData, TVariables, TContext>({
     mutationFn: config.mutationFn,
+    ...options,
+    meta,
   });
 };
 

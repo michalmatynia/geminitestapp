@@ -41,6 +41,5 @@ export function useCancelJob() {
     onSuccess: (_data, _variables, _context, queryClient): void => {
       void queryClient.invalidateQueries({ queryKey: jobKeys.all });
     },
-  });
+  })();
 }
-

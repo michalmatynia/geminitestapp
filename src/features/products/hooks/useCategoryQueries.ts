@@ -2,7 +2,7 @@
 
 import type { ProductCategory, ProductCategoryWithChildren } from '@/features/products/types';
 import { api } from '@/shared/lib/api-client';
-import { createListQuery } from '@/shared/lib/query-factories';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 import type { ListQuery } from '@/shared/types/query-result-types';
 
@@ -19,8 +19,9 @@ export function useProductCategories(catalogId?: string): ListQuery<ProductCateg
  * Hook to fetch product category tree for a catalog
  */
 export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCategoryWithChildren> {
-  return createListQuery({
-    queryKey: productSettingsKeys.categoryTree(catalogId ?? null),
+  const queryKey = productSettingsKeys.categoryTree(catalogId ?? null);
+  return createListQueryV2({
+    queryKey,
     queryFn: async (): Promise<ProductCategoryWithChildren[]> => {
       if (!catalogId) return [];
       return await api.get<ProductCategoryWithChildren[]>(
@@ -28,8 +29,14 @@ export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCat
         { cache: 'no-store' }
       );
     },
-    options: {
-      enabled: !!catalogId,
+    enabled: !!catalogId,
+    meta: {
+      source: 'products.hooks.useProductCategoryTree',
+      operation: 'list',
+      resource: 'products.settings.categories.tree',
+      domain: 'products',
+      queryKey,
+      tags: ['products', 'categories', 'tree'],
     },
   });
 }

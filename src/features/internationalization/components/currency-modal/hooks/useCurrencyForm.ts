@@ -52,14 +52,18 @@ export function useCurrencyForm({
     }
 
     try {
-      await saveMutation.mutateAsync({
-        id: currency?.id,
+      const payload: { id?: string; data: { code: string; name: string; symbol: string } } = {
         data: {
           code: form.code.trim().toUpperCase(),
           name: form.name.trim(),
           symbol: form.symbol.trim(),
         },
-      });
+      };
+      if (currency?.id) {
+        payload.id = currency.id;
+      }
+
+      await saveMutation.mutateAsync(payload);
 
       toast('Currency saved.', { variant: 'success' });
     } catch (err) {

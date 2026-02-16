@@ -2,7 +2,7 @@
 
 import { type Query } from '@tanstack/react-query';
 
-import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
+import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { jobKeys } from '@/shared/lib/query-key-exports';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
@@ -16,12 +16,13 @@ import {
   type TraderaQueueHealthResponse,
 } from '../api';
 
-
 export function useIntegrationJobs(): ListQuery<ProductJob> {
-  return createListQuery({
-    queryKey: jobKeys.integrations(),
+  const queryKey = jobKeys.integrations();
+  return createListQueryV2({
+    queryKey,
     queryFn: getIntegrationJobs,
-    refetchInterval: (data) => {
+    refetchInterval: (query: Query<ProductJob[], Error, ProductJob[], readonly unknown[]>) => {
+      const data = query.state.data;
       if (!Array.isArray(data)) return 5000;
       const activeStatuses = new Set([
         'queued',
@@ -39,46 +40,64 @@ export function useIntegrationJobs(): ListQuery<ProductJob> {
       );
       return hasActiveListings ? 2500 : false;
     },
+    meta: {
+      source: 'jobs.hooks.useIntegrationJobs',
+      operation: 'list',
+      resource: 'jobs.integrations',
+      queryKey,
+      tags: ['jobs', 'integrations'],
+    },
   });
 }
 
 export function useProductAiJobs(scope: string = 'all'): SingleQuery<{ jobs: ProductAiJob[] }> {
-  return createSingleQuery({
+  const queryKey = jobKeys.productAi(scope);
+  return createSingleQueryV2({
     id: scope,
-    queryKey: jobKeys.productAi(scope),
+    queryKey,
     queryFn: () => getProductAiJobs(scope),
+    meta: {
+      source: 'jobs.hooks.useProductAiJobs',
+      operation: 'detail',
+      resource: 'jobs.product-ai',
+      queryKey,
+      tags: ['jobs', 'product-ai'],
+    },
   });
 }
-
-const hasScheduledMarker = (payload: unknown): boolean => {
-  if (!payload || typeof payload !== 'object') return false;
-  const record = payload as Record<string, unknown>;
-  const keys = ['runAt', 'scheduledAt', 'scheduleAt', 'nextRunAt', 'schedule', 'scheduled', 'cron'];
-  if (keys.some((key: string) => record[key])) return true;
-  const context = record['context'];
-  if (context && typeof context === 'object') {
-    const ctx = context as Record<string, unknown>;
-    if (keys.some((key: string) => ctx[key])) return true;
-  }
-  return false;
-};
 
 export { jobKeys };
 
 export function useChatbotJobs(scope: string = 'all'): SingleQuery<{ jobs: unknown[] }> {
-  return createSingleQuery({
+  const queryKey = jobKeys.chatbot(scope);
+  return createSingleQueryV2({
     id: scope,
-    queryKey: jobKeys.chatbot(scope),
+    queryKey,
     queryFn: () => getChatbotJobs(scope),
+    meta: {
+      source: 'jobs.hooks.useChatbotJobs',
+      operation: 'detail',
+      resource: 'jobs.chatbot',
+      queryKey,
+      tags: ['jobs', 'chatbot'],
+    },
   });
 }
 
 export function useTraderaQueueHealth(): SingleQuery<TraderaQueueHealthResponse> {
-  return createSingleQuery({
+  const queryKey = jobKeys.traderaQueueHealth();
+  return createSingleQueryV2({
     id: 'tradera-health',
-    queryKey: jobKeys.traderaQueueHealth(),
+    queryKey,
     queryFn: getTraderaQueueHealth,
     refetchInterval: 5000,
     staleTime: 0,
+    meta: {
+      source: 'jobs.hooks.useTraderaQueueHealth',
+      operation: 'detail',
+      resource: 'jobs.tradera-health',
+      queryKey,
+      tags: ['jobs', 'tradera'],
+    },
   });
 }

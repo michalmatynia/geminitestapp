@@ -11,7 +11,7 @@ import {
   createCreateMutation,
   createUpdateMutation,
   createDeleteMutation,
-} from '@/shared/lib/query-factories';
+} from '@/shared/lib/query-factories-v2';
 import type { ProductJob } from '@/shared/types/domain/listing-jobs';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/types/query-result-types';
 

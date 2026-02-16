@@ -2,7 +2,6 @@
 
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
 import type { PlaywrightPersona } from '@/features/playwright/types';
-import { fetchPlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';
 import { createQueryHook, createMutationHook } from '@/shared/lib/api-hooks';
@@ -17,16 +16,6 @@ export const usePlaywrightPersonas = createQueryHook<PlaywrightPersona[], void>(
   // but here createQueryHook needs to support custom queryFn or we use the factory pattern
 });
 
-// Overriding the default behavior for this specific hook since it uses a custom fetcher
-export function usePlaywrightPersonasHook() {
-  return createQueryHook<PlaywrightPersona[], void>({
-    queryKeyFactory: () => playwrightKeys.personas(),
-    endpoint: '/api/settings', // Dummy endpoint, we'll use queryFn
-  })({}, {
-    queryFn: fetchPlaywrightPersonas
-  });
-}
-
 export function useSavePlaywrightPersonasMutation() {
   return createMutationHook<void, { personas: PlaywrightPersona[] }>({
     mutationFn: async ({ personas }: { personas: PlaywrightPersona[] }): Promise<void> => {
@@ -39,6 +28,5 @@ export function useSavePlaywrightPersonasMutation() {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: playwrightKeys.personas() });
     },
-  });
+  })();
 }
-

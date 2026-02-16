@@ -410,16 +410,16 @@ export const findExistingFilemakerAddressId = (
   if (!hasAddressData(input)) return null;
   let best: { id: string; score: number } | null = null;
 
-  database.addresses.forEach((address: FilemakerAddress) => {
+  for (const address of database.addresses) {
     const score = scoreAddressInputAgainstAddress(input, address);
-    if (score === null) return;
+    if (score === null) continue;
     if (!best || score > best.score) {
       best = {
         id: address.id,
         score,
       };
     }
-  });
+  }
 
   const resolvedBestAddress = best;
   if (!resolvedBestAddress || resolvedBestAddress.score < 4) return null;

@@ -2,7 +2,7 @@
 
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQuery, createCreateMutation } from '@/shared/lib/query-factories';
+import { createSingleQuery, createCreateMutation } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SingleQuery, MutationResult } from '@/shared/types/query-result-types';
 

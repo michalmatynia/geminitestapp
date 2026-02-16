@@ -10,7 +10,7 @@ import {
   createListQuery,
   createSingleQuery,
   createCreateMutation,
-} from '@/shared/lib/query-factories';
+} from '@/shared/lib/query-factories-v2';
 import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
 import type { 
   ListQuery, 

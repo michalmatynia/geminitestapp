@@ -229,14 +229,14 @@ export default function PagesPage(): React.ReactNode {
         </div>
       </ListPanel>
 
-      <ConfirmDialog
+      <ConfirmModal
         open={!!pageToDelete}
-        onOpenChange={(open) => !open && setPageToDelete(null)}
+        onClose={() => setPageToDelete(null)}
         onConfirm={() => { void handleConfirmDelete(); }}
         title='Permanently Delete Page?'
-        description={`This will destroy "${pageToDelete?.name}" and all its block configurations. This cannot be undone.`}
+        message={`This will destroy "${pageToDelete?.name}" and all its block configurations. This cannot be undone.`}
         confirmText='Destroy Page'
-        variant='destructive'
+        isDangerous
       />
     </div>
   );

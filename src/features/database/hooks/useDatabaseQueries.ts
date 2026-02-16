@@ -23,7 +23,7 @@ import {
   createSingleQuery,
   createCreateMutation,
   createUpdateMutation,
-} from '@/shared/lib/query-factories';
+} from '@/shared/lib/query-factories-v2';
 import { dbKeys } from '@/shared/lib/query-key-exports';
 import type { 
   ListQuery, 

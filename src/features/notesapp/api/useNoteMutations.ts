@@ -7,7 +7,7 @@ import {
   createCreateMutation,
   createUpdateMutation,
   createDeleteMutation,
-} from '@/shared/lib/query-factories';
+} from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
@@ -60,7 +60,7 @@ export function useUpdateNote(): UpdateMutation<NoteWithRelations, NoteUpdateInp
   });
 }
 
-export function useDeleteNote(): DeleteMutation {
+export function useDeleteNote(): DeleteMutation<DeleteResponse> {
   const queryClient = useQueryClient();
   return createDeleteMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
@@ -98,7 +98,7 @@ export function useUpdateNoteFolder(): UpdateMutation<CategoryRecord, CategoryUp
   });
 }
 
-export function useDeleteNoteFolder(): DeleteMutation {
+export function useDeleteNoteFolder(): DeleteMutation<DeleteResponse> {
   const queryClient = useQueryClient();
   return createDeleteMutation({
     mutationFn: (folderId: string) =>
@@ -137,7 +137,7 @@ export function useUpdateNotebook(): UpdateMutation<NotebookRecord, NotebookUpda
   });
 }
 
-export function useDeleteNotebook(): DeleteMutation {
+export function useDeleteNotebook(): DeleteMutation<DeleteResponse> {
   const queryClient = useQueryClient();
   return createDeleteMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
@@ -176,7 +176,7 @@ export function useUpdateNoteTag(): UpdateMutation<TagRecord, TagUpdateInput & {
   });
 }
 
-export function useDeleteNoteTag(): DeleteMutation {
+export function useDeleteNoteTag(): DeleteMutation<DeleteResponse> {
   const queryClient = useQueryClient();
   return createDeleteMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
@@ -215,7 +215,7 @@ export function useUpdateNoteTheme(): UpdateMutation<ThemeRecord, ThemeUpdateInp
   });
 }
 
-export function useDeleteNoteTheme(): DeleteMutation {
+export function useDeleteNoteTheme(): DeleteMutation<DeleteResponse> {
   const queryClient = useQueryClient();
   return createDeleteMutation({
     mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),

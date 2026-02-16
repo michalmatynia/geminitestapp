@@ -6,7 +6,7 @@ import {
   createListQuery,
   createSingleQuery,
   createCreateMutation,
-} from '@/shared/lib/query-factories';
+} from '@/shared/lib/query-factories-v2';
 import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';

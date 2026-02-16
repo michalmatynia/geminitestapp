@@ -82,9 +82,9 @@ export function useQueryPerformance(): QueryPerformanceHookResult {
 
 // Enhanced query hook with performance monitoring
 export function useQueryWithPerformance<TData>(
-  queryKey: unknown[],
+  queryKey: readonly unknown[],
   queryFn: () => Promise<TData>,
-  options?: Omit<UndefinedInitialDataOptions<TData, Error, TData, unknown[]>, 'queryKey' | 'queryFn'>
+  options?: Omit<UndefinedInitialDataOptions<TData, Error, TData, readonly unknown[]>, 'queryKey' | 'queryFn' | 'meta'>
 ): UseQueryResult<TData, Error> {
   const keyString = JSON.stringify(queryKey);
 

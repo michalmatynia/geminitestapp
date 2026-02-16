@@ -177,8 +177,8 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       const sequenceLabel = rule?.sequenceGroupLabel?.trim() ?? '';
       return {
         id: patternId,
-        title: storedLabel || rule?.title ?? patternId,
-        sequenceLabel: sequenceLabel || undefined,
+        title: (storedLabel || rule?.title) ?? patternId,
+        ...(sequenceLabel ? { sequenceLabel } : {}),
         segmentType: rule?.promptExploderSegmentType ?? null,
         priority: rule?.promptExploderPriority ?? 0,
         confidenceBoost: rule?.promptExploderConfidenceBoost ?? 0,

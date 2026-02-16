@@ -20,6 +20,5 @@ export function useClearAiInsightsNotifications() {
     onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: aiNotificationsQueryKey });
     },
-  });
+  })();
 }
-

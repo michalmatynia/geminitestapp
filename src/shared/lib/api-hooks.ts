@@ -9,7 +9,7 @@ import {
 import { z } from 'zod';
 
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
-import { createListQuery } from '@/shared/lib/query-factories';
+import { createListQuery } from '@/shared/lib/query-factories-v2';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { inferLegacyFactoryMeta } from '@/shared/lib/tanstack-factory-meta-inference';

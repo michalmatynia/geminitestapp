@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   createListQuery,
   createCreateMutation,
-} from '@/shared/lib/query-factories';
+} from '@/shared/lib/query-factories-v2';
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
 import { AiPathRunRecord } from '@/shared/types/domain/ai-paths';

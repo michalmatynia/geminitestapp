@@ -50,15 +50,22 @@ export function useLanguageForm(): UseLanguageFormResult {
     }
 
     try {
-      await saveMutation.mutateAsync({
-        id: language?.id,
+      const payload: {
+        id?: string;
+        data: { code: string; name: string; nativeName: string | null; countryIds: string[] };
+      } = {
         data: {
           code: form.code.trim(),
           name: form.name.trim(),
           nativeName: form.nativeName.trim() || null,
           countryIds: selectedCountryIds,
         },
-      });
+      };
+      if (language?.id) {
+        payload.id = language.id;
+      }
+
+      await saveMutation.mutateAsync(payload);
 
       toast('Language saved.', { variant: 'success' });
     } catch (err) {

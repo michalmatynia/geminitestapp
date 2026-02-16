@@ -22,6 +22,7 @@ import {
   resolveTanstackFactoryMeta,
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
+import { inferLegacyFactoryMeta } from '@/shared/lib/tanstack-factory-meta-inference';
 import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/types/query-result-types';
 
@@ -79,6 +80,34 @@ type SingleQueryConfigV2<TData, TTransformedData = TData, TQueryKey extends Quer
   id?: string | null | undefined;
   meta: TanstackFactoryMeta;
   telemetryContext?: Record<string, unknown> | undefined;
+};
+
+type ListQueryOptions<TQueryFnData> = Omit<
+  UseQueryOptions<TQueryFnData, Error, TQueryFnData, QueryKey>,
+  'queryKey' | 'queryFn' | 'meta'
+>;
+
+type SingleQueryOptions<TData, TTransformedData> = Omit<
+  UseQueryOptions<TData, Error, TTransformedData, QueryKey>,
+  'queryKey' | 'queryFn' | 'meta'
+>;
+
+export type ListQueryConfig<TData, TQueryFnData = TData[]> = {
+  queryKey: QueryKey;
+  queryFn: QueryFactoryFn<TQueryFnData, QueryKey>;
+  options?: ListQueryOptions<TQueryFnData> | undefined;
+} & ListQueryOptions<TQueryFnData>;
+
+export type SingleQueryConfig<TData, TTransformedData = TData> = {
+  queryKey: QueryKey | ((id: string) => QueryKey);
+  queryFn: QueryFactoryFn<TData, QueryKey>;
+  id?: string | null | undefined;
+  options?: SingleQueryOptions<TData, TTransformedData> | undefined;
+} & SingleQueryOptions<TData, TTransformedData>;
+
+type MutationFactoryConfig<TData, TVariables, TContext = unknown> = {
+  mutationFn: (variables: TVariables) => Promise<TData>;
+  options?: Omit<UseMutationOptions<TData, Error, TVariables, TContext>, 'mutationFn' | 'meta'> | undefined;
 };
 
 const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
@@ -356,6 +385,108 @@ export function createMutationV2<TData, TVariables, TContext = unknown>(
       }
     },
   });
+}
+
+export function createListQuery<TData, TQueryFnData = TData[]>(
+  config: ListQueryConfig<TData, TQueryFnData>
+): ListQuery<TData, TQueryFnData> {
+  const { queryKey, queryFn, options: legacyOptions, ...inlineOptions } = config;
+  const mergedOptions: ListQueryOptions<TQueryFnData> = {
+    ...(legacyOptions ?? {}),
+    ...inlineOptions,
+  };
+  const meta = inferLegacyFactoryMeta({
+    key: queryKey,
+    operation: 'list',
+    source: 'legacy.query-factories.list',
+    kind: 'query',
+  });
+
+  return createListQueryV2({
+    queryKey,
+    queryFn,
+    ...mergedOptions,
+    meta,
+  });
+}
+
+export function createSingleQuery<TData, TTransformedData = TData>(
+  config: SingleQueryConfig<TData, TTransformedData>
+): SingleQuery<TTransformedData> {
+  const {
+    queryKey,
+    queryFn,
+    id,
+    options: legacyOptions,
+    ...inlineOptions
+  } = config;
+  const mergedOptions: SingleQueryOptions<TData, TTransformedData> = {
+    ...(legacyOptions ?? {}),
+    ...inlineOptions,
+  };
+  const resolvedKey = typeof queryKey === 'function'
+    ? queryKey(id ?? 'none')
+    : queryKey;
+  const enabled = (mergedOptions.enabled ?? true) && (id !== null && id !== undefined);
+  const meta = inferLegacyFactoryMeta({
+    key: resolvedKey,
+    operation: 'detail',
+    source: 'legacy.query-factories.detail',
+    kind: 'query',
+  });
+
+  return createSingleQueryV2({
+    id,
+    queryKey: resolvedKey,
+    queryFn,
+    ...mergedOptions,
+    enabled,
+    meta,
+  });
+}
+
+const createMutationWithOperation = <TData, TVariables, TContext = unknown>(
+  config: MutationFactoryConfig<TData, TVariables, TContext>,
+  operation: 'create' | 'update' | 'delete' | 'action',
+  source: string
+): MutationResult<TData, TVariables> => {
+  const options = config.options ?? {};
+  const meta = inferLegacyFactoryMeta({
+    key: options.mutationKey,
+    operation,
+    source,
+    kind: 'mutation',
+  });
+
+  return createMutationV2<TData, TVariables, TContext>({
+    mutationFn: config.mutationFn,
+    ...options,
+    meta,
+  });
+};
+
+export function createMutation<TData, TVariables, TContext = unknown>(
+  config: MutationFactoryConfig<TData, TVariables, TContext>
+): MutationResult<TData, TVariables> {
+  return createMutationWithOperation(config, 'action', 'legacy.query-factories.mutation');
+}
+
+export function createCreateMutation<TData, TVariables, TContext = unknown>(
+  config: MutationFactoryConfig<TData, TVariables, TContext>
+): MutationResult<TData, TVariables> {
+  return createMutationWithOperation(config, 'create', 'legacy.query-factories.create');
+}
+
+export function createUpdateMutation<TData, TVariables, TContext = unknown>(
+  config: MutationFactoryConfig<TData, TVariables, TContext>
+): MutationResult<TData, TVariables> {
+  return createMutationWithOperation(config, 'update', 'legacy.query-factories.update');
+}
+
+export function createDeleteMutation<TData, TVariables, TContext = unknown>(
+  config: MutationFactoryConfig<TData, TVariables, TContext>
+): MutationResult<TData, TVariables> {
+  return createMutationWithOperation(config, 'delete', 'legacy.query-factories.delete');
 }
 
 export const createCreateMutationV2 = createMutationV2;

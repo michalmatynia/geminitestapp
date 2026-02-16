@@ -5,7 +5,7 @@ import { Dispatch, SetStateAction } from 'react';
 
 import type { ProductWithImages } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
-import { createListQuery } from '@/shared/lib/query-factories';
+import { createListQuery } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 
 import { listingBadgesQueryKey } from './listingCache';

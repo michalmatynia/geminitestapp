@@ -1,6 +1,6 @@
 'use client';
 
-import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
+import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories-v2';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { chatbotKeys } from '@/shared/lib/query-key-exports';
 import type { ChatSession } from '@/shared/types/domain/chatbot';

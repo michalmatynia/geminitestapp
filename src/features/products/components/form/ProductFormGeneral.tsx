@@ -32,7 +32,7 @@ import {
   sortValidatorPatterns,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { createListQuery } from '@/shared/lib/query-factories';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
@@ -203,12 +203,18 @@ export default function ProductFormGeneral(): React.JSX.Element {
       }),
     [validatorPatterns]
   );
-  const latestProductsQuery = createListQuery({
+  const latestProductsQuery = createListQueryV2({
     queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
     queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
-    options: {
-      enabled: validatorEnabled && needsLatestProductSource,
-      staleTime: 60_000,
+    enabled: validatorEnabled && needsLatestProductSource,
+    staleTime: 60_000,
+    meta: {
+      source: 'products.components.ProductFormGeneral.latestProducts',
+      operation: 'list',
+      resource: 'products.validator.latest-product-source',
+      domain: 'products',
+      queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
+      tags: ['products', 'validator', 'latest-source'],
     },
   });
   const latestProductValues = useMemo((): Record<string, unknown> | null => {

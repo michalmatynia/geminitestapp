@@ -12,6 +12,12 @@ import type {
   WarehouseOption,
 } from '@/features/data-import-export/types/imports';
 import type { IntegrationWithConnections } from '@/features/integrations';
+import type {
+  BaseImportRunDetailResponse,
+  BaseImportRunRecord,
+  BaseImportStartResponse,
+  BaseImportMode,
+} from '@/features/integrations/types/base-import-runs';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -342,21 +348,92 @@ export function useImportMutation(): MutationResult<ImportResponse, {
   uniqueOnly: boolean;
   allowDuplicateSku: boolean;
   selectedIds?: string[];
+  dryRun?: boolean;
+  mode?: BaseImportMode;
+  requestId?: string;
 }> {
   const mutationKey = importExportKeys.lists();
   return createCreateMutationV2({
-    mutationFn: (params) => api.post<ImportResponse>('/api/integrations/imports/base', {
-      action: 'import',
-      ...params,
-    }),
+    mutationFn: (params) => api.post<ImportResponse>('/api/integrations/imports/base/runs', params),
     mutationKey,
     meta: {
       source: 'importExport.hooks.useImportMutation',
       operation: 'create',
-      resource: 'integrations.import-export.import',
+      resource: 'integrations.import-export.import-runs',
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'import'],
+    },
+  });
+}
+
+export function useImportRuns(limit: number = 25): ListQuery<BaseImportRunRecord> {
+  const queryKey = importExportKeys.runs();
+  return createListQueryV2({
+    queryKey,
+    queryFn: async (): Promise<BaseImportRunRecord[]> => {
+      const data = await api.get<{ runs: BaseImportRunRecord[] }>(
+        `/api/integrations/imports/base/runs?limit=${encodeURIComponent(String(limit))}`,
+        { cache: 'no-store' }
+      );
+      return data.runs ?? [];
+    },
+    meta: {
+      source: 'importExport.hooks.useImportRuns',
+      operation: 'list',
+      resource: 'integrations.import-export.import-runs',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'import-runs'],
+    },
+  });
+}
+
+export function useImportRun(
+  runId: string,
+  enabled: boolean = true,
+  refetchInterval: number | false = false
+): SingleQuery<BaseImportRunDetailResponse> {
+  const queryKey = importExportKeys.run(runId || '__none__');
+  return createSingleQueryV2({
+    id: runId || null,
+    queryKey,
+    queryFn: () =>
+      api.get<BaseImportRunDetailResponse>(
+        `/api/integrations/imports/base/runs/${encodeURIComponent(runId)}`,
+        { cache: 'no-store' }
+      ),
+    enabled: enabled && !!runId,
+    refetchInterval,
+    meta: {
+      source: 'importExport.hooks.useImportRun',
+      operation: 'detail',
+      resource: 'integrations.import-export.import-run',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'import-runs', 'status'],
+    },
+  });
+}
+
+export function useResumeImportRunMutation(
+  runId: string
+): MutationResult<BaseImportStartResponse, { statuses?: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'> }> {
+  const mutationKey = importExportKeys.run(runId || '__none__');
+  return createMutationV2({
+    mutationFn: (params) =>
+      api.post<BaseImportStartResponse>(
+        `/api/integrations/imports/base/runs/${encodeURIComponent(runId)}/resume`,
+        params
+      ),
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useResumeImportRunMutation',
+      operation: 'action',
+      resource: 'integrations.import-export.import-run.resume',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'import-runs', 'resume'],
     },
   });
 }

@@ -349,7 +349,12 @@ export function CenterPreview(): React.JSX.Element {
         )
         : [];
       const linkedToSource = source === rootSourceSlotId || sourceIds.includes(rootSourceSlotId);
-      const isGeneration = metadata.role === 'generation' || relationType === 'generation:output';
+      const isGeneration =
+        metadata.role === 'generation' ||
+        relationType.startsWith('generation:') ||
+        relationType.startsWith('center:') ||
+        relationType.startsWith('crop:') ||
+        relationType.startsWith('upscale:');
       const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
       return linkedToSource && isGeneration && Boolean(imageSrc || slot.imageFileId);
     };

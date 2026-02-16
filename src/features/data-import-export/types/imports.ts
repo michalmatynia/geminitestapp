@@ -6,6 +6,10 @@ import type {
   ImportExportTemplate as DomainImportExportTemplate,
   ImportExportTemplateMapping as DomainImportExportTemplateMapping
 } from '@/shared/types/domain/integrations';
+import type {
+  BaseImportRunDetailResponse,
+  BaseImportStartResponse,
+} from '@/features/integrations/types/base-import-runs';
 
 export type {
   ImageBase64Mode,
@@ -42,12 +46,9 @@ export type ImportListItem = {
   description?: string;
 };
 
-export type ImportResponse = {
-  total: number;
-  imported: number;
-  failed: number;
-  errors: Array<{ productId?: string; sku?: string; error: string }>;
-};
+export type ImportResponse = BaseImportStartResponse;
+
+export type ImportRunDetail = BaseImportRunDetailResponse;
 
 export type TemplateMapping = DomainImportExportTemplateMapping;
 

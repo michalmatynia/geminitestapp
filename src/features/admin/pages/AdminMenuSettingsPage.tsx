@@ -790,16 +790,17 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateCustomHref(path, event.target.value)}
                             placeholder='/admin/...'
                             className='h-8 bg-gray-900/40 text-xs'
-                                                      disabled={isBuiltIn}
-                                                    />
-                                                  </div>
-                                                  <StatusBadge
-                                                    status={isBuiltIn ? 'Built-in' : 'Custom'}
-                                                    variant={isBuiltIn ? 'info' : 'success'}
-                                                    size='sm'
-                                                    className='font-bold'
-                                                  />
-                                                </div>                      <div className='flex items-center gap-1'>
+                            disabled={isBuiltIn}
+                          />
+                        </div>
+                        <StatusBadge
+                          status={isBuiltIn ? 'Built-in' : 'Custom'}
+                          variant={isBuiltIn ? 'info' : 'success'}
+                          size='sm'
+                          className='font-bold'
+                        />
+                      </div>
+                      <div className='flex items-center gap-1'>
                         <Button
                           type='button'
                           variant='outline'

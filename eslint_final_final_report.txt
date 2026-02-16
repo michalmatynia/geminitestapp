@@ -1,0 +1,20 @@
+
+> libapp2@0.1.0 lint
+> eslint src __tests__
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/pages/AdminMenuSettingsPage.tsx
+  793:1  error  Expected indentation of 28 spaces but found 54  indent
+  794:1  error  Expected indentation of 26 spaces but found 52  indent
+  795:1  error  Expected indentation of 24 spaces but found 50  indent
+  796:1  error  Expected indentation of 24 spaces but found 50  indent
+  797:1  error  Expected indentation of 26 spaces but found 52  indent
+  798:1  error  Expected indentation of 26 spaces but found 52  indent
+  799:1  error  Expected indentation of 26 spaces but found 52  indent
+  800:1  error  Expected indentation of 26 spaces but found 52  indent
+  801:1  error  Expected indentation of 24 spaces but found 50  indent
+  802:1  error  Expected indentation of 22 spaces but found 48  indent
+
+✖ 10 problems (10 errors, 0 warnings)
+  10 errors and 0 warnings potentially fixable with the `--fix` option.
+

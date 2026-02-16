@@ -17,7 +17,7 @@ import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-import type { Document, Filter } from 'mongodb';
+import type { Filter } from 'mongodb';
 
 const RUN_KEY_PREFIX = 'base_import_run:';
 const ITEM_KEY_PREFIX = 'base_import_run_item:';
@@ -65,7 +65,7 @@ const readSettingValue = async (key: string): Promise<string | null> => {
     const mongo = await getMongoDb();
     const doc = await mongo.collection<SettingDoc>('settings').findOne({
       $or: [{ _id: toMongoId(key) }, { key }],
-    } as Filter<Document>);
+    } as Filter<SettingDoc>);
     return typeof doc?.value === 'string' ? doc.value : null;
   }
   const setting = await prisma.setting.findUnique({
@@ -80,7 +80,7 @@ const writeSettingValue = async (key: string, value: string): Promise<void> => {
   if (provider === 'mongodb') {
     const mongo = await getMongoDb();
     await mongo.collection<SettingDoc>('settings').updateOne(
-      { $or: [{ _id: toMongoId(key) }, { key }] } as Filter<Document>,
+      { $or: [{ _id: toMongoId(key) }, { key }] } as Filter<SettingDoc>,
       {
         $set: {
           key,
@@ -109,7 +109,7 @@ const deleteSettingByKey = async (key: string): Promise<void> => {
     const mongo = await getMongoDb();
     await mongo.collection<SettingDoc>('settings').deleteMany({
       $or: [{ _id: toMongoId(key) }, { key }],
-    } as Filter<Document>);
+    } as Filter<SettingDoc>);
     return;
   }
   await prisma.setting.deleteMany({
@@ -127,7 +127,7 @@ const listSettingValuesByPrefix = async (
     const regex = new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
     const docs = await mongo
       .collection<SettingDoc>('settings')
-      .find({ key: { $regex: regex } } as Filter<Document>)
+      .find({ key: { $regex: regex } } as Filter<SettingDoc>)
       .sort({ updatedAt: -1, createdAt: -1 })
       .limit(Math.max(1, take))
       .toArray();
@@ -237,6 +237,27 @@ export const putBaseImportRunItem = async (
   return normalized;
 };
 
+export const updateBaseImportRunItem = async (
+  runId: string,
+  itemId: string,
+  patch: Partial<BaseImportItemRecord>
+): Promise<BaseImportItemRecord> => {
+  const existing = await getBaseImportRunItem(runId, itemId);
+  if (!existing) {
+    throw new Error(`Base import run item not found: ${runId}/${itemId}`);
+  }
+  const merged: BaseImportItemRecord = {
+    ...existing,
+    ...patch,
+    runId: existing.runId,
+    itemId: existing.itemId,
+    idempotencyKey: existing.idempotencyKey,
+    updatedAt: nowIso(),
+  };
+  await writeSettingValue(itemKey(runId, itemId), JSON.stringify(merged));
+  return merged;
+};
+
 export const getBaseImportRunItem = async (
   runId: string,
   itemId: string
@@ -286,6 +307,18 @@ export const computeBaseImportRunStats = (
     stats.total - stats.processing - stats.imported - stats.updated - stats.skipped - stats.failed
   );
   return stats;
+};
+
+export const recomputeBaseImportRunStats = async (
+  runId: string
+): Promise<BaseImportRunRecord> => {
+  const run = await getBaseImportRun(runId);
+  if (!run) {
+    throw new Error(`Base import run not found: ${runId}`);
+  }
+  const items = await listBaseImportRunItems(runId);
+  const stats = computeBaseImportRunStats(items);
+  return updateBaseImportRun(runId, { stats });
 };
 
 export const getBaseImportRunDetail = async (

@@ -39,10 +39,16 @@ export function ImportTab(): React.JSX.Element {
     baseConnections,
     imageMode,
     setImageMode,
+    importMode,
+    setImportMode,
+    importDryRun,
+    setImportDryRun,
     allowDuplicateSku,
     setAllowDuplicateSku,
     importing,
     handleImport,
+    handleResumeImport,
+    handleDownloadImportReport,
     importNameSearch,
     setImportNameSearch,
     importSkuSearch,
@@ -60,11 +66,32 @@ export function ImportTab(): React.JSX.Element {
     selectedImportIds,
     setSelectedImportIds,
     lastResult,
+    activeImportRunId,
+    activeImportRun,
+    loadingImportRun,
   } = useImportExport();
 
   const selectedImportCount = selectedImportIds.size;
   const hasImportSearch =
     importNameSearch.trim().length > 0 || importSkuSearch.trim().length > 0;
+  const activeRun = activeImportRun?.run ?? null;
+  const activeRunStats = activeRun?.stats ?? null;
+  const runHasRetryableItems = useMemo(
+    (): boolean =>
+      Boolean(
+        activeImportRun?.items.some(
+          (item) => item.status === 'failed' || item.status === 'pending'
+        )
+      ),
+    [activeImportRun?.items]
+  );
+  const runErrorItems = useMemo(
+    () =>
+      (activeImportRun?.items ?? [])
+        .filter((item) => item.status === 'failed' || item.errorMessage)
+        .slice(0, 10),
+    [activeImportRun?.items]
+  );
 
   const columns = useMemo<ColumnDef<ImportListItem>[]>(() => [
     {
@@ -319,7 +346,7 @@ export function ImportTab(): React.JSX.Element {
             </div>
           </div>
 
-          <div className='grid gap-4 md:grid-cols-2'>
+          <div className='grid gap-4 md:grid-cols-3'>
             <div>
               <Label className='text-xs text-gray-400'>Images</Label>
               <div className='mt-2'>
@@ -360,6 +387,47 @@ export function ImportTab(): React.JSX.Element {
                 When unchecked, products with existing SKUs will be skipped.
               </p>
             </div>
+            <div>
+              <Label className='text-xs text-gray-400'>Import behavior</Label>
+              <div className='mt-2'>
+                <SelectSimple size='sm'
+                  value={importMode}
+                  onValueChange={(value: string): void =>
+                    setImportMode(
+                      value as 'create_only' | 'upsert_on_base_id' | 'upsert_on_sku'
+                    )
+                  }
+                  options={[
+                    {
+                      value: 'upsert_on_base_id',
+                      label: 'Upsert by Base ID',
+                    },
+                    {
+                      value: 'upsert_on_sku',
+                      label: 'Upsert by SKU',
+                    },
+                    {
+                      value: 'create_only',
+                      label: 'Create only',
+                    },
+                  ]}
+                  triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
+                />
+              </div>
+              <div className='mt-3 flex items-center gap-2'>
+                <Checkbox
+                  id='importDryRun'
+                  checked={importDryRun}
+                  onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+                    setImportDryRun(Boolean(checked))
+                  }
+                  className='h-4 w-4 rounded border bg-gray-900 text-blue-500'
+                />
+                <Label htmlFor='importDryRun' className='text-sm text-white'>
+                  Dry-run only
+                </Label>
+              </div>
+            </div>
           </div>
 
           <div className='flex items-center justify-between gap-4'>
@@ -372,7 +440,11 @@ export function ImportTab(): React.JSX.Element {
               }}
               disabled={importing}
             >
-              {importing ? 'Importing...' : 'Import products'}
+              {importing
+                ? 'Processing...'
+                : importDryRun
+                  ? 'Run dry-run'
+                  : 'Import products'}
             </Button>
           </div>
         </div>
@@ -489,28 +561,97 @@ export function ImportTab(): React.JSX.Element {
         )}
       </div>
 
+      {activeRun ? (
+        <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div>
+              <h3 className='text-sm font-semibold text-white'>Import run</h3>
+              <p className='mt-1 text-xs text-gray-400 font-mono'>
+                {activeRun.id}
+              </p>
+            </div>
+            <div className='flex items-center gap-2'>
+              <Badge
+                variant='outline'
+                className={cn(
+                  'text-[10px] uppercase font-bold',
+                  activeRun.status === 'completed'
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                    : activeRun.status === 'failed'
+                      ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                      : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                )}
+              >
+                {activeRun.status}
+              </Badge>
+              <Button
+                type='button'
+                variant='secondary'
+                onClick={(): void => {
+                  void handleResumeImport();
+                }}
+                disabled={!runHasRetryableItems || importing}
+              >
+                Resume failed
+              </Button>
+              <Button
+                type='button'
+                variant='secondary'
+                onClick={handleDownloadImportReport}
+              >
+                Download report
+              </Button>
+            </div>
+          </div>
+          {activeRunStats ? (
+            <p className='mt-3 text-sm text-gray-300'>
+              Total {activeRunStats.total} · Imported {activeRunStats.imported}{' '}
+              · Updated {activeRunStats.updated} · Skipped{' '}
+              {activeRunStats.skipped} · Failed {activeRunStats.failed} · Pending{' '}
+              {activeRunStats.pending}
+            </p>
+          ) : null}
+          {activeRun.summaryMessage ? (
+            <p className='mt-2 text-xs text-gray-400'>{activeRun.summaryMessage}</p>
+          ) : null}
+          {loadingImportRun ? (
+            <p className='mt-2 text-xs text-gray-500'>Refreshing run status...</p>
+          ) : null}
+          {runErrorItems.length > 0 ? (
+            <div className='mt-3 space-y-1 text-xs text-gray-400'>
+              {runErrorItems.map((item) => (
+                <p key={`${item.itemId}-${item.attempt}`}>
+                  • {item.errorMessage || 'Import failed'}
+                  {item.sku ? ` (SKU: ${item.sku})` : ''}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {lastResult ? (
         <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <h3 className='text-sm font-semibold text-white'>
             Last import summary
           </h3>
           <p className='mt-2 text-sm text-gray-300'>
-            Imported {lastResult.imported} of {lastResult.total} product(s).
+            Run {lastResult.runId} is {lastResult.status}.
           </p>
-          {lastResult.failed > 0 ? (
-            <p className='mt-1 text-sm text-red-300'>
-              {lastResult.failed} failed.
-            </p>
+          {lastResult.summaryMessage ? (
+            <p className='mt-1 text-xs text-gray-400'>{lastResult.summaryMessage}</p>
           ) : null}
-          {lastResult.errors?.length ? (
+          {lastResult.preflight.issues.length > 0 ? (
             <div className='mt-3 space-y-1 text-xs text-gray-400'>
-              {lastResult.errors.map((entry: { productId?: string; sku?: string; error: string }, index: number) => (
-                <p key={`${entry.productId ?? entry.sku ?? entry.error}-${index}`}>
-                  • {entry.error}
-                  {entry.sku ? ` (SKU: ${entry.sku})` : ''}
-                </p>
+              {lastResult.preflight.issues.map((issue, index: number) => (
+                <p key={`${issue.code}-${index}`}>• {issue.message}</p>
               ))}
             </div>
+          ) : null}
+          {activeImportRunId ? (
+            <p className='mt-2 text-xs text-gray-500 font-mono'>
+              Active run: {activeImportRunId}
+            </p>
           ) : null}
         </div>
       ) : null}

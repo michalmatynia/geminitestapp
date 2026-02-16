@@ -170,6 +170,9 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.integrations.importExport.lists(), 'parameters', { inventoryId, productId }] as const,
       importList: (inventoryId: string, params: Record<string, unknown>) =>
         [...QUERY_KEYS.integrations.importExport.lists(), 'import-list', { inventoryId, ...params }] as const,
+      runs: () => [...QUERY_KEYS.integrations.importExport.all, 'runs'] as const,
+      run: (runId: string) =>
+        [...QUERY_KEYS.integrations.importExport.runs(), runId] as const,
     }
   },
   ai: {

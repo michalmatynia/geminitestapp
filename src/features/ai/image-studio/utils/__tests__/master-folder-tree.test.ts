@@ -124,4 +124,51 @@ describe('decodeImageStudioMasterNodeId', () => {
     expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
     expect(nodes.some((node) => node.id === 'card:slot-crop')).toBe(true);
   });
+
+  it('keeps center-derived slots visible in folder tree nodes', () => {
+    const nodes = buildMasterNodesFromStudioTree(
+      [
+        {
+          id: 'slot-base',
+          projectId: 'proj',
+          name: 'Base',
+          folderPath: 'test',
+          position: null,
+          imageFileId: 'file-base',
+          imageUrl: '/uploads/studio/proj/base.png',
+          imageBase64: null,
+          asset3dId: null,
+          screenshotFileId: null,
+          metadata: null,
+          imageFile: null,
+          screenshotFile: null,
+          asset3d: null,
+        },
+        {
+          id: 'slot-center',
+          projectId: 'proj',
+          name: 'Base • Centered',
+          folderPath: 'test',
+          position: null,
+          imageFileId: 'file-center',
+          imageUrl: '/uploads/studio/proj/center.png',
+          imageBase64: null,
+          asset3dId: null,
+          screenshotFileId: null,
+          metadata: {
+            role: 'generation',
+            sourceSlotId: 'slot-base',
+            relationType: 'center:output',
+          },
+          imageFile: null,
+          screenshotFile: null,
+          asset3d: null,
+        },
+      ],
+      ['test']
+    );
+
+    expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
+    expect(nodes.some((node) => node.id === 'card:slot-center')).toBe(true);
+  });
 });

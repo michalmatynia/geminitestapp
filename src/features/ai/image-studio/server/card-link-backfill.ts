@@ -75,6 +75,9 @@ function deriveRoleFromRelationType(relationType: string | null): string | null 
   const normalized = relationType.toLowerCase();
   if (normalized.startsWith('mask:')) return 'mask';
   if (normalized.startsWith('generation:')) return 'generation';
+  if (normalized.startsWith('center:')) return 'generation';
+  if (normalized.startsWith('crop:')) return 'generation';
+  if (normalized.startsWith('upscale:')) return 'generation';
   if (normalized.startsWith('version:')) return 'version';
   if (normalized.startsWith('variant:')) return 'variant';
   if (normalized.startsWith('part:')) return 'part';
@@ -113,6 +116,9 @@ function isLikelyGeneration(slot: SlotRecord): boolean {
   if (role === 'generation') return true;
   const relationType = asString(metadata['relationType'])?.toLowerCase() ?? '';
   if (relationType.startsWith('generation:')) return true;
+  if (relationType.startsWith('center:')) return true;
+  if (relationType.startsWith('crop:')) return true;
+  if (relationType.startsWith('upscale:')) return true;
   if (asString(metadata['generationFileId'])) return true;
 
   const name = asString(slot.name)?.toLowerCase() ?? '';

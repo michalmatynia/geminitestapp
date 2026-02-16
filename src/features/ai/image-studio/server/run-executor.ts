@@ -8,6 +8,16 @@ import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
 import { z } from 'zod';
 
+import {
+  imageStudioCenterModeSchema,
+  type ImageStudioCenterMode,
+  type ImageStudioCenterObjectBounds,
+} from '@/features/ai/image-studio/contracts/center';
+import {
+  centerObjectByAlpha,
+  validateCenterOutputDimensions,
+  validateCenterSourceDimensions,
+} from '@/features/ai/image-studio/server/center-utils';
 import { getImageModelCapabilities } from '@/features/ai/image-studio/utils/image-models';
 import {
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
@@ -56,7 +66,6 @@ const pointSchema = z.object({
 });
 
 const polygonSchema = z.array(pointSchema).min(3);
-const centerModeSchema = z.enum(['client_alpha_bbox', 'server_alpha_bbox']);
 
 export const imageStudioRunMaskSchema = z.union([
   z.object({
@@ -73,7 +82,7 @@ export const imageStudioRunMaskSchema = z.union([
 ]);
 
 const imageStudioRunCenterSchema = z.object({
-  mode: centerModeSchema.default('server_alpha_bbox'),
+  mode: imageStudioCenterModeSchema.default('server_alpha_bbox'),
   dataUrl: z.string().trim().min(1).optional(),
 });
 
@@ -100,13 +109,6 @@ export const imageStudioRunRequestSchema = z.object({
 
 export type ImageStudioRunRequest = z.infer<typeof imageStudioRunRequestSchema>;
 
-type ObjectBounds = {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-};
-
 type ImageStudioGenerationExecutionMeta = {
   operation: 'generate';
   modelRequested: string;
@@ -129,13 +131,13 @@ type ImageStudioGenerationExecutionMeta = {
 
 type ImageStudioCenterExecutionMeta = {
   operation: 'center_object';
-  mode: z.infer<typeof centerModeSchema>;
+  mode: ImageStudioCenterMode;
   outputFormat: 'png' | 'jpeg' | 'webp';
   requestedOutputCount: 1;
   responseImageCount: 1;
   inputImageCount: 1;
-  sourceObjectBounds: ObjectBounds | null;
-  targetObjectBounds: ObjectBounds | null;
+  sourceObjectBounds: ImageStudioCenterObjectBounds | null;
+  targetObjectBounds: ImageStudioCenterObjectBounds | null;
 };
 
 export type ImageStudioRunExecutionMeta =
@@ -267,96 +269,6 @@ const resolveCenterOutputFormat = async (
   return { buffer: converted, format: 'png' };
 };
 
-const resolveAlphaObjectBounds = (
-  pixelData: Buffer,
-  width: number,
-  height: number
-): ObjectBounds | null => {
-  let minX = width;
-  let maxX = -1;
-  let minY = height;
-  let maxY = -1;
-
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const alpha = pixelData[((y * width) + x) * 4 + 3];
-      if (typeof alpha !== 'number' || alpha <= 8) continue;
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-  }
-
-  if (maxX < minX || maxY < minY) {
-    return null;
-  }
-
-  return {
-    left: minX,
-    top: minY,
-    width: Math.max(1, maxX - minX + 1),
-    height: Math.max(1, maxY - minY + 1),
-  };
-};
-
-async function centerObjectByAlpha(sourceBuffer: Buffer): Promise<{
-  outputBuffer: Buffer;
-  sourceObjectBounds: ObjectBounds;
-  targetObjectBounds: ObjectBounds;
-}> {
-  const sourceWithAlpha = sharp(sourceBuffer).ensureAlpha();
-  const { data, info } = await sourceWithAlpha.raw().toBuffer({ resolveWithObject: true });
-  const width = info.width ?? 0;
-  const height = info.height ?? 0;
-  if (!(width > 0 && height > 0)) {
-    throw badRequestError('Source image dimensions are invalid.');
-  }
-
-  const sourceObjectBounds = resolveAlphaObjectBounds(data, width, height);
-  if (!sourceObjectBounds) {
-    throw badRequestError('No visible object pixels were detected to center.');
-  }
-
-  const targetLeft = Math.max(0, Math.round((width - sourceObjectBounds.width) / 2));
-  const targetTop = Math.max(0, Math.round((height - sourceObjectBounds.height) / 2));
-  const targetObjectBounds: ObjectBounds = {
-    left: targetLeft,
-    top: targetTop,
-    width: sourceObjectBounds.width,
-    height: sourceObjectBounds.height,
-  };
-
-  const extracted = await sharp(sourceBuffer)
-    .ensureAlpha()
-    .extract({
-      left: sourceObjectBounds.left,
-      top: sourceObjectBounds.top,
-      width: sourceObjectBounds.width,
-      height: sourceObjectBounds.height,
-    })
-    .png()
-    .toBuffer();
-
-  const outputBuffer = await sharp({
-    create: {
-      width,
-      height,
-      channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    },
-  })
-    .composite([{ input: extracted, left: targetObjectBounds.left, top: targetObjectBounds.top }])
-    .png()
-    .toBuffer();
-
-  return {
-    outputBuffer,
-    sourceObjectBounds,
-    targetObjectBounds,
-  };
-}
-
 async function toUploadableImageFile(params: {
   diskPath: string;
   fileNameBase: string;
@@ -446,6 +358,9 @@ async function createImageRecord(params: {
         ? 'image/webp'
         : 'image/png';
   const now = new Date();
+  const metadata = await sharp(params.buffer).metadata().catch(() => null);
+  const width = metadata?.width ?? null;
+  const height = metadata?.height ?? null;
 
   try {
     const repo = await getImageFileRepository();
@@ -454,6 +369,8 @@ async function createImageRecord(params: {
       filepath,
       mimetype,
       size: params.buffer.length,
+      width,
+      height,
       tags: ['image-studio', 'output'],
     });
   } catch {
@@ -463,8 +380,8 @@ async function createImageRecord(params: {
       filepath,
       mimetype,
       size: params.buffer.length,
-      width: null,
-      height: null,
+      width,
+      height,
       tags: ['image-studio', 'output'],
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -481,8 +398,8 @@ async function executeCenterOperation(params: {
 
   let outputBuffer: Buffer;
   let outputMime = 'image/png';
-  let sourceObjectBounds: ObjectBounds | null = null;
-  let targetObjectBounds: ObjectBounds | null = null;
+  let sourceObjectBounds: ImageStudioCenterObjectBounds | null = null;
+  let targetObjectBounds: ImageStudioCenterObjectBounds | null = null;
 
   if (centerMode === 'client_alpha_bbox') {
     const parsedDataUrl = parseDataUrl(params.request.center?.dataUrl ?? '');
@@ -491,11 +408,51 @@ async function executeCenterOperation(params: {
     }
     outputBuffer = parsedDataUrl.buffer;
     outputMime = parsedDataUrl.mime;
+    const metadata = await sharp(outputBuffer).metadata().catch(() => null);
+    const width = metadata?.width ?? 0;
+    const height = metadata?.height ?? 0;
+    if (!(width > 0 && height > 0)) {
+      throw badRequestError('Centered output dimensions are invalid.');
+    }
+    if (!validateCenterOutputDimensions(width, height)) {
+      throw badRequestError('Centered output exceeds center processing limits.');
+    }
   } else {
     const sourceBuffer = await fs.readFile(params.diskPath).catch(() => {
       throw badRequestError('Asset file not found.');
     });
-    const centered = await centerObjectByAlpha(sourceBuffer);
+    const sourceMetadata = await sharp(sourceBuffer).metadata().catch(() => null);
+    const sourceWidth = sourceMetadata?.width ?? 0;
+    const sourceHeight = sourceMetadata?.height ?? 0;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      throw badRequestError('Source image dimensions are invalid.');
+    }
+    const sourceValidation = validateCenterSourceDimensions(sourceWidth, sourceHeight);
+    if (!sourceValidation.ok) {
+      throw badRequestError('Source image exceeds center processing limits.', {
+        reason: sourceValidation.reason,
+        width: sourceWidth,
+        height: sourceHeight,
+      });
+    }
+    let centered: Awaited<ReturnType<typeof centerObjectByAlpha>>;
+    try {
+      centered = await centerObjectByAlpha(sourceBuffer);
+    } catch (error) {
+      if (error instanceof Error && /No visible object pixels were detected to center/i.test(error.message)) {
+        throw badRequestError('No visible object pixels were detected to center.');
+      }
+      if (error instanceof Error && /dimensions are invalid/i.test(error.message)) {
+        throw badRequestError('Source image dimensions are invalid.');
+      }
+      throw error;
+    }
+    if (!validateCenterOutputDimensions(centered.width, centered.height)) {
+      throw badRequestError('Centered output exceeds center processing limits.', {
+        width: centered.width,
+        height: centered.height,
+      });
+    }
     outputBuffer = centered.outputBuffer;
     outputMime = 'image/png';
     sourceObjectBounds = centered.sourceObjectBounds;

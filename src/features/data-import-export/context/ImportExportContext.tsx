@@ -11,6 +11,8 @@ import {
   useWarehouses,
   useImportList,
   useImportMutation,
+  useImportRun,
+  useResumeImportRunMutation,
   useSaveExportSettingsMutation,
   useClearInventoryMutation,
 } from '@/features/data-import-export/hooks/useImportQueries';
@@ -24,6 +26,7 @@ import type {
   ImageRetryPreset,
   ImportListItem,
   ImportListStats,
+  ImportRunDetail,
   DebugWarehouses,
   CatalogOption,
 } from '@/features/data-import-export/types/imports';
@@ -33,6 +36,7 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations';
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
+import type { BaseImportMode } from '@/features/integrations/types/base-import-runs';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import { useToast } from '@/shared/ui';
 
@@ -50,6 +54,10 @@ interface ImportExportContextType {
   setLimit: (limit: string) => void;
   imageMode: 'links' | 'download';
   setImageMode: (mode: 'links' | 'download') => void;
+  importMode: BaseImportMode;
+  setImportMode: (mode: BaseImportMode) => void;
+  importDryRun: boolean;
+  setImportDryRun: (enabled: boolean) => void;
   allowDuplicateSku: boolean;
   setAllowDuplicateSku: (allow: boolean) => void;
   uniqueOnly: boolean;
@@ -96,6 +104,9 @@ interface ImportExportContextType {
   setSelectedImportIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   lastResult: ImportResponse | null;
   setLastResult: (res: ImportResponse | null) => void;
+  activeImportRunId: string;
+  activeImportRun: ImportRunDetail | null;
+  loadingImportRun: boolean;
   templateScope: 'import' | 'export';
   setTemplateScope: (scope: 'import' | 'export') => void;
   showAllWarehouses: boolean;
@@ -128,6 +139,8 @@ interface ImportExportContextType {
   handleLoadWarehouses: () => Promise<void>;
   handleLoadImportList: () => Promise<void>;
   handleImport: () => Promise<void>;
+  handleResumeImport: () => Promise<void>;
+  handleDownloadImportReport: () => void;
   handleSaveExportSettings: () => Promise<void>;
   handleClearInventory: () => Promise<void>;
   handleNewTemplate: () => void;
@@ -156,7 +169,11 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const [catalogId, setCatalogId] = useState('');
   const [limit, setLimit] = useState('all');
   const [imageMode, setImageMode] = useState<'links' | 'download'>('links');
+  const [importMode, setImportMode] = useState<BaseImportMode>('upsert_on_base_id');
+  const [importDryRun, setImportDryRun] = useState(false);
   const [lastResult, setLastResult] = useState<ImportResponse | null>(null);
+  const [activeImportRunId, setActiveImportRunId] = useState('');
+  const [pollImportRun, setPollImportRun] = useState(false);
   const [importNameSearch, setImportNameSearch] = useState('');
   const [importSkuSearch, setImportSkuSearch] = useState('');
   const [selectedImportIds, setSelectedImportIds] = useState<Set<string>>(new Set());
@@ -375,6 +392,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   // Mutations
   const savePreferenceMutation = useSavePreferenceMutation();
   const importMutation = useImportMutation();
+  const resumeImportRunMutation = useResumeImportRunMutation(activeImportRunId);
   const saveExportSettingsMutation = useSaveExportSettingsMutation();
   const clearInventoryMutation = useClearInventoryMutation();
   const saveImportTemplateMutation = useTemplateMutation('import', importActiveTemplateId);
@@ -526,6 +544,26 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     };
   }, [importListData, importListPageSize]);
 
+  const activeImportRunQuery = useImportRun(
+    activeImportRunId,
+    Boolean(activeImportRunId),
+    pollImportRun ? 2000 : false
+  );
+  const activeImportRun = useMemo<ImportRunDetail | null>(() => {
+    return (activeImportRunQuery.data) ?? null;
+  }, [activeImportRunQuery.data]);
+  const loadingImportRun = activeImportRunQuery.isFetching && !!activeImportRunId;
+
+  useEffect(() => {
+    const status = activeImportRun?.run.status;
+    if (!status) return;
+    const isTerminal =
+      status === 'completed' || status === 'failed' || status === 'canceled';
+    if (isTerminal) {
+      setPollImportRun(false);
+    }
+  }, [activeImportRun?.run.status]);
+
   useEffect(() => {
     if (!importListEnabled) return;
     const visibleIds = importList
@@ -606,17 +644,23 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
         inventoryId: string;
         catalogId: string;
         imageMode: 'download' | 'links';
+        mode: BaseImportMode;
+        dryRun: boolean;
         uniqueOnly: boolean;
         allowDuplicateSku: boolean;
         templateId?: string;
         limit?: number;
         selectedIds?: string[];
+        requestId?: string;
       } = {
         inventoryId,
         catalogId,
         imageMode,
+        mode: importMode,
+        dryRun: importDryRun,
         uniqueOnly,
         allowDuplicateSku,
+        requestId: `${Date.now()}`,
       };
       if (selectedBaseConnectionId) {
         importData.connectionId = selectedBaseConnectionId;
@@ -631,12 +675,59 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       
       const res = await importMutation.mutateAsync(importData);
       setLastResult(res);
-      const importedCount = res.imported ?? 0;
-      toast(`Imported ${importedCount} products`, { variant: 'success' });
+      setActiveImportRunId(res.runId);
+      const queuedLike = res.status === 'queued' || res.status === 'running';
+      setPollImportRun(queuedLike);
+      if (queuedLike) {
+        toast(importDryRun ? 'Dry-run queued.' : 'Import queued.', {
+          variant: 'success',
+        });
+      } else if (res.status === 'completed') {
+        toast(res.summaryMessage || 'Import completed.', { variant: 'success' });
+      } else if (res.status === 'failed') {
+        const preflightErrors = res.preflight.issues
+          .filter((issue) => issue.severity === 'error')
+          .map((issue) => issue.message);
+        toast(
+          preflightErrors[0] || res.summaryMessage || 'Import failed.',
+          { variant: 'error' }
+        );
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Import failed';
       toast(message, { variant: 'error' });
     }
+  };
+
+  const handleResumeImport = async (): Promise<void> => {
+    if (!activeImportRunId) {
+      toast('No import run selected for resume.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      const resumed = await resumeImportRunMutation.mutateAsync({
+        statuses: ['failed', 'pending'],
+      });
+      setLastResult(resumed);
+      setPollImportRun(true);
+      toast('Import resume queued.', { variant: 'success' });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to resume import run.';
+      toast(message, { variant: 'error' });
+    }
+  };
+
+  const handleDownloadImportReport = (): void => {
+    if (!activeImportRunId) {
+      toast('No import run selected.', { variant: 'error' });
+      return;
+    }
+    const url = `/api/integrations/imports/base/runs/${encodeURIComponent(
+      activeImportRunId
+    )}/report?format=csv`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const handleSaveExportSettings = async (): Promise<void> => {
@@ -779,6 +870,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  const activeRunBusy =
+    activeImportRun?.run.status === 'queued' ||
+    activeImportRun?.run.status === 'running';
+
   const value: ImportExportContextType = {
     inventoryId,
     setInventoryId,
@@ -792,6 +887,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     setLimit,
     imageMode,
     setImageMode,
+    importMode,
+    setImportMode,
+    importDryRun,
+    setImportDryRun,
     allowDuplicateSku,
     setAllowDuplicateSku,
     uniqueOnly,
@@ -838,6 +937,9 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     setSelectedImportIds,
     lastResult,
     setLastResult,
+    activeImportRunId,
+    activeImportRun,
+    loadingImportRun,
     templateScope,
     setTemplateScope,
     showAllWarehouses,
@@ -868,6 +970,8 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     handleLoadWarehouses,
     handleLoadImportList,
     handleImport,
+    handleResumeImport,
+    handleDownloadImportReport,
     handleSaveExportSettings,
     handleClearInventory,
     handleNewTemplate,
@@ -876,7 +980,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     handleDeleteTemplate,
     applyTemplate,
 
-    importing: importMutation.isPending,
+    importing:
+      importMutation.isPending ||
+      resumeImportRunMutation.isPending ||
+      activeRunBusy,
     savingExportSettings: saveExportSettingsMutation.isPending,
     savingImportTemplate: saveImportTemplateMutation.isPending || createImportTemplateMutation.isPending,
     savingExportTemplate: saveExportTemplateMutation.isPending || createExportTemplateMutation.isPending,

@@ -13,6 +13,7 @@
     "lint": "eslint src __tests__",
     "seed": "node prisma/seed.js",
     "seed:admin": "tsx scripts/db/seed-admin.ts",
+    "backfill:image-studio-center-links": "tsx scripts/db/backfill-image-studio-center-links.ts",
     "cleanup:db-providers": "tsx scripts/cleanup/cleanup-db-provider-settings.ts",
     "cleanup:cms-blocks": "tsx scripts/db/drop-cms-blocks.ts",
     "cleanup:category-mapping-duplicates": "tsx scripts/cleanup/reconcile-category-mapping-duplicates.ts",

@@ -15,6 +15,15 @@ export type BaseImportItemStatus =
   | 'skipped'
   | 'failed';
 
+export type BaseImportItemAction =
+  | 'pending'
+  | 'processing'
+  | 'imported'
+  | 'updated'
+  | 'skipped'
+  | 'failed'
+  | 'dry_run';
+
 export type BaseImportMode =
   | 'create_only'
   | 'upsert_on_base_id'
@@ -77,6 +86,7 @@ export type BaseImportRunRecord = {
   status: BaseImportRunStatus;
   params: BaseImportRunParams;
   idempotencyKey?: string | null;
+  queueJobId?: string | null;
   preflight: BaseImportPreflight;
   stats: BaseImportRunStats;
   startedAt?: string | null;
@@ -94,7 +104,7 @@ export type BaseImportItemRecord = {
   status: BaseImportItemStatus;
   attempt: number;
   idempotencyKey: string;
-  action: 'imported' | 'updated' | 'skipped' | 'failed' | 'dry_run';
+  action: BaseImportItemAction;
   errorCode?: BaseImportErrorCode | null;
   errorMessage?: string | null;
   importedProductId?: string | null;
@@ -109,6 +119,7 @@ export type BaseImportStartResponse = {
   runId: string;
   status: BaseImportRunStatus;
   preflight: BaseImportPreflight;
+  queueJobId?: string | null;
   summaryMessage?: string | null;
 };
 

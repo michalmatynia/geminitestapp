@@ -27,7 +27,6 @@ import { studioKeys } from '../hooks/useImageStudioQueries';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
-import type { RunStudioEnqueueResult } from '../hooks/useImageStudioMutations';
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
@@ -49,17 +48,21 @@ type CropRect = {
   height: number;
 };
 
-type PolledRunRecord = {
-  id: string;
-  status: 'queued' | 'running' | 'completed' | 'failed';
-  errorMessage: string | null;
-};
-
 type CropActionResponse = {
   slot?: ImageStudioSlotRecord;
   mode?: CropMode;
   effectiveMode?: CropMode;
   cropRect?: CropRect | null;
+  requestId?: string | null;
+  deduplicated?: boolean;
+};
+
+type CenterActionResponse = {
+  slot?: ImageStudioSlotRecord;
+  mode?: CenterMode;
+  effectiveMode?: CenterMode;
+  sourceObjectBounds?: { left: number; top: number; width: number; height: number } | null;
+  targetObjectBounds?: { left: number; top: number; width: number; height: number } | null;
   requestId?: string | null;
   deduplicated?: boolean;
 };
@@ -72,10 +75,18 @@ type CropStatus =
   | 'processing'
   | 'persisting';
 
-const CENTER_RUN_POLL_INTERVAL_MS = 1200;
-const CENTER_RUN_POLL_MAX_ATTEMPTS = 600;
+type CenterStatus =
+  | 'idle'
+  | 'resolving'
+  | 'preparing'
+  | 'uploading'
+  | 'processing'
+  | 'persisting';
+
 const CROP_REQUEST_TIMEOUT_MS = 60_000;
 const CROP_RETRY_DELAY_MS = 350;
+const CENTER_REQUEST_TIMEOUT_MS = 60_000;
+const CENTER_RETRY_DELAY_MS = 350;
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
@@ -271,8 +282,11 @@ export function GenerationToolbar(): React.JSX.Element {
   const [cropBusy, setCropBusy] = useState(false);
   const [cropStatus, setCropStatus] = useState<CropStatus>('idle');
   const [centerBusy, setCenterBusy] = useState(false);
+  const [centerStatus, setCenterStatus] = useState<CenterStatus>('idle');
   const cropRequestInFlightRef = useRef(false);
   const cropAbortControllerRef = useRef<AbortController | null>(null);
+  const centerRequestInFlightRef = useRef(false);
+  const centerAbortControllerRef = useRef<AbortController | null>(null);
 
   const eligibleMaskShapes = useMemo<MaskShapeForExport[]>(
     () =>
@@ -445,6 +459,45 @@ export function GenerationToolbar(): React.JSX.Element {
         }
         attempt += 1;
         await sleep(CROP_RETRY_DELAY_MS * attempt);
+      }
+    }
+  };
+
+  const isClientCenterCrossOriginError = (error: unknown): boolean =>
+    error instanceof Error && /cross-origin restrictions/i.test(error.message);
+
+  const isCenterAbortError = (error: unknown): boolean =>
+    error instanceof DOMException && error.name === 'AbortError';
+
+  const isRetryableCenterError = (error: unknown): boolean => {
+    if (isCenterAbortError(error)) return false;
+    if (error instanceof ApiError) {
+      return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+    }
+    return (
+      error instanceof Error &&
+      /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase())
+    );
+  };
+
+  const buildCenterRequestId = (): string =>
+    `center_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+
+  const withCenterRetry = async <T,>(
+    run: () => Promise<T>,
+    signal: AbortSignal,
+    retries = 1
+  ): Promise<T> => {
+    let attempt = 0;
+    while (true) {
+      try {
+        return await run();
+      } catch (error) {
+        if (attempt >= retries || !isRetryableCenterError(error) || signal.aborted) {
+          throw error;
+        }
+        attempt += 1;
+        await sleep(CENTER_RETRY_DELAY_MS * attempt);
       }
     }
   };
@@ -656,36 +709,6 @@ export function GenerationToolbar(): React.JSX.Element {
     return canvas.toDataURL('image/png');
   };
 
-  const readGenerationRunId = (slot: ImageStudioSlotRecord): string | null => {
-    const metadata = slot.metadata;
-    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
-    const value = metadata['generationRunId'];
-    if (typeof value !== 'string') return null;
-    const normalized = value.trim();
-    return normalized.length > 0 ? normalized : null;
-  };
-
-  const readGenerationOutputIndex = (slot: ImageStudioSlotRecord): number => {
-    const metadata = slot.metadata;
-    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-      return Number.MAX_SAFE_INTEGER;
-    }
-    const value = metadata['generationOutputIndex'];
-    const parsed = typeof value === 'number' ? value : Number(value);
-    if (!Number.isFinite(parsed) || parsed <= 0) return Number.MAX_SAFE_INTEGER;
-    return Math.floor(parsed);
-  };
-
-  const pickPrimaryRunOutputSlot = (
-    candidateSlots: ImageStudioSlotRecord[],
-    runId: string
-  ): ImageStudioSlotRecord | null => {
-    const matches = candidateSlots
-      .filter((slot) => readGenerationRunId(slot) === runId)
-      .sort((left, right) => readGenerationOutputIndex(left) - readGenerationOutputIndex(right));
-    return matches[0] ?? null;
-  };
-
   const fetchProjectSlots = async (projectIdOverride?: string): Promise<ImageStudioSlotRecord[]> => {
     const resolvedProjectId = projectIdOverride?.trim() ?? projectId?.trim() ?? '';
     if (!resolvedProjectId) return [];
@@ -693,21 +716,6 @@ export function GenerationToolbar(): React.JSX.Element {
       `/api/image-studio/projects/${encodeURIComponent(resolvedProjectId)}/slots`
     );
     return Array.isArray(response.slots) ? response.slots : [];
-  };
-
-  const waitForRunCompletion = async (runId: string): Promise<PolledRunRecord> => {
-    for (let attempt = 0; attempt < CENTER_RUN_POLL_MAX_ATTEMPTS; attempt += 1) {
-      const response = await api.get<{ run: PolledRunRecord }>(
-        `/api/image-studio/runs/${encodeURIComponent(runId)}`
-      );
-      const run = response.run;
-      if (run.status === 'completed' || run.status === 'failed') {
-        return run;
-      }
-      await sleep(CENTER_RUN_POLL_INTERVAL_MS);
-    }
-
-    throw new Error('Timed out while waiting for center run completion.');
   };
 
   const attachMaskVariantsFromSelection = async (): Promise<void> => {
@@ -1057,88 +1065,150 @@ export function GenerationToolbar(): React.JSX.Element {
       toast('No client image source is available for centering.', { variant: 'info' });
       return;
     }
+    if (centerRequestInFlightRef.current) {
+      return;
+    }
 
-    const modeLabel = centerMode === 'client_alpha_bbox' ? 'Client' : 'Server';
-    const normalizedProjectId = projectId?.trim() ?? '';
-    const sourceFilepath = workingSlot.imageFile?.filepath?.trim() ?? '';
-    const canUseRuntimeCenter =
-      centerMode === 'server_alpha_bbox' &&
-      Boolean(normalizedProjectId) &&
-      sourceFilepath.startsWith(`/uploads/studio/${normalizedProjectId}/`);
-
+    centerRequestInFlightRef.current = true;
     setCenterBusy(true);
+    setCenterStatus('resolving');
+    const centerRequestId = buildCenterRequestId();
+    const abortController = new AbortController();
+    centerAbortControllerRef.current = abortController;
     try {
-      if (!canUseRuntimeCenter || !normalizedProjectId) {
-        const legacyPayload: Record<string, unknown> = {
-          mode: centerMode,
-        };
-        if (centerMode === 'client_alpha_bbox') {
-          legacyPayload['dataUrl'] = await centerCanvasImageObject(
-            clientProcessingImageSrc || workingSlotImageSrc
+      let response: CenterActionResponse;
+      let resolvedMode: CenterMode = centerMode;
+      if (centerMode === 'client_alpha_bbox') {
+        const sourceForClientCenter = clientProcessingImageSrc || workingSlotImageSrc;
+        if (!sourceForClientCenter) {
+          throw new Error('No client image source is available for centering.');
+        }
+        try {
+          setCenterStatus('preparing');
+          const centeredDataUrl = await centerCanvasImageObject(sourceForClientCenter);
+          let uploadBlob: Blob;
+          try {
+            const blobResponse = await fetch(centeredDataUrl);
+            uploadBlob = await blobResponse.blob();
+          } catch {
+            throw new Error('Failed to prepare client centered image for upload.');
+          }
+
+          setCenterStatus('uploading');
+          response = await withCenterRetry(
+            () => {
+              const formData = new FormData();
+              formData.append('mode', centerMode);
+              formData.append('dataUrl', centeredDataUrl);
+              formData.append('requestId', centerRequestId);
+              formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
+              return api.post<CenterActionResponse>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: CENTER_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': centerRequestId,
+                  },
+                }
+              );
+            },
+            abortController.signal
           );
+        } catch (error) {
+          if (!isClientCenterCrossOriginError(error)) {
+            throw error;
+          }
+          setCenterStatus('processing');
+          response = await withCenterRetry(
+            () =>
+              api.post<CenterActionResponse>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+                {
+                  mode: 'server_alpha_bbox',
+                  requestId: centerRequestId,
+                },
+                {
+                  signal: abortController.signal,
+                  timeout: CENTER_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': centerRequestId,
+                  },
+                }
+              ),
+            abortController.signal
+          );
+          resolvedMode = 'server_alpha_bbox';
+          toast('Client centering was blocked by cross-origin restrictions; used server centering instead.', {
+            variant: 'info',
+          });
         }
-
-        const legacyResponse = await api.post<{ slot?: { id: string; name: string | null } }>(
-          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
-          legacyPayload
+      } else {
+        setCenterStatus('processing');
+        response = await withCenterRetry(
+          () =>
+            api.post<CenterActionResponse>(
+              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
+              {
+                mode: centerMode,
+                requestId: centerRequestId,
+              },
+              {
+                signal: abortController.signal,
+                timeout: CENTER_REQUEST_TIMEOUT_MS,
+                headers: {
+                  'x-idempotency-key': centerRequestId,
+                },
+              }
+            ),
+          abortController.signal
         );
-        if (normalizedProjectId) {
-          await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-        }
-
-        if (legacyResponse.slot?.id) {
-          setSelectedSlotId(legacyResponse.slot.id);
-          setWorkingSlotId(legacyResponse.slot.id);
-        }
-
-        const createdLabel = legacyResponse.slot?.name?.trim() || 'Centered variant';
-        toast(`Created ${createdLabel} (${modeLabel} center).`, { variant: 'success' });
-        return;
       }
 
-      const runPayload: Record<string, unknown> = {
-        operation: 'center_object',
-        projectId: normalizedProjectId,
-        asset: {
-          id: workingSlot.id,
-          filepath: sourceFilepath,
-        },
-        prompt: `Center object (${modeLabel.toLowerCase()})`,
-        center: {
-          mode: centerMode,
-        },
-        studioSettings,
-      };
-
-      const enqueueResult = await api.post<RunStudioEnqueueResult>(
-        '/api/image-studio/run',
-        runPayload
-      );
-      toast(
-        `Center run queued (${enqueueResult.dispatchMode === 'inline' ? 'inline runtime' : 'redis runtime'}).`,
-        { variant: 'info' }
-      );
-
-      const run = await waitForRunCompletion(enqueueResult.runId);
-      if (run.status !== 'completed') {
-        throw new Error(run.errorMessage || 'Failed to center image object.');
+      const normalizedProjectId = projectId?.trim() ?? '';
+      if (normalizedProjectId) {
+        setCenterStatus('persisting');
+        await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
+        const createdSlotId = response.slot?.id ?? '';
+        const mergedSlots =
+          createdSlotId
+            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+            : slotsSnapshot;
+        queryClient.setQueryData<StudioSlotsResponse>(
+          studioKeys.slots(normalizedProjectId),
+          { slots: mergedSlots }
+        );
       }
 
-      await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-      const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
-      const centeredSlot = pickPrimaryRunOutputSlot(slotsSnapshot, enqueueResult.runId);
-      if (centeredSlot?.id) {
-        setSelectedSlotId(centeredSlot.id);
-        setWorkingSlotId(centeredSlot.id);
+      if (response.slot?.id) {
+        setSelectedSlotId(response.slot.id);
+        setWorkingSlotId(response.slot.id);
       }
 
-      const createdLabel = centeredSlot?.name?.trim() || 'Centered variant';
+      const createdLabel = response.slot?.name?.trim() || 'Centered variant';
+      const effectiveMode = response.effectiveMode ?? resolvedMode;
+      const modeLabel = effectiveMode === 'client_alpha_bbox' ? 'Client' : 'Server';
       toast(`Created ${createdLabel} (${modeLabel} center).`, { variant: 'success' });
     } catch (error) {
+      if (isCenterAbortError(error)) {
+        toast('Centering canceled.', { variant: 'info' });
+        return;
+      }
       toast(error instanceof Error ? error.message : 'Failed to center image object.', { variant: 'error' });
     } finally {
+      centerRequestInFlightRef.current = false;
+      centerAbortControllerRef.current = null;
       setCenterBusy(false);
+      setCenterStatus('idle');
     }
+  };
+
+  const handleCancelCenter = (): void => {
+    const controller = centerAbortControllerRef.current;
+    if (!controller) return;
+    controller.abort();
   };
 
   const maskGenerationBusy = maskGenLoading;
@@ -1162,6 +1232,23 @@ export function GenerationToolbar(): React.JSX.Element {
         return 'Crop';
     }
   }, [cropBusy, cropStatus]);
+  const centerBusyLabel = useMemo(() => {
+    if (!centerBusy) return 'Center Object';
+    switch (centerStatus) {
+      case 'resolving':
+        return 'Center: Resolving';
+      case 'preparing':
+        return 'Center: Preparing';
+      case 'uploading':
+        return 'Center: Uploading';
+      case 'processing':
+        return 'Center: Processing';
+      case 'persisting':
+        return 'Center: Persisting';
+      default:
+        return 'Center Object';
+    }
+  }, [centerBusy, centerStatus]);
 
   const quickSwitchModels = useMemo(
     () =>
@@ -1404,8 +1491,19 @@ export function GenerationToolbar(): React.JSX.Element {
         title='Create a centered linked variant from the active slot'
       >
         {centerBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-        Center Object
+        {centerBusyLabel}
       </Button>
+      {centerBusy ? (
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          onClick={handleCancelCenter}
+          title='Cancel centering request'
+        >
+          Cancel Center
+        </Button>
+      ) : null}
       <Button size='xs'
         type='button'
         variant='outline'

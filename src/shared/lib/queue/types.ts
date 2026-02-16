@@ -8,6 +8,7 @@ export type QueueName =
   | 'ai-insights'
   | 'database-backup-scheduler'
   | 'image-studio-run'
+  | 'base-import'
   | 'tradera-listings'
   | 'tradera-relist-scheduler';
 

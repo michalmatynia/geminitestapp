@@ -1,18 +1,18 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-16T21:41:08.324Z
+Generated at: 2026-02-16T21:47:33.844Z
 
 ## Snapshot
 
-- Source files: 2289
-- Source lines: 405950
+- Source files: 2292
+- Source lines: 405956
 - use client files: 897
 - Files >= 1000 LOC: 47
 - Files >= 1500 LOC: 21
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
-- API delegated server routes: 19
-- API routes without apiHandler/delegation: 2
+- API delegated server routes: 21
+- API routes without apiHandler/delegation: 0
 - API explicit cache policy coverage: 294/294 (100.0%)
 - Cross-feature dependency pairs: 118
 - Shared -> features imports: 15
@@ -43,9 +43,9 @@ Generated at: 2026-02-16T21:41:08.324Z
 | Edge | References |
 | --- | ---: |
 | `ai -> observability` | 42 |
-| `integrations -> products` | 40 |
+| `integrations -> products` | 42 |
+| `products -> observability` | 29 |
 | `jobs -> observability` | 28 |
-| `products -> observability` | 28 |
 | `prompt-exploder -> prompt-engine` | 28 |
 | `drafter -> products` | 26 |
 | `jobs -> ai` | 24 |
@@ -69,11 +69,11 @@ Generated at: 2026-02-16T21:41:08.324Z
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2203 |
 | `src/features/case-resolver/settings.ts` | 2145 |
 | `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2131 |
-| `src/features/integrations/services/imports/base-import-service.ts` | 2131 |
 | `src/features/integrations/services/exports/base-exporter.ts` | 2094 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
 | `src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx` | 2031 |
 | `src/shared/ui/vector-canvas.tsx` | 1986 |
+| `src/features/integrations/services/imports/base-import-service.ts` | 1970 |
 | `src/features/prompt-exploder/components/SegmentEditorPanel.tsx` | 1908 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 1882 |
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1806 |

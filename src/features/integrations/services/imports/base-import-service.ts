@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -27,6 +26,33 @@ import {
   updateBaseImportRunItem,
   updateBaseImportRunStatus,
 } from '@/features/integrations/services/imports/base-import-run-repository';
+import {
+  BASE_DETAILS_BATCH_SIZE,
+  BASE_IMPORT_HEARTBEAT_EVERY_ITEMS,
+  BASE_IMPORT_LEASE_MS,
+  BASE_IMPORT_MAX_ATTEMPTS,
+  BASE_IMPORT_RETRY_BASE_DELAY_MS,
+  BASE_IMPORT_RETRY_MAX_DELAY_MS,
+  BASE_INTEGRATION_SLUGS,
+  MAX_IMAGES_PER_PRODUCT,
+  addCurrencyCandidate,
+  createRunIdempotencyKey,
+  extractFilename,
+  guessMimeType,
+  isSkuConflictError,
+  normalizeSelectedIds,
+  nowIso,
+  resolveMode,
+  sanitizeSku,
+  toStringId,
+  type BaseConnectionContext,
+  type ImportDecision,
+  type NormalizedMappedProduct,
+  type PriceGroupLookup,
+  type ProcessItemResult,
+  type ProductLookupMaps,
+  type StartBaseImportRunInput,
+} from '@/features/integrations/services/imports/base-import-service-shared';
 import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import {
@@ -37,13 +63,10 @@ import { getTagMappingRepository } from '@/features/integrations/services/tag-ma
 import type {
   BaseImportErrorCode,
   BaseImportErrorClass,
-  BaseImportItemRecord,
-  BaseImportItemStatus,
   BaseImportMode,
   BaseImportPreflight,
   BaseImportPreflightIssue,
   BaseImportRunDetailResponse,
-  BaseImportRunParams,
   BaseImportRunRecord,
 } from '@/features/integrations/types/base-import-runs';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
@@ -63,190 +86,6 @@ import type {
 import { AppErrorCodes, badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-const BASE_DETAILS_BATCH_SIZE = 100;
-const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
-const MAX_IMAGES_PER_PRODUCT = 15;
-const DEFAULT_BASE_IMPORT_MAX_ATTEMPTS = 3;
-const DEFAULT_BASE_IMPORT_RETRY_BASE_DELAY_MS = 2_000;
-const DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS = 60_000;
-const DEFAULT_BASE_IMPORT_LEASE_MS = 60_000;
-const DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = 10;
-
-type PriceGroupLookup = {
-  id: string;
-  groupId?: string | null;
-  currencyId?: string | null;
-  currencyCode?: string | null;
-  isDefault?: boolean;
-};
-
-export type StartBaseImportRunInput = {
-  connectionId?: string;
-  inventoryId: string;
-  catalogId: string;
-  templateId?: string;
-  limit?: number;
-  imageMode: 'links' | 'download';
-  uniqueOnly: boolean;
-  allowDuplicateSku: boolean;
-  selectedIds?: string[];
-  dryRun?: boolean;
-  mode?: BaseImportMode;
-  requestId?: string;
-};
-
-type BaseConnectionContext = {
-  baseIntegrationId: string | null;
-  connectionId: string | null;
-  token: string | null;
-  issue: BaseImportPreflightIssue | null;
-};
-
-type ProductLookupMaps = {
-  producerIdSet: Set<string>;
-  producerNameToId: Map<string, string>;
-  tagIdSet: Set<string>;
-  tagNameToId: Map<string, string>;
-  externalTagToInternalTagId: Map<string, string>;
-};
-
-type ImportDecision =
-  | { type: 'create' }
-  | { type: 'update'; target: ProductRecord }
-  | { type: 'skip'; code: BaseImportErrorCode; message: string }
-  | { type: 'fail'; code: BaseImportErrorCode; message: string };
-
-type ProcessItemResult = {
-  status: Exclude<BaseImportItemStatus, 'pending' | 'processing'>;
-  action: BaseImportItemRecord['action'];
-  importedProductId?: string | null;
-  baseProductId?: string | null;
-  sku?: string | null;
-  errorCode?: BaseImportErrorCode | null;
-  errorClass?: BaseImportErrorClass | null;
-  errorMessage?: string | null;
-  retryable?: boolean | null;
-  nextRetryAt?: string | null;
-  lastErrorAt?: string | null;
-  payloadSnapshot?: ProductCreateInput | null;
-};
-
-type NormalizedMappedProduct = ProductCreateInput & {
-  producerIds?: string[];
-  tagIds?: string[];
-};
-
-const nowIso = (): string => new Date().toISOString();
-const toPositiveIntOrFallback = (
-  value: string | undefined,
-  fallback: number
-): number => {
-  if (!value) return fallback;
-  const parsed = Number.parseInt(value, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
-  return parsed;
-};
-
-const BASE_IMPORT_MAX_ATTEMPTS = toPositiveIntOrFallback(
-  process.env['BASE_IMPORT_MAX_ATTEMPTS'],
-  DEFAULT_BASE_IMPORT_MAX_ATTEMPTS
-);
-const BASE_IMPORT_RETRY_BASE_DELAY_MS = toPositiveIntOrFallback(
-  process.env['BASE_IMPORT_RETRY_BASE_DELAY_MS'],
-  DEFAULT_BASE_IMPORT_RETRY_BASE_DELAY_MS
-);
-const BASE_IMPORT_RETRY_MAX_DELAY_MS = toPositiveIntOrFallback(
-  process.env['BASE_IMPORT_RETRY_MAX_DELAY_MS'],
-  DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS
-);
-const BASE_IMPORT_LEASE_MS = toPositiveIntOrFallback(
-  process.env['BASE_IMPORT_LEASE_MS'],
-  DEFAULT_BASE_IMPORT_LEASE_MS
-);
-const BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = toPositiveIntOrFallback(
-  process.env['BASE_IMPORT_HEARTBEAT_EVERY_ITEMS'],
-  DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS
-);
-
-const toStringId = (value: unknown): string | null => {
-  if (typeof value === 'string' && value.trim()) return value.trim();
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  return null;
-};
-
-const normalizeCurrencyCode = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const compact = value.trim().toUpperCase().replace(/[^A-Z]/g, '');
-  return compact.length === 3 ? compact : null;
-};
-
-const addCurrencyCandidate = (target: Set<string>, value: unknown): void => {
-  const code = normalizeCurrencyCode(value);
-  if (code) target.add(code);
-};
-
-const sanitizeSku = (value: string): string =>
-  value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
-
-const guessMimeType = (url: string): string => {
-  const lower = url.toLowerCase();
-  if (lower.endsWith('.png')) return 'image/png';
-  if (lower.endsWith('.webp')) return 'image/webp';
-  if (lower.endsWith('.gif')) return 'image/gif';
-  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-  return 'image/jpeg';
-};
-
-const extractFilename = (url: string, fallback: string): string => {
-  try {
-    const parsed = new URL(url);
-    const base = path.basename(parsed.pathname);
-    return base || fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const isSkuConflictError = (error: unknown): boolean => {
-  if (!(error instanceof Error)) return false;
-  return /sku/i.test(error.message) && /unique|duplicate|conflict/i.test(error.message);
-};
-
-const normalizeSelectedIds = (selectedIds: string[] | undefined): string[] =>
-  Array.from(
-    new Set(
-      (selectedIds ?? [])
-        .map((id: string) => id.trim())
-        .filter((id: string) => id.length > 0)
-    )
-  );
-
-const resolveMode = (mode: BaseImportMode | undefined): BaseImportMode =>
-  mode ?? 'upsert_on_base_id';
-
-const createRunIdempotencyKey = (
-  params: BaseImportRunParams,
-  ids: string[]
-): string => {
-  const hash = createHash('sha1');
-  hash.update(
-    JSON.stringify({
-      connectionId: params.connectionId ?? null,
-      inventoryId: params.inventoryId,
-      catalogId: params.catalogId,
-      templateId: params.templateId ?? null,
-      imageMode: params.imageMode,
-      uniqueOnly: params.uniqueOnly,
-      allowDuplicateSku: params.allowDuplicateSku,
-      dryRun: params.dryRun ?? false,
-      mode: params.mode ?? 'upsert_on_base_id',
-      requestId: params.requestId ?? null,
-      ids,
-    })
-  );
-  return hash.digest('hex');
-};
 
 const resolvePriceGroupContext = async (
   provider: Awaited<ReturnType<typeof getProductDataProvider>>,

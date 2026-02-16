@@ -3,16 +3,11 @@
 import React from 'react';
 
 import {
-  Button,
   Input,
   Textarea,
   Label,
-  AppModal,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  FormModal,
+  SelectSimple,
 } from '@/shared/ui';
 
 import { useCategoryFormContext } from './CategoryFormContext';
@@ -35,10 +30,12 @@ export function CategoryForm(): React.JSX.Element | null {
   if (!open) return null;
 
   return (
-    <AppModal
+    <FormModal
       open={open}
       onClose={onClose}
       title={isEditing ? 'Edit Category' : 'Create Category'}
+      onSave={onSave}
+      isSaving={saving}
       size='md'
     >
       <div className='space-y-4'>
@@ -73,7 +70,7 @@ export function CategoryForm(): React.JSX.Element | null {
         <div>
           <Label className='text-xs text-gray-400'>Catalog</Label>
           <div className='mt-2'>
-            <Select
+            <SelectSimple
               value={formData.catalogId}
               onValueChange={(value: string): void => {
                 onFormDataChange((prev) => ({
@@ -83,26 +80,20 @@ export function CategoryForm(): React.JSX.Element | null {
                 }));
                 onCatalogChange(value);
               }}
-            >
-              <SelectTrigger className='w-full bg-gray-900 border-border text-sm text-white'>
-                <SelectValue placeholder='Select catalog' />
-              </SelectTrigger>
-              <SelectContent>
-                {catalogs.map((catalog): React.JSX.Element => (
-                  <SelectItem key={catalog.id} value={catalog.id}>
-                    {catalog.name}
-                    {catalog.isDefault ? ' (Default)' : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={catalogs.map((catalog) => ({
+                value: catalog.id,
+                label: catalog.name + (catalog.isDefault ? ' (Default)' : ''),
+              }))}
+              placeholder='Select catalog'
+              triggerClassName='w-full bg-gray-900 border-border text-white'
+            />
           </div>
         </div>
 
         <div>
           <Label className='text-xs text-gray-400'>Parent Category</Label>
           <div className='mt-2'>
-            <Select
+            <SelectSimple
               value={formData.parentId ?? '__root__'}
               onValueChange={(value: string): void =>
                 onFormDataChange((prev) => ({
@@ -111,20 +102,16 @@ export function CategoryForm(): React.JSX.Element | null {
                 }))
               }
               disabled={loadingCategories}
-            >
-              <SelectTrigger className='w-full bg-gray-900 border-border text-sm text-white'>
-                <SelectValue placeholder='Select parent category' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='__root__'>No parent (root)</SelectItem>
-                {parentOptions.map((option): React.JSX.Element => (
-                  <SelectItem key={option.id} value={option.id}>
-                    {'|-- '.repeat(option.level)}
-                    {option.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              options={[
+                { value: '__root__', label: 'No parent (root)' },
+                ...parentOptions.map((option) => ({
+                  value: option.id,
+                  label: '|-- '.repeat(option.level) + option.name,
+                })),
+              ]}
+              placeholder='Select parent category'
+              triggerClassName='w-full bg-gray-900 border-border text-white'
+            />
           </div>
           {loadingCategories && (
             <p className='mt-1 text-xs text-gray-500'>Loading categories...</p>
@@ -160,25 +147,7 @@ export function CategoryForm(): React.JSX.Element | null {
             />
           </div>
         </div>
-
-        <div className='flex items-center justify-end gap-3 pt-4'>
-          <Button
-            className='rounded-md border border-border px-3 py-2 text-sm text-gray-300 hover:bg-muted/50'
-            type='button'
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            className='rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-200'
-            type='button'
-            onClick={onSave}
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </Button>
-        </div>
       </div>
-    </AppModal>
+    </FormModal>
   );
 }

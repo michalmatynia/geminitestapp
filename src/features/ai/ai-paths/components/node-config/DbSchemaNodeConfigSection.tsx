@@ -8,7 +8,6 @@ import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { 
   Button, 
-  Input, 
   Label, 
   SelectSimple, 
   SearchInput 

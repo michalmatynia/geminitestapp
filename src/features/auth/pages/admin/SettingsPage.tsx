@@ -21,17 +21,13 @@ import {
   Button,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   useToast,
-  SectionHeader,
+  PanelHeader,
   FormSection,
   FormField,
   Checkbox,
   Alert,
+  SelectSimple,
 } from '@/shared/ui';
 
 export default function AuthSettingsPage(): React.JSX.Element {
@@ -228,7 +224,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
 
   return (
     <div className='container mx-auto max-w-5xl py-10 space-y-6'>
-      <SectionHeader
+      <PanelHeader
         title='Auth Settings'
         description='Authentication data source is managed globally.'
       />
@@ -237,27 +233,24 @@ export default function AuthSettingsPage(): React.JSX.Element {
         title='Default role'
         description='Users without an explicit role will receive this role. To avoid unintended access, set this to a low-privilege role.'
         className='p-4'
+        variant='subtle'
       >
         <div className='mt-4 flex flex-wrap items-center gap-3'>
-          <Select
+          <SelectSimple
+            size='sm'
             value={defaultRole}
             onValueChange={(value: string) => {
               setDefaultRole(value);
               setDefaultDirty(true);
             }}
             disabled={authLoading}
-          >
-            <SelectTrigger className='w-64 bg-gray-900 border text-white'>
-              <SelectValue placeholder='Select default role' />
-            </SelectTrigger>
-            <SelectContent>
-              {roleOptions.map((role: { id: string; name: string }) => (
-                <SelectItem key={role.id} value={role.id}>
-                  {role.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={roleOptions.map((role) => ({
+              value: role.id,
+              label: role.name,
+            }))}
+            placeholder='Select default role'
+            triggerClassName='w-64 bg-gray-900 border text-white'
+          />
           <Button
             onClick={() => void saveDefaultRole()}
             disabled={!defaultDirty || updateSetting.isPending}

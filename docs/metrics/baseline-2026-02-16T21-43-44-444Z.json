@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-16T21:47:33.844Z",
+  "generatedAt": "2026-02-16T21:43:44.444Z",
   "source": {
-    "totalFiles": 2292,
-    "totalLines": 405956,
+    "totalFiles": 2291,
+    "totalLines": 405949,
     "useClientFiles": 897,
     "filesOver800": 81,
     "filesOver1000": 47,
@@ -122,7 +122,7 @@
       },
       {
         "edge": "integrations -> products",
-        "references": 42
+        "references": 40
       },
       {
         "edge": "products -> observability",
@@ -231,12 +231,12 @@
       {
         "feature": "products",
         "files": 193,
-        "lines": 37219
+        "lines": 37249
       },
       {
         "feature": "integrations",
-        "files": 136,
-        "lines": 27030
+        "files": 135,
+        "lines": 26986
       },
       {
         "feature": "prompt-exploder",
@@ -266,7 +266,7 @@
       {
         "feature": "auth",
         "files": 40,
-        "lines": 6028
+        "lines": 6035
       },
       {
         "feature": "prompt-engine",
@@ -414,6 +414,10 @@
         "lines": 2131
       },
       {
+        "path": "src/features/integrations/services/imports/base-import-service.ts",
+        "lines": 2131
+      },
+      {
         "path": "src/features/integrations/services/exports/base-exporter.ts",
         "lines": 2094
       },
@@ -428,10 +432,6 @@
       {
         "path": "src/shared/ui/vector-canvas.tsx",
         "lines": 1986
-      },
-      {
-        "path": "src/features/integrations/services/imports/base-import-service.ts",
-        "lines": 1970
       },
       {
         "path": "src/features/prompt-exploder/components/SegmentEditorPanel.tsx",

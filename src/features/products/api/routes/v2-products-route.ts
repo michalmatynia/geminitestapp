@@ -6,8 +6,8 @@ import { ErrorSystem } from '@/features/observability/server';
 import { withApiVersioning, createVersionedResponse, StandardErrors, withErrorHandling } from '@/features/products/api/server';
 import type { ApiVersion } from '@/features/products/api/server';
 import { CachedProductService } from '@/features/products/performance';
-import { productService } from '@/features/products/services/productService';
 import { withSecurity } from '@/features/products/security';
+import { productService } from '@/features/products/services/productService';
 
 // Versioned products API handler
 async function productsHandler(req: NextRequest, version: ApiVersion): Promise<Response> {

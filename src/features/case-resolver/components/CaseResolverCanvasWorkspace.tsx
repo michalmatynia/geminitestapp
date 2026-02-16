@@ -313,24 +313,39 @@ const toHtmlParagraph = (value: string): string => {
 
 const hasHtmlMarkup = (value: string): boolean => /<\/?[a-z][^>]*>/i.test(value);
 
+const decodeBasicHtmlEntities = (value: string): string =>
+  value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&apos;|&#39;/gi, '\'')
+    .replace(/&quot;/gi, '"')
+    .replace(/&gt;/gi, '>')
+    .replace(/&lt;/gi, '<')
+    .replace(/&amp;/gi, '&');
+
 const decodeHtmlEntity = (value: string): string => {
+  const basicDecoded = decodeBasicHtmlEntities(value);
   try {
-    if (typeof window === 'undefined') return value;
+    if (typeof window === 'undefined') return basicDecoded;
     const textarea = document.createElement('textarea');
-    textarea.innerHTML = value;
-    return textarea.value;
+    textarea.innerHTML = basicDecoded;
+    return decodeBasicHtmlEntities(textarea.value);
   } catch {
-    return value;
+    return basicDecoded;
   }
 };
 
-const stripHtmlToPlainText = (html: string): string => {
-  const normalized = html
+const stripHtmlTagsPreserveBreaks = (value: string): string =>
+  value
     .replace(/<br\s*\/?\s*>/gi, '\n')
     .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote)>/gi, '\n')
     .replace(/<li>/gi, '• ')
     .replace(/<[^>]+>/g, '');
-  return decodeHtmlEntity(normalized)
+
+const stripHtmlToPlainText = (html: string): string => {
+  const decoded = decodeHtmlEntity(html);
+  const stripped = stripHtmlTagsPreserveBreaks(decoded);
+  const normalized = stripHtmlTagsPreserveBreaks(decodeHtmlEntity(stripped));
+  return normalized
     .split('\n')
     .map((line: string) => line.trim())
     .join('\n')
@@ -583,6 +598,20 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       y: localY - NODE_MIN_HEIGHT / 2,
     });
   };
+
+  const focusNodeInCanvas = React.useCallback(
+    (nodeId: string, position: { x: number; y: number }): void => {
+      selectNode(nodeId);
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      if (!viewport) return;
+      setView({
+        x: viewport.width / 2 - (position.x + NODE_WIDTH / 2) * view.scale,
+        y: viewport.height / 2 - (position.y + NODE_MIN_HEIGHT / 2) * view.scale,
+        scale: view.scale,
+      });
+    },
+    [selectNode, setView, view.scale, viewportRef]
+  );
 
   const extractPdfText = async (filepath: string): Promise<string> => {
     try {
@@ -872,6 +901,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       const nextNodeMeta = { ...normalizedNodeMeta };
       const nextDocumentSourceFileIdByNode = { ...normalizedDocumentSourceFileIdByNode };
       let lastCreatedNodeId: string | null = null;
+      let lastCreatedNodePosition: { x: number; y: number } | null = null;
 
       droppedDocumentFiles.forEach((file: CaseResolverFile, index: number): void => {
         const id = createNodeId();
@@ -903,10 +933,11 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         };
         nextDocumentSourceFileIdByNode[id] = file.id;
         lastCreatedNodeId = id;
+        lastCreatedNodePosition = position;
       });
 
-      if (lastCreatedNodeId) {
-        selectNode(lastCreatedNodeId);
+      if (lastCreatedNodeId && lastCreatedNodePosition) {
+        focusNodeInCanvas(lastCreatedNodeId, lastCreatedNodePosition);
       }
 
       onGraphChange({
@@ -949,7 +980,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       targetNodeId = id;
       nextNodes = [...nextNodes, node];
       addNode(node);
-      selectNode(id);
+      focusNodeInCanvas(id, node.position);
     }
 
     const existingLinkedFileIds = normalizedDocumentFileLinksByNode[targetNodeId] ?? [];
@@ -1361,14 +1392,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     ? (normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
     : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
 
-  const selectedPdfExtractionPreset = useMemo(
-    () =>
-      CASE_RESOLVER_PDF_EXTRACTION_PRESETS.find(
-        (preset): boolean => preset.value === pdfExtractionPresetId
-      ) ?? CASE_RESOLVER_PDF_EXTRACTION_PRESETS[0],
-    [pdfExtractionPresetId]
-  );
-
   const resolveConnectorTooltip = React.useCallback(
     (input: {
       direction: 'input' | 'output';
@@ -1492,11 +1515,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
           />
           {isDropImporting ? (
             <span className='text-[11px] text-gray-400'>Importing dropped files...</span>
-          ) : (
-            <span className='text-[11px] text-gray-500'>
-              PDF preset: {selectedPdfExtractionPreset?.description ?? 'Applies to dropped PDFs'}
-            </span>
-          )}
+          ) : null}
 
           <div className='ml-auto flex items-center gap-2'>
             <Button

@@ -91,7 +91,7 @@ function ImportsPageContent(): React.JSX.Element {
 
   if (checkingIntegration) {
     return (
-      <div className='container mx-auto py-10'>
+      <div className='w-full py-6'>
         <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
           Checking integration...
         </div>
@@ -100,7 +100,7 @@ function ImportsPageContent(): React.JSX.Element {
   }
   if (!isBaseConnected) {
     return (
-      <div className='container mx-auto py-10'>
+      <div className='w-full py-6'>
         <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-6 text-sm text-amber-300'>
           Base.com integration required.
         </div>
@@ -109,7 +109,7 @@ function ImportsPageContent(): React.JSX.Element {
   }
 
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
+    <div className='w-full py-6'>
       <SectionHeader title='Product Import/Export' description='Import products from Base.com or export your products to Base.com' className='mb-6' />
       <Tabs defaultValue='imports'>
         <TabsList className='bg-card/70'>

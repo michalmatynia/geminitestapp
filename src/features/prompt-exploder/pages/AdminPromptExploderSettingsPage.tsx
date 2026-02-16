@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
+  parseValidatorPatternLists,
+  VALIDATOR_PATTERN_LISTS_KEY,
+} from '@/features/admin/pages/validator-scope';
+import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
   parseBrainProviderCatalog,
 } from '@/features/ai/brain/settings';
@@ -26,7 +30,10 @@ import {
   parsePromptExploderSettings,
   PROMPT_EXPLODER_SETTINGS_KEY,
 } from '../settings';
-import { PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS } from '../validation-stack';
+import {
+  buildPromptExploderValidationRuleStackOptions,
+  normalizePromptExploderValidationRuleStack,
+} from '../validation-stack';
 
 import type {
   PromptExploderAiProvider,
@@ -71,6 +78,7 @@ const toSettingsDraft = (settings: PromptExploderSettings): SettingsDraft => ({
 const normalizeModelValues = (values: unknown): string[] => {
   const seen = new Set<string>();
   const output: string[] = [];
+  const visited = new WeakSet<object>();
 
   const append = (value: unknown): void => {
     if (typeof value === 'string') {
@@ -89,34 +97,46 @@ const normalizeModelValues = (values: unknown): string[] => {
     }
 
     if (!value || typeof value !== 'object') return;
+    if (visited.has(value)) return;
+    visited.add(value);
+
+    if (value instanceof Map) {
+      value.forEach((entry: unknown): void => {
+        append(entry);
+      });
+      return;
+    }
+
+    if (value instanceof Set) {
+      value.forEach((entry: unknown): void => {
+        append(entry);
+      });
+      return;
+    }
 
     const record = value as Record<string, unknown>;
-    if ('models' in record) {
-      append(record['models']);
-      return;
-    }
-    if ('data' in record) {
-      append(record['data']);
-      return;
-    }
-    if ('id' in record) {
-      append(record['id']);
-      return;
-    }
-    if ('model' in record) {
-      append(record['model']);
-      return;
-    }
-    if ('name' in record) {
-      append(record['name']);
-      return;
-    }
-    if ('value' in record) {
-      append(record['value']);
-    }
+    const keyOrder = ['models', 'data', 'id', 'model', 'name', 'value'] as const;
+    let matchedKnownKey = false;
+    keyOrder.forEach((key: (typeof keyOrder)[number]): void => {
+      if (!(key in record)) return;
+      matchedKnownKey = true;
+      append(record[key]);
+    });
+    if (matchedKnownKey) return;
+
+    Object.values(record).forEach((entry: unknown): void => {
+      append(entry);
+    });
   };
 
-  append(values);
+  try {
+    append(values);
+  } catch {
+    if (typeof values === 'string') {
+      append(values);
+    }
+  }
+
   return output;
 };
 
@@ -132,9 +152,19 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
 
   const rawSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
+  const rawValidatorPatternLists =
+    settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
   const parsedSettings = useMemo(
     () => parsePromptExploderSettings(rawSettings),
     [rawSettings]
+  );
+  const validatorPatternLists = useMemo(
+    () => parseValidatorPatternLists(rawValidatorPatternLists),
+    [rawValidatorPatternLists]
+  );
+  const validationPatternStackOptions = useMemo(
+    () => buildPromptExploderValidationRuleStackOptions(validatorPatternLists),
+    [validatorPatternLists]
   );
   const providerCatalog = useMemo(
     () =>
@@ -147,25 +177,55 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   useEffect(() => {
     const raw = rawSettings ?? '';
     if (draft && loadedFrom === raw) return;
-    setDraft(toSettingsDraft(parsedSettings));
+    setDraft({
+      ...toSettingsDraft(parsedSettings),
+      runtime: {
+        ...parsedSettings.runtime,
+        validationRuleStack: normalizePromptExploderValidationRuleStack(
+          parsedSettings.runtime.validationRuleStack,
+          validatorPatternLists
+        ),
+      },
+    });
     setLoadedFrom(raw);
-  }, [draft, loadedFrom, parsedSettings, rawSettings]);
+  }, [draft, loadedFrom, parsedSettings, rawSettings, validatorPatternLists]);
+
+  useEffect(() => {
+    setDraft((previous) => {
+      if (!previous) return previous;
+      const normalizedStack = normalizePromptExploderValidationRuleStack(
+        previous.runtime.validationRuleStack,
+        validatorPatternLists
+      );
+      if (normalizedStack === previous.runtime.validationRuleStack) {
+        return previous;
+      }
+      return {
+        ...previous,
+        runtime: {
+          ...previous.runtime,
+          validationRuleStack: normalizedStack,
+        },
+      };
+    });
+  }, [validatorPatternLists]);
 
   const modelOptions = useMemo(() => {
     const options: Array<{ value: string; label: string; description: string }> = [];
     const seen = new Set<string>();
 
     const append = (values: unknown, source: string): void => {
-      normalizeModelValues(values).forEach((value) => {
+      const normalizedValues = normalizeModelValues(values);
+      for (const value of normalizedValues) {
         const model = value.trim();
-        if (!model || seen.has(model)) return;
+        if (!model || seen.has(model)) continue;
         seen.add(model);
         options.push({
           value: model,
           label: model,
           description: source,
         });
-      });
+      }
     };
 
     append(providerCatalog.modelPresets, 'AI Brain preset');
@@ -220,6 +280,10 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       ...parsedSettings,
       runtime: {
         ...draft.runtime,
+        validationRuleStack: normalizePromptExploderValidationRuleStack(
+          draft.runtime.validationRuleStack,
+          validatorPatternLists
+        ),
         benchmarkLowConfidenceThreshold: clampNumber(
           draft.runtime.benchmarkLowConfidenceThreshold,
           0.3,
@@ -545,13 +609,13 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
                       ...previous,
                       runtime: {
                         ...previous.runtime,
-                        validationRuleStack: value as PromptExploderSettings['runtime']['validationRuleStack'],
+                        validationRuleStack: value,
                       },
                     }
                     : previous
                 );
               }}
-              options={PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.map((option) => ({
+              options={validationPatternStackOptions.map((option) => ({
                 value: option.value,
                 label: option.label,
               }))}

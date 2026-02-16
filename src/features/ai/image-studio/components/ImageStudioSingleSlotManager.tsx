@@ -11,11 +11,13 @@ import { api } from '@/shared/lib/api-client';
 
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import { isLikelyImageStudioErrorText } from '../utils/image-src';
 
 import type { ImageStudioSlotRecord } from '../types';
 
 const OBJECT_SLOT_INDEX = 0;
 const TEMP_OBJECT_SLOT_ID = '__image_studio_temp_object__';
+const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
 type UploadedAsset = {
   id: string;
@@ -101,8 +103,13 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     }, [projectId, setTemporaryObjectUpload]);
 
     useEffect(() => {
+      const slotImageUrl = objectSlot?.imageUrl ?? '';
       setUploadError(null);
-      setObjectImageLinkDraft(objectSlot?.imageUrl ?? '');
+      setObjectImageLinkDraft(
+        slotImageUrl && isLikelyImageStudioErrorText(slotImageUrl)
+          ? ''
+          : slotImageUrl
+      );
       setObjectImageBase64Draft(objectSlot?.imageBase64 ?? '');
     }, [objectSlot?.id, objectSlot?.imageUrl, objectSlot?.imageBase64]);
 
@@ -141,6 +148,9 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           if (!nextSlot) return false;
           setTemporaryObjectUpload(null);
           setSelectedSlotId(nextSlot.id);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: nextSlot.id } }));
+          }
           if (loadToCanvas) {
             setPreviewMode('image');
             setWorkingSlotId(nextSlot.id);
@@ -353,6 +363,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         <ProductImageManager
           key={`obj:${objectSlot?.id ?? temporaryObjectUpload?.id ?? 'none'}`}
           minimalUi
+          showDragHandle={false}
         />
       </ProductImageManagerControllerProvider>
     );

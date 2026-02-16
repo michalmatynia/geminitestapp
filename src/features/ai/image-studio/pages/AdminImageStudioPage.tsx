@@ -179,9 +179,8 @@ function AdminImageStudioPageContent(): React.JSX.Element {
             </TabsContent>
 
             <TabsContent value='projects' className='h-full m-0 overflow-y-auto'>
-              <div className='grid gap-6 xl:grid-cols-[360px_1fr] p-4'>
+              <div className='p-4'>
                 <StudioProjectsList />
-                <div className='text-gray-400 p-4'>Select a project to start editing.</div>
               </div>
             </TabsContent>
 

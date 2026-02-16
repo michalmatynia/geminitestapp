@@ -49,6 +49,7 @@ export interface GenerationState {
   maskEligibleCount: number;
   generationHistory: GenerationRecord[];
   activeRunId: string | null;
+  activeRunSourceSlotId: string | null;
   activeRunStatus: ImageStudioRunStatus | null;
   activeRunError: string | null;
   isRunInFlight: boolean;
@@ -166,6 +167,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   const [runOutputs, setRunOutputs] = useState<ImageFileRecord[]>([]);
   const [generationHistory, setGenerationHistory] = useState<GenerationRecord[]>([]);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [activeRunSourceSlotId, setActiveRunSourceSlotId] = useState<string | null>(null);
   const [activeRunStatus, setActiveRunStatus] = useState<ImageStudioRunStatus | null>(null);
   const [activeRunError, setActiveRunError] = useState<string | null>(null);
   const [landingSlots, setLandingSlots] = useState<GenerationLandingSlot[]>([]);
@@ -239,6 +241,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         if (token.cancelled || token.settled || pollTokenRef.current !== token) return true;
 
         setActiveRunId(run.id);
+        setActiveRunSourceSlotId(run.request?.asset?.id?.trim() || null);
         setActiveRunStatus(run.status);
         setActiveRunError(run.errorMessage ?? null);
 
@@ -379,6 +382,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       setGenerationHistory([]);
       setLandingSlots([]);
       setActiveRunId(null);
+      setActiveRunSourceSlotId(null);
       setActiveRunStatus(null);
       setActiveRunError(null);
       return;
@@ -402,12 +406,15 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
           .slice(0, 50);
         setGenerationHistory(historyRecords);
 
-        const latestRun = runs[0] ?? null;
+        const latestRunInFlight =
+          runs.find((run) => run.status === 'queued' || run.status === 'running') ?? null;
+        const latestRun = latestRunInFlight ?? runs[0] ?? null;
         if (!latestRun) {
           setRunOutputs([]);
           setGenerationHistory([]);
           setLandingSlots([]);
           setActiveRunId(null);
+          setActiveRunSourceSlotId(null);
           setActiveRunStatus(null);
           setActiveRunError(null);
           return;
@@ -416,10 +423,12 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         setRunOutputs(Array.isArray(latestRun.outputs) ? latestRun.outputs : []);
         setLandingSlots(buildLandingSlotsFromRun(latestRun));
         setActiveRunId(latestRun.id);
+        setActiveRunSourceSlotId(latestRun.request?.asset?.id?.trim() || null);
         setActiveRunStatus(latestRun.status);
-        setActiveRunError(latestRun.errorMessage ?? null);
+        const latestSelectedRunInFlight = latestRun.status === 'queued' || latestRun.status === 'running';
+        setActiveRunError(latestSelectedRunInFlight ? latestRun.errorMessage ?? null : null);
 
-        if (latestRun.status !== 'queued' && latestRun.status !== 'running') {
+        if (!latestSelectedRunInFlight) {
           return;
         }
 
@@ -509,6 +518,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     setRunOutputs([]);
     setActiveRunError(null);
     setActiveRunId('pending');
+    setActiveRunSourceSlotId(submittedSlotId || null);
     setActiveRunStatus('queued');
     setLandingSlots(buildPendingLandingSlots('pending', expectedOutputs));
 
@@ -516,6 +526,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       onSuccess: (data) => {
         const queuedExpected = normalizeExpectedOutputs(data.expectedOutputs, expectedOutputs);
         setActiveRunId(data.runId);
+        setActiveRunSourceSlotId(submittedSlotId || null);
         setActiveRunStatus(data.status);
         setActiveRunError(null);
         setLandingSlots(buildPendingLandingSlots(data.runId, queuedExpected));
@@ -575,6 +586,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         }))
       );
       setActiveRunId(null);
+      setActiveRunSourceSlotId(record.slotId || null);
       setActiveRunStatus('completed');
       setActiveRunError(null);
       toast('Restored generation settings.', { variant: 'info' });
@@ -593,6 +605,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       maskEligibleCount,
       generationHistory,
       activeRunId,
+      activeRunSourceSlotId,
       activeRunStatus,
       activeRunError,
       isRunInFlight,
@@ -604,6 +617,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       maskEligibleCount,
       generationHistory,
       activeRunId,
+      activeRunSourceSlotId,
       activeRunStatus,
       activeRunError,
       isRunInFlight,

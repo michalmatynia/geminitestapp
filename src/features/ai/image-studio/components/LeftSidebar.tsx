@@ -179,7 +179,7 @@ export function LeftSidebar(): React.JSX.Element {
     });
   };
 
-  const handleCreateCardFromLoadedImage = (): void => {
+  const handleCreateCardFromLoadedImage = useCallback((): void => {
     void (async (): Promise<void> => {
       const consumedTemporaryUpload =
         (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: true })) ?? false;
@@ -211,7 +211,7 @@ export function LeftSidebar(): React.JSX.Element {
         if (!nextCard) {
           throw new Error('Failed to create card.');
         }
-        setSelectedSlotId(nextCard.id);
+        queueRevealInTree(nextCard.id);
         toast('Created empty card.', { variant: 'success' });
         return;
       }
@@ -231,14 +231,24 @@ export function LeftSidebar(): React.JSX.Element {
       if (!nextCard) {
         throw new Error('Failed to create card from loaded image.');
       }
-      setSelectedSlotId(nextCard.id);
+      queueRevealInTree(nextCard.id);
       setPreviewMode('image');
       setWorkingSlotId(nextCard.id);
       toast('Created card from loaded image.', { variant: 'success' });
     })().catch((error: unknown) => {
       toast(error instanceof Error ? error.message : 'Failed to create card from loaded image.', { variant: 'error' });
     });
-  };
+  }, [
+    createSlots,
+    queueRevealInTree,
+    selectedFolder,
+    selectedSlot,
+    selectedSlotId,
+    setPreviewMode,
+    setWorkingSlotId,
+    toast,
+    workingSlot,
+  ]);
 
   const handleSaveProject = (): void => {
     const normalizedProjectId = projectId.trim();

@@ -1,12 +1,15 @@
 'use client';
 
-import { ChevronDown, ChevronRight, Edit2, Eye, Folder, FolderOpen, Link2, Lock, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Edit2, Eye, Folder, FolderOpen, Link2, Lock, Plus, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button, FormSection, Input, MultiSelect, SectionHeader, SelectSimple, useToast } from '@/shared/ui';
+import type { UserPreferences } from '@/shared/types/domain/user-preferences';
+import { AppModal, Badge, Button, FilterPanel, FormSection, Input, MultiSelect, SectionHeader, SelectSimple, useToast } from '@/shared/ui';
+import type { FilterField } from '@/shared/ui/templates/panels';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
@@ -14,8 +17,6 @@ import {
   CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverFile,
   normalizeCaseResolverWorkspace,
-  normalizeFolderPath,
-  normalizeFolderPaths,
   parseCaseResolverCategories,
   parseCaseResolverTags,
   parseCaseResolverWorkspace,
@@ -47,18 +48,90 @@ type CaseTreeNode = {
   children: CaseTreeNode[];
 };
 
-const sortCaseNodes = (nodes: CaseTreeNode[]): void => {
+type CaseSortKey = 'updated' | 'created' | 'name';
+type CaseSortOrder = 'asc' | 'desc';
+type CaseViewMode = 'hierarchy' | 'list';
+type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
+type CaseFileTypeFilter = 'all' | CaseResolverFileType;
+type IndexedCaseRow = {
+  file: CaseResolverFile;
+  normalizedName: string;
+  normalizedFolder: string;
+  normalizedContent: string;
+  normalizedTag: string;
+  normalizedCategory: string;
+};
+type CaseFileComparator = (left: CaseResolverFile, right: CaseResolverFile) => number;
+
+const defaultCaseComparator: CaseFileComparator = (
+  left: CaseResolverFile,
+  right: CaseResolverFile
+): number => {
+  const nameDelta = left.name.localeCompare(right.name);
+  if (nameDelta !== 0) return nameDelta;
+  return left.id.localeCompare(right.id);
+};
+
+const stripHtml = (value: string): string =>
+  value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const buildPathLabelMap = <T extends { id: string; name: string; parentId: string | null }>(
+  items: T[]
+): Map<string, string> => {
+  const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
+  const cache = new Map<string, string>();
+
+  const resolveLabel = (id: string, visited: Set<string>): string => {
+    const cached = cache.get(id);
+    if (cached) return cached;
+    const item = byId.get(id);
+    if (!item) return '';
+    if (visited.has(id)) {
+      cache.set(id, item.name);
+      return item.name;
+    }
+    if (!item.parentId || !byId.has(item.parentId)) {
+      cache.set(id, item.name);
+      return item.name;
+    }
+    const nextVisited = new Set(visited);
+    nextVisited.add(id);
+    const parentLabel = resolveLabel(item.parentId, nextVisited);
+    const label = `${parentLabel} / ${item.name}`;
+    cache.set(id, label);
+    return label;
+  };
+
+  items.forEach((item: T): void => {
+    resolveLabel(item.id, new Set<string>());
+  });
+
+  return cache;
+};
+
+const sortCaseNodes = (
+  nodes: CaseTreeNode[],
+  comparator: CaseFileComparator = defaultCaseComparator
+): void => {
   nodes.sort((left: CaseTreeNode, right: CaseTreeNode): number => {
-    const nameDelta = left.file.name.localeCompare(right.file.name);
-    if (nameDelta !== 0) return nameDelta;
-    return left.file.id.localeCompare(right.file.id);
+    return comparator(left.file, right.file);
   });
   nodes.forEach((node: CaseTreeNode) => {
-    sortCaseNodes(node.children);
+    sortCaseNodes(node.children, comparator);
   });
 };
 
-const buildCaseTree = (files: CaseResolverFile[]): CaseTreeNode[] => {
+const buildCaseTree = (
+  files: CaseResolverFile[],
+  comparator: CaseFileComparator = defaultCaseComparator
+): CaseTreeNode[] => {
   const byId = new Map<string, CaseTreeNode>(
     files.map((file: CaseResolverFile): [string, CaseTreeNode] => [
       file.id,
@@ -81,7 +154,7 @@ const buildCaseTree = (files: CaseResolverFile[]): CaseTreeNode[] => {
     parent.children.push(node);
   });
 
-  sortCaseNodes(roots);
+  sortCaseNodes(roots, comparator);
   return roots;
 };
 
@@ -94,11 +167,52 @@ const flattenCaseTreeOptions = (
     ...flattenCaseTreeOptions(node.children, depth + 1),
   ]);
 
+type CaseListViewDefaults = {
+  viewMode: CaseViewMode;
+  sortBy: CaseSortKey;
+  sortOrder: CaseSortOrder;
+  searchScope: CaseSearchScope;
+  filtersCollapsedByDefault: boolean;
+};
+
+const DEFAULT_CASE_LIST_VIEW_DEFAULTS: CaseListViewDefaults = {
+  viewMode: 'hierarchy',
+  sortBy: 'updated',
+  sortOrder: 'desc',
+  searchScope: 'all',
+  filtersCollapsedByDefault: true,
+};
+
+const normalizeCaseListViewDefaults = (
+  preferences: UserPreferences | undefined
+): CaseListViewDefaults => ({
+  viewMode: preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
+  sortBy:
+    preferences?.caseResolverCaseListSortBy === 'created' ||
+    preferences?.caseResolverCaseListSortBy === 'name'
+      ? preferences.caseResolverCaseListSortBy
+      : 'updated',
+  sortOrder: preferences?.caseResolverCaseListSortOrder === 'asc' ? 'asc' : 'desc',
+  searchScope:
+    preferences?.caseResolverCaseListSearchScope === 'name' ||
+    preferences?.caseResolverCaseListSearchScope === 'folder' ||
+    preferences?.caseResolverCaseListSearchScope === 'content'
+      ? preferences.caseResolverCaseListSearchScope
+      : 'all',
+  filtersCollapsedByDefault:
+    preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
+});
+
 export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const router = useRouter();
+  const preferencesQuery = useUserPreferences();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
+  const caseListViewDefaults = useMemo(
+    () => normalizeCaseListViewDefaults(preferencesQuery.data),
+    [preferencesQuery.data]
+  );
 
   const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
@@ -152,25 +266,63 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const [workspace, setWorkspace] = useState<CaseResolverWorkspace>(parsedWorkspace);
 
   const [newCaseName, setNewCaseName] = useState('');
-  const [newCaseFolder, setNewCaseFolder] = useState('');
-  const [newCaseFileType, setNewCaseFileType] = useState<CaseResolverFileType>('document');
   const [newCaseParentId, setNewCaseParentId] = useState<string | null>(null);
   const [newCaseReferenceCaseIds, setNewCaseReferenceCaseIds] = useState<string[]>([]);
   const [newCaseTagId, setNewCaseTagId] = useState<string | null>(defaultTagId);
   const [newCaseCategoryId, setNewCaseCategoryId] = useState<string | null>(defaultCategoryId);
+  const [isCreateCaseModalOpen, setIsCreateCaseModalOpen] = useState(false);
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
   const [editingCaseName, setEditingCaseName] = useState('');
-  const [editingCaseFolder, setEditingCaseFolder] = useState('');
-  const [editingCaseFileType, setEditingCaseFileType] = useState<CaseResolverFileType>('document');
   const [editingCaseParentId, setEditingCaseParentId] = useState<string | null>(null);
   const [editingCaseReferenceCaseIds, setEditingCaseReferenceCaseIds] = useState<string[]>([]);
   const [editingCaseTagId, setEditingCaseTagId] = useState<string | null>(null);
   const [editingCaseCategoryId, setEditingCaseCategoryId] = useState<string | null>(null);
   const [collapsedCaseIds, setCollapsedCaseIds] = useState<Set<string>>(new Set<string>());
+  const [caseSearchQuery, setCaseSearchQuery] = useState('');
+  const [caseSearchScope, setCaseSearchScope] = useState<CaseSearchScope>(
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.searchScope
+  );
+  const [caseFileTypeFilter, setCaseFileTypeFilter] = useState<CaseFileTypeFilter>('all');
+  const [caseFilterTagIds, setCaseFilterTagIds] = useState<string[]>([]);
+  const [caseFilterCategoryIds, setCaseFilterCategoryIds] = useState<string[]>([]);
+  const [caseFilterFolder, setCaseFilterFolder] = useState('__all__');
+  const [caseSortBy, setCaseSortBy] = useState<CaseSortKey>(
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortBy
+  );
+  const [caseSortOrder, setCaseSortOrder] = useState<CaseSortOrder>(
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortOrder
+  );
+  const [caseViewMode, setCaseViewMode] = useState<CaseViewMode>(
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.viewMode
+  );
+  const [caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded] = useState<boolean>(
+    !DEFAULT_CASE_LIST_VIEW_DEFAULTS.filtersCollapsedByDefault
+  );
+  const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] =
+    useState(false);
 
   useEffect(() => {
     setWorkspace(parsedWorkspace);
   }, [parsedWorkspace]);
+
+  useEffect(() => {
+    if (didHydrateCaseListViewDefaults) return;
+    if (!preferencesQuery.data) return;
+    setCaseViewMode(caseListViewDefaults.viewMode);
+    setCaseSortBy(caseListViewDefaults.sortBy);
+    setCaseSortOrder(caseListViewDefaults.sortOrder);
+    setCaseSearchScope(caseListViewDefaults.searchScope);
+    setCaseFilterPanelDefaultExpanded(!caseListViewDefaults.filtersCollapsedByDefault);
+    setDidHydrateCaseListViewDefaults(true);
+  }, [
+    caseListViewDefaults.filtersCollapsedByDefault,
+    caseListViewDefaults.searchScope,
+    caseListViewDefaults.sortBy,
+    caseListViewDefaults.sortOrder,
+    caseListViewDefaults.viewMode,
+    didHydrateCaseListViewDefaults,
+    preferencesQuery.data,
+  ]);
 
   useEffect(() => {
     setNewCaseTagId((current: string | null) => {
@@ -190,16 +342,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     });
   }, [caseResolverCategories, defaultCategoryId]);
 
-  useEffect(() => {
-    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
-    setNewCaseParentId((current: string | null) =>
-      current && validCaseIds.has(current) ? current : null
-    );
-    setNewCaseReferenceCaseIds((current: string[]) =>
-      current.filter((referenceId: string): boolean => validCaseIds.has(referenceId))
-    );
-  }, [files]);
-
   const files = useMemo(
     () =>
       [...workspace.files].sort((left: CaseResolverFile, right: CaseResolverFile) => {
@@ -210,10 +352,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       }),
     [workspace.files]
   );
-  const caseTree = useMemo((): CaseTreeNode[] => buildCaseTree(files), [files]);
+  const caseTreeForParents = useMemo((): CaseTreeNode[] => buildCaseTree(files), [files]);
   const caseParentOptions = useMemo(
-    () => flattenCaseTreeOptions(caseTree),
-    [caseTree]
+    () => flattenCaseTreeOptions(caseTreeForParents),
+    [caseTreeForParents]
   );
   const caseReferenceOptions = useMemo(
     () =>
@@ -223,6 +365,376 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       })),
     [files]
   );
+  const filesById = useMemo(
+    () => new Map<string, CaseResolverFile>(files.map((file: CaseResolverFile) => [file.id, file])),
+    [files]
+  );
+  const caseTagPathById = useMemo(
+    () => buildPathLabelMap(caseResolverTags),
+    [caseResolverTags]
+  );
+  const caseCategoryPathById = useMemo(
+    () => buildPathLabelMap(caseResolverCategories),
+    [caseResolverCategories]
+  );
+  const caseTagFilterOptions = useMemo(
+    () =>
+      caseResolverTags.map((tag: CaseResolverTag) => ({
+        value: tag.id,
+        label: caseTagPathById.get(tag.id) ?? tag.name,
+      })),
+    [caseResolverTags, caseTagPathById]
+  );
+  const caseCategoryFilterOptions = useMemo(
+    () =>
+      caseResolverCategories.map((category: CaseResolverCategory) => ({
+        value: category.id,
+        label: caseCategoryPathById.get(category.id) ?? category.name,
+      })),
+    [caseResolverCategories, caseCategoryPathById]
+  );
+  const folderFilterOptions = useMemo(() => {
+    const folders = Array.from(
+      new Set(
+        files
+          .map((file: CaseResolverFile): string => file.folder)
+          .filter((folder: string): boolean => folder.trim() !== '')
+      )
+    ).sort((left: string, right: string) => left.localeCompare(right));
+    return [
+      { value: '__all__', label: 'All folders' },
+      ...folders.map((folder: string) => ({ value: folder, label: folder })),
+    ];
+  }, [files]);
+  const caseFilterConfig = useMemo<FilterField[]>(
+    () => [
+      {
+        key: 'fileType',
+        label: 'File Type',
+        type: 'select',
+        options: [
+          { value: 'all', label: 'All file types' },
+          { value: 'document', label: 'Document' },
+          { value: 'scanfile', label: 'Scan File' },
+        ],
+        width: '180px',
+      },
+      {
+        key: 'folder',
+        label: 'Folder',
+        type: 'select',
+        options: folderFilterOptions,
+        width: '220px',
+      },
+      {
+        key: 'tagIds',
+        label: 'Tags',
+        type: 'select',
+        options: caseTagFilterOptions,
+        multi: true,
+        width: '280px',
+      },
+      {
+        key: 'categoryIds',
+        label: 'Categories',
+        type: 'select',
+        options: caseCategoryFilterOptions,
+        multi: true,
+        width: '280px',
+      },
+      {
+        key: 'searchScope',
+        label: 'Search Scope',
+        type: 'select',
+        options: [
+          { value: 'all', label: 'Name + Folder + Content' },
+          { value: 'name', label: 'Name only' },
+          { value: 'folder', label: 'Folder only' },
+          { value: 'content', label: 'Content only' },
+        ],
+        width: '220px',
+      },
+      {
+        key: 'sortBy',
+        label: 'Sort By',
+        type: 'select',
+        options: [
+          { value: 'updated', label: 'Date modified' },
+          { value: 'created', label: 'Date created' },
+          { value: 'name', label: 'Name' },
+        ],
+        width: '180px',
+      },
+    ],
+    [caseCategoryFilterOptions, caseTagFilterOptions, folderFilterOptions]
+  );
+  const caseFilterValues = useMemo(
+    () => ({
+      fileType: caseFileTypeFilter,
+      folder: caseFilterFolder,
+      tagIds: caseFilterTagIds,
+      categoryIds: caseFilterCategoryIds,
+      searchScope: caseSearchScope,
+      sortBy: caseSortBy,
+    }),
+    [
+      caseFileTypeFilter,
+      caseFilterFolder,
+      caseFilterTagIds,
+      caseFilterCategoryIds,
+      caseSearchScope,
+      caseSortBy,
+    ]
+  );
+  const caseSortComparator = useMemo<CaseFileComparator>(
+    () => (left: CaseResolverFile, right: CaseResolverFile): number => {
+      const factor = caseSortOrder === 'asc' ? 1 : -1;
+      let delta = 0;
+      if (caseSortBy === 'name') {
+        delta = left.name.localeCompare(right.name);
+      } else if (caseSortBy === 'created') {
+        const leftCreatedAt = Date.parse(left.createdAt);
+        const rightCreatedAt = Date.parse(right.createdAt);
+        delta =
+          (Number.isNaN(leftCreatedAt) ? 0 : leftCreatedAt) -
+          (Number.isNaN(rightCreatedAt) ? 0 : rightCreatedAt);
+      } else {
+        const leftUpdatedAt = Date.parse(left.updatedAt);
+        const rightUpdatedAt = Date.parse(right.updatedAt);
+        delta =
+          (Number.isNaN(leftUpdatedAt) ? 0 : leftUpdatedAt) -
+          (Number.isNaN(rightUpdatedAt) ? 0 : rightUpdatedAt);
+      }
+
+      if (delta === 0) {
+        delta = left.name.localeCompare(right.name);
+      }
+      if (delta === 0) {
+        delta = left.id.localeCompare(right.id);
+      }
+
+      return delta * factor;
+    },
+    [caseSortBy, caseSortOrder]
+  );
+  const indexedCases = useMemo(
+    (): IndexedCaseRow[] =>
+      files.map((file: CaseResolverFile): IndexedCaseRow => ({
+        file,
+        normalizedName: file.name.toLowerCase(),
+        normalizedFolder: file.folder.toLowerCase(),
+        normalizedContent: stripHtml(file.documentContent).toLowerCase(),
+        normalizedTag: (file.tagId ? (caseTagPathById.get(file.tagId) ?? '') : '').toLowerCase(),
+        normalizedCategory: (file.categoryId
+          ? (caseCategoryPathById.get(file.categoryId) ?? '')
+          : ''
+        ).toLowerCase(),
+      })),
+    [caseCategoryPathById, caseTagPathById, files]
+  );
+  const filteredCases = useMemo((): CaseResolverFile[] => {
+    const normalizedQuery = caseSearchQuery.trim().toLowerCase();
+    const hasTagFilter = caseFilterTagIds.length > 0;
+    const hasCategoryFilter = caseFilterCategoryIds.length > 0;
+
+    const matchesSearch = (row: IndexedCaseRow): boolean => {
+      if (!normalizedQuery) return true;
+      if (caseSearchScope === 'name') return row.normalizedName.includes(normalizedQuery);
+      if (caseSearchScope === 'folder') return row.normalizedFolder.includes(normalizedQuery);
+      if (caseSearchScope === 'content') return row.normalizedContent.includes(normalizedQuery);
+      return (
+        row.normalizedName.includes(normalizedQuery) ||
+        row.normalizedFolder.includes(normalizedQuery) ||
+        row.normalizedContent.includes(normalizedQuery) ||
+        row.normalizedTag.includes(normalizedQuery) ||
+        row.normalizedCategory.includes(normalizedQuery)
+      );
+    };
+
+    return indexedCases
+      .filter((row: IndexedCaseRow): boolean => {
+        if (caseFileTypeFilter !== 'all' && row.file.fileType !== caseFileTypeFilter) return false;
+        if (caseFilterFolder !== '__all__' && row.file.folder !== caseFilterFolder) return false;
+        if (hasTagFilter && (!row.file.tagId || !caseFilterTagIds.includes(row.file.tagId))) return false;
+        if (
+          hasCategoryFilter &&
+          (!row.file.categoryId || !caseFilterCategoryIds.includes(row.file.categoryId))
+        ) {
+          return false;
+        }
+        return matchesSearch(row);
+      })
+      .map((row: IndexedCaseRow): CaseResolverFile => row.file)
+      .sort(caseSortComparator);
+  }, [
+    caseFileTypeFilter,
+    caseFilterCategoryIds,
+    caseFilterFolder,
+    caseFilterTagIds,
+    caseSearchQuery,
+    caseSearchScope,
+    caseSortComparator,
+    indexedCases,
+  ]);
+  const filteredCaseTree = useMemo((): CaseTreeNode[] => {
+    if (filteredCases.length === 0) return [];
+    const includedIds = new Set<string>();
+
+    filteredCases.forEach((file: CaseResolverFile): void => {
+      let current: CaseResolverFile | undefined = file;
+      while (current) {
+        if (includedIds.has(current.id)) break;
+        includedIds.add(current.id);
+        current = current.parentCaseId ? filesById.get(current.parentCaseId) : undefined;
+      }
+    });
+
+    const treeFiles = files.filter((file: CaseResolverFile): boolean => includedIds.has(file.id));
+    return buildCaseTree(treeFiles, caseSortComparator);
+  }, [caseSortComparator, filteredCases, files, filesById]);
+  const flatCaseNodes = useMemo(
+    (): CaseTreeNode[] =>
+      filteredCases.map((file: CaseResolverFile): CaseTreeNode => ({ file, children: [] })),
+    [filteredCases]
+  );
+  const displayedCaseNodes = useMemo(
+    (): CaseTreeNode[] => (caseViewMode === 'hierarchy' ? filteredCaseTree : flatCaseNodes),
+    [caseViewMode, filteredCaseTree, flatCaseNodes]
+  );
+  const hasActiveCaseFilters = useMemo(
+    (): boolean =>
+      caseSearchQuery.trim() !== '' ||
+      caseSearchScope !== caseListViewDefaults.searchScope ||
+      caseFileTypeFilter !== 'all' ||
+      caseFilterFolder !== '__all__' ||
+      caseFilterTagIds.length > 0 ||
+      caseFilterCategoryIds.length > 0 ||
+      caseSortBy !== caseListViewDefaults.sortBy ||
+      caseSortOrder !== caseListViewDefaults.sortOrder,
+    [
+      caseFileTypeFilter,
+      caseFilterCategoryIds,
+      caseFilterFolder,
+      caseFilterTagIds,
+      caseListViewDefaults.searchScope,
+      caseListViewDefaults.sortBy,
+      caseListViewDefaults.sortOrder,
+      caseSearchQuery,
+      caseSearchScope,
+      caseSortBy,
+      caseSortOrder,
+    ]
+  );
+  const handleCaseFilterChange = useCallback((key: string, value: unknown): void => {
+    switch (key) {
+      case 'fileType':
+        setCaseFileTypeFilter(
+          value === 'document' || value === 'scanfile' || value === 'all' ? value : 'all'
+        );
+        break;
+      case 'folder':
+        setCaseFilterFolder(typeof value === 'string' && value !== '' ? value : '__all__');
+        break;
+      case 'tagIds':
+        setCaseFilterTagIds(
+          Array.isArray(value)
+            ? value.filter((entry): entry is string => typeof entry === 'string')
+            : []
+        );
+        break;
+      case 'categoryIds':
+        setCaseFilterCategoryIds(
+          Array.isArray(value)
+            ? value.filter((entry): entry is string => typeof entry === 'string')
+            : []
+        );
+        break;
+      case 'searchScope':
+        setCaseSearchScope(
+          value === 'name' || value === 'folder' || value === 'content' || value === 'all'
+            ? value
+            : 'all'
+        );
+        break;
+      case 'sortBy':
+        setCaseSortBy(value === 'created' || value === 'name' || value === 'updated' ? value : 'updated');
+        break;
+      default:
+        break;
+    }
+  }, []);
+  const handleResetCaseFilters = useCallback((): void => {
+    setCaseSearchQuery('');
+    setCaseSearchScope(caseListViewDefaults.searchScope);
+    setCaseFileTypeFilter('all');
+    setCaseFilterFolder('__all__');
+    setCaseFilterTagIds([]);
+    setCaseFilterCategoryIds([]);
+    setCaseSortBy(caseListViewDefaults.sortBy);
+    setCaseSortOrder(caseListViewDefaults.sortOrder);
+  }, [
+    caseListViewDefaults.searchScope,
+    caseListViewDefaults.sortBy,
+    caseListViewDefaults.sortOrder,
+  ]);
+
+  useEffect(() => {
+    if (caseFilterFolder === '__all__') return;
+    if (files.some((file: CaseResolverFile): boolean => file.folder === caseFilterFolder)) return;
+    setCaseFilterFolder('__all__');
+  }, [caseFilterFolder, files]);
+
+  useEffect(() => {
+    const validTagIds = new Set(caseResolverTags.map((tag: CaseResolverTag): string => tag.id));
+    setCaseFilterTagIds((current: string[]): string[] =>
+      current.filter((tagId: string): boolean => validTagIds.has(tagId))
+    );
+  }, [caseResolverTags]);
+
+  useEffect(() => {
+    const validCategoryIds = new Set(
+      caseResolverCategories.map((category: CaseResolverCategory): string => category.id)
+    );
+    setCaseFilterCategoryIds((current: string[]): string[] =>
+      current.filter((categoryId: string): boolean => validCategoryIds.has(categoryId))
+    );
+  }, [caseResolverCategories]);
+
+  useEffect(() => {
+    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
+    setNewCaseParentId((current: string | null) =>
+      current && validCaseIds.has(current) ? current : null
+    );
+    setNewCaseReferenceCaseIds((current: string[]) =>
+      current.filter((referenceId: string): boolean => validCaseIds.has(referenceId))
+    );
+  }, [files]);
+
+  const resetCreateCaseDraft = useCallback(
+    (parentCaseId: string | null = null): void => {
+      setNewCaseName('');
+      setNewCaseParentId(parentCaseId);
+      setNewCaseReferenceCaseIds([]);
+      setNewCaseTagId(defaultTagId);
+      setNewCaseCategoryId(defaultCategoryId);
+    },
+    [defaultCategoryId, defaultTagId]
+  );
+
+  const handleOpenCreateCaseModal = useCallback(
+    (parentCaseId: string | null = null): void => {
+      const validCaseIds = new Set(files.map((file: CaseResolverFile): string => file.id));
+      const normalizedParentCaseId =
+        parentCaseId && validCaseIds.has(parentCaseId) ? parentCaseId : null;
+      resetCreateCaseDraft(normalizedParentCaseId);
+      setIsCreateCaseModalOpen(true);
+    },
+    [files, resetCreateCaseDraft]
+  );
+
+  const handleCloseCreateCaseModal = useCallback((): void => {
+    setIsCreateCaseModalOpen(false);
+  }, []);
 
   const childrenByParentId = useMemo((): Map<string, string[]> => {
     const map = new Map<string, string[]>();
@@ -298,7 +810,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       return;
     }
 
-    const normalizedFolder = normalizeFolderPath(newCaseFolder);
     const validCaseIds = new Set(workspace.files.map((file: CaseResolverFile) => file.id));
     const normalizedParentCaseId =
       newCaseParentId && validCaseIds.has(newCaseParentId) ? newCaseParentId : null;
@@ -312,9 +823,8 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     );
     const file = createCaseResolverFile({
       id: createId('case-file'),
-      fileType: newCaseFileType,
+      fileType: 'document',
       name: normalizedName,
-      folder: normalizedFolder,
       parentCaseId: normalizedParentCaseId,
       referenceCaseIds: normalizedReferenceCaseIds,
       tagId: normalizedTagId,
@@ -325,30 +835,22 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       ...workspace,
       files: [...workspace.files, file],
       activeFileId: file.id,
-      folders: normalizeFolderPaths([...workspace.folders, normalizedFolder]),
+      folders: workspace.folders,
     };
 
     await persistWorkspace(nextWorkspace, 'Case created.');
-    setNewCaseName('');
-    setNewCaseFolder('');
-    setNewCaseFileType('document');
-    setNewCaseParentId(null);
-    setNewCaseReferenceCaseIds([]);
-    setNewCaseTagId(defaultTagId);
-    setNewCaseCategoryId(defaultCategoryId);
+    resetCreateCaseDraft();
+    setIsCreateCaseModalOpen(false);
   }, [
     caseResolverCategories,
     caseResolverTags,
-    defaultCategoryId,
-    defaultTagId,
     newCaseCategoryId,
-    newCaseFolder,
-    newCaseFileType,
     newCaseParentId,
     newCaseReferenceCaseIds,
     newCaseName,
     newCaseTagId,
     persistWorkspace,
+    resetCreateCaseDraft,
     toast,
     workspace,
   ]);
@@ -356,8 +858,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const handleStartEditCase = useCallback((file: CaseResolverFile): void => {
     setEditingCaseId(file.id);
     setEditingCaseName(file.name);
-    setEditingCaseFolder(file.folder);
-    setEditingCaseFileType(file.fileType);
     setEditingCaseParentId(file.parentCaseId);
     setEditingCaseReferenceCaseIds(file.referenceCaseIds);
     setEditingCaseTagId(file.tagId);
@@ -367,8 +867,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const handleCancelEditCase = useCallback((): void => {
     setEditingCaseId(null);
     setEditingCaseName('');
-    setEditingCaseFolder('');
-    setEditingCaseFileType('document');
     setEditingCaseParentId(null);
     setEditingCaseReferenceCaseIds([]);
     setEditingCaseTagId(null);
@@ -399,7 +897,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       toast('Select a document category.', { variant: 'error' });
       return;
     }
-    const normalizedFolder = normalizeFolderPath(editingCaseFolder);
     const validCaseIds = new Set(workspace.files.map((file: CaseResolverFile) => file.id));
     const blockedParentIds = new Set<string>(
       editingCaseId ? [editingCaseId, ...collectDescendantCaseIds(editingCaseId)] : []
@@ -428,9 +925,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           ? {
             ...file,
             name: normalizedName,
-            folder: normalizedFolder,
-            fileType: editingCaseFileType,
-            scanSlots: editingCaseFileType === 'scanfile' ? file.scanSlots : [],
             parentCaseId: normalizedParentCaseId,
             referenceCaseIds: normalizedReferenceCaseIds,
             tagId: normalizedTagId,
@@ -439,20 +933,18 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           }
           : file
       ),
-      folders: normalizeFolderPaths([...workspace.folders, normalizedFolder]),
+      folders: workspace.folders,
     };
 
     await persistWorkspace(nextWorkspace, 'Case updated.');
     handleCancelEditCase();
   }, [
-    editingCaseFolder,
     editingCaseId,
     editingCaseName,
     editingCaseParentId,
     editingCaseReferenceCaseIds,
     editingCaseCategoryId,
     editingCaseTagId,
-    editingCaseFileType,
     collectDescendantCaseIds,
     handleCancelEditCase,
     caseResolverCategories,
@@ -517,6 +1009,25 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     [router]
   );
 
+  const handleCopyCaseId = useCallback(
+    async (caseId: string): Promise<void> => {
+      try {
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(caseId);
+          toast('Case ID copied.', { variant: 'success' });
+          return;
+        }
+        throw new Error('Clipboard is not available.');
+      } catch (error) {
+        toast(
+          error instanceof Error ? error.message : 'Failed to copy case ID.',
+          { variant: 'error' }
+        );
+      }
+    },
+    [toast]
+  );
+
   const toggleCaseCollapsed = useCallback((fileId: string): void => {
     setCollapsedCaseIds((current: Set<string>) => {
       const next = new Set(current);
@@ -565,61 +1076,53 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           return (
             <div key={file.id} className='space-y-2'>
               <div
-                className='rounded-lg border border-border/60 bg-card/35 p-3'
+                className='relative rounded-lg border border-border/60 bg-card/35 p-3 pb-9'
                 style={{ marginLeft: `${depth * 16}px` }}
               >
                 {isEditing ? (
-                  <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_140px_200px_220px_200px_220px_auto] md:items-center'>
-                    <Input
-                      value={editingCaseName}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                        setEditingCaseName(event.target.value);
-                      }}
-                      placeholder='Case name'
-                      className='h-9'
-                    />
-                    <Input
-                      value={editingCaseFolder}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                        setEditingCaseFolder(event.target.value);
-                      }}
-                      placeholder='Folder (optional)'
-                      className='h-9'
-                    />
-                    <SelectSimple size='sm'
-                      value={editingCaseFileType}
-                      onValueChange={(value: string): void => {
-                        setEditingCaseFileType(value === 'scanfile' ? 'scanfile' : 'document');
-                      }}
-                      options={[
-                        { value: 'document', label: 'Document' },
-                        { value: 'scanfile', label: 'Scan File' },
-                      ]}
-                      placeholder='File type'
-                      triggerClassName='h-9'
-                    />
-                    <SelectSimple size='sm'
-                      value={editingCaseParentId ?? '__none__'}
-                      onValueChange={(value: string): void => {
-                        setEditingCaseParentId(value === '__none__' ? null : value);
-                      }}
-                      options={[
-                        { value: '__none__', label: 'No parent (root case)' },
-                        ...editingCaseParentOptions,
-                      ]}
-                      placeholder='Parent case'
-                      triggerClassName='h-9'
-                    />
-                    <MultiSelect
-                      options={editReferenceOptions}
-                      selected={editingCaseReferenceCaseIds}
-                      onChange={setEditingCaseReferenceCaseIds}
-                      placeholder='Reference cases'
-                      searchPlaceholder='Search cases...'
-                      emptyMessage='No cases available.'
-                      className='w-full'
-                    />
-                    <div className='grid gap-2 md:grid-cols-2'>
+                  <div className='space-y-3'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Input
+                        autoFocus
+                        value={editingCaseName}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                          setEditingCaseName(event.target.value);
+                        }}
+                        placeholder='Case name'
+                        className='h-9 min-w-[240px] flex-1'
+                      />
+                      <Button
+                        type='button'
+                        onClick={(): void => {
+                          void handleSaveCase();
+                        }}
+                        disabled={updateSetting.isPending}
+                        className='h-9'
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        onClick={handleCancelEditCase}
+                        className='h-9'
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                    <div className='grid gap-3 md:grid-cols-3'>
+                      <SelectSimple size='sm'
+                        value={editingCaseParentId ?? '__none__'}
+                        onValueChange={(value: string): void => {
+                          setEditingCaseParentId(value === '__none__' ? null : value);
+                        }}
+                        options={[
+                          { value: '__none__', label: 'No parent (root case)' },
+                          ...editingCaseParentOptions,
+                        ]}
+                        placeholder='Parent case'
+                        triggerClassName='h-9'
+                      />
                       <SelectSimple size='sm'
                         value={editingCaseTagId ?? '__none__'}
                         onValueChange={(value: string): void => {
@@ -645,26 +1148,15 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         triggerClassName='h-9'
                       />
                     </div>
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        type='button'
-                        onClick={(): void => {
-                          void handleSaveCase();
-                        }}
-                        disabled={updateSetting.isPending}
-                        className='h-9'
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        onClick={handleCancelEditCase}
-                        className='h-9'
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                    <MultiSelect
+                      options={editReferenceOptions}
+                      selected={editingCaseReferenceCaseIds}
+                      onChange={setEditingCaseReferenceCaseIds}
+                      placeholder='Reference cases'
+                      searchPlaceholder='Search cases...'
+                      emptyMessage='No cases available.'
+                      className='w-full'
+                    />
                   </div>
                 ) : (
                   <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -700,9 +1192,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                             Locked
                           </Badge>
                         ) : null}
-                        <Badge variant='outline' className='text-[10px]'>
-                          {file.fileType === 'scanfile' ? 'Scan File' : 'Document'}
-                        </Badge>
                         {parentCase ? (
                           <Badge variant='outline' className='text-[10px]'>
                             Parent: {parentCase.name}
@@ -744,7 +1233,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         variant='outline'
                         className='h-8 px-2'
                         onClick={(): void => {
-                          setNewCaseParentId(file.id);
+                          handleOpenCreateCaseModal(file.id);
                         }}
                       >
                         <Plus className='mr-1.5 size-3.5' />
@@ -774,6 +1263,17 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                     </div>
                   </div>
                 )}
+                <button
+                  type='button'
+                  onClick={(): void => {
+                    void handleCopyCaseId(file.id);
+                  }}
+                  className='absolute bottom-2 right-2 rounded border border-border/60 bg-black/20 px-2 py-0.5 font-mono text-[10px] text-gray-300 transition-colors hover:border-border hover:bg-black/30 hover:text-white'
+                  title='Copy Case ID'
+                  aria-label={`Copy Case ID ${file.id}`}
+                >
+                  ID: {file.id}
+                </button>
               </div>
               {hasChildren && !isCollapsed ? renderCaseTree(node.children, depth + 1) : null}
             </div>
@@ -794,11 +1294,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       editingCaseParentId,
       editingCaseReferenceCaseIds,
       editingCaseTagId,
-      editingCaseFileType,
-      editingCaseFolder,
       editingCaseParentOptions,
       handleCancelEditCase,
       handleDeleteCase,
+      handleOpenCreateCaseModal,
+      handleCopyCaseId,
       handleSaveCase,
       handleStartEditCase,
       handleViewCase,
@@ -813,83 +1313,133 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       <SectionHeader
         title='Case Resolver Cases'
         description='Manage all cases in one place. Open a case to work on its full node-map editor.'
+        eyebrow={(
+          <div className='mb-2 flex items-center gap-2'>
+            <Button
+              type='button'
+              size='icon-lg'
+              variant='outline'
+              aria-label='Create new case'
+              title='Create new case'
+              onClick={(): void => {
+                handleOpenCreateCaseModal();
+              }}
+            >
+              <Plus className='h-6 w-6' />
+            </Button>
+          </div>
+        )}
       />
 
-      <FormSection title='Add Case' className='space-y-4 p-4'>
-        <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_200px_160px_200px_240px_auto]'>
-          <Input
-            value={newCaseName}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setNewCaseName(event.target.value);
-            }}
-            placeholder='Case name'
-            className='h-9'
+      <AppModal
+        open={isCreateCaseModalOpen}
+        onOpenChange={setIsCreateCaseModalOpen}
+        title='Add Case'
+        subtitle='Create a new case with optional hierarchy, references, tags, and category.'
+        size='lg'
+        bodyClassName='h-auto max-h-[78vh]'
+        footer={(
+          <>
+            <Button type='button' variant='outline' onClick={handleCloseCreateCaseModal}>
+              Cancel
+            </Button>
+            <Button
+              type='button'
+              onClick={(): void => {
+                void handleCreateCase();
+              }}
+              disabled={updateSetting.isPending}
+            >
+              <Plus className='mr-1.5 size-3.5' />
+              Add Case
+            </Button>
+          </>
+        )}
+      >
+        <div className='space-y-4'>
+          <div className='grid gap-3 md:grid-cols-2'>
+            <Input
+              autoFocus
+              value={newCaseName}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setNewCaseName(event.target.value);
+              }}
+              placeholder='Case name'
+              className='h-9'
+            />
+            <SelectSimple size='sm'
+              value={newCaseParentId ?? '__none__'}
+              onValueChange={(value: string): void => {
+                setNewCaseParentId(value === '__none__' ? null : value);
+              }}
+              options={[
+                { value: '__none__', label: 'No parent (root case)' },
+                ...caseParentOptions,
+              ]}
+              placeholder='Parent case'
+              triggerClassName='h-9'
+            />
+          </div>
+          <MultiSelect
+            options={caseReferenceOptions}
+            selected={newCaseReferenceCaseIds}
+            onChange={setNewCaseReferenceCaseIds}
+            placeholder='Reference cases'
+            searchPlaceholder='Search cases...'
+            emptyMessage='No cases available.'
+            className='w-full'
           />
-          <Input
-            value={newCaseFolder}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setNewCaseFolder(event.target.value);
-            }}
-            placeholder='Folder (optional)'
-            className='h-9'
-          />
-          <SelectSimple size='sm'
-            value={newCaseFileType}
-            onValueChange={(value: string): void => {
-              setNewCaseFileType(value === 'scanfile' ? 'scanfile' : 'document');
-            }}
-            options={[
-              { value: 'document', label: 'Document' },
-              { value: 'scanfile', label: 'Scan File' },
-            ]}
-            placeholder='File type'
-            triggerClassName='h-9'
-          />
-          <SelectSimple size='sm'
-            value={newCaseTagId ?? '__none__'}
-            onValueChange={(value: string): void => {
-              setNewCaseTagId(value === '__none__' ? null : value);
-            }}
-            options={[
-              { value: '__none__', label: caseResolverTags.length > 0 ? 'Select tag' : 'No tags' },
-              ...caseResolverTagOptions,
-            ]}
-            placeholder='Select tag'
-            triggerClassName='h-9'
-          />
-          <SelectSimple size='sm'
-            value={newCaseCategoryId ?? '__none__'}
-            onValueChange={(value: string): void => {
-              setNewCaseCategoryId(value === '__none__' ? null : value);
-            }}
-            options={[
-              { value: '__none__', label: caseResolverCategories.length > 0 ? 'Select category' : 'No categories' },
-              ...caseResolverCategoryOptions,
-            ]}
-            placeholder='Select category'
-            triggerClassName='h-9'
-          />
-          <Button
-            type='button'
-            onClick={(): void => {
-              void handleCreateCase();
-            }}
-            disabled={updateSetting.isPending}
-            className='h-9 whitespace-nowrap'
-          >
-            <Plus className='mr-1.5 size-3.5' />
-            Add Case
-          </Button>
+          <div className='grid gap-3 md:grid-cols-2'>
+            <SelectSimple size='sm'
+              value={newCaseTagId ?? '__none__'}
+              onValueChange={(value: string): void => {
+                setNewCaseTagId(value === '__none__' ? null : value);
+              }}
+              options={[
+                { value: '__none__', label: caseResolverTags.length > 0 ? 'Select tag' : 'No tags' },
+                ...caseResolverTagOptions,
+              ]}
+              placeholder='Select tag'
+              triggerClassName='h-9'
+            />
+            <SelectSimple size='sm'
+              value={newCaseCategoryId ?? '__none__'}
+              onValueChange={(value: string): void => {
+                setNewCaseCategoryId(value === '__none__' ? null : value);
+              }}
+              options={[
+                { value: '__none__', label: caseResolverCategories.length > 0 ? 'Select category' : 'No categories' },
+                ...caseResolverCategoryOptions,
+              ]}
+              placeholder='Select category'
+              triggerClassName='h-9'
+            />
+          </div>
         </div>
-      </FormSection>
+      </AppModal>
 
       <FormSection
         title='All Cases'
         className='space-y-3 p-4'
         actions={(
-          <Badge variant='outline' className='text-[10px]'>
-            {files.length} total
-          </Badge>
+          <div className='flex items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='xs'
+              onClick={(): void => {
+                router.push('/admin/case-resolver/preferences');
+              }}
+            >
+              Preferences
+            </Button>
+            <Badge variant='outline' className='text-[10px]'>
+              {filteredCases.length} shown
+            </Badge>
+            <Badge variant='outline' className='text-[10px]'>
+              {files.length} total
+            </Badge>
+          </div>
         )}
       >
         {files.length === 0 ? (
@@ -897,155 +1447,90 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             No cases found.
           </div>
         ) : (
-          <div className='space-y-2'>
-            {files.map((file: CaseResolverFile) => {
-              const isEditing = editingCaseId === file.id;
-              return (
-                <div
-                  key={file.id}
-                  className='rounded-lg border border-border/60 bg-card/35 p-3'
+          <div className='space-y-4'>
+            <FilterPanel
+              key={`case-resolver-filters-${caseFilterPanelDefaultExpanded ? 'expanded' : 'collapsed'}`}
+              filters={caseFilterConfig}
+              values={caseFilterValues}
+              search={caseSearchQuery}
+              searchPlaceholder='Search cases by name, folder, tag, category, or content...'
+              onFilterChange={handleCaseFilterChange}
+              onSearchChange={setCaseSearchQuery}
+              onReset={handleResetCaseFilters}
+              showHeader={false}
+              collapsible
+              defaultExpanded={caseFilterPanelDefaultExpanded}
+            />
+            <div className='flex flex-wrap items-center gap-3 border-t border-border/40 pt-3'>
+              <div className='flex items-center gap-2'>
+                <span className='text-sm font-medium text-gray-400'>Sort Order:</span>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  className='h-8 px-2.5'
+                  onClick={(): void => {
+                    setCaseSortOrder((current: CaseSortOrder) =>
+                      current === 'asc' ? 'desc' : 'asc'
+                    );
+                  }}
+                  title={`Sorting ${caseSortOrder === 'asc' ? 'ascending' : 'descending'}`}
                 >
-                  {isEditing ? (
-                    <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_200px_160px_200px_240px_auto] md:items-center'>
-                      <Input
-                        value={editingCaseName}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingCaseName(event.target.value);
-                        }}
-                        placeholder='Case name'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingCaseFolder}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingCaseFolder(event.target.value);
-                        }}
-                        placeholder='Folder (optional)'
-                        className='h-9'
-                      />
-                      <SelectSimple size='sm'
-                        value={editingCaseFileType}
-                        onValueChange={(value: string): void => {
-                          setEditingCaseFileType(value === 'scanfile' ? 'scanfile' : 'document');
-                        }}
-                        options={[
-                          { value: 'document', label: 'Document' },
-                          { value: 'scanfile', label: 'Scan File' },
-                        ]}
-                        placeholder='File type'
-                        triggerClassName='h-9'
-                      />
-                      <SelectSimple size='sm'
-                        value={editingCaseTagId ?? '__none__'}
-                        onValueChange={(value: string): void => {
-                          setEditingCaseTagId(value === '__none__' ? null : value);
-                        }}
-                        options={[
-                          { value: '__none__', label: caseResolverTags.length > 0 ? 'Select tag' : 'No tags' },
-                          ...caseResolverTagOptions,
-                        ]}
-                        placeholder='Select tag'
-                        triggerClassName='h-9'
-                      />
-                      <SelectSimple size='sm'
-                        value={editingCaseCategoryId ?? '__none__'}
-                        onValueChange={(value: string): void => {
-                          setEditingCaseCategoryId(value === '__none__' ? null : value);
-                        }}
-                        options={[
-                          { value: '__none__', label: caseResolverCategories.length > 0 ? 'Select category' : 'No categories' },
-                          ...caseResolverCategoryOptions,
-                        ]}
-                        placeholder='Select category'
-                        triggerClassName='h-9'
-                      />
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          onClick={(): void => {
-                            void handleSaveCase();
-                          }}
-                          disabled={updateSetting.isPending}
-                          className='h-9'
-                        >
-                          Save
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          onClick={handleCancelEditCase}
-                          className='h-9'
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
+                  {caseSortOrder === 'asc' ? (
+                    <ArrowUp className='mr-1.5 size-3.5' />
                   ) : (
-                    <div className='flex flex-wrap items-center justify-between gap-3'>
-                      <div className='min-w-0'>
-                        <div className='flex items-center gap-2'>
-                          <div className='truncate text-sm font-semibold text-gray-100'>{file.name}</div>
-                          {file.isLocked ? (
-                            <Badge variant='outline' className='text-[10px] text-amber-300'>
-                              <Lock className='mr-1 size-3' />
-                              Locked
-                            </Badge>
-                          ) : null}
-                          <Badge variant='outline' className='text-[10px]'>
-                            {file.fileType === 'scanfile' ? 'Scan File' : 'Document'}
-                          </Badge>
-                          {file.tagId ? (
-                            <Badge variant='outline' className='text-[10px]'>
-                              {caseResolverTags.find((tag: CaseResolverTag) => tag.id === file.tagId)?.name ?? 'Tag'}
-                            </Badge>
-                          ) : null}
-                          {file.categoryId ? (
-                            <Badge variant='outline' className='text-[10px]'>
-                              {caseResolverCategories.find((category: CaseResolverCategory) => category.id === file.categoryId)?.name ?? 'Category'}
-                            </Badge>
-                          ) : null}
-                        </div>
-                        <div className='mt-0.5 text-xs text-gray-400'>
-                          Folder: {file.folder || '(root)'} | Updated: {formatUpdatedAt(file.updatedAt)}
-                        </div>
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-8 px-2'
-                          onClick={(): void => handleViewCase(file.id)}
-                        >
-                          <Eye className='mr-1.5 size-3.5' />
-                          View
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-8 px-2'
-                          onClick={(): void => handleStartEditCase(file)}
-                        >
-                          <Edit2 className='mr-1.5 size-3.5' />
-                          Edit
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-8 px-2 text-red-300 hover:text-red-200'
-                          disabled={file.isLocked}
-                          onClick={(): void => {
-                            void handleDeleteCase(file.id);
-                          }}
-                        >
-                          <Trash2 className='mr-1.5 size-3.5' />
-                          Remove
-                        </Button>
-                      </div>
-                    </div>
+                    <ArrowDown className='mr-1.5 size-3.5' />
                   )}
-                </div>
-              );
-            })}
+                  {caseSortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                </Button>
+              </div>
+
+              <div className='h-4 w-px bg-border/40' />
+
+              <div className='flex items-center gap-2'>
+                <span className='text-sm font-medium text-gray-400'>View:</span>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant={caseViewMode === 'hierarchy' ? 'default' : 'outline'}
+                  className='h-8 px-2.5'
+                  onClick={(): void => {
+                    setCaseViewMode('hierarchy');
+                  }}
+                >
+                  Hierarchy
+                </Button>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant={caseViewMode === 'list' ? 'default' : 'outline'}
+                  className='h-8 px-2.5'
+                  onClick={(): void => {
+                    setCaseViewMode('list');
+                  }}
+                >
+                  List
+                </Button>
+              </div>
+            </div>
+            {filteredCases.length === 0 ? (
+              <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-300'>
+                <div>No cases match the current search and filters.</div>
+                {hasActiveCaseFilters ? (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='mt-3'
+                    onClick={handleResetCaseFilters}
+                  >
+                    Reset Filters
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              renderCaseTree(displayedCaseNodes, 0)
+            )}
           </div>
         )}
       </FormSection>

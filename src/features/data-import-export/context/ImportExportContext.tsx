@@ -166,6 +166,8 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const [importListPage, setImportListPage] = useState(1);
   const [importListPageSize, setImportListPageSize] = useState(25);
   const [importListEnabled, setImportListEnabled] = useState(false);
+  const [inventoriesEnabled, setInventoriesEnabled] = useState(false);
+  const [warehousesEnabled, setWarehousesEnabled] = useState(false);
   
   const [importTemplateId, setImportTemplateId] = useState('');
   const [importActiveTemplateId, setImportActiveTemplateId] = useState('');
@@ -413,7 +415,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   }, [exportActiveTemplateId, activeExportTemplatePref?.templateId, savePreferenceMutation]);
 
   // Data loading hooks
-  const inventoriesQuery = useInventories(selectedBaseConnectionId, isBaseConnected);
+  const inventoriesQuery = useInventories(
+    selectedBaseConnectionId,
+    inventoriesEnabled && isBaseConnected && !!selectedBaseConnectionId
+  );
   const inventories = useMemo<InventoryOption[]>(() => {
     const toText = (value: unknown): string => {
       if (typeof value === 'string') return value.trim();
@@ -457,7 +462,15 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     }
     return undefined;
   }, [inventories, inventoryId, exportInventoryId]);
-  const warehousesQuery = useWarehouses(exportInventoryId, selectedBaseConnectionId, includeAllWarehouses, isBaseConnected && !!exportInventoryId);
+  const warehousesQuery = useWarehouses(
+    exportInventoryId,
+    selectedBaseConnectionId,
+    includeAllWarehouses,
+    warehousesEnabled &&
+      isBaseConnected &&
+      !!selectedBaseConnectionId &&
+      !!exportInventoryId
+  );
   const warehousesData = warehousesQuery.data;
   const isFetchingWarehouses = warehousesQuery.isFetching;
   const refetchWarehouses = warehousesQuery.refetch;
@@ -520,19 +533,45 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
 
   // Actions
   const handleLoadInventories = async (): Promise<void> => {
-    await refetchInventories();
+    setInventoriesEnabled(true);
+    const result = await refetchInventories();
+    if (result.error) {
+      const message =
+        result.error instanceof Error
+          ? result.error.message
+          : 'Failed to load inventories.';
+      toast(message, { variant: 'error' });
+      return;
+    }
     toast('Inventories reloaded', { variant: 'success' });
   };
 
   const handleLoadWarehouses = async (): Promise<void> => {
-    await refetchWarehouses();
+    setWarehousesEnabled(true);
+    const result = await refetchWarehouses();
+    if (result.error) {
+      const message =
+        result.error instanceof Error
+          ? result.error.message
+          : 'Failed to load warehouses.';
+      toast(message, { variant: 'error' });
+      return;
+    }
     toast('Warehouses reloaded', { variant: 'success' });
   };
 
   const handleLoadImportList = async (): Promise<void> => {
     setImportListEnabled(true);
     setImportListPage(1);
-    await refetchImportList();
+    const result = await refetchImportList();
+    if (result.error) {
+      const message =
+        result.error instanceof Error
+          ? result.error.message
+          : 'Failed to load import list.';
+      toast(message, { variant: 'error' });
+      return;
+    }
     toast('Import list reloaded', { variant: 'success' });
   };
 

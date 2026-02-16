@@ -55,11 +55,13 @@ export type ProductImageManagerController = Pick<
 type ProductImageManagerProps = {
   controller?: ProductImageManagerController;
   minimalUi?: boolean;
+  showDragHandle?: boolean;
 };
 
 export default function ProductImageManager({
   controller,
   minimalUi = false,
+  showDragHandle = true,
 }: ProductImageManagerProps = {}): React.JSX.Element {
   const formContext = React.useContext(ProductFormContext);
   const controllerContext = useOptionalProductImageManagerController();
@@ -723,7 +725,7 @@ export default function ProductImageManager({
                 <div className={`flex h-full w-full items-center justify-center ${isReordering ? 'pointer-events-none' : ''}`}>
                   {displayUrl ? (
                     <>
-                      {hasUpload ? (
+                      {hasUpload && showDragHandle ? (
                         <div className='absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400'>
                           <GripVertical className='h-3 w-3' />
                         </div>

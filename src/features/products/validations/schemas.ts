@@ -6,6 +6,17 @@ import { commonListQuerySchema } from '@/shared/validations/api-schemas';
 const trimmedString = z.string().trim();
 const optionalTrimmedString = trimmedString.optional();
 const nullishTrimmedString = trimmedString.nullish();
+const optionalBooleanQuery = z.preprocess((value: unknown) => {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return undefined;
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+  }
+  return value;
+}, z.boolean().optional());
 
 /**
  * Schema for filtering product lists.
@@ -18,6 +29,7 @@ export const productFilterSchema = commonListQuerySchema.extend({
   maxPrice: z.coerce.number().min(0).optional(),
   catalogId: z.string().trim().optional(),
   searchLanguage: z.enum(['name_en', 'name_pl', 'name_de']).optional(),
+  baseExported: optionalBooleanQuery,
 });
 
 export type ProductFiltersParsed = z.infer<typeof productFilterSchema>;

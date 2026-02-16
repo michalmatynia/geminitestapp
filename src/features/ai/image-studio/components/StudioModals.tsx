@@ -1874,7 +1874,7 @@ export function StudioModals(): React.JSX.Element {
           ? 'Select Environment Reference Image'
           : 'Import Images';
   const editCardModalHeader = (
-    <div className='flex items-center justify-between gap-3'>
+    <div className='flex items-center gap-3'>
       <div className='flex items-center gap-4'>
         <Button
           onClick={() => {
@@ -1888,15 +1888,6 @@ export function StudioModals(): React.JSX.Element {
         <div className='flex items-center gap-2'>
           <h2 className='text-2xl font-bold text-white'>Edit Card</h2>
         </div>
-      </div>
-      <div className='flex items-center gap-2'>
-        <Button
-          type='button'
-          onClick={() => setSlotInlineEditOpen(false)}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          Close
-        </Button>
       </div>
     </div>
   );
@@ -2084,7 +2075,7 @@ export function StudioModals(): React.JSX.Element {
                 Image Slot
               </div>
               <ProductImageManagerControllerProvider value={inlineCardImageManagerController}>
-                <ProductImageManager />
+                <ProductImageManager showDragHandle={false} />
               </ProductImageManagerControllerProvider>
             </div>
 

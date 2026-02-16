@@ -28,7 +28,7 @@ import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
 import { estimateGenerationCost } from '../utils/generation-cost';
-import { getImageStudioSlotImageSrc } from '../utils/image-src';
+import { getImageStudioSlotImageSrc, isLikelyImageStudioErrorText } from '../utils/image-src';
 import {
   asFiniteNumber,
   asObjectRecord,
@@ -65,7 +65,13 @@ export function CenterPreview(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { landingSlots, isRunInFlight, activeRunError, activeRunId } = useGenerationState();
+  const {
+    landingSlots,
+    isRunInFlight,
+    activeRunError,
+    activeRunId,
+    activeRunSourceSlotId,
+  } = useGenerationState();
   const { clearActiveRunError } = useGenerationActions();
 
   const {
@@ -345,7 +351,7 @@ export function CenterPreview(): React.JSX.Element {
       const linkedToSource = source === rootSourceSlotId || sourceIds.includes(rootSourceSlotId);
       const isGeneration = metadata.role === 'generation' || relationType === 'generation:output';
       const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
-      return linkedToSource && isGeneration && Boolean(imageSrc || slot.imageFileId || slot.imageUrl);
+      return linkedToSource && isGeneration && Boolean(imageSrc || slot.imageFileId);
     };
 
     const buildVariantFromSlot = (
@@ -391,6 +397,12 @@ export function CenterPreview(): React.JSX.Element {
       }
 
       const slotImageFile = slot.imageFile ?? null;
+      const resolvedSlotImageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
+      const rawSlotImageUrl = typeof slot.imageUrl === 'string' ? slot.imageUrl.trim() : '';
+      const safeSlotImageUrl =
+        rawSlotImageUrl && !isLikelyImageStudioErrorText(rawSlotImageUrl)
+          ? rawSlotImageUrl
+          : '';
       const output = slotImageFile
         ? {
           id: slotImageFile.id,
@@ -400,10 +412,10 @@ export function CenterPreview(): React.JSX.Element {
           width: slotImageFile.width,
           height: slotImageFile.height,
         }
-        : slot.imageFileId || slot.imageUrl
+        : slot.imageFileId || safeSlotImageUrl
           ? {
             id: slot.imageFileId ?? `slot:${slot.id}`,
-            filepath: slot.imageUrl ?? '',
+            filepath: safeSlotImageUrl,
             filename: slot.name || `Generated ${fallbackIndex}`,
             size: 0,
             width: null,
@@ -411,7 +423,7 @@ export function CenterPreview(): React.JSX.Element {
           }
           : null;
 
-      const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl) || output?.filepath || null;
+      const imageSrc = resolvedSlotImageSrc || output?.filepath || null;
       const rawIndex =
         asFiniteNumber(metadata?.generationOutputIndex) ??
         asFiniteNumber(generationParams?.['outputIndex']) ??
@@ -452,13 +464,16 @@ export function CenterPreview(): React.JSX.Element {
         .map((variant) => variant.slotId)
         .filter((slotId): slotId is string => typeof slotId === 'string' && slotId.length > 0)
     );
+    const normalizedRootSourceSlotId = rootSourceSlotId.trim();
+    const normalizedActiveRunSourceSlotId = activeRunSourceSlotId?.trim() ?? '';
+    const canShowActiveRunLandingSlots =
+      !normalizedActiveRunSourceSlotId ||
+      normalizedActiveRunSourceSlotId === normalizedRootSourceSlotId;
 
     const transientVariants = landingSlots
       .map((landingSlot): VariantThumbnailInfo | null => {
         const output = landingSlot.output ?? null;
-        if (!output) return null;
-
-        const normalizedOutputPath = normalizeImagePath(output.filepath);
+        const normalizedOutputPath = normalizeImagePath(output?.filepath);
         const matchingSlots = slots.filter((slot) => {
           const metadata = asObjectRecord(slot.metadata);
           const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
@@ -468,6 +483,9 @@ export function CenterPreview(): React.JSX.Element {
 
           if (activeRunId && runId === activeRunId && outputIndex === landingSlot.index) {
             return true;
+          }
+          if (!output) {
+            return false;
           }
           if (slot.imageFileId === output.id) {
             return true;
@@ -490,11 +508,35 @@ export function CenterPreview(): React.JSX.Element {
             : null;
           return Boolean(activeRunId && runId === activeRunId && outputIndex === landingSlot.index);
         }) ?? matchingSlots[0] ?? null;
-        if (!matchedSlot) {
-          return null;
-        }
-        if (!isGenerationSlotLinkedToRoot(matchedSlot)) {
-          return null;
+        if (!matchedSlot || !isGenerationSlotLinkedToRoot(matchedSlot)) {
+          if (!canShowActiveRunLandingSlots) {
+            return null;
+          }
+
+          return {
+            id: `run:${activeRunId ?? 'pending'}:${landingSlot.index}`,
+            index: landingSlot.index,
+            status: landingSlot.status,
+            imageSrc: output?.filepath ?? null,
+            output: output
+              ? {
+                id: output.id,
+                filepath: output.filepath,
+                filename: output.filename || `Generated ${landingSlot.index}`,
+                size: output.size,
+                width: output.width,
+                height: output.height,
+              }
+              : null,
+            slotId: null,
+            model: null,
+            timestamp: null,
+            timestampLabel: formatTimestamp(null),
+            timestampSearchText: buildTimestampSearchText(null),
+            tokenCostUsd: null,
+            actualCostUsd: null,
+            costEstimated: false,
+          };
         }
 
         if (historicalSlotIds.has(matchedSlot.id)) {
@@ -502,7 +544,7 @@ export function CenterPreview(): React.JSX.Element {
         }
 
         const imageSrc =
-          getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ?? output.filepath;
+          getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ?? output?.filepath ?? null;
 
         const metadata = asObjectRecord(matchedSlot.metadata) as SlotGenerationMetadata | null;
         const generationParams = asObjectRecord(metadata?.generationParams);
@@ -547,14 +589,16 @@ export function CenterPreview(): React.JSX.Element {
           index: landingSlot.index,
           status: landingSlot.status,
           imageSrc,
-          output: {
-            id: output.id,
-            filepath: output.filepath,
-            filename: output.filename || `Generated ${landingSlot.index}`,
-            size: output.size,
-            width: output.width,
-            height: output.height,
-          },
+          output: output
+            ? {
+              id: output.id,
+              filepath: output.filepath,
+              filename: output.filename || `Generated ${landingSlot.index}`,
+              size: output.size,
+              width: output.width,
+              height: output.height,
+            }
+            : null,
           slotId: matchedSlot.id,
           model,
           timestamp,
@@ -577,6 +621,7 @@ export function CenterPreview(): React.JSX.Element {
     return Array.from(deduped.values());
   }, [
     activeRunId,
+    activeRunSourceSlotId,
     landingSlots,
     productImagesExternalBaseUrl,
     rootVariantSourceSlotId,
@@ -853,9 +898,7 @@ export function CenterPreview(): React.JSX.Element {
         return next;
       });
       setVariantTooltip((current) => (current?.variant.id === variant.id ? null : current));
-      if (variant.status === 'failed') {
-        clearActiveRunError();
-      }
+      clearActiveRunError();
     };
 
     const resolveVariantSlotId = (): string | null => {
@@ -1217,7 +1260,18 @@ export function CenterPreview(): React.JSX.Element {
                   </div>
                 )}
                 {activeRunError ? (
-                  <div className='mt-2 text-[11px] text-red-300'>{activeRunError}</div>
+                  <div className='mt-2 flex items-start justify-between gap-2 rounded border border-red-500/30 bg-red-500/10 p-2'>
+                    <div className='text-[11px] text-red-300'>{activeRunError}</div>
+                    <Button
+                      type='button'
+                      size='xs'
+                      variant='ghost'
+                      className='h-6 shrink-0 px-2 text-[10px] text-red-200 hover:text-red-100'
+                      onClick={clearActiveRunError}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
                 ) : null}
               </div>
             </div>

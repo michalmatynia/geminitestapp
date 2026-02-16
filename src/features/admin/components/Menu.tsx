@@ -636,7 +636,9 @@ export const buildAdminNav = (handlers: {
     keywords: ['database', 'persons', 'organizations', 'addressing', 'case resolver'],
     children: [
       { id: 'filemaker/database', label: 'Database', href: '/admin/filemaker', exact: true },
-      { id: 'filemaker/list', label: 'List', href: '/admin/filemaker/list' },
+      { id: 'filemaker/persons', label: 'Persons', href: '/admin/filemaker/persons' },
+      { id: 'filemaker/organizations', label: 'Organizations', href: '/admin/filemaker/organizations' },
+      { id: 'filemaker/list', label: 'Combined List', href: '/admin/filemaker/list' },
     ],
   },
   {
@@ -653,7 +655,7 @@ export const buildAdminNav = (handlers: {
     icon: <SparklesIcon className='size-4' />,
     keywords: ['ai', 'prompt', 'exploder', 'projects', 'segmentation'],
     children: [
-      { id: 'prompt-exploder/projects', label: 'Projects', href: '/admin/prompt-exploder' },
+      { id: 'prompt-exploder/projects', label: 'Projects', href: '/admin/prompt-exploder/projects' },
       { id: 'prompt-exploder/settings', label: 'Settings', href: '/admin/prompt-exploder/settings' },
     ],
   },
@@ -753,6 +755,7 @@ export const buildAdminNav = (handlers: {
               { id: 'ai/ai-paths/case-resolver/cases', label: 'Cases', href: '/admin/case-resolver/cases' },
               { id: 'ai/ai-paths/case-resolver/tags', label: 'Tags', href: '/admin/case-resolver/tags' },
               { id: 'ai/ai-paths/case-resolver/categories', label: 'Categories', href: '/admin/case-resolver/categories' },
+              { id: 'ai/ai-paths/case-resolver/preferences', label: 'Preferences', href: '/admin/case-resolver/preferences' },
               { id: 'ai/ai-paths/case-resolver/settings', label: 'Settings', href: '/admin/case-resolver/settings' },
             ],
           },
@@ -764,7 +767,8 @@ export const buildAdminNav = (handlers: {
         href: '/admin/validator',
         keywords: ['validation', 'extractor', 'formatter', 'prompt rules', 'products', 'image studio'],
         children: [
-          { id: 'ai/prompt-engine/validation', label: 'Pattern Lists', href: '/admin/validator' },
+          { id: 'ai/prompt-engine/validation', label: 'Pattern Editor', href: '/admin/validator' },
+          { id: 'ai/prompt-engine/validation-lists', label: 'List Manager', href: '/admin/validator/lists' },
         ],
       },
       {

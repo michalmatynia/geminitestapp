@@ -59,6 +59,12 @@ const buildUserPreferencesResponse = (
   productListDraftIconColor: preferences?.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: preferences?.aiPathsActivePathId ?? null,
   imageStudioLastProjectId: preferences?.imageStudioLastProjectId ?? null,
+  caseResolverCaseListViewMode: preferences?.caseResolverCaseListViewMode ?? 'hierarchy',
+  caseResolverCaseListSortBy: preferences?.caseResolverCaseListSortBy ?? 'updated',
+  caseResolverCaseListSortOrder: preferences?.caseResolverCaseListSortOrder ?? 'desc',
+  caseResolverCaseListSearchScope: preferences?.caseResolverCaseListSearchScope ?? 'all',
+  caseResolverCaseListFiltersCollapsedByDefault:
+    preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
   adminMenuCollapsed: preferences?.adminMenuCollapsed ?? false,
   cmsLastPageId: preferences?.cmsLastPageId ?? null,
   cmsActiveDomainId: preferences?.cmsActiveDomainId ?? null,

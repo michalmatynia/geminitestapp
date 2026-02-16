@@ -1,11 +1,12 @@
 'use client';
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { type VectorShape, type VectorToolMode } from '@/features/vector-drawing';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
+import { useProjectsState } from './ProjectsContext';
 import { useSlotsState } from './SlotsContext';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -178,6 +179,7 @@ const MaskingActionsContext = createContext<MaskingActions | null>(null);
 
 export function MaskingProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
+  const { projectId } = useProjectsState();
   const { workingSlot, selectedSlot } = useSlotsState();
 
   const [tool, setTool] = useState<VectorToolMode>('select');
@@ -190,6 +192,19 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
   const [maskGenLoading, setMaskGenLoading] = useState<boolean>(false);
   const [maskGenMode, setMaskGenMode] = useState<MaskGenerationMode>('ai-polygon');
   const [slotMaskDetectionSettings, setSlotMaskDetectionSettings] = useState<Record<string, MaskDetectionSettings>>({});
+
+  useEffect(() => {
+    setTool('select');
+    setMaskShapes([]);
+    setActiveMaskId(null);
+    setSelectedPointIndex(null);
+    setMaskInvert(false);
+    setMaskFeather(0);
+    setBrushRadius(8);
+    setMaskGenLoading(false);
+    setMaskGenMode('ai-polygon');
+    setSlotMaskDetectionSettings({});
+  }, [projectId]);
 
   const activeMaskDetectionKey = workingSlot?.id ?? selectedSlot?.id ?? '__global__';
   const maskDetectionSettings = slotMaskDetectionSettings[activeMaskDetectionKey] ?? DEFAULT_MASK_DETECTION_SETTINGS;

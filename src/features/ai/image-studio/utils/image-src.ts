@@ -2,9 +2,21 @@ import { resolveProductImageUrl } from '@/features/products/utils/image-routing'
 
 import type { ImageStudioSlotRecord } from '../types';
 
+export function isLikelyImageStudioErrorText(rawValue: string | null | undefined): boolean {
+  const value = rawValue?.trim() ?? '';
+  if (!value) return false;
+
+  const normalized = value.toLowerCase();
+  if (normalized.includes('your request was rejected by the safety system')) return true;
+  if (normalized.includes('help.openai.com') && normalized.includes('request id')) return true;
+  if (/^\d{3}\s+your request was rejected by the safety system/.test(normalized)) return true;
+  return false;
+}
+
 function normalizeImageSrc(rawValue: string | null | undefined): string | null {
   const value = rawValue?.trim() ?? '';
   if (!value) return null;
+  if (isLikelyImageStudioErrorText(value)) return null;
 
   if (value.startsWith('data:') || value.startsWith('blob:')) {
     return value;

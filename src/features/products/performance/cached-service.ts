@@ -30,6 +30,16 @@ function toOptionalNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function toOptionalBoolean(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+  }
+  return undefined;
+}
+
 function isValidLanguageCode(code?: string): code is 'name_en' | 'name_pl' | 'name_de' {
   return code === 'name_en' || code === 'name_pl' || code === 'name_de';
 }
@@ -55,6 +65,7 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   const endDate = toOptionalString(filters['endDate']);
   const catalogId = toOptionalString(filters['catalogId']);
   const searchLanguage = toOptionalString(filters['searchLanguage']);
+  const baseExported = toOptionalBoolean(filters['baseExported']);
 
   if (search !== undefined) normalized.search = search;
   if (sku !== undefined) normalized.sku = sku;
@@ -66,6 +77,7 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   if (pageSize !== undefined) normalized.pageSize = pageSize;
   if (catalogId !== undefined) normalized.catalogId = catalogId;
   if (isValidLanguageCode(searchLanguage)) normalized.searchLanguage = searchLanguage;
+  if (baseExported !== undefined) normalized.baseExported = baseExported;
 
   return normalized;
 }

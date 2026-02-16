@@ -570,6 +570,7 @@ export function RichTextEditor({
         {allowFontFamily ? (
           <SelectSimple
             size='sm'
+            className='w-auto shrink-0'
             value={activeFontFamilyValue}
             onValueChange={(nextValue: string): void => {
               if (nextValue === '__default__') {
@@ -582,8 +583,8 @@ export function RichTextEditor({
             placeholder='Font'
             triggerClassName={cn(
               variant === 'full'
-                ? 'h-8 min-w-[140px] border-border/60 bg-gray-800 text-xs text-gray-100'
-                : 'h-7 min-w-[120px] border-border/60 bg-card/60 text-xs text-gray-100'
+                ? 'h-8 w-[168px] min-w-[168px] border-border/60 bg-gray-800 text-xs text-gray-100'
+                : 'h-7 w-[136px] min-w-[136px] border-border/60 bg-card/60 text-xs text-gray-100'
             )}
             contentClassName='border-border bg-card text-white'
             ariaLabel='Select font family'

@@ -3,3 +3,4 @@ export * from './pages/AdminCaseResolverCasesPage';
 export * from './pages/AdminCaseResolverTagsPage';
 export * from './pages/AdminCaseResolverCategoriesPage';
 export * from './pages/AdminCaseResolverSettingsPage';
+export * from './pages/AdminCaseResolverPreferencesPage';

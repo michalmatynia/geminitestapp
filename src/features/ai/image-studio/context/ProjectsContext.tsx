@@ -13,6 +13,7 @@ import {
 import {
   useCreateStudioProject,
   useDeleteStudioProject,
+  useRenameStudioProject,
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import {
@@ -24,6 +25,7 @@ import { ApiError } from '@/shared/lib/api-client';
 import type {
   CreateMutation,
   DeleteMutation,
+  UpdateMutation,
 } from '@/shared/types/query-result-types';
 import { useToast } from '@/shared/ui';
 
@@ -46,7 +48,12 @@ export interface ProjectsState {
 export interface ProjectsActions {
   setProjectId: (id: string) => void;
   createProjectMutation: CreateMutation<string, string>;
+  renameProjectMutation: UpdateMutation<
+    { projectId: string; fromProjectId: string; renamed: boolean },
+    { projectId: string; nextProjectId: string }
+  >;
   deleteProjectMutation: DeleteMutation<string, string>;
+  handleRenameProject: (id: string, nextId: string) => Promise<string>;
   handleDeleteProject: (id: string) => Promise<void>;
   setProjectSearch: (s: string) => void;
 }
@@ -69,6 +76,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   const heavySettings = useSettingsMap({ scope: 'heavy' });
   const updateSetting = useUpdateSetting();
   const createProjectMutation = useCreateStudioProject();
+  const renameProjectMutation = useRenameStudioProject();
   const deleteProjectMutation = useDeleteStudioProject();
   const heavyMap = heavySettings.data ?? new Map<string, string>();
   const lastPersistedProjectRef = useRef<string | null>(null);
@@ -189,6 +197,37 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     }
   }, [deleteProjectMutation, projectId, toast]);
 
+  const handleRenameProject = useCallback(async (id: string, nextId: string): Promise<string> => {
+    const sourceId = id.trim();
+    const targetId = nextId.trim();
+    if (!sourceId) {
+      throw new Error('Project id is required.');
+    }
+    if (!targetId) {
+      throw new Error('New project id is required.');
+    }
+
+    try {
+      const result = await renameProjectMutation.mutateAsync({
+        projectId: sourceId,
+        nextProjectId: targetId,
+      });
+      const resolvedProjectId = result.projectId?.trim() || targetId;
+      if (projectId === sourceId) {
+        setProjectId(resolvedProjectId);
+      }
+      if (result.renamed === false) {
+        toast('Project id is unchanged.', { variant: 'info' });
+      } else {
+        toast(`Project renamed to "${resolvedProjectId}".`, { variant: 'success' });
+      }
+      return resolvedProjectId;
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to rename project.', { variant: 'error' });
+      throw error;
+    }
+  }, [projectId, renameProjectMutation, toast]);
+
   const state = useMemo<ProjectsState>(
     () => ({ projectId, projectsQuery, projectSearch }),
     [projectId, projectsQuery, projectSearch]
@@ -198,11 +237,19 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     () => ({
       setProjectId,
       createProjectMutation,
+      renameProjectMutation,
       deleteProjectMutation,
+      handleRenameProject,
       handleDeleteProject,
       setProjectSearch,
     }),
-    [createProjectMutation, deleteProjectMutation, handleDeleteProject]
+    [
+      createProjectMutation,
+      deleteProjectMutation,
+      handleDeleteProject,
+      handleRenameProject,
+      renameProjectMutation,
+    ]
   );
 
   return (

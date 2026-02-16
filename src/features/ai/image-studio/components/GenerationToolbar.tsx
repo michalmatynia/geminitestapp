@@ -28,6 +28,7 @@ import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
 type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 type UpscaleMode = 'client_canvas' | 'server_sharp';
+type CropMode = 'client_bbox' | 'server_bbox';
 type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
 type MaskShapeForExport = {
   id: string;
@@ -35,6 +36,12 @@ type MaskShapeForExport = {
   points: Array<{ x: number; y: number }>;
   closed: boolean;
   visible: boolean;
+};
+type CropRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 };
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
@@ -129,9 +136,11 @@ export function GenerationToolbar(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [maskAttachMode, setMaskAttachMode] = useState<MaskAttachMode>('client_canvas_polygon');
   const [upscaleMode, setUpscaleMode] = useState<UpscaleMode>('client_canvas');
+  const [cropMode, setCropMode] = useState<CropMode>('client_bbox');
   const [upscaleScale, setUpscaleScale] = useState('2');
   const [upscaleSmoothingQuality, setUpscaleSmoothingQuality] = useState<UpscaleSmoothingQuality>('high');
   const [upscaleBusy, setUpscaleBusy] = useState(false);
+  const [cropBusy, setCropBusy] = useState(false);
 
   const eligibleMaskShapes = useMemo<MaskShapeForExport[]>(
     () =>
@@ -216,6 +225,93 @@ export function GenerationToolbar(): React.JSX.Element {
     } catch {
       throw new Error('Client upscale failed due to cross-origin restrictions. Use "Upscale Server: Sharp".');
     }
+  };
+
+  const cropCanvasImage = async (
+    src: string,
+    cropRect: CropRect
+  ): Promise<string> => {
+    const image = await loadImageElement(src, { crossOrigin: 'anonymous' });
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      throw new Error('Source image dimensions are invalid.');
+    }
+
+    const left = Math.max(0, Math.min(Math.floor(cropRect.x), sourceWidth - 1));
+    const top = Math.max(0, Math.min(Math.floor(cropRect.y), sourceHeight - 1));
+    const width = Math.max(1, Math.min(Math.floor(cropRect.width), sourceWidth - left));
+    const height = Math.max(1, Math.min(Math.floor(cropRect.height), sourceHeight - top));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context2d = canvas.getContext('2d');
+    if (!context2d) {
+      throw new Error('Canvas context is unavailable.');
+    }
+
+    context2d.drawImage(
+      image,
+      left,
+      top,
+      width,
+      height,
+      0,
+      0,
+      width,
+      height
+    );
+
+    try {
+      return canvas.toDataURL('image/png');
+    } catch {
+      throw new Error('Client crop failed due to cross-origin restrictions. Use "Crop Server: Sharp".');
+    }
+  };
+
+  const resolveCropRect = async (): Promise<CropRect> => {
+    let sourceWidth = workingSlot?.imageFile?.width ?? 0;
+    let sourceHeight = workingSlot?.imageFile?.height ?? 0;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      const image = await loadImageElement(workingSlotImageSrc || '');
+      sourceWidth = image.naturalWidth || image.width;
+      sourceHeight = image.naturalHeight || image.height;
+    }
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      throw new Error('Source image dimensions are invalid.');
+    }
+
+    const polygons = polygonsFromShapes(exportMaskShapes);
+    if (polygons.length > 0) {
+      const points = polygons.flatMap((polygon) => polygon);
+      const xs = points.map((point) => clamp01(point.x));
+      const ys = points.map((point) => clamp01(point.y));
+      if (xs.length > 0 && ys.length > 0) {
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        const left = Math.max(0, Math.min(Math.floor(minX * sourceWidth), sourceWidth - 1));
+        const top = Math.max(0, Math.min(Math.floor(minY * sourceHeight), sourceHeight - 1));
+        const width = Math.max(1, Math.min(Math.ceil((maxX - minX) * sourceWidth), sourceWidth - left));
+        const height = Math.max(1, Math.min(Math.ceil((maxY - minY) * sourceHeight), sourceHeight - top));
+        return {
+          x: left,
+          y: top,
+          width,
+          height,
+        };
+      }
+    }
+
+    const square = Math.max(1, Math.floor(Math.min(sourceWidth, sourceHeight) * 0.9));
+    return {
+      x: Math.floor((sourceWidth - square) / 2),
+      y: Math.floor((sourceHeight - square) / 2),
+      width: square,
+      height: square,
+    };
   };
 
   const polygonsFromShapes = (shapes: MaskShapeForExport[]): Array<Array<{ x: number; y: number }>> =>
@@ -390,6 +486,44 @@ export function GenerationToolbar(): React.JSX.Element {
     }
   };
 
+  const handleCrop = async (): Promise<void> => {
+    if (!workingSlot?.id) {
+      toast('No active source slot selected.', { variant: 'info' });
+      return;
+    }
+    if (!workingSlotImageSrc) {
+      toast('Select a slot image before cropping.', { variant: 'info' });
+      return;
+    }
+
+    setCropBusy(true);
+    try {
+      const cropRect = await resolveCropRect();
+      const payload: Record<string, unknown> = {
+        mode: cropMode,
+        cropRect,
+      };
+
+      if (cropMode === 'client_bbox') {
+        payload['dataUrl'] = await cropCanvasImage(workingSlotImageSrc, cropRect);
+      }
+
+      const response = await api.post<{ slot?: { id: string; name: string | null } }>(
+        `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
+        payload
+      );
+      void invalidateImageStudioSlots(queryClient, projectId);
+
+      const createdLabel = response.slot?.name?.trim() || 'Cropped variant';
+      const modeLabel = cropMode === 'client_bbox' ? 'Client' : 'Server';
+      toast(`Created ${createdLabel} (${modeLabel} crop).`, { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to crop image.', { variant: 'error' });
+    } finally {
+      setCropBusy(false);
+    }
+  };
+
   const maskGenerationBusy = maskGenLoading;
   const maskGenerationLabel = maskGenerationBusy
     ? 'Generating Mask...'
@@ -431,6 +565,13 @@ export function GenerationToolbar(): React.JSX.Element {
     () => ([
       { value: 'client_canvas', label: 'Upscale A: Canvas' },
       { value: 'server_sharp', label: 'Upscale Server: Sharp' },
+    ]),
+    []
+  );
+  const cropModeOptions = useMemo(
+    () => ([
+      { value: 'client_bbox', label: 'Crop Client: Canvas' },
+      { value: 'server_bbox', label: 'Crop Server: Sharp' },
     ]),
     []
   );
@@ -548,6 +689,28 @@ export function GenerationToolbar(): React.JSX.Element {
       >
         {upscaleBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
         Upscale
+      </Button>
+      <SelectSimple size='sm'
+        className='w-[185px]'
+        value={cropMode}
+        onValueChange={(value: string) => {
+          setCropMode(value as CropMode);
+        }}
+        options={cropModeOptions}
+        triggerClassName='h-8 text-xs'
+        ariaLabel='Crop mode'
+      />
+      <Button size='xs'
+        type='button'
+        variant='outline'
+        onClick={() => {
+          void handleCrop();
+        }}
+        disabled={!workingSlot || !workingSlotImageSrc || cropBusy}
+        title='Create cropped linked variant from selected mask bounds, or centered crop when no mask is selected'
+      >
+        {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+        Crop
       </Button>
       <Button size='xs'
         type='button'

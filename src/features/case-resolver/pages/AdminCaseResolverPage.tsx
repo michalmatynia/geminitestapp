@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, ChevronDown, Eye, EyeOff, FileImage, FileText, Link2, Plus, Trash2, Upload, Users } from 'lucide-react';
+import { Check, ChevronDown, Eye, EyeOff, FileImage, FileText, Link2, Plus, Trash2, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -44,6 +44,7 @@ import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
+  extractCaseResolverDocumentDate,
   parseCaseResolverCategories,
   parseCaseResolverTags,
   createCaseResolverAssetFile,
@@ -782,6 +783,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const { isMenuCollapsed, setIsMenuCollapsed } = useAdminLayout();
   const searchParams = useSearchParams();
   const requestedFileId = searchParams.get('fileId');
+  const shouldOpenEditorFromQuery = searchParams.get('openEditor') === '1';
 
   const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
@@ -851,6 +853,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const [isPromptExploderPartyProposalOpen, setIsPromptExploderPartyProposalOpen] = useState(false);
   const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposal] = useState(false);
   const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
+  const [hasHandledRequestedEditorOpen, setHasHandledRequestedEditorOpen] = useState(false);
   const [isUploadingScanDraftFiles, setIsUploadingScanDraftFiles] = useState(false);
   const [uploadingScanSlotId, setUploadingScanSlotId] = useState<string | null>(null);
   const [isDocumentTagDropdownOpen, setIsDocumentTagDropdownOpen] = useState(false);
@@ -997,6 +1000,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     }
 
     const nextExplodedContent = payload.prompt;
+    const extractedDocumentDate = extractCaseResolverDocumentDate(nextExplodedContent);
     const now = new Date().toISOString();
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
       normalizeCaseResolverWorkspace({
@@ -1011,6 +1015,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             explodedDocumentContent: nextExplodedContent,
             activeDocumentVersion: 'exploded',
             documentContent: nextExplodedContent,
+            documentDate: extractedDocumentDate ?? file.documentDate,
             updatedAt: now,
           };
         }),
@@ -1029,6 +1034,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         explodedDocumentContent: nextExplodedContent,
         activeDocumentVersion: 'exploded',
         documentContent: nextExplodedContent,
+        documentDate: extractedDocumentDate ?? current.documentDate,
         updatedAt: now,
       };
     });
@@ -1735,6 +1741,24 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     [toast, updateWorkspace, workspace.files]
   );
 
+  useEffect(() => {
+    setHasHandledRequestedEditorOpen(false);
+  }, [requestedFileId, shouldOpenEditorFromQuery]);
+
+  useEffect(() => {
+    if (!shouldOpenEditorFromQuery || hasHandledRequestedEditorOpen) return;
+    if (!requestedFileId) return;
+    if (!workspace.files.some((file: CaseResolverFile) => file.id === requestedFileId)) return;
+    handleOpenFileEditor(requestedFileId);
+    setHasHandledRequestedEditorOpen(true);
+  }, [
+    handleOpenFileEditor,
+    hasHandledRequestedEditorOpen,
+    requestedFileId,
+    shouldOpenEditorFromQuery,
+    workspace.files,
+  ]);
+
   const handleOpenFileFromSearch = useCallback(
     (fileId: string): void => {
       setActiveMainView('workspace');
@@ -2218,7 +2242,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       fileId: editingDocumentDraft.id,
       fileName: editingDocumentDraft.name,
     });
-    router.push('/admin/prompt-exploder?returnTo=/admin/case-resolver');
+    const returnTo = `/admin/case-resolver?fileId=${encodeURIComponent(editingDocumentDraft.id)}&openEditor=1`;
+    router.push(`/admin/prompt-exploder?returnTo=${encodeURIComponent(returnTo)}`);
   }, [editingDocumentDraft, router, toast]);
 
   const handleCreateDocumentFromExplodedDraft = useCallback((): void => {
@@ -2366,7 +2391,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       toast('Select a document category.', { variant: 'error' });
       return;
     }
-    const normalizedFolder = normalizeFolderPath(editingDocumentDraft.folder);
     const now = new Date().toISOString();
     const normalizedOriginalDocumentContent = editingDocumentDraft.originalDocumentContent;
     const normalizedExplodedDocumentContent = editingDocumentDraft.explodedDocumentContent;
@@ -2394,7 +2418,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               ...file,
               name: normalizedName,
               fileType: editingDocumentDraft.fileType,
-              folder: normalizedFolder,
               documentDate: editingDocumentDraft.documentDate,
               originalDocumentContent:
                 editingDocumentDraft.fileType === 'document'
@@ -2421,7 +2444,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             }
             : file
         ),
-        folders: normalizeFolderPaths([...current.folders, normalizedFolder]),
       }),
       { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST }
     );
@@ -2553,30 +2575,38 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           ) : null}
 
           <div className='min-h-0 w-full'>
-            <div className='mb-2 flex flex-wrap items-center gap-2'>
+            <div className='mb-2 flex flex-wrap items-center justify-center gap-2'>
               <Button
                 type='button'
-                variant={activeMainView === 'workspace' ? 'default' : 'outline'}
+                variant='outline'
                 onClick={(): void => {
                   setActiveMainView('workspace');
                 }}
-                className='h-8 border border-border px-2 text-xs'
+                className={`h-8 border px-2 text-xs ${
+                  activeMainView === 'workspace'
+                    ? 'border-sky-300/65 bg-sky-500/20 text-sky-100 hover:bg-sky-500/25'
+                    : 'border-border text-gray-200 hover:bg-muted/60'
+                }`}
               >
                 Workspace
               </Button>
               <Button
                 type='button'
-                variant={activeMainView === 'search' ? 'default' : 'outline'}
+                variant='outline'
                 onClick={(): void => {
                   setActiveMainView('search');
                   setIsPreviewPageVisible(false);
                 }}
-                className='h-8 border border-border px-2 text-xs'
+                className={`h-8 border px-2 text-xs ${
+                  activeMainView === 'search'
+                    ? 'border-sky-300/65 bg-sky-500/20 text-sky-100 hover:bg-sky-500/25'
+                    : 'border-border text-gray-200 hover:bg-muted/60'
+                }`}
               >
                 Document Search
               </Button>
               {activeMainView === 'workspace' && (folderPanelCollapsed || canTogglePreviewPage) ? (
-                <div className='ml-auto flex flex-wrap items-center gap-2'>
+                <>
                   {canTogglePreviewPage ? (
                     <Button
                       type='button'
@@ -2610,19 +2640,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                       )}
                     </Button>
                   ) : null}
-                  {activeFile ? (
-                    <Button
-                      type='button'
-                      onClick={(): void => {
-                        setIsPartiesModalOpen(true);
-                      }}
-                      className='h-8 rounded-md border border-border px-2 text-xs text-gray-200 hover:bg-muted/60'
-                    >
-                      <Users className='mr-1 size-3.5' />
-                  Parties
-                    </Button>
-                  ) : null}
-                </div>
+                </>
               ) : null}
             </div>
 
@@ -3007,7 +3025,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         >
           {editingDocumentDraft ? (
             <div className='space-y-4'>
-              <div className='grid gap-3 md:grid-cols-3'>
+              <div className='grid gap-3 md:grid-cols-2'>
                 <div className='space-y-1'>
                   <Label className='text-xs text-gray-400'>Document Name</Label>
                   <Input
@@ -3025,25 +3043,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     }}
                     className='h-9 border-border bg-card/60 text-sm text-white'
                     placeholder='Document name'
-                  />
-                </div>
-                <div className='space-y-1'>
-                  <Label className='text-xs text-gray-400'>Folder</Label>
-                  <Input
-                    value={editingDocumentDraft.folder}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      const nextFolder = event.target.value;
-                      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
-                        current
-                          ? {
-                            ...current,
-                            folder: nextFolder,
-                          }
-                          : current
-                      );
-                    }}
-                    className='h-9 border-border bg-card/60 text-sm text-white'
-                    placeholder='Folder (optional)'
                   />
                 </div>
                 <div className='space-y-1'>

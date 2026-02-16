@@ -40,6 +40,20 @@ type ProductDocument = Omit<
 };
 
 const productCollectionName = 'products';
+const integrationCollectionName = 'integrations';
+const listingCollectionName = 'product_listings';
+const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
+
+type IntegrationSlugDocument = {
+  _id: string;
+  slug: string;
+};
+
+type ProductListingFilterDocument = {
+  productId: string;
+  integrationId: string;
+  externalListingId?: string | null;
+};
 
 let productIndexesEnsured: Promise<void> | null = null;
 
@@ -78,6 +92,92 @@ const getProductCollection = async () => {
 
 const isEmptyFilter = (filter: Filter<ProductDocument>): boolean =>
   Object.keys(filter as Record<string, unknown>).length === 0;
+
+const appendAndCondition = (
+  filter: Filter<ProductDocument>,
+  condition: Filter<ProductDocument>
+): Filter<ProductDocument> => {
+  if (isEmptyFilter(filter)) return condition;
+  return {
+    $and: [filter, condition],
+  } as Filter<ProductDocument>;
+};
+
+const normalizeLookupId = (value: unknown): string => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : '';
+  }
+  if (value instanceof ObjectId) {
+    return value.toHexString();
+  }
+  return '';
+};
+
+const applyBaseExportedFilter = async (
+  filter: Filter<ProductDocument>,
+  baseExported: boolean | undefined
+): Promise<Filter<ProductDocument>> => {
+  if (baseExported === undefined) return filter;
+
+  const db = await getMongoDb();
+  const integrations = await db
+    .collection<IntegrationSlugDocument>(integrationCollectionName)
+    .find(
+      { slug: { $in: [...BASE_INTEGRATION_SLUGS] } },
+      { projection: { _id: 1 } }
+    )
+    .toArray();
+
+  const integrationIds = integrations
+    .map((integration: IntegrationSlugDocument) => normalizeLookupId(integration._id))
+    .filter((id: string) => id.length > 0);
+
+  if (integrationIds.length === 0) {
+    if (baseExported) {
+      return appendAndCondition(filter, {
+        id: '__no_base_exported_products__',
+      } as Filter<ProductDocument>);
+    }
+    return filter;
+  }
+
+  const exportedProductIdsRaw = await db
+    .collection<ProductListingFilterDocument>(listingCollectionName)
+    .distinct('productId', {
+      integrationId: { $in: integrationIds },
+      externalListingId: { $exists: true, $nin: [null, ''] },
+    });
+
+  const exportedProductIds = exportedProductIdsRaw
+    .map((value: unknown) => normalizeLookupId(value))
+    .filter((id: string) => id.length > 0);
+
+  if (baseExported) {
+    if (exportedProductIds.length === 0) {
+      return appendAndCondition(filter, {
+        id: '__no_base_exported_products__',
+      } as Filter<ProductDocument>);
+    }
+    return appendAndCondition(filter, {
+      $or: [
+        { id: { $in: exportedProductIds } },
+        { _id: { $in: exportedProductIds } },
+      ],
+    } as Filter<ProductDocument>);
+  }
+
+  if (exportedProductIds.length === 0) {
+    return filter;
+  }
+
+  return appendAndCondition(filter, {
+    $and: [
+      { id: { $nin: exportedProductIds } },
+      { _id: { $nin: exportedProductIds } },
+    ],
+  } as Filter<ProductDocument>);
+};
 
 const buildListProjectStage = (filters: ProductFilters): Document | null => {
   // List/grid queries should return only fields used by table cells and row actions.
@@ -466,7 +566,10 @@ export const mongoProductRepository: ProductRepository = {
     const pageSize = filters.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
     const limit = pageSize;
-    const searchFilter = buildSearchFilter(filters);
+    const searchFilter = await applyBaseExportedFilter(
+      buildSearchFilter(filters),
+      filters.baseExported
+    );
     const projectStage = buildListProjectStage(filters);
 
     if (projectStage) {
@@ -497,7 +600,10 @@ export const mongoProductRepository: ProductRepository = {
 
   async countProducts(filters: ProductFilters) {
     const collection = await getProductCollection();
-    const searchFilter = buildSearchFilter(filters);
+    const searchFilter = await applyBaseExportedFilter(
+      buildSearchFilter(filters),
+      filters.baseExported
+    );
     if (isEmptyFilter(searchFilter)) {
       return collection.estimatedDocumentCount();
     }

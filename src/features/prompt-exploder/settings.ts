@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
-  PROMPT_EXPLODER_VALIDATION_RULE_STACK_VALUES,
+  normalizePromptExploderValidationRuleStack,
 } from './validation-stack';
 
 import type {
@@ -85,9 +85,9 @@ const promptExploderSettingsSchema: z.ZodType<PromptExploderSettings> = z.object
   runtime: z
     .object({
       ruleProfile: z.enum(['all', 'pattern_pack', 'learned_only']).default('all'),
-      validationRuleStack: z
-        .enum(PROMPT_EXPLODER_VALIDATION_RULE_STACK_VALUES)
-        .default(DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK),
+      validationRuleStack: z.string().trim().min(1).default(
+        DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK
+      ),
       benchmarkSuite: z.enum(['default', 'extended', 'custom']).default('default'),
       benchmarkLowConfidenceThreshold: z.number().min(0.3).max(0.9).default(0.55),
       benchmarkSuggestionLimit: z.number().int().min(1).max(20).default(4),
@@ -173,6 +173,12 @@ export function parsePromptExploderSettings(rawValue: string | null | undefined)
     if (!result.success) return defaultPromptExploderSettings;
     return {
       ...result.data,
+      runtime: {
+        ...result.data.runtime,
+        validationRuleStack: normalizePromptExploderValidationRuleStack(
+          result.data.runtime.validationRuleStack
+        ),
+      },
       learning: {
         ...result.data.learning,
         templates: result.data.learning.templates.map((template) => ({

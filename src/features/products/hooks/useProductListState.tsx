@@ -259,6 +259,8 @@ export function useProductListState(): ProductListContextType & {
     setEndDate,
     catalogFilter,
     setCatalogFilter,
+    baseExported,
+    setBaseExported,
     loadError,
     isLoading,
     isFetching,
@@ -326,6 +328,7 @@ export function useProductListState(): ProductListContextType & {
     startDate,
     endDate,
     catalogFilter,
+    baseExported,
     page,
     pageSize,
   }, !isLoading);
@@ -637,6 +640,12 @@ export function useProductListState(): ProductListContextType & {
         endDate: endDate || undefined,
         catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
         searchLanguage: preferences.nameLocale,
+        baseExported:
+          baseExported === 'true'
+            ? true
+            : baseExported === 'false'
+              ? false
+              : undefined,
       };
 
       const allProducts = await queryClient.fetchQuery({
@@ -656,7 +665,7 @@ export function useProductListState(): ProductListContextType & {
     } finally {
       setLoadingGlobalSelection(false);
     }
-  }, [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, preferences.nameLocale, toast, queryClient]);
+  }, [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, baseExported, preferences.nameLocale, toast, queryClient]);
 
   const handleMassDelete = useCallback(async () => {
     const selectedProductIds = Object.keys(rowSelection).filter(
@@ -799,6 +808,8 @@ export function useProductListState(): ProductListContextType & {
     filtersCollapsedByDefault: preferences.filtersCollapsedByDefault ?? false,
     catalogFilter,
     setCatalogFilter: handleSetCatalogFilter,
+    baseExported,
+    setBaseExported,
     catalogs,
     loadError: loadError?.message || null,
     actionError,
@@ -968,6 +979,8 @@ export function useProductListState(): ProductListContextType & {
     sku,
     description,
     categoryId,
+    baseExported,
+    setBaseExported,
     startDate,
     tableSkeleton,
     totalPages,

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
+  extractCaseResolverDocumentDate,
   inferCaseResolverAssetKind,
   normalizeCaseResolverTags,
   parseCaseResolverSettings,
@@ -82,6 +83,7 @@ describe('case-resolver settings', () => {
     expect(workspace.assets).toEqual([]);
     expect(workspace.files[0]?.id).toBe('dup-file');
     expect(workspace.files[0]?.folder).toBe('Root_A/Sub__');
+    expect(workspace.files[0]?.documentDate).toBe('');
     expect(workspace.files[0]?.addresser).toEqual({ kind: 'person', id: 'p-1' });
     expect(workspace.files[0]?.addressee).toBeNull();
     expect(workspace.folders).toEqual(['Root_A', 'Root_A/Sub__']);
@@ -211,6 +213,14 @@ describe('case-resolver settings', () => {
 
     expect(parseCaseResolverSettings(JSON.stringify({})).ocrModel).toBe('');
     expect(parseCaseResolverSettings(null).ocrModel).toBe('');
+  });
+
+  it('extracts document date from exploded text formats', () => {
+    expect(extractCaseResolverDocumentDate('Document Date: 2024-11-05')).toBe('2024-11-05');
+    expect(extractCaseResolverDocumentDate('Data dokumentu: 05.11.2024')).toBe('2024-11-05');
+    expect(extractCaseResolverDocumentDate('Date: 11/05/2024')).toBe('2024-11-05');
+    expect(extractCaseResolverDocumentDate('Date: 31.02.2024')).toBeNull();
+    expect(extractCaseResolverDocumentDate('No date in this content')).toBeNull();
   });
 
   it('normalizes hierarchical tags and removes invalid parent references', () => {

@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 import { deleteImageStudioRunsByProject } from '@/features/ai/image-studio/server/run-repository';
 import { deleteImageStudioSlotLinksForProject } from '@/features/ai/image-studio/server/slot-link-repository';
@@ -11,10 +12,17 @@ import { deleteImageStudioSlotsByProject } from '@/features/ai/image-studio/serv
 import { getImageFileRepository } from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const projectsRootResolved = path.resolve(projectsRoot);
+const renameProjectSchema = z.object({
+  projectId: z.string().trim().min(1).max(120),
+});
+const SLOT_COLLECTION = 'image_studio_slots';
+const RUN_COLLECTION = 'image_studio_runs';
+const SLOT_LINK_COLLECTION = 'image_studio_slot_links';
 
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
@@ -96,6 +104,167 @@ async function deleteProjectImageFileRecords(projectIdCandidates: string[]): Pro
   return deletedCount;
 }
 
+const replaceProjectAssetPath = (
+  filepath: string | null | undefined,
+  fromProjectIds: string[],
+  toProjectId: string
+): string | null => {
+  if (typeof filepath !== 'string') return null;
+  const trimmed = filepath.trim();
+  if (!trimmed) return null;
+
+  let next = trimmed;
+  for (const sourceProjectId of fromProjectIds) {
+    const sourcePrefix = `/uploads/studio/${sourceProjectId}/`;
+    const targetPrefix = `/uploads/studio/${toProjectId}/`;
+    if (next.includes(sourcePrefix)) {
+      next = next.replace(sourcePrefix, targetPrefix);
+    }
+  }
+
+  return next !== trimmed ? next : null;
+};
+
+async function migrateImageFilePaths(
+  fromProjectIds: string[],
+  toProjectId: string
+): Promise<number> {
+  const repo = await getImageFileRepository();
+  const imageFiles = await repo.listImageFiles();
+  const projectFiles = imageFiles.filter((file) =>
+    isProjectAssetPath(file.filepath, fromProjectIds)
+  );
+  let updatedCount = 0;
+  for (const file of projectFiles) {
+    const nextPath = replaceProjectAssetPath(file.filepath, fromProjectIds, toProjectId);
+    if (!nextPath || nextPath === file.filepath) continue;
+    const updated = await repo.updateImageFilePath(file.id, nextPath);
+    if (updated) updatedCount += 1;
+  }
+  return updatedCount;
+}
+
+async function migrateSlotRecords(
+  fromProjectIds: string[],
+  toProjectId: string
+): Promise<{ updatedSlots: number; updatedImageUrls: number }> {
+  const db = await getMongoDb();
+  const collection = db.collection<{
+    _id: string;
+    projectId: string;
+    imageUrl?: string | null;
+  }>(SLOT_COLLECTION);
+  const docs = await collection.find({ projectId: { $in: fromProjectIds } }).toArray();
+
+  let updatedSlots = 0;
+  let updatedImageUrls = 0;
+  for (const doc of docs) {
+    const nextImageUrl = replaceProjectAssetPath(doc.imageUrl ?? null, fromProjectIds, toProjectId);
+    const setPayload: Record<string, unknown> = {
+      projectId: toProjectId,
+    };
+    if (nextImageUrl) {
+      setPayload['imageUrl'] = nextImageUrl;
+      updatedImageUrls += 1;
+    }
+    const result = await collection.updateOne(
+      { _id: doc._id },
+      { $set: setPayload }
+    );
+    if (result.modifiedCount > 0) {
+      updatedSlots += 1;
+    }
+  }
+
+  return { updatedSlots, updatedImageUrls };
+}
+
+async function migrateRunRecords(
+  fromProjectIds: string[],
+  toProjectId: string
+): Promise<number> {
+  const db = await getMongoDb();
+  const collection = db.collection(RUN_COLLECTION);
+  const result = await collection.updateMany(
+    { projectId: { $in: fromProjectIds } },
+    {
+      $set: {
+        projectId: toProjectId,
+        'request.projectId': toProjectId,
+      },
+    }
+  );
+  return result.modifiedCount ?? 0;
+}
+
+async function migrateSlotLinkRecords(
+  fromProjectIds: string[],
+  toProjectId: string
+): Promise<number> {
+  const db = await getMongoDb();
+  const collection = db.collection(SLOT_LINK_COLLECTION);
+  const result = await collection.updateMany(
+    { projectId: { $in: fromProjectIds } },
+    { $set: { projectId: toProjectId } }
+  );
+  return result.modifiedCount ?? 0;
+}
+
+async function ensureProjectDirectoryRename(
+  fromProjectIds: string[],
+  toProjectId: string
+): Promise<{ movedDirectory: boolean; createdDirectory: boolean }> {
+  const toDir = resolveProjectDir(toProjectId);
+  if (!toDir) {
+    throw badRequestError('Invalid target project id.');
+  }
+
+  const sourceDirs = fromProjectIds
+    .map((projectId) => resolveProjectDir(projectId))
+    .filter((dir): dir is string => Boolean(dir))
+    .filter((dir) => dir !== toDir);
+
+  const existingSourceDirs: string[] = [];
+  for (const sourceDir of sourceDirs) {
+    const stats = await fs.stat(sourceDir).catch(() => null);
+    if (stats?.isDirectory()) {
+      existingSourceDirs.push(sourceDir);
+    }
+  }
+
+  const targetExists = Boolean((await fs.stat(toDir).catch(() => null))?.isDirectory());
+  if (targetExists && existingSourceDirs.length > 0) {
+    throw badRequestError('Target project id already exists.');
+  }
+
+  if (existingSourceDirs.length > 0) {
+    await fs.rename(existingSourceDirs[0]!, toDir);
+    for (let index = 1; index < existingSourceDirs.length; index += 1) {
+      const extraDir = existingSourceDirs[index];
+      if (!extraDir) continue;
+      await fs.rm(extraDir, { recursive: true, force: true });
+    }
+    return { movedDirectory: true, createdDirectory: false };
+  }
+
+  if (!targetExists) {
+    await fs.mkdir(toDir, { recursive: true });
+    return { movedDirectory: false, createdDirectory: true };
+  }
+
+  return { movedDirectory: false, createdDirectory: false };
+}
+
+async function hasProjectData(projectId: string): Promise<boolean> {
+  const db = await getMongoDb();
+  const [slotsCount, runsCount, slotLinksCount] = await Promise.all([
+    db.collection(SLOT_COLLECTION).countDocuments({ projectId }),
+    db.collection(RUN_COLLECTION).countDocuments({ projectId }),
+    db.collection(SLOT_LINK_COLLECTION).countDocuments({ projectId }),
+  ]);
+  return slotsCount > 0 || runsCount > 0 || slotLinksCount > 0;
+}
+
 async function DELETE_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -138,8 +307,102 @@ async function DELETE_handler(
   return NextResponse.json({ projectId: rawProjectId, deleted: true, stats });
 }
 
+async function PATCH_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { projectId: string }
+): Promise<Response> {
+  const rawProjectId = params.projectId?.trim() ?? '';
+  if (!rawProjectId) throw badRequestError('Project id is required');
+  const fromProjectIds = toProjectIdCandidates(rawProjectId);
+  if (fromProjectIds.length === 0) {
+    throw badRequestError('Invalid source project id.');
+  }
+
+  const body = (await req.json().catch(() => null)) as unknown;
+  const parsed = renameProjectSchema.safeParse(body);
+  if (!parsed.success) {
+    throw badRequestError('Invalid payload', { errors: parsed.error.format() });
+  }
+
+  const toProjectId = sanitizeProjectId(parsed.data.projectId);
+  if (!toProjectId) {
+    throw badRequestError('Target project id is required.');
+  }
+
+  if (fromProjectIds.includes(toProjectId)) {
+    return NextResponse.json({
+      projectId: toProjectId,
+      fromProjectId: rawProjectId,
+      renamed: false,
+      stats: {
+        movedDirectory: false,
+        createdDirectory: false,
+        updatedSlots: 0,
+        updatedSlotImageUrls: 0,
+        updatedRuns: 0,
+        updatedSlotLinks: 0,
+        updatedImageFiles: 0,
+      },
+    });
+  }
+
+  const [sourceDataFlags, sourceDirFlags] = await Promise.all([
+    Promise.all(fromProjectIds.map((projectId) => hasProjectData(projectId))),
+    Promise.all(
+      fromProjectIds.map(async (projectId) => {
+        const dir = resolveProjectDir(projectId);
+        if (!dir) return false;
+        const stats = await fs.stat(dir).catch(() => null);
+        return Boolean(stats?.isDirectory());
+      })
+    ),
+  ]);
+  const sourceExists = sourceDataFlags.some(Boolean) || sourceDirFlags.some(Boolean);
+  if (!sourceExists) {
+    throw notFoundError('Project not found', { projectId: rawProjectId });
+  }
+
+  const targetDir = resolveProjectDir(toProjectId);
+  if (!targetDir) {
+    throw badRequestError('Invalid target project id.');
+  }
+  const [targetDirExists, targetHasData] = await Promise.all([
+    fs.stat(targetDir).then((stats) => stats.isDirectory()).catch(() => false),
+    hasProjectData(toProjectId),
+  ]);
+  if (targetDirExists || targetHasData) {
+    throw badRequestError('Target project id already exists.');
+  }
+
+  const directoryStats = await ensureProjectDirectoryRename(fromProjectIds, toProjectId);
+  const slotStats = await migrateSlotRecords(fromProjectIds, toProjectId);
+  const updatedRuns = await migrateRunRecords(fromProjectIds, toProjectId);
+  const updatedSlotLinks = await migrateSlotLinkRecords(fromProjectIds, toProjectId);
+  const updatedImageFiles = await migrateImageFilePaths(fromProjectIds, toProjectId);
+
+  return NextResponse.json({
+    projectId: toProjectId,
+    fromProjectId: rawProjectId,
+    renamed: true,
+    stats: {
+      movedDirectory: directoryStats.movedDirectory,
+      createdDirectory: directoryStats.createdDirectory,
+      updatedSlots: slotStats.updatedSlots,
+      updatedSlotImageUrls: slotStats.updatedImageUrls,
+      updatedRuns,
+      updatedSlotLinks,
+      updatedImageFiles,
+    },
+  });
+}
+
 export const DELETE = apiHandlerWithParams(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { projectId: string }): Promise<Response> =>
     DELETE_handler(req, ctx, params),
   { source: 'image-studio.projects.DELETE' }
 );
+
+export const PATCH = apiHandlerWithParams<{ projectId: string }>(PATCH_handler, {
+  source: 'image-studio.projects.[projectId].PATCH',
+});

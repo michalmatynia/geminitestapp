@@ -323,8 +323,10 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     window.requestAnimationFrame(() => {
       const container = treeRef.current;
       if (!container) return;
-      const row = container.querySelector<HTMLElement>(`[data-slot-id="${revealRequest.slotId}"]`);
-      row?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const row = container.querySelector<HTMLButtonElement>(`button[data-slot-id="${revealRequest.slotId}"]`);
+      if (!row) return;
+      row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      row.focus({ preventScroll: true });
     });
   }, [controller.nodes, expandNode, panelCollapsed, revealRequest, setPanelCollapsed]);
 

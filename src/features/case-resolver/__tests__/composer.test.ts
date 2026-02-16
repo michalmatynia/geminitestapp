@@ -258,4 +258,37 @@ describe('case-resolver composer', () => {
     });
     expect(compiled.prompt).toBe('Alpha');
   });
+
+  it('strips escaped HTML entities from plainText output', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 }),
+      ],
+      edges: [],
+      nodeMeta: {
+        source: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '&lt;b&gt;',
+          surroundSuffix: '&lt;/b&gt;',
+        },
+      },
+      edgeMeta: {},
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        source: 'file-source',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'source');
+
+    expect(compiled.outputsByNode['source']).toEqual({
+      textfield: 'Alpha',
+      content: '&lt;b&gt;Alpha&lt;/b&gt;',
+      plainText: 'Alpha',
+    });
+  });
 });

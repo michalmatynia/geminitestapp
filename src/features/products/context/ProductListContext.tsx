@@ -57,6 +57,8 @@ export interface ProductListContextType {
   setStartDate: (value: string) => void;
   endDate: string;
   setEndDate: (value: string) => void;
+  baseExported: '' | 'true' | 'false';
+  setBaseExported: (value: '' | 'true' | 'false') => void;
   
   // Data State
   data: ProductWithImages[];
@@ -161,6 +163,8 @@ export interface ProductListFiltersContextType {
   setStartDate: (value: string) => void;
   endDate: string;
   setEndDate: (value: string) => void;
+  baseExported: '' | 'true' | 'false';
+  setBaseExported: (value: '' | 'true' | 'false') => void;
 }
 
 export interface ProductListSelectionContextType {
@@ -350,6 +354,8 @@ export function ProductListProvider({
       setStartDate: value.setStartDate,
       endDate: value.endDate,
       setEndDate: value.setEndDate,
+      baseExported: value.baseExported,
+      setBaseExported: value.setBaseExported,
     }),
     [value]
   );

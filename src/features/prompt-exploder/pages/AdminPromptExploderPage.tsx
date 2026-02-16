@@ -4,6 +4,11 @@ import { ArrowDown, ArrowUp, GripVertical, Link2, Plus, RefreshCcw, Settings2, T
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import {
+  parseValidatorPatternLists,
+  VALIDATOR_PATTERN_LISTS_KEY,
+  type ValidatorPatternList,
+} from '@/features/admin/pages/validator-scope';
 import { extractParamsFromPrompt, setDeepValue } from '@/features/prompt-engine/prompt-params';
 import {
   defaultPromptEngineSettings,
@@ -66,7 +71,6 @@ import {
 } from '../helpers/drag-reorder';
 import {
   promptExploderClampNumber,
-  promptExploderFormatTimestamp,
   promptExploderBenchmarkSuiteLabel,
   promptExploderSafeJsonStringify,
   promptExploderIsFiniteNumber,
@@ -130,7 +134,6 @@ import {
   type PromptExploderParserTuningRuleDraft,
 } from '../parser-tuning';
 import {
-  ensurePromptExploderPatternPack,
   getPromptExploderScopedRules,
   PROMPT_EXPLODER_PATTERN_PACK,
   PROMPT_EXPLODER_PATTERN_PACK_IDS,
@@ -142,15 +145,11 @@ import {
   removePatternSnapshotById,
 } from '../pattern-snapshots';
 import {
-  buildPromptExploderLibraryItem,
-  createPromptExploderLibraryItemId,
   getManualBindingsFromDocument,
   hydratePromptExploderLibraryDocument,
   parsePromptExploderLibrary,
   PROMPT_EXPLODER_LIBRARY_KEY,
-  removePromptExploderLibraryItemById,
   sortPromptExploderLibraryItemsByUpdated,
-  upsertPromptExploderLibraryItems,
 } from '../prompt-library';
 import {
   buildManualLearnedRegexRuleDraft,
@@ -174,8 +173,9 @@ import {
   type TemplateMergeMode,
 } from '../template-learning';
 import {
+  buildPromptExploderValidationRuleStackOptions,
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
-  PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS,
+  normalizePromptExploderValidationRuleStack,
   promptExploderValidationScopeFromStack,
   promptExploderValidationStackFromBridgeSource,
   promptExploderValidatorScopeFromStack,
@@ -186,7 +186,6 @@ import type {
   PromptExploderCaseResolverPartyCandidate,
   PromptExploderCaseResolverPartyRole,
 } from '../bridge';
-import type { PromptExploderLibraryItem } from '../prompt-library';
 import type {
   PromptExploderBenchmarkSuite,
   PromptExploderBinding,
@@ -381,7 +380,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const [sessionLearnedTemplates, setSessionLearnedTemplates] = useState<PromptExploderLearnedTemplate[]>([]);
   const [learningDraft, setLearningDraft] = useState<{
     runtimeRuleProfile: 'all' | 'pattern_pack' | 'learned_only';
-    runtimeValidationRuleStack: 'image_studio_prompt_exploder' | 'case_resolver_prompt_exploder';
+    runtimeValidationRuleStack: string;
     enabled: boolean;
     similarityThreshold: number;
     templateMergeThreshold: number;
@@ -436,10 +435,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     sourceLabel: '',
     targetLabel: '',
   });
-  const [selectedLibraryItemId, setSelectedLibraryItemId] = useState<string | null>(
-    null
-  );
-  const [libraryNameDraft, setLibraryNameDraft] = useState('');
+  const [loadedProjectIdFromQuery, setLoadedProjectIdFromQuery] = useState<string | null>(null);
   const [draggingSegmentId, setDraggingSegmentId] = useState<string | null>(null);
   const [segmentDropTargetId, setSegmentDropTargetId] = useState<string | null>(null);
   const [segmentDropPosition, setSegmentDropPosition] = useState<'before' | 'after' | null>(null);
@@ -456,13 +452,30 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     useState<CaseResolverPartySegmentSelection>(EMPTY_CASE_RESOLVER_PARTY_SELECTION);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
+  const requestedProjectId = searchParams?.get('projectId')?.trim() ?? '';
   const returnTarget = returnTo.startsWith('/admin/case-resolver') ? 'case-resolver' : 'image-studio';
-  const incomingLabel = incomingBridgeSource === 'case-resolver' ? 'Case Resolver' : 'Image Studio';
+  const sourceContextLabel = useMemo(() => {
+    if (incomingBridgeSource === 'case-resolver') return 'Case Resolver';
+    if (incomingBridgeSource === 'image-studio') return 'Image Studio';
+    return returnTarget === 'case-resolver' ? 'Case Resolver' : 'Image Studio';
+  }, [incomingBridgeSource, returnTarget]);
+  const sourceContextDescription = useMemo(() => {
+    if (sourceContextLabel !== 'Case Resolver') {
+      return `Sent from ${sourceContextLabel}.`;
+    }
+    const sourceFileName = incomingCaseResolverContext?.fileName.trim();
+    if (sourceFileName) {
+      return `Sent from Case Resolver: ${sourceFileName}`;
+    }
+    return 'Sent from Case Resolver.';
+  }, [incomingCaseResolverContext?.fileName, sourceContextLabel]);
 
   const rawPromptSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const rawExploderSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
   const rawPromptLibrary =
     settingsQuery.data?.get(PROMPT_EXPLODER_LIBRARY_KEY) ?? null;
+  const rawValidatorPatternLists =
+    settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
   const promptSettings = useMemo(
     () => parsePromptEngineSettings(rawPromptSettings),
     [rawPromptSettings]
@@ -475,37 +488,47 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     () => parsePromptExploderLibrary(rawPromptLibrary),
     [rawPromptLibrary]
   );
+  const validatorPatternLists = useMemo(
+    () => parseValidatorPatternLists(rawValidatorPatternLists),
+    [rawValidatorPatternLists]
+  );
+  const validationPatternStackOptions = useMemo(
+    () => buildPromptExploderValidationRuleStackOptions(validatorPatternLists),
+    [validatorPatternLists]
+  );
   const promptLibraryItems = useMemo(
     () =>
       sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
     [promptLibraryState.items]
   );
   const activeValidationScope = useMemo(
-    () => promptExploderValidationScopeFromStack(learningDraft.runtimeValidationRuleStack),
-    [learningDraft.runtimeValidationRuleStack]
+    () => promptExploderValidationScopeFromStack(
+      learningDraft.runtimeValidationRuleStack,
+      validatorPatternLists
+    ),
+    [learningDraft.runtimeValidationRuleStack, validatorPatternLists]
   );
   const activeValidatorScope = useMemo(
-    () => promptExploderValidatorScopeFromStack(learningDraft.runtimeValidationRuleStack),
-    [learningDraft.runtimeValidationRuleStack]
+    () => promptExploderValidatorScopeFromStack(
+      learningDraft.runtimeValidationRuleStack,
+      validatorPatternLists
+    ),
+    [learningDraft.runtimeValidationRuleStack, validatorPatternLists]
   );
   const activeValidationStackLabel = useMemo(
     () =>
-      PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.find(
+      validationPatternStackOptions.find(
         (option) => option.value === learningDraft.runtimeValidationRuleStack
       )?.label ?? learningDraft.runtimeValidationRuleStack,
-    [learningDraft.runtimeValidationRuleStack]
+    [learningDraft.runtimeValidationRuleStack, validationPatternStackOptions]
   );
-  const selectedLibraryItem = useMemo(() => {
-    if (!selectedLibraryItemId) return null;
-    return (
-      promptLibraryItems.find((item) => item.id === selectedLibraryItemId) ?? null
-    );
-  }, [promptLibraryItems, selectedLibraryItemId]);
 
   useEffect(() => {
     setLearningDraft({
       runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile,
-      runtimeValidationRuleStack: promptExploderSettings.runtime.validationRuleStack,
+      runtimeValidationRuleStack: normalizePromptExploderValidationRuleStack(
+        promptExploderSettings.runtime.validationRuleStack
+      ),
       enabled: promptExploderSettings.learning.enabled,
       similarityThreshold: promptExploderSettings.learning.similarityThreshold,
       templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
@@ -541,6 +564,22 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     promptExploderSettings.learning.templateMergeThreshold,
     promptExploderSettings.learning.similarityThreshold,
   ]);
+
+  useEffect(() => {
+    setLearningDraft((previous) => {
+      const normalizedStack = normalizePromptExploderValidationRuleStack(
+        previous.runtimeValidationRuleStack,
+        validatorPatternLists
+      );
+      if (normalizedStack === previous.runtimeValidationRuleStack) {
+        return previous;
+      }
+      return {
+        ...previous,
+        runtimeValidationRuleStack: normalizedStack,
+      };
+    });
+  }, [validatorPatternLists]);
 
   const scopedRules = useMemo<PromptValidationRule[]>(
     () => getPromptExploderScopedRules(promptSettings, activeValidationScope),
@@ -807,12 +846,6 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   }, [availableSnapshots, selectedSnapshotId]);
 
   useEffect(() => {
-    if (!selectedLibraryItemId) return;
-    if (promptLibraryItems.some((item) => item.id === selectedLibraryItemId)) return;
-    setSelectedLibraryItemId(null);
-  }, [promptLibraryItems, selectedLibraryItemId]);
-
-  useEffect(() => {
     if (!draggingSegmentId) return;
     const segmentIds = new Set((documentState?.segments ?? []).map((segment) => segment.id));
     if (segmentIds.has(draggingSegmentId)) return;
@@ -934,7 +967,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
           setLearningDraft((previous) => ({
             ...previous,
             runtimeValidationRuleStack:
-              promptExploderValidationStackFromBridgeSource(draftPayload.source),
+              promptExploderValidationStackFromBridgeSource(
+                draftPayload.source,
+                validatorPatternLists
+              ),
           }));
         }
       } else {
@@ -947,7 +983,43 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     if (promptText.trim().length > 0) return;
 
     setPromptText('=== PROMPT EXPLODER DEMO ===\n\nROLE\nDefine your role here.\n\nPARAMS\nparams = {\n  "example": true\n}');
-  }, [promptText]);
+  }, [promptText, validatorPatternLists]);
+
+  useEffect(() => {
+    if (!requestedProjectId) {
+      if (loadedProjectIdFromQuery !== null) {
+        setLoadedProjectIdFromQuery(null);
+      }
+      return;
+    }
+    if (loadedProjectIdFromQuery === requestedProjectId) return;
+
+    const requestedProject = promptLibraryItems.find(
+      (item) => item.id === requestedProjectId
+    );
+    if (!requestedProject) {
+      if (!settingsQuery.isSuccess) return;
+      toast('Requested project no longer exists.', { variant: 'warning' });
+      setLoadedProjectIdFromQuery(requestedProjectId);
+      return;
+    }
+
+    const hydratedDocument = hydratePromptExploderLibraryDocument(requestedProject);
+    setPromptText(requestedProject.prompt);
+    setDocumentState(hydratedDocument);
+    setSelectedSegmentId(hydratedDocument?.segments[0]?.id ?? null);
+    setManualBindings(getManualBindingsFromDocument(hydratedDocument));
+    setBenchmarkReport(null);
+    setDismissedBenchmarkSuggestionIds([]);
+    setLoadedProjectIdFromQuery(requestedProjectId);
+    toast(`Loaded project: ${requestedProject.name}`, { variant: 'success' });
+  }, [
+    loadedProjectIdFromQuery,
+    promptLibraryItems,
+    requestedProjectId,
+    settingsQuery.isSuccess,
+    toast,
+  ]);
 
   useEffect(() => {
     if (returnTarget !== 'case-resolver') return;
@@ -1889,32 +1961,6 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     );
   };
 
-  const handleInstallPatternPack = async (): Promise<void> => {
-    try {
-      const result = ensurePromptExploderPatternPack(promptSettings, {
-        scope: activeValidationScope,
-      });
-      if (result.addedRuleIds.length === 0 && result.updatedRuleIds.length === 0) {
-        toast('Prompt Exploder pattern pack is already installed.', { variant: 'info' });
-        return;
-      }
-
-      await updateSetting.mutateAsync({
-        key: PROMPT_ENGINE_SETTINGS_KEY,
-        value: serializeSetting(result.nextSettings),
-      });
-
-      toast(
-        `Pattern pack synced. Added ${result.addedRuleIds.length}, updated ${result.updatedRuleIds.length}.`,
-        { variant: 'success' }
-      );
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to install pattern pack.', {
-        variant: 'error',
-      });
-    }
-  };
-
   const patchParserTuningDraft = (
     ruleId: PromptExploderParserTuningRuleDraft['id'],
     patch: Partial<PromptExploderParserTuningRuleDraft>
@@ -1994,7 +2040,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         runtime: {
           ...promptExploderSettings.runtime,
           ruleProfile: learningDraft.runtimeRuleProfile,
-          validationRuleStack: learningDraft.runtimeValidationRuleStack,
+          validationRuleStack: normalizePromptExploderValidationRuleStack(
+            learningDraft.runtimeValidationRuleStack,
+            validatorPatternLists
+          ),
           benchmarkSuite: benchmarkSuiteDraft,
           benchmarkLowConfidenceThreshold: promptExploderClampNumber(
             benchmarkLowConfidenceThresholdDraft,
@@ -2274,7 +2323,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const handleReloadFromStudio = (): void => {
     const draftPayload = consumePromptExploderDraftPayload('prompt-exploder');
     if (!draftPayload) {
-      toast(`No draft prompt was received from ${incomingLabel}.`, { variant: 'info' });
+      toast(`No draft prompt was received from ${sourceContextLabel}.`, { variant: 'info' });
       return;
     }
     const sourceLabel = draftPayload.source === 'case-resolver' ? 'Case Resolver' : 'Image Studio';
@@ -2285,7 +2334,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         setLearningDraft((previous) => ({
           ...previous,
           runtimeValidationRuleStack:
-            promptExploderValidationStackFromBridgeSource(draftPayload.source),
+            promptExploderValidationStackFromBridgeSource(
+              draftPayload.source,
+              validatorPatternLists
+            ),
         }));
       }
     } else {
@@ -2293,115 +2345,6 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }
     setIncomingCaseResolverContext(draftPayload.caseResolverContext ?? null);
     toast(`Loaded latest prompt draft from ${sourceLabel}.`, { variant: 'success' });
-  };
-
-  const persistPromptLibraryItems = async (
-    items: PromptExploderLibraryItem[]
-  ): Promise<void> => {
-    await updateSetting.mutateAsync({
-      key: PROMPT_EXPLODER_LIBRARY_KEY,
-      value: serializeSetting({
-        version: 1,
-        items,
-      }),
-    });
-  };
-
-  const handleNewLibraryEntry = (): void => {
-    setSelectedLibraryItemId(null);
-    setLibraryNameDraft('');
-    setPromptText('');
-    setDocumentState(null);
-    setSelectedSegmentId(null);
-    setManualBindings([]);
-    setBenchmarkReport(null);
-    setDismissedBenchmarkSuggestionIds([]);
-    toast('Started a new prompt draft.', { variant: 'info' });
-  };
-
-  const handleSaveLibraryItem = async (): Promise<void> => {
-    const prompt = promptText.trim();
-    if (!prompt) {
-      toast('Enter a prompt before saving to the library.', { variant: 'info' });
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const nextItem = buildPromptExploderLibraryItem({
-      prompt,
-      libraryNameDraft,
-      existingItem: selectedLibraryItem,
-      documentState,
-      now,
-      createItemId: createPromptExploderLibraryItemId,
-    });
-
-    const nextItems = upsertPromptExploderLibraryItems({
-      items: promptLibraryState.items,
-      nextItem,
-      maxItems: 200,
-    });
-
-    try {
-      await persistPromptLibraryItems(nextItems);
-      setSelectedLibraryItemId(nextItem.id);
-      setLibraryNameDraft(nextItem.name);
-      toast(`Saved library entry: ${nextItem.name}`, { variant: 'success' });
-    } catch (error) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save Prompt Exploder library entry.',
-        { variant: 'error' }
-      );
-    }
-  };
-
-  const handleLoadLibraryItem = (itemId: string): void => {
-    const item = promptLibraryItems.find((candidate) => candidate.id === itemId);
-    if (!item) {
-      toast('Library entry no longer exists.', { variant: 'error' });
-      return;
-    }
-
-    const hydratedDocument = hydratePromptExploderLibraryDocument(item);
-
-    setSelectedLibraryItemId(item.id);
-    setLibraryNameDraft(item.name);
-    setPromptText(item.prompt);
-    setDocumentState(hydratedDocument);
-    setSelectedSegmentId(hydratedDocument?.segments[0]?.id ?? null);
-    setManualBindings(getManualBindingsFromDocument(hydratedDocument));
-    setBenchmarkReport(null);
-    setDismissedBenchmarkSuggestionIds([]);
-    toast(`Loaded library entry: ${item.name}`, { variant: 'success' });
-  };
-
-  const handleDeleteLibraryItem = async (itemId: string): Promise<void> => {
-    const target = promptLibraryState.items.find((item) => item.id === itemId);
-    if (!target) {
-      toast('Library entry no longer exists.', { variant: 'info' });
-      return;
-    }
-
-    const nextItems = removePromptExploderLibraryItemById(
-      promptLibraryState.items,
-      itemId
-    );
-    try {
-      await persistPromptLibraryItems(nextItems);
-      if (selectedLibraryItemId === itemId) {
-        setSelectedLibraryItemId(null);
-      }
-      toast(`Deleted library entry: ${target.name}`, { variant: 'success' });
-    } catch (error) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to delete Prompt Exploder library entry.',
-        { variant: 'error' }
-      );
-    }
   };
 
   const handleAddManualBinding = (): void => {
@@ -2785,11 +2728,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     returnTarget === 'case-resolver' ? 'Apply to Case Resolver' : 'Apply to Image Studio';
 
   return (
-    <div className='container mx-auto space-y-4 py-6'>
+    <div className='w-full space-y-5 px-4 py-6 xl:px-6 2xl:px-8'>
       <SectionHeader
-        eyebrow='AI · Prompt Exploder'
         title='Prompt Exploder'
-        description='Explode prompts into typed segments, edit structure, and reassemble with references intact.'
+        description={sourceContextDescription}
         actions={
           <div className='flex flex-wrap items-center gap-2'>
             <Button
@@ -2799,6 +2741,15 @@ export function AdminPromptExploderPage(): React.JSX.Element {
             >
               <RefreshCcw className='mr-2 size-4' />
               Reload Incoming Draft
+            </Button>
+            <Button
+              size='xs'
+              variant='outline'
+              onClick={() => {
+                router.push('/admin/prompt-exploder/projects');
+              }}
+            >
+              Projects
             </Button>
             <Button
               size='xs'
@@ -2858,21 +2809,6 @@ export function AdminPromptExploderPage(): React.JSX.Element {
           </div>
         }
       >
-        <div className='mt-3 flex flex-wrap items-center gap-2'>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => {
-              void handleInstallPatternPack();
-            }}
-            disabled={updateSetting.isPending}
-          >
-            Install Pattern Pack
-          </Button>
-          <div className='text-xs text-gray-500'>
-            Advanced pack includes {PROMPT_EXPLODER_PATTERN_PACK.length} segmentation patterns.
-          </div>
-        </div>
         <div className='mt-3 grid gap-2 md:grid-cols-9'>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Validation Pattern Stack</Label>
@@ -2882,11 +2818,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               onValueChange={(value: string) => {
                 setLearningDraft((previous) => ({
                   ...previous,
-                  runtimeValidationRuleStack:
-                    value as typeof previous.runtimeValidationRuleStack,
+                  runtimeValidationRuleStack: value,
                 }));
               }}
-              options={PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.map((option) => ({
+              options={validationPatternStackOptions.map((option) => ({
                 value: option.value,
                 label: option.label,
               }))}
@@ -3193,6 +3128,14 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               },
               onResetToPackDefaults: handleResetParserTuningDrafts,
               onOpenValidationPatterns: () => {
+                const activeList = validatorPatternLists.find(
+                  (list: ValidatorPatternList): boolean =>
+                    list.id === learningDraft.runtimeValidationRuleStack
+                );
+                if (activeList) {
+                  router.push(`/admin/validator?list=${encodeURIComponent(activeList.id)}`);
+                  return;
+                }
                 router.push(`/admin/validator?scope=${activeValidatorScope}`);
               },
               isBusy: updateSetting.isPending,
@@ -3205,122 +3148,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         )}
       </FormSection>
 
-      <div className='grid gap-4'>
-        <div className='space-y-4'>
-          <FormSection
-            title='Prompt Exploder Projects'
-            description='Manage all Prompt Exploder projects and their saved explosions.'
-            variant='subtle'
-            className='p-4'
-            actions={
-              <div className='flex flex-wrap items-center gap-2'>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
-                    void handleSaveLibraryItem();
-                  }}
-                  disabled={updateSetting.isPending}
-                >
-                  Save Project
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={handleNewLibraryEntry}
-                >
-                  New Project
-                </Button>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => {
-                    if (!selectedLibraryItemId) return;
-                    void handleDeleteLibraryItem(selectedLibraryItemId);
-                  }}
-                  disabled={!selectedLibraryItemId || updateSetting.isPending}
-                >
-                  Delete Project
-                </Button>
-              </div>
-            }
-          >
-            <div className='grid gap-3 lg:grid-cols-[320px_minmax(0,1fr)]'>
-              <div className='space-y-1'>
-                <Label className='text-[11px] text-gray-400'>Projects</Label>
-                {promptLibraryItems.length === 0 ? (
-                  <div className='rounded border border-border/50 bg-card/20 px-3 py-4 text-xs text-gray-500'>
-                    No projects saved yet.
-                  </div>
-                ) : (
-                  <div className='max-h-[280px] space-y-2 overflow-auto rounded border border-border/50 bg-card/20 p-2'>
-                    {promptLibraryItems.map((item) => {
-                      const isSelected = selectedLibraryItemId === item.id;
-                      const segmentCount = item.document?.segments.length ?? 0;
-                      return (
-                        <button
-                          key={item.id}
-                          type='button'
-                          className={`w-full rounded border px-2 py-2 text-left text-xs transition-colors ${isSelected ? 'border-blue-400 bg-blue-500/10 text-gray-100' : 'border-border/50 bg-card/30 text-gray-300 hover:border-blue-300/50'}`}
-                          onClick={() => {
-                            handleLoadLibraryItem(item.id);
-                          }}
-                        >
-                          <div className='truncate font-medium'>{item.name}</div>
-                          <div className='mt-1 text-[10px] text-gray-500'>
-                            segments {segmentCount} · updated {promptExploderFormatTimestamp(item.updatedAt)}
-                          </div>
-                          <div className='mt-1 line-clamp-2 text-[10px] text-gray-500'>
-                            {item.prompt}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              <div className='space-y-2'>
-                <div className='space-y-1'>
-                  <Label className='text-[11px] text-gray-400'>Project Name</Label>
-                  <Input
-                    value={libraryNameDraft}
-                    onChange={(event) => {
-                      setLibraryNameDraft(event.target.value);
-                    }}
-                    placeholder='Project name'
-                  />
-                </div>
-                <div className='rounded border border-border/50 bg-card/20 p-2 text-xs text-gray-500'>
-                  <div>
-                    Active project:{' '}
-                    <span className='text-gray-300'>
-                      {selectedLibraryItem?.name ?? 'Unsaved draft'}
-                    </span>
-                  </div>
-                  <div>
-                    Prompt length:{' '}
-                    <span className='text-gray-300'>{promptText.length}</span>
-                  </div>
-                  <div>
-                    Saved segments:{' '}
-                    <span className='text-gray-300'>
-                      {selectedLibraryItem?.document?.segments.length ?? 0}
-                    </span>
-                  </div>
-                  <div>
-                    Current segments:{' '}
-                    <span className='text-gray-300'>
-                      {documentState?.segments.length ?? 0}
-                    </span>
-                  </div>
-                </div>
-                <div className='text-[11px] text-gray-500'>
-                  Save Project stores both prompt text and the current exploded document.
-                </div>
-              </div>
-            </div>
-          </FormSection>
-
+      <div className='grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] xl:items-start'>
+        <div className='min-w-0 space-y-4'>
           <FormSection
             title='Source Prompt'
             description='Paste a prompt and explode it into structured segments.'
@@ -5083,7 +4912,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
           </FormSection>
         </div>
 
-        <div className='space-y-4'>
+        <div className='min-w-0 space-y-4'>
           <FormSection
             title='Bindings'
             description='Auto-detected links between references and parameter usage.'

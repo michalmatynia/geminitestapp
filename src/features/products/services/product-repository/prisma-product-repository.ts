@@ -38,6 +38,8 @@ const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
   return Array.from(unique);
 };
 
+const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
+
 const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput => {
   const where: Prisma.ProductWhereInput = {};
   const andConditions: Prisma.ProductWhereInput[] = [];
@@ -118,6 +120,26 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
         { categories: { some: { categoryId: filters.categoryId } } },
       ],
     });
+  }
+
+  if (filters.baseExported === true) {
+    where.listings = {
+      some: {
+        integration: {
+          slug: { in: [...BASE_INTEGRATION_SLUGS] },
+        },
+        externalListingId: { not: null },
+      },
+    };
+  } else if (filters.baseExported === false) {
+    where.listings = {
+      none: {
+        integration: {
+          slug: { in: [...BASE_INTEGRATION_SLUGS] },
+        },
+        externalListingId: { not: null },
+      },
+    };
   }
 
   if (andConditions.length > 0) {

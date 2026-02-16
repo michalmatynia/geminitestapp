@@ -39,17 +39,26 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
     'Manage tags used by Case Resolver documents.',
   '/admin/case-resolver/categories':
     'Manage the Case Resolver document category tree.',
+  '/admin/case-resolver/preferences':
+    'Configure default Case Resolver Case list view and filter behavior.',
   '/admin/case-resolver/settings':
     'Configure Case Resolver OCR model settings.',
   '/admin/filemaker':
     'Manage persons and organizations used as addresser/addressee in Case Resolver documents.',
+  '/admin/filemaker/persons':
+    'Search and review Filemaker persons.',
+  '/admin/filemaker/organizations':
+    'Search and review Filemaker organizations.',
   '/admin/filemaker/list':
-    'Search and review the Filemaker person and organization registry.',
+    'Search and review the combined Filemaker person and organization registry.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',
   '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
   '/admin/validator':
-    'Manage validator pattern lists for Products, Image Studio, and Prompt Exploder variants.',
+    'Edit validation rules for each available validator pattern list.',
+  '/admin/validator/lists':
+    'Create, rename, lock, and remove available validator pattern lists.',
   '/admin/prompt-exploder': 'Explode long prompts into editable typed segments and reassemble them.',
+  '/admin/prompt-exploder/projects': 'Create, edit, remove, and open Prompt Exploder projects.',
   '/admin/prompt-exploder/settings': 'Configure Prompt Exploder runtime, learning, and AI model settings.',
   '/admin/products': 'Browse and manage all products in the catalog.',
   '/admin/cms/builder': 'Visual page builder for CMS layouts.',

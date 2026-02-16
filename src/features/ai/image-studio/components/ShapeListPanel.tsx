@@ -7,7 +7,6 @@ import type { VectorShape, VectorShapeRole } from '@/shared/types/domain/vector'
 import {
   Button,
   Input,
-  SelectSimple,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -137,18 +136,28 @@ export function ShapeListPanel({
 
             {/* Role selector */}
             {isActive && (
-              <div onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                <SelectSimple size='sm'
-                  className='w-[72px]'
-                  value={shape.role ?? undefined}
-                  onValueChange={(value: string) =>
-                    handleUpdateShape(shape.id, { role: value as VectorShapeRole })
-                  }
-                  options={ROLE_OPTIONS}
-                  placeholder='Role'
-                  triggerClassName='h-5 px-1 text-[10px]'
-                  ariaLabel='Shape role'
-                />
+              <div
+                onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+                onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                <select
+                  value={shape.role ?? ''}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                    const value = e.target.value.trim();
+                    if (!value) return;
+                    handleUpdateShape(shape.id, { role: value as VectorShapeRole });
+                  }}
+                  className='h-5 w-[86px] rounded border border-border/60 bg-card/50 px-1 text-[10px] text-foreground'
+                  aria-label='Shape role'
+                >
+                  <option value=''>Role</option>
+                  {ROLE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 

@@ -51,25 +51,41 @@ const resolveEdgeMeta = (
   return edgeMeta[edgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
 };
 
+const decodeBasicHtmlEntities = (value: string): string =>
+  value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&apos;|&#39;/gi, '\'')
+    .replace(/&quot;/gi, '"')
+    .replace(/&gt;/gi, '>')
+    .replace(/&lt;/gi, '<')
+    .replace(/&amp;/gi, '&');
+
 const decodeHtmlEntity = (value: string): string => {
+  const basicDecoded = decodeBasicHtmlEntities(value);
   try {
-    if (typeof window === 'undefined') return value;
+    if (typeof window === 'undefined') return basicDecoded;
     const textarea = document.createElement('textarea');
-    textarea.innerHTML = value;
-    return textarea.value;
-  } catch (error) {
-    console.error('Failed to decode HTML entity:', error);
-    return value;
+    textarea.innerHTML = basicDecoded;
+    return decodeBasicHtmlEntities(textarea.value);
+  } catch {
+    return basicDecoded;
   }
 };
 
-const stripHtml = (html: string): string => {
-  const normalized = html
+const stripHtmlTagsPreserveBreaks = (value: string): string =>
+  value
     .replace(/<br\s*\/?\s*>/gi, '\n')
     .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote)>/gi, '\n')
     .replace(/<li>/gi, '• ')
     .replace(/<[^>]+>/g, '');
-  return decodeHtmlEntity(normalized)
+
+const stripHtml = (html: string): string => {
+  // Decode first so escaped HTML tags (e.g. &lt;b&gt;) are stripped as markup, not emitted as text.
+  const decoded = decodeHtmlEntity(html);
+  const stripped = stripHtmlTagsPreserveBreaks(decoded);
+  // Decode once more for any remaining entities and strip again to handle double-encoded wrappers.
+  const normalized = stripHtmlTagsPreserveBreaks(decodeHtmlEntity(stripped));
+  return normalized
     .split('\n')
     .map((line: string) => line.trim())
     .join('\n')

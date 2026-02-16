@@ -95,6 +95,17 @@ export interface StudioAssetImportResult {
   failures: Array<{ filename?: string; filepath?: string; error: string }>;
 }
 
+export interface RenameStudioProjectPayload {
+  projectId: string;
+  nextProjectId: string;
+}
+
+export interface RenameStudioProjectResult {
+  projectId: string;
+  fromProjectId: string;
+  renamed: boolean;
+}
+
 export function useCreateStudioProject(): CreateMutation<string, string> {
   const queryClient = useQueryClient();
   return createCreateMutation({
@@ -106,6 +117,40 @@ export function useCreateStudioProject(): CreateMutation<string, string> {
     options: {
       onSuccess: () => {
         void invalidateImageStudioProjects(queryClient);
+      },
+    },
+  });
+}
+
+export function useRenameStudioProject(): UpdateMutation<RenameStudioProjectResult, RenameStudioProjectPayload> {
+  const queryClient = useQueryClient();
+  return createUpdateMutation({
+    mutationFn: async ({ projectId, nextProjectId }: RenameStudioProjectPayload): Promise<RenameStudioProjectResult> => {
+      const fromProjectId = projectId.trim();
+      const response = await api.patch<RenameStudioProjectResult>(
+        `/api/image-studio/projects/${encodeURIComponent(fromProjectId)}`,
+        { projectId: nextProjectId },
+        {
+          timeout: 120_000,
+        }
+      );
+      return {
+        projectId: response.projectId,
+        fromProjectId: response.fromProjectId || fromProjectId,
+        renamed: response.renamed !== false,
+      };
+    },
+    options: {
+      onSuccess: (result: RenameStudioProjectResult, variables: RenameStudioProjectPayload) => {
+        const fromProjectId = variables.projectId.trim();
+        const toProjectId = result.projectId.trim() || variables.nextProjectId.trim();
+        void invalidateImageStudioProjects(queryClient);
+        if (fromProjectId) {
+          void invalidateImageStudioSlots(queryClient, fromProjectId);
+        }
+        if (toProjectId && toProjectId !== fromProjectId) {
+          void invalidateImageStudioSlots(queryClient, toProjectId);
+        }
       },
     },
   });

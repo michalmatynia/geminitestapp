@@ -7,7 +7,6 @@ import { Button, FormSection, Input, Label, StatusToggle, SelectSimple } from '@
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
 import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
-import { PROMPT_EXPLODER_PATTERN_PACK } from '../pattern-pack';
 import { PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS } from '../validation-stack';
 
 import type { PromptExploderLearnedTemplate } from '../types';
@@ -30,7 +29,6 @@ export function PatternRuntimePanel(): React.JSX.Element {
     setLearningDraft,
     setSnapshotDraftName,
     setSelectedSnapshotId,
-    handleInstallPatternPack,
     handleSaveLearningSettings,
     handleCapturePatternSnapshot,
     handleRestorePatternSnapshot,
@@ -84,21 +82,6 @@ export function PatternRuntimePanel(): React.JSX.Element {
         </div>
       }
     >
-      <div className='mt-3 flex flex-wrap items-center gap-2'>
-        <Button
-          type='button'
-          variant='outline'
-          onClick={() => {
-            void handleInstallPatternPack();
-          }}
-          disabled={isBusy}
-        >
-          Install Pattern Pack
-        </Button>
-        <div className='text-xs text-gray-500'>
-          Advanced pack includes {PROMPT_EXPLODER_PATTERN_PACK.length} segmentation patterns.
-        </div>
-      </div>
       <div className='mt-3 grid gap-2 md:grid-cols-9'>
         <div className='space-y-1'>
           <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
@@ -108,7 +91,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             onValueChange={(value: string) => {
               setLearningDraft((previous) => ({
                 ...previous,
-                runtimeValidationRuleStack: value as typeof previous.runtimeValidationRuleStack,
+                runtimeValidationRuleStack: value,
               }));
             }}
             options={PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS.map((option) => ({

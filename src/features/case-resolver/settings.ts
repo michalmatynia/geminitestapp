@@ -142,13 +142,6 @@ const normalizeHexColor = (value: unknown, fallback: string): string => {
   return fallback;
 };
 
-const toLocalDateValue = (date: Date): string => {
-  const year = String(date.getFullYear());
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const normalizeDocumentDate = (value: unknown): string => {
   if (typeof value === 'string') {
     const trimmed = value.trim();
@@ -159,7 +152,97 @@ const normalizeDocumentDate = (value: unknown): string => {
       return trimmed.slice(0, 10);
     }
   }
-  return toLocalDateValue(new Date());
+  return '';
+};
+
+const CASE_RESOLVER_DATE_LABEL_REGEX = /\b(date|document\s*date|data|data\s*dokumentu)\b/i;
+const CASE_RESOLVER_YMD_DATE_REGEX = /\b((?:19|20)\d{2})[.\-/](0?[1-9]|1[0-2])[.\-/](0?[1-9]|[12]\d|3[01])\b/g;
+const CASE_RESOLVER_DMY_DATE_REGEX = /\b(0?[1-9]|[12]\d|3[01])[.-](0?[1-9]|1[0-2])[.-]((?:19|20)\d{2})\b/g;
+const CASE_RESOLVER_MDY_DATE_REGEX = /\b(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/((?:19|20)\d{2})\b/g;
+
+const toIsoDocumentDate = (year: number, month: number, day: number): string | null => {
+  if (year < 1900 || year > 2099) return null;
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() !== month - 1 ||
+    parsed.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};
+
+const findFirstDateMatch = (source: string): string | null => {
+  const text = source.trim();
+  if (!text) return null;
+  let firstIndex = Number.POSITIVE_INFINITY;
+  let firstValue: string | null = null;
+  const registerMatch = (index: number, value: string | null): void => {
+    if (!value) return;
+    if (index >= firstIndex) return;
+    firstIndex = index;
+    firstValue = value;
+  };
+
+  CASE_RESOLVER_YMD_DATE_REGEX.lastIndex = 0;
+  let match = CASE_RESOLVER_YMD_DATE_REGEX.exec(text);
+  while (match) {
+    registerMatch(
+      match.index,
+      toIsoDocumentDate(
+        Number(match[1]),
+        Number(match[2]),
+        Number(match[3])
+      )
+    );
+    match = CASE_RESOLVER_YMD_DATE_REGEX.exec(text);
+  }
+
+  CASE_RESOLVER_DMY_DATE_REGEX.lastIndex = 0;
+  match = CASE_RESOLVER_DMY_DATE_REGEX.exec(text);
+  while (match) {
+    registerMatch(
+      match.index,
+      toIsoDocumentDate(
+        Number(match[3]),
+        Number(match[2]),
+        Number(match[1])
+      )
+    );
+    match = CASE_RESOLVER_DMY_DATE_REGEX.exec(text);
+  }
+
+  CASE_RESOLVER_MDY_DATE_REGEX.lastIndex = 0;
+  match = CASE_RESOLVER_MDY_DATE_REGEX.exec(text);
+  while (match) {
+    registerMatch(
+      match.index,
+      toIsoDocumentDate(
+        Number(match[3]),
+        Number(match[1]),
+        Number(match[2])
+      )
+    );
+    match = CASE_RESOLVER_MDY_DATE_REGEX.exec(text);
+  }
+
+  return firstValue;
+};
+
+export const extractCaseResolverDocumentDate = (source: string): string | null => {
+  const normalized = source.trim();
+  if (!normalized) return null;
+  const text = normalized.replace(/<[^>]*>/g, ' ');
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    if (!CASE_RESOLVER_DATE_LABEL_REGEX.test(line)) continue;
+    const labeledMatch = findFirstDateMatch(line);
+    if (labeledMatch) return labeledMatch;
+  }
+  return findFirstDateMatch(text);
 };
 
 const sanitizeNodeMeta = (

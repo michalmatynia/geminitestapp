@@ -60,10 +60,12 @@ export const ProductListHeader = memo(function ProductListHeader({
       {showHeader && (
         <SectionHeader
           className='relative'
+          actionsClassName='!w-full !shrink lg:!flex-1 lg:min-w-0 lg:!justify-stretch'
           title='Products'
           actions={
-            <div className='relative flex w-full items-start lg:min-h-9'>
-              <div className='flex w-full justify-center lg:absolute lg:left-1/2 lg:top-1/2 lg:w-auto lg:-translate-x-1/2 lg:-translate-y-1/2'>
+            <div className='grid w-full grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center'>
+              <div className='hidden lg:block' aria-hidden />
+              <div className='flex justify-center'>
                 <Pagination
                   page={page}
                   totalPages={totalPages}
@@ -76,7 +78,7 @@ export const ProductListHeader = memo(function ProductListHeader({
                   variant='compact'
                 />
               </div>
-              <div className='flex w-full justify-end gap-2 max-sm:flex-wrap lg:absolute lg:right-0 lg:top-0 lg:w-auto lg:flex-nowrap'>
+              <div className='flex w-full justify-end gap-2 max-sm:flex-wrap lg:flex-nowrap'>
                 <SelectSimple
                   size='sm'
                   value={nameLocale}

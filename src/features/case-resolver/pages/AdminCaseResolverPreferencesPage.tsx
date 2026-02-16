@@ -1,0 +1,294 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useMemo, useState } from 'react';
+
+import {
+  useUpdateUserPreferencesMutation,
+  useUserPreferences,
+} from '@/features/auth/hooks/useUserPreferences';
+import type { UserPreferences } from '@/shared/types/domain/user-preferences';
+import { Button, FormField, FormSection, SectionHeader, SelectSimple, useToast } from '@/shared/ui';
+
+type CaseResolverCaseListViewMode = 'hierarchy' | 'list';
+type CaseResolverCaseListSortBy = 'updated' | 'created' | 'name';
+type CaseResolverCaseListSortOrder = 'asc' | 'desc';
+type CaseResolverCaseListSearchScope = 'all' | 'name' | 'folder' | 'content';
+
+type CaseResolverCaseListPreferences = {
+  caseResolverCaseListViewMode: CaseResolverCaseListViewMode;
+  caseResolverCaseListSortBy: CaseResolverCaseListSortBy;
+  caseResolverCaseListSortOrder: CaseResolverCaseListSortOrder;
+  caseResolverCaseListSearchScope: CaseResolverCaseListSearchScope;
+  caseResolverCaseListFiltersCollapsedByDefault: boolean;
+};
+
+const DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES: CaseResolverCaseListPreferences = {
+  caseResolverCaseListViewMode: 'hierarchy',
+  caseResolverCaseListSortBy: 'updated',
+  caseResolverCaseListSortOrder: 'desc',
+  caseResolverCaseListSearchScope: 'all',
+  caseResolverCaseListFiltersCollapsedByDefault: true,
+};
+
+const normalizeCaseResolverCaseListPreferences = (
+  preferences: UserPreferences | undefined
+): CaseResolverCaseListPreferences => ({
+  caseResolverCaseListViewMode:
+    preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
+  caseResolverCaseListSortBy:
+    preferences?.caseResolverCaseListSortBy === 'created' ||
+    preferences?.caseResolverCaseListSortBy === 'name'
+      ? preferences.caseResolverCaseListSortBy
+      : 'updated',
+  caseResolverCaseListSortOrder:
+    preferences?.caseResolverCaseListSortOrder === 'asc' ? 'asc' : 'desc',
+  caseResolverCaseListSearchScope:
+    preferences?.caseResolverCaseListSearchScope === 'name' ||
+    preferences?.caseResolverCaseListSearchScope === 'folder' ||
+    preferences?.caseResolverCaseListSearchScope === 'content'
+      ? preferences.caseResolverCaseListSearchScope
+      : 'all',
+  caseResolverCaseListFiltersCollapsedByDefault:
+    preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
+});
+
+export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
+  const router = useRouter();
+  const { toast } = useToast();
+  const preferencesQuery = useUserPreferences();
+  const updatePreferencesMutation = useUpdateUserPreferencesMutation();
+
+  const savedPreferences = useMemo(
+    () => normalizeCaseResolverCaseListPreferences(preferencesQuery.data),
+    [preferencesQuery.data]
+  );
+  const hydrationSignature = useMemo(
+    () => JSON.stringify(savedPreferences),
+    [savedPreferences]
+  );
+
+  const [draft, setDraft] = useState<CaseResolverCaseListPreferences>(
+    DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES
+  );
+  const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loadedFrom === hydrationSignature) return;
+    setDraft(savedPreferences);
+    setLoadedFrom(hydrationSignature);
+  }, [hydrationSignature, loadedFrom, savedPreferences]);
+
+  const handleSave = async (): Promise<void> => {
+    try {
+      await updatePreferencesMutation.mutateAsync({
+        caseResolverCaseListViewMode: draft.caseResolverCaseListViewMode,
+        caseResolverCaseListSortBy: draft.caseResolverCaseListSortBy,
+        caseResolverCaseListSortOrder: draft.caseResolverCaseListSortOrder,
+        caseResolverCaseListSearchScope: draft.caseResolverCaseListSearchScope,
+        caseResolverCaseListFiltersCollapsedByDefault:
+          draft.caseResolverCaseListFiltersCollapsedByDefault,
+      });
+      toast('Case Resolver preferences saved.', { variant: 'success' });
+      router.push('/admin/case-resolver/cases');
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to save Case Resolver preferences.',
+        { variant: 'error' }
+      );
+    }
+  };
+
+  const handleReset = async (): Promise<void> => {
+    try {
+      await updatePreferencesMutation.mutateAsync(
+        DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES
+      );
+      setDraft(DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES);
+      setLoadedFrom(JSON.stringify(DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES));
+      toast('Case Resolver preferences reset to defaults.', { variant: 'success' });
+    } catch (error) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to reset Case Resolver preferences.',
+        { variant: 'error' }
+      );
+    }
+  };
+
+  if (preferencesQuery.isLoading && !preferencesQuery.data) {
+    return (
+      <div className='container mx-auto py-10'>
+        <div className='rounded-lg bg-card p-6 shadow-lg'>
+          <p className='text-sm text-gray-400'>Loading preferences...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className='container mx-auto max-w-5xl space-y-6 py-10'>
+      <SectionHeader
+        title='Case Resolver Preferences'
+        size='md'
+        description='Configure default Case List view behavior.'
+        actions={(
+          <Button
+            type='button'
+            variant='outline'
+            onClick={(): void => {
+              router.push('/admin/case-resolver/cases');
+            }}
+          >
+            Back to Cases
+          </Button>
+        )}
+      />
+
+      <FormSection title='Case List Defaults' className='p-6'>
+        <div className='space-y-4'>
+          <FormField
+            label='Default View'
+            description='Choose whether the Case list opens in hierarchy or list view.'
+          >
+            <SelectSimple
+              size='sm'
+              value={draft.caseResolverCaseListViewMode}
+              onValueChange={(value: string): void => {
+                setDraft((current: CaseResolverCaseListPreferences) => ({
+                  ...current,
+                  caseResolverCaseListViewMode: value === 'list' ? 'list' : 'hierarchy',
+                }));
+              }}
+              options={[
+                { value: 'hierarchy', label: 'Hierarchy' },
+                { value: 'list', label: 'List' },
+              ]}
+            />
+          </FormField>
+
+          <FormField
+            label='Default Sort By'
+            description='Choose the initial sort field for Cases.'
+          >
+            <SelectSimple
+              size='sm'
+              value={draft.caseResolverCaseListSortBy}
+              onValueChange={(value: string): void => {
+                setDraft((current: CaseResolverCaseListPreferences) => ({
+                  ...current,
+                  caseResolverCaseListSortBy:
+                    value === 'created' || value === 'name' ? value : 'updated',
+                }));
+              }}
+              options={[
+                { value: 'updated', label: 'Date modified' },
+                { value: 'created', label: 'Date created' },
+                { value: 'name', label: 'Name' },
+              ]}
+            />
+          </FormField>
+
+          <FormField
+            label='Default Sort Order'
+            description='Choose whether Cases are shown in ascending or descending order.'
+          >
+            <SelectSimple
+              size='sm'
+              value={draft.caseResolverCaseListSortOrder}
+              onValueChange={(value: string): void => {
+                setDraft((current: CaseResolverCaseListPreferences) => ({
+                  ...current,
+                  caseResolverCaseListSortOrder: value === 'asc' ? 'asc' : 'desc',
+                }));
+              }}
+              options={[
+                { value: 'desc', label: 'Descending' },
+                { value: 'asc', label: 'Ascending' },
+              ]}
+            />
+          </FormField>
+
+          <FormField
+            label='Default Search Scope'
+            description='Set what fields are searched first when typing in Case search.'
+          >
+            <SelectSimple
+              size='sm'
+              value={draft.caseResolverCaseListSearchScope}
+              onValueChange={(value: string): void => {
+                setDraft((current: CaseResolverCaseListPreferences) => ({
+                  ...current,
+                  caseResolverCaseListSearchScope:
+                    value === 'name' || value === 'folder' || value === 'content'
+                      ? value
+                      : 'all',
+                }));
+              }}
+              options={[
+                { value: 'all', label: 'Name + Folder + Content' },
+                { value: 'name', label: 'Name only' },
+                { value: 'folder', label: 'Folder only' },
+                { value: 'content', label: 'Content only' },
+              ]}
+            />
+          </FormField>
+
+          <FormField
+            label='Filters Button Default'
+            description='Set whether filters are hidden or shown when opening the Case list.'
+          >
+            <SelectSimple
+              size='sm'
+              value={draft.caseResolverCaseListFiltersCollapsedByDefault ? 'hidden' : 'shown'}
+              onValueChange={(value: string): void => {
+                setDraft((current: CaseResolverCaseListPreferences) => ({
+                  ...current,
+                  caseResolverCaseListFiltersCollapsedByDefault: value === 'hidden',
+                }));
+              }}
+              options={[
+                { value: 'hidden', label: 'Hide Filters' },
+                { value: 'shown', label: 'Show Filters' },
+              ]}
+            />
+          </FormField>
+        </div>
+      </FormSection>
+
+      <div className='flex items-center justify-between gap-3'>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={(): void => {
+            void handleReset();
+          }}
+          disabled={updatePreferencesMutation.isPending}
+          className='border-yellow-600 text-yellow-600 hover:bg-yellow-600/10'
+        >
+          Reset to Defaults
+        </Button>
+        <div className='flex items-center gap-3'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={(): void => {
+              router.push('/admin/case-resolver/cases');
+            }}
+            disabled={updatePreferencesMutation.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            type='button'
+            onClick={(): void => {
+              void handleSave();
+            }}
+            disabled={updatePreferencesMutation.isPending}
+          >
+            {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Preferences'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

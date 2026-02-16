@@ -254,6 +254,8 @@ export interface ProductDataHookResult {
   setEndDate: (s: string | undefined) => void;
   catalogFilter: string;
   setCatalogFilter: (f: string) => void;
+  baseExported: '' | 'true' | 'false';
+  setBaseExported: (value: '' | 'true' | 'false') => void;
   loadError: Error | null;
   isLoading: boolean;
   isFetching: boolean;
@@ -280,6 +282,7 @@ export function useProductData({
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
+  const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
   const hasInitialized = useRef(false);
 
   useEffect(() => {
@@ -309,7 +312,13 @@ export function useProductData({
     pageSize,
     catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
     searchLanguage: searchLanguage || undefined,
-  }), [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, searchLanguage]);
+    baseExported:
+      baseExported === 'true'
+        ? true
+        : baseExported === 'false'
+          ? false
+          : undefined,
+  }), [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, searchLanguage, baseExported]);
 
   // Use parallel queries
   const results = useQueries({
@@ -346,7 +355,7 @@ export function useProductData({
   // Keep pagination valid when filters change.
   useEffect(() => {
     setPage(1);
-  }, [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, pageSize]);
+  }, [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, baseExported, pageSize]);
 
   // Clamp page when current page no longer exists after count change.
   useEffect(() => {
@@ -377,6 +386,10 @@ export function useProductData({
   const handleSetStartDate = useCallback((s: string | undefined) => setStartDate(s), []);
   const handleSetEndDate = useCallback((s: string | undefined) => setEndDate(s), []);
   const handleSetCatalogFilter = useCallback((f: string) => setCatalogFilter(f), []);
+  const handleSetBaseExported = useCallback(
+    (value: '' | 'true' | 'false') => setBaseExported(value),
+    []
+  );
 
   return {
     data: productsQuery.data || [],
@@ -403,6 +416,8 @@ export function useProductData({
     setEndDate: handleSetEndDate,
     catalogFilter,
     setCatalogFilter: handleSetCatalogFilter,
+    baseExported,
+    setBaseExported: handleSetBaseExported,
     loadError: productsQuery.error || countQuery.error,
     isLoading: productsQuery.isPending || countQuery.isPending,
     isFetching: productsQuery.isFetching || countQuery.isFetching,

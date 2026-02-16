@@ -15,6 +15,7 @@ export async function getProducts(filters: {
   pageSize?: number | undefined;
   catalogId?: string | undefined;
   searchLanguage?: string | undefined;
+  baseExported?: boolean | undefined;
 }, signal?: AbortSignal): Promise<ProductWithImages[]> {
   const options: ApiClientOptions = {
     params: {
@@ -30,6 +31,7 @@ export async function getProducts(filters: {
       pageSize: filters.pageSize,
       catalogId: filters.catalogId,
       searchLanguage: filters.searchLanguage,
+      baseExported: filters.baseExported,
     },
     cache: 'no-store',
   };
@@ -48,6 +50,7 @@ export async function countProducts(filters: {
   endDate?: string | undefined;
   catalogId?: string | undefined;
   searchLanguage?: string | undefined;
+  baseExported?: boolean | undefined;
 }, signal?: AbortSignal): Promise<number> {
   try {
     const options: ApiClientOptions = {
@@ -62,6 +65,7 @@ export async function countProducts(filters: {
         endDate: filters.endDate,
         catalogId: filters.catalogId,
         searchLanguage: filters.searchLanguage,
+        baseExported: filters.baseExported,
       },
       cache: 'no-store',
     };

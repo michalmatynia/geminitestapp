@@ -27,6 +27,11 @@ export type UserPreferencesData = {
   productListDraftIconColor?: string | null;
   aiPathsActivePathId?: string | null;
   imageStudioLastProjectId?: string | null;
+  caseResolverCaseListViewMode?: 'hierarchy' | 'list' | null;
+  caseResolverCaseListSortBy?: 'updated' | 'created' | 'name' | null;
+  caseResolverCaseListSortOrder?: 'asc' | 'desc' | null;
+  caseResolverCaseListSearchScope?: 'all' | 'name' | 'folder' | 'content' | null;
+  caseResolverCaseListFiltersCollapsedByDefault?: boolean | null;
   adminMenuCollapsed?: boolean | null;
   adminMenuFavorites?: string[] | null;
   adminMenuSectionColors?: Record<string, string> | null;
@@ -54,6 +59,11 @@ type UserPreferencesRecord = {
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
   imageStudioLastProjectId: string | null;
+  caseResolverCaseListViewMode: 'hierarchy' | 'list' | null;
+  caseResolverCaseListSortBy: 'updated' | 'created' | 'name' | null;
+  caseResolverCaseListSortOrder: 'asc' | 'desc' | null;
+  caseResolverCaseListSearchScope: 'all' | 'name' | 'folder' | 'content' | null;
+  caseResolverCaseListFiltersCollapsedByDefault: boolean | null;
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[];
   adminMenuSectionColors: Record<string, string>;
@@ -83,6 +93,11 @@ type UserPreferencesDocument = {
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
   imageStudioLastProjectId: string | null;
+  caseResolverCaseListViewMode: 'hierarchy' | 'list' | null;
+  caseResolverCaseListSortBy: 'updated' | 'created' | 'name' | null;
+  caseResolverCaseListSortOrder: 'asc' | 'desc' | null;
+  caseResolverCaseListSearchScope: 'all' | 'name' | 'folder' | 'content' | null;
+  caseResolverCaseListFiltersCollapsedByDefault: boolean | null;
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[] | null;
   adminMenuSectionColors: Record<string, string> | null;
@@ -184,6 +199,12 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
   imageStudioLastProjectId: doc.imageStudioLastProjectId ?? null,
+  caseResolverCaseListViewMode: doc.caseResolverCaseListViewMode ?? 'hierarchy',
+  caseResolverCaseListSortBy: doc.caseResolverCaseListSortBy ?? 'updated',
+  caseResolverCaseListSortOrder: doc.caseResolverCaseListSortOrder ?? 'desc',
+  caseResolverCaseListSearchScope: doc.caseResolverCaseListSearchScope ?? 'all',
+  caseResolverCaseListFiltersCollapsedByDefault:
+    doc.caseResolverCaseListFiltersCollapsedByDefault ?? true,
   adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
   adminMenuFavorites: doc.adminMenuFavorites ?? [],
   adminMenuSectionColors: doc.adminMenuSectionColors ?? {},
@@ -214,6 +235,11 @@ const defaultPreferences = (
   productListDraftIconColor: '#60a5fa',
   aiPathsActivePathId: null,
   imageStudioLastProjectId: null,
+  caseResolverCaseListViewMode: 'hierarchy',
+  caseResolverCaseListSortBy: 'updated',
+  caseResolverCaseListSortOrder: 'desc',
+  caseResolverCaseListSearchScope: 'all',
+  caseResolverCaseListFiltersCollapsedByDefault: true,
   adminMenuCollapsed: false,
   adminMenuFavorites: [],
   adminMenuSectionColors: {},

@@ -34,6 +34,11 @@ export const userPreferencesUpdateSchema = z.object({
     .nullable(),
   aiPathsActivePathId: nullableIdSchema,
   imageStudioLastProjectId: nullableIdSchema,
+  caseResolverCaseListViewMode: z.enum(['hierarchy', 'list']).optional().nullable(),
+  caseResolverCaseListSortBy: z.enum(['updated', 'created', 'name']).optional().nullable(),
+  caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
+  caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']).optional().nullable(),
+  caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
   adminMenuCollapsed: z.boolean().optional().nullable(),
   adminMenuFavorites: stringArraySchema.optional().nullable(),
   adminMenuSectionColors: z.record(z.string(), z.string()).optional().nullable(),
@@ -62,6 +67,11 @@ export const userPreferencesResponseSchema = z
     productListDraftIconColor: z.string().regex(USER_PREFERENCES_HEX_COLOR_PATTERN).optional().nullable(),
     aiPathsActivePathId: z.string().optional().nullable(),
     imageStudioLastProjectId: z.string().optional().nullable(),
+    caseResolverCaseListViewMode: z.enum(['hierarchy', 'list']).optional().nullable(),
+    caseResolverCaseListSortBy: z.enum(['updated', 'created', 'name']).optional().nullable(),
+    caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
+    caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']).optional().nullable(),
+    caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
     adminMenuCollapsed: z.boolean().optional().nullable(),
     adminMenuFavorites: z.array(z.string()).optional(),
     adminMenuSectionColors: z.record(z.string(), z.string()).optional(),
@@ -132,6 +142,22 @@ export const normalizeUserPreferencesUpdatePayload = (
   }
   if (payload.imageStudioLastProjectId !== undefined) {
     normalized.imageStudioLastProjectId = payload.imageStudioLastProjectId;
+  }
+  if (payload.caseResolverCaseListViewMode !== undefined) {
+    normalized.caseResolverCaseListViewMode = payload.caseResolverCaseListViewMode;
+  }
+  if (payload.caseResolverCaseListSortBy !== undefined) {
+    normalized.caseResolverCaseListSortBy = payload.caseResolverCaseListSortBy;
+  }
+  if (payload.caseResolverCaseListSortOrder !== undefined) {
+    normalized.caseResolverCaseListSortOrder = payload.caseResolverCaseListSortOrder;
+  }
+  if (payload.caseResolverCaseListSearchScope !== undefined) {
+    normalized.caseResolverCaseListSearchScope = payload.caseResolverCaseListSearchScope;
+  }
+  if (payload.caseResolverCaseListFiltersCollapsedByDefault !== undefined) {
+    normalized.caseResolverCaseListFiltersCollapsedByDefault =
+      payload.caseResolverCaseListFiltersCollapsedByDefault;
   }
   if (payload.adminMenuCollapsed !== undefined) {
     normalized.adminMenuCollapsed = payload.adminMenuCollapsed;

@@ -47,6 +47,8 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     setStartDate,
     endDate,
     setEndDate,
+    baseExported,
+    setBaseExported,
     filtersCollapsedByDefault,
   } = useProductListFiltersContext();
 
@@ -72,6 +74,18 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
     { key: 'description', label: 'Description', type: 'text', placeholder: 'Search by description...', width: '16rem' },
     { key: 'categoryId', label: 'Category', type: 'select', placeholder: 'All categories', options: categoryOptions, width: '16rem' },
+    {
+      key: 'baseExported',
+      label: 'Base.com Export',
+      type: 'select',
+      placeholder: 'All export statuses',
+      options: [
+        { value: '__all__', label: 'All export statuses' },
+        { value: 'true', label: 'Exported to Base.com' },
+        { value: 'false', label: 'Not exported to Base.com' },
+      ],
+      width: '16rem',
+    },
     { key: 'minPrice', label: 'Min Price', type: 'number', placeholder: 'Min price', width: '9rem' },
     { key: 'maxPrice', label: 'Max Price', type: 'number', placeholder: 'Max price', width: '9rem' },
     { key: 'createdAt', label: 'Date Range', type: 'dateRange', width: '22rem' },
@@ -82,10 +96,11 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     sku,
     description,
     categoryId,
+    baseExported,
     minPrice,
     maxPrice,
     createdAt: { from: startDate, to: endDate },
-  }), [sku, description, categoryId, minPrice, maxPrice, startDate, endDate]);
+  }), [sku, description, categoryId, baseExported, minPrice, maxPrice, startDate, endDate]);
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: unknown) => {
@@ -98,6 +113,13 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         break;
       case 'categoryId':
         setCategoryId(typeof value === 'string' && value && value !== '__all__' ? value : '');
+        break;
+      case 'baseExported':
+        if (value === 'true' || value === 'false') {
+          setBaseExported(value);
+        } else {
+          setBaseExported('');
+        }
         break;
       case 'minPrice':
         setMinPrice(value ? Number(value) : undefined);
@@ -127,6 +149,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         setSku('');
         setDescription('');
         setCategoryId('');
+        setBaseExported('');
         setMinPrice(undefined);
         setMaxPrice(undefined);
         setStartDate('');

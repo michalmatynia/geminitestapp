@@ -425,19 +425,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               >
                 <Upload className='size-4' />
               </Button>
-              <Button
-                type='button'
-                onClick={(): void => {
-                  onPanelCollapsedChange(true);
-                  setPanelCollapsed(true);
-                }}
-                size='sm'
-                variant='outline'
-                className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
-                title='Collapse tree'
-              >
-                <ChevronRight className='size-4' />
-              </Button>
             </>
           )}
         >

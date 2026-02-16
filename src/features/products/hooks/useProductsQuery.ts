@@ -34,6 +34,7 @@ export interface UseProductsFilters {
   pageSize?: number | undefined;
   catalogId?: string | undefined;
   searchLanguage?: string | undefined;
+  baseExported?: boolean | undefined;
 }
 
 export interface UseProductsOptions {

@@ -17,21 +17,19 @@ export interface AiJobStatus {
  */
 export function useAiJobStatus(jobId: string | null): SingleQuery<{ job: AiJobStatus } | null> {
   return createSingleQuery({
+    id: jobId,
     queryKey: QUERY_KEYS.products.aiJobs.detail(jobId || 'none'),
     queryFn: async (): Promise<{ job: AiJobStatus } | null> => {
       if (!jobId) return null;
       return await api.get<{ job: AiJobStatus }>(`/api/products/ai-jobs/${jobId}`);
     },
-    options: {
-      enabled: !!jobId,
-      refetchInterval: (query) => {
-        const data = query.state.data as { job: AiJobStatus } | undefined;
-        if (data?.job?.status === 'completed' || data?.job?.status === 'failed' || data?.job?.status === 'canceled') {
-          return false;
-        }
-        return 2000;
-      },
-      refetchIntervalInBackground: true,
+    enabled: !!jobId,
+    refetchInterval: (data) => {
+      const jobData = data as { job: AiJobStatus } | null;
+      if (jobData?.job?.status === 'completed' || jobData?.job?.status === 'failed' || jobData?.job?.status === 'canceled') {
+        return false;
+      }
+      return 2000;
     },
   });
 }

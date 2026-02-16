@@ -1,11 +1,17 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
+import { emitTanstackTelemetry, getTanstackFactoryMetaFromBag } from '@/shared/lib/observability/tanstack-telemetry';
 import { createQueryClient } from '@/shared/lib/query-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: vi.fn(),
   isLoggableObject: (error: unknown): boolean => typeof error === 'object' && error !== null,
+}));
+
+vi.mock('@/shared/lib/observability/tanstack-telemetry', () => ({
+  emitTanstackTelemetry: vi.fn(),
+  getTanstackFactoryMetaFromBag: vi.fn(() => null),
 }));
 
 describe('createQueryClient', () => {
@@ -67,6 +73,7 @@ describe('createQueryClient', () => {
         }),
       })
     );
+    expect(emitTanstackTelemetry).toHaveBeenCalledTimes(1);
   });
 
   it('logs normalized context for mutation cache errors and never throws', () => {
@@ -100,6 +107,7 @@ describe('createQueryClient', () => {
         }),
       })
     );
+    expect(emitTanstackTelemetry).toHaveBeenCalledTimes(1);
 
     vi.mocked(logClientError).mockImplementationOnce(() => {
       throw new Error('logger failed');
@@ -117,5 +125,33 @@ describe('createQueryClient', () => {
         undefined as unknown as Parameters<NonNullable<typeof onError>>[4]
       )
     ).not.toThrow();
+  });
+
+  it('skips fallback telemetry when factory metadata is present', () => {
+    vi.mocked(getTanstackFactoryMetaFromBag).mockReturnValueOnce({
+      source: 'products.hooks.useProducts',
+      operation: 'list',
+      resource: 'products',
+      key: ['products'],
+      criticality: 'normal',
+      samplingRate: 1,
+      domain: 'products',
+      tags: ['products'],
+    });
+    const client = createQueryClient();
+    const onError = client.getQueryCache().config.onError;
+    expect(typeof onError).toBe('function');
+    if (typeof onError !== 'function') return;
+
+    onError(
+      new Error('factory error'),
+      {
+        queryKey: ['products'],
+        state: { fetchFailureCount: 1 },
+        meta: { tanstackFactoryV2Meta: { source: 'x' } },
+      } as unknown as Parameters<NonNullable<typeof onError>>[1]
+    );
+
+    expect(emitTanstackTelemetry).not.toHaveBeenCalled();
   });
 });

@@ -13,9 +13,9 @@ import {
   Textarea, 
   FormSection, 
   FormField,
-  Badge
+  Badge,
+  ConfirmDialog
 } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
 

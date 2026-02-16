@@ -263,11 +263,11 @@ export const findExistingFilemakerPartyReference = (
 
   let bestPerson: { id: string; score: number } | null = null;
   if (kindHint !== 'organization' && (personFirst || personLast)) {
-    database.persons.forEach((person) => {
+    for (const person of database.persons) {
       const first = normalizeCaseResolverComparable(person.firstName);
       const last = normalizeCaseResolverComparable(person.lastName);
-      if (personFirst && first !== personFirst) return;
-      if (personLast && !isPersonLastNameCompatible(personLast, last)) return;
+      if (personFirst && first !== personFirst) continue;
+      if (personLast && !isPersonLastNameCompatible(personLast, last)) continue;
       const addressScore = scoreAddressCompatibility(candidate, {
         street: person.street,
         streetNumber: person.streetNumber,
@@ -275,7 +275,7 @@ export const findExistingFilemakerPartyReference = (
         postalCode: person.postalCode,
         country: person.country,
       });
-      if (addressScore === null) return;
+      if (addressScore === null) continue;
       const nameScore = (personFirst ? 3 : 0) + (personLast ? 3 : 0);
       const score = nameScore + addressScore;
       if (!bestPerson || score > bestPerson.score) {
@@ -284,14 +284,13 @@ export const findExistingFilemakerPartyReference = (
           score,
         };
       }
-    });
+    }
   }
 
-  const resolvedBestPerson = bestPerson;
-  if (resolvedBestPerson && resolvedBestPerson.score >= 4) {
+  if (bestPerson && bestPerson.score >= 4) {
     return {
       kind: 'person',
-      id: String(resolvedBestPerson.id),
+      id: String(bestPerson.id),
     };
   }
 
@@ -300,9 +299,9 @@ export const findExistingFilemakerPartyReference = (
     (candidate.kind === 'organization' ? candidate.displayName.trim() : '');
   let bestOrganization: { id: string; score: number } | null = null;
   if (kindHint !== 'person' && organizationName) {
-    database.organizations.forEach((organization) => {
+    for (const organization of database.organizations) {
       const nameScore = scoreOrganizationNameCompatibility(organizationName, organization.name);
-      if (nameScore === 0) return;
+      if (nameScore === 0) continue;
       const addressScore = scoreAddressCompatibility(candidate, {
         street: organization.street,
         streetNumber: organization.streetNumber,
@@ -310,7 +309,7 @@ export const findExistingFilemakerPartyReference = (
         postalCode: organization.postalCode,
         country: organization.country,
       });
-      if (addressScore === null) return;
+      if (addressScore === null) continue;
       const score = nameScore + addressScore;
       if (!bestOrganization || score > bestOrganization.score) {
         bestOrganization = {
@@ -318,14 +317,13 @@ export const findExistingFilemakerPartyReference = (
           score,
         };
       }
-    });
+    }
   }
 
-  const resolvedBestOrganization = bestOrganization;
-  if (resolvedBestOrganization && resolvedBestOrganization.score >= 4) {
+  if (bestOrganization && bestOrganization.score >= 4) {
     return {
       kind: 'organization',
-      id: String(resolvedBestOrganization.id),
+      id: String(bestOrganization.id),
     };
   }
 

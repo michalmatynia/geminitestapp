@@ -65,6 +65,9 @@ const CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS = new Set<string>([
   'segment.case_resolver.heading.place_date',
   'segment.case_resolver.heading.addresser_person',
   'segment.case_resolver.heading.addressee_organization',
+  'segment.case_resolver.heading.dotyczy',
+  'segment.case_resolver.heading.body_statement',
+  'segment.case_resolver.heading.closing_statement',
 ]);
 
 type PatternRuntime = {
@@ -1793,9 +1796,13 @@ const createRuleDrivenSegment = (args: {
     normalizeHeadingLabel(args.blockLines[0] ?? '') ||
     'Section';
   const matchedRules = collectMatchedRules(args.runtime, raw);
+  const matchedRuleIds = matchedRules.map((rule) => rule.id);
+  const keepEmptyTitle = shouldKeepEmptyTitleForCaseResolver(matchedRuleIds);
   const fallbackType = args.headingRule?.segmentTypeHint ?? 'assigned_text';
   const type = inferTypeFromRuleSequence(matchedRules, fallbackType);
   const contentLines = args.headingLine ? args.blockLines.slice(1) : args.blockLines;
+  const contentRaw = trimTrailingBlankLines(contentLines.join('\n'));
+  const hasBodyContent = contentRaw.trim().length > 0;
 
   if (type === 'metadata') {
     return createSegment({
@@ -1864,7 +1871,10 @@ const createRuleDrivenSegment = (args: {
     type,
     lockType: true,
     title,
-    raw,
+    raw:
+      args.headingLine && !keepEmptyTitle && hasBodyContent
+        ? contentRaw
+        : raw,
   });
 };
 
@@ -2430,8 +2440,14 @@ export function updatePromptExploderDocument(
 }
 
 export function ensureSegmentTitle(segment: PromptExploderSegment): PromptExploderSegment {
+  if (shouldKeepEmptyTitleForCaseResolver(segment.matchedPatternIds ?? [])) {
+    if (segment.title.length === 0) return segment;
+    return {
+      ...segment,
+      title: '',
+    };
+  }
   if (segment.title.trim().length > 0) return segment;
-  if (shouldKeepEmptyTitleForCaseResolver(segment.matchedPatternIds ?? [])) return segment;
   return {
     ...segment,
     title: `Segment ${segment.id}`,

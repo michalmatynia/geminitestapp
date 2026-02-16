@@ -59,9 +59,7 @@ export function useTeachingAgents(options?: { enabled?: boolean }): ListQuery<Ag
   return createListQuery<AgentTeachingAgentRecord>({
     queryKey: agentTeachingKeys.agents(),
     queryFn: getTeachingAgents,
-    options: {
-      enabled: options?.enabled ?? true,
-    },
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -135,15 +133,13 @@ export function useDeleteEmbeddingCollectionMutation(): MutationResult<
 
 export function useEmbeddingDocuments(collectionId: string | null): SingleQuery<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null> {
   return createSingleQuery<{ items: AgentTeachingEmbeddingDocumentListItem[]; total: number } | null>({
+    id: collectionId,
     queryKey: (id: string) => id !== 'none' ? agentTeachingKeys.documents(id) : [...agentTeachingKeys.all, 'detail', 'documents', 'none'],
     queryFn: async () => {
       if (!collectionId) return null;
       return fetchEmbeddingDocs(collectionId);
     },
-    id: collectionId,
-    options: {
-      enabled: !!collectionId,
-    }
+    enabled: !!collectionId,
   });
 }
 

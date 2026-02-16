@@ -79,6 +79,117 @@ type MappedItem = {
 
 const BASE_DETAILS_BATCH_SIZE = 100;
 
+type PriceGroupLookup = {
+  id: string;
+  groupId?: string | null;
+  currencyId?: string | null;
+  currencyCode?: string | null;
+  isDefault?: boolean;
+};
+
+const normalizeCurrencyCode = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const compact = value.trim().toUpperCase().replace(/[^A-Z]/g, '');
+  return compact.length === 3 ? compact : null;
+};
+
+const addCurrencyCandidate = (target: Set<string>, value: unknown): void => {
+  const code = normalizeCurrencyCode(value);
+  if (code) target.add(code);
+};
+
+const resolvePriceGroupContext = async (
+  provider: Awaited<ReturnType<typeof getProductDataProvider>>,
+  preferredPriceGroupId?: string | null
+): Promise<{ defaultPriceGroupId: string | null; preferredCurrencies: string[] }> => {
+  const projectedFields = { id: 1, groupId: 1, currencyId: 1, currencyCode: 1 } as const;
+
+  if (provider === 'mongodb') {
+    const mongo = await getMongoDb();
+    const priceGroupCollection =
+      mongo.collection<PriceGroupLookup>('price_groups');
+    const byId =
+      preferredPriceGroupId && preferredPriceGroupId.trim()
+        ? await priceGroupCollection.findOne(
+            { id: preferredPriceGroupId.trim() },
+            { projection: projectedFields }
+          )
+        : null;
+    const fallbackDefault = byId
+      ? null
+      : await priceGroupCollection.findOne(
+          { isDefault: true },
+          { projection: projectedFields }
+        );
+    const resolved = byId ?? fallbackDefault;
+    if (!resolved?.id) {
+      return { defaultPriceGroupId: null, preferredCurrencies: [] };
+    }
+    const preferredCurrencies = new Set<string>();
+    addCurrencyCandidate(preferredCurrencies, resolved.currencyCode);
+    addCurrencyCandidate(preferredCurrencies, resolved.groupId);
+    addCurrencyCandidate(preferredCurrencies, resolved.currencyId);
+    if (resolved.currencyId) {
+      try {
+        const currency = await mongo
+          .collection<{ id?: string; code?: string }>('currencies')
+          .findOne(
+            {
+              $or: [
+                { id: resolved.currencyId },
+                { code: resolved.currencyId }
+              ]
+            },
+            { projection: { code: 1, id: 1 } }
+          );
+        addCurrencyCandidate(preferredCurrencies, currency?.code);
+      } catch {
+        // Currency lookup is optional for import mapping.
+      }
+    }
+    return {
+      defaultPriceGroupId: resolved.id,
+      preferredCurrencies: Array.from(preferredCurrencies)
+    };
+  }
+
+  const byId =
+    preferredPriceGroupId && preferredPriceGroupId.trim()
+      ? await prisma.priceGroup.findUnique({
+          where: { id: preferredPriceGroupId.trim() },
+          select: {
+            id: true,
+            groupId: true,
+            currencyId: true,
+            currency: { select: { code: true } }
+          }
+        })
+      : null;
+  const fallbackDefault = byId
+    ? null
+    : await prisma.priceGroup.findFirst({
+        where: { isDefault: true },
+        select: {
+          id: true,
+          groupId: true,
+          currencyId: true,
+          currency: { select: { code: true } }
+        }
+      });
+  const resolved = byId ?? fallbackDefault;
+  if (!resolved?.id) {
+    return { defaultPriceGroupId: null, preferredCurrencies: [] };
+  }
+  const preferredCurrencies = new Set<string>();
+  addCurrencyCandidate(preferredCurrencies, resolved.currency?.code);
+  addCurrencyCandidate(preferredCurrencies, resolved.groupId);
+  addCurrencyCandidate(preferredCurrencies, resolved.currencyId);
+  return {
+    defaultPriceGroupId: resolved.id,
+    preferredCurrencies: Array.from(preferredCurrencies)
+  };
+};
+
 async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof requestSchema>;
   let token = data.token;
@@ -179,8 +290,20 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     throw badRequestError('Inventory ID is required.');
   }
   const inventoryId = data.inventoryId;
+  const provider = await getProductDataProvider();
 
   if (data.action === 'list') {
+    const catalogRepository = await getCatalogRepository();
+    const catalogs = await catalogRepository.listCatalogs();
+    const defaultCatalog = catalogs.find((catalog) => catalog.isDefault);
+    const targetCatalog = data.catalogId
+      ? catalogs.find((catalog) => catalog.id === data.catalogId) ?? defaultCatalog
+      : defaultCatalog;
+    const { preferredCurrencies: listPreferredCurrencies } = await resolvePriceGroupContext(
+      provider,
+      targetCatalog?.defaultPriceGroupId ?? null
+    );
+
     const allBaseIds = await fetchBaseProductIds(token, inventoryId);
 
     // Get existing products using repository to check for baseProductIds and SKUs
@@ -226,7 +349,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     const mapRecordsToItems = (records: BaseProductRecord[]): MappedItem[] =>
       records
         .map((record: BaseProductRecord) => {
-          const mapped: ProductCreateInput = mapBaseProduct(record);
+          const mapped: ProductCreateInput = mapBaseProduct(record, [], {
+            preferredPriceCurrencies: listPreferredCurrencies,
+          });
           const images = extractBaseImageUrls(record);
           const baseProductId =
           mapped.baseProductId ??
@@ -280,12 +405,6 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       return mapRecordsToItems(records);
     };
 
-    const matchesSearch = (item: MappedItem): boolean => {
-      const nameOk = normalizedName.length === 0 ? true : item.name.toLowerCase().includes(normalizedName);
-      const skuOk = normalizedSku.length === 0 ? true : (item.sku ?? '').toLowerCase().includes(normalizedSku);
-      return nameOk && skuOk;
-    };
-
     if (!hasSearchFilter) {
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
@@ -325,7 +444,25 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
     const searchableIds = filteredItems.map((item: { id: string; exists: boolean }) => item.id);
     const mappedSearchScope = await fetchMappedItemsByIds(searchableIds);
-    const searchedList = mappedSearchScope.filter(matchesSearch);
+    const hasExactSkuMatch =
+      normalizedSku.length > 0 &&
+      mappedSearchScope.some(
+        (item) => (item.sku ?? '').toLowerCase() === normalizedSku
+      );
+    const searchedList = mappedSearchScope.filter((item: MappedItem) => {
+      const nameOk =
+        normalizedName.length === 0
+          ? true
+          : item.name.toLowerCase().includes(normalizedName);
+      const skuValue = (item.sku ?? '').toLowerCase();
+      const skuOk =
+        normalizedSku.length === 0
+          ? true
+          : hasExactSkuMatch
+            ? skuValue === normalizedSku
+            : skuValue.includes(normalizedSku);
+      return nameOk && skuOk;
+    });
     const searchedTotalPages = Math.max(1, Math.ceil(searchedList.length / pageSize));
     const normalizedPage = Math.min(Math.max(page, 1), searchedTotalPages);
     const startIndex = (normalizedPage - 1) * pageSize;
@@ -350,9 +487,11 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     .map((id: string) => id.trim())
     .filter(Boolean);
   const normalizedSelectedIds = Array.from(new Set(selectedIds));
-  const idsToFetch = data.limit
-    ? normalizedSelectedIds.slice(0, data.limit)
-    : normalizedSelectedIds;
+  const hasSelectionPayload = Array.isArray(data.selectedIds);
+  if (hasSelectionPayload && normalizedSelectedIds.length === 0) {
+    throw badRequestError('Select at least one product from the import list before importing.');
+  }
+  const idsToFetch = normalizedSelectedIds;
   const [products, catalogRepository, productRepository, imageRepository] =
     await Promise.all([
       idsToFetch.length > 0
@@ -423,29 +562,14 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     throw notFoundError('Selected catalog not found.');
   }
 
-  const defaultPriceGroupId = targetCatalog.defaultPriceGroupId;
-  const provider = await getProductDataProvider();
-  const defaultPriceGroup = defaultPriceGroupId
-    ? { id: defaultPriceGroupId }
-    : provider === 'mongodb'
-      ? (() => {
-        const mongoDefault = getMongoDb()
-          .then((mongo) =>
-            mongo
-              .collection<{ id: string }>('price_groups')
-              .findOne({ isDefault: true }, { projection: { id: 1 } })
-          )
-          .catch(() => null);
-        return mongoDefault;
-      })()
-      : prisma.priceGroup.findFirst({
-        where: { isDefault: true },
-        select: { id: true }
-      });
-  const resolvedDefault = (await defaultPriceGroup) as { id: string } | null;
-  if (!resolvedDefault?.id) {
+  const pricingContext = await resolvePriceGroupContext(
+    provider,
+    targetCatalog.defaultPriceGroupId
+  );
+  if (!pricingContext.defaultPriceGroupId) {
     throw badRequestError('Default price group is required before importing products.');
   }
+  const preferredPriceCurrencies = pricingContext.preferredCurrencies;
 
   const producerRepository = await getProducerRepository();
   const producers = await producerRepository.listProducers({});
@@ -601,7 +725,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
   for (const raw of productsToImport) {
     try {
-      const mapped = mapBaseProduct(raw, template?.mappings ?? []) as ProductCreateInput & {
+      const mapped = mapBaseProduct(raw, template?.mappings ?? [], {
+        preferredPriceCurrencies,
+      }) as ProductCreateInput & {
         producerIds?: string[];
         tagIds?: string[];
       };
@@ -621,7 +747,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       const imageUrls = (mapped.imageLinks ?? []).slice(0, maxImages);
       const validationResult = await validateProductCreate({
         ...mapped,
-        defaultPriceGroupId: resolvedDefault.id,
+        defaultPriceGroupId: pricingContext.defaultPriceGroupId,
         imageLinks: imageUrls
       });
       
@@ -690,7 +816,9 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       let currentError = error;
       if (isSkuConflict(currentError)) {
         try {
-          const mapped = mapBaseProduct(raw, template?.mappings ?? []) as ProductCreateInput & {
+          const mapped = mapBaseProduct(raw, template?.mappings ?? [], {
+            preferredPriceCurrencies,
+          }) as ProductCreateInput & {
             producerIds?: string[];
             tagIds?: string[];
           };
@@ -703,7 +831,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           const validationResult = await validateProductCreate({
             ...mapped,
             sku: fallbackSku,
-            defaultPriceGroupId: resolvedDefault.id,
+            defaultPriceGroupId: pricingContext.defaultPriceGroupId,
             imageLinks: imageUrls
           });
           

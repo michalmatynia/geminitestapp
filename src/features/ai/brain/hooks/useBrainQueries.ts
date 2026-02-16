@@ -28,10 +28,8 @@ export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
     queryKey: () => brainKeys.ollamaModels(),
     queryFn: () => api.get<ChatbotModelsResponse>('/api/chatbot'),
     id: 'ollama-models',
-    options: {
-      staleTime: 1000 * 60,
-      refetchInterval: 1000 * 60,
-    },
+    staleTime: 1000 * 60,
+    refetchInterval: 1000 * 60,
   });
 }
 
@@ -42,9 +40,7 @@ export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummaryDto> {
       params: { range: '24h', scope: 'all' }
     }),
     id: 'analytics-summary',
-    options: {
-      refetchInterval: 30_000,
-    },
+    refetchInterval: 30_000,
   });
 }
 
@@ -59,9 +55,7 @@ export function useBrainLogMetrics(): SingleQuery<SystemLogMetrics> {
       return data.metrics;
     },
     id: 'log-metrics',
-    options: {
-      refetchInterval: 30_000,
-    },
+    refetchInterval: 30_000,
   });
 }
 
@@ -79,9 +73,7 @@ export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
       };
     },
     id: 'insights',
-    options: {
-      refetchInterval: 30_000,
-    },
+    refetchInterval: 30_000,
   });
 }
 
@@ -96,8 +88,6 @@ export function useBrainRuntimeAnalytics(): SingleQuery<AiPathRuntimeAnalyticsSu
       return data.summary;
     },
     id: 'runtime-analytics',
-    options: {
-      refetchInterval: 30_000,
-    },
+    refetchInterval: 30_000,
   });
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildMasterNodesFromStudioTree,
   decodeImageStudioMasterNodeId,
   toFolderMasterNodeId,
   toSlotMasterNodeId,
@@ -28,5 +29,56 @@ describe('decodeImageStudioMasterNodeId', () => {
   it('rejects unknown or root-like ids', () => {
     expect(decodeImageStudioMasterNodeId('folder:')).toBeNull();
     expect(decodeImageStudioMasterNodeId('unknown:1')).toBeNull();
+  });
+
+  it('excludes generation-derived slots from folder tree nodes', () => {
+    const nodes = buildMasterNodesFromStudioTree(
+      [
+        {
+          id: 'slot-base',
+          projectId: 'proj',
+          name: 'Base',
+          folderPath: 'test',
+          position: null,
+          imageFileId: 'file-base',
+          imageUrl: '/uploads/studio/proj/base.png',
+          imageBase64: null,
+          asset3dId: null,
+          screenshotFileId: null,
+          metadata: null,
+          imageFile: null,
+          screenshotFile: null,
+          asset3d: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        {
+          id: 'slot-generation',
+          projectId: 'proj',
+          name: 'Base • Gen 1',
+          folderPath: 'test',
+          position: null,
+          imageFileId: 'file-gen',
+          imageUrl: '/uploads/studio/proj/gen.png',
+          imageBase64: null,
+          asset3dId: null,
+          screenshotFileId: null,
+          metadata: {
+            role: 'generation',
+            sourceSlotId: 'slot-base',
+            relationType: 'generation:output',
+          },
+          imageFile: null,
+          screenshotFile: null,
+          asset3d: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ],
+      ['test']
+    );
+
+    expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
+    expect(nodes.some((node) => node.id === 'card:slot-generation')).toBe(false);
   });
 });

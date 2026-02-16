@@ -9,15 +9,23 @@ import {
   createDeleteMutation,
 } from '@/shared/lib/query-factories';
 import {
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
+import {
   invalidateImageStudioProjects,
   invalidateImageStudioSlots,
 } from '@/shared/lib/query-invalidation';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { isTanstackFactoryV2Enabled } from '@/shared/lib/tanstack-factory-flags';
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/types/domain/files';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/types/query-result-types';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
+const USE_V2_IMAGE_STUDIO_FACTORIES = isTanstackFactoryV2Enabled('image_studio');
 
 export interface RunStudioPayload {
   projectId: string;
@@ -118,6 +126,29 @@ export interface RenameStudioProjectResult {
 
 export function useCreateStudioProject(): CreateMutation<string, string> {
   const queryClient = useQueryClient();
+
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createCreateMutationV2({
+      mutationFn: async (id: string): Promise<string> => {
+        const data = await api.post<{ projectId?: string }>('/api/image-studio/projects', { projectId: id });
+        if (!data.projectId) throw new Error('Failed to create project');
+        return data.projectId;
+      },
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      meta: {
+        source: 'imageStudio.hooks.useCreateStudioProject',
+        operation: 'create',
+        resource: 'image-studio.projects',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.all,
+        tags: ['image-studio', 'project', 'create'],
+      },
+      onSuccess: () => {
+        void invalidateImageStudioProjects(queryClient);
+      },
+    });
+  }
+
   return createCreateMutation({
     mutationFn: async (id: string): Promise<string> => {
       const data = await api.post<{ projectId?: string }>('/api/image-studio/projects', { projectId: id });
@@ -134,6 +165,47 @@ export function useCreateStudioProject(): CreateMutation<string, string> {
 
 export function useRenameStudioProject(): UpdateMutation<RenameStudioProjectResult, RenameStudioProjectPayload> {
   const queryClient = useQueryClient();
+
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createUpdateMutationV2({
+      mutationFn: async ({ projectId, nextProjectId }: RenameStudioProjectPayload): Promise<RenameStudioProjectResult> => {
+        const fromProjectId = projectId.trim();
+        const response = await api.patch<RenameStudioProjectResult>(
+          `/api/image-studio/projects/${encodeURIComponent(fromProjectId)}`,
+          { projectId: nextProjectId },
+          {
+            timeout: 120_000,
+          }
+        );
+        return {
+          projectId: response.projectId,
+          fromProjectId: response.fromProjectId || fromProjectId,
+          renamed: response.renamed !== false,
+        };
+      },
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      meta: {
+        source: 'imageStudio.hooks.useRenameStudioProject',
+        operation: 'update',
+        resource: 'image-studio.projects',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.all,
+        tags: ['image-studio', 'project', 'rename'],
+      },
+      onSuccess: (result: RenameStudioProjectResult, variables: RenameStudioProjectPayload) => {
+        const fromProjectId = variables.projectId.trim();
+        const toProjectId = result.projectId.trim() || variables.nextProjectId.trim();
+        void invalidateImageStudioProjects(queryClient);
+        if (fromProjectId) {
+          void invalidateImageStudioSlots(queryClient, fromProjectId);
+        }
+        if (toProjectId && toProjectId !== fromProjectId) {
+          void invalidateImageStudioSlots(queryClient, toProjectId);
+        }
+      },
+    });
+  }
+
   return createUpdateMutation({
     mutationFn: async ({ projectId, nextProjectId }: RenameStudioProjectPayload): Promise<RenameStudioProjectResult> => {
       const fromProjectId = projectId.trim();
@@ -168,6 +240,32 @@ export function useRenameStudioProject(): UpdateMutation<RenameStudioProjectResu
 
 export function useDeleteStudioProject(): DeleteMutation<string, string> {
   const queryClient = useQueryClient();
+
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createDeleteMutationV2<string, string>({
+      mutationFn: async (id: string): Promise<string> => {
+        await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
+          // Recursive folder deletion can take longer for large projects.
+          timeout: 120_000,
+        });
+        return id;
+      },
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      meta: {
+        source: 'imageStudio.hooks.useDeleteStudioProject',
+        operation: 'delete',
+        resource: 'image-studio.projects',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.all,
+        tags: ['image-studio', 'project', 'delete'],
+      },
+      onSuccess: (id: string) => {
+        void invalidateImageStudioProjects(queryClient);
+        void invalidateImageStudioSlots(queryClient, id);
+      },
+    });
+  }
+
   return createDeleteMutation<string, string>({
     mutationFn: async (id: string): Promise<string> => {
       await api.delete(`/api/image-studio/projects/${encodeURIComponent(id)}`, {
@@ -187,6 +285,26 @@ export function useDeleteStudioProject(): DeleteMutation<string, string> {
 
 export function useCreateStudioSlots(projectId: string): CreateMutation<StudioSlotsResponse, Array<Partial<ImageStudioSlotRecord>>> {
   const queryClient = useQueryClient();
+
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createCreateMutationV2({
+      mutationFn: (slots: Array<Partial<ImageStudioSlotRecord>>) =>
+        api.post<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, { slots }),
+      mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+      meta: {
+        source: 'imageStudio.hooks.useCreateStudioSlots',
+        operation: 'create',
+        resource: 'image-studio.slots',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+        tags: ['image-studio', 'slots', 'create'],
+      },
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
+    });
+  }
+
   return createCreateMutation({
     mutationFn: (slots: Array<Partial<ImageStudioSlotRecord>>) => 
       api.post<StudioSlotsResponse>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`, { slots }),
@@ -200,6 +318,32 @@ export function useCreateStudioSlots(projectId: string): CreateMutation<StudioSl
 
 export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStudioSlotRecord, { id: string; data: Partial<ImageStudioSlotRecord> }> {
   const queryClient = useQueryClient();
+
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createUpdateMutationV2({
+      mutationFn: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
+        const slotId = normalizeStudioSlotId(id);
+        const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`, data);
+        if (!response.slot) {
+          throw new Error('Failed to update image studio slot');
+        }
+        return response.slot;
+      },
+      mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+      meta: {
+        source: 'imageStudio.hooks.useUpdateStudioSlot',
+        operation: 'update',
+        resource: 'image-studio.slots',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+        tags: ['image-studio', 'slots', 'update'],
+      },
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
+    });
+  }
+
   return createUpdateMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<ImageStudioSlotRecord> }): Promise<ImageStudioSlotRecord> => {
       const slotId = normalizeStudioSlotId(id);
@@ -219,6 +363,28 @@ export function useUpdateStudioSlot(projectId: string): UpdateMutation<ImageStud
 
 export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, string> {
   const queryClient = useQueryClient();
+
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createDeleteMutationV2<void, string>({
+      mutationFn: (id: string) => {
+        const slotId = normalizeStudioSlotId(id);
+        return api.delete<void>(`/api/image-studio/slots/${encodeURIComponent(slotId)}`);
+      },
+      mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+      meta: {
+        source: 'imageStudio.hooks.useDeleteStudioSlot',
+        operation: 'delete',
+        resource: 'image-studio.slots',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+        tags: ['image-studio', 'slots', 'delete'],
+      },
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
+    });
+  }
+
   return createDeleteMutation<void, string>({
     mutationFn: (id: string) => {
       const slotId = normalizeStudioSlotId(id);
@@ -234,6 +400,32 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
 
 export function useUploadStudioAssets(projectId: string): CreateMutation<StudioAssetImportResult, { files: File[]; folder: string }> {
   const queryClient = useQueryClient();
+
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createCreateMutationV2({
+      mutationFn: ({ files, folder }: { files: File[]; folder: string }) => {
+        const formData = new FormData();
+        files.forEach((file: File) => formData.append('files', file));
+        if (folder.trim()) {
+          formData.append('folder', folder.trim());
+        }
+        return api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets`, formData);
+      },
+      mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+      meta: {
+        source: 'imageStudio.hooks.useUploadStudioAssets',
+        operation: 'upload',
+        resource: 'image-studio.assets',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+        tags: ['image-studio', 'assets', 'upload'],
+      },
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
+    });
+  }
+
   return createCreateMutation({
     mutationFn: ({ files, folder }: { files: File[]; folder: string }) => {
       const formData = new FormData();
@@ -253,6 +445,26 @@ export function useUploadStudioAssets(projectId: string): CreateMutation<StudioA
 
 export function useImportStudioAssetsFromDrive(projectId: string): CreateMutation<StudioAssetImportResult, { files: ImageFileSelection[]; folder: string }> {
   const queryClient = useQueryClient();
+
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createCreateMutationV2({
+      mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) =>
+        api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, { files, folder }),
+      mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+      meta: {
+        source: 'imageStudio.hooks.useImportStudioAssetsFromDrive',
+        operation: 'upload',
+        resource: 'image-studio.assets.import',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
+        tags: ['image-studio', 'assets', 'import'],
+      },
+      onSuccess: () => {
+        void invalidateImageStudioSlots(queryClient, projectId);
+      },
+    });
+  }
+
   return createCreateMutation({
     mutationFn: ({ files, folder }: { files: ImageFileSelection[]; folder: string }) =>
       api.post<StudioAssetImportResult>(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/import`, { files, folder }),
@@ -265,6 +477,23 @@ export function useImportStudioAssetsFromDrive(projectId: string): CreateMutatio
 }
 
 export function useRunStudio(): CreateMutation<RunStudioEnqueueResult, RunStudioPayload> {
+  if (USE_V2_IMAGE_STUDIO_FACTORIES) {
+    return createCreateMutationV2({
+      mutationFn: async (payload: RunStudioPayload): Promise<RunStudioEnqueueResult> => {
+        return api.post<RunStudioEnqueueResult>('/api/image-studio/run', payload);
+      },
+      mutationKey: QUERY_KEYS.imageStudio.all,
+      meta: {
+        source: 'imageStudio.hooks.useRunStudio',
+        operation: 'create',
+        resource: 'image-studio.run',
+        domain: 'image_studio',
+        mutationKey: QUERY_KEYS.imageStudio.all,
+        tags: ['image-studio', 'run'],
+      },
+    });
+  }
+
   return createCreateMutation({
     mutationFn: async (payload: RunStudioPayload): Promise<RunStudioEnqueueResult> => {
       return api.post<RunStudioEnqueueResult>('/api/image-studio/run', payload);

@@ -5890,11 +5890,9 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
                             <div className='space-y-1'>
                               <Label className='text-[11px] text-gray-400'>Body Preview</Label>
-                              <Textarea
-                                className='min-h-[120px] font-mono text-[12px]'
-                                value={selectedSegment.text}
-                                readOnly
-                              />
+                              <div className='min-h-[120px] w-full whitespace-pre-wrap rounded-md border border-foreground/10 bg-foreground/[0.03] px-3 py-2 font-mono text-[12px] text-gray-300'>
+                                {selectedSegment.text}
+                              </div>
                             </div>
                           </div>
                         ) : (

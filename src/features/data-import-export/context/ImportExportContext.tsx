@@ -220,11 +220,17 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       const connections = baseIntegration?.connections ?? [];
       timer = setTimeout(() => {
         setBaseConnections(connections);
-        if (connections.length > 0) {
-          setIsBaseConnected(true);
-          if (!selectedBaseConnectionId) {
-            setSelectedBaseConnectionId(connections[0]?.id || '');
-          }
+        setIsBaseConnected(connections.length > 0);
+        if (connections.length === 0) {
+          setSelectedBaseConnectionId('');
+          return;
+        }
+        const hasSelected = connections.some(
+          (connection: IntegrationConnectionBasic) =>
+            connection.id === selectedBaseConnectionId
+        );
+        if (!selectedBaseConnectionId || !hasSelected) {
+          setSelectedBaseConnectionId(connections[0]?.id || '');
         }
       }, 0);
     }
@@ -481,6 +487,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     inventoryId,
     {
       connectionId: selectedBaseConnectionId,
+      catalogId,
       limit,
       uniqueOnly,
       page: importListPage,

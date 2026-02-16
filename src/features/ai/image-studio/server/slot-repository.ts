@@ -5,6 +5,7 @@ import type { Asset3DRecord } from '@/features/viewer3d/types';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
+import { removeImageStudioRunOutputs } from './run-repository';
 import { deleteImageStudioSlotLinksForSlot } from './slot-link-repository';
 
 export type ImageStudioSlotDocument = {
@@ -128,6 +129,25 @@ const resolveImageFiles = async (docs: ImageStudioSlotDocument[]): Promise<{
   };
 };
 
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const asTrimmedString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const isGenerationDerivedSlotMetadata = (metadata: Record<string, unknown> | null): boolean => {
+  if (!metadata) return false;
+  const role = asTrimmedString(metadata['role'])?.toLowerCase() ?? '';
+  if (role === 'generation') return true;
+  const relationType = asTrimmedString(metadata['relationType'])?.toLowerCase() ?? '';
+  return relationType.startsWith('generation:') || relationType.startsWith('center:') || relationType.startsWith('crop:') || relationType.startsWith('upscale:');
+};
+
 export async function listImageStudioSlots(projectId: string): Promise<ImageStudioSlotRecord[]> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
@@ -217,10 +237,33 @@ export async function updateImageStudioSlot(slotId: string, update: SlotUpdateIn
 export async function deleteImageStudioSlot(slotId: string): Promise<boolean> {
   await ensureIndexesOnce();
   const db = await getMongoDb();
-  const result = await db.collection<ImageStudioSlotDocument>(COLLECTION).deleteOne({ _id: slotId });
+  const collection = db.collection<ImageStudioSlotDocument>(COLLECTION);
+  const existing = await collection.findOne({ _id: slotId });
+  if (!existing) return false;
+
+  const result = await collection.deleteOne({ _id: slotId });
   const deleted = result.deletedCount > 0;
   if (deleted) {
     await deleteImageStudioSlotLinksForSlot(slotId).catch(() => {});
+
+    const metadata = asRecord(existing.metadata);
+    if (isGenerationDerivedSlotMetadata(metadata)) {
+      const outputFile = asRecord(metadata?.['outputFile']);
+      const runId = asTrimmedString(metadata?.['generationRunId']);
+      const outputFileId =
+        asTrimmedString(metadata?.['generationFileId']) ??
+        asTrimmedString(existing.imageFileId);
+      const outputFilepath =
+        asTrimmedString(outputFile?.['filepath']) ??
+        asTrimmedString(existing.imageUrl);
+
+      await removeImageStudioRunOutputs({
+        projectId: existing.projectId,
+        runId,
+        outputFileId,
+        outputFilepath,
+      }).catch(() => {});
+    }
   }
   return deleted;
 }

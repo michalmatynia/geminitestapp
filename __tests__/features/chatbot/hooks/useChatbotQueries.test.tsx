@@ -82,7 +82,7 @@ describe('Chatbot Queries Hooks', () => {
     it('fetches models from API', async () => {
       vi.mocked(chatbotApi.fetchChatbotModels).mockResolvedValue({ models: ['m1', 'm2'] });
 
-      const { result } = renderHook(() => useChatbotModels({ staleTime: 0 } as any), { wrapper });
+      const { result } = renderHook(() => useChatbotModels({ enabled: true, staleTime: 0 }), { wrapper });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
       expect(result.current.data).toEqual(['m1', 'm2']);

@@ -44,6 +44,10 @@ const REPORT_QUERY_WARNINGS = isEnabled(
   process.env['NEXT_PUBLIC_QUERY_WARNING_REPORTING_ENABLED'],
   process.env['NODE_ENV'] === 'production'
 );
+const ENABLE_LOGGING_MIDDLEWARE = isEnabled(
+  process.env['NEXT_PUBLIC_QUERY_LOGGING_MIDDLEWARE_ENABLED'],
+  false
+);
 
 const queryStartTimes = new WeakMap<Query, number>();
 const slowQueryLastReportedAt = new Map<string, number>();
@@ -255,7 +259,7 @@ export const securityMiddleware: QueryMiddleware = {
 
 // Default middleware stack
 export const defaultMiddlewares: QueryMiddleware[] = [
-  loggingMiddleware,
+  ...(ENABLE_LOGGING_MIDDLEWARE ? [loggingMiddleware] : []),
   performanceMiddleware,
   cacheOptimizationMiddleware,
   errorRecoveryMiddleware,

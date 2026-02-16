@@ -86,6 +86,20 @@ const getSlotRelationType = (slot: ImageStudioSlotRecord): string | null => {
   return normalized || null;
 };
 
+const isGenerationDerivedSlot = (slot: ImageStudioSlotRecord): boolean => {
+  const role = getSlotRole(slot);
+  if (role === 'generation') return true;
+
+  const relationType = getSlotRelationType(slot);
+  if (!relationType) return false;
+  return (
+    relationType.startsWith('generation:') ||
+    relationType.startsWith('center:') ||
+    relationType.startsWith('crop:') ||
+    relationType.startsWith('upscale:')
+  );
+};
+
 const getRoleLabel = (slot: ImageStudioSlotRecord, derivedFromCard: boolean): string | null => {
   const metadata = getSlotMetadata(slot);
   const role = getSlotRole(slot);
@@ -152,13 +166,14 @@ const buildStudioTreeRoot = (
     children: [],
   };
 
+  const visibleSlots = slots.filter((slot: ImageStudioSlotRecord) => !isGenerationDerivedSlot(slot));
   const slotById = new Map<string, ImageStudioSlotRecord>(
-    slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
+    visibleSlots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
   );
   const linkedSlotsBySource = new Map<string, ImageStudioSlotRecord[]>();
   const rootSlots: ImageStudioSlotRecord[] = [];
 
-  slots.forEach((slot: ImageStudioSlotRecord) => {
+  visibleSlots.forEach((slot: ImageStudioSlotRecord) => {
     const sourceSlotId = getSlotSourceId(slot);
     if (sourceSlotId && sourceSlotId !== slot.id && slotById.has(sourceSlotId)) {
       const current = linkedSlotsBySource.get(sourceSlotId) ?? [];

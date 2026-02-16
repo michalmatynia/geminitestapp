@@ -34,7 +34,7 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
   // Global error handling
   useGlobalQueryErrorHandler({
     showToast: true,
-    logErrors: true,
+    logErrors: false,
     retryOnError: true,
   });
 

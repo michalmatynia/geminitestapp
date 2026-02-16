@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useMemo, useCallback } from 'react';
+import { useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
 
 import {
   useCreateNote,

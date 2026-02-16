@@ -90,6 +90,13 @@ type ListImageStudioRunsInput = {
   offset?: number;
 };
 
+type RemoveImageStudioRunOutputsInput = {
+  projectId: string;
+  runId?: string | null;
+  outputFileId?: string | null;
+  outputFilepath?: string | null;
+};
+
 const COLLECTION = 'image_studio_runs';
 
 const createId = (): string => {
@@ -337,6 +344,52 @@ export async function listImageStudioRuns(
     runs: docs.map(toRecord),
     total,
   };
+}
+
+export async function removeImageStudioRunOutputs(
+  input: RemoveImageStudioRunOutputsInput
+): Promise<number> {
+  await ensureIndexesOnce();
+
+  const projectId = input.projectId.trim();
+  if (!projectId) return 0;
+
+  const runId = input.runId?.trim() || null;
+  const outputFileId = input.outputFileId?.trim() || null;
+  const outputFilepath = input.outputFilepath?.trim() || null;
+  if (!outputFileId && !outputFilepath) return 0;
+
+  const outputSelectors: Array<Record<string, string>> = [];
+  if (outputFileId) outputSelectors.push({ id: outputFileId });
+  if (outputFilepath) outputSelectors.push({ filepath: outputFilepath });
+  if (outputSelectors.length === 0) return 0;
+
+  const db = await getMongoDb();
+  const collection = db.collection<ImageStudioRunDocument>(COLLECTION);
+  const now = new Date().toISOString();
+
+  const query: Record<string, unknown> = {
+    projectId,
+    outputs: {
+      $elemMatch: {
+        $or: outputSelectors,
+      },
+    },
+  };
+  if (runId) query['_id'] = runId;
+
+  const result = await collection.updateMany(query, {
+    $pull: {
+      outputs: {
+        $or: outputSelectors,
+      } as unknown as ImageFileRecord,
+    },
+    $set: {
+      updatedAt: now,
+    },
+  });
+
+  return result.modifiedCount ?? 0;
 }
 
 export async function deleteImageStudioRunsByProject(projectId: string): Promise<number> {

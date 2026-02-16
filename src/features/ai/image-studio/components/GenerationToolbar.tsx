@@ -967,14 +967,6 @@ export function GenerationToolbar(): React.JSX.Element {
         },
         studioSettings,
       };
-      if (centerMode === 'client_alpha_bbox') {
-        runPayload['center'] = {
-          mode: centerMode,
-          dataUrl: await centerCanvasImageObject(
-            clientProcessingImageSrc || workingSlotImageSrc
-          ),
-        };
-      }
 
       const enqueueResult = await api.post<RunStudioEnqueueResult>(
         '/api/image-studio/run',

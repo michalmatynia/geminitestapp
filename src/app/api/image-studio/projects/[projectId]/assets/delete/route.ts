@@ -6,6 +6,11 @@ import path from 'path';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
 
+import { removeImageStudioRunOutputs } from '@/features/ai/image-studio/server/run-repository';
+import {
+  deleteImageStudioSlot,
+  listImageStudioSlots,
+} from '@/features/ai/image-studio/server/slot-repository';
 import { getImageFileRepository } from '@/features/files/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
@@ -15,6 +20,32 @@ const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const asTrimmedLowerString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim().toLowerCase();
+};
+
+const isGenerationDerivedSlot = (metadata: unknown): boolean => {
+  const record = asRecord(metadata);
+  if (!record) return false;
+
+  const role = asTrimmedLowerString(record['role']);
+  if (role === 'generation') return true;
+
+  const relationType = asTrimmedLowerString(record['relationType']);
+  return (
+    relationType.startsWith('generation:') ||
+    relationType.startsWith('center:') ||
+    relationType.startsWith('crop:') ||
+    relationType.startsWith('upscale:')
+  );
+};
 
 function normalizePublicPath(filepath: string | null | undefined): string | null {
   const raw = typeof filepath === 'string' ? filepath.trim() : '';
@@ -59,6 +90,36 @@ const deleteSchema = z.object({
   filepath: z.string().optional(),
 });
 
+async function deleteGenerationSlotsLinkedToAsset(params: {
+  projectId: string;
+  assetId?: string | null;
+  filepath?: string | null;
+}): Promise<void> {
+  const normalizedFilepath = normalizePublicPath(params.filepath ?? null);
+  if (!params.assetId && !normalizedFilepath) return;
+
+  const slots = await listImageStudioSlots(params.projectId);
+  const matchedSlots = slots.filter((slot) => {
+    if (!isGenerationDerivedSlot(slot.metadata)) return false;
+
+    if (params.assetId && slot.imageFileId === params.assetId) {
+      return true;
+    }
+
+    if (!normalizedFilepath) return false;
+    const slotImagePath = normalizePublicPath(slot.imageFile?.filepath ?? null);
+    if (slotImagePath && slotImagePath === normalizedFilepath) return true;
+    const slotImageUrl = normalizePublicPath(slot.imageUrl);
+    return Boolean(slotImageUrl && slotImageUrl === normalizedFilepath);
+  });
+
+  await Promise.allSettled(
+    matchedSlots.map(async (slot) => {
+      await deleteImageStudioSlot(slot.id);
+    })
+  );
+}
+
 async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -97,6 +158,16 @@ async function POST_handler(
       });
     }
     await repo.deleteImageFile(assetId);
+    await removeImageStudioRunOutputs({
+      projectId,
+      outputFileId: assetId,
+      outputFilepath: normalized,
+    }).catch(() => {});
+    await deleteGenerationSlotsLinkedToAsset({
+      projectId,
+      assetId,
+      filepath: normalized,
+    }).catch(() => {});
     return new Response(null, { status: 204 });
   }
 
@@ -117,6 +188,14 @@ async function POST_handler(
       throw error;
     }
   });
+  await removeImageStudioRunOutputs({
+    projectId,
+    outputFilepath: normalized,
+  }).catch(() => {});
+  await deleteGenerationSlotsLinkedToAsset({
+    projectId,
+    filepath: normalized,
+  }).catch(() => {});
 
   return new Response(null, { status: 204 });
 }

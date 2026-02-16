@@ -1,6 +1,7 @@
 import { MutationCache, QueryCache, QueryClient, type QueryKey } from '@tanstack/react-query';
 
 import { classifyError } from '@/shared/errors/error-classifier';
+import { emitTanstackTelemetry, getTanstackFactoryMetaFromBag } from '@/shared/lib/observability/tanstack-telemetry';
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
 import { getTraceId } from '@/shared/utils/observability/trace';
 
@@ -65,41 +66,69 @@ const safeLogCacheError = (
   source: 'QueryCache' | 'MutationCache',
   key: QueryKey | undefined,
   attempt: number | undefined,
-  error: unknown
+  error: unknown,
+  metaBag: unknown
 ): void => {
   try {
     const statusCode = extractStatusCode(error);
     const category = classifyError(error);
-    
-    // Avoid re-logging if the error was already enriched and logged by api-client
-    if (isLoggableObject(error) && error.__logged) {
-      return;
+    const normalizedAttempt = toAttempt(attempt);
+    const alreadyLogged = isLoggableObject(error) && error.__logged;
+
+    if (!alreadyLogged) {
+      const baseContext = {
+        source,
+        key: toStableKey(key),
+        attempt: normalizedAttempt,
+        statusCode,
+        category,
+        traceId: getTraceId(),
+      };
+      const context =
+        source === 'QueryCache'
+          ? { ...baseContext, queryKey: key }
+          : { ...baseContext, mutationKey: key };
+
+      logClientError(error, {
+        context,
+      });
+
+      // Mark as logged to prevent double logging in useGlobalQueryErrorHandler
+      if (isLoggableObject(error)) {
+        try {
+          error.__logged = true;
+        } catch {
+          // ignore read-only errors
+        }
+      }
     }
 
-    const baseContext = {
-      source,
-      key: toStableKey(key),
-      attempt: toAttempt(attempt),
-      statusCode,
-      category,
-      traceId: getTraceId(),
-    };
-    const context =
-      source === 'QueryCache'
-        ? { ...baseContext, queryKey: key }
-        : { ...baseContext, mutationKey: key };
-
-    logClientError(error, {
-      context,
-    });
-    
-    // Mark as logged to prevent double logging in useGlobalQueryErrorHandler
-    if (isLoggableObject(error)) {
-      try {
-        error.__logged = true;
-      } catch {
-        // ignore read-only errors
-      }
+    const resolvedMeta = getTanstackFactoryMetaFromBag(metaBag);
+    if (!resolvedMeta) {
+      emitTanstackTelemetry({
+        entity: source === 'QueryCache' ? 'query-cache' : 'mutation-cache',
+        stage: 'error',
+        meta: {
+          source: `tanstack.${source.toLowerCase()}`,
+          operation: source === 'QueryCache' ? 'detail' : 'action',
+          resource: source === 'QueryCache' ? 'query-cache' : 'mutation-cache',
+          ...(source === 'QueryCache' ? { queryKey: key } : {}),
+          ...(source === 'MutationCache' ? { mutationKey: key } : {}),
+          domain: 'global',
+          samplingRate: 1,
+          tags: ['cache', 'fallback'],
+        },
+        key,
+        attempt: normalizedAttempt,
+        error,
+        ...(typeof statusCode === 'number' ? { statusCode } : {}),
+        context: {
+          source,
+          category,
+          statusCode,
+          key: toStableKey(key),
+        },
+      });
     }
   } catch {
     // Cache callbacks must never throw.
@@ -127,7 +156,13 @@ export const createQueryClient = (): QueryClient =>
   new QueryClient({
     queryCache: new QueryCache({
       onError: (error, query) => {
-        safeLogCacheError('QueryCache', query.queryKey, query.state.fetchFailureCount, error);
+        safeLogCacheError(
+          'QueryCache',
+          query.queryKey,
+          query.state.fetchFailureCount,
+          error,
+          query.meta
+        );
       },
     }),
     mutationCache: new MutationCache({
@@ -136,7 +171,8 @@ export const createQueryClient = (): QueryClient =>
           'MutationCache',
           mutation.options.mutationKey,
           mutation.state.failureCount,
-          error
+          error,
+          mutation.meta ?? mutation.options.meta
         );
       },
     }),

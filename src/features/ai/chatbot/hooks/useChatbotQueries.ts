@@ -1,6 +1,7 @@
 'use client';
 
-import { api } from '@/shared/lib/api-client';
+import { useQuery } from '@tanstack/react-query';
+
 import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
 import { chatbotKeys } from '@/shared/lib/query-key-exports';
 import type { ChatSession } from '@/shared/types/domain/chatbot';
@@ -12,6 +13,7 @@ import {
   fetchChatbotSettings,
   fetchOllamaModels,
   fetchChatbotMemory,
+  fetchChatbotModels,
 } from '../api';
 
 import type { ChatbotSessionListItem } from '../types';
@@ -100,16 +102,16 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
 /**
  * Query hook for fetching available models from the chatbot API
  */
-export function useChatbotModels(options?: { enabled?: boolean }): ListQuery<string> {
-  return createListQuery({
+export function useChatbotModels(options?: { enabled?: boolean; staleTime?: number }): ListQuery<string> {
+  return useQuery({
     queryKey: chatbotKeys.models(),
     queryFn: async (): Promise<string[]> => {
       const raw = await fetchChatbotModels();
       return normalizeModelList(raw);
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: options?.staleTime ?? 1000 * 60 * 5, // 5 minutes
     enabled: options?.enabled ?? true,
-  });
+  }) as ListQuery<string>;
 }
 
 /**

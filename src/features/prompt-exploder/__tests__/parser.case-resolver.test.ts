@@ -50,6 +50,9 @@ describe('case resolver prompt exploder segmentation', () => {
     const addresserSegment = document.segments[addresserIndex];
     const addresseeSegment = document.segments[addresseeIndex];
     const placeDateSegment = document.segments[placeDateIndex];
+    const subjectSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Wniosek o umorzenie zadłużenia')
+    );
     expect(addresserSegment?.raw).toContain('Fioletowa 71/2');
     expect(addresserSegment?.raw).toContain('Polska');
     expect(addresserSegment?.raw).not.toContain('Inspektorat ZUS w Gryficach');
@@ -106,6 +109,7 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(placeDateSegment?.title).toBe('');
     expect(addresserSegment?.title).toBe('');
     expect(addresseeSegment?.title).toBe('');
+    expect(subjectSegment?.title).toMatch(/^Wniosek/i);
   });
 
   it('keeps plain place/date line isolated from addresser block without comma suffix', () => {
@@ -142,6 +146,9 @@ describe('case resolver prompt exploder segmentation', () => {
     const addresseeSegment = document.segments.find((segment) =>
       (segment.raw || segment.text).includes('Inspektorat ZUS w Gryficach')
     );
+    const subjectSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Wniosek o umorzenie zadłużenia')
+    );
 
     expect(placeDateSegment).toBeDefined();
     expect(addresserSegment).toBeDefined();
@@ -159,5 +166,110 @@ describe('case resolver prompt exploder segmentation', () => {
     expect(placeDateSegment?.title).toBe('');
     expect(addresserSegment?.title).toBe('');
     expect(addresseeSegment?.title).toBe('');
+    expect(subjectSegment?.title).toMatch(/^Wniosek/i);
+  });
+
+  it('splits Dotyczy subheading into its own segment and keeps the title empty', () => {
+    const prompt = [
+      '<p><strong>Wniosek o umorzenie zadłużenia</strong></p>',
+      '<p><strong>Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282</strong></p>',
+      '<p>Niniejszym wnoszę o umorzenie powstałego zadłużenia z tytułu należności składkowych.</p>',
+      '<p><strong>Uzasadnienie</strong></p>',
+    ].join('');
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    const dotyczySegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282'
+      )
+    );
+    const bodySegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Niniejszym wnoszę o umorzenie powstałego zadłużenia'
+      )
+    );
+
+    expect(dotyczySegment).toBeDefined();
+    expect(bodySegment).toBeDefined();
+    expect(dotyczySegment?.id).not.toBe(bodySegment?.id);
+    expect(dotyczySegment?.raw.trim()).toBe(
+      'Dotyczy: postępowanie administracyjne ZUS O/Szczecin nr 390000/71/RKS3/2026/282'
+    );
+    expect(dotyczySegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Dotyczy Subheading'
+    );
+    expect(dotyczySegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Subject/Section'
+    );
+    expect(dotyczySegment?.title).toBe('');
+    expect(bodySegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Body Statement Start'
+    );
+    expect(bodySegment?.title).toBe('');
+  });
+
+  it('keeps Uzasadnienie in title only and removes it from body text', () => {
+    const prompt = [
+      '<p><strong>Uzasadnienie</strong></p>',
+      '<p>Przez kilka lat nie nastąpiło skuteczne doręczenie wnioskodawcy informacji o narastającym zadłużeniu względem ZUS.</p>',
+      '<p>Organ rentowy nie dopełnił tym samym obowiązków wynikających z art. 9 i art. 10 KPA.</p>',
+    ].join('');
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    const uzasadnienieSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Przez kilka lat nie nastąpiło skuteczne doręczenie wnioskodawcy'
+      )
+    );
+
+    expect(uzasadnienieSegment).toBeDefined();
+    expect(uzasadnienieSegment?.title).toBe('Uzasadnienie');
+    const uzasadnienieBody = uzasadnienieSegment?.raw || uzasadnienieSegment?.text || '';
+    expect(uzasadnienieBody.startsWith('Uzasadnienie')).toBe(false);
+  });
+
+  it('keeps Na zakończenie closing segment title empty', () => {
+    const prompt = [
+      '<p>Na zakończenie, na podstawie art. 73 § 1 KPA, wnoszę o umożliwienie dostępu do akt sprawy.</p>',
+      '<p>Proszę o udostępnienie mi akt postępowania do wglądu.</p>',
+    ].join('');
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    const closingSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Na zakończenie, na podstawie art. 73 § 1 KPA')
+    );
+
+    expect(closingSegment).toBeDefined();
+    expect(closingSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Heading: Closing Statement'
+    );
+    expect(closingSegment?.title).toBe('');
   });
 });

@@ -181,6 +181,7 @@ export function useImportList(
   inventoryId: string,
   params: {
     connectionId?: string;
+    catalogId?: string;
     limit?: string | number;
     uniqueOnly?: boolean;
     page?: number;
@@ -194,7 +195,7 @@ export function useImportList(
     id: inventoryId || null,
     queryKey: importExportKeys.importList(inventoryId, params),
     queryFn: () => {
-      const { connectionId, limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
+      const { connectionId, catalogId, limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
       return api.post<{
         products?: ImportListItem[];
         total?: number;
@@ -208,6 +209,7 @@ export function useImportList(
       }>('/api/integrations/imports/base', {
         action: 'list',
         connectionId,
+        catalogId,
         inventoryId,
         limit: limit === 'all' ? undefined : Number(limit),
         uniqueOnly,

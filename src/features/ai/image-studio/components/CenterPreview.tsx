@@ -901,6 +901,16 @@ export function CenterPreview(): React.JSX.Element {
       clearActiveRunError();
     };
 
+    const refreshGenerationQueries = (): void => {
+      void queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          query.queryKey[0] === studioKeys.all[0] &&
+          query.queryKey[1] === 'list' &&
+          query.queryKey[2] === 'runs',
+      });
+    };
+
     const resolveVariantSlotId = (): string | null => {
       if (variant.slotId && slots.some((slot) => slot.id === variant.slotId)) {
         return variant.slotId;
@@ -948,6 +958,7 @@ export function CenterPreview(): React.JSX.Element {
       void deleteVariantAssetFallback()
         .then(() => {
           dismissVariantFromUi();
+          refreshGenerationQueries();
         })
         .catch((error: unknown) => {
           toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
@@ -962,6 +973,7 @@ export function CenterPreview(): React.JSX.Element {
           setWorkingSlotId(null);
         }
         dismissVariantFromUi();
+        refreshGenerationQueries();
       })
       .catch((error: unknown) => {
         if (error instanceof ApiError && error.status === 404) {
@@ -971,6 +983,7 @@ export function CenterPreview(): React.JSX.Element {
                 setWorkingSlotId(null);
               }
               dismissVariantFromUi();
+              refreshGenerationQueries();
             })
             .catch((fallbackError: unknown) => {
               toast(
@@ -986,6 +999,7 @@ export function CenterPreview(): React.JSX.Element {
     buildVariantDismissKeys,
     deleteSlotMutation,
     projectId,
+    queryClient,
     setWorkingSlotId,
     slots,
     toast,

@@ -53,9 +53,7 @@ export function useAiPathRuntimeAnalytics(
     queryKey: () => QUERY_KEYS.ai.aiPaths.runtimeAnalytics(range),
     queryFn: () => api.get<AiPathRuntimeAnalyticsSummary>('/api/ai-paths/runtime-analytics', { params: { range } }),
     id: range,
-    options: {
-      enabled,
-    },
+    enabled,
   });
 }
 

@@ -72,12 +72,16 @@ export const noteRelationSchema = z.object({
 export type NoteRelationDto = z.infer<typeof noteRelationSchema>;
 
 export const noteWithRelationsSchema = noteSchema.extend({
-  tags: z.array(noteTagRelationSchema),
-  categories: z.array(noteCategoryRelationSchema),
+  tags: z.array(noteTagRelationSchema.extend({
+    tag: z.lazy(() => noteTagSchema)
+  })),
+  categories: z.array(noteCategoryRelationSchema.extend({
+    category: z.lazy(() => noteCategorySchema)
+  })),
   relations: z.array(relatedNoteSchema).optional(),
   relationsFrom: z.array(noteRelationSchema).optional(),
   relationsTo: z.array(noteRelationSchema).optional(),
-  files: z.array(z.any()).optional(), // Keep as any for now or define NoteFileDto
+  files: z.array(z.any()).optional(),
 });
 
 export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;

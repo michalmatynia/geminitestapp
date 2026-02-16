@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader2, Play } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -174,6 +174,35 @@ const shapeHasUsableCropGeometry = (shape: MaskShapeForExport): boolean => {
   return false;
 };
 
+const normalizeLocalImageSource = (value: string | null | undefined): string | null => {
+  const normalized = value?.trim() ?? '';
+  if (!normalized) return null;
+  if (normalized.startsWith('data:') || normalized.startsWith('blob:')) {
+    return normalized;
+  }
+  if (/^https?:\/\//i.test(normalized)) {
+    return normalized;
+  }
+  const normalizedPath = normalized.replace(/\\/g, '/').replace(/^\/+/, '');
+  return normalizedPath ? `/${normalizedPath}` : null;
+};
+
+const resolveClientProcessingImageSrc = (
+  slot: ImageStudioSlotRecord | null | undefined,
+  fallbackSrc: string | null
+): string | null => {
+  const inlineBase64 = normalizeLocalImageSource(slot?.imageBase64 ?? null);
+  if (inlineBase64) return inlineBase64;
+
+  const localFilepath = normalizeLocalImageSource(slot?.imageFile?.filepath ?? null);
+  if (localFilepath) return localFilepath;
+
+  const localUrl = normalizeLocalImageSource(slot?.imageUrl ?? null);
+  if (localUrl) return localUrl;
+
+  return fallbackSrc;
+};
+
 const resolveMaskColors = (
   variant: 'white' | 'black',
   inverted: boolean
@@ -222,6 +251,7 @@ export function GenerationToolbar(): React.JSX.Element {
   const [upscaleBusy, setUpscaleBusy] = useState(false);
   const [cropBusy, setCropBusy] = useState(false);
   const [centerBusy, setCenterBusy] = useState(false);
+  const cropRequestInFlightRef = useRef(false);
 
   const eligibleMaskShapes = useMemo<MaskShapeForExport[]>(
     () =>
@@ -260,6 +290,10 @@ export function GenerationToolbar(): React.JSX.Element {
   const workingSlotImageSrc = useMemo(() => {
     return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
   }, [workingSlot, productImagesExternalBaseUrl]);
+  const clientProcessingImageSrc = useMemo(
+    () => resolveClientProcessingImageSrc(workingSlot, workingSlotImageSrc),
+    [workingSlot, workingSlotImageSrc]
+  );
 
   const loadImageElement = (
     src: string,
@@ -494,7 +528,8 @@ export function GenerationToolbar(): React.JSX.Element {
     let sourceWidth = workingSlot?.imageFile?.width ?? 0;
     let sourceHeight = workingSlot?.imageFile?.height ?? 0;
     if (!(sourceWidth > 0 && sourceHeight > 0)) {
-      const image = await loadImageElement(workingSlotImageSrc || '');
+      const sourceForDimensions = clientProcessingImageSrc || workingSlotImageSrc || '';
+      const image = await loadImageElement(sourceForDimensions);
       sourceWidth = image.naturalWidth || image.width;
       sourceHeight = image.naturalHeight || image.height;
     }
@@ -524,7 +559,7 @@ export function GenerationToolbar(): React.JSX.Element {
       },
     ]);
     setActiveMaskId(shapeId);
-    setTool('rect');
+    setTool('select');
     toast('Crop box created. Adjust the rectangle, then click Crop.', { variant: 'success' });
   };
 
@@ -591,10 +626,11 @@ export function GenerationToolbar(): React.JSX.Element {
     return matches[0] ?? null;
   };
 
-  const fetchProjectSlots = async (): Promise<ImageStudioSlotRecord[]> => {
-    if (!projectId) return [];
+  const fetchProjectSlots = async (projectIdOverride?: string): Promise<ImageStudioSlotRecord[]> => {
+    const resolvedProjectId = projectIdOverride?.trim() ?? projectId?.trim() ?? '';
+    if (!resolvedProjectId) return [];
     const response = await api.get<StudioSlotsResponse>(
-      `/api/image-studio/projects/${encodeURIComponent(projectId)}/slots`
+      `/api/image-studio/projects/${encodeURIComponent(resolvedProjectId)}/slots`
     );
     return Array.isArray(response.slots) ? response.slots : [];
   };
@@ -723,8 +759,12 @@ export function GenerationToolbar(): React.JSX.Element {
       const mode = upscaleMode === 'client_canvas' ? 'client_data_url' : 'server_sharp';
       let response: { slot?: { id: string; name: string | null } };
       if (mode === 'client_data_url') {
+        const sourceForClientUpscale = clientProcessingImageSrc || workingSlotImageSrc;
+        if (!sourceForClientUpscale) {
+          throw new Error('No client image source is available for upscale.');
+        }
         const upscaledDataUrl = await upscaleCanvasImage(
-          workingSlotImageSrc,
+          sourceForClientUpscale,
           scale,
           upscaleSmoothingQuality
         );
@@ -759,7 +799,7 @@ export function GenerationToolbar(): React.JSX.Element {
       const normalizedProjectId = projectId?.trim() ?? '';
       if (normalizedProjectId) {
         await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-        const slotsSnapshot = await fetchProjectSlots();
+        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
         queryClient.setQueryData<StudioSlotsResponse>(
           studioKeys.slots(normalizedProjectId),
           { slots: slotsSnapshot }
@@ -794,24 +834,62 @@ export function GenerationToolbar(): React.JSX.Element {
       toast('Set a valid crop boundary first.', { variant: 'info' });
       return;
     }
+    if (cropRequestInFlightRef.current) {
+      return;
+    }
 
+    cropRequestInFlightRef.current = true;
     setCropBusy(true);
     try {
       const cropRect = await resolveCropRect();
-      const payload: Record<string, unknown> = {
-        mode: cropMode,
-        cropRect,
-      };
-
+      let response: { slot?: { id: string; name: string | null } };
       if (cropMode === 'client_bbox') {
-        payload['dataUrl'] = await cropCanvasImage(workingSlotImageSrc, cropRect);
+        const sourceForClientCrop = clientProcessingImageSrc || workingSlotImageSrc;
+        if (!sourceForClientCrop) {
+          throw new Error('No client image source is available for crop.');
+        }
+        const croppedDataUrl = await cropCanvasImage(sourceForClientCrop, cropRect);
+        let uploadBlob: Blob;
+        try {
+          const blobResponse = await fetch(croppedDataUrl);
+          uploadBlob = await blobResponse.blob();
+        } catch {
+          throw new Error('Failed to prepare client crop image for upload.');
+        }
+
+        const formData = new FormData();
+        formData.append('mode', cropMode);
+        formData.append('cropRect', JSON.stringify(cropRect));
+        formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
+
+        response = await api.post<{ slot?: { id: string; name: string | null } }>(
+          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
+          formData
+        );
+      } else {
+        response = await api.post<{ slot?: { id: string; name: string | null } }>(
+          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
+          {
+            mode: cropMode,
+            cropRect,
+          }
+        );
       }
 
-      const response = await api.post<{ slot?: { id: string; name: string | null } }>(
-        `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
-        payload
-      );
-      void invalidateImageStudioSlots(queryClient, projectId);
+      const normalizedProjectId = projectId?.trim() ?? '';
+      if (normalizedProjectId) {
+        await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+        const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
+        queryClient.setQueryData<StudioSlotsResponse>(
+          studioKeys.slots(normalizedProjectId),
+          { slots: slotsSnapshot }
+        );
+      }
+
+      if (response.slot?.id) {
+        setSelectedSlotId(response.slot.id);
+        setWorkingSlotId(response.slot.id);
+      }
 
       const createdLabel = response.slot?.name?.trim() || 'Cropped variant';
       const modeLabel = cropMode === 'client_bbox' ? 'Client' : 'Server';
@@ -819,6 +897,7 @@ export function GenerationToolbar(): React.JSX.Element {
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to crop image.', { variant: 'error' });
     } finally {
+      cropRequestInFlightRef.current = false;
       setCropBusy(false);
     }
   };
@@ -830,6 +909,10 @@ export function GenerationToolbar(): React.JSX.Element {
     }
     if (!workingSlotImageSrc) {
       toast('Select a slot image before centering.', { variant: 'info' });
+      return;
+    }
+    if (centerMode === 'client_alpha_bbox' && !clientProcessingImageSrc) {
+      toast('No client image source is available for centering.', { variant: 'info' });
       return;
     }
 
@@ -848,7 +931,9 @@ export function GenerationToolbar(): React.JSX.Element {
           mode: centerMode,
         };
         if (centerMode === 'client_alpha_bbox') {
-          legacyPayload['dataUrl'] = await centerCanvasImageObject(workingSlotImageSrc);
+          legacyPayload['dataUrl'] = await centerCanvasImageObject(
+            clientProcessingImageSrc || workingSlotImageSrc
+          );
         }
 
         const legacyResponse = await api.post<{ slot?: { id: string; name: string | null } }>(
@@ -885,7 +970,9 @@ export function GenerationToolbar(): React.JSX.Element {
       if (centerMode === 'client_alpha_bbox') {
         runPayload['center'] = {
           mode: centerMode,
-          dataUrl: await centerCanvasImageObject(workingSlotImageSrc),
+          dataUrl: await centerCanvasImageObject(
+            clientProcessingImageSrc || workingSlotImageSrc
+          ),
         };
       }
 
@@ -904,7 +991,7 @@ export function GenerationToolbar(): React.JSX.Element {
       }
 
       await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-      const slotsSnapshot = await fetchProjectSlots();
+      const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
       const centeredSlot = pickPrimaryRunOutputSlot(slotsSnapshot, enqueueResult.runId);
       if (centeredSlot?.id) {
         setSelectedSlotId(centeredSlot.id);

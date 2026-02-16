@@ -33,6 +33,10 @@ export function ImportTab(): React.JSX.Element {
     setImportTemplateId,
     importTemplates,
     loadingImportTemplates,
+    selectedBaseConnectionId,
+    setSelectedBaseConnectionId,
+    isBaseConnected,
+    baseConnections,
     imageMode,
     setImageMode,
     allowDuplicateSku,
@@ -59,6 +63,8 @@ export function ImportTab(): React.JSX.Element {
   } = useImportExport();
 
   const selectedImportCount = selectedImportIds.size;
+  const hasImportSearch =
+    importNameSearch.trim().length > 0 || importSkuSearch.trim().length > 0;
 
   const columns = useMemo<ColumnDef<ImportListItem>[]>(() => [
     {
@@ -178,18 +184,58 @@ export function ImportTab(): React.JSX.Element {
             </p>
           </div>
           <div className='flex items-center gap-2'>
-            <span className='flex h-2 w-2 rounded-full bg-green-500'></span>
-            <span className='text-xs text-green-400'>Connected</span>
+            <span
+              className={cn(
+                'flex h-2 w-2 rounded-full',
+                isBaseConnected ? 'bg-green-500' : 'bg-red-500'
+              )}
+            />
+            <span
+              className={cn(
+                'text-xs',
+                isBaseConnected ? 'text-green-400' : 'text-red-400'
+              )}
+            >
+              {isBaseConnected ? 'Connected' : 'Disconnected'}
+            </span>
           </div>
         </div>
 
         <div className='mt-4 space-y-4'>
+          <div>
+            <Label className='text-xs text-gray-400'>
+              Base connection for import
+            </Label>
+            <div className='mt-2'>
+              <SelectSimple size='sm'
+                value={selectedBaseConnectionId || '__none__'}
+                onValueChange={(v: string): void =>
+                  setSelectedBaseConnectionId(v === '__none__' ? '' : v)
+                }
+                disabled={baseConnections.length === 0}
+                options={[
+                  { value: '__none__', label: 'Select a connection...' },
+                  ...baseConnections.map((connection) => ({
+                    value: connection.id,
+                    label: connection.name,
+                  })),
+                ]}
+                placeholder={
+                  baseConnections.length === 0
+                    ? 'No connections loaded'
+                    : 'Select a connection...'
+                }
+                triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
+              />
+            </div>
+          </div>
+
           <div className='flex flex-wrap items-end gap-3'>
             <Button
               onClick={(): void => {
                 void handleLoadInventories();
               }}
-              disabled={loadingInventories}
+              disabled={loadingInventories || !selectedBaseConnectionId}
               className='mt-6'
             >
               {loadingInventories ? 'Loading...' : 'Load inventories'}
@@ -434,8 +480,10 @@ export function ImportTab(): React.JSX.Element {
           </div>
         ) : (
           <p className='mt-3 text-xs text-gray-500'>
-            {importList.length > 0
-              ? 'No matches for this search.'
+            {importListStats
+              ? hasImportSearch
+                ? 'No matches for this search.'
+                : 'No products available for current filters.'
               : 'No items loaded yet.'}
           </p>
         )}

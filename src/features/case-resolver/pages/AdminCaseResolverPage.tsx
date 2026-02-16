@@ -18,6 +18,7 @@ import {
 } from '@/features/case-resolver/context/CaseResolverPageContext';
 import {
   buildFilemakerPartyOptions,
+  createFilemakerAddress,
   createFilemakerOrganization,
   createFilemakerPerson,
   decodeFilemakerPartyReference,
@@ -28,6 +29,7 @@ import {
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
 import type { FilemakerDatabase, FilemakerEntityKind } from '@/features/filemaker/types';
+import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
 import {
   consumePromptExploderApplyPromptForCaseResolver,
   savePromptExploderDraftPromptFromCaseResolver,
@@ -40,6 +42,13 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { AppModal, Button, Input, Label, MultiSelect, Textarea, SelectSimple, useToast } from '@/shared/ui';
 
+import {
+  composeCandidateStreetNumber,
+  findExistingFilemakerAddressId,
+  findExistingFilemakerPartyReference,
+  normalizeCaseResolverComparable,
+  resolveCountryFromCandidateValue,
+} from '../party-matching';
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_TAGS_KEY,
@@ -162,11 +171,10 @@ type CaseResolverFilemakerPartySearchOption = {
 };
 
 const toNormalizedSearchValue = (...parts: Array<string | null | undefined>): string =>
-  parts
+  normalizeCaseResolverComparable(parts
     .map((value: string | null | undefined): string => value?.trim() ?? '')
     .filter((value: string): boolean => value.length > 0)
-    .join(' ')
-    .toLowerCase();
+    .join(' '));
 
 const buildFilemakerAddressLabel = ({
   street,
@@ -367,9 +375,6 @@ type CaseResolverPromptExploderPartyProposalState = {
   addressee: CaseResolverPromptExploderPartyProposal | null;
 };
 
-const normalizeComparablePartyValue = (value: string): string =>
-  value.trim().toLowerCase().replace(/\s+/g, ' ');
-
 const PROMPT_EXPLODER_ADDRESSER_LABEL_HINTS = [
   'addresser',
   'nadawca',
@@ -386,7 +391,7 @@ const PROMPT_EXPLODER_ADDRESSEE_LABEL_HINTS = [
 
 const countRoleHints = (source: string, hints: string[]): number =>
   hints.reduce((total: number, hint: string): number => {
-    const normalizedHint = normalizeComparablePartyValue(hint);
+    const normalizedHint = normalizeCaseResolverComparable(hint);
     if (!normalizedHint) return total;
     return source.includes(normalizedHint) ? total + 1 : total;
   }, 0);
@@ -394,7 +399,7 @@ const countRoleHints = (source: string, hints: string[]): number =>
 const inferCandidateRoleFromLabels = (
   candidate: PromptExploderCaseResolverPartyCandidate
 ): 'addresser' | 'addressee' | null => {
-  const source = normalizeComparablePartyValue([
+  const source = normalizeCaseResolverComparable([
     ...(candidate.sourcePatternLabels ?? []),
     ...(candidate.sourceSequenceLabels ?? []),
     candidate.sourceSegmentTitle ?? '',
@@ -405,12 +410,6 @@ const inferCandidateRoleFromLabels = (
   const addresseeScore = countRoleHints(source, PROMPT_EXPLODER_ADDRESSEE_LABEL_HINTS);
   if (addresserScore === addresseeScore) return null;
   return addresserScore > addresseeScore ? 'addresser' : 'addressee';
-};
-
-const isOptionalPartyFieldMatch = (candidate: string | undefined, current: string): boolean => {
-  const normalizedCandidate = normalizeComparablePartyValue(candidate ?? '');
-  if (!normalizedCandidate) return true;
-  return normalizedCandidate === normalizeComparablePartyValue(current);
 };
 
 const appendTextBlock = (source: string, addition: string): string => {
@@ -465,91 +464,6 @@ const appendTextToCaseResolverDraft = (
     originalDocumentContent: nextOriginal,
     documentContent: nextOriginal,
   };
-};
-
-const findExistingFilemakerPartyReference = (
-  database: FilemakerDatabase,
-  candidate: PromptExploderCaseResolverPartyCandidate
-): CaseResolverPartyReference | null => {
-  const composeStreet = (street: string, streetNumber: string): string =>
-    [street.trim(), streetNumber.trim()].filter((value: string) => value.length > 0).join(' ');
-  const composeCandidateStreetNumber = (): string => {
-    const streetNumber = (candidate.streetNumber ?? '').trim();
-    const houseNumber = (candidate.houseNumber ?? '').trim();
-    if (!streetNumber) return '';
-    return houseNumber ? `${streetNumber}/${houseNumber}` : streetNumber;
-  };
-
-  const kindHint = candidate.kind ?? null;
-  const firstName = (candidate.firstName ?? '').trim();
-  const middleName = (candidate.middleName ?? '').trim();
-  const lastName = (candidate.lastName ?? '').trim();
-  const organizationName = (candidate.organizationName ?? '').trim();
-  const candidateStreetNumber = composeCandidateStreetNumber();
-  const candidateLastNameNormalized = [middleName, lastName].filter(Boolean).join(' ').trim() || lastName;
-
-  if (kindHint !== 'organization' && firstName && lastName) {
-    const match = database.persons.find((person) => {
-      if (normalizeComparablePartyValue(person.firstName) !== normalizeComparablePartyValue(firstName)) {
-        return false;
-      }
-      if (
-        normalizeComparablePartyValue(person.lastName) !==
-        normalizeComparablePartyValue(candidateLastNameNormalized)
-      ) {
-        return false;
-      }
-      const personStreet = composeStreet(person.street, person.streetNumber);
-      if (
-        !isOptionalPartyFieldMatch(candidate.street, personStreet) &&
-        !isOptionalPartyFieldMatch(candidate.street, person.street)
-      ) {
-        return false;
-      }
-      if (!isOptionalPartyFieldMatch(candidateStreetNumber, person.streetNumber)) return false;
-      if (!isOptionalPartyFieldMatch(candidate.city, person.city)) return false;
-      if (!isOptionalPartyFieldMatch(candidate.postalCode, person.postalCode)) return false;
-      if (!isOptionalPartyFieldMatch(candidate.country, person.country)) return false;
-      return true;
-    });
-    if (match) {
-      return {
-        kind: 'person',
-        id: match.id,
-      };
-    }
-  }
-
-  if (kindHint !== 'person' && organizationName) {
-    const match = database.organizations.find((organization) => {
-      if (
-        normalizeComparablePartyValue(organization.name) !==
-        normalizeComparablePartyValue(organizationName)
-      ) {
-        return false;
-      }
-      const organizationStreet = composeStreet(organization.street, organization.streetNumber);
-      if (
-        !isOptionalPartyFieldMatch(candidate.street, organizationStreet) &&
-        !isOptionalPartyFieldMatch(candidate.street, organization.street)
-      ) {
-        return false;
-      }
-      if (!isOptionalPartyFieldMatch(candidateStreetNumber, organization.streetNumber)) return false;
-      if (!isOptionalPartyFieldMatch(candidate.city, organization.city)) return false;
-      if (!isOptionalPartyFieldMatch(candidate.postalCode, organization.postalCode)) return false;
-      if (!isOptionalPartyFieldMatch(candidate.country, organization.country)) return false;
-      return true;
-    });
-    if (match) {
-      return {
-        kind: 'organization',
-        id: match.id,
-      };
-    }
-  }
-
-  return null;
 };
 
 const buildPromptExploderPartyProposal = (
@@ -966,6 +880,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     () => parseFilemakerDatabase(rawFilemakerDatabase),
     [rawFilemakerDatabase]
   );
+  const countriesQuery = useCountries();
+  const countries = countriesQuery.data ?? [];
   const filemakerPartyOptions = useMemo(
     () => buildFilemakerPartyOptions(filemakerDatabase),
     [filemakerDatabase]
@@ -1053,7 +969,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   );
   const filterFilemakerPartySearchOptions = useCallback(
     (query: string): CaseResolverFilemakerPartySearchOption[] => {
-      const normalizedQuery = query.trim().toLowerCase();
+      const normalizedQuery = normalizeCaseResolverComparable(query);
       if (!normalizedQuery) {
         return filemakerPartySearchOptions.slice(0, 16);
       }
@@ -1275,7 +1191,36 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     }
 
     const nextExplodedContent = payload.prompt;
-    const extractedDocumentDate = extractCaseResolverDocumentDate(nextExplodedContent);
+    const extractedDocumentDateFromMetadata = (() => {
+      const placeDate = payload.caseResolverMetadata?.placeDate;
+      const dayValue = Number(placeDate?.day ?? '');
+      const monthValue = Number(placeDate?.month ?? '');
+      const yearValue = Number(placeDate?.year ?? '');
+      if (
+        !Number.isFinite(dayValue) ||
+        !Number.isFinite(monthValue) ||
+        !Number.isFinite(yearValue)
+      ) {
+        return null;
+      }
+      const day = Math.floor(dayValue);
+      const month = Math.floor(monthValue);
+      const year = Math.floor(yearValue);
+      if (year < 1900 || year > 2099 || month < 1 || month > 12 || day < 1 || day > 31) {
+        return null;
+      }
+      const parsed = new Date(Date.UTC(year, month - 1, day));
+      if (
+        parsed.getUTCFullYear() !== year ||
+        parsed.getUTCMonth() !== month - 1 ||
+        parsed.getUTCDate() !== day
+      ) {
+        return null;
+      }
+      return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    })();
+    const extractedDocumentDate =
+      extractedDocumentDateFromMetadata ?? extractCaseResolverDocumentDate(nextExplodedContent);
     const now = new Date().toISOString();
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
       normalizeCaseResolverWorkspace({
@@ -2287,6 +2232,83 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       const partyPatch: Partial<Record<'addresser' | 'addressee', CaseResolverPartyReference | null>> = {};
       const textAdditions: string[] = [];
 
+      const upsertAddressForEntity = (args: {
+        entityKind: 'person' | 'organization';
+        entityId: string;
+        street: string;
+        streetNumber: string;
+        city: string;
+        postalCode: string;
+        country: string;
+        countryId: string;
+      }): string => {
+        const resolvedAddressId =
+          findExistingFilemakerAddressId(nextDatabase, {
+            street: args.street,
+            streetNumber: args.streetNumber,
+            city: args.city,
+            postalCode: args.postalCode,
+            country: args.country,
+            countryId: args.countryId,
+          }) ??
+          `${args.entityKind}-address-${args.entityId}`;
+
+        const hasAddressData = Boolean(
+          args.street ||
+            args.streetNumber ||
+            args.city ||
+            args.postalCode ||
+            args.country ||
+            args.countryId
+        );
+        if (!hasAddressData) {
+          return resolvedAddressId;
+        }
+
+        const existingAddressIndex = nextDatabase.addresses.findIndex(
+          (address) => address.id === resolvedAddressId
+        );
+        const nextAddress = createFilemakerAddress({
+          id: resolvedAddressId,
+          street: args.street,
+          streetNumber: args.streetNumber,
+          city: args.city,
+          postalCode: args.postalCode,
+          country: args.country,
+          countryId: args.countryId,
+          updatedAt: new Date().toISOString(),
+        });
+
+        if (existingAddressIndex >= 0) {
+          const existingAddress = nextDatabase.addresses[existingAddressIndex];
+          if (
+            existingAddress?.street === nextAddress.street &&
+            existingAddress?.streetNumber === nextAddress.streetNumber &&
+            existingAddress?.city === nextAddress.city &&
+            existingAddress?.postalCode === nextAddress.postalCode &&
+            existingAddress?.country === nextAddress.country &&
+            existingAddress?.countryId === nextAddress.countryId
+          ) {
+            return resolvedAddressId;
+          }
+          const nextAddresses = [...nextDatabase.addresses];
+          nextAddresses[existingAddressIndex] = nextAddress;
+          nextDatabase = {
+            ...nextDatabase,
+            addresses: nextAddresses,
+          };
+          databaseChanged = true;
+          return resolvedAddressId;
+        }
+
+        nextDatabase = {
+          ...nextDatabase,
+          addresses: [...nextDatabase.addresses, nextAddress],
+        };
+        databaseChanged = true;
+        return resolvedAddressId;
+      };
+
       const upsertPartyForProposal = (
         proposal: CaseResolverPromptExploderPartyProposal | null
       ): void => {
@@ -2304,12 +2326,16 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           proposal.existingReference;
         if (!reference) {
           const candidateKind = proposal.candidate.kind ?? null;
-          const normalizedStreetNumber = (() => {
-            const streetNumber = proposal.candidate.streetNumber?.trim() ?? '';
-            const houseNumber = proposal.candidate.houseNumber?.trim() ?? '';
-            if (!streetNumber) return '';
-            return houseNumber ? `${streetNumber}/${houseNumber}` : streetNumber;
-          })();
+          const normalizedStreetNumber = composeCandidateStreetNumber(proposal.candidate);
+          const street = proposal.candidate.street?.trim() ?? '';
+          const city = proposal.candidate.city?.trim() ?? '';
+          const postalCode = proposal.candidate.postalCode?.trim() ?? '';
+          const resolvedCountry = resolveCountryFromCandidateValue(
+            proposal.candidate.country,
+            countries
+          );
+          const country = resolvedCountry.country.trim();
+          const countryId = resolvedCountry.countryId.trim();
           const shouldCreateOrganization =
             candidateKind === 'organization' ||
             (!(proposal.candidate.firstName ?? '').trim() &&
@@ -2319,14 +2345,27 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               proposal.candidate.organizationName?.trim() ||
               proposal.candidate.displayName.trim() ||
               'Organization';
-            const organization = createFilemakerOrganization({
-              id: createId('organization'),
-              name: organizationName,
-              street: proposal.candidate.street ?? '',
+            const organizationId = createId('organization');
+            const addressId = upsertAddressForEntity({
+              entityKind: 'organization',
+              entityId: organizationId,
+              street,
               streetNumber: normalizedStreetNumber,
-              city: proposal.candidate.city ?? '',
-              postalCode: proposal.candidate.postalCode ?? '',
-              country: proposal.candidate.country ?? '',
+              city,
+              postalCode,
+              country,
+              countryId,
+            });
+            const organization = createFilemakerOrganization({
+              id: organizationId,
+              name: organizationName,
+              addressId,
+              street,
+              streetNumber: normalizedStreetNumber,
+              city,
+              postalCode,
+              country,
+              countryId,
             });
             nextDatabase = {
               ...nextDatabase,
@@ -2350,15 +2389,28 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 .trim() ||
               proposal.candidate.displayName.trim().split(/\s+/).slice(1).join(' ').trim() ||
               'Unknown';
+            const personId = createId('person');
+            const addressId = upsertAddressForEntity({
+              entityKind: 'person',
+              entityId: personId,
+              street,
+              streetNumber: normalizedStreetNumber,
+              city,
+              postalCode,
+              country,
+              countryId,
+            });
             const person = createFilemakerPerson({
-              id: createId('person'),
+              id: personId,
               firstName,
               lastName,
-              street: proposal.candidate.street ?? '',
+              addressId,
+              street,
               streetNumber: normalizedStreetNumber,
-              city: proposal.candidate.city ?? '',
-              postalCode: proposal.candidate.postalCode ?? '',
-              country: proposal.candidate.country ?? '',
+              city,
+              postalCode,
+              country,
+              countryId,
             });
             nextDatabase = {
               ...nextDatabase,
@@ -2456,6 +2508,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       );
     }
   }, [
+    countries,
     filemakerDatabase,
     handleClosePromptExploderPartyProposal,
     promptExploderPartyProposal,
@@ -3072,12 +3125,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                   proposal.existingReference
                     ? resolveFilemakerPartyLabel(filemakerDatabase, proposal.existingReference)
                     : null;
-                const candidateStreetNumber = (() => {
-                  const streetNumber = proposal.candidate.streetNumber?.trim() ?? '';
-                  const houseNumber = proposal.candidate.houseNumber?.trim() ?? '';
-                  if (!streetNumber) return '';
-                  return houseNumber ? `${streetNumber}/${houseNumber}` : streetNumber;
-                })();
+                const candidateStreetNumber = composeCandidateStreetNumber(proposal.candidate);
                 return (
                   <div
                     key={role}

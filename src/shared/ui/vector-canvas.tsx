@@ -438,10 +438,25 @@ export function VectorCanvas({
         ctx.fillText('M', firstPt.x + 8, firstPt.y - 6);
       }
 
-      if (shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush') {
-        shape.points.forEach((p: VectorPoint, index: number) => {
+      if (
+        shape.type === 'polygon' ||
+        shape.type === 'lasso' ||
+        shape.type === 'brush' ||
+        shape.type === 'rect' ||
+        shape.type === 'ellipse'
+      ) {
+        const visiblePoints =
+          shape.type === 'rect' || shape.type === 'ellipse'
+            ? shape.points.slice(0, 2)
+            : shape.points;
+        visiblePoints.forEach((p: VectorPoint, index: number) => {
           const px = toPx(p);
-          const pointRadius = index === 0 ? 5.5 : 4.5;
+          const pointRadius =
+            shape.type === 'rect' || shape.type === 'ellipse'
+              ? 5.5
+              : index === 0
+                ? 5.5
+                : 4.5;
           // Dark halo first, then bright core marker to keep points visible on any image.
           ctx.beginPath();
           ctx.arc(px.x, px.y, pointRadius + 2, 0, Math.PI * 2);
@@ -453,7 +468,11 @@ export function VectorCanvas({
           const isSelected = isActive && index === (selectedPointIndex ?? -1);
           ctx.fillStyle = isSelected
             ? 'rgba(251, 191, 36, 0.98)'
-            : (index === 0 ? 'rgba(16, 185, 129, 0.98)' : 'rgba(56, 189, 248, 0.98)');
+            : (
+              shape.type === 'rect' || shape.type === 'ellipse'
+                ? 'rgba(251, 146, 60, 0.98)'
+                : (index === 0 ? 'rgba(16, 185, 129, 0.98)' : 'rgba(56, 189, 248, 0.98)')
+            );
           ctx.fill();
           ctx.lineWidth = 1.5;
           ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
@@ -694,8 +713,18 @@ export function VectorCanvas({
     const radius = 8;
     for (const shape of shapes) {
       if (!shape.visible) continue;
-      if (!(shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush')) continue;
-      for (let idx = 0; idx < shape.points.length; idx += 1) {
+      const supportsEditablePoints =
+        shape.type === 'polygon' ||
+        shape.type === 'lasso' ||
+        shape.type === 'brush' ||
+        shape.type === 'rect' ||
+        shape.type === 'ellipse';
+      if (!supportsEditablePoints) continue;
+      const maxPointCount =
+        shape.type === 'rect' || shape.type === 'ellipse'
+          ? Math.min(shape.points.length, 2)
+          : shape.points.length;
+      for (let idx = 0; idx < maxPointCount; idx += 1) {
         const p = shape.points[idx]!;
         const px = p.x * rect.width;
         const py = p.y * rect.height;
@@ -1259,21 +1288,36 @@ export function VectorCanvas({
                       strokeDasharray={dash}
                       vectorEffect='non-scaling-stroke'
                     />
-                    {(shape.type === 'polygon' || shape.type === 'lasso' || shape.type === 'brush')
-                      ? shape.points.map((point: VectorPoint, index: number) => {
+                    {(
+                      shape.type === 'polygon' ||
+                      shape.type === 'lasso' ||
+                      shape.type === 'brush' ||
+                      shape.type === 'rect' ||
+                      shape.type === 'ellipse'
+                    )
+                      ? (shape.type === 'rect' || shape.type === 'ellipse'
+                        ? shape.points.slice(0, 2)
+                        : shape.points).map((point: VectorPoint, index: number) => {
                         const cx = point.x * SHAPE_VIEWBOX_SIZE;
                         const cy = point.y * SHAPE_VIEWBOX_SIZE;
                         const selected = isActive && index === (selectedPointIndex ?? -1);
+                        const isRectLike = shape.type === 'rect' || shape.type === 'ellipse';
+                        const haloRadius = isRectLike ? 7.5 : (index === 0 ? 7.5 : 6.5);
+                        const markerRadius = isRectLike ? 5.5 : (index === 0 ? 5.5 : 4.5);
                         return (
                           <g key={`${shape.id}-${index.toString(36)}`}>
-                            <circle cx={cx} cy={cy} r={index === 0 ? 7.5 : 6.5} fill='rgba(2,6,23,0.55)' />
+                            <circle cx={cx} cy={cy} r={haloRadius} fill='rgba(2,6,23,0.55)' />
                             <circle
                               cx={cx}
                               cy={cy}
-                              r={index === 0 ? 5.5 : 4.5}
+                              r={markerRadius}
                               fill={selected
                                 ? 'rgba(251,191,36,0.98)'
-                                : (index === 0 ? 'rgba(16,185,129,0.98)' : 'rgba(56,189,248,0.98)')}
+                                : (
+                                  isRectLike
+                                    ? 'rgba(251,146,60,0.98)'
+                                    : (index === 0 ? 'rgba(16,185,129,0.98)' : 'rgba(56,189,248,0.98)')
+                                )}
                               stroke='rgba(255,255,255,0.9)'
                               strokeWidth={1.5}
                               vectorEffect='non-scaling-stroke'
@@ -1364,15 +1408,54 @@ export function VectorCanvas({
                     : 'transparent';
                   const dash = isMaskEligible ? undefined : (isNonMaskType ? '6 4' : '8 4');
                   return (
-                    <path
-                      key={shape.id}
-                      d={path}
-                      fill={fill}
-                      stroke={stroke}
-                      strokeWidth={isActive ? 2.5 : 2}
-                      strokeDasharray={dash}
-                      vectorEffect='non-scaling-stroke'
-                    />
+                    <g key={shape.id}>
+                      <path
+                        d={path}
+                        fill={fill}
+                        stroke={stroke}
+                        strokeWidth={isActive ? 2.5 : 2}
+                        strokeDasharray={dash}
+                        vectorEffect='non-scaling-stroke'
+                      />
+                      {(
+                        shape.type === 'polygon' ||
+                        shape.type === 'lasso' ||
+                        shape.type === 'brush' ||
+                        shape.type === 'rect' ||
+                        shape.type === 'ellipse'
+                      )
+                        ? (shape.type === 'rect' || shape.type === 'ellipse'
+                          ? shape.points.slice(0, 2)
+                          : shape.points).map((point: VectorPoint, index: number) => {
+                          const cx = point.x * SHAPE_VIEWBOX_SIZE;
+                          const cy = point.y * SHAPE_VIEWBOX_SIZE;
+                          const selected = isActive && index === (selectedPointIndex ?? -1);
+                          const isRectLike = shape.type === 'rect' || shape.type === 'ellipse';
+                          const haloRadius = isRectLike ? 7.5 : (index === 0 ? 7.5 : 6.5);
+                          const markerRadius = isRectLike ? 5.5 : (index === 0 ? 5.5 : 4.5);
+                          return (
+                            <g key={`${shape.id}-${index.toString(36)}`}>
+                              <circle cx={cx} cy={cy} r={haloRadius} fill='rgba(2,6,23,0.55)' />
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r={markerRadius}
+                                fill={selected
+                                  ? 'rgba(251,191,36,0.98)'
+                                  : (
+                                    isRectLike
+                                      ? 'rgba(251,146,60,0.98)'
+                                      : (index === 0 ? 'rgba(16,185,129,0.98)' : 'rgba(56,189,248,0.98)')
+                                  )}
+                                stroke='rgba(255,255,255,0.9)'
+                                strokeWidth={1.5}
+                                vectorEffect='non-scaling-stroke'
+                              />
+                            </g>
+                          );
+                        })
+                        : null}
+                    </g>
                   );
                 })}
               </svg>

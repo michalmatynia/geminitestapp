@@ -41,7 +41,7 @@ export function useAsset3DListState(): UseAsset3DListStateReturn {
   const filters = useMemo(
     () => ({
       ...(searchQuery && { search: searchQuery }),
-      ...(selectedCategory && { category: selectedCategory }),
+      ...(selectedCategory && { categoryId: selectedCategory }),
       ...(selectedTags.length > 0 && { tags: selectedTags }),
     }),
     [searchQuery, selectedCategory, selectedTags]
@@ -61,7 +61,6 @@ export function useAsset3DListState(): UseAsset3DListStateReturn {
   const handleReindex = async () => {
     try {
       await reindexMutation.mutateAsync();
-      void assetsQuery.refetch();
     } catch (_e) {
       // handled by mutation error
     }

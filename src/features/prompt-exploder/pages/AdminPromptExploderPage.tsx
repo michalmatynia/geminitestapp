@@ -2,7 +2,7 @@
 
 import { ArrowDown, ArrowUp, GripVertical, Link2, Plus, RefreshCcw, Settings2, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   parseValidatorPatternLists,
@@ -64,6 +64,9 @@ import {
   parseCustomBenchmarkCasesDraft,
   upsertCustomBenchmarkCase,
 } from '../custom-benchmark-cases';
+import {
+  readRegexCaptureGroup,
+} from '../helpers/capture';
 import {
   reorderListItemsForDrop,
   reorderSegmentsForDrop,
@@ -206,19 +209,106 @@ type CaseResolverPartySegmentSelection = {
   addresseeSegmentId: string;
 };
 
+type CaseResolverPlaceDateCandidate = {
+  city?: string | undefined;
+  day?: string | undefined;
+  month?: string | undefined;
+  year?: string | undefined;
+  sourceSegmentId?: string | undefined;
+  sourceSegmentTitle?: string | undefined;
+  sourcePatternLabels?: string[] | undefined;
+  sourceSequenceLabels?: string[] | undefined;
+};
+
+type CaseResolverStructuredSegmentDraft =
+  | {
+    kind: 'place_date';
+    city: string;
+    day: string;
+    month: string;
+    year: string;
+  }
+  | {
+    kind: 'party';
+    role: PromptExploderCaseResolverPartyRole;
+    companyName: string;
+    name: string;
+    middleName: string;
+    lastName: string;
+    street: string;
+    streetNumber: string;
+    houseNumber: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
+
 const EMPTY_CASE_RESOLVER_PARTY_SELECTION: CaseResolverPartySegmentSelection = {
   addresserSegmentId: '',
   addresseeSegmentId: '',
 };
 
 const POSTAL_CITY_RE = /^(\d{2}-\d{3})\s+(.+)$/;
-const STREET_NUMBER_RE = /^(.+?)\s+(\d+[A-Za-z]?)(?:\s*\/\s*([0-9A-Za-z-]+))?$/;
+const PLACE_DATE_LINE_RE =
+  /^\s*[\p{L}][\p{L}\s\-.'’]{1,60}?(?:,)?\s+\d{1,2}[./-]\d{1,2}[./-]\d{2,4}(?:\s*r\.?\s*)?$/iu;
+const STREET_NUMBER_RE =
+  /^(?:(?:ul\.?|al\.?|os\.?|pl\.?|aleja)\s+)?([\p{L}][\p{L}\s'’.-]{1,80}?)\s+(\d+[A-Za-z]?)(?:\s*\/\s*([0-9A-Za-z-]+))?$/u;
 const ORGANIZATION_HINT_RE =
   /\b(sp\.|s\.a\.|sa|llc|inc|corp|company|inspektorat|urzad|urząd|organ|fundacja|stowarzyszenie|office|department|instytut)\b/i;
 const COUNTRY_NORMALIZATION_MAP: Record<string, string> = {
   polska: 'Poland',
   poland: 'Poland',
+  niemcy: 'Germany',
+  germany: 'Germany',
+  deutschland: 'Germany',
+  francja: 'France',
+  france: 'France',
+  hiszpania: 'Spain',
+  spain: 'Spain',
+  włochy: 'Italy',
+  wlochy: 'Italy',
+  italy: 'Italy',
+  uk: 'United Kingdom',
+  'united kingdom': 'United Kingdom',
+  'wielka brytania': 'United Kingdom',
+  usa: 'United States',
+  'u.s.a.': 'United States',
+  'stany zjednoczone': 'United States',
 };
+const KNOWN_COUNTRY_KEYS = new Set(Object.keys(COUNTRY_NORMALIZATION_MAP));
+const PERSON_NAME_TOKEN_RE = /^[\p{Lu}][\p{L}'’.-]{1,40}$/u;
+const PERSON_NAME_STOPWORDS = new Set<string>([
+  'z',
+  'ze',
+  'na',
+  'w',
+  'we',
+  'od',
+  'do',
+  'i',
+  'oraz',
+  'a',
+  'o',
+  'dotyczy',
+  'wniosek',
+  'uzasadnienie',
+  'niniejszym',
+  'pozdrawiam',
+  'poważaniem',
+  'powazaniem',
+  'sincerely',
+  'regards',
+  'inspektorat',
+  'urząd',
+  'urzad',
+  'zus',
+  'organ',
+  'sąd',
+  'sad',
+  'ministerstwo',
+]);
+const BODY_SECTION_HINT_RE =
+  /\b(wniosek|dotyczy|uzasadnienie|niniejszym|na\s+podstawie|postępowania|postepowania|administracyjnego|z\s+poważaniem|z\s+powazaniem|sincerely|regards|art\.|§|ust\.|pkt\.?)\b/iu;
 const ADDRESSER_ROLE_HINTS = [
   'addresser',
   'nadawca',
@@ -241,6 +331,12 @@ const PLACE_DATE_ROLE_HINTS = [
   'miejsce data',
   'data miejsc',
 ];
+const CASE_RESOLVER_PLACE_DATE_HEADING_PATTERN_ID =
+  'segment.case_resolver.heading.place_date';
+const CASE_RESOLVER_ADDRESSER_HEADING_PATTERN_ID =
+  'segment.case_resolver.heading.addresser_person';
+const CASE_RESOLVER_ADDRESSEE_HEADING_PATTERN_ID =
+  'segment.case_resolver.heading.addressee_organization';
 
 const normalizeText = (value: string): string => value.trim().replace(/\s+/g, ' ');
 
@@ -250,6 +346,48 @@ const normalizeCountryName = (value: string): string => {
   const normalized = normalizeText(value);
   if (!normalized) return '';
   return COUNTRY_NORMALIZATION_MAP[normalized.toLowerCase()] ?? normalized;
+};
+
+const isCountryLine = (line: string): boolean => {
+  const normalized = normalizeText(line);
+  if (!normalized || /\d/.test(normalized)) return false;
+  return KNOWN_COUNTRY_KEYS.has(normalized.toLowerCase());
+};
+
+const isLikelyPersonNameLine = (line: string): boolean => {
+  const normalized = normalizeText(line);
+  if (!normalized) return false;
+  if (normalized.length > 80) return false;
+  if (/\d/.test(normalized)) return false;
+  if (/[,:;!?()[\]{}<>§]/u.test(normalized)) return false;
+  if (BODY_SECTION_HINT_RE.test(normalized)) return false;
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  if (tokens.length < 2 || tokens.length > 4) return false;
+  if (!tokens.every((token: string): boolean => PERSON_NAME_TOKEN_RE.test(token))) return false;
+  const normalizedTokens = tokens.map((token: string): string => normalizeComparable(token));
+  return normalizedTokens.every((token: string): boolean => !PERSON_NAME_STOPWORDS.has(token));
+};
+
+const isBodyLikeLine = (line: string): boolean => {
+  const normalized = normalizeText(line);
+  if (!normalized) return false;
+  if (BODY_SECTION_HINT_RE.test(normalized)) return true;
+  const tokenCount = normalized.split(/\s+/).length;
+  if (normalized.length >= 140) return true;
+  return tokenCount >= 10 && /[.!?;:]/.test(normalized);
+};
+
+const isLikelyBodySection = (lines: string[]): boolean => {
+  const normalizedLines = lines
+    .map((line: string): string => normalizeText(line))
+    .filter((line: string): boolean => line.length > 0);
+  if (normalizedLines.length < 3) return false;
+  const bodyLikeCount = normalizedLines.filter(isBodyLikeLine).length;
+  if (bodyLikeCount >= 2) return true;
+  const sentenceLikeCount = normalizedLines.filter(
+    (line: string): boolean => line.split(/\s+/).length >= 12
+  ).length;
+  return bodyLikeCount >= 1 && sentenceLikeCount >= 2;
 };
 
 const toSegmentSourceText = (segment: PromptExploderSegment): string => {
@@ -308,13 +446,171 @@ const splitSegmentLines = (segment: PromptExploderSegment): string[] =>
     .map((line: string): string => normalizeText(line))
     .filter((line: string): boolean => line.length > 0);
 
+const resolveSegmentDisplayLabel = (segment: PromptExploderSegment): string => {
+  const explicitTitle = normalizeText(segment.title);
+  if (explicitTitle) return explicitTitle;
+  const firstLine = splitSegmentLines(segment)[0] ?? '';
+  return firstLine || `Segment ${segment.id}`;
+};
+
+const hasCaseResolverPlaceDateSignal = (segment: PromptExploderSegment): boolean => {
+  const matchedPatternIds = segment.matchedPatternIds ?? [];
+  if (
+    matchedPatternIds.some((patternId: string): boolean =>
+      patternId === CASE_RESOLVER_PLACE_DATE_HEADING_PATTERN_ID ||
+      patternId.startsWith('segment.case_resolver.extract.place_date.')
+    )
+  ) {
+    return true;
+  }
+  const firstLine = splitSegmentLines(segment)[0] ?? '';
+  if (PLACE_DATE_LINE_RE.test(firstLine)) return true;
+  const signalSource = buildSegmentRoleSignalSource(segment);
+  return hasRoleHint(signalSource, PLACE_DATE_ROLE_HINTS);
+};
+
+type CaseResolverCaptureRole = PromptExploderCaseResolverPartyRole | 'party' | 'place_date';
+type CaseResolverCaptureField =
+  | 'kind'
+  | 'displayName'
+  | 'organizationName'
+  | 'companyName'
+  | 'firstName'
+  | 'name'
+  | 'middleName'
+  | 'lastName'
+  | 'street'
+  | 'streetNumber'
+  | 'houseNumber'
+  | 'city'
+  | 'postalCode'
+  | 'country'
+  | 'day'
+  | 'month'
+  | 'year';
+
+type CaseResolverSegmentCaptureRule = {
+  id: string;
+  label: string;
+  role: CaseResolverCaptureRole;
+  field: CaseResolverCaptureField;
+  regex: RegExp;
+  applyTo: 'segment' | 'line';
+  group: number;
+  normalize: 'trim' | 'lower' | 'upper' | 'country' | 'day' | 'month' | 'year';
+  overwrite: boolean;
+  sequence: number;
+};
+
+const CASE_RESOLVER_CAPTURE_TARGET_PREFIX = 'case_resolver.';
+
+const normalizeRegexFlags = (flags: string): string => flags.replace(/[gy]/g, '');
+
+const compileCaptureRegex = (
+  pattern: string,
+  flags: string
+): RegExp | null => {
+  try {
+    return new RegExp(pattern, normalizeRegexFlags(flags));
+  } catch {
+    return null;
+  }
+};
+
+const parseCaseResolverCaptureTarget = (
+  target: string
+): { role: CaseResolverCaptureRole; field: CaseResolverCaptureField } | null => {
+  const normalized = target.trim();
+  if (!normalized) return null;
+  const lower = normalized.toLowerCase();
+  if (!lower.startsWith(CASE_RESOLVER_CAPTURE_TARGET_PREFIX)) return null;
+  const path = normalized.slice(CASE_RESOLVER_CAPTURE_TARGET_PREFIX.length);
+  const parts = path.split('.').map((segment) => segment.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+
+  const roleRaw = parts[0]?.toLowerCase();
+  if (
+    roleRaw !== 'addresser' &&
+    roleRaw !== 'addressee' &&
+    roleRaw !== 'party' &&
+    roleRaw !== 'place_date'
+  ) {
+    return null;
+  }
+
+  const fieldPath = parts.slice(1).join('.').replace(/^address\./i, '');
+  const fieldRaw = fieldPath.toLowerCase();
+  const fieldMap: Record<string, CaseResolverCaptureField> = {
+    kind: 'kind',
+    displayname: 'displayName',
+    organizationname: 'organizationName',
+    companyname: 'companyName',
+    firstname: 'firstName',
+    name: 'name',
+    middlename: 'middleName',
+    lastname: 'lastName',
+    street: 'street',
+    streetnumber: 'streetNumber',
+    housenumber: 'houseNumber',
+    city: 'city',
+    postalcode: 'postalCode',
+    country: 'country',
+    day: 'day',
+    month: 'month',
+    year: 'year',
+  };
+  const mappedField = fieldMap[fieldRaw];
+  if (!mappedField) return null;
+
+  return {
+    role: roleRaw as CaseResolverCaptureRole,
+    field: mappedField,
+  };
+};
+
+const normalizeCapturedValue = (
+  value: string,
+  mode: CaseResolverSegmentCaptureRule['normalize']
+): string => {
+  const normalized = normalizeText(value);
+  if (!normalized) return '';
+  if (mode === 'lower') return normalized.toLowerCase();
+  if (mode === 'upper') return normalized.toUpperCase();
+  if (mode === 'country') return normalizeCountryName(normalized);
+  if (mode === 'day' || mode === 'month') {
+    const digits = normalized.replace(/\D/g, '');
+    if (!digits) return '';
+    const numeric = Number(digits);
+    if (!Number.isFinite(numeric)) return '';
+    const bounded = mode === 'day'
+      ? Math.min(31, Math.max(1, Math.floor(numeric)))
+      : Math.min(12, Math.max(1, Math.floor(numeric)));
+    return String(bounded).padStart(2, '0');
+  }
+  if (mode === 'year') {
+    const digits = normalized.replace(/\D/g, '');
+    if (!digits) return '';
+    const numeric = Number(digits);
+    if (!Number.isFinite(numeric)) return '';
+    if (digits.length <= 2) {
+      return String(2000 + Math.floor(numeric));
+    }
+    return String(Math.floor(numeric));
+  }
+  return normalized;
+};
+
 const inferPartyKindFromLines = (lines: string[]): 'person' | 'organization' => {
-  const firstLine = lines[0] ?? '';
+  const firstLine = normalizeText(lines[0] ?? '');
+  if (!firstLine) return 'organization';
   if (ORGANIZATION_HINT_RE.test(firstLine)) return 'organization';
-  const tokens = firstLine.split(/\s+/).filter(Boolean);
-  const hasDigits = /\d/.test(firstLine);
-  if (hasDigits) return 'organization';
-  if (tokens.length >= 2 && tokens.length <= 4) return 'person';
+  if (/\d/.test(firstLine)) return 'organization';
+  const hasAddressSignal = lines
+    .slice(1)
+    .some((line: string): boolean => POSTAL_CITY_RE.test(line) || STREET_NUMBER_RE.test(line) || isCountryLine(line));
+  if (isLikelyPersonNameLine(firstLine) && (hasAddressSignal || lines.length <= 2)) {
+    return 'person';
+  }
   return 'organization';
 };
 
@@ -323,15 +619,11 @@ const parsePersonName = (line: string): {
   middleName?: string | undefined;
   lastName?: string | undefined;
 } => {
-  const tokens = normalizeText(line).split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) {
+  if (!isLikelyPersonNameLine(line)) {
     return {};
   }
-  if (tokens.length === 1) {
-    return {
-      firstName: tokens[0],
-    };
-  }
+  const tokens = normalizeText(line).split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return {};
   if (tokens.length === 2) {
     return {
       firstName: tokens[0],
@@ -376,15 +668,12 @@ const extractAddressFields = (lines: string[]): {
       return;
     }
     const isLast = index === addressLines.length - 1;
-    if (!country && isLast && !/\d/.test(line) && line.split(/\s+/).length <= 4) {
+    if (!country && isLast && isCountryLine(line)) {
       country = normalizeCountryName(line);
       return;
     }
-    if (!city && !/\d/.test(line)) {
+    if (!city && !/\d/.test(line) && line.split(/\s+/).length <= 4 && !isBodyLikeLine(line)) {
       city = line;
-    }
-    if (!street && /\d/.test(line)) {
-      street = line;
     }
   });
 
@@ -399,33 +688,140 @@ const extractAddressFields = (lines: string[]): {
 };
 
 const isLikelyAddressSegment = (lines: string[]): boolean => {
-  if (lines.length < 2) return false;
-  const addressLines = lines.slice(1);
+  if (lines.length < 2 || lines.length > 8) return false;
+  const addressLines = lines
+    .slice(1)
+    .map((line: string): string => normalizeText(line))
+    .filter((line: string): boolean => line.length > 0);
+  if (addressLines.length === 0) return false;
   const hasPostalCity = addressLines.some((line: string): boolean => POSTAL_CITY_RE.test(line));
   if (hasPostalCity) return true;
   const hasStreetNumber = addressLines.some((line: string): boolean => STREET_NUMBER_RE.test(line));
-  const hasAddressWords = addressLines.some(
-    (line: string): boolean => !/\d/.test(line) && line.split(/\s+/).length <= 4
-  );
-  return hasStreetNumber && hasAddressWords;
+  if (!hasStreetNumber) return false;
+  const hasCountry = addressLines.some((line: string): boolean => isCountryLine(line));
+  const bodyLikeLineCount = addressLines.filter(isBodyLikeLine).length;
+  if (bodyLikeLineCount >= 2) return false;
+  const shortAddressishLineCount = addressLines.filter(
+    (line: string): boolean => line.split(/\s+/).length <= 5
+  ).length;
+  return hasCountry || shortAddressishLineCount >= 2;
+};
+
+const isLikelyPartyHeadingSegment = (lines: string[]): boolean => {
+  if (lines.length === 0 || lines.length > 8) return false;
+  if (isLikelyBodySection(lines)) return false;
+  const firstLine = lines[0] ?? '';
+  if (isLikelyPersonNameLine(firstLine)) return true;
+  if (ORGANIZATION_HINT_RE.test(firstLine)) return true;
+  return isLikelyAddressSegment(lines);
+};
+
+const buildCaseResolverSegmentCaptureRules = (
+  rules: PromptValidationRule[],
+  validationScope: 'prompt_exploder' | 'case_resolver_prompt_exploder'
+): CaseResolverSegmentCaptureRule[] => {
+  const out: CaseResolverSegmentCaptureRule[] = [];
+  rules.forEach((rule) => {
+    if (rule.kind !== 'regex' || !rule.enabled) return;
+    const captureTarget = rule.promptExploderCaptureTarget?.trim() ?? '';
+    if (!captureTarget) return;
+    const parsedTarget = parseCaseResolverCaptureTarget(captureTarget);
+    if (!parsedTarget) return;
+    const scopes = rule.appliesToScopes ?? [];
+    const scopeAllowed =
+      scopes.length === 0 ||
+      scopes.includes(validationScope) ||
+      scopes.includes('global');
+    if (!scopeAllowed) return;
+    const regex = compileCaptureRegex(rule.pattern, rule.flags);
+    if (!regex) return;
+    const group =
+      typeof rule.promptExploderCaptureGroup === 'number' &&
+      Number.isFinite(rule.promptExploderCaptureGroup)
+        ? Math.max(0, Math.floor(rule.promptExploderCaptureGroup))
+        : 1;
+    const applyTo = rule.promptExploderCaptureApplyTo === 'line' ? 'line' : 'segment';
+    const normalize =
+      rule.promptExploderCaptureNormalize === 'lower' ||
+      rule.promptExploderCaptureNormalize === 'upper' ||
+      rule.promptExploderCaptureNormalize === 'country' ||
+      rule.promptExploderCaptureNormalize === 'day' ||
+      rule.promptExploderCaptureNormalize === 'month' ||
+      rule.promptExploderCaptureNormalize === 'year'
+        ? rule.promptExploderCaptureNormalize
+        : 'trim';
+    out.push({
+      id: rule.id,
+      label: rule.title.trim() || rule.id,
+      role: parsedTarget.role,
+      field: parsedTarget.field,
+      regex,
+      applyTo,
+      group,
+      normalize,
+      overwrite: rule.promptExploderCaptureOverwrite ?? false,
+      sequence:
+        typeof rule.sequence === 'number' && Number.isFinite(rule.sequence)
+          ? Math.max(0, Math.floor(rule.sequence))
+          : 0,
+    });
+  });
+  return out.sort((left, right) => {
+    if (left.sequence !== right.sequence) return left.sequence - right.sequence;
+    return left.id.localeCompare(right.id);
+  });
 };
 
 const scoreSegmentForPartyRole = (
   segment: PromptExploderSegment,
-  role: PromptExploderCaseResolverPartyRole
+  role: PromptExploderCaseResolverPartyRole,
+  captureRules: CaseResolverSegmentCaptureRule[]
 ): number => {
+  const lines = splitSegmentLines(segment);
   const normalized = buildSegmentRoleSignalSource(segment);
   const roleHints = role === 'addresser' ? ADDRESSER_ROLE_HINTS : ADDRESSEE_ROLE_HINTS;
-  const lineCount = splitSegmentLines(segment).length;
+  const lineCount = lines.length;
+  const matchedRuleIds = new Set(segment.matchedPatternIds ?? []);
+  const roleCaptureMatches = captureRules.filter((rule) => {
+    if (rule.role !== role && rule.role !== 'party') return false;
+    return matchedRuleIds.has(rule.id);
+  });
+  const placeDateCaptureMatches = captureRules.filter((rule) => {
+    if (rule.role !== 'place_date') return false;
+    return matchedRuleIds.has(rule.id);
+  });
+  const nameCaptureMatchCount = roleCaptureMatches.filter((rule) =>
+    rule.field === 'firstName' ||
+    rule.field === 'middleName' ||
+    rule.field === 'lastName' ||
+    rule.field === 'name'
+  ).length;
+  const isAddressLikeSegment = isLikelyAddressSegment(lines);
+  const isBodySection = isLikelyBodySection(lines);
+  const isPlaceDateSegment = hasCaseResolverPlaceDateSignal(segment);
   let score = lineCount >= 2 ? 4 : 1;
-  if (hasRoleHint(normalized, PLACE_DATE_ROLE_HINTS)) {
+  if (isPlaceDateSegment) {
     score -= 30;
   }
+  if (isBodySection) {
+    score -= 60;
+  }
+  if (lineCount > 8) {
+    score -= 36;
+  }
+  score += roleCaptureMatches.length * 18;
+  if (nameCaptureMatchCount > 0 && !isLikelyPersonNameLine(lines[0] ?? '')) {
+    score -= 48;
+  }
+  score -= placeDateCaptureMatches.length * 14;
   if (hasRoleHint(normalized, roleHints)) {
     score += 30;
   }
-  if (isLikelyAddressSegment(splitSegmentLines(segment))) {
+  if (isAddressLikeSegment) {
     score += 8;
+  }
+  if (isLikelyPartyHeadingSegment(lines)) {
+    score += 6;
   }
   roleHints.forEach((keyword: string) => {
     if (normalized.includes(keyword)) score += 12;
@@ -435,14 +831,21 @@ const scoreSegmentForPartyRole = (
 };
 
 const suggestCaseResolverPartySegmentIds = (
-  segments: PromptExploderSegment[]
+  segments: PromptExploderSegment[],
+  captureRules: CaseResolverSegmentCaptureRule[]
 ): CaseResolverPartySegmentSelection => {
   const orderedCandidates = segments
     .map((segment: PromptExploderSegment) => ({
       segment,
       lines: splitSegmentLines(segment),
     }))
-    .filter((entry): boolean => entry.lines.length > 0 && isLikelyAddressSegment(entry.lines));
+    .filter(
+      (entry): boolean =>
+        entry.lines.length > 0 &&
+        !isLikelyBodySection(entry.lines) &&
+        !hasCaseResolverPlaceDateSignal(entry.segment) &&
+        isLikelyAddressSegment(entry.lines)
+    );
 
   if (orderedCandidates.length >= 2) {
     return {
@@ -451,21 +854,33 @@ const suggestCaseResolverPartySegmentIds = (
     };
   }
 
-  const candidates = segments.filter(
-    (segment: PromptExploderSegment): boolean => splitSegmentLines(segment).length > 0
-  );
-  if (candidates.length === 0) return EMPTY_CASE_RESOLVER_PARTY_SELECTION;
+  const candidates = segments.filter((segment: PromptExploderSegment): boolean => {
+    const lines = splitSegmentLines(segment);
+    return (
+      lines.length > 0 &&
+      !isLikelyBodySection(lines) &&
+      !hasCaseResolverPlaceDateSignal(segment)
+    );
+  });
+  const rankedCandidates = candidates.length > 0
+    ? candidates
+    : segments.filter(
+      (segment: PromptExploderSegment): boolean => splitSegmentLines(segment).length > 0
+    );
+  if (rankedCandidates.length === 0) return EMPTY_CASE_RESOLVER_PARTY_SELECTION;
 
-  const rankedAddresser = [...candidates].sort(
+  const rankedAddresser = [...rankedCandidates].sort(
     (left: PromptExploderSegment, right: PromptExploderSegment): number =>
-      scoreSegmentForPartyRole(right, 'addresser') - scoreSegmentForPartyRole(left, 'addresser')
+      scoreSegmentForPartyRole(right, 'addresser', captureRules) -
+      scoreSegmentForPartyRole(left, 'addresser', captureRules)
   );
   const addresserSegmentId = rankedAddresser[0]?.id ?? '';
-  const rankedAddressee = [...candidates]
+  const rankedAddressee = [...rankedCandidates]
     .filter((segment: PromptExploderSegment): boolean => segment.id !== addresserSegmentId)
     .sort(
       (left: PromptExploderSegment, right: PromptExploderSegment): number =>
-        scoreSegmentForPartyRole(right, 'addressee') - scoreSegmentForPartyRole(left, 'addressee')
+        scoreSegmentForPartyRole(right, 'addressee', captureRules) -
+        scoreSegmentForPartyRole(left, 'addressee', captureRules)
     );
   const addresseeSegmentId = rankedAddressee[0]?.id ?? '';
 
@@ -475,44 +890,418 @@ const suggestCaseResolverPartySegmentIds = (
   };
 };
 
+const applyCaptureFieldToPartyCandidate = (
+  candidate: PromptExploderCaseResolverPartyCandidate,
+  field: CaseResolverCaptureField,
+  value: string,
+  overwrite: boolean
+): void => {
+  if (!value) return;
+  const setValue = <K extends keyof PromptExploderCaseResolverPartyCandidate>(
+    key: K,
+    next: string
+  ): void => {
+    const current = candidate[key];
+    if (!overwrite && typeof current === 'string' && current.trim().length > 0) return;
+    (candidate[key] as unknown) = next;
+  };
+  if (field === 'kind') {
+    const normalized = value.toLowerCase();
+    if (normalized !== 'person' && normalized !== 'organization') return;
+    if (!overwrite && candidate.kind) return;
+    candidate.kind = normalized;
+    return;
+  }
+  if (field === 'displayName') {
+    setValue('displayName', value);
+    return;
+  }
+  if (field === 'organizationName' || field === 'companyName') {
+    setValue('organizationName', value);
+    return;
+  }
+  if (field === 'firstName' || field === 'name') {
+    setValue('firstName', value);
+    return;
+  }
+  if (field === 'middleName') {
+    setValue('middleName', value);
+    return;
+  }
+  if (field === 'lastName') {
+    setValue('lastName', value);
+    return;
+  }
+  if (field === 'street') {
+    setValue('street', value);
+    return;
+  }
+  if (field === 'streetNumber') {
+    setValue('streetNumber', value);
+    return;
+  }
+  if (field === 'houseNumber') {
+    setValue('houseNumber', value);
+    return;
+  }
+  if (field === 'postalCode') {
+    setValue('postalCode', value);
+    return;
+  }
+  if (field === 'city') {
+    setValue('city', value);
+    return;
+  }
+  if (field === 'country') {
+    setValue('country', normalizeCountryName(value));
+  }
+};
+
+const applyCaptureFieldToPlaceDate = (
+  candidate: CaseResolverPlaceDateCandidate,
+  field: CaseResolverCaptureField,
+  value: string,
+  overwrite: boolean
+): void => {
+  if (!value) return;
+  const setValue = <K extends keyof CaseResolverPlaceDateCandidate>(
+    key: K,
+    next: string
+  ): void => {
+    const current = candidate[key];
+    if (!overwrite && typeof current === 'string' && current.trim().length > 0) return;
+    candidate[key] = next;
+  };
+  if (field === 'city') {
+    setValue('city', value);
+    return;
+  }
+  if (field === 'day') {
+    setValue('day', value);
+    return;
+  }
+  if (field === 'month') {
+    setValue('month', value);
+    return;
+  }
+  if (field === 'year') {
+    setValue('year', value);
+  }
+};
+
+const applySegmentCaptureRules = (args: {
+  segment: PromptExploderSegment;
+  rules: CaseResolverSegmentCaptureRule[];
+  onCapture: (
+    field: CaseResolverCaptureField,
+    value: string,
+    overwrite: boolean
+  ) => void;
+}): boolean => {
+  const source = toSegmentSourceText(args.segment);
+  const lines = splitSegmentLines(args.segment);
+  const firstLine = lines[0] ?? '';
+  const firstLineIsPersonName = isLikelyPersonNameLine(firstLine);
+  let matched = false;
+
+  args.rules.forEach((rule: CaseResolverSegmentCaptureRule) => {
+    const isPersonNameField =
+      rule.field === 'firstName' ||
+      rule.field === 'middleName' ||
+      rule.field === 'lastName' ||
+      rule.field === 'name';
+    const isOrganizationNameField =
+      rule.field === 'organizationName' ||
+      rule.field === 'companyName';
+    if (isPersonNameField && !firstLineIsPersonName) {
+      return;
+    }
+    let inputs = rule.applyTo === 'line' ? lines : [source];
+    if (rule.applyTo === 'line' && isPersonNameField) {
+      inputs = lines.slice(0, 2);
+    } else if (rule.applyTo === 'line' && isOrganizationNameField) {
+      inputs = lines.slice(0, 1);
+    }
+    for (const input of inputs) {
+      const result = rule.regex.exec(input);
+      if (!result) continue;
+      const rawValue = readRegexCaptureGroup(result, rule.group);
+      if (!rawValue) continue;
+      const normalizedValue = normalizeCapturedValue(rawValue, rule.normalize);
+      if (!normalizedValue) continue;
+      args.onCapture(rule.field, normalizedValue, rule.overwrite);
+      matched = true;
+      if (!rule.overwrite) break;
+    }
+  });
+
+  return matched;
+};
+
 const buildCaseResolverPartyCandidateFromSegment = (
   segment: PromptExploderSegment,
-  role: PromptExploderCaseResolverPartyRole
+  role: PromptExploderCaseResolverPartyRole,
+  captureRules: CaseResolverSegmentCaptureRule[]
 ): PromptExploderCaseResolverPartyCandidate | null => {
-  const lines = splitSegmentLines(segment);
+  const sourceLines = splitSegmentLines(segment);
+  if (sourceLines.length === 0) return null;
+  const placeDateInLeadingLine =
+    sourceLines.length > 1 &&
+    (hasCaseResolverPlaceDateSignal(segment) || PLACE_DATE_LINE_RE.test(sourceLines[0] ?? ''));
+  const lines = placeDateInLeadingLine ? sourceLines.slice(1) : sourceLines;
   if (lines.length === 0) return null;
-  const kind = inferPartyKindFromLines(lines);
+  if (isLikelyBodySection(lines) && !isLikelyAddressSegment(lines)) return null;
   const firstLine = lines[0] ?? '';
   const displayName = firstLine || segment.title || role;
   const parsedAddress = extractAddressFields(lines.slice(1));
   const parsedName = parsePersonName(firstLine);
+  const inferredKind = inferPartyKindFromLines(lines);
+  const roleCaptureRules = captureRules.filter(
+    (rule) => rule.role === role || rule.role === 'party'
+  );
+  const targetedFields = new Set<CaseResolverCaptureField>(
+    roleCaptureRules.map((rule) => rule.field)
+  );
 
   const candidate: PromptExploderCaseResolverPartyCandidate = {
     role,
-    kind,
+    kind: targetedFields.has('kind') ? undefined : inferredKind,
     displayName,
     rawText: lines.join('\n'),
     sourceSegmentId: segment.id,
     sourceSegmentTitle: segment.title,
     sourcePatternLabels: toSegmentPatternLabels(segment),
     sourceSequenceLabels: toSegmentSequenceLabels(segment),
-    street: parsedAddress.street,
-    streetNumber: parsedAddress.streetNumber,
-    houseNumber: parsedAddress.houseNumber,
-    city: parsedAddress.city,
-    postalCode: parsedAddress.postalCode,
-    country: parsedAddress.country,
+    street: targetedFields.has('street') ? undefined : parsedAddress.street,
+    streetNumber: targetedFields.has('streetNumber') ? undefined : parsedAddress.streetNumber,
+    houseNumber: targetedFields.has('houseNumber') ? undefined : parsedAddress.houseNumber,
+    city: targetedFields.has('city') ? undefined : parsedAddress.city,
+    postalCode: targetedFields.has('postalCode') ? undefined : parsedAddress.postalCode,
+    country: targetedFields.has('country') ? undefined : parsedAddress.country,
   };
 
-  if (kind === 'person') {
-    candidate.firstName = parsedName.firstName;
-    candidate.middleName = parsedName.middleName;
-    candidate.lastName = parsedName.lastName;
-  } else {
+  if (inferredKind === 'person') {
+    if (!targetedFields.has('firstName') && !targetedFields.has('name')) {
+      candidate.firstName = parsedName.firstName;
+    }
+    if (!targetedFields.has('middleName')) {
+      candidate.middleName = parsedName.middleName;
+    }
+    if (!targetedFields.has('lastName')) {
+      candidate.lastName = parsedName.lastName;
+    }
+  }
+  if (
+    !targetedFields.has('organizationName') &&
+    !targetedFields.has('companyName') &&
+    inferredKind === 'organization'
+  ) {
     candidate.organizationName = firstLine;
   }
 
+  if (targetedFields.size > 0) {
+    applySegmentCaptureRules({
+      segment,
+      rules: roleCaptureRules,
+      onCapture: (field, value, overwrite) => {
+        applyCaptureFieldToPartyCandidate(candidate, field, value, overwrite);
+      },
+    });
+  }
+
+  if (candidate.kind === 'person') {
+    if (!candidate.firstName && parsedName.firstName) {
+      candidate.firstName = parsedName.firstName;
+    }
+    if (!candidate.middleName && parsedName.middleName) {
+      candidate.middleName = parsedName.middleName;
+    }
+    if (!candidate.lastName && parsedName.lastName) {
+      candidate.lastName = parsedName.lastName;
+    }
+  } else {
+    if (!candidate.organizationName && firstLine) {
+      candidate.organizationName = firstLine;
+    }
+  }
+
+  if (!candidate.kind) {
+    if (candidate.organizationName) {
+      candidate.kind = 'organization';
+    } else if (candidate.firstName || candidate.lastName) {
+      candidate.kind = 'person';
+    } else {
+      candidate.kind = inferredKind;
+    }
+  }
+
+  if (!candidate.displayName) {
+    if (candidate.organizationName) {
+      candidate.displayName = candidate.organizationName;
+    } else {
+      candidate.displayName = [
+        candidate.firstName,
+        candidate.middleName,
+        candidate.lastName,
+      ]
+        .filter((value): value is string => Boolean(value?.trim()))
+        .join(' ')
+        .trim();
+    }
+  }
+
   return candidate;
+};
+
+const buildCaseResolverPlaceDateCandidate = (
+  segments: PromptExploderSegment[],
+  captureRules: CaseResolverSegmentCaptureRule[]
+): CaseResolverPlaceDateCandidate | null => {
+  const placeDateRules = captureRules.filter((rule) => rule.role === 'place_date');
+  if (placeDateRules.length === 0) return null;
+  const candidate: CaseResolverPlaceDateCandidate = {};
+  let hasSourceSegment = false;
+
+  segments.forEach((segment: PromptExploderSegment) => {
+    const matched = applySegmentCaptureRules({
+      segment,
+      rules: placeDateRules,
+      onCapture: (field, value, overwrite) => {
+        applyCaptureFieldToPlaceDate(candidate, field, value, overwrite);
+      },
+    });
+    if (matched && !hasSourceSegment) {
+      hasSourceSegment = true;
+      candidate.sourceSegmentId = segment.id;
+      candidate.sourceSegmentTitle = segment.title;
+      candidate.sourcePatternLabels = toSegmentPatternLabels(segment);
+      candidate.sourceSequenceLabels = toSegmentSequenceLabels(segment);
+    }
+  });
+
+  const hasData = Boolean(
+    candidate.city?.trim() ||
+    candidate.day?.trim() ||
+    candidate.month?.trim() ||
+    candidate.year?.trim()
+  );
+  if (!hasData) return null;
+
+  return candidate;
+};
+
+const resolveStructuredPartyRoleForSegment = (
+  segment: PromptExploderSegment,
+  selection: CaseResolverPartySegmentSelection
+): PromptExploderCaseResolverPartyRole | null => {
+  const matchedPatternIds = new Set(segment.matchedPatternIds ?? []);
+  if (matchedPatternIds.has(CASE_RESOLVER_ADDRESSER_HEADING_PATTERN_ID)) {
+    return 'addresser';
+  }
+  if (matchedPatternIds.has(CASE_RESOLVER_ADDRESSEE_HEADING_PATTERN_ID)) {
+    return 'addressee';
+  }
+  if (segment.id === selection.addresserSegmentId) return 'addresser';
+  if (segment.id === selection.addresseeSegmentId) return 'addressee';
+  return null;
+};
+
+const createStructuredDraftFromSegment = (args: {
+  segment: PromptExploderSegment;
+  activeValidationScope: 'prompt_exploder' | 'case_resolver_prompt_exploder';
+  captureRules: CaseResolverSegmentCaptureRule[];
+  selection: CaseResolverPartySegmentSelection;
+}): CaseResolverStructuredSegmentDraft | null => {
+  if (args.activeValidationScope !== 'case_resolver_prompt_exploder') return null;
+  if (args.segment.type !== 'assigned_text') return null;
+
+  const placeDate = buildCaseResolverPlaceDateCandidate([args.segment], args.captureRules);
+  if (placeDate) {
+    return {
+      kind: 'place_date',
+      city: placeDate.city ?? '',
+      day: placeDate.day ?? '',
+      month: placeDate.month ?? '',
+      year: placeDate.year ?? '',
+    };
+  }
+
+  const role = resolveStructuredPartyRoleForSegment(args.segment, args.selection);
+  if (!role) return null;
+  const partyCandidate = buildCaseResolverPartyCandidateFromSegment(
+    args.segment,
+    role,
+    args.captureRules
+  );
+  if (!partyCandidate) return null;
+
+  return {
+    kind: 'party',
+    role,
+    companyName: partyCandidate.organizationName ?? '',
+    name: partyCandidate.firstName ?? '',
+    middleName: partyCandidate.middleName ?? '',
+    lastName: partyCandidate.lastName ?? '',
+    street: partyCandidate.street ?? '',
+    streetNumber: partyCandidate.streetNumber ?? '',
+    houseNumber: partyCandidate.houseNumber ?? '',
+    postalCode: partyCandidate.postalCode ?? '',
+    city: partyCandidate.city ?? '',
+    country: partyCandidate.country ?? '',
+  };
+};
+
+const buildPlaceDateLineFromDraft = (
+  draft: Extract<CaseResolverStructuredSegmentDraft, { kind: 'place_date' }>
+): string => {
+  const city = normalizeText(draft.city);
+  const day = normalizeText(draft.day);
+  const month = normalizeText(draft.month);
+  const year = normalizeText(draft.year);
+  const dateParts = [day, month, year].filter((value) => value.length > 0);
+  const dateText = dateParts.join('.');
+  return [city, dateText].filter((value) => value.length > 0).join(' ').trim();
+};
+
+const buildPartyBlockFromDraft = (
+  draft: Extract<CaseResolverStructuredSegmentDraft, { kind: 'party' }>
+): string => {
+  const lines: string[] = [];
+  const companyName = normalizeText(draft.companyName);
+  const personName = [draft.name, draft.middleName, draft.lastName]
+    .map((value: string): string => normalizeText(value))
+    .filter((value: string): boolean => value.length > 0)
+    .join(' ')
+    .trim();
+
+  if (companyName) {
+    lines.push(companyName);
+    if (personName) lines.push(personName);
+  } else if (personName) {
+    lines.push(personName);
+  }
+
+  const street = normalizeText(draft.street);
+  const streetNumber = normalizeText(draft.streetNumber);
+  const houseNumber = normalizeText(draft.houseNumber);
+  const streetLine = [street, streetNumber].filter((value) => value.length > 0).join(' ').trim();
+  if (streetLine) {
+    lines.push(houseNumber ? `${streetLine}/${houseNumber}` : streetLine);
+  }
+
+  const postalCode = normalizeText(draft.postalCode);
+  const city = normalizeText(draft.city);
+  const postalCityLine = [postalCode, city].filter((value) => value.length > 0).join(' ').trim();
+  if (postalCityLine) {
+    lines.push(postalCityLine);
+  }
+
+  const country = normalizeText(draft.country);
+  if (country) {
+    lines.push(country);
+  }
+
+  return lines.join('\n').trim();
 };
 
 export function AdminPromptExploderPage(): React.JSX.Element {
@@ -603,10 +1392,15 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   } | null>(null);
   const [caseResolverPartySelection, setCaseResolverPartySelection] =
     useState<CaseResolverPartySegmentSelection>(EMPTY_CASE_RESOLVER_PARTY_SELECTION);
+  const [selectedCaseResolverStructuredDraft, setSelectedCaseResolverStructuredDraft] =
+    useState<CaseResolverStructuredSegmentDraft | null>(null);
+  const handledIncomingDraftPayloadRef = useRef<string | null>(null);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
   const requestedProjectId = searchParams?.get('projectId')?.trim() ?? '';
   const returnTarget = returnTo.startsWith('/admin/case-resolver') ? 'case-resolver' : 'image-studio';
+  const shouldPreferCaseResolverValidationStack =
+    incomingBridgeSource === 'case-resolver' || returnTarget === 'case-resolver';
   const sourceContextLabel = useMemo(() => {
     if (incomingBridgeSource === 'case-resolver') return 'Case Resolver';
     if (incomingBridgeSource === 'image-studio') return 'Image Studio';
@@ -677,11 +1471,19 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   );
 
   useEffect(() => {
+    const persistedStack = normalizePromptExploderValidationRuleStack(
+      promptExploderSettings.runtime.validationRuleStack,
+      validatorPatternLists
+    );
+    const preferredStack = shouldPreferCaseResolverValidationStack
+      ? promptExploderValidationStackFromBridgeSource(
+        'case-resolver',
+        validatorPatternLists
+      )
+      : persistedStack;
     setLearningDraft({
       runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile,
-      runtimeValidationRuleStack: normalizePromptExploderValidationRuleStack(
-        promptExploderSettings.runtime.validationRuleStack
-      ),
+      runtimeValidationRuleStack: preferredStack,
       enabled: promptExploderSettings.learning.enabled,
       similarityThreshold: promptExploderSettings.learning.similarityThreshold,
       templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
@@ -716,6 +1518,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     promptExploderSettings.learning.minApprovalsForMatching,
     promptExploderSettings.learning.templateMergeThreshold,
     promptExploderSettings.learning.similarityThreshold,
+    shouldPreferCaseResolverValidationStack,
+    validatorPatternLists,
   ]);
 
   useEffect(() => {
@@ -768,6 +1572,14 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }
     return effectiveRules;
   }, [effectiveRules, learningDraft.runtimeRuleProfile]);
+  const caseResolverCaptureRules = useMemo<CaseResolverSegmentCaptureRule[]>(
+    () =>
+      buildCaseResolverSegmentCaptureRules(
+        runtimeValidationRules,
+        activeValidationScope
+      ),
+    [activeValidationScope, runtimeValidationRules]
+  );
   const effectiveLearnedTemplates = useMemo<PromptExploderLearnedTemplate[]>(() => {
     const byId = new Map<string, PromptExploderLearnedTemplate>();
     [...promptExploderSettings.learning.templates, ...sessionLearnedTemplates].forEach((template) => {
@@ -881,7 +1693,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       const sequenceLabel = rule?.sequenceGroupLabel?.trim() ?? '';
       return {
         id: patternId,
-        title: storedLabel || rule?.title ?? patternId,
+        title: storedLabel || rule?.title || patternId,
         sequenceLabel: sequenceLabel || undefined,
         segmentType: rule?.promptExploderSegmentType ?? null,
         priority: rule?.promptExploderPriority ?? 0,
@@ -1027,7 +1839,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const segmentOptions = useMemo(() => {
     return (documentState?.segments ?? []).map((segment) => ({
       value: segment.id,
-      label: segment.title,
+      label: resolveSegmentDisplayLabel(segment),
     }));
   }, [documentState?.segments]);
 
@@ -1051,18 +1863,34 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     );
     return {
       addresser: addresserSegment
-        ? buildCaseResolverPartyCandidateFromSegment(addresserSegment, 'addresser')
+        ? buildCaseResolverPartyCandidateFromSegment(
+          addresserSegment,
+          'addresser',
+          caseResolverCaptureRules
+        )
         : null,
       addressee: addresseeSegment
-        ? buildCaseResolverPartyCandidateFromSegment(addresseeSegment, 'addressee')
+        ? buildCaseResolverPartyCandidateFromSegment(
+          addresseeSegment,
+          'addressee',
+          caseResolverCaptureRules
+        )
         : null,
     };
   }, [
+    caseResolverCaptureRules,
     caseResolverPartySelection.addresseeSegmentId,
     caseResolverPartySelection.addresserSegmentId,
     documentState,
     returnTarget,
   ]);
+  const caseResolverPlaceDateCandidate = useMemo<CaseResolverPlaceDateCandidate | null>(() => {
+    if (returnTarget !== 'case-resolver' || !documentState) return null;
+    return buildCaseResolverPlaceDateCandidate(
+      documentState.segments,
+      caseResolverCaptureRules
+    );
+  }, [caseResolverCaptureRules, documentState, returnTarget]);
   const caseResolverPartyBundle = useMemo<PromptExploderCaseResolverPartyBundle | undefined>(() => {
     const addresser = caseResolverPartyCandidates.addresser;
     const addressee = caseResolverPartyCandidates.addressee;
@@ -1072,6 +1900,33 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       ...(addressee ? { addressee } : {}),
     };
   }, [caseResolverPartyCandidates.addressee, caseResolverPartyCandidates.addresser]);
+  const caseResolverMetadata = useMemo(() => {
+    if (!caseResolverPlaceDateCandidate) return undefined;
+    return {
+      placeDate: caseResolverPlaceDateCandidate,
+    };
+  }, [caseResolverPlaceDateCandidate]);
+
+  useEffect(() => {
+    if (!selectedSegment) {
+      setSelectedCaseResolverStructuredDraft(null);
+      return;
+    }
+    setSelectedCaseResolverStructuredDraft(
+      createStructuredDraftFromSegment({
+        segment: selectedSegment,
+        activeValidationScope,
+        captureRules: caseResolverCaptureRules,
+        selection: caseResolverPartySelection,
+      })
+    );
+  }, [
+    activeValidationScope,
+    caseResolverCaptureRules,
+    caseResolverPartySelection.addresseeSegmentId,
+    caseResolverPartySelection.addresserSegmentId,
+    selectedSegment?.id,
+  ]);
 
   const fromSubsectionOptions = useMemo(() => {
     const segment = segmentById.get(bindingDraft.fromSegmentId);
@@ -1101,11 +1956,18 @@ export function AdminPromptExploderPage(): React.JSX.Element {
 
   useEffect(() => {
     const draftPayload = readPromptExploderDraftPayload();
-    if (
+    const isPromptExploderDraftPayload =
       draftPayload &&
-      (!draftPayload.target || draftPayload.target === 'prompt-exploder') &&
-      !promptText.trim()
+      (!draftPayload.target || draftPayload.target === 'prompt-exploder');
+    const draftPayloadKey = draftPayload
+      ? `${draftPayload.source}:${draftPayload.target ?? 'prompt-exploder'}:${draftPayload.createdAt}`
+      : null;
+    if (
+      isPromptExploderDraftPayload &&
+      draftPayloadKey &&
+      handledIncomingDraftPayloadRef.current !== draftPayloadKey
     ) {
+      handledIncomingDraftPayloadRef.current = draftPayloadKey;
       setPromptText(draftPayload.prompt);
       if (draftPayload.source === 'case-resolver' || draftPayload.source === 'image-studio') {
         setIncomingBridgeSource(draftPayload.source);
@@ -1127,6 +1989,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
     }
 
     if (promptText.trim().length > 0) return;
+    if (isPromptExploderDraftPayload) return;
 
     setPromptText('=== PROMPT EXPLODER DEMO ===\n\nROLE\nDefine your role here.\n\nPARAMS\nparams = {\n  "example": true\n}');
   }, [promptText, validatorPatternLists]);
@@ -1179,7 +2042,10 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       return;
     }
     const validIds = new Set(segments.map((segment: PromptExploderSegment): string => segment.id));
-    const suggested = suggestCaseResolverPartySegmentIds(segments);
+    const suggested = suggestCaseResolverPartySegmentIds(
+      segments,
+      caseResolverCaptureRules
+    );
     setCaseResolverPartySelection((previous) => {
       const nextAddresserSegmentId = validIds.has(previous.addresserSegmentId)
         ? previous.addresserSegmentId
@@ -1209,7 +2075,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         addresseeSegmentId: nextAddresseeSegmentId,
       };
     });
-  }, [documentState?.segments, returnTarget]);
+  }, [caseResolverCaptureRules, documentState?.segments, returnTarget]);
 
   useEffect(() => {
     const segments = documentState?.segments ?? [];
@@ -1281,6 +2147,26 @@ export function AdminPromptExploderPage(): React.JSX.Element {
         segment.id === segmentId ? ensureSegmentTitle(updater(segment)) : segment
       );
       return updatePromptExploderDocument(current, nextSegments, manualBindings);
+    });
+  };
+
+  const patchSelectedCaseResolverStructuredDraft = (
+    updater: (draft: CaseResolverStructuredSegmentDraft) => CaseResolverStructuredSegmentDraft
+  ): void => {
+    if (!selectedSegment) return;
+    setSelectedCaseResolverStructuredDraft((previous) => {
+      if (!previous) return previous;
+      const nextDraft = updater(previous);
+      const nextText =
+        nextDraft.kind === 'place_date'
+          ? buildPlaceDateLineFromDraft(nextDraft)
+          : buildPartyBlockFromDraft(nextDraft);
+      updateSegment(selectedSegment.id, (current) => ({
+        ...current,
+        text: nextText,
+        raw: nextText,
+      }));
+      return nextDraft;
     });
   };
 
@@ -2456,7 +3342,8 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       savePromptExploderApplyPromptForCaseResolver(
         reassembled,
         incomingCaseResolverContext,
-        caseResolverPartyBundle
+        caseResolverPartyBundle,
+        caseResolverMetadata
       );
       toast('Restructured text sent to Case Resolver.', { variant: 'success' });
     } else {
@@ -2921,8 +3808,6 @@ export function AdminPromptExploderPage(): React.JSX.Element {
       />
 
       <FormSection
-        title='Pattern Runtime'
-        description='Prompt Exploder uses Prompt Validator rules from the selected validation stack.'
         variant='subtle'
         className='p-4'
         actions={
@@ -3753,7 +4638,7 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                             >
                               <GripVertical className='size-3.5' />
                             </button>
-                            <span className='truncate font-medium'>{segment.title}</span>
+                            <span className='truncate font-medium'>{resolveSegmentDisplayLabel(segment)}</span>
                           </div>
                           <span className='rounded border border-border/50 bg-card/50 px-1 py-0.5 text-[10px] uppercase'>
                             {segment.type.replaceAll('_', ' ')}
@@ -4742,19 +5627,291 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                       ) : null}
 
                       {selectedSegment.type === 'assigned_text' ? (
-                        <div className='space-y-2'>
-                          <Label className='text-[11px] text-gray-400'>Body</Label>
-                          <Textarea
-                            className='min-h-[180px] font-mono text-[12px]'
-                            value={selectedSegment.text}
-                            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
-                              updateSegment(selectedSegment.id, (current) => ({
-                                ...current,
-                                text: event.target.value,
-                              }));
-                            }}
-                          />
-                        </div>
+                        selectedCaseResolverStructuredDraft ? (
+                          <div className='space-y-3 rounded border border-border/50 bg-card/20 p-3'>
+                            <div className='text-[11px] uppercase tracking-wide text-gray-400'>
+                              Structured Fields
+                            </div>
+
+                            {selectedCaseResolverStructuredDraft.kind === 'place_date' ? (
+                              <div className='grid gap-2 md:grid-cols-4'>
+                                <div className='space-y-1 md:col-span-2'>
+                                  <Label className='text-[11px] text-gray-400'>City</Label>
+                                  <Input
+                                    value={selectedCaseResolverStructuredDraft.city}
+                                    onChange={(event) => {
+                                      const nextValue = event.target.value;
+                                      patchSelectedCaseResolverStructuredDraft((current) =>
+                                        current.kind === 'place_date'
+                                          ? {
+                                            ...current,
+                                            city: nextValue,
+                                          }
+                                          : current
+                                      );
+                                    }}
+                                  />
+                                </div>
+                                <div className='space-y-1'>
+                                  <Label className='text-[11px] text-gray-400'>Day</Label>
+                                  <Input
+                                    value={selectedCaseResolverStructuredDraft.day}
+                                    onChange={(event) => {
+                                      const nextValue = event.target.value;
+                                      patchSelectedCaseResolverStructuredDraft((current) =>
+                                        current.kind === 'place_date'
+                                          ? {
+                                            ...current,
+                                            day: nextValue,
+                                          }
+                                          : current
+                                      );
+                                    }}
+                                  />
+                                </div>
+                                <div className='space-y-1'>
+                                  <Label className='text-[11px] text-gray-400'>Month</Label>
+                                  <Input
+                                    value={selectedCaseResolverStructuredDraft.month}
+                                    onChange={(event) => {
+                                      const nextValue = event.target.value;
+                                      patchSelectedCaseResolverStructuredDraft((current) =>
+                                        current.kind === 'place_date'
+                                          ? {
+                                            ...current,
+                                            month: nextValue,
+                                          }
+                                          : current
+                                      );
+                                    }}
+                                  />
+                                </div>
+                                <div className='space-y-1'>
+                                  <Label className='text-[11px] text-gray-400'>Year</Label>
+                                  <Input
+                                    value={selectedCaseResolverStructuredDraft.year}
+                                    onChange={(event) => {
+                                      const nextValue = event.target.value;
+                                      patchSelectedCaseResolverStructuredDraft((current) =>
+                                        current.kind === 'place_date'
+                                          ? {
+                                            ...current,
+                                            year: nextValue,
+                                          }
+                                          : current
+                                      );
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className='text-[11px] text-gray-500'>
+                                  {selectedCaseResolverStructuredDraft.role === 'addresser'
+                                    ? 'Addresser fields'
+                                    : 'Addressee fields'}
+                                </div>
+                                <div className='grid gap-2 md:grid-cols-4'>
+                                  <div className='space-y-1 md:col-span-2'>
+                                    <Label className='text-[11px] text-gray-400'>Company Name</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.companyName}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              companyName: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                  <div className='space-y-1'>
+                                    <Label className='text-[11px] text-gray-400'>Name</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.name}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              name: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                  <div className='space-y-1'>
+                                    <Label className='text-[11px] text-gray-400'>Middle Name</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.middleName}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              middleName: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                  <div className='space-y-1'>
+                                    <Label className='text-[11px] text-gray-400'>Last Name</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.lastName}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              lastName: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                <div className='grid gap-2 md:grid-cols-5'>
+                                  <div className='space-y-1 md:col-span-2'>
+                                    <Label className='text-[11px] text-gray-400'>Street</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.street}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              street: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                  <div className='space-y-1'>
+                                    <Label className='text-[11px] text-gray-400'>Street Number</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.streetNumber}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              streetNumber: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                  <div className='space-y-1'>
+                                    <Label className='text-[11px] text-gray-400'>House Number</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.houseNumber}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              houseNumber: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                  <div className='space-y-1'>
+                                    <Label className='text-[11px] text-gray-400'>Postal Code</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.postalCode}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              postalCode: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                  <div className='space-y-1'>
+                                    <Label className='text-[11px] text-gray-400'>City</Label>
+                                    <Input
+                                      value={selectedCaseResolverStructuredDraft.city}
+                                      onChange={(event) => {
+                                        const nextValue = event.target.value;
+                                        patchSelectedCaseResolverStructuredDraft((current) =>
+                                          current.kind === 'party'
+                                            ? {
+                                              ...current,
+                                              city: nextValue,
+                                            }
+                                            : current
+                                        );
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                <div className='space-y-1'>
+                                  <Label className='text-[11px] text-gray-400'>Country</Label>
+                                  <Input
+                                    value={selectedCaseResolverStructuredDraft.country}
+                                    onChange={(event) => {
+                                      const nextValue = event.target.value;
+                                      patchSelectedCaseResolverStructuredDraft((current) =>
+                                        current.kind === 'party'
+                                          ? {
+                                            ...current,
+                                            country: nextValue,
+                                          }
+                                          : current
+                                      );
+                                    }}
+                                  />
+                                </div>
+                              </>
+                            )}
+
+                            <div className='space-y-1'>
+                              <Label className='text-[11px] text-gray-400'>Body Preview</Label>
+                              <Textarea
+                                className='min-h-[120px] font-mono text-[12px]'
+                                value={selectedSegment.text}
+                                readOnly
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className='space-y-2'>
+                            <Label className='text-[11px] text-gray-400'>Body</Label>
+                            <Textarea
+                              className='min-h-[180px] font-mono text-[12px]'
+                              value={selectedSegment.text}
+                              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                updateSegment(selectedSegment.id, (current) => ({
+                                  ...current,
+                                  text: event.target.value,
+                                }));
+                              }}
+                            />
+                          </div>
+                        )
                       ) : null}
 
                       <div className='space-y-3 rounded border border-border/60 bg-card/30 p-2 text-[11px] text-gray-400'>

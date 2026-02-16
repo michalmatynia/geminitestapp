@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
@@ -14,7 +13,7 @@ import {
 } from '@/features/integrations/hooks/useMarketplaceQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
 import type { CatalogRecord, ProductTag } from '@/features/products/types';
-import { api } from '@/shared/lib/api-client';
+import { createQueryHook } from '@/shared/lib/api-hooks';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { GenericItemMapper, type GenericItemMapperConfig } from './GenericItemMapper';
@@ -29,14 +28,22 @@ interface TagMapping {
 export function BaseTagMapper(): React.JSX.Element {
   const { connectionId } = useCategoryMapper();
   const catalogsQuery = useCatalogs();
-  const internalTagsQuery = useQuery({
-    queryKey: QUERY_KEYS.products.metadata.tags('all'),
-    queryFn: () => api.get<ProductTag[]>('/api/products/tags/all'),
-  });
+
+  // Refactored internalTagsQuery to use createQueryHook
+  const internalTagsQuery = createQueryHook<ProductTag[], string>({
+    queryKeyFactory: (catalogId: string) => QUERY_KEYS.products.metadata.tags(catalogId),
+    endpoint: '/api/products/tags/all',
+  })('all');
+
   const externalTagsQuery = useExternalTags(connectionId);
   const mappingsQuery = useTagMappings(connectionId);
-  const fetchMutation = useFetchExternalTagsMutation();
-  const saveMutation = useSaveTagMappingsMutation();
+
+  // Invoke the hooks to get the mutation objects
+  const fetchMutationHook = useFetchExternalTagsMutation();
+  const fetchMutation = fetchMutationHook();
+
+  const saveMutationHook = useSaveTagMappingsMutation();
+  const saveMutation = saveMutationHook();
 
   const catalogsById = useMemo(
     () =>

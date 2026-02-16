@@ -524,6 +524,9 @@ export function StudioModals(): React.JSX.Element {
     },
     enabled: Boolean(projectId && slotInlineEditOpen && selectedSlot?.id),
     staleTime: 5_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   const linkedGeneratedVariants = useMemo((): LinkedGeneratedVariant[] => {

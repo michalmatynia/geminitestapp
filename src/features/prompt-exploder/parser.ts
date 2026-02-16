@@ -61,6 +61,11 @@ const STUDIO_RELIGHTING_BOUNDARY_FALLBACK_RE = /^(===\s*STUDIO\s+RELIGHTING|STUD
 const REQUIREMENTS_BOUNDARY_FALLBACK_RE = /^(REQUIREMENTS|COMPOSITING\s+REQUIREMENTS)\b/i;
 const PIPELINE_BOUNDARY_FALLBACK_RE = /^(PIPELINE|WORKFLOW|PROCESS|EXECUTION\s+TEMPLATE)\b/i;
 const FINAL_QA_BOUNDARY_FALLBACK_RE = /^FINAL\s+QA\b/i;
+const CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS = new Set<string>([
+  'segment.case_resolver.heading.place_date',
+  'segment.case_resolver.heading.addresser_person',
+  'segment.case_resolver.heading.addressee_organization',
+]);
 
 type PatternRuntime = {
   allowDefaultFallback: boolean;
@@ -351,6 +356,12 @@ const inferTypeFromPatternIds = (
     if (inferred) return inferred;
   }
   return fallbackType;
+};
+
+const shouldKeepEmptyTitleForCaseResolver = (matchedPatternIds: string[]): boolean => {
+  return matchedPatternIds.some((patternId) =>
+    CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS.has(patternId)
+  );
 };
 
 const normalizeRegexFlags = (flags: string | null | undefined): string | undefined => {
@@ -1428,11 +1439,13 @@ const createSegment = (args: {
     0.99,
     confidenceBase + matchedPatternIds.length * 0.06 + confidenceBoost
   );
+  const keepEmptyTitle = shouldKeepEmptyTitleForCaseResolver(matchedPatternIds);
+  const resolvedTitle = args.title.trim();
 
   return {
     id: segmentId(),
     type,
-    title: args.title.trim() || 'Untitled Segment',
+    title: keepEmptyTitle ? '' : (resolvedTitle || 'Untitled Segment'),
     includeInOutput: args.includeInOutput ?? (type !== 'metadata'),
     text: normalizedRaw,
     raw: normalizedRaw,
@@ -2418,6 +2431,7 @@ export function updatePromptExploderDocument(
 
 export function ensureSegmentTitle(segment: PromptExploderSegment): PromptExploderSegment {
   if (segment.title.trim().length > 0) return segment;
+  if (shouldKeepEmptyTitleForCaseResolver(segment.matchedPatternIds ?? [])) return segment;
   return {
     ...segment,
     title: `Segment ${segment.id}`,

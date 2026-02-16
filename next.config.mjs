@@ -64,6 +64,16 @@ const nextConfig = {
   ],
   turbopack: {
     root: __dirname,
+    resolveAlias: {
+      // Force a single three.js runtime even when transitive deps (e.g. stats-gl) ship nested copies.
+      'stats-gl/node_modules/three': path.resolve(__dirname, 'node_modules/three'),
+    },
+  },
+  webpack: (config) => {
+    config.resolve ??= {};
+    config.resolve.alias ??= {};
+    config.resolve.alias['stats-gl/node_modules/three'] = path.resolve(__dirname, 'node_modules/three');
+    return config;
   },
   images: {
     qualities: [75, 90],

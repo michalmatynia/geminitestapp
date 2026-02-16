@@ -193,7 +193,6 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const hasInitializedCatalog = useRef(false);
   const hasInitializedPrefs = useRef(false);
   const hasInitializedInventories = useRef(false);
-  const hasInitializedImportListSelection = useRef(false);
   const hasHydratedImportActiveTemplatePref = useRef(false);
   const hasHydratedExportActiveTemplatePref = useRef(false);
 
@@ -481,6 +480,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const importListQuery = useImportList(
     inventoryId,
     {
+      connectionId: selectedBaseConnectionId,
       limit,
       uniqueOnly,
       page: importListPage,
@@ -520,16 +520,19 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   }, [importListData, importListPageSize]);
 
   useEffect(() => {
-    if (importList.length > 0 && !hasInitializedImportListSelection.current) {
-      const ids = importList.map((item: ImportListItem) => item.baseProductId).filter(Boolean);
-      const timer = setTimeout(() => {
-        setSelectedImportIds(new Set(ids));
-        hasInitializedImportListSelection.current = true;
-      }, 0);
-      return (): void => clearTimeout(timer);
-    }
-    return undefined;
-  }, [importList]);
+    if (!importListEnabled) return;
+    const visibleIds = importList
+      .map((item: ImportListItem) => item.baseProductId)
+      .filter((id: string): id is string => Boolean(id));
+    const visibleSet = new Set(visibleIds);
+    setSelectedImportIds((previous: Set<string>) => {
+      const retained = Array.from(previous).filter((id: string) => visibleSet.has(id));
+      if (retained.length > 0) {
+        return new Set(retained);
+      }
+      return new Set(visibleIds);
+    });
+  }, [importList, importListEnabled]);
 
   // Actions
   const handleLoadInventories = async (): Promise<void> => {
@@ -563,6 +566,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const handleLoadImportList = async (): Promise<void> => {
     setImportListEnabled(true);
     setImportListPage(1);
+    setSelectedImportIds(new Set());
     const result = await refetchImportList();
     if (result.error) {
       const message =
@@ -580,9 +584,18 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       toast('Inventory and catalog are required', { variant: 'error' });
       return;
     }
+    if (!selectedBaseConnectionId) {
+      toast('Select a Base.com connection first.', { variant: 'error' });
+      return;
+    }
+    if (importListEnabled && selectedImportIds.size === 0) {
+      toast('Select at least one product from the import list.', { variant: 'error' });
+      return;
+    }
     try {
       const selectedIds = Array.from(selectedImportIds);
       const importData: {
+        connectionId?: string;
         inventoryId: string;
         catalogId: string;
         imageMode: 'download' | 'links';
@@ -592,6 +605,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
         limit?: number;
         selectedIds?: string[];
       } = {
+        connectionId: selectedBaseConnectionId || undefined,
         inventoryId,
         catalogId,
         imageMode,
@@ -600,7 +614,11 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       };
       if (importTemplateId) importData.templateId = importTemplateId;
       if (limit !== 'all') importData.limit = Number(limit);
-      if (selectedIds.length > 0) importData.selectedIds = selectedIds;
+      if (importListEnabled) {
+        importData.selectedIds = selectedIds;
+      } else if (selectedIds.length > 0) {
+        importData.selectedIds = selectedIds;
+      }
       
       const res = await importMutation.mutateAsync(importData);
       setLastResult(res);

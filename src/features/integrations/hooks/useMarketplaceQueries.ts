@@ -20,9 +20,7 @@ export function useExternalCategories(connectionId: string): ListQuery<ExternalC
   return createListQuery({
     queryKey: marketplaceKeys.categories(connectionId),
     queryFn: () => api.get<ExternalCategory[]>(`/api/marketplace/categories?connectionId=${connectionId}`),
-    options: {
-      enabled: !!connectionId,
-    }
+    enabled: !!connectionId,
   });
 }
 
@@ -35,9 +33,7 @@ export function useCategoryMappings(connectionId: string, catalogId?: string | n
         `/api/marketplace/mappings?connectionId=${connectionId}&catalogId=${catalogId}`
       );
     },
-    options: {
-      enabled: !!connectionId && !!catalogId,
-    }
+    enabled: !!connectionId && !!catalogId,
   });
 }
 
@@ -50,9 +46,7 @@ export function useCategoryMappingsByConnection(
   return createListQuery({
     queryKey: marketplaceKeys.mappings(connectionId, 'all'),
     queryFn: () => api.get<CategoryMappingWithDetails[]>(`/api/marketplace/mappings?connectionId=${connectionId}`),
-    options: {
-      enabled: isEnabled && !!connectionId,
-    }
+    enabled: isEnabled && !!connectionId,
   });
 }
 
@@ -61,9 +55,7 @@ export function useExternalProducers(connectionId: string): ListQuery<ExternalPr
     queryKey: marketplaceKeys.producers(connectionId),
     queryFn: () =>
       api.get<ExternalProducer[]>(`/api/marketplace/producers?connectionId=${connectionId}`),
-    options: {
-      enabled: !!connectionId,
-    }
+    enabled: !!connectionId,
   });
 }
 
@@ -76,9 +68,7 @@ export function useProducerMappings(
       api.get<ProducerMappingWithDetails[]>(
         `/api/marketplace/producer-mappings?connectionId=${connectionId}`
       ),
-    options: {
-      enabled: !!connectionId,
-    }
+    enabled: !!connectionId,
   });
 }
 
@@ -86,9 +76,7 @@ export function useExternalTags(connectionId: string): ListQuery<ExternalTag> {
   return createListQuery({
     queryKey: marketplaceKeys.tags(connectionId),
     queryFn: () => api.get<ExternalTag[]>(`/api/marketplace/tags?connectionId=${connectionId}`),
-    options: {
-      enabled: !!connectionId,
-    }
+    enabled: !!connectionId,
   });
 }
 
@@ -101,8 +89,6 @@ export function useTagMappings(
       api.get<TagMappingWithDetails[]>(
         `/api/marketplace/tag-mappings?connectionId=${connectionId}`
       ),
-    options: {
-      enabled: !!connectionId,
-    }
+    enabled: !!connectionId,
   });
 }

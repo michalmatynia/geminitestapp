@@ -36,7 +36,7 @@ export function useAdmin3DAssetsState() {
   const filters = useMemo(
     () => ({
       ...(searchQuery && { search: searchQuery }),
-      ...(selectedCategory && { category: selectedCategory }),
+      ...(selectedCategory && { categoryId: selectedCategory }),
       ...(selectedTags.length > 0 && { tags: selectedTags }),
     }),
     [searchQuery, selectedCategory, selectedTags]
@@ -81,12 +81,11 @@ export function useAdmin3DAssetsState() {
     try {
       await reindexMutation.mutateAsync();
       toast('Assets reindexed successfully.', { variant: 'success' });
-      void assetsQuery.refetch();
     } catch (err) {
       logClientError(err, { context: { source: 'useAdmin3DAssetsState', action: 'reindexAssets' } });
       toast(err instanceof Error ? err.message : 'Failed to reindex assets', { variant: 'error' });
     }
-  }, [reindexMutation, toast, assetsQuery]);
+  }, [reindexMutation, toast]);
 
   const clearFilters = useCallback(() => {
     setSearchQuery('');

@@ -1,13 +1,18 @@
-import {
-  createPostMutation,
-  createPatchMutation,
-  createDeleteMutation,
-  createSaveMutation,
-} from '@/shared/lib/api-hooks';
+'use client';
+
 import {
   createListQuery,
   createSingleQuery,
+  createCreateMutation,
+  createUpdateMutation,
+  createDeleteMutation,
 } from '@/shared/lib/query-factories';
+import {
+  createSaveMutation as createRobustSaveMutation,
+  createDeleteMutation as createRobustDeleteMutation,
+  createCreateMutation as createRobustCreateMutation,
+  createUpdateMutation as createRobustUpdateMutation,
+} from '@/shared/lib/mutation-factories';
 import {
   invalidateCatalogScopedData,
   invalidatePriceGroups,
@@ -16,13 +21,16 @@ import {
 } from '@/shared/lib/query-invalidation';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 export { productSettingsKeys };
-import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
   ProductValidationPattern,
   ProductValidatorConfig,
   ProductValidatorSettings,
 } from '@/shared/types/domain/products';
 import type { 
+  UpdateMutation, 
+  DeleteMutation, 
+  SaveMutation, 
+  CreateMutation,
   ListQuery,
   SingleQuery,
 } from '@/shared/types/query-result-types';
@@ -62,11 +70,11 @@ export function useCategories(catalogId: string | null): ListQuery<ProductCatego
 }
 
 export function useTags(catalogId: string | null): ListQuery<ProductTag> {
-  return useMetadataTags(catalogId ?? undefined);
+  return useMetadataTags(catalogId ?? undefined) as ListQuery<ProductTag>;
 }
 
 export function useParameters(catalogId: string | null): ListQuery<ProductParameter> {
-  return useMetadataParameters(catalogId ?? undefined);
+  return useMetadataParameters(catalogId ?? undefined) as ListQuery<ProductParameter>;
 }
 
 export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {
@@ -92,156 +100,159 @@ export function useProductValidatorConfig(includeDisabled: boolean = false): Sin
   });
 }
 
-export function useUpdatePriceGroupMutation() {
-  return createPatchMutation<PriceGroup, PriceGroup>({
-    endpoint: (group) => `/api/products/price-groups/${group.id}`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useUpdatePriceGroupMutation(): UpdateMutation<PriceGroup, PriceGroup> {
+  return createRobustUpdateMutation({
+    updateFn: (group: PriceGroup) => api.updatePriceGroup(group),
+    invalidateFn: (queryClient) => {
       void invalidatePriceGroups(queryClient);
     },
   });
 }
 
-export function useDeletePriceGroupMutation() {
-  return createDeleteMutation<DeleteResponse, string>({
-    endpoint: (id) => `/api/products/price-groups/${id}`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useDeletePriceGroupMutation(): DeleteMutation {
+  return createRobustDeleteMutation({
+    deleteFn: (id: string) => api.deletePriceGroup(id),
+    invalidateFn: (queryClient) => {
       void invalidatePriceGroups(queryClient);
     },
   });
 }
 
-export function useSavePriceGroupMutation() {
-  return createSaveMutation<PriceGroup, { id?: string; data: Partial<PriceGroup> }>({
-    createEndpoint: '/api/products/price-groups',
-    updateEndpoint: ({ id }) => `/api/products/price-groups/${id}`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useSavePriceGroupMutation(): SaveMutation<PriceGroup> {
+  return createRobustSaveMutation({
+    saveFn: ({ id, data }: { id?: string; data: Partial<PriceGroup> }) => api.savePriceGroup(id, data),
+    invalidateFn: (queryClient) => {
       void invalidatePriceGroups(queryClient);
     },
   });
 }
 
-export function useDeleteCatalogMutation() {
-  return createDeleteMutation<DeleteResponse, string>({
-    endpoint: (id) => `/api/products/catalogs/${id}`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useDeleteCatalogMutation(): DeleteMutation {
+  return createRobustDeleteMutation({
+    deleteFn: (id: string) => api.deleteCatalog(id),
+    invalidateFn: (queryClient) => {
       void invalidateProductSettingsCatalogs(queryClient);
     },
   });
 }
 
-export function useSaveCatalogMutation() {
-  return createSaveMutation<Catalog, { id?: string; data: Partial<Catalog> }>({
-    createEndpoint: '/api/products/catalogs',
-    updateEndpoint: ({ id }) => `/api/products/catalogs/${id}`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useSaveCatalogMutation(): SaveMutation<Catalog> {
+  return createRobustSaveMutation({
+    saveFn: ({ id, data }: { id?: string; data: Partial<Catalog> }) =>
+      id ? api.updateCatalog(id, data) : api.createCatalog(data),
+    invalidateFn: (queryClient) => {
       void invalidateProductSettingsCatalogs(queryClient);
     },
   });
 }
 
-export function useSaveCategoryMutation() {
-  return createSaveMutation<ProductCategory, { id?: string; data: Partial<ProductCategory> }>({
-    createEndpoint: '/api/products/categories',
-    updateEndpoint: ({ id }) => `/api/products/categories/${id}`,
-    onSuccess: (_data, variables, _context, queryClient) => {
+export function useSaveCategoryMutation(): SaveMutation<ProductCategory, { id: string | undefined; data: Partial<ProductCategory> }> {
+  return createRobustSaveMutation({
+    saveFn: ({ id, data }: { id: string | undefined; data: Partial<ProductCategory> }) =>
+      id ? api.updateCategory(id, data) : api.createCategory(data),
+    invalidateFn: (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
 
-export function useDeleteCategoryMutation() {
-  return createDeleteMutation<DeleteResponse, { id: string; catalogId: string | null }>({
-    endpoint: ({ id }) => `/api/products/categories/${id}`,
-    onSuccess: (_data, variables, _context, queryClient) => {
+export function useDeleteCategoryMutation(): UpdateMutation<void, { id: string; catalogId: string | null }> {
+  return createRobustUpdateMutation({
+    updateFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteCategory(id),
+    invalidateFn: (queryClient, _data, variables) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
 
-export function useReorderCategoryMutation() {
-  return createPatchMutation<ProductCategory, api.ReorderCategoryPayload>({
-    endpoint: '/api/products/categories/reorder',
-    onSuccess: (_data, variables, _context, queryClient) => {
+export function useReorderCategoryMutation(): UpdateMutation<ProductCategory, api.ReorderCategoryPayload> {
+  return createRobustUpdateMutation({
+    updateFn: (payload: api.ReorderCategoryPayload) =>
+      api.reorderCategory(payload),
+    invalidateFn: (
+      queryClient,
+      _data: ProductCategory,
+      variables: api.ReorderCategoryPayload
+    ) => {
       const catalogId = variables.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
 
-export function useSaveTagMutation() {
-  return createSaveMutation<ProductTag, { id?: string; data: Partial<ProductTag> }>({
-    createEndpoint: '/api/products/tags',
-    updateEndpoint: ({ id }) => `/api/products/tags/${id}`,
-    onSuccess: (_data, variables, _context, queryClient) => {
+export function useSaveTagMutation(): SaveMutation<ProductTag, { id: string | undefined; data: Partial<ProductTag> }> {
+  return createRobustSaveMutation({
+    saveFn: ({ id, data }: { id: string | undefined; data: Partial<ProductTag> }) =>
+      id ? api.updateTag(id, data) : api.createTag(data),
+    invalidateFn: (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
 
-export function useDeleteTagMutation() {
-  return createDeleteMutation<DeleteResponse, { id: string; catalogId: string | null }>({
-    endpoint: ({ id }) => `/api/products/tags/${id}`,
-    onSuccess: (_data, variables, _context, queryClient) => {
+export function useDeleteTagMutation(): UpdateMutation<void, { id: string; catalogId: string | null }> {
+  return createRobustUpdateMutation({
+    updateFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteTag(id),
+    invalidateFn: (queryClient, _data, variables) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
 
-export function useSaveParameterMutation() {
-  return createSaveMutation<ProductParameter, { id?: string; data: Partial<ProductParameter> }>({
-    createEndpoint: '/api/products/parameters',
-    updateEndpoint: ({ id }) => `/api/products/parameters/${id}`,
-    onSuccess: (_data, variables, _context, queryClient) => {
+export function useSaveParameterMutation(): SaveMutation<ProductParameter, { id: string | undefined; data: Partial<ProductParameter> }> {
+  return createRobustSaveMutation({
+    saveFn: ({ id, data }: { id: string | undefined; data: Partial<ProductParameter> }) =>
+      id ? api.updateParameter(id, data) : api.createParameter(data),
+    invalidateFn: (queryClient, _data, variables) => {
       const catalogId = variables.data.catalogId ?? null;
       void invalidateCatalogScopedData(queryClient, catalogId);
     },
   });
 }
 
-export function useDeleteParameterMutation() {
-  return createDeleteMutation<DeleteResponse, { id: string; catalogId: string | null }>({
-    endpoint: ({ id }) => `/api/products/parameters/${id}`,
-    onSuccess: (_data, variables, _context, queryClient) => {
+export function useDeleteParameterMutation(): UpdateMutation<void, { id: string; catalogId: string | null }> {
+  return createRobustUpdateMutation({
+    updateFn: ({ id }: { id: string; catalogId: string | null }) => api.deleteParameter(id),
+    invalidateFn: (queryClient, _data, variables) => {
       void invalidateCatalogScopedData(queryClient, variables.catalogId);
     },
   });
 }
 
-export function useUpdateValidatorSettingsMutation() {
-  return createPatchMutation<ProductValidatorSettings, Partial<ProductValidatorSettings>>({
-    endpoint: '/api/products/validator-settings',
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useUpdateValidatorSettingsMutation(): UpdateMutation<ProductValidatorSettings, Partial<ProductValidatorSettings>> {
+  return createRobustUpdateMutation({
+    updateFn: api.updateValidatorSettings,
+    invalidateFn: (queryClient) => {
       void invalidateValidatorConfig(queryClient);
     },
   });
 }
 
-export function useCreateValidationPatternMutation() {
-  return createPostMutation<ProductValidationPattern, api.CreateValidationPatternPayload>({
-    endpoint: '/api/products/validator-patterns',
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useCreateValidationPatternMutation(): CreateMutation<ProductValidationPattern, api.CreateValidationPatternPayload> {
+  return createRobustCreateMutation({
+    createFn: api.createValidationPattern,
+    invalidateFn: (queryClient) => {
       void invalidateValidatorConfig(queryClient);
     },
   });
 }
 
-export function useUpdateValidationPatternMutation() {
-  return createPatchMutation<ProductValidationPattern, { id: string; data: api.UpdateValidationPatternPayload }>({
-    endpoint: ({ id }) => `/api/products/validator-patterns/${id}`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useUpdateValidationPatternMutation(): UpdateMutation<ProductValidationPattern, { id: string; data: api.UpdateValidationPatternPayload }> {
+  return createRobustUpdateMutation({
+    updateFn: ({ id, data }: { id: string; data: api.UpdateValidationPatternPayload }) => api.updateValidationPattern(id, data),
+    invalidateFn: (queryClient) => {
       void invalidateValidatorConfig(queryClient);
     },
   });
 }
 
-export function useDeleteValidationPatternMutation() {
-  return createDeleteMutation<DeleteResponse, string>({
-    endpoint: (id) => `/api/products/validator-patterns/${id}`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useDeleteValidationPatternMutation(): DeleteMutation {
+  return createRobustDeleteMutation({
+    deleteFn: (id: string) => api.deleteValidationPattern(id),
+    invalidateFn: (queryClient) => {
       void invalidateValidatorConfig(queryClient);
     },
   });
 }
-

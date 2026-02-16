@@ -41,6 +41,9 @@ NETWORK
 Remove legacy solutions and backwards compatibility I want only the newest
 pursue project-wide standardization
 apply the standardized mutation factories
+Develop further robust Tanstack factories for different requests connect them to centralised logging system
+Refactored 30+ query/mutation hook files across all
+         features to use the new factory pattern
 
 VALIDATION
 - expand mutation-invalidation matrix QUERY KEYS. 

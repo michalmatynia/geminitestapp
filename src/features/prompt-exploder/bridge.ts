@@ -38,12 +38,28 @@ export type PromptExploderCaseResolverPartyBundle = {
   addressee?: PromptExploderCaseResolverPartyCandidate | undefined;
 };
 
+export type PromptExploderCaseResolverPlaceDate = {
+  city?: string | undefined;
+  day?: string | undefined;
+  month?: string | undefined;
+  year?: string | undefined;
+  sourceSegmentId?: string | undefined;
+  sourceSegmentTitle?: string | undefined;
+  sourcePatternLabels?: string[] | undefined;
+  sourceSequenceLabels?: string[] | undefined;
+};
+
+export type PromptExploderCaseResolverMetadata = {
+  placeDate?: PromptExploderCaseResolverPlaceDate | undefined;
+};
+
 export type PromptExploderBridgePayload = {
   prompt: string;
   source: PromptExploderBridgeSource;
   target?: PromptExploderBridgeTarget | undefined;
   caseResolverContext?: PromptExploderCaseResolverContext | undefined;
   caseResolverParties?: PromptExploderCaseResolverPartyBundle | undefined;
+  caseResolverMetadata?: PromptExploderCaseResolverMetadata | undefined;
   createdAt: string;
 };
 
@@ -96,6 +112,33 @@ const sanitizeCaseResolverPartyCandidate = (
   };
 };
 
+const sanitizeCaseResolverPlaceDate = (
+  value: unknown
+): PromptExploderCaseResolverPlaceDate | undefined => {
+  if (!value || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  const city = toTrimmedString(record['city']) || undefined;
+  const day = toTrimmedString(record['day']) || undefined;
+  const month = toTrimmedString(record['month']) || undefined;
+  const year = toTrimmedString(record['year']) || undefined;
+  const sourceSegmentId = toTrimmedString(record['sourceSegmentId']) || undefined;
+  const sourceSegmentTitle = toTrimmedString(record['sourceSegmentTitle']) || undefined;
+  const sourcePatternLabels = toTrimmedStringList(record['sourcePatternLabels']);
+  const sourceSequenceLabels = toTrimmedStringList(record['sourceSequenceLabels']);
+
+  if (!city && !day && !month && !year) return undefined;
+  return {
+    city,
+    day,
+    month,
+    year,
+    sourceSegmentId,
+    sourceSegmentTitle,
+    sourcePatternLabels,
+    sourceSequenceLabels,
+  };
+};
+
 const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | null => {
   if (!raw) return null;
   try {
@@ -139,6 +182,15 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
         ...(addressee ? { addressee } : {}),
       };
     })();
+    const caseResolverMetadata = (() => {
+      if (!parsed.caseResolverMetadata || typeof parsed.caseResolverMetadata !== 'object') return undefined;
+      const record = parsed.caseResolverMetadata as Record<string, unknown>;
+      const placeDate = sanitizeCaseResolverPlaceDate(record['placeDate']);
+      if (!placeDate) return undefined;
+      return {
+        placeDate,
+      };
+    })();
 
     return {
       prompt: parsed.prompt,
@@ -146,6 +198,7 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
       target,
       caseResolverContext,
       caseResolverParties,
+      caseResolverMetadata,
       createdAt,
     };
   } catch {
@@ -232,7 +285,8 @@ export function savePromptExploderApplyPrompt(prompt: string): void {
 export function savePromptExploderApplyPromptForCaseResolver(
   prompt: string,
   context?: PromptExploderCaseResolverContext | null,
-  parties?: PromptExploderCaseResolverPartyBundle | null
+  parties?: PromptExploderCaseResolverPartyBundle | null,
+  metadata?: PromptExploderCaseResolverMetadata | null
 ): void {
   saveApplyPayload({
     prompt,
@@ -240,6 +294,7 @@ export function savePromptExploderApplyPromptForCaseResolver(
     target: 'case-resolver',
     caseResolverContext: context ?? undefined,
     caseResolverParties: parties ?? undefined,
+    caseResolverMetadata: metadata ?? undefined,
     createdAt: new Date().toISOString(),
   });
 }

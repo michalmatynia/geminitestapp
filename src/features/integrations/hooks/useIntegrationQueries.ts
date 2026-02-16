@@ -19,39 +19,54 @@ import {
   type IntegrationConnectionDto
 } from '@/shared/contracts/integrations';
 import { api, ApiError } from '@/shared/lib/api-client';
-import { createQueryHook } from '@/shared/lib/api-hooks';
-import { createListQuery } from '@/shared/lib/query-factories';
+import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
 import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery } from '@/shared/types/query-result-types';
+import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';
 
-export const useIntegrations = createQueryHook<IntegrationDto[]>({
-  queryKeyFactory: () => integrationKeys.all,
-  endpoint: '/api/integrations',
-  schema: z.array(integrationSchema),
-});
+export function useIntegrations(): ListQuery<IntegrationDto> {
+  return createListQuery({
+    queryKey: integrationKeys.all,
+    queryFn: async (): Promise<IntegrationDto[]> => {
+      const data = await api.get<IntegrationDto[]>('/api/integrations');
+      return z.array(integrationSchema).parse(data);
+    },
+  });
+}
 
-export const useIntegrationConnections = createQueryHook<IntegrationConnectionDto[], string | undefined>({
-  queryKeyFactory: (integrationId?: string) => getIntegrationConnectionsQueryKey(integrationId),
-  endpoint: (integrationId?: string) => `/api/integrations/${integrationId}/connections`,
-  schema: z.array(integrationConnectionSchema),
-});
+export function useIntegrationConnections(integrationId?: string): ListQuery<IntegrationConnectionDto> {
+  return createListQuery({
+    queryKey: getIntegrationConnectionsQueryKey(integrationId),
+    queryFn: async (): Promise<IntegrationConnectionDto[]> => {
+      if (!integrationId) return [];
+      const data = await api.get<IntegrationConnectionDto[]>(`/api/integrations/${integrationId}/connections`);
+      return z.array(integrationConnectionSchema).parse(data);
+    },
+    enabled: !!integrationId,
+  });
+}
 
-export const useConnectionSession = createQueryHook<unknown, string | undefined>({
-  queryKeyFactory: (connectionId?: string) => integrationKeys.connectionSession(connectionId),
-  endpoint: (connectionId?: string) => `/api/integrations/connections/${connectionId}/session`,
-  staleTime: 0,
-});
+export function useConnectionSession(connectionId?: string): SingleQuery<unknown> {
+  return createSingleQuery({
+    id: connectionId,
+    queryKey: integrationKeys.connectionSession(connectionId),
+    queryFn: () => api.get<unknown>(`/api/integrations/connections/${connectionId}/session`),
+    enabled: !!connectionId,
+    staleTime: 0,
+  });
+}
 
-export const useIntegrationsWithConnections = createQueryHook<IntegrationWithConnections[]>({
-  queryKeyFactory: () => integrationKeys.withConnections(),
-  endpoint: '/api/integrations/with-connections',
-});
+export function useIntegrationsWithConnections(): ListQuery<IntegrationWithConnections> {
+  return createListQuery({
+    queryKey: integrationKeys.withConnections(),
+    queryFn: () => api.get<IntegrationWithConnections[]>('/api/integrations/with-connections'),
+  });
+}
 
 export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
-  return createListQuery<PlaywrightPersona>({
+  return createListQuery({
     queryKey: playwrightKeys.personas(),
     queryFn: async (): Promise<PlaywrightPersona[]> => {
       const data = await fetchSettingsCached();
@@ -65,68 +80,43 @@ export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {
   });
 }
 
-export const getExportTemplatesQueryOptions = () => ({
-  queryKey: integrationKeys.exportTemplates(),
-  queryFn: () => api.get<ImportExportTemplateDto[]>('/api/integrations/export-templates'),
-  staleTime: 5 * 60 * 1000,
-  refetchOnMount: false,
-  refetchOnWindowFocus: false,
-  refetchOnReconnect: false,
-});
+export function useExportTemplates(): ListQuery<ImportExportTemplateDto> {
+  return createListQuery({
+    queryKey: integrationKeys.exportTemplates(),
+    queryFn: async (): Promise<ImportExportTemplateDto[]> => {
+      const data = await api.get<ImportExportTemplateDto[]>('/api/integrations/export-templates');
+      return z.array(importExportTemplateSchema).parse(data);
+    },
+  });
+}
 
-export const useExportTemplates = createQueryHook<ImportExportTemplateDto[]>({
-  queryKeyFactory: () => integrationKeys.exportTemplates(),
-  endpoint: '/api/integrations/export-templates',
-  schema: z.array(importExportTemplateSchema),
-});
+export function useActiveExportTemplate(): SingleQuery<{ templateId?: string | null }> {
+  return createSingleQuery({
+    id: 'active-export-template',
+    queryKey: () => integrationKeys.activeExportTemplate(),
+    queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
+  });
+}
 
-export const getActiveExportTemplateQueryOptions = () => ({
-  queryKey: integrationKeys.activeExportTemplate(),
-  queryFn: () => api.get<{ templateId?: string | null }>('/api/integrations/exports/base/active-template'),
-  staleTime: 5 * 60 * 1000,
-  refetchOnMount: false,
-  refetchOnWindowFocus: false,
-  refetchOnReconnect: false,
-});
-
-export const useActiveExportTemplate = createQueryHook({
-  queryKeyFactory: () => integrationKeys.activeExportTemplate(),
-  endpoint: '/api/integrations/exports/base/active-template',
-});
-
-export const getDefaultExportInventoryQueryOptions = () => ({
-  queryKey: integrationKeys.defaultExportInventory(),
-  queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
-  staleTime: 5 * 60 * 1000,
-  refetchOnMount: false,
-  refetchOnWindowFocus: false,
-  refetchOnReconnect: false,
-});
-
-export const useDefaultExportInventory = createQueryHook({
-  queryKeyFactory: () => integrationKeys.defaultExportInventory(),
-  endpoint: '/api/integrations/exports/base/default-inventory',
-});
-
-export const getBaseInventoriesQueryOptions = (connectionId: string, enabled: boolean = true) => ({
-  queryKey: integrationKeys.baseInventories(connectionId),
-  queryFn: async (): Promise<BaseInventory[]> => {
-    const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
-      action: 'inventories',
-      connectionId,
-    });
-    if (data.error) throw new ApiError(data.error, 400);
-    return Array.isArray(data.inventories) ? data.inventories : [];
-  },
-  enabled: enabled && !!connectionId,
-  refetchOnMount: false,
-  refetchOnWindowFocus: false,
-  refetchOnReconnect: false,
-});
+export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string | null }> {
+  return createSingleQuery({
+    id: 'default-export-inventory',
+    queryKey: () => integrationKeys.defaultExportInventory(),
+    queryFn: () => api.get<{ inventoryId?: string | null }>('/api/integrations/exports/base/default-inventory'),
+  });
+}
 
 export function useBaseInventories(connectionId: string, enabled: boolean = true): ListQuery<BaseInventory> {
-  return createListQuery<BaseInventory>({
-    ...getBaseInventoriesQueryOptions(connectionId, enabled),
-    options: getBaseInventoriesQueryOptions(connectionId, enabled),
+  return createListQuery({
+    queryKey: integrationKeys.baseInventories(connectionId),
+    queryFn: async (): Promise<BaseInventory[]> => {
+      const data = await api.post<{ inventories?: BaseInventory[]; error?: string }>('/api/integrations/imports/base', {
+        action: 'inventories',
+        connectionId,
+      });
+      if (data.error) throw new ApiError(data.error, 400);
+      return Array.isArray(data.inventories) ? data.inventories : [];
+    },
+    enabled: enabled && !!connectionId,
   });
 }

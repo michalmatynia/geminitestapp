@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 
+import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -7,7 +8,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { z } from 'zod';
 
-import { upsertImageStudioSlotLink } from '@/features/ai/image-studio/server/slot-link-repository';
+import {
+  getImageStudioSlotLinkBySourceAndRelation,
+  upsertImageStudioSlotLink,
+} from '@/features/ai/image-studio/server/slot-link-repository';
 import {
   createImageStudioSlots,
   getImageStudioSlotById,
@@ -40,7 +44,27 @@ const payloadSchema = z.object({
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
 
 type CropRect = z.infer<typeof cropRectSchema>;
+type CropPayload = z.infer<typeof payloadSchema>;
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
+type UploadedClientCropImage = {
+  buffer: Buffer;
+  mime: string;
+};
+type CropPoint = { x: number; y: number };
+
+const isFileLike = (value: FormDataEntryValue | null): value is File =>
+  typeof File !== 'undefined' && value instanceof File;
+
+const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+  try {
+    return JSON.parse(normalized) as T;
+  } catch {
+    return undefined;
+  }
+};
 
 const sanitizeSegment = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
@@ -58,6 +82,48 @@ function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null 
   } catch {
     return null;
   }
+}
+
+async function parseCropRequestPayload(
+  req: NextRequest
+): Promise<{ body: unknown; uploadedClientImage: UploadedClientCropImage | null }> {
+  const contentType = req.headers.get('content-type')?.toLowerCase() ?? '';
+  if (!contentType.includes('multipart/form-data')) {
+    const jsonBody = (await req.json().catch(() => null)) as unknown;
+    return { body: jsonBody, uploadedClientImage: null };
+  }
+
+  const form = await req.formData().catch(() => null);
+  if (!form) {
+    return { body: null, uploadedClientImage: null };
+  }
+
+  const mode = form.get('mode');
+  const cropRect = parseJsonFormValue<CropRect>(form.get('cropRect'));
+  const polygon = parseJsonFormValue<Array<{ x: number; y: number }>>(form.get('polygon'));
+  const dataUrl = form.get('dataUrl');
+  const name = form.get('name');
+  const image = form.get('image');
+
+  let uploadedClientImage: UploadedClientCropImage | null = null;
+  if (isFileLike(image) && image.size > 0) {
+    const arrayBuffer = await image.arrayBuffer();
+    uploadedClientImage = {
+      buffer: Buffer.from(arrayBuffer),
+      mime: image.type?.trim().toLowerCase() || 'image/png',
+    };
+  }
+
+  return {
+    body: {
+      ...(typeof mode === 'string' ? { mode } : {}),
+      ...(cropRect ? { cropRect } : {}),
+      ...(polygon ? { polygon } : {}),
+      ...(typeof dataUrl === 'string' ? { dataUrl } : {}),
+      ...(typeof name === 'string' ? { name } : {}),
+    },
+    uploadedClientImage,
+  };
 }
 
 function guessExtension(mime: string): string {
@@ -146,6 +212,54 @@ function polygonToPath(points: Array<{ x: number; y: number }>): string {
     .join(' ');
 }
 
+const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
+
+const normalizeCropRectForFingerprint = (rect: CropRect | undefined): CropRect | null => {
+  if (!rect) return null;
+  return {
+    x: Math.max(0, Math.floor(rect.x)),
+    y: Math.max(0, Math.floor(rect.y)),
+    width: Math.max(1, Math.floor(rect.width)),
+    height: Math.max(1, Math.floor(rect.height)),
+  };
+};
+
+const normalizePolygonForFingerprint = (
+  polygon: Array<CropPoint> | undefined
+): Array<CropPoint> | null => {
+  if (!polygon || polygon.length === 0) return null;
+  return polygon.map((point) => ({
+    x: Number(clampUnit(point.x).toFixed(5)),
+    y: Number(clampUnit(point.y).toFixed(5)),
+  }));
+};
+
+const buildCropDedupeRelationType = (
+  sourceSlot: StudioSlotRecord,
+  payload: CropPayload,
+  now: number
+): string => {
+  const sourceSignature = [
+    sourceSlot.id,
+    sourceSlot.projectId,
+    sourceSlot.imageFileId ?? '',
+    sourceSlot.imageFile?.filepath ?? sourceSlot.imageUrl ?? '',
+    sourceSlot.imageBase64 ? `b64:${sourceSlot.imageBase64.length}` : '',
+  ].join('|');
+  const fingerprintPayload = {
+    sourceSignature,
+    mode: payload.mode,
+    cropRect: normalizeCropRectForFingerprint(payload.cropRect),
+    polygon: normalizePolygonForFingerprint(payload.polygon),
+  };
+  const fingerprint = createHash('sha1')
+    .update(JSON.stringify(fingerprintPayload))
+    .digest('hex')
+    .slice(0, 16);
+  const dedupeBucket = Math.floor(now / 4000);
+  return `crop:output:${fingerprint}:${dedupeBucket}`;
+};
+
 async function cropByPolygonMask(
   sourceBuffer: Buffer,
   polygon: Array<{ x: number; y: number }>,
@@ -213,7 +327,7 @@ async function POST_handler(
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) throw badRequestError('Slot id is required.');
 
-  const body = (await req.json().catch(() => null)) as unknown;
+  const { body, uploadedClientImage } = await parseCropRequestPayload(req);
   const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {
     throw badRequestError('Invalid payload.', { errors: parsed.error.format() });
@@ -223,10 +337,31 @@ async function POST_handler(
   if (!sourceSlot) throw notFoundError('Source slot not found.');
 
   const payload = parsed.data;
+  const now = Date.now();
+  const dedupeRelationType = buildCropDedupeRelationType(sourceSlot, payload, now);
+  const existingLink = await getImageStudioSlotLinkBySourceAndRelation(
+    sourceSlot.projectId,
+    sourceSlot.id,
+    dedupeRelationType
+  );
+  if (existingLink) {
+    const existingSlot = await getImageStudioSlotById(existingLink.targetSlotId);
+    if (existingSlot) {
+      return NextResponse.json(
+        {
+          slot: existingSlot,
+          mode: payload.mode,
+          cropRect: payload.cropRect ?? null,
+          deduplicated: true,
+        },
+        { status: 200 }
+      );
+    }
+  }
 
   if (payload.mode === 'client_bbox') {
-    if (!payload.dataUrl) {
-      throw badRequestError('Client crop requires dataUrl.');
+    if (!payload.dataUrl && !uploadedClientImage) {
+      throw badRequestError('Client crop requires an uploaded image or dataUrl.');
     }
   } else if (payload.mode === 'server_bbox') {
     if (!payload.cropRect) {
@@ -241,12 +376,17 @@ async function POST_handler(
   let cropRect: CropRect | null = payload.cropRect ?? null;
 
   if (payload.mode === 'client_bbox') {
-    const parsedData = parseDataUrl(payload.dataUrl ?? '');
-    if (!parsedData) {
-      throw badRequestError('Invalid crop image data URL.');
+    if (uploadedClientImage) {
+      outputBuffer = uploadedClientImage.buffer;
+      outputMime = uploadedClientImage.mime;
+    } else {
+      const parsedData = parseDataUrl(payload.dataUrl ?? '');
+      if (!parsedData) {
+        throw badRequestError('Invalid crop image data URL.');
+      }
+      outputBuffer = parsedData.buffer;
+      outputMime = parsedData.mime;
     }
-    outputBuffer = parsedData.buffer;
-    outputMime = parsedData.mime;
   } else {
     const source = await loadSourceBuffer(sourceSlot);
     const metadata = await sharp(source.buffer).metadata();
@@ -280,7 +420,6 @@ async function POST_handler(
   }
 
   const ext = guessExtension(outputMime);
-  const now = Date.now();
   const safeProjectId = sanitizeSegment(sourceSlot.projectId);
   const safeSourceSlotId = sanitizeSegment(sourceSlot.id);
   const baseName =
@@ -335,7 +474,7 @@ async function POST_handler(
     projectId: sourceSlot.projectId,
     sourceSlotId: sourceSlot.id,
     targetSlotId: createdSlot.id,
-    relationType: `crop:output:${now}`,
+    relationType: dedupeRelationType,
     metadata: {
       mode: payload.mode,
       cropRect,

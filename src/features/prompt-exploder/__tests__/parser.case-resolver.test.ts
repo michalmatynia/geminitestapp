@@ -7,7 +7,7 @@ import { getPromptExploderScopedRules } from '@/features/prompt-exploder/pattern
 describe('case resolver prompt exploder segmentation', () => {
   it('splits place/date, addresser, and addressee blocks from HTML input', () => {
     const prompt = [
-      '<p style="text-align: right;">Szczecin 25.01.2026</p>',
+      '<p style="text-align: right;">Szczecin, 25.01.2026 r.</p>',
       '<p></p>',
       '<p>Michał Matynia</p>',
       '<p>Fioletowa 71/2</p>',
@@ -38,27 +38,126 @@ describe('case resolver prompt exploder segmentation', () => {
       value.includes('Inspektorat ZUS w Gryficach')
     );
     const placeDateIndex = segmentBodies.findIndex((value) =>
-      value.includes('Szczecin 25.01.2026')
+      value.includes('Szczecin, 25.01.2026 r.')
     );
 
     expect(placeDateIndex).toBeGreaterThanOrEqual(0);
     expect(addresserIndex).toBeGreaterThanOrEqual(0);
     expect(addresseeIndex).toBeGreaterThanOrEqual(0);
+    expect(addresserIndex).not.toBe(placeDateIndex);
     expect(addresseeIndex).toBeGreaterThan(addresserIndex);
 
     const addresserSegment = document.segments[addresserIndex];
     const addresseeSegment = document.segments[addresseeIndex];
     const placeDateSegment = document.segments[placeDateIndex];
     expect(addresserSegment?.raw).toContain('Fioletowa 71/2');
+    expect(addresserSegment?.raw).toContain('Polska');
     expect(addresserSegment?.raw).not.toContain('Inspektorat ZUS w Gryficach');
     expect(addresseeSegment?.raw).toContain('Inspektorat ZUS w Gryficach');
     expect(addresseeSegment?.raw).toContain('72-300 Gryfice');
+    expect(placeDateSegment?.raw).not.toContain('Michał Matynia');
+    expect(addresserSegment?.raw).not.toContain('Szczecin, 25.01.2026 r.');
+    expect(placeDateSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Place Date City'
+    );
+    expect(placeDateSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Place Date Day'
+    );
+    expect(placeDateSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Place Date Month'
+    );
+    expect(placeDateSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Place Date Year'
+    );
+    expect(addresserSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Addresser First Name'
+    );
+    expect(addresserSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Address Street'
+    );
+    expect(addresserSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Address Street Number'
+    );
+    expect(addresserSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Address House Number'
+    );
+    expect(addresserSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Address Postal Code'
+    );
+    expect(addresserSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Address City'
+    );
+    expect(addresserSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Address Country'
+    );
     expect(addresseeSegment?.matchedPatternLabels).toContain(
       'Case Resolver Heading: Addressee Organization'
+    );
+    expect(addresseeSegment?.matchedPatternLabels).toContain(
+      'Case Resolver Extract: Addressee Organization Name'
+    );
+    expect(addresseeSegment?.matchedPatternLabels).not.toContain(
+      'Case Resolver Extract: Address Country'
     );
     expect(placeDateSegment?.matchedPatternLabels).toContain(
       'Case Resolver Heading: Place + Date'
     );
     expect(addresseeSegment?.matchedSequenceLabels).toContain('Case Resolver Structure');
+    expect(placeDateSegment?.title).toBe('');
+    expect(addresserSegment?.title).toBe('');
+    expect(addresseeSegment?.title).toBe('');
+  });
+
+  it('keeps plain place/date line isolated from addresser block without comma suffix', () => {
+    const prompt = [
+      '<p style="text-align: right;">Szczecin 25.01.2026</p>',
+      '<p></p>',
+      '<p>Michał Matynia</p>',
+      '<p>Fioletowa 71/2</p>',
+      '<p>70-781 Szczecin</p>',
+      '<p>Polska</p>',
+      '<p style="text-align: right;">Inspektorat ZUS w Gryficach</p>',
+      '<p style="text-align: right;">Dąbskiego 5</p>',
+      '<p style="text-align: right;">72-300 Gryfice</p>',
+      '<p></p>',
+      '<p><strong>Wniosek o umorzenie zadłużenia</strong></p>',
+    ].join('');
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    const placeDateSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Szczecin 25.01.2026')
+    );
+    const addresserSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Michał Matynia')
+    );
+    const addresseeSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes('Inspektorat ZUS w Gryficach')
+    );
+
+    expect(placeDateSegment).toBeDefined();
+    expect(addresserSegment).toBeDefined();
+    expect(addresseeSegment).toBeDefined();
+    expect(placeDateSegment?.id).not.toBe(addresserSegment?.id);
+    expect(addresserSegment?.id).not.toBe(addresseeSegment?.id);
+    expect(placeDateSegment?.raw).toBe('Szczecin 25.01.2026');
+    expect(addresserSegment?.raw).toContain('Fioletowa 71/2');
+    expect(addresserSegment?.raw).toContain('70-781 Szczecin');
+    expect(addresserSegment?.raw).toContain('Polska');
+    expect(addresserSegment?.raw).not.toContain('Inspektorat ZUS w Gryficach');
+    expect(addresseeSegment?.raw).toContain('Inspektorat ZUS w Gryficach');
+    expect(addresseeSegment?.raw).toContain('Dąbskiego 5');
+    expect(addresseeSegment?.raw).toContain('72-300 Gryfice');
+    expect(placeDateSegment?.title).toBe('');
+    expect(addresserSegment?.title).toBe('');
+    expect(addresseeSegment?.title).toBe('');
   });
 });

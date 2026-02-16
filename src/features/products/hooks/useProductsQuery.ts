@@ -3,7 +3,6 @@
 import {
   useQueries,
   useQueryClient,
-  type UseQueryResult,
 } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { z } from 'zod';
@@ -11,9 +10,10 @@ import { z } from 'zod';
 import { getProducts, countProducts } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/features/products/types';
 import { productSchema } from '@/shared/contracts/products';
-import { createQueryHook } from '@/shared/lib/api-hooks';
+import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
 
 import {
   getProductCountQueryKey,
@@ -43,26 +43,27 @@ export interface UseProductsOptions {
 
 const PRODUCTS_STALE_MS = 10_000;
 
+export function useProducts(filters: UseProductsFilters, options?: UseProductsOptions): ListQuery<ProductWithImages> {
+  return createListQuery({
+    queryKey: QUERY_KEYS.products.list(filters),
+    queryFn: async () => {
+      const data = await getProducts(filters);
+      return z.array(productSchema).parse(data) as ProductWithImages[];
+    },
+    staleTime: PRODUCTS_STALE_MS,
+    enabled: options?.enabled ?? true,
+  });
+}
 
-export const useProducts = (filters: UseProductsFilters, options?: UseProductsOptions): UseQueryResult<ProductWithImages[], Error> => {
-  return _useProducts(filters, options) as UseQueryResult<ProductWithImages[], Error>;
-};
-
-const _useProducts = createQueryHook({
-  queryKeyFactory: (filters: UseProductsFilters) => QUERY_KEYS.products.list(filters),
-  endpoint: '/api/products',
-  schema: z.array(productSchema), 
-  staleTime: PRODUCTS_STALE_MS,
-  apiOptions: { cache: 'no-store' },
-});
-
-export const useProductsCount = createQueryHook({
-  queryKeyFactory: (filters: UseProductsFilters) => QUERY_KEYS.products.count(filters),
-  endpoint: '/api/products/count',
-  schema: z.object({ count: z.number() }).transform(d => d.count),
-  staleTime: PRODUCTS_STALE_MS,
-  apiOptions: { cache: 'no-store' },
-});
+export function useProductsCount(filters: UseProductsFilters, options?: UseProductsOptions): SingleQuery<number> {
+  return createSingleQuery({
+    id: JSON.stringify(filters),
+    queryKey: QUERY_KEYS.products.count(filters),
+    queryFn: () => countProducts(filters),
+    staleTime: PRODUCTS_STALE_MS,
+    enabled: options?.enabled ?? true,
+  });
+}
 
 export function useProductsWithCount(
   filters: UseProductsFilters,

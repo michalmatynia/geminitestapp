@@ -228,13 +228,20 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const playwrightPersonasLoading = playwrightPersonasQuery.isLoading;
 
   // Mutations
-  const createIntegrationMutation = useCreateIntegration();
-  const upsertConnectionMutation = useUpsertConnection();
-  const deleteConnectionMutation = useDeleteConnection();
-  const disconnectAllegroMutation = useDisconnectAllegro();
-  const testConnectionMutation = useTestConnection();
-  const baseApiRequestMutation = useBaseApiRequest();
-  const allegroApiRequestMutation = useAllegroApiRequest();
+  const createIntegrationMutationHook = useCreateIntegration();
+  const createIntegrationMutation = createIntegrationMutationHook();
+  const upsertConnectionMutationHook = useUpsertConnection();
+  const upsertConnectionMutation = upsertConnectionMutationHook();
+  const deleteConnectionMutationHook = useDeleteConnection();
+  const deleteConnectionMutation = deleteConnectionMutationHook();
+  const disconnectAllegroMutationHook = useDisconnectAllegro();
+  const disconnectAllegroMutation = disconnectAllegroMutationHook();
+  const testConnectionMutationHook = useTestConnection();
+  const testConnectionMutation = testConnectionMutationHook();
+  const baseApiRequestMutationHook = useBaseApiRequest();
+  const baseApiRequestMutation = baseApiRequestMutationHook();
+  const allegroApiRequestMutationHook = useAllegroApiRequest();
+  const allegroApiRequestMutation = allegroApiRequestMutationHook();
 
   // UI State
   const [isModalOpen, setIsModalOpen] = useState(false);

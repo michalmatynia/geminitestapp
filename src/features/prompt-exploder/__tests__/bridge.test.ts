@@ -71,6 +71,18 @@ describe('prompt exploder bridge parties', () => {
           sourcePatternLabels: ['Case Resolver Role: Addressee'],
           sourceSequenceLabels: ['Case Resolver Parties'],
         },
+      },
+      {
+        placeDate: {
+          city: 'Szczecin',
+          day: '25',
+          month: '01',
+          year: '2026',
+          sourceSegmentId: 'segment-1',
+          sourceSegmentTitle: 'Place + Date',
+          sourcePatternLabels: ['Case Resolver Heading: Place + Date'],
+          sourceSequenceLabels: ['Case Resolver Structure'],
+        },
       }
     );
 
@@ -92,6 +104,16 @@ describe('prompt exploder bridge parties', () => {
     expect(payload?.caseResolverParties?.addressee?.sourceSequenceLabels).toEqual([
       'Case Resolver Parties',
     ]);
+    expect(payload?.caseResolverMetadata?.placeDate).toEqual({
+      city: 'Szczecin',
+      day: '25',
+      month: '01',
+      year: '2026',
+      sourceSegmentId: 'segment-1',
+      sourceSegmentTitle: 'Place + Date',
+      sourcePatternLabels: ['Case Resolver Heading: Place + Date'],
+      sourceSequenceLabels: ['Case Resolver Structure'],
+    });
 
     const secondRead = consumePromptExploderApplyPromptForCaseResolver();
     expect(secondRead).toBeNull();

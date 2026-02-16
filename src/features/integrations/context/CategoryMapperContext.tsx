@@ -207,8 +207,10 @@ export function CategoryMapperProvider({
   const mappingsLoading = mappingsQuery.isLoading;
 
   // Mutations
-  const fetchMutation = useFetchExternalCategoriesMutation();
-  const saveMutation = useSaveMappingsMutation();
+  const fetchMutationHook = useFetchExternalCategoriesMutation();
+  const fetchMutation = fetchMutationHook();
+  const saveMutationHook = useSaveMappingsMutation();
+  const saveMutation = saveMutationHook();
 
   const [pendingMappings, setPendingMappings] = useState<Map<string, string | null>>(new Map());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());

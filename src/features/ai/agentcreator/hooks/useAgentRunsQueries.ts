@@ -28,9 +28,7 @@ export function useAgentSnapshots(runId: string | null): ListQuery<AgentSnapshot
   return createListQuery<AgentSnapshot>({
     queryKey: agentRunsKeys.snapshots(runId || ''),
     queryFn: () => api.getAgentSnapshots(runId!),
-    options: {
-      enabled: !!runId,
-    }
+    enabled: !!runId,
   });
 }
 
@@ -38,10 +36,8 @@ export function useAgentLogs(runId: string | null, options?: { refetchInterval?:
   return createListQuery<AgentBrowserLog>({
     queryKey: agentRunsKeys.logs(runId || ''),
     queryFn: () => api.getAgentLogs(runId!),
-    options: {
-      enabled: !!runId,
-      refetchInterval: options?.refetchInterval ?? false,
-    }
+    enabled: !!runId,
+    refetchInterval: options?.refetchInterval ?? false,
   });
 }
 
@@ -49,10 +45,8 @@ export function useAgentAudits(runId: string | null, options?: { refetchInterval
   return createListQuery<AgentAuditLog>({
     queryKey: agentRunsKeys.audits(runId || ''),
     queryFn: () => api.getAgentAudits(runId!),
-    options: {
-      enabled: !!runId,
-      refetchInterval: options?.refetchInterval ?? false,
-    }
+    enabled: !!runId,
+    refetchInterval: options?.refetchInterval ?? false,
   });
 }
 

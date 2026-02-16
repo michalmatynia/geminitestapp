@@ -327,13 +327,31 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Detects a location-and-date heading line used in legal letters (for example: "Szczecin 25.01.2026").',
     pattern:
-      '^\\s*[\\p{L}][\\p{L}\\s\\-.\'’]{1,60}\\s+\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}\\s*$',
+      '^\\s*[\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?(?:,)?\\s+\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Place and date heading detected.',
     sequence: 35,
     sequenceGroupId: 'case_resolver_structure',
     sequenceGroupLabel: 'Case Resolver Structure',
     promptExploderPriority: 42,
+    promptExploderConfidenceBoost: 0.2,
+    promptExploderTreatAsHeading: true,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.heading.addresser_person',
+    title: 'Case Resolver Heading: Addresser Person',
+    description:
+      'Detects sender person-name heading lines to split addresser blocks into a dedicated segment.',
+    pattern:
+      '^\\s*(?!(?:z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|inspektorat|urząd|urzad|ministerstwo|organ|zus)\\b)([\\p{Lu}][\\p{L}\'’.-]{1,40}(?:\\s+[\\p{Lu}][\\p{L}\'’.-]{1,40}){1,3})\\s*$',
+    flags: 'imu',
+    message: 'Addresser person heading detected.',
+    sequence: 36,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 43,
     promptExploderConfidenceBoost: 0.2,
     promptExploderTreatAsHeading: true,
     appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
@@ -348,7 +366,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
       '^\\s*(?=.*\\b(zus|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120}\\s*$',
     flags: 'imu',
     message: 'Addressee organization heading detected.',
-    sequence: 36,
+    sequence: 37,
     sequenceGroupId: 'case_resolver_structure',
     sequenceGroupLabel: 'Case Resolver Structure',
     promptExploderPriority: 45,
@@ -366,7 +384,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
       '^\\s*(wniosek\\b|dotyczy\\b|uzasadnienie\\b|na\\s+zakończenie\\b|z\\s+poważaniem\\b|subject\\b|re:\\b|sincerely\\b|regards\\b).*$',
     flags: 'imu',
     message: 'Case Resolver subject/section heading detected.',
-    sequence: 37,
+    sequence: 38,
     sequenceGroupId: 'case_resolver_structure',
     sequenceGroupLabel: 'Case Resolver Structure',
     promptExploderPriority: 34,
@@ -381,7 +399,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts city/place from a place+date line (for example: "Szczecin 25.01.2026").',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60})\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*$',
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Case Resolver place/date city captured.',
     sequence: 38,
@@ -403,7 +421,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts day value from a place+date line.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60})\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*$',
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Case Resolver place/date day captured.',
     sequence: 39,
@@ -425,7 +443,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts month value from a place+date line.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60})\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*$',
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Case Resolver place/date month captured.',
     sequence: 40,
@@ -447,7 +465,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts year value from a place+date line.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60})\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*$',
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60}?)(?:,)?\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})(?:\\s*r\\.?\\s*)?$',
     flags: 'imu',
     message: 'Case Resolver place/date year captured.',
     sequence: 41,
@@ -467,9 +485,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     id: 'segment.case_resolver.extract.addresser.first_name',
     title: 'Case Resolver Extract: Addresser First Name',
     description:
-      'Extracts addresser first name from a person name line.',
+      'Extracts addresser first name from a capitalized person name line.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\'’.-]+)(?:\\s+([\\p{L}][\\p{L}\'’.-]+))?\\s+([\\p{L}][\\p{L}\'’.-]+)\\s*$',
+      '^\\s*(?!(?:z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|inspektorat|urząd|urzad|ministerstwo|organ|zus)\\b)([\\p{Lu}][\\p{L}\'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}\'’.-]+(?:\\s+[\\p{Lu}][\\p{L}\'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}\'’.-]+)\\s*$',
     flags: 'imu',
     message: 'Case Resolver addresser first name captured.',
     sequence: 42,
@@ -489,9 +507,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     id: 'segment.case_resolver.extract.addresser.middle_name',
     title: 'Case Resolver Extract: Addresser Middle Name',
     description:
-      'Extracts addresser middle name from a person name line when present.',
+      'Extracts addresser middle name from a capitalized person name line when present.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\'’.-]+)(?:\\s+([\\p{L}][\\p{L}\'’.-]+))?\\s+([\\p{L}][\\p{L}\'’.-]+)\\s*$',
+      '^\\s*(?!(?:z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|inspektorat|urząd|urzad|ministerstwo|organ|zus)\\b)([\\p{Lu}][\\p{L}\'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}\'’.-]+(?:\\s+[\\p{Lu}][\\p{L}\'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}\'’.-]+)\\s*$',
     flags: 'imu',
     message: 'Case Resolver addresser middle name captured.',
     sequence: 43,
@@ -511,9 +529,9 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     id: 'segment.case_resolver.extract.addresser.last_name',
     title: 'Case Resolver Extract: Addresser Last Name',
     description:
-      'Extracts addresser last name from a person name line.',
+      'Extracts addresser last name from a capitalized person name line.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\'’.-]+)(?:\\s+([\\p{L}][\\p{L}\'’.-]+))?\\s+([\\p{L}][\\p{L}\'’.-]+)\\s*$',
+      '^\\s*(?!(?:z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|inspektorat|urząd|urzad|ministerstwo|organ|zus)\\b)([\\p{Lu}][\\p{L}\'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}\'’.-]+(?:\\s+[\\p{Lu}][\\p{L}\'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}\'’.-]+)\\s*$',
     flags: 'imu',
     message: 'Case Resolver addresser last name captured.',
     sequence: 44,
@@ -530,12 +548,34 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
   }),
   createRegexRule({
+    id: 'segment.case_resolver.extract.addresser.organization_name',
+    title: 'Case Resolver Extract: Addresser Organization Name',
+    description:
+      'Extracts addresser organization/company name when sender is an institution.',
+    pattern:
+      '^\\s*((?=.*\\b(zus|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120})\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver addresser organization captured.',
+    sequence: 45,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 24,
+    promptExploderConfidenceBoost: 0.1,
+    promptExploderCaptureTarget: 'case_resolver.addresser.organizationName',
+    promptExploderCaptureGroup: 1,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
     id: 'segment.case_resolver.extract.address.street',
     title: 'Case Resolver Extract: Address Street',
     description:
       'Extracts street, street number, and house number from address lines.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
     flags: 'imu',
     message: 'Case Resolver address street captured.',
     sequence: 45,
@@ -557,7 +597,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts street number from address lines.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
     flags: 'imu',
     message: 'Case Resolver address street number captured.',
     sequence: 46,
@@ -579,7 +619,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts house/unit number from address lines.',
     pattern:
-      '^\\s*([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+      '^\\s*(?:(?:ul\\.?|al\\.?|os\\.?|pl\\.?|aleja)\\s+)?([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
     flags: 'imu',
     message: 'Case Resolver address house number captured.',
     sequence: 47,
@@ -601,7 +641,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts postal code from postal-code and city lines.',
     pattern:
-      '^\\s*(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
+      '^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
     flags: 'imu',
     message: 'Case Resolver address postal code captured.',
     sequence: 48,
@@ -623,7 +663,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     description:
       'Extracts city from postal-code and city lines.',
     pattern:
-      '^\\s*(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
+      '^\\s*(?:PL-)?(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
     flags: 'imu',
     message: 'Case Resolver address city captured.',
     sequence: 49,
@@ -640,6 +680,28 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
   }),
   createRegexRule({
+    id: 'segment.case_resolver.extract.address.country',
+    title: 'Case Resolver Extract: Address Country',
+    description:
+      'Extracts country from standalone country lines (Polish and English names).',
+    pattern:
+      '^\\s*(polska|poland|niemcy|germany|deutschland|francja|france|hiszpania|spain|włochy|wlochy|italy|uk|united\\s+kingdom|wielka\\s+brytania|usa|u\\.s\\.a\\.|stany\\s+zjednoczone)\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver address country captured.',
+    sequence: 51,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 24,
+    promptExploderConfidenceBoost: 0.08,
+    promptExploderCaptureTarget: 'case_resolver.party.country',
+    promptExploderCaptureGroup: 1,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'country',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
     id: 'segment.case_resolver.extract.addressee.organization_name',
     title: 'Case Resolver Extract: Addressee Organization Name',
     description:
@@ -648,7 +710,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
       '^\\s*((?=.*\\b(zus|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120})\\s*$',
     flags: 'imu',
     message: 'Case Resolver addressee organization captured.',
-    sequence: 50,
+    sequence: 52,
     sequenceGroupId: 'case_resolver_structure',
     sequenceGroupLabel: 'Case Resolver Structure',
     promptExploderPriority: 34,

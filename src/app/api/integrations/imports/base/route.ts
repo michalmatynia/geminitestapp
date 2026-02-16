@@ -77,6 +77,8 @@ type MappedItem = {
   image: string | null;
 };
 
+const BASE_DETAILS_BATCH_SIZE = 100;
+
 async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof requestSchema>;
   let token = data.token;
@@ -176,9 +178,10 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   if (!data.inventoryId) {
     throw badRequestError('Inventory ID is required.');
   }
+  const inventoryId = data.inventoryId;
 
   if (data.action === 'list') {
-    const allBaseIds = await fetchBaseProductIds(token, data.inventoryId);
+    const allBaseIds = await fetchBaseProductIds(token, inventoryId);
 
     // Get existing products using repository to check for baseProductIds and SKUs
     const productRepository = await getProductRepository();
@@ -207,27 +210,10 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
 
     const pageSize = data.pageSize ?? data.limit ?? 50;
     const page = data.page ?? 1;
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const pagedItems = filteredItems.slice(startIndex, endIndex);
-
-    if (pagedItems.length === 0) {
-      return NextResponse.json({
-        products: [],
-        total: listItems.length,
-        filtered: filteredItems.length,
-        existing: listItems.filter((i: { id: string; exists: boolean }) => i.exists).length,
-        page,
-        pageSize,
-        totalPages: Math.max(1, Math.ceil(filteredItems.length / pageSize))
-      });
-    }
-
-    const products = await fetchBaseProductDetails(
-      token,
-      data.inventoryId,
-      pagedItems.map((i: { id: string; exists: boolean }) => i.id)
-    );
+    const normalizedName = (data.searchName ?? '').trim().toLowerCase();
+    const normalizedSku = (data.searchSku ?? '').trim().toLowerCase();
+    const hasSearchFilter = normalizedName.length > 0 || normalizedSku.length > 0;
+    const filteredItemsTotalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
 
     const toStringId = (value: unknown): string | null => {
       if (typeof value === 'string' && value.trim()) return value.trim();
@@ -237,66 +223,126 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       return null;
     };
 
-    const mappedList: MappedItem[] = products
-      .map((record: BaseProductRecord) => {
-        const mapped: ProductCreateInput = mapBaseProduct(record);
-        const images = extractBaseImageUrls(record);
-        const baseProductId =
+    const mapRecordsToItems = (records: BaseProductRecord[]): MappedItem[] =>
+      records
+        .map((record: BaseProductRecord) => {
+          const mapped: ProductCreateInput = mapBaseProduct(record);
+          const images = extractBaseImageUrls(record);
+          const baseProductId =
           mapped.baseProductId ??
           toStringId(record['base_product_id']) ??
           toStringId(record['product_id']) ??
           toStringId(record['id']);
 
-        // Prioritize EN, then PL, then DE, then raw name
-        const name =
+          // Prioritize EN, then PL, then DE, then raw name
+          const name =
           mapped.name_en ??
           mapped.name_pl ??
           mapped.name_de ??
           (typeof record['name'] === 'string' ? record['name'] : 'Unnamed');
 
-        const description =
+          const description =
           mapped.description_en ??
           mapped.description_pl ??
           mapped.description_de ??
           '';
 
-        const sku = mapped.sku ?? null;
-        const skuExists = sku ? existingSkus.has(sku) : false;
+          const sku = mapped.sku ?? null;
+          const skuExists = sku ? existingSkus.has(sku) : false;
 
-        return {
-          baseProductId: baseProductId ?? null,
-          name,
-          sku,
-          exists: baseProductId ? existingIds.has(baseProductId) : false,
-          skuExists, // New field to indicate SKU already exists
-          description: description.slice(0, 100),
-          price: mapped.price ?? 0,
-          stock: mapped.stock ?? 0,
-          image: images[0] ?? null
-        };
-      })
-      .filter((item) => Boolean(item.baseProductId && item.sku));
+          return {
+            baseProductId: baseProductId ?? null,
+            name,
+            sku,
+            exists: baseProductId ? existingIds.has(baseProductId) : false,
+            skuExists,
+            description: description.slice(0, 100),
+            price: mapped.price ?? 0,
+            stock: mapped.stock ?? 0,
+            image: images[0] ?? null
+          };
+        })
+        .filter((item) => Boolean(item.baseProductId && item.sku));
 
-    const normalizedName = (data.searchName ?? '').trim().toLowerCase();
-    const normalizedSku = (data.searchSku ?? '').trim().toLowerCase();
-    const searchedList = mappedList.filter((item: MappedItem) => {
+    const fetchMappedItemsByIds = async (ids: string[]): Promise<MappedItem[]> => {
+      if (ids.length === 0) return [];
+      const records: BaseProductRecord[] = [];
+      for (let index = 0; index < ids.length; index += BASE_DETAILS_BATCH_SIZE) {
+        const batch = ids.slice(index, index + BASE_DETAILS_BATCH_SIZE);
+        if (batch.length === 0) continue;
+        const batchProducts = await fetchBaseProductDetails(
+          token,
+          inventoryId,
+          batch
+        );
+        records.push(...batchProducts);
+      }
+      return mapRecordsToItems(records);
+    };
+
+    const matchesSearch = (item: MappedItem): boolean => {
       const nameOk = normalizedName.length === 0 ? true : item.name.toLowerCase().includes(normalizedName);
       const skuOk = normalizedSku.length === 0 ? true : (item.sku ?? '').toLowerCase().includes(normalizedSku);
       return nameOk && skuOk;
-    });
+    };
 
-    const skuDuplicateCount = searchedList.filter((item) => item.skuExists).length;
+    if (!hasSearchFilter) {
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const pagedItems = filteredItems.slice(startIndex, endIndex);
+
+      if (pagedItems.length === 0) {
+        return NextResponse.json({
+          products: [],
+          total: listItems.length,
+          filtered: filteredItems.length,
+          available: filteredItems.length,
+          existing: listItems.filter((i: { id: string; exists: boolean }) => i.exists).length,
+          skuDuplicates: 0,
+          page,
+          pageSize,
+          totalPages: filteredItemsTotalPages
+        });
+      }
+
+      const mappedList = await fetchMappedItemsByIds(
+        pagedItems.map((item: { id: string; exists: boolean }) => item.id)
+      );
+      const skuDuplicateCount = mappedList.filter((item) => item.skuExists).length;
+
+      return NextResponse.json({
+        products: mappedList,
+        total: listItems.length,
+        filtered: filteredItems.length,
+        available: filteredItems.length,
+        existing: listItems.filter((item: { id: string; exists: boolean }) => item.exists).length,
+        skuDuplicates: skuDuplicateCount,
+        page,
+        pageSize,
+        totalPages: filteredItemsTotalPages
+      });
+    }
+
+    const searchableIds = filteredItems.map((item: { id: string; exists: boolean }) => item.id);
+    const mappedSearchScope = await fetchMappedItemsByIds(searchableIds);
+    const searchedList = mappedSearchScope.filter(matchesSearch);
+    const searchedTotalPages = Math.max(1, Math.ceil(searchedList.length / pageSize));
+    const normalizedPage = Math.min(Math.max(page, 1), searchedTotalPages);
+    const startIndex = (normalizedPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pagedSearchedList = searchedList.slice(startIndex, endIndex);
+    const skuDuplicateCount = pagedSearchedList.filter((item) => item.skuExists).length;
 
     return NextResponse.json({
-      products: searchedList,
+      products: pagedSearchedList,
       total: listItems.length,
-      filtered: searchedList.length, // Actual number of items being shown (after limit applied)
-      available: filteredItems.length, // Total available after uniqueOnly filter
+      filtered: searchedList.length,
+      available: filteredItems.length,
       existing: listItems.filter((item: { id: string; exists: boolean }) => item.exists).length,
-      skuDuplicates: skuDuplicateCount, // New stat
-      page,
+      skuDuplicates: skuDuplicateCount,
+      page: normalizedPage,
       pageSize,
-      totalPages: Math.max(1, Math.ceil(filteredItems.length / pageSize))
+      totalPages: searchedTotalPages
     });
   }
 
@@ -310,8 +356,8 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   const [products, catalogRepository, productRepository, imageRepository] =
     await Promise.all([
       idsToFetch.length > 0
-        ? fetchBaseProductDetails(token, data.inventoryId, idsToFetch)
-        : fetchBaseProducts(token, data.inventoryId, data.limit),
+        ? fetchBaseProductDetails(token, inventoryId, idsToFetch)
+        : fetchBaseProducts(token, inventoryId, data.limit),
       getCatalogRepository(),
       getProductRepository(),
       getImageFileRepository()

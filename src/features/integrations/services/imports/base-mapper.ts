@@ -13,17 +13,29 @@ const toTrimmedString = (value: unknown): string | null => {
   return null;
 };
 
-const toInt = (value: unknown): number | null => {
+const normalizeCurrencyCode = (value: unknown): string | null => {
+  const normalized = toTrimmedString(value)?.toUpperCase();
+  if (!normalized) return null;
+  const compact = normalized.replace(/[^A-Z]/g, '');
+  return compact || null;
+};
+
+const parsePrice = (value: unknown): number | null => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return Math.round(value);
   }
   if (typeof value === 'string') {
-    const parsed = Number(value.replace(',', '.'));
+    const cleaned = value.replace(/\s/g, '').replace(',', '.');
+    const parsed = Number(cleaned);
     if (Number.isFinite(parsed)) {
       return Math.round(parsed);
     }
   }
   return null;
+};
+
+const toInt = (value: unknown): number | null => {
+  return parsePrice(value);
 };
 
 const pickString = (record: BaseProductRecord, keys: string[]): string | null => {
@@ -86,6 +98,98 @@ const pickFirstIntFromObject = (record: BaseProductRecord, key: string): number 
     }
   }
   return null;
+};
+
+const normalizePreferredCurrencies = (preferred?: string[]): string[] =>
+  Array.from(
+    new Set(
+      (preferred ?? [])
+        .map((value: string): string | null => normalizeCurrencyCode(value))
+        .filter((value: string | null): value is string => Boolean(value))
+    )
+  );
+
+const readPriceFromPriceEntry = (value: unknown): number | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number' || typeof value === 'string') {
+    return parsePrice(value);
+  }
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, unknown>;
+  const directCandidates = [
+    record['price'],
+    record['price_brutto'],
+    record['price_gross'],
+    record['gross'],
+    record['brutto'],
+    record['value'],
+    record['amount'],
+  ];
+  for (const candidate of directCandidates) {
+    const parsed = parsePrice(candidate);
+    if (parsed !== null) return parsed;
+  }
+  return null;
+};
+
+const pickPriceByPreferredCurrency = (
+  record: BaseProductRecord,
+  preferredCurrencies: string[]
+): number | null => {
+  const preferredSet = new Set(normalizePreferredCurrencies(preferredCurrencies));
+  const rawPrices = record['prices'];
+  if (!rawPrices) return null;
+
+  const tryValue = (entry: unknown, keyHint?: string): { value: number | null; currency: string | null } => {
+    const parsed = readPriceFromPriceEntry(entry);
+    if (parsed === null) return { value: null, currency: null };
+    let detectedCurrency: string | null = null;
+    if (keyHint) {
+      detectedCurrency = normalizeCurrencyCode(keyHint);
+    }
+    if (!detectedCurrency && entry && typeof entry === 'object') {
+      const entryRecord = entry as Record<string, unknown>;
+      detectedCurrency =
+        normalizeCurrencyCode(entryRecord['currency']) ??
+        normalizeCurrencyCode(entryRecord['currency_code']) ??
+        normalizeCurrencyCode(entryRecord['code']) ??
+        normalizeCurrencyCode(entryRecord['symbol']);
+    }
+    return { value: parsed, currency: detectedCurrency };
+  };
+
+  const buffered: Array<{ value: number; currency: string | null }> = [];
+  if (Array.isArray(rawPrices)) {
+    rawPrices.forEach((entry: unknown) => {
+      const resolved = tryValue(entry);
+      if (resolved.value !== null) {
+        buffered.push({ value: resolved.value, currency: resolved.currency });
+      }
+    });
+  } else if (rawPrices && typeof rawPrices === 'object') {
+    Object.entries(rawPrices as Record<string, unknown>).forEach(
+      ([key, value]: [string, unknown]) => {
+        const resolved = tryValue(value, key);
+        if (resolved.value !== null) {
+          buffered.push({ value: resolved.value, currency: resolved.currency });
+        }
+      }
+    );
+  } else {
+    const resolved = tryValue(rawPrices);
+    if (resolved.value !== null) {
+      buffered.push({ value: resolved.value, currency: resolved.currency });
+    }
+  }
+
+  if (buffered.length === 0) return null;
+  if (preferredSet.size > 0) {
+    const preferredMatch = buffered.find(
+      (entry) => entry.currency && preferredSet.has(entry.currency)
+    );
+    if (preferredMatch) return preferredMatch.value;
+  }
+  return buffered[0]?.value ?? null;
 };
 
 const isUrl = (value: string): boolean => /^https?:\/\//i.test(value);
@@ -517,7 +621,10 @@ const applyTemplateMappings = (
 
 export function mapBaseProduct(
   record: BaseProductRecord,
-  mappings: TemplateMapping[] = []
+  mappings: TemplateMapping[] = [],
+  options?: {
+    preferredPriceCurrencies?: string[];
+  }
 ): ProductCreateInput {
   // Extend this mapper as new Base.com fields are needed.
   const baseProductId = pickString(record, [
@@ -527,38 +634,70 @@ export function mapBaseProduct(
   ]);
 
   const nameEn =
-    pickString(record, ['name_en', 'name', 'title']) ??
+    pickString(record, ['name_en', 'title_en', 'name|en']) ??
     pickNestedString(record, [
-      ['text_fields', 'name'],
       ['text_fields', 'name_en'],
       ['text_fields', 'name|en'],
-      ['text_fields', 'title'],
+      ['text_fields', 'title_en'],
+      ['text_fields', 'title|en'],
     ]);
 
-  const namePl = pickString(record, ['name_pl']);
+  const namePl =
+    pickString(record, ['name_pl', 'title_pl', 'name', 'title']) ??
+    pickNestedString(record, [
+      ['text_fields', 'name_pl'],
+      ['text_fields', 'name|pl'],
+      ['text_fields', 'name'],
+      ['text_fields', 'title_pl'],
+      ['text_fields', 'title|pl'],
+      ['text_fields', 'title'],
+    ]);
   const nameDe = pickString(record, ['name_de']);
 
   const descriptionEn =
     pickString(record, [
       'description_en',
-      'description',
-      'description_long',
+      'description_en_long',
+      'description|en',
     ]) ??
     pickNestedString(record, [
-      ['text_fields', 'description'],
       ['text_fields', 'description_en'],
       ['text_fields', 'description|en'],
-      ['text_fields', 'description_long'],
+      ['text_fields', 'description_en_long'],
     ]);
 
-  const descriptionPl = pickString(record, ['description_pl']);
+  const descriptionPl =
+    pickString(record, ['description_pl', 'description', 'description_long']) ??
+    pickNestedString(record, [
+      ['text_fields', 'description_pl'],
+      ['text_fields', 'description|pl'],
+      ['text_fields', 'description'],
+      ['text_fields', 'description_long'],
+    ]);
   const descriptionDe = pickString(record, ['description_de']);
 
   const sku = pickString(record, ['sku', 'code', 'product_code', 'item_code']);
 
+  const preferredCurrencies = normalizePreferredCurrencies(options?.preferredPriceCurrencies);
   const price =
-    pickInt(record, ['price', 'price_gross', 'price_brutto']) ??
+    pickPriceByPreferredCurrency(record, preferredCurrencies) ??
+    pickInt(record, [
+      ...(preferredCurrencies.includes('PLN') ? ['price_pln', 'price_gross_pln', 'price_brutto_pln'] : []),
+      'price',
+      'price_gross',
+      'price_brutto',
+    ]) ??
     pickNestedInt(record, [
+      ...(preferredCurrencies.includes('PLN')
+        ? [
+          ['prices', 'pln'],
+          ['prices', 'PLN'],
+          ['prices', 'pln', 'price'],
+          ['prices', 'PLN', 'price'],
+          ['prices', 'pln', 'price_brutto'],
+          ['prices', 'PLN', 'price_brutto'],
+        ]
+        : []),
       ['prices', '0', 'price'],
       ['prices', '0', 'price_brutto'],
     ]) ??

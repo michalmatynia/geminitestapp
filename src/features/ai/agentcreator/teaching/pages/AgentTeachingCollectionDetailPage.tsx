@@ -14,7 +14,8 @@ import {
   FormSection, 
   FormField,
   Badge,
-  ConfirmDialog
+  ConfirmDialog,
+  Alert
 } from '@/shared/ui';
 
 import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
@@ -204,9 +205,9 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
             </div>
 
             {searchError && (
-              <div className='p-3 rounded bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300'>
+              <Alert variant='error' className='p-3 text-xs'>
                 {searchError}
-              </div>
+              </Alert>
             )}
 
             <div className='rounded-md border border-border bg-black/20 p-0 overflow-hidden'>

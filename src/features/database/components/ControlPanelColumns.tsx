@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, StatusBadge } from '@/shared/ui';
+import { Button, StatusBadge, DataTableSortableHeader } from '@/shared/ui';
 
 import type { ColumnDef, Column } from '@tanstack/react-table';
 
@@ -13,27 +13,6 @@ export type UnifiedCollectionRow = {
   existsInMongo: boolean;
   existsInPrisma: boolean;
   assignedProvider: 'mongodb' | 'prisma' | 'auto';
-};
-
-const renderSortableHeader = <TData, TValue>(
-  label: string,
-  column: Column<TData, TValue>
-): React.JSX.Element => {
-  const direction = column.getIsSorted();
-  const handler = column.getToggleSortingHandler();
-  return (
-    <Button
-      type='button'
-      onClick={handler ?? undefined}
-      disabled={!handler}
-      className='inline-flex items-center gap-1 text-left text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60'
-    >
-      {label}
-      <span className='text-xs text-muted-foreground'>
-        {direction === 'asc' ? '▲' : direction === 'desc' ? '▼' : '↕'}
-      </span>
-    </Button>
-  );
 };
 
 const ProviderBadge = ({
@@ -66,8 +45,9 @@ export function getControlPanelColumns(options: {
   return [
     {
       accessorKey: 'name',
-      header: ({ column }: { column: Column<UnifiedCollectionRow, unknown> }): React.JSX.Element =>
-        renderSortableHeader('Collection', column),
+      header: ({ column }) => (
+        <DataTableSortableHeader label='Collection' column={column} />
+      ),
       cell: ({ row }: { row: { original: UnifiedCollectionRow } }): React.JSX.Element => (
         <span className='font-mono text-sm text-gray-100'>{row.original.name}</span>
       ),

@@ -1,34 +1,10 @@
 'use client';
 
-import { Button } from '@/shared/ui';
+import { Button, DataTableSortableHeader } from '@/shared/ui';
 
 import type { DatabaseInfo } from '../types';
-import type { ColumnDef, Column, Row } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 
-
-// ✅ Use TanStack's Column type, and accept that the handler may be undefined.
-const renderSortableHeader = <TData, TValue>(
-  label: string,
-  column: Column<TData, TValue>
-): React.JSX.Element => {
-  const direction = column.getIsSorted(); // false | "asc" | "desc"
-  const handler = column.getToggleSortingHandler(); // ((event) => void) | undefined
-
-  return (
-    <Button
-      type='button'
-      onClick={handler ?? undefined}
-      // optional: prevent "clickable" affordance if it can't sort
-      disabled={!handler}
-      className='inline-flex items-center gap-1 text-left text-sm font-medium text-foreground disabled:cursor-not-allowed disabled:opacity-60'
-    >
-      {label}
-      <span className='text-xs text-muted-foreground'>
-        {direction === 'asc' ? '▲' : direction === 'desc' ? '▼' : '↕'}
-      </span>
-    </Button>
-  );
-};
 
 export const getDatabaseColumns = (options?: {
   onPreview?: (backupName: string) => void;
@@ -41,11 +17,15 @@ export const getDatabaseColumns = (options?: {
 }): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: 'name',
-    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader('Name', column),
+    header: ({ column }) => (
+      <DataTableSortableHeader label='Name' column={column} />
+    ),
   },
   {
     accessorKey: 'size',
-    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader('Size', column),
+    header: ({ column }) => (
+      <DataTableSortableHeader label='Size' column={column} />
+    ),
     sortingFn: (rowA: Row<DatabaseInfo>, rowB: Row<DatabaseInfo>, columnId: string): number => {
       const toNumber = (value: string): number =>
         Number.parseFloat(value.replace(/[^0-9.]/g, '')) || 0;
@@ -57,13 +37,17 @@ export const getDatabaseColumns = (options?: {
   {
     id: 'createdAt',
     accessorFn: (row: DatabaseInfo): number => new Date(row.createdAt).getTime(),
-    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader('Created', column),
+    header: ({ column }) => (
+      <DataTableSortableHeader label='Created' column={column} />
+    ),
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.created,
   },
   {
     id: 'lastModifiedAt',
     accessorFn: (row: DatabaseInfo): number => new Date(row.lastModifiedAt).getTime(),
-    header: ({ column }: { column: Column<DatabaseInfo, unknown> }): React.JSX.Element => renderSortableHeader('Last Modified', column),
+    header: ({ column }) => (
+      <DataTableSortableHeader label='Last Modified' column={column} />
+    ),
     cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.lastModified,
   },
   {

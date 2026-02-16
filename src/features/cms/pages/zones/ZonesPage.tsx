@@ -120,11 +120,11 @@ export default function ZonesPage(): React.JSX.Element {
       id: 'type',
       header: 'Routing Policy',
       cell: ({ row }) => {
-        if (!row.original.aliasOf) return <Badge variant='outline' className='text-[9px] uppercase font-bold bg-blue-500/10 text-blue-400 border-blue-500/20'>Independent Zone</Badge>;
+        if (!row.original.aliasOf) return <StatusBadge status='Independent Zone' variant='info' size='sm' className='font-bold' />;
         const target = domains.find(d => d.id === row.original.aliasOf);
         return (
           <div className='flex flex-col gap-1'>
-            <Badge variant='outline' className='text-[9px] uppercase font-bold bg-amber-500/10 text-amber-400 border-amber-500/20 w-fit'>Shared Context</Badge>
+            <StatusBadge status='Shared Context' variant='warning' size='sm' className='font-bold' />
             <span className='text-[10px] text-gray-500'>Inherits slugs from {target?.domain ?? 'another zone'}</span>
           </div>
         );

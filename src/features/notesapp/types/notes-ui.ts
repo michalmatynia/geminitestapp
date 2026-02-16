@@ -1,9 +1,7 @@
 import type { NoteWithRelations } from '@/shared/types/domain/notes';
+import type { ModalStateProps } from '@/shared/types/modal-props';
 
-export interface CreateNoteModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+export interface CreateNoteModalProps extends ModalStateProps {}
 
 export interface NoteFormProps {
   note?: NoteWithRelations | null;

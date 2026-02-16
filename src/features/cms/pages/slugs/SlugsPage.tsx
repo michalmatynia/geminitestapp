@@ -26,7 +26,7 @@ import {
   PageLayout,
   SelectSimple,
   DataTable,
-  Badge,
+  StatusBadge,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -119,9 +119,9 @@ export default function SlugsPage(): React.JSX.Element {
             /{row.original.slug}
           </Link>
           <div className='flex items-center gap-2'>
-            {row.original.isDefault && <Badge variant='outline' className='text-[9px] uppercase font-bold bg-blue-500/10 text-blue-400 border-blue-500/20 px-1 py-0 h-4'>Default</Badge>}
+            {row.original.isDefault && <StatusBadge status='Default' variant='info' size='sm' className='font-bold' />}
             {(canonicalDomain || sharedWithDomains.length > 0) && (
-              <Badge variant='outline' className='text-[9px] uppercase font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-1 py-0 h-4'>Shared</Badge>
+              <StatusBadge status='Shared' variant='active' size='sm' className='font-bold' />
             )}
           </div>
         </div>

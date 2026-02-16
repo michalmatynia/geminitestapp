@@ -15,12 +15,14 @@ import {
   OnChangeFn,
   RowData,
   Row,
+  Column,
 } from '@tanstack/react-table';
 import { Loader2 } from 'lucide-react';
 import React, { JSX, memo, useEffect, useMemo, useState } from 'react';
 
 import { cn } from '@/shared/utils';
 
+import { Button } from './button';
 import { EmptyState } from './empty-state';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 
@@ -44,6 +46,35 @@ interface DataTableProps<TData> {
   getRowClassName?: ((row: Row<TData>) => string | undefined) | undefined;
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
+}
+
+export function DataTableSortableHeader<TData, TValue>({
+  label,
+  column,
+  className,
+}: {
+  label: string;
+  column: Column<TData, TValue>;
+  className?: string;
+}) {
+  const direction = column.getIsSorted();
+  const handler = column.getToggleSortingHandler();
+
+  return (
+    <Button
+      type='button'
+      variant='ghost'
+      size='sm'
+      onClick={handler ?? undefined}
+      disabled={!handler}
+      className={cn('-ml-3 h-8 gap-1 px-3 text-left text-sm font-medium text-foreground hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-60', className)}
+    >
+      {label}
+      <span className='text-xs text-muted-foreground'>
+        {direction === 'asc' ? '▲' : direction === 'desc' ? '▼' : '↕'}
+      </span>
+    </Button>
+  );
 }
 
 declare module '@tanstack/react-table' {

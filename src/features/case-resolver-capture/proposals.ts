@@ -157,3 +157,112 @@ export const buildCaseResolverCaptureProposalState = (
     addressee: proposals.addressee,
   };
 };
+
+const normalizeCaptureTextLine = (value: string): string =>
+  value
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/[,:;.\s]+$/g, '')
+    .trim()
+    .toLowerCase();
+
+const collectCandidateAddressLines = (
+  candidate: PromptExploderCaseResolverPartyCandidate
+): string[] => {
+  const lines = new Set<string>();
+  const pushLine = (value: string | undefined): void => {
+    if (!value) return;
+    const normalized = value.trim();
+    if (!normalized) return;
+    lines.add(normalized);
+  };
+
+  const street = candidate.street?.trim() ?? '';
+  const streetNumber = candidate.streetNumber?.trim() ?? '';
+  const houseNumber = candidate.houseNumber?.trim() ?? '';
+  const postalCode = candidate.postalCode?.trim() ?? '';
+  const city = candidate.city?.trim() ?? '';
+  const country = candidate.country?.trim() ?? '';
+
+  if (street && streetNumber && houseNumber) {
+    pushLine(`${street} ${streetNumber}/${houseNumber}`);
+  }
+  if (street && streetNumber) {
+    pushLine(`${street} ${streetNumber}`);
+  }
+  if (street && houseNumber && !streetNumber) {
+    pushLine(`${street} ${houseNumber}`);
+  }
+  if (postalCode && city) {
+    pushLine(`${postalCode} ${city}`);
+  }
+  pushLine(country);
+
+  const normalizedStreet = normalizeCaptureTextLine(street);
+  const normalizedPostalCode = normalizeCaptureTextLine(postalCode);
+  const normalizedCountry = normalizeCaptureTextLine(country);
+
+  candidate.rawText
+    .split(/\r?\n/)
+    .map((line: string): string => line.trim())
+    .filter(Boolean)
+    .forEach((line: string): void => {
+      const normalizedLine = normalizeCaptureTextLine(line);
+      if (!normalizedLine) return;
+      if (normalizedStreet && normalizedLine.includes(normalizedStreet)) {
+        pushLine(line);
+        return;
+      }
+      if (normalizedPostalCode && normalizedLine.includes(normalizedPostalCode)) {
+        pushLine(line);
+        return;
+      }
+      if (normalizedCountry && normalizedLine === normalizedCountry) {
+        pushLine(line);
+      }
+    });
+
+  return [...lines];
+};
+
+export const stripCapturedAddressLinesFromText = (
+  sourceText: string,
+  proposalState: CaseResolverCaptureProposalState | null
+): string => {
+  if (!sourceText || !proposalState) return sourceText;
+
+  const removalKeys = new Set<string>();
+  [proposalState.addresser, proposalState.addressee].forEach((proposal) => {
+    if (!proposal || proposal.action === 'ignore') return;
+    collectCandidateAddressLines(proposal.candidate).forEach((line: string): void => {
+      const key = normalizeCaptureTextLine(line);
+      if (!key) return;
+      removalKeys.add(key);
+    });
+  });
+
+  if (removalKeys.size === 0) return sourceText;
+
+  const sourceLines = sourceText.split(/\r?\n/);
+  let changed = false;
+  const filtered = sourceLines.filter((line: string): boolean => {
+    const key = normalizeCaptureTextLine(line);
+    const shouldRemove = Boolean(key) && removalKeys.has(key);
+    if (shouldRemove) changed = true;
+    return !shouldRemove;
+  });
+
+  if (!changed) return sourceText;
+
+  const compact: string[] = [];
+  let previousBlank = false;
+  filtered.forEach((line: string): void => {
+    const isBlank = line.trim().length === 0;
+    if (isBlank && previousBlank) return;
+    compact.push(line);
+    previousBlank = isBlank;
+  });
+
+  const newline = sourceText.includes('\r\n') ? '\r\n' : '\n';
+  return compact.join(newline);
+};

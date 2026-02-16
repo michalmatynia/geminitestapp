@@ -22,7 +22,7 @@ export type ImageStudioSlotRecord = {
 export interface SlotGenerationMetadata {
   role?: 'generation' | 'merge' | 'base' | 'import' | 'composite' | undefined;
   sourceSlotId?: string | undefined;
-  relationType?: 'generation:output' | 'merge:output' | 'composite:output' | 'composite:flatten' | undefined;
+  relationType?: string | undefined;
   generationFileId?: string | undefined;
   generationRunId?: string | undefined;
   generationOutputIndex?: number | undefined;

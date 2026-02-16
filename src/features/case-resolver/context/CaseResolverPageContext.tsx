@@ -7,6 +7,7 @@ import type {
   CaseResolverCategory,
   CaseResolverFile,
   CaseResolverGraph,
+  CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '../types';
@@ -45,6 +46,7 @@ export type CaseResolverPageContextValue = {
   onToggleFileLock: (fileId: string) => void;
   onEditFile: (fileId: string) => void;
   caseResolverTags: CaseResolverTag[];
+  caseResolverIdentifiers: CaseResolverIdentifier[];
   caseResolverCategories: CaseResolverCategory[];
   onCreateDocumentFromSearch: () => void;
   onOpenFileFromSearch: (fileId: string) => void;

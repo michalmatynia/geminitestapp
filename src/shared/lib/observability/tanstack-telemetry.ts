@@ -17,9 +17,23 @@ const DEDUPE_WINDOW_MS = 1_000;
 const DEDUPE_BUCKET_LIMIT = 500;
 const DEFAULT_SAMPLING_RATE = 0.2;
 const MAX_CONTEXT_SIZE = 6_000;
+const MAX_META_SOURCE_LENGTH = 240;
+const MAX_META_RESOURCE_LENGTH = 240;
+const MAX_META_TAGS = 16;
+const MAX_META_TAG_LENGTH = 120;
 const MAX_EVENT_QUEUE = 20;
 const FLUSH_DELAY_MS = 250;
 const META_KEY = 'tanstackFactoryV2Meta';
+const ENABLE_QUERY_TELEMETRY_IN_DEV =
+  process.env['NEXT_PUBLIC_ENABLE_QUERY_TELEMETRY_IN_DEV'] === 'true';
+const ENABLE_QUERY_TELEMETRY =
+  process.env['NEXT_PUBLIC_ENABLE_QUERY_TELEMETRY'] === 'true' ||
+  (process.env['NEXT_PUBLIC_ENABLE_QUERY_TELEMETRY'] !== 'false' &&
+    (
+      process.env.NODE_ENV === 'production' ||
+      process.env.NODE_ENV === 'test' ||
+      ENABLE_QUERY_TELEMETRY_IN_DEV
+    ));
 
 type EmitTanstackTelemetryInput = {
   entity: TanstackEntityKind;
@@ -39,6 +53,7 @@ type SerializableRecord = Record<string, unknown>;
 const dedupeBucket = new Map<string, number>();
 const queuedEvents: TanstackTelemetryEvent[] = [];
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let sanitizedContextCache = new WeakMap<Record<string, unknown>, Record<string, unknown> | undefined>();
 
 const isSerializableRecord = (value: unknown): value is SerializableRecord =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -65,6 +80,34 @@ const hashKey = (input: string): string => {
 const clampSamplingRate = (value: number | undefined): number => {
   if (typeof value !== 'number' || Number.isNaN(value)) return DEFAULT_SAMPLING_RATE;
   return Math.max(0, Math.min(1, value));
+};
+
+const clampMetaText = (value: unknown, fallback: string, maxLength: number): string => {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+  return trimmed.length > maxLength ? trimmed.slice(0, maxLength) : trimmed;
+};
+
+const sanitizeTag = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return trimmed.length > MAX_META_TAG_LENGTH
+    ? trimmed.slice(0, MAX_META_TAG_LENGTH)
+    : trimmed;
+};
+
+const sanitizeTags = (tags: unknown): string[] => {
+  if (!Array.isArray(tags)) return [];
+  const next: string[] = [];
+  for (const tag of tags) {
+    const normalized = sanitizeTag(tag);
+    if (!normalized) continue;
+    next.push(normalized);
+    if (next.length >= MAX_META_TAGS) break;
+  }
+  return next;
 };
 
 const toStableKey = (queryKey: QueryKey | undefined): string => {
@@ -99,6 +142,11 @@ const extractStatusCode = (error: unknown): number | undefined => {
 
 const sanitizeContext = (context: Record<string, unknown> | undefined): Record<string, unknown> | undefined => {
   if (!context) return undefined;
+  if (sanitizedContextCache.has(context)) {
+    return sanitizedContextCache.get(context);
+  }
+
+  let sanitized: Record<string, unknown> | undefined;
   try {
     const seen = new WeakSet<object>();
     const serialized = JSON.stringify(context, (_key, value: unknown): unknown => {
@@ -111,18 +159,23 @@ const sanitizeContext = (context: Record<string, unknown> | undefined): Record<s
       if (typeof value === 'function') return '[Function]';
       return value;
     });
-    if (!serialized) return undefined;
-    if (serialized.length > MAX_CONTEXT_SIZE) {
-      return {
+    if (!serialized) {
+      sanitized = undefined;
+    } else if (serialized.length > MAX_CONTEXT_SIZE) {
+      sanitized = {
         truncated: true,
         preview: serialized.slice(0, MAX_CONTEXT_SIZE),
       };
+    } else {
+      const parsed = JSON.parse(serialized) as unknown;
+      sanitized = toRecord(parsed) ?? { value: parsed };
     }
-    const parsed = JSON.parse(serialized) as unknown;
-    return toRecord(parsed) ?? { value: parsed };
   } catch {
-    return { error: 'Failed to serialize telemetry context.' };
+    sanitized = { error: 'Failed to serialize telemetry context.' };
   }
+
+  sanitizedContextCache.set(context, sanitized);
+  return sanitized;
 };
 
 const requiredMetaFields: Array<keyof Pick<TanstackFactoryMeta, 'source' | 'operation' | 'resource'>> = [
@@ -151,14 +204,14 @@ export const resolveTanstackFactoryMeta = (
   assertFactoryMeta(meta);
   const key = meta.queryKey ?? meta.mutationKey ?? options?.key;
   return {
-    source: meta.source?.trim() || 'tanstack.unknown',
+    source: clampMetaText(meta.source, 'tanstack.unknown', MAX_META_SOURCE_LENGTH),
     operation: meta.operation,
-    resource: meta.resource?.trim() || 'unknown-resource',
+    resource: clampMetaText(meta.resource, 'unknown-resource', MAX_META_RESOURCE_LENGTH),
     key,
     criticality: meta.criticality ?? 'normal',
     samplingRate: clampSamplingRate(meta.samplingRate),
     domain: meta.domain ?? 'global',
-    tags: Array.isArray(meta.tags) ? meta.tags.filter((tag) => typeof tag === 'string' && tag.trim().length > 0) : [],
+    tags: sanitizeTags(meta.tags),
   };
 };
 
@@ -297,6 +350,7 @@ const scheduleFlush = (): void => {
 
 export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolean => {
   if (typeof window === 'undefined') return false;
+  if (!ENABLE_QUERY_TELEMETRY) return false;
 
   const resolvedMeta = resolveTanstackFactoryMeta(input.meta, { key: input.key });
   const sampled = shouldSampleEvent(
@@ -311,7 +365,7 @@ export const emitTanstackTelemetry = (input: EmitTanstackTelemetryInput): boolea
   const statusCode = input.statusCode ?? extractStatusCode(input.error);
   const category = input.error ? classifyError(input.error) : undefined;
   const context = sanitizeContext(input.context);
-  const tags = [...resolvedMeta.tags, ...(input.tags ?? [])].filter((tag) => tag.trim().length > 0);
+  const tags = sanitizeTags([...resolvedMeta.tags, ...(input.tags ?? [])]);
 
   const event: TanstackTelemetryEvent = {
     id: createEventId(),
@@ -366,6 +420,7 @@ export const tanstackTelemetryTestUtils = {
   reset: (): void => {
     dedupeBucket.clear();
     queuedEvents.splice(0, queuedEvents.length);
+    sanitizedContextCache = new WeakMap<Record<string, unknown>, Record<string, unknown> | undefined>();
     if (flushTimer) {
       clearTimeout(flushTimer);
       flushTimer = null;

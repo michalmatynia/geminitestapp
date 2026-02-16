@@ -87,17 +87,13 @@ const getSlotRelationType = (slot: ImageStudioSlotRecord): string | null => {
 };
 
 const isGenerationDerivedSlot = (slot: ImageStudioSlotRecord): boolean => {
-  const role = getSlotRole(slot);
-  if (role === 'generation') return true;
-
   const relationType = getSlotRelationType(slot);
-  if (!relationType) return false;
-  return (
-    relationType.startsWith('generation:') ||
-    relationType.startsWith('center:') ||
-    relationType.startsWith('crop:') ||
-    relationType.startsWith('upscale:')
-  );
+  if (relationType?.startsWith('generation:')) return true;
+
+  const role = getSlotRole(slot);
+  if (role !== 'generation') return false;
+  // Keep legacy generation-only cards hidden while allowing explicit crop/upscale/center variants.
+  return !relationType || relationType.startsWith('generation:');
 };
 
 const getRoleLabel = (slot: ImageStudioSlotRecord, derivedFromCard: boolean): string | null => {

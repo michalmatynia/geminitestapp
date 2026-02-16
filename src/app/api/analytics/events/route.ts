@@ -11,6 +11,10 @@ import { apiHandler, getPaginationParams, getQueryParams } from '@/shared/lib/ap
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/types';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
+import { logger } from '@/shared/utils/logger';
+
+const BLOCKING_ANALYTICS_EVENTS_INGESTION =
+  process.env['ANALYTICS_EVENTS_BLOCKING_INGESTION'] === 'true';
 
 const createEventSchema = z.object({
   type: z.enum(['pageview', 'event']),
@@ -77,14 +81,37 @@ const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
   return { from, to };
 };
 
+const resolveSessionUserId = async (): Promise<string | null> => {
+  const session = await auth().catch(() => null);
+  const userId = session?.user?.id;
+  if (typeof userId !== 'string') return null;
+  const trimmed = userId.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const persistAnalyticsEvent = async (
+  inputBase: AnalyticsEventCreateInput,
+  serverContext: {
+    ip: string | null;
+    userAgent: string | null;
+    country: string | null;
+    region: string | null;
+    city: string | null;
+  }
+): Promise<{ id: string }> => {
+  const userId = await resolveSessionUserId();
+  const input: AnalyticsEventCreateInput = userId
+    ? { ...inputBase, userId }
+    : inputBase;
+
+  return insertAnalyticsEvent(input, serverContext);
+};
+
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const parsed = await parseJsonBody(req, createEventSchema, {
     logPrefix: 'analytics.events.POST',
   });
   if (!parsed.ok) return parsed.response;
-
-  const session = await auth().catch(() => null);
-  const userId = session?.user?.id ?? null;
 
   const ip = extractClientIp(req);
   const userAgent = req.headers.get('user-agent');
@@ -115,18 +142,35 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     ...(parsed.data.connection ? { connection: parsed.data.connection } : {}),
     ...(parsed.data.meta ? { meta: parsed.data.meta } : {}),
     ...(parsed.data.clientTs !== null && parsed.data.clientTs !== undefined ? { clientTs: parsed.data.clientTs } : {}),
-    ...(userId ? { userId } : {}),
   };
 
-  const inserted = await insertAnalyticsEvent(input, {
+  const serverContext = {
     ip,
     userAgent,
     country,
     region,
     city,
+  };
+
+  if (BLOCKING_ANALYTICS_EVENTS_INGESTION) {
+    const inserted = await persistAnalyticsEvent(input, serverContext);
+    return NextResponse.json({ ok: true, id: inserted.id, queued: false });
+  }
+
+  void persistAnalyticsEvent(input, serverContext).catch((error: unknown) => {
+    logger.error('analytics.events.POST background ingestion failed', error, {
+      source: 'analytics.events.POST',
+      path: input.path,
+      scope: input.scope,
+      type: input.type,
+      requestId: _ctx.requestId,
+    });
   });
 
-  return NextResponse.json({ ok: true, id: inserted.id });
+  return NextResponse.json(
+    { ok: true, queued: true, requestId: _ctx.requestId },
+    { status: 202 }
+  );
 }
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

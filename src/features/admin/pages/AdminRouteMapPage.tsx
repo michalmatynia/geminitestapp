@@ -37,10 +37,14 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
     'List, add, open, edit, and remove Case Resolver cases.',
   '/admin/case-resolver/tags':
     'Manage tags used by Case Resolver documents.',
+  '/admin/case-resolver/identifiers':
+    'Manage case identifiers used by Case Resolver documents.',
   '/admin/case-resolver/categories':
     'Manage the Case Resolver document category tree.',
   '/admin/case-resolver/preferences':
     'Configure default Case Resolver Case list view and filter behavior.',
+  '/admin/case-resolver/capture':
+    'Configure Case Resolver Capture role mappings and Filemaker auto-matching rules.',
   '/admin/case-resolver/settings':
     'Configure Case Resolver OCR model settings.',
   '/admin/filemaker':

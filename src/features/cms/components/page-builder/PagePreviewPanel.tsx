@@ -6,10 +6,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CmsDomainSelector } from '@/features/cms';
 import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
 import { logClientError } from '@/features/observability';
-import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
+import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import {
   Button,
-  Checkbox,
   Select,
   SelectContent,
   SelectItem,
@@ -73,7 +72,6 @@ export function PagePreviewPanel(): React.ReactNode {
   
   const preferencesQuery = useUserPreferences();
   const userPreferences = preferencesQuery.data;
-  const updatePreferencesMutation = useUpdateUserPreferences();
 
   const domainSlugSet = useMemo(
     (): Set<string> | null =>
@@ -148,14 +146,12 @@ export function PagePreviewPanel(): React.ReactNode {
     return Boolean(userPreferences?.cmsPreviewEnabled);
   }, [userPreferences?.cmsPreviewEnabled]);
 
-  const [userPreviewDraftsEnabled, setUserPreviewDraftsEnabled] = useState<boolean | null>(null);
-  const previewDraftsEnabled = userPreviewDraftsEnabled ?? initialPreviewDraftsEnabled;
+  const previewDraftsEnabled = initialPreviewDraftsEnabled;
 
   const initialPauseSlideshowOnHoverInEditor = useMemo((): boolean => {
     return Boolean(userPreferences?.cmsSlideshowPauseOnHoverInEditor);
   }, [userPreferences?.cmsSlideshowPauseOnHoverInEditor]);
-  const [userPauseSlideshowOnHoverInEditor, setUserPauseSlideshowOnHoverInEditor] = useState<boolean | null>(null);
-  const pauseSlideshowOnHoverInEditor = userPauseSlideshowOnHoverInEditor ?? initialPauseSlideshowOnHoverInEditor;
+  const pauseSlideshowOnHoverInEditor = initialPauseSlideshowOnHoverInEditor;
 
   const previewTargetLabel = useMemo((): string => {
     if (!selectedPreviewSlug) return '';
@@ -578,28 +574,6 @@ export function PagePreviewPanel(): React.ReactNode {
                   Cross-zone: {outOfZoneSlugs.map((slug: string) => `/${slug}`).join(', ')}
                 </div>
               )}
-              <label className='flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200'>
-                <Checkbox
-                  checked={previewDraftsEnabled}
-                  onCheckedChange={(value: boolean | 'indeterminate'): void => {
-                    const next = value === true;
-                    setUserPreviewDraftsEnabled(next);
-                    updatePreferencesMutation.mutate({ cmsPreviewEnabled: next });
-                  }}
-                />
-                Draft preview
-              </label>
-              <label className='flex items-center gap-2 rounded-full border border-slate-500/40 bg-slate-500/10 px-3 py-1 text-[10px] text-slate-200'>
-                <Checkbox
-                  checked={pauseSlideshowOnHoverInEditor}
-                  onCheckedChange={(value: boolean | 'indeterminate'): void => {
-                    const next = value === true;
-                    setUserPauseSlideshowOnHoverInEditor(next);
-                    updatePreferencesMutation.mutate({ cmsSlideshowPauseOnHoverInEditor: next });
-                  }}
-                />
-                Pause slides on hover (editor)
-              </label>
               <Button
                 onClick={(): void => { void handlePreview(); }}
                 size='sm'

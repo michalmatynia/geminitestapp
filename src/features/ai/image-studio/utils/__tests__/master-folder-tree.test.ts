@@ -77,4 +77,51 @@ describe('decodeImageStudioMasterNodeId', () => {
     expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
     expect(nodes.some((node) => node.id === 'card:slot-generation')).toBe(false);
   });
+
+  it('keeps crop-derived slots visible in folder tree nodes', () => {
+    const nodes = buildMasterNodesFromStudioTree(
+      [
+        {
+          id: 'slot-base',
+          projectId: 'proj',
+          name: 'Base',
+          folderPath: 'test',
+          position: null,
+          imageFileId: 'file-base',
+          imageUrl: '/uploads/studio/proj/base.png',
+          imageBase64: null,
+          asset3dId: null,
+          screenshotFileId: null,
+          metadata: null,
+          imageFile: null,
+          screenshotFile: null,
+          asset3d: null,
+        },
+        {
+          id: 'slot-crop',
+          projectId: 'proj',
+          name: 'Base • Crop',
+          folderPath: 'test',
+          position: null,
+          imageFileId: 'file-crop',
+          imageUrl: '/uploads/studio/proj/crop.png',
+          imageBase64: null,
+          asset3dId: null,
+          screenshotFileId: null,
+          metadata: {
+            role: 'generation',
+            sourceSlotId: 'slot-base',
+            relationType: 'crop:output',
+          },
+          imageFile: null,
+          screenshotFile: null,
+          asset3d: null,
+        },
+      ],
+      ['test']
+    );
+
+    expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
+    expect(nodes.some((node) => node.id === 'card:slot-crop')).toBe(true);
+  });
 });

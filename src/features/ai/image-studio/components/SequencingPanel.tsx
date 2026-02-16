@@ -328,6 +328,7 @@ export function SequencingPanel(): React.JSX.Element {
             {
               mode: 'server_bbox',
               cropRect,
+              requestId: `seq_crop_${Date.now().toString(36)}_${currentSlot.id}`,
             }
           );
           if (!cropResponse.slot?.id) {

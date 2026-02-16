@@ -25,6 +25,15 @@ export type CaseResolverTag = {
   updatedAt: string;
 };
 
+export type CaseResolverIdentifier = {
+  id: string;
+  name: string;
+  parentId: string | null;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type CaseResolverCategory = {
   id: string;
   name: string;
@@ -87,6 +96,7 @@ export type CaseResolverFile = {
   addresser: CaseResolverPartyReference | null;
   addressee: CaseResolverPartyReference | null;
   tagId: string | null;
+  caseIdentifierId: string | null;
   categoryId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -110,6 +120,7 @@ export type CaseResolverFileEditDraft = {
   addresser: CaseResolverPartyReference | null;
   addressee: CaseResolverPartyReference | null;
   tagId: string | null;
+  caseIdentifierId: string | null;
   categoryId: string | null;
 };
 

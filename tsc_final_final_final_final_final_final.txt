@@ -1,0 +1,3 @@
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(70,7): error TS2353: Object literal may only specify known properties, and 'selectedSegmentId' does not exist in type 'PromptExploderHierarchyTreeContextValue'.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(137,13): error TS2322: Type '{ isOpen: boolean; onOpenChange: Dispatch<SetStateAction<boolean>>; drafts: PromptExploderParserTuningRuleDraft[]; onDraftsChange: Dispatch<...>; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'isOpen' does not exist on type 'IntrinsicAttributes'.

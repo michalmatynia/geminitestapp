@@ -82,7 +82,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const state = useAiPathsSettingsOrchestrator();
 
   // Domain: Persistence — read from context
-  const { loading, saving, autoSaveStatus } = usePersistenceState();
+  const { loading, saving, autoSaveStatus, autoSaveAt } = usePersistenceState();
   const { incrementLoadNonce, savePathConfig } = usePersistenceActions();
 
   // Domain: Runtime — read from context

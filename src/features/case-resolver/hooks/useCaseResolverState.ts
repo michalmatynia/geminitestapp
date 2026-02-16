@@ -5,6 +5,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
+  buildCaseResolverCaptureProposalState,
+  stripCapturedAddressLinesFromText,
+  type CaseResolverCaptureProposalState,
+} from '@/features/case-resolver-capture/proposals';
+import {
+  CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
+  parseCaseResolverCaptureSettings,
+} from '@/features/case-resolver-capture/settings';
+import {
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,
 } from '@/features/filemaker/settings';
@@ -16,22 +25,14 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
-import { 
-  createId, 
-  isPathWithinFolder, 
-  createUniqueFolderPath, 
-  promptForName, 
-  buildFileEditDraft,
-  buildPromptExploderPartyProposalState,
-  type CaseResolverPromptExploderPartyProposalState
-} from '../utils/caseResolverUtils';
-
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
+  CASE_RESOLVER_IDENTIFIERS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   extractCaseResolverDocumentDate,
   parseCaseResolverCategories,
+  parseCaseResolverIdentifiers,
   parseCaseResolverTags,
   createCaseResolverFile,
   normalizeCaseResolverWorkspace,
@@ -39,12 +40,20 @@ import {
   normalizeFolderPaths,
   parseCaseResolverWorkspace,
 } from '../settings';
+import {
+  buildFileEditDraft,
+  createId,
+  createUniqueFolderPath,
+  isPathWithinFolder,
+  promptForName,
+} from '../utils/caseResolverUtils';
 
 import type {
   CaseResolverAssetFile,
   CaseResolverCategory,
   CaseResolverFile,
   CaseResolverFileEditDraft,
+  CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '../types';
@@ -65,8 +74,10 @@ export function useCaseResolverState() {
 
   const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
+  const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
   const rawFilemakerDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
+  const rawCaseResolverCaptureSettings = settingsStore.get(CASE_RESOLVER_CAPTURE_SETTINGS_KEY);
   
   const parsedWorkspace = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
@@ -76,6 +87,10 @@ export function useCaseResolverState() {
     (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
     [rawCaseResolverTags]
   );
+  const caseResolverIdentifiers = useMemo(
+    (): CaseResolverIdentifier[] => parseCaseResolverIdentifiers(rawCaseResolverIdentifiers),
+    [rawCaseResolverIdentifiers]
+  );
   const caseResolverCategories = useMemo(
     (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
     [rawCaseResolverCategories]
@@ -83,6 +98,10 @@ export function useCaseResolverState() {
   const filemakerDatabase = useMemo(
     () => parseFilemakerDatabase(rawFilemakerDatabase),
     [rawFilemakerDatabase]
+  );
+  const caseResolverCaptureSettings = useMemo(
+    () => parseCaseResolverCaptureSettings(rawCaseResolverCaptureSettings),
+    [rawCaseResolverCaptureSettings]
   );
   
   const countriesQuery = useCountries();
@@ -100,11 +119,12 @@ export function useCaseResolverState() {
   const [isUploadingScanDraftFiles, setIsUploadingScanDraftFiles] = useState(false);
   const [uploadingScanSlotId, setUploadingScanSlotId] = useState<string | null>(null);
 
-  const [promptExploderPartyProposal, setPromptExploderPartyProposal] = useState<CaseResolverPromptExploderPartyProposalState | null>(null);
+  const [promptExploderPartyProposal, setPromptExploderPartyProposal] = useState<CaseResolverCaptureProposalState | null>(null);
   const [isPromptExploderPartyProposalOpen, setIsPromptExploderPartyProposalOpen] = useState(false);
   const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposal] = useState(false);
 
   const defaultTagId = caseResolverTags[0]?.id ?? null;
+  const defaultCaseIdentifierId = caseResolverIdentifiers[0]?.id ?? null;
   const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
 
   const lastPersistedValueRef = useRef<string>(JSON.stringify(parsedWorkspace));
@@ -119,7 +139,7 @@ export function useCaseResolverState() {
   useEffect(() => {
     const serialized = JSON.stringify(workspace);
     if (serialized === lastPersistedValueRef.current) return;
-    
+
     const timer = window.setTimeout(() => {
       void (async (): Promise<void> => {
         try {
@@ -128,15 +148,16 @@ export function useCaseResolverState() {
             value: serialized,
           });
           lastPersistedValueRef.current = serialized;
-                      if (pendingSaveToastRef.current) {
-                      toast(pendingSaveToastRef.current, { variant: 'success' });
-                      pendingSaveToastRef.current = null;
-                    }
-                  } catch (_error) {
-                    toast('Failed to save Case Resolver workspace.', { variant: 'error' });
-                  }
-                })();
-              }, 350);
+          if (pendingSaveToastRef.current) {
+            toast(pendingSaveToastRef.current, { variant: 'success' });
+            pendingSaveToastRef.current = null;
+          }
+        } catch (_error) {
+          toast('Failed to save Case Resolver workspace.', { variant: 'error' });
+        }
+      })();
+    }, 350);
+
     return () => window.clearTimeout(timer);
   }, [workspace, updateSetting, toast]);
 
@@ -211,6 +232,7 @@ export function useCaseResolverState() {
       name: fileName,
       folder,
       tagId: defaultTagId,
+      caseIdentifierId: defaultCaseIdentifierId,
       categoryId: defaultCategoryId,
     });
     updateWorkspace((current) => ({
@@ -222,7 +244,7 @@ export function useCaseResolverState() {
     setSelectedFileId(file.id);
     setSelectedFolderPath(null);
     setSelectedAssetId(null);
-  }, [defaultCategoryId, defaultTagId, updateWorkspace]);
+  }, [defaultCaseIdentifierId, defaultCategoryId, defaultTagId, updateWorkspace]);
 
   const handleDeleteFolder = useCallback((folderPath: string): void => {
     const normalizedFolder = normalizeFolderPath(folderPath);
@@ -322,7 +344,13 @@ export function useCaseResolverState() {
     const targetFileId = payload.caseResolverContext?.fileId ?? workspace.activeFileId ?? null;
     if (!targetFileId) return;
 
-    const nextExplodedContent = payload.prompt;
+    const proposalState = buildCaseResolverCaptureProposalState(
+      payload.caseResolverParties,
+      targetFileId,
+      filemakerDatabase,
+      caseResolverCaptureSettings
+    );
+    const nextExplodedContent = stripCapturedAddressLinesFromText(payload.prompt, proposalState);
     const extractedDocumentDate = extractCaseResolverDocumentDate(nextExplodedContent);
     const now = new Date().toISOString();
 
@@ -343,17 +371,20 @@ export function useCaseResolverState() {
       }),
     }));
 
-    const proposalState = buildPromptExploderPartyProposalState(
-      payload.caseResolverParties,
-      targetFileId,
-      filemakerDatabase
-    );
     if (proposalState) {
       setPromptExploderPartyProposal(proposalState);
-      setIsPromptExploderPartyProposalOpen(true);
+      if (caseResolverCaptureSettings.autoOpenProposalModal) {
+        setIsPromptExploderPartyProposalOpen(true);
+      }
     }
     toast('Exploded text returned to Case Resolver.', { variant: 'success' });
-  }, [filemakerDatabase, toast, workspace.activeFileId, updateWorkspace]);
+  }, [
+    caseResolverCaptureSettings,
+    filemakerDatabase,
+    toast,
+    workspace.activeFileId,
+    updateWorkspace,
+  ]);
 
   return {
     workspace,
@@ -380,6 +411,7 @@ export function useCaseResolverState() {
     uploadingScanSlotId,
     setUploadingScanSlotId,
     caseResolverTags,
+    caseResolverIdentifiers,
     caseResolverCategories,
     filemakerDatabase,
     countries,

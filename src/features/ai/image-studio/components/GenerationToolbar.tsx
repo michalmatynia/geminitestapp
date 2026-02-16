@@ -8,7 +8,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
-import { api } from '@/shared/lib/api-client';
+import { ApiError, api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -55,8 +55,27 @@ type PolledRunRecord = {
   errorMessage: string | null;
 };
 
+type CropActionResponse = {
+  slot?: ImageStudioSlotRecord;
+  mode?: CropMode;
+  effectiveMode?: CropMode;
+  cropRect?: CropRect | null;
+  requestId?: string | null;
+  deduplicated?: boolean;
+};
+
+type CropStatus =
+  | 'idle'
+  | 'resolving'
+  | 'preparing'
+  | 'uploading'
+  | 'processing'
+  | 'persisting';
+
 const CENTER_RUN_POLL_INTERVAL_MS = 1200;
 const CENTER_RUN_POLL_MAX_ATTEMPTS = 600;
+const CROP_REQUEST_TIMEOUT_MS = 60_000;
+const CROP_RETRY_DELAY_MS = 350;
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
@@ -250,8 +269,10 @@ export function GenerationToolbar(): React.JSX.Element {
   const [upscaleSmoothingQuality, setUpscaleSmoothingQuality] = useState<UpscaleSmoothingQuality>('high');
   const [upscaleBusy, setUpscaleBusy] = useState(false);
   const [cropBusy, setCropBusy] = useState(false);
+  const [cropStatus, setCropStatus] = useState<CropStatus>('idle');
   const [centerBusy, setCenterBusy] = useState(false);
   const cropRequestInFlightRef = useRef(false);
+  const cropAbortControllerRef = useRef<AbortController | null>(null);
 
   const eligibleMaskShapes = useMemo<MaskShapeForExport[]>(
     () =>
@@ -386,6 +407,45 @@ export function GenerationToolbar(): React.JSX.Element {
       return canvas.toDataURL('image/png');
     } catch {
       throw new Error('Client crop failed due to cross-origin restrictions. Use "Crop Server: Sharp".');
+    }
+  };
+
+  const isClientCropCrossOriginError = (error: unknown): boolean =>
+    error instanceof Error && /cross-origin restrictions/i.test(error.message);
+
+  const isCropAbortError = (error: unknown): boolean =>
+    error instanceof DOMException && error.name === 'AbortError';
+
+  const isRetryableCropError = (error: unknown): boolean => {
+    if (isCropAbortError(error)) return false;
+    if (error instanceof ApiError) {
+      return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+    }
+    return (
+      error instanceof Error &&
+      /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase())
+    );
+  };
+
+  const buildCropRequestId = (): string =>
+    `crop_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+
+  const withCropRetry = async <T,>(
+    run: () => Promise<T>,
+    signal: AbortSignal,
+    retries = 1
+  ): Promise<T> => {
+    let attempt = 0;
+    while (true) {
+      try {
+        return await run();
+      } catch (error) {
+        if (attempt >= retries || !isRetryableCropError(error) || signal.aborted) {
+          throw error;
+        }
+        attempt += 1;
+        await sleep(CROP_RETRY_DELAY_MS * attempt);
+      }
     }
   };
 
@@ -840,49 +900,118 @@ export function GenerationToolbar(): React.JSX.Element {
 
     cropRequestInFlightRef.current = true;
     setCropBusy(true);
+    setCropStatus('resolving');
+    const cropRequestId = buildCropRequestId();
+    const abortController = new AbortController();
+    cropAbortControllerRef.current = abortController;
     try {
       const cropRect = await resolveCropRect();
-      let response: { slot?: { id: string; name: string | null } };
+      let response: CropActionResponse;
+      let resolvedMode: CropMode = cropMode;
       if (cropMode === 'client_bbox') {
         const sourceForClientCrop = clientProcessingImageSrc || workingSlotImageSrc;
         if (!sourceForClientCrop) {
           throw new Error('No client image source is available for crop.');
         }
-        const croppedDataUrl = await cropCanvasImage(sourceForClientCrop, cropRect);
-        let uploadBlob: Blob;
         try {
-          const blobResponse = await fetch(croppedDataUrl);
-          uploadBlob = await blobResponse.blob();
-        } catch {
-          throw new Error('Failed to prepare client crop image for upload.');
-        }
-
-        const formData = new FormData();
-        formData.append('mode', cropMode);
-        formData.append('cropRect', JSON.stringify(cropRect));
-        formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
-
-        response = await api.post<{ slot?: { id: string; name: string | null } }>(
-          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
-          formData
-        );
-      } else {
-        response = await api.post<{ slot?: { id: string; name: string | null } }>(
-          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
-          {
-            mode: cropMode,
-            cropRect,
+          setCropStatus('preparing');
+          const croppedDataUrl = await cropCanvasImage(sourceForClientCrop, cropRect);
+          let uploadBlob: Blob;
+          try {
+            const blobResponse = await fetch(croppedDataUrl);
+            uploadBlob = await blobResponse.blob();
+          } catch {
+            throw new Error('Failed to prepare client crop image for upload.');
           }
+
+          setCropStatus('uploading');
+          response = await withCropRetry(
+            () => {
+              const formData = new FormData();
+              formData.append('mode', cropMode);
+              formData.append('cropRect', JSON.stringify(cropRect));
+              formData.append('dataUrl', croppedDataUrl);
+              formData.append('requestId', cropRequestId);
+              formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
+              return api.post<CropActionResponse>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: CROP_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': cropRequestId,
+                  },
+                }
+              );
+            },
+            abortController.signal
+          );
+        } catch (error) {
+          if (!isClientCropCrossOriginError(error)) {
+            throw error;
+          }
+          setCropStatus('processing');
+          response = await withCropRetry(
+            () =>
+              api.post<CropActionResponse>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
+                {
+                  mode: 'server_bbox',
+                  cropRect,
+                  requestId: cropRequestId,
+                },
+                {
+                  signal: abortController.signal,
+                  timeout: CROP_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': cropRequestId,
+                  },
+                }
+              ),
+            abortController.signal
+          );
+          resolvedMode = 'server_bbox';
+          toast('Client crop was blocked by cross-origin restrictions; used server crop instead.', {
+            variant: 'info',
+          });
+        }
+      } else {
+        setCropStatus('processing');
+        response = await withCropRetry(
+          () =>
+            api.post<CropActionResponse>(
+              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
+              {
+                mode: cropMode,
+                cropRect,
+                requestId: cropRequestId,
+              },
+              {
+                signal: abortController.signal,
+                timeout: CROP_REQUEST_TIMEOUT_MS,
+                headers: {
+                  'x-idempotency-key': cropRequestId,
+                },
+              }
+            ),
+          abortController.signal
         );
       }
 
       const normalizedProjectId = projectId?.trim() ?? '';
       if (normalizedProjectId) {
+        setCropStatus('persisting');
         await invalidateImageStudioSlots(queryClient, normalizedProjectId);
         const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
+        const createdSlotId = response.slot?.id ?? '';
+        const mergedSlots =
+          createdSlotId
+            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+            : slotsSnapshot;
         queryClient.setQueryData<StudioSlotsResponse>(
           studioKeys.slots(normalizedProjectId),
-          { slots: slotsSnapshot }
+          { slots: mergedSlots }
         );
       }
 
@@ -892,14 +1021,27 @@ export function GenerationToolbar(): React.JSX.Element {
       }
 
       const createdLabel = response.slot?.name?.trim() || 'Cropped variant';
-      const modeLabel = cropMode === 'client_bbox' ? 'Client' : 'Server';
+      const effectiveMode = response.effectiveMode ?? resolvedMode;
+      const modeLabel = effectiveMode === 'client_bbox' ? 'Client' : 'Server';
       toast(`Created ${createdLabel} (${modeLabel} crop).`, { variant: 'success' });
     } catch (error) {
+      if (isCropAbortError(error)) {
+        toast('Crop canceled.', { variant: 'info' });
+        return;
+      }
       toast(error instanceof Error ? error.message : 'Failed to crop image.', { variant: 'error' });
     } finally {
       cropRequestInFlightRef.current = false;
+      cropAbortControllerRef.current = null;
       setCropBusy(false);
+      setCropStatus('idle');
     }
+  };
+
+  const handleCancelCrop = (): void => {
+    const controller = cropAbortControllerRef.current;
+    if (!controller) return;
+    controller.abort();
   };
 
   const handleCenterObject = async (): Promise<void> => {
@@ -1003,6 +1145,23 @@ export function GenerationToolbar(): React.JSX.Element {
   const maskGenerationLabel = maskGenerationBusy
     ? 'Generating Mask...'
     : 'Generate Mask';
+  const cropBusyLabel = useMemo(() => {
+    if (!cropBusy) return 'Crop';
+    switch (cropStatus) {
+      case 'resolving':
+        return 'Crop: Resolving';
+      case 'preparing':
+        return 'Crop: Preparing';
+      case 'uploading':
+        return 'Crop: Uploading';
+      case 'processing':
+        return 'Crop: Processing';
+      case 'persisting':
+        return 'Crop: Persisting';
+      default:
+        return 'Crop';
+    }
+  }, [cropBusy, cropStatus]);
 
   const quickSwitchModels = useMemo(
     () =>
@@ -1201,8 +1360,19 @@ export function GenerationToolbar(): React.JSX.Element {
         title='Create cropped linked variant from selected boundary'
       >
         {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-        Crop
+        {cropBusyLabel}
       </Button>
+      {cropBusy ? (
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          onClick={handleCancelCrop}
+          title='Cancel crop request'
+        >
+          Cancel Crop
+        </Button>
+      ) : null}
       <Button size='xs'
         type='button'
         variant='outline'

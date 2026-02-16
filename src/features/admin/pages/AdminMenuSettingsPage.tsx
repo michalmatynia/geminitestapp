@@ -27,7 +27,7 @@ import {
 } from '@/features/admin/constants/admin-menu-settings';
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, Switch, useToast, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, Switch, useToast, SelectSimple, FormSection, FormField, StatusBadge } from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
 const normalize = (value: string): string =>
@@ -790,19 +790,16 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) => updateCustomHref(path, event.target.value)}
                             placeholder='/admin/...'
                             className='h-8 bg-gray-900/40 text-xs'
-                            disabled={isBuiltIn}
-                          />
-                        </div>
-                        <span
-                          className={cn(
-                            'rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide',
-                            isBuiltIn ? 'border-blue-500/40 text-blue-200' : 'border-emerald-500/40 text-emerald-200'
-                          )}
-                        >
-                          {isBuiltIn ? 'Built-in' : 'Custom'}
-                        </span>
-                      </div>
-                      <div className='flex items-center gap-1'>
+                                                      disabled={isBuiltIn}
+                                                    />
+                                                  </div>
+                                                  <StatusBadge
+                                                    status={isBuiltIn ? 'Built-in' : 'Custom'}
+                                                    variant={isBuiltIn ? 'info' : 'success'}
+                                                    size='sm'
+                                                    className='font-bold'
+                                                  />
+                                                </div>                      <div className='flex items-center gap-1'>
                         <Button
                           type='button'
                           variant='outline'

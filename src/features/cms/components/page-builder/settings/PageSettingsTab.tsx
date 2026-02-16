@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
+import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -65,6 +66,11 @@ function PageSettingsTab(): React.ReactNode {
   const [isEditingName, setIsEditingName] = useState(false);
   const pageAiAbortRef = useRef<AbortController | null>(null);
   const nameInputRef = useRef<HTMLInputElement | null>(null);
+  const preferencesQuery = useUserPreferences();
+  const userPreferences = preferencesQuery.data;
+  const updatePreferencesMutation = useUpdateUserPreferences();
+  const [userPreviewDraftsEnabled, setUserPreviewDraftsEnabled] = useState<boolean | null>(null);
+  const [userPauseSlideshowOnHoverInEditor, setUserPauseSlideshowOnHoverInEditor] = useState<boolean | null>(null);
   const modelsQuery = useChatbotModels({
     enabled: activeTab === 'ai' && pageAiProvider === 'model',
   });
@@ -182,6 +188,9 @@ function PageSettingsTab(): React.ReactNode {
   };
 
   const showMenuValue = page ? page.showMenu !== false : false;
+  const previewDraftsEnabled = userPreviewDraftsEnabled ?? Boolean(userPreferences?.cmsPreviewEnabled);
+  const pauseSlideshowOnHoverInEditor =
+    userPauseSlideshowOnHoverInEditor ?? Boolean(userPreferences?.cmsSlideshowPauseOnHoverInEditor);
 
   const applySelectedSlugIds = (ids: string[]): void => {
     const selectedSlugsList = ids
@@ -211,6 +220,18 @@ function PageSettingsTab(): React.ReactNode {
       input: { slug: slug.slug, isDefault: true },
       domainId: activeDomainId,
     });
+  };
+
+  const handleDraftPreviewChange = (value: boolean | 'indeterminate'): void => {
+    const next = value === true;
+    setUserPreviewDraftsEnabled(next);
+    updatePreferencesMutation.mutate({ cmsPreviewEnabled: next });
+  };
+
+  const handlePauseSlidesOnHoverChange = (value: boolean | 'indeterminate'): void => {
+    const next = value === true;
+    setUserPauseSlideshowOnHoverInEditor(next);
+    updatePreferencesMutation.mutate({ cmsSlideshowPauseOnHoverInEditor: next });
   };
 
   useEffect((): (() => void) => {
@@ -738,6 +759,18 @@ function PageSettingsTab(): React.ReactNode {
           <p className='text-xs text-gray-500'>
             Select a section or block from the tree to edit its settings.
           </p>
+
+          <div className='space-y-2 border-t border-border/40 pt-4'>
+            <Label className='text-xs text-gray-400'>Preview options</Label>
+            <label className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2 text-xs text-gray-200'>
+              <span>Draft Preview</span>
+              <Checkbox checked={previewDraftsEnabled} onCheckedChange={handleDraftPreviewChange} />
+            </label>
+            <label className='flex items-center justify-between rounded border border-border/40 bg-gray-900/40 px-3 py-2 text-xs text-gray-200'>
+              <span>Pause slides on hover</span>
+              <Checkbox checked={pauseSlideshowOnHoverInEditor} onCheckedChange={handlePauseSlidesOnHoverChange} />
+            </label>
+          </div>
         </div>
       </TabsContent>
 

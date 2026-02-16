@@ -175,6 +175,7 @@ export function RunTimeline({
   nodes,
   events,
   eventsOverflow,
+  eventsBatchLimit,
 }: {
   run: AiPathRunRecord;
   nodes: AiPathRunNodeRecord[];

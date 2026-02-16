@@ -92,4 +92,59 @@ describe('query-factories-v2 behavior', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(result.current.data).toEqual({ id: '1' });
   });
+
+  it('applies guarded refetch defaults and sanitizes invalid polling values', async () => {
+    const fetcher = vi.fn(async () => ['a']);
+
+    const { result } = renderHook(
+      () =>
+        createListQueryV2<string, string[]>({
+          queryKey: ['legacy', 'refetch-guards'],
+          queryFn: fetcher,
+          refetchInterval: -100,
+          meta: {
+            source: 'tests.shared.query-factories-v2.refetch-guards',
+            operation: 'list',
+            resource: 'legacy.refetch-guards',
+          },
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const query = queryClient.getQueryCache().find({ queryKey: ['legacy', 'refetch-guards'] });
+    const queryOptions = (query as { options?: Record<string, unknown> } | undefined)?.options;
+    expect(query).toBeDefined();
+    expect(queryOptions?.['refetchOnMount']).toBe(false);
+    expect(queryOptions?.['refetchOnWindowFocus']).toBe(false);
+    expect(queryOptions?.['refetchOnReconnect']).toBe(false);
+    expect(queryOptions?.['refetchIntervalInBackground']).toBe(false);
+    expect(queryOptions?.['refetchInterval']).toBe(false);
+  });
+
+  it('keeps enabled callback semantics while enforcing required single-query id', async () => {
+    const fetcher = vi.fn(async () => ({ id: '2' }));
+    const enabled = vi.fn(() => true);
+
+    const { result } = renderHook(
+      () =>
+        createSingleQueryV2<{ id: string }>({
+          id: null,
+          queryKey: (id: string) => ['legacy', 'detail', id],
+          queryFn: fetcher,
+          enabled,
+          meta: {
+            source: 'tests.shared.query-factories-v2.single-id-guard',
+            operation: 'detail',
+            resource: 'legacy.detail-id-guard',
+          },
+        }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.fetchStatus).toBe('idle'));
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(enabled).not.toHaveBeenCalled();
+  });
 });

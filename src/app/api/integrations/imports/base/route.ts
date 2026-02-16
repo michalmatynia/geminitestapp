@@ -20,6 +20,10 @@ import {
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import { extractBaseImageUrls, mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
+import {
+  findProductListingByProductAndConnectionAcrossProviders,
+  getProductListingRepository,
+} from '@/features/integrations/services/product-listing-repository';
 import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
 import { decryptSecret } from '@/features/integrations/utils/encryption';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
@@ -78,6 +82,7 @@ type MappedItem = {
 };
 
 const BASE_DETAILS_BATCH_SIZE = 100;
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
 type PriceGroupLookup = {
   id: string;
@@ -192,37 +197,48 @@ const resolvePriceGroupContext = async (
 
 async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const data = ctx.body as z.infer<typeof requestSchema>;
+  const integrationRepo = await getIntegrationRepository();
+  const integrations = await integrationRepo.listIntegrations();
+  const baseIntegration = integrations.find((integration) =>
+    BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
+  );
+  const baseIntegrationId = baseIntegration?.id ?? null;
+  let resolvedBaseConnectionId = data.connectionId?.trim() || null;
+  let resolvedBaseConnection: {
+    id: string;
+    baseApiToken?: string | null;
+    password?: string | null;
+  } | null = null;
+  if (baseIntegrationId && resolvedBaseConnectionId) {
+    resolvedBaseConnection =
+      await integrationRepo.getConnectionByIdAndIntegration(
+        resolvedBaseConnectionId,
+        baseIntegrationId
+      );
+    if (!resolvedBaseConnection) {
+      resolvedBaseConnectionId = null;
+    }
+  }
+
   let token = data.token;
 
   if (!token) {
-    const integrationRepo = await getIntegrationRepository();
-    const integrations = await integrationRepo.listIntegrations();
-    const baseIntegration = integrations.find((i) =>
-      ['baselinker', 'base-com', 'base'].includes(i.slug)
-    );
-
-    if (baseIntegration) {
-      let connection = null;
-      if (data.connectionId) {
-        connection = await integrationRepo.getConnectionByIdAndIntegration(
-          data.connectionId,
-          baseIntegration.id
-        );
-      }
-      if (!connection) {
+    if (baseIntegrationId) {
+      if (!resolvedBaseConnection) {
         const connections = await integrationRepo.listConnections(
-          baseIntegration.id
+          baseIntegrationId
         );
-        connection = connections.find(
-          (c) => c.baseApiToken || c.password
+        resolvedBaseConnection = connections.find(
+          (connection) => connection.baseApiToken || connection.password
         ) ?? null;
+        resolvedBaseConnectionId = resolvedBaseConnection?.id ?? null;
       }
-      if (connection) {
+      if (resolvedBaseConnection) {
         try {
-          if (connection.baseApiToken) {
-            token = decryptSecret(connection.baseApiToken);
-          } else if (connection.password) {
-            token = decryptSecret(connection.password);
+          if (resolvedBaseConnection.baseApiToken) {
+            token = decryptSecret(resolvedBaseConnection.baseApiToken);
+          } else if (resolvedBaseConnection.password) {
+            token = decryptSecret(resolvedBaseConnection.password);
           }
         } catch {
           // Ignore decryption errors, will fail later if token is still missing
@@ -291,6 +307,55 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   }
   const inventoryId = data.inventoryId;
   const provider = await getProductDataProvider();
+  const linkImportedProductToBaseListing = async (
+    product: ProductWithImages | null,
+    baseProductId: string | null | undefined
+  ): Promise<void> => {
+    const normalizedBaseProductId = baseProductId?.trim() || '';
+    if (!product?.id || !normalizedBaseProductId) return;
+    if (!baseIntegrationId || !resolvedBaseConnectionId) return;
+
+    const existingListing =
+      await findProductListingByProductAndConnectionAcrossProviders(
+        product.id,
+        resolvedBaseConnectionId
+      );
+    if (existingListing) {
+      if (existingListing.listing.externalListingId !== normalizedBaseProductId) {
+        await existingListing.repository.updateListingExternalId(
+          existingListing.listing.id,
+          normalizedBaseProductId
+        );
+      }
+      if ((existingListing.listing.inventoryId ?? null) !== inventoryId) {
+        await existingListing.repository.updateListingInventoryId(
+          existingListing.listing.id,
+          inventoryId
+        );
+      }
+      if (existingListing.listing.status !== 'active') {
+        await existingListing.repository.updateListingStatus(
+          existingListing.listing.id,
+          'active'
+        );
+      }
+      return;
+    }
+
+    const listingRepository = await getProductListingRepository();
+    const createdListing = await listingRepository.createListing({
+      productId: product.id,
+      integrationId: baseIntegrationId,
+      connectionId: resolvedBaseConnectionId,
+      status: 'active',
+      externalListingId: normalizedBaseProductId,
+      inventoryId,
+      marketplaceData: {
+        source: 'base-import',
+      },
+    });
+    await listingRepository.updateListingStatus(createdListing.id, 'active');
+  };
 
   if (data.action === 'list') {
     const catalogRepository = await getCatalogRepository();
@@ -810,6 +875,22 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
           await productRepository.addProductImages(created.id, imageFileIds);
         }
       }
+      if (created) {
+        try {
+          await linkImportedProductToBaseListing(
+            created,
+            payload.baseProductId ?? mapped.baseProductId
+          );
+        } catch (linkError) {
+          const skuLabel = payload.sku ?? mapped.sku ?? created.id;
+          const linkErrorMessage = linkError instanceof Error
+            ? linkError.message
+            : 'Failed to link imported product to Base.com listing.';
+          if (errors.length < 10) {
+            errors.push(`Imported ${skuLabel}, but failed to link Base.com listing: ${linkErrorMessage}`);
+          }
+        }
+      }
 
       imported += 1;
     } catch (error: unknown) {
@@ -888,6 +969,22 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
             }
             if (imageFileIds.length > 0 && created) {
               await productRepository.addProductImages(created.id, imageFileIds);
+            }
+          }
+          if (created) {
+            try {
+              await linkImportedProductToBaseListing(
+                created,
+                payload.baseProductId ?? mapped.baseProductId
+              );
+            } catch (linkError) {
+              const skuLabel = payload.sku ?? mapped.sku ?? created.id;
+              const linkErrorMessage = linkError instanceof Error
+                ? linkError.message
+                : 'Failed to link imported product to Base.com listing.';
+              if (errors.length < 10) {
+                errors.push(`Imported ${skuLabel}, but failed to link Base.com listing: ${linkErrorMessage}`);
+              }
             }
           }
 

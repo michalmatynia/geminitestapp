@@ -8,7 +8,7 @@ import {
   useClearAiInsightsNotifications,
 } from '@/features/admin/hooks/useAiInsightsNotifications';
 import type { AiInsightNotification } from '@/shared/types';
-import { Button } from '@/shared/ui';
+import { Button, StatusBadge } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
 export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
@@ -79,17 +79,18 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
                     <span className='text-[10px] uppercase text-gray-500'>
                       {new Date(notification.createdAt).toLocaleString()}
                     </span>
-                    <span
-                      className={`rounded border px-2 py-0.5 text-[10px] ${
+                    <StatusBadge
+                      status={notification.status}
+                      variant={
                         notification.status === 'ok'
-                          ? 'border-emerald-500/40 text-emerald-200'
+                          ? 'success'
                           : notification.status === 'warning'
-                            ? 'border-amber-500/40 text-amber-200'
-                            : 'border-rose-500/40 text-rose-200'
-                      }`}
-                    >
-                      {notification.status}
-                    </span>
+                            ? 'warning'
+                            : 'error'
+                      }
+                      size='sm'
+                      className='font-bold'
+                    />
                   </div>
                   <div className='mt-2 text-sm text-white'>{notification.summary}</div>
                   {notification.warnings.length > 0 ? (

@@ -4,7 +4,9 @@ import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   extractCaseResolverDocumentDate,
   inferCaseResolverAssetKind,
+  normalizeCaseResolverIdentifiers,
   normalizeCaseResolverTags,
+  parseCaseResolverIdentifiers,
   parseCaseResolverSettings,
   parseCaseResolverWorkspace,
   resolveCaseResolverUploadFolder,
@@ -40,6 +42,7 @@ describe('case-resolver settings', () => {
           updatedAt: '',
           addresser: { kind: 'person', id: 'p-1' },
           addressee: { kind: 'invalid', id: 'x-1' },
+          caseIdentifierId: '  identifier-1  ',
           graph: {
             nodes: [createPromptNode('n1'), createPromptNode('n2')],
             edges: [],
@@ -86,6 +89,7 @@ describe('case-resolver settings', () => {
     expect(workspace.files[0]?.documentDate).toBe('');
     expect(workspace.files[0]?.addresser).toEqual({ kind: 'person', id: 'p-1' });
     expect(workspace.files[0]?.addressee).toBeNull();
+    expect(workspace.files[0]?.caseIdentifierId).toBe('identifier-1');
     expect(workspace.folders).toEqual(['Root_A', 'Root_A/Sub__']);
     expect(workspace.activeFileId).toBe('dup-file');
     expect(workspace.files[0]?.createdAt).not.toBe('');
@@ -241,6 +245,35 @@ describe('case-resolver settings', () => {
     expect(byId.get('cycle-a')?.parentId).toBeNull();
     expect(byId.get('cycle-b')?.parentId).toBeNull();
     expect(tags.map((tag) => tag.id)).toEqual(['cycle-a', 'cycle-b', 'orphan', 'parent', 'child', 'self']);
+  });
+
+  it('normalizes hierarchical case identifiers and parses safely', () => {
+    const identifiers = normalizeCaseResolverIdentifiers([
+      { id: 'child', name: 'Child', parentId: 'parent' },
+      { id: 'parent', name: 'Parent' },
+      { id: 'orphan', name: 'Orphan', parentId: 'missing' },
+      { id: 'self', name: 'Self', parentId: 'self' },
+      { id: 'cycle-a', name: 'Cycle A', parentId: 'cycle-b' },
+      { id: 'cycle-b', name: 'Cycle B', parentId: 'cycle-a' },
+    ]);
+
+    const byId = new Map(identifiers.map((identifier) => [identifier.id, identifier]));
+    expect(byId.get('child')?.parentId).toBe('parent');
+    expect(byId.get('parent')?.parentId).toBeNull();
+    expect(byId.get('orphan')?.parentId).toBeNull();
+    expect(byId.get('self')?.parentId).toBeNull();
+    expect(byId.get('cycle-a')?.parentId).toBeNull();
+    expect(byId.get('cycle-b')?.parentId).toBeNull();
+    expect(identifiers.map((identifier) => identifier.id)).toEqual([
+      'cycle-a',
+      'cycle-b',
+      'orphan',
+      'parent',
+      'child',
+      'self',
+    ]);
+
+    expect(parseCaseResolverIdentifiers('not-json')).toEqual([]);
   });
 
   it('adds document textfield/content ports for linked document nodes', () => {

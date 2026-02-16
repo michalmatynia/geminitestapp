@@ -1,13 +1,27 @@
 export const runtime = 'nodejs';
 
-import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
-import { z } from 'zod';
 
+import {
+  IMAGE_STUDIO_CROP_ERROR_CODES,
+  imageStudioCropRequestSchema,
+  type ImageStudioCropErrorCode,
+  type ImageStudioCropPoint,
+  type ImageStudioCropRect,
+  type ImageStudioCropRequest,
+} from '@/features/ai/image-studio/contracts/crop';
+import {
+  buildCropFingerprint,
+  buildCropFingerprintRelationType,
+  buildCropRequestRelationType,
+  clampCropRect,
+  validateCropOutputDimensions,
+  validateCropSourceDimensions,
+} from '@/features/ai/image-studio/server/crop-utils';
 import {
   getImageStudioSlotLinkBySourceAndRelation,
   upsertImageStudioSlotLink,
@@ -17,43 +31,43 @@ import {
   getImageStudioSlotById,
 } from '@/features/ai/image-studio/server/slot-repository';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { logSystemEvent } from '@/features/observability/server';
+import { badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-const pointSchema = z.object({
-  x: z.number().finite().min(0).max(1),
-  y: z.number().finite().min(0).max(1),
-});
-
-const cropRectSchema = z.object({
-  x: z.number().finite().min(0),
-  y: z.number().finite().min(0),
-  width: z.number().finite().positive(),
-  height: z.number().finite().positive(),
-});
-
-const payloadSchema = z.object({
-  mode: z.enum(['client_bbox', 'server_bbox', 'server_polygon']),
-  cropRect: cropRectSchema.optional(),
-  polygon: z.array(pointSchema).min(3).optional(),
-  dataUrl: z.string().trim().min(1).optional(),
-  name: z.string().trim().min(1).max(180).optional(),
-});
-
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'crops');
+const SOURCE_FETCH_TIMEOUT_MS = 15_000;
+const CROP_PIPELINE_VERSION = process.env['IMAGE_STUDIO_CROP_PIPELINE_VERSION']?.trim() || 'v2';
+const STRICT_SERVER_CROP_ENABLED = process.env['IMAGE_STUDIO_CROP_SERVER_AUTHORITATIVE'] !== 'false';
 
-type CropRect = z.infer<typeof cropRectSchema>;
-type CropPayload = z.infer<typeof payloadSchema>;
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 type UploadedClientCropImage = {
   buffer: Buffer;
   mime: string;
 };
-type CropPoint = { x: number; y: number };
 
-const isFileLike = (value: FormDataEntryValue | null): value is File =>
-  typeof File !== 'undefined' && value instanceof File;
+type CropProcessingResult = {
+  outputBuffer: Buffer;
+  outputMime: string;
+  cropRect: ImageStudioCropRect | null;
+  outputWidth: number | null;
+  outputHeight: number | null;
+  effectiveMode: ImageStudioCropRequest['mode'];
+  authoritativeSource: 'source_slot' | 'client_upload_fallback';
+};
+
+const isFileLike = (value: FormDataEntryValue | null): value is File => {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<File>;
+  return typeof candidate.size === 'number' && typeof candidate.arrayBuffer === 'function';
+};
+
+const cropBadRequest = (
+  cropErrorCode: ImageStudioCropErrorCode,
+  message: string,
+  meta?: Record<string, unknown>
+) => badRequestError(message, { cropErrorCode, ...(meta ?? {}) });
 
 const parseJsonFormValue = <T>(value: FormDataEntryValue | null): T | undefined => {
   if (typeof value !== 'string') return undefined;
@@ -71,6 +85,12 @@ const sanitizeSegment = (value: string): string =>
 
 const sanitizeFilename = (value: string): string =>
   value.replace(/[^a-zA-Z0-9._-]/g, '_');
+
+const readIdempotencyKey = (req: NextRequest): string | null => {
+  const headerValue = req.headers.get('x-idempotency-key') ?? req.headers.get('x-crop-request-id');
+  const normalized = headerValue?.trim() ?? '';
+  return normalized.length >= 8 ? normalized : null;
+};
 
 function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
   const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/i);
@@ -99,10 +119,11 @@ async function parseCropRequestPayload(
   }
 
   const mode = form.get('mode');
-  const cropRect = parseJsonFormValue<CropRect>(form.get('cropRect'));
-  const polygon = parseJsonFormValue<Array<{ x: number; y: number }>>(form.get('polygon'));
+  const cropRect = parseJsonFormValue<ImageStudioCropRect>(form.get('cropRect'));
+  const polygon = parseJsonFormValue<Array<ImageStudioCropPoint>>(form.get('polygon'));
   const dataUrl = form.get('dataUrl');
   const name = form.get('name');
+  const requestId = form.get('requestId');
   const image = form.get('image');
 
   let uploadedClientImage: UploadedClientCropImage | null = null;
@@ -110,7 +131,7 @@ async function parseCropRequestPayload(
     const arrayBuffer = await image.arrayBuffer();
     uploadedClientImage = {
       buffer: Buffer.from(arrayBuffer),
-      mime: image.type?.trim().toLowerCase() || 'image/png',
+      mime: (typeof image.type === 'string' ? image.type.trim().toLowerCase() : '') || 'image/png',
     };
   }
 
@@ -121,6 +142,7 @@ async function parseCropRequestPayload(
       ...(polygon ? { polygon } : {}),
       ...(typeof dataUrl === 'string' ? { dataUrl } : {}),
       ...(typeof name === 'string' ? { name } : {}),
+      ...(typeof requestId === 'string' ? { requestId } : {}),
     },
     uploadedClientImage,
   };
@@ -158,25 +180,41 @@ async function loadSourceBuffer(slot: StudioSlotRecord): Promise<{ buffer: Buffe
 
   const sourcePath = slot.imageFile?.filepath ?? slot.imageUrl ?? null;
   if (!sourcePath) {
-    throw badRequestError('Slot has no source image to crop.');
+    throw cropBadRequest(
+      IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
+      'Slot has no source image to crop.'
+    );
   }
 
   const normalizedPath = normalizePublicPath(sourcePath);
   if (!normalizedPath) {
-    throw badRequestError('Slot source image path is invalid.');
+    throw cropBadRequest(
+      IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_INVALID,
+      'Slot source image path is invalid.'
+    );
   }
 
   if (/^https?:\/\//i.test(normalizedPath)) {
-    const response = await fetch(normalizedPath);
-    if (!response.ok) {
-      throw badRequestError(`Failed to fetch source image (${response.status}).`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), SOURCE_FETCH_TIMEOUT_MS);
+    try {
+      const response = await fetch(normalizedPath, { signal: controller.signal });
+      if (!response.ok) {
+        throw cropBadRequest(
+          IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_INVALID,
+          `Failed to fetch source image (${response.status}).`,
+          { status: response.status }
+        );
+      }
+      const contentType = response.headers.get('content-type');
+      const arrayBuffer = await response.arrayBuffer();
+      return {
+        buffer: Buffer.from(arrayBuffer),
+        mimeHint: contentType ? contentType.toLowerCase() : null,
+      };
+    } finally {
+      clearTimeout(timeoutId);
     }
-    const contentType = response.headers.get('content-type');
-    const arrayBuffer = await response.arrayBuffer();
-    return {
-      buffer: Buffer.from(arrayBuffer),
-      mimeHint: contentType ? contentType.toLowerCase() : null,
-    };
   }
 
   const diskPath = getDiskPathFromPublicPath(normalizedPath);
@@ -187,85 +225,18 @@ async function loadSourceBuffer(slot: StudioSlotRecord): Promise<{ buffer: Buffe
   };
 }
 
-function clampCropRect(rect: CropRect, width: number, height: number): sharp.Region {
-  const left = Math.floor(rect.x);
-  const top = Math.floor(rect.y);
-  const requestedWidth = Math.floor(rect.width);
-  const requestedHeight = Math.floor(rect.height);
-
-  const safeLeft = Math.max(0, Math.min(left, width - 1));
-  const safeTop = Math.max(0, Math.min(top, height - 1));
-  const safeWidth = Math.max(1, Math.min(requestedWidth, width - safeLeft));
-  const safeHeight = Math.max(1, Math.min(requestedHeight, height - safeTop));
-
-  return {
-    left: safeLeft,
-    top: safeTop,
-    width: safeWidth,
-    height: safeHeight,
-  };
-}
-
 function polygonToPath(points: Array<{ x: number; y: number }>): string {
   return points
     .map((point) => `${Number(point.x.toFixed(2))},${Number(point.y.toFixed(2))}`)
     .join(' ');
 }
 
-const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
-
-const normalizeCropRectForFingerprint = (rect: CropRect | undefined): CropRect | null => {
-  if (!rect) return null;
-  return {
-    x: Math.max(0, Math.floor(rect.x)),
-    y: Math.max(0, Math.floor(rect.y)),
-    width: Math.max(1, Math.floor(rect.width)),
-    height: Math.max(1, Math.floor(rect.height)),
-  };
-};
-
-const normalizePolygonForFingerprint = (
-  polygon: Array<CropPoint> | undefined
-): Array<CropPoint> | null => {
-  if (!polygon || polygon.length === 0) return null;
-  return polygon.map((point) => ({
-    x: Number(clampUnit(point.x).toFixed(5)),
-    y: Number(clampUnit(point.y).toFixed(5)),
-  }));
-};
-
-const buildCropDedupeRelationType = (
-  sourceSlot: StudioSlotRecord,
-  payload: CropPayload,
-  now: number
-): string => {
-  const sourceSignature = [
-    sourceSlot.id,
-    sourceSlot.projectId,
-    sourceSlot.imageFileId ?? '',
-    sourceSlot.imageFile?.filepath ?? sourceSlot.imageUrl ?? '',
-    sourceSlot.imageBase64 ? `b64:${sourceSlot.imageBase64.length}` : '',
-  ].join('|');
-  const fingerprintPayload = {
-    sourceSignature,
-    mode: payload.mode,
-    cropRect: normalizeCropRectForFingerprint(payload.cropRect),
-    polygon: normalizePolygonForFingerprint(payload.polygon),
-  };
-  const fingerprint = createHash('sha1')
-    .update(JSON.stringify(fingerprintPayload))
-    .digest('hex')
-    .slice(0, 16);
-  const dedupeBucket = Math.floor(now / 4000);
-  return `crop:output:${fingerprint}:${dedupeBucket}`;
-};
-
 async function cropByPolygonMask(
   sourceBuffer: Buffer,
   polygon: Array<{ x: number; y: number }>,
   width: number,
   height: number
-): Promise<{ outputBuffer: Buffer; cropRect: CropRect }> {
+): Promise<{ outputBuffer: Buffer; cropRect: ImageStudioCropRect }> {
   const pxPoints = polygon.map((point) => ({
     x: Math.max(0, Math.min(1, point.x)) * width,
     y: Math.max(0, Math.min(1, point.y)) * height,
@@ -319,177 +290,471 @@ async function cropByPolygonMask(
   };
 }
 
+async function processCropPayload(input: {
+  payload: ImageStudioCropRequest;
+  sourceSlot: StudioSlotRecord;
+  uploadedClientImage: UploadedClientCropImage | null;
+}): Promise<CropProcessingResult> {
+  const { payload, sourceSlot, uploadedClientImage } = input;
+  const preferAuthoritativeSource =
+    STRICT_SERVER_CROP_ENABLED || payload.mode === 'server_bbox' || payload.mode === 'server_polygon';
+
+  let sourceBuffer: Buffer | null = null;
+  let sourceWidth = 0;
+  let sourceHeight = 0;
+  let sourceLoadError: unknown = null;
+
+  if (preferAuthoritativeSource || payload.mode === 'client_bbox') {
+    try {
+      const source = await loadSourceBuffer(sourceSlot);
+      const metadata = await sharp(source.buffer).metadata();
+      sourceWidth = metadata.width ?? sourceSlot.imageFile?.width ?? 0;
+      sourceHeight = metadata.height ?? sourceSlot.imageFile?.height ?? 0;
+      const sourceValidation = validateCropSourceDimensions(sourceWidth, sourceHeight);
+      if (!sourceValidation.ok) {
+        throw cropBadRequest(
+          IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_TOO_LARGE,
+          'Source image exceeds crop processing limits.',
+          {
+            reason: sourceValidation.reason,
+            width: sourceWidth,
+            height: sourceHeight,
+          }
+        );
+      }
+      sourceBuffer = source.buffer;
+    } catch (error) {
+      sourceLoadError = error;
+    }
+  }
+
+  if (payload.mode === 'server_polygon') {
+    if (!sourceBuffer || !(sourceWidth > 0 && sourceHeight > 0)) {
+      throw sourceLoadError instanceof Error
+        ? sourceLoadError
+        : cropBadRequest(
+          IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
+          'Server polygon crop requires a resolvable source image.'
+        );
+    }
+
+    const polygonResult = await cropByPolygonMask(
+      sourceBuffer,
+      payload.polygon ?? [],
+      sourceWidth,
+      sourceHeight
+    );
+
+    const outputValid = validateCropOutputDimensions(
+      polygonResult.cropRect.width,
+      polygonResult.cropRect.height
+    );
+    if (!outputValid) {
+      throw cropBadRequest(
+        IMAGE_STUDIO_CROP_ERROR_CODES.OUTPUT_INVALID,
+        'Cropped polygon output exceeds crop limits.',
+        { width: polygonResult.cropRect.width, height: polygonResult.cropRect.height }
+      );
+    }
+
+    return {
+      outputBuffer: polygonResult.outputBuffer,
+      outputMime: 'image/png',
+      cropRect: polygonResult.cropRect,
+      outputWidth: polygonResult.cropRect.width,
+      outputHeight: polygonResult.cropRect.height,
+      effectiveMode: 'server_polygon',
+      authoritativeSource: 'source_slot',
+    };
+  }
+
+  const requestedRect = payload.cropRect;
+  if (!requestedRect) {
+    throw cropBadRequest(
+      IMAGE_STUDIO_CROP_ERROR_CODES.CROP_RECT_INVALID,
+      'Bounding box crop requires cropRect.'
+    );
+  }
+
+  if (sourceBuffer && sourceWidth > 0 && sourceHeight > 0) {
+    const region = clampCropRect(requestedRect, sourceWidth, sourceHeight);
+    const outputValid = validateCropOutputDimensions(region.width, region.height);
+    if (!outputValid) {
+      throw cropBadRequest(
+        IMAGE_STUDIO_CROP_ERROR_CODES.OUTPUT_INVALID,
+        'Cropped output exceeds crop limits.',
+        { width: region.width, height: region.height }
+      );
+    }
+
+    const outputBuffer = await sharp(sourceBuffer).extract(region).png().toBuffer();
+    return {
+      outputBuffer,
+      outputMime: 'image/png',
+      cropRect: {
+        x: region.left,
+        y: region.top,
+        width: region.width,
+        height: region.height,
+      },
+      outputWidth: region.width,
+      outputHeight: region.height,
+      effectiveMode: 'server_bbox',
+      authoritativeSource: 'source_slot',
+    };
+  }
+
+  if (payload.mode !== 'client_bbox') {
+    throw sourceLoadError instanceof Error
+      ? sourceLoadError
+      : cropBadRequest(
+        IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_IMAGE_MISSING,
+        'Server crop requires a resolvable source image.'
+      );
+  }
+
+  if (uploadedClientImage) {
+    const metadata = await sharp(uploadedClientImage.buffer).metadata().catch(() => null);
+    const outputWidth = metadata?.width ?? null;
+    const outputHeight = metadata?.height ?? null;
+    if (outputWidth && outputHeight && !validateCropOutputDimensions(outputWidth, outputHeight)) {
+      throw cropBadRequest(
+        IMAGE_STUDIO_CROP_ERROR_CODES.OUTPUT_INVALID,
+        'Uploaded crop output exceeds crop limits.',
+        { width: outputWidth, height: outputHeight }
+      );
+    }
+
+    return {
+      outputBuffer: uploadedClientImage.buffer,
+      outputMime: uploadedClientImage.mime,
+      cropRect: requestedRect,
+      outputWidth,
+      outputHeight,
+      effectiveMode: 'client_bbox',
+      authoritativeSource: 'client_upload_fallback',
+    };
+  }
+
+  const parsedData = parseDataUrl(payload.dataUrl ?? '');
+  if (!parsedData) {
+    throw cropBadRequest(
+      IMAGE_STUDIO_CROP_ERROR_CODES.CLIENT_DATA_URL_INVALID,
+      'Invalid crop image data URL.'
+    );
+  }
+
+  const metadata = await sharp(parsedData.buffer).metadata().catch(() => null);
+  const outputWidth = metadata?.width ?? null;
+  const outputHeight = metadata?.height ?? null;
+  if (outputWidth && outputHeight && !validateCropOutputDimensions(outputWidth, outputHeight)) {
+    throw cropBadRequest(
+      IMAGE_STUDIO_CROP_ERROR_CODES.OUTPUT_INVALID,
+      'Data URL crop output exceeds crop limits.',
+      { width: outputWidth, height: outputHeight }
+    );
+  }
+
+  return {
+    outputBuffer: parsedData.buffer,
+    outputMime: parsedData.mime,
+    cropRect: requestedRect,
+    outputWidth,
+    outputHeight,
+    effectiveMode: 'client_bbox',
+    authoritativeSource: 'client_upload_fallback',
+  };
+}
+
 async function POST_handler(
   req: NextRequest,
-  _ctx: ApiHandlerContext,
+  ctx: ApiHandlerContext,
   params: { slotId: string }
 ): Promise<Response> {
   const slotId = params.slotId?.trim() ?? '';
-  if (!slotId) throw badRequestError('Slot id is required.');
+  if (!slotId) {
+    throw cropBadRequest(IMAGE_STUDIO_CROP_ERROR_CODES.INVALID_PAYLOAD, 'Slot id is required.');
+  }
 
+  const startedAt = Date.now();
   const { body, uploadedClientImage } = await parseCropRequestPayload(req);
-  const parsed = payloadSchema.safeParse(body);
+  const parsed = imageStudioCropRequestSchema.safeParse(body);
   if (!parsed.success) {
-    throw badRequestError('Invalid payload.', { errors: parsed.error.format() });
+    throw cropBadRequest(
+      IMAGE_STUDIO_CROP_ERROR_CODES.INVALID_PAYLOAD,
+      'Invalid crop payload.',
+      { errors: parsed.error.format() }
+    );
   }
 
   const sourceSlot = await getImageStudioSlotById(slotId);
-  if (!sourceSlot) throw notFoundError('Source slot not found.');
+  if (!sourceSlot) {
+    throw notFoundError('Source slot not found.', {
+      cropErrorCode: IMAGE_STUDIO_CROP_ERROR_CODES.SOURCE_SLOT_MISSING,
+      slotId,
+    });
+  }
 
-  const payload = parsed.data;
-  const now = Date.now();
-  const dedupeRelationType = buildCropDedupeRelationType(sourceSlot, payload, now);
-  const existingLink = await getImageStudioSlotLinkBySourceAndRelation(
+  const idempotencyKey = parsed.data.requestId?.trim() || readIdempotencyKey(req);
+  const payload: ImageStudioCropRequest = {
+    ...parsed.data,
+    ...(idempotencyKey ? { requestId: idempotencyKey } : {}),
+  };
+
+  if (payload.mode === 'client_bbox' && !payload.dataUrl && !uploadedClientImage && STRICT_SERVER_CROP_ENABLED === false) {
+    throw cropBadRequest(
+      IMAGE_STUDIO_CROP_ERROR_CODES.CLIENT_IMAGE_REQUIRED,
+      'Client crop requires uploaded image or dataUrl when authoritative server mode is disabled.'
+    );
+  }
+
+  const sourceSignature = [
+    sourceSlot.id,
+    sourceSlot.projectId,
+    sourceSlot.imageFileId ?? '',
+    sourceSlot.imageFile?.filepath ?? sourceSlot.imageUrl ?? '',
+    sourceSlot.imageBase64 ? `b64:${sourceSlot.imageBase64.length}` : '',
+  ].join('|');
+
+  const fingerprint = buildCropFingerprint({
+    sourceSignature,
+    mode: payload.mode,
+    cropRect: payload.cropRect,
+    polygon: payload.polygon,
+  });
+  const fingerprintRelationType = buildCropFingerprintRelationType(fingerprint);
+  const requestRelationType = idempotencyKey ? buildCropRequestRelationType(idempotencyKey) : null;
+
+  if (requestRelationType) {
+    const existingByRequest = await getImageStudioSlotLinkBySourceAndRelation(
+      sourceSlot.projectId,
+      sourceSlot.id,
+      requestRelationType
+    );
+    if (existingByRequest) {
+      const existingSlot = await getImageStudioSlotById(existingByRequest.targetSlotId);
+      if (existingSlot) {
+        return NextResponse.json(
+          {
+            slot: existingSlot,
+            mode: payload.mode,
+            effectiveMode: payload.mode,
+            cropRect: payload.cropRect ?? null,
+            requestId: idempotencyKey,
+            fingerprint,
+            deduplicated: true,
+            dedupeReason: 'request',
+            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+          },
+          { status: 200 }
+        );
+      }
+    }
+  }
+
+  const existingFingerprintLink = await getImageStudioSlotLinkBySourceAndRelation(
     sourceSlot.projectId,
     sourceSlot.id,
-    dedupeRelationType
+    fingerprintRelationType
   );
-  if (existingLink) {
-    const existingSlot = await getImageStudioSlotById(existingLink.targetSlotId);
+  if (existingFingerprintLink) {
+    const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
     if (existingSlot) {
       return NextResponse.json(
         {
           slot: existingSlot,
           mode: payload.mode,
+          effectiveMode: payload.mode,
           cropRect: payload.cropRect ?? null,
+          requestId: idempotencyKey,
+          fingerprint,
           deduplicated: true,
+          dedupeReason: 'fingerprint',
+          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
         },
         { status: 200 }
       );
     }
   }
 
-  if (payload.mode === 'client_bbox') {
-    if (!payload.dataUrl && !uploadedClientImage) {
-      throw badRequestError('Client crop requires an uploaded image or dataUrl.');
-    }
-  } else if (payload.mode === 'server_bbox') {
-    if (!payload.cropRect) {
-      throw badRequestError('Server bbox crop requires cropRect.');
-    }
-  } else if (!payload.polygon || payload.polygon.length < 3) {
-    throw badRequestError('Polygon crop requires at least 3 points.');
-  }
+  try {
+    const processed = await processCropPayload({
+      payload,
+      sourceSlot,
+      uploadedClientImage,
+    });
 
-  let outputBuffer: Buffer;
-  let outputMime = 'image/png';
-  let cropRect: CropRect | null = payload.cropRect ?? null;
-
-  if (payload.mode === 'client_bbox') {
-    if (uploadedClientImage) {
-      outputBuffer = uploadedClientImage.buffer;
-      outputMime = uploadedClientImage.mime;
-    } else {
-      const parsedData = parseDataUrl(payload.dataUrl ?? '');
-      if (!parsedData) {
-        throw badRequestError('Invalid crop image data URL.');
-      }
-      outputBuffer = parsedData.buffer;
-      outputMime = parsedData.mime;
-    }
-  } else {
-    const source = await loadSourceBuffer(sourceSlot);
-    const metadata = await sharp(source.buffer).metadata();
-    const sourceWidth = metadata.width ?? 0;
-    const sourceHeight = metadata.height ?? 0;
-    if (!(sourceWidth > 0 && sourceHeight > 0)) {
-      throw badRequestError('Source image dimensions are invalid.');
-    }
-
-    if (payload.mode === 'server_bbox') {
-      const region = clampCropRect(payload.cropRect!, sourceWidth, sourceHeight);
-      outputBuffer = await sharp(source.buffer).extract(region).png().toBuffer();
-      cropRect = {
-        x: region.left,
-        y: region.top,
-        width: region.width,
-        height: region.height,
-      };
-      outputMime = 'image/png';
-    } else {
-      const polygonResult = await cropByPolygonMask(
-        source.buffer,
-        payload.polygon!,
-        sourceWidth,
-        sourceHeight
-      );
-      outputBuffer = polygonResult.outputBuffer;
-      cropRect = polygonResult.cropRect;
-      outputMime = 'image/png';
-    }
-  }
-
-  const ext = guessExtension(outputMime);
-  const safeProjectId = sanitizeSegment(sourceSlot.projectId);
-  const safeSourceSlotId = sanitizeSegment(sourceSlot.id);
-  const baseName =
-    sanitizeFilename(payload.name ?? '') ||
-    `crop-${payload.mode}-${now}`;
-  const fileName = baseName.endsWith(ext) ? baseName : `${baseName}${ext}`;
-
-  const diskDir = path.join(uploadsRoot, safeProjectId, safeSourceSlotId);
-  const diskPath = path.join(diskDir, fileName);
-  const publicPath = `/uploads/studio/crops/${safeProjectId}/${safeSourceSlotId}/${fileName}`;
-
-  await fs.mkdir(diskDir, { recursive: true });
-  await fs.writeFile(diskPath, outputBuffer);
-
-  const imageFileRepository = await getImageFileRepository();
-  const imageFile = await imageFileRepository.createImageFile({
-    filename: fileName,
-    filepath: publicPath,
-    mimetype: outputMime,
-    size: outputBuffer.length,
-  });
-
-  const sourceLabel = sourceSlot.name?.trim() || sourceSlot.id;
-  const createdSlots = await createImageStudioSlots(sourceSlot.projectId, [
-    {
-      name: `${sourceLabel} • Crop`,
-      folderPath: sourceSlot.folderPath ?? null,
-      imageFileId: imageFile.id,
-      imageUrl: imageFile.filepath,
-      imageBase64: null,
-      metadata: {
-        role: 'generation',
-        sourceSlotId: sourceSlot.id,
-        sourceSlotIds: [sourceSlot.id],
-        relationType: 'crop:output',
-        crop: {
+    if (processed.authoritativeSource === 'client_upload_fallback') {
+      void logSystemEvent({
+        level: 'warn',
+        source: 'image-studio.crop',
+        message: 'Crop fell back to client-provided payload because source image was unavailable.',
+        request: req,
+        requestId: ctx.requestId,
+        context: {
+          projectId: sourceSlot.projectId,
+          sourceSlotId: sourceSlot.id,
           mode: payload.mode,
-          cropRect,
-          polygon: payload.mode === 'server_polygon' ? payload.polygon : undefined,
-          timestamp: new Date(now).toISOString(),
+          requestId: idempotencyKey,
+          fingerprint,
+        },
+      });
+    }
+
+    const ext = guessExtension(processed.outputMime);
+    const now = Date.now();
+    const safeProjectId = sanitizeSegment(sourceSlot.projectId);
+    const safeSourceSlotId = sanitizeSegment(sourceSlot.id);
+    const baseName = sanitizeFilename(payload.name ?? '') || `crop-${payload.mode}-${now}`;
+    const fileName = baseName.endsWith(ext) ? baseName : `${baseName}${ext}`;
+
+    const diskDir = path.join(uploadsRoot, safeProjectId, safeSourceSlotId);
+    const diskPath = path.join(diskDir, fileName);
+    const publicPath = `/uploads/studio/crops/${safeProjectId}/${safeSourceSlotId}/${fileName}`;
+
+    await fs.mkdir(diskDir, { recursive: true });
+    await fs.writeFile(diskPath, processed.outputBuffer);
+
+    const imageFileRepository = await getImageFileRepository();
+    const imageFile = await imageFileRepository.createImageFile({
+      filename: fileName,
+      filepath: publicPath,
+      mimetype: processed.outputMime,
+      size: processed.outputBuffer.length,
+      width: processed.outputWidth,
+      height: processed.outputHeight,
+    });
+
+    const sourceLabel = sourceSlot.name?.trim() || sourceSlot.id;
+    const createdSlots = await createImageStudioSlots(sourceSlot.projectId, [
+      {
+        name: `${sourceLabel} • Crop`,
+        folderPath: sourceSlot.folderPath ?? null,
+        imageFileId: imageFile.id,
+        imageUrl: imageFile.filepath,
+        imageBase64: null,
+        metadata: {
+          role: 'generation',
+          sourceSlotId: sourceSlot.id,
+          sourceSlotIds: [sourceSlot.id],
+          relationType: 'crop:output',
+          crop: {
+            mode: payload.mode,
+            effectiveMode: processed.effectiveMode,
+            authoritativeSource: processed.authoritativeSource,
+            cropRect: processed.cropRect,
+            polygon: payload.mode === 'server_polygon' ? payload.polygon : undefined,
+            requestId: idempotencyKey,
+            fingerprint,
+            pipelineVersion: CROP_PIPELINE_VERSION,
+            timestamp: new Date(now).toISOString(),
+          },
         },
       },
-    },
-  ]);
+    ]);
 
-  const createdSlot = createdSlots[0];
-  if (!createdSlot) {
-    throw badRequestError('Failed to create cropped slot.');
+    const createdSlot = createdSlots[0];
+    if (!createdSlot) {
+      throw cropBadRequest(
+        IMAGE_STUDIO_CROP_ERROR_CODES.OUTPUT_PERSIST_FAILED,
+        'Failed to create cropped slot.'
+      );
+    }
+
+    await upsertImageStudioSlotLink({
+      projectId: sourceSlot.projectId,
+      sourceSlotId: sourceSlot.id,
+      targetSlotId: createdSlot.id,
+      relationType: fingerprintRelationType,
+      metadata: {
+        mode: payload.mode,
+        effectiveMode: processed.effectiveMode,
+        cropRect: processed.cropRect,
+        fingerprint,
+        requestId: idempotencyKey,
+        pipelineVersion: CROP_PIPELINE_VERSION,
+      },
+    });
+
+    if (requestRelationType) {
+      await upsertImageStudioSlotLink({
+        projectId: sourceSlot.projectId,
+        sourceSlotId: sourceSlot.id,
+        targetSlotId: createdSlot.id,
+        relationType: requestRelationType,
+        metadata: {
+          mode: payload.mode,
+          effectiveMode: processed.effectiveMode,
+          cropRect: processed.cropRect,
+          fingerprint,
+          requestId: idempotencyKey,
+          pipelineVersion: CROP_PIPELINE_VERSION,
+        },
+      });
+    }
+
+    const durationMs = Date.now() - startedAt;
+    void logSystemEvent({
+      level: 'info',
+      source: 'image-studio.crop',
+      message: 'Image Studio crop persisted.',
+      request: req,
+      requestId: ctx.requestId,
+      context: {
+        projectId: sourceSlot.projectId,
+        sourceSlotId: sourceSlot.id,
+        createdSlotId: createdSlot.id,
+        mode: payload.mode,
+        effectiveMode: processed.effectiveMode,
+        authoritativeSource: processed.authoritativeSource,
+        outputWidth: processed.outputWidth,
+        outputHeight: processed.outputHeight,
+        outputBytes: processed.outputBuffer.length,
+        durationMs,
+        requestId: idempotencyKey,
+        fingerprint,
+        pipelineVersion: CROP_PIPELINE_VERSION,
+      },
+    });
+
+    return NextResponse.json(
+      {
+        slot: createdSlot,
+        imageFile,
+        mode: payload.mode,
+        effectiveMode: processed.effectiveMode,
+        cropRect: processed.cropRect,
+        requestId: idempotencyKey,
+        fingerprint,
+        deduplicated: false,
+        lifecycle: {
+          state: 'persisted',
+          durationMs,
+        },
+        pipelineVersion: CROP_PIPELINE_VERSION,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    void logSystemEvent({
+      level: 'warn',
+      source: 'image-studio.crop',
+      message: 'Image Studio crop failed.',
+      request: req,
+      requestId: ctx.requestId,
+      error,
+      context: {
+        projectId: sourceSlot.projectId,
+        sourceSlotId: sourceSlot.id,
+        mode: payload.mode,
+        requestId: idempotencyKey,
+        fingerprint,
+        cropErrorCode: isAppError(error) ? error.meta?.['cropErrorCode'] : undefined,
+        durationMs: Date.now() - startedAt,
+      },
+    });
+    throw error;
   }
-
-  await upsertImageStudioSlotLink({
-    projectId: sourceSlot.projectId,
-    sourceSlotId: sourceSlot.id,
-    targetSlotId: createdSlot.id,
-    relationType: dedupeRelationType,
-    metadata: {
-      mode: payload.mode,
-      cropRect,
-    },
-  });
-
-  return NextResponse.json(
-    {
-      slot: createdSlot,
-      imageFile,
-      mode: payload.mode,
-      cropRect,
-    },
-    { status: 201 }
-  );
 }
 
 export const POST = apiHandlerWithParams<{ slotId: string }>(

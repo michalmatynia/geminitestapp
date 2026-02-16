@@ -13,11 +13,13 @@ import type { FilterField } from '@/shared/ui/templates/panels';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
+  CASE_RESOLVER_IDENTIFIERS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverFile,
   normalizeCaseResolverWorkspace,
   parseCaseResolverCategories,
+  parseCaseResolverIdentifiers,
   parseCaseResolverTags,
   parseCaseResolverWorkspace,
 } from '../settings';
@@ -26,6 +28,7 @@ import type {
   CaseResolverCategory,
   CaseResolverFile,
   CaseResolverFileType,
+  CaseResolverIdentifier,
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '../types';
@@ -59,6 +62,7 @@ type IndexedCaseRow = {
   normalizedFolder: string;
   normalizedContent: string;
   normalizedTag: string;
+  normalizedCaseIdentifier: string;
   normalizedCategory: string;
 };
 type CaseFileComparator = (left: CaseResolverFile, right: CaseResolverFile) => number;
@@ -216,6 +220,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
   const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
+  const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
   const parsedWorkspace = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
@@ -224,6 +229,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const caseResolverTags = useMemo(
     (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
     [rawCaseResolverTags]
+  );
+  const caseResolverIdentifiers = useMemo(
+    (): CaseResolverIdentifier[] => parseCaseResolverIdentifiers(rawCaseResolverIdentifiers),
+    [rawCaseResolverIdentifiers]
   );
   const caseResolverCategories = useMemo(
     (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
@@ -236,6 +245,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         label: tag.name,
       })),
     [caseResolverTags]
+  );
+  const caseResolverIdentifierOptions = useMemo(
+    () =>
+      caseResolverIdentifiers.map((identifier: CaseResolverIdentifier) => ({
+        value: identifier.id,
+        label: identifier.name,
+      })),
+    [caseResolverIdentifiers]
   );
   const caseResolverCategoryOptions = useMemo(() => {
     const byId = new Map<string, CaseResolverCategory>(
@@ -262,6 +279,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       .sort((left, right) => left.label.localeCompare(right.label));
   }, [caseResolverCategories]);
   const defaultTagId = caseResolverTags[0]?.id ?? null;
+  const defaultCaseIdentifierId = caseResolverIdentifiers[0]?.id ?? null;
   const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
   const [workspace, setWorkspace] = useState<CaseResolverWorkspace>(parsedWorkspace);
 
@@ -269,6 +287,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const [newCaseParentId, setNewCaseParentId] = useState<string | null>(null);
   const [newCaseReferenceCaseIds, setNewCaseReferenceCaseIds] = useState<string[]>([]);
   const [newCaseTagId, setNewCaseTagId] = useState<string | null>(defaultTagId);
+  const [newCaseCaseIdentifierId, setNewCaseCaseIdentifierId] = useState<string | null>(
+    defaultCaseIdentifierId
+  );
   const [newCaseCategoryId, setNewCaseCategoryId] = useState<string | null>(defaultCategoryId);
   const [isCreateCaseModalOpen, setIsCreateCaseModalOpen] = useState(false);
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
@@ -276,6 +297,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const [editingCaseParentId, setEditingCaseParentId] = useState<string | null>(null);
   const [editingCaseReferenceCaseIds, setEditingCaseReferenceCaseIds] = useState<string[]>([]);
   const [editingCaseTagId, setEditingCaseTagId] = useState<string | null>(null);
+  const [editingCaseCaseIdentifierId, setEditingCaseCaseIdentifierId] = useState<string | null>(
+    null
+  );
   const [editingCaseCategoryId, setEditingCaseCategoryId] = useState<string | null>(null);
   const [collapsedCaseIds, setCollapsedCaseIds] = useState<Set<string>>(new Set<string>());
   const [caseSearchQuery, setCaseSearchQuery] = useState('');
@@ -284,6 +308,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   );
   const [caseFileTypeFilter, setCaseFileTypeFilter] = useState<CaseFileTypeFilter>('all');
   const [caseFilterTagIds, setCaseFilterTagIds] = useState<string[]>([]);
+  const [caseFilterCaseIdentifierIds, setCaseFilterCaseIdentifierIds] = useState<string[]>([]);
   const [caseFilterCategoryIds, setCaseFilterCategoryIds] = useState<string[]>([]);
   const [caseFilterFolder, setCaseFilterFolder] = useState('__all__');
   const [caseSortBy, setCaseSortBy] = useState<CaseSortKey>(
@@ -334,6 +359,17 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   }, [caseResolverTags, defaultTagId]);
 
   useEffect(() => {
+    setNewCaseCaseIdentifierId((current: string | null) => {
+      if (!current) return defaultCaseIdentifierId;
+      return caseResolverIdentifiers.some(
+        (identifier: CaseResolverIdentifier) => identifier.id === current
+      )
+        ? current
+        : defaultCaseIdentifierId;
+    });
+  }, [caseResolverIdentifiers, defaultCaseIdentifierId]);
+
+  useEffect(() => {
     setNewCaseCategoryId((current: string | null) => {
       if (!current) return defaultCategoryId;
       return caseResolverCategories.some((category: CaseResolverCategory) => category.id === current)
@@ -373,6 +409,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     () => buildPathLabelMap(caseResolverTags),
     [caseResolverTags]
   );
+  const caseIdentifierPathById = useMemo(
+    () => buildPathLabelMap(caseResolverIdentifiers),
+    [caseResolverIdentifiers]
+  );
   const caseCategoryPathById = useMemo(
     () => buildPathLabelMap(caseResolverCategories),
     [caseResolverCategories]
@@ -392,6 +432,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         label: caseCategoryPathById.get(category.id) ?? category.name,
       })),
     [caseResolverCategories, caseCategoryPathById]
+  );
+  const caseIdentifierFilterOptions = useMemo(
+    () =>
+      caseResolverIdentifiers.map((identifier: CaseResolverIdentifier) => ({
+        value: identifier.id,
+        label: caseIdentifierPathById.get(identifier.id) ?? identifier.name,
+      })),
+    [caseIdentifierPathById, caseResolverIdentifiers]
   );
   const folderFilterOptions = useMemo(() => {
     const folders = Array.from(
@@ -435,6 +483,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         width: '280px',
       },
       {
+        key: 'caseIdentifierIds',
+        label: 'Case Identifiers',
+        type: 'select',
+        options: caseIdentifierFilterOptions,
+        multi: true,
+        width: '280px',
+      },
+      {
         key: 'categoryIds',
         label: 'Categories',
         type: 'select',
@@ -466,19 +522,26 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         width: '180px',
       },
     ],
-    [caseCategoryFilterOptions, caseTagFilterOptions, folderFilterOptions]
+    [
+      caseCategoryFilterOptions,
+      caseIdentifierFilterOptions,
+      caseTagFilterOptions,
+      folderFilterOptions,
+    ]
   );
   const caseFilterValues = useMemo(
     () => ({
       fileType: caseFileTypeFilter,
       folder: caseFilterFolder,
       tagIds: caseFilterTagIds,
+      caseIdentifierIds: caseFilterCaseIdentifierIds,
       categoryIds: caseFilterCategoryIds,
       searchScope: caseSearchScope,
       sortBy: caseSortBy,
     }),
     [
       caseFileTypeFilter,
+      caseFilterCaseIdentifierIds,
       caseFilterFolder,
       caseFilterTagIds,
       caseFilterCategoryIds,
@@ -525,16 +588,21 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         normalizedFolder: file.folder.toLowerCase(),
         normalizedContent: stripHtml(file.documentContent).toLowerCase(),
         normalizedTag: (file.tagId ? (caseTagPathById.get(file.tagId) ?? '') : '').toLowerCase(),
+        normalizedCaseIdentifier: (file.caseIdentifierId
+          ? (caseIdentifierPathById.get(file.caseIdentifierId) ?? '')
+          : ''
+        ).toLowerCase(),
         normalizedCategory: (file.categoryId
           ? (caseCategoryPathById.get(file.categoryId) ?? '')
           : ''
         ).toLowerCase(),
       })),
-    [caseCategoryPathById, caseTagPathById, files]
+    [caseCategoryPathById, caseIdentifierPathById, caseTagPathById, files]
   );
   const filteredCases = useMemo((): CaseResolverFile[] => {
     const normalizedQuery = caseSearchQuery.trim().toLowerCase();
     const hasTagFilter = caseFilterTagIds.length > 0;
+    const hasCaseIdentifierFilter = caseFilterCaseIdentifierIds.length > 0;
     const hasCategoryFilter = caseFilterCategoryIds.length > 0;
 
     const matchesSearch = (row: IndexedCaseRow): boolean => {
@@ -547,6 +615,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         row.normalizedFolder.includes(normalizedQuery) ||
         row.normalizedContent.includes(normalizedQuery) ||
         row.normalizedTag.includes(normalizedQuery) ||
+        row.normalizedCaseIdentifier.includes(normalizedQuery) ||
         row.normalizedCategory.includes(normalizedQuery)
       );
     };
@@ -556,6 +625,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         if (caseFileTypeFilter !== 'all' && row.file.fileType !== caseFileTypeFilter) return false;
         if (caseFilterFolder !== '__all__' && row.file.folder !== caseFilterFolder) return false;
         if (hasTagFilter && (!row.file.tagId || !caseFilterTagIds.includes(row.file.tagId))) return false;
+        if (
+          hasCaseIdentifierFilter &&
+          (!row.file.caseIdentifierId ||
+            !caseFilterCaseIdentifierIds.includes(row.file.caseIdentifierId))
+        ) {
+          return false;
+        }
         if (
           hasCategoryFilter &&
           (!row.file.categoryId || !caseFilterCategoryIds.includes(row.file.categoryId))
@@ -568,6 +644,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       .sort(caseSortComparator);
   }, [
     caseFileTypeFilter,
+    caseFilterCaseIdentifierIds,
     caseFilterCategoryIds,
     caseFilterFolder,
     caseFilterTagIds,
@@ -608,11 +685,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       caseFileTypeFilter !== 'all' ||
       caseFilterFolder !== '__all__' ||
       caseFilterTagIds.length > 0 ||
+      caseFilterCaseIdentifierIds.length > 0 ||
       caseFilterCategoryIds.length > 0 ||
       caseSortBy !== caseListViewDefaults.sortBy ||
       caseSortOrder !== caseListViewDefaults.sortOrder,
     [
       caseFileTypeFilter,
+      caseFilterCaseIdentifierIds,
       caseFilterCategoryIds,
       caseFilterFolder,
       caseFilterTagIds,
@@ -637,6 +716,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         break;
       case 'tagIds':
         setCaseFilterTagIds(
+          Array.isArray(value)
+            ? value.filter((entry): entry is string => typeof entry === 'string')
+            : []
+        );
+        break;
+      case 'caseIdentifierIds':
+        setCaseFilterCaseIdentifierIds(
           Array.isArray(value)
             ? value.filter((entry): entry is string => typeof entry === 'string')
             : []
@@ -669,6 +755,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     setCaseFileTypeFilter('all');
     setCaseFilterFolder('__all__');
     setCaseFilterTagIds([]);
+    setCaseFilterCaseIdentifierIds([]);
     setCaseFilterCategoryIds([]);
     setCaseSortBy(caseListViewDefaults.sortBy);
     setCaseSortOrder(caseListViewDefaults.sortOrder);
@@ -690,6 +777,17 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       current.filter((tagId: string): boolean => validTagIds.has(tagId))
     );
   }, [caseResolverTags]);
+
+  useEffect(() => {
+    const validCaseIdentifierIds = new Set(
+      caseResolverIdentifiers.map((identifier: CaseResolverIdentifier): string => identifier.id)
+    );
+    setCaseFilterCaseIdentifierIds((current: string[]): string[] =>
+      current.filter((caseIdentifierId: string): boolean =>
+        validCaseIdentifierIds.has(caseIdentifierId)
+      )
+    );
+  }, [caseResolverIdentifiers]);
 
   useEffect(() => {
     const validCategoryIds = new Set(
@@ -716,9 +814,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       setNewCaseParentId(parentCaseId);
       setNewCaseReferenceCaseIds([]);
       setNewCaseTagId(defaultTagId);
+      setNewCaseCaseIdentifierId(defaultCaseIdentifierId);
       setNewCaseCategoryId(defaultCategoryId);
     },
-    [defaultCategoryId, defaultTagId]
+    [defaultCaseIdentifierId, defaultCategoryId, defaultTagId]
   );
 
   const handleOpenCreateCaseModal = useCallback(
@@ -778,7 +877,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         toast(successMessage, { variant: 'success' });
       } catch (error: unknown) {
         toast(
-          error instanceof Error ? error.message : 'Failed to save Case Resolver cases.',
+          error instanceof Error
+            ? error.message
+            : 'Failed to save Case Resolver cases.',
           { variant: 'error' }
         );
       }
@@ -797,12 +898,23 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       newCaseTagId && caseResolverTags.some((tag: CaseResolverTag) => tag.id === newCaseTagId)
         ? newCaseTagId
         : null;
+    const normalizedCaseIdentifierId =
+      newCaseCaseIdentifierId &&
+      caseResolverIdentifiers.some(
+        (identifier: CaseResolverIdentifier) => identifier.id === newCaseCaseIdentifierId
+      )
+        ? newCaseCaseIdentifierId
+        : null;
     const normalizedCategoryId =
       newCaseCategoryId && caseResolverCategories.some((category: CaseResolverCategory) => category.id === newCaseCategoryId)
         ? newCaseCategoryId
         : null;
     if (caseResolverTags.length > 0 && !normalizedTagId) {
       toast('Select a document tag.', { variant: 'error' });
+      return;
+    }
+    if (caseResolverIdentifiers.length > 0 && !normalizedCaseIdentifierId) {
+      toast('Select a case identifier.', { variant: 'error' });
       return;
     }
     if (caseResolverCategories.length > 0 && !normalizedCategoryId) {
@@ -828,6 +940,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       parentCaseId: normalizedParentCaseId,
       referenceCaseIds: normalizedReferenceCaseIds,
       tagId: normalizedTagId,
+      caseIdentifierId: normalizedCaseIdentifierId,
       categoryId: normalizedCategoryId,
     });
 
@@ -843,7 +956,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     setIsCreateCaseModalOpen(false);
   }, [
     caseResolverCategories,
+    caseResolverIdentifiers,
     caseResolverTags,
+    newCaseCaseIdentifierId,
     newCaseCategoryId,
     newCaseParentId,
     newCaseReferenceCaseIds,
@@ -861,6 +976,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     setEditingCaseParentId(file.parentCaseId);
     setEditingCaseReferenceCaseIds(file.referenceCaseIds);
     setEditingCaseTagId(file.tagId);
+    setEditingCaseCaseIdentifierId(file.caseIdentifierId);
     setEditingCaseCategoryId(file.categoryId);
   }, []);
 
@@ -870,6 +986,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     setEditingCaseParentId(null);
     setEditingCaseReferenceCaseIds([]);
     setEditingCaseTagId(null);
+    setEditingCaseCaseIdentifierId(null);
     setEditingCaseCategoryId(null);
   }, []);
 
@@ -884,6 +1001,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       editingCaseTagId && caseResolverTags.some((tag: CaseResolverTag) => tag.id === editingCaseTagId)
         ? editingCaseTagId
         : null;
+    const normalizedCaseIdentifierId =
+      editingCaseCaseIdentifierId &&
+      caseResolverIdentifiers.some(
+        (identifier: CaseResolverIdentifier) => identifier.id === editingCaseCaseIdentifierId
+      )
+        ? editingCaseCaseIdentifierId
+        : null;
     const normalizedCategoryId =
       editingCaseCategoryId &&
       caseResolverCategories.some((category: CaseResolverCategory) => category.id === editingCaseCategoryId)
@@ -891,6 +1015,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         : null;
     if (caseResolverTags.length > 0 && !normalizedTagId) {
       toast('Select a document tag.', { variant: 'error' });
+      return;
+    }
+    if (caseResolverIdentifiers.length > 0 && !normalizedCaseIdentifierId) {
+      toast('Select a case identifier.', { variant: 'error' });
       return;
     }
     if (caseResolverCategories.length > 0 && !normalizedCategoryId) {
@@ -928,6 +1056,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             parentCaseId: normalizedParentCaseId,
             referenceCaseIds: normalizedReferenceCaseIds,
             tagId: normalizedTagId,
+            caseIdentifierId: normalizedCaseIdentifierId,
             categoryId: normalizedCategoryId,
             updatedAt: new Date().toISOString(),
           }
@@ -943,11 +1072,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     editingCaseName,
     editingCaseParentId,
     editingCaseReferenceCaseIds,
+    editingCaseCaseIdentifierId,
     editingCaseCategoryId,
     editingCaseTagId,
     collectDescendantCaseIds,
     handleCancelEditCase,
     caseResolverCategories,
+    caseResolverIdentifiers,
     caseResolverTags,
     persistWorkspace,
     toast,
@@ -1110,7 +1241,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         Cancel
                       </Button>
                     </div>
-                    <div className='grid gap-3 md:grid-cols-3'>
+                    <div className='grid gap-3 md:grid-cols-4'>
                       <SelectSimple size='sm'
                         value={editingCaseParentId ?? '__none__'}
                         onValueChange={(value: string): void => {
@@ -1133,6 +1264,25 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                           ...caseResolverTagOptions,
                         ]}
                         placeholder='Select tag'
+                        triggerClassName='h-9'
+                      />
+                      <SelectSimple
+                        size='sm'
+                        value={editingCaseCaseIdentifierId ?? '__none__'}
+                        onValueChange={(value: string): void => {
+                          setEditingCaseCaseIdentifierId(value === '__none__' ? null : value);
+                        }}
+                        options={[
+                          {
+                            value: '__none__',
+                            label:
+                              caseResolverIdentifiers.length > 0
+                                ? 'Select case identifier'
+                                : 'No case identifiers',
+                          },
+                          ...caseResolverIdentifierOptions,
+                        ]}
+                        placeholder='Select case identifier'
                         triggerClassName='h-9'
                       />
                       <SelectSimple size='sm'
@@ -1206,6 +1356,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         {file.tagId ? (
                           <Badge variant='outline' className='text-[10px]'>
                             {caseResolverTags.find((tag: CaseResolverTag) => tag.id === file.tagId)?.name ?? 'Tag'}
+                          </Badge>
+                        ) : null}
+                        {file.caseIdentifierId ? (
+                          <Badge variant='outline' className='text-[10px]'>
+                            {caseResolverIdentifiers.find(
+                              (identifier: CaseResolverIdentifier) =>
+                                identifier.id === file.caseIdentifierId
+                            )?.name ?? 'Case Identifier'}
                           </Badge>
                         ) : null}
                         {file.categoryId ? (
@@ -1285,9 +1443,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       caseReferenceOptions,
       caseResolverCategories,
       caseResolverCategoryOptions,
+      caseResolverIdentifierOptions,
+      caseResolverIdentifiers,
       caseResolverTags,
       caseResolverTagOptions,
       collapsedCaseIds,
+      editingCaseCaseIdentifierId,
       editingCaseCategoryId,
       editingCaseId,
       editingCaseName,
@@ -1335,7 +1496,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         open={isCreateCaseModalOpen}
         onOpenChange={setIsCreateCaseModalOpen}
         title='Add Case'
-        subtitle='Create a new case with optional hierarchy, references, tags, and category.'
+        subtitle='Create a new case with optional hierarchy, references, tag, case identifier, and category.'
         size='lg'
         bodyClassName='h-auto max-h-[78vh]'
         footer={(
@@ -1389,7 +1550,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             emptyMessage='No cases available.'
             className='w-full'
           />
-          <div className='grid gap-3 md:grid-cols-2'>
+          <div className='grid gap-3 md:grid-cols-3'>
             <SelectSimple size='sm'
               value={newCaseTagId ?? '__none__'}
               onValueChange={(value: string): void => {
@@ -1400,6 +1561,25 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                 ...caseResolverTagOptions,
               ]}
               placeholder='Select tag'
+              triggerClassName='h-9'
+            />
+            <SelectSimple
+              size='sm'
+              value={newCaseCaseIdentifierId ?? '__none__'}
+              onValueChange={(value: string): void => {
+                setNewCaseCaseIdentifierId(value === '__none__' ? null : value);
+              }}
+              options={[
+                {
+                  value: '__none__',
+                  label:
+                    caseResolverIdentifiers.length > 0
+                      ? 'Select case identifier'
+                      : 'No case identifiers',
+                },
+                ...caseResolverIdentifierOptions,
+              ]}
+              placeholder='Select case identifier'
               triggerClassName='h-9'
             />
             <SelectSimple size='sm'
@@ -1453,7 +1633,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
               filters={caseFilterConfig}
               values={caseFilterValues}
               search={caseSearchQuery}
-              searchPlaceholder='Search cases by name, folder, tag, category, or content...'
+              searchPlaceholder='Search cases by name, folder, tag, case identifier, category, or content...'
               onFilterChange={handleCaseFilterChange}
               onSearchChange={setCaseSearchQuery}
               onReset={handleResetCaseFilters}

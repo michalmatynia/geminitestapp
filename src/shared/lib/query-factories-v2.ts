@@ -22,10 +22,11 @@ import {
   resolveTanstackFactoryMeta,
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import type { TanstackFactoryMeta } from '@/shared/lib/tanstack-factory-v2.types';
+import type { TanstackFactoryMeta, TanstackLifecycleStage } from '@/shared/lib/tanstack-factory-v2.types';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/types/query-result-types';
 
 const DEFAULT_STALE_TIME_MS = 5 * 60 * 1000;
+const MIN_REFETCH_INTERVAL_MS = 1;
 
 type QueryFactoryFn<TQueryFnData, TQueryKey extends QueryKey> =
   | (() => Promise<TQueryFnData>)
@@ -81,14 +82,202 @@ type SingleQueryConfigV2<TData, TTransformedData = TData, TQueryKey extends Quer
   telemetryContext?: Record<string, unknown> | undefined;
 };
 
+type AnyRefetchIntervalOption =
+  | number
+  | false
+  | ((query: unknown) => number | false | undefined);
+
+type EmitFactoryTelemetryInput = {
+  entity: 'query' | 'mutation';
+  stage: TanstackLifecycleStage;
+  meta: TanstackFactoryMeta;
+  key: QueryKey | undefined;
+  attempt: number;
+  context?: Record<string, unknown> | undefined;
+  startedAtMs?: number | undefined;
+  error?: unknown;
+};
+
+const sanitizeRefetchIntervalValue = (
+  value: number | false | undefined
+): number | false | undefined => {
+  if (value === false || value === undefined) return value;
+  if (!Number.isFinite(value) || value < MIN_REFETCH_INTERVAL_MS) return false;
+  return value;
+};
+
+const guardRefetchInterval = <TOption extends AnyRefetchIntervalOption | undefined>(
+  option: TOption
+): TOption => {
+  if (option === undefined) return option;
+
+  if (typeof option === 'function') {
+    const wrapped = ((query: unknown): number | false | undefined => {
+      const nextValue = option(query);
+      return sanitizeRefetchIntervalValue(nextValue);
+    }) as TOption;
+    return wrapped;
+  }
+
+  return sanitizeRefetchIntervalValue(option) as TOption;
+};
+
+const applyQueryRuntimeGuards = <
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryKey extends QueryKey,
+>(
+    options: Omit<
+    UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+    'queryKey' | 'queryFn' | 'meta'
+  >
+  ): Omit<UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>, 'queryKey' | 'queryFn' | 'meta'> => {
+  const { refetchInterval, ...rest } = options;
+  const guardedRefetchInterval = guardRefetchInterval(
+    refetchInterval as unknown as AnyRefetchIntervalOption | undefined
+  ) as Omit<
+    UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+    'queryKey' | 'queryFn' | 'meta'
+  >['refetchInterval'];
+  const isStaticallyDisabled = options.enabled === false;
+
+  const base = {
+    ...rest,
+    staleTime: options.staleTime ?? DEFAULT_STALE_TIME_MS,
+    refetchOnMount: options.refetchOnMount ?? false,
+    refetchOnWindowFocus: options.refetchOnWindowFocus ?? false,
+    refetchOnReconnect: options.refetchOnReconnect ?? false,
+    refetchIntervalInBackground: options.refetchIntervalInBackground ?? false,
+  };
+
+  if (isStaticallyDisabled) {
+    return {
+      ...base,
+      refetchInterval: false,
+    };
+  }
+
+  if (guardedRefetchInterval !== undefined) {
+    return {
+      ...base,
+      refetchInterval: guardedRefetchInterval,
+    };
+  }
+
+  return base;
+};
+
+const applyInfiniteQueryRuntimeGuards = <
+  TQueryFnData,
+  TError,
+  TData,
+  TQueryKey extends QueryKey,
+  TPageParam,
+>(
+    options: Omit<
+    UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
+    'queryKey' | 'queryFn' | 'meta'
+  >
+  ): Omit<
+  UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
+  'queryKey' | 'queryFn' | 'meta'
+> => {
+  const { refetchInterval, ...rest } = options;
+  const guardedRefetchInterval = guardRefetchInterval(
+    refetchInterval as unknown as AnyRefetchIntervalOption | undefined
+  ) as Omit<
+    UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam>,
+    'queryKey' | 'queryFn' | 'meta'
+  >['refetchInterval'];
+  const isStaticallyDisabled = options.enabled === false;
+
+  const base = {
+    ...rest,
+    staleTime: options.staleTime ?? DEFAULT_STALE_TIME_MS,
+    refetchOnMount: options.refetchOnMount ?? false,
+    refetchOnWindowFocus: options.refetchOnWindowFocus ?? false,
+    refetchOnReconnect: options.refetchOnReconnect ?? false,
+    refetchIntervalInBackground: options.refetchIntervalInBackground ?? false,
+  };
+
+  if (isStaticallyDisabled) {
+    return {
+      ...base,
+      refetchInterval: false,
+    };
+  }
+
+  if (guardedRefetchInterval !== undefined) {
+    return {
+      ...base,
+      refetchInterval: guardedRefetchInterval,
+    };
+  }
+
+  return base;
+};
+
+const emitFactoryTelemetry = ({
+  entity,
+  stage,
+  meta,
+  key,
+  attempt,
+  context,
+  startedAtMs,
+  error,
+}: EmitFactoryTelemetryInput): void => {
+  emitTanstackTelemetry({
+    entity,
+    stage,
+    meta,
+    key,
+    attempt,
+    ...(typeof startedAtMs === 'number'
+      ? { durationMs: Date.now() - startedAtMs }
+      : {}),
+    ...(error !== undefined ? { error } : {}),
+    context,
+  });
+};
+
+const withQueryKeyMeta = <TQueryKey extends QueryKey>(
+  meta: TanstackFactoryMeta,
+  queryKey: TQueryKey
+): TanstackFactoryMeta => ({
+    ...meta,
+    queryKey,
+  });
+
+const withMutationKeyMeta = (
+  meta: TanstackFactoryMeta,
+  mutationKey: QueryKey | undefined
+): TanstackFactoryMeta => ({
+  ...meta,
+  ...(mutationKey ? { mutationKey } : {}),
+});
+
 const invokeQueryFactoryFn = <TQueryFnData, TQueryKey extends QueryKey>(
   queryFn: QueryFactoryFn<TQueryFnData, TQueryKey>,
   context: QueryFunctionContext<TQueryKey>
-): Promise<TQueryFnData> => {
-  if (queryFn.length === 0) {
-    return (queryFn as () => Promise<TQueryFnData>)();
+): Promise<TQueryFnData> =>
+    (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
+
+const combineEnabledWithRequiredId = <TData, TTransformedData, TQueryKey extends QueryKey>(
+  enabled: SingleQueryConfigV2<TData, TTransformedData, TQueryKey>['enabled'],
+  hasId: boolean
+): SingleQueryConfigV2<TData, TTransformedData, TQueryKey>['enabled'] => {
+  if (!hasId) return false;
+  if (enabled === undefined) return true;
+  if (typeof enabled === 'function') {
+    return ((query): boolean => enabled(query) && hasId) as SingleQueryConfigV2<
+      TData,
+      TTransformedData,
+      TQueryKey
+    >['enabled'];
   }
-  return (queryFn as (ctx: QueryFunctionContext<TQueryKey>) => Promise<TQueryFnData>)(context);
+  return Boolean(enabled);
 };
 
 function useQueryFactoryV2<
@@ -102,72 +291,61 @@ function useQueryFactoryV2<
   const { meta, queryFn, telemetryContext, queryKey, ...options } = config;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
+  const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
+  const guardedOptions = applyQueryRuntimeGuards(options);
   const attemptRef = useRef(0);
 
   return useQuery({
-    ...options,
-    staleTime: options.staleTime ?? DEFAULT_STALE_TIME_MS,
+    ...guardedOptions,
     queryKey: normalizedQueryKey,
     meta: attachTanstackFactoryMeta(resolvedMeta),
     queryFn: async (context): Promise<TQueryFnData> => {
       const attempt = attemptRef.current + 1;
       attemptRef.current = attempt;
       if (attempt > 1) {
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'query',
           stage: 'retry',
-          meta: {
-            ...meta,
-            queryKey: normalizedQueryKey,
-          },
+          meta: telemetryMeta,
           key: normalizedQueryKey,
           attempt,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
         });
       }
 
       const startMs = Date.now();
-      emitTanstackTelemetry({
+      emitFactoryTelemetry({
         entity: 'query',
         stage: 'start',
-        meta: {
-          ...meta,
-          queryKey: normalizedQueryKey,
-        },
+        meta: telemetryMeta,
         key: normalizedQueryKey,
         attempt,
-        context: telemetryContext,
+        ...(telemetryContext ? { context: telemetryContext } : {}),
       });
 
       try {
         const data = await invokeQueryFactoryFn(queryFn, context);
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'query',
           stage: 'success',
-          meta: {
-            ...meta,
-            queryKey: normalizedQueryKey,
-          },
+          meta: telemetryMeta,
           key: normalizedQueryKey,
           attempt,
-          durationMs: Date.now() - startMs,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
+          startedAtMs: startMs,
         });
         attemptRef.current = 0;
         return data;
       } catch (error) {
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'query',
           stage: telemetryErrorStage(error),
-          meta: {
-            ...meta,
-            queryKey: normalizedQueryKey,
-          },
+          meta: telemetryMeta,
           key: normalizedQueryKey,
           attempt,
-          durationMs: Date.now() - startMs,
+          startedAtMs: startMs,
           error,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
         });
         throw error;
       }
@@ -186,11 +364,13 @@ export function createSingleQueryV2<TData, TTransformedData = TData, TQueryKey e
 ): SingleQuery<TTransformedData> {
   const { queryKey, id, enabled, ...rest } = config;
   const resolvedQueryKey = typeof queryKey === 'function' ? queryKey(id ?? 'none') : queryKey;
+  const hasId = id !== null && id !== undefined;
+  const guardedEnabled = combineEnabledWithRequiredId(enabled, hasId);
 
   return useQueryFactoryV2<TData, Error, TTransformedData, TQueryKey>({
     ...rest,
     queryKey: resolvedQueryKey,
-    enabled: (enabled ?? true) && id !== null && id !== undefined,
+    ...(guardedEnabled !== undefined ? { enabled: guardedEnabled } : {}),
   }) as SingleQuery<TTransformedData>;
 }
 
@@ -206,71 +386,61 @@ export function createInfiniteQueryV2<
   const { queryKey, queryFn, meta, telemetryContext, ...options } = config;
   const normalizedQueryKey = normalizeQueryKey(queryKey) as TQueryKey;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedQueryKey });
+  const telemetryMeta = withQueryKeyMeta(meta, normalizedQueryKey);
+  const guardedOptions = applyInfiniteQueryRuntimeGuards(options);
   const attemptRef = useRef(0);
 
   const queryOptions: UseInfiniteQueryOptions<TQueryFnData, TError, TData, TQueryKey, TPageParam> = {
-    ...options,
+    ...guardedOptions,
     queryKey: normalizedQueryKey,
     meta: attachTanstackFactoryMeta(resolvedMeta),
     queryFn: async (context): Promise<TQueryFnData> => {
       const attempt = attemptRef.current + 1;
       attemptRef.current = attempt;
       if (attempt > 1) {
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'query',
           stage: 'retry',
-          meta: {
-            ...meta,
-            queryKey: normalizedQueryKey,
-          },
+          meta: telemetryMeta,
           key: normalizedQueryKey,
           attempt,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
         });
       }
 
       const startMs = Date.now();
-      emitTanstackTelemetry({
+      emitFactoryTelemetry({
         entity: 'query',
         stage: 'start',
-        meta: {
-          ...meta,
-          queryKey: normalizedQueryKey,
-        },
+        meta: telemetryMeta,
         key: normalizedQueryKey,
         attempt,
-        context: telemetryContext,
+        ...(telemetryContext ? { context: telemetryContext } : {}),
       });
 
       try {
         const data = await queryFn(context as QueryFunctionContext<TQueryKey, TPageParam>);
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'query',
           stage: 'success',
-          meta: {
-            ...meta,
-            queryKey: normalizedQueryKey,
-          },
+          meta: telemetryMeta,
           key: normalizedQueryKey,
           attempt,
-          durationMs: Date.now() - startMs,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
+          startedAtMs: startMs,
         });
         attemptRef.current = 0;
         return data;
       } catch (error) {
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'query',
           stage: telemetryErrorStage(error),
-          meta: {
-            ...meta,
-            queryKey: normalizedQueryKey,
-          },
+          meta: telemetryMeta,
           key: normalizedQueryKey,
           attempt,
-          durationMs: Date.now() - startMs,
+          startedAtMs: startMs,
           error,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
         });
         throw error;
       }
@@ -286,6 +456,7 @@ export function createMutationV2<TData, TVariables, TContext = unknown>(
   const { mutationFn, meta, mutationKey, telemetryContext, ...options } = config;
   const normalizedMutationKey = mutationKey ? normalizeQueryKey(mutationKey) : undefined;
   const resolvedMeta = resolveTanstackFactoryMeta(meta, { key: normalizedMutationKey });
+  const telemetryMeta = withMutationKeyMeta(meta, normalizedMutationKey);
   const attemptRef = useRef(0);
 
   return useMutation({
@@ -296,61 +467,49 @@ export function createMutationV2<TData, TVariables, TContext = unknown>(
       const attempt = attemptRef.current + 1;
       attemptRef.current = attempt;
       if (attempt > 1) {
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'mutation',
           stage: 'retry',
-          meta: {
-            ...meta,
-            mutationKey: normalizedMutationKey,
-          },
+          meta: telemetryMeta,
           key: normalizedMutationKey,
           attempt,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
         });
       }
 
       const startMs = Date.now();
-      emitTanstackTelemetry({
+      emitFactoryTelemetry({
         entity: 'mutation',
         stage: 'start',
-        meta: {
-          ...meta,
-          mutationKey: normalizedMutationKey,
-        },
+        meta: telemetryMeta,
         key: normalizedMutationKey,
         attempt,
-        context: telemetryContext,
+        ...(telemetryContext ? { context: telemetryContext } : {}),
       });
 
       try {
         const data = await mutationFn(variables);
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'mutation',
           stage: 'success',
-          meta: {
-            ...meta,
-            mutationKey: normalizedMutationKey,
-          },
+          meta: telemetryMeta,
           key: normalizedMutationKey,
           attempt,
-          durationMs: Date.now() - startMs,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
+          startedAtMs: startMs,
         });
         attemptRef.current = 0;
         return data;
       } catch (error) {
-        emitTanstackTelemetry({
+        emitFactoryTelemetry({
           entity: 'mutation',
           stage: telemetryErrorStage(error),
-          meta: {
-            ...meta,
-            mutationKey: normalizedMutationKey,
-          },
+          meta: telemetryMeta,
           key: normalizedMutationKey,
           attempt,
-          durationMs: Date.now() - startMs,
+          startedAtMs: startMs,
           error,
-          context: telemetryContext,
+          ...(telemetryContext ? { context: telemetryContext } : {}),
         });
         throw error;
       }

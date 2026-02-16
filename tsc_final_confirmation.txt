@@ -1,0 +1,98 @@
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(127,22): error TS2304: Cannot find name 'autoSaveAt'.
+src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx(127,53): error TS2304: Cannot find name 'autoSaveAt'.
+src/features/ai/ai-paths/components/run-timeline.tsx(624,40): error TS2304: Cannot find name 'eventsBatchLimit'.
+src/features/ai/ai-paths/components/run-timeline.tsx(624,72): error TS2304: Cannot find name 'eventsBatchLimit'.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(4,8): error TS6133: 'React' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(10,1): error TS6133: 'setDeepValue' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(12,3): error TS6133: 'defaultPromptEngineSettings' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(14,3): error TS6133: 'parsePromptValidationRules' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(28,3): error TS6133: 'runPromptExploderBenchmark' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(31,1): error TS6133: 'applyBenchmarkSuggestions' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(32,1): error TS6133: 'prepareBenchmarkSuggestionsForApply' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(34,3): error TS6133: 'consumePromptExploderDraftPayload' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(35,3): error TS6133: 'readPromptExploderDraftPayload' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(39,1): error TS6133: 'parseCustomBenchmarkCasesDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(46,3): error TS6133: 'promptExploderCreateManualBindingId' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(47,3): error TS6133: 'formatSubsectionLabel' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(48,3): error TS6133: 'buildSegmentSampleText' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(50,3): error TS6133: 'isPromptExploderManagedRule' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(52,1): error TS6192: All imports in import declaration are unused.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(57,1): error TS6192: All imports in import declaration are unused.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(72,3): error TS6133: 'applyPromptExploderParserTuningDrafts' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(73,3): error TS6133: 'buildPromptExploderParserTuningDrafts' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(74,3): error TS6133: 'validatePromptExploderParserTuningDrafts' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(79,3): error TS6133: 'PROMPT_EXPLODER_PATTERN_PACK' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(82,1): error TS6192: All imports in import declaration are unused.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(89,3): error TS6133: 'getManualBindingsFromDocument' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(90,3): error TS6133: 'hydratePromptExploderLibraryDocument' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(95,1): error TS6133: 'buildManualLearnedRegexRuleDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(98,1): error TS6133: 'upsertRegexLearnedRule' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(100,3): error TS6133: 'buildRuntimeRulesForReexplode' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(101,3): error TS6133: 'buildRuntimeTemplatesForReexplode' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(103,3): error TS6133: 'reexplodePromptWithRuntime' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(104,3): error TS6133: 'resolveSegmentIdAfterReexplode' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(110,1): error TS6192: All imports in import declaration are unused.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(121,3): error TS6133: 'promptExploderValidatorScopeFromStack' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(130,3): error TS6196: 'PromptExploderListItem' is declared but never used.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(134,3): error TS2305: Module '"../utils/case-resolver-extraction"' has no exported member 'suggestCaseResolverPartySegmentIds'.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(134,3): error TS6133: 'suggestCaseResolverPartySegmentIds' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(136,3): error TS2305: Module '"../utils/case-resolver-extraction"' has no exported member 'buildCaseResolverPartyCandidateFromSegment'.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(136,3): error TS6133: 'buildCaseResolverPartyCandidateFromSegment' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(137,3): error TS2305: Module '"../utils/case-resolver-extraction"' has no exported member 'buildCaseResolverPlaceDateCandidate'.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(137,3): error TS6133: 'buildCaseResolverPlaceDateCandidate' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(138,3): error TS2305: Module '"../utils/case-resolver-extraction"' has no exported member 'createStructuredDraftFromSegment'.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(138,3): error TS6133: 'createStructuredDraftFromSegment' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(139,3): error TS2305: Module '"../utils/case-resolver-extraction"' has no exported member 'buildPlaceDateLineFromDraft'.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(139,3): error TS6133: 'buildPlaceDateLineFromDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(140,3): error TS2305: Module '"../utils/case-resolver-extraction"' has no exported member 'buildPartyBlockFromDraft'.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(140,3): error TS6133: 'buildPartyBlockFromDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(141,3): error TS6133: 'resolveSegmentDisplayLabel' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(163,31): error TS6133: 'setSessionLearnedRules' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(164,35): error TS6133: 'setSessionLearnedTemplates' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(176,10): error TS6133: 'benchmarkSuiteDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(176,31): error TS6133: 'setBenchmarkSuiteDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(178,10): error TS6133: 'benchmarkLowConfidenceThresholdDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(178,48): error TS6133: 'setBenchmarkLowConfidenceThresholdDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(180,10): error TS6133: 'benchmarkSuggestionLimitDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(180,41): error TS6133: 'setBenchmarkSuggestionLimitDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(182,10): error TS6133: 'customBenchmarkCasesDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(182,37): error TS6133: 'setCustomBenchmarkCasesDraft' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(203,10): error TS6133: 'loadedProjectIdFromQuery' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(203,36): error TS6133: 'setLoadedProjectIdFromQuery' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(204,32): error TS6133: 'setIncomingBridgeSource' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(206,39): error TS6133: 'setIncomingCaseResolverContext' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(214,9): error TS6133: 'handledIncomingDraftPayloadRef' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(217,9): error TS6133: 'requestedProjectId' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(286,9): error TS6133: 'caseResolverCaptureRules' is declared but its value is never read.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(450,5): error TS18004: No value exists in scope for the shorthand property 'availableSnapshots'. Either declare one or provide an initializer.
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(451,5): error TS2552: Cannot find name 'selectedSnapshot'. Did you mean 'selectedSnapshotId'?
+src/features/prompt-exploder/hooks/usePromptExploderState.ts(452,5): error TS2552: Cannot find name 'visibleBenchmarkSuggestions'. Did you mean 'dismissedBenchmarkSuggestionIds'?
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(3,1): error TS6192: All imports in import declaration are unused.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(4,21): error TS6133: 'useSearchParams' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(5,17): error TS6133: 'useEffect' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(5,28): error TS6133: 'useMemo' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(5,37): error TS6133: 'useRef' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(5,45): error TS6133: 'useState' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(11,3): error TS6133: 'Input' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(12,3): error TS6133: 'Label' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(14,3): error TS6133: 'StatusToggle' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(16,3): error TS6133: 'SelectSimple' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(21,1): error TS6133: 'PromptExploderHierarchyTreeEditor' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(28,3): error TS6133: 'normalizeText' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(31,1): error TS6192: All imports in import declaration are unused.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(44,5): error TS6133: 'selectedSegment' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(48,5): error TS6133: 'returnTarget' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(50,5): error TS6133: 'learningDraft' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(51,5): error TS6133: 'setLearningDraft' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(52,5): error TS6133: 'validationPatternStackOptions' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(53,5): error TS6133: 'runtimeValidationRules' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(54,5): error TS6133: 'effectiveLearnedTemplates' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(59,5): error TS6133: 'updateSegment' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(62,9): error TS6133: 'toast' is declared but its value is never read.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(78,29): error TS2322: Type '"success"' is not assignable to type '"link" | "default" | "primary" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined'.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(87,6): error TS2741: Property 'value' is missing in type '{ children: Element; }' but required in type '{ value: PromptExploderHierarchyTreeContextValue; children: ReactNode; }'.
+src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(152,13): error TS2322: Type '{ open: boolean; onOpenChange: Dispatch<SetStateAction<boolean>>; drafts: PromptExploderParserTuningRuleDraft[]; onDraftsChange: Dispatch<...>; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'open' does not exist on type 'IntrinsicAttributes'.
+src/features/prompt-exploder/utils/case-resolver-extraction.ts(6,3): error TS6196: 'PromptExploderDocument' is declared but never used.
+src/features/prompt-exploder/utils/case-resolver-extraction.ts(101,3): error TS6133: 'rules' is declared but its value is never read.
+src/features/prompt-exploder/utils/case-resolver-extraction.ts(102,3): error TS6133: 'validationScope' is declared but its value is never read.

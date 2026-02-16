@@ -38,6 +38,24 @@ describe('tanstack telemetry', () => {
     expect(resolved.tags).toEqual([]);
   });
 
+  it('normalizes metadata fields to transport-safe limits', () => {
+    const longText = 'x'.repeat(400);
+    const tags = Array.from({ length: 40 }, (_, index: number) =>
+      `tag-${index}-${'y'.repeat(140)}`
+    );
+    const resolved = resolveTanstackFactoryMeta({
+      source: ` ${longText} `,
+      operation: 'list',
+      resource: ` ${longText} `,
+      tags,
+    });
+
+    expect(resolved.source.length).toBeLessThanOrEqual(240);
+    expect(resolved.resource.length).toBeLessThanOrEqual(240);
+    expect(resolved.tags.length).toBeLessThanOrEqual(16);
+    expect(resolved.tags.every((tag: string) => tag.length <= 120)).toBe(true);
+  });
+
   it('attaches and extracts runtime metadata from react-query meta bag', () => {
     const resolved = resolveTanstackFactoryMeta({
       source: 'integrations.hooks.useIntegrations',
@@ -91,4 +109,3 @@ describe('tanstack telemetry', () => {
     randomSpy.mockRestore();
   });
 });
-

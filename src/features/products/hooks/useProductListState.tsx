@@ -85,6 +85,35 @@ const toTrimmedString = (value: unknown): string => {
   return value.trim();
 };
 
+const toMillis = (value: unknown): number | null => {
+  if (value instanceof Date) {
+    const time = value.getTime();
+    return Number.isNaN(time) ? null : time;
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Date.parse(trimmed);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  return null;
+};
+
+const isIncomingProductDetailNewer = (
+  incoming: ProductWithImages,
+  current: ProductWithImages
+): boolean => {
+  const incomingUpdatedAt = toMillis(incoming.updatedAt);
+  const currentUpdatedAt = toMillis(current.updatedAt);
+
+  if (incomingUpdatedAt == null) return false;
+  if (currentUpdatedAt == null) return true;
+  return incomingUpdatedAt > currentUpdatedAt;
+};
+
 const resolveCategoryLabelByLocale = (
   category: ProductCategory,
   locale: 'name_en' | 'name_pl' | 'name_de'
@@ -413,7 +442,7 @@ export function useProductListState(): ProductListContextType & {
     const fresh = editingProductDetailQuery.data;
     if (!fresh) return;
     if (fresh.id !== editingProduct.id) return;
-    if ((fresh.updatedAt ?? null) === (editingProduct.updatedAt ?? null)) return;
+    if (!isIncomingProductDetailNewer(fresh, editingProduct)) return;
     setEditingProduct(fresh);
   }, [editingProduct, editingProductDetailQuery.data, setEditingProduct]);
 

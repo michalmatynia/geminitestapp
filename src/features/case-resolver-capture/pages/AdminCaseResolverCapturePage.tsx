@@ -86,7 +86,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
         key: CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
         value: serializeSetting(draft),
       });
-      setLoadedFrom(serializeSetting(draft));
+      setLoadedFrom(hydrationSignature);
       toast('Case Resolver Capture settings saved.', { variant: 'success' });
     } catch (error) {
       toast(

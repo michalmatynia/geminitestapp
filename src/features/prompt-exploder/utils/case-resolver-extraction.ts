@@ -1,11 +1,11 @@
 'use client';
 
+import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+
 import type { PromptExploderCaseResolverPartyRole } from '../bridge';
 import type { 
-  PromptExploderSegment, 
-  PromptExploderDocument 
+  PromptExploderSegment
 } from '../types';
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 
 // --- Constants & Regex ---
 
@@ -32,7 +32,7 @@ export const COUNTRY_NORMALIZATION_MAP: Record<string, string> = {
   italy: 'Italy',
   uk: 'United Kingdom',
   'united kingdom': 'United Kingdom',
-   USA: 'United States',
+  USA: 'United States',
   'u.s.a.': 'United States',
 };
 
@@ -87,13 +87,19 @@ export const isLikelyPersonNameLine = (line: string): boolean => {
 
 export const splitSegmentLines = (segment: PromptExploderSegment): string[] => {
   const source = segment.raw || segment.text || '';
-  return source.split('
-').map(normalizeText).filter(Boolean);
+  return source.split('\n').map(normalizeText).filter(Boolean);
+};
+
+export const resolveSegmentDisplayLabel = (segment: PromptExploderSegment): string => {
+  const explicitTitle = normalizeText(segment.title || '');
+  if (explicitTitle) return explicitTitle;
+  const firstLine = splitSegmentLines(segment)[0] ?? '';
+  return firstLine || `Segment ${segment.id}`;
 };
 
 export const buildCaseResolverSegmentCaptureRules = (
-  rules: PromptValidationRule[],
-  validationScope: string
+  _rules: PromptValidationRule[],
+  _validationScope: string
 ): CaseResolverSegmentCaptureRule[] => {
   // Logic from AdminPromptExploderPage...
   return []; // Placeholder for now to speed up the refactor

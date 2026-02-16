@@ -9,6 +9,14 @@ import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/types';
 const VISITOR_COOKIE = 'pa_vid';
 const SESSION_STORAGE_KEY = 'pa_sid';
 const PAGEVIEW_DEDUPE_WINDOW_MS = 1500;
+const ENABLE_PAGE_ANALYTICS_IN_DEV =
+  process.env['NEXT_PUBLIC_ENABLE_PAGE_ANALYTICS_IN_DEV'] === 'true';
+const ENABLE_ADMIN_PAGE_ANALYTICS =
+  process.env['NEXT_PUBLIC_ENABLE_ADMIN_PAGE_ANALYTICS'] === 'true';
+const ENABLE_PAGE_ANALYTICS =
+  process.env['NEXT_PUBLIC_ENABLE_PAGE_ANALYTICS'] === 'true' ||
+  (process.env['NEXT_PUBLIC_ENABLE_PAGE_ANALYTICS'] !== 'false' &&
+    (process.env.NODE_ENV === 'production' || ENABLE_PAGE_ANALYTICS_IN_DEV));
 
 let lastTrackedPageview: { key: string; ts: number } | null = null;
 
@@ -101,7 +109,11 @@ export default function PageAnalyticsTracker(): null {
   const trackEventMutation = useTrackEventMutation();
 
   useEffect(() => {
+    if (!ENABLE_PAGE_ANALYTICS) return;
     if (!pathname) return;
+    const scope = getScopeFromPathname(pathname);
+    if (scope === 'admin' && !ENABLE_ADMIN_PAGE_ANALYTICS) return;
+
     const pageKey = `${pathname}?${search}`;
     const now = Date.now();
     const isDuplicatePageview =
@@ -114,7 +126,6 @@ export default function PageAnalyticsTracker(): null {
 
     const visitorId = getOrCreateVisitorId();
     const sessionId = getOrCreateSessionId();
-    const scope = getScopeFromPathname(pathname);
 
     const url = typeof window !== 'undefined' ? window.location.href : null;
     const title = typeof document !== 'undefined' ? document.title : null;

@@ -10,6 +10,7 @@ import {
   type CaseResolverAssetFile,
   type CaseResolverAssetKind,
   type CaseResolverCategory,
+  type CaseResolverIdentifier,
   type CaseResolverDocumentVersion,
   type CaseResolverEdgeMeta,
   type CaseResolverFile,
@@ -26,6 +27,7 @@ import {
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
 export const CASE_RESOLVER_TAGS_KEY = 'case_resolver_tags_v1';
+export const CASE_RESOLVER_IDENTIFIERS_KEY = 'case_resolver_identifiers_v1';
 export const CASE_RESOLVER_CATEGORIES_KEY = 'case_resolver_categories_v1';
 export const CASE_RESOLVER_SETTINGS_KEY = 'case_resolver_settings_v1';
 
@@ -415,6 +417,77 @@ const normalizeCaseResolverScanSlots = (input: unknown): CaseResolverScanSlot[] 
   return slots;
 };
 
+export const normalizeCaseResolverIdentifiers = (input: unknown): CaseResolverIdentifier[] => {
+  const now = new Date().toISOString();
+  if (!Array.isArray(input)) return [];
+
+  const seen = new Set<string>();
+  const raw: CaseResolverIdentifier[] = [];
+
+  input.forEach((entry: unknown, index: number): void => {
+    if (!entry || typeof entry !== 'object') return;
+    const record = entry as Record<string, unknown>;
+    const rawId =
+      typeof record['id'] === 'string' && record['id'].trim().length > 0
+        ? record['id'].trim()
+        : `identifier-${index + 1}`;
+    if (seen.has(rawId)) return;
+    seen.add(rawId);
+
+    const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
+    raw.push({
+      id: rawId,
+      name: rawName || `Case Identifier ${raw.length + 1}`,
+      parentId: sanitizeOptionalId(record['parentId']),
+      color: normalizeHexColor(record['color'], '#f59e0b'),
+      createdAt: normalizeTimestamp(record['createdAt'], now),
+      updatedAt: normalizeTimestamp(record['updatedAt'], now),
+    });
+  });
+
+  const byId = new Map<string, CaseResolverIdentifier>(
+    raw.map(
+      (identifier: CaseResolverIdentifier): [string, CaseResolverIdentifier] => [
+        identifier.id,
+        identifier,
+      ]
+    )
+  );
+  const normalizedParents = raw.map(
+    (identifier: CaseResolverIdentifier): CaseResolverIdentifier => ({
+      ...identifier,
+      parentId: resolveSafeIdentifierParentId(identifier.id, identifier.parentId, byId),
+    })
+  );
+
+  const grouped = new Map<string, CaseResolverIdentifier[]>();
+  const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
+  normalizedParents.forEach((identifier: CaseResolverIdentifier): void => {
+    const key = getGroupKey(identifier.parentId);
+    const current = grouped.get(key) ?? [];
+    current.push(identifier);
+    grouped.set(key, current);
+  });
+
+  const output: CaseResolverIdentifier[] = [];
+  const visit = (parentId: string | null): void => {
+    const group = grouped.get(getGroupKey(parentId)) ?? [];
+    group
+      .sort((left: CaseResolverIdentifier, right: CaseResolverIdentifier) => {
+        const nameDelta = left.name.localeCompare(right.name);
+        if (nameDelta !== 0) return nameDelta;
+        return left.id.localeCompare(right.id);
+      })
+      .forEach((identifier: CaseResolverIdentifier): void => {
+        output.push(identifier);
+        visit(identifier.id);
+      });
+  };
+
+  visit(null);
+  return output;
+};
+
 export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => {
   const now = new Date().toISOString();
   if (!Array.isArray(input)) return [];
@@ -478,6 +551,23 @@ export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => 
   visit(null);
   return output;
 };
+
+function resolveSafeIdentifierParentId(
+  identifierId: string,
+  parentId: string | null,
+  identifierMap: Map<string, CaseResolverIdentifier>
+): string | null {
+  if (!parentId || !identifierMap.has(parentId) || parentId === identifierId) return null;
+  let current: string | null = parentId;
+  const visited = new Set<string>();
+  while (current) {
+    if (current === identifierId || visited.has(current)) return null;
+    visited.add(current);
+    const parent = identifierMap.get(current);
+    current = parent?.parentId ?? null;
+  }
+  return parentId;
+}
 
 function resolveSafeTagParentId(
   tagId: string,
@@ -632,6 +722,11 @@ export const buildCaseResolverCategoryTree = (
 
 export const parseCaseResolverTags = (raw: string | null | undefined): CaseResolverTag[] =>
   normalizeCaseResolverTags(parseJsonSetting<unknown>(raw, []));
+
+export const parseCaseResolverIdentifiers = (
+  raw: string | null | undefined
+): CaseResolverIdentifier[] =>
+  normalizeCaseResolverIdentifiers(parseJsonSetting<unknown>(raw, []));
 
 export const parseCaseResolverCategories = (raw: string | null | undefined): CaseResolverCategory[] =>
   normalizeCaseResolverCategories(parseJsonSetting<unknown>(raw, []));
@@ -822,6 +917,7 @@ export const createCaseResolverFile = (input: {
   addresser?: CaseResolverPartyReference | null | undefined;
   addressee?: CaseResolverPartyReference | null | undefined;
   tagId?: string | null | undefined;
+  caseIdentifierId?: string | null | undefined;
   categoryId?: string | null | undefined;
   createdAt?: string;
   updatedAt?: string;
@@ -865,6 +961,7 @@ export const createCaseResolverFile = (input: {
     addresser: sanitizePartyReference(input.addresser),
     addressee: sanitizePartyReference(input.addressee),
     tagId: sanitizeOptionalId(input.tagId),
+    caseIdentifierId: sanitizeOptionalId(input.caseIdentifierId),
     categoryId: sanitizeOptionalId(input.categoryId),
     createdAt,
     updatedAt,
@@ -1139,6 +1236,7 @@ export const normalizeCaseResolverWorkspace = (
         addresser: file.addresser,
         addressee: file.addressee,
         tagId: file.tagId,
+        caseIdentifierId: file.caseIdentifierId,
         categoryId: file.categoryId,
         createdAt: file.createdAt,
         updatedAt: file.updatedAt,

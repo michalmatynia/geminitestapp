@@ -621,7 +621,7 @@ export function RunTimeline({
             <div className='text-[11px] uppercase text-gray-500'>Logs</div>
             {eventsOverflow ? (
               <StatusBadge
-                status={`Truncated\${eventsBatchLimit ? \` (limit \${eventsBatchLimit})\` : ''}`}
+                status={'Truncated' + (eventsBatchLimit ? ' (limit ' + eventsBatchLimit + ')' : '')}
                 variant='warning'
                 size='sm'
                 className='font-bold'

@@ -20,7 +20,6 @@ import {
   createCreateMutationV2,
   createDeleteMutationV2,
   createListQueryV2,
-  createMutationV2,
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation';
@@ -193,7 +192,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const reorderMutation = createMutationV2<AiTriggerButtonDto[], string[]>({
+  const reorderMutation = createUpdateMutationV2<AiTriggerButtonDto[], string[]>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
     mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonDto[]> => {
       const result = await triggerButtonsApi.reorder(orderedIds);

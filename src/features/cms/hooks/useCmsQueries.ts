@@ -34,6 +34,7 @@ import {
 } from '@/features/cms/api/themes';
 import type { Page, PageSummary, Slug, CmsDomain, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/features/cms/types';
 import {
+  createDeleteMutationV2,
   createListQueryV2,
   createSingleQueryV2,
   createCreateMutationV2,
@@ -141,7 +142,7 @@ export function useUpdatePage(): UpdateMutation<Page, { id: string; input: Page 
 
 export function useDeletePage(): UpdateMutation<string, string> {
   const queryClient = useQueryClient();
-  return createUpdateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: (id: string) => 
       deletePage(id).then(({ ok }) => {
         if (!ok) throw new Error('Failed to delete page');
@@ -295,7 +296,7 @@ export function useUpdateSlugDomains(): UpdateMutation<
 
 export function useDeleteSlug(): UpdateMutation<string, { id: string; domainId?: string | null }> {
   const queryClient = useQueryClient();
-  return createUpdateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: ({ id, domainId }: { id: string; domainId?: string | null }) => 
       deleteSlug(id, domainId).then(({ ok }) => {
         if (!ok) throw new Error('Failed to delete slug');
@@ -358,7 +359,7 @@ export function useCreateCmsDomain(): CreateMutation<CmsDomain, { domain: string
 
 export function useDeleteCmsDomain(): UpdateMutation<string, string> {
   const queryClient = useQueryClient();
-  return createUpdateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: (id: string) => 
       deleteDomain(id).then(({ ok }) => {
         if (!ok) throw new Error('Failed to delete domain');
@@ -483,7 +484,7 @@ export function useUpdateTheme(): UpdateMutation<CmsTheme, { id: string; input: 
 
 export function useDeleteTheme(): UpdateMutation<string, string> {
   const queryClient = useQueryClient();
-  return createUpdateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: (id: string) => 
       deleteTheme(id).then(({ ok }) => {
         if (!ok) throw new Error('Failed to delete theme');

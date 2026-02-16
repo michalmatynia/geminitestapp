@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateMarketplaceCategories,
   invalidateMarketplaceMappings,
@@ -34,7 +34,7 @@ export function useFetchExternalCategoriesMutation() {
 
 export function useSaveMappingsMutation() {
   const queryClient = useQueryClient();
-  return createMutationV2({
+  return createUpdateMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-mappings'),
     mutationFn: (payload: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => 
       api.post<{ upserted: number; message: string }>('/api/marketplace/mappings/bulk', payload),
@@ -75,7 +75,7 @@ export function useFetchExternalProducersMutation() {
 
 export function useSaveProducerMappingsMutation() {
   const queryClient = useQueryClient();
-  return createMutationV2({
+  return createUpdateMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-producer-mappings'),
     mutationFn: (payload: {
       connectionId: string;
@@ -122,7 +122,7 @@ export function useFetchExternalTagsMutation() {
 
 export function useSaveTagMappingsMutation() {
   const queryClient = useQueryClient();
-  return createMutationV2({
+  return createUpdateMutationV2({
     mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-tag-mappings'),
     mutationFn: (payload: {
       connectionId: string;

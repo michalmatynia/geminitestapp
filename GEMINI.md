@@ -86,7 +86,7 @@ src/app/
 - **UI Components**: Follow patterns defined in [docs/COMPONENT_PATTERNS.md](docs/COMPONENT_PATTERNS.md) for DataTable, ListPanel, and FormSection.
 - **Data Access**: Use explicit v2 factories from `src/shared/lib/query-factories-v2.ts` (`createListQueryV2`, `createSingleQueryV2`, `createMutationV2` and operation-specific aliases).
 - **Factory Metadata**: Define explicit `meta` objects at each factory call site; legacy meta inference helpers are retired.
-- **Telemetry Guard**: Run `npm run check:factory-meta` to ensure every v2 factory call includes `meta`.
+- **Telemetry Guard**: Run `npm run check:factory-meta` to ensure every v2 factory call includes `meta` (or `npm run check:factory-meta:strict` to also enforce alias/operation alignment).
 
 Notable API route groups:
 - `/api/products`, `/api/drafts`, `/api/notes`

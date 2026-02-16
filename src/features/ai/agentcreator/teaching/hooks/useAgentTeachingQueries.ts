@@ -3,9 +3,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
+  createDeleteMutationV2,
   createListQueryV2,
   createSingleQueryV2,
   createCreateMutationV2,
+  createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord, AgentTeachingEmbeddingDocumentListItem, AgentTeachingChatSource } from '@/shared/types/domain/agent-teaching';
@@ -114,7 +116,7 @@ export function useUpsertTeachingAgentMutation(): MutationResult<
   > {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.agents();
-  return createCreateMutationV2<AgentTeachingAgentRecord, Partial<AgentTeachingAgentRecord> & { name: string }>({
+  return createUpdateMutationV2<AgentTeachingAgentRecord, Partial<AgentTeachingAgentRecord> & { name: string }>({
     mutationFn: upsertTeachingAgent,
     mutationKey,
     meta: {
@@ -137,7 +139,7 @@ export function useDeleteTeachingAgentMutation(): MutationResult<
   > {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.agents();
-  return createCreateMutationV2<void, { id: string }>({
+  return createDeleteMutationV2<void, { id: string }>({
     mutationFn: ({ id }: { id: string }) => deleteTeachingAgent(id),
     mutationKey,
     meta: {
@@ -160,7 +162,7 @@ export function useUpsertEmbeddingCollectionMutation(): MutationResult<
   > {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
-  return createCreateMutationV2<AgentTeachingEmbeddingCollectionRecord, Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }>({
+  return createUpdateMutationV2<AgentTeachingEmbeddingCollectionRecord, Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }>({
     mutationFn: upsertEmbeddingCollection,
     mutationKey,
     meta: {
@@ -183,7 +185,7 @@ export function useDeleteEmbeddingCollectionMutation(): MutationResult<
   > {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
-  return createCreateMutationV2<void, { id: string }>({
+  return createDeleteMutationV2<void, { id: string }>({
     mutationFn: ({ id }: { id: string }) => deleteEmbeddingCollection(id),
     mutationKey,
     meta: {
@@ -255,7 +257,7 @@ export function useDeleteEmbeddingDocumentMutation(): MutationResult<
   > {
   const qc = useQueryClient();
   const mutationKey = agentTeachingKeys.collections();
-  return createCreateMutationV2<void, { collectionId: string; documentId: string }>({
+  return createDeleteMutationV2<void, { collectionId: string; documentId: string }>({
     mutationFn: ({ collectionId, documentId }: { collectionId: string; documentId: string }) => deleteEmbeddingDocument(collectionId, documentId),
     mutationKey,
     meta: {

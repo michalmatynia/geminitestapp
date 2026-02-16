@@ -14,7 +14,7 @@ import {
   AI_PATHS_RUN_SOURCE_VALUES,
 } from '@/features/ai/ai-paths/lib/run-sources';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
@@ -548,7 +548,7 @@ export function JobQueuePanel({
     },
   });
 
-  const clearRunsMutation = createMutationV2({
+  const clearRunsMutation = createDeleteMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.clear-runs'),
     mutationFn: async (scope: 'terminal' | 'all'): Promise<{ deleted: number; scope: 'all' | 'terminal' }> => {
       const response = await runsApi.clear({
@@ -658,7 +658,7 @@ export function JobQueuePanel({
     });
   }, []);
 
-  const deleteRunMutation = createMutationV2({
+  const deleteRunMutation = createDeleteMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.delete-run'),
     mutationFn: async (runId: string): Promise<void> => {
       const response = await runsApi.remove(runId);
@@ -1076,7 +1076,7 @@ export function JobQueuePanel({
           )}
           {queueStatus?.slo ? (
             <StatusBadge
-              status={`SLO \${queueStatus.slo.overall} · \${queueStatus.slo.breachCount} breach\${queueStatus.slo.breachCount === 1 ? '' : 'es'}`}
+              status={`SLO ${queueStatus.slo.overall} · ${queueStatus.slo.breachCount} breach${queueStatus.slo.breachCount === 1 ? '' : 'es'}`}
               variant={getSloVariant(queueStatus.slo.overall)}
               size='sm'
               className='mt-2 font-bold'
@@ -1381,25 +1381,25 @@ export function JobQueuePanel({
                     ) : null}
                     <div className='mt-1 flex flex-wrap items-center gap-1'>
                       <StatusBadge
-                        status={`Origin: \${getOriginLabel(runOrigin)}`}
+                        status={'Origin: ' + getOriginLabel(runOrigin)}
                         variant={getOriginVariant(runOrigin)}
                         size='sm'
                         className='font-medium'
                       />
                       <StatusBadge
-                        status={`Run: \${getExecutionLabel(runExecution)}`}
+                        status={'Run: ' + getExecutionLabel(runExecution)}
                         variant={getExecutionVariant(runExecution)}
                         size='sm'
                         className='font-medium'
                       />
                       <StatusBadge
-                        status={`Source: \${runSource}`}
+                        status={'Source: ' + runSource}
                         variant='neutral'
                         size='sm'
                         className='font-medium'
                       />
                       <StatusBadge
-                        status={`Debug: \${runSourceDebug}`}
+                        status={'Debug: ' + runSourceDebug}
                         variant='info'
                         size='sm'
                         title={runSourceDebug}

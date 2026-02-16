@@ -51,7 +51,7 @@ import {
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathSettings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -240,7 +240,7 @@ export function useAiPathsPersistence({
   toast,
 }: UseAiPathsPersistenceArgs): UseAiPathsPersistenceResult {
   const queryClient = useQueryClient();
-  const updateAiPathsSettingsMutation = createMutationV2({
+  const updateAiPathsSettingsMutation = createUpdateMutationV2({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.bulk-update'),
     mutationFn: async (
       payloads: Array<{ key: string; value: string }>

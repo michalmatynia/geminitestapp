@@ -2,7 +2,7 @@
 
 import { Button, StatusBadge, DataTableSortableHeader } from '@/shared/ui';
 
-import type { ColumnDef, Column } from '@tanstack/react-table';
+import type { ColumnDef } from '@tanstack/react-table';
 
 export type UnifiedCollectionRow = {
   name: string;

@@ -11,8 +11,8 @@ import {
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
-  createMutationV2,
   createSingleQueryV2,
+  createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -116,7 +116,7 @@ export function useLiteSettingsMap(options?: { enabled?: boolean }): SingleQuery
 export function useUpdateSetting(): MutationResult<SystemSetting, { key: string; value: string }> {
   const queryClient = useQueryClient();
 
-  return createMutationV2<SystemSetting, { key: string; value: string }>({
+  return createUpdateMutationV2<SystemSetting, { key: string; value: string }>({
     mutationKey: QUERY_KEYS.settings.mutation('update-setting'),
     mutationFn: async ({
       key,
@@ -145,7 +145,7 @@ export function useUpdateSetting(): MutationResult<SystemSetting, { key: string;
 export function useUpdateSettingsBulk(): MutationResult<SystemSetting[], Array<{ key: string; value: string }>> {
   const queryClient = useQueryClient();
 
-  return createMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({
+  return createUpdateMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({
     mutationKey: QUERY_KEYS.settings.mutation('update-settings-bulk'),
     mutationFn: async (
       payloads: Array<{ key: string; value: string }>,

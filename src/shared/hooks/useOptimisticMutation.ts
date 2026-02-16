@@ -3,7 +3,7 @@
 import { useQueryClient, type MutationFunctionContext, type QueryKey, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 
 interface OptimisticUpdateConfig<TData, TVariables> {
   queryKey: readonly unknown[];
@@ -19,7 +19,7 @@ export function useOptimisticMutation<TData, TError, TVariables, TCacheData = TD
   const queryClient = useQueryClient();
   const mutationKey: QueryKey = config.queryKey;
 
-  return createMutationV2<TData, TVariables, { previousData: TCacheData | undefined }>({
+  return createUpdateMutationV2<TData, TVariables, { previousData: TCacheData | undefined }>({
     mutationKey,
     meta: {
       mutationKey,

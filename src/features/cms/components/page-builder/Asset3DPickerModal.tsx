@@ -9,7 +9,6 @@ import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/type
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { FilterPanel, Button, AppModal, FormSection } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
-import { cn } from '@/shared/utils';
 
 interface Asset3DPickerModalProps extends EntityModalProps<Asset3DRecord, Asset3DRecord> {
   onSelect: (assetId: string) => void;

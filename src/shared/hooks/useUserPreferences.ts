@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/types/domain/user-preferences';
 import type { MutationResult, SingleQuery } from '@/shared/types/query-result-types';
@@ -66,7 +66,7 @@ export function useUserPreferences(): SingleQuery<UserPreferences> {
 export function useUpdateUserPreferences(): MutationResult<UserPreferences, UserPreferencesUpdate> {
   const queryClient = useQueryClient();
 
-  return createMutationV2<UserPreferences, UserPreferencesUpdate>({
+  return createUpdateMutationV2<UserPreferences, UserPreferencesUpdate>({
     mutationKey: QUERY_KEYS.userPreferences.mutation('update'),
     mutationFn: (data: UserPreferencesUpdate) => {
       const validation = userPreferencesUpdateSchema.safeParse(data);

@@ -18,7 +18,7 @@ import {
   useToast,
   SelectSimple,
   DataTable,
-  Badge,
+  StatusBadge,
   SectionHeader,
   FormField,
   FormSection

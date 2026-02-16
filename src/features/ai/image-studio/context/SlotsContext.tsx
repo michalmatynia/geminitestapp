@@ -14,7 +14,7 @@ import {
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
-import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
@@ -365,7 +365,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const uploadMutation = useUploadStudioAssets(projectId);
   const importFromDriveMutation = useImportStudioAssetsFromDrive(projectId);
 
-  const moveSlotMutation = createMutationV2<
+  const moveSlotMutation = createUpdateMutationV2<
     ImageStudioSlotRecord,
     { slot: ImageStudioSlotRecord; targetFolder: string },
     { previous?: StudioSlotsResponse | undefined }
@@ -595,7 +595,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     projectId,
   ]);
 
-  const createFolderMutation = createMutationV2<string, string>({
+  const createFolderMutation = createCreateMutationV2<string, string>({
     mutationKey: studioKeys.mutation('folders.create'),
     mutationFn: async (folder: string) => {
       const expanded = expandFolderPath(folder);

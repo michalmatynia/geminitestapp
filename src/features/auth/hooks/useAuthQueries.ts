@@ -16,6 +16,7 @@ import {
 } from '@/features/auth/api/users';
 import { ApiError } from '@/shared/lib/api-client';
 import {
+  createDeleteMutationV2,
   createSingleQueryV2,
   createUpdateMutationV2,
   createCreateMutationV2,
@@ -151,7 +152,7 @@ export function useDeleteAuthUser(): UpdateMutation<
   { userId: string }
   > {
   const queryClient = useQueryClient();
-  return createUpdateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: async ({ userId }: { userId: string }): Promise<{ id: string; deleted: boolean }> => {
       return deleteAuthUser(userId);
     },

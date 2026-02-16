@@ -19,6 +19,7 @@ import type {
 import { ApiError } from '@/shared/lib/api-client';
 import { resolvePayloadErrorMessage, unwrapMutationResult } from '@/shared/lib/mutation-error-handler';
 import {
+  createDeleteMutationV2,
   createListQueryV2,
   createSingleQueryV2,
   createCreateMutationV2,
@@ -126,7 +127,7 @@ export function useRestoreBackupMutation(): MutationResult<
   { dbType: DatabaseType; backupName: string; truncateBeforeRestore: boolean }
   > {
   const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
+  return createUpdateMutationV2({
     mutationFn: (variables: {
       dbType: DatabaseType;
       backupName: string;
@@ -181,7 +182,7 @@ export function useDeleteBackupMutation(): MutationResult<
   > {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: (variables: { dbType: DatabaseType; backupName: string }) =>
       deleteDatabaseBackup(variables.dbType, variables.backupName),
     mutationKey,
@@ -259,7 +260,7 @@ export function useSqlQueryMutation(): MutationResult<
   }
   > {
   const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
+  return createUpdateMutationV2({
     mutationFn: (input) => executeSqlQuery(input),
     mutationKey,
     meta: {
@@ -417,7 +418,7 @@ export function useDatabaseBackupRunNowMutation(): UpdateMutation<
   > {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
-  return createUpdateMutationV2({
+  return createCreateMutationV2({
     mutationFn: (variables) =>
       runDatabaseEngineBackupNow(variables.dbType),
     mutationKey,
@@ -444,7 +445,7 @@ export function useCancelDatabaseEngineOperationJobMutation(): MutationResult<
   > {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
-  return createCreateMutationV2({
+  return createUpdateMutationV2({
     mutationFn: (variables: { jobId: string }) =>
       cancelDatabaseEngineOperationJob(variables.jobId),
     mutationKey,
@@ -525,7 +526,7 @@ export function useCreateJsonBackupMutation(): UpdateMutation<
   > {
   const queryClient = useQueryClient();
   const mutationKey = dbKeys.all;
-  return createUpdateMutationV2({
+  return createCreateMutationV2({
     mutationFn: async (): Promise<DatabaseBackupResponse> => {
       const result = await createJsonBackup();
       return unwrapMutationResult(result, 'Failed to create JSON backup.');

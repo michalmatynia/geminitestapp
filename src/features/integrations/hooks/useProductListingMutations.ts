@@ -201,7 +201,7 @@ export function useDeleteFromBaseMutation(productId: string): UpdateMutation<
   const queryClient = useQueryClient();
   const listingQueryKey = getProductListingsQueryKey(productId);
 
-  return createCreateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }) => 
       api.post<{ status?: string; message?: string; runId?: string | null }>(
         `/api/integrations/products/${productId}/listings/${listingId}/delete-from-base`,
@@ -326,7 +326,7 @@ export function useSyncBaseImagesMutation(productId: string): UpdateMutation<
   const queryClient = useQueryClient();
   const mutationKey = getProductListingsQueryKey(productId);
 
-  return createCreateMutationV2({
+  return createUpdateMutationV2({
     mutationFn: async ({ listingId, inventoryId }: { listingId: string; inventoryId?: string }): Promise<{ status: string; count: number; added: number }> => {
       const payload = await api.post<{ status?: string; count?: number; added?: number }>(`/api/integrations/products/${productId}/listings/${listingId}/sync-base-images`, { inventoryId });
       return {

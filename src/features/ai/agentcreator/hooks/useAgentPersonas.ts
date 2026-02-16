@@ -7,7 +7,7 @@ import type { AgentPersona } from '@/features/ai/agentcreator/types';
 import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAgentPersonas } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -39,7 +39,7 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
   > {
   const queryClient = useQueryClient();
 
-  return createMutationV2<void, { personas: AgentPersona[] }>({
+  return createUpdateMutationV2<void, { personas: AgentPersona[] }>({
     mutationKey: agentPersonaKeys.mutation('save'),
     mutationFn: async ({ personas }: { personas: AgentPersona[] }): Promise<void> => {
       await api.post('/api/settings', {

@@ -21,7 +21,6 @@ import {
   StatusBadge, 
   PageLayout, 
   FormSection,
-  Badge,
   Alert,
   type StatusVariant
 } from '@/shared/ui';

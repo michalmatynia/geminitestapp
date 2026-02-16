@@ -8,6 +8,7 @@ import {
   createCreateMutationV2,
   createDeleteMutationV2,
   createMutationV2,
+  createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateIntegrations } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -203,7 +204,7 @@ export function useAllegroApiRequest() {
 
 export function useUpdatePreferredTemplate() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createCreateMutationV2<void, { templateId: string }>({
+  return createUpdateMutationV2<void, { templateId: string }>({
     mutationFn: (variables) =>
       api.post<void>('/api/integrations/exports/base/templates/preferred', variables),
     mutationKey,
@@ -237,7 +238,7 @@ export function useSyncAllBaseImagesMutation() {
 
 export function useUpdatePreferredInventory() {
   const mutationKey = QUERY_KEYS.integrations.all;
-  return createCreateMutationV2<void, { inventoryId: string; connectionId: string }>({
+  return createUpdateMutationV2<void, { inventoryId: string; connectionId: string }>({
     mutationFn: (variables) =>
       api.post<void>('/api/integrations/exports/base/inventories/preferred', variables),
     mutationKey,

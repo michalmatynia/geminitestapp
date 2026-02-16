@@ -124,7 +124,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
     : saving
       ? 'Saving...'
       : autoSaveStatus === 'saved'
-        ? `Saved\${autoSaveAt ? \` at \${new Date(autoSaveAt).toLocaleTimeString()}\` : ''}`
+        ? 'Saved' + (autoSaveAt ? ' at ' + new Date(autoSaveAt).toLocaleTimeString() : '')
         : autoSaveStatus === 'error'
           ? 'Save failed'
           : 'Manual save only';
@@ -456,7 +456,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                 />
                 {lastRunAt && (
                   <StatusBadge
-                    status={`Last run: \${new Date(lastRunAt).toLocaleTimeString()}`}
+                    status={'Last run: ' + new Date(lastRunAt).toLocaleTimeString()}
                     variant='active'
                     size='sm'
                     className='font-medium'
@@ -646,7 +646,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                       {runtimeNodeLiveStates.map((entry: { nodeId: string; title: string; status: string }) => (
                         <StatusBadge
                           key={entry.nodeId}
-                          status={`${entry.title} · ${formatStatusLabel(entry.status)}`}
+                          status={entry.title + ' · ' + formatStatusLabel(entry.status)}
                           variant={statusToVariant(entry.status)}
                           size='sm'
                           title={entry.nodeId}

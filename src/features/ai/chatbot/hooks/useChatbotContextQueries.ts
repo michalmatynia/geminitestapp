@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
-import { createCreateMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { createCreateMutationV2, createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ListQuery, MutationResult } from '@/shared/types/query-result-types';
 import type { FileUploadHelpers } from '@/shared/ui';
@@ -35,7 +35,7 @@ export function useSaveChatbotContextMutation(): MutationResult<
   > {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.ai.chatbot.mutation('save-context');
-  return createCreateMutationV2<SettingRecord, { key: string; value: string; errorLabel: string }>({
+  return createUpdateMutationV2<SettingRecord, { key: string; value: string; errorLabel: string }>({
     mutationFn: ({ key, value, errorLabel }) => chatbotApi.saveSetting(key, value, errorLabel),
     mutationKey,
     meta: {

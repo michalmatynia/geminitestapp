@@ -121,47 +121,6 @@
   569:13  error  Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
   589:62  error  Unsafe argument of type `any` assigned to a parameter of type `FilemakerDatabase`                  @typescript-eslint/no-unsafe-argument
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useNoteData.ts
-  219:1  error  Expected indentation of 6 spaces but found 2    indent
-  220:1  error  Expected indentation of 8 spaces but found 4    indent
-  221:1  error  Expected indentation of 10 spaces but found 6   indent
-  222:1  error  Expected indentation of 10 spaces but found 6   indent
-  223:1  error  Expected indentation of 10 spaces but found 6   indent
-  224:1  error  Expected indentation of 8 spaces but found 4    indent
-  229:1  error  Expected indentation of 10 spaces but found 6   indent
-  230:1  error  Expected indentation of 10 spaces but found 6   indent
-  231:1  error  Expected indentation of 10 spaces but found 6   indent
-  232:1  error  Expected indentation of 10 spaces but found 6   indent
-  234:1  error  Expected indentation of 10 spaces but found 6   indent
-  235:1  error  Expected indentation of 10 spaces but found 6   indent
-  236:1  error  Expected indentation of 12 spaces but found 8   indent
-  237:1  error  Expected indentation of 12 spaces but found 8   indent
-  238:1  error  Expected indentation of 14 spaces but found 10  indent
-  239:1  error  Expected indentation of 14 spaces but found 10  indent
-  240:1  error  Expected indentation of 12 spaces but found 8   indent
-  241:1  error  Expected indentation of 10 spaces but found 6   indent
-  242:1  error  Expected indentation of 10 spaces but found 6   indent
-  243:1  error  Expected indentation of 12 spaces but found 8   indent
-  244:1  error  Expected indentation of 12 spaces but found 8   indent
-  245:1  error  Expected indentation of 10 spaces but found 6   indent
-  246:1  error  Expected indentation of 10 spaces but found 6   indent
-  247:1  error  Expected indentation of 8 spaces but found 4    indent
-  248:1  error  Expected indentation of 8 spaces but found 4    indent
-  249:1  error  Expected indentation of 8 spaces but found 4    indent
-  250:1  error  Expected indentation of 10 spaces but found 6   indent
-  251:1  error  Expected indentation of 10 spaces but found 6   indent
-  252:1  error  Expected indentation of 10 spaces but found 6   indent
-  253:1  error  Expected indentation of 10 spaces but found 6   indent
-  254:1  error  Expected indentation of 10 spaces but found 6   indent
-  255:1  error  Expected indentation of 10 spaces but found 6   indent
-  256:1  error  Expected indentation of 8 spaces but found 4    indent
-  257:1  error  Expected indentation of 8 spaces but found 4    indent
-  258:1  error  Expected indentation of 10 spaces but found 6   indent
-  259:1  error  Expected indentation of 12 spaces but found 8   indent
-  260:1  error  Expected indentation of 10 spaces but found 6   indent
-  261:1  error  Expected indentation of 8 spaces but found 4    indent
-  262:1  error  Expected indentation of 6 spaces but found 2    indent
-
-✖ 143 problems (142 errors, 1 warning)
-  54 errors and 0 warnings potentially fixable with the `--fix` option.
+✖ 104 problems (103 errors, 1 warning)
+  15 errors and 0 warnings potentially fixable with the `--fix` option.
 

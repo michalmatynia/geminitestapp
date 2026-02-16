@@ -61,8 +61,8 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
           status={row.original.status} 
           variant={
             row.original.status === 'running' ? 'processing' :
-            row.original.status === 'queued' ? 'warning' :
-            row.original.status === 'completed' ? 'success' : 'error'
+              row.original.status === 'queued' ? 'warning' :
+                row.original.status === 'completed' ? 'success' : 'error'
           }
           size='sm'
           className='font-bold'

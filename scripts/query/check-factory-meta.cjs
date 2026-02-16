@@ -20,6 +20,8 @@ const OPERATION_EXPECTATIONS = {
   createUpdateMutationV2: new Set(['update', 'action', 'upload']),
   createDeleteMutationV2: new Set(['delete', 'action']),
 };
+const STRICT_ALIAS_OPERATION = process.env.CHECK_FACTORY_META_STRICT_ALIAS === '1';
+const STRICT_GENERIC_ACTION = process.env.CHECK_FACTORY_META_STRICT_GENERIC_ACTION !== '0';
 
 const IGNORED_DIRS = new Set([
   'node_modules',
@@ -124,7 +126,48 @@ const inspectCallExpression = (callExpression, sourceFile, relFilePath, issues) 
   }
 
   const expectedOperations = OPERATION_EXPECTATIONS[callName];
-  if (!expectedOperations) {
+  if (!expectedOperations || !STRICT_ALIAS_OPERATION) {
+    if (callName !== 'createMutationV2' || !STRICT_GENERIC_ACTION) {
+      return;
+    }
+
+    const metaObject = extractMetaObject(metaProperty);
+    if (!metaObject) {
+      return;
+    }
+
+    const operationProperty = findObjectProperty(metaObject, 'operation');
+    if (!operationProperty || !ts.isPropertyAssignment(operationProperty)) {
+      issues.push({
+        file: relFilePath,
+        line,
+        callName,
+        message: 'meta.operation is required for createMutationV2.',
+      });
+      return;
+    }
+
+    const operationValue = readStringLiteralValue(operationProperty.initializer);
+    if (operationValue === 'action') {
+      return;
+    }
+
+    if (operationValue === null) {
+      issues.push({
+        file: relFilePath,
+        line,
+        callName,
+        message: "meta.operation should be the string literal 'action' for createMutationV2.",
+      });
+      return;
+    }
+
+    issues.push({
+      file: relFilePath,
+      line,
+      callName,
+      message: "createMutationV2 must use meta.operation: 'action'. Use operation-specific aliases for create/update/delete.",
+    });
     return;
   }
 

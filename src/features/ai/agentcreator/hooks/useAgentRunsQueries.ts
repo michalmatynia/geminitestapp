@@ -1,8 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
+  createDeleteMutationV2,
   createListQueryV2,
-  createCreateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAgentRuns } from '@/shared/lib/query-invalidation';
 import { agentRunsKeys } from '@/shared/lib/query-key-exports';
@@ -89,7 +89,7 @@ export function useAgentAudits(runId: string | null, options?: { refetchInterval
 export function useDeleteAgentRunMutation(): MutationResult<void, { runId: string; force?: boolean }> {
   const queryClient = useQueryClient();
   const mutationKey = agentRunsKeys.lists();
-  return createCreateMutationV2<void, { runId: string; force?: boolean }>({
+  return createDeleteMutationV2<void, { runId: string; force?: boolean }>({
     mutationFn: ({ runId, force }: { runId: string; force?: boolean }) => 
       api.deleteAgentRun(runId, force),
     mutationKey,
@@ -110,7 +110,7 @@ export function useDeleteAgentRunMutation(): MutationResult<void, { runId: strin
 export function useDeleteCompletedAgentRunsMutation(): MutationResult<void, void> {
   const queryClient = useQueryClient();
   const mutationKey = agentRunsKeys.lists();
-  return createCreateMutationV2<void, void>({
+  return createDeleteMutationV2<void, void>({
     mutationFn: api.deleteCompletedAgentRuns,
     mutationKey,
     meta: {

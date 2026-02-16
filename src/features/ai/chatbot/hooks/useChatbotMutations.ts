@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createCreateMutationV2, createDeleteMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
   invalidateChatbotSession,
   invalidateChatbotSessions,
@@ -81,7 +81,7 @@ export function useDeleteChatbotSession(): UpdateMutation<unknown, string> {
   const queryClient = useQueryClient();
   const mutationKey = chatbotQueryKeys.mutation('delete-session');
 
-  return createUpdateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: deleteChatbotSession,
     mutationKey,
     meta: {
@@ -106,7 +106,7 @@ export function useDeleteChatbotSessions(): UpdateMutation<unknown, string[]> {
   const queryClient = useQueryClient();
   const mutationKey = chatbotQueryKeys.mutation('delete-sessions');
 
-  return createUpdateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: deleteChatbotSessions,
     mutationKey,
     meta: {

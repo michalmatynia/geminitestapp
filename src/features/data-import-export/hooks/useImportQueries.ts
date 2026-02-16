@@ -15,9 +15,11 @@ import type { IntegrationWithConnections } from '@/features/integrations';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
+  createDeleteMutationV2,
   createListQueryV2,
   createMutationV2,
   createSingleQueryV2,
+  createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
 import type {
@@ -122,7 +124,7 @@ export function useSavePreferenceMutation(): MutationResult<unknown, { endpoint:
   const queryClient = useQueryClient();
   const mutationKey = importExportKeys.preferences();
 
-  return createCreateMutationV2({
+  return createUpdateMutationV2({
     mutationFn: ({ endpoint, data }: { endpoint: string; data: unknown }) => api.post<unknown>(endpoint, data),
     mutationKey,
     meta: {
@@ -370,7 +372,7 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
   const queryClient = useQueryClient();
   const mutationKey = importExportKeys.preferences();
 
-  return createCreateMutationV2({
+  return createUpdateMutationV2({
     mutationFn: async (params: {
       exportActiveTemplateId?: string | null;
       exportInventoryId?: string | null;
@@ -414,7 +416,7 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
 
 export function useClearInventoryMutation(): MutationResult<void, void> {
   const mutationKey = importExportKeys.inventories(undefined);
-  return createCreateMutationV2({
+  return createDeleteMutationV2({
     mutationFn: async () => {
       await Promise.all([
         api.post('/api/integrations/imports/base/sample-product', { inventoryId: '', saveOnly: true }),

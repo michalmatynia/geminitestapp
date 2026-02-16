@@ -16,6 +16,16 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
+import { 
+  createId, 
+  isPathWithinFolder, 
+  createUniqueFolderPath, 
+  promptForName, 
+  buildFileEditDraft,
+  buildPromptExploderPartyProposalState,
+  type CaseResolverPromptExploderPartyProposalState
+} from '../utils/caseResolverUtils';
+
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_TAGS_KEY,
@@ -38,16 +48,6 @@ import type {
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '../types';
-
-import { 
-  createId, 
-  isPathWithinFolder, 
-  createUniqueFolderPath, 
-  promptForName, 
-  buildFileEditDraft,
-  buildPromptExploderPartyProposalState,
-  type CaseResolverPromptExploderPartyProposalState
-} from '../utils/caseResolverUtils';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 
@@ -128,16 +128,15 @@ export function useCaseResolverState() {
             value: serialized,
           });
           lastPersistedValueRef.current = serialized;
-          if (pendingSaveToastRef.current) {
-            toast(pendingSaveToastRef.current, { variant: 'success' });
-            pendingSaveToastRef.current = null;
-          }
-        } catch (error) {
-          toast('Failed to save Case Resolver workspace.', { variant: 'error' });
-        }
-      })();
-    }, 350);
-
+                      if (pendingSaveToastRef.current) {
+                      toast(pendingSaveToastRef.current, { variant: 'success' });
+                      pendingSaveToastRef.current = null;
+                    }
+                  } catch (_error) {
+                    toast('Failed to save Case Resolver workspace.', { variant: 'error' });
+                  }
+                })();
+              }, 350);
     return () => window.clearTimeout(timer);
   }, [workspace, updateSetting, toast]);
 

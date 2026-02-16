@@ -17,7 +17,7 @@ import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   SelectSimple,
@@ -318,7 +318,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
       tags: ['ai-paths', 'node-config', 'regex'],
     },
   });
-  const updateSettingMutation = createMutationV2<void, { key: string; value: string }>({
+  const updateSettingMutation = createUpdateMutationV2<void, { key: string; value: string }>({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation('regex.update-setting'),
     mutationFn: async (payload: { key: string; value: string }): Promise<void> => {
       await updateAiPathsSetting(payload.key, payload.value);

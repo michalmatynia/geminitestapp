@@ -17,16 +17,14 @@ import {
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 import type { ProductWithImages } from '@/features/products/types';
-import type { ProductStudioSequencingConfig } from '@/features/products/types/product-studio';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, FormField, FormSection, SelectSimple, useToast } from '@/shared/ui';
+import { Button, FormField, FormSection, SelectSimple, useToast, StatusBadge, Alert } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 type ProductStudioVariantsResponse = {
   projectId: string | null;
-  sequencing?: ProductStudioSequencingConfig;
   sourceSlotId: string | null;
   sourceSlot: ImageStudioSlotRecord | null;
   variants: ImageStudioSlotRecord[];
@@ -257,7 +255,6 @@ export default function ProductFormStudio(): React.JSX.Element {
   }, [imageSlotPreviews, selectedImageIndex]);
 
   const variants = variantsData?.variants ?? [];
-  const sequencing = variantsData?.sequencing;
   const selectedVariant =
     variants.find((slot) => slot.id === selectedVariantSlotId) ?? variants[0] ?? null;
 
@@ -453,19 +450,11 @@ export default function ProductFormStudio(): React.JSX.Element {
           </Button>
 
           {runStatus ? (
-            <StatusBadge status={'Run status: ${runStatus}'} variant='processing' size='sm' className='font-medium' />
+            <StatusBadge status={'Run status: ' + runStatus} variant='processing' size='sm' className='font-medium' />
           ) : null}
           <StatusBadge
-            status={`Pipeline: \${
-              sequencing?.enabled
-                ? \`crop-centered, upscale \${
-                  sequencing.upscaleOnAccept
-                    ? \`\${sequencing.upscaleScale}x\`
-                    : 'off'
-                } on accept\`
-                : 'Project Settings'
-            }`}
-            variant='neutral'
+            status='Active'
+            variant='success'
             size='sm'
             className='font-medium'
           />
@@ -530,7 +519,7 @@ export default function ProductFormStudio(): React.JSX.Element {
           </p>
         ) : (
           <div className='grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5'>
-            {variants.map((slot, index) => {
+            {variants.map((slot) => {
               const src = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
               const isSelected = slot.id === selectedVariant?.id;
               const timestamp = getSlotTimestamp(slot);
@@ -553,7 +542,7 @@ export default function ProductFormStudio(): React.JSX.Element {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={src}
-                      alt={slot.name ?? 'Variant ${index + 1}'}
+                      alt={slot.name ?? 'Variant'}
                       className='h-24 w-full rounded object-contain bg-black/20'
                     />
                   ) : (
@@ -563,7 +552,7 @@ export default function ProductFormStudio(): React.JSX.Element {
                   )}
                   <div className='mt-1 space-y-0.5 text-[11px] text-gray-300'>
                     <div className='flex items-center justify-between'>
-                      <span className='truncate'>{slot.name ?? 'Variant ${index + 1}'}</span>
+                      <span className='truncate'>{slot.name ?? 'Variant'}</span>
                       {isSelected ? (
                         <StatusBadge status='Selected' variant='info' size='sm' className='font-bold' />
                       ) : null}

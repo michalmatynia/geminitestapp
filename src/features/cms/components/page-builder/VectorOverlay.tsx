@@ -10,11 +10,10 @@ import {
   vectorShapesToPath,
   smoothShape,
   simplifyShape,
-  DEFAULT_VECTOR_VIEWBOX,
   type VectorShape,
   type VectorToolMode,
 } from '@/features/vector-drawing';
-import { Button, StatusBadge } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import type { VectorOverlayRequest } from '../../hooks/usePageBuilderContext';
@@ -173,12 +172,6 @@ export function VectorOverlay({ request, onClose, className }: VectorOverlayProp
             <div className='text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200'>
               {request.title}
             </div>
-            <StatusBadge
-              status={`ViewBox \${DEFAULT_VECTOR_VIEWBOX}`}
-              variant='success'
-              size='sm'
-              className='font-bold'
-            />
           </div>
           {request.description ? (
             <div className='text-[11px] text-gray-400'>{request.description}</div>

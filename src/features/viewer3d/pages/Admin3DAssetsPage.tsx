@@ -109,14 +109,10 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       cell: ({ row }) => (
         <div className='flex flex-wrap gap-1'>
           {row.original.tags.slice(0, 2).map((tag) => (
-            <Badge key={tag} variant='secondary' className='text-[10px]'>
-              {tag}
-            </Badge>
+            <StatusBadge key={tag} status={tag} variant='neutral' size='sm' className='font-medium' />
           ))}
           {row.original.tags.length > 2 && (
-            <Badge variant='outline' className='text-[10px]'>
-              +{row.original.tags.length - 2}
-            </Badge>
+            <StatusBadge status={'+' + (row.original.tags.length - 2)} variant='neutral' size='sm' className='font-bold' />
           )}
           {row.original.tags.length === 0 && <span className='text-muted-foreground'>-</span>}
         </div>

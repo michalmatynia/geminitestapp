@@ -284,7 +284,17 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
             const by = Math.max(0, Math.round(rect.y * invRatio));
             const bw = Math.max(1, Math.round(rect.w * invRatio));
             const bh = Math.max(1, Math.round(rect.h * invRatio));
-            appendRectShape(bx, by, bw, bh, effectiveMode === 'threshold' ? 'Threshold BBox' : 'Edge BBox');
+            const normalizedX = sourceWidth > 0 ? (bx / sourceWidth) : 0;
+            const normalizedY = sourceHeight > 0 ? (by / sourceHeight) : 0;
+            const normalizedW = sourceWidth > 0 ? (bw / sourceWidth) : 1;
+            const normalizedH = sourceHeight > 0 ? (bh / sourceHeight) : 1;
+            appendRectShape(
+              Math.max(0, Math.min(1, normalizedX)),
+              Math.max(0, Math.min(1, normalizedY)),
+              Math.max(1 / Math.max(sourceWidth, 1), Math.min(1, normalizedW)),
+              Math.max(1 / Math.max(sourceHeight, 1), Math.min(1, normalizedH)),
+              effectiveMode === 'threshold' ? 'Threshold BBox' : 'Edge BBox'
+            );
             toast(
               effectiveMode === 'threshold' ? 'Threshold mask generated.' : 'Edge mask generated.',
               { variant: 'success' }

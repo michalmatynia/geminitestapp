@@ -18,14 +18,19 @@ export type PromptExploderCaseResolverPartyCandidate = {
   rawText: string;
   kind?: PromptExploderCaseResolverPartyKind | undefined;
   firstName?: string | undefined;
+  middleName?: string | undefined;
   lastName?: string | undefined;
   organizationName?: string | undefined;
   street?: string | undefined;
+  streetNumber?: string | undefined;
+  houseNumber?: string | undefined;
   city?: string | undefined;
   postalCode?: string | undefined;
   country?: string | undefined;
   sourceSegmentId?: string | undefined;
   sourceSegmentTitle?: string | undefined;
+  sourcePatternLabels?: string[] | undefined;
+  sourceSequenceLabels?: string[] | undefined;
 };
 
 export type PromptExploderCaseResolverPartyBundle = {
@@ -45,6 +50,16 @@ export type PromptExploderBridgePayload = {
 const hasWindow = (): boolean => typeof window !== 'undefined';
 
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+const toTrimmedStringList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const out = new Set<string>();
+  value.forEach((entry: unknown) => {
+    const normalized = toTrimmedString(entry);
+    if (!normalized) return;
+    out.add(normalized);
+  });
+  return [...out];
+};
 
 const sanitizeCaseResolverPartyCandidate = (
   value: unknown,
@@ -65,14 +80,19 @@ const sanitizeCaseResolverPartyCandidate = (
     rawText: rawText || displayName,
     kind,
     firstName: toTrimmedString(record['firstName']) || undefined,
+    middleName: toTrimmedString(record['middleName']) || undefined,
     lastName: toTrimmedString(record['lastName']) || undefined,
     organizationName: toTrimmedString(record['organizationName']) || undefined,
     street: toTrimmedString(record['street']) || undefined,
+    streetNumber: toTrimmedString(record['streetNumber']) || undefined,
+    houseNumber: toTrimmedString(record['houseNumber']) || undefined,
     city: toTrimmedString(record['city']) || undefined,
     postalCode: toTrimmedString(record['postalCode']) || undefined,
     country: toTrimmedString(record['country']) || undefined,
     sourceSegmentId: toTrimmedString(record['sourceSegmentId']) || undefined,
     sourceSegmentTitle: toTrimmedString(record['sourceSegmentTitle']) || undefined,
+    sourcePatternLabels: toTrimmedStringList(record['sourcePatternLabels']),
+    sourceSequenceLabels: toTrimmedStringList(record['sourceSequenceLabels']),
   };
 };
 

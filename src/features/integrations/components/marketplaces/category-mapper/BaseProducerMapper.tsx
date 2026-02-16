@@ -28,8 +28,12 @@ export function BaseProducerMapper(): React.JSX.Element {
   const producersQuery = useProducers();
   const externalProducersQuery = useExternalProducers(connectionId);
   const mappingsQuery = useProducerMappings(connectionId);
-  const fetchMutation = useFetchExternalProducersMutation();
-  const saveMutation = useSaveProducerMappingsMutation();
+  const fetchMutationHook = useFetchExternalProducersMutation();
+  const saveMutationHook = useSaveProducerMappingsMutation();
+
+  const fetchMutation = fetchMutationHook();
+  const saveMutation = saveMutationHook();
+
 
   const internalProducers = useMemo(
     (): Producer[] => producersQuery.data ?? [],

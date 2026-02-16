@@ -48,7 +48,7 @@ const formatPromptPreview = (value: string): string => {
 export function AdminPromptExploderProjectsPage(): React.JSX.Element {
   const router = useRouter();
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap({ scope: 'light' });
+  const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
 
   const rawPromptLibrary = settingsQuery.data?.get(PROMPT_EXPLODER_LIBRARY_KEY) ?? null;

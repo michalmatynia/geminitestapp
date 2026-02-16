@@ -5,7 +5,8 @@ import {
   type UseQueryOptions,
   type UseMutationOptions,
   type QueryKey,
-  type QueryClient, // Added QueryClient import
+  type QueryClient,
+  type UseMutationResult,
 } from '@tanstack/react-query';
 import { z } from 'zod';
 
@@ -63,14 +64,14 @@ export interface MutationConfig<TData, TVariables, TContext = unknown> {
   invalidateKeys?: QueryKey[] | ((data: TData, variables: TVariables) => QueryKey[]);
 }
 
-export function createMutationHook<TData, TVariables, TContext = unknown>(
+export function createMutationHook<TData, TVariables, TContext = unknown, TError = Error>(
   config: MutationConfig<TData, TVariables, TContext>
 ) {
   return (
-    options?: Partial<UseMutationOptions<TData, Error, TVariables, TContext>> & {
+    options?: Partial<UseMutationOptions<TData, TError, TVariables, TContext>> & {
       onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
     }
-  ) => {
+  ): UseMutationResult<TData, TError, TVariables, TContext> => {
     const queryClient = useQueryClient();
     const { onSuccess, ...mutationOptions } = options || {};
 
@@ -106,21 +107,25 @@ export function createMutationHook<TData, TVariables, TContext = unknown>(
 /**
  * Factory for creating typed and validated TanStack Mutation hooks based on API endpoints.
  */
-export interface MutationEndpointConfig<TData, TVariables, TError = Error> {
+export interface MutationEndpointConfig<TData, TVariables, TError = Error, TContext = unknown> {
   endpoint: string | ((variables: TVariables) => string);
   responseSchema?: z.ZodType<TData>;
   apiOptions?: ApiClientOptions;
   invalidateKeys?: QueryKey[] | ((data: TData, variables: TVariables) => QueryKey[]);
-  onSuccess?: (data: TData, variables: TVariables, context: unknown, queryClient: QueryClient) => void | Promise<void>;
+  onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
 }
 
 type HttpMethod = 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-function createEndpointMutation<TData, TVariables, TError = Error>(
+function createEndpointMutation<TData, TVariables, TError = Error, TContext = unknown>(
   method: HttpMethod,
-  config: MutationEndpointConfig<TData, TVariables, TError>
-) {
-  return createMutationHook<TData, TVariables, unknown>({
+  config: MutationEndpointConfig<TData, TVariables, TError, TContext>
+): (
+  options?: Partial<UseMutationOptions<TData, TError, TVariables, TContext>> & {
+    onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
+  }
+) => UseMutationResult<TData, TError, TVariables, TContext> {
+  return createMutationHook<TData, TVariables, TContext, TError>({
     mutationFn: async (variables) => {
       const url = typeof config.endpoint === 'function' ? config.endpoint(variables) : config.endpoint;
       let data: TData;
@@ -152,42 +157,76 @@ function createEndpointMutation<TData, TVariables, TError = Error>(
   });
 }
 
-export function createPostMutation<TData, TVariables, TError = Error>(
-  config: MutationEndpointConfig<TData, TVariables, TError>
-) {
-  return createEndpointMutation('POST', config);
+export function createPostMutation<TData, TVariables, TError = Error, TContext = unknown>(
+  config: MutationEndpointConfig<TData, TVariables, TError, TContext>
+): (
+  options?: Partial<UseMutationOptions<TData, TError, TVariables, TContext>> & {
+    onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
+  }
+) => UseMutationResult<TData, TError, TVariables, TContext> {
+  return createEndpointMutation<TData, TVariables, TError, TContext>('POST', config);
 }
 
-export function createPutMutation<TData, TVariables, TError = Error>(
-  config: MutationEndpointConfig<TData, TVariables, TError>
-) {
-  return createEndpointMutation('PUT', config);
+export function createPutMutation<TData, TVariables, TError = Error, TContext = unknown>(
+  config: MutationEndpointConfig<TData, TVariables, TError, TContext>
+): (
+  options?: Partial<UseMutationOptions<TData, TError, TVariables, TContext>> & {
+    onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
+  }
+) => UseMutationResult<TData, TError, TVariables, TContext> {
+  return createEndpointMutation<TData, TVariables, TError, TContext>('PUT', config);
 }
 
-export function createPatchMutation<TData, TVariables, TError = Error>(
-  config: MutationEndpointConfig<TData, TVariables, TError>
-) {
-  return createEndpointMutation('PATCH', config);
+export function createPatchMutation<TData, TVariables, TError = Error, TContext = unknown>(
+  config: MutationEndpointConfig<TData, TVariables, TError, TContext>
+): (
+  options?: Partial<UseMutationOptions<TData, TError, TVariables, TContext>> & {
+    onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
+  }
+) => UseMutationResult<TData, TError, TVariables, TContext> {
+  return createEndpointMutation<TData, TVariables, TError, TContext>('PATCH', config);
 }
 
-export function createDeleteMutation<TData, TVariables, TError = Error>(
-  config: MutationEndpointConfig<TData, TVariables, TError>
-) {
-  return createEndpointMutation('DELETE', config);
+export function createDeleteMutation<TData, TVariables, TError = Error, TContext = unknown>(
+  config: MutationEndpointConfig<TData, TVariables, TError, TContext>
+): (
+  options?: Partial<UseMutationOptions<TData, TError, TVariables, TContext>> & {
+    onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
+  }
+) => UseMutationResult<TData, TError, TVariables, TContext> {
+  return createEndpointMutation<TData, TVariables, TError, TContext>('DELETE', config);
 }
 
-export function createSaveMutation<TData, TVariables extends { id?: string | number }, TError = Error>(
-  config: Omit<MutationEndpointConfig<TData, TVariables, TError>, 'endpoint'> & {
+export function createSaveMutation<TData, TVariables extends { id?: string | number }, TError = Error, TContext = unknown>(
+  config: Omit<MutationEndpointConfig<TData, TVariables, TError, TContext>, 'endpoint'> & {
     createEndpoint: string | ((variables: TVariables) => string);
     updateEndpoint: string | ((variables: TVariables) => string);
+    updateMethod?: 'POST' | 'PUT' | 'PATCH';
   }
-) {
-  return createMutationHook<TData, TVariables, unknown>({
+): (
+  options?: Partial<UseMutationOptions<TData, TError, TVariables, TContext>> & {
+    onSuccess?: (data: TData, variables: TVariables, context: TContext, queryClient: QueryClient) => void | Promise<void>;
+  }
+) => UseMutationResult<TData, TError, TVariables, TContext> {
+  return createMutationHook<TData, TVariables, TContext, TError>({
     mutationFn: async (variables) => {
       let data: TData;
       if (variables.id) {
         const url = typeof config.updateEndpoint === 'function' ? config.updateEndpoint(variables) : config.updateEndpoint;
-        data = await api.patch<TData>(url, variables, config.apiOptions);
+        const method = config.updateMethod ?? 'PATCH';
+        
+        switch (method) {
+          case 'POST':
+            data = await api.post<TData>(url, variables, config.apiOptions);
+            break;
+          case 'PUT':
+            data = await api.put<TData>(url, variables, config.apiOptions);
+            break;
+          case 'PATCH':
+          default:
+            data = await api.patch<TData>(url, variables, config.apiOptions);
+            break;
+        }
       } else {
         const url = typeof config.createEndpoint === 'function' ? config.createEndpoint(variables) : config.createEndpoint;
         data = await api.post<TData>(url, variables, config.apiOptions);
@@ -202,5 +241,8 @@ export function createSaveMutation<TData, TVariables extends { id?: string | num
     invalidateKeys: config.invalidateKeys,
   });
 }
+
+
+
 
 

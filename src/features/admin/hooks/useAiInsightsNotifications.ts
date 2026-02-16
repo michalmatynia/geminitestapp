@@ -1,8 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
-
-import { api } from '@/shared/lib/api-client';
+import { createQueryHook, createDeleteMutation } from '@/shared/lib/api-hooks';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiInsightNotification } from '@/shared/types/ai-insights';
 
@@ -10,28 +8,18 @@ export type NotificationsResponse = { notifications: AiInsightNotification[] };
 
 export const aiNotificationsQueryKey = QUERY_KEYS.ai.insights.notifications();
 
-export function useAiInsightsNotifications(options: { enabled?: boolean } = {}): UseQueryResult<NotificationsResponse, Error> {
-  return useQuery<NotificationsResponse, Error>({
-    queryKey: aiNotificationsQueryKey,
-    queryFn: async () => {
-      const data = await api.get<NotificationsResponse>('/api/ai-insights/notifications', {
-        params: { limit: 30 }
-      });
-      return {
-        notifications: data?.notifications ?? []
-      };
-    },
-    enabled: options.enabled ?? true,
-  });
-}
+export const useAiInsightsNotifications = createQueryHook<NotificationsResponse, { enabled?: boolean } | void>({
+  queryKeyFactory: () => aiNotificationsQueryKey,
+  endpoint: '/api/ai-insights/notifications',
+  apiOptions: { params: { limit: 30 } },
+});
 
 export function useClearAiInsightsNotifications() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: () => api.delete('/api/ai-insights/notifications'),
-    onSuccess: () => {
+  return createDeleteMutation<void, void>({
+    endpoint: '/api/ai-insights/notifications',
+    onSuccess: (_data, _variables, _context, queryClient) => {
       void queryClient.invalidateQueries({ queryKey: aiNotificationsQueryKey });
     },
   });
 }
+

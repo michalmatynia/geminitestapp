@@ -184,7 +184,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     const productRepository = await getProductRepository();
     const allProducts = await productRepository.getProducts({
       pageSize: 10000, // Get all products
-      page: 0
+      page: 1
     });
     const existingIds = new Set(
       allProducts
@@ -325,7 +325,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   if (data.uniqueOnly || !allowDuplicateSku) {
     const allProducts = await productRepository.getProducts({
       pageSize: 10000,
-      page: 0
+      page: 1
     });
 
     if (data.uniqueOnly) {

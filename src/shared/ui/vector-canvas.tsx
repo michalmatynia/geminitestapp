@@ -159,6 +159,7 @@ export interface VectorCanvasProps {
   maskPreviewInvert?: boolean;
   maskPreviewOpacity?: number;
   maskPreviewFeather?: number;
+  showCenterGuides?: boolean;
   className?: string;
 }
 
@@ -180,6 +181,7 @@ export function VectorCanvas({
   maskPreviewInvert = false,
   maskPreviewOpacity = 0.48,
   maskPreviewFeather = 0,
+  showCenterGuides = false,
   className,
 }: VectorCanvasProps): React.JSX.Element {
   const SHAPE_VIEWBOX_SIZE = 1000;
@@ -1284,6 +1286,17 @@ export function VectorCanvas({
                 );
               })}
             </svg>
+            {showCenterGuides ? (
+              <div
+                className='pointer-events-none absolute left-1/2 top-0 z-[22] -translate-x-1/2'
+                style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
+                aria-hidden='true'
+              >
+                <div className='absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-cyan-300/80 shadow-[0_0_0_1px_rgba(2,6,23,0.55)]' />
+                <div className='absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-cyan-300/80 shadow-[0_0_0_1px_rgba(2,6,23,0.55)]' />
+                <div className='absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-100/90 bg-cyan-400/90 shadow-[0_0_0_1px_rgba(2,6,23,0.65)]' />
+              </div>
+            ) : null}
           </div>
         </>
       ) : (
@@ -1363,6 +1376,13 @@ export function VectorCanvas({
                   );
                 })}
               </svg>
+              {showCenterGuides ? (
+                <div className='pointer-events-none absolute inset-0 z-[22]' aria-hidden='true'>
+                  <div className='absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-cyan-300/80 shadow-[0_0_0_1px_rgba(2,6,23,0.55)]' />
+                  <div className='absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-cyan-300/80 shadow-[0_0_0_1px_rgba(2,6,23,0.55)]' />
+                  <div className='absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-100/90 bg-cyan-400/90 shadow-[0_0_0_1px_rgba(2,6,23,0.65)]' />
+                </div>
+              ) : null}
             </div>
           ) : null}
           {showEmptyState && !allowWithoutImage ? (

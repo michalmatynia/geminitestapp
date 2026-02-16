@@ -56,6 +56,7 @@ const pointSchema = z.object({
 });
 
 const polygonSchema = z.array(pointSchema).min(3);
+const centerModeSchema = z.enum(['client_alpha_bbox', 'server_alpha_bbox']);
 
 export const imageStudioRunMaskSchema = z.union([
   z.object({
@@ -71,8 +72,14 @@ export const imageStudioRunMaskSchema = z.union([
   }),
 ]);
 
+const imageStudioRunCenterSchema = z.object({
+  mode: centerModeSchema.default('server_alpha_bbox'),
+  dataUrl: z.string().trim().min(1).optional(),
+});
+
 export const imageStudioRunRequestSchema = z.object({
   projectId: z.string().min(1).max(120),
+  operation: z.enum(['generate', 'center_object']).default('generate').optional(),
   asset: z.object({
     filepath: z.string().min(1),
     id: z.string().optional(),
@@ -87,32 +94,58 @@ export const imageStudioRunRequestSchema = z.object({
     .optional(),
   prompt: z.string().min(1),
   mask: imageStudioRunMaskSchema.nullable().optional(),
+  center: imageStudioRunCenterSchema.optional(),
   studioSettings: z.record(z.string(), z.any()).optional(),
 });
 
 export type ImageStudioRunRequest = z.infer<typeof imageStudioRunRequestSchema>;
 
+type ObjectBounds = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+type ImageStudioGenerationExecutionMeta = {
+  operation: 'generate';
+  modelRequested: string;
+  modelUsed: string;
+  outputFormat: 'png' | 'jpeg' | 'webp';
+  requestedOutputCount: number;
+  responseImageCount: number;
+  inputImageCount: number;
+  usedMask: boolean;
+  requestedSize: string | null;
+  effectiveSize: string | null;
+  requestedQuality: string | null;
+  effectiveQuality: string | null;
+  requestedBackground: string | null;
+  effectiveBackground: string | null;
+  unknownParameterDrops: string[];
+  usedDalle2ModelFallback: boolean;
+  apiAttemptCount: number;
+};
+
+type ImageStudioCenterExecutionMeta = {
+  operation: 'center_object';
+  mode: z.infer<typeof centerModeSchema>;
+  outputFormat: 'png' | 'jpeg' | 'webp';
+  requestedOutputCount: 1;
+  responseImageCount: 1;
+  inputImageCount: 1;
+  sourceObjectBounds: ObjectBounds | null;
+  targetObjectBounds: ObjectBounds | null;
+};
+
+export type ImageStudioRunExecutionMeta =
+  | ImageStudioGenerationExecutionMeta
+  | ImageStudioCenterExecutionMeta;
+
 export type ImageStudioRunExecutionResult = {
   projectId: string;
   outputs: ImageFileRecord[];
-  executionMeta: {
-    modelRequested: string;
-    modelUsed: string;
-    outputFormat: 'png' | 'jpeg' | 'webp';
-    requestedOutputCount: number;
-    responseImageCount: number;
-    inputImageCount: number;
-    usedMask: boolean;
-    requestedSize: string | null;
-    effectiveSize: string | null;
-    requestedQuality: string | null;
-    effectiveQuality: string | null;
-    requestedBackground: string | null;
-    effectiveBackground: string | null;
-    unknownParameterDrops: string[];
-    usedDalle2ModelFallback: boolean;
-    apiAttemptCount: number;
-  };
+  executionMeta: ImageStudioRunExecutionMeta;
 };
 
 export const sanitizeImageStudioProjectId = (value: string): string =>
@@ -121,6 +154,7 @@ export const sanitizeImageStudioProjectId = (value: string): string =>
 export const resolveExpectedOutputCount = (rawRequest: unknown): number => {
   const parsed = imageStudioRunRequestSchema.safeParse(rawRequest);
   if (!parsed.success) return 1;
+  if (parsed.data.operation === 'center_object') return 1;
   const settings = parseImageStudioSettings(
     parsed.data.studioSettings ? JSON.stringify(parsed.data.studioSettings) : null
   );
@@ -202,6 +236,126 @@ const clampPromptForDalle2 = (prompt: string): string => {
   if (prompt.length <= DALLE2_PROMPT_MAX_CHARS) return prompt;
   return `${prompt.slice(0, DALLE2_PROMPT_MAX_CHARS - 3)}...`;
 };
+
+function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/i);
+  if (!match) return null;
+  try {
+    const buffer = Buffer.from(match[2] ?? '', 'base64');
+    const mime = (match[1] ?? 'image/png').toLowerCase();
+    return { buffer, mime };
+  } catch {
+    return null;
+  }
+}
+
+const resolveCenterOutputFormat = async (
+  buffer: Buffer,
+  mime: string
+): Promise<{ buffer: Buffer; format: 'png' | 'jpeg' | 'webp' }> => {
+  const normalizedMime = mime.toLowerCase();
+  if (normalizedMime.includes('jpeg') || normalizedMime.includes('jpg')) {
+    return { buffer, format: 'jpeg' };
+  }
+  if (normalizedMime.includes('webp')) {
+    return { buffer, format: 'webp' };
+  }
+  if (normalizedMime.includes('png')) {
+    return { buffer, format: 'png' };
+  }
+  const converted = await sharp(buffer).png().toBuffer();
+  return { buffer: converted, format: 'png' };
+};
+
+const resolveAlphaObjectBounds = (
+  pixelData: Buffer,
+  width: number,
+  height: number
+): ObjectBounds | null => {
+  let minX = width;
+  let maxX = -1;
+  let minY = height;
+  let maxY = -1;
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const alpha = pixelData[((y * width) + x) * 4 + 3];
+      if (typeof alpha !== 'number' || alpha <= 8) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+
+  if (maxX < minX || maxY < minY) {
+    return null;
+  }
+
+  return {
+    left: minX,
+    top: minY,
+    width: Math.max(1, maxX - minX + 1),
+    height: Math.max(1, maxY - minY + 1),
+  };
+};
+
+async function centerObjectByAlpha(sourceBuffer: Buffer): Promise<{
+  outputBuffer: Buffer;
+  sourceObjectBounds: ObjectBounds;
+  targetObjectBounds: ObjectBounds;
+}> {
+  const sourceWithAlpha = sharp(sourceBuffer).ensureAlpha();
+  const { data, info } = await sourceWithAlpha.raw().toBuffer({ resolveWithObject: true });
+  const width = info.width ?? 0;
+  const height = info.height ?? 0;
+  if (!(width > 0 && height > 0)) {
+    throw badRequestError('Source image dimensions are invalid.');
+  }
+
+  const sourceObjectBounds = resolveAlphaObjectBounds(data, width, height);
+  if (!sourceObjectBounds) {
+    throw badRequestError('No visible object pixels were detected to center.');
+  }
+
+  const targetLeft = Math.max(0, Math.round((width - sourceObjectBounds.width) / 2));
+  const targetTop = Math.max(0, Math.round((height - sourceObjectBounds.height) / 2));
+  const targetObjectBounds: ObjectBounds = {
+    left: targetLeft,
+    top: targetTop,
+    width: sourceObjectBounds.width,
+    height: sourceObjectBounds.height,
+  };
+
+  const extracted = await sharp(sourceBuffer)
+    .ensureAlpha()
+    .extract({
+      left: sourceObjectBounds.left,
+      top: sourceObjectBounds.top,
+      width: sourceObjectBounds.width,
+      height: sourceObjectBounds.height,
+    })
+    .png()
+    .toBuffer();
+
+  const outputBuffer = await sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([{ input: extracted, left: targetObjectBounds.left, top: targetObjectBounds.top }])
+    .png()
+    .toBuffer();
+
+  return {
+    outputBuffer,
+    sourceObjectBounds,
+    targetObjectBounds,
+  };
+}
 
 async function toUploadableImageFile(params: {
   diskPath: string;
@@ -318,6 +472,59 @@ async function createImageRecord(params: {
   }
 }
 
+async function executeCenterOperation(params: {
+  request: ImageStudioRunRequest;
+  projectId: string;
+  diskPath: string;
+}): Promise<ImageStudioRunExecutionResult> {
+  const centerMode = params.request.center?.mode ?? 'server_alpha_bbox';
+
+  let outputBuffer: Buffer;
+  let outputMime = 'image/png';
+  let sourceObjectBounds: ObjectBounds | null = null;
+  let targetObjectBounds: ObjectBounds | null = null;
+
+  if (centerMode === 'client_alpha_bbox') {
+    const parsedDataUrl = parseDataUrl(params.request.center?.dataUrl ?? '');
+    if (!parsedDataUrl) {
+      throw badRequestError('Client centering requires a valid dataUrl payload.');
+    }
+    outputBuffer = parsedDataUrl.buffer;
+    outputMime = parsedDataUrl.mime;
+  } else {
+    const sourceBuffer = await fs.readFile(params.diskPath).catch(() => {
+      throw badRequestError('Asset file not found.');
+    });
+    const centered = await centerObjectByAlpha(sourceBuffer);
+    outputBuffer = centered.outputBuffer;
+    outputMime = 'image/png';
+    sourceObjectBounds = centered.sourceObjectBounds;
+    targetObjectBounds = centered.targetObjectBounds;
+  }
+
+  const normalizedOutput = await resolveCenterOutputFormat(outputBuffer, outputMime);
+  const createdOutput = await createImageRecord({
+    projectId: params.projectId,
+    buffer: normalizedOutput.buffer,
+    extension: normalizedOutput.format,
+  });
+
+  return {
+    projectId: params.projectId,
+    outputs: [createdOutput],
+    executionMeta: {
+      operation: 'center_object',
+      mode: centerMode,
+      outputFormat: normalizedOutput.format,
+      requestedOutputCount: 1,
+      responseImageCount: 1,
+      inputImageCount: 1,
+      sourceObjectBounds,
+      targetObjectBounds,
+    },
+  };
+}
+
 export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageStudioRunExecutionResult> {
   const parsed = imageStudioRunRequestSchema.safeParse(rawRequest);
   if (!parsed.success) {
@@ -325,6 +532,7 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   }
 
   const request = parsed.data;
+  const operation = request.operation === 'center_object' ? 'center_object' : 'generate';
   const projectId = sanitizeImageStudioProjectId(request.projectId);
   if (!projectId) throw badRequestError('Project id is required.');
 
@@ -339,6 +547,14 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   await fs.stat(diskPath).catch(() => {
     throw badRequestError('Asset file not found.');
   });
+
+  if (operation === 'center_object') {
+    return executeCenterOperation({
+      request,
+      projectId,
+      diskPath,
+    });
+  }
 
   const settings = parseImageStudioSettings(
     request.studioSettings ? JSON.stringify(request.studioSettings) : null
@@ -648,6 +864,7 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     projectId,
     outputs,
     executionMeta: {
+      operation: 'generate',
       modelRequested: resolvedModel,
       modelUsed,
       outputFormat: effectiveFormat,

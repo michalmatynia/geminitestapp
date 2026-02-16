@@ -27,7 +27,7 @@ import {
   parseFilemakerDatabase,
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
-import type { FilemakerDatabase } from '@/features/filemaker/types';
+import type { FilemakerDatabase, FilemakerEntityKind } from '@/features/filemaker/types';
 import {
   consumePromptExploderApplyPromptForCaseResolver,
   savePromptExploderDraftPromptFromCaseResolver,
@@ -151,6 +151,92 @@ type CaseResolverTagPickerOption = {
   pathIds: string[];
   pathNames: string[];
   searchLabel: string;
+};
+
+type CaseResolverFilemakerPartySearchOption = {
+  key: string;
+  reference: CaseResolverPartyReference;
+  label: string;
+  details: string;
+  searchLabel: string;
+};
+
+const toNormalizedSearchValue = (...parts: Array<string | null | undefined>): string =>
+  parts
+    .map((value: string | null | undefined): string => value?.trim() ?? '')
+    .filter((value: string): boolean => value.length > 0)
+    .join(' ')
+    .toLowerCase();
+
+const buildFilemakerAddressLabel = ({
+  street,
+  streetNumber,
+  postalCode,
+  city,
+  country,
+}: {
+  street: string;
+  streetNumber: string;
+  postalCode: string;
+  city: string;
+  country: string;
+}): string => {
+  const streetLabel = [street.trim(), streetNumber.trim()].filter(Boolean).join(' ').trim();
+  const cityLabel = [postalCode.trim(), city.trim()].filter(Boolean).join(' ').trim();
+  return [streetLabel, cityLabel, country.trim()].filter(Boolean).join(', ');
+};
+
+const buildCaseResolverFilemakerPartySearchOptions = (
+  database: FilemakerDatabase,
+  kind: FilemakerEntityKind
+): CaseResolverFilemakerPartySearchOption[] => {
+  if (kind === 'person') {
+    return database.persons
+      .map((person) => {
+        const label = `${person.firstName} ${person.lastName}`.trim() || person.id;
+        const details = buildFilemakerAddressLabel({
+          street: person.street,
+          streetNumber: person.streetNumber,
+          postalCode: person.postalCode,
+          city: person.city,
+          country: person.country,
+        });
+        return {
+          key: `person:${person.id}`,
+          reference: {
+            kind: 'person',
+            id: person.id,
+          } satisfies CaseResolverPartyReference,
+          label,
+          details,
+          searchLabel: toNormalizedSearchValue(label, details, person.nip, person.regon, person.id),
+        } satisfies CaseResolverFilemakerPartySearchOption;
+      })
+      .sort((left, right) => left.label.localeCompare(right.label));
+  }
+
+  return database.organizations
+    .map((organization) => {
+      const label = organization.name.trim() || organization.id;
+      const details = buildFilemakerAddressLabel({
+        street: organization.street,
+        streetNumber: organization.streetNumber,
+        postalCode: organization.postalCode,
+        city: organization.city,
+        country: organization.country,
+      });
+      return {
+        key: `organization:${organization.id}`,
+        reference: {
+          kind: 'organization',
+          id: organization.id,
+        } satisfies CaseResolverPartyReference,
+        label,
+        details,
+        searchLabel: toNormalizedSearchValue(label, details, organization.id),
+      } satisfies CaseResolverFilemakerPartySearchOption;
+    })
+    .sort((left, right) => left.label.localeCompare(right.label));
 };
 
 const buildCaseResolverTagPickerOptions = (
@@ -284,6 +370,43 @@ type CaseResolverPromptExploderPartyProposalState = {
 const normalizeComparablePartyValue = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, ' ');
 
+const PROMPT_EXPLODER_ADDRESSER_LABEL_HINTS = [
+  'addresser',
+  'nadawca',
+  'sender',
+  'wnioskodawca',
+];
+const PROMPT_EXPLODER_ADDRESSEE_LABEL_HINTS = [
+  'addressee',
+  'adresat',
+  'recipient',
+  'odbiorca',
+  'organ',
+];
+
+const countRoleHints = (source: string, hints: string[]): number =>
+  hints.reduce((total: number, hint: string): number => {
+    const normalizedHint = normalizeComparablePartyValue(hint);
+    if (!normalizedHint) return total;
+    return source.includes(normalizedHint) ? total + 1 : total;
+  }, 0);
+
+const inferCandidateRoleFromLabels = (
+  candidate: PromptExploderCaseResolverPartyCandidate
+): 'addresser' | 'addressee' | null => {
+  const source = normalizeComparablePartyValue([
+    ...(candidate.sourcePatternLabels ?? []),
+    ...(candidate.sourceSequenceLabels ?? []),
+    candidate.sourceSegmentTitle ?? '',
+  ].join(' '));
+  if (!source) return null;
+
+  const addresserScore = countRoleHints(source, PROMPT_EXPLODER_ADDRESSER_LABEL_HINTS);
+  const addresseeScore = countRoleHints(source, PROMPT_EXPLODER_ADDRESSEE_LABEL_HINTS);
+  if (addresserScore === addresseeScore) return null;
+  return addresserScore > addresseeScore ? 'addresser' : 'addressee';
+};
+
 const isOptionalPartyFieldMatch = (candidate: string | undefined, current: string): boolean => {
   const normalizedCandidate = normalizeComparablePartyValue(candidate ?? '');
   if (!normalizedCandidate) return true;
@@ -350,17 +473,30 @@ const findExistingFilemakerPartyReference = (
 ): CaseResolverPartyReference | null => {
   const composeStreet = (street: string, streetNumber: string): string =>
     [street.trim(), streetNumber.trim()].filter((value: string) => value.length > 0).join(' ');
+  const composeCandidateStreetNumber = (): string => {
+    const streetNumber = (candidate.streetNumber ?? '').trim();
+    const houseNumber = (candidate.houseNumber ?? '').trim();
+    if (!streetNumber) return '';
+    return houseNumber ? `${streetNumber}/${houseNumber}` : streetNumber;
+  };
+
   const kindHint = candidate.kind ?? null;
   const firstName = (candidate.firstName ?? '').trim();
+  const middleName = (candidate.middleName ?? '').trim();
   const lastName = (candidate.lastName ?? '').trim();
   const organizationName = (candidate.organizationName ?? '').trim();
+  const candidateStreetNumber = composeCandidateStreetNumber();
+  const candidateLastNameNormalized = [middleName, lastName].filter(Boolean).join(' ').trim() || lastName;
 
   if (kindHint !== 'organization' && firstName && lastName) {
     const match = database.persons.find((person) => {
       if (normalizeComparablePartyValue(person.firstName) !== normalizeComparablePartyValue(firstName)) {
         return false;
       }
-      if (normalizeComparablePartyValue(person.lastName) !== normalizeComparablePartyValue(lastName)) {
+      if (
+        normalizeComparablePartyValue(person.lastName) !==
+        normalizeComparablePartyValue(candidateLastNameNormalized)
+      ) {
         return false;
       }
       const personStreet = composeStreet(person.street, person.streetNumber);
@@ -370,6 +506,7 @@ const findExistingFilemakerPartyReference = (
       ) {
         return false;
       }
+      if (!isOptionalPartyFieldMatch(candidateStreetNumber, person.streetNumber)) return false;
       if (!isOptionalPartyFieldMatch(candidate.city, person.city)) return false;
       if (!isOptionalPartyFieldMatch(candidate.postalCode, person.postalCode)) return false;
       if (!isOptionalPartyFieldMatch(candidate.country, person.country)) return false;
@@ -398,6 +535,7 @@ const findExistingFilemakerPartyReference = (
       ) {
         return false;
       }
+      if (!isOptionalPartyFieldMatch(candidateStreetNumber, organization.streetNumber)) return false;
       if (!isOptionalPartyFieldMatch(candidate.city, organization.city)) return false;
       if (!isOptionalPartyFieldMatch(candidate.postalCode, organization.postalCode)) return false;
       if (!isOptionalPartyFieldMatch(candidate.country, organization.country)) return false;
@@ -435,8 +573,31 @@ const buildPromptExploderPartyProposalState = (
   database: FilemakerDatabase
 ): CaseResolverPromptExploderPartyProposalState | null => {
   if (!payload) return null;
-  const addresser = buildPromptExploderPartyProposal('addresser', payload.addresser, database);
-  const addressee = buildPromptExploderPartyProposal('addressee', payload.addressee, database);
+  const resolvedCandidates: Partial<
+    Record<'addresser' | 'addressee', PromptExploderCaseResolverPartyCandidate>
+  > = {
+    ...(payload.addresser ? { addresser: payload.addresser } : {}),
+    ...(payload.addressee ? { addressee: payload.addressee } : {}),
+  };
+
+  [payload.addresser, payload.addressee].forEach((candidate) => {
+    if (!candidate) return;
+    const inferredRole = inferCandidateRoleFromLabels(candidate);
+    if (!inferredRole) return;
+    if (resolvedCandidates[inferredRole]) return;
+    resolvedCandidates[inferredRole] = candidate;
+  });
+
+  const addresser = buildPromptExploderPartyProposal(
+    'addresser',
+    resolvedCandidates.addresser,
+    database
+  );
+  const addressee = buildPromptExploderPartyProposal(
+    'addressee',
+    resolvedCandidates.addressee,
+    database
+  );
   if (!addresser && !addressee) return null;
   return {
     targetFileId,
@@ -858,10 +1019,17 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const [uploadingScanSlotId, setUploadingScanSlotId] = useState<string | null>(null);
   const [isDocumentTagDropdownOpen, setIsDocumentTagDropdownOpen] = useState(false);
   const [documentTagSearchQuery, setDocumentTagSearchQuery] = useState('');
+  const [documentPartySearchScope, setDocumentPartySearchScope] = useState<FilemakerEntityKind>('person');
+  const [documentAddresserSearchQuery, setDocumentAddresserSearchQuery] = useState('');
+  const [documentAddresseeSearchQuery, setDocumentAddresseeSearchQuery] = useState('');
+  const [isDocumentAddresserSearchOpen, setIsDocumentAddresserSearchOpen] = useState(false);
+  const [isDocumentAddresseeSearchOpen, setIsDocumentAddresseeSearchOpen] = useState(false);
   const scanBulkUploadInputRef = useRef<HTMLInputElement | null>(null);
   const scanSlotUploadInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const documentTagDropdownRef = useRef<HTMLDivElement | null>(null);
   const documentTagSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const documentAddresserSearchRef = useRef<HTMLDivElement | null>(null);
+  const documentAddresseeSearchRef = useRef<HTMLDivElement | null>(null);
   const selectedDocumentTagOption = useMemo((): CaseResolverTagPickerOption | null => {
     const tagId = editingDocumentDraft?.tagId ?? null;
     if (!tagId) return null;
@@ -878,6 +1046,83 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       option.searchLabel.includes(query)
     );
   }, [caseResolverTagPickerOptions, documentTagSearchQuery]);
+  const filemakerPartySearchOptions = useMemo(
+    (): CaseResolverFilemakerPartySearchOption[] =>
+      buildCaseResolverFilemakerPartySearchOptions(filemakerDatabase, documentPartySearchScope),
+    [documentPartySearchScope, filemakerDatabase]
+  );
+  const filterFilemakerPartySearchOptions = useCallback(
+    (query: string): CaseResolverFilemakerPartySearchOption[] => {
+      const normalizedQuery = query.trim().toLowerCase();
+      if (!normalizedQuery) {
+        return filemakerPartySearchOptions.slice(0, 16);
+      }
+      return filemakerPartySearchOptions
+        .filter((option: CaseResolverFilemakerPartySearchOption): boolean =>
+          option.searchLabel.includes(normalizedQuery)
+        )
+        .slice(0, 16);
+    },
+    [filemakerPartySearchOptions]
+  );
+  const filteredDocumentAddresserSearchOptions = useMemo(
+    (): CaseResolverFilemakerPartySearchOption[] =>
+      filterFilemakerPartySearchOptions(documentAddresserSearchQuery),
+    [documentAddresserSearchQuery, filterFilemakerPartySearchOptions]
+  );
+  const filteredDocumentAddresseeSearchOptions = useMemo(
+    (): CaseResolverFilemakerPartySearchOption[] =>
+      filterFilemakerPartySearchOptions(documentAddresseeSearchQuery),
+    [documentAddresseeSearchQuery, filterFilemakerPartySearchOptions]
+  );
+  const selectedDocumentDraftAddresserLabel = useMemo(
+    (): string =>
+      editingDocumentDraft
+        ? resolveFilemakerPartyLabel(filemakerDatabase, editingDocumentDraft.addresser) ?? ''
+        : '',
+    [editingDocumentDraft?.addresser, filemakerDatabase]
+  );
+  const selectedDocumentDraftAddresseeLabel = useMemo(
+    (): string =>
+      editingDocumentDraft
+        ? resolveFilemakerPartyLabel(filemakerDatabase, editingDocumentDraft.addressee) ?? ''
+        : '',
+    [editingDocumentDraft?.addressee, filemakerDatabase]
+  );
+  const handleSelectDocumentDraftParty = useCallback(
+    (
+      role: 'addresser' | 'addressee',
+      nextReference: CaseResolverPartyReference | null
+    ): void => {
+      const nextLabel = nextReference ? resolveFilemakerPartyLabel(filemakerDatabase, nextReference) ?? '' : '';
+
+      if (role === 'addresser') {
+        setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
+          current
+            ? {
+              ...current,
+              addresser: nextReference,
+            }
+            : current
+        );
+        setDocumentAddresserSearchQuery(nextLabel);
+        setIsDocumentAddresserSearchOpen(false);
+        return;
+      }
+
+      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
+        current
+          ? {
+            ...current,
+            addressee: nextReference,
+          }
+          : current
+      );
+      setDocumentAddresseeSearchQuery(nextLabel);
+      setIsDocumentAddresseeSearchOpen(false);
+    },
+    [filemakerDatabase]
+  );
 
   useEffect(() => {
     setWorkspace(parsedWorkspace);
@@ -924,7 +1169,21 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     if (editingDocumentDraft) return;
     setIsDocumentTagDropdownOpen(false);
     setDocumentTagSearchQuery('');
+    setIsDocumentAddresserSearchOpen(false);
+    setIsDocumentAddresseeSearchOpen(false);
+    setDocumentAddresserSearchQuery('');
+    setDocumentAddresseeSearchQuery('');
   }, [editingDocumentDraft]);
+
+  useEffect(() => {
+    if (!editingDocumentDraft) return;
+    setDocumentAddresserSearchQuery(
+      resolveFilemakerPartyLabel(filemakerDatabase, editingDocumentDraft.addresser) ?? ''
+    );
+    setDocumentAddresseeSearchQuery(
+      resolveFilemakerPartyLabel(filemakerDatabase, editingDocumentDraft.addressee) ?? ''
+    );
+  }, [editingDocumentDraft?.id, filemakerDatabase]);
 
   useEffect(() => {
     if (!isDocumentTagDropdownOpen) return;
@@ -940,6 +1199,22 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       document.removeEventListener('mousedown', listener);
     };
   }, [isDocumentTagDropdownOpen]);
+
+  useEffect(() => {
+    if (!isDocumentAddresserSearchOpen && !isDocumentAddresseeSearchOpen) return;
+    const listener = (event: MouseEvent): void => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (documentAddresserSearchRef.current?.contains(target)) return;
+      if (documentAddresseeSearchRef.current?.contains(target)) return;
+      setIsDocumentAddresserSearchOpen(false);
+      setIsDocumentAddresseeSearchOpen(false);
+    };
+    document.addEventListener('mousedown', listener);
+    return () => {
+      document.removeEventListener('mousedown', listener);
+    };
+  }, [isDocumentAddresseeSearchOpen, isDocumentAddresserSearchOpen]);
 
   useEffect(() => {
     if (!isDocumentTagDropdownOpen) return;
@@ -2029,6 +2304,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           proposal.existingReference;
         if (!reference) {
           const candidateKind = proposal.candidate.kind ?? null;
+          const normalizedStreetNumber = (() => {
+            const streetNumber = proposal.candidate.streetNumber?.trim() ?? '';
+            const houseNumber = proposal.candidate.houseNumber?.trim() ?? '';
+            if (!streetNumber) return '';
+            return houseNumber ? `${streetNumber}/${houseNumber}` : streetNumber;
+          })();
           const shouldCreateOrganization =
             candidateKind === 'organization' ||
             (!(proposal.candidate.firstName ?? '').trim() &&
@@ -2042,7 +2323,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               id: createId('organization'),
               name: organizationName,
               street: proposal.candidate.street ?? '',
-              streetNumber: '',
+              streetNumber: normalizedStreetNumber,
               city: proposal.candidate.city ?? '',
               postalCode: proposal.candidate.postalCode ?? '',
               country: proposal.candidate.country ?? '',
@@ -2061,8 +2342,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               proposal.candidate.firstName?.trim() ||
               proposal.candidate.displayName.trim().split(/\s+/)[0] ||
               'Unknown';
+            const middleName = proposal.candidate.middleName?.trim() ?? '';
             const lastName =
-              proposal.candidate.lastName?.trim() ||
+              [middleName, proposal.candidate.lastName?.trim() ?? '']
+                .filter((value: string): boolean => value.length > 0)
+                .join(' ')
+                .trim() ||
               proposal.candidate.displayName.trim().split(/\s+/).slice(1).join(' ').trim() ||
               'Unknown';
             const person = createFilemakerPerson({
@@ -2070,7 +2355,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               firstName,
               lastName,
               street: proposal.candidate.street ?? '',
-              streetNumber: '',
+              streetNumber: normalizedStreetNumber,
               city: proposal.candidate.city ?? '',
               postalCode: proposal.candidate.postalCode ?? '',
               country: proposal.candidate.country ?? '',
@@ -2787,6 +3072,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                   proposal.existingReference
                     ? resolveFilemakerPartyLabel(filemakerDatabase, proposal.existingReference)
                     : null;
+                const candidateStreetNumber = (() => {
+                  const streetNumber = proposal.candidate.streetNumber?.trim() ?? '';
+                  const houseNumber = proposal.candidate.houseNumber?.trim() ?? '';
+                  if (!streetNumber) return '';
+                  return houseNumber ? `${streetNumber}/${houseNumber}` : streetNumber;
+                })();
                 return (
                   <div
                     key={role}
@@ -2827,10 +3118,31 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     <div className='text-[11px] text-gray-400'>
                       Detected: {proposal.candidate.displayName || 'Unnamed party'}
                     </div>
+                    {(proposal.candidate.sourcePatternLabels?.length ?? 0) > 0 ? (
+                      <div className='text-[11px] text-gray-500'>
+                        Pattern labels: {proposal.candidate.sourcePatternLabels?.join(', ')}
+                      </div>
+                    ) : null}
+                    {(proposal.candidate.sourceSequenceLabels?.length ?? 0) > 0 ? (
+                      <div className='text-[11px] text-gray-500'>
+                        Sequence labels: {proposal.candidate.sourceSequenceLabels?.join(', ')}
+                      </div>
+                    ) : null}
                     <div className='text-[11px] text-gray-500'>
                       {existingLabel
                         ? `Existing database match: ${existingLabel}`
                         : 'No matching Filemaker entry was found.'}
+                    </div>
+                    <div className='grid gap-1 rounded border border-border/50 bg-card/50 p-2 text-[11px] text-gray-300 md:grid-cols-2'>
+                      <div>Company Name: {proposal.candidate.organizationName?.trim() || '—'}</div>
+                      <div>Name: {proposal.candidate.firstName?.trim() || '—'}</div>
+                      <div>Middle Name: {proposal.candidate.middleName?.trim() || '—'}</div>
+                      <div>Last Name: {proposal.candidate.lastName?.trim() || '—'}</div>
+                      <div>Street: {proposal.candidate.street?.trim() || '—'}</div>
+                      <div>Street Number: {candidateStreetNumber || '—'}</div>
+                      <div>Postal Code: {proposal.candidate.postalCode?.trim() || '—'}</div>
+                      <div>City: {proposal.candidate.city?.trim() || '—'}</div>
+                      <div>Country: {proposal.candidate.country?.trim() || '—'}</div>
                     </div>
                     <Textarea
                       value={proposal.candidate.rawText}
@@ -3212,44 +3524,194 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
               <div className='grid gap-3 md:grid-cols-2'>
                 <div className='space-y-1'>
-                  <Label className='text-xs text-gray-400'>Addresser</Label>
-                  <SelectSimple size='sm'
-                    value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
-                    onValueChange={(value: string): void => {
-                      const nextAddresser = decodeFilemakerPartyReference(value);
-                      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
-                        current
-                          ? {
-                            ...current,
-                            addresser: nextAddresser,
-                          }
-                          : current
-                      );
-                    }}
-                    options={filemakerPartyOptions}
-                    placeholder='Select addresser'
-                    triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-                  />
+                  <div className='flex items-center justify-between gap-2'>
+                    <Label className='text-xs text-gray-400'>Addresser</Label>
+                    <button
+                      type='button'
+                      onClick={(): void => {
+                        handleSelectDocumentDraftParty('addresser', null);
+                      }}
+                      className='text-[11px] text-gray-400 underline-offset-2 hover:text-white hover:underline'
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div ref={documentAddresserSearchRef} className='relative'>
+                    <Input
+                      size='sm'
+                      value={documentAddresserSearchQuery}
+                      onFocus={(): void => {
+                        setIsDocumentAddresseeSearchOpen(false);
+                        setIsDocumentAddresserSearchOpen(true);
+                      }}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        setDocumentAddresserSearchQuery(event.target.value);
+                        setIsDocumentAddresseeSearchOpen(false);
+                        setIsDocumentAddresserSearchOpen(true);
+                      }}
+                      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                        if (event.key === 'Escape') {
+                          setIsDocumentAddresserSearchOpen(false);
+                        }
+                      }}
+                      placeholder={`Search ${documentPartySearchScope === 'person' ? 'persons' : 'organizations'}...`}
+                      className='h-9 border-border bg-card/60 text-xs text-white'
+                    />
+                    {isDocumentAddresserSearchOpen ? (
+                      <div className='absolute z-50 mt-1 w-full rounded-md border border-border bg-popover/95 p-1 shadow-lg backdrop-blur-md'>
+                        <div className='max-h-56 space-y-1 overflow-y-auto'>
+                          {filteredDocumentAddresserSearchOptions.length === 0 ? (
+                            <div className='px-2 py-1.5 text-xs text-gray-500'>
+                              No matching {documentPartySearchScope === 'person' ? 'persons' : 'organizations'} found.
+                            </div>
+                          ) : (
+                            filteredDocumentAddresserSearchOptions.map((option: CaseResolverFilemakerPartySearchOption) => {
+                              const isSelected =
+                                editingDocumentDraft.addresser?.kind === option.reference.kind &&
+                                editingDocumentDraft.addresser?.id === option.reference.id;
+                              return (
+                                <button
+                                  key={option.key}
+                                  type='button'
+                                  onClick={(): void => {
+                                    handleSelectDocumentDraftParty('addresser', option.reference);
+                                  }}
+                                  className={`flex w-full items-start justify-between gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors ${
+                                    isSelected
+                                      ? 'bg-cyan-500/20 text-cyan-100'
+                                      : 'text-gray-200 hover:bg-muted/50'
+                                  }`}
+                                >
+                                  <span className='min-w-0'>
+                                    <span className='block truncate'>{option.label}</span>
+                                    {option.details ? (
+                                      <span className='block truncate text-[10px] text-gray-500'>{option.details}</span>
+                                    ) : null}
+                                  </span>
+                                  {isSelected ? <Check className='mt-0.5 size-3.5 shrink-0' /> : null}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className='text-[11px] text-gray-500'>
+                    {selectedDocumentDraftAddresserLabel || 'No addresser selected.'}
+                  </div>
                 </div>
-                <div className='space-y-1 md:text-right'>
-                  <Label className='text-xs text-gray-400 md:block md:text-right'>Addressee</Label>
-                  <SelectSimple size='sm'
-                    value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
-                    onValueChange={(value: string): void => {
-                      const nextAddressee = decodeFilemakerPartyReference(value);
-                      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) =>
-                        current
-                          ? {
-                            ...current,
-                            addressee: nextAddressee,
-                          }
-                          : current
-                      );
-                    }}
-                    options={filemakerPartyOptions}
-                    placeholder='Select addressee'
-                    triggerClassName='h-9 border-border bg-card/60 text-xs text-white [&>span]:text-right'
-                  />
+                <div className='space-y-1'>
+                  <div className='flex items-center justify-between gap-2'>
+                    <Label className='text-xs text-gray-400'>Addressee</Label>
+                    <button
+                      type='button'
+                      onClick={(): void => {
+                        handleSelectDocumentDraftParty('addressee', null);
+                      }}
+                      className='text-[11px] text-gray-400 underline-offset-2 hover:text-white hover:underline'
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div ref={documentAddresseeSearchRef} className='relative'>
+                    <Input
+                      size='sm'
+                      value={documentAddresseeSearchQuery}
+                      onFocus={(): void => {
+                        setIsDocumentAddresserSearchOpen(false);
+                        setIsDocumentAddresseeSearchOpen(true);
+                      }}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        setDocumentAddresseeSearchQuery(event.target.value);
+                        setIsDocumentAddresserSearchOpen(false);
+                        setIsDocumentAddresseeSearchOpen(true);
+                      }}
+                      onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                        if (event.key === 'Escape') {
+                          setIsDocumentAddresseeSearchOpen(false);
+                        }
+                      }}
+                      placeholder={`Search ${documentPartySearchScope === 'person' ? 'persons' : 'organizations'}...`}
+                      className='h-9 border-border bg-card/60 text-xs text-white'
+                    />
+                    {isDocumentAddresseeSearchOpen ? (
+                      <div className='absolute z-50 mt-1 w-full rounded-md border border-border bg-popover/95 p-1 shadow-lg backdrop-blur-md'>
+                        <div className='max-h-56 space-y-1 overflow-y-auto'>
+                          {filteredDocumentAddresseeSearchOptions.length === 0 ? (
+                            <div className='px-2 py-1.5 text-xs text-gray-500'>
+                              No matching {documentPartySearchScope === 'person' ? 'persons' : 'organizations'} found.
+                            </div>
+                          ) : (
+                            filteredDocumentAddresseeSearchOptions.map((option: CaseResolverFilemakerPartySearchOption) => {
+                              const isSelected =
+                                editingDocumentDraft.addressee?.kind === option.reference.kind &&
+                                editingDocumentDraft.addressee?.id === option.reference.id;
+                              return (
+                                <button
+                                  key={option.key}
+                                  type='button'
+                                  onClick={(): void => {
+                                    handleSelectDocumentDraftParty('addressee', option.reference);
+                                  }}
+                                  className={`flex w-full items-start justify-between gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors ${
+                                    isSelected
+                                      ? 'bg-cyan-500/20 text-cyan-100'
+                                      : 'text-gray-200 hover:bg-muted/50'
+                                  }`}
+                                >
+                                  <span className='min-w-0'>
+                                    <span className='block truncate'>{option.label}</span>
+                                    {option.details ? (
+                                      <span className='block truncate text-[10px] text-gray-500'>{option.details}</span>
+                                    ) : null}
+                                  </span>
+                                  {isSelected ? <Check className='mt-0.5 size-3.5 shrink-0' /> : null}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className='text-[11px] text-gray-500'>
+                    {selectedDocumentDraftAddresseeLabel || 'No addressee selected.'}
+                  </div>
+                </div>
+                <div className='space-y-1 md:col-span-2'>
+                  <Label className='text-xs text-gray-400'>Filemaker Search Source</Label>
+                  <div className='inline-flex items-center gap-1 rounded-md border border-border/60 bg-card/40 p-1'>
+                    <button
+                      type='button'
+                      onClick={(): void => {
+                        setDocumentPartySearchScope('person');
+                      }}
+                      className={`rounded px-2 py-1 text-xs transition-colors ${
+                        documentPartySearchScope === 'person'
+                          ? 'bg-cyan-500/20 text-cyan-100'
+                          : 'text-gray-300 hover:bg-muted/50'
+                      }`}
+                    >
+                      Persons
+                    </button>
+                    <button
+                      type='button'
+                      onClick={(): void => {
+                        setDocumentPartySearchScope('organization');
+                      }}
+                      className={`rounded px-2 py-1 text-xs transition-colors ${
+                        documentPartySearchScope === 'organization'
+                          ? 'bg-cyan-500/20 text-cyan-100'
+                          : 'text-gray-300 hover:bg-muted/50'
+                      }`}
+                    >
+                      Organizations
+                    </button>
+                  </div>
+                  <div className='text-[11px] text-gray-500'>
+                    Applies to both addresser and addressee search fields.
+                  </div>
                 </div>
               </div>
 

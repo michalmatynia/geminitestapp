@@ -105,6 +105,8 @@ export type PromptExploderSegment = {
   paramComments?: Record<string, string>;
   paramDescriptions?: Record<string, string>;
   matchedPatternIds: string[];
+  matchedPatternLabels?: string[];
+  matchedSequenceLabels?: string[];
   confidence: number;
 };
 

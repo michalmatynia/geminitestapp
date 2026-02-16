@@ -73,6 +73,8 @@ type PatternRuntime = {
 
 type RuntimeRegexRule = {
   id: string;
+  label: string;
+  sequenceGroupLabel: string | null;
   regex: RegExp;
   segmentTypeHint: PromptExploderSegmentType | null;
   confidenceBoost: number;
@@ -506,6 +508,8 @@ const compileRuntimePatterns = (
       byId.set(id, regex);
       runtimeRulesById.set(id, {
         id,
+        label: id,
+        sequenceGroupLabel: null,
         regex,
         segmentTypeHint: typeFromPatternId(id),
         confidenceBoost: 0,
@@ -530,6 +534,8 @@ const compileRuntimePatterns = (
     byId.set(rule.id, compiled);
     runtimeRulesById.set(rule.id, {
       id: rule.id,
+      label: rule.title.trim() || rule.id,
+      sequenceGroupLabel: rule.sequenceGroupLabel?.trim() || null,
       regex: compiled,
       segmentTypeHint:
         toSegmentTypeHint(rule.promptExploderSegmentType) ?? typeFromPatternId(rule.id),
@@ -1393,6 +1399,14 @@ const createSegment = (args: {
   const inferredType = args.type ?? inferSegmentType(args.title, args.raw);
   const matchedRules = collectMatchedRules(args.runtime, args.raw);
   const matchedPatternIds = matchedRules.map((rule) => rule.id);
+  const matchedPatternLabels = matchedRules
+    .map((rule) => rule.label.trim())
+    .filter((label): label is string => label.length > 0);
+  const matchedSequenceLabels = [...new Set(
+    matchedRules
+      .map((rule) => rule.sequenceGroupLabel?.trim() ?? '')
+      .filter((label): label is string => label.length > 0)
+  )];
   const hintedType = inferTypeFromRuleHints(matchedRules, inferredType);
   const type = args.lockType ? inferredType : hintedType;
   const normalizedRaw = trimTrailingBlankLines(args.raw);
@@ -1432,6 +1446,8 @@ const createSegment = (args: {
     paramComments: args.paramComments ?? {},
     paramDescriptions: args.paramDescriptions ?? {},
     matchedPatternIds,
+    matchedPatternLabels,
+    matchedSequenceLabels,
     confidence,
   };
 };
@@ -2295,6 +2311,14 @@ const applyLearnedTemplateTypes = (
     if (!inferred.matchedTemplateId && inferred.type === segment.type) {
       return segment;
     }
+    const nextPatternLabels = inferred.matchedTemplateId
+      ? [
+        ...new Set([
+          ...(segment.matchedPatternLabels ?? []),
+          `Learned Template: ${inferred.type.replaceAll('_', ' ')}`,
+        ]),
+      ]
+      : (segment.matchedPatternLabels ?? []);
     const nextPatternIds = inferred.matchedTemplateId
       ? [
         ...new Set([
@@ -2308,6 +2332,8 @@ const applyLearnedTemplateTypes = (
       type: inferred.type,
       confidence: inferred.confidence,
       matchedPatternIds: nextPatternIds,
+      matchedPatternLabels: nextPatternLabels,
+      matchedSequenceLabels: segment.matchedSequenceLabels ?? [],
     };
   });
 };

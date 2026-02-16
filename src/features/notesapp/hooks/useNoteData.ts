@@ -1,11 +1,5 @@
 'use client';
 
-import {
-  useMutation,
-  useQueryClient,
-  type UseMutationResult,
-  type UseQueryResult,
-} from '@tanstack/react-query';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 
 import {
@@ -36,7 +30,8 @@ import {
 } from '@/features/notesapp/api/useNoteQueries';
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
-import { api, ApiError } from '@/shared/lib/api-client';
+import { ApiError } from '@/shared/lib/api-client';
+import { createMutationHook, createPutMutation, createDeleteMutation } from '@/shared/lib/api-hooks';
 import {
   invalidateNoteDetail,
 } from '@/shared/lib/query-invalidation';
@@ -185,16 +180,13 @@ export const useDeleteThemeMutation = (): UseMutationResult<DeleteResponse, Erro
   return useDeleteNoteTheme();
 };
 
-export const useUpdateNoteRelationsMutation = (noteId: string): UseMutationResult<void, Error, {
-  relationsFrom?: string[];
-  relationsTo?: string[];
-}> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: { relationsFrom?: string[]; relationsTo?: string[] }) => 
-      api.put<void>(`/api/notes/${noteId}/relations`, data),
-    onSuccess: () => {
+export const useUpdateNoteRelationsMutation = (noteId: string) => {
+  return createPutMutation<void, {
+    relationsFrom?: string[];
+    relationsTo?: string[];
+  }>({
+    endpoint: `/api/notes/${noteId}/relations`,
+    onSuccess: (_data, _variables, _context, queryClient) => {
       void invalidateNoteDetail(queryClient, noteId);
     },
   });
@@ -202,59 +194,54 @@ export const useUpdateNoteRelationsMutation = (noteId: string): UseMutationResul
 
 export const useCreateNoteFileMutation = (
   noteId?: string
-): UseMutationResult<
-  NoteFileRecord,
-  Error,
-  { slotIndex: number; file: File; onProgress?: (loaded: number, total?: number) => void }
-> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      slotIndex,
-      file,
-      onProgress,
-    }: {
+) => {
+  return createMutationHook<
+    NoteFileRecord,
+    { slotIndex: number; file: File; onProgress?: (loaded: number, total?: number) => void }
+      >({
+        mutationFn: async ({
+          slotIndex,
+          file,
+          onProgress,
+        }: {
       slotIndex: number;
       file: File;
       onProgress?: (loaded: number, total?: number) => void;
     }): Promise<NoteFileRecord> => {
-      if (!noteId) throw new ApiError('Note ID is required for file upload', 400);
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('slotIndex', slotIndex.toString());
+          if (!noteId) throw new ApiError('Note ID is required for file upload', 400);
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('slotIndex', slotIndex.toString());
 
-      const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
-      const result = await uploadWithProgress<NoteFileRecord | { error?: string }>(
-        `/api/notes/${noteId}/files`,
-        {
-          formData,
-          onProgress,
-        }
-      );
-      if (!result.ok) {
-        const error = result.data as { error?: string };
-        throw new ApiError(error.error || 'Failed to upload note file', 400);
-      }
-      return result.data as NoteFileRecord;
-    },
-    onSuccess: () => {
-      if (noteId) {
-        void invalidateNoteDetail(queryClient, noteId);
-      }
-    },
-  });
+          const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
+          const result = await uploadWithProgress<NoteFileRecord | { error?: string }>(
+            `/api/notes/${noteId}/files`,
+            {
+              formData,
+              onProgress,
+            }
+          );
+          if (!result.ok) {
+            const error = result.data as { error?: string };
+            throw new ApiError(error.error || 'Failed to upload note file', 400);
+          }
+          return result.data as NoteFileRecord;
+        },
+        onSuccess: (_data, _variables, _context, queryClient) => {
+          if (noteId) {
+            void invalidateNoteDetail(queryClient, noteId);
+          }
+        },
+      });
 };
 
-export const useDeleteNoteFileMutation = (noteId?: string): UseMutationResult<DeleteResponse, Error, number> => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (slotIndex: number) => {
+export const useDeleteNoteFileMutation = (noteId?: string) => {
+  return createDeleteMutation<DeleteResponse, number>({
+    endpoint: (slotIndex) => {
       if (!noteId) throw new ApiError('Note ID is required for file deletion', 400);
-      return api.delete<DeleteResponse>(`/api/notes/${noteId}/files/${slotIndex}`);
+      return `/api/notes/${noteId}/files/${slotIndex}`;
     },
-    onSuccess: () => {
+    onSuccess: (_data, _variables, _context, queryClient) => {
       if (noteId) {
         void invalidateNoteDetail(queryClient, noteId);
       }

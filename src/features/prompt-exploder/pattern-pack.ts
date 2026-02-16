@@ -1,5 +1,7 @@
 import {
   defaultPromptEngineSettings,
+  type PromptExploderCaptureApplyTo,
+  type PromptExploderCaptureNormalize,
   type PromptExploderRuleSegmentType,
   type PromptEngineSettings,
   type PromptValidationRule,
@@ -9,6 +11,25 @@ import {
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
 const PROMPT_EXPLODER_SCOPE = ['prompt_exploder'] as const;
+const CASE_RESOLVER_PROMPT_EXPLODER_SCOPE = ['case_resolver_prompt_exploder'] as const;
+
+const normalizeRuleScopes = (
+  scopes: readonly PromptValidationScope[] | null | undefined,
+  fallbackScope: PromptExploderRuntimeValidationScope
+): PromptValidationScope[] => {
+  if (Array.isArray(scopes) && scopes.length > 0) {
+    return [...new Set(scopes)] as PromptValidationScope[];
+  }
+  return [fallbackScope];
+};
+
+const includesScope = (
+  scopes: readonly PromptValidationScope[] | null | undefined,
+  scope: PromptExploderRuntimeValidationScope
+): boolean => {
+  if (!Array.isArray(scopes) || scopes.length === 0) return true;
+  return scopes.includes(scope) || scopes.includes('global');
+};
 
 const createRegexRule = (rule: {
   id: string;
@@ -24,6 +45,13 @@ const createRegexRule = (rule: {
   promptExploderPriority?: number;
   promptExploderConfidenceBoost?: number;
   promptExploderTreatAsHeading?: boolean;
+  promptExploderCaptureTarget?: string | null;
+  promptExploderCaptureGroup?: number | null;
+  promptExploderCaptureApplyTo?: PromptExploderCaptureApplyTo;
+  promptExploderCaptureNormalize?: PromptExploderCaptureNormalize;
+  promptExploderCaptureOverwrite?: boolean;
+  appliesToScopes?: PromptValidationScope[];
+  launchAppliesToScopes?: PromptValidationScope[];
 }): PromptValidationRule => ({
   kind: 'regex',
   id: rule.id,
@@ -46,9 +74,9 @@ const createRegexRule = (rule: {
   chainMode: 'continue',
   maxExecutions: 1,
   passOutputToNext: true,
-  appliesToScopes: [...PROMPT_EXPLODER_SCOPE],
+  appliesToScopes: rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchEnabled: false,
-  launchAppliesToScopes: [...PROMPT_EXPLODER_SCOPE],
+  launchAppliesToScopes: rule.launchAppliesToScopes ?? rule.appliesToScopes ?? [...PROMPT_EXPLODER_SCOPE],
   launchScopeBehavior: 'gate',
   launchOperator: 'contains',
   launchValue: null,
@@ -57,6 +85,15 @@ const createRegexRule = (rule: {
   promptExploderPriority: rule.promptExploderPriority ?? 0,
   promptExploderConfidenceBoost: rule.promptExploderConfidenceBoost ?? 0,
   promptExploderTreatAsHeading: rule.promptExploderTreatAsHeading ?? false,
+  promptExploderCaptureTarget: rule.promptExploderCaptureTarget ?? null,
+  promptExploderCaptureGroup:
+    typeof rule.promptExploderCaptureGroup === 'number' &&
+    Number.isFinite(rule.promptExploderCaptureGroup)
+      ? Math.max(0, Math.floor(rule.promptExploderCaptureGroup))
+      : null,
+  promptExploderCaptureApplyTo: rule.promptExploderCaptureApplyTo ?? 'segment',
+  promptExploderCaptureNormalize: rule.promptExploderCaptureNormalize ?? 'trim',
+  promptExploderCaptureOverwrite: rule.promptExploderCaptureOverwrite ?? false,
 });
 
 export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
@@ -283,6 +320,346 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     promptExploderPriority: 25,
     promptExploderConfidenceBoost: 0.14,
     promptExploderTreatAsHeading: true,
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.heading.place_date',
+    title: 'Case Resolver Heading: Place + Date',
+    description:
+      'Detects a location-and-date heading line used in legal letters (for example: "Szczecin 25.01.2026").',
+    pattern:
+      '^\\s*[\\p{L}][\\p{L}\\s\\-.\'’]{1,60}\\s+\\d{1,2}[./-]\\d{1,2}[./-]\\d{2,4}\\s*$',
+    flags: 'imu',
+    message: 'Place and date heading detected.',
+    sequence: 35,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 42,
+    promptExploderConfidenceBoost: 0.2,
+    promptExploderTreatAsHeading: true,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.heading.addressee_organization',
+    title: 'Case Resolver Heading: Addressee Organization',
+    description:
+      'Detects organization addressee heading lines in correspondence blocks.',
+    pattern:
+      '^\\s*(?=.*\\b(zus|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120}\\s*$',
+    flags: 'imu',
+    message: 'Addressee organization heading detected.',
+    sequence: 36,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 45,
+    promptExploderConfidenceBoost: 0.22,
+    promptExploderTreatAsHeading: true,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.heading.subject_or_section',
+    title: 'Case Resolver Heading: Subject/Section',
+    description:
+      'Detects common subject and section headings in legal document bodies.',
+    pattern:
+      '^\\s*(wniosek\\b|dotyczy\\b|uzasadnienie\\b|na\\s+zakończenie\\b|z\\s+poważaniem\\b|subject\\b|re:\\b|sincerely\\b|regards\\b).*$',
+    flags: 'imu',
+    message: 'Case Resolver subject/section heading detected.',
+    sequence: 37,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 34,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderTreatAsHeading: true,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.place_date.city',
+    title: 'Case Resolver Extract: Place Date City',
+    description:
+      'Extracts city/place from a place+date line (for example: "Szczecin 25.01.2026").',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60})\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver place/date city captured.',
+    sequence: 38,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 40,
+    promptExploderConfidenceBoost: 0.18,
+    promptExploderCaptureTarget: 'case_resolver.place_date.city',
+    promptExploderCaptureGroup: 1,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.place_date.day',
+    title: 'Case Resolver Extract: Place Date Day',
+    description:
+      'Extracts day value from a place+date line.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60})\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver place/date day captured.',
+    sequence: 39,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 40,
+    promptExploderConfidenceBoost: 0.18,
+    promptExploderCaptureTarget: 'case_resolver.place_date.day',
+    promptExploderCaptureGroup: 2,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'day',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.place_date.month',
+    title: 'Case Resolver Extract: Place Date Month',
+    description:
+      'Extracts month value from a place+date line.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60})\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver place/date month captured.',
+    sequence: 40,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 40,
+    promptExploderConfidenceBoost: 0.18,
+    promptExploderCaptureTarget: 'case_resolver.place_date.month',
+    promptExploderCaptureGroup: 3,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'month',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.place_date.year',
+    title: 'Case Resolver Extract: Place Date Year',
+    description:
+      'Extracts year value from a place+date line.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\\s\\-.\'’]{1,60})\\s+(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver place/date year captured.',
+    sequence: 41,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 40,
+    promptExploderConfidenceBoost: 0.18,
+    promptExploderCaptureTarget: 'case_resolver.place_date.year',
+    promptExploderCaptureGroup: 4,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'year',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.addresser.first_name',
+    title: 'Case Resolver Extract: Addresser First Name',
+    description:
+      'Extracts addresser first name from a person name line.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\'’.-]+)(?:\\s+([\\p{L}][\\p{L}\'’.-]+))?\\s+([\\p{L}][\\p{L}\'’.-]+)\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver addresser first name captured.',
+    sequence: 42,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 26,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderCaptureTarget: 'case_resolver.addresser.firstName',
+    promptExploderCaptureGroup: 1,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.addresser.middle_name',
+    title: 'Case Resolver Extract: Addresser Middle Name',
+    description:
+      'Extracts addresser middle name from a person name line when present.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\'’.-]+)(?:\\s+([\\p{L}][\\p{L}\'’.-]+))?\\s+([\\p{L}][\\p{L}\'’.-]+)\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver addresser middle name captured.',
+    sequence: 43,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 26,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderCaptureTarget: 'case_resolver.addresser.middleName',
+    promptExploderCaptureGroup: 2,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.addresser.last_name',
+    title: 'Case Resolver Extract: Addresser Last Name',
+    description:
+      'Extracts addresser last name from a person name line.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\'’.-]+)(?:\\s+([\\p{L}][\\p{L}\'’.-]+))?\\s+([\\p{L}][\\p{L}\'’.-]+)\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver addresser last name captured.',
+    sequence: 44,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 26,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderCaptureTarget: 'case_resolver.addresser.lastName',
+    promptExploderCaptureGroup: 3,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.address.street',
+    title: 'Case Resolver Extract: Address Street',
+    description:
+      'Extracts street, street number, and house number from address lines.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver address street captured.',
+    sequence: 45,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 30,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderCaptureTarget: 'case_resolver.party.street',
+    promptExploderCaptureGroup: 1,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.address.street_number',
+    title: 'Case Resolver Extract: Address Street Number',
+    description:
+      'Extracts street number from address lines.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver address street number captured.',
+    sequence: 46,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 30,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderCaptureTarget: 'case_resolver.party.streetNumber',
+    promptExploderCaptureGroup: 2,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.address.house_number',
+    title: 'Case Resolver Extract: Address House Number',
+    description:
+      'Extracts house/unit number from address lines.',
+    pattern:
+      '^\\s*([\\p{L}][\\p{L}\\s\'’.-]+?)\\s+(\\d+[A-Za-z]?)(?:\\s*\\/\\s*([0-9A-Za-z-]+))?\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver address house number captured.',
+    sequence: 47,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 30,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderCaptureTarget: 'case_resolver.party.houseNumber',
+    promptExploderCaptureGroup: 3,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.address.postal_code',
+    title: 'Case Resolver Extract: Address Postal Code',
+    description:
+      'Extracts postal code from postal-code and city lines.',
+    pattern:
+      '^\\s*(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver address postal code captured.',
+    sequence: 48,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 30,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderCaptureTarget: 'case_resolver.party.postalCode',
+    promptExploderCaptureGroup: 1,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.address.city',
+    title: 'Case Resolver Extract: Address City',
+    description:
+      'Extracts city from postal-code and city lines.',
+    pattern:
+      '^\\s*(\\d{2}-\\d{3})\\s+([\\p{L}][\\p{L}\\s\'’.-]+)\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver address city captured.',
+    sequence: 49,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 30,
+    promptExploderConfidenceBoost: 0.12,
+    promptExploderCaptureTarget: 'case_resolver.party.city',
+    promptExploderCaptureGroup: 2,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.case_resolver.extract.addressee.organization_name',
+    title: 'Case Resolver Extract: Addressee Organization Name',
+    description:
+      'Extracts addressee organization/company name.',
+    pattern:
+      '^\\s*((?=.*\\b(zus|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120})\\s*$',
+    flags: 'imu',
+    message: 'Case Resolver addressee organization captured.',
+    sequence: 50,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 34,
+    promptExploderConfidenceBoost: 0.14,
+    promptExploderCaptureTarget: 'case_resolver.addressee.organizationName',
+    promptExploderCaptureGroup: 1,
+    promptExploderCaptureApplyTo: 'line',
+    promptExploderCaptureNormalize: 'trim',
+    promptExploderCaptureOverwrite: false,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
   }),
   createRegexRule({
     id: 'segment.params.block',
@@ -719,6 +1096,11 @@ export function ensurePromptExploderPatternPack(
   const updatedRuleIds: string[] = [];
 
   PROMPT_EXPLODER_PATTERN_PACK.forEach((packRule) => {
+    if (!includesScope(packRule.appliesToScopes, targetScope)) {
+      return;
+    }
+    const packScopes = normalizeRuleScopes(packRule.appliesToScopes, targetScope);
+    const packLaunchScopes = normalizeRuleScopes(packRule.launchAppliesToScopes, targetScope);
     const existingIndex = nextRules.findIndex((rule) => {
       if (rule.id !== packRule.id) return false;
       const scopes = rule.appliesToScopes ?? [];
@@ -728,8 +1110,8 @@ export function ensurePromptExploderPatternPack(
     if (!existing) {
       nextRules.push({
         ...packRule,
-        appliesToScopes: [targetScope],
-        launchAppliesToScopes: [targetScope],
+        appliesToScopes: packScopes,
+        launchAppliesToScopes: packLaunchScopes,
       });
       addedRuleIds.push(packRule.id);
       return;
@@ -764,6 +1146,30 @@ export function ensurePromptExploderPatternPack(
       promptExploderTreatAsHeading:
         existing.promptExploderTreatAsHeading ??
         (packRule.promptExploderTreatAsHeading ?? false),
+      promptExploderCaptureTarget:
+        existing.promptExploderCaptureTarget?.trim() ||
+        packRule.promptExploderCaptureTarget?.trim() ||
+        null,
+      promptExploderCaptureGroup:
+        typeof existing.promptExploderCaptureGroup === 'number' &&
+        Number.isFinite(existing.promptExploderCaptureGroup)
+          ? Math.max(0, Math.floor(existing.promptExploderCaptureGroup))
+          : (typeof packRule.promptExploderCaptureGroup === 'number' &&
+              Number.isFinite(packRule.promptExploderCaptureGroup)
+            ? Math.max(0, Math.floor(packRule.promptExploderCaptureGroup))
+            : null),
+      promptExploderCaptureApplyTo:
+        existing.promptExploderCaptureApplyTo === 'line'
+          ? 'line'
+          : (packRule.promptExploderCaptureApplyTo ?? 'segment'),
+      promptExploderCaptureNormalize:
+        existing.promptExploderCaptureNormalize ??
+        packRule.promptExploderCaptureNormalize ??
+        'trim',
+      promptExploderCaptureOverwrite:
+        existing.promptExploderCaptureOverwrite ??
+        packRule.promptExploderCaptureOverwrite ??
+        false,
     };
 
     const changed =
@@ -774,7 +1180,17 @@ export function ensurePromptExploderPatternPack(
       merged.promptExploderConfidenceBoost !==
       existing.promptExploderConfidenceBoost ||
       merged.promptExploderTreatAsHeading !==
-      existing.promptExploderTreatAsHeading;
+      existing.promptExploderTreatAsHeading ||
+      merged.promptExploderCaptureTarget !==
+      existing.promptExploderCaptureTarget ||
+      merged.promptExploderCaptureGroup !==
+      existing.promptExploderCaptureGroup ||
+      merged.promptExploderCaptureApplyTo !==
+      existing.promptExploderCaptureApplyTo ||
+      merged.promptExploderCaptureNormalize !==
+      existing.promptExploderCaptureNormalize ||
+      merged.promptExploderCaptureOverwrite !==
+      existing.promptExploderCaptureOverwrite;
 
     if (changed) {
       nextRules[existingIndex] = merged;
@@ -803,8 +1219,21 @@ export function getPromptExploderScopedRules(
     ...settings.promptValidation.rules,
     ...(settings.promptValidation.learnedRules ?? []),
   ];
-  return mergedRules.filter((rule) => {
+  const scopedRules = mergedRules.filter((rule) => {
     const scopes = rule.appliesToScopes ?? [];
     return scopes.length === 0 || scopes.includes(scope) || scopes.includes('global');
   });
+
+  const byId = new Map<string, PromptValidationRule>(
+    scopedRules.map((rule: PromptValidationRule): [string, PromptValidationRule] => [rule.id, rule])
+  );
+  PROMPT_EXPLODER_PATTERN_PACK.forEach((rule: PromptValidationRule): void => {
+    const scopes = rule.appliesToScopes ?? [];
+    if (!(scopes.length === 0 || scopes.includes(scope) || scopes.includes('global'))) {
+      return;
+    }
+    if (byId.has(rule.id)) return;
+    byId.set(rule.id, rule);
+  });
+  return [...byId.values()];
 }

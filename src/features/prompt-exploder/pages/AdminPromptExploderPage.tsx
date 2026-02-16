@@ -211,17 +211,95 @@ const EMPTY_CASE_RESOLVER_PARTY_SELECTION: CaseResolverPartySegmentSelection = {
   addresseeSegmentId: '',
 };
 
-const POSTAL_CITY_RE = /(\d{2}-\d{3})\s+(.+)/;
+const POSTAL_CITY_RE = /^(\d{2}-\d{3})\s+(.+)$/;
+const STREET_NUMBER_RE = /^(.+?)\s+(\d+[A-Za-z]?)(?:\s*\/\s*([0-9A-Za-z-]+))?$/;
 const ORGANIZATION_HINT_RE =
   /\b(sp\.|s\.a\.|sa|llc|inc|corp|company|inspektorat|urzad|urząd|organ|fundacja|stowarzyszenie|office|department|instytut)\b/i;
+const COUNTRY_NORMALIZATION_MAP: Record<string, string> = {
+  polska: 'Poland',
+  poland: 'Poland',
+};
+const ADDRESSER_ROLE_HINTS = [
+  'addresser',
+  'nadawca',
+  'sender',
+  'wnioskodawca',
+  'from',
+];
+const ADDRESSEE_ROLE_HINTS = [
+  'addressee',
+  'adresat',
+  'recipient',
+  'odbiorca',
+  'organ',
+  'to',
+];
+const PLACE_DATE_ROLE_HINTS = [
+  'place_date',
+  'place date',
+  'city date',
+  'miejsce data',
+  'data miejsc',
+];
 
 const normalizeText = (value: string): string => value.trim().replace(/\s+/g, ' ');
 
 const normalizeComparable = (value: string): string => normalizeText(value).toLowerCase();
 
+const normalizeCountryName = (value: string): string => {
+  const normalized = normalizeText(value);
+  if (!normalized) return '';
+  return COUNTRY_NORMALIZATION_MAP[normalized.toLowerCase()] ?? normalized;
+};
+
 const toSegmentSourceText = (segment: PromptExploderSegment): string => {
   const source = segment.raw || segment.text || '';
   return source.trim();
+};
+
+const toSegmentPatternLabels = (segment: PromptExploderSegment): string[] => {
+  const labels = new Set<string>();
+  (segment.matchedPatternLabels ?? []).forEach((label: string) => {
+    const normalized = normalizeText(label);
+    if (!normalized) return;
+    labels.add(normalized);
+  });
+  if (labels.size === 0) {
+    (segment.matchedPatternIds ?? []).forEach((patternId: string) => {
+      const normalized = normalizeText(patternId);
+      if (!normalized) return;
+      labels.add(normalized);
+    });
+  }
+  return [...labels];
+};
+
+const toSegmentSequenceLabels = (segment: PromptExploderSegment): string[] => {
+  const labels = new Set<string>();
+  (segment.matchedSequenceLabels ?? []).forEach((label: string) => {
+    const normalized = normalizeText(label);
+    if (!normalized) return;
+    labels.add(normalized);
+  });
+  return [...labels];
+};
+
+const buildSegmentRoleSignalSource = (segment: PromptExploderSegment): string => {
+  const rawTokens = [
+    segment.title,
+    toSegmentSourceText(segment),
+    ...(segment.matchedPatternIds ?? []),
+    ...toSegmentPatternLabels(segment),
+    ...toSegmentSequenceLabels(segment),
+  ].filter((value: string): boolean => normalizeText(value).length > 0);
+  return normalizeComparable(rawTokens.join(' '));
+};
+
+const hasRoleHint = (
+  source: string,
+  hints: string[]
+): boolean => {
+  return hints.some((hint: string): boolean => source.includes(normalizeComparable(hint)));
 };
 
 const splitSegmentLines = (segment: PromptExploderSegment): string[] =>
@@ -240,14 +318,45 @@ const inferPartyKindFromLines = (lines: string[]): 'person' | 'organization' => 
   return 'organization';
 };
 
+const parsePersonName = (line: string): {
+  firstName?: string | undefined;
+  middleName?: string | undefined;
+  lastName?: string | undefined;
+} => {
+  const tokens = normalizeText(line).split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) {
+    return {};
+  }
+  if (tokens.length === 1) {
+    return {
+      firstName: tokens[0],
+    };
+  }
+  if (tokens.length === 2) {
+    return {
+      firstName: tokens[0],
+      lastName: tokens[1],
+    };
+  }
+  return {
+    firstName: tokens[0],
+    middleName: tokens.slice(1, -1).join(' ').trim() || undefined,
+    lastName: tokens[tokens.length - 1],
+  };
+};
+
 const extractAddressFields = (lines: string[]): {
   street?: string | undefined;
+  streetNumber?: string | undefined;
+  houseNumber?: string | undefined;
   city?: string | undefined;
   postalCode?: string | undefined;
   country?: string | undefined;
 } => {
-  const addressLines = lines.slice(1);
+  const addressLines = lines.map((line: string): string => normalizeText(line)).filter(Boolean);
   let street = '';
+  let streetNumber = '';
+  let houseNumber = '';
   let city = '';
   let postalCode = '';
   let country = '';
@@ -259,41 +368,66 @@ const extractAddressFields = (lines: string[]): {
       city = normalizeText(postalMatch[2] ?? '');
       return;
     }
-    if (!street && /\d/.test(line)) {
-      street = line;
+    const streetMatch = STREET_NUMBER_RE.exec(line);
+    if (!street && streetMatch) {
+      street = normalizeText(streetMatch[1] ?? '');
+      streetNumber = normalizeText(streetMatch[2] ?? '');
+      houseNumber = normalizeText(streetMatch[3] ?? '');
       return;
     }
     const isLast = index === addressLines.length - 1;
     if (!country && isLast && !/\d/.test(line) && line.split(/\s+/).length <= 4) {
-      country = line;
+      country = normalizeCountryName(line);
       return;
     }
     if (!city && !/\d/.test(line)) {
       city = line;
     }
+    if (!street && /\d/.test(line)) {
+      street = line;
+    }
   });
 
   return {
     street: street || undefined,
+    streetNumber: streetNumber || undefined,
+    houseNumber: houseNumber || undefined,
     city: city || undefined,
     postalCode: postalCode || undefined,
-    country: country || undefined,
+    country: normalizeCountryName(country) || undefined,
   };
+};
+
+const isLikelyAddressSegment = (lines: string[]): boolean => {
+  if (lines.length < 2) return false;
+  const addressLines = lines.slice(1);
+  const hasPostalCity = addressLines.some((line: string): boolean => POSTAL_CITY_RE.test(line));
+  if (hasPostalCity) return true;
+  const hasStreetNumber = addressLines.some((line: string): boolean => STREET_NUMBER_RE.test(line));
+  const hasAddressWords = addressLines.some(
+    (line: string): boolean => !/\d/.test(line) && line.split(/\s+/).length <= 4
+  );
+  return hasStreetNumber && hasAddressWords;
 };
 
 const scoreSegmentForPartyRole = (
   segment: PromptExploderSegment,
   role: PromptExploderCaseResolverPartyRole
 ): number => {
-  const source = `${segment.title} ${toSegmentSourceText(segment)} ${segment.matchedPatternIds.join(' ')}`;
-  const normalized = normalizeComparable(source);
-  const keywords =
-    role === 'addresser'
-      ? ['addresser', 'nadawca', 'sender', 'from', 'wnioskodawca']
-      : ['addressee', 'adresat', 'recipient', 'odbiorca', 'to', 'organ'];
+  const normalized = buildSegmentRoleSignalSource(segment);
+  const roleHints = role === 'addresser' ? ADDRESSER_ROLE_HINTS : ADDRESSEE_ROLE_HINTS;
   const lineCount = splitSegmentLines(segment).length;
   let score = lineCount >= 2 ? 4 : 1;
-  keywords.forEach((keyword: string) => {
+  if (hasRoleHint(normalized, PLACE_DATE_ROLE_HINTS)) {
+    score -= 30;
+  }
+  if (hasRoleHint(normalized, roleHints)) {
+    score += 30;
+  }
+  if (isLikelyAddressSegment(splitSegmentLines(segment))) {
+    score += 8;
+  }
+  roleHints.forEach((keyword: string) => {
     if (normalized.includes(keyword)) score += 12;
   });
   if (segment.type === 'assigned_text') score += 3;
@@ -303,6 +437,20 @@ const scoreSegmentForPartyRole = (
 const suggestCaseResolverPartySegmentIds = (
   segments: PromptExploderSegment[]
 ): CaseResolverPartySegmentSelection => {
+  const orderedCandidates = segments
+    .map((segment: PromptExploderSegment) => ({
+      segment,
+      lines: splitSegmentLines(segment),
+    }))
+    .filter((entry): boolean => entry.lines.length > 0 && isLikelyAddressSegment(entry.lines));
+
+  if (orderedCandidates.length >= 2) {
+    return {
+      addresserSegmentId: orderedCandidates[0]?.segment.id ?? '',
+      addresseeSegmentId: orderedCandidates[1]?.segment.id ?? '',
+    };
+  }
+
   const candidates = segments.filter(
     (segment: PromptExploderSegment): boolean => splitSegmentLines(segment).length > 0
   );
@@ -336,8 +484,8 @@ const buildCaseResolverPartyCandidateFromSegment = (
   const kind = inferPartyKindFromLines(lines);
   const firstLine = lines[0] ?? '';
   const displayName = firstLine || segment.title || role;
-  const parsedAddress = extractAddressFields(lines);
-  const personTokens = firstLine.split(/\s+/).filter(Boolean);
+  const parsedAddress = extractAddressFields(lines.slice(1));
+  const parsedName = parsePersonName(firstLine);
 
   const candidate: PromptExploderCaseResolverPartyCandidate = {
     role,
@@ -346,15 +494,20 @@ const buildCaseResolverPartyCandidateFromSegment = (
     rawText: lines.join('\n'),
     sourceSegmentId: segment.id,
     sourceSegmentTitle: segment.title,
+    sourcePatternLabels: toSegmentPatternLabels(segment),
+    sourceSequenceLabels: toSegmentSequenceLabels(segment),
     street: parsedAddress.street,
+    streetNumber: parsedAddress.streetNumber,
+    houseNumber: parsedAddress.houseNumber,
     city: parsedAddress.city,
     postalCode: parsedAddress.postalCode,
     country: parsedAddress.country,
   };
 
   if (kind === 'person') {
-    candidate.firstName = personTokens[0] ?? '';
-    candidate.lastName = personTokens.slice(1).join(' ').trim() || '';
+    candidate.firstName = parsedName.firstName;
+    candidate.middleName = parsedName.middleName;
+    candidate.lastName = parsedName.lastName;
   } else {
     candidate.organizationName = firstLine;
   }
@@ -722,11 +875,14 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const matchedRuleDetails = useMemo(() => {
     if (!selectedSegment) return [];
     const byId = new Map(effectiveRules.map((rule) => [rule.id, rule]));
-    return selectedSegment.matchedPatternIds.map((patternId) => {
+    return selectedSegment.matchedPatternIds.map((patternId, index) => {
       const rule = byId.get(patternId);
+      const storedLabel = selectedSegment.matchedPatternLabels?.[index]?.trim() ?? '';
+      const sequenceLabel = rule?.sequenceGroupLabel?.trim() ?? '';
       return {
         id: patternId,
-        title: rule?.title ?? patternId,
+        title: storedLabel || rule?.title ?? patternId,
+        sequenceLabel: sequenceLabel || undefined,
         segmentType: rule?.promptExploderSegmentType ?? null,
         priority: rule?.promptExploderPriority ?? 0,
         confidenceBoost: rule?.promptExploderConfidenceBoost ?? 0,
@@ -878,16 +1034,6 @@ export function AdminPromptExploderPage(): React.JSX.Element {
   const segmentById = useMemo(() => {
     return new Map((documentState?.segments ?? []).map((segment) => [segment.id, segment]));
   }, [documentState?.segments]);
-  const caseResolverPartySegmentOptions = useMemo(
-    () => [
-      { value: '', label: 'None' },
-      ...(documentState?.segments ?? []).map((segment, index) => ({
-        value: segment.id,
-        label: `${index + 1}. ${segment.title}`,
-      })),
-    ],
-    [documentState?.segments]
-  );
   const caseResolverPartyCandidates = useMemo<{
     addresser: PromptExploderCaseResolverPartyCandidate | null;
     addressee: PromptExploderCaseResolverPartyCandidate | null;
@@ -3617,6 +3763,16 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                           <span>Confidence {(segment.confidence * 100).toFixed(0)}%</span>
                           <span>{segment.includeInOutput ? 'Included' : 'Omitted'}</span>
                         </div>
+                        {(segment.matchedPatternLabels?.[0] ?? segment.matchedPatternIds?.[0]) ? (
+                          <div className='mt-1 truncate text-[10px] text-gray-500'>
+                            Pattern: {segment.matchedPatternLabels?.[0] ?? segment.matchedPatternIds?.[0]}
+                          </div>
+                        ) : null}
+                        {segment.matchedSequenceLabels?.[0] ? (
+                          <div className='truncate text-[10px] text-gray-500'>
+                            Sequence: {segment.matchedSequenceLabels[0]}
+                          </div>
+                        ) : null}
                       </div>
                     );
                   })}
@@ -4630,6 +4786,11 @@ export function AdminPromptExploderPage(): React.JSX.Element {
                                   {matchedRule.confidenceBoost.toFixed(2)} · heading{' '}
                                   {matchedRule.treatAsHeading ? 'yes' : 'no'}
                                 </div>
+                                {matchedRule.sequenceLabel ? (
+                                  <div className='mt-1 text-[10px] text-gray-500'>
+                                    sequence: {matchedRule.sequenceLabel}
+                                  </div>
+                                ) : null}
                               </div>
                             ))}
                           </div>
@@ -5114,63 +5275,6 @@ export function AdminPromptExploderPage(): React.JSX.Element {
               </div>
             }
           >
-            {returnTarget === 'case-resolver' && documentState ? (
-              <div className='mb-3 space-y-3 rounded border border-border/60 bg-card/20 p-3'>
-                <div className='text-xs text-gray-300'>
-                  Map reassembled segments to Case Resolver party fields before applying.
-                </div>
-                <div className='grid gap-3 md:grid-cols-2'>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-gray-400'>Addresser Segment</Label>
-                    <SelectSimple
-                      size='sm'
-                      value={caseResolverPartySelection.addresserSegmentId}
-                      onValueChange={(value: string) => {
-                        setCaseResolverPartySelection((previous) => ({
-                          ...previous,
-                          addresserSegmentId: value,
-                        }));
-                      }}
-                      options={caseResolverPartySegmentOptions}
-                    />
-                  </div>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-gray-400'>Addressee Segment</Label>
-                    <SelectSimple
-                      size='sm'
-                      value={caseResolverPartySelection.addresseeSegmentId}
-                      onValueChange={(value: string) => {
-                        setCaseResolverPartySelection((previous) => ({
-                          ...previous,
-                          addresseeSegmentId: value,
-                        }));
-                      }}
-                      options={caseResolverPartySegmentOptions}
-                    />
-                  </div>
-                </div>
-                <div className='grid gap-3 md:grid-cols-2'>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-gray-400'>Addresser Preview</Label>
-                    <Textarea
-                      readOnly
-                      value={caseResolverPartyCandidates.addresser?.rawText ?? ''}
-                      className='min-h-[120px] text-[11px]'
-                      placeholder='No addresser segment selected.'
-                    />
-                  </div>
-                  <div className='space-y-1'>
-                    <Label className='text-[11px] text-gray-400'>Addressee Preview</Label>
-                    <Textarea
-                      readOnly
-                      value={caseResolverPartyCandidates.addressee?.rawText ?? ''}
-                      className='min-h-[120px] text-[11px]'
-                      placeholder='No addressee segment selected.'
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : null}
             <div className='mt-2'>
               <Textarea
                 className='min-h-[420px] font-mono text-[11px]'

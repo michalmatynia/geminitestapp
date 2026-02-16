@@ -1,11 +1,10 @@
 'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-
 import { useRealtimeQuery } from '@/shared/hooks/query/useRealtimeQuery';
+import { createPostMutation } from '@/shared/lib/api-hooks';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import { getJobStatus, getJobStatusDetail, cancelJob } from '../api';
+import { getJobStatus, getJobStatusDetail } from '../api';
 
 import type { UseQueryResult } from '@tanstack/react-query';
 
@@ -36,13 +35,12 @@ export function useJobStatus(jobId: string): UseQueryResult<unknown, Error> {
 }
 
 // Cancel job mutation
-export function useCancelJob(): UseMutationResult<unknown, Error, string> {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: cancelJob,
-    onSuccess: (): void => {
+export function useCancelJob() {
+  return createPostMutation<{ success: boolean }, string>({
+    endpoint: (jobId) => `/api/jobs/${jobId}/cancel`,
+    onSuccess: (_data, _variables, _context, queryClient): void => {
       void queryClient.invalidateQueries({ queryKey: jobKeys.all });
     },
   });
 }
+

@@ -51,7 +51,7 @@ const PREVIEW_MODE_OPTIONS = [
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
 export function CenterPreview(): React.JSX.Element {
-  const { isFocusMode, maskPreviewEnabled } = useUiState();
+  const { isFocusMode, maskPreviewEnabled, centerGuidesEnabled } = useUiState();
   const { toggleFocusMode } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot, selectedSlot, selectedSlotId, previewMode, captureRef, slots } = useSlotsState();
@@ -1128,6 +1128,7 @@ export function CenterPreview(): React.JSX.Element {
                   maskPreviewInvert={maskInvert}
                   maskPreviewOpacity={0.5}
                   maskPreviewFeather={maskFeather}
+                  showCenterGuides={centerGuidesEnabled}
                 />
               )}
             </VectorDrawingProvider>

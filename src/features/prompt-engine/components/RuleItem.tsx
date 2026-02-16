@@ -35,6 +35,8 @@ import {
 import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
 import {
   type PromptExploderRuleSegmentType,
+  type PromptExploderCaptureApplyTo,
+  type PromptExploderCaptureNormalize,
   type PromptValidationScope,
   type PromptValidationSimilarPattern,
   type PromptAutofixOperation,
@@ -94,6 +96,24 @@ export function RuleItem({
     ? Math.min(50, Math.max(-50, Math.floor(rule?.promptExploderPriority ?? 0)))
     : 0;
   const promptExploderTreatAsHeading = rule?.promptExploderTreatAsHeading ?? false;
+  const promptExploderCaptureTarget = rule?.promptExploderCaptureTarget ?? '';
+  const promptExploderCaptureGroup =
+    typeof rule?.promptExploderCaptureGroup === 'number' &&
+    Number.isFinite(rule.promptExploderCaptureGroup)
+      ? Math.max(0, Math.floor(rule.promptExploderCaptureGroup))
+      : 1;
+  const promptExploderCaptureApplyTo: PromptExploderCaptureApplyTo =
+    rule?.promptExploderCaptureApplyTo === 'line' ? 'line' : 'segment';
+  const promptExploderCaptureNormalize: PromptExploderCaptureNormalize =
+    rule?.promptExploderCaptureNormalize === 'lower' ||
+    rule?.promptExploderCaptureNormalize === 'upper' ||
+    rule?.promptExploderCaptureNormalize === 'country' ||
+    rule?.promptExploderCaptureNormalize === 'day' ||
+    rule?.promptExploderCaptureNormalize === 'month' ||
+    rule?.promptExploderCaptureNormalize === 'year'
+      ? rule.promptExploderCaptureNormalize
+      : 'trim';
+  const promptExploderCaptureOverwrite = rule?.promptExploderCaptureOverwrite ?? false;
   const hasPromptExploderScope = appliesToScopes.some(
     (scope) => scope === 'prompt_exploder' || scope === 'global'
   );
@@ -498,6 +518,119 @@ export function RuleItem({
                     }
                   >
                     {promptExploderTreatAsHeading ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                <div className='space-y-1 md:col-span-4'>
+                  <Label className='text-[11px] text-slate-300'>Exploder Capture Target</Label>
+                  <Input
+                    className='h-8 font-mono'
+                    value={promptExploderCaptureTarget}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      patchRule({
+                        promptExploderCaptureTarget: event.target.value.trim() || null,
+                      });
+                    }}
+                    placeholder='case_resolver.addresser.firstName'
+                  />
+                  <div className='text-[10px] text-slate-400'>
+                    Optional. If set, regex captures can populate Case Resolver fields (for example:
+                    `case_resolver.addresser.street`, `case_resolver.addressee.organizationName`,
+                    `case_resolver.place_date.year`).
+                  </div>
+                </div>
+                <div className='space-y-1 md:col-span-1'>
+                  <Label className='text-[11px] text-slate-300'>Capture Group</Label>
+                  <Input
+                    type='number'
+                    min={0}
+                    max={20}
+                    className='h-8'
+                    value={String(promptExploderCaptureGroup)}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      const raw = event.target.value.trim();
+                      if (!raw) {
+                        patchRule({ promptExploderCaptureGroup: null });
+                        return;
+                      }
+                      const parsed = Number(raw);
+                      if (!Number.isFinite(parsed)) return;
+                      patchRule({
+                        promptExploderCaptureGroup: Math.min(20, Math.max(0, Math.floor(parsed))),
+                      });
+                    }}
+                  />
+                </div>
+                <div className='space-y-1 md:col-span-1'>
+                  <Label className='text-[11px] text-slate-300'>Capture Apply To</Label>
+                  <Select
+                    value={promptExploderCaptureApplyTo}
+                    onValueChange={(value: string): void => {
+                      patchRule({
+                        promptExploderCaptureApplyTo: value === 'line' ? 'line' : 'segment',
+                      });
+                    }}
+                  >
+                    <SelectTrigger className='h-8'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='segment'>Whole segment</SelectItem>
+                      <SelectItem value='line'>Each line</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-1 md:col-span-1'>
+                  <Label className='text-[11px] text-slate-300'>Capture Normalize</Label>
+                  <Select
+                    value={promptExploderCaptureNormalize}
+                    onValueChange={(value: string): void => {
+                      if (
+                        value !== 'trim' &&
+                        value !== 'lower' &&
+                        value !== 'upper' &&
+                        value !== 'country' &&
+                        value !== 'day' &&
+                        value !== 'month' &&
+                        value !== 'year'
+                      ) {
+                        return;
+                      }
+                      patchRule({
+                        promptExploderCaptureNormalize: value,
+                      });
+                    }}
+                  >
+                    <SelectTrigger className='h-8'>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value='trim'>Trim</SelectItem>
+                      <SelectItem value='lower'>Lower</SelectItem>
+                      <SelectItem value='upper'>Upper</SelectItem>
+                      <SelectItem value='country'>Country Name</SelectItem>
+                      <SelectItem value='day'>Day</SelectItem>
+                      <SelectItem value='month'>Month</SelectItem>
+                      <SelectItem value='year'>Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-1 md:col-span-1'>
+                  <Label className='text-[11px] text-slate-300'>Capture Overwrite</Label>
+                  <button
+                    type='button'
+                    className={cn(
+                      'h-8 w-full rounded border text-xs font-medium',
+                      promptExploderCaptureOverwrite
+                        ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-200'
+                        : 'border-red-500/50 bg-red-500/10 text-red-200'
+                    )}
+                    onClick={() =>
+                      patchRule({
+                        promptExploderCaptureOverwrite: !promptExploderCaptureOverwrite,
+                      })
+                    }
+                  >
+                    {promptExploderCaptureOverwrite ? 'ON' : 'OFF'}
                   </button>
                 </div>
               </>

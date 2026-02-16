@@ -26,6 +26,7 @@ export function VectorDrawingCanvas({
   maskPreviewInvert,
   maskPreviewOpacity,
   maskPreviewFeather,
+  showCenterGuides,
   className,
 }: Partial<VectorCanvasProps>): React.JSX.Element {
   const context = useOptionalVectorDrawing();
@@ -74,6 +75,7 @@ export function VectorDrawingCanvas({
       {...(maskPreviewInvert !== undefined ? { maskPreviewInvert } : {})}
       {...(maskPreviewOpacity !== undefined ? { maskPreviewOpacity } : {})}
       {...(maskPreviewFeather !== undefined ? { maskPreviewFeather } : {})}
+      {...(showCenterGuides !== undefined ? { showCenterGuides } : {})}
       {...(className !== undefined ? { className } : {})}
     />
   );

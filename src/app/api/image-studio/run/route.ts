@@ -36,6 +36,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     ...parsed.data,
     projectId,
   };
+  const operation = request.operation === 'center_object' ? 'center_object' : 'generate';
+  const operationLabel = operation === 'center_object' ? 'Center object' : 'Generation';
 
   const expectedOutputs = resolveExpectedOutputCount(request);
   const run = await createImageStudioRun({
@@ -59,9 +61,10 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
         {
           type: 'dispatch_failed',
           source: 'queue',
-          message: 'Failed to dispatch generation run.',
+          message: `Failed to dispatch ${operationLabel.toLowerCase()} run.`,
           payload: {
             runId: run.id,
+            operation,
             reason: errorMessage,
           },
         },
@@ -82,10 +85,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
           source: 'queue',
           message:
             dispatchMode === 'queued'
-              ? 'Generation run dispatched to Redis queue.'
-              : 'Generation run dispatched inline (Redis unavailable).',
+              ? `${operationLabel} run dispatched to Redis queue.`
+              : `${operationLabel} run dispatched inline (Redis unavailable).`,
           payload: {
             runId: run.id,
+            operation,
             dispatchMode,
             expectedOutputs: run.expectedOutputs,
           },

@@ -112,6 +112,9 @@ export function RightSidebar(): React.JSX.Element {
   } = useMaskingState();
   const {
     setTool,
+    setMaskShapes,
+    setActiveMaskId,
+    setSelectedPointIndex,
     setMaskFeather,
     setBrushRadius,
     setMaskThresholdSensitivity,
@@ -188,6 +191,14 @@ export function RightSidebar(): React.JSX.Element {
       ? 'Queued...'
       : 'Generating...'
     : `Generate ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`;
+
+  const handleClearAllShapes = useCallback((): void => {
+    if (maskShapes.length === 0) return;
+    setMaskShapes([]);
+    setActiveMaskId(null);
+    setSelectedPointIndex(null);
+    toast('All shapes removed from canvas.', { variant: 'info' });
+  }, [maskShapes.length, setActiveMaskId, setMaskShapes, setSelectedPointIndex, toast]);
 
   const requestPreview = useMemo(
     () =>
@@ -641,6 +652,8 @@ export function RightSidebar(): React.JSX.Element {
                       <VectorDrawingToolbar
                         tool={tool}
                         onSelectTool={setTool}
+                        onClear={handleClearAllShapes}
+                        disableClear={maskShapes.length === 0}
                         className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
                       />
                       {tool !== 'select' ? (

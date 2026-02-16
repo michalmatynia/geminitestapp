@@ -1,6 +1,9 @@
 import 'server-only';
 
-import { executeImageStudioRun } from '@/features/ai/image-studio/server/run-executor';
+import {
+  executeImageStudioRun,
+  type ImageStudioRunExecutionMeta,
+} from '@/features/ai/image-studio/server/run-executor';
 import {
   getImageStudioRunById,
   updateImageStudioRun,
@@ -65,6 +68,18 @@ const toJsonSafe = <T,>(value: T): T => {
 
 const buildGenerationOutputRelationType = (runId: string, outputIndex: number): string =>
   `generation:output:${runId}:${outputIndex}`;
+
+const resolveRunOperation = (run: ImageStudioRunRecord): 'generate' | 'center_object' =>
+  run.request.operation === 'center_object' ? 'center_object' : 'generate';
+
+const buildRunOutputRelationType = (
+  operation: 'generate' | 'center_object',
+  runId: string,
+  outputIndex: number
+): string =>
+  operation === 'center_object'
+    ? `center:output:${runId}:${outputIndex}`
+    : buildGenerationOutputRelationType(runId, outputIndex);
 
 const collectGenerationSourceContext = async (
   run: ImageStudioRunRecord
@@ -205,7 +220,7 @@ const resolveGenerationModel = (run: ImageStudioRunRecord): string | null => {
   return model ? model : null;
 };
 
-const createGenerationSlotMetadata = (params: {
+const createRunOutputSlotMetadata = (params: {
   run: ImageStudioRunRecord;
   finishedAt: string;
   outputIndex: number;
@@ -221,12 +236,18 @@ const createGenerationSlotMetadata = (params: {
     tags: string[];
   };
   sourceContext: GenerationSourceContext;
+  operation: 'generate' | 'center_object';
   model: string | null;
   generationCost: GenerationCostEstimate | null;
+  executionMeta: ImageStudioRunExecutionMeta;
 }): Record<string, unknown> => {
+  const isCenterOperation = params.operation === 'center_object';
+  const relationType = isCenterOperation ? 'center:output' : 'generation:output';
   const sourceReferenceIds = params.sourceContext.primarySourceSlotId
     ? params.sourceContext.sourceSlotIds.filter((id) => id !== params.sourceContext.primarySourceSlotId)
     : params.sourceContext.sourceSlotIds;
+  const centerMeta = isCenterOperation && isRecord(params.executionMeta) ? params.executionMeta : null;
+
   return {
     role: 'generation',
     ...(params.sourceContext.primarySourceSlotId
@@ -236,7 +257,7 @@ const createGenerationSlotMetadata = (params: {
       ? { sourceSlotIds: params.sourceContext.sourceSlotIds }
       : {}),
     ...(sourceReferenceIds.length > 0 ? { sourceReferenceIds } : {}),
-    relationType: 'generation:output',
+    relationType,
     generationFileId: params.output.id,
     generationRunId: params.run.id,
     generationOutputIndex: params.outputIndex,
@@ -255,7 +276,7 @@ const createGenerationSlotMetadata = (params: {
     ...(isRecord(params.run.request.studioSettings)
       ? { generationSettings: toJsonSafe(params.run.request.studioSettings) }
       : {}),
-    ...(params.generationCost
+    ...(!isCenterOperation && params.generationCost
       ? {
         generationCosts: {
           ...params.generationCost,
@@ -264,9 +285,21 @@ const createGenerationSlotMetadata = (params: {
         },
       }
       : {}),
+    ...(isCenterOperation
+      ? {
+        center: {
+          mode: centerMeta?.operation === 'center_object' ? centerMeta.mode : 'server_alpha_bbox',
+          sourceObjectBounds:
+              centerMeta?.operation === 'center_object' ? centerMeta.sourceObjectBounds : null,
+          targetObjectBounds:
+              centerMeta?.operation === 'center_object' ? centerMeta.targetObjectBounds : null,
+          timestamp: params.finishedAt,
+        },
+      }
+      : {}),
     generationParams: {
       prompt: params.run.request.prompt,
-      ...(params.model ? { model: params.model } : {}),
+      ...(params.model && !isCenterOperation ? { model: params.model } : {}),
       timestamp: params.finishedAt,
       runId: params.run.id,
       outputIndex: params.outputIndex,
@@ -275,9 +308,10 @@ const createGenerationSlotMetadata = (params: {
   };
 };
 
-const materializeGenerationOutputSlots = async (params: {
+const materializeRunOutputSlots = async (params: {
   run: ImageStudioRunRecord;
   finishedAt: string;
+  executionMeta: ImageStudioRunExecutionMeta;
   outputs: Array<{
     id: string;
     filename: string;
@@ -291,7 +325,8 @@ const materializeGenerationOutputSlots = async (params: {
 }): Promise<string[]> => {
   if (params.outputs.length === 0) return [];
   const sourceContext = await collectGenerationSourceContext(params.run);
-  const model = resolveGenerationModel(params.run);
+  const operation = resolveRunOperation(params.run);
+  const model = operation === 'generate' ? resolveGenerationModel(params.run) : null;
   const outputCount = params.outputs.length;
   const generationCost = model
     ? estimateGenerationCost({
@@ -306,19 +341,25 @@ const materializeGenerationOutputSlots = async (params: {
     const output = params.outputs[index];
     if (!output) continue;
     const outputIndex = index + 1;
-    const relationTypeForLink = buildGenerationOutputRelationType(params.run.id, outputIndex);
-    const slotName = outputCount > 1
-      ? `${sourceContext.primarySourceSlotName} • Gen ${outputIndex}`
-      : `${sourceContext.primarySourceSlotName} • Gen`;
-    const metadata = createGenerationSlotMetadata({
+    const relationTypeForLink = buildRunOutputRelationType(operation, params.run.id, outputIndex);
+    const slotName = operation === 'center_object'
+      ? outputCount > 1
+        ? `${sourceContext.primarySourceSlotName} • Center ${outputIndex}`
+        : `${sourceContext.primarySourceSlotName} • Centered`
+      : outputCount > 1
+        ? `${sourceContext.primarySourceSlotName} • Gen ${outputIndex}`
+        : `${sourceContext.primarySourceSlotName} • Gen`;
+    const metadata = createRunOutputSlotMetadata({
       run: params.run,
       finishedAt: params.finishedAt,
       outputIndex,
       outputCount,
       output,
       sourceContext,
+      operation,
       model,
       generationCost,
+      executionMeta: params.executionMeta,
     });
 
     let generationSlotId: string | null = null;
@@ -372,7 +413,7 @@ const materializeGenerationOutputSlots = async (params: {
           relationType: relationTypeForLink,
           metadata: {
             role: 'generation',
-            relationType: 'generation:output',
+            relationType: operation === 'center_object' ? 'center:output' : 'generation:output',
             runId: params.run.id,
             outputIndex,
             outputCount,
@@ -423,6 +464,8 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
       return;
     }
 
+    const operation = resolveRunOperation(run);
+    const operationLabel = operation === 'center_object' ? 'Center object' : 'Generation';
     const startedAt = new Date().toISOString();
     await updateImageStudioRun(run.id, {
       status: 'running',
@@ -433,9 +476,10 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
         {
           type: 'running',
           source: 'worker',
-          message: 'Generation started.',
+          message: `${operationLabel} started.`,
           payload: {
             runId: run.id,
+            operation,
             status: 'running',
             startedAt,
           },
@@ -452,9 +496,10 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
     try {
       const result = await executeImageStudioRun(run.request);
       const finishedAt = new Date().toISOString();
-      const createdSlotIds = await materializeGenerationOutputSlots({
+      const createdSlotIds = await materializeRunOutputSlots({
         run,
         finishedAt,
+        executionMeta: result.executionMeta,
         outputs: result.outputs,
       });
       await updateImageStudioRun(run.id, {
@@ -466,9 +511,10 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
           {
             type: 'completed',
             source: 'worker',
-            message: 'Generation completed successfully.',
+            message: `${operationLabel} completed successfully.`,
             payload: {
               runId: run.id,
+              operation,
               status: 'completed',
               finishedAt,
               outputCount: result.outputs.length,
@@ -521,9 +567,10 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
           {
             type: 'failed',
             source: 'worker',
-            message: 'Generation failed.',
+            message: `${operationLabel} failed.`,
             payload: {
               runId: run.id,
+              operation,
               status: 'failed',
               finishedAt,
               message,

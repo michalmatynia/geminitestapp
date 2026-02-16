@@ -35,6 +35,15 @@ export type PromptExploderRuleSegmentType =
   | 'hierarchical_list'
   | 'conditional_list'
   | 'qa_matrix';
+export type PromptExploderCaptureApplyTo = 'segment' | 'line';
+export type PromptExploderCaptureNormalize =
+  | 'trim'
+  | 'lower'
+  | 'upper'
+  | 'country'
+  | 'day'
+  | 'month'
+  | 'year';
 
 export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
   'image_studio_prompt',
@@ -58,6 +67,19 @@ export const PROMPT_EXPLODER_RULE_SEGMENT_TYPE_VALUES: PromptExploderRuleSegment
   'hierarchical_list',
   'conditional_list',
   'qa_matrix',
+];
+export const PROMPT_EXPLODER_CAPTURE_APPLY_TO_VALUES: PromptExploderCaptureApplyTo[] = [
+  'segment',
+  'line',
+];
+export const PROMPT_EXPLODER_CAPTURE_NORMALIZE_VALUES: PromptExploderCaptureNormalize[] = [
+  'trim',
+  'lower',
+  'upper',
+  'country',
+  'day',
+  'month',
+  'year',
 ];
 
 export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, string> = {
@@ -125,6 +147,11 @@ export type PromptValidationRule =
       promptExploderConfidenceBoost?: number;
       promptExploderPriority?: number;
       promptExploderTreatAsHeading?: boolean;
+      promptExploderCaptureTarget?: string | null;
+      promptExploderCaptureGroup?: number | null;
+      promptExploderCaptureApplyTo?: PromptExploderCaptureApplyTo;
+      promptExploderCaptureNormalize?: PromptExploderCaptureNormalize;
+      promptExploderCaptureOverwrite?: boolean;
     }
   | {
       kind: 'params_object';
@@ -154,6 +181,11 @@ export type PromptValidationRule =
       promptExploderConfidenceBoost?: number;
       promptExploderPriority?: number;
       promptExploderTreatAsHeading?: boolean;
+      promptExploderCaptureTarget?: string | null;
+      promptExploderCaptureGroup?: number | null;
+      promptExploderCaptureApplyTo?: PromptExploderCaptureApplyTo;
+      promptExploderCaptureNormalize?: PromptExploderCaptureNormalize;
+      promptExploderCaptureOverwrite?: boolean;
     };
 
 export type PromptValidationSettings = {
@@ -370,6 +402,18 @@ const promptExploderRuleSegmentTypeSchema = z.enum(
     ...PromptExploderRuleSegmentType[],
   ]
 );
+const promptExploderCaptureApplyToSchema = z.enum(
+  PROMPT_EXPLODER_CAPTURE_APPLY_TO_VALUES as [
+    PromptExploderCaptureApplyTo,
+    ...PromptExploderCaptureApplyTo[],
+  ]
+);
+const promptExploderCaptureNormalizeSchema = z.enum(
+  PROMPT_EXPLODER_CAPTURE_NORMALIZE_VALUES as [
+    PromptExploderCaptureNormalize,
+    ...PromptExploderCaptureNormalize[],
+  ]
+);
 const promptValidationSimilarSchema: z.ZodType<PromptValidationSimilarPattern> = z
   .object({
     pattern: z.string().trim().min(1),
@@ -433,6 +477,11 @@ const promptValidationSequenceFieldsSchema = z
     promptExploderConfidenceBoost: z.number().min(0).max(0.5).optional().default(0),
     promptExploderPriority: z.number().int().min(-50).max(50).optional().default(0),
     promptExploderTreatAsHeading: z.boolean().optional().default(false),
+    promptExploderCaptureTarget: z.string().trim().min(1).nullable().optional().default(null),
+    promptExploderCaptureGroup: z.number().int().min(0).max(20).nullable().optional().default(null),
+    promptExploderCaptureApplyTo: promptExploderCaptureApplyToSchema.optional().default('segment'),
+    promptExploderCaptureNormalize: promptExploderCaptureNormalizeSchema.optional().default('trim'),
+    promptExploderCaptureOverwrite: z.boolean().optional().default(false),
   })
   .strict();
 

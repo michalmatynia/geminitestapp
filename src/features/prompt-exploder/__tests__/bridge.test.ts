@@ -58,6 +58,8 @@ describe('prompt exploder bridge parties', () => {
           lastName: 'Matynia',
           city: 'Szczecin',
           country: 'Polska',
+          sourcePatternLabels: ['Case Resolver Role: Addresser'],
+          sourceSequenceLabels: ['Case Resolver Parties'],
         },
         addressee: {
           role: 'addressee',
@@ -66,6 +68,8 @@ describe('prompt exploder bridge parties', () => {
           kind: 'organization',
           organizationName: 'Inspektorat ZUS w Gryficach',
           city: 'Gryfice',
+          sourcePatternLabels: ['Case Resolver Role: Addressee'],
+          sourceSequenceLabels: ['Case Resolver Parties'],
         },
       }
     );
@@ -82,6 +86,12 @@ describe('prompt exploder bridge parties', () => {
       'Inspektorat ZUS w Gryficach'
     );
     expect(payload?.caseResolverParties?.addressee?.kind).toBe('organization');
+    expect(payload?.caseResolverParties?.addresser?.sourcePatternLabels).toEqual([
+      'Case Resolver Role: Addresser',
+    ]);
+    expect(payload?.caseResolverParties?.addressee?.sourceSequenceLabels).toEqual([
+      'Case Resolver Parties',
+    ]);
 
     const secondRead = consumePromptExploderApplyPromptForCaseResolver();
     expect(secondRead).toBeNull();

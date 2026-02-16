@@ -1,6 +1,13 @@
 'use client';
 
-import { createPostMutation, createPatchMutation, createDeleteMutation } from '@/shared/lib/api-hooks';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { api } from '@/shared/lib/api-client';
+import {
+  createCreateMutation,
+  createUpdateMutation,
+  createDeleteMutation,
+} from '@/shared/lib/query-factories';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DeleteResponse } from '@/shared/types/api/api';
 import type {
@@ -20,91 +27,202 @@ import type {
   ThemeCreateInput,
   ThemeUpdateInput,
 } from '@/shared/types/domain/notes';
+import type { 
+  CreateMutation, 
+  UpdateMutation, 
+  DeleteMutation 
+} from '@/shared/types/query-result-types';
 
 
-export const useCreateNote = createPostMutation<NoteWithRelations, NoteCreateInput>({
-  endpoint: '/api/notes',
-  invalidateKeys: [QUERY_KEYS.notes.all],
-});
+export function useCreateNote(): CreateMutation<NoteWithRelations, NoteCreateInput> {
+  const queryClient = useQueryClient();
+  return createCreateMutation({
+    mutationFn: (payload: NoteCreateInput) => api.post<NoteWithRelations>('/api/notes', payload),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      },
+    },
+  });
+}
 
-export const useUpdateNote = createPatchMutation<NoteWithRelations, NoteUpdateInput & { id: string }>({
-  endpoint: ({ id }) => `/api/notes/${id}`,
-  invalidateKeys: (_data, variables) => [
-    QUERY_KEYS.notes.all,
-    QUERY_KEYS.notes.detail(variables.id),
-  ],
-});
+export function useUpdateNote(): UpdateMutation<NoteWithRelations, NoteUpdateInput & { id: string }> {
+  const queryClient = useQueryClient();
+  return createUpdateMutation({
+    mutationFn: ({ id, ...data }: NoteUpdateInput & { id: string }) =>
+      api.patch<NoteWithRelations>(`/api/notes/${id}`, data),
+    options: {
+      onSuccess: (_data, variables) => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(variables.id) });
+      },
+    },
+  });
+}
 
-export const useDeleteNote = createDeleteMutation<DeleteResponse, string>({
-  endpoint: (id) => `/api/notes/${id}`,
-  invalidateKeys: [QUERY_KEYS.notes.all],
-});
+export function useDeleteNote(): DeleteMutation {
+  const queryClient = useQueryClient();
+  return createDeleteMutation({
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/${id}`),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      },
+    },
+  });
+}
 
-export const useCreateNoteFolder = createPostMutation<CategoryRecord, CategoryCreateInput>({
-  endpoint: '/api/notes/categories',
-  invalidateKeys: [QUERY_KEYS.notes.all],
-});
+export function useCreateNoteFolder(): CreateMutation<CategoryRecord, CategoryCreateInput> {
+  const queryClient = useQueryClient();
+  return createCreateMutation({
+    mutationFn: (payload: CategoryCreateInput) =>
+      api.post<CategoryRecord>('/api/notes/categories', payload),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      },
+    },
+  });
+}
 
-export const useUpdateNoteFolder = createPatchMutation<CategoryRecord, CategoryUpdateInput & { id: string }>({
-  endpoint: ({ id }) => `/api/notes/categories/${id}`,
-  invalidateKeys: [QUERY_KEYS.notes.all],
-});
+export function useUpdateNoteFolder(): UpdateMutation<CategoryRecord, CategoryUpdateInput & { id: string }> {
+  const queryClient = useQueryClient();
+  return createUpdateMutation({
+    mutationFn: ({ id, ...data }: CategoryUpdateInput & { id: string }) =>
+      api.patch<CategoryRecord>(`/api/notes/categories/${id}`, data),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      },
+    },
+  });
+}
 
-export const useDeleteNoteFolder = createDeleteMutation<DeleteResponse, string>({
-  endpoint: (folderId) => `/api/notes/categories/${folderId}`,
-  invalidateKeys: [QUERY_KEYS.notes.all],
-});
+export function useDeleteNoteFolder(): DeleteMutation {
+  const queryClient = useQueryClient();
+  return createDeleteMutation({
+    mutationFn: (folderId: string) =>
+      api.delete<DeleteResponse>(`/api/notes/categories/${folderId}`),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      },
+    },
+  });
+}
 
-export const useCreateNotebook = createPostMutation<NotebookRecord, NotebookCreateInput>({
-  endpoint: '/api/notes/notebooks',
-  invalidateKeys: [QUERY_KEYS.notes.notebooks()],
-});
+export function useCreateNotebook(): CreateMutation<NotebookRecord, NotebookCreateInput> {
+  const queryClient = useQueryClient();
+  return createCreateMutation({
+    mutationFn: (payload: NotebookCreateInput) => api.post<NotebookRecord>('/api/notes/notebooks', payload),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.notebooks() });
+      },
+    },
+  });
+}
 
-export const useUpdateNotebook = createPatchMutation<NotebookRecord, NotebookUpdateInput & { id: string }>({
-  endpoint: ({ id }) => `/api/notes/notebooks/${id}`,
-  invalidateKeys: (_data, variables) => [
-    QUERY_KEYS.notes.notebooks(),
-    QUERY_KEYS.notes.detail(variables.id),
-  ],
-});
+export function useUpdateNotebook(): UpdateMutation<NotebookRecord, NotebookUpdateInput & { id: string }> {
+  const queryClient = useQueryClient();
+  return createUpdateMutation({
+    mutationFn: ({ id, ...data }: NotebookUpdateInput & { id: string }) =>
+      api.patch<NotebookRecord>(`/api/notes/notebooks/${id}`, data),
+    options: {
+      onSuccess: (_data, variables) => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.notebooks() });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.detail(variables.id) });
+      },
+    },
+  });
+}
 
-export const useDeleteNotebook = createDeleteMutation<DeleteResponse, string>({
-  endpoint: (id) => `/api/notes/notebooks/${id}`,
-  invalidateKeys: [QUERY_KEYS.notes.all],
-});
+export function useDeleteNotebook(): DeleteMutation {
+  const queryClient = useQueryClient();
+  return createDeleteMutation({
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/notebooks/${id}`),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.all });
+      },
+    },
+  });
+}
 
-export const useCreateNoteTag = createPostMutation<TagRecord, TagCreateInput>({
-  endpoint: '/api/notes/tags',
-  invalidateKeys: (_data, variables) => [
-    QUERY_KEYS.notes.tags(),
-    QUERY_KEYS.notes.tags(variables.notebookId ?? undefined),
-  ],
-});
+export function useCreateNoteTag(): CreateMutation<TagRecord, TagCreateInput> {
+  const queryClient = useQueryClient();
+  return createCreateMutation({
+    mutationFn: (payload: TagCreateInput) =>
+      api.post<TagRecord>('/api/notes/tags', payload),
+    options: {
+      onSuccess: (_data, variables) => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags(variables.notebookId ?? undefined) });
+      },
+    },
+  });
+}
 
-export const useUpdateNoteTag = createPatchMutation<TagRecord, TagUpdateInput & { id: string }>({
-  endpoint: ({ id }) => `/api/notes/tags/${id}`,
-  invalidateKeys: [QUERY_KEYS.notes.tags()],
-});
+export function useUpdateNoteTag(): UpdateMutation<TagRecord, TagUpdateInput & { id: string }> {
+  const queryClient = useQueryClient();
+  return createUpdateMutation({
+    mutationFn: ({ id, ...data }: TagUpdateInput & { id: string }) =>
+      api.patch<TagRecord>(`/api/notes/tags/${id}`, data),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
+      },
+    },
+  });
+}
 
-export const useDeleteNoteTag = createDeleteMutation<DeleteResponse, string>({
-  endpoint: (id) => `/api/notes/tags/${id}`,
-  invalidateKeys: [QUERY_KEYS.notes.tags()],
-});
+export function useDeleteNoteTag(): DeleteMutation {
+  const queryClient = useQueryClient();
+  return createDeleteMutation({
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/tags/${id}`),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.tags() });
+      },
+    },
+  });
+}
 
-export const useCreateNoteTheme = createPostMutation<ThemeRecord, ThemeCreateInput>({
-  endpoint: '/api/notes/themes',
-  invalidateKeys: (_data, variables) => [
-    QUERY_KEYS.notes.themes(),
-    QUERY_KEYS.notes.themes(variables.notebookId ?? undefined),
-  ],
-});
+export function useCreateNoteTheme(): CreateMutation<ThemeRecord, ThemeCreateInput> {
+  const queryClient = useQueryClient();
+  return createCreateMutation({
+    mutationFn: (payload: ThemeCreateInput) =>
+      api.post<ThemeRecord>('/api/notes/themes', payload),
+    options: {
+      onSuccess: (_data, variables) => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() });
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes(variables.notebookId ?? undefined) });
+      },
+    },
+  });
+}
 
-export const useUpdateNoteTheme = createPatchMutation<ThemeRecord, ThemeUpdateInput & { id: string }>({
-  endpoint: ({ id }) => `/api/notes/themes/${id}`,
-  invalidateKeys: [QUERY_KEYS.notes.themes()],
-});
+export function useUpdateNoteTheme(): UpdateMutation<ThemeRecord, ThemeUpdateInput & { id: string }> {
+  const queryClient = useQueryClient();
+  return createUpdateMutation({
+    mutationFn: ({ id, ...data }: ThemeUpdateInput & { id: string }) =>
+      api.patch<ThemeRecord>(`/api/notes/themes/${id}`, data),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() });
+      },
+    },
+  });
+}
 
-export const useDeleteNoteTheme = createDeleteMutation<DeleteResponse, string>({
-  endpoint: (id) => `/api/notes/themes/${id}`,
-  invalidateKeys: [QUERY_KEYS.notes.themes()],
-});
+export function useDeleteNoteTheme(): DeleteMutation {
+  const queryClient = useQueryClient();
+  return createDeleteMutation({
+    mutationFn: (id: string) => api.delete<DeleteResponse>(`/api/notes/themes/${id}`),
+    options: {
+      onSuccess: () => {
+        void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notes.themes() });
+      },
+    },
+  });
+}

@@ -18,31 +18,19 @@ import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const payloadSchema = z.object({
-  mode: z.enum(['client_data_url', 'server_sharp']).default('server_sharp'),
-  scale: z.number().finite().gt(1).max(8).default(2),
-  smoothingQuality: z.enum(['low', 'medium', 'high']).optional(),
+  mode: z.enum(['client_alpha_bbox', 'server_alpha_bbox']).default('server_alpha_bbox'),
   dataUrl: z.string().trim().min(1).optional(),
   name: z.string().trim().min(1).max(180).optional(),
 });
 
-const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'upscale');
+const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'center');
 type SourceSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 
-type UploadedClientImage = {
-  buffer: Buffer;
-  mime: string;
-};
-
-const isFileLike = (value: FormDataEntryValue | null): value is File =>
-  typeof File !== 'undefined' && value instanceof File;
-
-const parseNumericFormValue = (value: FormDataEntryValue | null): number | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const normalized = value.trim();
-  if (!normalized) return undefined;
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed)) return Number.NaN;
-  return parsed;
+type ObjectBounds = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 };
 
 function parseDataUrl(dataUrl: string): { buffer: Buffer; mime: string } | null {
@@ -96,7 +84,7 @@ async function loadSourceBuffer(slot: SourceSlotRecord): Promise<Buffer> {
 
   const sourcePath = slot.imageFile?.filepath ?? slot.imageUrl ?? null;
   if (!sourcePath) {
-    throw badRequestError('Slot has no source image to upscale.');
+    throw badRequestError('Slot has no source image to center.');
   }
 
   const normalizedPath = normalizePublicPath(sourcePath);
@@ -117,49 +105,97 @@ async function loadSourceBuffer(slot: SourceSlotRecord): Promise<Buffer> {
   return fs.readFile(diskPath);
 }
 
-function formatScaleLabel(scale: number): string {
-  return `${Number(scale.toFixed(2))}x`;
-}
+function resolveAlphaObjectBounds(
+  pixelData: Buffer,
+  width: number,
+  height: number
+): ObjectBounds | null {
+  let minX = width;
+  let maxX = -1;
+  let minY = height;
+  let maxY = -1;
 
-async function parseUpscaleRequestPayload(
-  req: NextRequest
-): Promise<{ body: unknown; uploadedClientImage: UploadedClientImage | null }> {
-  const contentType = req.headers.get('content-type')?.toLowerCase() ?? '';
-  if (!contentType.includes('multipart/form-data')) {
-    const jsonBody = (await req.json().catch(() => null)) as unknown;
-    return { body: jsonBody, uploadedClientImage: null };
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const alpha = pixelData[((y * width) + x) * 4 + 3];
+      if (typeof alpha !== 'number' || alpha <= 8) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
   }
 
-  const form = await req.formData().catch(() => null);
-  if (!form) {
-    return { body: null, uploadedClientImage: null };
-  }
-
-  const mode = form.get('mode');
-  const scale = parseNumericFormValue(form.get('scale'));
-  const smoothingQuality = form.get('smoothingQuality');
-  const dataUrl = form.get('dataUrl');
-  const name = form.get('name');
-  const image = form.get('image');
-
-  let uploadedClientImage: UploadedClientImage | null = null;
-  if (isFileLike(image) && image.size > 0) {
-    const arrayBuffer = await image.arrayBuffer();
-    uploadedClientImage = {
-      buffer: Buffer.from(arrayBuffer),
-      mime: image.type?.trim().toLowerCase() || 'image/png',
-    };
+  if (maxX < minX || maxY < minY) {
+    return null;
   }
 
   return {
-    body: {
-      ...(typeof mode === 'string' ? { mode } : {}),
-      ...(scale !== undefined ? { scale } : {}),
-      ...(typeof smoothingQuality === 'string' ? { smoothingQuality } : {}),
-      ...(typeof dataUrl === 'string' ? { dataUrl } : {}),
-      ...(typeof name === 'string' ? { name } : {}),
+    left: minX,
+    top: minY,
+    width: Math.max(1, maxX - minX + 1),
+    height: Math.max(1, maxY - minY + 1),
+  };
+}
+
+async function centerObjectByAlpha(sourceBuffer: Buffer): Promise<{
+  outputBuffer: Buffer;
+  width: number;
+  height: number;
+  sourceObjectBounds: ObjectBounds;
+  targetObjectBounds: ObjectBounds;
+}> {
+  const sourceWithAlpha = sharp(sourceBuffer).ensureAlpha();
+  const { data, info } = await sourceWithAlpha.raw().toBuffer({ resolveWithObject: true });
+  const width = info.width ?? 0;
+  const height = info.height ?? 0;
+  if (!(width > 0 && height > 0)) {
+    throw badRequestError('Source image dimensions are invalid.');
+  }
+
+  const sourceObjectBounds = resolveAlphaObjectBounds(data, width, height);
+  if (!sourceObjectBounds) {
+    throw badRequestError('No visible object pixels were detected to center.');
+  }
+
+  const targetLeft = Math.max(0, Math.round((width - sourceObjectBounds.width) / 2));
+  const targetTop = Math.max(0, Math.round((height - sourceObjectBounds.height) / 2));
+  const targetObjectBounds: ObjectBounds = {
+    left: targetLeft,
+    top: targetTop,
+    width: sourceObjectBounds.width,
+    height: sourceObjectBounds.height,
+  };
+
+  const extracted = await sharp(sourceBuffer)
+    .ensureAlpha()
+    .extract({
+      left: sourceObjectBounds.left,
+      top: sourceObjectBounds.top,
+      width: sourceObjectBounds.width,
+      height: sourceObjectBounds.height,
+    })
+    .png()
+    .toBuffer();
+
+  const outputBuffer = await sharp({
+    create: {
+      width,
+      height,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
     },
-    uploadedClientImage,
+  })
+    .composite([{ input: extracted, left: targetObjectBounds.left, top: targetObjectBounds.top }])
+    .png()
+    .toBuffer();
+
+  return {
+    outputBuffer,
+    width,
+    height,
+    sourceObjectBounds,
+    targetObjectBounds,
   };
 }
 
@@ -171,7 +207,7 @@ async function POST_handler(
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) throw badRequestError('Slot id is required.');
 
-  const { body, uploadedClientImage } = await parseUpscaleRequestPayload(req);
+  const body = (await req.json().catch(() => null)) as unknown;
   const parsed = payloadSchema.safeParse(body);
   if (!parsed.success) {
     throw badRequestError('Invalid payload.', { errors: parsed.error.format() });
@@ -181,51 +217,36 @@ async function POST_handler(
   if (!sourceSlot) throw notFoundError('Source slot not found.');
   const payload = parsed.data;
 
-  if (payload.mode === 'client_data_url' && !payload.dataUrl && !uploadedClientImage) {
-    throw badRequestError('Client upscale requires an uploaded image or dataUrl.');
+  if (payload.mode === 'client_alpha_bbox' && !payload.dataUrl) {
+    throw badRequestError('Client centering requires dataUrl.');
   }
 
   let outputBuffer: Buffer;
   let outputMime = 'image/png';
   let outputWidth: number | null = null;
   let outputHeight: number | null = null;
+  let sourceObjectBounds: ObjectBounds | null = null;
+  let targetObjectBounds: ObjectBounds | null = null;
 
-  if (payload.mode === 'client_data_url') {
-    if (uploadedClientImage) {
-      outputBuffer = uploadedClientImage.buffer;
-      outputMime = uploadedClientImage.mime;
-    } else {
-      const parsedData = parseDataUrl(payload.dataUrl ?? '');
-      if (!parsedData) {
-        throw badRequestError('Invalid upscale image data URL.');
-      }
-      outputBuffer = parsedData.buffer;
-      outputMime = parsedData.mime;
+  if (payload.mode === 'client_alpha_bbox') {
+    const parsedData = parseDataUrl(payload.dataUrl ?? '');
+    if (!parsedData) {
+      throw badRequestError('Invalid centering image data URL.');
     }
+    outputBuffer = parsedData.buffer;
+    outputMime = parsedData.mime;
     const metadata = await sharp(outputBuffer).metadata().catch(() => null);
     outputWidth = metadata?.width ?? null;
     outputHeight = metadata?.height ?? null;
   } else {
     const sourceBuffer = await loadSourceBuffer(sourceSlot);
-    const sourceMeta = await sharp(sourceBuffer).metadata();
-    const sourceWidth = sourceMeta.width ?? sourceSlot.imageFile?.width ?? 0;
-    const sourceHeight = sourceMeta.height ?? sourceSlot.imageFile?.height ?? 0;
-    if (!(sourceWidth > 0 && sourceHeight > 0)) {
-      throw badRequestError('Source image dimensions are invalid.');
-    }
-
-    outputWidth = Math.max(1, Math.round(sourceWidth * payload.scale));
-    outputHeight = Math.max(1, Math.round(sourceHeight * payload.scale));
-    outputBuffer = await sharp(sourceBuffer)
-      .resize({
-        width: outputWidth,
-        height: outputHeight,
-        kernel: sharp.kernel.lanczos3,
-        withoutEnlargement: false,
-      })
-      .png()
-      .toBuffer();
+    const centered = await centerObjectByAlpha(sourceBuffer);
+    outputBuffer = centered.outputBuffer;
     outputMime = 'image/png';
+    outputWidth = centered.width;
+    outputHeight = centered.height;
+    sourceObjectBounds = centered.sourceObjectBounds;
+    targetObjectBounds = centered.targetObjectBounds;
   }
 
   const ext = guessExtension(outputMime);
@@ -234,11 +255,11 @@ async function POST_handler(
   const safeSourceSlotId = sanitizeSegment(sourceSlot.id);
   const baseName =
     sanitizeFilename(payload.name ?? '') ||
-    `upscale-${payload.mode}-${formatScaleLabel(payload.scale)}-${now}`;
+    `center-${payload.mode}-${now}`;
   const fileName = baseName.endsWith(ext) ? baseName : `${baseName}${ext}`;
   const diskDir = path.join(uploadsRoot, safeProjectId, safeSourceSlotId);
   const diskPath = path.join(diskDir, fileName);
-  const publicPath = `/uploads/studio/upscale/${safeProjectId}/${safeSourceSlotId}/${fileName}`;
+  const publicPath = `/uploads/studio/center/${safeProjectId}/${safeSourceSlotId}/${fileName}`;
 
   await fs.mkdir(diskDir, { recursive: true });
   await fs.writeFile(diskPath, outputBuffer);
@@ -254,35 +275,31 @@ async function POST_handler(
   });
 
   const sourceLabel = sourceSlot.name?.trim() || sourceSlot.id;
-  const scaleLabel = formatScaleLabel(payload.scale);
-  const relationType = `upscale:output:${now}`;
-  const metadata = {
-    role: 'generation',
-    sourceSlotId: sourceSlot.id,
-    sourceSlotIds: [sourceSlot.id],
-    relationType: 'upscale:output',
-    upscale: {
-      mode: payload.mode,
-      scale: payload.scale,
-      smoothingQuality: payload.mode === 'client_data_url' ? (payload.smoothingQuality ?? 'high') : undefined,
-      kernel: payload.mode === 'server_sharp' ? 'lanczos3' : undefined,
-      timestamp: new Date(now).toISOString(),
-    },
-  };
-
+  const relationType = `center:output:${now}`;
   const createdSlots = await createImageStudioSlots(sourceSlot.projectId, [
     {
-      name: `${sourceLabel} • Upscale ${scaleLabel}`,
+      name: `${sourceLabel} • Centered`,
       folderPath: sourceSlot.folderPath ?? null,
       imageFileId: imageFile.id,
       imageUrl: imageFile.filepath,
       imageBase64: null,
-      metadata,
+      metadata: {
+        role: 'generation',
+        sourceSlotId: sourceSlot.id,
+        sourceSlotIds: [sourceSlot.id],
+        relationType: 'center:output',
+        center: {
+          mode: payload.mode,
+          sourceObjectBounds,
+          targetObjectBounds,
+          timestamp: new Date(now).toISOString(),
+        },
+      },
     },
   ]);
   const createdSlot = createdSlots[0];
   if (!createdSlot) {
-    throw badRequestError('Failed to create upscaled slot.');
+    throw badRequestError('Failed to create centered slot.');
   }
 
   await upsertImageStudioSlotLink({
@@ -292,7 +309,8 @@ async function POST_handler(
     relationType,
     metadata: {
       mode: payload.mode,
-      scale: payload.scale,
+      sourceObjectBounds,
+      targetObjectBounds,
     },
   });
 
@@ -300,9 +318,10 @@ async function POST_handler(
     {
       sourceSlotId: sourceSlot.id,
       mode: payload.mode,
-      scale: payload.scale,
       slot: createdSlot,
       output: imageFile,
+      sourceObjectBounds,
+      targetObjectBounds,
     },
     { status: 201 }
   );
@@ -311,5 +330,5 @@ async function POST_handler(
 export const POST = apiHandlerWithParams<{ slotId: string }>(
   async (req: NextRequest, ctx: ApiHandlerContext, params: { slotId: string }): Promise<Response> =>
     POST_handler(req, ctx, params),
-  { source: 'image-studio.slots.[slotId].upscale.POST' }
+  { source: 'image-studio.slots.[slotId].center.POST' }
 );

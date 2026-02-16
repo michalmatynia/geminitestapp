@@ -522,6 +522,216 @@ export default function ProductImageManager({
           const singleMinimalSlotSizeClass = 'w-[7.5rem]';
           const singleMinimalSlotFrameClass = 'h-[7.5rem] w-[7.5rem]';
           const previewSize = isSingleMinimalSlot ? 120 : 96;
+          const minimalLayoutWidthClass = isSingleMinimalSlot ? 'w-[12.25rem]' : 'w-40';
+
+          const setSlotViewMode = (nextMode: SlotViewMode): void => {
+            setSlotViewModes((prev: SlotViewMode[]) => {
+              const next = [...prev];
+              next[index] = nextMode;
+              return next;
+            });
+          };
+
+          const actionsMenu = (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type='button'
+                  variant={minimalUi ? 'outline' : 'ghost'}
+                  size={minimalUi ? 'sm' : 'icon'}
+                  className={minimalUi ? 'h-6 w-full px-2 text-[10px]' : 'h-6 w-6'}
+                >
+                  {minimalUi ? 'Actions' : <MoreVertical className='h-3.5 w-3.5' />}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end' data-preserve-slot-selection='true'>
+                <DropdownMenuItem onClick={() => openSlotFilePicker(index)}>
+                  Upload image
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => triggerFileManager(index)}>
+                  Choose existing
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  disabled={Boolean(!canConvertToBase64 || !!base64LoadingSlots[index])}
+                  onClick={() => void convertSlotToBase64(index)}
+                >
+                  {base64LoadingSlots[index] ? 'Converting...' : 'Convert to Base64'}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!hasBase64}
+                  onClick={() => {
+                    setImageBase64At(index, '');
+                    setSlotViewModes((prev: SlotViewMode[]) => {
+                      const next = [...prev];
+                      if (linkValue.trim()) {
+                        next[index] = 'link';
+                      } else {
+                        next[index] = 'upload';
+                      }
+                      return next;
+                    });
+                  }}
+                >
+                  Clear Base64
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  disabled={!hasLink}
+                  onClick={() => setImageLinkAt(index, '')}
+                >
+                  Clear link
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={!hasUpload}
+                  onClick={() => {
+                    handleSlotDisconnectImage(index).catch((error: unknown) => {
+                      pushDebug({
+                        action: 'remove-image',
+                        message:
+                          error instanceof Error
+                            ? error.message
+                            : 'Failed to remove image',
+                        slotIndex: index,
+                      });
+                    });
+                  }}
+                >
+                  Clear upload
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+
+          const thumbnailFrame = (
+            <div
+              draggable={canReorder && hasUpload}
+              onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, index)}
+              onDragEnd={handleDragEnd}
+              onDragOver={(e: React.DragEvent<HTMLDivElement>) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e: React.DragEvent<HTMLDivElement>) => handleDrop(e, index)}
+              className={`
+                relative flex ${isSingleMinimalSlot ? singleMinimalSlotFrameClass : 'h-24 w-24'} items-center justify-center rounded-md border-2 bg-gray-800
+                ${!isReordering ? 'transition-all' : ''}
+                ${hasUpload ? 'cursor-grab active:cursor-grabbing' : ''}
+                ${isDragging ? 'opacity-70 ring-2 ring-emerald-400/60 scale-[0.98] border-emerald-400/40' : 'border'}
+                ${isDragOver ? 'border-emerald-500 bg-emerald-500/10' : ''}
+              `}
+            >
+              <div className={`flex h-full w-full items-center justify-center ${isReordering ? 'pointer-events-none' : ''}`}>
+                {displayUrl ? (
+                  <>
+                    {hasUpload && showDragHandle ? (
+                      <div className='absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400'>
+                        <GripVertical className='h-3 w-3' />
+                      </div>
+                    ) : null}
+                    {isLocalPreviewUrl(displayUrl) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={displayUrl}
+                        alt={`Product Image ${index + 1}`}
+                        className='h-full w-full rounded-md object-cover pointer-events-none'
+                        draggable={false}
+                        onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
+                        onError={() => {
+                          const signature = `${index}:${displayUrl}`;
+                          if (reportedImageErrorsRef.current.has(signature)) return;
+                          reportedImageErrorsRef.current.add(signature);
+                          pushDebug({
+                            action: 'image-load',
+                            message: 'Failed to load preview',
+                            slotIndex: index,
+                          });
+                        }}
+                        onLoad={() => {
+                          const signature = `${index}:${displayUrl}`;
+                          reportedImageErrorsRef.current.delete(signature);
+                        }}
+                      />
+                    ) : (
+                      <NextImage
+                        src={displayUrl}
+                        alt={`Product Image ${index + 1}`}
+                        width={previewSize}
+                        height={previewSize}
+                        sizes={`${previewSize}px`}
+                        unoptimized
+                        className='h-full w-full rounded-md object-cover pointer-events-none'
+                        draggable={false}
+                        onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
+                        onError={() => {
+                          const signature = `${index}:${displayUrl}`;
+                          if (reportedImageErrorsRef.current.has(signature)) return;
+                          reportedImageErrorsRef.current.add(signature);
+                          pushDebug({
+                            action: 'image-load',
+                            message: 'Failed to load preview',
+                            slotIndex: index,
+                          });
+                        }}
+                        onLoad={() => {
+                          const signature = `${index}:${displayUrl}`;
+                          reportedImageErrorsRef.current.delete(signature);
+                        }}
+                      />
+                    )}
+                    {hasUpload ? (
+                      <Button
+                        type='button'
+                        variant='destructive'
+                        size='icon'
+                        className='absolute right-0 top-0 h-6 w-6 rounded-full'
+                        onClick={() => {
+                          handleSlotDisconnectImage(index).catch((error: unknown) => {
+                            pushDebug({
+                              action: 'remove-image',
+                              message:
+                                error instanceof Error
+                                  ? error.message
+                                  : 'Failed to remove image',
+                              slotIndex: index,
+                            });
+                          });
+                        }}
+                        aria-label={`Remove image ${index + 1}`}
+                      >
+                        <XIcon className='h-4 w-4' />
+                      </Button>
+                    ) : null}
+                    {!minimalUi ? (
+                      <div className='absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400'>
+                        {index + 1}
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className='flex flex-col items-center justify-center text-gray-500'>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      aria-label={`Upload image to slot ${index + 1}`}
+                      onClick={() => openSlotFilePicker(index)}
+                    >
+                      <PlusIcon className='h-6 w-6' />
+                    </Button>
+                    <span className='text-xs'>Upload</span>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      className='text-xs'
+                      onClick={() => triggerFileManager(index)}
+                      aria-label={`Choose existing image for slot ${index + 1}`}
+                    >
+                      Choose Existing
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
 
           // Use index as key to prevent re-mounting during drag/drop and updates
           // This eliminates flickering when reordering or updating slots
@@ -550,288 +760,117 @@ export default function ProductImageManager({
                 aria-hidden='true'
                 tabIndex={-1}
               />
-              <div
-                className={
-                  minimalUi
-                    ? `mx-auto flex ${isSingleMinimalSlot ? singleMinimalSlotSizeClass : 'w-24'} items-center justify-between gap-1`
-                    : 'flex w-full items-center justify-between gap-2'
-                }
-              >
-                {minimalUi ? <span /> : (
-                  <div className='flex items-center gap-1 text-[10px] text-gray-400'>
-                    <span
-                      className={`rounded-full border px-1 ${
-                        hasUpload
-                          ? 'border-emerald-400 text-emerald-300'
-                          : 'border-gray-600 text-gray-500'
-                      }`}
-                      title='Uploaded image'
+              {minimalUi ? (
+                <div className={`mx-auto flex ${minimalLayoutWidthClass} items-start gap-2`}>
+                  {thumbnailFrame}
+                  <div className='flex w-[4.25rem] flex-col items-stretch gap-1'>
+                    <Button
+                      type='button'
+                      variant={mode === 'upload' ? 'default' : 'outline'}
+                      size='sm'
+                      className='h-6 w-full px-2 text-[10px]'
+                      disabled={!hasUpload}
+                      onClick={() => setSlotViewMode('upload')}
                     >
-                      U
-                    </span>
-                    <span
-                      className={`rounded-full border px-1 ${
-                        hasLink
-                          ? 'border-sky-400 text-sky-300'
-                          : 'border-gray-600 text-gray-500'
-                      }`}
-                      title='Image link'
+                      Upload
+                    </Button>
+                    <Button
+                      type='button'
+                      variant={mode === 'link' ? 'default' : 'outline'}
+                      size='sm'
+                      className='h-6 w-full px-2 text-[10px]'
+                      disabled={!hasLink}
+                      onClick={() => setSlotViewMode('link')}
                     >
-                      L
-                    </span>
-                    <span
-                      className={`rounded-full border px-1 ${
-                        hasBase64
-                          ? 'border-purple-400 text-purple-300'
-                          : 'border-gray-600 text-gray-500'
-                      }`}
-                      title='Base64 image'
+                      Link
+                    </Button>
+                    <Button
+                      type='button'
+                      variant={mode === 'base64' ? 'default' : 'outline'}
+                      size='sm'
+                      className='h-6 w-full px-2 text-[10px]'
+                      disabled={!hasBase64}
+                      onClick={() => setSlotViewMode('base64')}
                     >
-                      B
-                    </span>
+                      Base64
+                    </Button>
+                    {actionsMenu}
                   </div>
-                )}
-                <div className='flex items-center gap-1'>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-6 px-2 text-[10px]'
-                      >
-                        View: {modeLabel}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end' data-preserve-slot-selection='true'>
-                      <DropdownMenuItem
-                        disabled={!hasUpload}
-                        onClick={() =>
-                          setSlotViewModes((prev: SlotViewMode[]) => {
-                            const next = [...prev];
-                            next[index] = 'upload';
-                            return next;
-                          })
-                        }
-                      >
-                        Upload
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={!hasLink}
-                        onClick={() =>
-                          setSlotViewModes((prev: SlotViewMode[]) => {
-                            const next = [...prev];
-                            next[index] = 'link';
-                            return next;
-                          })
-                        }
-                      >
-                        Link
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={!hasBase64}
-                        onClick={() =>
-                          setSlotViewModes((prev: SlotViewMode[]) => {
-                            const next = [...prev];
-                            next[index] = 'base64';
-                            return next;
-                          })
-                        }
-                      >
-                        Base64
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button type='button' variant='ghost' size='icon' className='h-6 w-6'>
-                        <MoreVertical className='h-3.5 w-3.5' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end' data-preserve-slot-selection='true'>
-                      <DropdownMenuItem onClick={() => openSlotFilePicker(index)}>
-                        Upload image
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => triggerFileManager(index)}>
-                        Choose existing
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        disabled={Boolean(!canConvertToBase64 || !!base64LoadingSlots[index])}
-                        onClick={() => void convertSlotToBase64(index)}
-                      >
-                        {base64LoadingSlots[index] ? 'Converting...' : 'Convert to Base64'}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={!hasBase64}
-                        onClick={() => {
-                          setImageBase64At(index, '');
-                          setSlotViewModes((prev: SlotViewMode[]) => {
-                            const next = [...prev];
-                            if (linkValue.trim()) {
-                              next[index] = 'link';
-                            } else {
-                              next[index] = 'upload';
-                            }
-                            return next;
-                          });
-                        }}
-                      >
-                        Clear Base64
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        disabled={!hasLink}
-                        onClick={() => setImageLinkAt(index, '')}
-                      >
-                        Clear link
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={!hasUpload}
-                        onClick={() => {
-                          handleSlotDisconnectImage(index).catch((error: unknown) => {
-                            pushDebug({
-                              action: 'remove-image',
-                              message:
-                                error instanceof Error
-                                  ? error.message
-                                  : 'Failed to remove image',
-                              slotIndex: index,
-                            });
-                          });
-                        }}
-                      >
-                        Clear upload
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
-              </div>
-              <div
-                draggable={canReorder && hasUpload}
-                onDragStart={(e: React.DragEvent<HTMLDivElement>) => handleDragStart(e, index)}
-                onDragEnd={handleDragEnd}
-                onDragOver={(e: React.DragEvent<HTMLDivElement>) => handleDragOver(e, index)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e: React.DragEvent<HTMLDivElement>) => handleDrop(e, index)}
-                className={`
-                  relative flex ${isSingleMinimalSlot ? singleMinimalSlotFrameClass : 'h-24 w-24'} items-center justify-center rounded-md border-2 bg-gray-800
-                  ${!isReordering ? 'transition-all' : ''}
-                  ${hasUpload ? 'cursor-grab active:cursor-grabbing' : ''}
-                  ${isDragging ? 'opacity-70 ring-2 ring-emerald-400/60 scale-[0.98] border-emerald-400/40' : 'border'}
-                  ${isDragOver ? 'border-emerald-500 bg-emerald-500/10' : ''}
-                `}
-              >
-                <div className={`flex h-full w-full items-center justify-center ${isReordering ? 'pointer-events-none' : ''}`}>
-                  {displayUrl ? (
-                    <>
-                      {hasUpload && showDragHandle ? (
-                        <div className='absolute left-0 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-br-md bg-gray-900/80 text-gray-400'>
-                          <GripVertical className='h-3 w-3' />
-                        </div>
-                      ) : null}
-                      {isLocalPreviewUrl(displayUrl) ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={displayUrl}
-                          alt={`Product Image ${index + 1}`}
-                          className='h-full w-full rounded-md object-cover pointer-events-none'
-                          draggable={false}
-                          onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
-                          onError={() => {
-                            const signature = `${index}:${displayUrl}`;
-                            if (reportedImageErrorsRef.current.has(signature)) return;
-                            reportedImageErrorsRef.current.add(signature);
-                            pushDebug({
-                              action: 'image-load',
-                              message: 'Failed to load preview',
-                              slotIndex: index,
-                            });
-                          }}
-                          onLoad={() => {
-                            const signature = `${index}:${displayUrl}`;
-                            reportedImageErrorsRef.current.delete(signature);
-                          }}
-                        />
-                      ) : (
-                        <NextImage
-                          src={displayUrl}
-                          alt={`Product Image ${index + 1}`}
-                          width={previewSize}
-                          height={previewSize}
-                          sizes={`${previewSize}px`}
-                          unoptimized
-                          className='h-full w-full rounded-md object-cover pointer-events-none'
-                          draggable={false}
-                          onDragStart={(event: React.DragEvent<HTMLImageElement>) => event.preventDefault()}
-                          onError={() => {
-                            const signature = `${index}:${displayUrl}`;
-                            if (reportedImageErrorsRef.current.has(signature)) return;
-                            reportedImageErrorsRef.current.add(signature);
-                            pushDebug({
-                              action: 'image-load',
-                              message: 'Failed to load preview',
-                              slotIndex: index,
-                            });
-                          }}
-                          onLoad={() => {
-                            const signature = `${index}:${displayUrl}`;
-                            reportedImageErrorsRef.current.delete(signature);
-                          }}
-                        />
-                      )}
-                      {hasUpload ? (
-                        <Button
-                          type='button'
-                          variant='destructive'
-                          size='icon'
-                          className='absolute right-0 top-0 h-6 w-6 rounded-full'
-                          onClick={() => {
-                            handleSlotDisconnectImage(index).catch((error: unknown) => {
-                              pushDebug({
-                                action: 'remove-image',
-                                message:
-                                  error instanceof Error
-                                    ? error.message
-                                    : 'Failed to remove image',
-                                slotIndex: index,
-                              });
-                            });
-                          }}
-                          aria-label={`Remove image ${index + 1}`}
-                        >
-                          <XIcon className='h-4 w-4' />
-                        </Button>
-                      ) : null}
-                      <div className='absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400'>
-                        {index + 1}
-                      </div>
-                    </>
-                  ) : (
-                    <div className='flex flex-col items-center justify-center text-gray-500'>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        size='icon'
-                        aria-label={`Upload image to slot ${index + 1}`}
-                        onClick={() => openSlotFilePicker(index)}
+              ) : (
+                <>
+                  <div className='flex w-full items-center justify-between gap-2'>
+                    <div className='flex items-center gap-1 text-[10px] text-gray-400'>
+                      <span
+                        className={`rounded-full border px-1 ${
+                          hasUpload
+                            ? 'border-emerald-400 text-emerald-300'
+                            : 'border-gray-600 text-gray-500'
+                        }`}
+                        title='Uploaded image'
                       >
-                        <PlusIcon className='h-6 w-6' />
-                      </Button>
-                      <span className='text-xs'>Upload</span>
-                      <Button
-                        type='button'
-                        variant='ghost'
-                        className='text-xs'
-                        onClick={() => triggerFileManager(index)}
-                        aria-label={`Choose existing image for slot ${index + 1}`}
+                        U
+                      </span>
+                      <span
+                        className={`rounded-full border px-1 ${
+                          hasLink
+                            ? 'border-sky-400 text-sky-300'
+                            : 'border-gray-600 text-gray-500'
+                        }`}
+                        title='Image link'
                       >
-                        Choose Existing
-                      </Button>
+                        L
+                      </span>
+                      <span
+                        className={`rounded-full border px-1 ${
+                          hasBase64
+                            ? 'border-purple-400 text-purple-300'
+                            : 'border-gray-600 text-gray-500'
+                        }`}
+                        title='Base64 image'
+                      >
+                        B
+                      </span>
                     </div>
-                  )}
-                </div>
-              </div>
+                    <div className='flex items-center gap-1'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            className='h-6 px-2 text-[10px]'
+                          >
+                            View: {modeLabel}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end' data-preserve-slot-selection='true'>
+                          <DropdownMenuItem
+                            disabled={!hasUpload}
+                            onClick={() => setSlotViewMode('upload')}
+                          >
+                            Upload
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={!hasLink}
+                            onClick={() => setSlotViewMode('link')}
+                          >
+                            Link
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={!hasBase64}
+                            onClick={() => setSlotViewMode('base64')}
+                          >
+                            Base64
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {actionsMenu}
+                    </div>
+                  </div>
+                  {thumbnailFrame}
+                </>
+              )}
               {(minimalUi || mode === 'link' || (hasLink && !hasUpload)) ? (
                 <Input
                   type='url'
@@ -840,12 +879,12 @@ export default function ProductImageManager({
                     setImageLinkAt(index, event.target.value)
                   }
                   placeholder='Paste image link'
-                  className='h-7 w-full px-2 text-[10px]'
+                  className={minimalUi ? `h-7 ${minimalLayoutWidthClass} px-2 text-[10px]` : 'h-7 w-full px-2 text-[10px]'}
                   aria-label={`Image link for slot ${index + 1}`}
                 />
               ) : null}
               {hasBase64 ? (
-                <div className='w-full text-[10px] text-purple-300/80'>
+                <div className={minimalUi ? `${minimalLayoutWidthClass} text-[10px] text-purple-300/80` : 'w-full text-[10px] text-purple-300/80'}>
                   Base64 stored
                 </div>
               ) : null}

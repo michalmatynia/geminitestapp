@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 import {
@@ -11,7 +10,7 @@ import {
 import { logClientError } from '@/features/observability';
 import type { ProductWithImages, ProductImageRecord } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
-import { api } from '@/shared/lib/api-client';
+import { createDeleteMutation } from '@/shared/lib/api-hooks';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { logger } from '@/shared/utils/logger';
 
@@ -102,12 +101,9 @@ export function useProductImages(
   const isReorderingRef = useRef(false);
   const pendingRefreshRef = useRef<ProductWithImages | null>(null);
   
-  const queryClient = useQueryClient();
-  const disconnectImageMutation = useMutation({
-    mutationFn: async ({ productId, imageFileId }: { productId: string; imageFileId: string }): Promise<void> => {
-      await api.delete<unknown>(`/api/products/${productId}/images/${imageFileId}`);
-    },
-    onSuccess: () => {
+  const disconnectImageMutation = createDeleteMutation<void, { productId: string; imageFileId: string }>({
+    endpoint: ({ productId, imageFileId }) => `/api/products/${productId}/images/${imageFileId}`,
+    onSuccess: (_data, _variables, _context, queryClient) => {
       void invalidateProducts(queryClient);
     }
   });

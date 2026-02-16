@@ -21,6 +21,7 @@ const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
 
 export interface RunStudioPayload {
   projectId: string;
+  operation?: 'generate' | 'center_object' | undefined;
   asset: { filepath: string; id?: string | undefined };
   referenceAssets?: Array<{ filepath: string; id?: string | undefined }> | undefined;
   prompt: string;
@@ -30,6 +31,10 @@ export interface RunStudioPayload {
     invert?: boolean | undefined;
     feather?: number | undefined;
   } | null | undefined;
+  center?: {
+    mode: 'client_alpha_bbox' | 'server_alpha_bbox';
+    dataUrl?: string | undefined;
+  } | undefined;
   studioSettings?: Record<string, unknown> | undefined;
 }
 
@@ -46,6 +51,7 @@ export interface ImageStudioRunHistoryEvent {
 
 export interface ImageStudioRunRequestRecord {
   projectId?: string;
+  operation?: 'generate' | 'center_object';
   prompt?: string;
   asset?: { filepath?: string; id?: string };
   referenceAssets?: Array<{ filepath?: string; id?: string }>;
@@ -64,6 +70,10 @@ export interface ImageStudioRunRequestRecord {
       feather?: number;
     }
     | null;
+  center?: {
+    mode?: 'client_alpha_bbox' | 'server_alpha_bbox';
+    dataUrl?: string;
+  };
   studioSettings?: Record<string, unknown>;
 }
 

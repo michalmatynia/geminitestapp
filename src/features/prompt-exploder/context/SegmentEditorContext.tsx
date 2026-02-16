@@ -51,6 +51,7 @@ export interface SegmentEditorState {
   matchedRuleDetails: Array<{
     id: string;
     title: string;
+    sequenceLabel?: string;
     segmentType: string | null;
     priority: number;
     confidenceBoost: number;
@@ -170,11 +171,14 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   const matchedRuleDetails = useMemo(() => {
     if (!selectedSegment) return [];
     const byId = new Map(effectiveRules.map((rule) => [rule.id, rule]));
-    return selectedSegment.matchedPatternIds.map((patternId) => {
+    return selectedSegment.matchedPatternIds.map((patternId, index) => {
       const rule = byId.get(patternId);
+      const storedLabel = selectedSegment.matchedPatternLabels?.[index]?.trim() ?? '';
+      const sequenceLabel = rule?.sequenceGroupLabel?.trim() ?? '';
       return {
         id: patternId,
-        title: rule?.title ?? patternId,
+        title: storedLabel || rule?.title ?? patternId,
+        sequenceLabel: sequenceLabel || undefined,
         segmentType: rule?.promptExploderSegmentType ?? null,
         priority: rule?.promptExploderPriority ?? 0,
         confidenceBoost: rule?.promptExploderConfidenceBoost ?? 0,

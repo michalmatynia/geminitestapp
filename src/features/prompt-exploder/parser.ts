@@ -1,3 +1,12 @@
+import { validateRegexSafety } from '@/features/products/utils/validator-regex-safety';
+import {
+  PromptValidationRuleCompileError,
+} from '@/features/prompt-core/errors';
+import {
+  recordPromptValidationCounter,
+  recordPromptValidationError,
+  recordPromptValidationTiming,
+} from '@/features/prompt-core/runtime-observability';
 import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
 import type {
   PromptExploderRuleSegmentType,
@@ -77,6 +86,7 @@ type PatternRuntime = {
   regexRules: RuntimeRegexRule[];
   headingRules: RuntimeRegexRule[];
   nonHeadingRules: RuntimeRegexRule[];
+  compileErrors: PromptValidationRuleCompileError[];
 };
 
 type RuntimeRegexRule = {
@@ -101,45 +111,43 @@ type ParsedTitleLine = {
   title: string;
 };
 
-const listItemId = (() => {
-  let count = 0;
-  return (): string => {
-    count += 1;
-    return `item_${count.toString(36)}`;
-  };
-})();
+type IdFactory = {
+  next: () => string;
+  reset: () => void;
+};
 
-const logicalConditionId = (() => {
+const createIdFactory = (prefix: string): IdFactory => {
   let count = 0;
-  return (): string => {
-    count += 1;
-    return `condition_${count.toString(36)}`;
+  return {
+    next: (): string => {
+      count += 1;
+      return `${prefix}_${count.toString(36)}`;
+    },
+    reset: (): void => {
+      count = 0;
+    },
   };
-})();
+};
 
-const segmentId = (() => {
-  let count = 0;
-  return (): string => {
-    count += 1;
-    return `segment_${count.toString(36)}`;
-  };
-})();
+const listItemIdFactory = createIdFactory('item');
+const logicalConditionIdFactory = createIdFactory('condition');
+const segmentIdFactory = createIdFactory('segment');
+const subsectionIdFactory = createIdFactory('subsection');
+const bindingIdFactory = createIdFactory('binding');
 
-const subsectionId = (() => {
-  let count = 0;
-  return (): string => {
-    count += 1;
-    return `subsection_${count.toString(36)}`;
-  };
-})();
+const listItemId = (): string => listItemIdFactory.next();
+const logicalConditionId = (): string => logicalConditionIdFactory.next();
+const segmentId = (): string => segmentIdFactory.next();
+const subsectionId = (): string => subsectionIdFactory.next();
+const bindingId = (): string => bindingIdFactory.next();
 
-const bindingId = (() => {
-  let count = 0;
-  return (): string => {
-    count += 1;
-    return `binding_${count.toString(36)}`;
-  };
-})();
+const resetParserRuntimeIds = (): void => {
+  listItemIdFactory.reset();
+  logicalConditionIdFactory.reset();
+  segmentIdFactory.reset();
+  subsectionIdFactory.reset();
+  bindingIdFactory.reset();
+};
 
 const trimTrailingBlankLines = (value: string): string => value.replace(/\n{3,}$/g, '\n\n').trimEnd();
 
@@ -509,13 +517,146 @@ const normalizeRuntimeValidationScope = (
     ? 'case_resolver_prompt_exploder'
     : 'prompt_exploder';
 
+const runtimePatternCacheByRules = new WeakMap<
+  PromptValidationRule[],
+  Map<PromptExploderRuntimeValidationScope, PatternRuntime>
+>();
+const runtimePatternCacheByKey = new Map<string, PatternRuntime>();
+const RUNTIME_PATTERN_CACHE_LIMIT = 120;
+const runtimePatternCacheStats = {
+  keyedHits: 0,
+  keyedMisses: 0,
+  weakHits: 0,
+  weakMisses: 0,
+  evictions: 0,
+};
+const COMPILE_FAILURE_WINDOW_MS = 60_000;
+const COMPILE_FAILURE_THRESHOLD = 5;
+const COMPILE_CIRCUIT_OPEN_MS = 45_000;
+const compileFailuresByScope = new Map<
+  PromptExploderRuntimeValidationScope,
+  number[]
+>();
+const compileCircuitOpenUntilByScope = new Map<
+  PromptExploderRuntimeValidationScope,
+  number
+>();
+
+const parseCacheKey = (
+  key: string
+): {
+  scope: string;
+  stack: string;
+  profile: string;
+  settingsVersion: string;
+  listVersion: string;
+} | null => {
+  const parts = key.split(':');
+  if (parts.length !== 6) return null;
+  if (parts[0] !== 'prompt-validation-runtime-v2') return null;
+  return {
+    scope: parts[1] ?? '',
+    stack: parts[2] ?? '',
+    profile: parts[3] ?? '',
+    settingsVersion: parts[4] ?? '',
+    listVersion: parts[5] ?? '',
+  };
+};
+
+const trimRuntimePatternCacheByKey = (): void => {
+  if (runtimePatternCacheByKey.size <= RUNTIME_PATTERN_CACHE_LIMIT) return;
+  const oldestKey = runtimePatternCacheByKey.keys().next().value;
+  if (typeof oldestKey === 'string') {
+    runtimePatternCacheByKey.delete(oldestKey);
+    runtimePatternCacheStats.evictions += 1;
+  }
+};
+
+export const getPromptExploderRuntimePatternCacheSnapshot = (): {
+  keyed: number;
+  keyedKeys: string[];
+  stats: typeof runtimePatternCacheStats;
+  circuitOpenScopes: Array<{
+    scope: PromptExploderRuntimeValidationScope;
+    openUntil: string;
+  }>;
+} => ({
+  keyed: runtimePatternCacheByKey.size,
+  keyedKeys: [...runtimePatternCacheByKey.keys()],
+  stats: {
+    ...runtimePatternCacheStats,
+  },
+  circuitOpenScopes: [...compileCircuitOpenUntilByScope.entries()]
+    .filter(([, timestamp]) => timestamp > Date.now())
+    .map(([scope, timestamp]) => ({
+      scope,
+      openUntil: new Date(timestamp).toISOString(),
+    })),
+});
+
+export const resetPromptExploderRuntimePatternCache = (): void => {
+  runtimePatternCacheByKey.clear();
+  runtimePatternCacheStats.keyedHits = 0;
+  runtimePatternCacheStats.keyedMisses = 0;
+  runtimePatternCacheStats.weakHits = 0;
+  runtimePatternCacheStats.weakMisses = 0;
+  runtimePatternCacheStats.evictions = 0;
+  compileFailuresByScope.clear();
+  compileCircuitOpenUntilByScope.clear();
+};
+
+export const invalidatePromptExploderRuntimePatternCacheByRuntime = (args: {
+  scope: string;
+  stack: string;
+  profile: string;
+  settingsVersion?: string | null | undefined;
+  listVersion?: string | null | undefined;
+}): number => {
+  let removed = 0;
+  for (const key of [...runtimePatternCacheByKey.keys()]) {
+    const parsed = parseCacheKey(key);
+    if (!parsed) continue;
+    if (parsed.scope !== args.scope) continue;
+    if (parsed.stack !== args.stack) continue;
+    if (parsed.profile !== args.profile) continue;
+    const settingsMatch = args.settingsVersion
+      ? parsed.settingsVersion === args.settingsVersion
+      : true;
+    const listMatch = args.listVersion
+      ? parsed.listVersion === args.listVersion
+      : true;
+    if (settingsMatch && listMatch) {
+      continue;
+    }
+    runtimePatternCacheByKey.delete(key);
+    removed += 1;
+  }
+  return removed;
+};
+
 const compileRuntimePatterns = (
   rules: PromptValidationRule[] | null | undefined,
-  scope: PromptExploderRuntimeValidationScope
+  scope: PromptExploderRuntimeValidationScope,
+  correlationId?: string | null
 ): PatternRuntime => {
+  const now = Date.now();
+  const openUntil = compileCircuitOpenUntilByScope.get(scope) ?? 0;
+  if (openUntil > now) {
+    recordPromptValidationCounter('runtime_circuit_break_open', 1, { scope });
+    throw new PromptValidationRuleCompileError(
+      `Prompt Exploder runtime compile circuit is open for scope "${scope}".`,
+      {
+        scope,
+        openUntil: new Date(openUntil).toISOString(),
+        correlationId: correlationId ?? null,
+      }
+    );
+  }
+
   const allowDefaultFallback = scope !== 'case_resolver_prompt_exploder';
   const byId = new Map<string, RegExp>();
   const runtimeRulesById = new Map<string, RuntimeRegexRule>();
+  const compileErrors: PromptValidationRuleCompileError[] = [];
 
   if (allowDefaultFallback) {
     Object.entries(DEFAULT_PATTERN_IDS).forEach(([id, regex]) => {
@@ -543,8 +684,36 @@ const compileRuntimePatterns = (
 
   scopedRules.forEach((rule) => {
     if (rule.kind !== 'regex') return;
+    const safety = validateRegexSafety(rule.pattern, rule.flags);
+    if (!safety.ok) {
+      compileErrors.push(
+        new PromptValidationRuleCompileError(
+          `Unsafe Prompt Exploder regex rule "${rule.id}" skipped.`,
+          {
+            ruleId: rule.id,
+            scope,
+            safetyCode: safety.code,
+            safetyMessage: safety.message,
+            correlationId: correlationId ?? null,
+          }
+        )
+      );
+      return;
+    }
     const compiled = compileSafeRegex(rule.pattern, rule.flags);
-    if (!compiled) return;
+    if (!compiled) {
+      compileErrors.push(
+        new PromptValidationRuleCompileError(
+          `Failed to compile Prompt Exploder regex rule "${rule.id}".`,
+          {
+            ruleId: rule.id,
+            scope,
+            correlationId: correlationId ?? null,
+          }
+        )
+      );
+      return;
+    }
     byId.set(rule.id, compiled);
     runtimeRulesById.set(rule.id, {
       id: rule.id,
@@ -566,11 +735,43 @@ const compileRuntimePatterns = (
     });
   });
 
+  if (compileErrors.length > 0) {
+    const previousFailures = compileFailuresByScope.get(scope) ?? [];
+    const freshFailures = [...previousFailures, now].filter(
+      (timestamp) => now - timestamp <= COMPILE_FAILURE_WINDOW_MS
+    );
+    compileFailuresByScope.set(scope, freshFailures);
+    if (freshFailures.length >= COMPILE_FAILURE_THRESHOLD) {
+      compileCircuitOpenUntilByScope.set(scope, now + COMPILE_CIRCUIT_OPEN_MS);
+      recordPromptValidationCounter('runtime_circuit_break_open', 1, { scope });
+    }
+  } else {
+    compileFailuresByScope.delete(scope);
+    compileCircuitOpenUntilByScope.delete(scope);
+  }
+
   const regexRules = [...runtimeRulesById.values()];
   const headingRules = regexRules.filter((rule) => rule.treatAsHeading);
   const nonHeadingRules = regexRules.filter(
     (rule) => !rule.treatAsHeading && /^segment\.not_heading\./i.test(rule.id)
   );
+
+  if (!allowDefaultFallback && regexRules.length === 0 && scopedRules.length > 0) {
+    throw (
+      compileErrors[0] ??
+      new PromptValidationRuleCompileError(
+        'No regex rules could be compiled for case-resolver Prompt Exploder scope.',
+        {
+          scope,
+          correlationId: correlationId ?? null,
+        }
+      )
+    );
+  }
+
+  if (compileErrors.length > 0) {
+    recordPromptValidationError('rule_compile');
+  }
 
   return {
     allowDefaultFallback,
@@ -579,7 +780,103 @@ const compileRuntimePatterns = (
     regexRules,
     headingRules,
     nonHeadingRules,
+    compileErrors,
   };
+};
+
+const resolveRuntimePatterns = (
+  rules: PromptValidationRule[] | null | undefined,
+  scope: PromptExploderRuntimeValidationScope,
+  options?: {
+    runtimeCacheKey?: string | null | undefined;
+    correlationId?: string | null | undefined;
+  }
+): PatternRuntime => {
+  const runtimeCacheKey = options?.runtimeCacheKey?.trim() || '';
+
+  if (runtimeCacheKey) {
+    const cachedByKey = runtimePatternCacheByKey.get(runtimeCacheKey);
+    if (cachedByKey) {
+      runtimePatternCacheStats.keyedHits += 1;
+      recordPromptValidationCounter('runtime_cache_hit', 1, {
+        scope,
+        cache: 'keyed',
+      });
+      return cachedByKey;
+    }
+    runtimePatternCacheStats.keyedMisses += 1;
+    recordPromptValidationCounter('runtime_cache_miss', 1, {
+      scope,
+      cache: 'keyed',
+    });
+  }
+
+  if (!rules || rules.length === 0) {
+    const startedAt = performance.now();
+    const runtime = compileRuntimePatterns(rules, scope, options?.correlationId ?? null);
+    recordPromptValidationTiming('runtime_compile_ms', performance.now() - startedAt, {
+      scope,
+      cacheKey: runtimeCacheKey || 'none',
+      correlationId: options?.correlationId ?? '',
+    });
+    if (runtimeCacheKey) {
+      runtimePatternCacheByKey.set(runtimeCacheKey, runtime);
+      trimRuntimePatternCacheByKey();
+    }
+    return runtime;
+  }
+
+  const cachedByScope = runtimePatternCacheByRules.get(rules);
+  const cachedRuntime = cachedByScope?.get(scope);
+  if (cachedRuntime) {
+    runtimePatternCacheStats.weakHits += 1;
+    recordPromptValidationCounter('runtime_cache_hit', 1, {
+      scope,
+      cache: 'weak',
+    });
+    if (runtimeCacheKey) {
+      runtimePatternCacheByKey.set(runtimeCacheKey, cachedRuntime);
+      trimRuntimePatternCacheByKey();
+    }
+    return cachedRuntime;
+  }
+  runtimePatternCacheStats.weakMisses += 1;
+  recordPromptValidationCounter('runtime_cache_miss', 1, {
+    scope,
+    cache: 'weak',
+  });
+
+  const startedAt = performance.now();
+  const runtime = compileRuntimePatterns(rules, scope, options?.correlationId ?? null);
+  recordPromptValidationTiming('runtime_compile_ms', performance.now() - startedAt, {
+    scope,
+    cacheKey: runtimeCacheKey || 'weakmap',
+    correlationId: options?.correlationId ?? '',
+  });
+
+  const nextCachedByScope =
+    cachedByScope ?? new Map<PromptExploderRuntimeValidationScope, PatternRuntime>();
+  nextCachedByScope.set(scope, runtime);
+  if (!cachedByScope) {
+    runtimePatternCacheByRules.set(rules, nextCachedByScope);
+  }
+  if (runtimeCacheKey) {
+    runtimePatternCacheByKey.set(runtimeCacheKey, runtime);
+    trimRuntimePatternCacheByKey();
+  }
+  return runtime;
+};
+
+export const prewarmPromptExploderRuntimePatterns = (args: {
+  rules: PromptValidationRule[] | null | undefined;
+  scope: PromptExploderRuntimeValidationScope;
+  runtimeCacheKey?: string | null | undefined;
+  correlationId?: string | null | undefined;
+}): void => {
+  resolveRuntimePatterns(args.rules, args.scope, {
+    runtimeCacheKey: args.runtimeCacheKey,
+    correlationId: args.correlationId,
+  });
 };
 
 const testPattern = (runtime: PatternRuntime, patternId: string, value: string): boolean => {
@@ -1735,13 +2032,40 @@ const detectAutoBindings = (segments: PromptExploderSegment[]): PromptExploderBi
   return bindings;
 };
 
+const autoBindingsCache = new WeakMap<PromptExploderSegment[], PromptExploderBinding[]>();
+
+const resolveAutoBindings = (segments: PromptExploderSegment[]): PromptExploderBinding[] => {
+  const cached = autoBindingsCache.get(segments);
+  if (cached) return cached;
+  const detected = detectAutoBindings(segments);
+  autoBindingsCache.set(segments, detected);
+  return detected;
+};
+
+const bindingDedupeKey = (binding: PromptExploderBinding): string =>
+  `${binding.type}:${binding.fromSegmentId}:${binding.fromSubsectionId ?? ''}:${binding.toSegmentId}:${binding.toSubsectionId ?? ''}:${binding.targetLabel}`;
+
+const hashBindingKey = (value: string): string => {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
+};
+
 const dedupeBindings = (bindings: PromptExploderBinding[]): PromptExploderBinding[] => {
   const deduped = new Map<string, PromptExploderBinding>();
   bindings.forEach((binding) => {
-    const key = `${binding.type}:${binding.fromSegmentId}:${binding.fromSubsectionId ?? ''}:${binding.toSegmentId}:${binding.toSubsectionId ?? ''}:${binding.targetLabel}`;
+    const key = bindingDedupeKey(binding);
     const existing = deduped.get(key);
     if (!existing) {
-      deduped.set(key, binding);
+      deduped.set(
+        key,
+        binding.origin === 'auto'
+          ? { ...binding, id: `auto_${hashBindingKey(key)}` }
+          : binding
+      );
       return;
     }
     if (existing.origin === 'auto' && binding.origin === 'manual') {
@@ -1755,7 +2079,7 @@ const buildBindings = (
   segments: PromptExploderSegment[],
   manualBindings: PromptExploderBinding[] = []
 ): PromptExploderBinding[] => {
-  const autoBindings = detectAutoBindings(segments);
+  const autoBindings = resolveAutoBindings(segments);
   const normalizedManual = normalizeManualBindings(manualBindings, segments);
   return dedupeBindings([...autoBindings, ...normalizedManual]);
 };
@@ -2367,12 +2691,19 @@ export function explodePromptText(args: {
   learnedTemplates?: PromptExploderLearnedTemplate[] | null;
   similarityThreshold?: number;
   validationScope?: PromptExploderRuntimeValidationScope | null;
+  runtimeCacheKey?: string | null;
+  correlationId?: string | null;
 }): PromptExploderDocument {
+  resetParserRuntimeIds();
   const prompt = normalizePromptSource(args.prompt);
   const validationScope = normalizeRuntimeValidationScope(args.validationScope);
-  const runtime = compileRuntimePatterns(
+  const runtime = resolveRuntimePatterns(
     args.validationRules,
-    validationScope
+    validationScope,
+    {
+      runtimeCacheKey: args.runtimeCacheKey,
+      correlationId: args.correlationId,
+    }
   );
   const parsedSegments =
     validationScope === 'case_resolver_prompt_exploder'
@@ -2426,9 +2757,12 @@ export function updatePromptExploderDocument(
   segments: PromptExploderSegment[],
   manualBindings: PromptExploderBinding[] = []
 ): PromptExploderDocument {
+  const hasSameSegmentsReference = segments === document.segments;
   const bindings = buildBindings(segments, manualBindings);
   const warnings = [...document.warnings];
-  const reassembledPrompt = reassemblePromptSegments(segments);
+  const reassembledPrompt = hasSameSegmentsReference
+    ? document.reassembledPrompt
+    : reassemblePromptSegments(segments);
 
   return {
     ...document,

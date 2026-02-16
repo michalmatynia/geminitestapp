@@ -117,7 +117,7 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        open={Boolean(backupToDelete)}
+        isOpen={Boolean(backupToDelete)}
         onClose={() => setBackupToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Backup'

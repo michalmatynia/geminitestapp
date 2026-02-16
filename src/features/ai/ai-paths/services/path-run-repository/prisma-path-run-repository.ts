@@ -164,6 +164,9 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
   if (options.pathId) {
     andFilters.push({ pathId: options.pathId });
   }
+  if (options.requestId?.trim()) {
+    andFilters.push({ meta: { path: ['requestId'], equals: options.requestId.trim() } });
+  }
   if (statuses.length > 0) {
     andFilters.push({ status: { in: statuses } });
   } else if (options.status) {
@@ -438,6 +441,36 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const nodes = await prismaAny.aiPathRunNode!.findMany({
       where: { runId },
       orderBy: { createdAt: 'asc' },
+    });
+    return (nodes).map(mapNode);
+  },
+
+  async listRunNodesSince(
+    runId: string,
+    cursor: { updatedAt: Date | string; nodeId: string },
+    options: { limit?: number } = {}
+  ): Promise<AiPathRunNodeRecord[]> {
+    ensureModels();
+    const updatedAt =
+      cursor.updatedAt instanceof Date ? cursor.updatedAt : new Date(cursor.updatedAt);
+    if (Number.isNaN(updatedAt.getTime())) {
+      return [];
+    }
+    const nodeId = cursor.nodeId.trim();
+    const limit =
+      typeof options.limit === 'number' && options.limit > 0
+        ? Math.min(Math.floor(options.limit), 500)
+        : 200;
+    const nodes = await prismaAny.aiPathRunNode!.findMany({
+      where: {
+        runId,
+        OR: [
+          { updatedAt: { gt: updatedAt } },
+          { updatedAt, nodeId: { gt: nodeId } },
+        ],
+      },
+      orderBy: [{ updatedAt: 'asc' }, { nodeId: 'asc' }],
+      take: limit,
     });
     return (nodes).map(mapNode);
   },

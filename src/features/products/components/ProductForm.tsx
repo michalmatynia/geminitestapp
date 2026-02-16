@@ -2,11 +2,15 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
+import * as productsApi from '@/features/products/api/products';
 import DebugPanel from '@/features/products/components/DebugPanel';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
+import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
+import { ProductFormData } from '@/features/products/types';
 import {
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
   type ProductDraftOpenFormTab,
@@ -16,7 +20,10 @@ import {
   normalizeProductValidationInstanceDenyBehaviorMap,
   normalizeProductValidationPatternDenyBehaviorOverride,
 } from '@/features/products/utils/validator-instance-behavior';
+import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
@@ -54,6 +61,16 @@ const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
   return trimmed as ProductDraftOpenFormTab;
 };
 
+const extractNameEnSegment = (value: string, segmentIndex: number): string => {
+  if (!value.trim()) return '';
+  const parts = value.split('|').map((part: string) => part.trim());
+  if (parts.length < segmentIndex + 1) return '';
+  return parts[segmentIndex] ?? '';
+};
+
+const escapeRegexSegment = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
  * This component renders the product form fields and handles user interactions.
  * It consumes the ProductFormContext to access state and functions.
@@ -66,9 +83,13 @@ export default function ProductForm({
 }: ProductFormProps): React.JSX.Element {
   const {
     handleSubmit,
+    categories,
+    selectedCategoryId,
+    selectedCatalogIds,
     product,
     draft,
   } = useProductFormContext();
+  const { watch } = useFormContext<ProductFormData>();
   
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);
@@ -76,6 +97,7 @@ export default function ProductForm({
     normalizeProductFormTab(draft?.openProductFormTab)
   );
   const validatorConfigQuery = useProductValidatorConfig();
+  const allValues = watch();
   const [validatorEnabled, setValidatorEnabled] = useState<boolean>(() => draft?.validatorEnabled ?? true);
   const [formatterEnabled, setFormatterEnabled] = useState<boolean>(
     () => ((draft?.validatorEnabled ?? true) ? (draft?.formatterEnabled ?? false) : false)
@@ -187,6 +209,71 @@ export default function ProductForm({
       ),
     [validatorConfigQuery.data?.patterns]
   );
+  const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
+  const primaryCatalogId = selectedCatalogIds[0] ?? '';
+  const selectedCategoryName = useMemo((): string => {
+    if (!selectedCategoryId) return '';
+    const category =
+      categories.find((item) => item.id === selectedCategoryId) ?? null;
+    return category?.name?.trim() ?? '';
+  }, [categories, selectedCategoryId]);
+  const nameEnSegment4 = useMemo(
+    () => extractNameEnSegment(String(allValues['name_en'] ?? ''), 3),
+    [allValues]
+  );
+  const nameEnSegment4RegexEscaped = useMemo(
+    () => escapeRegexSegment(nameEnSegment4),
+    [nameEnSegment4]
+  );
+  const validatorValues = useMemo(
+    (): Record<string, unknown> => ({
+      ...(allValues as Record<string, unknown>),
+      categoryId: selectedCategoryId ?? '',
+      categoryName: selectedCategoryName,
+      primaryCatalogId,
+      nameEnSegment4,
+      nameEnSegment4RegexEscaped,
+    }),
+    [
+      allValues,
+      nameEnSegment4,
+      nameEnSegment4RegexEscaped,
+      primaryCatalogId,
+      selectedCategoryId,
+      selectedCategoryName,
+    ]
+  );
+  const needsLatestProductSource = useMemo(
+    () =>
+      validatorPatterns.some((pattern: ProductValidationPattern) => {
+        const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+        return (
+          recipe?.sourceMode === 'latest_product_field' ||
+          (pattern.launchEnabled && pattern.launchSourceMode === 'latest_product_field')
+        );
+      }),
+    [validatorPatterns]
+  );
+  const latestProductsQuery = createListQueryV2({
+    queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
+    queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
+    enabled: validatorEnabled && needsLatestProductSource,
+    staleTime: 60_000,
+    meta: {
+      source: 'products.components.ProductForm.latestProducts',
+      operation: 'list',
+      resource: 'products.validator.latest-product-source',
+      domain: 'products',
+      queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
+      tags: ['products', 'validator', 'latest-source'],
+    },
+  });
+  const latestProductValues = useMemo((): Record<string, unknown> | null => {
+    const list = latestProductsQuery.data ?? [];
+    if (list.length === 0) return null;
+    const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
+    return preferred as unknown as Record<string, unknown>;
+  }, [latestProductsQuery.data, product?.id]);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get('debug') === 'true');
@@ -367,6 +454,26 @@ export default function ProductForm({
       acceptedIssueKeys.has(buildIssueDecisionKey(fieldName, patternId)),
     [acceptedIssueKeys, buildIssueDecisionKey]
   );
+  const { visibleFieldIssues } = useProductValidatorIssues({
+    values: validatorValues,
+    runtimeValues: validatorValues,
+    patterns: validatorPatterns,
+    latestProductValues,
+    validationScope: validationInstanceScope,
+    validatorEnabled,
+    isIssueDenied,
+    isIssueAccepted,
+    resolveChangedAt: (fieldName: string, timestamps: Record<string, number>): number => {
+      if (fieldName === 'categoryId') {
+        return Math.max(
+          timestamps['categoryId'] ?? 0,
+          timestamps['name_en'] ?? 0
+        );
+      }
+      return timestamps[fieldName] ?? 0;
+    },
+    source: 'ProductForm',
+  });
 
   const denyIssue = useCallback(
     (input: {
@@ -531,10 +638,14 @@ export default function ProductForm({
             <TabsTrigger value='validation'>Validation</TabsTrigger>
           </TabsList>
           <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormGeneral />
+            <ProductFormGeneral
+              validatorPatterns={validatorPatterns}
+              latestProductValues={latestProductValues}
+              visibleFieldIssues={visibleFieldIssues}
+            />
           </TabsContent>
           <TabsContent value='other' className='mt-4'>
-            <ProductFormOther />
+            <ProductFormOther visibleFieldIssues={visibleFieldIssues} />
           </TabsContent>
           <TabsContent value='parameters' className='mt-4'>
             <ProductFormParameters />

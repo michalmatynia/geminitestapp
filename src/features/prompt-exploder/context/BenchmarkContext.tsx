@@ -84,6 +84,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   const { toast } = useToast();
 
   const {
+    settingsMap,
     activeValidationScope,
     runtimeValidationRules,
     runtimeLearnedTemplates,
@@ -98,6 +99,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
     setSessionLearnedRules,
     setSessionLearnedTemplates,
     updateSetting,
+    updateSettingsBulk,
   } = useSettingsActions();
   const { promptText, documentState } = useDocumentState();
   const { setDocumentState, setManualBindings, setSelectedSegmentId } = useDocumentActions();
@@ -310,15 +312,25 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
           },
         };
 
-        await updateSetting.mutateAsync({
-          key: PROMPT_ENGINE_SETTINGS_KEY,
-          value: serializeSetting(nextPromptSettings),
-        });
+        const writePayloads: Array<{ key: string; value: string }> = [
+          {
+            key: PROMPT_ENGINE_SETTINGS_KEY,
+            value: serializeSetting(nextPromptSettings),
+          },
+        ];
         if (shouldUpsertTemplates) {
-          await updateSetting.mutateAsync({
+          writePayloads.push({
             key: PROMPT_EXPLODER_SETTINGS_KEY,
             value: serializeSetting(nextExploderSettings),
           });
+        }
+        const changedPayloads = writePayloads.filter(
+          (payload) => settingsMap.get(payload.key) !== payload.value
+        );
+        if (changedPayloads.length === 1) {
+          await updateSetting.mutateAsync(changedPayloads[0]!);
+        } else if (changedPayloads.length > 1) {
+          await updateSettingsBulk.mutateAsync(changedPayloads);
         }
 
         setSessionLearnedRules((previous) => {
@@ -409,6 +421,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
       promptText,
       runtimeLearnedTemplates,
       runtimeValidationRules,
+      settingsMap,
       sessionLearnedRules,
       setDocumentState,
       setManualBindings,
@@ -418,6 +431,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
       templateMergeThreshold,
       toast,
       updateSetting,
+      updateSettingsBulk,
     ]
   );
 

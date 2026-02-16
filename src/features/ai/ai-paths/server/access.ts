@@ -3,6 +3,7 @@ import 'server-only';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { auth } from '@/features/auth/server';
 import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
+import { getRedisConnection } from '@/shared/lib/queue';
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/types/domain/ai-paths';
 
 import type { NextRequest } from 'next/server';
@@ -62,6 +63,7 @@ const ACTION_RATE_MAX = parseNumber(
   process.env['AI_PATHS_ACTION_RATE_LIMIT_MAX'],
   120
 );
+const ACTION_RATE_BUCKET_PREFIX = 'ai_paths:action-rate:v1';
 
 const actionBuckets = new Map<string, { count: number; resetAt: number }>();
 
@@ -201,13 +203,58 @@ export const enforceAiPathsRunRateLimit = async (
   }
 };
 
-export const enforceAiPathsActionRateLimit = (
+const consumeRedisActionRateLimit = async (
+  userId: string,
+  action: string,
+  windowMs: number
+): Promise<{ count: number; resetAt: number } | null> => {
+  const redis = getRedisConnection();
+  if (!redis) return null;
+  const key = `${ACTION_RATE_BUCKET_PREFIX}:${userId}:${action}`;
+  const ttlSeconds = Math.max(1, Math.ceil(windowMs / 1000));
+  try {
+    const response = await redis
+      .multi()
+      .incr(key)
+      .expire(key, ttlSeconds, 'NX')
+      .ttl(key)
+      .exec();
+    if (!response || response.length < 3) return null;
+
+    const count = Number((response[0] as [Error | null, number])[1] ?? 0);
+    const ttl = Number((response[2] as [Error | null, number])[1] ?? 0);
+    const retryAfterMs = Math.max(1_000, (ttl > 0 ? ttl : ttlSeconds) * 1000);
+    return {
+      count,
+      resetAt: Date.now() + retryAfterMs,
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const enforceAiPathsActionRateLimit = async (
   access: AiPathsAccessContext,
   action: string
-): void => {
+): Promise<void> => {
   if (ACTION_RATE_MAX <= 0) return;
-  const now = Date.now();
   const windowMs = ACTION_RATE_WINDOW_SECONDS * 1000;
+  const redisBucket = await consumeRedisActionRateLimit(
+    access.userId,
+    action,
+    windowMs
+  );
+  if (redisBucket) {
+    if (redisBucket.count > ACTION_RATE_MAX) {
+      const retryAfter = Math.max(redisBucket.resetAt - Date.now(), 1000);
+      throw rateLimitedError('Too many requests. Please slow down.', retryAfter, {
+        action,
+      });
+    }
+    return;
+  }
+
+  const now = Date.now();
   const key = `${access.userId}:${action}`;
   const bucket = actionBuckets.get(key);
   if (!bucket || now >= bucket.resetAt) {

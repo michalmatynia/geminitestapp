@@ -87,6 +87,12 @@ type AnyRefetchIntervalOption =
   | false
   | ((query: unknown) => number | false | undefined);
 
+type QueryLikeWithEnabledOption = {
+  options?: {
+    enabled?: boolean | ((query: unknown) => boolean);
+  };
+};
+
 type EmitFactoryTelemetryInput = {
   entity: 'query' | 'mutation';
   stage: TanstackLifecycleStage;
@@ -106,6 +112,23 @@ const sanitizeRefetchIntervalValue = (
   return value;
 };
 
+const isRefetchEnabledForQuery = (query: unknown): boolean => {
+  if (!query || typeof query !== 'object') return true;
+
+  const enabled = (query as QueryLikeWithEnabledOption).options?.enabled;
+  if (enabled === undefined) return true;
+
+  if (typeof enabled === 'function') {
+    try {
+      return Boolean(enabled(query));
+    } catch {
+      return false;
+    }
+  }
+
+  return enabled !== false;
+};
+
 const guardRefetchInterval = <TOption extends AnyRefetchIntervalOption | undefined>(
   option: TOption
 ): TOption => {
@@ -113,7 +136,15 @@ const guardRefetchInterval = <TOption extends AnyRefetchIntervalOption | undefin
 
   if (typeof option === 'function') {
     const wrapped = ((query: unknown): number | false | undefined => {
-      const nextValue = option(query);
+      if (!isRefetchEnabledForQuery(query)) return false;
+
+      let nextValue: number | false | undefined;
+      try {
+        nextValue = option(query);
+      } catch {
+        return false;
+      }
+
       return sanitizeRefetchIntervalValue(nextValue);
     }) as TOption;
     return wrapped;
@@ -516,6 +547,12 @@ export function createMutationV2<TData, TVariables, TContext = unknown>(
     },
   });
 }
+
+export const queryFactoriesV2TestUtils = {
+  guardRefetchInterval,
+  isRefetchEnabledForQuery,
+  sanitizeRefetchIntervalValue,
+};
 
 export const createCreateMutationV2 = createMutationV2;
 export const createUpdateMutationV2 = createMutationV2;

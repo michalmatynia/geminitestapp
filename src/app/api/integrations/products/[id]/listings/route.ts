@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
+  getExportDefaultConnectionId,
+  getExportDefaultInventoryId,
   getProductListingRepository,
   listingExistsAcrossProviders,
   listProductListingsByProductIdAcrossProviders,
@@ -26,6 +28,46 @@ const createListingSchema = z.object({
   templateId: z.string().trim().nullable().optional(),
 });
 
+const isBaseIntegrationSlug = (value: string | null | undefined): boolean => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  return normalized === 'base' || normalized === 'base-com' || normalized === 'baselinker';
+};
+
+type BaseListingLinkContext = {
+  integrationId: string;
+  connectionId: string;
+  inventoryId: string | null;
+};
+
+const resolveBaseListingLinkContext = async (): Promise<BaseListingLinkContext | null> => {
+  const integrationRepo = await getIntegrationRepository();
+  const integrations = await integrationRepo.listIntegrations();
+  const baseIntegration = integrations.find((integration) =>
+    isBaseIntegrationSlug(integration.slug)
+  );
+  if (!baseIntegration) return null;
+
+  const connections = await integrationRepo.listConnections(baseIntegration.id);
+  if (connections.length === 0) return null;
+
+  const defaultConnectionId = (await getExportDefaultConnectionId())?.trim() || '';
+  const preferredConnection =
+    (defaultConnectionId
+      ? connections.find((connection) => connection.id === defaultConnectionId)
+      : null) ??
+    connections.find((connection) => Boolean(connection.baseApiToken || connection.password)) ??
+    connections[0] ??
+    null;
+  if (!preferredConnection?.id) return null;
+
+  const defaultInventoryId = (await getExportDefaultInventoryId())?.trim() || '';
+  return {
+    integrationId: baseIntegration.id,
+    connectionId: preferredConnection.id,
+    inventoryId: defaultInventoryId || null,
+  };
+};
+
 /**
  * GET /api/integrations/products/[id]/listings
  * Fetches all listings for a specific product.
@@ -36,7 +78,43 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: {
     if (!productId) {
       throw badRequestError('Product id is required');
     }
-    const listings = await listProductListingsByProductIdAcrossProviders(productId);
+    let listings = await listProductListingsByProductIdAcrossProviders(productId);
+
+    const hasBaseListing = listings.some((listing) =>
+      isBaseIntegrationSlug(listing.integration.slug)
+    );
+    if (!hasBaseListing) {
+      const productRepo = await getProductRepository();
+      const product = await productRepo.getProductById(productId);
+      const normalizedBaseProductId = product?.baseProductId?.trim() || '';
+
+      if (normalizedBaseProductId) {
+        const linkContext = await resolveBaseListingLinkContext();
+        if (linkContext) {
+          const existsForConnection = await listingExistsAcrossProviders(
+            productId,
+            linkContext.connectionId
+          );
+          if (!existsForConnection) {
+            const listingRepo = await getProductListingRepository();
+            await listingRepo.createListing({
+              productId,
+              integrationId: linkContext.integrationId,
+              connectionId: linkContext.connectionId,
+              status: 'active',
+              externalListingId: normalizedBaseProductId,
+              inventoryId: linkContext.inventoryId,
+              marketplaceData: {
+                source: 'base-import-backfill',
+                marketplace: 'base',
+              },
+            });
+            listings = await listProductListingsByProductIdAcrossProviders(productId);
+          }
+        }
+      }
+    }
+
     return NextResponse.json(listings);
   } catch (error) {
     return NextResponse.json(
@@ -112,6 +190,11 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, params: {
       integrationId: data.integrationId,
       connectionId: data.connectionId,
       status: isTraderaIntegrationSlug(integration.slug) ? 'queued' : 'pending',
+      marketplaceData: isTraderaIntegrationSlug(integration.slug)
+        ? { source: 'manual-listing', marketplace: 'tradera' }
+        : isBaseIntegrationSlug(integration.slug)
+          ? { source: 'manual-listing', marketplace: 'base' }
+          : { source: 'manual-listing' },
       relistPolicy:
         isTraderaIntegrationSlug(integration.slug)
           ? {

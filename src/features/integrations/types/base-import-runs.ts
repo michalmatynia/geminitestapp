@@ -4,6 +4,7 @@ export type BaseImportRunStatus =
   | 'queued'
   | 'running'
   | 'completed'
+  | 'partial_success'
   | 'failed'
   | 'canceled';
 
@@ -42,7 +43,17 @@ export type BaseImportErrorCode =
   | 'LINKING_ERROR'
   | 'CONFLICT'
   | 'PRECHECK_FAILED'
-  | 'NOT_FOUND';
+  | 'NOT_FOUND'
+  | 'CANCELED'
+  | 'RATE_LIMITED'
+  | 'TIMEOUT'
+  | 'NETWORK_ERROR';
+
+export type BaseImportErrorClass =
+  | 'transient'
+  | 'permanent'
+  | 'configuration'
+  | 'canceled';
 
 export type BaseImportRunStats = {
   total: number;
@@ -87,6 +98,13 @@ export type BaseImportRunRecord = {
   params: BaseImportRunParams;
   idempotencyKey?: string | null;
   queueJobId?: string | null;
+  lockOwnerId?: string | null;
+  lockToken?: string | null;
+  lockExpiresAt?: string | null;
+  lockHeartbeatAt?: string | null;
+  cancellationRequestedAt?: string | null;
+  canceledAt?: string | null;
+  maxAttempts?: number;
   preflight: BaseImportPreflight;
   stats: BaseImportRunStats;
   startedAt?: string | null;
@@ -106,7 +124,11 @@ export type BaseImportItemRecord = {
   idempotencyKey: string;
   action: BaseImportItemAction;
   errorCode?: BaseImportErrorCode | null;
+  errorClass?: BaseImportErrorClass | null;
   errorMessage?: string | null;
+  retryable?: boolean | null;
+  nextRetryAt?: string | null;
+  lastErrorAt?: string | null;
   importedProductId?: string | null;
   payloadSnapshot?: ProductCreateInput | null;
   createdAt: string;
@@ -126,4 +148,10 @@ export type BaseImportStartResponse = {
 export type BaseImportRunDetailResponse = {
   run: BaseImportRunRecord;
   items: BaseImportItemRecord[];
+  pagination?: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
 };

@@ -171,6 +171,7 @@ export type PromptExploderSettings = {
   runtime: {
     ruleProfile: 'all' | 'pattern_pack' | 'learned_only';
     validationRuleStack: PromptExploderValidationRuleStack;
+    orchestratorEnabled: boolean;
     benchmarkSuite: PromptExploderBenchmarkSuite;
     benchmarkLowConfidenceThreshold: number;
     benchmarkSuggestionLimit: number;

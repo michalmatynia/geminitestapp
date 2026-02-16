@@ -203,7 +203,7 @@ const normalizeReplaceDoc = (update: unknown): Record<string, unknown> | null =>
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
-    enforceAiPathsActionRateLimit(access, 'db-action');
+    await enforceAiPathsActionRateLimit(access, 'db-action');
   }
   const parsed = await parseJsonBody(req, actionSchema, {
     logPrefix: 'ai-paths.db-action',

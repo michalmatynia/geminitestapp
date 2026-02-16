@@ -8,11 +8,8 @@ import {
   listBaseImportRuns,
 } from '@/features/integrations/services/imports/base-import-run-repository';
 import {
-  prepareBaseImportRun,
-  toStartResponse,
-  updateBaseImportRunQueueJob,
-} from '@/features/integrations/services/imports/base-import-service';
-import { enqueueBaseImportRunJob } from '@/features/jobs/workers/baseImportQueue';
+  startBaseImportRunResponse,
+} from '@/features/integrations/services/imports/base-import-run-starter';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -56,8 +53,7 @@ async function POST_handler(
   ctx: ApiHandlerContext
 ): Promise<Response> {
   const data = ctx.body as z.infer<typeof startRunSchema>;
-
-  const run = await prepareBaseImportRun({
+  const response = await startBaseImportRunResponse({
     inventoryId: data.inventoryId,
     catalogId: data.catalogId,
     imageMode: data.imageMode,
@@ -72,17 +68,7 @@ async function POST_handler(
     ...(data.requestId ? { requestId: data.requestId } : {}),
   });
 
-  let responseRun = run;
-  if (run.status === 'queued' && run.stats.total > 0) {
-    const queueJobId = await enqueueBaseImportRunJob({
-      runId: run.id,
-      reason: 'start',
-      statuses: ['pending'],
-    });
-    responseRun = await updateBaseImportRunQueueJob(run.id, queueJobId);
-  }
-
-  return NextResponse.json(toStartResponse(responseRun), {
+  return NextResponse.json(response, {
     headers: {
       'Cache-Control': 'no-store',
     },

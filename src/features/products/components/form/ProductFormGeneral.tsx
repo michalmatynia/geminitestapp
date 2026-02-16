@@ -4,17 +4,13 @@ import { ArrowRight } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import * as productsApi from '@/features/products/api/products';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { useProductValidationSettings } from '@/features/products/context/ProductValidationSettingsContext';
-import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
-import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
 import { ProductFormData } from '@/features/products/types';
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
 } from '@/features/products/utils/validator-instance-behavior';
-import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
 import {
   applyResolvedReplacement,
   buildSequenceGroupCounts,
@@ -32,8 +28,6 @@ import {
   sortValidatorPatterns,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -159,25 +153,31 @@ export function ValidatorIssueHint({
   );
 }
 
-export default function ProductFormGeneral(): React.JSX.Element {
+type ProductFormGeneralProps = {
+  validatorPatterns: ProductValidationPattern[];
+  latestProductValues: Record<string, unknown> | null;
+  visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
+};
+
+export default function ProductFormGeneral({
+  validatorPatterns,
+  latestProductValues,
+  visibleFieldIssues,
+}: ProductFormGeneralProps): React.JSX.Element {
   const {
     validationInstanceScope,
     validatorEnabled,
     formatterEnabled,
     getDenyActionLabel,
-    isIssueDenied,
-    isIssueAccepted,
     acceptIssue,
     denyIssue,
   } = useProductValidationSettings();
   const {
     filteredLanguages,
     errors,
-    product,
   } = useProductFormContext();
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
-  const validatorConfigQuery = useProductValidatorConfig();
   const [activeNameTab, setActiveNameTab] = useState<string>('');
   const [activeDescriptionTab, setActiveDescriptionTab] = useState<string>('');
   const sequenceGroupDebounceRef = useRef<Record<string, number>>({});
@@ -191,49 +191,6 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const allValues = watch();
   const hasCatalogs = (filteredLanguages ?? []).length > 0;
   const languagesReady = (filteredLanguages ?? []).length > 0;
-  const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
-  const needsLatestProductSource = useMemo(
-    () =>
-      validatorPatterns.some((pattern: ProductValidationPattern) => {
-        const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
-        return (
-          recipe?.sourceMode === 'latest_product_field' ||
-          (pattern.launchEnabled && pattern.launchSourceMode === 'latest_product_field')
-        );
-      }),
-    [validatorPatterns]
-  );
-  const latestProductsQuery = createListQueryV2({
-    queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
-    queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
-    enabled: validatorEnabled && needsLatestProductSource,
-    staleTime: 60_000,
-    meta: {
-      source: 'products.components.ProductFormGeneral.latestProducts',
-      operation: 'list',
-      resource: 'products.validator.latest-product-source',
-      domain: 'products',
-      queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
-      tags: ['products', 'validator', 'latest-source'],
-    },
-  });
-  const latestProductValues = useMemo((): Record<string, unknown> | null => {
-    const list = latestProductsQuery.data ?? [];
-    if (list.length === 0) return null;
-    const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
-    return preferred as unknown as Record<string, unknown>;
-  }, [latestProductsQuery.data, product?.id]);
-  const { visibleFieldIssues } = useProductValidatorIssues({
-    values: allValues as Record<string, unknown>,
-    runtimeValues: allValues as Record<string, unknown>,
-    patterns: validatorPatterns,
-    latestProductValues,
-    validationScope: validationInstanceScope,
-    validatorEnabled,
-    isIssueDenied,
-    isIssueAccepted,
-    source: 'ProductFormGeneral',
-  });
   const languageTabValues = useMemo(
     () =>
       filteredLanguages.map((language: { code: string }) => String(language.code).trim().toLowerCase()),

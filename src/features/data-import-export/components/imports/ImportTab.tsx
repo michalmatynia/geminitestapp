@@ -48,6 +48,7 @@ export function ImportTab(): React.JSX.Element {
     importing,
     handleImport,
     handleResumeImport,
+    handleCancelImport,
     handleDownloadImportReport,
     importNameSearch,
     setImportNameSearch,
@@ -577,9 +578,11 @@ export function ImportTab(): React.JSX.Element {
                   'text-[10px] uppercase font-bold',
                   activeRun.status === 'completed'
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                    : activeRun.status === 'failed'
-                      ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                      : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                    : activeRun.status === 'partial_success'
+                      ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                      : activeRun.status === 'failed'
+                        ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                        : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                 )}
               >
                 {activeRun.status}
@@ -593,6 +596,16 @@ export function ImportTab(): React.JSX.Element {
                 disabled={!runHasRetryableItems || importing}
               >
                 Resume failed
+              </Button>
+              <Button
+                type='button'
+                variant='secondary'
+                onClick={(): void => {
+                  void handleCancelImport();
+                }}
+                disabled={!(activeRun.status === 'queued' || activeRun.status === 'running') || importing}
+              >
+                Cancel run
               </Button>
               <Button
                 type='button'

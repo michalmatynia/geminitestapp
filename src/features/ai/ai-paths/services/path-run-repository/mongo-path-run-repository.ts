@@ -37,12 +37,15 @@ export const AI_PATHS_MONGO_INDEXES: MongoIndexSpec[] = [
   { collection: RUNS_COLLECTION, key: { id: 1 } },
   { collection: RUNS_COLLECTION, key: { userId: 1 } },
   { collection: RUNS_COLLECTION, key: { pathId: 1 } },
+  { collection: RUNS_COLLECTION, key: { pathId: 1, status: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { status: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { userId: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { status: 1, nextRetryAt: 1, createdAt: 1 } },
+  { collection: RUNS_COLLECTION, key: { 'meta.requestId': 1, status: 1, createdAt: -1 } },
   { collection: NODES_COLLECTION, key: { runId: 1 } },
   { collection: NODES_COLLECTION, key: { runId: 1, nodeId: 1 } },
   { collection: NODES_COLLECTION, key: { runId: 1, createdAt: 1 } },
+  { collection: NODES_COLLECTION, key: { runId: 1, updatedAt: 1, nodeId: 1 } },
   { collection: EVENTS_COLLECTION, key: { runId: 1, createdAt: 1 } },
 ];
 
@@ -253,6 +256,9 @@ const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unkn
   }
   if (options.pathId) {
     andFilters.push({ pathId: options.pathId });
+  }
+  if (options.requestId?.trim()) {
+    andFilters.push({ 'meta.requestId': options.requestId.trim() });
   }
   const statuses = Array.isArray(options.statuses) ? options.statuses.filter(Boolean) : [];
   if (statuses.length > 0) {
@@ -604,6 +610,39 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       .collection<NodeDocument>(NODES_COLLECTION)
       .find({ runId })
       .sort({ createdAt: 1 })
+      .toArray();
+    return docs.map(toNodeRecord);
+  },
+
+  async listRunNodesSince(
+    runId: string,
+    cursor: { updatedAt: Date | string; nodeId: string },
+    options: { limit?: number } = {}
+  ) {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const updatedAt =
+      cursor.updatedAt instanceof Date ? cursor.updatedAt : new Date(cursor.updatedAt);
+    if (Number.isNaN(updatedAt.getTime())) {
+      return [];
+    }
+    const nodeId = cursor.nodeId.trim();
+    const filter: Record<string, unknown> = {
+      runId,
+      $or: [
+        { updatedAt: { $gt: updatedAt } },
+        { updatedAt, nodeId: { $gt: nodeId } },
+      ],
+    };
+    const limit =
+      typeof options.limit === 'number' && options.limit > 0
+        ? Math.min(Math.floor(options.limit), 500)
+        : 200;
+    const docs = await db
+      .collection<NodeDocument>(NODES_COLLECTION)
+      .find(filter)
+      .sort({ updatedAt: 1, nodeId: 1 })
+      .limit(limit)
       .toArray();
     return docs.map(toNodeRecord);
   },

@@ -36,6 +36,11 @@ const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [
   'canceled',
   'dead_lettered',
 ];
+const LOG_NODE_START_EVENTS = process.env['AI_PATHS_LOG_NODE_START_EVENTS'] === 'true';
+const INTERMEDIATE_SAVE_INTERVAL_MS = Math.max(
+  500,
+  Number.parseInt(process.env['AI_PATHS_RUNTIME_STATE_FLUSH_INTERVAL_MS'] ?? '', 10) || 2000
+);
 
 const isMissingRunUpdateError = (error: unknown): boolean => {
   if (
@@ -340,7 +345,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   // Flushed before final status update to ensure no state is lost.
   let lastIntermediateSaveMs = 0;
   let pendingIntermediateSave = false;
-  const INTERMEDIATE_SAVE_INTERVAL_MS = 1000;
   const throttledSaveIntermediateState = async (): Promise<void> => {
     const now = Date.now();
     if (now - lastIntermediateSaveMs < INTERMEDIATE_SAVE_INTERVAL_MS) {
@@ -436,7 +440,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'running' } as RuntimePortValues;
 
-          await Promise.all([
+          const tasks: Promise<unknown>[] = [
             repo.upsertRunNode(run.id, node.id, {
               nodeType: node.type,
               nodeTitle: node.title ?? null,
@@ -445,24 +449,29 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               inputs: safeInputs,
               outputs: safePrevOutputs,
               startedAt: new Date().toISOString(),
-              errorMessage: null,
-            }),
-            repo.createRunEvent({
-              runId: run.id,
-              level: 'info',
-              message: `Node ${node.title ?? node.id} started.`,
-              metadata: {
-                nodeId: node.id,
-                nodeType: node.type,
-                nodeTitle: node.title ?? null,
-                status: 'running',
-                attempt: nextAttempt,
-                iteration,
-                runStartedAt: cbRunStartedAt,
-              },
+                errorMessage: null,
             }),
             throttledSaveIntermediateState(),
-          ]);
+          ];
+          if (LOG_NODE_START_EVENTS) {
+            tasks.push(
+              repo.createRunEvent({
+                runId: run.id,
+                level: 'info',
+                message: `Node ${node.title ?? node.id} started.`,
+                metadata: {
+                  nodeId: node.id,
+                  nodeType: node.type,
+                  nodeTitle: node.title ?? null,
+                  status: 'running',
+                  attempt: nextAttempt,
+                  iteration,
+                  runStartedAt: cbRunStartedAt,
+                },
+              })
+            );
+          }
+          await Promise.all(tasks);
           await recordRuntimeNodeStatus({
             runId: run.id,
             nodeId: node.id,

@@ -13,14 +13,11 @@ import {
 } from '@/features/integrations/services/imports/base-client';
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import {
-  prepareBaseImportRun,
-  toStartResponse,
-  updateBaseImportRunQueueJob,
-} from '@/features/integrations/services/imports/base-import-service';
+  startBaseImportRunResponse,
+} from '@/features/integrations/services/imports/base-import-run-starter';
 import { extractBaseImageUrls, mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import { decryptSecret } from '@/features/integrations/utils/encryption';
-import { enqueueBaseImportRunJob } from '@/features/jobs/workers/baseImportQueue';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { getProductRepository } from '@/features/products/services/product-repository';
@@ -199,7 +196,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       throw badRequestError('Catalog ID is required.');
     }
 
-    const run = await prepareBaseImportRun({
+    const response = await startBaseImportRunResponse({
       inventoryId: data.inventoryId,
       catalogId: data.catalogId,
       imageMode: data.imageMode ?? 'links',
@@ -213,28 +210,10 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
       ...(data.mode ? { mode: data.mode } : {}),
       ...(data.requestId ? { requestId: data.requestId } : {}),
     });
-
-    let responseRun = run;
-    if (run.status === 'queued' && run.stats.total > 0) {
-      const queueJobId = await enqueueBaseImportRunJob({
-        runId: run.id,
-        reason: 'start',
-        statuses: ['pending'],
-      });
-      responseRun = await updateBaseImportRunQueueJob(run.id, queueJobId);
-    }
-
-    const payload = toStartResponse(responseRun);
-    return NextResponse.json({
-      ...payload,
-      total: responseRun.stats.total,
-      imported: responseRun.stats.imported,
-      updated: responseRun.stats.updated,
-      skipped: responseRun.stats.skipped,
-      failed: responseRun.stats.failed,
-      errors: responseRun.preflight.issues
-        .filter((issue) => issue.severity === 'error')
-        .map((issue) => ({ error: issue.message })),
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
     });
   }
 

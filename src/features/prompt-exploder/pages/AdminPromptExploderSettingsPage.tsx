@@ -334,9 +334,14 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     }
 
     try {
+      const serialized = serializeSetting(nextSettings);
+      if (rawSettings === serialized) {
+        toast('No settings changes to save.', { variant: 'info' });
+        return;
+      }
       await updateSetting.mutateAsync({
         key: PROMPT_EXPLODER_SETTINGS_KEY,
-        value: serializeSetting(nextSettings),
+        value: serialized,
       });
       setDraft(toSettingsDraft(nextSettings));
       toast('Prompt Exploder settings saved.', { variant: 'success' });
@@ -597,7 +602,28 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         variant='subtle'
         className='p-4'
       >
-        <div className='grid gap-3 md:grid-cols-5'>
+        <div className='grid gap-3 md:grid-cols-6'>
+          <div className='space-y-1'>
+            <Label className='text-[11px] text-gray-400'>Orchestrator Runtime</Label>
+            <div className='flex h-10 items-center rounded border border-border/60 bg-card/30 px-3'>
+              <StatusToggle
+                enabled={draft.runtime.orchestratorEnabled}
+                onToggle={() => {
+                  setDraft((previous) =>
+                    previous
+                      ? {
+                        ...previous,
+                        runtime: {
+                          ...previous.runtime,
+                          orchestratorEnabled: !previous.runtime.orchestratorEnabled,
+                        },
+                      }
+                      : previous
+                  );
+                }}
+              />
+            </div>
+          </div>
           <div className='space-y-1'>
             <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
             <SelectSimple

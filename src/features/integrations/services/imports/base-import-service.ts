@@ -13,6 +13,8 @@ import {
   type BaseProductRecord,
 } from '@/features/integrations/services/imports/base-client';
 import {
+  acquireBaseImportRunLease,
+  heartbeatBaseImportRunLease,
   createBaseImportRun,
   getBaseImportRun,
   getBaseImportRunDetail,
@@ -20,6 +22,7 @@ import {
   listBaseImportRuns,
   putBaseImportRunItem,
   recomputeBaseImportRunStats,
+  releaseBaseImportRunLease,
   updateBaseImportRun,
   updateBaseImportRunItem,
   updateBaseImportRunStatus,
@@ -33,6 +36,7 @@ import {
 import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
 import type {
   BaseImportErrorCode,
+  BaseImportErrorClass,
   BaseImportItemRecord,
   BaseImportItemStatus,
   BaseImportMode,
@@ -56,13 +60,18 @@ import type {
   ProductCreateInput,
   ProductUpdateInput,
 } from '@/features/products/validations/schemas';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { AppErrorCodes, badRequestError, isAppError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
 const BASE_DETAILS_BATCH_SIZE = 100;
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 const MAX_IMAGES_PER_PRODUCT = 15;
+const DEFAULT_BASE_IMPORT_MAX_ATTEMPTS = 3;
+const DEFAULT_BASE_IMPORT_RETRY_BASE_DELAY_MS = 2_000;
+const DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS = 60_000;
+const DEFAULT_BASE_IMPORT_LEASE_MS = 60_000;
+const DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = 10;
 
 type PriceGroupLookup = {
   id: string;
@@ -72,7 +81,7 @@ type PriceGroupLookup = {
   isDefault?: boolean;
 };
 
-type StartBaseImportRunInput = {
+export type StartBaseImportRunInput = {
   connectionId?: string;
   inventoryId: string;
   catalogId: string;
@@ -115,7 +124,11 @@ type ProcessItemResult = {
   baseProductId?: string | null;
   sku?: string | null;
   errorCode?: BaseImportErrorCode | null;
+  errorClass?: BaseImportErrorClass | null;
   errorMessage?: string | null;
+  retryable?: boolean | null;
+  nextRetryAt?: string | null;
+  lastErrorAt?: string | null;
   payloadSnapshot?: ProductCreateInput | null;
 };
 
@@ -125,6 +138,36 @@ type NormalizedMappedProduct = ProductCreateInput & {
 };
 
 const nowIso = (): string => new Date().toISOString();
+const toPositiveIntOrFallback = (
+  value: string | undefined,
+  fallback: number
+): number => {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+};
+
+const BASE_IMPORT_MAX_ATTEMPTS = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_MAX_ATTEMPTS'],
+  DEFAULT_BASE_IMPORT_MAX_ATTEMPTS
+);
+const BASE_IMPORT_RETRY_BASE_DELAY_MS = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_RETRY_BASE_DELAY_MS'],
+  DEFAULT_BASE_IMPORT_RETRY_BASE_DELAY_MS
+);
+const BASE_IMPORT_RETRY_MAX_DELAY_MS = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_RETRY_MAX_DELAY_MS'],
+  DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS
+);
+const BASE_IMPORT_LEASE_MS = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_LEASE_MS'],
+  DEFAULT_BASE_IMPORT_LEASE_MS
+);
+const BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = toPositiveIntOrFallback(
+  process.env['BASE_IMPORT_HEARTBEAT_EVERY_ITEMS'],
+  DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS
+);
 
 const toStringId = (value: unknown): string | null => {
   if (typeof value === 'string' && value.trim()) return value.trim();
@@ -509,22 +552,240 @@ const buildSummaryMessage = (
   return `${prefix}: ${stats.imported} imported, ${stats.updated} updated, ${stats.skipped} skipped, ${stats.failed} failed.`;
 };
 
-const mapErrorCode = (error: unknown): BaseImportErrorCode => {
-  if (!(error instanceof Error)) return 'UNEXPECTED_ERROR';
-  const message = error.message.toLowerCase();
+export const classifyBaseImportError = (
+  error: unknown
+): {
+  code: BaseImportErrorCode;
+  errorClass: BaseImportErrorClass;
+  retryable: boolean;
+  message: string;
+  retryAfterMs?: number;
+} => {
+  if (!error) {
+    return {
+      code: 'UNEXPECTED_ERROR',
+      errorClass: 'transient',
+      retryable: true,
+      message: 'Unexpected empty error payload.',
+    };
+  }
 
-  if (message.includes('validation')) return 'VALIDATION_ERROR';
-  if (message.includes('duplicate') && message.includes('sku')) return 'DUPLICATE_SKU';
-  if (message.includes('sku') && message.includes('unique')) return 'DUPLICATE_SKU';
-  if (message.includes('base') && message.includes('fetch')) return 'BASE_FETCH_ERROR';
-  if (message.includes('missing') && message.includes('base')) return 'MISSING_BASE_ID';
-  if (message.includes('missing') && message.includes('sku')) return 'MISSING_SKU';
-  if (message.includes('catalog')) return 'MISSING_CATALOG';
-  if (message.includes('price group')) return 'MISSING_PRICE_GROUP';
-  if (message.includes('link')) return 'LINKING_ERROR';
-  if (message.includes('conflict')) return 'CONFLICT';
+  if (isAppError(error)) {
+    const message = error.message || 'Import error';
+    if (error.code === AppErrorCodes.timeout) {
+      const result: any = {
+        code: 'TIMEOUT',
+        errorClass: 'transient',
+        retryable: true,
+        message,
+      };
+      if (error.retryAfterMs !== undefined) result.retryAfterMs = error.retryAfterMs;
+      return result;
+    }
+    if (error.code === AppErrorCodes.rateLimited) {
+      const result: any = {
+        code: 'RATE_LIMITED',
+        errorClass: 'transient',
+        retryable: true,
+        message,
+      };
+      if (error.retryAfterMs !== undefined) result.retryAfterMs = error.retryAfterMs;
+      return result;
+    }
+    if (error.code === AppErrorCodes.externalService) {
+      return {
+        code: 'BASE_FETCH_ERROR',
+        errorClass: error.retryable ? 'transient' : 'permanent',
+        retryable: error.retryable,
+        message,
+        retryAfterMs: error.retryAfterMs,
+      };
+    }
+    if (error.code === AppErrorCodes.configurationError) {
+      return {
+        code: 'PRECHECK_FAILED',
+        errorClass: 'configuration',
+        retryable: false,
+        message,
+      };
+    }
+    if (error.code === AppErrorCodes.validation) {
+      return {
+        code: 'VALIDATION_ERROR',
+        errorClass: 'permanent',
+        retryable: false,
+        message,
+      };
+    }
+  }
 
-  return 'UNEXPECTED_ERROR';
+  if (error instanceof Error) {
+    const message = error.message;
+    const normalized = message.toLowerCase();
+    if (normalized.includes('timed out') || normalized.includes('timeout')) {
+      return {
+        code: 'TIMEOUT',
+        errorClass: 'transient',
+        retryable: true,
+        message,
+      };
+    }
+    if (
+      normalized.includes('econnreset') ||
+      normalized.includes('econnrefused') ||
+      normalized.includes('network') ||
+      normalized.includes('fetch failed')
+    ) {
+      return {
+        code: 'NETWORK_ERROR',
+        errorClass: 'transient',
+        retryable: true,
+        message,
+      };
+    }
+    if (normalized.includes('validation')) {
+      return {
+        code: 'VALIDATION_ERROR',
+        errorClass: 'permanent',
+        retryable: false,
+        message,
+      };
+    }
+    if (normalized.includes('duplicate') && normalized.includes('sku')) {
+      return {
+        code: 'DUPLICATE_SKU',
+        errorClass: 'permanent',
+        retryable: false,
+        message,
+      };
+    }
+    if (normalized.includes('sku') && normalized.includes('unique')) {
+      return {
+        code: 'DUPLICATE_SKU',
+        errorClass: 'permanent',
+        retryable: false,
+        message,
+      };
+    }
+    if (normalized.includes('base') && normalized.includes('fetch')) {
+      return {
+        code: 'BASE_FETCH_ERROR',
+        errorClass: 'transient',
+        retryable: true,
+        message,
+      };
+    }
+    if (normalized.includes('missing') && normalized.includes('base')) {
+      return {
+        code: 'MISSING_BASE_ID',
+        errorClass: 'permanent',
+        retryable: false,
+        message,
+      };
+    }
+    if (normalized.includes('missing') && normalized.includes('sku')) {
+      return {
+        code: 'MISSING_SKU',
+        errorClass: 'permanent',
+        retryable: false,
+        message,
+      };
+    }
+    if (normalized.includes('catalog')) {
+      return {
+        code: 'MISSING_CATALOG',
+        errorClass: 'configuration',
+        retryable: false,
+        message,
+      };
+    }
+    if (normalized.includes('price group')) {
+      return {
+        code: 'MISSING_PRICE_GROUP',
+        errorClass: 'configuration',
+        retryable: false,
+        message,
+      };
+    }
+    if (normalized.includes('link')) {
+      return {
+        code: 'LINKING_ERROR',
+        errorClass: 'transient',
+        retryable: true,
+        message,
+      };
+    }
+    if (normalized.includes('conflict')) {
+      return {
+        code: 'CONFLICT',
+        errorClass: 'permanent',
+        retryable: false,
+        message,
+      };
+    }
+    return {
+      code: 'UNEXPECTED_ERROR',
+      errorClass: 'transient',
+      retryable: true,
+      message,
+    };
+  }
+
+  return {
+    code: 'UNEXPECTED_ERROR',
+    errorClass: 'transient',
+    retryable: true,
+    message: 'Unexpected import error.',
+  };
+};
+
+export const determineBaseImportTerminalStatus = (
+  stats: BaseImportRunRecord['stats'],
+  options?: { hasPendingItems?: boolean }
+): BaseImportRunRecord['status'] => {
+  const hadFailures = stats.failed > 0;
+  const hadSuccess = stats.imported > 0 || stats.updated > 0 || stats.skipped > 0;
+  if (options?.hasPendingItems) {
+    return hadSuccess ? 'partial_success' : 'failed';
+  }
+  if (hadFailures && hadSuccess) return 'partial_success';
+  if (hadFailures) return 'failed';
+  return 'completed';
+};
+
+const computeRetryDelayMs = (
+  attempt: number,
+  retryAfterMs?: number
+): number => {
+  if (typeof retryAfterMs === 'number' && Number.isFinite(retryAfterMs) && retryAfterMs > 0) {
+    return Math.min(Math.floor(retryAfterMs), BASE_IMPORT_RETRY_MAX_DELAY_MS);
+  }
+  const jitter = Math.floor(Math.random() * 500);
+  const exponential = BASE_IMPORT_RETRY_BASE_DELAY_MS * 2 ** Math.max(0, attempt - 1);
+  return Math.min(exponential + jitter, BASE_IMPORT_RETRY_MAX_DELAY_MS);
+};
+
+const classifyByErrorCode = (
+  code: BaseImportErrorCode
+): { errorClass: BaseImportErrorClass; retryable: boolean } => {
+  if (
+    code === 'MISSING_CONNECTION' ||
+    code === 'MISSING_CATALOG' ||
+    code === 'MISSING_PRICE_GROUP' ||
+    code === 'PRECHECK_FAILED'
+  ) {
+    return { errorClass: 'configuration', retryable: false };
+  }
+  if (code === 'CANCELED') {
+    return { errorClass: 'canceled', retryable: false };
+  }
+  if (code === 'TIMEOUT' || code === 'RATE_LIMITED' || code === 'NETWORK_ERROR') {
+    return { errorClass: 'transient', retryable: true };
+  }
+  if (code === 'BASE_FETCH_ERROR' || code === 'LINKING_ERROR') {
+    return { errorClass: 'transient', retryable: true };
+  }
+  return { errorClass: 'permanent', retryable: false };
 };
 
 const fetchDetailsMap = async (
@@ -601,6 +862,10 @@ const linkImportedProductToBaseListing = async (input: {
 }): Promise<void> => {
   const normalizedBaseProductId = input.baseProductId?.trim() || '';
   if (!normalizedBaseProductId) return;
+  const baseMarketplaceMetadata = {
+    source: 'base-import',
+    marketplace: 'base',
+  } as const;
 
   const existingListing =
     await findProductListingByProductAndConnectionAcrossProviders(
@@ -627,6 +892,12 @@ const linkImportedProductToBaseListing = async (input: {
         'active'
       );
     }
+    await existingListing.repository.updateListing(existingListing.listing.id, {
+      marketplaceData: {
+        ...(existingListing.listing.marketplaceData ?? {}),
+        ...baseMarketplaceMetadata,
+      },
+    });
     return;
   }
 
@@ -638,7 +909,7 @@ const linkImportedProductToBaseListing = async (input: {
     status: 'active',
     externalListingId: normalizedBaseProductId,
     inventoryId: input.inventoryId,
-    marketplaceData: { source: 'base-import' },
+    marketplaceData: baseMarketplaceMetadata,
   });
   await listingRepository.updateListingStatus(createdListing.id, 'active');
 };
@@ -767,10 +1038,13 @@ const decideImportAction = (input: {
 const markRunItem = async (
   runId: string,
   item: BaseImportItemRecord,
-  patch: Partial<BaseImportItemRecord>
+  patch: Partial<BaseImportItemRecord>,
+  options?: { recompute?: boolean }
 ): Promise<void> => {
   await updateBaseImportRunItem(runId, item.itemId, patch);
-  await recomputeBaseImportRunStats(runId);
+  if (options?.recompute !== false) {
+    await recomputeBaseImportRunStats(runId);
+  }
 };
 
 const pickMappedSku = (mapped: NormalizedMappedProduct): string | null => {
@@ -840,24 +1114,30 @@ const importSingleItem = async (input: {
   });
 
   if (decision.type === 'skip') {
+    const classified = classifyByErrorCode(decision.code);
     return {
       status: 'skipped',
       action: input.dryRun ? 'dry_run' : 'skipped',
       baseProductId: mappedBaseProductId,
       sku: mappedSku,
       errorCode: decision.code,
+      errorClass: classified.errorClass,
+      retryable: classified.retryable,
       errorMessage: decision.message,
       payloadSnapshot: mapped,
     };
   }
 
   if (decision.type === 'fail') {
+    const classified = classifyByErrorCode(decision.code);
     return {
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
       sku: mappedSku,
       errorCode: decision.code,
+      errorClass: classified.errorClass,
+      retryable: classified.retryable,
       errorMessage: decision.message,
       payloadSnapshot: mapped,
     };
@@ -886,12 +1166,15 @@ const importSingleItem = async (input: {
     if (mappedSku && !input.allowDuplicateSku && mappedSku !== decision.target.sku) {
       const skuOwner = await input.productRepository.getProductBySku(mappedSku);
       if (skuOwner && skuOwner.id !== decision.target.id) {
+        const classified = classifyByErrorCode('DUPLICATE_SKU');
         return {
           status: 'skipped',
           action: input.dryRun ? 'dry_run' : 'skipped',
           baseProductId: mappedBaseProductId,
           sku: mappedSku,
           errorCode: 'DUPLICATE_SKU',
+          errorClass: classified.errorClass,
+          retryable: classified.retryable,
           errorMessage: `SKU ${mappedSku} already belongs to another product.`,
           payloadSnapshot: mapped,
         };
@@ -900,12 +1183,15 @@ const importSingleItem = async (input: {
 
     const validationResult = await validateProductUpdate(updateData);
     if (!validationResult.success) {
+      const classified = classifyByErrorCode('VALIDATION_ERROR');
       return {
         status: 'failed',
         action: 'failed',
         baseProductId: mappedBaseProductId,
         sku: mappedSku,
         errorCode: 'VALIDATION_ERROR',
+        errorClass: classified.errorClass,
+        retryable: classified.retryable,
         errorMessage: `Validation failed for ${mappedSku ?? mappedBaseProductId ?? input.item.itemId}.`,
         payloadSnapshot: mapped,
       };
@@ -977,12 +1263,15 @@ const importSingleItem = async (input: {
 
   let skuForCreate = mappedSku;
   if (!skuForCreate) {
+    const classified = classifyByErrorCode('MISSING_SKU');
     return {
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
       sku: mappedSku,
       errorCode: 'MISSING_SKU',
+      errorClass: classified.errorClass,
+      retryable: classified.retryable,
       errorMessage: 'Cannot create product without SKU.',
       payloadSnapshot: mapped,
     };
@@ -1006,12 +1295,15 @@ const importSingleItem = async (input: {
 
   const validationResult = await validateProductCreate(createData);
   if (!validationResult.success) {
+    const classified = classifyByErrorCode('VALIDATION_ERROR');
     return {
       status: 'failed',
       action: 'failed',
       baseProductId: mappedBaseProductId,
       sku: skuForCreate,
       errorCode: 'VALIDATION_ERROR',
+      errorClass: classified.errorClass,
+      retryable: classified.retryable,
       errorMessage: `Validation failed for ${skuForCreate}.`,
       payloadSnapshot: mapped,
     };
@@ -1235,6 +1527,7 @@ export const prepareBaseImportRun = async (
       preflight: preflightResult.preflight,
       summaryMessage: 'Preflight failed. Resolve errors and retry import.',
       totalItems: 0,
+      maxAttempts: BASE_IMPORT_MAX_ATTEMPTS,
     });
   }
 
@@ -1270,6 +1563,7 @@ export const prepareBaseImportRun = async (
     preflight: preflightResult.preflight,
     idempotencyKey,
     totalItems: ids.length,
+    maxAttempts: BASE_IMPORT_MAX_ATTEMPTS,
     summaryMessage:
       ids.length === 0
         ? 'No products matched current import filters.'
@@ -1304,7 +1598,11 @@ export const prepareBaseImportRun = async (
       idempotencyKey: `${run.id}:${itemId}`,
       action: 'pending',
       errorCode: null,
+      errorClass: null,
       errorMessage: null,
+      retryable: null,
+      nextRetryAt: null,
+      lastErrorAt: null,
       importedProductId: null,
       payloadSnapshot: null,
       createdAt,
@@ -1321,6 +1619,8 @@ const failRemainingItems = async (input: {
   runId: string;
   allowedStatuses: Set<BaseImportItemStatus>;
   code: BaseImportErrorCode;
+  errorClass: BaseImportErrorClass;
+  retryable: boolean;
   message: string;
 }): Promise<void> => {
   const items = await listBaseImportRunItems(input.runId);
@@ -1331,7 +1631,11 @@ const failRemainingItems = async (input: {
       status: 'failed',
       action: 'failed',
       errorCode: input.code,
+      errorClass: input.errorClass,
+      retryable: input.retryable,
       errorMessage: input.message,
+      lastErrorAt: now,
+      nextRetryAt: null,
       finishedAt: now,
     });
   }
@@ -1355,178 +1659,366 @@ export const processBaseImportRun = async (
       ? options.allowedStatuses
       : ['pending']
   );
+  const ownerId =
+    options?.jobId?.trim() || `worker-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const lease = await acquireBaseImportRunLease({
+    runId,
+    ownerId,
+    leaseMs: BASE_IMPORT_LEASE_MS,
+  });
+  if (!lease.acquired) {
+    if (lease.run) return lease.run;
+    throw badRequestError('Import run is locked by another worker.', { runId });
+  }
 
-  const allItems = await listBaseImportRunItems(runId);
-  const items = allItems.filter((item) => allowedStatuses.has(item.status));
+  const getDueItems = (items: BaseImportItemRecord[], nowMs: number): BaseImportItemRecord[] =>
+    items.filter((item: BaseImportItemRecord): boolean => {
+      if (!allowedStatuses.has(item.status)) return false;
+      if (item.status !== 'pending') return true;
+      if (!item.nextRetryAt) return true;
+      const retryAt = Date.parse(item.nextRetryAt);
+      if (!Number.isFinite(retryAt)) return true;
+      return retryAt <= nowMs;
+    });
 
-  if (items.length === 0) {
+  const getNextRetryTimestamp = (items: BaseImportItemRecord[]): number | null => {
+    let next: number | null = null;
+    items.forEach((item: BaseImportItemRecord): void => {
+      if (item.status !== 'pending' || !allowedStatuses.has(item.status)) return;
+      if (!item.nextRetryAt) return;
+      const retryAt = Date.parse(item.nextRetryAt);
+      if (!Number.isFinite(retryAt)) return;
+      if (next === null || retryAt < next) next = retryAt;
+    });
+    return next;
+  };
+
+  let processedItemsSinceHeartbeat = 0;
+
+  try {
+    const initialItems = await listBaseImportRunItems(runId, {
+      limit: 100_000,
+      statuses: Array.from(allowedStatuses),
+    });
+    if (initialItems.length === 0) {
+      const refreshed = await recomputeBaseImportRunStats(runId);
+      const alreadyFinished =
+        refreshed.status === 'completed' ||
+        refreshed.status === 'partial_success' ||
+        refreshed.status === 'failed' ||
+        refreshed.status === 'canceled';
+      if (alreadyFinished) return refreshed;
+      return updateBaseImportRunStatus(runId, 'completed', {
+        summaryMessage: buildSummaryMessage(refreshed.stats, Boolean(run.params.dryRun)),
+      });
+    }
+
+    await updateBaseImportRunStatus(runId, 'running', {
+      queueJobId: options?.jobId ?? run.queueJobId ?? null,
+      summaryMessage: `Processing ${initialItems.length} product(s).`,
+      cancellationRequestedAt: run.cancellationRequestedAt ?? null,
+    });
+
+    const connection = await resolveBaseConnectionContext(run.params.connectionId);
+    if (!connection.token || !connection.connectionId || !connection.baseIntegrationId) {
+      await failRemainingItems({
+        runId,
+        allowedStatuses,
+        code: 'MISSING_CONNECTION',
+        errorClass: 'configuration',
+        retryable: false,
+        message:
+          connection.issue?.message ??
+          'Base.com connection or token is missing.',
+      });
+      return updateBaseImportRunStatus(runId, 'failed', {
+        summaryMessage: 'Import failed: Base.com connection is not available.',
+      });
+    }
+
+    const catalogRepository = await getCatalogRepository();
+    const catalogs = await catalogRepository.listCatalogs();
+    const targetCatalog = catalogs.find((catalog) => catalog.id === run.params.catalogId);
+    if (!targetCatalog) {
+      await failRemainingItems({
+        runId,
+        allowedStatuses,
+        code: 'MISSING_CATALOG',
+        errorClass: 'configuration',
+        retryable: false,
+        message: 'Selected catalog no longer exists.',
+      });
+      return updateBaseImportRunStatus(runId, 'failed', {
+        summaryMessage: 'Import failed: selected catalog no longer exists.',
+      });
+    }
+
+    const provider = await getProductDataProvider();
+    const pricingContext = await resolvePriceGroupContext(
+      provider,
+      targetCatalog.defaultPriceGroupId
+    );
+    if (!pricingContext.defaultPriceGroupId) {
+      await failRemainingItems({
+        runId,
+        allowedStatuses,
+        code: 'MISSING_PRICE_GROUP',
+        errorClass: 'configuration',
+        retryable: false,
+        message: 'Catalog default price group is missing.',
+      });
+      return updateBaseImportRunStatus(runId, 'failed', {
+        summaryMessage: 'Import failed: configure catalog default price group.',
+      });
+    }
+
+    const template = run.params.templateId
+      ? await getImportTemplate(run.params.templateId)
+      : null;
+    const templateMappings = Array.isArray(template?.mappings) ? template.mappings : [];
+    const lookups = await resolveProducerAndTagLookups(connection.connectionId);
+    const productRepository = await getProductRepository();
+    const maxAttempts =
+      typeof run.maxAttempts === 'number' &&
+      Number.isFinite(run.maxAttempts) &&
+      run.maxAttempts > 0
+        ? Math.floor(run.maxAttempts)
+        : BASE_IMPORT_MAX_ATTEMPTS;
+
+    while (true) {
+      const currentRun = await getBaseImportRun(runId);
+      if (!currentRun) {
+        throw notFoundError('Base import run not found.', { runId });
+      }
+      if (currentRun.cancellationRequestedAt) {
+        await failRemainingItems({
+          runId,
+          allowedStatuses: new Set<BaseImportItemStatus>(['pending', 'processing']),
+          code: 'CANCELED',
+          errorClass: 'canceled',
+          retryable: false,
+          message: 'Run canceled by user request.',
+        });
+        const canceledAt = nowIso();
+        return updateBaseImportRunStatus(runId, 'canceled', {
+          canceledAt,
+          finishedAt: canceledAt,
+          summaryMessage: 'Import canceled.',
+        });
+      }
+
+      const candidates = await listBaseImportRunItems(runId, {
+        limit: 100_000,
+        statuses: Array.from(allowedStatuses),
+      });
+      const nowMs = Date.now();
+      const dueItems = getDueItems(candidates, nowMs);
+      if (dueItems.length === 0) {
+        const nextRetryAtMs = getNextRetryTimestamp(candidates);
+        if (nextRetryAtMs !== null) {
+          const waitMs = nextRetryAtMs - nowMs;
+          if (waitMs > 0 && waitMs <= 5_000) {
+            await new Promise((resolve) => setTimeout(resolve, waitMs));
+            continue;
+          }
+        }
+        break;
+      }
+
+      const detailsMap = await fetchDetailsMap(
+        connection.token,
+        run.params.inventoryId,
+        dueItems.map((item: BaseImportItemRecord): string => item.itemId)
+      );
+
+      for (const item of dueItems) {
+        processedItemsSinceHeartbeat += 1;
+        if (processedItemsSinceHeartbeat >= BASE_IMPORT_HEARTBEAT_EVERY_ITEMS) {
+          processedItemsSinceHeartbeat = 0;
+          const heartbeat = await heartbeatBaseImportRunLease({
+            runId,
+            ownerId,
+            leaseMs: BASE_IMPORT_LEASE_MS,
+          });
+          if (!heartbeat) {
+            throw badRequestError('Import lease expired while processing run.', { runId });
+          }
+        }
+
+        const now = nowIso();
+        const attempt = item.attempt + 1;
+        await markRunItem(
+          runId,
+          item,
+          {
+            status: 'processing',
+            action: 'processing',
+            attempt,
+            startedAt: now,
+            errorCode: null,
+            errorClass: null,
+            errorMessage: null,
+            retryable: null,
+            nextRetryAt: null,
+          },
+          { recompute: false }
+        );
+
+        const raw = detailsMap.get(item.itemId);
+        if (!raw) {
+          await markRunItem(
+            runId,
+            item,
+            {
+              status: 'failed',
+              action: 'failed',
+              errorCode: 'NOT_FOUND',
+              errorClass: 'permanent',
+              retryable: false,
+              errorMessage: `Base product ${item.itemId} not found.`,
+              lastErrorAt: now,
+              nextRetryAt: null,
+              finishedAt: now,
+            },
+            { recompute: false }
+          );
+          continue;
+        }
+
+        try {
+          const result = await importSingleItem({
+            run,
+            item,
+            raw,
+            baseIntegrationId: connection.baseIntegrationId,
+            connectionId: connection.connectionId,
+            token: connection.token,
+            targetCatalogId: targetCatalog.id,
+            defaultPriceGroupId: pricingContext.defaultPriceGroupId,
+            preferredPriceCurrencies: pricingContext.preferredCurrencies,
+            lookups,
+            templateMappings,
+            productRepository,
+            imageMode: run.params.imageMode,
+            dryRun: Boolean(run.params.dryRun),
+            inventoryId: run.params.inventoryId,
+            mode: resolveMode(run.params.mode),
+            allowDuplicateSku: run.params.allowDuplicateSku,
+          });
+
+          const retryableResult = result.status === 'failed' && result.retryable === true;
+          if (retryableResult && attempt < maxAttempts) {
+            const delayMs = computeRetryDelayMs(attempt);
+            await markRunItem(
+              runId,
+              item,
+              {
+                status: 'pending',
+                action: 'pending',
+                baseProductId: result.baseProductId ?? null,
+                sku: result.sku ?? null,
+                importedProductId: result.importedProductId ?? null,
+                payloadSnapshot: result.payloadSnapshot ?? null,
+                errorCode: result.errorCode ?? null,
+                errorClass: result.errorClass ?? 'transient',
+                errorMessage: result.errorMessage ?? 'Retry scheduled.',
+                retryable: true,
+                lastErrorAt: now,
+                nextRetryAt: new Date(Date.now() + delayMs).toISOString(),
+                finishedAt: now,
+              },
+              { recompute: false }
+            );
+            continue;
+          }
+
+          await markRunItem(
+            runId,
+            item,
+            {
+              status: result.status,
+              action: result.action,
+              baseProductId: result.baseProductId ?? null,
+              sku: result.sku ?? null,
+              importedProductId: result.importedProductId ?? null,
+              payloadSnapshot: result.payloadSnapshot ?? null,
+              errorCode: result.errorCode ?? null,
+              errorClass: result.errorClass ?? null,
+              errorMessage: result.errorMessage ?? null,
+              retryable: result.retryable ?? null,
+              lastErrorAt: result.errorCode ? now : null,
+              nextRetryAt: null,
+              finishedAt: now,
+            },
+            { recompute: false }
+          );
+        } catch (error: unknown) {
+          const classified = classifyBaseImportError(error);
+          if (classified.retryable && attempt < maxAttempts) {
+            const delayMs = computeRetryDelayMs(attempt, classified.retryAfterMs);
+            await markRunItem(
+              runId,
+              item,
+              {
+                status: 'pending',
+                action: 'pending',
+                errorCode: classified.code,
+                errorClass: classified.errorClass,
+                retryable: true,
+                errorMessage: classified.message,
+                lastErrorAt: now,
+                nextRetryAt: new Date(Date.now() + delayMs).toISOString(),
+                finishedAt: now,
+              },
+              { recompute: false }
+            );
+            continue;
+          }
+          await markRunItem(
+            runId,
+            item,
+            {
+              status: 'failed',
+              action: 'failed',
+              errorCode: classified.code,
+              errorClass: classified.errorClass,
+              retryable: classified.retryable,
+              errorMessage: classified.message,
+              lastErrorAt: now,
+              nextRetryAt: null,
+              finishedAt: now,
+            },
+            { recompute: false }
+          );
+        }
+      }
+
+      await recomputeBaseImportRunStats(runId);
+    }
+
     const refreshed = await recomputeBaseImportRunStats(runId);
-    const alreadyFinished =
-      refreshed.status === 'completed' ||
-      refreshed.status === 'failed' ||
-      refreshed.status === 'canceled';
-    if (alreadyFinished) return refreshed;
+    const pendingOrProcessing = await listBaseImportRunItems(runId, {
+      limit: 100_000,
+      statuses: ['pending', 'processing'],
+    });
+    if (pendingOrProcessing.length > 0) {
+      const pendingTerminalStatus = determineBaseImportTerminalStatus(refreshed.stats, {
+        hasPendingItems: true,
+      });
+      return updateBaseImportRunStatus(runId, pendingTerminalStatus, {
+        stats: refreshed.stats,
+        summaryMessage: 'Import paused with pending retry items. Resume run to continue.',
+      });
+    }
 
-    return updateBaseImportRunStatus(runId, 'completed', {
+    const terminalStatus = determineBaseImportTerminalStatus(refreshed.stats);
+    return updateBaseImportRunStatus(runId, terminalStatus, {
+      stats: refreshed.stats,
       summaryMessage: buildSummaryMessage(refreshed.stats, Boolean(run.params.dryRun)),
     });
+  } finally {
+    await releaseBaseImportRunLease({ runId, ownerId });
   }
-
-  await updateBaseImportRunStatus(runId, 'running', {
-    queueJobId: options?.jobId ?? run.queueJobId ?? null,
-    summaryMessage: `Processing ${items.length} product(s).`,
-  });
-
-  const connection = await resolveBaseConnectionContext(run.params.connectionId);
-  if (!connection.token || !connection.connectionId || !connection.baseIntegrationId) {
-    await failRemainingItems({
-      runId,
-      allowedStatuses,
-      code: 'MISSING_CONNECTION',
-      message:
-        connection.issue?.message ??
-        'Base.com connection or token is missing.',
-    });
-    return updateBaseImportRunStatus(runId, 'failed', {
-      summaryMessage: 'Import failed: Base.com connection is not available.',
-    });
-  }
-
-  const catalogRepository = await getCatalogRepository();
-  const catalogs = await catalogRepository.listCatalogs();
-  const targetCatalog = catalogs.find((catalog) => catalog.id === run.params.catalogId);
-  if (!targetCatalog) {
-    await failRemainingItems({
-      runId,
-      allowedStatuses,
-      code: 'MISSING_CATALOG',
-      message: 'Selected catalog no longer exists.',
-    });
-    return updateBaseImportRunStatus(runId, 'failed', {
-      summaryMessage: 'Import failed: selected catalog no longer exists.',
-    });
-  }
-
-  const provider = await getProductDataProvider();
-  const pricingContext = await resolvePriceGroupContext(
-    provider,
-    targetCatalog.defaultPriceGroupId
-  );
-  if (!pricingContext.defaultPriceGroupId) {
-    await failRemainingItems({
-      runId,
-      allowedStatuses,
-      code: 'MISSING_PRICE_GROUP',
-      message: 'Catalog default price group is missing.',
-    });
-    return updateBaseImportRunStatus(runId, 'failed', {
-      summaryMessage: 'Import failed: configure catalog default price group.',
-    });
-  }
-
-  const template = run.params.templateId
-    ? await getImportTemplate(run.params.templateId)
-    : null;
-
-  const lookups = await resolveProducerAndTagLookups(connection.connectionId);
-  const detailsMap = await fetchDetailsMap(
-    connection.token,
-    run.params.inventoryId,
-    items.map((item) => item.itemId)
-  );
-
-  const productRepository = await getProductRepository();
-  const templateMappings = Array.isArray(template?.mappings) ? template.mappings : [];
-
-  for (const item of items) {
-    await markRunItem(runId, item, {
-      status: 'processing',
-      action: 'processing',
-      attempt: item.attempt + 1,
-      startedAt: nowIso(),
-      errorCode: null,
-      errorMessage: null,
-    });
-
-    const raw = detailsMap.get(item.itemId);
-    if (!raw) {
-      await markRunItem(runId, item, {
-        status: 'failed',
-        action: 'failed',
-        errorCode: 'NOT_FOUND',
-        errorMessage: `Base product ${item.itemId} not found.`,
-        finishedAt: nowIso(),
-      });
-      continue;
-    }
-
-    try {
-      const result = await importSingleItem({
-        run,
-        item,
-        raw,
-        baseIntegrationId: connection.baseIntegrationId,
-        connectionId: connection.connectionId,
-        token: connection.token,
-        targetCatalogId: targetCatalog.id,
-        defaultPriceGroupId: pricingContext.defaultPriceGroupId,
-        preferredPriceCurrencies: pricingContext.preferredCurrencies,
-        lookups,
-        templateMappings,
-        productRepository,
-        imageMode: run.params.imageMode,
-        dryRun: Boolean(run.params.dryRun),
-        inventoryId: run.params.inventoryId,
-        mode: resolveMode(run.params.mode),
-        allowDuplicateSku: run.params.allowDuplicateSku,
-      });
-
-      await markRunItem(runId, item, {
-        status: result.status,
-        action: result.action,
-        baseProductId: result.baseProductId ?? null,
-        sku: result.sku ?? null,
-        importedProductId: result.importedProductId ?? null,
-        payloadSnapshot: result.payloadSnapshot ?? null,
-        errorCode: result.errorCode ?? null,
-        errorMessage: result.errorMessage ?? null,
-        finishedAt: nowIso(),
-      });
-    } catch (error: unknown) {
-      await markRunItem(runId, item, {
-        status: 'failed',
-        action: 'failed',
-        errorCode: mapErrorCode(error),
-        errorMessage:
-          error instanceof Error
-            ? error.message
-            : 'Unexpected import error.',
-        finishedAt: nowIso(),
-      });
-    }
-  }
-
-  const refreshed = await recomputeBaseImportRunStats(runId);
-  const hasPending = (await listBaseImportRunItems(runId)).some(
-    (item) => item.status === 'pending' || item.status === 'processing'
-  );
-
-  if (hasPending) {
-    return updateBaseImportRunStatus(runId, 'failed', {
-      summaryMessage: 'Import ended with unprocessed items. Resume to retry.',
-      stats: refreshed.stats,
-    });
-  }
-
-  const onlyFailures =
-    refreshed.stats.failed > 0 &&
-    refreshed.stats.imported === 0 &&
-    refreshed.stats.updated === 0;
-
-  return updateBaseImportRunStatus(runId, onlyFailures ? 'failed' : 'completed', {
-    stats: refreshed.stats,
-    summaryMessage: buildSummaryMessage(refreshed.stats, Boolean(run.params.dryRun)),
-  });
 };
 
 export const resumeBaseImportRun = async (
@@ -1540,23 +2032,54 @@ export const resumeBaseImportRun = async (
 
   const allowed = new Set<BaseImportItemStatus>(statuses);
   const items = await listBaseImportRunItems(runId);
-  const resumeCount = items.filter((item) => allowed.has(item.status)).length;
+  const resumeCandidates = items.filter((item) => allowed.has(item.status));
+  const resumeCount = resumeCandidates.length;
 
   if (resumeCount === 0) {
     throw badRequestError('No items match selected resume statuses.');
   }
 
+  const now = nowIso();
+  for (const item of resumeCandidates) {
+    await updateBaseImportRunItem(runId, item.itemId, {
+      status: 'pending',
+      action: 'pending',
+      errorCode: null,
+      errorClass: null,
+      errorMessage: null,
+      retryable: null,
+      nextRetryAt: null,
+      lastErrorAt: null,
+      finishedAt: null,
+      startedAt: null,
+    });
+  }
+  await recomputeBaseImportRunStats(runId);
+
   return updateBaseImportRun(runId, {
     status: 'queued',
     finishedAt: null,
+    canceledAt: null,
+    cancellationRequestedAt: null,
+    lockOwnerId: null,
+    lockToken: null,
+    lockExpiresAt: null,
+    lockHeartbeatAt: null,
+    updatedAt: now,
     summaryMessage: `Resume queued for ${resumeCount} product(s).`,
   });
 };
 
 export const getBaseImportRunDetailOrThrow = async (
-  runId: string
+  runId: string,
+  options?: {
+    statuses?: BaseImportItemStatus[];
+    page?: number;
+    pageSize?: number;
+    includeItems?: boolean;
+  }
 ): Promise<BaseImportRunDetailResponse> => {
-  const detail = await getBaseImportRunDetail(runId);
+  const detail = await getBaseImportRunDetail(runId, options);
   if (!detail) {
     throw notFoundError('Base import run not found.', { runId });
   }
@@ -1569,6 +2092,23 @@ export const updateBaseImportRunQueueJob = async (
 ): Promise<BaseImportRunRecord> => {
   return updateBaseImportRun(runId, {
     queueJobId,
+  });
+};
+
+export const cancelBaseImportRun = async (
+  runId: string
+): Promise<BaseImportRunRecord> => {
+  const run = await getBaseImportRun(runId);
+  if (!run) {
+    throw notFoundError('Base import run not found.', { runId });
+  }
+  if (run.status === 'completed' || run.status === 'partial_success' || run.status === 'failed') {
+    throw badRequestError('Run already finished and cannot be canceled.', { runId });
+  }
+  if (run.status === 'canceled') return run;
+  return updateBaseImportRun(runId, {
+    cancellationRequestedAt: run.cancellationRequestedAt ?? nowIso(),
+    summaryMessage: 'Cancellation requested. Worker will stop shortly.',
   });
 };
 

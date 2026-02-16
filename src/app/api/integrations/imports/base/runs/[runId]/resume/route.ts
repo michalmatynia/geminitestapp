@@ -39,7 +39,7 @@ async function POST_handler(
   const queueJobId = await enqueueBaseImportRunJob({
     runId: resumed.id,
     reason: 'resume',
-    statuses,
+    statuses: ['pending'],
   });
   const responseRun = await updateBaseImportRunQueueJob(resumed.id, queueJobId);
 

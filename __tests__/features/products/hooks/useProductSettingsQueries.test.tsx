@@ -13,6 +13,7 @@ import {
   useDeletePriceGroupMutation,
   useDeleteTagMutation,
   useDeleteValidationPatternMutation,
+  useReorderValidationPatternsMutation,
   useReorderCategoryMutation,
   useSaveCatalogMutation,
   useSavePriceGroupMutation,
@@ -38,6 +39,7 @@ vi.mock('@/features/products/api/settings', () => ({
   deleteParameter: vi.fn(),
   createValidationPattern: vi.fn(),
   updateValidationPattern: vi.fn(),
+  reorderValidationPatterns: vi.fn(),
   deleteValidationPattern: vi.fn(),
   updateCategory: vi.fn(),
   createCategory: vi.fn(),
@@ -128,8 +130,7 @@ describe('useProductSettingsQueries invalidation', () => {
     await result.current.mutateAsync({ enabledByDefault: true });
 
     expect(productSettingsApi.updateValidatorSettings).toHaveBeenCalledWith(
-      { enabledByDefault: true },
-      expect.anything()
+      { enabledByDefault: true }
     );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
@@ -414,8 +415,7 @@ describe('useProductSettingsQueries invalidation', () => {
         target: 'name',
         regex: '.+',
         message: 'Name is required',
-      },
-      expect.anything()
+      }
     );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
@@ -449,6 +449,47 @@ describe('useProductSettingsQueries invalidation', () => {
       'pattern-1',
       { label: 'no-empty-name' }
     );
+    await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: productSettingsKeys.validatorPatterns(),
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: productSettingsKeys.validatorConfig(true),
+    });
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: productSettingsKeys.validatorConfig(false),
+    });
+  });
+
+  it('useReorderValidationPatternsMutation invalidates validator patterns/config keys', async () => {
+    vi.mocked(productSettingsApi.reorderValidationPatterns).mockResolvedValue({
+      updated: [],
+    });
+
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+    const { result } = renderHook(() => useReorderValidationPatternsMutation(), {
+      wrapper,
+    });
+
+    await result.current.mutateAsync({
+      updates: [
+        {
+          id: 'pattern-1',
+          sequence: 10,
+          expectedUpdatedAt: '2026-02-01T00:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(productSettingsApi.reorderValidationPatterns).toHaveBeenCalledWith({
+      updates: [
+        {
+          id: 'pattern-1',
+          sequence: 10,
+          expectedUpdatedAt: '2026-02-01T00:00:00.000Z',
+        },
+      ],
+    });
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalledTimes(4));
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorPatterns(),

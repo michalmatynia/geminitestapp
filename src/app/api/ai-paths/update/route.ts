@@ -69,7 +69,7 @@ const applyAppendMode = (
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
-    enforceAiPathsActionRateLimit(access, 'entity-update');
+    await enforceAiPathsActionRateLimit(access, 'entity-update');
   }
   const parsed = await parseJsonBody(req, updateSchema, {
     logPrefix: 'ai-paths.update',

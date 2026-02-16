@@ -6,7 +6,9 @@ import { ObjectId } from 'mongodb';
 
 import type {
   BaseImportItemRecord,
+  BaseImportItemStatus,
   BaseImportRunDetailResponse,
+  BaseImportErrorClass,
   BaseImportRunParams,
   BaseImportRunRecord,
   BaseImportRunStats,
@@ -22,6 +24,7 @@ import type { Filter } from 'mongodb';
 const RUN_KEY_PREFIX = 'base_import_run:';
 const ITEM_KEY_PREFIX = 'base_import_run_item:';
 const LIST_LIMIT_DEFAULT = 50;
+const RUN_ITEM_HARD_LIMIT = 100_000;
 
 type StorageProvider = 'mongodb' | 'prisma';
 
@@ -44,6 +47,16 @@ const toMongoId = (id: string): string | ObjectId => {
 };
 
 const nowIso = (): string => new Date().toISOString();
+const toTimestamp = (value: string | null | undefined): number | null => {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+};
+const isRunTerminal = (status: BaseImportRunStatus): boolean =>
+  status === 'completed' ||
+  status === 'partial_success' ||
+  status === 'failed' ||
+  status === 'canceled';
 
 const runKey = (runId: string): string => `${RUN_KEY_PREFIX}${runId}`;
 
@@ -167,6 +180,7 @@ export const createBaseImportRun = async (input: {
   idempotencyKey?: string | null;
   totalItems?: number;
   summaryMessage?: string | null;
+  maxAttempts?: number;
 }): Promise<BaseImportRunRecord> => {
   const timestamp = nowIso();
   const record: BaseImportRunRecord = {
@@ -174,6 +188,19 @@ export const createBaseImportRun = async (input: {
     status: input.preflight.ok ? 'queued' : 'failed',
     params: input.params,
     idempotencyKey: input.idempotencyKey ?? null,
+    queueJobId: null,
+    lockOwnerId: null,
+    lockToken: null,
+    lockExpiresAt: null,
+    lockHeartbeatAt: null,
+    cancellationRequestedAt: null,
+    canceledAt: null,
+    maxAttempts:
+      typeof input.maxAttempts === 'number' &&
+      Number.isFinite(input.maxAttempts) &&
+      input.maxAttempts > 0
+        ? Math.floor(input.maxAttempts)
+        : 3,
     preflight: input.preflight,
     stats: initialStats(input.totalItems ?? 0),
     startedAt: null,
@@ -228,6 +255,10 @@ export const putBaseImportRunItem = async (
 ): Promise<BaseImportItemRecord> => {
   const normalized: BaseImportItemRecord = {
     ...item,
+    errorClass: item.errorClass ?? null,
+    retryable: item.retryable ?? null,
+    nextRetryAt: item.nextRetryAt ?? null,
+    lastErrorAt: item.lastErrorAt ?? null,
     updatedAt: nowIso(),
   };
   await writeSettingValue(
@@ -252,6 +283,10 @@ export const updateBaseImportRunItem = async (
     runId: existing.runId,
     itemId: existing.itemId,
     idempotencyKey: existing.idempotencyKey,
+    errorClass: patch.errorClass ?? existing.errorClass ?? null,
+    retryable: patch.retryable ?? existing.retryable ?? null,
+    nextRetryAt: patch.nextRetryAt ?? existing.nextRetryAt ?? null,
+    lastErrorAt: patch.lastErrorAt ?? existing.lastErrorAt ?? null,
     updatedAt: nowIso(),
   };
   await writeSettingValue(itemKey(runId, itemId), JSON.stringify(merged));
@@ -266,20 +301,123 @@ export const getBaseImportRunItem = async (
   return parseJson<BaseImportItemRecord>(raw);
 };
 
+type ListBaseImportRunItemsOptions = {
+  limit?: number;
+  statuses?: BaseImportItemStatus[];
+  page?: number;
+  pageSize?: number;
+  retryDueOnly?: boolean;
+  now?: string;
+};
+
+const filterItems = (
+  items: BaseImportItemRecord[],
+  options: ListBaseImportRunItemsOptions
+): BaseImportItemRecord[] => {
+  const statusFilter =
+    Array.isArray(options.statuses) && options.statuses.length > 0
+      ? new Set<BaseImportItemStatus>(options.statuses)
+      : null;
+  const nowTimestamp = toTimestamp(options.now ?? nowIso());
+  return items.filter((item: BaseImportItemRecord): boolean => {
+    if (statusFilter && !statusFilter.has(item.status)) return false;
+    if (!options.retryDueOnly) return true;
+    if (item.status !== 'pending') return false;
+    const retryAt = toTimestamp(item.nextRetryAt ?? null);
+    if (retryAt === null || nowTimestamp === null) return true;
+    return retryAt <= nowTimestamp;
+  });
+};
+
+const normalizeItemErrorClass = (item: BaseImportItemRecord): BaseImportErrorClass | null =>
+  item.errorClass === 'transient' ||
+  item.errorClass === 'permanent' ||
+  item.errorClass === 'configuration' ||
+  item.errorClass === 'canceled'
+    ? item.errorClass
+    : null;
+
+const normalizeListOptions = (
+  limitOrOptions: number | ListBaseImportRunItemsOptions | undefined
+): ListBaseImportRunItemsOptions => {
+  if (typeof limitOrOptions === 'number') {
+    return { limit: limitOrOptions };
+  }
+  return limitOrOptions ?? {};
+};
+
 export const listBaseImportRunItems = async (
   runId: string,
-  limit = 10_000
+  limitOrOptions?: number | ListBaseImportRunItemsOptions
 ): Promise<BaseImportItemRecord[]> => {
-  const values = await listSettingValuesByPrefix(`${ITEM_KEY_PREFIX}${runId}:`, limit);
-  return values
+  const options = normalizeListOptions(limitOrOptions);
+  const requestedLimit =
+    typeof options.limit === 'number' && Number.isFinite(options.limit) && options.limit > 0
+      ? Math.floor(options.limit)
+      : 10_000;
+  const values = await listSettingValuesByPrefix(
+    `${ITEM_KEY_PREFIX}${runId}:`,
+    Math.min(requestedLimit, RUN_ITEM_HARD_LIMIT)
+  );
+  const items = values
     .map((value: string) => parseJson<BaseImportItemRecord>(value))
     .filter(
-      (item: BaseImportItemRecord | null): item is BaseImportItemRecord =>
-        Boolean(item)
+      (item: BaseImportItemRecord | null): item is BaseImportItemRecord => Boolean(item)
     )
-    .sort((a: BaseImportItemRecord, b: BaseImportItemRecord) =>
-      a.itemId.localeCompare(b.itemId)
-    );
+    .map((item: BaseImportItemRecord): BaseImportItemRecord => ({
+      ...item,
+      errorClass: normalizeItemErrorClass(item),
+      retryable: typeof item.retryable === 'boolean' ? item.retryable : null,
+      nextRetryAt: item.nextRetryAt ?? null,
+      lastErrorAt: item.lastErrorAt ?? null,
+    }))
+    .sort((a: BaseImportItemRecord, b: BaseImportItemRecord) => a.itemId.localeCompare(b.itemId));
+  return filterItems(items, options);
+};
+
+export const listBaseImportRunItemsPage = async (
+  runId: string,
+  options?: {
+    statuses?: BaseImportItemStatus[];
+    page?: number;
+    pageSize?: number;
+    retryDueOnly?: boolean;
+  }
+): Promise<{
+  items: BaseImportItemRecord[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}> => {
+  const page =
+    typeof options?.page === 'number' && Number.isFinite(options.page) && options.page > 0
+      ? Math.floor(options.page)
+      : 1;
+  const pageSizeRaw =
+    typeof options?.pageSize === 'number' &&
+    Number.isFinite(options.pageSize) &&
+    options.pageSize > 0
+      ? Math.floor(options.pageSize)
+      : 200;
+  const pageSize = Math.min(pageSizeRaw, RUN_ITEM_HARD_LIMIT);
+  const filtered = await listBaseImportRunItems(runId, {
+    limit: RUN_ITEM_HARD_LIMIT,
+    ...(options?.statuses !== undefined && { statuses: options.statuses }),
+    ...(options?.retryDueOnly !== undefined && { retryDueOnly: options.retryDueOnly }),
+  });
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * pageSize;
+  const end = start + pageSize;
+  return {
+    items: filtered.slice(start, end),
+    page: safePage,
+    pageSize,
+    totalItems,
+    totalPages,
+  };
 };
 
 export const deleteBaseImportRunItems = async (runId: string): Promise<void> => {
@@ -322,12 +460,47 @@ export const recomputeBaseImportRunStats = async (
 };
 
 export const getBaseImportRunDetail = async (
-  runId: string
+  runId: string,
+  options?: {
+    statuses?: BaseImportItemStatus[];
+    page?: number;
+    pageSize?: number;
+    includeItems?: boolean;
+  }
 ): Promise<BaseImportRunDetailResponse | null> => {
   const run = await getBaseImportRun(runId);
   if (!run) return null;
-  const items = await listBaseImportRunItems(runId);
-  return { run, items };
+  if (options?.includeItems === false) {
+    const pageSize =
+      typeof options.pageSize === 'number' && Number.isFinite(options.pageSize) && options.pageSize > 0
+        ? Math.floor(options.pageSize)
+        : 200;
+    return {
+      run,
+      items: [],
+      pagination: {
+        page: 1,
+        pageSize,
+        totalItems: run.stats.total,
+        totalPages: Math.max(1, Math.ceil(run.stats.total / pageSize)),
+      },
+    };
+  }
+  const paged = await listBaseImportRunItemsPage(runId, {
+    ...(options?.statuses !== undefined && { statuses: options.statuses }),
+    ...(options?.page !== undefined && { page: options.page }),
+    ...(options?.pageSize !== undefined && { pageSize: options.pageSize }),
+  });
+  return {
+    run,
+    items: paged.items,
+    pagination: {
+      page: paged.page,
+      pageSize: paged.pageSize,
+      totalItems: paged.totalItems,
+      totalPages: paged.totalPages,
+    },
+  };
 };
 
 export const updateBaseImportRunStatus = async (
@@ -339,9 +512,97 @@ export const updateBaseImportRunStatus = async (
   const basePatch: Partial<BaseImportRunRecord> = {
     status,
     ...(status === 'running' ? { startedAt: patch?.startedAt ?? now } : {}),
-    ...(status === 'completed' || status === 'failed' || status === 'canceled'
+    ...(status === 'completed' ||
+    status === 'partial_success' ||
+    status === 'failed' ||
+    status === 'canceled'
       ? { finishedAt: patch?.finishedAt ?? now }
       : {}),
   };
   return updateBaseImportRun(runId, { ...basePatch, ...(patch ?? {}) });
+};
+
+export const requestBaseImportRunCancellation = async (
+  runId: string
+): Promise<BaseImportRunRecord> => {
+  const run = await getBaseImportRun(runId);
+  if (!run) {
+    throw new Error(`Base import run not found: ${runId}`);
+  }
+  if (isRunTerminal(run.status)) return run;
+  const now = nowIso();
+  return updateBaseImportRun(runId, {
+    cancellationRequestedAt: run.cancellationRequestedAt ?? now,
+    summaryMessage: run.summaryMessage ?? 'Cancellation requested. Waiting for worker to stop.',
+  });
+};
+
+export const acquireBaseImportRunLease = async (input: {
+  runId: string;
+  ownerId: string;
+  leaseMs: number;
+}): Promise<{ acquired: boolean; run: BaseImportRunRecord | null; reason?: string }> => {
+  const run = await getBaseImportRun(input.runId);
+  if (!run) {
+    return { acquired: false, run: null, reason: 'RUN_NOT_FOUND' };
+  }
+  if (isRunTerminal(run.status)) {
+    return { acquired: false, run, reason: 'RUN_TERMINAL' };
+  }
+  const now = Date.now();
+  const lockExpiresAtMs = toTimestamp(run.lockExpiresAt ?? null);
+  const lockActive =
+    Boolean(run.lockOwnerId) &&
+    lockExpiresAtMs !== null &&
+    lockExpiresAtMs > now &&
+    run.lockOwnerId !== input.ownerId;
+  if (lockActive) {
+    return { acquired: false, run, reason: 'LOCKED_BY_OTHER' };
+  }
+  const leaseMs =
+    Number.isFinite(input.leaseMs) && input.leaseMs > 0 ? Math.floor(input.leaseMs) : 60_000;
+  const lockToken = randomUUID();
+  const nowIsoValue = new Date(now).toISOString();
+  const leased = await updateBaseImportRun(input.runId, {
+    lockOwnerId: input.ownerId,
+    lockToken,
+    lockHeartbeatAt: nowIsoValue,
+    lockExpiresAt: new Date(now + leaseMs).toISOString(),
+  });
+  if (leased.lockOwnerId === input.ownerId && leased.lockToken === lockToken) {
+    return { acquired: true, run: leased };
+  }
+  return { acquired: false, run: leased, reason: 'LEASE_RACE' };
+};
+
+export const heartbeatBaseImportRunLease = async (input: {
+  runId: string;
+  ownerId: string;
+  leaseMs: number;
+}): Promise<BaseImportRunRecord | null> => {
+  const run = await getBaseImportRun(input.runId);
+  if (!run) return null;
+  if (run.lockOwnerId !== input.ownerId) return null;
+  const now = Date.now();
+  const leaseMs =
+    Number.isFinite(input.leaseMs) && input.leaseMs > 0 ? Math.floor(input.leaseMs) : 60_000;
+  return updateBaseImportRun(input.runId, {
+    lockHeartbeatAt: new Date(now).toISOString(),
+    lockExpiresAt: new Date(now + leaseMs).toISOString(),
+  });
+};
+
+export const releaseBaseImportRunLease = async (input: {
+  runId: string;
+  ownerId: string;
+}): Promise<BaseImportRunRecord | null> => {
+  const run = await getBaseImportRun(input.runId);
+  if (!run) return null;
+  if (run.lockOwnerId !== input.ownerId) return run;
+  return updateBaseImportRun(input.runId, {
+    lockOwnerId: null,
+    lockToken: null,
+    lockExpiresAt: null,
+    lockHeartbeatAt: null,
+  });
 };

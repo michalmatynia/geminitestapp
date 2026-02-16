@@ -20,8 +20,11 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 const requestSchema = z.object({
   inventoryId: z.string().trim().optional().nullable(),
   productId: z.string().trim().min(1).optional(),
+  connectionId: z.string().trim().min(1).optional(),
   saveOnly: z.boolean().optional()
 });
+
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
 const toStringId = (value: unknown): string | null => {
   if (typeof value === 'string' && value.trim()) return value.trim();
@@ -107,18 +110,35 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   if (!productId) {
     const integrationRepo = await getIntegrationRepository();
     const integrations = await integrationRepo.listIntegrations();
-    const baseIntegration = integrations.find((i) => i.slug === 'baselinker');
+    const baseIntegration = integrations.find((integration) =>
+      BASE_INTEGRATION_SLUGS.has(
+        (integration.slug ?? '').trim().toLowerCase()
+      )
+    );
     if (!baseIntegration) {
       throw notFoundError('Base integration not found.');
     }
     const connections = await integrationRepo.listConnections(
       baseIntegration.id
     );
-    const connection = connections.find((c) => c.baseApiToken);
-    if (!connection?.baseApiToken) {
+    const normalizedConnectionId = data.connectionId?.trim();
+    const connection = normalizedConnectionId
+      ? connections.find((entry) => entry.id === normalizedConnectionId)
+      : connections.find((entry) => entry.baseApiToken || entry.password);
+    if (!connection?.baseApiToken && !connection?.password) {
       throw badRequestError('No Base API token configured.');
     }
-    const token = decryptSecret(connection.baseApiToken);
+
+    let token = '';
+    if (connection.baseApiToken) {
+      token = decryptSecret(connection.baseApiToken);
+    } else if (connection.password) {
+      token = decryptSecret(connection.password);
+    }
+    if (!token) {
+      throw badRequestError('No Base API token configured.');
+    }
+
     const payload = await callBaseApi(token, 'getInventoryProductsList', {
       inventory_id: inventoryId,
       limit: 1

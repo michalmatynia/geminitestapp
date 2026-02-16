@@ -53,7 +53,8 @@ export function PromptExploderParserTuningProvider({
       onResetToPackDefaults: settingsActions.handleResetParserTuningDrafts,
       onOpenValidationPatterns: () => {
         const validatorScope = promptExploderValidatorScopeFromStack(
-          settingsState.activeValidationRuleStack
+          settingsState.activeValidationRuleStack,
+          settingsState.validatorPatternLists
         );
         router.push(`/admin/validator?scope=${validatorScope}`);
       },

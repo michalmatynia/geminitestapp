@@ -89,6 +89,7 @@ export type UpdateProductValidationPatternInput = {
   launchValue?: string | null;
   launchFlags?: string | null;
   appliesToScopes?: ProductValidationInstanceScope[];
+  expectedUpdatedAt?: string | null;
 };
 
 export type ProductValidationPatternRepository = {

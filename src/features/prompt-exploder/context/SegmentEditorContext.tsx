@@ -99,6 +99,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   const { toast } = useToast();
 
   const {
+    settingsMap,
     activeValidationScope,
     effectiveRules,
     effectiveLearnedTemplates,
@@ -113,6 +114,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     setSessionLearnedRules,
     setSessionLearnedTemplates,
     updateSetting,
+    updateSettingsBulk,
   } = useSettingsActions();
   const {
     documentState,
@@ -425,11 +427,6 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
           learnedRules: nextLearnedRules,
         },
       };
-      await updateSetting.mutateAsync({
-        key: PROMPT_ENGINE_SETTINGS_KEY,
-        value: serializeSetting(nextPromptSettings),
-      });
-
       const nextExploderSettings = {
         ...promptExploderSettings,
         learning: {
@@ -437,10 +434,24 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
           templates: nextTemplates,
         },
       };
-      await updateSetting.mutateAsync({
-        key: PROMPT_EXPLODER_SETTINGS_KEY,
-        value: serializeSetting(nextExploderSettings),
-      });
+      const writePayloads = [
+        {
+          key: PROMPT_ENGINE_SETTINGS_KEY,
+          value: serializeSetting(nextPromptSettings),
+        },
+        {
+          key: PROMPT_EXPLODER_SETTINGS_KEY,
+          value: serializeSetting(nextExploderSettings),
+        },
+      ];
+      const changedPayloads = writePayloads.filter(
+        (payload) => settingsMap.get(payload.key) !== payload.value
+      );
+      if (changedPayloads.length === 1) {
+        await updateSetting.mutateAsync(changedPayloads[0]!);
+      } else if (changedPayloads.length > 1) {
+        await updateSettingsBulk.mutateAsync(changedPayloads);
+      }
 
       setSessionLearnedRules((previous) => {
         const byId = new Map(previous.map((rule) => [rule.id, rule]));
@@ -507,6 +518,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     promptText,
     runtimeLearnedTemplates,
     runtimeValidationRules,
+    settingsMap,
     selectedSegment,
     setDocumentState,
     setManualBindings,
@@ -516,6 +528,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     templateMergeThreshold,
     toast,
     updateSetting,
+    updateSettingsBulk,
   ]);
 
   // ── Memoized context values ────────────────────────────────────────────────

@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
+import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
 import {
   encodeDynamicReplacementRecipe,
   parseDynamicReplacementRecipe,
@@ -185,6 +186,8 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
       isNameSegmentDimensionPattern(pattern, template),
     ),
   );
+
+  invalidateValidationPatternRuntimeCache();
 
   return NextResponse.json({
     outcomes,

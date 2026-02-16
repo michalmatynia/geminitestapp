@@ -25,6 +25,7 @@ const enqueueSchema = z.object({
   maxAttempts: z.number().int().min(1).max(50).optional(),
   backoffMs: z.number().int().min(0).max(60_000).optional(),
   backoffMaxMs: z.number().int().min(0).max(10 * 60_000).optional(),
+  requestId: z.string().trim().min(1).max(200).optional(),
   meta: z.record(z.string(), z.any()).optional().nullable(),
 });
 
@@ -71,6 +72,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
     ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
     ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
     ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
+    ...(rest.requestId ? { requestId: rest.requestId } : {}),
     meta: normalizedMeta,
   });
   startAiPathRunQueue();

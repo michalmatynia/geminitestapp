@@ -15,10 +15,8 @@ import { usePreviewEditor } from '@/features/cms/components/page-builder/preview
 
 interface PreviewSlideshowSectionProps {
   section: SectionInstance;
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  mediaStyles?: React.CSSProperties | null;
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
   selectedRing: string;
-  inspectorZ: string;
   renderSectionActions: () => React.ReactNode;
   divider: React.ReactNode;
   wrapInspector: (node: React.ReactNode) => React.ReactNode;

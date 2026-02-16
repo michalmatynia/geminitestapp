@@ -1005,7 +1005,7 @@ export function CanvasBoard({
 
         {nodes.map((node) => {
           const isSelected = node.id === selectedNodeId;
-          const style = typeStyles[node.type];
+          const style = typeStyles[node.type] ?? typeStyles.template;
           const canUsePersistedStatusFallback = runtimeRunStatus !== 'idle';
           const statusFromRuntimeState = (runtimeState.outputs[node.id] as Record<string, unknown> | undefined)?.['status'];
           const runtimeNodeStatusRaw =

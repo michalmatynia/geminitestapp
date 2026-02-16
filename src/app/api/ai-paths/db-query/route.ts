@@ -144,7 +144,7 @@ const normalizePrismaOrderBy = (
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
-    enforceAiPathsActionRateLimit(access, 'db-query');
+    await enforceAiPathsActionRateLimit(access, 'db-query');
   }
   const parsed = await parseJsonBody(req, querySchema, {
     logPrefix: 'ai-paths.db-query',

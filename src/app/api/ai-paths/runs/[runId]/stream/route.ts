@@ -2,13 +2,13 @@ export const runtime = 'nodejs';
 
 import { NextRequest } from 'next/server';
 
-import { assertAiPathRunAccess, requireAiPathsAccess } from '@/features/ai/ai-paths/server';
+import { assertAiPathRunAccess, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
-import type { AiPathRunRecord, AiPathRunNodeRecord } from '@/shared/types/domain/ai-paths';
+import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 
 const TERMINAL_STATUSES = new Set([
   'completed',
@@ -24,6 +24,10 @@ const EVENT_BATCH_LIMIT = normalizeLimit(
   Number(process.env['AI_PATHS_STREAM_EVENT_LIMIT'] ?? '200'),
   200
 );
+const NODE_BATCH_LIMIT = normalizeLimit(
+  Number(process.env['AI_PATHS_STREAM_NODE_LIMIT'] ?? '200'),
+  200
+);
 const PUBSUB_IDLE_TIMEOUT_MS = 30_000;
 const PUBSUB_CATCHUP_INTERVAL_MS = 10_000;
 const POLL_INTERVAL_MS = 500;
@@ -34,17 +38,6 @@ const toISOStringSafe = (value?: Date | string | null): string | null => {
   if (!value) return null;
   if (typeof value === 'string') return value;
   return value.toISOString();
-};
-
-const isAfterCursor = (
-  candidateTs: string,
-  candidateId: string,
-  cursorTs: string,
-  cursorId: string
-): boolean => {
-  if (candidateTs > cursorTs) return true;
-  if (candidateTs < cursorTs) return false;
-  return candidateId > cursorId;
 };
 
 const parseSinceParam = (value: string | null): Date | null => {
@@ -98,20 +91,13 @@ async function sendCatchUp(
     lastRunUpdatedAt = nextRunUpdatedAt;
   }
 
-  const nodes = await repo.listRunNodes(runId);
-  const changedNodes = nodes
-    .filter((node: AiPathRunNodeRecord) => {
-      const ts = toISOStringSafe(node.updatedAt ?? node.createdAt);
-      if (!ts) return false;
-      if (!lastNodeCursor) return true;
-      return isAfterCursor(ts, node.nodeId, lastNodeCursor.ts, lastNodeCursor.nodeId);
-    })
-    .sort((a: AiPathRunNodeRecord, b: AiPathRunNodeRecord) => {
-      const aTs = toISOStringSafe(a.updatedAt ?? a.createdAt) ?? '';
-      const bTs = toISOStringSafe(b.updatedAt ?? b.createdAt) ?? '';
-      if (aTs === bTs) return a.nodeId.localeCompare(b.nodeId);
-      return aTs.localeCompare(bTs);
-    });
+  const changedNodes = lastNodeCursor
+    ? await repo.listRunNodesSince(
+      runId,
+      { updatedAt: lastNodeCursor.ts, nodeId: lastNodeCursor.nodeId },
+      { limit: NODE_BATCH_LIMIT }
+    )
+    : await repo.listRunNodes(runId);
   if (changedNodes.length > 0) {
     send('nodes', changedNodes);
     const latestNode = changedNodes[changedNodes.length - 1];
@@ -305,7 +291,7 @@ async function GET_handler(
   params: { runId: string }
 ): Promise<Response> {
   const { runId } = params;
-  const access = await requireAiPathsAccess();
+  const access = await requireAiPathsRunAccess();
   const repo = await getPathRunRepository();
   const initialRun = await repo.findRunById(runId);
   if (!initialRun) {

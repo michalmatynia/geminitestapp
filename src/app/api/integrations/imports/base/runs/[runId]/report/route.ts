@@ -10,7 +10,9 @@ import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const querySchema = z.object({
   format: z.enum(['json', 'csv']).optional(),
+  statuses: z.string().trim().optional(),
 });
+const REPORT_PAGE_SIZE = 1000;
 
 const escapeCsv = (value: unknown): string => {
   const raw =
@@ -63,6 +65,42 @@ const buildCsv = (
   return `${header.join(',')}\n${rows.join('\n')}`;
 };
 
+const loadReportDetail = async (input: {
+  runId: string;
+  statuses: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
+}): Promise<Awaited<ReturnType<typeof getBaseImportRunDetailOrThrow>>> => {
+  const first = await getBaseImportRunDetailOrThrow(input.runId, {
+    ...(input.statuses.length > 0 ? { statuses: input.statuses } : {}),
+    page: 1,
+    pageSize: REPORT_PAGE_SIZE,
+  });
+  const totalPages = first.pagination?.totalPages ?? 1;
+  if (totalPages <= 1) {
+    return first;
+  }
+
+  const allItems = [...first.items];
+  for (let page = 2; page <= totalPages; page += 1) {
+    const detail = await getBaseImportRunDetailOrThrow(input.runId, {
+      ...(input.statuses.length > 0 ? { statuses: input.statuses } : {}),
+      page,
+      pageSize: REPORT_PAGE_SIZE,
+    });
+    allItems.push(...detail.items);
+  }
+
+  return {
+    ...first,
+    items: allItems,
+    pagination: {
+      page: 1,
+      pageSize: allItems.length,
+      totalItems: allItems.length,
+      totalPages: 1,
+    },
+  };
+};
+
 async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
@@ -72,8 +110,24 @@ async function GET_handler(
     Object.fromEntries(new URL(req.url).searchParams.entries())
   );
   const format = parsed.success ? parsed.data.format ?? 'json' : 'json';
+  const statusesRaw = parsed.success ? parsed.data.statuses ?? '' : '';
+  const statuses = statusesRaw
+    .split(',')
+    .map((value: string): string => value.trim())
+    .filter((value: string): boolean => value.length > 0)
+    .filter((value: string): boolean =>
+      value === 'pending' ||
+      value === 'processing' ||
+      value === 'imported' ||
+      value === 'updated' ||
+      value === 'skipped' ||
+      value === 'failed'
+    ) as Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
 
-  const detail = await getBaseImportRunDetailOrThrow(params.runId);
+  const detail = await loadReportDetail({
+    runId: params.runId,
+    statuses,
+  });
 
   if (format === 'csv') {
     const filename = `base-import-${detail.run.id}.csv`;

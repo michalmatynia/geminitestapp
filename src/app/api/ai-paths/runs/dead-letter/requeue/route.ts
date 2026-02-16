@@ -25,7 +25,7 @@ const requeueSchema = z.object({
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, 'run-requeue');
+  await enforceAiPathsActionRateLimit(access, 'run-requeue');
   const parsed = await parseJsonBody(req, requeueSchema, {
     logPrefix: 'ai-paths.runs.dead-letter.requeue',
   });

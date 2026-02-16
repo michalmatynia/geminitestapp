@@ -103,6 +103,19 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     [projectsQuery.data]
   );
 
+  const handleOpenProjectEditor = useCallback((nextProjectId: string): void => {
+    const normalizedProjectId = nextProjectId.trim();
+    if (!normalizedProjectId) return;
+
+    setProjectId(normalizedProjectId);
+    setActiveTab('studio');
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    params.set('projectId', normalizedProjectId);
+    params.delete('tab');
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  }, [pathname, router, searchParams, setProjectId]);
+
   const handleCopyActiveCardName = useCallback((): void => {
     const cardLabel = selectedSlot?.name?.trim() || selectedSlot?.id || null;
     if (!cardLabel) {
@@ -180,7 +193,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
 
             <TabsContent value='projects' className='h-full m-0 overflow-y-auto'>
               <div className='p-4'>
-                <StudioProjectsList />
+                <StudioProjectsList onOpenProject={handleOpenProjectEditor} />
               </div>
             </TabsContent>
 

@@ -172,7 +172,9 @@ export async function createValidationPattern(
 }
 
 export type UpdateValidationPatternPayload =
-  Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>>;
+  Partial<Omit<ProductValidationPattern, 'id' | 'createdAt' | 'updatedAt'>> & {
+    expectedUpdatedAt?: string | null;
+  };
 
 export async function updateValidationPattern(
   id: string,
@@ -183,6 +185,24 @@ export async function updateValidationPattern(
 
 export async function deleteValidationPattern(id: string): Promise<void> {
   return api.delete(`/api/products/validator-patterns/${id}`);
+}
+
+export type ReorderValidationPatternUpdatePayload = {
+  id: string;
+  sequence?: number;
+  sequenceGroupId?: string | null;
+  sequenceGroupLabel?: string | null;
+  sequenceGroupDebounceMs?: number;
+  expectedUpdatedAt?: string | null;
+};
+
+export async function reorderValidationPatterns(payload: {
+  updates: ReorderValidationPatternUpdatePayload[];
+}): Promise<{ updated: ProductValidationPattern[] }> {
+  return api.post<{ updated: ProductValidationPattern[] }>(
+    '/api/products/validator-patterns/reorder',
+    payload
+  );
 }
 
 export async function getProductValidatorConfig(includeDisabled: boolean = false): Promise<ProductValidatorConfig> {

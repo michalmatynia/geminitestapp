@@ -90,14 +90,19 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
 
   const persistProjects = async (
     nextItems: PromptExploderLibraryItem[]
-  ): Promise<void> => {
+  ): Promise<boolean> => {
+    const serialized = serializeSetting({
+      version: 1,
+      items: nextItems,
+    });
+    if (rawPromptLibrary === serialized) {
+      return false;
+    }
     await updateSetting.mutateAsync({
       key: PROMPT_EXPLODER_LIBRARY_KEY,
-      value: serializeSetting({
-        version: 1,
-        items: nextItems,
-      }),
+      value: serialized,
     });
+    return true;
   };
 
   const openCreateEditor = (): void => {
@@ -162,7 +167,11 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
     });
 
     try {
-      await persistProjects(nextItems);
+      const persisted = await persistProjects(nextItems);
+      if (!persisted) {
+        toast('No project changes to save.', { variant: 'info' });
+        return;
+      }
       setIsEditorOpen(false);
       setEditingProjectId(null);
       setDraftName('');
@@ -192,7 +201,11 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       projectPendingDeleteId
     );
     try {
-      await persistProjects(nextItems);
+      const persisted = await persistProjects(nextItems);
+      if (!persisted) {
+        toast('Project list was already up to date.', { variant: 'info' });
+        return;
+      }
       setProjectPendingDeleteId(null);
       toast(`Deleted project: ${target.name}`, { variant: 'success' });
     } catch (error: unknown) {

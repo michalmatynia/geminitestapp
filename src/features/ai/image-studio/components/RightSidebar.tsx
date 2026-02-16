@@ -387,7 +387,8 @@ export function RightSidebar(): React.JSX.Element {
       const result = formatProgrammaticPrompt(
         nextPrompt,
         promptValidationSettings,
-        { scope: 'image_studio_prompt' }
+        { scope: 'image_studio_prompt' },
+        { precomputedIssuesBefore: beforeIssues }
       );
       if (result.changed) {
         nextPrompt = result.prompt;

@@ -2,13 +2,13 @@ import 'server-only';
 
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { recoverStaleRunningRuns } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { logSystemEvent } from '@/features/observability/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type { AiPathRunRecord } from '@/shared/types/domain/ai-paths';
 
-const STALE_RUNNING_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
 const DEFAULT_MAX_ATTEMPTS = Number(process.env['AI_PATHS_RUN_MAX_ATTEMPTS'] ?? '3');
 const DEFAULT_BACKOFF_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MS'] ?? '5000');
 const DEFAULT_BACKOFF_MAX_MS = Number(process.env['AI_PATHS_RUN_BACKOFF_MAX_MS'] ?? '60000');
@@ -238,20 +238,20 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
  */
 export const processStaleRunRecovery = async (): Promise<void> => {
   try {
-    const repo = await getPathRunRepository();
-    const result = await repo.markStaleRunningRuns(STALE_RUNNING_THRESHOLD_MS);
-    if (result.count > 0) {
+    const count = await recoverStaleRunningRuns({
+      source: 'ai-paths-queue.stale-recovery',
+    });
+    if (count > 0) {
       debugQueueLog(
-        `Recovery: marked ${result.count} stale running run(s) as failed`,
-        { count: result.count, thresholdMs: STALE_RUNNING_THRESHOLD_MS }
+        `Recovery: marked ${count} stale running run(s) as failed`,
+        { count }
       );
       void ErrorSystem.logWarning(
-        `Stale run recovery: marked ${result.count} run(s) as failed`,
+        `Stale run recovery: marked ${count} run(s) as failed`,
         {
           service: 'ai-paths-queue',
           action: 'staleRunRecovery',
-          count: result.count,
-          thresholdMs: STALE_RUNNING_THRESHOLD_MS,
+          count,
         }
       );
     }

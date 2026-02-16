@@ -21,6 +21,16 @@ const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 
+const isProjectScopedStudioPath = (filepath: string, projectId: string): boolean => {
+  const scopes = [
+    `/uploads/studio/${projectId}`,
+    `/uploads/studio/crops/${projectId}`,
+    `/uploads/studio/center/${projectId}`,
+    `/uploads/studio/upscale/${projectId}`,
+  ];
+  return scopes.some((scope) => filepath === scope || filepath.startsWith(`${scope}/`));
+};
+
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -146,7 +156,7 @@ async function POST_handler(
     }
     filepath = record.filepath;
     const normalized = normalizePublicPath(filepath);
-    if (!normalized?.startsWith(`/uploads/studio/${projectId}/`)) {
+    if (!normalized || !isProjectScopedStudioPath(normalized, projectId)) {
       throw badRequestError('Asset not in this project');
     }
     const diskPath = resolveDiskPathFromPublicUploadPath(normalized);
@@ -176,7 +186,7 @@ async function POST_handler(
   }
 
   const normalized = normalizePublicPath(filepath);
-  if (!normalized?.startsWith(`/uploads/studio/${projectId}/`)) {
+  if (!normalized || !isProjectScopedStudioPath(normalized, projectId)) {
     throw notFoundError('Asset not found');
   }
   const diskPath = resolveDiskPathFromPublicUploadPath(normalized);

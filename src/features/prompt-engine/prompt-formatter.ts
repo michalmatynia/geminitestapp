@@ -1,15 +1,16 @@
 import {
-  buildPromptSequenceGroupCounts,
   doesPromptRuleApplyToScope,
   evaluatePromptValidationRule,
   isPromptRuleInSequenceGroup,
   normalizePromptRuleChainMode,
   normalizePromptRuleMaxExecutions,
+  preparePromptValidationRuntime,
   shouldLaunchPromptRule,
-  sortPromptValidationRules,
+  type PromptValidationIssue,
+  validateProgrammaticPromptWithRuntime,
   type PromptValidationExecutionContext,
-  validateProgrammaticPrompt,
 } from './prompt-validator';
+import { recordPromptValidationTiming } from '@/features/prompt-core/runtime-observability';
 
 import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings, PromptValidationSimilarPattern } from './settings';
 
@@ -24,6 +25,12 @@ export type FormatPromptResult = {
   applied: AppliedFix[];
   issuesBefore: number;
   issuesAfter: number;
+};
+
+export type FormatPromptOptions = {
+  precomputedIssuesBefore?: PromptValidationIssue[] | undefined;
+  preparedRuntime?: ReturnType<typeof preparePromptValidationRuntime> | undefined;
+  enableIncrementalValidation?: boolean | undefined;
 };
 
 type ScanState = {
@@ -330,31 +337,42 @@ function applySuggestionFix(prompt: string, suggestion: PromptValidationSimilarP
 export function formatProgrammaticPrompt(
   prompt: string,
   settings: PromptValidationSettings,
-  context: PromptValidationExecutionContext = {}
+  context: PromptValidationExecutionContext = {},
+  options: FormatPromptOptions = {}
 ): FormatPromptResult {
+  const startedAt = performance.now();
   const mergedRules: PromptValidationRule[] = [
     ...settings.rules,
     ...(settings.learnedRules ?? []),
   ];
   const validationSettings = { ...settings, enabled: true, rules: mergedRules };
-  const issuesBefore = validateProgrammaticPrompt(
-    prompt,
-    validationSettings,
-    context
-  ).length;
+  const runtime =
+    options.preparedRuntime ??
+    preparePromptValidationRuntime(validationSettings, context);
+  const issuesBeforeList =
+    options.precomputedIssuesBefore ??
+    validateProgrammaticPromptWithRuntime(prompt, runtime);
+  const issuesBefore = issuesBeforeList.length;
   if (issuesBefore === 0) {
+    recordPromptValidationTiming('formatter_ms', performance.now() - startedAt, {
+      scope: context.scope ?? 'none',
+      changed: '0',
+      mode: 'skip',
+    });
     return { prompt, changed: false, applied: [], issuesBefore, issuesAfter: 0 };
   }
 
-  const orderedRules = sortPromptValidationRules(mergedRules);
-  const sequenceGroupCounts = buildPromptSequenceGroupCounts(orderedRules);
+  const orderedRules = runtime.orderedRules;
+  const sequenceGroupCounts = runtime.sequenceGroupCounts;
 
   let nextPrompt = prompt;
   const applied: AppliedFix[] = [];
+  const impactedRuleIds = new Set<string>();
+  let wideImpactFix = false;
 
   for (const rule of orderedRules) {
     if (!rule.enabled) continue;
-    if (!doesPromptRuleApplyToScope(rule, context.scope)) continue;
+    if (!doesPromptRuleApplyToScope(rule, runtime.context.scope)) continue;
 
     const inSequenceGroup = isPromptRuleInSequenceGroup(rule, sequenceGroupCounts);
     const maxExecutions = normalizePromptRuleMaxExecutions(rule);
@@ -363,7 +381,7 @@ export function formatProgrammaticPrompt(
     let replaced = false;
 
     for (let execution = 0; execution < maxExecutions; execution += 1) {
-      if (!shouldLaunchPromptRule(rule, candidatePrompt, context)) break;
+      if (!shouldLaunchPromptRule(rule, candidatePrompt, runtime.context)) break;
       const issue = evaluatePromptValidationRule(candidatePrompt, rule);
       if (!issue) break;
 
@@ -378,6 +396,10 @@ export function formatProgrammaticPrompt(
           if (candidatePrompt !== before) {
             applied.push({ ruleId: rule.id, operationKind: op.kind });
             appliedFixInExecution = true;
+            impactedRuleIds.add(rule.id);
+            if (op.kind === 'params_json') {
+              wideImpactFix = true;
+            }
           }
         }
       }
@@ -389,6 +411,10 @@ export function formatProgrammaticPrompt(
           if (candidatePrompt !== before) {
             applied.push({ ruleId: rule.id, operationKind: 'replace' });
             appliedFixInExecution = true;
+            impactedRuleIds.add(rule.id);
+            if (sim.pattern.includes('params')) {
+              wideImpactFix = true;
+            }
           }
         }
       }
@@ -412,16 +438,48 @@ export function formatProgrammaticPrompt(
     if (replaced && rule.passOutputToNext !== false && candidatePrompt !== nextPrompt) {
       nextPrompt = candidatePrompt;
     }
+
+    if (replaced) {
+      const sequenceGroupId = rule.sequenceGroupId?.trim();
+      if (sequenceGroupId) {
+        orderedRules.forEach((entry) => {
+          if (entry.sequenceGroupId?.trim() === sequenceGroupId) {
+            impactedRuleIds.add(entry.id);
+          }
+        });
+      }
+    }
   }
 
-  const issuesAfter = validateProgrammaticPrompt(
-    nextPrompt,
-    validationSettings,
-    context
-  ).length;
+  const changed = nextPrompt !== prompt;
+  let issuesAfter = issuesBefore;
+  if (changed) {
+    const shouldUseIncremental =
+      options.enableIncrementalValidation !== false &&
+      !wideImpactFix &&
+      impactedRuleIds.size > 0;
+    if (shouldUseIncremental) {
+      const afterTouchedIssues = validateProgrammaticPromptWithRuntime(nextPrompt, runtime, {
+        includeRuleIds: impactedRuleIds,
+      });
+      const untouchedBeforeCount = issuesBeforeList.filter(
+        (issue) => !impactedRuleIds.has(issue.ruleId)
+      ).length;
+      issuesAfter = untouchedBeforeCount + afterTouchedIssues.length;
+    } else {
+      issuesAfter = validateProgrammaticPromptWithRuntime(nextPrompt, runtime).length;
+    }
+  }
+
+  recordPromptValidationTiming('formatter_ms', performance.now() - startedAt, {
+    scope: context.scope ?? 'none',
+    changed: changed ? '1' : '0',
+    mode: changed && impactedRuleIds.size > 0 && !wideImpactFix ? 'incremental' : 'full',
+  });
+
   return {
     prompt: nextPrompt,
-    changed: nextPrompt !== prompt,
+    changed,
     applied,
     issuesBefore,
     issuesAfter,

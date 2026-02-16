@@ -41,7 +41,11 @@ import {
   setImageStudioProjectDeletionLock,
 } from '../utils/project-locks';
 
-export function StudioProjectsList(): React.JSX.Element {
+interface StudioProjectsListProps {
+  onOpenProject?: (projectId: string) => void;
+}
+
+export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const projectSettingsMutation = useUpdateSetting();
@@ -246,6 +250,17 @@ export function StudioProjectsList(): React.JSX.Element {
     ]
   );
 
+  const handleOpenProject = React.useCallback(
+    (id: string): void => {
+      if (onOpenProject) {
+        onOpenProject(id);
+        return;
+      }
+      setProjectId(id);
+    },
+    [onOpenProject, setProjectId]
+  );
+
   return (
     <div className='space-y-4'>
       <div className='flex items-center gap-2 rounded-lg border border-border/60 bg-card/40 p-3'>
@@ -292,7 +307,6 @@ export function StudioProjectsList(): React.JSX.Element {
           <TableHeader>
             <TableRow>
               <TableHead className='h-9 px-3'>Project</TableHead>
-              <TableHead className='h-9 px-3'>Status</TableHead>
               <TableHead className='h-9 px-3 text-center'>Lock</TableHead>
               <TableHead className='h-9 px-3 text-right'>Actions</TableHead>
             </TableRow>
@@ -300,13 +314,13 @@ export function StudioProjectsList(): React.JSX.Element {
           <TableBody>
             {projectsQuery.isLoading ? (
               <TableRow>
-                <TableCell colSpan={4} className='px-3 py-6 text-center text-xs text-gray-500'>
+                <TableCell colSpan={3} className='px-3 py-6 text-center text-xs text-gray-500'>
                   Loading projects...
                 </TableCell>
               </TableRow>
             ) : filteredProjects.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className='px-3 py-6 text-center text-xs text-gray-500'>
+                <TableCell colSpan={3} className='px-3 py-6 text-center text-xs text-gray-500'>
                   No projects found.
                 </TableCell>
               </TableRow>
@@ -352,20 +366,11 @@ export function StudioProjectsList(): React.JSX.Element {
                             'max-w-[230px] truncate text-left',
                             isSelected ? 'font-medium text-primary' : 'text-gray-200 hover:text-white'
                           )}
-                          onClick={() => setProjectId(id)}
+                          onClick={() => handleOpenProject(id)}
                           title={id}
                         >
                           {id}
                         </button>
-                      )}
-                    </TableCell>
-                    <TableCell className='px-3 py-2'>
-                      {isSelected ? (
-                        <Badge variant='secondary' className='text-[10px]'>
-                          Active
-                        </Badge>
-                      ) : (
-                        <span className='text-[11px] text-gray-500'>Inactive</span>
                       )}
                     </TableCell>
                     <TableCell className='px-3 py-2 text-center'>
@@ -425,10 +430,10 @@ export function StudioProjectsList(): React.JSX.Element {
                               size='xs'
                               variant='outline'
                               className='h-7 px-2'
-                              onClick={() => setProjectId(id)}
-                              title='Set active project'
+                              onClick={() => handleOpenProject(id)}
+                              title='Open project editor'
                             >
-                              Active
+                              Edit
                             </Button>
                             <Button
                               type='button'
@@ -439,7 +444,8 @@ export function StudioProjectsList(): React.JSX.Element {
                               disabled={rowPending}
                               title='Rename project'
                             >
-                              <Pencil className='size-3.5' />
+                              <Pencil className='mr-1 size-3.5' />
+                              Rename
                             </Button>
                             <Button
                               type='button'

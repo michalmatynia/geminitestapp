@@ -11,6 +11,8 @@ export const runtime = 'nodejs';
 const MAX_BATCH_SIZE = 100;
 const MAX_CONTEXT_BYTES = 12_000;
 const MAX_STRING_LENGTH = 2_000;
+const BLOCKING_QUERY_TELEMETRY_INGESTION =
+  process.env['QUERY_TELEMETRY_BLOCKING_INGESTION'] === 'true';
 
 const eventSchema = z.object({
   id: z.string().trim().min(1).max(120),
@@ -101,24 +103,21 @@ const logSystemTelemetryEvent = async (input: LogSystemEventInput): Promise<void
   }
 };
 
-async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
-  const parsed = bodySchema.safeParse(ctx.body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      {
-        ok: false,
-        accepted: 0,
-        dropped: 0,
-        reason: 'invalid_payload',
-      },
-      { status: 400 }
-    );
-  }
+type PersistTelemetryBatchInput = {
+  events: Array<z.infer<typeof eventSchema>>;
+  request: NextRequest;
+  requestId?: string | undefined;
+};
 
+const persistTelemetryBatch = async ({
+  events,
+  request,
+  requestId,
+}: PersistTelemetryBatchInput): Promise<{ accepted: number; dropped: number }> => {
   let accepted = 0;
   let dropped = 0;
 
-  const tasks = parsed.data.events.map(async (event) => {
+  const tasks = events.map(async (event) => {
     const sanitizedContext = sanitizeContext(event.context);
     const message = `TanStack ${event.entity} ${event.stage} (${event.resource})`;
     const source = `tanstack.telemetry.${event.entity}.${event.stage}`;
@@ -147,8 +146,8 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<N
         message,
         source,
         ...(typeof event.statusCode === 'number' ? { statusCode: event.statusCode } : {}),
-        request: req,
-        requestId: ctx.requestId,
+        request,
+        ...(requestId ? { requestId } : {}),
         context,
         critical: event.criticality === 'critical',
       });
@@ -159,12 +158,57 @@ async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<N
   });
 
   await Promise.all(tasks);
+  return { accepted, dropped };
+};
+
+async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<NextResponse> {
+  const parsed = bodySchema.safeParse(ctx.body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        ok: false,
+        accepted: 0,
+        dropped: 0,
+        reason: 'invalid_payload',
+      },
+      { status: 400 }
+    );
+  }
+
+  if (BLOCKING_QUERY_TELEMETRY_INGESTION) {
+    const persisted = await persistTelemetryBatch({
+      events: parsed.data.events,
+      request: req,
+      requestId: ctx.requestId,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      accepted: persisted.accepted,
+      dropped: persisted.dropped,
+      queued: false,
+    });
+  }
+
+  void persistTelemetryBatch({
+    events: parsed.data.events,
+    request: req,
+    requestId: ctx.requestId,
+  }).catch((error: unknown) => {
+    logger.error('query-telemetry background ingestion failed', error, {
+      source: 'query-telemetry.POST',
+      requestId: ctx.requestId,
+      eventCount: parsed.data.events.length,
+    });
+  });
 
   return NextResponse.json({
     ok: true,
-    accepted,
-    dropped,
-  });
+    accepted: parsed.data.events.length,
+    dropped: 0,
+    queued: true,
+    requestId: ctx.requestId,
+  }, { status: 202 });
 }
 
 export const POST = apiHandler(POST_handler, {

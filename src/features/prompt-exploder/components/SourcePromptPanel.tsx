@@ -7,7 +7,7 @@ import { Button, FormSection, Textarea } from '@/shared/ui';
 import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
 
 export function SourcePromptPanel(): React.JSX.Element {
-  const { promptText, documentState } = useDocumentState();
+  const { promptText, documentState, returnTarget } = useDocumentState();
   const { setPromptText, handleExplode, handleApplyToImageStudio } = useDocumentActions();
 
   return (
@@ -27,7 +27,9 @@ export function SourcePromptPanel(): React.JSX.Element {
             onClick={handleApplyToImageStudio}
             disabled={!documentState}
           >
-            Apply to Image Studio
+            {returnTarget === 'case-resolver'
+              ? 'Apply to Case Resolver'
+              : 'Apply to Image Studio'}
           </Button>
         </div>
       }

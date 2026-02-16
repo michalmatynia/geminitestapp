@@ -1,5 +1,6 @@
 import { extractParamsFromPrompt } from './prompt-params';
 import { DEFAULT_PROMPT_VALIDATION_SCOPES } from './settings';
+import { recordPromptValidationTiming } from '@/features/prompt-core/runtime-observability';
 
 import type {
   PromptValidationScope,
@@ -27,6 +28,17 @@ export type PromptValidationIssue = {
 
 export type PromptValidationExecutionContext = {
   scope?: PromptValidationScope | null;
+};
+
+export type PromptValidationPreparedRuntime = {
+  enabled: boolean;
+  context: PromptValidationExecutionContext;
+  orderedRules: PromptValidationRule[];
+  sequenceGroupCounts: Map<string, number>;
+};
+
+export type PromptValidationRuntimeEvaluateOptions = {
+  includeRuleIds?: Set<string> | string[] | null | undefined;
 };
 
 const DEFAULT_SEQUENCE_STEP = 10;
@@ -277,33 +289,63 @@ export const evaluatePromptValidationRule = (
   };
 };
 
-export function validateProgrammaticPrompt(
-  prompt: string,
+const normalizeRuleFilter = (
+  includeRuleIds: PromptValidationRuntimeEvaluateOptions['includeRuleIds']
+): Set<string> | null => {
+  if (!includeRuleIds) return null;
+  if (includeRuleIds instanceof Set) {
+    return includeRuleIds.size > 0 ? includeRuleIds : null;
+  }
+  if (!Array.isArray(includeRuleIds) || includeRuleIds.length === 0) {
+    return null;
+  }
+  return new Set(includeRuleIds.filter(Boolean));
+};
+
+export const preparePromptValidationRuntime = (
   settings: PromptValidationSettings,
   context: PromptValidationExecutionContext = {}
-): PromptValidationIssue[] {
-  if (!settings.enabled) return [];
-  if (!prompt.trim()) return [];
-
+): PromptValidationPreparedRuntime => {
   const mergedRules: PromptValidationRule[] = [
     ...settings.rules,
     ...(settings.learnedRules ?? []),
   ];
   const orderedRules = sortPromptValidationRules(mergedRules);
   const sequenceGroupCounts = buildPromptSequenceGroupCounts(orderedRules);
+  return {
+    enabled: settings.enabled,
+    context,
+    orderedRules,
+    sequenceGroupCounts,
+  };
+};
 
+export const validateProgrammaticPromptWithRuntime = (
+  prompt: string,
+  runtime: PromptValidationPreparedRuntime,
+  options: PromptValidationRuntimeEvaluateOptions = {}
+): PromptValidationIssue[] => {
+  if (!runtime.enabled) return [];
+  if (!prompt.trim()) return [];
+
+  const startedAt = performance.now();
+  const includeRuleIds = normalizeRuleFilter(options.includeRuleIds);
   const issues: PromptValidationIssue[] = [];
 
-  for (const rule of orderedRules) {
+  for (const rule of runtime.orderedRules) {
+    if (includeRuleIds && !includeRuleIds.has(rule.id)) continue;
     if (!rule.enabled) continue;
-    if (!doesPromptRuleApplyToScope(rule, context.scope)) continue;
+    if (!doesPromptRuleApplyToScope(rule, runtime.context.scope)) continue;
 
-    const inSequenceGroup = isPromptRuleInSequenceGroup(rule, sequenceGroupCounts);
+    const inSequenceGroup = isPromptRuleInSequenceGroup(
+      rule,
+      runtime.sequenceGroupCounts
+    );
     const maxExecutions = normalizePromptRuleMaxExecutions(rule);
     let matched = false;
 
     for (let execution = 0; execution < maxExecutions; execution += 1) {
-      if (!shouldLaunchPromptRule(rule, prompt, context)) break;
+      if (!shouldLaunchPromptRule(rule, prompt, runtime.context)) break;
       const issue = evaluatePromptValidationRule(prompt, rule);
       if (!issue) break;
       matched = true;
@@ -316,5 +358,21 @@ export function validateProgrammaticPrompt(
     if (matched && chainMode === 'stop_on_match') break;
   }
 
+  recordPromptValidationTiming('validator_ms', performance.now() - startedAt, {
+    scope: runtime.context.scope ?? 'none',
+    mode: includeRuleIds ? 'subset' : 'full',
+  });
+
   return issues;
+};
+
+export function validateProgrammaticPrompt(
+  prompt: string,
+  settings: PromptValidationSettings,
+  context: PromptValidationExecutionContext = {}
+): PromptValidationIssue[] {
+  return validateProgrammaticPromptWithRuntime(
+    prompt,
+    preparePromptValidationRuntime(settings, context)
+  );
 }

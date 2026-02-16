@@ -1,8 +1,8 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -20,6 +20,7 @@ import {
 } from '../prompt-library';
 import { useBenchmarkActions } from './hooks/useBenchmark';
 import { useDocumentState, useDocumentActions } from './hooks/useDocument';
+import { useSettingsActions, useSettingsState } from './hooks/useSettings';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,8 +49,9 @@ const LibraryActionsContext = createContext<LibraryActions | null>(null);
 
 export function LibraryProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
-  const settingsQuery = useSettingsMap({ scope: 'all' });
-  const updateSetting = useUpdateSetting();
+  const searchParams = useSearchParams();
+  const { settingsMap } = useSettingsState();
+  const { updateSetting } = useSettingsActions();
 
   const { promptText, documentState } = useDocumentState();
   const {
@@ -65,10 +67,11 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
 
   const [selectedLibraryItemId, setSelectedLibraryItemId] = useState<string | null>(null);
   const [libraryNameDraft, setLibraryNameDraft] = useState('');
+  const [loadedProjectIdFromQuery, setLoadedProjectIdFromQuery] = useState<string | null>(null);
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  const rawPromptLibrary = settingsQuery.data?.get(PROMPT_EXPLODER_LIBRARY_KEY) ?? null;
+  const rawPromptLibrary = settingsMap.get(PROMPT_EXPLODER_LIBRARY_KEY) ?? null;
   const promptLibraryState = useMemo(
     () => parsePromptExploderLibrary(rawPromptLibrary),
     [rawPromptLibrary]
@@ -90,16 +93,23 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     setSelectedLibraryItemId(null);
   }, [promptLibraryItems, selectedLibraryItemId]);
 
+  const requestedProjectId = searchParams?.get('projectId')?.trim() ?? '';
+
   // ── Actions ────────────────────────────────────────────────────────────────
 
   const persistPromptLibraryItems = useCallback(
-    async (items: PromptExploderLibraryItem[]) => {
+    async (items: PromptExploderLibraryItem[]): Promise<boolean> => {
+      const serialized = serializeSetting({ version: 1, items });
+      if (settingsMap.get(PROMPT_EXPLODER_LIBRARY_KEY) === serialized) {
+        return false;
+      }
       await updateSetting.mutateAsync({
         key: PROMPT_EXPLODER_LIBRARY_KEY,
-        value: serializeSetting({ version: 1, items }),
+        value: serialized,
       });
+      return true;
     },
-    [updateSetting]
+    [settingsMap, updateSetting]
   );
 
   const handleNewLibraryEntry = useCallback(() => {
@@ -143,7 +153,11 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       maxItems: 200,
     });
     try {
-      await persistPromptLibraryItems(nextItems);
+      const persisted = await persistPromptLibraryItems(nextItems);
+      if (!persisted) {
+        toast('No project changes to save.', { variant: 'info' });
+        return;
+      }
       setSelectedLibraryItemId(nextItem.id);
       setLibraryNameDraft(nextItem.name);
       toast(`Saved library entry: ${nextItem.name}`, { variant: 'success' });
@@ -193,6 +207,15 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
     ]
   );
 
+  useEffect(() => {
+    if (!requestedProjectId) return;
+    if (loadedProjectIdFromQuery === requestedProjectId) return;
+    const requestedItem = promptLibraryItems.find((item) => item.id === requestedProjectId);
+    if (!requestedItem) return;
+    handleLoadLibraryItem(requestedItem.id);
+    setLoadedProjectIdFromQuery(requestedItem.id);
+  }, [handleLoadLibraryItem, loadedProjectIdFromQuery, promptLibraryItems, requestedProjectId]);
+
   const handleDeleteLibraryItem = useCallback(
     async (itemId: string) => {
       const target = promptLibraryState.items.find((item) => item.id === itemId);
@@ -202,7 +225,11 @@ export function LibraryProvider({ children }: { children: React.ReactNode }): Re
       }
       const nextItems = removePromptExploderLibraryItemById(promptLibraryState.items, itemId);
       try {
-        await persistPromptLibraryItems(nextItems);
+        const persisted = await persistPromptLibraryItems(nextItems);
+        if (!persisted) {
+          toast('Project list was already up to date.', { variant: 'info' });
+          return;
+        }
         if (selectedLibraryItemId === itemId) {
           setSelectedLibraryItemId(null);
         }

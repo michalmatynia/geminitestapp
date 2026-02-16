@@ -10,11 +10,13 @@ import {
 import { logClientError } from '@/features/observability';
 import type {
   CreateValidationPatternPayload,
+  ReorderValidationPatternUpdatePayload,
   UpdateValidationPatternPayload,
 } from '@/features/products/api/settings';
 import {
   useCreateValidationPatternMutation,
   useDeleteValidationPatternMutation,
+  useReorderValidationPatternsMutation,
   useUpdateValidatorSettingsMutation,
   useUpdateValidationPatternMutation,
   useValidationPatterns,
@@ -147,6 +149,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
   const createPattern = useCreateValidationPatternMutation();
   const updatePattern = useUpdateValidationPatternMutation();
   const deletePattern = useDeleteValidationPatternMutation();
+  const reorderPatternsMutation = useReorderValidationPatternsMutation();
 
   const [showModal, setShowModal] = useState(false);
   const [editingPattern, setEditingPattern] =
@@ -209,6 +212,7 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
     createPattern.isPending ||
     updatePattern.isPending ||
     deletePattern.isPending ||
+    reorderPatternsMutation.isPending ||
     reorderPending;
 
   const getGroupDraft = (groupId: string): SequenceGroupDraft => {
@@ -758,17 +762,43 @@ export function useValidatorSettingsController(): ValidatorSettingsController {
       }
     }
 
-    const updates = Array.from(updateMap.entries()).map(([id, data]) => ({ id, data }));
+    const patternById = new Map<string, ProductValidationPattern>(
+      orderedPatterns.map((pattern: ProductValidationPattern) => [pattern.id, pattern])
+    );
+    const updates: ReorderValidationPatternUpdatePayload[] = Array.from(updateMap.entries()).map(
+      ([id, data]) => {
+        const currentUpdatedAt = patternById.get(id)?.updatedAt;
+        const nextUpdate: ReorderValidationPatternUpdatePayload = {
+          id,
+          expectedUpdatedAt:
+            typeof currentUpdatedAt === 'string'
+              ? currentUpdatedAt
+              : currentUpdatedAt instanceof Date
+                ? currentUpdatedAt.toISOString()
+                : null,
+        };
+        if (typeof data.sequence === 'number' && Number.isFinite(data.sequence)) {
+          nextUpdate.sequence = Math.max(0, Math.floor(data.sequence));
+        }
+        if (data.sequenceGroupId !== undefined) {
+          nextUpdate.sequenceGroupId = data.sequenceGroupId ?? null;
+        }
+        if (data.sequenceGroupLabel !== undefined) {
+          nextUpdate.sequenceGroupLabel = data.sequenceGroupLabel ?? null;
+        }
+        if (typeof data.sequenceGroupDebounceMs === 'number') {
+          nextUpdate.sequenceGroupDebounceMs = normalizeSequenceGroupDebounceMs(
+            data.sequenceGroupDebounceMs
+          );
+        }
+        return nextUpdate;
+      }
+    );
     if (updates.length === 0) return;
 
     setReorderPending(true);
     try {
-      for (const update of updates) {
-        await updatePattern.mutateAsync({
-          id: update.id,
-          data: update.data,
-        });
-      }
+      await reorderPatternsMutation.mutateAsync({ updates });
       setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
         ...prev,
         [nextGroupId]: {

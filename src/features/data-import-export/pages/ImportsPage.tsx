@@ -62,6 +62,9 @@ function ImportsPageContent(): React.JSX.Element {
     setExportTemplateMappings,
     exportImagesAsBase64,
     setExportImagesAsBase64,
+    importSourceFields,
+    importSourceFieldValues,
+    loadingImportSourceFields,
   } = useImportExport();
 
   const isImportTemplateScope = templateScope === 'import';
@@ -72,6 +75,13 @@ function ImportsPageContent(): React.JSX.Element {
   const exportSourceFieldOptions = React.useMemo(
     (): string[] => [...EXPORT_PARAMETER_KEYS].sort((a: string, b: string): number => a.localeCompare(b)),
     []
+  );
+  const importSourceFieldOptions = React.useMemo(
+    (): string[] =>
+      [...importSourceFields].sort(
+        (a: string, b: string): number => a.localeCompare(b)
+      ),
+    [importSourceFields]
   );
 
   const updateMapping = (index: number, patch: Partial<TemplateMapping>): void => {
@@ -185,8 +195,16 @@ function ImportsPageContent(): React.JSX.Element {
                       <Input
                         value={m.sourceKey}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
-                        placeholder={templateScope === 'export' ? 'Source (e.g. category_id)' : 'Source'}
-                        list={templateScope === 'export' ? 'export-source-field-options' : undefined}
+                        placeholder={
+                          templateScope === 'export'
+                            ? 'Source (e.g. category_id)'
+                            : 'Source (type or pick from inventory fields)'
+                        }
+                        list={
+                          templateScope === 'export'
+                            ? 'export-source-field-options'
+                            : 'import-source-field-options'
+                        }
                         className='flex-1'
                       />
                       <div className='flex-1'>
@@ -216,6 +234,37 @@ function ImportsPageContent(): React.JSX.Element {
                     </datalist>
                     <p className='text-xs text-gray-500'>
                       For category mapping use: source <code>category_id</code> and target <code>categoryId</code>.
+                    </p>
+                  </>
+                )}
+                {templateScope === 'import' && (
+                  <>
+                    <datalist id='import-source-field-options'>
+                      {importSourceFieldOptions.map((field: string) => {
+                        const preview = importSourceFieldValues[field];
+                        const shortPreview =
+                          preview && preview.length > 80
+                            ? `${preview.slice(0, 77)}...`
+                            : preview;
+                        return (
+                          <option
+                            key={field}
+                            value={field}
+                            label={
+                              shortPreview
+                                ? `${field} (${shortPreview})`
+                                : field
+                            }
+                          />
+                        );
+                      })}
+                    </datalist>
+                    <p className='text-xs text-gray-500'>
+                      {loadingImportSourceFields
+                        ? 'Loading source fields from selected inventory...'
+                        : importSourceFieldOptions.length > 0
+                          ? `Loaded ${importSourceFieldOptions.length} source fields from the selected inventory schema.`
+                          : 'No source fields loaded yet. In the Imports tab, select connection + inventory to load schema fields.'}
                     </p>
                   </>
                 )}

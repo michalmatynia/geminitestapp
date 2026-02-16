@@ -7,7 +7,7 @@ import { Button, FormSection, Textarea } from '@/shared/ui';
 import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
 
 export function ReassembledPromptPanel(): React.JSX.Element {
-  const { documentState } = useDocumentState();
+  const { documentState, returnTarget } = useDocumentState();
   const { handleApplyToImageStudio } = useDocumentActions();
 
   return (
@@ -23,7 +23,9 @@ export function ReassembledPromptPanel(): React.JSX.Element {
           onClick={handleApplyToImageStudio}
           disabled={!documentState}
         >
-          Apply to Image Studio
+          {returnTarget === 'case-resolver'
+            ? 'Apply to Case Resolver'
+            : 'Apply to Image Studio'}
         </Button>
       }
     >

@@ -19,7 +19,7 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/features/products/utils/validator-instance-behavior';
-import { operationFailedError } from '@/shared/errors/app-error';
+import { conflictError, operationFailedError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 import type {
   ProductValidationChainMode,
@@ -153,9 +153,7 @@ const normalizeLaunchOperator = (value: unknown): ProductValidationLaunchOperato
 };
 
 type ProductValidationPatternDelegate = {
-  findMany: (args: {
-    orderBy: Array<{ target: 'asc' | 'desc' } | { label: 'asc' | 'desc' }>;
-  }) => Promise<PrismaPattern[]>;
+  findMany: (args: Record<string, unknown>) => Promise<PrismaPattern[]>;
   findUnique: (args: { where: { id: string } }) => Promise<PrismaPattern | null>;
   create: (args: {
     data: Record<string, unknown>;
@@ -164,6 +162,13 @@ type ProductValidationPatternDelegate = {
     where: { id: string };
     data: Record<string, unknown>;
   }) => Promise<PrismaPattern>;
+  updateMany: (args: {
+    where: {
+      id: string;
+      updatedAt?: Date;
+    };
+    data: Record<string, unknown>;
+  }) => Promise<{ count: number }>;
   delete: (args: { where: { id: string } }) => Promise<PrismaPattern>;
 };
 
@@ -273,7 +278,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
     const delegate = requirePatternDelegate();
     try {
       const rows = await delegate.findMany({
-        orderBy: [{ target: 'asc' }, { label: 'asc' }],
+        orderBy: [{ sequence: 'asc' }, { target: 'asc' }, { label: 'asc' }],
       });
       return rows.map(toDomain);
     } catch (error) {
@@ -301,6 +306,25 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
 
   async createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const delegate = requirePatternDelegate();
+    let fallbackSequence = 10;
+    try {
+      const maxSequenceRows = await delegate.findMany({
+        select: { sequence: true },
+        orderBy: [{ sequence: 'desc' }],
+        take: 1,
+      });
+      const firstRow = Array.isArray(maxSequenceRows) ? maxSequenceRows[0] : null;
+      const firstSequence =
+        firstRow && typeof (firstRow as unknown as { sequence?: unknown }).sequence === 'number'
+          ? Math.floor((firstRow as unknown as { sequence: number }).sequence)
+          : null;
+      fallbackSequence = firstSequence !== null ? firstSequence + 10 : 10;
+    } catch (error) {
+      if (isSchemaMismatchError(error)) {
+        throw schemaMismatchError(error);
+      }
+      throw error;
+    }
     const createData: Record<string, unknown> = {
       label: data.label,
       target: data.target,
@@ -334,7 +358,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       sequenceGroupDebounceMs: normalizeSequenceGroupDebounceMs(
         data.sequenceGroupDebounceMs
       ),
-      sequence: normalizeSequence(data.sequence),
+      sequence: normalizeSequence(data.sequence) ?? fallbackSequence,
       chainMode: normalizeChainMode(data.chainMode),
       maxExecutions: normalizeMaxExecutions(data.maxExecutions),
       passOutputToNext: data.passOutputToNext ?? true,
@@ -368,6 +392,14 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
 
   async updatePattern(id: string, data: UpdateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const delegate = requirePatternDelegate();
+    const expectedUpdatedAtRaw =
+      typeof data.expectedUpdatedAt === 'string' && data.expectedUpdatedAt.trim()
+        ? data.expectedUpdatedAt.trim()
+        : null;
+    const expectedUpdatedAt = expectedUpdatedAtRaw ? new Date(expectedUpdatedAtRaw) : null;
+    if (expectedUpdatedAtRaw && Number.isNaN(expectedUpdatedAt?.getTime() ?? Number.NaN)) {
+      throw operationFailedError('Invalid expectedUpdatedAt value.');
+    }
     const baseUpdateData = {
       ...(data.label !== undefined && { label: data.label }),
       ...(data.target !== undefined && { target: data.target }),
@@ -469,10 +501,29 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       }),
     };
     try {
-      const row = await delegate.update({
-        where: { id },
-        data: baseUpdateData,
-      });
+      if (expectedUpdatedAt) {
+        const updateResult = await delegate.updateMany({
+          where: { id, updatedAt: expectedUpdatedAt },
+          data: baseUpdateData,
+        });
+        if (updateResult.count === 0) {
+          const current = await delegate.findUnique({ where: { id } });
+          if (!current) {
+            throw operationFailedError('Validation pattern not found.');
+          }
+          throw conflictError('Validation pattern was modified by another request.', {
+            patternId: id,
+            expectedUpdatedAt: expectedUpdatedAtRaw,
+            actualUpdatedAt: current.updatedAt.toISOString(),
+          });
+        }
+        const row = await delegate.findUnique({ where: { id } });
+        if (!row) {
+          throw operationFailedError('Validation pattern not found.');
+        }
+        return toDomain(row);
+      }
+      const row = await delegate.update({ where: { id }, data: baseUpdateData });
       return toDomain(row);
     } catch (error) {
       if (isSchemaMismatchError(error)) {

@@ -28,8 +28,11 @@ const optionalIdSchema = z.preprocess(
 const requestSchema = z.object({
   inventoryId: optionalIdSchema,
   productId: optionalIdSchema,
+  connectionId: optionalIdSchema,
   clearOnly: z.boolean().optional()
 });
+
+const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
 
 const extractProductRecord = (payload: unknown, productId: string): Record<string, unknown> | null => {
   const products = (payload as { products?: unknown })?.products;
@@ -282,18 +285,33 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const integrationRepo = await getIntegrationRepository();
   const integrations = await integrationRepo.listIntegrations();
-  const baseIntegration = integrations.find((i) => i.slug === 'baselinker');
+  const baseIntegration = integrations.find((integration) =>
+    BASE_INTEGRATION_SLUGS.has(
+      (integration.slug ?? '').trim().toLowerCase()
+    )
+  );
   if (!baseIntegration) {
     throw notFoundError('Base integration not found.');
   }
 
   const connections = await integrationRepo.listConnections(baseIntegration.id);
-  const connection = connections.find((c) => c.baseApiToken);
-  if (!connection?.baseApiToken) {
+  const normalizedConnectionId = data.connectionId?.trim();
+  const connection = normalizedConnectionId
+    ? connections.find((entry) => entry.id === normalizedConnectionId)
+    : connections.find((entry) => entry.baseApiToken || entry.password);
+  if (!connection?.baseApiToken && !connection?.password) {
     throw badRequestError('No Base API token configured.');
   }
 
-  const token = decryptSecret(connection.baseApiToken);
+  let token = '';
+  if (connection.baseApiToken) {
+    token = decryptSecret(connection.baseApiToken);
+  } else if (connection.password) {
+    token = decryptSecret(connection.password);
+  }
+  if (!token) {
+    throw badRequestError('No Base API token configured.');
+  }
   const payload = await callBaseApi(token, 'getInventoryProductsData', {
     inventory_id: data.inventoryId,
     products: [data.productId]

@@ -371,6 +371,10 @@ const renderPromptNodeTextPreview = (
 };
 
 const buildPromptTemplateFromDroppedDocumentFile = (file: CaseResolverFile): string => {
+  const sourceHtml = file.documentContentHtml.trim();
+  if (sourceHtml.length > 0) {
+    return sourceHtml;
+  }
   const source = file.documentContent.trim();
   if (source.length > 0) {
     return hasHtmlMarkup(source) ? source : toHtmlParagraph(source);

@@ -273,6 +273,105 @@ export function useParameters(
   });
 }
 
+export type ImportParameterCacheResponse = {
+  inventoryId?: string | null;
+  productId?: string | null;
+  keys?: string[];
+  values?: Record<string, string>;
+  updatedAt?: string;
+};
+
+export function useImportParameterCache(
+  enabled: boolean = true
+): SingleQuery<ImportParameterCacheResponse> {
+  const queryKey = importExportKeys.pref('parameter-cache');
+  return createSingleQueryV2({
+    id: 'parameter-cache',
+    queryKey,
+    queryFn: () =>
+      api.get<ImportParameterCacheResponse>(
+        '/api/integrations/imports/base/parameters',
+        { cache: 'no-store' }
+      ),
+    enabled,
+    meta: {
+      source: 'importExport.hooks.useImportParameterCache',
+      operation: 'detail',
+      resource: 'integrations.import-export.parameter-cache',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'parameters', 'cache'],
+    },
+  });
+}
+
+export function useRefreshImportParameterCacheMutation(): MutationResult<
+  { keys?: string[]; values?: Record<string, string> },
+  { inventoryId: string; connectionId?: string }
+  > {
+  const queryClient = useQueryClient();
+  const mutationKey = importExportKeys.lists();
+
+  return createMutationV2({
+    mutationFn: async ({
+      inventoryId,
+      connectionId,
+    }: {
+      inventoryId: string;
+      connectionId?: string;
+    }): Promise<{ keys?: string[]; values?: Record<string, string> }> => {
+      const normalizedInventoryId = inventoryId.trim();
+      if (!normalizedInventoryId) {
+        throw new Error('Inventory ID is required to load source fields.');
+      }
+
+      const normalizedConnectionId = connectionId?.trim();
+      const sample = await api.post<{ productId?: string | null }>(
+        '/api/integrations/imports/base/sample-product',
+        {
+          inventoryId: normalizedInventoryId,
+          ...(normalizedConnectionId
+            ? { connectionId: normalizedConnectionId }
+            : {}),
+        }
+      );
+      const productId =
+        typeof sample?.productId === 'string' ? sample.productId.trim() : '';
+      if (!productId) {
+        throw new Error('No sample product found in selected inventory.');
+      }
+
+      return api.post<{ keys?: string[]; values?: Record<string, string> }>(
+        '/api/integrations/imports/base/parameters',
+        {
+          inventoryId: normalizedInventoryId,
+          productId,
+          ...(normalizedConnectionId
+            ? { connectionId: normalizedConnectionId }
+            : {}),
+        }
+      );
+    },
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useRefreshImportParameterCacheMutation',
+      operation: 'action',
+      resource: 'integrations.import-export.parameter-cache.refresh',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'parameters', 'refresh'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: importExportKeys.pref('sample-product'),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: importExportKeys.pref('parameter-cache'),
+      });
+    },
+  });
+}
+
 export function useImportList(
   inventoryId: string,
   params: {
@@ -391,20 +490,46 @@ export function useImportRuns(limit: number = 25): ListQuery<BaseImportRunRecord
 
 export function useImportRun(
   runId: string,
-  enabled: boolean = true,
-  refetchInterval: number | false = false
+  options?: {
+    enabled?: boolean;
+    refetchInterval?: number | false;
+    statuses?: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
+    page?: number;
+    pageSize?: number;
+    includeItems?: boolean;
+  }
 ): SingleQuery<BaseImportRunDetailResponse> {
-  const queryKey = importExportKeys.run(runId || '__none__');
+  const queryKey = importExportKeys.run(
+    `${runId || '__none__'}:${JSON.stringify({
+      statuses: options?.statuses ?? [],
+      page: options?.page ?? null,
+      pageSize: options?.pageSize ?? null,
+      includeItems: options?.includeItems ?? null,
+    })}`
+  );
   return createSingleQueryV2({
     id: runId || null,
     queryKey,
-    queryFn: () =>
-      api.get<BaseImportRunDetailResponse>(
-        `/api/integrations/imports/base/runs/${encodeURIComponent(runId)}`,
-        { cache: 'no-store' }
-      ),
-    enabled: enabled && !!runId,
-    refetchInterval,
+    queryFn: () => {
+      const search = new URLSearchParams();
+      if (Array.isArray(options?.statuses) && options.statuses.length > 0) {
+        search.set('statuses', options.statuses.join(','));
+      }
+      if (typeof options?.page === 'number') {
+        search.set('page', String(options.page));
+      }
+      if (typeof options?.pageSize === 'number') {
+        search.set('pageSize', String(options.pageSize));
+      }
+      if (typeof options?.includeItems === 'boolean') {
+        search.set('includeItems', String(options.includeItems));
+      }
+      const query = search.toString();
+      const endpoint = `/api/integrations/imports/base/runs/${encodeURIComponent(runId)}${query ? `?${query}` : ''}`;
+      return api.get<BaseImportRunDetailResponse>(endpoint, { cache: 'no-store' });
+    },
+    enabled: (options?.enabled ?? true) && !!runId,
+    refetchInterval: options?.refetchInterval ?? false,
     meta: {
       source: 'importExport.hooks.useImportRun',
       operation: 'detail',
@@ -434,6 +559,28 @@ export function useResumeImportRunMutation(
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'import-runs', 'resume'],
+    },
+  });
+}
+
+export function useCancelImportRunMutation(
+  runId: string
+): MutationResult<BaseImportStartResponse, void> {
+  const mutationKey = importExportKeys.run(runId || '__none__');
+  return createMutationV2({
+    mutationFn: () =>
+      api.post<BaseImportStartResponse>(
+        `/api/integrations/imports/base/runs/${encodeURIComponent(runId)}/cancel`,
+        {}
+      ),
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useCancelImportRunMutation',
+      operation: 'action',
+      resource: 'integrations.import-export.import-run.cancel',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'import-runs', 'cancel'],
     },
   });
 }
@@ -492,6 +639,7 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
 }
 
 export function useClearInventoryMutation(): MutationResult<void, void> {
+  const queryClient = useQueryClient();
   const mutationKey = importExportKeys.inventories(undefined);
   return createDeleteMutationV2({
     mutationFn: async () => {
@@ -508,6 +656,14 @@ export function useClearInventoryMutation(): MutationResult<void, void> {
       domain: 'integrations',
       mutationKey,
       tags: ['import-export', 'inventory', 'clear'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: importExportKeys.pref('sample-product'),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: importExportKeys.pref('parameter-cache'),
+      });
     },
   });
 }

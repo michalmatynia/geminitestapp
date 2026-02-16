@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildMasterNodesFromCaseResolverWorkspace } from '@/features/case-resolver/master-tree';
-import { createCaseResolverAssetFile, createCaseResolverFile } from '@/features/case-resolver/settings';
+import {
+  createCaseResolverAssetFile,
+  createCaseResolverFile,
+  createEmptyCaseResolverRelationGraph,
+} from '@/features/case-resolver/settings';
 import type { CaseResolverWorkspace } from '@/features/case-resolver/types';
 import { buildMasterTree } from '@/shared/utils/master-folder-tree-engine';
 
@@ -20,6 +24,7 @@ describe('case-resolver master tree', () => {
         createCaseResolverAssetFile({ id: 'asset-root-m', name: 'middle.png', folder: '', kind: 'image' }),
         createCaseResolverAssetFile({ id: 'asset-alpha-a', name: 'able.pdf', folder: 'alpha', kind: 'pdf' }),
       ],
+      relationGraph: createEmptyCaseResolverRelationGraph(),
       activeFileId: 'file-root-a',
     };
 

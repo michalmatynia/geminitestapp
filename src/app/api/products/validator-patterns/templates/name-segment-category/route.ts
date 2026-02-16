@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
+import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { ProductValidationInstanceScope, ProductValidationPattern } from '@/shared/types/domain/products';
@@ -73,6 +74,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
   );
 
   const runtimeConfig = {
+    version: 1,
     operation: 'query',
     payload: {
       provider: 'auto',
@@ -141,6 +143,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
       ...payload,
       label: existing.label,
     });
+    invalidateValidationPatternRuntimeCache();
     return NextResponse.json({
       outcomes: [
         {
@@ -155,6 +158,7 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise
   }
 
   const created = await repository.createPattern(payload);
+  invalidateValidationPatternRuntimeCache();
   return NextResponse.json({
     outcomes: [
       {

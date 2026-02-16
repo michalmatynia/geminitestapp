@@ -1,5 +1,4 @@
 export const runtime = 'nodejs';
-export const revalidate = 10;
 
 import fs from 'fs/promises';
 import path from 'path';
@@ -28,7 +27,14 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b));
 
-  return NextResponse.json({ projects });
+  return NextResponse.json(
+    { projects },
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
 }
 
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -56,4 +62,3 @@ export const GET = apiHandler(async (req: NextRequest, ctx: ApiHandlerContext): 
 export const POST = apiHandler(async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx), {
   source: 'image-studio.projects.POST',
 });
-

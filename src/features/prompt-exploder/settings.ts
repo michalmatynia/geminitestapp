@@ -88,6 +88,7 @@ const promptExploderSettingsSchema: z.ZodType<PromptExploderSettings> = z.object
       validationRuleStack: z.string().trim().min(1).default(
         DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK
       ),
+      orchestratorEnabled: z.boolean().default(true),
       benchmarkSuite: z.enum(['default', 'extended', 'custom']).default('default'),
       benchmarkLowConfidenceThreshold: z.number().min(0.3).max(0.9).default(0.55),
       benchmarkSuggestionLimit: z.number().int().min(1).max(20).default(4),
@@ -97,6 +98,7 @@ const promptExploderSettingsSchema: z.ZodType<PromptExploderSettings> = z.object
     .default({
       ruleProfile: 'all',
       validationRuleStack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+      orchestratorEnabled: true,
       benchmarkSuite: 'default',
       benchmarkLowConfidenceThreshold: 0.55,
       benchmarkSuggestionLimit: 4,
@@ -138,6 +140,7 @@ export const defaultPromptExploderSettings: PromptExploderSettings = {
   runtime: {
     ruleProfile: 'all',
     validationRuleStack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+    orchestratorEnabled: true,
     benchmarkSuite: 'default',
     benchmarkLowConfidenceThreshold: 0.55,
     benchmarkSuggestionLimit: 4,

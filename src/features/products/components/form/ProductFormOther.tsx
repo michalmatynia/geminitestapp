@@ -3,24 +3,17 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import * as productsApi from '@/features/products/api/products';
 import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
 import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { useProductValidationSettings } from '@/features/products/context/ProductValidationSettingsContext';
-import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
-import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
 import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/features/products/types';
-import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
 import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ProductValidationPattern } from '@/shared/types/domain/products';
 import { Button, Input, SelectSimple, FormSection, FormField, DataTable, StatusBadge, Alert } from '@/shared/ui';
 
 import { ValidatorIssueHint } from './ProductFormGeneral';
@@ -31,17 +24,13 @@ interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   sourceGroupName: string | undefined;
 }
 
-const extractNameEnSegment = (value: string, segmentIndex: number): string => {
-  if (!value.trim()) return '';
-  const parts = value.split('|').map((part: string) => part.trim());
-  if (parts.length < segmentIndex + 1) return '';
-  return parts[segmentIndex] ?? '';
+type ProductFormOtherProps = {
+  visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
 };
 
-const escapeRegexSegment = (value: string): string =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-export default function ProductFormOther(): React.JSX.Element {
+export default function ProductFormOther({
+  visibleFieldIssues,
+}: ProductFormOtherProps): React.JSX.Element {
   const {
     errors,
     catalogs,
@@ -54,111 +43,23 @@ export default function ProductFormOther(): React.JSX.Element {
     product,
   } = useProductFormContext();
   const {
-    validationInstanceScope,
     validatorEnabled,
     getDenyActionLabel,
-    isIssueDenied,
-    isIssueAccepted,
     acceptIssue,
     denyIssue,
   } = useProductValidationSettings();
-  const validatorConfigQuery = useProductValidatorConfig();
 
   const { register, setValue, watch, getValues } = useFormContext<ProductFormData>();
-
   const allValues = watch();
-  const primaryCatalogId = selectedCatalogIds[0] ?? '';
   const selectedCategoryName = useMemo((): string => {
     if (!selectedCategoryId) return '';
     const category =
       categories.find((item: ProductCategory) => item.id === selectedCategoryId) ?? null;
     return category?.name?.trim() ?? '';
   }, [categories, selectedCategoryId]);
-  const nameEnSegment4 = useMemo(
-    () => extractNameEnSegment(String(allValues['name_en'] ?? ''), 3),
-    [allValues]
-  );
-  const nameEnSegment4RegexEscaped = useMemo(
-    () => escapeRegexSegment(nameEnSegment4),
-    [nameEnSegment4]
-  );
-  const validatorValues = useMemo(
-    () => {
-      const values: Record<string, unknown> = {
-        ...(allValues as unknown as Record<string, unknown>),
-        categoryId: selectedCategoryId ?? '',
-        categoryName: selectedCategoryName,
-        primaryCatalogId,
-        nameEnSegment4,
-        nameEnSegment4RegexEscaped,
-      };
-      return values;
-    },
-    [
-      allValues,
-      nameEnSegment4,
-      nameEnSegment4RegexEscaped,
-      primaryCatalogId,
-      selectedCategoryId,
-      selectedCategoryName,
-    ]
-  );
   const basePrice = watch('price') || 0;
   const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
   const hasCatalogs = selectedCatalogIds.length > 0;
-  const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
-  const needsLatestProductSource = useMemo(
-    () =>
-      validatorPatterns.some((pattern: ProductValidationPattern) => {
-        const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
-        return (
-          recipe?.sourceMode === 'latest_product_field' ||
-          (pattern.launchEnabled && pattern.launchSourceMode === 'latest_product_field')
-        );
-      }),
-    [validatorPatterns]
-  );
-  const latestProductsQuery = createListQueryV2({
-    queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
-    queryFn: () => productsApi.getProducts({ page: 1, pageSize: 4 }),
-    enabled: validatorEnabled && needsLatestProductSource,
-    staleTime: 60_000,
-    meta: {
-      source: 'products.components.ProductFormOther.latestProducts',
-      operation: 'list',
-      resource: 'products.validator.latest-product-source',
-      domain: 'products',
-      queryKey: QUERY_KEYS.products.validatorLatestProductSource(),
-      tags: ['products', 'validator', 'latest-source'],
-    },
-  });
-  const latestProductValues = useMemo((): Record<string, unknown> | null => {
-    const list = latestProductsQuery.data ?? [];
-    if (list.length === 0) return null;
-    const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
-    return preferred as unknown as Record<string, unknown>;
-  }, [latestProductsQuery.data, product?.id]);
-  const { visibleFieldIssues } = useProductValidatorIssues({
-    values: validatorValues,
-    runtimeValues: validatorValues,
-    patterns: validatorPatterns,
-    latestProductValues,
-    validationScope: validationInstanceScope,
-    validatorEnabled,
-    isIssueDenied,
-    isIssueAccepted,
-    trackedFields: ['price', 'stock', 'categoryId', 'name_en'],
-    resolveChangedAt: (fieldName: string, timestamps: Record<string, number>): number => {
-      if (fieldName === 'categoryId') {
-        return Math.max(
-          timestamps['categoryId'] ?? 0,
-          timestamps['name_en'] ?? 0
-        );
-      }
-      return timestamps[fieldName] ?? 0;
-    },
-    source: 'ProductFormOther',
-  });
   const getIssueList = (fieldName: string): FieldValidatorIssue[] => {
     if (!validatorEnabled) return [];
     const issueList = visibleFieldIssues[fieldName];

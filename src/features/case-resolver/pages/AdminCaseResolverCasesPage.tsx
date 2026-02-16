@@ -586,7 +586,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         file,
         normalizedName: file.name.toLowerCase(),
         normalizedFolder: file.folder.toLowerCase(),
-        normalizedContent: stripHtml(file.documentContent).toLowerCase(),
+        normalizedContent: (
+          file.documentContentPlainText.trim().length > 0
+            ? file.documentContentPlainText
+            : stripHtml(file.documentContent)
+        ).toLowerCase(),
         normalizedTag: (file.tagId ? (caseTagPathById.get(file.tagId) ?? '') : '').toLowerCase(),
         normalizedCaseIdentifier: (file.caseIdentifierId
           ? (caseIdentifierPathById.get(file.caseIdentifierId) ?? '')

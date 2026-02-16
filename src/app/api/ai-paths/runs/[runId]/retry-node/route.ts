@@ -26,7 +26,7 @@ async function POST_handler(
   params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, 'run-retry');
+  await enforceAiPathsActionRateLimit(access, 'run-retry');
   const parsed = await parseJsonBody(req, retrySchema, {
     logPrefix: 'ai-paths.runs.retry-node',
   });

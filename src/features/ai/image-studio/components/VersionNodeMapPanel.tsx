@@ -525,8 +525,8 @@ export function VersionNodeMapPanel(): React.JSX.Element {
         ) : null}
 
         <VersionNodeDetailsModal
-          open={Boolean(detailsNode)}
-          node={detailsNode}
+          isOpen={Boolean(detailsNode)}
+          item={detailsNode}
           onClose={handleCloseNodeDetails}
           getSlotImageSrc={getSlotImageSrc}
         />

@@ -12,7 +12,8 @@ import {
 import { getValueAtMappingPath } from '@/features/ai/ai-paths/lib/core/utils/json';
 import { renderTemplate } from '@/features/ai/ai-paths/lib/core/utils/template';
 import { ErrorSystem } from '@/features/observability/server';
-import { getSettingValue, getValidationPatternRepository } from '@/features/products/server';
+import { getSettingValue } from '@/features/products/server';
+import { listValidationPatternsCached } from '@/features/products/services/validation-pattern-runtime-cache';
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
@@ -28,6 +29,7 @@ import {
   resolveFieldTargetAndLocale,
   shouldLaunchPattern,
 } from '@/features/products/validation-engine/core';
+import { parseRuntimeConfigForEvaluation } from '@/features/products/validations/validator-runtime-config';
 import { badRequestError, configurationError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -45,6 +47,18 @@ const evaluateRuntimeSchema = z.object({
   patternIds: z.array(z.string().trim().min(1)).optional(),
   validationScope: z.enum(['draft_template', 'product_create', 'product_edit']).optional(),
 });
+
+const MAX_RUNTIME_VALUE_FIELDS = 120;
+const MAX_RUNTIME_PATTERN_IDS = 120;
+const MAX_RUNTIME_STRING_LENGTH = 20_000;
+const DEFAULT_AI_RUNTIME_TIMEOUT_MS = 12_000;
+const READ_ONLY_DB_ACTIONS = new Set<string>([
+  'find',
+  'findOne',
+  'countDocuments',
+  'distinct',
+  'aggregate',
+]);
 
 type RuntimeOperator =
   | 'truthy'
@@ -77,6 +91,18 @@ type RuntimeFieldIssue = {
   replacementActive: boolean;
   postAcceptBehavior: ProductValidationPostAcceptBehavior;
   debounceMs: number;
+};
+
+type RuntimeFieldEntry = {
+  fieldName: string;
+  target: NonNullable<ReturnType<typeof resolveFieldTargetAndLocale>['target']>;
+  locale: string | null;
+  fieldValue: string;
+};
+
+type RuntimeSettingsCache = {
+  defaultModelPromise: Promise<string> | null;
+  openAiApiKeyPromise: Promise<string | null> | null;
 };
 
 const normalizeRuntimeOperator = (value: unknown): RuntimeOperator => {
@@ -210,15 +236,100 @@ const renderUnknown = (
   return value;
 };
 
-const parseRuntimeConfig = (value: string | null): Record<string, unknown> | null => {
-  if (!value) return null;
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-    return parsed as Record<string, unknown>;
-  } catch {
-    return null;
+const assertRuntimePayloadBounds = (body: z.infer<typeof evaluateRuntimeSchema>): void => {
+  const values = body.values ?? {};
+  const fields = Object.keys(values);
+  if (fields.length > MAX_RUNTIME_VALUE_FIELDS) {
+    throw badRequestError(
+      `Runtime validation supports up to ${MAX_RUNTIME_VALUE_FIELDS} fields per request.`
+    );
   }
+
+  const patternIds = body.patternIds ?? [];
+  if (patternIds.length > MAX_RUNTIME_PATTERN_IDS) {
+    throw badRequestError(
+      `Runtime validation supports up to ${MAX_RUNTIME_PATTERN_IDS} patternIds per request.`
+    );
+  }
+
+  for (const [fieldName, rawValue] of Object.entries(values)) {
+    if (typeof rawValue === 'string' && rawValue.length > MAX_RUNTIME_STRING_LENGTH) {
+      throw badRequestError(
+        `Field "${fieldName}" exceeds max runtime value length (${MAX_RUNTIME_STRING_LENGTH}).`
+      );
+    }
+  }
+};
+
+const buildRuntimeFieldEntries = (
+  values: Record<string, unknown>
+): RuntimeFieldEntry[] =>
+  Object.entries(values).flatMap(([fieldName, rawValue]): RuntimeFieldEntry[] => {
+    const resolved = resolveFieldTargetAndLocale(fieldName);
+    if (!resolved.target) return [];
+    const fieldValue =
+      typeof rawValue === 'string'
+        ? rawValue
+        : typeof rawValue === 'number' && Number.isFinite(rawValue)
+          ? String(rawValue)
+          : '';
+    return [
+      {
+        fieldName,
+        target: resolved.target,
+        locale: resolved.locale,
+        fieldValue,
+      },
+    ];
+  });
+
+const getCachedDefaultModel = async (settingsCache: RuntimeSettingsCache): Promise<string> => {
+  if (!settingsCache.defaultModelPromise) {
+    settingsCache.defaultModelPromise = getSettingValue('openai_model').then((value) =>
+      value?.trim() || 'gpt-4o-mini'
+    );
+  }
+  return settingsCache.defaultModelPromise;
+};
+
+const getCachedOpenAiApiKey = async (
+  settingsCache: RuntimeSettingsCache
+): Promise<string | null> => {
+  if (!settingsCache.openAiApiKeyPromise) {
+    settingsCache.openAiApiKeyPromise = getSettingValue('openai_api_key').then(
+      (value) => value ?? process.env['OPENAI_API_KEY'] ?? null
+    );
+  }
+  return settingsCache.openAiApiKeyPromise;
+};
+
+const withTimeout = async <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutMessage: string
+): Promise<T> =>
+  await new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(timeoutMessage));
+    }, timeoutMs);
+
+    promise
+      .then((value: T) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+
+const resolveAiRuntimeTimeoutMs = (config: Record<string, unknown>): number => {
+  const raw = config['timeoutMs'];
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return Math.max(500, Math.min(60_000, Math.floor(raw)));
+  }
+  return DEFAULT_AI_RUNTIME_TIMEOUT_MS;
 };
 
 const parseAiJson = (value: string): Record<string, unknown> | null => {
@@ -376,25 +487,24 @@ const evaluateDatabaseRuntime = async ({
       renderedPayload['provider'] === 'mongodb' || renderedPayload['provider'] === 'prisma'
         ? renderedPayload['provider']
         : 'auto';
+    const actionName = String(renderedPayload['action'] ?? 'find').trim() || 'find';
+    if (!READ_ONLY_DB_ACTIONS.has(actionName)) {
+      throw badRequestError(
+        `Runtime DB action "${actionName}" is not allowed. Only read-only actions are supported.`
+      );
+    }
     const payload: DbActionPayload = {
       provider,
       collection: String(renderedPayload['collection'] ?? ''),
-      action: String(renderedPayload['action'] ?? 'find'),
+      action: actionName,
     };
     if (renderedPayload['filter'] !== undefined) payload.filter = renderedPayload['filter'];
     if (Array.isArray(renderedPayload['pipeline'])) payload.pipeline = renderedPayload['pipeline'] as unknown[];
-    if (renderedPayload['document'] !== undefined) payload.document = renderedPayload['document'];
-    if (Array.isArray(renderedPayload['documents'])) payload.documents = renderedPayload['documents'] as unknown[];
-    if (renderedPayload['update'] !== undefined) payload.update = renderedPayload['update'];
     if (renderedPayload['projection'] !== undefined) payload.projection = renderedPayload['projection'];
     if (renderedPayload['sort'] !== undefined) payload.sort = renderedPayload['sort'];
     if (typeof renderedPayload['limit'] === 'number') payload.limit = renderedPayload['limit'];
     if (typeof renderedPayload['idType'] === 'string') payload.idType = renderedPayload['idType'];
     if (typeof renderedPayload['distinctField'] === 'string') payload.distinctField = renderedPayload['distinctField'];
-    if (typeof renderedPayload['upsert'] === 'boolean') payload.upsert = renderedPayload['upsert'];
-    if (renderedPayload['returnDocument'] === 'before' || renderedPayload['returnDocument'] === 'after') {
-      payload.returnDocument = renderedPayload['returnDocument'];
-    }
     if (!payload.collection.trim()) {
       throw badRequestError('Runtime DB action requires a collection.');
     }
@@ -455,10 +565,12 @@ const evaluateAiRuntime = async ({
   config,
   context,
   currentValue,
+  settingsCache,
 }: {
   config: Record<string, unknown>;
   context: Record<string, unknown>;
   currentValue: string;
+  settingsCache: RuntimeSettingsCache;
 }): Promise<{
   matched: boolean;
   resultData: unknown;
@@ -470,9 +582,9 @@ const evaluateAiRuntime = async ({
     typeof config['model'] === 'string' && config['model'].trim()
       ? config['model'].trim()
       : null;
-  const defaultModel = (await getSettingValue('openai_model'))?.trim() || 'gpt-4o-mini';
+  const defaultModel = await getCachedDefaultModel(settingsCache);
   const model = modelFromConfig || defaultModel;
-  const apiKey = (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
+  const apiKey = await getCachedOpenAiApiKey(settingsCache);
   const { openai, isOllama } = getClient(model, apiKey);
 
   const systemPromptRaw =
@@ -495,17 +607,22 @@ const evaluateAiRuntime = async ({
       ? Math.max(50, Math.floor(config['maxTokens']))
       : 300;
   const forceJson = config['responseFormat'] === 'json';
+  const timeoutMs = resolveAiRuntimeTimeoutMs(config);
 
-  const completion = await openai.chat.completions.create({
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: prompt },
-    ],
-    temperature,
-    max_completion_tokens: maxTokens,
-    ...(forceJson && !isOllama ? { response_format: { type: 'json_object' as const } } : {}),
-  });
+  const completion = await withTimeout(
+    openai.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt },
+      ],
+      temperature,
+      max_completion_tokens: maxTokens,
+      ...(forceJson && !isOllama ? { response_format: { type: 'json_object' as const } } : {}),
+    }),
+    timeoutMs,
+    `AI runtime request timed out after ${timeoutMs}ms`
+  );
 
   const raw = completion.choices?.[0]?.message?.content?.trim() ?? '';
   const parsed = parseAiJson(raw);
@@ -617,13 +734,13 @@ const buildRuntimeIssue = ({
 
 async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const body = ctx.body as z.infer<typeof evaluateRuntimeSchema>;
+  assertRuntimePayloadBounds(body);
   const values = body.values;
   const latestProductValues = body.latestProductValues ?? null;
   const validationScope = normalizeProductValidationInstanceScope(
     body.validationScope ?? 'product_create'
   );
-  const repository = await getValidationPatternRepository();
-  const allPatterns = await repository.listPatterns();
+  const allPatterns = await listValidationPatternsCached();
   const requestedPatternIds = body.patternIds && body.patternIds.length > 0 ? new Set(body.patternIds) : null;
   const runtimePatterns = allPatterns.filter((pattern: ProductValidationPattern) => {
     if (!pattern.enabled) return false;
@@ -635,24 +752,35 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     return true;
   });
 
+  const runtimeFieldEntries = buildRuntimeFieldEntries(values);
+  const fieldEntriesByTarget = new Map<
+    RuntimeFieldEntry['target'],
+    RuntimeFieldEntry[]
+  >();
+  for (const entry of runtimeFieldEntries) {
+    const current = fieldEntriesByTarget.get(entry.target) ?? [];
+    current.push(entry);
+    fieldEntriesByTarget.set(entry.target, current);
+  }
+
+  const runtimeSettingsCache: RuntimeSettingsCache = {
+    defaultModelPromise: null,
+    openAiApiKeyPromise: null,
+  };
+
   const issues: Record<string, RuntimeFieldIssue[]> = {};
-  const entries = Object.entries(values);
   for (const pattern of runtimePatterns) {
-    const runtimeConfig = parseRuntimeConfig(pattern.runtimeConfig);
+    const runtimeConfig = parseRuntimeConfigForEvaluation({
+      runtimeType: pattern.runtimeType,
+      runtimeConfig: pattern.runtimeConfig,
+    });
     if (!runtimeConfig) continue;
 
-    for (const [fieldName, rawValue] of entries) {
-      const { target, locale } = resolveFieldTargetAndLocale(fieldName);
-      if (!target) continue;
-      if (target !== pattern.target) continue;
-      if (!isPatternLocaleMatch(pattern.locale, locale)) continue;
-
-      const fieldValue =
-        typeof rawValue === 'string'
-          ? rawValue
-          : typeof rawValue === 'number' && Number.isFinite(rawValue)
-            ? String(rawValue)
-            : '';
+    const candidateEntries = (fieldEntriesByTarget.get(pattern.target) ?? []).filter(
+      (entry: RuntimeFieldEntry) => isPatternLocaleMatch(pattern.locale, entry.locale)
+    );
+    for (const entry of candidateEntries) {
+      const { fieldName, fieldValue } = entry;
       if (
         !shouldLaunchPattern({
           pattern,
@@ -693,6 +821,7 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
             config: runtimeConfig,
             context,
             currentValue: fieldValue,
+            settingsCache: runtimeSettingsCache,
           });
           matched = result.matched;
           resultData = result.resultData;

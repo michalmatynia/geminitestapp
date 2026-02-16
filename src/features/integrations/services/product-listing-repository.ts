@@ -255,10 +255,24 @@ const prismaRepository: ProductListingRepository = {
     return existing !== null;
   },
 
-  listAllListings: async (): Promise<Array<{ productId: string; status: string; integrationId: string }>> => {
-    return prisma.productListing.findMany({
-      select: { productId: true, status: true, integrationId: true },
+  listAllListings: async (): Promise<Array<{ productId: string; status: string; integrationId: string; marketplaceData: Record<string, unknown> | null }>> => {
+    const rows = await prisma.productListing.findMany({
+      select: {
+        productId: true,
+        status: true,
+        integrationId: true,
+        marketplaceData: true,
+      },
     });
+    return rows.map((row) => ({
+      productId: row.productId,
+      status: row.status,
+      integrationId: row.integrationId,
+      marketplaceData:
+        row.marketplaceData && typeof row.marketplaceData === 'object'
+          ? (row.marketplaceData as Record<string, unknown>)
+          : null,
+    }));
   },
 };
 
@@ -466,17 +480,24 @@ const mongoRepository: ProductListingRepository = {
     return existing !== null;
   },
 
-  listAllListings: async (): Promise<Array<{ productId: string; status: string; integrationId: string }>> => {
+  listAllListings: async (): Promise<Array<{ productId: string; status: string; integrationId: string; marketplaceData: Record<string, unknown> | null }>> => {
     const db = await getMongoDb();
     return db
       .collection<ProductListingDocument>(LISTINGS_COLLECTION)
-      .find({}, { projection: { productId: 1, status: 1, integrationId: 1 } })
+      .find(
+        {},
+        { projection: { productId: 1, status: 1, integrationId: 1, marketplaceData: 1 } }
+      )
       .toArray()
       .then((docs: ProductListingDocument[]) =>
         docs.map((doc: ProductListingDocument) => ({
           productId: doc.productId,
           status: doc.status,
           integrationId: doc.integrationId,
+          marketplaceData:
+            doc.marketplaceData && typeof doc.marketplaceData === 'object'
+              ? doc.marketplaceData
+              : null,
         }))
       );
   },
@@ -591,7 +612,7 @@ export const listProductListingsByProductIdAcrossProviders = async (
 };
 
 export const listAllProductListingsAcrossProviders = async (): Promise<
-  Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId'>>
+  Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
 > => {
   const repositories = await getProductListingRepositoriesForRead();
   const all = await Promise.all(
@@ -599,7 +620,7 @@ export const listAllProductListingsAcrossProviders = async (): Promise<
       try {
         return await repository.listAllListings();
       } catch {
-        return [] as Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId'>>;
+        return [] as Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>;
       }
     })
   );

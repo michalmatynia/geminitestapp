@@ -10,7 +10,7 @@ describe('ConfirmModal', () => {
 
     render(
       <ConfirmModal
-        open={true}
+        isOpen={true}
         onClose={onClose}
         onConfirm={onConfirm}
         title='Confirm Action'
@@ -28,7 +28,7 @@ describe('ConfirmModal', () => {
 
     render(
       <ConfirmModal
-        open={true}
+        isOpen={true}
         onClose={onClose}
         onConfirm={onConfirm}
         title='Confirm Action'
@@ -48,7 +48,7 @@ describe('ConfirmModal', () => {
 
     render(
       <ConfirmModal
-        open={true}
+        isOpen={true}
         onClose={onClose}
         onConfirm={onConfirm}
         title='Confirm Action'
@@ -68,7 +68,7 @@ describe('ConfirmModal', () => {
 
     render(
       <ConfirmModal
-        open={true}
+        isOpen={true}
         onClose={onClose}
         onConfirm={onConfirm}
         title='Confirm Action'
@@ -86,7 +86,7 @@ describe('ConfirmModal', () => {
 
     render(
       <ConfirmModal
-        open={true}
+        isOpen={true}
         onClose={onClose}
         onConfirm={onConfirm}
         title='Delete Item'

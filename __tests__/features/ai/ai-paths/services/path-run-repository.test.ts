@@ -116,6 +116,27 @@ describe('AiPathRunRepository', () => {
     expect(multipleStatuses.total).toBe(2);
   });
 
+  it('should filter runs by requestId stored in meta', async () => {
+    await repo.createRun({
+      pathId: 'path-request-a',
+      userId: 'user-1',
+      meta: { requestId: 'req-1' },
+    });
+    await repo.createRun({
+      pathId: 'path-request-b',
+      userId: 'user-1',
+      meta: { requestId: 'req-2' },
+    });
+
+    const matched = await repo.listRuns({
+      userId: 'user-1',
+      requestId: 'req-1',
+      statuses: ['queued'],
+    });
+    expect(matched.total).toBe(1);
+    expect(matched.runs[0]?.pathId).toBe('path-request-a');
+  });
+
   it('should claim next queued run', async () => {
     await repo.createRun({ pathId: 'p1' });
     
@@ -162,6 +183,29 @@ describe('AiPathRunRepository', () => {
     expect(nodes.map(n => n.nodeId)).toContain('node-1');
     expect(nodes.map(n => n.nodeId)).toContain('node-2');
     expect(nodes[0]!.status).toBe('pending');
+  });
+
+  it('should list run nodes changed after a cursor', async () => {
+    const run = await repo.createRun({ pathId: 'nodes-since' });
+    await repo.createRunNodes(run.id, mockNodes);
+    const initialNodes = await repo.listRunNodes(run.id);
+    const cursorNode = initialNodes[initialNodes.length - 1]!;
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await repo.upsertRunNode(run.id, 'node-1', {
+      nodeType: 'constant',
+      status: 'running',
+      attempt: 1,
+    });
+
+    const changed = await repo.listRunNodesSince(
+      run.id,
+      {
+        updatedAt: cursorNode.updatedAt ?? cursorNode.createdAt,
+        nodeId: cursorNode.nodeId,
+      },
+      { limit: 50 }
+    );
+    expect(changed.some((node) => node.nodeId === 'node-1')).toBe(true);
   });
 
   it('should upsert run node', async () => {

@@ -36,16 +36,15 @@ import {
 
 interface PreviewGridSectionProps {
   section: SectionInstance;
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  mediaStyles?: React.CSSProperties | null;
+  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
+  mediaStyles?: React.CSSProperties | null | undefined;
   selectedRing: string;
-  inspectorZ: string;
   renderSectionActions: () => React.ReactNode;
   divider: React.ReactNode;
   wrapInspector: (node: React.ReactNode) => React.ReactNode;
   handleSelect: () => void;
   PreviewBlockItem: React.ComponentType<{ block: BlockInstance }>;
-  layout?: { fullWidth?: boolean };
+  layout?: { fullWidth?: boolean } | undefined;
 }
 
 export function PreviewGridSection({

@@ -39,7 +39,7 @@ async function POST_handler(
   params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, 'run-cancel');
+  await enforceAiPathsActionRateLimit(access, 'run-cancel');
   const runId: string = params.runId;
   const repo = await getPathRunRepository();
   let repoForRun: AiPathRunRepository = repo;

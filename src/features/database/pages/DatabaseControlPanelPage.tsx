@@ -218,7 +218,7 @@ export default function DatabaseControlPanelPage(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        open={!!pendingCopy}
+        isOpen={!!pendingCopy}
         onClose={() => setPendingCopy(null)}
         onConfirm={handleConfirmCopy}
         title='Copy Collection'

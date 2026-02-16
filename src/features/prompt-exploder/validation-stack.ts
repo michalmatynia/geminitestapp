@@ -4,6 +4,7 @@ import {
   type ValidatorPatternList,
   type ValidatorScope,
 } from '@/features/admin/pages/validator-scope';
+import { PromptValidationScopeResolutionError } from '@/features/prompt-core/errors';
 import type { PromptValidationScope } from '@/features/prompt-engine/settings';
 
 export type PromptExploderValidationRuleStack = string;
@@ -12,11 +13,27 @@ export type PromptExploderRuntimeValidationScope =
   | 'prompt_exploder'
   | 'case_resolver_prompt_exploder';
 
-type PromptExploderValidationRuleStackOption = {
+export type PromptExploderValidationRuleStackOption = {
   value: PromptExploderValidationRuleStack;
   label: string;
   description: string;
   scope: ValidatorScope;
+};
+
+export type PromptExploderValidationStackResolutionReason =
+  | 'exact_match'
+  | 'legacy_mapping'
+  | 'default_scope'
+  | 'scope_fallback'
+  | 'invalid_stack';
+
+export type PromptExploderValidationStackResolution = {
+  stack: PromptExploderValidationRuleStack;
+  scope: PromptExploderRuntimeValidationScope;
+  validatorScope: ValidatorScope;
+  list: ValidatorPatternList | null;
+  usedFallback: boolean;
+  reason: PromptExploderValidationStackResolutionReason;
 };
 
 const PROMPT_EXPLODER_VALIDATOR_SCOPE: ValidatorScope = 'prompt-exploder';
@@ -46,7 +63,16 @@ const FALLBACK_VALIDATION_STACK_OPTIONS: PromptExploderValidationRuleStackOption
 const normalizeStackValue = (value: string | null | undefined): string =>
   typeof value === 'string' ? value.trim() : '';
 
-const resolveScopeFromLegacyStack = (stack: string): ValidatorScope => {
+const toRuntimeScope = (
+  validatorScope: ValidatorScope
+): PromptExploderRuntimeValidationScope =>
+  validatorScope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
+    ? 'case_resolver_prompt_exploder'
+    : 'prompt_exploder';
+
+const resolveScopeFromLegacyStack = (
+  stack: string
+): ValidatorScope => {
   if (
     stack === LEGACY_CASE_RESOLVER_PROMPT_EXPLODER_STACK ||
     stack === 'case-resolver-prompt-exploder' ||
@@ -58,30 +84,124 @@ const resolveScopeFromLegacyStack = (stack: string): ValidatorScope => {
   return PROMPT_EXPLODER_VALIDATOR_SCOPE;
 };
 
-const findFirstListIdByScope = (
+const findFirstListByScope = (
   patternLists: ValidatorPatternList[],
   scope: ValidatorScope
-): string | null =>
-  patternLists.find((entry: ValidatorPatternList): boolean => entry.scope === scope)?.id ?? null;
+): ValidatorPatternList | null =>
+  patternLists.find((entry: ValidatorPatternList): boolean => entry.scope === scope) ?? null;
 
 const resolveStackByScope = (
   scope: ValidatorScope,
-  patternLists: ValidatorPatternList[]
-): PromptExploderValidationRuleStack => {
-  const matchedId = findFirstListIdByScope(patternLists, scope);
-  if (matchedId) return matchedId;
+  patternLists: ValidatorPatternList[],
+  reason: PromptExploderValidationStackResolutionReason
+): PromptExploderValidationStackResolution => {
+  const matchedList = findFirstListByScope(patternLists, scope);
+  if (matchedList) {
+    return {
+      stack: matchedList.id,
+      scope: toRuntimeScope(matchedList.scope),
+      validatorScope: matchedList.scope,
+      list: matchedList,
+      usedFallback: false,
+      reason,
+    };
+  }
+
   if (patternLists.length > 0) {
-    const promptExploderFallback = findFirstListIdByScope(
-      patternLists,
-      PROMPT_EXPLODER_VALIDATOR_SCOPE
-    );
-    if (promptExploderFallback) return promptExploderFallback;
-    return patternLists[0]?.id ?? DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
+    const promptExploderFallback = findFirstListByScope(patternLists, PROMPT_EXPLODER_VALIDATOR_SCOPE);
+    const list = promptExploderFallback ?? patternLists[0] ?? null;
+    if (list) {
+      return {
+        stack: list.id,
+        scope: toRuntimeScope(list.scope),
+        validatorScope: list.scope,
+        list,
+        usedFallback: true,
+        reason: 'scope_fallback',
+      };
+    }
   }
+
   if (scope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE) {
-    return 'case-resolver-prompt-exploder';
+    return {
+      stack: 'case-resolver-prompt-exploder',
+      scope: 'case_resolver_prompt_exploder',
+      validatorScope: CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+      list: null,
+      usedFallback: true,
+      reason: 'default_scope',
+    };
   }
-  return DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
+  return {
+    stack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+    scope: 'prompt_exploder',
+    validatorScope: PROMPT_EXPLODER_VALIDATOR_SCOPE,
+    list: null,
+    usedFallback: true,
+    reason: 'default_scope',
+  };
+};
+
+export const resolvePromptExploderValidationStack = (args: {
+  stack: PromptExploderValidationRuleStack | null | undefined;
+  patternLists?: ValidatorPatternList[] | null | undefined;
+  preferredScope?: ValidatorScope | null | undefined;
+  strictUnknownStack?: boolean | undefined;
+}): PromptExploderValidationStackResolution => {
+  const patternLists = args.patternLists ?? [];
+  const normalizedStack = normalizeStackValue(args.stack);
+  const preferredScope = args.preferredScope ?? PROMPT_EXPLODER_VALIDATOR_SCOPE;
+
+  if (normalizedStack) {
+    const matchedList =
+      patternLists.find((list: ValidatorPatternList): boolean => list.id === normalizedStack) ?? null;
+    if (matchedList) {
+      return {
+        stack: matchedList.id,
+        scope: toRuntimeScope(matchedList.scope),
+        validatorScope: matchedList.scope,
+        list: matchedList,
+        usedFallback: false,
+        reason: 'exact_match',
+      };
+    }
+  }
+
+  if (!normalizedStack) {
+    return resolveStackByScope(preferredScope, patternLists, 'default_scope');
+  }
+
+  if (
+    normalizedStack === LEGACY_IMAGE_STUDIO_PROMPT_EXPLODER_STACK ||
+    normalizedStack === LEGACY_CASE_RESOLVER_PROMPT_EXPLODER_STACK
+  ) {
+    const mappedScope =
+      normalizedStack === LEGACY_CASE_RESOLVER_PROMPT_EXPLODER_STACK
+        ? CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
+        : PROMPT_EXPLODER_VALIDATOR_SCOPE;
+    const resolved = resolveStackByScope(mappedScope, patternLists, 'legacy_mapping');
+    return {
+      ...resolved,
+      reason: 'legacy_mapping',
+    };
+  }
+
+  const inferredScope = resolveScopeFromLegacyStack(normalizedStack);
+  if (args.strictUnknownStack) {
+    throw new PromptValidationScopeResolutionError(
+      `Unknown Prompt Exploder validation stack "${normalizedStack}".`,
+      {
+        requestedStack: normalizedStack,
+        inferredScope,
+      }
+    );
+  }
+  const fallback = resolveStackByScope(inferredScope, patternLists, 'invalid_stack');
+  return {
+    ...fallback,
+    usedFallback: true,
+    reason: 'invalid_stack',
+  };
 };
 
 export const buildPromptExploderValidationRuleStackOptions = (
@@ -103,69 +223,60 @@ export const normalizePromptExploderValidationRuleStack = (
   stack: PromptExploderValidationRuleStack | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): PromptExploderValidationRuleStack => {
-  const normalizedStack = normalizeStackValue(stack);
-  if (normalizedStack && patternLists.some((list: ValidatorPatternList): boolean => list.id === normalizedStack)) {
-    return normalizedStack;
-  }
-
-  if (normalizedStack === LEGACY_IMAGE_STUDIO_PROMPT_EXPLODER_STACK) {
-    return resolveStackByScope(PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists);
-  }
-  if (normalizedStack === LEGACY_CASE_RESOLVER_PROMPT_EXPLODER_STACK) {
-    return resolveStackByScope(CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists);
-  }
-
-  if (!normalizedStack) {
-    return resolveStackByScope(PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists);
-  }
-
-  const inferredScope = resolveScopeFromLegacyStack(normalizedStack);
-  return resolveStackByScope(inferredScope, patternLists);
+  return resolvePromptExploderValidationStack({
+    stack,
+    patternLists,
+  }).stack;
 };
 
 export const promptExploderValidationScopeFromStack = (
   stack: PromptExploderValidationRuleStack | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): PromptExploderRuntimeValidationScope =>
-  promptExploderValidatorScopeFromStack(stack, patternLists) ===
-  CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
-    ? 'case_resolver_prompt_exploder'
-    : 'prompt_exploder';
+  resolvePromptExploderValidationStack({
+    stack,
+    patternLists,
+  }).scope;
 
 export const promptExploderValidationStackFromScope = (
   scope: PromptValidationScope | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): PromptExploderValidationRuleStack =>
   scope === 'case_resolver_prompt_exploder'
-    ? resolveStackByScope(CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists)
-    : resolveStackByScope(PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists);
+    ? resolveStackByScope(
+      CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+      patternLists,
+      'default_scope'
+    ).stack
+    : resolveStackByScope(
+      PROMPT_EXPLODER_VALIDATOR_SCOPE,
+      patternLists,
+      'default_scope'
+    ).stack;
 
 export const promptExploderValidationStackFromBridgeSource = (
   source: 'image-studio' | 'case-resolver' | 'prompt-exploder' | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): PromptExploderValidationRuleStack =>
   source === 'case-resolver'
-    ? resolveStackByScope(CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists)
-    : resolveStackByScope(PROMPT_EXPLODER_VALIDATOR_SCOPE, patternLists);
+    ? resolveStackByScope(
+      CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
+      patternLists,
+      'default_scope'
+    ).stack
+    : resolveStackByScope(
+      PROMPT_EXPLODER_VALIDATOR_SCOPE,
+      patternLists,
+      'default_scope'
+    ).stack;
 
 export const promptExploderValidatorScopeFromStack = (
   stack: PromptExploderValidationRuleStack | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): 'prompt-exploder' | 'case-resolver-prompt-exploder' =>
-  (() => {
-    const normalizedStack = normalizeStackValue(stack);
-    if (normalizedStack) {
-      const matchedList = patternLists.find(
-        (list: ValidatorPatternList): boolean => list.id === normalizedStack
-      );
-      if (matchedList) {
-        return matchedList.scope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
-          ? 'case-resolver-prompt-exploder'
-          : 'prompt-exploder';
-      }
-    }
-    return resolveScopeFromLegacyStack(normalizedStack || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK) ===
-      CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
-      ? 'case-resolver-prompt-exploder'
-      : 'prompt-exploder';
-  })();
+  resolvePromptExploderValidationStack({
+    stack,
+    patternLists,
+  }).validatorScope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
+    ? 'case-resolver-prompt-exploder'
+    : 'prompt-exploder';

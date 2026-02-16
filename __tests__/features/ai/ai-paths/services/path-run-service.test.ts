@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+vi.unmock('@/shared/lib/db/prisma');
+vi.unmock('@/features/ai/ai-paths/services/path-run-repository');
+
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { 
   enqueuePathRun, 
@@ -75,6 +78,56 @@ describe('PathRunService', () => {
         backoffMs: 5000,
         custom: 'value'
       }));
+    });
+
+    it('should dedupe active runs by requestId', async () => {
+      const first = await enqueuePathRun({
+        pathId: 'test-path-idempotency',
+        userId: 'user-idempotent',
+        nodes: mockNodes,
+        edges: [],
+        requestId: 'request-123',
+      });
+      const second = await enqueuePathRun({
+        pathId: 'test-path-idempotency',
+        userId: 'user-idempotent',
+        nodes: mockNodes,
+        edges: [],
+        requestId: 'request-123',
+      });
+
+      expect(second.id).toBe(first.id);
+      const runs = await repo.listRuns({
+        userId: 'user-idempotent',
+        pathId: 'test-path-idempotency',
+      });
+      expect(runs.total).toBe(1);
+    });
+
+    it('should fail closed when run bootstrap fails', async () => {
+      const createRunNodesSpy = vi
+        .spyOn(repo, 'createRunNodes')
+        .mockRejectedValueOnce(new Error('bootstrap failed'));
+
+      await expect(
+        enqueuePathRun({
+          pathId: 'test-path-bootstrap-failure',
+          userId: 'user-bootstrap',
+          nodes: mockNodes,
+          edges: [],
+          requestId: 'bootstrap-request',
+        })
+      ).rejects.toThrow('Run setup failed');
+
+      createRunNodesSpy.mockRestore();
+
+      const failedRuns = await repo.listRuns({
+        userId: 'user-bootstrap',
+        pathId: 'test-path-bootstrap-failure',
+        status: 'failed',
+      });
+      expect(failedRuns.total).toBe(1);
+      expect(String(failedRuns.runs[0]?.errorMessage ?? '')).toContain('Run setup failed');
     });
   });
 

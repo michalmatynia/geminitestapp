@@ -8,6 +8,7 @@ import type {
   CaseResolverFile,
   CaseResolverGraph,
   CaseResolverIdentifier,
+  CaseResolverRelationGraph,
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '../types';
@@ -55,6 +56,7 @@ export type CaseResolverPageContextValue = {
   selectedAsset: CaseResolverAssetFile | null;
   onUpdateSelectedAsset: (patch: CaseResolverAssetPatch) => void;
   onGraphChange: (nextGraph: CaseResolverGraph) => void;
+  onRelationGraphChange: (nextGraph: CaseResolverRelationGraph) => void;
 };
 
 const CaseResolverPageContext = React.createContext<CaseResolverPageContextValue | null>(null);

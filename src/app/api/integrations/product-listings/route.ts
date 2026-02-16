@@ -27,14 +27,40 @@ const resolveMarketplaceKey = (
   return null;
 };
 
+const inferMarketplaceFromListingMetadata = (
+  value: unknown
+): MarketplaceBadgeKey | null => {
+  if (!value || typeof value !== 'object') return null;
+  const data = value as Record<string, unknown>;
+  const marketplace =
+    typeof data['marketplace'] === 'string'
+      ? data['marketplace'].trim().toLowerCase()
+      : '';
+  if (BASE_INTEGRATION_SLUGS.has(marketplace)) return 'base';
+  if (TRADERA_INTEGRATION_SLUGS.has(marketplace)) return 'tradera';
+
+  const source = typeof data['source'] === 'string' ? data['source'].trim().toLowerCase() : '';
+  if (source.includes('base')) return 'base';
+  if (source.includes('tradera')) return 'tradera';
+
+  const traderaData = data['tradera'];
+  if (traderaData && typeof traderaData === 'object') return 'tradera';
+
+  const baseData = data['base'];
+  if (baseData && typeof baseData === 'object') return 'base';
+
+  return null;
+};
+
 /**
  * GET /api/integrations/product-listings
  * Returns listing badge statuses grouped by marketplace for each product.
  */
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+  const integrationRepository = await getIntegrationRepository();
   const [listings, integrations] = await Promise.all([
     listAllProductListingsAcrossProviders(),
-    getIntegrationRepository().then((repo) => repo.listIntegrations()),
+    integrationRepository.listIntegrations(),
   ]);
 
   const integrationMarketplaceById = new Map<string, MarketplaceBadgeKey>();
@@ -42,10 +68,6 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     const marketplace = resolveMarketplaceKey(integration.slug);
     if (!marketplace) continue;
     integrationMarketplaceById.set(integration.id, marketplace);
-  }
-
-  if (integrationMarketplaceById.size === 0) {
-    return NextResponse.json({});
   }
 
   const statusRank: Record<string, number> = {
@@ -69,7 +91,11 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   const byProduct = new Map<string, Partial<Record<MarketplaceBadgeKey, string>>>();
   for (const listing of listings) {
-    const marketplace = integrationMarketplaceById.get(listing.integrationId);
+    const marketplace =
+      integrationMarketplaceById.get(listing.integrationId) ??
+      inferMarketplaceFromListingMetadata(
+        (listing as { marketplaceData?: unknown }).marketplaceData
+      );
     if (!marketplace) continue;
 
     const normalizedStatus = normalizeStatus(listing.status);

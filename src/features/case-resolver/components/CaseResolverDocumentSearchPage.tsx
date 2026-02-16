@@ -155,7 +155,11 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
           : ''
         ).toLowerCase(),
         normalizedCategory: (file.categoryId ? (categoryPathById.get(file.categoryId) ?? '') : '').toLowerCase(),
-        normalizedContent: stripHtml(file.documentContent).toLowerCase(),
+        normalizedContent: (
+          file.documentContentPlainText.trim().length > 0
+            ? file.documentContentPlainText
+            : stripHtml(file.documentContent)
+        ).toLowerCase(),
       })),
     [caseIdentifierPathById, categoryPathById, files, tagPathById]
   );
@@ -359,7 +363,11 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
     >
       <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
         {pagedFiles.map((file: CaseResolverFile) => {
-          const previewText = stripHtml(file.documentContent).slice(0, 220);
+          const previewText = (
+            file.documentContentPlainText.trim().length > 0
+              ? file.documentContentPlainText
+              : stripHtml(file.documentContent)
+          ).slice(0, 220);
           const tagLabel = file.tagId ? tagPathById.get(file.tagId) ?? 'Unknown tag' : 'No tag';
           const caseIdentifierLabel = file.caseIdentifierId
             ? caseIdentifierPathById.get(file.caseIdentifierId) ?? 'Unknown case identifier'

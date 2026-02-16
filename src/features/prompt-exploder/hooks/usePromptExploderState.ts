@@ -1,12 +1,13 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
 } from '@/features/admin/pages/validator-scope';
+import { recordPromptValidationCounter } from '@/features/prompt-core/runtime-observability';
 import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
@@ -17,6 +18,7 @@ import {
   useUpdateSetting,
 } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -26,6 +28,11 @@ import {
   savePromptExploderApplyPrompt,
   savePromptExploderApplyPromptForCaseResolver,
 } from '../bridge';
+import {
+  isPromptExploderOrchestratorEnabled,
+  isPromptValidationStrictStackMode,
+  resolvePromptExploderOrchestratorRollout,
+} from '../feature-flags';
 import {
   promptExploderClampNumber,
 } from '../helpers/formatting';
@@ -42,17 +49,18 @@ import {
   type PromptExploderParserTuningRuleDraft,
 } from '../parser-tuning';
 import {
-  getPromptExploderScopedRules,
-  PROMPT_EXPLODER_PATTERN_PACK_IDS,
-} from '../pattern-pack';
-import {
   parsePromptExploderLibrary,
   PROMPT_EXPLODER_LIBRARY_KEY,
   sortPromptExploderLibraryItemsByUpdated,
 } from '../prompt-library';
 import {
-  filterTemplatesForRuntime,
-} from '../runtime-refresh';
+  explodePromptWithValidationRuntime,
+  resolvePromptValidationRuntime,
+} from '../prompt-validation-orchestrator';
+import {
+  leavePromptRuntimeScope,
+  tryEnterPromptRuntimeScope,
+} from '../runtime-load-shedder';
 import {
   parsePromptExploderSettings,
   PROMPT_EXPLODER_SETTINGS_KEY,
@@ -61,7 +69,6 @@ import {
   buildPromptExploderValidationRuleStackOptions,
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
   normalizePromptExploderValidationRuleStack,
-  promptExploderValidationScopeFromStack,
   promptExploderValidationStackFromBridgeSource,
 } from '../validation-stack';
 
@@ -142,6 +149,11 @@ export function usePromptExploderState() {
     useState(EMPTY_CASE_RESOLVER_PARTY_SELECTION);
   const [selectedCaseResolverStructuredDraft, setSelectedCaseResolverStructuredDraft] =
     useState<Record<string, unknown> | null>(null);
+  const explodeInFlightRef = useRef(false);
+  const lastExplosionRef = useRef<{
+    signature: string;
+    document: PromptExploderDocument;
+  } | null>(null);
 
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
   const returnTarget = returnTo.startsWith('/admin/case-resolver') ? 'case-resolver' : 'image-studio';
@@ -179,54 +191,89 @@ export function usePromptExploderState() {
     () => sortPromptExploderLibraryItemsByUpdated(promptLibraryState.items),
     [promptLibraryState.items]
   );
-  const activeValidationScope = useMemo(
-    () => promptExploderValidationScopeFromStack(
-      learningDraft.runtimeValidationRuleStack,
-      validatorPatternLists
-    ),
-    [learningDraft.runtimeValidationRuleStack, validatorPatternLists]
+  const strictStackMode = useMemo(
+    () => isPromptValidationStrictStackMode(),
+    []
   );
-
-  const scopedRules = useMemo<PromptValidationRule[]>(
-    () => getPromptExploderScopedRules(promptSettings, activeValidationScope),
-    [activeValidationScope, promptSettings]
-  );
-
-  const effectiveRules = useMemo<PromptValidationRule[]>(() => {
-    const byId = new Map<string, PromptValidationRule>();
-    [...scopedRules, ...sessionLearnedRules].forEach((rule) => {
-      byId.set(rule.id, rule);
-    });
-    return [...byId.values()];
-  }, [scopedRules, sessionLearnedRules]);
-
-  const runtimeValidationRules = useMemo<PromptValidationRule[]>(() => {
-    if (learningDraft.runtimeRuleProfile === 'learned_only') {
-      return effectiveRules.filter((rule) => rule.id.startsWith('segment.learned.'));
+  const runtimeResolution = useMemo(() => {
+    const preferredValidatorScope = shouldPreferCaseResolverValidationStack
+      ? 'case-resolver-prompt-exploder'
+      : 'prompt-exploder';
+    try {
+      return {
+        runtime: resolvePromptValidationRuntime({
+          promptSettings,
+          promptExploderSettings,
+          validatorPatternLists,
+          runtimeRuleProfile: learningDraft.runtimeRuleProfile,
+          runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
+          learningEnabled: learningDraft.enabled,
+          minApprovalsForMatching: learningDraft.minApprovalsForMatching,
+          maxTemplates: learningDraft.maxTemplates,
+          sessionLearnedRules,
+          sessionLearnedTemplates,
+          preferredValidatorScope,
+          strictUnknownStack: strictStackMode,
+        }),
+        warning: null as Error | null,
+      };
+    } catch (error) {
+      return {
+        runtime: resolvePromptValidationRuntime({
+          promptSettings,
+          promptExploderSettings,
+          validatorPatternLists,
+          runtimeRuleProfile: learningDraft.runtimeRuleProfile,
+          runtimeValidationRuleStack: learningDraft.runtimeValidationRuleStack,
+          learningEnabled: learningDraft.enabled,
+          minApprovalsForMatching: learningDraft.minApprovalsForMatching,
+          maxTemplates: learningDraft.maxTemplates,
+          sessionLearnedRules,
+          sessionLearnedTemplates,
+          preferredValidatorScope,
+          strictUnknownStack: false,
+        }),
+        warning: error instanceof Error ? error : new Error(String(error)),
+      };
     }
-    if (learningDraft.runtimeRuleProfile === 'pattern_pack') {
-      return effectiveRules.filter((rule) =>
-        PROMPT_EXPLODER_PATTERN_PACK_IDS.has(rule.id)
-      );
-    }
-    return effectiveRules;
-  }, [effectiveRules, learningDraft.runtimeRuleProfile]);
+  }, [
+    learningDraft.enabled,
+    learningDraft.maxTemplates,
+    learningDraft.minApprovalsForMatching,
+    learningDraft.runtimeRuleProfile,
+    learningDraft.runtimeValidationRuleStack,
+    promptExploderSettings,
+    promptSettings,
+    sessionLearnedRules,
+    sessionLearnedTemplates,
+    shouldPreferCaseResolverValidationStack,
+    strictStackMode,
+    validatorPatternLists,
+  ]);
 
-  const effectiveLearnedTemplates = useMemo<PromptExploderLearnedTemplate[]>(() => {
-    const byId = new Map<string, PromptExploderLearnedTemplate>();
-    [...promptExploderSettings.learning.templates, ...sessionLearnedTemplates].forEach((template) => {
-      byId.set(template.id, template);
+  useEffect(() => {
+    if (!runtimeResolution.warning) return;
+    logClientError(runtimeResolution.warning, {
+      context: {
+        source: 'usePromptExploderState',
+        action: 'resolvePromptValidationRuntime',
+        stack: learningDraft.runtimeValidationRuleStack,
+        correlationId: runtimeResolution.runtime.correlationId,
+        level: 'warn',
+      },
     });
-    return [...byId.values()];
-  }, [promptExploderSettings.learning.templates, sessionLearnedTemplates]);
+    toast(runtimeResolution.warning.message, { variant: 'warning' });
+  }, [
+    learningDraft.runtimeValidationRuleStack,
+    runtimeResolution.runtime.correlationId,
+    runtimeResolution.warning,
+    toast,
+  ]);
 
-  const runtimeLearnedTemplates = useMemo<PromptExploderLearnedTemplate[]>(() => {
-    if (!learningDraft.enabled) return [];
-    return filterTemplatesForRuntime(effectiveLearnedTemplates, {
-      minApprovalsForMatching: learningDraft.minApprovalsForMatching,
-      maxTemplates: learningDraft.maxTemplates,
-    });
-  }, [effectiveLearnedTemplates, learningDraft.enabled, learningDraft.maxTemplates, learningDraft.minApprovalsForMatching]);
+  const activeValidationScope = runtimeResolution.runtime.identity.scope;
+  const effectiveRules = runtimeResolution.runtime.effectiveRules;
+  const runtimeValidationRules = runtimeResolution.runtime.runtimeValidationRules;
+  const effectiveLearnedTemplates = runtimeResolution.runtime.effectiveLearnedTemplates;
 
   const selectedSegment = useMemo(() => {
     if (!documentState || !selectedSegmentId) return null;
@@ -266,20 +313,131 @@ export function usePromptExploderState() {
       toast('Enter a prompt first.', { variant: 'info' });
       return;
     }
+    if (explodeInFlightRef.current) {
+      recordPromptValidationCounter('runtime_backpressure_drop', 1, {
+        scope: runtimeResolution.runtime.identity.scope,
+      });
+      toast('Prompt explosion is already running.', { variant: 'info' });
+      return;
+    }
+    if (!tryEnterPromptRuntimeScope(runtimeResolution.runtime.identity.scope)) {
+      recordPromptValidationCounter('runtime_backpressure_drop', 1, {
+        scope: runtimeResolution.runtime.identity.scope,
+      });
+      toast('Runtime is busy for this scope. Try again in a moment.', {
+        variant: 'info',
+      });
+      return;
+    }
+    explodeInFlightRef.current = true;
 
-    const nextDocument = explodePromptText({
-      prompt: trimmed,
-      validationRules: runtimeValidationRules,
-      learnedTemplates: runtimeLearnedTemplates,
-      similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
-      validationScope: activeValidationScope,
-    });
+    try {
+      const similarityThreshold = promptExploderClampNumber(
+        learningDraft.similarityThreshold,
+        0.3,
+        0.95
+      );
+      const learnedTemplateSignature = runtimeResolution.runtime.runtimeLearnedTemplates
+        .map((template) => `${template.id}:${template.state}:${template.updatedAt}`)
+        .join('|');
+      const runtimeSignature = [
+        trimmed,
+        runtimeResolution.runtime.identity.cacheKey,
+        similarityThreshold.toFixed(4),
+        learnedTemplateSignature,
+      ].join('::');
+      if (lastExplosionRef.current?.signature === runtimeSignature) {
+        recordPromptValidationCounter('runtime_fast_path_hit', 1, {
+          scope: runtimeResolution.runtime.identity.scope,
+        });
+        const nextDocument = lastExplosionRef.current.document;
+        setManualBindings([]);
+        setDocumentState(nextDocument);
+        setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
+        toast(`Reused ${nextDocument.segments.length} cached segment(s).`, {
+          variant: 'info',
+        });
+        return;
+      }
+      recordPromptValidationCounter('runtime_fast_path_miss', 1, {
+        scope: runtimeResolution.runtime.identity.scope,
+      });
 
-    setManualBindings([]);
-    setDocumentState(nextDocument);
-    setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-    toast(`Exploded into ${nextDocument.segments.length} segment(s).`, { variant: 'success' });
-  }, [promptText, runtimeValidationRules, runtimeLearnedTemplates, learningDraft.similarityThreshold, activeValidationScope, toast]);
+      const rollout = resolvePromptExploderOrchestratorRollout({
+        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled,
+        cohortSeed: runtimeResolution.runtime.identity.cacheKey,
+      });
+      const orchestratorEnabled = isPromptExploderOrchestratorEnabled(
+        promptExploderSettings.runtime.orchestratorEnabled,
+        runtimeResolution.runtime.identity.cacheKey
+      );
+      const nextDocument = orchestratorEnabled
+        ? explodePromptWithValidationRuntime({
+          prompt: trimmed,
+          runtime: runtimeResolution.runtime,
+          similarityThreshold,
+        })
+        : explodePromptText({
+          prompt: trimmed,
+          validationRules: runtimeResolution.runtime.runtimeValidationRules,
+          learnedTemplates: runtimeResolution.runtime.runtimeLearnedTemplates,
+          similarityThreshold,
+          validationScope: runtimeResolution.runtime.identity.scope,
+        });
+      lastExplosionRef.current = {
+        signature: runtimeSignature,
+        document: nextDocument,
+      };
+
+      setManualBindings([]);
+      setDocumentState(nextDocument);
+      setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
+      toast(`Exploded into ${nextDocument.segments.length} segment(s).`, {
+        variant: 'success',
+      });
+      if (!orchestratorEnabled) {
+        logClientError(
+          new Error('Prompt runtime orchestrator disabled for current rollout cohort.'),
+          {
+            context: {
+              source: 'usePromptExploderState',
+              action: 'handleExplode.rollout',
+              scope: runtimeResolution.runtime.identity.scope,
+              stack: runtimeResolution.runtime.identity.stack,
+              rolloutReason: rollout.reason,
+              rolloutPercent: rollout.canaryPercent,
+              rolloutBucket: rollout.bucket,
+              level: 'warn',
+            },
+          }
+        );
+      }
+    } catch (error) {
+      logClientError(error, {
+        context: {
+          source: 'usePromptExploderState',
+          action: 'handleExplode',
+          correlationId: runtimeResolution.runtime.correlationId,
+          scope: runtimeResolution.runtime.identity.scope,
+          stack: runtimeResolution.runtime.identity.stack,
+          level: 'error',
+        },
+      });
+      toast(
+        error instanceof Error ? error.message : 'Prompt explosion failed.',
+        { variant: 'error' }
+      );
+    } finally {
+      explodeInFlightRef.current = false;
+      leavePromptRuntimeScope(runtimeResolution.runtime.identity.scope);
+    }
+  }, [
+    promptText,
+    runtimeResolution.runtime,
+    learningDraft.similarityThreshold,
+    promptExploderSettings.runtime.orchestratorEnabled,
+    toast,
+  ]);
 
   const handleSaveDocument = useCallback(async (name: string): Promise<void> => {
     if (!documentState) return;

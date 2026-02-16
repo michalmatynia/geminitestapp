@@ -31,6 +31,29 @@ const includesScope = (
   return scopes.includes(scope) || scopes.includes('global');
 };
 
+const remapExploderScopesForTarget = (
+  scopes: readonly PromptValidationScope[] | null | undefined,
+  targetScope: PromptExploderRuntimeValidationScope
+): PromptValidationScope[] => {
+  const normalizedScopes = normalizeRuleScopes(scopes, targetScope);
+  if (includesScope(normalizedScopes, targetScope)) {
+    return normalizedScopes;
+  }
+
+  const remapped = normalizedScopes.map((scope) => {
+    if (scope === 'prompt_exploder' || scope === 'case_resolver_prompt_exploder') {
+      return targetScope;
+    }
+    return scope;
+  });
+
+  const deduped = [...new Set(remapped)];
+  if (!deduped.includes(targetScope) && !deduped.includes('global')) {
+    deduped.push(targetScope);
+  }
+  return deduped as PromptValidationScope[];
+};
+
 const createRegexRule = (rule: {
   id: string;
   title: string;
@@ -1212,15 +1235,14 @@ export function ensurePromptExploderPatternPack(
   const updatedRuleIds: string[] = [];
 
   PROMPT_EXPLODER_PATTERN_PACK.forEach((packRule) => {
-    if (!includesScope(packRule.appliesToScopes, targetScope)) {
-      return;
-    }
-    const packScopes = normalizeRuleScopes(packRule.appliesToScopes, targetScope);
-    const packLaunchScopes = normalizeRuleScopes(packRule.launchAppliesToScopes, targetScope);
+    const packScopes = remapExploderScopesForTarget(packRule.appliesToScopes, targetScope);
+    const packLaunchScopes = remapExploderScopesForTarget(
+      packRule.launchAppliesToScopes,
+      targetScope
+    );
     const existingIndex = nextRules.findIndex((rule) => {
       if (rule.id !== packRule.id) return false;
-      const scopes = rule.appliesToScopes ?? [];
-      return scopes.includes(targetScope);
+      return includesScope(rule.appliesToScopes, targetScope);
     });
     const existing = existingIndex >= 0 ? nextRules[existingIndex] : null;
     if (!existing) {
@@ -1335,21 +1357,8 @@ export function getPromptExploderScopedRules(
     ...settings.promptValidation.rules,
     ...(settings.promptValidation.learnedRules ?? []),
   ];
-  const scopedRules = mergedRules.filter((rule) => {
+  return mergedRules.filter((rule) => {
     const scopes = rule.appliesToScopes ?? [];
     return scopes.length === 0 || scopes.includes(scope) || scopes.includes('global');
   });
-
-  const byId = new Map<string, PromptValidationRule>(
-    scopedRules.map((rule: PromptValidationRule): [string, PromptValidationRule] => [rule.id, rule])
-  );
-  PROMPT_EXPLODER_PATTERN_PACK.forEach((rule: PromptValidationRule): void => {
-    const scopes = rule.appliesToScopes ?? [];
-    if (!(scopes.length === 0 || scopes.includes(scope) || scopes.includes('global'))) {
-      return;
-    }
-    if (byId.has(rule.id)) return;
-    byId.set(rule.id, rule);
-  });
-  return [...byId.values()];
 }

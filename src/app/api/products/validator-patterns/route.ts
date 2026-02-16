@@ -6,6 +6,10 @@ import { z } from 'zod';
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { getValidationPatternRepository } from '@/features/products/server';
 import {
+  invalidateValidationPatternRuntimeCache,
+  listValidationPatternsCached,
+} from '@/features/products/services/validation-pattern-runtime-cache';
+import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationLaunchScopeBehavior,
   normalizeProductValidationSkipNoopReplacementProposal,
@@ -13,7 +17,9 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
 } from '@/features/products/utils/validator-instance-behavior';
+import { validateRegexSafety } from '@/features/products/utils/validator-regex-safety';
 import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { validateAndNormalizeRuntimeConfig } from '@/features/products/validations/validator-runtime-config';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -92,6 +98,15 @@ const createPatternSchema = z.object({
 });
 
 const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
+  const safety = validateRegexSafety(regexSource, flags);
+  if (!safety.ok) {
+    throw badRequestError(safety.message, {
+      code: safety.code,
+      detail: safety.detail ?? null,
+      regex: regexSource,
+      flags: flags ?? null,
+    });
+  }
   try {
     const normalizedFlags = flags?.trim() || undefined;
     // Compile once on write to avoid persisting invalid rules.
@@ -142,48 +157,13 @@ const assertValidLaunchConfig = ({
   assertValidRegex(launchValue, launchFlags);
 };
 
-const parseRuntimeConfigObject = (
-  runtimeConfig: string | null
-): Record<string, unknown> | null => {
-  if (!runtimeConfig) return null;
-  try {
-    const parsed = JSON.parse(runtimeConfig) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw badRequestError('Runtime config must be a JSON object.');
-    }
-    return parsed as Record<string, unknown>;
-  } catch (error) {
-    throw badRequestError('Invalid runtimeConfig JSON.', {
-      runtimeConfig,
-      detail: error instanceof Error ? error.message : String(error),
-    });
-  }
-};
-
-const assertValidRuntimeConfig = ({
-  runtimeEnabled,
-  runtimeType,
-  runtimeConfig,
-}: {
-  runtimeEnabled: boolean;
-  runtimeType: z.infer<typeof createPatternSchema>['runtimeType'];
-  runtimeConfig: string | null;
-}): void => {
-  if (!runtimeEnabled || runtimeType === 'none') return;
-  if (!runtimeConfig) {
-    throw badRequestError('runtimeConfig is required when runtime is enabled.');
-  }
-  void parseRuntimeConfigObject(runtimeConfig);
-};
-
 const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   return [...new Set(fields)];
 };
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const repository = await getValidationPatternRepository();
-  const patterns = await repository.listPatterns();
+  const patterns = await listValidationPatternsCached();
   return NextResponse.json(patterns);
 }
 
@@ -207,7 +187,11 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
   );
   const runtimeEnabled = body.runtimeEnabled ?? false;
   const runtimeType = body.runtimeType ?? 'none';
-  const runtimeConfig = body.runtimeConfig?.trim() || null;
+  const runtimeConfig = validateAndNormalizeRuntimeConfig({
+    runtimeEnabled,
+    runtimeType,
+    runtimeConfig: body.runtimeConfig?.trim() || null,
+  });
   const postAcceptBehavior = body.postAcceptBehavior ?? 'revalidate';
   const denyBehaviorOverride = normalizeProductValidationPatternDenyBehaviorOverride(
     body.denyBehaviorOverride
@@ -245,12 +229,6 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     launchValue,
     launchFlags,
   });
-  assertValidRuntimeConfig({
-    runtimeEnabled,
-    runtimeType,
-    runtimeConfig,
-  });
-
   const repository = await getValidationPatternRepository();
   const pattern = await repository.createPattern({
     label,
@@ -290,6 +268,8 @@ async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<
     launchFlags,
     appliesToScopes,
   });
+
+  invalidateValidationPatternRuntimeCache();
 
   return NextResponse.json(pattern, { status: 201 });
 }

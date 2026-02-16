@@ -2,16 +2,19 @@
 
 import React from 'react';
 
+import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
 import { Button, FormSection, Input, Label, StatusToggle, SelectSimple } from '@/shared/ui';
 
 import { useBenchmarkState } from '../context/hooks/useBenchmark';
 import { useSettingsState, useSettingsActions } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
+import { getPromptExploderRuntimePatternCacheSnapshot } from '../parser';
 import { PROMPT_EXPLODER_VALIDATION_RULE_STACK_OPTIONS } from '../validation-stack';
 
 import type { PromptExploderLearnedTemplate } from '../types';
 
 export function PatternRuntimePanel(): React.JSX.Element {
+  const [runtimeHealthTick, setRuntimeHealthTick] = React.useState(0);
   const {
     runtimeValidationRules,
     activeValidationRuleStack,
@@ -41,6 +44,63 @@ export function PatternRuntimePanel(): React.JSX.Element {
     benchmarkLowConfidenceThresholdDraft,
     benchmarkSuggestionLimitDraft,
   } = useBenchmarkState();
+
+  React.useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRuntimeHealthTick((current) => current + 1);
+    }, 4_000);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  const runtimeHealth = React.useMemo(() => {
+    void runtimeHealthTick;
+    const observability = getPromptValidationObservabilitySnapshot();
+    const parserCache = getPromptExploderRuntimePatternCacheSnapshot();
+    const cacheHits = observability.counters.runtime_cache_hit;
+    const cacheMisses = observability.counters.runtime_cache_miss;
+    const selectionTotal = observability.counters.runtime_selection_total;
+    const fallbackTotal = observability.counters.runtime_selection_fallback;
+    const totalErrors =
+      observability.errors.scope_resolution +
+      observability.errors.rule_compile +
+      observability.errors.runtime_execution;
+    const cacheHitRate =
+      cacheHits + cacheMisses > 0
+        ? cacheHits / (cacheHits + cacheMisses)
+        : 0;
+    const fallbackRate =
+      selectionTotal > 0 ? fallbackTotal / selectionTotal : 0;
+    const errorRate = selectionTotal > 0 ? totalErrors / selectionTotal : 0;
+    const toPercent = (value: number): string => `${(value * 100).toFixed(1)}%`;
+    const pipelineP95 =
+      observability.metrics.find((metric) => metric.name === 'runtime_pipeline_ms')?.p95Ms ?? 0;
+    const explodeP95 =
+      observability.metrics.find((metric) => metric.name === 'explode_ms')?.p95Ms ?? 0;
+    const compileP95 =
+      observability.metrics.find((metric) => metric.name === 'runtime_compile_ms')?.p95Ms ?? 0;
+
+    return {
+      status: observability.health.status,
+      cacheHitRate: toPercent(cacheHitRate),
+      fallbackRate: toPercent(fallbackRate),
+      errorRate: toPercent(errorRate),
+      pipelineP95: pipelineP95.toFixed(1),
+      explodeP95: explodeP95.toFixed(1),
+      compileP95: compileP95.toFixed(1),
+      selectionTotal,
+      parserCacheEntries: parserCache.keyed,
+      circuitOpenScopes: parserCache.circuitOpenScopes.length,
+    };
+  }, [runtimeHealthTick]);
+
+  const runtimeStatusClass =
+    runtimeHealth.status === 'ok'
+      ? 'text-emerald-300'
+      : runtimeHealth.status === 'degraded'
+        ? 'text-amber-300'
+        : 'text-rose-300';
 
   return (
     <FormSection
@@ -79,6 +139,8 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <span className='text-gray-200'>
             {promptExploderClampNumber(Math.floor(benchmarkSuggestionLimitDraft), 1, 20)}
           </span>
+          {' '}· runtime health:{' '}
+          <span className={runtimeStatusClass}>{runtimeHealth.status}</span>
         </div>
       }
     >
@@ -247,6 +309,50 @@ export function PatternRuntimePanel(): React.JSX.Element {
         <div className='text-xs text-gray-500'>
           Current runtime: similarity {learningDraft.similarityThreshold.toFixed(2)}, merge {learningDraft.templateMergeThreshold.toFixed(2)}, min approvals {learningDraft.minApprovalsForMatching}, cap {learningDraft.maxTemplates}, auto-activate {learningDraft.autoActivateLearnedTemplates ? 'on' : 'off'}, benchmark template upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}.
           {' '}Benchmark suite {benchmarkSuiteDraft}
+        </div>
+      </div>
+      <div className='mt-3 rounded border border-border/60 bg-card/20 p-3 text-xs text-gray-300'>
+        <div className='mb-2 text-[11px] uppercase tracking-wide text-gray-400'>
+          Runtime Health
+        </div>
+        <div className='grid gap-2 md:grid-cols-4'>
+          <div>
+            <div className='text-[10px] text-gray-500'>Pipeline p95 (ms)</div>
+            <div>{runtimeHealth.pipelineP95}</div>
+          </div>
+          <div>
+            <div className='text-[10px] text-gray-500'>Explode p95 (ms)</div>
+            <div>{runtimeHealth.explodeP95}</div>
+          </div>
+          <div>
+            <div className='text-[10px] text-gray-500'>Compile p95 (ms)</div>
+            <div>{runtimeHealth.compileP95}</div>
+          </div>
+          <div>
+            <div className='text-[10px] text-gray-500'>Selections</div>
+            <div>{runtimeHealth.selectionTotal}</div>
+          </div>
+          <div>
+            <div className='text-[10px] text-gray-500'>Cache Hit Rate</div>
+            <div>{runtimeHealth.cacheHitRate}</div>
+          </div>
+          <div>
+            <div className='text-[10px] text-gray-500'>Fallback Rate</div>
+            <div>{runtimeHealth.fallbackRate}</div>
+          </div>
+          <div>
+            <div className='text-[10px] text-gray-500'>Error Rate</div>
+            <div>{runtimeHealth.errorRate}</div>
+          </div>
+          <div>
+            <div className='text-[10px] text-gray-500'>Parser Cache</div>
+            <div>
+              {runtimeHealth.parserCacheEntries}
+              {runtimeHealth.circuitOpenScopes > 0
+                ? ` · circuit:${runtimeHealth.circuitOpenScopes}`
+                : ''}
+            </div>
+          </div>
         </div>
       </div>
       <div className='mt-4 rounded border border-border/60 bg-card/20 p-3'>

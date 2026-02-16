@@ -39,6 +39,13 @@ const JOB_STATUSES: ProductAiJobStatus[] = [
   'failed',
   'canceled',
 ];
+const DEFAULT_HEALTH_CRITICAL_GRACE_MS = 15 * 60 * 1000;
+let criticalSloSinceMs: number | null = null;
+
+const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
 
 const toIso = (value?: Date | string | null): string | null => {
   if (!value) return null;
@@ -204,14 +211,31 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     });
   })();
 
-  const hasCriticalSlo = queue?.slo?.overall === 'critical';
+  const nowMs = Date.now();
+  const criticalGraceMs = parsePositiveInt(
+    process.env['AI_PATHS_HEALTH_CRITICAL_GRACE_MS'],
+    DEFAULT_HEALTH_CRITICAL_GRACE_MS
+  );
+  const isCriticalNow = queue?.slo?.overall === 'critical';
+  if (isCriticalNow) {
+    criticalSloSinceMs = criticalSloSinceMs ?? nowMs;
+  } else {
+    criticalSloSinceMs = null;
+  }
+  const criticalForMs =
+    criticalSloSinceMs !== null ? Math.max(0, nowMs - criticalSloSinceMs) : 0;
+  const hasCriticalSlo = isCriticalNow && criticalForMs >= criticalGraceMs;
   const ok = Object.keys(errors).length === 0 && !hasCriticalSlo;
   const responseErrors =
     ok
       ? undefined
       : Object.keys(errors).length > 0
         ? errors
-        : { slo: 'Critical AI Paths SLO breach detected.' };
+        : {
+          slo: `Critical AI Paths SLO breach detected for ${Math.round(
+            criticalForMs / 1000
+          )}s.`,
+        };
   return NextResponse.json(
     {
       ok,
@@ -220,6 +244,12 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       aiJobs,
       queue,
       runtime24h,
+      sloGate: {
+        graceMs: criticalGraceMs,
+        criticalSince:
+          criticalSloSinceMs !== null ? new Date(criticalSloSinceMs).toISOString() : null,
+        criticalForMs,
+      },
       sloNotification,
       errors: responseErrors,
     },

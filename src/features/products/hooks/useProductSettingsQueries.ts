@@ -462,3 +462,27 @@ export function useDeleteValidationPatternMutation(): DeleteMutation {
     },
   });
 }
+
+export function useReorderValidationPatternsMutation(): UpdateMutation<
+  { updated: ProductValidationPattern[] },
+  { updates: api.ReorderValidationPatternUpdatePayload[] }
+> {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.validatorPatterns();
+  return createUpdateMutationV2({
+    mutationFn: (payload: { updates: api.ReorderValidationPatternUpdatePayload[] }) =>
+      api.reorderValidationPatterns(payload),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useReorderValidationPatternsMutation',
+      operation: 'update',
+      resource: 'products.settings.validator.patterns.reorder',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'validator', 'patterns', 'reorder'],
+    },
+    onSuccess: () => {
+      void invalidateValidatorConfig(queryClient);
+    },
+  });
+}

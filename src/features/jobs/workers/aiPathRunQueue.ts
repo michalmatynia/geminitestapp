@@ -3,6 +3,7 @@ import 'server-only';
 import { Queue } from 'bullmq';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { resolveAiPathsStaleRunningCleanupIntervalMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { getRuntimeAnalyticsSummary, recordRuntimeRunStarted } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { processRun, processStaleRunRecovery } from '@/features/jobs/processors/ai-path-run-processor';
 import { getAiInsightsQueueStatus } from '@/features/jobs/workers/aiInsightsQueue';
@@ -12,8 +13,10 @@ import { createManagedQueue, getRedisConnection } from '@/shared/lib/queue';
 const DEFAULT_CONCURRENCY = Number(process.env['AI_PATHS_RUN_CONCURRENCY'] ?? '1');
 const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
 const LOG_SOURCE = 'ai-path-run-queue';
+const RECOVERY_REPEAT_MS = resolveAiPathsStaleRunningCleanupIntervalMs();
 const buildRetryJobId = (runId: string): string => `${runId}:retry`;
 const DEBUG_AI_PATH_QUEUE = process.env['AI_PATHS_QUEUE_DEBUG'] === 'true';
+const localFallbackTimers = new Map<string, NodeJS.Timeout>();
 
 const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
@@ -372,10 +375,10 @@ const queue = createManagedQueue<AiPathRunJobData>({
 
 export const startAiPathRunQueue = (): void => {
   queue.startWorker();
-  // Schedule stale-run recovery as a repeatable job every 2 minutes
+  // Schedule stale-run recovery using the same interval as HTTP cleanup guards.
   void queue.enqueue(
     { runId: '__recovery__', type: 'recovery' },
-    { repeat: { every: 120_000 }, jobId: 'ai-path-run-recovery' }
+    { repeat: { every: RECOVERY_REPEAT_MS }, jobId: 'ai-path-run-recovery' }
   );
 };
 
@@ -483,9 +486,9 @@ export const getAiPathRunQueueStatus = async (): Promise<AiPathRunQueueStatus> =
       queueLagMs,
       completedLastMinute: health.completedCount,
       throughputPerMinute: health.completedCount,
-      avgRuntimeMs: null, // BullMQ doesn't track this natively; can be added via QueueEvents
+      avgRuntimeMs: runtimeAnalyticsSummary.runs.avgDurationMs,
       p50RuntimeMs: null,
-      p95RuntimeMs: null,
+      p95RuntimeMs: runtimeAnalyticsSummary.runs.p95DurationMs,
       brainQueue: {
         running: insightsQueueHealth.running,
         healthy: insightsQueueHealth.healthy,
@@ -551,6 +554,26 @@ export const processSingleRun = async (runId: string): Promise<void> => {
   }
 };
 
+const scheduleLocalFallbackRun = (runId: string, delayMs: number): void => {
+  const existing = localFallbackTimers.get(runId);
+  if (existing) {
+    clearTimeout(existing);
+    localFallbackTimers.delete(runId);
+  }
+  const timeout = setTimeout(() => {
+    localFallbackTimers.delete(runId);
+    void processSingleRun(runId).catch((error: unknown) => {
+      void logSystemEvent({
+        level: 'error',
+        source: LOG_SOURCE,
+        message: `[aiPathRunQueue] Local fallback execution failed for run ${runId}`,
+        error,
+      });
+    });
+  }, Math.max(0, delayMs));
+  localFallbackTimers.set(runId, timeout);
+};
+
 const normalizeDelayMs = (value?: number): number => {
   if (!Number.isFinite(value) || value === undefined || value <= 0) return 0;
   return Math.floor(value);
@@ -575,12 +598,11 @@ export const enqueuePathRunJob = async (
   const delayMs = normalizeDelayMs(options.delayMs);
   const { queue: bullQueue, owned } = resolveAiPathRunQueue();
   if (!bullQueue) {
-    if (delayMs > 0) {
-      debugQueueWarn(
-        `[aiPathRunQueue] Redis unavailable; retry delay for run ${runId} cannot be scheduled, processing inline.`
-      );
-    }
-    await queue.enqueue({ runId }, { jobId: runId });
+    debugQueueWarn(
+      `[aiPathRunQueue] Redis unavailable; scheduling local fallback execution for run ${runId}.`,
+      { runId, delayMs }
+    );
+    scheduleLocalFallbackRun(runId, delayMs);
     return;
   }
 

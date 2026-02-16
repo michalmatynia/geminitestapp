@@ -4,33 +4,17 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  Megaphone,
-  Link2,
 } from 'lucide-react';
-import NextImage from 'next/image';
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-} from 'react';
+import React from 'react';
 
 import {
-  APP_EMBED_OPTIONS,
-  type AppEmbedId,
-} from '@/features/app-embeds/lib/constants';
-import { EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
+  EventEffectsWrapper } from '@/features/cms/components/shared/EventEffectsWrapper';
 import type { CssAnimationConfig } from '@/features/cms/types/css-animations';
 import {
   buildScopedCustomCss,
   getCustomCssSelector,
 } from '@/features/cms/utils/custom-css';
 import type { GsapAnimationConfig } from '@/features/gsap';
-import {
-  Viewer3D,
-  type EnvironmentPreset,
-  type LightingPreset,
-} from '@/features/viewer3d';
 
 import { CssAnimationWrapper } from '../frontend/CssAnimationWrapper';
 import { GsapAnimationWrapper } from '../frontend/GsapAnimationWrapper';
@@ -39,40 +23,23 @@ import {
   getSectionStyles,
   getTextAlign,
   getBlockTypographyStyles,
-  getVerticalAlign,
   type ColorSchemeColors,
 } from '../frontend/theme-styles';
 import { BlockContextProvider, useBlockContext } from './preview/context/BlockContext';
 import { usePreviewEditor } from './preview/context/PreviewEditorContext';
 import {
-  buildImageElementPresentation,
-  renderBackgroundImageLayer,
-} from './preview/image-utils';
-import {
   InspectorTooltip,
   InspectorHover,
   buildStyleEntries,
   resolveNodeLabel,
-  type InspectorEntry,
   type InspectorSection,
 } from './preview/InspectorOverlay';
-import { MemoizedViewer3D } from './preview/MemoizedViewer3D';
 import {
   SECTION_BLOCK_TYPES,
-  getGapClass,
-  resolveGapValue,
-  getGapStyle,
   resolveJustifyContent,
   resolveAlignItems,
-  normalizeSlideshowAnimationType,
-  getBlockMinHeight,
   getSpacingValue,
-  toNumber,
-  toBoolean,
-  toRadians,
   shouldShowSectionDivider,
-  isBackgroundModeImage,
-  collectBackgroundImages,
   type MediaReplaceTarget,
 } from './preview/preview-utils';
 import {
@@ -103,8 +70,6 @@ import type {
 
 export type { MediaReplaceTarget };
 
-type AppEmbedOption = (typeof APP_EMBED_OPTIONS)[number];
-
 // ---------------------------------------------------------------------------
 // Top-level section preview
 // ---------------------------------------------------------------------------
@@ -128,10 +93,8 @@ export function PreviewSection({
     inspectorSettings,
     hoveredNodeId,
     onSelect,
-    onOpenMedia,
     onRemoveSection,
     onToggleSectionVisibility,
-    onRemoveRow,
   } = usePreviewEditor();
 
   const isSectionSelected = selectedNodeId === section.id;
@@ -228,9 +191,7 @@ export function PreviewSection({
       <PreviewSlideshowSection
         section={section}
         colorSchemes={colorSchemes}
-        mediaStyles={mediaStyles}
         selectedRing={selectedRing}
-        inspectorZ={inspectorZ}
         renderSectionActions={renderSectionActions}
         divider={divider}
         wrapInspector={wrapInspector}
@@ -247,7 +208,6 @@ export function PreviewSection({
         colorSchemes={colorSchemes}
         mediaStyles={mediaStyles}
         selectedRing={selectedRing}
-        inspectorZ={inspectorZ}
         renderSectionActions={renderSectionActions}
         divider={divider}
         wrapInspector={wrapInspector}
@@ -297,7 +257,6 @@ export function PreviewSection({
       <PreviewRichTextSection
         section={section}
         colorSchemes={colorSchemes}
-        mediaStyles={mediaStyles}
         selectedRing={selectedRing}
         renderSectionActions={renderSectionActions}
         divider={divider}
@@ -415,7 +374,7 @@ function PreviewBlockItem({ block }: PreviewBlockItemProps): React.ReactNode {
   } = usePreviewEditor();
   
   const blockContext = useBlockContext();
-  const { sectionId, sectionType, sectionZone, columnId, parentBlockId, mediaStyles, contained = false, stretch = false } = blockContext;
+  const { sectionId, columnId, parentBlockId, contained = false, stretch = false } = blockContext;
   
   const isSelected = selectedNodeId === block.id;
   const isSectionType = SECTION_BLOCK_TYPES.includes(block.type);

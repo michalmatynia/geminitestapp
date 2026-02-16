@@ -13,10 +13,16 @@ import {
   useImportMutation,
   useImportRun,
   useResumeImportRunMutation,
+  useCancelImportRunMutation,
   useSaveExportSettingsMutation,
   useClearInventoryMutation,
+  useImportParameterCache,
+  useRefreshImportParameterCacheMutation,
 } from '@/features/data-import-export/hooks/useImportQueries';
-import type { CatalogRecord } from '@/features/data-import-export/hooks/useImportQueries';
+import type {
+  CatalogRecord,
+  ImportParameterCacheResponse,
+} from '@/features/data-import-export/hooks/useImportQueries';
 import type {
   ImportResponse,
   InventoryOption,
@@ -107,6 +113,9 @@ interface ImportExportContextType {
   activeImportRunId: string;
   activeImportRun: ImportRunDetail | null;
   loadingImportRun: boolean;
+  importSourceFields: string[];
+  importSourceFieldValues: Record<string, string>;
+  loadingImportSourceFields: boolean;
   templateScope: 'import' | 'export';
   setTemplateScope: (scope: 'import' | 'export') => void;
   showAllWarehouses: boolean;
@@ -140,6 +149,7 @@ interface ImportExportContextType {
   handleLoadImportList: () => Promise<void>;
   handleImport: () => Promise<void>;
   handleResumeImport: () => Promise<void>;
+  handleCancelImport: () => Promise<void>;
   handleDownloadImportReport: () => void;
   handleSaveExportSettings: () => Promise<void>;
   handleClearInventory: () => Promise<void>;
@@ -212,6 +222,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const hasInitializedInventories = useRef(false);
   const hasHydratedImportActiveTemplatePref = useRef(false);
   const hasHydratedExportActiveTemplatePref = useRef(false);
+  const lastHydratedImportSchemaKey = useRef('');
 
   // Queries
   const { data: integrationsWithConnectionsData, isLoading: checkingIntegration } = useIntegrationsWithConnections();
@@ -307,6 +318,34 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     'sample-product',
     '/api/integrations/imports/base/sample-product'
   );
+  const importParameterCacheQuery = useImportParameterCache(isBaseConnected);
+  const importParameterCache = useMemo<ImportParameterCacheResponse | null>(() => {
+    return importParameterCacheQuery.data ?? null;
+  }, [importParameterCacheQuery.data]);
+  const importSourceFields = useMemo<string[]>(() => {
+    const rawKeys = Array.isArray(importParameterCache?.keys)
+      ? importParameterCache.keys
+      : [];
+    const normalized = rawKeys
+      .map((key: unknown): string => (typeof key === 'string' ? key.trim() : ''))
+      .filter((key: string): boolean => key.length > 0);
+    return Array.from(new Set(normalized)).sort((a: string, b: string) =>
+      a.localeCompare(b)
+    );
+  }, [importParameterCache?.keys]);
+  const importSourceFieldValues = useMemo<Record<string, string>>(() => {
+    const rawValues = importParameterCache?.values;
+    if (!rawValues || typeof rawValues !== 'object') return {};
+    const normalized: Record<string, string> = {};
+    Object.entries(rawValues).forEach(([key, value]: [string, unknown]) => {
+      const normalizedKey = key.trim();
+      if (!normalizedKey || typeof value !== 'string') return;
+      const normalizedValue = value.trim();
+      if (!normalizedValue) return;
+      normalized[normalizedKey] = normalizedValue;
+    });
+    return normalized;
+  }, [importParameterCache?.values]);
 
   const applyTemplate = useCallback((template: Template, scope: 'import' | 'export'): void => {
     const nextMappings = template.mappings?.length ? template.mappings : [{ sourceKey: '', targetField: '' }];
@@ -393,8 +432,11 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const savePreferenceMutation = useSavePreferenceMutation();
   const importMutation = useImportMutation();
   const resumeImportRunMutation = useResumeImportRunMutation(activeImportRunId);
+  const cancelImportRunMutation = useCancelImportRunMutation(activeImportRunId);
   const saveExportSettingsMutation = useSaveExportSettingsMutation();
   const clearInventoryMutation = useClearInventoryMutation();
+  const refreshImportParameterCacheMutation =
+    useRefreshImportParameterCacheMutation();
   const saveImportTemplateMutation = useTemplateMutation('import', importActiveTemplateId);
   const saveExportTemplateMutation = useTemplateMutation('export', exportActiveTemplateId);
   const createImportTemplateMutation = useTemplateMutation('import');
@@ -485,6 +527,49 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     }
     return undefined;
   }, [inventories, inventoryId, exportInventoryId]);
+
+  useEffect(() => {
+    const normalizedInventoryId = inventoryId.trim();
+    const normalizedConnectionId = selectedBaseConnectionId.trim();
+    if (!normalizedInventoryId || !normalizedConnectionId || !isBaseConnected) {
+      return;
+    }
+    const schemaCacheKey = `${normalizedConnectionId}:${normalizedInventoryId}`;
+    const cachedInventoryId =
+      typeof importParameterCache?.inventoryId === 'string'
+        ? importParameterCache.inventoryId.trim()
+        : '';
+    if (
+      cachedInventoryId === normalizedInventoryId &&
+      importSourceFields.length > 0
+    ) {
+      lastHydratedImportSchemaKey.current = schemaCacheKey;
+      return;
+    }
+    if (lastHydratedImportSchemaKey.current === schemaCacheKey) {
+      return;
+    }
+    if (refreshImportParameterCacheMutation.isPending) {
+      return;
+    }
+    lastHydratedImportSchemaKey.current = schemaCacheKey;
+    void refreshImportParameterCacheMutation
+      .mutateAsync({
+        inventoryId: normalizedInventoryId,
+        connectionId: normalizedConnectionId,
+      })
+      .catch(() => {
+        // Source fields remain optional; users can still enter custom keys.
+      });
+  }, [
+    inventoryId,
+    selectedBaseConnectionId,
+    isBaseConnected,
+    importParameterCache?.inventoryId,
+    importSourceFields.length,
+    refreshImportParameterCacheMutation,
+  ]);
+
   const warehousesQuery = useWarehouses(
     exportInventoryId,
     selectedBaseConnectionId,
@@ -546,8 +631,13 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
 
   const activeImportRunQuery = useImportRun(
     activeImportRunId,
-    Boolean(activeImportRunId),
-    pollImportRun ? 2000 : false
+    {
+      enabled: Boolean(activeImportRunId),
+      refetchInterval: pollImportRun ? 2000 : false,
+      page: 1,
+      pageSize: pollImportRun ? 250 : 1000,
+      includeItems: true,
+    }
   );
   const activeImportRun = useMemo<ImportRunDetail | null>(() => {
     return (activeImportRunQuery.data) ?? null;
@@ -558,7 +648,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     const status = activeImportRun?.run.status;
     if (!status) return;
     const isTerminal =
-      status === 'completed' || status === 'failed' || status === 'canceled';
+      status === 'completed' || status === 'partial_success' || status === 'failed' || status === 'canceled';
     if (isTerminal) {
       setPollImportRun(false);
     }
@@ -590,6 +680,34 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
           : 'Failed to load inventories.';
       toast(message, { variant: 'error' });
       return;
+    }
+    const normalizeInventoryId = (value: unknown): string => {
+      if (typeof value === 'string') return value.trim();
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return String(value);
+      }
+      return '';
+    };
+    const resultInventories = Array.isArray(result.data)
+      ? result.data
+      : [];
+    const firstLoadedInventoryId = normalizeInventoryId(
+      (resultInventories[0] as { inventory_id?: unknown; id?: unknown } | undefined)
+        ?.inventory_id ??
+        (resultInventories[0] as { inventory_id?: unknown; id?: unknown } | undefined)?.id
+    );
+    const selectedInventoryId = inventoryId.trim() || firstLoadedInventoryId;
+    const selectedConnectionId = selectedBaseConnectionId.trim();
+    if (selectedInventoryId && selectedConnectionId) {
+      lastHydratedImportSchemaKey.current = '';
+      void refreshImportParameterCacheMutation
+        .mutateAsync({
+          inventoryId: selectedInventoryId,
+          connectionId: selectedConnectionId,
+        })
+        .catch(() => {
+          // Keep inventory reload successful even if source schema hydration fails.
+        });
     }
     toast('Inventories reloaded', { variant: 'success' });
   };
@@ -682,7 +800,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
         toast(importDryRun ? 'Dry-run queued.' : 'Import queued.', {
           variant: 'success',
         });
-      } else if (res.status === 'completed') {
+      } else if (res.status === 'completed' || res.status === 'partial_success') {
         toast(res.summaryMessage || 'Import completed.', { variant: 'success' });
       } else if (res.status === 'failed') {
         const preflightErrors = res.preflight.issues
@@ -715,6 +833,24 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : 'Failed to resume import run.';
+      toast(message, { variant: 'error' });
+    }
+  };
+
+  const handleCancelImport = async (): Promise<void> => {
+    if (!activeImportRunId) {
+      toast('No import run selected for cancel.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      const canceled = await cancelImportRunMutation.mutateAsync();
+      setLastResult(canceled);
+      setPollImportRun(true);
+      toast('Import cancel requested.', { variant: 'success' });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to request import cancel.';
       toast(message, { variant: 'error' });
     }
   };
@@ -940,6 +1076,11 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     activeImportRunId,
     activeImportRun,
     loadingImportRun,
+    importSourceFields,
+    importSourceFieldValues,
+    loadingImportSourceFields:
+      importParameterCacheQuery.isFetching ||
+      refreshImportParameterCacheMutation.isPending,
     templateScope,
     setTemplateScope,
     showAllWarehouses,
@@ -971,6 +1112,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     handleLoadImportList,
     handleImport,
     handleResumeImport,
+    handleCancelImport,
     handleDownloadImportReport,
     handleSaveExportSettings,
     handleClearInventory,
@@ -983,6 +1125,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     importing:
       importMutation.isPending ||
       resumeImportRunMutation.isPending ||
+      cancelImportRunMutation.isPending ||
       activeRunBusy,
     savingExportSettings: saveExportSettingsMutation.isPending,
     savingImportTemplate: saveImportTemplateMutation.isPending || createImportTemplateMutation.isPending,

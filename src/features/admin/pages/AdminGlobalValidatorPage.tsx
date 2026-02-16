@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
 import { AdminImageStudioValidationPatternsPage } from '@/features/ai/image-studio';
@@ -13,10 +13,6 @@ import {
   ClientOnly,
   FormSection,
   SectionHeader,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
 } from '@/shared/ui';
 
 import {
@@ -29,8 +25,6 @@ import {
 
 export function AdminGlobalValidatorPage(): React.JSX.Element {
   const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const router = useRouter();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
   const patternLists = useMemo(
@@ -38,32 +32,17 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
     [rawPatternLists]
   );
 
-  const activeListId = useMemo((): string => {
+  const activeList = useMemo(() => {
     const listParam = searchParams.get('list');
-    if (listParam && patternLists.some((list) => list.id === listParam)) {
-      return listParam;
+    if (listParam) {
+      const matchedById = patternLists.find((list) => list.id === listParam);
+      if (matchedById) return matchedById;
     }
 
     const legacyScope = parseValidatorScope(searchParams.get('scope'));
     const matchedList = patternLists.find((list) => list.scope === legacyScope);
-    return matchedList?.id ?? patternLists[0]?.id ?? 'products';
+    return matchedList ?? patternLists[0] ?? null;
   }, [patternLists, searchParams]);
-
-  const activeList = useMemo(
-    () =>
-      patternLists.find((list) => list.id === activeListId) ??
-      patternLists[0] ??
-      null,
-    [activeListId, patternLists]
-  );
-
-  const handleScopeChange = (value: string): void => {
-    if (value === activeListId) return;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('list', value);
-    params.delete('scope');
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
 
   const renderScopePanel = (
     scope: ValidatorScope,
@@ -139,9 +118,20 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
   return (
     <div className='container mx-auto space-y-6 py-10'>
       <SectionHeader
-        eyebrow='AI · Global Validator'
         title='Validation Pattern Lists'
-        description='Choose which pattern list you want to manage.'
+        subtitle={(
+          <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
+            <Link href='/admin' className='hover:text-gray-200 transition-colors'>
+              Admin
+            </Link>
+            <span>/</span>
+            <Link href='/admin/validator' className='hover:text-gray-200 transition-colors'>
+              Global Validator
+            </Link>
+            <span>/</span>
+            <span className='text-gray-300'>Validation Pattern Lists</span>
+          </nav>
+        )}
         actions={(
           <Button type='button' variant='outline' size='xs' asChild>
             <Link href='/admin/validator/lists'>Manage Lists</Link>
@@ -156,25 +146,17 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
           </FormSection>
         }
       >
-        <Tabs
-          value={activeList?.id ?? ''}
-          onValueChange={handleScopeChange}
-          className='space-y-4'
-        >
-          <TabsList>
-            {patternLists.map((list) => (
-              <TabsTrigger key={list.id} value={list.id}>
-                {list.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {patternLists.map((list) => (
-            <TabsContent key={list.id} value={list.id} className='space-y-4'>
-              {renderScopePanel(list.scope, list.description)}
-            </TabsContent>
-          ))}
-        </Tabs>
+        {activeList ? (
+          <div className='space-y-4'>
+            {renderScopePanel(activeList.scope, activeList.description)}
+          </div>
+        ) : (
+          <FormSection variant='subtle' className='p-4'>
+            <p className='text-sm text-gray-400'>
+              No validation pattern lists available. Create one in Manage Lists.
+            </p>
+          </FormSection>
+        )}
       </ClientOnly>
     </div>
   );

@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { PRODUCT_VALIDATION_REPLACEMENT_FIELDS } from '@/features/products/constants';
 import { getValidationPatternRepository } from '@/features/products/server';
+import { invalidateValidationPatternRuntimeCache } from '@/features/products/services/validation-pattern-runtime-cache';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationLaunchScopeBehavior,
@@ -13,7 +14,9 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
 } from '@/features/products/utils/validator-instance-behavior';
+import { validateRegexSafety } from '@/features/products/utils/validator-regex-safety';
 import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
+import { validateAndNormalizeRuntimeConfig } from '@/features/products/validations/validator-runtime-config';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -92,13 +95,24 @@ const updatePatternSchema = z
     appliesToScopes: z
       .array(z.enum(['draft_template', 'product_create', 'product_edit']))
       .optional(),
+    expectedUpdatedAt: z.string().trim().nullable().optional(),
   })
   .refine(
-    (value: Record<string, unknown>) => Object.keys(value).length > 0,
+    (value: Record<string, unknown>) =>
+      Object.keys(value).some((key: string) => key !== 'expectedUpdatedAt'),
     'At least one field is required'
   );
 
 const assertValidRegex = (regexSource: string, flags: string | null | undefined): void => {
+  const safety = validateRegexSafety(regexSource, flags);
+  if (!safety.ok) {
+    throw badRequestError(safety.message, {
+      code: safety.code,
+      detail: safety.detail ?? null,
+      regex: regexSource,
+      flags: flags ?? null,
+    });
+  }
   try {
     const normalizedFlags = flags?.trim() || undefined;
     void new RegExp(regexSource, normalizedFlags);
@@ -146,40 +160,6 @@ const assertValidLaunchConfig = ({
     throw badRequestError('launchValue is required when launchOperator is regex.');
   }
   assertValidRegex(launchValue, launchFlags);
-};
-
-const parseRuntimeConfigObject = (
-  runtimeConfig: string | null
-): Record<string, unknown> | null => {
-  if (!runtimeConfig) return null;
-  try {
-    const parsed = JSON.parse(runtimeConfig) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw badRequestError('Runtime config must be a JSON object.');
-    }
-    return parsed as Record<string, unknown>;
-  } catch (error) {
-    throw badRequestError('Invalid runtimeConfig JSON.', {
-      runtimeConfig,
-      detail: error instanceof Error ? error.message : String(error),
-    });
-  }
-};
-
-const assertValidRuntimeConfig = ({
-  runtimeEnabled,
-  runtimeType,
-  runtimeConfig,
-}: {
-  runtimeEnabled: boolean;
-  runtimeType: z.infer<typeof updatePatternSchema>['runtimeType'] | 'none' | 'database_query' | 'ai_prompt';
-  runtimeConfig: string | null;
-}): void => {
-  if (!runtimeEnabled || runtimeType === 'none') return;
-  if (!runtimeConfig) {
-    throw badRequestError('runtimeConfig is required when runtime is enabled.');
-  }
-  void parseRuntimeConfigObject(runtimeConfig);
 };
 
 const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
@@ -247,8 +227,17 @@ async function PUT_handler(
     body.runtimeEnabled !== undefined ? body.runtimeEnabled : current.runtimeEnabled;
   const nextRuntimeType =
     body.runtimeType !== undefined ? body.runtimeType : current.runtimeType;
-  const nextRuntimeConfig =
+  const nextRuntimeConfigRaw =
     body.runtimeConfig !== undefined ? body.runtimeConfig?.trim() || null : current.runtimeConfig;
+  const nextRuntimeConfig = validateAndNormalizeRuntimeConfig({
+    runtimeEnabled: nextRuntimeEnabled,
+    runtimeType: nextRuntimeType,
+    runtimeConfig: nextRuntimeConfigRaw,
+  });
+  const shouldPersistRuntimeConfig =
+    body.runtimeConfig !== undefined ||
+    body.runtimeEnabled !== undefined ||
+    body.runtimeType !== undefined;
   if (nextReplacementEnabled && !nextReplacementValue) {
     throw badRequestError('replacementValue is required when replacementEnabled is true');
   }
@@ -268,12 +257,6 @@ async function PUT_handler(
         : current.launchValue,
     launchFlags: body.launchFlags !== undefined ? body.launchFlags?.trim() || null : current.launchFlags,
   });
-  assertValidRuntimeConfig({
-    runtimeEnabled: nextRuntimeEnabled,
-    runtimeType: nextRuntimeType,
-    runtimeConfig: nextRuntimeConfig,
-  });
-
   const updated = await repository.updatePattern(params.id, {
     ...(body.label !== undefined && { label: body.label.trim() }),
     ...(body.target !== undefined && { target: body.target }),
@@ -299,7 +282,7 @@ async function PUT_handler(
     }),
     ...(body.runtimeEnabled !== undefined && { runtimeEnabled: body.runtimeEnabled }),
     ...(body.runtimeType !== undefined && { runtimeType: body.runtimeType }),
-    ...(body.runtimeConfig !== undefined && { runtimeConfig: body.runtimeConfig?.trim() || null }),
+    ...(shouldPersistRuntimeConfig && { runtimeConfig: nextRuntimeConfig }),
     ...(body.postAcceptBehavior !== undefined && { postAcceptBehavior: body.postAcceptBehavior }),
     ...(body.denyBehaviorOverride !== undefined && {
       denyBehaviorOverride: normalizeProductValidationPatternDenyBehaviorOverride(
@@ -333,7 +316,12 @@ async function PUT_handler(
     }),
     ...(body.launchFlags !== undefined && { launchFlags: body.launchFlags?.trim() || null }),
     ...(body.appliesToScopes !== undefined && { appliesToScopes: nextAppliesToScopes }),
+    ...(body.expectedUpdatedAt !== undefined && {
+      expectedUpdatedAt: body.expectedUpdatedAt?.trim() || null,
+    }),
   });
+
+  invalidateValidationPatternRuntimeCache();
 
   return NextResponse.json(updated);
 }
@@ -345,6 +333,7 @@ async function DELETE_handler(
 ): Promise<Response> {
   const repository = await getValidationPatternRepository();
   await repository.deletePattern(params.id);
+  invalidateValidationPatternRuntimeCache();
   return new Response(null, { status: 204 });
 }
 

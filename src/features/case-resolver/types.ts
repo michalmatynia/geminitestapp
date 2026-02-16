@@ -7,6 +7,8 @@ export type CaseResolverDocumentNodePort = 'textfield' | 'content' | 'plainText'
 export type CaseResolverAssetKind = 'node_file' | 'image' | 'pdf' | 'file';
 export type CaseResolverFileType = 'document' | 'scanfile';
 export type CaseResolverDocumentVersion = 'original' | 'exploded';
+export type CaseResolverEditorType = 'markdown' | 'wysiwyg' | 'code';
+export type CaseResolverDocumentFormatVersion = 1;
 export type CaseResolverPdfExtractionPresetId =
   | 'plain_text'
   | 'structured_sections'
@@ -78,6 +80,43 @@ export type CaseResolverGraph = {
   documentSourceFileIdByNode?: Record<string, string>;
 };
 
+export type CaseResolverRelationEntityType = 'case' | 'folder' | 'file' | 'custom';
+export type CaseResolverRelationFileKind = 'case_file' | 'asset_file';
+export type CaseResolverRelationEdgeKind =
+  | 'contains'
+  | 'located_in'
+  | 'parent_case'
+  | 'references'
+  | 'related'
+  | 'custom';
+
+export type CaseResolverRelationNodeMeta = {
+  entityType: CaseResolverRelationEntityType;
+  entityId: string;
+  label: string;
+  fileKind: CaseResolverRelationFileKind | null;
+  folderPath: string | null;
+  sourceFileId: string | null;
+  isStructural: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CaseResolverRelationEdgeMeta = {
+  relationType: CaseResolverRelationEdgeKind;
+  label: string;
+  isStructural: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CaseResolverRelationGraph = {
+  nodes: AiNode[];
+  edges: Edge[];
+  nodeMeta: Record<string, CaseResolverRelationNodeMeta>;
+  edgeMeta: Record<string, CaseResolverRelationEdgeMeta>;
+};
+
 export type CaseResolverFile = {
   id: string;
   fileType: CaseResolverFileType;
@@ -89,7 +128,15 @@ export type CaseResolverFile = {
   originalDocumentContent: string;
   explodedDocumentContent: string;
   activeDocumentVersion: CaseResolverDocumentVersion;
+  editorType: CaseResolverEditorType;
+  documentContentFormatVersion: CaseResolverDocumentFormatVersion;
+  documentContentVersion: number;
   documentContent: string;
+  documentContentMarkdown: string;
+  documentContentHtml: string;
+  documentContentPlainText: string;
+  documentConversionWarnings: string[];
+  lastContentConversionAt: string;
   scanSlots: CaseResolverScanSlot[];
   isLocked: boolean;
   graph: CaseResolverGraph;
@@ -115,7 +162,16 @@ export type CaseResolverFileEditDraft = {
   originalDocumentContent: string;
   explodedDocumentContent: string;
   activeDocumentVersion: CaseResolverDocumentVersion;
+  editorType: CaseResolverEditorType;
+  documentContentFormatVersion: CaseResolverDocumentFormatVersion;
+  documentContentVersion: number;
+  baseDocumentContentVersion: number;
   documentContent: string;
+  documentContentMarkdown: string;
+  documentContentHtml: string;
+  documentContentPlainText: string;
+  documentConversionWarnings: string[];
+  lastContentConversionAt: string;
   scanSlots: CaseResolverScanSlot[];
   addresser: CaseResolverPartyReference | null;
   addressee: CaseResolverPartyReference | null;
@@ -150,6 +206,7 @@ export type CaseResolverWorkspace = {
   folderTimestamps: Record<string, CaseResolverFolderTimestamp>;
   files: CaseResolverFile[];
   assets: CaseResolverAssetFile[];
+  relationGraph: CaseResolverRelationGraph;
   activeFileId: string | null;
 };
 
@@ -276,3 +333,37 @@ export const DEFAULT_CASE_RESOLVER_NODE_META: CaseResolverNodeMeta = {
 export const DEFAULT_CASE_RESOLVER_EDGE_META: CaseResolverEdgeMeta = {
   joinMode: 'newline',
 };
+
+export const CASE_RESOLVER_RELATION_ROOT_FOLDER_ID = '__root__';
+
+export const DEFAULT_CASE_RESOLVER_RELATION_NODE_META: CaseResolverRelationNodeMeta = {
+  entityType: 'custom',
+  entityId: '',
+  label: '',
+  fileKind: null,
+  folderPath: null,
+  sourceFileId: null,
+  isStructural: false,
+  createdAt: '',
+  updatedAt: '',
+};
+
+export const DEFAULT_CASE_RESOLVER_RELATION_EDGE_META: CaseResolverRelationEdgeMeta = {
+  relationType: 'related',
+  label: '',
+  isStructural: false,
+  createdAt: '',
+  updatedAt: '',
+};
+
+export const CASE_RESOLVER_RELATION_EDGE_KIND_OPTIONS: Array<{
+  value: CaseResolverRelationEdgeKind;
+  label: string;
+}> = [
+  { value: 'contains', label: 'Contains' },
+  { value: 'located_in', label: 'Located In' },
+  { value: 'parent_case', label: 'Parent Case' },
+  { value: 'references', label: 'References' },
+  { value: 'related', label: 'Related' },
+  { value: 'custom', label: 'Custom' },
+];

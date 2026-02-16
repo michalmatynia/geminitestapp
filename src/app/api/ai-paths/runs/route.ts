@@ -7,16 +7,19 @@ import {
   canAccessGlobalAiPathRuns,
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
+  requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
+import {
+  recoverStaleRunningRuns,
+  resolveAiPathsStaleRunningCleanupIntervalMs,
+  resolveAiPathsStaleRunningMaxAgeMs,
+} from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import type { AiPathRunListOptions } from '@/features/ai/ai-paths/types/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 import type { AiPathRunStatus } from '@/shared/types/domain/ai-paths';
-
-const DEFAULT_STALE_RUNNING_MAX_AGE_MS = 30 * 60 * 1000;
-const DEFAULT_STALE_RUNNING_CLEANUP_INTERVAL_MS = 30_000;
 
 let lastStaleRunningCleanupAt = 0;
 let staleRunningCleanupPromise: Promise<void> | null = null;
@@ -28,12 +31,12 @@ const parseEnvNumber = (value: string | undefined, fallback: number): number => 
 
 const staleRunningCleanupIntervalMs = parseEnvNumber(
   process.env['AI_PATHS_STALE_RUNNING_CLEANUP_INTERVAL_MS'],
-  DEFAULT_STALE_RUNNING_CLEANUP_INTERVAL_MS
+  resolveAiPathsStaleRunningCleanupIntervalMs()
 );
+const staleRunningMaxAgeMs = resolveAiPathsStaleRunningMaxAgeMs();
 
 const scheduleStaleRunningCleanup = (
-  repo: Awaited<ReturnType<typeof getPathRunRepository>>,
-  staleRunningMaxAgeMs: number
+  repo: Awaited<ReturnType<typeof getPathRunRepository>>
 ): void => {
   const now = Date.now();
   if (staleRunningCleanupPromise) return;
@@ -42,12 +45,10 @@ const scheduleStaleRunningCleanup = (
 
   const runCleanup = async (): Promise<void> => {
     try {
-      await repo.markStaleRunningRuns(staleRunningMaxAgeMs);
-    } catch (error) {
-      const { ErrorSystem } = await import('@/features/observability/server');
-      void ErrorSystem.logWarning('[ai-paths.runs.list] Failed to cleanup stale running runs.', {
-        service: 'ai-paths',
-        error,
+      await recoverStaleRunningRuns({
+        repo,
+        source: 'ai-paths.runs.list',
+        maxAgeMs: staleRunningMaxAgeMs,
       });
     } finally {
       staleRunningCleanupPromise = null;
@@ -75,7 +76,7 @@ const TERMINAL_STATUSES: AiPathRunStatus[] = [
 ];
 
 async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const access = await requireAiPathsAccess();
+  const access = await requireAiPathsRunAccess();
   const url = new URL(req.url);
   const pathId = url.searchParams.get('pathId')?.trim() || undefined;
   const query = url.searchParams.get('query')?.trim() || undefined;
@@ -95,15 +96,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const offset =
     Number.isFinite(offsetRaw) && offsetRaw >= 0 ? offsetRaw : undefined;
   const repo = await getPathRunRepository();
-  const staleRunningMaxAgeMsRaw = Number.parseInt(
-    process.env['AI_PATHS_STALE_RUNNING_MAX_AGE_MS'] ?? '',
-    10
-  );
-  const staleRunningMaxAgeMs =
-    Number.isFinite(staleRunningMaxAgeMsRaw) && staleRunningMaxAgeMsRaw > 0
-      ? staleRunningMaxAgeMsRaw
-      : DEFAULT_STALE_RUNNING_MAX_AGE_MS;
-  scheduleStaleRunningCleanup(repo, staleRunningMaxAgeMs);
+  scheduleStaleRunningCleanup(repo);
   const hasGlobalRunAccess = canAccessGlobalAiPathRuns(access);
   const result = await repo.listRuns({
     ...(!hasGlobalRunAccess ? { userId: access.userId } : {}),
@@ -123,7 +116,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
 
 async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, 'runs-clear');
+  await enforceAiPathsActionRateLimit(access, 'runs-clear');
   const url = new URL(req.url);
   const scopeRaw = url.searchParams.get('scope')?.trim().toLowerCase() || 'terminal';
   const scope = scopeRaw === 'all' ? 'all' : 'terminal';

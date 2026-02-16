@@ -26,10 +26,13 @@ type EnqueueRunInput = {
   maxAttempts?: number | null;
   backoffMs?: number | null;
   backoffMaxMs?: number | null;
+  requestId?: string | null;
   meta?: Record<string, unknown> | null;
 };
 
 const ACTIVE_RUN_STATUSES = new Set(['queued', 'running']);
+const ACTIVE_RUN_STATUS_FILTER = ['queued', 'running', 'paused'] as const;
+const enqueueIdempotencyLocks = new Map<string, Promise<void>>();
 
 const resolveRunStartedAt = (run: AiPathRunRecord): string | null => {
   if (!run.startedAt) return null;
@@ -57,13 +60,85 @@ const dispatchRun = async (
   }
 };
 
-export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
+const withIdempotencyLock = async <T>(
+  key: string,
+  task: () => Promise<T>
+): Promise<T> => {
+  const previous = enqueueIdempotencyLocks.get(key) ?? Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  enqueueIdempotencyLocks.set(key, previous.then(() => current));
+
+  await previous;
   try {
+    return await task();
+  } finally {
+    release();
+    if (enqueueIdempotencyLocks.get(key) === current) {
+      enqueueIdempotencyLocks.delete(key);
+    }
+  }
+};
+
+const resolveRequestId = (input: EnqueueRunInput): string | null => {
+  if (typeof input.requestId === 'string' && input.requestId.trim().length > 0) {
+    return input.requestId.trim();
+  }
+  const fromMeta = input.meta?.['requestId'];
+  if (typeof fromMeta === 'string' && fromMeta.trim().length > 0) {
+    return fromMeta.trim();
+  }
+  return null;
+};
+
+export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
+  const requestId = resolveRequestId(input);
+  const lockKey = requestId
+    ? `${input.userId ?? 'anon'}:${input.pathId}:${requestId}`
+    : null;
+
+  const execute = async (): Promise<AiPathRunRecord> => {
     const repo = await getPathRunRepository();
+    if (requestId) {
+      const existingByRequestId = await repo.listRuns({
+        ...(input.userId ? { userId: input.userId } : {}),
+        pathId: input.pathId,
+        statuses: [...ACTIVE_RUN_STATUS_FILTER],
+        requestId,
+        limit: 1,
+        offset: 0,
+      });
+      if (existingByRequestId.runs[0]) {
+        return existingByRequestId.runs[0];
+      }
+
+      // Provider-safe fallback when JSON-path filtering on meta is unavailable.
+      const existingByScan = await repo.listRuns({
+        ...(input.userId ? { userId: input.userId } : {}),
+        pathId: input.pathId,
+        statuses: [...ACTIVE_RUN_STATUS_FILTER],
+        limit: 50,
+        offset: 0,
+      });
+      const matched = existingByScan.runs.find((run: AiPathRunRecord) => {
+        const meta =
+          run.meta && typeof run.meta === 'object'
+            ? (run.meta as Record<string, unknown>)
+            : null;
+        return meta?.['requestId'] === requestId;
+      });
+      if (matched) {
+        return matched;
+      }
+    }
+
     const nodes = normalizeNodes(input.nodes ?? []);
     const edges = sanitizeEdges(nodes, input.edges ?? []);
     const meta = {
       ...(input.meta ?? {}),
+      ...(requestId ? { requestId } : {}),
       backoffMs: input.backoffMs ?? undefined,
       backoffMaxMs: input.backoffMaxMs ?? undefined,
     };
@@ -80,10 +155,39 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       meta,
       maxAttempts: input.maxAttempts ?? null,
     });
-    // Run node records + event log in parallel, then dispatch to queue
+
+    try {
+      await repo.createRunNodes(run.id, nodes);
+    } catch (setupError) {
+      const finishedAt = new Date();
+      const message = `Run setup failed: ${
+        setupError instanceof Error ? setupError.message : String(setupError)
+      }`;
+      await repo.updateRunIfStatus(run.id, ['queued'], {
+        status: 'failed',
+        errorMessage: message,
+        finishedAt: finishedAt.toISOString(),
+      });
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'error',
+        message,
+        metadata: {
+          pathId: run.pathId,
+          runStartedAt: resolveRunStartedAt(run),
+        },
+      });
+      await recordRuntimeRunFinished({
+        runId: run.id,
+        status: 'failed',
+        durationMs: 0,
+        timestamp: finishedAt,
+      });
+      throw new Error(message);
+    }
+
     try {
       await Promise.all([
-        repo.createRunNodes(run.id, nodes),
         repo.createRunEvent({
           runId: run.id,
           level: 'info',
@@ -98,13 +202,18 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         error: parallelError,
         runId: run.id,
       });
-      // We continue as the run record itself was created.
     }
 
-    // Dispatch to BullMQ for immediate pickup (falls back to inline if Redis unavailable)
     await dispatchRun(run.id);
 
     return run;
+  };
+
+  try {
+    if (lockKey) {
+      return await withIdempotencyLock(lockKey, execute);
+    }
+    return await execute();
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',

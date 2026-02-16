@@ -104,7 +104,7 @@ const getPrismaDelegate = (collection: string): PrismaDelegate | null => {
 async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
-    enforceAiPathsActionRateLimit(access, 'db-update');
+    await enforceAiPathsActionRateLimit(access, 'db-update');
   }
   const parsed = await parseJsonBody(req, updateSchema, {
     logPrefix: 'ai-paths.db-update',

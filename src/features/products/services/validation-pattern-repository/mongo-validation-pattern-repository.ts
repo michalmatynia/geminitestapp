@@ -1,4 +1,4 @@
-import { ObjectId, type Document, type Filter, type UpdateFilter } from 'mongodb';
+import { ObjectId, type Db, type Document, type Filter, type UpdateFilter } from 'mongodb';
 
 import {
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
@@ -19,7 +19,7 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/features/products/utils/validator-instance-behavior';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   ProductValidationChainMode,
@@ -39,6 +39,8 @@ import type {
 const COLLECTION = 'product_validation_patterns';
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_ENABLED_BY_DEFAULT = true;
+const DEFAULT_PATTERNS_SORT_INDEX = 'validation_pattern_default_sort_idx';
+const RUNTIME_LOOKUP_INDEX = 'validation_pattern_runtime_lookup_idx';
 
 interface ProductValidationPatternDoc extends Document {
   _id: ObjectId;
@@ -129,6 +131,36 @@ type SettingDoc = Document & {
   value?: string;
   createdAt?: Date;
   updatedAt?: Date;
+};
+
+let indexesInitialized = false;
+let indexesInFlight: Promise<void> | null = null;
+
+const ensureIndexes = async (db: Db): Promise<void> => {
+  if (indexesInitialized) return;
+  if (indexesInFlight) {
+    await indexesInFlight;
+    return;
+  }
+  indexesInFlight = (async (): Promise<void> => {
+    const collection = db.collection<ProductValidationPatternDoc>(COLLECTION);
+    await Promise.all([
+      collection.createIndex(
+        { sequence: 1, target: 1, label: 1 },
+        { name: DEFAULT_PATTERNS_SORT_INDEX }
+      ),
+      collection.createIndex(
+        { enabled: 1, runtimeEnabled: 1, target: 1, locale: 1, sequence: 1 },
+        { name: RUNTIME_LOOKUP_INDEX }
+      ),
+    ]);
+    indexesInitialized = true;
+  })();
+  try {
+    await indexesInFlight;
+  } finally {
+    indexesInFlight = null;
+  }
 };
 
 const parseBooleanSetting = (value: string | null | undefined): boolean => {
@@ -329,6 +361,7 @@ const toObjectId = (id: string): ObjectId => new ObjectId(id);
 export const mongoValidationPatternRepository: ProductValidationPatternRepository = {
   async listPatterns(): Promise<ProductValidationPattern[]> {
     const db = await getMongoDb();
+    await ensureIndexes(db);
     const rows = await db
       .collection<ProductValidationPatternDoc>(COLLECTION)
       .find({})
@@ -339,6 +372,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
 
   async getPatternById(id: string): Promise<ProductValidationPattern | null> {
     const db = await getMongoDb();
+    await ensureIndexes(db);
     if (!ObjectId.isValid(id)) return null;
     const row = await db
       .collection<ProductValidationPatternDoc>(COLLECTION)
@@ -348,6 +382,7 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
 
   async createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const db = await getMongoDb();
+    await ensureIndexes(db);
     const now = new Date();
     const maxSequenceRow = await db
       .collection<ProductValidationPatternDoc>(COLLECTION)
@@ -422,6 +457,18 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       throw badRequestError('Invalid pattern ID', { patternId: id });
     }
     const db = await getMongoDb();
+    await ensureIndexes(db);
+    const expectedUpdatedAtRaw =
+      typeof data.expectedUpdatedAt === 'string' && data.expectedUpdatedAt.trim()
+        ? data.expectedUpdatedAt.trim()
+        : null;
+    const expectedUpdatedAt = expectedUpdatedAtRaw ? new Date(expectedUpdatedAtRaw) : null;
+    if (expectedUpdatedAtRaw && Number.isNaN(expectedUpdatedAt?.getTime() ?? Number.NaN)) {
+      throw badRequestError('Invalid expectedUpdatedAt value.', {
+        patternId: id,
+        expectedUpdatedAt: expectedUpdatedAtRaw,
+      });
+    }
     const set: Partial<ProductValidationPatternDoc> = {
       updatedAt: new Date(),
     };
@@ -524,10 +571,27 @@ export const mongoValidationPatternRepository: ProductValidationPatternRepositor
       set.appliesToScopes = normalizeProductValidationPatternScopes(data.appliesToScopes);
     }
 
-    await db.collection<ProductValidationPatternDoc>(COLLECTION).updateOne(
-      { _id: toObjectId(id) },
+    const filter: Filter<ProductValidationPatternDoc> = {
+      _id: toObjectId(id),
+      ...(expectedUpdatedAt ? { updatedAt: expectedUpdatedAt } : {}),
+    };
+    const updateResult = await db.collection<ProductValidationPatternDoc>(COLLECTION).updateOne(
+      filter,
       { $set: set } as UpdateFilter<ProductValidationPatternDoc>
     );
+    if (updateResult.matchedCount === 0) {
+      const existing = await db
+        .collection<ProductValidationPatternDoc>(COLLECTION)
+        .findOne({ _id: toObjectId(id) });
+      if (!existing) {
+        throw notFoundError('Validation pattern not found', { patternId: id });
+      }
+      throw conflictError('Validation pattern was modified by another request.', {
+        patternId: id,
+        expectedUpdatedAt: expectedUpdatedAtRaw,
+        actualUpdatedAt: existing.updatedAt?.toISOString?.() ?? null,
+      });
+    }
 
     const updated = await db
       .collection<ProductValidationPatternDoc>(COLLECTION)

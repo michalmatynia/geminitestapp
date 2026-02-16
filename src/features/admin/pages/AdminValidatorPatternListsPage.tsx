@@ -10,6 +10,7 @@ import {
   Button,
   FormSection,
   Input,
+  Pagination,
   SectionHeader,
   SelectSimple,
   Switch,
@@ -76,11 +77,14 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
   const [newListName, setNewListName] = useState('');
   const [newListDescription, setNewListDescription] = useState('');
   const [newListScope, setNewListScope] = useState<ValidatorScope>('products');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const raw = rawPatternLists ?? '';
     if (loadedFrom === raw) return;
     setLists(parsedPatternLists);
+    setPage(1);
     setLoadedFrom(raw);
   }, [loadedFrom, parsedPatternLists, rawPatternLists]);
 
@@ -123,13 +127,15 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       updatedAt: now,
     };
     setLists((current: ValidatorPatternList[]) => [...current, nextList]);
+    const nextTotalPages = Math.max(1, Math.ceil((lists.length + 1) / pageSize));
+    setPage(nextTotalPages);
     setNewListName('');
     setNewListDescription('');
     setNewListScope('products');
     toast('Validation pattern list added. Save to persist.', {
       variant: 'success',
     });
-  }, [newListDescription, newListName, newListScope, toast]);
+  }, [lists.length, newListDescription, newListName, newListScope, pageSize, toast]);
 
   const handleRemoveList = useCallback(
     (list: ValidatorPatternList): void => {
@@ -159,6 +165,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
 
   const handleReset = useCallback((): void => {
     setLists(parsedPatternLists);
+    setPage(1);
     setNewListName('');
     setNewListDescription('');
     setNewListScope('products');
@@ -208,6 +215,30 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       lists.filter((list: ValidatorPatternList): boolean => list.deletionLocked).length,
     [lists]
   );
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(lists.length / pageSize)),
+    [lists.length, pageSize]
+  );
+  const paginatedLists = useMemo((): ValidatorPatternList[] => {
+    const clampedPage = Math.min(page, totalPages);
+    const start = (clampedPage - 1) * pageSize;
+    return lists.slice(start, start + pageSize);
+  }, [lists, page, pageSize, totalPages]);
+  const pageStart = useMemo((): number => {
+    if (lists.length === 0) return 0;
+    const clampedPage = Math.min(page, totalPages);
+    return (clampedPage - 1) * pageSize + 1;
+  }, [lists.length, page, pageSize, totalPages]);
+  const pageEnd = useMemo((): number => {
+    if (lists.length === 0) return 0;
+    return Math.min(lists.length, pageStart + pageSize - 1);
+  }, [lists.length, pageSize, pageStart]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   return (
     <div className='container mx-auto space-y-6 py-10'>
@@ -289,6 +320,9 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             <Badge variant='outline' className='text-[10px]'>
               {totalLocked} locked
             </Badge>
+            <Badge variant='outline' className='text-[10px]'>
+              {pageStart}-{pageEnd}
+            </Badge>
             <Button
               type='button'
               variant='outline'
@@ -307,7 +341,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
           </div>
         ) : (
           <div className='space-y-3'>
-            {lists.map((list: ValidatorPatternList) => (
+            {paginatedLists.map((list: ValidatorPatternList) => (
               <div
                 key={list.id}
                 className='space-y-3 rounded-lg border border-border/60 bg-card/30 p-3'
@@ -387,6 +421,19 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
                 </div>
               </div>
             ))}
+            <div className='flex justify-end border-t border-border/50 pt-3'>
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[5, 10, 20, 50]}
+                showPageSize
+                showLabels={false}
+                variant='compact'
+              />
+            </div>
           </div>
         )}
       </FormSection>

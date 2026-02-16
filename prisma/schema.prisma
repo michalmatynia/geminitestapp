@@ -932,6 +932,8 @@ model AiPathRun {
   @@index([status])
   @@index([createdAt])
   @@index([nextRetryAt])
+  @@index([status, nextRetryAt, createdAt])
+  @@index([pathId, status, createdAt])
 }
 
 model AiPathRunNode {
@@ -954,6 +956,7 @@ model AiPathRunNode {
   @@unique([runId, nodeId])
   @@index([runId])
   @@index([nodeId])
+  @@index([runId, updatedAt, nodeId])
 }
 
 model AiPathRunEvent {

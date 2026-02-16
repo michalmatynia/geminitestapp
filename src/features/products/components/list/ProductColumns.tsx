@@ -784,8 +784,11 @@ export const getProductColumns = (
 
       if (!handleClick) return null;
       const showMarketplaceBadge: boolean =
-        integrationBadgeIds?.has(product.id) ?? false;
-      const status: string = integrationBadgeStatuses?.get(product.id) ?? 'not_started';
+        (integrationBadgeIds?.has(product.id) ?? false) ||
+        Boolean(product.baseProductId?.trim());
+      const status: string =
+        integrationBadgeStatuses?.get(product.id) ??
+        (product.baseProductId?.trim() ? 'active' : 'not_started');
       const showTraderaBadge: boolean = traderaBadgeIds?.has(product.id) ?? false;
       const traderaStatus: string =
         traderaBadgeStatuses?.get(product.id) ?? 'not_started';

@@ -9,7 +9,7 @@ describe('DetailModal', () => {
 
     render(
       <DetailModal
-        open={true}
+        isOpen={true}
         onClose={onClose}
         title='Details'
       >
@@ -26,7 +26,7 @@ describe('DetailModal', () => {
 
     const { container } = render(
       <DetailModal
-        open={false}
+        isOpen={false}
         onClose={onClose}
         title='Details'
       >
@@ -42,7 +42,7 @@ describe('DetailModal', () => {
 
     render(
       <DetailModal
-        open={true}
+        isOpen={true}
         onClose={onClose}
         title='Details'
         footer={<button>Custom Action</button>}
@@ -59,7 +59,7 @@ describe('DetailModal', () => {
 
     render(
       <DetailModal
-        open={true}
+        isOpen={true}
         onClose={onClose}
         title='Details'
         subtitle='Additional info'

@@ -6,6 +6,7 @@ import {
   assertAiPathRunAccess,
   enforceAiPathsActionRateLimit,
   requireAiPathsAccess,
+  requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
@@ -18,7 +19,7 @@ async function GET_handler(
   _ctx: ApiHandlerContext,
   params: { runId: string }
 ): Promise<Response> {
-  const access = await requireAiPathsAccess();
+  const access = await requireAiPathsRunAccess();
   const runId = params.runId;
   const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);
@@ -37,7 +38,7 @@ async function DELETE_handler(
   params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, 'run-delete');
+  await enforceAiPathsActionRateLimit(access, 'run-delete');
   const runId = params.runId;
   const repo = await getPathRunRepository();
   const run = await repo.findRunById(runId);

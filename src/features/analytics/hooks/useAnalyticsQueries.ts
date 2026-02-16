@@ -92,12 +92,14 @@ export function useTrackEventMutation(): MutationResult<void, Record<string, unk
         if (ok) return Promise.resolve();
       }
 
-      await fetch('/api/analytics/events', {
+      void fetch('/api/analytics/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,
         credentials: 'include',
         keepalive: true,
+      }).catch(() => {
+        // Keep analytics best-effort and never block mutation flow.
       });
     },
     mutationKey: analyticsKeys.all,

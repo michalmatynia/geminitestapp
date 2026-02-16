@@ -19,6 +19,7 @@ const ENABLE_PAGE_ANALYTICS =
     (process.env.NODE_ENV === 'production' || ENABLE_PAGE_ANALYTICS_IN_DEV));
 
 let lastTrackedPageview: { key: string; ts: number } | null = null;
+const inflightPageviews = new Set<string>();
 
 const readCookie = (name: string): string | null => {
   if (typeof document === 'undefined') return null;
@@ -122,7 +123,11 @@ export default function PageAnalyticsTracker(): null {
     if (isDuplicatePageview) {
       return;
     }
+    if (inflightPageviews.has(pageKey)) {
+      return;
+    }
     lastTrackedPageview = { key: pageKey, ts: now };
+    inflightPageviews.add(pageKey);
 
     const visitorId = getOrCreateVisitorId();
     const sessionId = getOrCreateSessionId();
@@ -180,7 +185,10 @@ export default function PageAnalyticsTracker(): null {
     trackEventMutation.mutate(event as unknown as Record<string, unknown>, {
       onError: () => {
         // Intentionally swallow errors; analytics must never break UX.
-      }
+      },
+      onSettled: () => {
+        inflightPageviews.delete(pageKey);
+      },
     });
   }, [pathname, search]);
 

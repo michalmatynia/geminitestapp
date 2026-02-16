@@ -26,7 +26,7 @@ async function POST_handler(
   params: { runId: string }
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
-  enforceAiPathsActionRateLimit(access, 'run-resume');
+  await enforceAiPathsActionRateLimit(access, 'run-resume');
   const parsed = await parseJsonBody(req, resumeSchema, {
     logPrefix: 'ai-paths.runs.resume',
   });

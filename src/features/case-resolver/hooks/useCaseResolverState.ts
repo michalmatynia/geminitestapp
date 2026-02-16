@@ -14,6 +14,11 @@ import {
   parseCaseResolverCaptureSettings,
 } from '@/features/case-resolver-capture/settings';
 import {
+  deriveDocumentContentSync,
+  normalizeRawDocumentModeFromContent,
+  toStorageDocumentValue,
+} from '@/features/document-editor/content-format';
+import {
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,
 } from '@/features/filemaker/settings';
@@ -59,6 +64,48 @@ import type {
 } from '../types';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
+const CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX = 'case-resolver-editor-draft-v1';
+
+type StoredCaseResolverEditorDraft = {
+  fileId: string;
+  baseDocumentContentVersion: number;
+  updatedAt: string;
+  draft: CaseResolverFileEditDraft;
+};
+
+const buildEditorDraftStorageKey = (fileId: string): string =>
+  `${CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX}:${fileId}`;
+
+const readStoredEditorDraft = (fileId: string): StoredCaseResolverEditorDraft | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(buildEditorDraftStorageKey(fileId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredCaseResolverEditorDraft | null;
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (parsed.fileId !== fileId) return null;
+    if (!parsed.draft || typeof parsed.draft !== 'object') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const writeStoredEditorDraft = (fileId: string, draft: CaseResolverFileEditDraft): void => {
+  if (typeof window === 'undefined') return;
+  const payload: StoredCaseResolverEditorDraft = {
+    fileId,
+    baseDocumentContentVersion: draft.baseDocumentContentVersion,
+    updatedAt: new Date().toISOString(),
+    draft,
+  };
+  window.localStorage.setItem(buildEditorDraftStorageKey(fileId), JSON.stringify(payload));
+};
+
+const clearStoredEditorDraft = (fileId: string): void => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(buildEditorDraftStorageKey(fileId));
+};
 
 /**
  * Custom hook to manage the complex state and logic of the Case Resolver page.
@@ -129,37 +176,73 @@ export function useCaseResolverState() {
 
   const lastPersistedValueRef = useRef<string>(JSON.stringify(parsedWorkspace));
   const pendingSaveToastRef = useRef<string | null>(null);
+  const queuedSerializedWorkspaceRef = useRef<string | null>(null);
+  const persistWorkspaceTimerRef = useRef<number | null>(null);
+  const persistWorkspaceInFlightRef = useRef(false);
+
+  const flushWorkspacePersist = useCallback((): void => {
+    if (persistWorkspaceInFlightRef.current) return;
+    const nextSerialized = queuedSerializedWorkspaceRef.current;
+    if (!nextSerialized || nextSerialized === lastPersistedValueRef.current) return;
+
+    persistWorkspaceInFlightRef.current = true;
+    void updateSetting.mutateAsync({
+      key: CASE_RESOLVER_WORKSPACE_KEY,
+      value: nextSerialized,
+    }).then(() => {
+      lastPersistedValueRef.current = nextSerialized;
+      if (queuedSerializedWorkspaceRef.current === nextSerialized) {
+        queuedSerializedWorkspaceRef.current = null;
+      }
+      if (pendingSaveToastRef.current) {
+        toast(pendingSaveToastRef.current, { variant: 'success' });
+        pendingSaveToastRef.current = null;
+      }
+    }).catch(() => {
+      toast('Failed to save Case Resolver workspace.', { variant: 'error' });
+    }).finally(() => {
+      persistWorkspaceInFlightRef.current = false;
+      if (
+        queuedSerializedWorkspaceRef.current &&
+        queuedSerializedWorkspaceRef.current !== lastPersistedValueRef.current
+      ) {
+        flushWorkspacePersist();
+      }
+    });
+  }, [toast, updateSetting]);
 
   // Sync with store
   useEffect(() => {
     setWorkspace(parsedWorkspace);
+    lastPersistedValueRef.current = JSON.stringify(parsedWorkspace);
+    queuedSerializedWorkspaceRef.current = null;
   }, [parsedWorkspace]);
 
   // Handle auto-save
   useEffect(() => {
     const serialized = JSON.stringify(workspace);
     if (serialized === lastPersistedValueRef.current) return;
+    queuedSerializedWorkspaceRef.current = serialized;
 
-    const timer = window.setTimeout(() => {
-      void (async (): Promise<void> => {
-        try {
-          await updateSetting.mutateAsync({
-            key: CASE_RESOLVER_WORKSPACE_KEY,
-            value: serialized,
-          });
-          lastPersistedValueRef.current = serialized;
-          if (pendingSaveToastRef.current) {
-            toast(pendingSaveToastRef.current, { variant: 'success' });
-            pendingSaveToastRef.current = null;
-          }
-        } catch (_error) {
-          toast('Failed to save Case Resolver workspace.', { variant: 'error' });
-        }
-      })();
+    if (persistWorkspaceTimerRef.current) {
+      window.clearTimeout(persistWorkspaceTimerRef.current);
+      persistWorkspaceTimerRef.current = null;
+    }
+
+    persistWorkspaceTimerRef.current = window.setTimeout(() => {
+      persistWorkspaceTimerRef.current = null;
+      flushWorkspacePersist();
     }, 350);
+  }, [flushWorkspacePersist, workspace]);
 
-    return () => window.clearTimeout(timer);
-  }, [workspace, updateSetting, toast]);
+  useEffect(() => {
+    return (): void => {
+      if (persistWorkspaceTimerRef.current) {
+        window.clearTimeout(persistWorkspaceTimerRef.current);
+        persistWorkspaceTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const updateWorkspace = useCallback(
     (
@@ -280,7 +363,17 @@ export function useCaseResolverState() {
       toast('File not found.', { variant: 'warning' });
       return;
     }
-    setEditingDocumentDraft(buildFileEditDraft(target));
+    const baseDraft = buildFileEditDraft(target);
+    const recoveredDraft = readStoredEditorDraft(fileId);
+    const canRecoverStoredDraft =
+      recoveredDraft?.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
+    const nextDraft = canRecoverStoredDraft ? recoveredDraft.draft : baseDraft;
+    if (canRecoverStoredDraft) {
+      toast('Recovered unsaved draft from local storage.', { variant: 'info' });
+    } else if (recoveredDraft) {
+      clearStoredEditorDraft(fileId);
+    }
+    setEditingDocumentDraft(nextDraft);
     setSelectedFileId(fileId);
     setSelectedAssetId(null);
     setSelectedFolderPath(null);
@@ -320,6 +413,68 @@ export function useCaseResolverState() {
 
   const handleSaveFileEditor = useCallback((): void => {
     if (!editingDocumentDraft) return;
+    const currentFile = workspace.files.find(
+      (file: CaseResolverFile): boolean => file.id === editingDocumentDraft.id
+    );
+    if (!currentFile) {
+      toast('Document no longer exists. Please refresh list.', { variant: 'warning' });
+      return;
+    }
+    if (currentFile.documentContentVersion !== editingDocumentDraft.baseDocumentContentVersion) {
+      toast('Document changed elsewhere. Reopen editor to merge latest version.', {
+        variant: 'warning',
+      });
+      return;
+    }
+    const resolvedMode = normalizeRawDocumentModeFromContent({
+      mode: editingDocumentDraft.editorType,
+      rawContent: editingDocumentDraft.documentContent,
+      rawMarkdown: editingDocumentDraft.documentContentMarkdown,
+      rawHtml: editingDocumentDraft.documentContentHtml,
+    });
+    const canonical = deriveDocumentContentSync({
+      mode: resolvedMode,
+      value: resolvedMode === 'wysiwyg'
+        ? editingDocumentDraft.documentContentHtml
+        : editingDocumentDraft.documentContentMarkdown,
+      previousHtml: editingDocumentDraft.documentContentHtml,
+      previousMarkdown: editingDocumentDraft.documentContentMarkdown,
+    });
+    const nextStoredContent = toStorageDocumentValue(canonical);
+    const nextOriginalDocumentContent =
+      editingDocumentDraft.activeDocumentVersion === 'original'
+        ? nextStoredContent
+        : editingDocumentDraft.originalDocumentContent;
+    const nextExplodedDocumentContent =
+      editingDocumentDraft.activeDocumentVersion === 'exploded'
+        ? nextStoredContent
+        : editingDocumentDraft.explodedDocumentContent;
+    const hasMeaningfulChanges =
+      currentFile.name !== editingDocumentDraft.name ||
+      currentFile.folder !== editingDocumentDraft.folder ||
+      currentFile.parentCaseId !== editingDocumentDraft.parentCaseId ||
+      JSON.stringify(currentFile.referenceCaseIds) !== JSON.stringify(editingDocumentDraft.referenceCaseIds) ||
+      currentFile.documentDate !== editingDocumentDraft.documentDate ||
+      currentFile.tagId !== editingDocumentDraft.tagId ||
+      currentFile.caseIdentifierId !== editingDocumentDraft.caseIdentifierId ||
+      currentFile.categoryId !== editingDocumentDraft.categoryId ||
+      JSON.stringify(currentFile.addresser) !== JSON.stringify(editingDocumentDraft.addresser) ||
+      JSON.stringify(currentFile.addressee) !== JSON.stringify(editingDocumentDraft.addressee) ||
+      currentFile.activeDocumentVersion !== editingDocumentDraft.activeDocumentVersion ||
+      currentFile.editorType !== canonical.mode ||
+      currentFile.documentContent !== nextStoredContent ||
+      currentFile.documentContentMarkdown !== canonical.markdown ||
+      currentFile.documentContentHtml !== canonical.html ||
+      currentFile.documentContentPlainText !== canonical.plainText ||
+      JSON.stringify(currentFile.documentConversionWarnings) !== JSON.stringify(canonical.warnings) ||
+      currentFile.originalDocumentContent !== nextOriginalDocumentContent ||
+      currentFile.explodedDocumentContent !== nextExplodedDocumentContent;
+
+    if (!hasMeaningfulChanges) {
+      clearStoredEditorDraft(editingDocumentDraft.id);
+      setEditingDocumentDraft(null);
+      return;
+    }
     const now = new Date().toISOString();
     updateWorkspace((current) => ({
       ...current,
@@ -328,13 +483,40 @@ export function useCaseResolverState() {
           ? {
             ...file,
             ...editingDocumentDraft,
+            editorType: canonical.mode,
+            documentContentFormatVersion: 1,
+            documentContentVersion: file.documentContentVersion + 1,
+            documentContent: nextStoredContent,
+            documentContentMarkdown: canonical.markdown,
+            documentContentHtml: canonical.html,
+            documentContentPlainText: canonical.plainText,
+            documentConversionWarnings: canonical.warnings,
+            lastContentConversionAt: now,
+            originalDocumentContent: nextOriginalDocumentContent,
+            explodedDocumentContent: nextExplodedDocumentContent,
             updatedAt: now,
           }
           : file
       ),
     }), { persistToast: 'Document changes saved.' });
+    clearStoredEditorDraft(editingDocumentDraft.id);
     setEditingDocumentDraft(null);
-  }, [editingDocumentDraft, updateWorkspace]);
+  }, [editingDocumentDraft, toast, updateWorkspace, workspace.files]);
+
+  const handleDiscardFileEditorDraft = useCallback((): void => {
+    if (editingDocumentDraft) {
+      clearStoredEditorDraft(editingDocumentDraft.id);
+    }
+    setEditingDocumentDraft(null);
+  }, [editingDocumentDraft]);
+
+  useEffect(() => {
+    if (!editingDocumentDraft) return;
+    const timer = window.setTimeout(() => {
+      writeStoredEditorDraft(editingDocumentDraft.id, editingDocumentDraft);
+    }, 250);
+    return (): void => window.clearTimeout(timer);
+  }, [editingDocumentDraft]);
 
   // Prompt Exploder sync
   useEffect(() => {
@@ -353,6 +535,19 @@ export function useCaseResolverState() {
     const nextExplodedContent = stripCapturedAddressLinesFromText(payload.prompt, proposalState);
     const extractedDocumentDate = extractCaseResolverDocumentDate(nextExplodedContent);
     const now = new Date().toISOString();
+    const canonicalExploded = deriveDocumentContentSync({
+      mode: 'markdown',
+      value: nextExplodedContent,
+    });
+    const explodedStoredContent = toStorageDocumentValue(canonicalExploded);
+    const proposedAddresserReference =
+      proposalState?.addresser?.action === 'database'
+        ? proposalState?.addresser?.existingReference ?? undefined
+        : undefined;
+    const proposedAddresseeReference =
+      proposalState?.addressee?.action === 'database'
+        ? proposalState?.addressee?.existingReference ?? undefined
+        : undefined;
 
     updateWorkspace((current) => ({
       ...current,
@@ -362,14 +557,48 @@ export function useCaseResolverState() {
         return {
           ...file,
           originalDocumentContent: file.originalDocumentContent ?? file.documentContent,
-          explodedDocumentContent: nextExplodedContent,
+          explodedDocumentContent: explodedStoredContent,
           activeDocumentVersion: 'exploded',
-          documentContent: nextExplodedContent,
+          editorType: canonicalExploded.mode,
+          documentContentFormatVersion: 1,
+          documentContentVersion: file.documentContentVersion + 1,
+          documentContent: explodedStoredContent,
+          documentContentMarkdown: canonicalExploded.markdown,
+          documentContentHtml: canonicalExploded.html,
+          documentContentPlainText: canonicalExploded.plainText,
+          documentConversionWarnings: canonicalExploded.warnings,
+          lastContentConversionAt: now,
           documentDate: extractedDocumentDate ?? file.documentDate,
+          ...(proposedAddresserReference ? { addresser: proposedAddresserReference } : {}),
+          ...(proposedAddresseeReference ? { addressee: proposedAddresseeReference } : {}),
           updatedAt: now,
         };
       }),
     }));
+
+    setEditingDocumentDraft((current) => {
+      if (current?.id !== targetFileId) return current;
+      const nextVersion = current.documentContentVersion + 1;
+      return {
+        ...current,
+        originalDocumentContent: current.originalDocumentContent || current.documentContent,
+        explodedDocumentContent: explodedStoredContent,
+        activeDocumentVersion: 'exploded',
+        editorType: canonicalExploded.mode,
+        documentContentFormatVersion: 1,
+        documentContentVersion: nextVersion,
+        baseDocumentContentVersion: nextVersion,
+        documentContent: explodedStoredContent,
+        documentContentMarkdown: canonicalExploded.markdown,
+        documentContentHtml: canonicalExploded.html,
+        documentContentPlainText: canonicalExploded.plainText,
+        documentConversionWarnings: canonicalExploded.warnings,
+        lastContentConversionAt: now,
+        documentDate: extractedDocumentDate ?? current.documentDate,
+        ...(proposedAddresserReference ? { addresser: proposedAddresserReference } : {}),
+        ...(proposedAddresseeReference ? { addressee: proposedAddresseeReference } : {}),
+      };
+    });
 
     if (proposalState) {
       setPromptExploderPartyProposal(proposalState);
@@ -430,6 +659,7 @@ export function useCaseResolverState() {
     selectedAsset,
     handleUpdateActiveFileParties,
     handleSaveFileEditor,
+    handleDiscardFileEditorDraft,
     promptExploderPartyProposal,
     setPromptExploderPartyProposal,
     isPromptExploderPartyProposalOpen,

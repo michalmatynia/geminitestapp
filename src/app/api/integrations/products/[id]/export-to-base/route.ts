@@ -923,7 +923,11 @@ async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: 
             integrationId: baseIntegrationId,
             connectionId: data.connectionId,
             externalListingId: null,
-            inventoryId: resolvedInventoryId
+            inventoryId: resolvedInventoryId,
+            marketplaceData: {
+              source: 'base-export',
+              marketplace: 'base',
+            },
           });
           listingRepo = primaryListingRepo;
           listingId = newListing.id;

@@ -2,17 +2,15 @@
 
 import React, { useMemo } from 'react';
 
-import { AppModal } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { readMeta } from '../utils/metadata';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 import type { ImageStudioSlotRecord } from '../types';
+import type { EntityModalProps } from '@/shared/types/modal-props';
 
-type VersionNodeDetailsModalProps = {
-  open: boolean;
-  node: VersionNode | null;
-  onClose: () => void;
+type VersionNodeDetailsModalProps = EntityModalProps<VersionNode> & {
   getSlotImageSrc: (slot: ImageStudioSlotRecord) => string | null;
 };
 
@@ -147,8 +145,8 @@ const DetailsGrid = ({ rows }: { rows: Array<{ label: string; value: string }> }
 );
 
 export function VersionNodeDetailsModal({
-  open,
-  node,
+  isOpen,
+  item: node,
   onClose,
   getSlotImageSrc,
 }: VersionNodeDetailsModalProps): React.JSX.Element {
@@ -307,8 +305,8 @@ export function VersionNodeDetailsModal({
   }, [node, getSlotImageSrc]);
 
   return (
-    <AppModal
-      open={open}
+    <DetailModal
+      isOpen={isOpen}
       onClose={onClose}
       title={node ? `Node Details: ${node.label}` : 'Node Details'}
       size='lg'
@@ -316,7 +314,7 @@ export function VersionNodeDetailsModal({
       {content ?? (
         <div className='text-sm text-gray-400'>No node selected.</div>
       )}
-    </AppModal>
+    </DetailModal>
   );
 }
 

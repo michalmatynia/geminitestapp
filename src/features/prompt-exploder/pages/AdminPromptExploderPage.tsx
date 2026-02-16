@@ -1,139 +1,95 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import React from 'react';
 
-import { 
-  Button, 
-  EmptyState, 
-  FormSection, 
-  SectionHeader, 
-  Textarea, 
-} from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
-import { PromptExploderHierarchyTreeProvider } from '../components/PromptExploderHierarchyTreeContext';
-import { PromptExploderParserTuningProvider } from '../components/PromptExploderParserTuningContext';
-import { PromptExploderParserTuningPanel } from '../components/PromptExploderParserTuningPanel';
-import { usePromptExploderState } from '../hooks/usePromptExploderState';
-import { 
-  resolveSegmentDisplayLabel,
-} from '../utils/case-resolver-extraction';
+import { BenchmarkReportPanel } from '../components/BenchmarkReportPanel';
+import { BindingsPanel } from '../components/BindingsPanel';
+import { ExplosionMetricsPanel } from '../components/ExplosionMetricsPanel';
+import { ParserTuningSection } from '../components/ParserTuningSection';
+import { PatternRuntimePanel } from '../components/PatternRuntimePanel';
+import { PromptExploderHeaderBar } from '../components/PromptExploderHeaderBar';
+import { PromptProjectsPanel } from '../components/PromptProjectsPanel';
+import { ReassembledPromptPanel } from '../components/ReassembledPromptPanel';
+import { SegmentEditorPanel } from '../components/SegmentEditorPanel';
+import { SourcePromptPanel } from '../components/SourcePromptPanel';
+import { WarningsPanel } from '../components/WarningsPanel';
+import { PromptExploderProvider } from '../context';
 
-import type { 
-  PromptExploderSegment,
-} from '../types';
+type PromptExploderErrorBoundaryState = {
+  hasError: boolean;
+  errorMessage: string | null;
+};
+
+class PromptExploderErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  PromptExploderErrorBoundaryState
+> {
+  override state: PromptExploderErrorBoundaryState = {
+    hasError: false,
+    errorMessage: null,
+  };
+
+  static getDerivedStateFromError(error: unknown): PromptExploderErrorBoundaryState {
+    return {
+      hasError: true,
+      errorMessage: error instanceof Error ? error.message : 'Unknown Prompt Exploder error.',
+    };
+  }
+
+  override render(): React.ReactNode {
+    if (!this.state.hasError) {
+      return this.props.children;
+    }
+
+    return (
+      <div className='container mx-auto space-y-3 py-8'>
+        <div className='rounded border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-100'>
+          Prompt Exploder encountered a runtime error: {this.state.errorMessage ?? 'Unknown error'}
+        </div>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.location.reload();
+            }
+          }}
+        >
+          Reload Prompt Exploder
+        </Button>
+      </div>
+    );
+  }
+}
 
 export function AdminPromptExploderPage(): React.JSX.Element {
-  const state = usePromptExploderState();
-  const {
-    promptText,
-    setPromptText,
-    documentState,
-    selectedSegmentId,
-    setSelectedSegmentId,
-    handleExplode,
-    handleApplyToBridge,
-    returnTo,
-    activeValidationScope,
-  } = state;
-
-  const router = useRouter();
-
-  // Sub-render helpers (simplified for this refactor phase)
-  const renderHeader = () => (
-    <SectionHeader
-      title='Prompt Exploder'
-      description={'Active scope: ' + activeValidationScope}
-      actions={
-        <div className='flex items-center gap-2'>
-          <Button size='xs' variant='outline' onClick={() => router.push(returnTo)}>
-            Back
-          </Button>
-          <Button size='xs' onClick={handleExplode}>
-            Explode Prompt
-          </Button>
-          <Button size='xs' variant='default' onClick={handleApplyToBridge} disabled={!documentState}>
-            Apply & Return
-          </Button>
-        </div>
-      }
-    />
-  );
-
   return (
-    <PromptExploderHierarchyTreeProvider value={{
-      items: [],
-      onChange: () => {},
-      emptyLabel: 'No segments'
-    }}>
-      <PromptExploderParserTuningProvider>
-        <div className='w-full space-y-5 px-4 py-6 xl:px-6 2xl:px-8'>
-          {renderHeader()}
+    <PromptExploderErrorBoundary>
+      <PromptExploderProvider>
+        <div className='container mx-auto space-y-5 py-6'>
+          <PromptExploderHeaderBar />
 
-          <div className='grid grid-cols-1 gap-6 lg:grid-cols-12'>
-            {/* Input Section */}
-            <div className='lg:col-span-5 space-y-4'>
-              <FormSection title='Source Prompt' variant='subtle'>
-                <Textarea
-                  value={promptText}
-                  onChange={(e) => setPromptText(e.target.value)}
-                  placeholder='Enter prompt to explode...'
-                  className='min-h-[400px] font-mono text-sm'
-                />
-              </FormSection>
+          <div className='grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(380px,0.85fr)_minmax(640px,1.15fr)]'>
+            <div className='space-y-4'>
+              <SourcePromptPanel />
+              <ExplosionMetricsPanel />
+              <WarningsPanel />
+              <PromptProjectsPanel />
             </div>
-
-            {/* Results Section */}
-            <div className='lg:col-span-7 space-y-4'>
-              {documentState ? (
-                <div className='space-y-4'>
-                  <div className='flex items-center justify-between'>
-                    <h3 className='text-lg font-medium text-white'>
-                      Exploded Segments ({documentState.segments.length})
-                    </h3>
-                  </div>
-                  
-                  <div className='space-y-3'>
-                    {documentState.segments.map((segment: PromptExploderSegment) => (
-                      <div 
-                        key={segment.id}
-                        className={'cursor-pointer rounded-lg border p-3 transition-colors ' + (
-                          selectedSegmentId === segment.id 
-                            ? 'border-blue-500 bg-blue-500/10' 
-                            : 'border-border bg-card/20 hover:bg-card/40'
-                        )}
-                        onClick={() => setSelectedSegmentId(segment.id)}
-                      >
-                        <div className='flex items-center justify-between mb-1'>
-                          <span className='text-xs font-bold uppercase tracking-wider text-gray-400'>
-                            {segment.type}
-                          </span>
-                          <span className='text-[10px] text-gray-500'>
-                            {(segment.confidence * 100).toFixed(0)}% match
-                          </span>
-                        </div>
-                        <div className='text-sm text-gray-200 line-clamp-2'>
-                          {resolveSegmentDisplayLabel(segment)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <EmptyState
-                  title='No explosion yet'
-                  description='Enter a prompt and click Explode to see the structured breakdown.'
-                />
-              )}
+            <div className='space-y-4'>
+              <SegmentEditorPanel />
+              <BindingsPanel />
+              <ReassembledPromptPanel />
             </div>
           </div>
 
-          {/* Modal for Parser Tuning */}
-          <FormSection title='Parser Tuning' variant='subtle'>
-            <PromptExploderParserTuningPanel />
-          </FormSection>
+          <PatternRuntimePanel />
+          <ParserTuningSection />
+          <BenchmarkReportPanel />
         </div>
-      </PromptExploderParserTuningProvider>
-    </PromptExploderHierarchyTreeProvider>
+      </PromptExploderProvider>
+    </PromptExploderErrorBoundary>
   );
 }

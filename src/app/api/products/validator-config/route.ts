@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getValidationPatternRepository } from '@/features/products/server';
+import { listValidationPatternsCached } from '@/features/products/services/validation-pattern-runtime-cache';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -12,7 +13,7 @@ async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<R
   const [enabledByDefault, instanceDenyBehavior, patterns] = await Promise.all([
     repository.getEnabledByDefault(),
     repository.getInstanceDenyBehavior(),
-    repository.listPatterns(),
+    listValidationPatternsCached(),
   ]);
 
   return NextResponse.json({

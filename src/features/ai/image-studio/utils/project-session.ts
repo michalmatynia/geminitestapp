@@ -1,6 +1,7 @@
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export const IMAGE_STUDIO_ACTIVE_PROJECT_KEY = 'image_studio_active_project';
+export const IMAGE_STUDIO_ACTIVE_PROJECT_LOCAL_KEY = 'image_studio_active_project_local';
 export const IMAGE_STUDIO_PROJECT_SESSION_KEY_PREFIX = 'image_studio_project_session_';
 export const IMAGE_STUDIO_PROJECT_SESSION_LOCAL_KEY_PREFIX = 'image_studio_project_session_local_';
 
@@ -58,6 +59,22 @@ export function serializeImageStudioActiveProject(projectId: string): string {
 export function parseImageStudioActiveProject(raw: string | null | undefined): string {
   const parsed = parseJsonSetting<string | null>(raw, null);
   return typeof parsed === 'string' ? parsed.trim() : '';
+}
+
+export function loadImageStudioActiveProjectLocal(): string {
+  if (typeof window === 'undefined') return '';
+  const raw = window.localStorage.getItem(IMAGE_STUDIO_ACTIVE_PROJECT_LOCAL_KEY);
+  return typeof raw === 'string' ? raw.trim() : '';
+}
+
+export function saveImageStudioActiveProjectLocal(projectId: string): void {
+  if (typeof window === 'undefined') return;
+  const normalized = normalizeImageStudioProjectId(projectId);
+  if (!normalized) {
+    window.localStorage.removeItem(IMAGE_STUDIO_ACTIVE_PROJECT_LOCAL_KEY);
+    return;
+  }
+  window.localStorage.setItem(IMAGE_STUDIO_ACTIVE_PROJECT_LOCAL_KEY, normalized);
 }
 
 export function serializeImageStudioProjectSession(value: ImageStudioProjectSession): string {

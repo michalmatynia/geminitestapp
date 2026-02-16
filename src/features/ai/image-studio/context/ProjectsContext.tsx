@@ -1,6 +1,10 @@
 'use client';
 
 import {
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
+import {
   createContext,
   useCallback,
   useContext,
@@ -22,6 +26,10 @@ import {
 } from '@/features/auth/hooks/useUserPreferences';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { ApiError } from '@/shared/lib/api-client';
+import {
+  invalidateImageStudioProjects,
+  invalidateImageStudioSlots,
+} from '@/shared/lib/query-invalidation';
 import type {
   CreateMutation,
   DeleteMutation,
@@ -31,11 +39,11 @@ import { useToast } from '@/shared/ui';
 
 import {
   IMAGE_STUDIO_ACTIVE_PROJECT_KEY,
+  loadImageStudioActiveProjectLocal,
   parseImageStudioActiveProject,
+  saveImageStudioActiveProjectLocal,
   serializeImageStudioActiveProject,
 } from '../utils/project-session';
-
-import type { UseQueryResult } from '@tanstack/react-query';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -67,8 +75,12 @@ const ProjectsActionsContext = createContext<ProjectsActions | null>(null);
 
 export function ProjectsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [projectId, setProjectId] = useState<string>('');
   const [projectSearch, setProjectSearch] = useState<string>('');
+  const [localActiveProjectId, setLocalActiveProjectId] = useState<string>(() =>
+    loadImageStudioActiveProjectLocal()
+  );
 
   const projectsQuery = useStudioProjects();
   const userPreferencesQuery = useUserPreferences();
@@ -90,7 +102,8 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     () => parseImageStudioActiveProject(heavyMap.get(IMAGE_STUDIO_ACTIVE_PROJECT_KEY)),
     [heavyMap]
   );
-  const activeProjectId = activeProjectIdFromPreferences || legacyActiveProjectId;
+  const activeProjectId =
+    activeProjectIdFromPreferences || localActiveProjectId || legacyActiveProjectId;
 
   // Auto-select active project when available, otherwise fall back to first project.
   useEffect(() => {
@@ -119,10 +132,22 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   // Persist the active project to user profile on selection change.
   // Keep writing the legacy heavy setting as a best-effort compatibility fallback.
   useEffect(() => {
-    if (heavySettings.isLoading || userPreferencesQuery.isLoading) return;
+    if (
+      heavySettings.isLoading ||
+      projectsQuery.isLoading ||
+      userPreferencesQuery.isLoading
+    ) {
+      return;
+    }
     const normalizedProjectId = projectId.trim();
     const availableProjects = projectsQuery.data ?? [];
     if (!normalizedProjectId && availableProjects.length > 0) return;
+
+    if (localActiveProjectId !== normalizedProjectId) {
+      saveImageStudioActiveProjectLocal(normalizedProjectId);
+      setLocalActiveProjectId(normalizedProjectId);
+    }
+
     const nextPersistedValue = normalizedProjectId || null;
     if (lastPersistedProjectRef.current === nextPersistedValue) return;
 
@@ -168,7 +193,9 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     activeProjectIdFromPreferences,
     heavySettings.isLoading,
     legacyActiveProjectId,
+    localActiveProjectId,
     projectsQuery.data,
+    projectsQuery.isLoading,
     projectId,
     updateSetting,
     updateUserPreferences,
@@ -189,13 +216,15 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
         if (projectId === id) {
           setProjectId('');
         }
+        void invalidateImageStudioProjects(queryClient);
+        void invalidateImageStudioSlots(queryClient, id);
         toast(`Project "${id}" no longer exists.`, { variant: 'info' });
         return;
       }
       toast(error instanceof Error ? error.message : 'Failed to delete project.', { variant: 'error' });
       throw error;
     }
-  }, [deleteProjectMutation, projectId, toast]);
+  }, [deleteProjectMutation, projectId, queryClient, toast]);
 
   const handleRenameProject = useCallback(async (id: string, nextId: string): Promise<string> => {
     const sourceId = id.trim();

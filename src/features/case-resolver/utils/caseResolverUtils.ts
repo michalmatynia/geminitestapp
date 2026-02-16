@@ -527,9 +527,18 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     originalDocumentContent,
     explodedDocumentContent,
     activeDocumentVersion,
+    editorType: file.editorType,
+    documentContentFormatVersion: file.documentContentFormatVersion,
+    documentContentVersion: file.documentContentVersion,
+    baseDocumentContentVersion: file.documentContentVersion,
     documentContent: activeDocumentVersion === 'exploded' && explodedDocumentContent.trim().length > 0
       ? explodedDocumentContent
       : originalDocumentContent,
+    documentContentMarkdown: file.documentContentMarkdown,
+    documentContentHtml: file.documentContentHtml,
+    documentContentPlainText: file.documentContentPlainText,
+    documentConversionWarnings: file.documentConversionWarnings,
+    lastContentConversionAt: file.lastContentConversionAt,
     scanSlots: file.scanSlots,
     addresser: file.addresser,
     addressee: file.addressee,

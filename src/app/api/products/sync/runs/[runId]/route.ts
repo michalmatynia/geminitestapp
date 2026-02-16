@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getProductSyncRunDetail } from '@/features/integrations/services/product-sync/product-sync-repository';
+import { getProductSyncRunDetail } from '@/features/product-sync/services/product-sync-repository';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';

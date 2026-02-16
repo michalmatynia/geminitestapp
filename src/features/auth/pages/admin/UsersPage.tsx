@@ -1,14 +1,13 @@
 'use client';
 
 import { 
-  RefreshCwIcon, 
   UserPlusIcon, 
   ShieldAlertIcon, 
-  SearchIcon, 
   Trash2, 
   Edit2, 
   ShieldCheck,
-  Key
+  Key,
+  Users
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
@@ -16,11 +15,11 @@ import {
   Button, 
   DataTable, 
   SelectSimple, 
-  SectionHeader, 
   ListPanel, 
-  Input, 
   StatusBadge,
-  useToast
+  useToast,
+  PanelHeader,
+  SearchInput
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -148,42 +147,49 @@ export default function AuthUsersPage(): React.JSX.Element {
 
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <SectionHeader
+      <PanelHeader
         title='Identity Management'
         description={`Active directory console using ${provider} provider.`}
-        actions={
-          <div className='flex gap-2'>
-            <Button variant='outline' size='xs' className='h-8' onClick={refetch} disabled={isFetching}>
-              <RefreshCwIcon className={`size-3.5 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button variant='outline' size='xs' className='h-8' onClick={() => setMockOpen(true)}>
-              <Key className='size-3.5 mr-2' />
-              Mock Sign-in
-            </Button>
-            <Button variant='outline' size='xs' className='h-8' onClick={() => setCreateOpen(true)}>
-              <UserPlusIcon className='size-3.5 mr-2' />
-              New User
-            </Button>
-            <Button size='xs' className='h-8' onClick={() => { void saveRoles(); }} disabled={!dirtyRoles}>
-              <ShieldCheck className='size-3.5 mr-2' />
-              {dirtyRoles ? 'Save Changes' : 'Permissions Up-to-date'}
-            </Button>
-          </div>
-        }
+        icon={<Users className='size-4' />}
+        refreshable={true}
+        isRefreshing={isFetching}
+        onRefresh={refetch}
+        actions={[
+          {
+            key: 'mock',
+            label: 'Mock Sign-in',
+            icon: <Key className='size-3.5' />,
+            variant: 'outline',
+            onClick: () => setMockOpen(true),
+          },
+          {
+            key: 'new',
+            label: 'New User',
+            icon: <UserPlusIcon className='size-3.5' />,
+            variant: 'outline',
+            onClick: () => setCreateOpen(true),
+          },
+          {
+            key: 'save',
+            label: dirtyRoles ? 'Save Changes' : 'Permissions Up-to-date',
+            icon: <ShieldCheck className='size-3.5' />,
+            disabled: !dirtyRoles,
+            onClick: () => { void saveRoles(); },
+          }
+        ]}
       />
 
       <ListPanel
-        variant='flat'
+        variant='default'
         filters={
           <div className='flex items-center gap-4'>
-            <div className='relative flex-1 max-w-sm'>
-              <SearchIcon className='absolute left-2.5 top-2.5 size-4 text-gray-500' />
-              <Input
+            <div className='flex-1 max-w-sm'>
+              <SearchInput
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch('')}
                 placeholder='Search users...'
-                className='pl-9 h-9 text-sm'
+                size='sm'
               />
             </div>
             {dirtyRoles && (
@@ -192,13 +198,16 @@ export default function AuthUsersPage(): React.JSX.Element {
           </div>
         }
       >
-        <div className='rounded-md border border-border bg-gray-950/20'>
-          <DataTable
-            columns={columns}
-            data={filteredUsers}
-            isLoading={isLoading}
-          />
-        </div>
+        <DataTable
+          columns={columns}
+          data={filteredUsers}
+          isLoading={isLoading}
+          emptyState={
+            <div className='py-12 text-center text-sm text-gray-500'>
+              {search ? 'No users found matching your search.' : 'No users found in directory.'}
+            </div>
+          }
+        />
       </ListPanel>
 
       <UserEditModal

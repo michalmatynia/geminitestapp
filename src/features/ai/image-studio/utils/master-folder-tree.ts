@@ -70,14 +70,6 @@ const getSlotRole = (slot: ImageStudioSlotRecord): string | null => {
   return normalized || null;
 };
 
-const getSlotSourceId = (slot: ImageStudioSlotRecord): string | null => {
-  const metadata = getSlotMetadata(slot);
-  const sourceSlotId = metadata?.['sourceSlotId'];
-  if (typeof sourceSlotId !== 'string') return null;
-  const normalized = sourceSlotId.trim();
-  return normalized || null;
-};
-
 const getSlotRelationType = (slot: ImageStudioSlotRecord): string | null => {
   const metadata = getSlotMetadata(slot);
   const relationType = metadata?.['relationType'];
@@ -105,6 +97,18 @@ const getRoleLabel = (slot: ImageStudioSlotRecord, derivedFromCard: boolean): st
   }
   if (derivedFromCard) return 'derived';
   return null;
+};
+
+const isGenerationDerivedTreeSlot = (slot: ImageStudioSlotRecord): boolean => {
+  const role = getSlotRole(slot);
+  if (role === 'generation') return true;
+  const relationType = getSlotRelationType(slot);
+  return Boolean(
+    relationType?.startsWith('generation:') ||
+    relationType?.startsWith('center:') ||
+    relationType?.startsWith('crop:') ||
+    relationType?.startsWith('upscale:')
+  );
 };
 
 const compareNodes = (a: SlotTreeNode, b: SlotTreeNode): number => {
@@ -152,52 +156,10 @@ const buildStudioTreeRoot = (
     children: [],
   };
 
-  const visibleSlots = slots;
-  const slotById = new Map<string, ImageStudioSlotRecord>(
-    visibleSlots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
-  );
-  const linkedSlotsBySource = new Map<string, ImageStudioSlotRecord[]>();
-  const rootSlots: ImageStudioSlotRecord[] = [];
-
-  visibleSlots.forEach((slot: ImageStudioSlotRecord) => {
-    const sourceSlotId = getSlotSourceId(slot);
-    if (sourceSlotId && sourceSlotId !== slot.id && slotById.has(sourceSlotId)) {
-      const current = linkedSlotsBySource.get(sourceSlotId) ?? [];
-      current.push(slot);
-      linkedSlotsBySource.set(sourceSlotId, current);
-      return;
-    }
-    rootSlots.push(slot);
-  });
-
-  linkedSlotsBySource.forEach((childSlots: ImageStudioSlotRecord[]) => {
-    childSlots.sort(compareSlots);
-  });
-  rootSlots.sort(compareSlots);
-
-  const buildCardChildren = (sourceSlotId: string, lineage: Set<string>): SlotTreeNode[] => {
-    const childSlots = linkedSlotsBySource.get(sourceSlotId) ?? [];
-    if (childSlots.length === 0) return [];
-
-    const children: SlotTreeNode[] = [];
-    childSlots.forEach((child: ImageStudioSlotRecord) => {
-      if (lineage.has(child.id)) return;
-      const nextLineage = new Set(lineage);
-      nextLineage.add(child.id);
-      children.push({
-        id: toSlotMasterNodeId(child.id),
-        name: child.name ?? child.id,
-        type: 'card',
-        path: normalizeSlotFolderPath(child.folderPath),
-        slotId: child.id,
-        roleLabel: getRoleLabel(child, true),
-        derivedFromCard: true,
-        children: buildCardChildren(child.id, nextLineage),
-      });
-    });
-    children.sort(compareNodes);
-    return children;
-  };
+  // Generation outputs are managed inside the card editor, not as folder-tree cards.
+  const visibleSlots = slots
+    .filter((slot: ImageStudioSlotRecord) => !isGenerationDerivedTreeSlot(slot))
+    .sort(compareSlots);
 
   normalizeFolderPaths(folders).forEach((folderPath: string) => {
     const normalized = normalizeTreePath(folderPath);
@@ -210,7 +172,7 @@ const buildStudioTreeRoot = (
     }
   });
 
-  rootSlots.forEach((slot: ImageStudioSlotRecord) => {
+  visibleSlots.forEach((slot: ImageStudioSlotRecord) => {
     const folderPath = normalizeSlotFolderPath(slot.folderPath);
     const parts = folderPath ? folderPath.split('/').filter(Boolean) : [];
 
@@ -228,7 +190,7 @@ const buildStudioTreeRoot = (
       slotId: slot.id,
       roleLabel: getRoleLabel(slot, false),
       derivedFromCard: false,
-      children: buildCardChildren(slot.id, new Set([slot.id])),
+      children: [],
     });
     cursor.children.sort(compareNodes);
   });

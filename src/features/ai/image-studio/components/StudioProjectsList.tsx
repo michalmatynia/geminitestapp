@@ -8,8 +8,9 @@ import {
   Trash2,
   Unlock,
   X,
+  Folder,
 } from 'lucide-react';
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 
 import {
   defaultImageStudioSettings,
@@ -20,12 +21,10 @@ import {
   Badge,
   Button,
   Input,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  DataTable,
+  ListPanel,
+  PanelHeader,
+  SearchInput,
   useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -40,6 +39,8 @@ import {
   serializeImageStudioProjectLocks,
   setImageStudioProjectDeletionLock,
 } from '../utils/project-locks';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 interface StudioProjectsListProps {
   onOpenProject?: (projectId: string) => void;
@@ -90,7 +91,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     [filteredProjects, projectLocks]
   );
 
-  const persistProjectLocks = React.useCallback(
+  const persistProjectLocks = useCallback(
     async (locks: Record<string, boolean>): Promise<void> => {
       await projectLocksMutation.mutateAsync({
         key: IMAGE_STUDIO_PROJECT_LOCKS_KEY,
@@ -138,17 +139,17 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     }
   };
 
-  const handleStartEdit = React.useCallback((id: string): void => {
+  const handleStartEdit = useCallback((id: string): void => {
     setEditingProjectId(id);
     setEditingProjectValue(id);
   }, []);
 
-  const handleCancelEdit = React.useCallback((): void => {
+  const handleCancelEdit = useCallback((): void => {
     setEditingProjectId(null);
     setEditingProjectValue('');
   }, []);
 
-  const handleSaveEdit = React.useCallback(
+  const handleSaveEdit = useCallback(
     async (id: string): Promise<void> => {
       const nextId = editingProjectValue.trim();
       if (!nextId) {
@@ -185,7 +186,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     ]
   );
 
-  const handleToggleLock = React.useCallback(
+  const handleToggleLock = useCallback(
     async (id: string): Promise<void> => {
       const currentlyLocked = isImageStudioProjectLocked(projectLocks, id);
       const nextLocks = setImageStudioProjectDeletionLock(
@@ -213,7 +214,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     [persistProjectLocks, projectLocks, toast]
   );
 
-  const handleDelete = React.useCallback(
+  const handleDelete = useCallback(
     async (id: string): Promise<void> => {
       if (isImageStudioProjectLocked(projectLocks, id)) {
         toast('Project is locked. Unlock it before removing.', {
@@ -250,7 +251,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     ]
   );
 
-  const handleOpenProject = React.useCallback(
+  const handleOpenProject = useCallback(
     (id: string): void => {
       if (onOpenProject) {
         onOpenProject(id);
@@ -260,6 +261,184 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     },
     [onOpenProject, setProjectId]
   );
+
+  const columns = useMemo<ColumnDef<string>[]>(() => [
+    {
+      accessorKey: 'id',
+      header: 'Project',
+      cell: ({ row }) => {
+        const id = row.original;
+        const isEditing = editingProjectId === id;
+        const isSelected = projectId === id;
+
+        if (isEditing) {
+          return (
+            <Input
+              size='sm'
+              value={editingProjectValue}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setEditingProjectValue(event.target.value);
+              }}
+              className='h-8 text-xs max-w-[230px]'
+              autoFocus
+              onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  void handleSaveEdit(id);
+                }
+                if (event.key === 'Escape') {
+                  event.preventDefault();
+                  handleCancelEdit();
+                }
+              }}
+            />
+          );
+        }
+
+        return (
+          <button
+            type='button'
+            className={cn(
+              'max-w-[230px] truncate text-left transition-colors',
+              isSelected ? 'font-medium text-primary' : 'text-gray-200 hover:text-white'
+            )}
+            onClick={() => handleOpenProject(id)}
+            title={id}
+          >
+            {id}
+          </button>
+        );
+      },
+    },
+    {
+      id: 'lock',
+      header: () => <div className='text-center'>Lock</div>,
+      cell: ({ row }) => {
+        const id = row.original;
+        const locked = isImageStudioProjectLocked(projectLocks, id);
+        const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
+
+        return (
+          <div className='flex justify-center'>
+            <Button
+              type='button'
+              size='xs'
+              variant='outline'
+              className={cn(
+                'h-7 gap-1 px-2',
+                locked ? 'text-amber-300' : 'text-emerald-300'
+              )}
+              onClick={() => {
+                void handleToggleLock(id);
+              }}
+              disabled={rowPending}
+              title={locked ? 'Unlock project' : 'Lock project'}
+            >
+              {locked ? (
+                <Lock className='size-3.5' />
+              ) : (
+                <Unlock className='size-3.5' />
+              )}
+            </Button>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => {
+        const id = row.original;
+        const locked = isImageStudioProjectLocked(projectLocks, id);
+        const isEditing = editingProjectId === id;
+        const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
+
+        return (
+          <div className='flex items-center justify-end gap-1'>
+            {isEditing ? (
+              <>
+                <Button
+                  type='button'
+                  size='xs'
+                  className='h-7 px-2'
+                  onClick={() => {
+                    void handleSaveEdit(id);
+                  }}
+                  disabled={!editingProjectValue.trim() || rowPending}
+                  title='Save project id'
+                >
+                  <Check className='size-3.5' />
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  className='h-7 px-2'
+                  onClick={handleCancelEdit}
+                  disabled={rowPending}
+                  title='Cancel edit'
+                >
+                  <X className='size-3.5' />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  className='h-7 px-2'
+                  onClick={() => handleOpenProject(id)}
+                  title='Open project editor'
+                >
+                  Edit
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  className='h-7 px-2'
+                  onClick={() => handleStartEdit(id)}
+                  disabled={rowPending}
+                  title='Rename project'
+                >
+                  <Pencil className='mr-1 size-3.5' />
+                  Rename
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  className='h-7 px-2 text-red-300 hover:text-red-200'
+                  onClick={() => {
+                    void handleDelete(id).catch(() => {});
+                  }}
+                  disabled={locked || deleteProjectMutation.isPending}
+                  title={locked ? 'Unlock project before removing' : 'Remove project'}
+                >
+                  <Trash2 className='size-3.5' />
+                </Button>
+              </>
+            )}
+          </div>
+        );
+      },
+    },
+  ], [
+    editingProjectId,
+    editingProjectValue,
+    projectId,
+    projectLocks,
+    renameProjectMutation.isPending,
+    projectLocksMutation.isPending,
+    deleteProjectMutation.isPending,
+    handleSaveEdit,
+    handleCancelEdit,
+    handleOpenProject,
+    handleToggleLock,
+    handleStartEdit,
+    handleDelete,
+  ]);
 
   return (
     <div className='space-y-4'>
@@ -287,190 +466,49 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
         </Button>
       </div>
 
-      <div className='overflow-hidden rounded-lg border border-border/60 bg-card/40'>
-        <div className='flex flex-wrap items-center gap-2 border-b border-border/60 bg-muted/30 p-2'>
-          <Input
-            size='sm'
-            placeholder='Search projects...'
-            value={projectSearch}
-            onChange={(e) => setProjectSearch(e.target.value)}
-            className='h-8 min-w-[220px] flex-1 text-xs'
+      <ListPanel
+        header={
+          <PanelHeader
+            title='Studio Projects'
+            description='Manage and organize your image studio projects.'
+            icon={<Folder className='size-4' />}
           />
-          <Badge variant='outline' className='text-[10px]'>
-            {filteredProjects.length} total
-          </Badge>
-          <Badge variant='outline' className='text-[10px]'>
-            {lockedProjectsCount} locked
-          </Badge>
-        </div>
-        <Table className='text-xs'>
-          <TableHeader>
-            <TableRow>
-              <TableHead className='h-9 px-3'>Project</TableHead>
-              <TableHead className='h-9 px-3 text-center'>Lock</TableHead>
-              <TableHead className='h-9 px-3 text-right'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {projectsQuery.isLoading ? (
-              <TableRow>
-                <TableCell colSpan={3} className='px-3 py-6 text-center text-xs text-gray-500'>
-                  Loading projects...
-                </TableCell>
-              </TableRow>
-            ) : filteredProjects.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className='px-3 py-6 text-center text-xs text-gray-500'>
-                  No projects found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredProjects.map((id) => {
-                const locked = isImageStudioProjectLocked(projectLocks, id);
-                const isEditing = editingProjectId === id;
-                const isSelected = projectId === id;
-                const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
-
-                return (
-                  <TableRow
-                    key={id}
-                    className={cn(
-                      isSelected ? 'bg-primary/10' : 'text-gray-300',
-                      'align-middle'
-                    )}
-                  >
-                    <TableCell className='px-3 py-2'>
-                      {isEditing ? (
-                        <Input
-                          size='sm'
-                          value={editingProjectValue}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                            setEditingProjectValue(event.target.value);
-                          }}
-                          className='h-8 text-xs'
-                          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-                            if (event.key === 'Enter') {
-                              event.preventDefault();
-                              void handleSaveEdit(id);
-                            }
-                            if (event.key === 'Escape') {
-                              event.preventDefault();
-                              handleCancelEdit();
-                            }
-                          }}
-                        />
-                      ) : (
-                        <button
-                          type='button'
-                          className={cn(
-                            'max-w-[230px] truncate text-left',
-                            isSelected ? 'font-medium text-primary' : 'text-gray-200 hover:text-white'
-                          )}
-                          onClick={() => handleOpenProject(id)}
-                          title={id}
-                        >
-                          {id}
-                        </button>
-                      )}
-                    </TableCell>
-                    <TableCell className='px-3 py-2 text-center'>
-                      <Button
-                        type='button'
-                        size='xs'
-                        variant='outline'
-                        className={cn(
-                          'h-7 gap-1 px-2',
-                          locked ? 'text-amber-300' : 'text-emerald-300'
-                        )}
-                        onClick={() => {
-                          void handleToggleLock(id);
-                        }}
-                        disabled={rowPending}
-                        title={locked ? 'Unlock project' : 'Lock project'}
-                      >
-                        {locked ? (
-                          <Lock className='size-3.5' />
-                        ) : (
-                          <Unlock className='size-3.5' />
-                        )}
-                      </Button>
-                    </TableCell>
-                    <TableCell className='px-3 py-2 text-right'>
-                      <div className='flex items-center justify-end gap-1'>
-                        {isEditing ? (
-                          <>
-                            <Button
-                              type='button'
-                              size='xs'
-                              className='h-7 px-2'
-                              onClick={() => {
-                                void handleSaveEdit(id);
-                              }}
-                              disabled={!editingProjectValue.trim() || rowPending}
-                              title='Save project id'
-                            >
-                              <Check className='size-3.5' />
-                            </Button>
-                            <Button
-                              type='button'
-                              size='xs'
-                              variant='outline'
-                              className='h-7 px-2'
-                              onClick={handleCancelEdit}
-                              disabled={rowPending}
-                              title='Cancel edit'
-                            >
-                              <X className='size-3.5' />
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button
-                              type='button'
-                              size='xs'
-                              variant='outline'
-                              className='h-7 px-2'
-                              onClick={() => handleOpenProject(id)}
-                              title='Open project editor'
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              type='button'
-                              size='xs'
-                              variant='outline'
-                              className='h-7 px-2'
-                              onClick={() => handleStartEdit(id)}
-                              disabled={rowPending}
-                              title='Rename project'
-                            >
-                              <Pencil className='mr-1 size-3.5' />
-                              Rename
-                            </Button>
-                            <Button
-                              type='button'
-                              size='xs'
-                              variant='outline'
-                              className='h-7 px-2 text-red-300 hover:text-red-200'
-                              onClick={() => {
-                                void handleDelete(id).catch(() => {});
-                              }}
-                              disabled={locked || deleteProjectMutation.isPending}
-                              title={locked ? 'Unlock project before removing' : 'Remove project'}
-                            >
-                              <Trash2 className='size-3.5' />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+        }
+        filters={
+          <div className='flex flex-wrap items-center gap-2'>
+            <SearchInput
+              size='sm'
+              placeholder='Search projects...'
+              value={projectSearch}
+              onChange={(e) => setProjectSearch(e.target.value)}
+              onClear={() => setProjectSearch('')}
+              containerClassName='min-w-[220px] flex-1'
+            />
+            <div className='flex gap-1'>
+              <Badge variant='outline' className='text-[10px]'>
+                {filteredProjects.length} total
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                {lockedProjectsCount} locked
+              </Badge>
+            </div>
+          </div>
+        }
+      >
+        <DataTable
+          columns={columns}
+          data={filteredProjects}
+          isLoading={projectsQuery.isLoading}
+          emptyState={
+            <div className='flex flex-col items-center justify-center py-12 text-center'>
+              <p className='text-sm text-gray-500'>
+                {projectSearch ? 'No projects found matching your search.' : 'No projects found. Create one above!'}
+              </p>
+            </div>
+          }
+          getRowClassName={(row) => (row === projectId ? 'bg-primary/5' : '')}
+        />
+      </ListPanel>
     </div>
   );
 }

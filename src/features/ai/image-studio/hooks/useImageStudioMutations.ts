@@ -275,7 +275,32 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
       mutationKey: QUERY_KEYS.imageStudio.slots(projectId),
       tags: ['image-studio', 'slots', 'delete'],
     },
-    onSuccess: () => {
+    onSuccess: (_result: void, deletedSlotRawId: string) => {
+      const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
+      const deletedSlotCandidates = new Set<string>([normalizedDeletedSlotId]);
+      if (normalizedDeletedSlotId.startsWith('slot:')) {
+        const unprefixed = normalizeStudioSlotId(normalizedDeletedSlotId.slice('slot:'.length));
+        if (unprefixed) deletedSlotCandidates.add(unprefixed);
+      }
+      if (normalizedDeletedSlotId.startsWith('card:')) {
+        const unprefixed = normalizeStudioSlotId(normalizedDeletedSlotId.slice('card:'.length));
+        if (unprefixed) deletedSlotCandidates.add(unprefixed);
+      }
+
+      queryClient.setQueryData<StudioSlotsResponse | undefined>(
+        QUERY_KEYS.imageStudio.slots(projectId),
+        (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
+          if (!current?.slots?.length) return current;
+          const nextSlots = current.slots.filter(
+            (slot: ImageStudioSlotRecord) => !deletedSlotCandidates.has(slot.id),
+          );
+          if (nextSlots.length === current.slots.length) return current;
+          return {
+            ...current,
+            slots: nextSlots,
+          };
+        },
+      );
       void invalidateImageStudioSlots(queryClient, projectId);
     },
   });

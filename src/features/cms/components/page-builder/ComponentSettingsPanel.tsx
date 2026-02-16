@@ -328,9 +328,13 @@ export function ComponentSettingsPanel(): React.ReactNode {
                 <div className='space-y-4'>
                   {isImageElementInContainer && backgroundTargetOptions.length > 1 && (
                     <div className='rounded border border-border/40 bg-gray-900/40 p-3 mb-4'>
-                      <select value={currentBackgroundTarget} onChange={(e) => handleBlockSettingChange('backgroundTarget', e.target.value)} className='w-full h-8 text-xs bg-gray-800 border border-border rounded px-2 text-gray-200'>
-                        {backgroundTargetOptions.map((opt) => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
-                      </select>
+                      <SelectSimple
+                        value={currentBackgroundTarget}
+                        onValueChange={(value) => handleBlockSettingChange('backgroundTarget', value)}
+                        options={backgroundTargetOptions}
+                        size='sm'
+                        triggerClassName='h-8 bg-gray-800 border-border text-gray-200'
+                      />
                     </div>
                   )}
                   {isImageElementInContainer && isInBackgroundMode ? (

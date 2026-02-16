@@ -60,4 +60,9 @@ const formatPlaceholderLabel = (port: string): string =>
       ? '{{entityId}} (entity id)'
       : `{{${port}}}`;
 
-export { extractImageUrls, formatPortLabel, formatPlaceholderLabel };
+const resolveNodeLabel = (fallback: string, value: unknown): string => {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  return fallback;
+};
+
+export { extractImageUrls, formatPortLabel, formatPlaceholderLabel, resolveNodeLabel };

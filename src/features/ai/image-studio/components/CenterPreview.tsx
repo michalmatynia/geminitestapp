@@ -897,30 +897,66 @@ export function CenterPreview(): React.JSX.Element {
     workingSlot?.id,
   ]);
 
-  const resolveVariantSlotId = useCallback((variant: VariantThumbnailInfo): string | null => {
-    const directSlotId = variant.slotId?.trim() ?? '';
-    if (directSlotId && slots.some((slot) => slot.id === directSlotId)) {
-      return directSlotId;
-    }
+  const resolveVariantSlotId = useCallback(
+    (
+      variant: VariantThumbnailInfo,
+      candidateSlots: ImageStudioSlotRecord[] = slots,
+    ): string | null => {
+      const directSlotId = variant.slotId?.trim() ?? '';
+      if (directSlotId && candidateSlots.some((slot) => slot.id === directSlotId)) {
+        return directSlotId;
+      }
 
-    if (variant.output?.id) {
-      const matchedByFileId = slots.find((slot) => slot.imageFileId === variant.output?.id);
-      if (matchedByFileId) return matchedByFileId.id;
-    }
+      if (variant.output?.id) {
+        const matchedByFileId = candidateSlots.find((slot) => slot.imageFileId === variant.output?.id);
+        if (matchedByFileId) return matchedByFileId.id;
+      }
 
-    const variantOutputPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
-    if (variantOutputPath) {
-      const matchedByPath = slots.find((slot) => {
-        const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
-        if (imageFilePath && imageFilePath === variantOutputPath) return true;
-        const imageUrlPath = normalizeImagePath(slot.imageUrl);
-        return Boolean(imageUrlPath && imageUrlPath === variantOutputPath);
-      });
-      if (matchedByPath) return matchedByPath.id;
-    }
+      const variantOutputPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
+      if (variantOutputPath) {
+        const matchedByPath = candidateSlots.find((slot) => {
+          const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
+          if (imageFilePath && imageFilePath === variantOutputPath) return true;
+          const imageUrlPath = normalizeImagePath(slot.imageUrl);
+          return Boolean(imageUrlPath && imageUrlPath === variantOutputPath);
+        });
+        if (matchedByPath) return matchedByPath.id;
+      }
 
-    return null;
-  }, [slots]);
+      const runIdFromVariantId = variant.id.startsWith('run:')
+        ? variant.id.split(':')[1]?.trim() ?? ''
+        : '';
+      const normalizedRunId = runIdFromVariantId || activeRunId?.trim() || '';
+      const normalizedRootSourceId = rootVariantSourceSlotId?.trim() ?? '';
+      if (normalizedRunId) {
+        const matchedByRunMetadata = candidateSlots.find((slot) => {
+          const metadata = asObjectRecord(slot.metadata);
+          const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'].trim() : '';
+          if (!runId || runId !== normalizedRunId) return false;
+          const outputIndex =
+            typeof metadata?.['generationOutputIndex'] === 'number' && Number.isFinite(metadata['generationOutputIndex'])
+              ? metadata['generationOutputIndex']
+              : null;
+          if (outputIndex !== variant.index) return false;
+          if (!normalizedRootSourceId) return true;
+
+          const sourceSlotId = typeof metadata?.['sourceSlotId'] === 'string' ? metadata['sourceSlotId'].trim() : '';
+          if (sourceSlotId && sourceSlotId === normalizedRootSourceId) return true;
+          const sourceSlotIds = Array.isArray(metadata?.['sourceSlotIds'])
+            ? metadata['sourceSlotIds']
+              .filter((value): value is string => typeof value === 'string')
+              .map((value: string) => value.trim())
+              .filter(Boolean)
+            : [];
+          return sourceSlotIds.includes(normalizedRootSourceId);
+        });
+        if (matchedByRunMetadata) return matchedByRunMetadata.id;
+      }
+
+      return null;
+    },
+    [activeRunId, rootVariantSourceSlotId, slots],
+  );
 
   const handleToggleSourceVariantView = useCallback((): void => {
     setSplitVariantView(false);
@@ -1041,55 +1077,70 @@ export function CenterPreview(): React.JSX.Element {
       }
     };
 
-    const targetSlotId = resolveVariantSlotId(variant);
-    if (!targetSlotId) {
-      void deleteVariantAssetFallback()
-        .then(() => {
-          dismissVariantFromUi();
-          refreshGenerationQueries();
-        })
-        .catch((error: unknown) => {
-          toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
-        });
-      return;
-    }
+    const resolveTargetSlotId = async (): Promise<string | null> => {
+      const direct = resolveVariantSlotId(variant);
+      if (direct) return direct;
+      if (!projectId) return null;
 
-    void deleteSlotMutation
-      .mutateAsync(targetSlotId)
-      .then(() => {
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+        const cached = queryClient.getQueryData<{ slots?: ImageStudioSlotRecord[] }>(studioKeys.slots(projectId));
+        const candidateSlots = Array.isArray(cached?.slots) ? cached.slots : slots;
+        const resolved = resolveVariantSlotId(variant, candidateSlots);
+        if (resolved) return resolved;
+        await wait(180);
+      }
+
+      return null;
+    };
+
+    void (async (): Promise<void> => {
+      const targetSlotId = await resolveTargetSlotId();
+      if (!targetSlotId) {
+        await deleteVariantAssetFallback();
+        dismissVariantFromUi();
+        refreshGenerationQueries();
+        return;
+      }
+
+      try {
+        await deleteSlotMutation.mutateAsync(targetSlotId);
         if (workingSlot?.id === targetSlotId) {
           setWorkingSlotId(null);
         }
+        if (selectedSlotId === targetSlotId) {
+          setSelectedSlotId(null);
+        }
         dismissVariantFromUi();
         refreshGenerationQueries();
-      })
-      .catch((error: unknown) => {
+      } catch (error: unknown) {
         if (error instanceof ApiError && error.status === 404) {
-          void deleteVariantAssetFallback()
-            .then(() => {
-              if (workingSlot?.id === targetSlotId) {
-                setWorkingSlotId(null);
-              }
-              dismissVariantFromUi();
-              refreshGenerationQueries();
-            })
-            .catch((fallbackError: unknown) => {
-              toast(
-                fallbackError instanceof Error ? fallbackError.message : 'Failed to delete variant.',
-                { variant: 'error' }
-              );
-            });
+          await deleteVariantAssetFallback();
+          if (workingSlot?.id === targetSlotId) {
+            setWorkingSlotId(null);
+          }
+          if (selectedSlotId === targetSlotId) {
+            setSelectedSlotId(null);
+          }
+          dismissVariantFromUi();
+          refreshGenerationQueries();
           return;
         }
-        toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
-      });
+        throw error;
+      }
+    })().catch((error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to delete variant.', { variant: 'error' });
+    });
   }, [
     buildVariantDismissKeys,
     deleteSlotMutation,
     projectId,
     queryClient,
     resolveVariantSlotId,
+    selectedSlotId,
+    setSelectedSlotId,
     setWorkingSlotId,
+    slots,
     toast,
     workingSlot?.id,
     clearActiveRunError,

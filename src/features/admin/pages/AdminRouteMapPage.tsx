@@ -1,5 +1,6 @@
 'use client';
 
+import { Map as MapIcon } from 'lucide-react';
 import Link from 'next/link';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
@@ -19,7 +20,14 @@ import {
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Card, FormSection, SearchInput, SectionHeader } from '@/shared/ui';
+import { 
+  Badge, 
+  Card, 
+  FormSection, 
+  SearchInput, 
+  PanelHeader,
+  ListPanel 
+} from '@/shared/ui';
 
 type RouteMapEntry = FlattenedNavItem & {
   description: string;
@@ -209,69 +217,79 @@ export function AdminRouteMapPage(): React.JSX.Element {
 
   return (
     <div className='container mx-auto space-y-6 py-10'>
-      <SectionHeader
+      <PanelHeader
         title='Admin Route Map'
         description='Reference of admin routes with clear descriptions for each destination.'
+        icon={<MapIcon className='size-4' />}
       />
 
-      <div className='flex flex-col gap-4 rounded-lg border border-border/60 bg-card/40 p-4 md:flex-row md:items-center md:justify-between'>
-        <div className='flex flex-col gap-1'>
-          <div className='text-sm text-gray-200'>Routes indexed</div>
-          <div className='text-xs text-gray-400'>
-            Showing {filtered.length} of {entries.length} routes
-          </div>
-        </div>
-        <div className='w-full max-w-sm'>
-          <SearchInput
-            value={query}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
-            placeholder='Search routes, labels, keywords...'
-          />
-        </div>
-      </div>
-
-      {grouped.length === 0 ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
-          No routes match your search.
-        </div>
-      ) : (
-        grouped.map(([section, sectionEntries]: [string, RouteMapEntry[]]) => (
-          <FormSection
-            key={section}
-            title={section}
-            actions={
-              <Badge variant='outline' className='text-[10px]'>
-                {sectionEntries.length}
-              </Badge>
-            }
-          >
-            <div className='grid gap-3 md:grid-cols-2'>
-              {sectionEntries.map((entry: RouteMapEntry) => (
-                <Card key={entry.id} className='border-border bg-card/60 p-4'>
-                  <div className='flex items-start justify-between gap-3'>
-                    <div className='min-w-0'>
-                      <Link
-                        href={entry.href ?? '#'}
-                        className='text-sm font-semibold text-white hover:text-gray-200'
-                      >
-                        {entry.label}
-                      </Link>
-                      <div className='mt-1 truncate font-mono text-[11px] text-cyan-200'>
-                        {entry.href}
-                      </div>
-                    </div>
-                    <Badge variant='secondary' className='shrink-0 text-[10px]'>
-                      {entry.parents.length ? entry.parents[entry.parents.length - 1] : 'Root'}
-                    </Badge>
-                  </div>
-                  <p className='mt-2 text-xs text-gray-300'>{entry.description}</p>
-                  <div className='mt-2 text-[10px] text-gray-500'>{entry.breadcrumb}</div>
-                </Card>
-              ))}
+      <ListPanel
+        filters={
+          <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+            <div className='flex flex-col gap-1'>
+              <div className='text-sm text-gray-200'>Routes indexed</div>
+              <div className='text-xs text-gray-400'>
+                Showing {filtered.length} of {entries.length} routes
+              </div>
             </div>
-          </FormSection>
-        ))
-      )}
+            <div className='w-full max-w-sm'>
+              <SearchInput
+                value={query}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => setQuery(event.target.value)}
+                onClear={() => setQuery('')}
+                placeholder='Search routes, labels, keywords...'
+                size='sm'
+              />
+            </div>
+          </div>
+        }
+      >
+        {grouped.length === 0 ? (
+          <div className='py-12 text-center text-sm text-gray-500'>
+            No routes match your search.
+          </div>
+        ) : (
+          <div className='space-y-8'>
+            {grouped.map(([section, sectionEntries]: [string, RouteMapEntry[]]) => (
+              <FormSection
+                key={section}
+                title={section}
+                actions={
+                  <Badge variant='outline' className='text-[10px]'>
+                    {sectionEntries.length}
+                  </Badge>
+                }
+                variant='subtle'
+              >
+                <div className='grid gap-3 md:grid-cols-2'>
+                  {sectionEntries.map((entry: RouteMapEntry) => (
+                    <Card key={entry.id} className='border-border bg-card/60 p-4 transition-colors hover:bg-card/80'>
+                      <div className='flex items-start justify-between gap-3'>
+                        <div className='min-w-0'>
+                          <Link
+                            href={entry.href ?? '#'}
+                            className='text-sm font-semibold text-white hover:text-primary transition-colors'
+                          >
+                            {entry.label}
+                          </Link>
+                          <div className='mt-1 truncate font-mono text-[11px] text-cyan-200/70'>
+                            {entry.href}
+                          </div>
+                        </div>
+                        <Badge variant='secondary' className='shrink-0 text-[10px]'>
+                          {entry.parents.length ? entry.parents[entry.parents.length - 1] : 'Root'}
+                        </Badge>
+                      </div>
+                      <p className='mt-2 text-xs text-gray-300 leading-relaxed'>{entry.description}</p>
+                      <div className='mt-2 text-[10px] text-gray-500 font-medium'>{entry.breadcrumb}</div>
+                    </Card>
+                  ))}
+                </div>
+              </FormSection>
+            ))}
+          </div>
+        )}
+      </ListPanel>
     </div>
   );
 }

@@ -1,25 +1,19 @@
 'use client';
 
-import { ArrowLeft, Edit3, ExternalLink, Plus, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowLeft, Edit3, ExternalLink, Plus, Trash2, Library } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   AppModal,
   Button,
-  ConfirmDialog,
-  FormSection,
+  ConfirmModal,
   Input,
   Label,
-  SectionHeader,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  DataTable,
+  ListPanel,
+  PanelHeader,
   Textarea,
   useToast,
 } from '@/shared/ui';
@@ -35,6 +29,8 @@ import {
   upsertPromptExploderLibraryItems,
   type PromptExploderLibraryItem,
 } from '../prompt-library';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 const MAX_PROMPT_PREVIEW = 120;
 
@@ -216,113 +212,132 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
     }
   };
 
-  const handleOpenInExploder = (projectId: string): void => {
+  const handleOpenInExploder = useCallback((projectId: string): void => {
     router.push(`/admin/prompt-exploder?projectId=${encodeURIComponent(projectId)}`);
-  };
+  }, [router]);
+
+  const columns = useMemo<ColumnDef<PromptExploderLibraryItem>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Project Name',
+      cell: ({ row }) => <span className='font-medium text-gray-100'>{row.original.name}</span>,
+    },
+    {
+      accessorKey: 'prompt',
+      header: 'Prompt',
+      cell: ({ row }) => (
+        <span className='text-xs text-gray-400'>
+          {formatPromptPreview(row.original.prompt)}
+        </span>
+      ),
+    },
+    {
+      id: 'segments',
+      header: 'Segments',
+      cell: ({ row }) => (
+        <span className='text-xs text-gray-300'>
+          {row.original.document?.segments.length ?? 0}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'updatedAt',
+      header: 'Updated',
+      cell: ({ row }) => (
+        <span className='text-xs text-gray-300'>
+          {promptExploderFormatTimestamp(row.original.updatedAt)}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => {
+        const project = row.original;
+        return (
+          <div className='flex items-center justify-end gap-2'>
+            <Button
+              type='button'
+              size='xs'
+              variant='outline'
+              onClick={(): void => {
+                handleOpenInExploder(project.id);
+              }}
+            >
+              <ExternalLink className='mr-1 size-3.5' />
+              Open
+            </Button>
+            <Button
+              type='button'
+              size='xs'
+              variant='outline'
+              onClick={(): void => {
+                openEditEditor(project);
+              }}
+              disabled={isBusy}
+            >
+              <Edit3 className='mr-1 size-3.5' />
+              Edit
+            </Button>
+            <Button
+              type='button'
+              size='xs'
+              variant='outline'
+              onClick={(): void => {
+                setProjectPendingDeleteId(project.id);
+              }}
+              disabled={isBusy}
+              className='text-red-300 hover:text-red-200'
+            >
+              <Trash2 className='mr-1 size-3.5' />
+              Delete
+            </Button>
+          </div>
+        );
+      },
+    },
+  ], [handleOpenInExploder, isBusy]);
 
   return (
     <div className='container mx-auto space-y-6 py-10'>
-      <SectionHeader
-        eyebrow='AI · Prompt Exploder'
+      <PanelHeader
         title='Prompt Exploder Projects'
         description='Create, edit, delete, and open Prompt Exploder projects.'
-        actions={
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button type='button' variant='outline' size='xs' asChild>
-              <Link href='/admin/prompt-exploder'>
-                <ArrowLeft className='mr-2 size-4' />
-                Back To Prompt Exploder
-              </Link>
-            </Button>
-            <Button type='button' size='xs' onClick={openCreateEditor} disabled={isBusy}>
-              <Plus className='mr-2 size-4' />
-              New Project
-            </Button>
-          </div>
-        }
+        icon={<Library className='size-4' />}
+        actions={[
+          {
+            key: 'back',
+            label: 'Back To Studio',
+            icon: <ArrowLeft className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/prompt-exploder'),
+          },
+          {
+            key: 'new',
+            label: 'New Project',
+            icon: <Plus className='size-4' />,
+            onClick: openCreateEditor,
+            disabled: isBusy,
+          }
+        ]}
       />
 
-      <FormSection
-        title='Project List'
-        description='Projects store prompt text and the latest saved exploded document.'
-        className='p-0'
+      <ListPanel
+        variant='default'
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Project Name</TableHead>
-              <TableHead>Prompt</TableHead>
-              <TableHead className='w-[120px]'>Segments</TableHead>
-              <TableHead className='w-[190px]'>Updated</TableHead>
-              <TableHead className='w-[250px] text-right'>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {projects.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className='py-8 text-center text-sm text-gray-500'>
-                  No projects found. Create your first Prompt Exploder project.
-                </TableCell>
-              </TableRow>
-            ) : (
-              projects.map((project: PromptExploderLibraryItem) => (
-                <TableRow key={project.id}>
-                  <TableCell className='font-medium text-gray-100'>{project.name}</TableCell>
-                  <TableCell className='text-xs text-gray-400'>
-                    {formatPromptPreview(project.prompt)}
-                  </TableCell>
-                  <TableCell className='text-xs text-gray-300'>
-                    {project.document?.segments.length ?? 0}
-                  </TableCell>
-                  <TableCell className='text-xs text-gray-300'>
-                    {promptExploderFormatTimestamp(project.updatedAt)}
-                  </TableCell>
-                  <TableCell>
-                    <div className='flex items-center justify-end gap-2'>
-                      <Button
-                        type='button'
-                        size='xs'
-                        variant='outline'
-                        onClick={(): void => {
-                          handleOpenInExploder(project.id);
-                        }}
-                      >
-                        <ExternalLink className='mr-1 size-3.5' />
-                        Open
-                      </Button>
-                      <Button
-                        type='button'
-                        size='xs'
-                        variant='outline'
-                        onClick={(): void => {
-                          openEditEditor(project);
-                        }}
-                        disabled={isBusy}
-                      >
-                        <Edit3 className='mr-1 size-3.5' />
-                        Edit
-                      </Button>
-                      <Button
-                        type='button'
-                        size='xs'
-                        variant='outline'
-                        onClick={(): void => {
-                          setProjectPendingDeleteId(project.id);
-                        }}
-                        disabled={isBusy}
-                        className='text-red-300 hover:text-red-200'
-                      >
-                        <Trash2 className='mr-1 size-3.5' />
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </FormSection>
+        <DataTable
+          columns={columns}
+          data={projects}
+          isLoading={settingsQuery.isLoading}
+          emptyState={
+            <div className='flex flex-col items-center justify-center py-12 text-center'>
+              <p className='text-sm text-gray-500'>
+                No projects found. Create your first Prompt Exploder project.
+              </p>
+            </div>
+          }
+        />
+      </ListPanel>
 
       <AppModal
         open={isEditorOpen}
@@ -330,14 +345,14 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
         title={editingProject ? 'Edit Prompt Exploder Project' : 'Create Prompt Exploder Project'}
         size='lg'
         footer={
-          <>
+          <div className='flex gap-2'>
             <Button type='button' variant='outline' onClick={closeEditor} disabled={isBusy}>
               Cancel
             </Button>
             <Button type='button' onClick={() => void handleSaveEditor()} disabled={isBusy}>
               {editingProject ? 'Save Project' : 'Create Project'}
             </Button>
-          </>
+          </div>
         }
       >
         <div className='space-y-4'>
@@ -370,24 +385,20 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
         </div>
       </AppModal>
 
-      <ConfirmDialog
-        open={Boolean(pendingDeleteProject)}
-        onOpenChange={(open: boolean): void => {
-          if (!open) {
-            setProjectPendingDeleteId(null);
-          }
-        }}
+      <ConfirmModal
+        isOpen={Boolean(pendingDeleteProject)}
+        onClose={() => setProjectPendingDeleteId(null)}
         onConfirm={() => {
           void handleDeleteProject();
         }}
         title='Delete Project'
-        description={
+        message={
           pendingDeleteProject
-            ? `Delete project "${pendingDeleteProject.name}"? This action cannot be undone.`
-            : 'Delete this project?'
+            ? `Are you sure you want to delete project "${pendingDeleteProject.name}"? This action cannot be undone.`
+            : 'Are you sure you want to delete this project?'
         }
         confirmText='Delete'
-        variant='destructive'
+        isDangerous={true}
       />
     </div>
   );

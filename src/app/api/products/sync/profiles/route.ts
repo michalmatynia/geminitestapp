@@ -9,7 +9,7 @@ import { z } from 'zod';
 import {
   createProductSyncProfile,
   listProductSyncProfiles,
-} from '@/features/integrations/services/product-sync/product-sync-repository';
+} from '@/features/product-sync/services/product-sync-repository';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 

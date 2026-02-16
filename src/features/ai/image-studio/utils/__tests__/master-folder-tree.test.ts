@@ -31,7 +31,7 @@ describe('decodeImageStudioMasterNodeId', () => {
     expect(decodeImageStudioMasterNodeId('unknown:1')).toBeNull();
   });
 
-  it('keeps generation-derived slots visible in folder tree nodes', () => {
+  it('hides generation-derived slots from folder tree nodes', () => {
     const nodes = buildMasterNodesFromStudioTree(
       [
         {
@@ -75,10 +75,10 @@ describe('decodeImageStudioMasterNodeId', () => {
     );
 
     expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
-    expect(nodes.some((node) => node.id === 'card:slot-generation')).toBe(true);
+    expect(nodes.some((node) => node.id === 'card:slot-generation')).toBe(false);
   });
 
-  it('keeps crop-derived slots visible in folder tree nodes', () => {
+  it('hides crop-derived slots from folder tree nodes', () => {
     const nodes = buildMasterNodesFromStudioTree(
       [
         {
@@ -122,10 +122,10 @@ describe('decodeImageStudioMasterNodeId', () => {
     );
 
     expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
-    expect(nodes.some((node) => node.id === 'card:slot-crop')).toBe(true);
+    expect(nodes.some((node) => node.id === 'card:slot-crop')).toBe(false);
   });
 
-  it('keeps center-derived slots visible in folder tree nodes', () => {
+  it('hides center-derived slots from folder tree nodes', () => {
     const nodes = buildMasterNodesFromStudioTree(
       [
         {
@@ -169,10 +169,10 @@ describe('decodeImageStudioMasterNodeId', () => {
     );
 
     expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
-    expect(nodes.some((node) => node.id === 'card:slot-center')).toBe(true);
+    expect(nodes.some((node) => node.id === 'card:slot-center')).toBe(false);
   });
 
-  it('keeps upscale-derived slots visible in folder tree nodes', () => {
+  it('hides upscale-derived slots from folder tree nodes', () => {
     const nodes = buildMasterNodesFromStudioTree(
       [
         {
@@ -216,6 +216,6 @@ describe('decodeImageStudioMasterNodeId', () => {
     );
 
     expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
-    expect(nodes.some((node) => node.id === 'card:slot-upscale')).toBe(true);
+    expect(nodes.some((node) => node.id === 'card:slot-upscale')).toBe(false);
   });
 });

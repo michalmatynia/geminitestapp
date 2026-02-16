@@ -1,11 +1,18 @@
 'use client';
 
-import { Edit2 } from 'lucide-react';
-import Link from 'next/link';
+import { Edit2, Building2, Users, Database } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button, FormSection, SearchInput, SectionHeader } from '@/shared/ui';
+import { 
+  Badge, 
+  Button, 
+  DataTable, 
+  ListPanel, 
+  PanelHeader, 
+  SearchInput 
+} from '@/shared/ui';
 
 import {
   FILEMAKER_DATABASE_KEY,
@@ -15,8 +22,10 @@ import {
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
 
 import type { FilemakerOrganization } from '../types';
+import type { ColumnDef } from '@tanstack/react-table';
 
 export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
+  const router = useRouter();
   const settingsStore = useSettingsStore();
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query.trim());
@@ -47,81 +56,111 @@ export function AdminFilemakerOrganizationsPage(): React.JSX.Element {
     [database.organizations, deferredQuery]
   );
 
+  const columns = useMemo<ColumnDef<FilemakerOrganization>[]>(() => [
+    {
+      id: 'organization',
+      header: 'Organization',
+      cell: ({ row }) => {
+        const organization = row.original;
+        return (
+          <div className='min-w-0 flex-1 space-y-1'>
+            <div className='text-sm font-semibold text-white'>
+              {organization.name}
+            </div>
+            <div className='text-xs text-gray-300'>
+              {formatFilemakerAddress(organization)}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: 'updatedAt',
+      header: 'Updated',
+      cell: ({ row }) => (
+        <span className='text-[10px] text-gray-600'>
+          {formatTimestamp(row.original.updatedAt)}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end gap-2'>
+          <Button 
+            type='button' 
+            variant='outline' 
+            size='xs'
+            onClick={() => router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`)}
+          >
+            <Edit2 className='mr-1.5 size-3.5' />
+            Edit
+          </Button>
+        </div>
+      ),
+    },
+  ], [router]);
+
   return (
     <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
+      <PanelHeader
         title='Filemaker Organizations'
         description='Search and browse organizations available for Case Resolver document addressing.'
-        actions={(
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button type='button' variant='outline' className='h-9' asChild>
-              <Link href='/admin/filemaker/persons'>Persons</Link>
-            </Button>
-            <Button type='button' className='h-9' asChild>
-              <Link href='/admin/filemaker'>Manage Database</Link>
-            </Button>
-          </div>
-        )}
+        icon={<Building2 className='size-4' />}
+        actions={[
+          {
+            key: 'persons',
+            label: 'Persons',
+            icon: <Users className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/persons'),
+          },
+          {
+            key: 'manage',
+            label: 'Manage Database',
+            icon: <Database className='size-4' />,
+            onClick: () => router.push('/admin/filemaker'),
+          }
+        ]}
       />
 
-      <div className='flex flex-col gap-3 rounded-lg border border-border/60 bg-card/40 p-4 md:flex-row md:items-center md:justify-between'>
-        <div className='flex items-center gap-2'>
-          <Badge variant='outline' className='text-[10px]'>
-            Organizations: {organizations.length}
-          </Badge>
-          <Badge variant='outline' className='text-[10px]'>
-            Total Addresses: {database.addresses.length}
-          </Badge>
-        </div>
-        <div className='w-full max-w-sm'>
-          <SearchInput
-            value={query}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setQuery(event.target.value);
-            }}
-            placeholder='Search organization name and address...'
-          />
-        </div>
-      </div>
-
-      <FormSection title='Organizations' className='space-y-3 p-4'>
-        {organizations.length === 0 ? (
-          <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-400'>
-            No organizations found.
+      <ListPanel
+        filters={
+          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+            <div className='flex items-center gap-2'>
+              <Badge variant='outline' className='text-[10px]'>
+                Organizations: {organizations.length}
+              </Badge>
+              <Badge variant='outline' className='text-[10px]'>
+                Total Addresses: {database.addresses.length}
+              </Badge>
+            </div>
+            <div className='w-full max-w-sm'>
+              <SearchInput
+                value={query}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setQuery(event.target.value);
+                }}
+                onClear={() => setQuery('')}
+                placeholder='Search organization name and address...'
+                size='sm'
+              />
+            </div>
           </div>
-        ) : (
-          <div className='space-y-2'>
-            {organizations.map((organization: FilemakerOrganization) => (
-              <div
-                key={organization.id}
-                className='flex flex-wrap items-start justify-between gap-3 rounded border border-border/60 bg-card/35 px-3 py-2'
-              >
-                <div className='min-w-0 flex-1 space-y-1'>
-                  <div className='text-sm font-semibold text-white'>
-                    {organization.name}
-                  </div>
-                  <div className='text-xs text-gray-300'>
-                    {formatFilemakerAddress(organization)}
-                  </div>
-                  <div className='text-[10px] text-gray-600'>
-                    Updated: {formatTimestamp(organization.updatedAt)}
-                  </div>
-                </div>
-                <div className='flex items-center gap-2'>
-                  <Button type='button' variant='outline' className='h-8' asChild>
-                    <Link
-                      href={`/admin/filemaker/organizations/${encodeURIComponent(organization.id)}`}
-                    >
-                      <Edit2 className='mr-1.5 size-3.5' />
-                      Edit
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </FormSection>
+        }
+      >
+        <DataTable
+          columns={columns}
+          data={organizations}
+          isLoading={settingsStore.isLoading}
+          emptyState={
+            <div className='py-12 text-center text-sm text-gray-500'>
+              {query ? 'No organizations found matching your search.' : 'No organizations found in database.'}
+            </div>
+          }
+        />
+      </ListPanel>
     </div>
   );
 }

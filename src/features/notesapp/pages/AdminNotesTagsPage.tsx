@@ -1,17 +1,27 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Trash2, Tags, Plus } from 'lucide-react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { useCreateNoteTag, useDeleteNoteTag, useUpdateNoteTag } from '@/features/notesapp/api/useNoteMutations';
 import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { TagRecord } from '@/shared/types/domain/notes';
-import { Button, useToast, Input, SectionHeader,  SearchInput, FormSection, FormField, RefreshButton } from '@/shared/ui';
+import { 
+  Button, 
+  useToast, 
+  Input, 
+  SearchInput, 
+  FormSection, 
+  FormField, 
+  ListPanel,
+  PanelHeader,
+  DataTable,
+} from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-
-
+import type { ColumnDef } from '@tanstack/react-table';
 
 export function AdminNotesTagsPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -23,6 +33,8 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingColor, setEditingColor] = useState('#3b82f6');
+  const [toDelete, setToDelete] = useState<TagRecord | null>(null);
+
   const notebooksQuery = useNotebooks();
   const tagsQuery = useNoteTags(selectedNotebookId ?? undefined);
   const createTag = useCreateNoteTag();
@@ -30,9 +42,7 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   const deleteTag = useDeleteNoteTag();
 
   const tags = useMemo((): TagRecord[] => tagsQuery.data ?? [], [tagsQuery.data]);
-  const loading = tagsQuery.isPending;
-
-  // Query handles tag loading
+  const loading = tagsQuery.isLoading;
 
   useEffect((): void => {
     if (selectedNotebookId) return;
@@ -58,28 +68,30 @@ export function AdminNotesTagsPage(): React.JSX.Element {
     }
   };
 
-  const handleDelete = async (tagId: string): Promise<void> => {
-    if (!confirm('Delete this tag? It will be removed from all notes.')) return;
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (!toDelete) return;
     try {
-      await deleteTag.mutateAsync(tagId);
+      await deleteTag.mutateAsync(toDelete.id);
       toast('Tag deleted', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesTagsPage', action: 'deleteTag', tagId } });
+      logClientError(error, { context: { source: 'AdminNotesTagsPage', action: 'deleteTag', tagId: toDelete.id } });
       toast('Failed to delete tag', { variant: 'error' });
+    } finally {
+      setToDelete(null);
     }
   };
 
-  const handleEditStart = (tag: TagRecord): void => {
+  const handleEditStart = useCallback((tag: TagRecord): void => {
     setEditingId(tag.id);
     setEditingName(tag.name);
     setEditingColor(tag.color || '#3b82f6');
-  };
+  }, []);
 
-  const handleEditCancel = (): void => {
+  const handleEditCancel = useCallback((): void => {
     setEditingId(null);
     setEditingName('');
     setEditingColor('#3b82f6');
-  };
+  }, []);
 
   const handleUpdate = async (tagId: string): Promise<void> => {
     if (!editingName.trim()) {
@@ -105,26 +117,115 @@ export function AdminNotesTagsPage(): React.JSX.Element {
     [tags, searchQuery]
   );
 
+  const columns = useMemo<ColumnDef<TagRecord>[]>(() => [
+    {
+      accessorKey: 'name',
+      header: 'Tag',
+      cell: ({ row }) => {
+        const tag = row.original;
+        const isEditing = editingId === tag.id;
+        
+        if (isEditing) {
+          return (
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <Input
+                type='text'
+                value={editingName}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingName(event.target.value)}
+                className='h-8 w-full sm:max-w-[200px]'
+                autoFocus
+              />
+              <div className='flex items-center gap-2'>
+                <Input
+                  type='color'
+                  value={editingColor}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingColor(event.target.value)}
+                  className='h-8 w-12 p-1'
+                />
+                <span className='text-[10px] font-mono text-gray-500 uppercase'>{editingColor}</span>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className='flex items-center gap-3'>
+            <span
+              className='h-3 w-3 rounded-full shrink-0'
+              style={{ backgroundColor: tag.color || '#3b82f6' }}
+            />
+            <span className='text-sm font-medium text-gray-200'>{tag.name}</span>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => {
+        const tag = row.original;
+        const isEditing = editingId === tag.id;
+        
+        return (
+          <div className='flex items-center justify-end gap-2'>
+            {isEditing ? (
+              <>
+                <Button
+                  variant='outline'
+                  size='xs'
+                  onClick={(): void => { void handleUpdate(tag.id); }}
+                  disabled={updateTag.isPending}
+                >
+                  Save
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='xs'
+                  onClick={handleEditCancel}
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant='outline'
+                  size='xs'
+                  onClick={(): void => handleEditStart(tag)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  type='button'
+                  size='xs'
+                  variant='outline'
+                  onClick={(): void => setToDelete(tag)}
+                  className='text-red-300 hover:text-red-200'
+                  aria-label={`Delete ${tag.name}`}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </>
+            )}
+          </div>
+        );
+      },
+    },
+  ], [editingId, editingName, editingColor, handleUpdate, updateTag.isPending, handleEditCancel, handleEditStart]);
+
   return (
-    <div className='container mx-auto py-10'>
-      <SectionHeader
+    <div className='container mx-auto space-y-6 py-10'>
+      <PanelHeader
         title='Note Tags'
         description='Create and remove tags used in the Notes app.'
-        className='mb-6'
+        icon={<Tags className='size-4' />}
+        refreshable={true}
+        isRefreshing={tagsQuery.isFetching}
+        onRefresh={() => { void tagsQuery.refetch(); }}
       />
 
-      <div className='max-w-3xl space-y-6'>
-        <FormSection title='Search'>
-          <SearchInput
-            value={searchQuery}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
-            onClear={() => setSearchQuery('')}
-            placeholder='Search tags...'
-            className='w-full'
-          />
-        </FormSection>
-
-        <FormSection title='Create Tag'>
+      <div className='max-w-4xl space-y-6'>
+        <FormSection title='Create Tag' variant='subtle'>
           <div className='flex flex-col gap-4 sm:flex-row sm:items-end'>
             <FormField label='Tag Name' className='flex-1'>
               <Input
@@ -136,109 +237,59 @@ export function AdminNotesTagsPage(): React.JSX.Element {
               />
             </FormField>
             <FormField label='Color'>
-              <Input
-                type='color'
-                value={color}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setColor(event.target.value)}
-                className='h-10 w-20'
-              />
+              <div className='flex items-center gap-2'>
+                <Input
+                  type='color'
+                  value={color}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setColor(event.target.value)}
+                  className='h-10 w-16 p-1'
+                />
+                <span className='text-xs font-mono text-gray-500 uppercase'>{color}</span>
+              </div>
             </FormField>
             <Button onClick={(): void => { void handleCreate(); }} disabled={createTag.isPending}>
+              <Plus className='mr-2 size-4' />
               {createTag.isPending ? 'Saving...' : 'Create'}
             </Button>
           </div>
         </FormSection>
 
-        <FormSection
-          title='Existing Tags'
-          actions={(
-            <RefreshButton
-              onRefresh={(): void => { void tagsQuery.refetch(); }}
-              isRefreshing={loading}
-            />
-          )}
-        >
-          {loading ? (
-            <div className='text-sm text-gray-400'>Loading tags...</div>
-          ) : filteredTags.length === 0 ? (
-            <div className='text-sm text-gray-500'>No tags created yet.</div>
-          ) : (
-            <div className='grid gap-3 sm:grid-cols-2'>
-              {filteredTags.map((tag: TagRecord) => {
-                const isEditing = editingId === tag.id;
-                return (
-                  <div
-                    key={tag.id}
-                    className='flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/30 px-4 py-3'
-                  >
-                    <div className='flex flex-1 items-center gap-3'>
-                      <span
-                        className='h-3 w-3 rounded-full'
-                        style={{ backgroundColor: tag.color || '#3b82f6' }}
-                      />
-                      {isEditing ? (
-                        <div className='flex flex-1 flex-col gap-2 sm:flex-row sm:items-center'>
-                          <Input
-                            type='text'
-                            value={editingName}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingName(event.target.value)}
-                            className='w-full'
-                          />
-                          <Input
-                            type='color'
-                            value={editingColor}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingColor(event.target.value)}
-                            className='h-8 w-14'
-                          />
-                        </div>
-                      ) : (
-                        <span className='text-sm text-gray-200'>{tag.name}</span>
-                      )}
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      {isEditing ? (
-                        <>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={(): void => { void handleUpdate(tag.id); }}
-                            disabled={updateTag.isPending}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={(): void => handleEditCancel()}
-                          >
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={(): void => handleEditStart(tag)}
-                        >
-                          Edit
-                        </Button>
-                      )}
-                      <Button
-                        type='button'
-                        onClick={(): void => { void handleDelete(tag.id); }}
-                        className='text-gray-400 hover:text-red-400'
-                        aria-label={`Delete ${tag.name}`}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+        <ListPanel
+          filters={
+            <div className='max-w-md'>
+              <SearchInput
+                value={searchQuery}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
+                onClear={() => setSearchQuery('')}
+                placeholder='Search tags...'
+                size='sm'
+              />
             </div>
-          )}
-        </FormSection>
+          }
+        >
+          <DataTable
+            columns={columns}
+            data={filteredTags}
+            isLoading={loading}
+            emptyState={
+              <div className='py-12 text-center text-sm text-gray-500'>
+                {searchQuery ? 'No tags found matching your search.' : 'No tags created yet.'}
+              </div>
+            }
+          />
+        </ListPanel>
       </div>
+
+      <ConfirmModal
+        isOpen={!!toDelete}
+        onClose={() => setToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title='Delete Tag'
+        message={`Are you sure you want to delete tag "${toDelete?.name ?? ''}"? It will be removed from all notes.`}
+        confirmText='Delete'
+        isDangerous={true}
+        loading={deleteTag.isPending}
+      />
     </div>
   );
 }

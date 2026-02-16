@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { startProductSyncRun } from '@/features/integrations/services/product-sync/product-sync-run-starter';
+import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 

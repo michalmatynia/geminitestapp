@@ -414,7 +414,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       const next = cloneCustomNav(prev);
       const node = createCustomNode(kind);
       if (!parentPath || parentPath.length === 0) {
-        next.push(node);
+        next.unshift(node);
         return next;
       }
       const parentNode = getNodeAtPath(next, parentPath);
@@ -423,6 +423,11 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
       parentNode.children.push(node);
       return next;
     });
+  };
+
+  const handleAddRootNode = (kind: 'link' | 'group'): void => {
+    setCustomEnabled(true);
+    addCustomNodeAt(kind);
   };
 
   const addBuiltInNode = (entry: AdminNavNodeEntry): void => {
@@ -514,6 +519,29 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
             ← Back to settings
           </Link>
+        )}
+        actions={(
+          <div className='flex flex-wrap gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={handleReset}
+              disabled={isDefaultState}
+            >
+              Reset
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              onClick={() => {
+                void handleSave();
+              }}
+              disabled={!isDirty || updateSettingsBulk.isPending}
+            >
+              {updateSettingsBulk.isPending ? 'Saving...' : 'Save Settings'}
+            </Button>
+          </div>
         )}
         className='mb-8'
       />
@@ -674,11 +702,11 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
         ) : null}
 
         <div className='mt-2 flex flex-wrap items-center gap-2'>
-          <Button type='button' size='sm' onClick={() => addCustomNodeAt('link')}>
+          <Button type='button' size='sm' onClick={() => handleAddRootNode('link')}>
             <Plus className='mr-2 size-4' />
             Add link
           </Button>
-          <Button type='button' variant='outline' size='sm' onClick={() => addCustomNodeAt('group')}>
+          <Button type='button' variant='outline' size='sm' onClick={() => handleAddRootNode('group')}>
             <Plus className='mr-2 size-4' />
             Add group
           </Button>
@@ -885,28 +913,6 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           </div>
         </div>
       </FormSection>
-
-      <div className='mt-6 flex flex-wrap gap-2'>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          onClick={handleReset}
-          disabled={isDefaultState}
-        >
-          Reset
-        </Button>
-        <Button
-          type='button'
-          size='sm'
-          onClick={() => {
-            void handleSave();
-          }}
-          disabled={!isDirty || updateSettingsBulk.isPending}
-        >
-          {updateSettingsBulk.isPending ? 'Saving...' : 'Save Settings'}
-        </Button>
-      </div>
     </div>
   );
 }

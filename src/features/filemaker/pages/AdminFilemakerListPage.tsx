@@ -1,11 +1,22 @@
 'use client';
 
-import { Edit2 } from 'lucide-react';
-import Link from 'next/link';
+import { Edit2, LayoutList, Users, Building2, Database } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, Button, FormSection, SearchInput, SectionHeader } from '@/shared/ui';
+import { 
+  Badge, 
+  Button, 
+  DataTable, 
+  ListPanel, 
+  PanelHeader, 
+  SearchInput,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent
+} from '@/shared/ui';
 
 import {
   FILEMAKER_DATABASE_KEY,
@@ -14,6 +25,7 @@ import {
 } from '../settings';
 
 import type { FilemakerOrganization, FilemakerPerson } from '../types';
+import type { ColumnDef } from '@tanstack/react-table';
 
 const includeQuery = (values: string[], query: string): boolean => {
   if (!query) return true;
@@ -21,6 +33,7 @@ const includeQuery = (values: string[], query: string): boolean => {
 };
 
 export function AdminFilemakerListPage(): React.JSX.Element {
+  const router = useRouter();
   const settingsStore = useSettingsStore();
   const [query, setQuery] = useState('');
   const deferredQuery = useDeferredValue(query.trim());
@@ -78,109 +91,180 @@ export function AdminFilemakerListPage(): React.JSX.Element {
     [database.organizations, deferredQuery]
   );
 
+  const personColumns = useMemo<ColumnDef<FilemakerPerson>[]>(() => [
+    {
+      id: 'person',
+      header: 'Person',
+      cell: ({ row }) => {
+        const person = row.original;
+        return (
+          <div className='min-w-0 space-y-1'>
+            <div className='text-sm font-semibold text-white'>
+              {person.firstName} {person.lastName}
+            </div>
+            <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'contact',
+      header: 'Contact',
+      cell: ({ row }) => {
+        const person = row.original;
+        return (
+          <div className='text-[11px] text-gray-500 space-y-0.5'>
+            <div>NIP: {person.nip || 'n/a'}</div>
+            <div>Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}</div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end'>
+          <Button 
+            type='button' 
+            variant='outline' 
+            size='xs'
+            onClick={() => router.push(`/admin/filemaker/persons/${encodeURIComponent(row.original.id)}`)}
+          >
+            <Edit2 className='mr-1.5 size-3.5' />
+            Edit
+          </Button>
+        </div>
+      ),
+    },
+  ], [router]);
+
+  const orgColumns = useMemo<ColumnDef<FilemakerOrganization>[]>(() => [
+    {
+      id: 'organization',
+      header: 'Organization',
+      cell: ({ row }) => {
+        const organization = row.original;
+        return (
+          <div className='min-w-0 space-y-1'>
+            <div className='text-sm font-semibold text-white'>{organization.name}</div>
+            <div className='text-xs text-gray-300'>
+              {formatFilemakerAddress(organization)}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end'>
+          <Button 
+            type='button' 
+            variant='outline' 
+            size='xs'
+            onClick={() => router.push(`/admin/filemaker/organizations/${encodeURIComponent(row.original.id)}`)}
+          >
+            <Edit2 className='mr-1.5 size-3.5' />
+            Edit
+          </Button>
+        </div>
+      ),
+    },
+  ], [router]);
+
   return (
     <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
+      <PanelHeader
         title='Filemaker List'
         description='Search persons and organizations available for Case Resolver document addressing.'
+        icon={<LayoutList className='size-4' />}
+        actions={[
+          {
+            key: 'persons',
+            label: 'Persons Page',
+            icon: <Users className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/persons'),
+          },
+          {
+            key: 'organizations',
+            label: 'Organizations Page',
+            icon: <Building2 className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/organizations'),
+          },
+          {
+            key: 'manage',
+            label: 'Manage Database',
+            icon: <Database className='size-4' />,
+            onClick: () => router.push('/admin/filemaker'),
+          }
+        ]}
       />
 
-      <div className='flex flex-col gap-3 rounded-lg border border-border/60 bg-card/40 p-4 md:flex-row md:items-center md:justify-between'>
-        <div className='flex items-center gap-2'>
-          <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
-          <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
-          <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
-        </div>
-        <div className='w-full max-w-sm'>
-          <SearchInput
-            value={query}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setQuery(event.target.value);
-            }}
-            placeholder='Search name, address, NIP, REGON, phone...'
-          />
-        </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          <Button asChild type='button' variant='outline' className='h-9 whitespace-nowrap'>
-            <Link href='/admin/filemaker/persons'>Persons Page</Link>
-          </Button>
-          <Button asChild type='button' variant='outline' className='h-9 whitespace-nowrap'>
-            <Link href='/admin/filemaker/organizations'>Organizations Page</Link>
-          </Button>
-          <Button asChild type='button' className='h-9 whitespace-nowrap'>
-            <Link href='/admin/filemaker'>Manage Database</Link>
-          </Button>
-        </div>
-      </div>
-
-      <FormSection title='Persons' className='space-y-3 p-4'>
-        {persons.length === 0 ? (
-          <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-400'>
-            No persons found.
+      <ListPanel
+        filters={
+          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+            <div className='flex items-center gap-2'>
+              <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
+              <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+              <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
+            </div>
+            <div className='w-full max-w-sm'>
+              <SearchInput
+                value={query}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setQuery(event.target.value);
+                }}
+                onClear={() => setQuery('')}
+                placeholder='Search name, address, NIP, REGON, phone...'
+                size='sm'
+              />
+            </div>
           </div>
-        ) : (
-          <div className='space-y-2'>
-            {persons.map((person: FilemakerPerson) => (
-              <div key={person.id} className='rounded border border-border/60 bg-card/35 px-3 py-2'>
-                <div className='flex flex-wrap items-start justify-between gap-2'>
-                  <div className='min-w-0 space-y-1'>
-                    <div className='text-sm font-semibold text-white'>
-                      {person.firstName} {person.lastName}
-                    </div>
-                    <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
-                    <div className='text-[11px] text-gray-500'>
-                      NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
-                    </div>
-                    <div className='text-[11px] text-gray-500'>
-                      Phones:{' '}
-                      {person.phoneNumbers.length > 0
-                        ? person.phoneNumbers.join(', ')
-                        : 'n/a'}
-                    </div>
-                  </div>
-                  <Button type='button' variant='outline' size='sm' className='h-8' asChild>
-                    <Link href={`/admin/filemaker/persons/${encodeURIComponent(person.id)}`}>
-                      <Edit2 className='mr-1.5 size-3.5' />
-                      Edit
-                    </Link>
-                  </Button>
+        }
+      >
+        <Tabs defaultValue='persons' className='w-full'>
+          <TabsList className='mb-4'>
+            <TabsTrigger value='persons' className='gap-2'>
+              <Users className='size-3.5' />
+              Persons
+            </TabsTrigger>
+            <TabsTrigger value='organizations' className='gap-2'>
+              <Building2 className='size-3.5' />
+              Organizations
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value='persons' className='m-0'>
+            <DataTable
+              columns={personColumns}
+              data={persons}
+              isLoading={settingsStore.isLoading}
+              emptyState={
+                <div className='py-12 text-center text-sm text-gray-500'>
+                  {query ? 'No persons found matching your search.' : 'No persons found.'}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </FormSection>
-
-      <FormSection title='Organizations' className='space-y-3 p-4'>
-        {organizations.length === 0 ? (
-          <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-400'>
-            No organizations found.
-          </div>
-        ) : (
-          <div className='space-y-2'>
-            {organizations.map((organization: FilemakerOrganization) => (
-              <div key={organization.id} className='rounded border border-border/60 bg-card/35 px-3 py-2'>
-                <div className='flex flex-wrap items-start justify-between gap-2'>
-                  <div className='min-w-0 space-y-1'>
-                    <div className='text-sm font-semibold text-white'>{organization.name}</div>
-                    <div className='text-xs text-gray-300'>
-                      {formatFilemakerAddress(organization)}
-                    </div>
-                  </div>
-                  <Button type='button' variant='outline' size='sm' className='h-8' asChild>
-                    <Link
-                      href={`/admin/filemaker/organizations/${encodeURIComponent(organization.id)}`}
-                    >
-                      <Edit2 className='mr-1.5 size-3.5' />
-                      Edit
-                    </Link>
-                  </Button>
+              }
+            />
+          </TabsContent>
+          
+          <TabsContent value='organizations' className='m-0'>
+            <DataTable
+              columns={orgColumns}
+              data={organizations}
+              isLoading={settingsStore.isLoading}
+              emptyState={
+                <div className='py-12 text-center text-sm text-gray-500'>
+                  {query ? 'No organizations found matching your search.' : 'No organizations found.'}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </FormSection>
+              }
+            />
+          </TabsContent>
+        </Tabs>
+      </ListPanel>
     </div>
   );
 }

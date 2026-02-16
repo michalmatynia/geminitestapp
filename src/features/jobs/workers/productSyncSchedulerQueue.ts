@@ -3,8 +3,8 @@ import 'server-only';
 import {
   findDueProductSyncProfiles,
   recoverStaleProductSyncRuns,
-} from '@/features/integrations/services/product-sync/product-sync-repository';
-import { startProductSyncRun } from '@/features/integrations/services/product-sync/product-sync-run-starter';
+} from '@/features/product-sync/services/product-sync-repository';
+import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
 import { ErrorSystem } from '@/features/observability/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 

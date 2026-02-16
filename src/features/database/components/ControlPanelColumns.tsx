@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, StatusBadge, DataTableSortableHeader } from '@/shared/ui';
+import { Button, StatusBadge, DataTableSortableHeader, SelectSimple } from '@/shared/ui';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -78,20 +78,23 @@ export function getControlPanelColumns(options: {
       id: 'assignedProvider',
       header: 'Active Provider',
       cell: ({ row }: { row: { original: UnifiedCollectionRow } }): React.JSX.Element => (
-        <select
+        <SelectSimple
           value={row.original.assignedProvider}
-          onChange={(e): void => {
+          onValueChange={(value): void => {
             options.onProviderChange(
               row.original.name,
-              e.target.value as 'mongodb' | 'prisma' | 'auto'
+              value as 'mongodb' | 'prisma' | 'auto'
             );
           }}
-          className='rounded-md border border-gray-700 bg-gray-900 px-2 py-1 text-xs text-gray-200 focus:outline-none focus:ring-1 focus:ring-gray-600'
-        >
-          <option value='auto'>Auto</option>
-          <option value='mongodb'>MongoDB</option>
-          <option value='prisma'>Prisma</option>
-        </select>
+          options={[
+            { value: 'auto', label: 'Auto' },
+            { value: 'mongodb', label: 'MongoDB' },
+            { value: 'prisma', label: 'Prisma' },
+          ]}
+          size='sm'
+          className='w-32'
+          triggerClassName='h-8'
+        />
       ),
     },
     {

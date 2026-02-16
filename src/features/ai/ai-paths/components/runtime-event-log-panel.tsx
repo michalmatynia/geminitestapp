@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { AiPathRuntimeEvent, AiPathRuntimeEventLevel } from '@/features/ai/ai-paths/lib';
-import { Button, StatusBadge } from '@/shared/ui';
+import { Button, StatusBadge, SelectSimple } from '@/shared/ui';
 
 import { useRuntimeState, useRuntimeActions } from '../context';
 
@@ -118,19 +118,15 @@ export function RuntimeEventLogPanel(): React.JSX.Element {
         </div>
         <div className='flex items-center gap-1.5'>
           {/* Level filter */}
-          <select
-            className='rounded border border-border/40 bg-transparent px-1.5 py-0.5 text-[10px] text-gray-300 outline-none'
+          <SelectSimple
+            size='xs'
             value={levelFilter}
-            onChange={(e) =>
-              setLevelFilter(e.target.value as AiPathRuntimeEventLevel | 'all')
+            onValueChange={(value) =>
+              setLevelFilter(value as AiPathRuntimeEventLevel | 'all')
             }
-          >
-            {LEVEL_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            options={LEVEL_OPTIONS}
+            triggerClassName='h-6 min-w-[70px] px-2 bg-transparent border-border/40 text-[10px]'
+          />
           {/* Export */}
           <Button
             type='button'

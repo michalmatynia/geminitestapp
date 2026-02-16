@@ -10,8 +10,8 @@ import {
   deleteProductSyncProfile,
   getProductSyncProfile,
   updateProductSyncProfile,
-} from '@/features/integrations/services/product-sync/product-sync-repository';
-import type { ProductSyncProfile } from '@/features/integrations/types/product-sync';
+} from '@/features/product-sync/services/product-sync-repository';
+import type { ProductSyncProfile } from '@/features/product-sync/types/product-sync';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';

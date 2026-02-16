@@ -26,7 +26,6 @@ interface PreviewRichTextSectionProps {
 export function PreviewRichTextSection({
   section,
   colorSchemes,
-  mediaStyles,
   selectedRing,
   renderSectionActions,
   divider,
@@ -38,10 +37,9 @@ export function PreviewRichTextSection({
   const { 
     inspectorSettings, 
     onOpenMedia,
-    showEditorChrome: globalShowEditorChrome 
   } = usePreviewEditor();
 
-  const showEditorChrome = inspectorSettings.showEditorChrome ?? globalShowEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
 
   return wrapInspector(

@@ -394,7 +394,7 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
       </FormSection>
 
       <ConfirmModal
-        open={Boolean(caseIdentifierToDelete)}
+        isOpen={Boolean(caseIdentifierToDelete)}
         onClose={() => setCaseIdentifierToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Case Identifier'

@@ -311,7 +311,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
       </FormSection>
 
       <ConfirmModal
-        open={Boolean(tagToDelete)}
+        isOpen={Boolean(tagToDelete)}
         onClose={() => setTagToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Tag'

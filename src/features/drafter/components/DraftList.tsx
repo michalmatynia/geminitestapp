@@ -61,7 +61,7 @@ export function DraftList(): React.JSX.Element {
       }
     >
       <ConfirmModal
-        open={!!draftToDelete}
+        isOpen={!!draftToDelete}
         onClose={() => setDraftToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Draft'

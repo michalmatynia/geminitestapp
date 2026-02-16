@@ -52,6 +52,8 @@ import {
   toCaseResolverFolderNodeId,
 } from '../master-tree';
 
+import type { CaseResolverFile, CaseResolverWorkspace } from '../types';
+
 type PaletteEntry = {
   id: string;
   label: string;
@@ -136,9 +138,99 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   const [isRootExplicitlySelected, setIsRootExplicitlySelected] = useState(true);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
+  const treeWorkspace = useMemo((): CaseResolverWorkspace => {
+    const selectedCase =
+      selectedFileId
+        ? workspace.files.find((file: CaseResolverFile): boolean => file.id === selectedFileId) ?? null
+        : null;
+    const isChildCase = Boolean(
+      selectedCase?.parentCaseId &&
+      selectedCase.parentCaseId !== selectedCase.id
+    );
+    if (!selectedCase || !isChildCase) {
+      return workspace;
+    }
+
+    const filesById = new Map<string, CaseResolverFile>(
+      workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+    );
+    const childIdsByParentId = new Map<string, string[]>();
+    workspace.files.forEach((file: CaseResolverFile): void => {
+      const parentCaseId = file.parentCaseId;
+      if (!parentCaseId || parentCaseId === file.id) return;
+      const current = childIdsByParentId.get(parentCaseId) ?? [];
+      current.push(file.id);
+      childIdsByParentId.set(parentCaseId, current);
+    });
+
+    const relatedCaseIds = new Set<string>();
+    const visitCase = (caseId: string): void => {
+      if (!caseId || relatedCaseIds.has(caseId)) return;
+      const file = filesById.get(caseId);
+      if (!file) return;
+      relatedCaseIds.add(caseId);
+
+      if (file.parentCaseId && file.parentCaseId !== file.id) {
+        visitCase(file.parentCaseId);
+      }
+      const childIds = childIdsByParentId.get(file.id) ?? [];
+      childIds.forEach((childId: string): void => {
+        visitCase(childId);
+      });
+      file.referenceCaseIds.forEach((referenceCaseId: string): void => {
+        visitCase(referenceCaseId);
+      });
+    };
+
+    visitCase(selectedCase.id);
+    workspace.files.forEach((file: CaseResolverFile): void => {
+      if (file.referenceCaseIds.includes(selectedCase.id)) {
+        visitCase(file.id);
+      }
+    });
+
+    const scopedFiles = workspace.files.filter((file: CaseResolverFile): boolean =>
+      relatedCaseIds.has(file.id)
+    );
+    if (scopedFiles.length === 0) {
+      return workspace;
+    }
+
+    const folderPaths = new Set<string>();
+    const registerFolderPath = (folderPath: string): void => {
+      const normalizedFolderPath = folderPath.trim();
+      if (!normalizedFolderPath) return;
+      const segments = normalizedFolderPath.split('/').filter(Boolean);
+      for (let index = 0; index < segments.length; index += 1) {
+        folderPaths.add(segments.slice(0, index + 1).join('/'));
+      }
+    };
+
+    scopedFiles.forEach((file: CaseResolverFile): void => {
+      registerFolderPath(file.folder);
+    });
+
+    const scopedFolderTimestamps = Object.fromEntries(
+      Object.entries(workspace.folderTimestamps ?? {}).filter(([folderPath]: [string, unknown]): boolean =>
+        folderPaths.has(folderPath)
+      )
+    );
+
+    return {
+      ...workspace,
+      folders: workspace.folders.filter((folderPath: string): boolean => folderPaths.has(folderPath)),
+      folderTimestamps: scopedFolderTimestamps,
+      files: scopedFiles,
+      assets: [],
+      activeFileId: scopedFiles.some((file: CaseResolverFile): boolean => file.id === selectedCase.id)
+        ? selectedCase.id
+        : (scopedFiles[0]?.id ?? null),
+    };
+  }, [selectedFileId, workspace]);
+
   const masterNodes = useMemo(
-    (): MasterTreeNode[] => buildMasterNodesFromCaseResolverWorkspace(workspace),
-    [workspace]
+    (): MasterTreeNode[] => buildMasterNodesFromCaseResolverWorkspace(treeWorkspace),
+    [treeWorkspace]
   );
 
   const selectedMasterNodeId = useMemo((): string | null => {
@@ -215,13 +307,13 @@ export function CaseResolverFolderTree(): React.JSX.Element {
 
   const fileLockById = useMemo((): Map<string, boolean> => {
     return new Map(
-      workspace.files.map((file): [string, boolean] => [file.id, file.isLocked])
+      treeWorkspace.files.map((file): [string, boolean] => [file.id, file.isLocked])
     );
-  }, [workspace.files]);
+  }, [treeWorkspace.files]);
 
   const folderCaseFileStatsByPath = useMemo((): Map<string, FolderCaseFileStats> => {
     const stats = new Map<string, FolderCaseFileStats>();
-    workspace.files.forEach((file): void => {
+    treeWorkspace.files.forEach((file): void => {
       const normalizedFolder = file.folder.trim();
       if (!normalizedFolder) return;
       const segments = normalizedFolder.split('/').filter(Boolean);
@@ -236,7 +328,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       }
     });
     return stats;
-  }, [workspace.files]);
+  }, [treeWorkspace.files]);
 
   const documentNodeIdsBySourceFileId = useMemo((): Map<string, string[]> => {
     const byFileId = new Map<string, string[]>();

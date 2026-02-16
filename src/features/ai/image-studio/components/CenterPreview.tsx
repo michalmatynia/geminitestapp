@@ -15,6 +15,7 @@ import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import type { VectorCanvasViewCropRect } from '@/shared/ui';
 import { Button, Input, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -52,7 +53,7 @@ const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
 export function CenterPreview(): React.JSX.Element {
   const { isFocusMode, maskPreviewEnabled, centerGuidesEnabled } = useUiState();
-  const { toggleFocusMode } = useUiActions();
+  const { toggleFocusMode, registerPreviewCanvasViewportCropResolver } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot, selectedSlot, selectedSlotId, previewMode, captureRef, slots } = useSlotsState();
   const {
@@ -100,6 +101,8 @@ export function CenterPreview(): React.JSX.Element {
   const [dismissedVariantKeys, setDismissedVariantKeys] = useState<Set<string>>(new Set());
   const pendingDismissedVariantHydrationKeyRef = useRef<string | null>(null);
   const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
+  const previewCanvasCropRectRef = useRef<VectorCanvasViewCropRect | null>(null);
+  const previewCanvasSlotIdRef = useRef<string | null>(null);
   const [variantTooltip, setVariantTooltip] = useState<{
     variant: VariantThumbnailInfo;
     x: number;
@@ -196,6 +199,14 @@ export function CenterPreview(): React.JSX.Element {
     return workingSlotImageSrc;
   }, [isCompositeSlot, compositeResultImage, canCompareWithSource, singleVariantView, sourceSlotImageSrc, workingSlotImageSrc]);
 
+  const activeCanvasSlotId = useMemo((): string | null => {
+    if (previewMode !== 'image' || splitVariantView) return null;
+    if (canCompareWithSource && singleVariantView === 'source') {
+      return sourceSlot?.id ?? null;
+    }
+    return workingSlot?.id ?? null;
+  }, [canCompareWithSource, previewMode, singleVariantView, sourceSlot?.id, splitVariantView, workingSlot?.id]);
+
   const eligibleMaskShapes = useMemo(
     () =>
       maskShapes.filter(
@@ -258,6 +269,35 @@ export function CenterPreview(): React.JSX.Element {
     setSelectedPointIndex,
     maskShapes.length,
   ]);
+
+  const handlePreviewCanvasCropRectChange = useCallback((cropRect: VectorCanvasViewCropRect | null): void => {
+    previewCanvasCropRectRef.current = cropRect;
+  }, []);
+
+  useEffect(() => {
+    previewCanvasSlotIdRef.current = activeCanvasSlotId;
+  }, [activeCanvasSlotId]);
+
+  useEffect(() => {
+    if (previewMode !== 'image' || splitVariantView) {
+      previewCanvasCropRectRef.current = null;
+    }
+  }, [previewMode, splitVariantView]);
+
+  useEffect(() => {
+    registerPreviewCanvasViewportCropResolver(() => {
+      const slotId = previewCanvasSlotIdRef.current?.trim() ?? '';
+      const cropRect = previewCanvasCropRectRef.current;
+      if (!slotId || !cropRect) return null;
+      return {
+        slotId,
+        cropRect,
+      };
+    });
+    return (): void => {
+      registerPreviewCanvasViewportCropResolver(null);
+    };
+  }, [registerPreviewCanvasViewportCropResolver]);
 
   useEffect(() => {
     setSingleVariantView('variant');
@@ -1148,6 +1188,8 @@ export function CenterPreview(): React.JSX.Element {
                   maskPreviewOpacity={0.5}
                   maskPreviewFeather={maskFeather}
                   showCenterGuides={centerGuidesEnabled}
+                  enableTwoFingerRotate
+                  onViewCropRectChange={handlePreviewCanvasCropRectChange}
                 />
               )}
             </VectorDrawingProvider>

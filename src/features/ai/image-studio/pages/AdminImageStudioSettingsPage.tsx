@@ -114,6 +114,11 @@ const PROJECT_SEQUENCE_UPSCALE_SCALE_OPTIONS = [
   { value: '4', label: '4x' },
 ];
 
+const PROJECT_SEQUENCE_UPSCALE_STRATEGY_OPTIONS = [
+  { value: 'scale', label: 'By Multiplier' },
+  { value: 'target_resolution', label: 'By Resolution' },
+];
+
 const PROJECT_SEQUENCE_OPERATION_LABELS: Record<ImageStudioSequenceOperation, string> = {
   crop_center: 'Center Crop',
   mask: 'Masking',
@@ -741,25 +746,88 @@ export function AdminImageStudioSettingsPage(
                   />
                 </div>
                 <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Upscale Scale</div>
+                  <div className='text-[11px] text-gray-500'>Upscale Strategy</div>
                   <SelectSimple
                     size='sm'
-                    value={String(studioSettings.projectSequencing.upscaleScale)}
+                    value={studioSettings.projectSequencing.upscaleStrategy}
                     onValueChange={(value: string) => {
-                      const numeric = Number(value);
-                      if (!Number.isFinite(numeric)) return;
+                      const strategy = value === 'target_resolution' ? 'target_resolution' : 'scale';
                       setStudioSettings((prev: ImageStudioSettings) => ({
                         ...prev,
                         projectSequencing: {
                           ...prev.projectSequencing,
-                          upscaleScale: numeric,
+                          upscaleStrategy: strategy,
                         },
                       }));
                     }}
-                    options={PROJECT_SEQUENCE_UPSCALE_SCALE_OPTIONS}
+                    options={PROJECT_SEQUENCE_UPSCALE_STRATEGY_OPTIONS}
                     triggerClassName='h-8'
-                    ariaLabel='Project sequence upscale scale'
+                    ariaLabel='Project sequence upscale strategy'
                   />
+                  {studioSettings.projectSequencing.upscaleStrategy === 'scale' ? (
+                    <SelectSimple
+                      size='sm'
+                      value={String(studioSettings.projectSequencing.upscaleScale)}
+                      onValueChange={(value: string) => {
+                        const numeric = Number(value);
+                        if (!Number.isFinite(numeric)) return;
+                        setStudioSettings((prev: ImageStudioSettings) => ({
+                          ...prev,
+                          projectSequencing: {
+                            ...prev.projectSequencing,
+                            upscaleScale: numeric,
+                          },
+                        }));
+                      }}
+                      options={PROJECT_SEQUENCE_UPSCALE_SCALE_OPTIONS}
+                      triggerClassName='h-8'
+                      ariaLabel='Project sequence upscale scale'
+                    />
+                  ) : (
+                    <div className='flex items-center gap-1 rounded border border-border/50 bg-foreground/5 px-2 py-1'>
+                      <Input
+                        type='number'
+                        min={1}
+                        max={32768}
+                        step={1}
+                        value={String(studioSettings.projectSequencing.upscaleTargetWidth)}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                          const numeric = Math.floor(Number(event.target.value));
+                          if (!Number.isFinite(numeric) || numeric < 1 || numeric > 32768) return;
+                          setStudioSettings((prev: ImageStudioSettings) => ({
+                            ...prev,
+                            projectSequencing: {
+                              ...prev.projectSequencing,
+                              upscaleTargetWidth: numeric,
+                            },
+                          }));
+                        }}
+                        className='h-7 text-xs'
+                        aria-label='Project sequence upscale target width'
+                      />
+                      <span className='text-[11px] text-gray-500'>x</span>
+                      <Input
+                        type='number'
+                        min={1}
+                        max={32768}
+                        step={1}
+                        value={String(studioSettings.projectSequencing.upscaleTargetHeight)}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                          const numeric = Math.floor(Number(event.target.value));
+                          if (!Number.isFinite(numeric) || numeric < 1 || numeric > 32768) return;
+                          setStudioSettings((prev: ImageStudioSettings) => ({
+                            ...prev,
+                            projectSequencing: {
+                              ...prev.projectSequencing,
+                              upscaleTargetHeight: numeric,
+                            },
+                          }));
+                        }}
+                        className='h-7 text-xs'
+                        aria-label='Project sequence upscale target height'
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               <div className='mt-3 space-y-2'>

@@ -41,6 +41,7 @@ const uploadsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio', 'cen
 const SOURCE_FETCH_TIMEOUT_MS = 15_000;
 const CENTER_PIPELINE_VERSION = process.env['IMAGE_STUDIO_CENTER_PIPELINE_VERSION']?.trim() || 'v2';
 const STRICT_SERVER_CENTER_ENABLED = process.env['IMAGE_STUDIO_CENTER_SERVER_AUTHORITATIVE'] !== 'false';
+const CENTER_FINGERPRINT_DEDUPE_ENABLED = process.env['IMAGE_STUDIO_CENTER_DEDUPE_BY_FINGERPRINT'] === 'true';
 
 type StudioSlotRecord = NonNullable<Awaited<ReturnType<typeof getImageStudioSlotById>>>;
 type UploadedClientCenterImage = {
@@ -525,31 +526,33 @@ async function POST_handler(
     }
   }
 
-  const existingFingerprintLink = await getImageStudioSlotLinkBySourceAndRelation(
-    sourceSlot.projectId,
-    sourceSlot.id,
-    fingerprintRelationType
-  );
-  if (existingFingerprintLink) {
-    const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
-    if (existingSlot) {
-      const existingCenter = readCenterMetadataFromSlot(existingSlot);
-      return NextResponse.json(
-        {
-          slot: existingSlot,
-          mode: payload.mode,
-          effectiveMode: existingCenter.effectiveMode ?? payload.mode,
-          sourceObjectBounds: existingCenter.sourceObjectBounds,
-          targetObjectBounds: existingCenter.targetObjectBounds,
-          requestId: idempotencyKey,
-          fingerprint,
-          deduplicated: true,
-          dedupeReason: 'fingerprint',
-          lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
-          pipelineVersion: CENTER_PIPELINE_VERSION,
-        },
-        { status: 200 }
-      );
+  if (CENTER_FINGERPRINT_DEDUPE_ENABLED) {
+    const existingFingerprintLink = await getImageStudioSlotLinkBySourceAndRelation(
+      sourceSlot.projectId,
+      sourceSlot.id,
+      fingerprintRelationType
+    );
+    if (existingFingerprintLink) {
+      const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
+      if (existingSlot) {
+        const existingCenter = readCenterMetadataFromSlot(existingSlot);
+        return NextResponse.json(
+          {
+            slot: existingSlot,
+            mode: payload.mode,
+            effectiveMode: existingCenter.effectiveMode ?? payload.mode,
+            sourceObjectBounds: existingCenter.sourceObjectBounds,
+            targetObjectBounds: existingCenter.targetObjectBounds,
+            requestId: idempotencyKey,
+            fingerprint,
+            deduplicated: true,
+            dedupeReason: 'fingerprint',
+            lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
+            pipelineVersion: CENTER_PIPELINE_VERSION,
+          },
+          { status: 200 }
+        );
+      }
     }
   }
 

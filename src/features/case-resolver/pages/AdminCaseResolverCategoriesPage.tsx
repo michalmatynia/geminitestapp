@@ -376,7 +376,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
       </FormSection>
 
       <ConfirmModal
-        open={Boolean(categoryToDelete)}
+        isOpen={Boolean(categoryToDelete)}
         onClose={() => setCategoryToDelete(null)}
         onConfirm={handleDeleteCategory}
         title='Delete Category'

@@ -88,7 +88,7 @@ export default function MarketplacesPage(): React.JSX.Element {
       </div>
 
       <ConfirmModal
-        open={showSyncConfirm}
+        isOpen={showSyncConfirm}
         onClose={() => setShowSyncConfirm(false)}
         onConfirm={handleSyncBaseImages}
         title='Sync Base.com images for all listings?'

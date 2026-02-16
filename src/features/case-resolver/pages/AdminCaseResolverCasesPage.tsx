@@ -40,7 +40,7 @@ const createId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
-const formatUpdatedAt = (value: string): string => {
+const formatCaseTimestamp = (value: string): string => {
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return 'Unknown';
   return new Date(parsed).toLocaleString();
@@ -1373,7 +1373,8 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         ) : null}
                       </div>
                       <div className='mt-0.5 text-xs text-gray-400'>
-                        Folder: {file.folder || '(root)'} | Updated: {formatUpdatedAt(file.updatedAt)}
+                        Folder: {file.folder || '(root)'} | Created: {formatCaseTimestamp(file.createdAt)} | Updated:{' '}
+                        {formatCaseTimestamp(file.updatedAt)}
                       </div>
                     </div>
                     <div className='flex items-center gap-2'>

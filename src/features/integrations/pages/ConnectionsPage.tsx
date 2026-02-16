@@ -19,7 +19,7 @@ function IntegrationsContent(): React.JSX.Element {
   return (
     <div className='container mx-auto py-10'>
       <ConfirmModal
-        open={!!connectionToDelete}
+        isOpen={!!connectionToDelete}
         onClose={() => setConnectionToDelete(null)}
         onConfirm={handleConfirmDeleteConnection}
         title='Delete Connection'

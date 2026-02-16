@@ -6,7 +6,7 @@ import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 
 export interface ConfirmModalProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void | Promise<void>;
   title: string;
@@ -24,7 +24,7 @@ export interface ConfirmModalProps {
  * Consolidates delete/destructive action confirmations across features.
  */
 export function ConfirmModal({
-  open,
+  isOpen,
   onClose,
   onConfirm,
   title,
@@ -47,7 +47,7 @@ export function ConfirmModal({
 
   return (
     <AppModal
-      open={open}
+      open={isOpen}
       onOpenChange={onClose}
       onClose={onClose}
       title={title}

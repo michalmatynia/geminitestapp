@@ -128,7 +128,7 @@ export function LocalRunsPanel({
       </div>
 
       <ConfirmModal
-        open={clearScope === 'terminal'}
+        isOpen={clearScope === 'terminal'}
         onClose={() => setClearScope(null)}
         onConfirm={() => clearRuns('terminal')}
         title='Clear finished local runs'
@@ -139,7 +139,7 @@ export function LocalRunsPanel({
       />
 
       <ConfirmModal
-        open={clearScope === 'all'}
+        isOpen={clearScope === 'all'}
         onClose={() => setClearScope(null)}
         onConfirm={() => clearRuns('all')}
         title='Clear all local runs'

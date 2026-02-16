@@ -31,6 +31,10 @@ const UPSCALE_SCALE_OPTIONS = ['1.25', '1.5', '2', '3', '4'].map((value) => ({
   value,
   label: `${value}x`,
 }));
+const UPSCALE_STRATEGY_OPTIONS = [
+  { value: 'scale', label: 'By Multiplier' },
+  { value: 'target_resolution', label: 'By Resolution' },
+];
 
 const PROJECT_SEQUENCE_OPERATION_LABELS: Record<ImageStudioSequenceOperation, string> = {
   crop_center: 'Center Crop',
@@ -411,11 +415,37 @@ export function SequencingPanel(): React.JSX.Element {
         }
 
         if (operation === 'upscale') {
+          const upscaleStrategy = studioSettings.projectSequencing.upscaleStrategy;
+          const upscalePayload =
+            upscaleStrategy === 'target_resolution'
+              ? {
+                strategy: 'target_resolution' as const,
+                targetWidth: studioSettings.projectSequencing.upscaleTargetWidth,
+                targetHeight: studioSettings.projectSequencing.upscaleTargetHeight,
+              }
+              : {
+                strategy: 'scale' as const,
+                scale: studioSettings.projectSequencing.upscaleScale,
+              };
+          if (upscalePayload.strategy === 'target_resolution') {
+            const sourceDimensions = await resolveSlotDimensions(currentSlot);
+            if (
+              upscalePayload.targetWidth < sourceDimensions.width ||
+              upscalePayload.targetHeight < sourceDimensions.height ||
+              (
+                upscalePayload.targetWidth === sourceDimensions.width &&
+                upscalePayload.targetHeight === sourceDimensions.height
+              )
+            ) {
+              throw new Error('Sequence upscale target resolution must enlarge at least one side.');
+            }
+          }
           const upscaleResponse = await api.post<{ slot?: ImageStudioSlotRecord }>(
             `/api/image-studio/slots/${encodeURIComponent(currentSlot.id)}/upscale`,
             {
               mode: 'server_sharp',
-              scale: studioSettings.projectSequencing.upscaleScale,
+              ...upscalePayload,
+              requestId: `seq_upscale_${Date.now().toString(36)}_${currentSlot.id}`,
             }
           );
           if (!upscaleResponse.slot?.id) {
@@ -495,23 +525,89 @@ export function SequencingPanel(): React.JSX.Element {
           <div className='flex flex-wrap items-center gap-2'>
             <SelectSimple
               size='sm'
-              className='w-[120px]'
-              value={String(studioSettings.projectSequencing.upscaleScale)}
+              className='w-[150px]'
+              value={studioSettings.projectSequencing.upscaleStrategy}
               onValueChange={(value: string) => {
-                const numeric = Number(value);
-                if (!Number.isFinite(numeric)) return;
+                const strategy = value === 'target_resolution' ? 'target_resolution' : 'scale';
                 setStudioSettings((prev) => ({
                   ...prev,
                   projectSequencing: {
                     ...prev.projectSequencing,
-                    upscaleScale: numeric,
+                    upscaleStrategy: strategy,
                   },
                 }));
               }}
-              options={UPSCALE_SCALE_OPTIONS}
+              options={UPSCALE_STRATEGY_OPTIONS}
               triggerClassName='h-8 text-xs'
-              ariaLabel='Sequence upscale scale'
+              ariaLabel='Sequence upscale strategy'
             />
+            {studioSettings.projectSequencing.upscaleStrategy === 'scale' ? (
+              <SelectSimple
+                size='sm'
+                className='w-[120px]'
+                value={String(studioSettings.projectSequencing.upscaleScale)}
+                onValueChange={(value: string) => {
+                  const numeric = Number(value);
+                  if (!Number.isFinite(numeric)) return;
+                  setStudioSettings((prev) => ({
+                    ...prev,
+                    projectSequencing: {
+                      ...prev.projectSequencing,
+                      upscaleScale: numeric,
+                    },
+                  }));
+                }}
+                options={UPSCALE_SCALE_OPTIONS}
+                triggerClassName='h-8 text-xs'
+                ariaLabel='Sequence upscale scale'
+              />
+            ) : (
+              <div className='flex h-8 items-center gap-1 rounded border border-border/60 bg-card/40 px-2'>
+                <input
+                  type='number'
+                  min={1}
+                  max={32768}
+                  step={1}
+                  inputMode='numeric'
+                  value={String(studioSettings.projectSequencing.upscaleTargetWidth)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    const numeric = Math.floor(Number(event.target.value));
+                    if (!Number.isFinite(numeric) || numeric < 1 || numeric > 32768) return;
+                    setStudioSettings((prev) => ({
+                      ...prev,
+                      projectSequencing: {
+                        ...prev.projectSequencing,
+                        upscaleTargetWidth: numeric,
+                      },
+                    }));
+                  }}
+                  className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
+                  aria-label='Sequence target upscale width'
+                />
+                <span className='text-[11px] text-gray-500'>x</span>
+                <input
+                  type='number'
+                  min={1}
+                  max={32768}
+                  step={1}
+                  inputMode='numeric'
+                  value={String(studioSettings.projectSequencing.upscaleTargetHeight)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    const numeric = Math.floor(Number(event.target.value));
+                    if (!Number.isFinite(numeric) || numeric < 1 || numeric > 32768) return;
+                    setStudioSettings((prev) => ({
+                      ...prev,
+                      projectSequencing: {
+                        ...prev.projectSequencing,
+                        upscaleTargetHeight: numeric,
+                      },
+                    }));
+                  }}
+                  className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
+                  aria-label='Sequence target upscale height'
+                />
+              </div>
+            )}
             <Button
               size='xs'
               variant='outline'

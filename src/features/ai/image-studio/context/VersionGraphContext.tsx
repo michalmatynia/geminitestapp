@@ -13,8 +13,9 @@ import {
   type VersionEdge,
   type LayoutMode,
 } from '../utils/version-graph';
+import { resolveScopedVersionGraphSlots } from '../utils/version-graph-scope';
 
-import type { CompositeLayerConfig, SlotGenerationMetadata } from '../types';
+import type { CompositeLayerConfig } from '../types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -111,29 +112,6 @@ const VersionGraphActionsContext = createContext<VersionGraphActions | null>(nul
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-
-function resolveSourceIds(
-  meta: SlotGenerationMetadata,
-  slotById: Map<string, { id: string }>,
-): string[] {
-  const ordered: string[] = [];
-
-  if (Array.isArray(meta.sourceSlotIds)) {
-    for (const id of meta.sourceSlotIds) {
-      if (typeof id !== 'string') continue;
-      if (!slotById.has(id)) continue;
-      if (ordered.includes(id)) continue;
-      ordered.push(id);
-    }
-  }
-
-  if (typeof meta.sourceSlotId === 'string' && slotById.has(meta.sourceSlotId) && !ordered.includes(meta.sourceSlotId)) {
-    ordered.push(meta.sourceSlotId);
-  }
-
-  return ordered;
-}
-
 /** Collect all recursive descendant IDs for a set of collapsed nodes. */
 function collectHiddenIds(
   collapsedIds: Set<string>,
@@ -229,46 +207,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
   );
 
   const scopedSlots = useMemo(() => {
-    if (!activeSlotId) return [];
-
-    const slotById = new Map(slots.map((slot) => [slot.id, slot]));
-    const activeSlot = slotById.get(activeSlotId);
-    if (!activeSlot) return [];
-
-    const childrenBySource = new Map<string, string[]>();
-    for (const slot of slots) {
-      const sourceIds = resolveSourceIds(readMeta(slot), slotById);
-      for (const sourceId of sourceIds) {
-        const existing = childrenBySource.get(sourceId);
-        if (existing) {
-          existing.push(slot.id);
-        } else {
-          childrenBySource.set(sourceId, [slot.id]);
-        }
-      }
-    }
-
-    const rootIds = resolveSourceIds(readMeta(activeSlot), slotById);
-    if (rootIds.length === 0) {
-      rootIds.push(activeSlot.id);
-    }
-
-    // Scope to the current card branch: source image(s) + current card + descendants.
-    const includedIds = new Set<string>([activeSlot.id, ...rootIds]);
-    const queue: string[] = [activeSlot.id];
-
-    while (queue.length > 0) {
-      const current = queue.shift();
-      if (!current) break;
-      const children = childrenBySource.get(current) ?? [];
-      for (const childId of children) {
-        if (includedIds.has(childId)) continue;
-        includedIds.add(childId);
-        queue.push(childId);
-      }
-    }
-
-    return slots.filter((slot) => includedIds.has(slot.id));
+    return resolveScopedVersionGraphSlots(slots, activeSlotId);
   }, [slots, activeSlotId]);
 
   // Compute base graph only for the scoped card subset.

@@ -212,7 +212,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
       </AppModal>
 
       <ConfirmModal
-        open={!!toDelete}
+        isOpen={!!toDelete}
         onClose={() => setToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete producer?'

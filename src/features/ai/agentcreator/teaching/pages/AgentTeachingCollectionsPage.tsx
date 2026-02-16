@@ -131,7 +131,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
       </FormSection>
 
       <ConfirmModal
-        open={!!itemToDelete}
+        isOpen={!!itemToDelete}
         onClose={() => setItemToDelete(null)}
         title='Delete collection?'
         message={`This will permanently delete "${itemToDelete?.name}" and all associated document embeddings. Agents using this collection will lose access to this knowledge.`}

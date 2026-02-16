@@ -579,7 +579,7 @@ export function CategoriesSettings(): React.JSX.Element {
       )}
 
       <ConfirmModal
-        open={!!categoryToDelete}
+        isOpen={!!categoryToDelete}
         onClose={() => setCategoryToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Category'

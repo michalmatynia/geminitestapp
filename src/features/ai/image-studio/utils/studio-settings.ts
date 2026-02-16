@@ -58,12 +58,20 @@ export type ImageStudioProjectSequencingSettings = {
   enabled: boolean;
   trigger: 'manual';
   operations: ImageStudioSequenceOperation[];
+  upscaleStrategy: 'scale' | 'target_resolution';
   upscaleScale: number;
+  upscaleTargetWidth: number;
+  upscaleTargetHeight: number;
 };
 
 const clampImageStudioUpscaleScale = (value: number): number => {
   const clamped = Math.max(1.1, Math.min(8, value));
   return Number(clamped.toFixed(2));
+};
+
+const clampImageStudioUpscaleResolutionSide = (value: number): number => {
+  const clamped = Math.max(1, Math.min(32_768, Math.floor(value)));
+  return clamped;
 };
 
 export function normalizeImageStudioSequenceOperations(
@@ -144,7 +152,10 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
     enabled: false,
     trigger: 'manual',
     operations: ['crop_center', 'generate', 'upscale'],
+    upscaleStrategy: 'scale',
     upscaleScale: 2,
+    upscaleTargetWidth: 2048,
+    upscaleTargetHeight: 2048,
   },
   promptExtraction: {
     mode: 'hybrid',
@@ -217,6 +228,10 @@ const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
           .array(z.enum(IMAGE_STUDIO_SEQUENCE_OPERATIONS))
           .optional()
           .default(defaultImageStudioSettings.projectSequencing.operations),
+        upscaleStrategy: z
+          .enum(['scale', 'target_resolution'])
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.upscaleStrategy),
         upscaleScale: z
           .number()
           .finite()
@@ -224,6 +239,20 @@ const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
           .max(8)
           .optional()
           .default(defaultImageStudioSettings.projectSequencing.upscaleScale),
+        upscaleTargetWidth: z
+          .number()
+          .int()
+          .min(1)
+          .max(32_768)
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.upscaleTargetWidth),
+        upscaleTargetHeight: z
+          .number()
+          .int()
+          .min(1)
+          .max(32_768)
+          .optional()
+          .default(defaultImageStudioSettings.projectSequencing.upscaleTargetHeight),
       })
       .optional()
       .default(defaultImageStudioSettings.projectSequencing),
@@ -341,8 +370,18 @@ export function parseImageStudioSettings(raw: string | null | undefined): ImageS
       operations: normalizeImageStudioSequenceOperations(
         parsedSettings.projectSequencing.operations
       ),
+      upscaleStrategy:
+        parsedSettings.projectSequencing.upscaleStrategy === 'target_resolution'
+          ? 'target_resolution'
+          : 'scale',
       upscaleScale: clampImageStudioUpscaleScale(
         parsedSettings.projectSequencing.upscaleScale
+      ),
+      upscaleTargetWidth: clampImageStudioUpscaleResolutionSide(
+        parsedSettings.projectSequencing.upscaleTargetWidth
+      ),
+      upscaleTargetHeight: clampImageStudioUpscaleResolutionSide(
+        parsedSettings.projectSequencing.upscaleTargetHeight
       ),
     };
     return {

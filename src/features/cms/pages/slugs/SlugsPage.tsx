@@ -254,7 +254,7 @@ export default function SlugsPage(): React.JSX.Element {
       />
 
       <ConfirmModal
-        open={!!slugToDelete}
+        isOpen={!!slugToDelete}
         onClose={() => setSlugToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Remove Slug from Zone'

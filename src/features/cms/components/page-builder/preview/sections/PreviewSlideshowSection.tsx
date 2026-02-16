@@ -10,7 +10,7 @@ import {
   normalizeSlideshowAnimationType,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
 import type { BlockInstance, SectionInstance } from '@/features/cms/types/page-builder';
-import { BlockContextProvider, useBlockContext } from '@/features/cms/components/page-builder/preview/context/BlockContext';
+import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 
 interface PreviewSlideshowSectionProps {
@@ -29,7 +29,6 @@ interface PreviewSlideshowSectionProps {
 export function PreviewSlideshowSection({
   section,
   colorSchemes,
-  mediaStyles,
   selectedRing,
   renderSectionActions,
   divider,

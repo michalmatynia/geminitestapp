@@ -16,6 +16,8 @@ export type ImageStudioSlotRecord = {
   imageFile?: ImageFileRecord | null;
   screenshotFile?: ImageFileRecord | null;
   asset3d?: Asset3DRecord | null;
+  createdAt?: string | undefined;
+  updatedAt?: string | undefined;
 };
 
 /** Typed overlay for the slot `metadata` field for generation lineage tracking. */
@@ -41,6 +43,9 @@ export interface SlotGenerationMetadata {
   } | undefined;
   generationRequest?: Record<string, unknown> | undefined;
   generationSettings?: Record<string, unknown> | undefined;
+  crop?: Record<string, unknown> | undefined;
+  center?: Record<string, unknown> | undefined;
+  upscale?: Record<string, unknown> | undefined;
   generationCosts?: {
     currency: 'USD';
     estimated: true;
@@ -59,6 +64,10 @@ export interface SlotGenerationMetadata {
     feather: number;
     attachedAt: string;
   } | undefined;
+  variant?: string | undefined;
+  inverted?: boolean | undefined;
+  generationMode?: string | undefined;
+  polygonCount?: number | undefined;
   generationParams?: {
     prompt?: string | undefined;
     model?: string | undefined;

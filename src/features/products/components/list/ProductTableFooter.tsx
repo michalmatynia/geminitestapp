@@ -123,7 +123,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
 
       {/* Delete confirmation dialog */}
       <ConfirmModal
-        open={showDeleteConfirm}
+        isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleMassDelete}
         title='Delete selected products?'
@@ -134,7 +134,7 @@ export const ProductTableFooter = memo(function ProductTableFooter<TData>({
       />
 
       <ConfirmModal
-        open={showBase64Confirm}
+        isOpen={showBase64Confirm}
         onClose={() => setShowBase64Confirm(false)}
         onConfirm={handleMassBase64}
         title='Generate Base64 images?'

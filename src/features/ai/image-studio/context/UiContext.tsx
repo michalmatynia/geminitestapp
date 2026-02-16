@@ -1,6 +1,20 @@
 'use client';
 
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useRef, useState } from 'react';
+
+export interface PreviewCanvasCropRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PreviewCanvasViewportCrop {
+  slotId: string;
+  cropRect: PreviewCanvasCropRect;
+}
+
+export type PreviewCanvasViewportCropResolver = () => PreviewCanvasViewportCrop | null;
 
 export interface UiState {
   isFocusMode: boolean;
@@ -17,6 +31,8 @@ export interface UiActions {
   setCenterGuidesEnabled: (value: boolean) => void;
   setValidatorEnabled: (value: boolean) => void;
   setFormatterEnabled: (value: boolean) => void;
+  registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null) => void;
+  getPreviewCanvasViewportCrop: () => PreviewCanvasViewportCrop | null;
 }
 
 const UiStateContext = createContext<UiState | null>(null);
@@ -28,6 +44,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [centerGuidesEnabled, setCenterGuidesEnabled] = useState(false);
   const [validatorEnabled, setValidatorEnabledState] = useState(true);
   const [formatterEnabled, setFormatterEnabledState] = useState(false);
+  const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
 
   const state = useMemo<UiState>(
     () => ({
@@ -57,6 +74,11 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       setFormatterEnabled: (value: boolean): void => {
         setFormatterEnabledState(value);
       },
+      registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null): void => {
+        previewCanvasViewportCropResolverRef.current = resolver;
+      },
+      getPreviewCanvasViewportCrop: (): PreviewCanvasViewportCrop | null =>
+        previewCanvasViewportCropResolverRef.current?.() ?? null,
     }),
     []
   );

@@ -650,7 +650,7 @@ function SystemLogsContent(): React.JSX.Element {
       </div>
 
       <ConfirmModal
-        open={isClearLogsConfirmOpen}
+        isOpen={isClearLogsConfirmOpen}
         onClose={() => setIsClearLogsConfirmOpen(false)}
         onConfirm={handleClearLogs}
         title='Wipe Observation Logs'
@@ -660,7 +660,7 @@ function SystemLogsContent(): React.JSX.Element {
       />
       
       <ConfirmModal
-        open={isRebuildIndexesConfirmOpen}
+        isOpen={isRebuildIndexesConfirmOpen}
         onClose={() => setIsRebuildIndexesConfirmOpen(false)}
         onConfirm={handleRebuildMongoIndexes}
         title='Restore Index Health'

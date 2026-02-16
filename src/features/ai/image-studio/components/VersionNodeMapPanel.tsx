@@ -13,6 +13,7 @@ import { VersionGraphFilterBar } from './VersionGraphFilterBar';
 import { VersionGraphInspector } from './VersionGraphInspector';
 import { VersionGraphInspectorProvider } from './VersionGraphInspectorContext';
 import { VersionGraphToolbar } from './VersionGraphToolbar';
+import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { VersionNodeMapCanvas, type VersionNodeMapCanvasRef } from './VersionNodeMapCanvas';
 import { VersionNodeMapProvider } from './VersionNodeMapContext';
 import { VersionNodeMapMinimap } from './VersionNodeMapMinimap';
@@ -93,11 +94,15 @@ export function VersionNodeMapPanel(): React.JSX.Element {
   const [showMinimap, setShowMinimap] = useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [contextMenu, setContextMenu] = useState<{ nodeId: string; x: number; y: number } | null>(null);
+  const [detailsNodeId, setDetailsNodeId] = useState<string | null>(null);
   const [annotationDraft, setAnnotationDraft] = useState('');
   const annotationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedNode = selectedNodeId
     ? nodes.find((n) => n.id === selectedNodeId) ?? null
+    : null;
+  const detailsNode = detailsNodeId
+    ? allNodes.find((node) => node.id === detailsNodeId) ?? null
     : null;
 
   const getSlotImageSrc = useCallback(
@@ -240,11 +245,21 @@ export function VersionNodeMapPanel(): React.JSX.Element {
       handleCompareNodeClick(id);
     } else if (id) {
       selectNode(id);
+      setWorkingSlotId(id);
     } else {
       selectNode(id);
     }
     closeContextMenu();
-  }, [compareMode, handleCompareNodeClick, selectNode, closeContextMenu]);
+  }, [compareMode, handleCompareNodeClick, selectNode, setWorkingSlotId, closeContextMenu]);
+
+  const handleOpenNodeDetails = useCallback((id: string) => {
+    setDetailsNodeId(id);
+    closeContextMenu();
+  }, [closeContextMenu]);
+
+  const handleCloseNodeDetails = useCallback(() => {
+    setDetailsNodeId(null);
+  }, []);
 
   const getSlotAnnotation = useCallback(
     (slot: ImageStudioSlotRecord) => readMeta(slot).annotation,
@@ -296,6 +311,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     onSelectNode: handleCanvasSelectNode,
     onHoverNode: hoverNode,
     onActivateNode: handleActivateNode,
+    onOpenNodeDetails: handleOpenNodeDetails,
     onToggleMergeSelection: toggleMergeSelection,
     onToggleCompositeSelection: toggleCompositeSelection,
     onToggleCollapse: toggleCollapse,
@@ -325,6 +341,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
       void refreshCompositePreview(slotId);
     },
     onSelectNode: selectNode,
+    onOpenDetails: handleOpenNodeDetails,
     onFocusNode: handleFocusNode,
     onIsolateBranch: isolateBranch,
     annotationDraft,
@@ -492,6 +509,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
               onSwap: () => {
                 if (compareNodeIds) setCompareNodeIds([compareNodeIds[1], compareNodeIds[0]]);
               },
+              onOpenDetails: handleOpenNodeDetails,
               onExit: toggleCompareMode,
             }}
           >
@@ -505,6 +523,13 @@ export function VersionNodeMapPanel(): React.JSX.Element {
             <VersionGraphInspector />
           </VersionGraphInspectorProvider>
         ) : null}
+
+        <VersionNodeDetailsModal
+          open={Boolean(detailsNode)}
+          node={detailsNode}
+          onClose={handleCloseNodeDetails}
+          getSlotImageSrc={getSlotImageSrc}
+        />
       </div>
     </VersionGraphControlsProvider>
   );

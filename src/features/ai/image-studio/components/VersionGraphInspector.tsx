@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy, Crosshair, Focus, Layers, MousePointer2, RefreshCw } from 'lucide-react';
+import { Copy, Crosshair, Focus, Info, Layers, MousePointer2, RefreshCw } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/shared/ui';
@@ -20,6 +20,7 @@ export function VersionGraphInspector(): React.JSX.Element {
     onFlattenComposite,
     onRefreshCompositePreview,
     onSelectNode,
+    onOpenDetails,
     onFocusNode,
     onIsolateBranch,
     annotationDraft,
@@ -30,7 +31,7 @@ export function VersionGraphInspector(): React.JSX.Element {
   if (!selectedNode) {
     return (
       <div className='border-t border-border/40 px-3 py-2 text-[10px] text-gray-500'>
-        Click a node to inspect. Double-click to set as source.
+        Click a node to inspect. Use the info icon above the thumbnail for full details.
       </div>
     );
   }
@@ -41,19 +42,36 @@ export function VersionGraphInspector(): React.JSX.Element {
     <div className='border-t border-border/40 p-3'>
       <div className='flex gap-3'>
         {/* Thumbnail */}
-        <div className='size-[72px] flex-shrink-0 overflow-hidden rounded border border-border/60 bg-card/30'>
-          {getSlotImageSrc(selectedNode.slot) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={getSlotImageSrc(selectedNode.slot)!}
-              alt={selectedNode.label}
-              className='h-full w-full object-cover'
-            />
-          ) : (
-            <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
-              No image
+        <div className='flex-shrink-0'>
+          {onOpenDetails ? (
+            <div className='mb-1 flex justify-end'>
+              <button
+                type='button'
+                className='inline-flex h-5 w-5 items-center justify-center rounded border border-blue-400/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:text-blue-200'
+                title='Open full node/file details'
+                aria-label='Open full node/file details'
+                onClick={() => onOpenDetails(selectedNode.id)}
+              >
+                <Info className='size-3' />
+              </button>
             </div>
+          ) : (
+            <div className='mb-1 h-5' />
           )}
+          <div className='size-[72px] overflow-hidden rounded border border-border/60 bg-card/30'>
+            {getSlotImageSrc(selectedNode.slot) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={getSlotImageSrc(selectedNode.slot)!}
+                alt={selectedNode.label}
+                className='h-full w-full object-cover'
+              />
+            ) : (
+              <div className='flex h-full items-center justify-center text-[10px] text-gray-500'>
+                No image
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Details */}
@@ -198,6 +216,16 @@ export function VersionGraphInspector(): React.JSX.Element {
           <Copy className='size-2.5' />
           Copy ID
         </button>
+        {onOpenDetails ? (
+          <button
+            type='button'
+            className='flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] text-blue-400 hover:bg-blue-500/10 hover:text-blue-300'
+            title='Open full node details'
+            onClick={() => onOpenDetails(selectedNode.id)}
+          >
+            Details
+          </button>
+        ) : null}
       </div>
 
       {/* Annotation */}

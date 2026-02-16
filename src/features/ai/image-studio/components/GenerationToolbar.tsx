@@ -31,6 +31,7 @@ import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 type UpscaleMode = 'client_canvas' | 'server_sharp';
+type UpscaleStrategy = 'scale' | 'target_resolution';
 type CropMode = 'client_bbox' | 'server_bbox';
 type CenterMode = 'client_alpha_bbox' | 'server_alpha_bbox';
 type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
@@ -47,6 +48,29 @@ type CropRect = {
   width: number;
   height: number;
 };
+
+type UpscaleActionResponse = {
+  slot?: ImageStudioSlotRecord;
+  mode?: 'client_data_url' | 'server_sharp';
+  effectiveMode?: 'client_data_url' | 'server_sharp';
+  strategy?: UpscaleStrategy;
+  scale?: number | null;
+  targetWidth?: number | null;
+  targetHeight?: number | null;
+  requestId?: string | null;
+  deduplicated?: boolean;
+};
+
+type UpscaleRequestStrategyPayload =
+  | {
+    strategy: 'scale';
+    scale: number;
+  }
+  | {
+    strategy: 'target_resolution';
+    targetWidth: number;
+    targetHeight: number;
+  };
 
 type CropActionResponse = {
   slot?: ImageStudioSlotRecord;
@@ -83,6 +107,17 @@ type CenterStatus =
   | 'processing'
   | 'persisting';
 
+type UpscaleStatus =
+  | 'idle'
+  | 'resolving'
+  | 'preparing'
+  | 'uploading'
+  | 'processing'
+  | 'persisting';
+
+const UPSCALE_REQUEST_TIMEOUT_MS = 60_000;
+const UPSCALE_RETRY_DELAY_MS = 350;
+const UPSCALE_MAX_OUTPUT_SIDE = 32_768;
 const CROP_REQUEST_TIMEOUT_MS = 60_000;
 const CROP_RETRY_DELAY_MS = 350;
 const CENTER_REQUEST_TIMEOUT_MS = 60_000;
@@ -248,7 +283,7 @@ const resolveMaskColors = (
 
 export function GenerationToolbar(): React.JSX.Element {
   const { maskPreviewEnabled, centerGuidesEnabled } = useUiState();
-  const { setMaskPreviewEnabled, setCenterGuidesEnabled } = useUiActions();
+  const { setMaskPreviewEnabled, setCenterGuidesEnabled, getPreviewCanvasViewportCrop } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
@@ -274,15 +309,21 @@ export function GenerationToolbar(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [maskAttachMode, setMaskAttachMode] = useState<MaskAttachMode>('client_canvas_polygon');
   const [upscaleMode, setUpscaleMode] = useState<UpscaleMode>('client_canvas');
+  const [upscaleStrategy, setUpscaleStrategy] = useState<UpscaleStrategy>('scale');
   const [cropMode, setCropMode] = useState<CropMode>('client_bbox');
   const [centerMode, setCenterMode] = useState<CenterMode>('client_alpha_bbox');
   const [upscaleScale, setUpscaleScale] = useState('2');
+  const [upscaleTargetWidth, setUpscaleTargetWidth] = useState('');
+  const [upscaleTargetHeight, setUpscaleTargetHeight] = useState('');
   const [upscaleSmoothingQuality, setUpscaleSmoothingQuality] = useState<UpscaleSmoothingQuality>('high');
   const [upscaleBusy, setUpscaleBusy] = useState(false);
+  const [upscaleStatus, setUpscaleStatus] = useState<UpscaleStatus>('idle');
   const [cropBusy, setCropBusy] = useState(false);
   const [cropStatus, setCropStatus] = useState<CropStatus>('idle');
   const [centerBusy, setCenterBusy] = useState(false);
   const [centerStatus, setCenterStatus] = useState<CenterStatus>('idle');
+  const upscaleRequestInFlightRef = useRef(false);
+  const upscaleAbortControllerRef = useRef<AbortController | null>(null);
   const cropRequestInFlightRef = useRef(false);
   const cropAbortControllerRef = useRef<AbortController | null>(null);
   const centerRequestInFlightRef = useRef(false);
@@ -344,11 +385,52 @@ export function GenerationToolbar(): React.JSX.Element {
       img.src = src;
     });
 
+  const dataUrlToUploadBlob = async (dataUrl: string): Promise<Blob> => {
+    const normalized = dataUrl.trim();
+    if (!normalized.startsWith('data:')) {
+      throw new Error('Invalid image data URL.');
+    }
+
+    const commaIndex = normalized.indexOf(',');
+    if (commaIndex <= 5 || commaIndex === normalized.length - 1) {
+      throw new Error('Invalid image data URL.');
+    }
+
+    const meta = normalized.slice(5, commaIndex);
+    const payload = normalized.slice(commaIndex + 1);
+    const mime = (meta.split(';')[0] ?? '').trim() || 'application/octet-stream';
+    const isBase64 = /;base64/i.test(meta);
+
+    try {
+      if (isBase64) {
+        const binary = atob(payload);
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) {
+          bytes[index] = binary.charCodeAt(index);
+        }
+        return new Blob([bytes], { type: mime });
+      }
+
+      return new Blob([decodeURIComponent(payload)], { type: mime });
+    } catch {
+      // Fallback for edge browsers that may still handle this route better via fetch.
+      const blobResponse = await fetch(normalized);
+      return blobResponse.blob();
+    }
+  };
+
   const upscaleCanvasImage = async (
     src: string,
-    scale: number,
+    request: UpscaleRequestStrategyPayload,
     smoothingQuality: UpscaleSmoothingQuality
-  ): Promise<string> => {
+  ): Promise<{
+    dataUrl: string;
+    outputWidth: number;
+    outputHeight: number;
+    sourceWidth: number;
+    sourceHeight: number;
+    scale: number;
+  }> => {
     const image = await loadImageElement(src, { crossOrigin: 'anonymous' });
     const sourceWidth = image.naturalWidth || image.width;
     const sourceHeight = image.naturalHeight || image.height;
@@ -356,9 +438,26 @@ export function GenerationToolbar(): React.JSX.Element {
       throw new Error('Source image dimensions are invalid.');
     }
 
+    const outputWidth = request.strategy === 'scale'
+      ? Math.max(1, Math.round(sourceWidth * request.scale))
+      : request.targetWidth;
+    const outputHeight = request.strategy === 'scale'
+      ? Math.max(1, Math.round(sourceHeight * request.scale))
+      : request.targetHeight;
+    if (
+      request.strategy === 'target_resolution' &&
+      (
+        outputWidth < sourceWidth ||
+        outputHeight < sourceHeight ||
+        (outputWidth === sourceWidth && outputHeight === sourceHeight)
+      )
+    ) {
+      throw new Error('Target resolution must upscale at least one side and not reduce source dimensions.');
+    }
+
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(sourceWidth * scale));
-    canvas.height = Math.max(1, Math.round(sourceHeight * scale));
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
 
     const context2d = canvas.getContext('2d');
     if (!context2d) {
@@ -375,9 +474,57 @@ export function GenerationToolbar(): React.JSX.Element {
     context2d.drawImage(image, 0, 0, canvas.width, canvas.height);
 
     try {
-      return canvas.toDataURL('image/png');
+      return {
+        dataUrl: canvas.toDataURL('image/png'),
+        outputWidth,
+        outputHeight,
+        sourceWidth,
+        sourceHeight,
+        scale: Number(
+          Math.max(outputWidth / sourceWidth, outputHeight / sourceHeight).toFixed(4)
+        ),
+      };
     } catch {
       throw new Error('Client upscale failed due to cross-origin restrictions. Use "Upscale Server: Sharp".');
+    }
+  };
+
+  const isClientUpscaleCrossOriginError = (error: unknown): boolean =>
+    error instanceof Error && /cross-origin restrictions/i.test(error.message);
+
+  const isUpscaleAbortError = (error: unknown): boolean =>
+    error instanceof DOMException && error.name === 'AbortError';
+
+  const isRetryableUpscaleError = (error: unknown): boolean => {
+    if (isUpscaleAbortError(error)) return false;
+    if (error instanceof ApiError) {
+      return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
+    }
+    return (
+      error instanceof Error &&
+      /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase())
+    );
+  };
+
+  const buildUpscaleRequestId = (): string =>
+    `upscale_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+
+  const withUpscaleRetry = async <T,>(
+    run: () => Promise<T>,
+    signal: AbortSignal,
+    retries = 1
+  ): Promise<T> => {
+    let attempt = 0;
+    while (true) {
+      try {
+        return await run();
+      } catch (error) {
+        if (attempt >= retries || !isRetryableUpscaleError(error) || signal.aborted) {
+          throw error;
+        }
+        attempt += 1;
+        await sleep(UPSCALE_RETRY_DELAY_MS * attempt);
+      }
     }
   };
 
@@ -658,6 +805,31 @@ export function GenerationToolbar(): React.JSX.Element {
     throw new Error('Set a valid crop boundary first (polygon/lasso/brush, rectangle, or ellipse).');
   };
 
+  const resolveCenteredSquareCropRect = async (): Promise<CropRect> => {
+    let sourceWidth = workingSlot?.imageFile?.width ?? 0;
+    let sourceHeight = workingSlot?.imageFile?.height ?? 0;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      const sourceForDimensions = clientProcessingImageSrc || workingSlotImageSrc || '';
+      const image = await loadImageElement(sourceForDimensions);
+      sourceWidth = image.naturalWidth || image.width;
+      sourceHeight = image.naturalHeight || image.height;
+    }
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      throw new Error('Source image dimensions are invalid.');
+    }
+
+    const side = Math.max(1, Math.min(sourceWidth, sourceHeight));
+    const x = Math.max(0, Math.floor((sourceWidth - side) / 2));
+    const y = Math.max(0, Math.floor((sourceHeight - side) / 2));
+
+    return {
+      x,
+      y,
+      width: side,
+      height: side,
+    };
+  };
+
   const handleCreateCropBox = (): void => {
     const shapeId = `crop_${Date.now().toString(36)}`;
     setMaskShapes((previous) => [
@@ -806,6 +978,50 @@ export function GenerationToolbar(): React.JSX.Element {
     }
   };
 
+  const resolveUpscaleSourceDimensions = async (): Promise<{ width: number; height: number }> => {
+    let sourceWidth = workingSlot?.imageFile?.width ?? 0;
+    let sourceHeight = workingSlot?.imageFile?.height ?? 0;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      const sourceForDimensions = clientProcessingImageSrc || workingSlotImageSrc || '';
+      const image = await loadImageElement(sourceForDimensions);
+      sourceWidth = image.naturalWidth || image.width;
+      sourceHeight = image.naturalHeight || image.height;
+    }
+    if (!(sourceWidth > 0 && sourceHeight > 0)) {
+      throw new Error('Source image dimensions are invalid.');
+    }
+    return {
+      width: sourceWidth,
+      height: sourceHeight,
+    };
+  };
+
+  const appendUpscaleStrategyToFormData = (
+    formData: FormData,
+    request: UpscaleRequestStrategyPayload
+  ): void => {
+    formData.append('strategy', request.strategy);
+    if (request.strategy === 'scale') {
+      formData.append('scale', String(request.scale));
+      return;
+    }
+    formData.append('targetWidth', String(request.targetWidth));
+    formData.append('targetHeight', String(request.targetHeight));
+  };
+
+  const buildUpscaleRequestBody = (
+    mode: 'client_data_url' | 'server_sharp',
+    request: UpscaleRequestStrategyPayload,
+    requestId: string
+  ): Record<string, unknown> => ({
+    mode,
+    strategy: request.strategy,
+    ...(request.strategy === 'scale'
+      ? { scale: request.scale }
+      : { targetWidth: request.targetWidth, targetHeight: request.targetHeight }),
+    requestId,
+  });
+
   const handleUpscale = async (): Promise<void> => {
     if (!workingSlot?.id) {
       toast('No active source slot selected.', { variant: 'info' });
@@ -815,62 +1031,163 @@ export function GenerationToolbar(): React.JSX.Element {
       toast('Select a slot image before upscaling.', { variant: 'info' });
       return;
     }
-
-    const scale = Number(upscaleScale);
-    if (!Number.isFinite(scale) || scale <= 1 || scale > 8) {
-      toast('Upscale scale must be greater than 1 and at most 8.', { variant: 'info' });
+    if (upscaleRequestInFlightRef.current) {
       return;
     }
 
+    let upscaleRequestPayload: UpscaleRequestStrategyPayload;
+    if (upscaleStrategy === 'scale') {
+      const scale = Number(upscaleScale);
+      if (!Number.isFinite(scale) || scale <= 1 || scale > 8) {
+        toast('Upscale multiplier must be greater than 1 and at most 8.', { variant: 'info' });
+        return;
+      }
+      upscaleRequestPayload = {
+        strategy: 'scale',
+        scale,
+      };
+    } else {
+      const parsedTargetWidth = Math.floor(Number(upscaleTargetWidth));
+      const parsedTargetHeight = Math.floor(Number(upscaleTargetHeight));
+      if (!(parsedTargetWidth > 0 && parsedTargetHeight > 0)) {
+        toast('Enter both target width and target height as positive integers.', { variant: 'info' });
+        return;
+      }
+      if (parsedTargetWidth > UPSCALE_MAX_OUTPUT_SIDE || parsedTargetHeight > UPSCALE_MAX_OUTPUT_SIDE) {
+        toast(`Target resolution side cannot exceed ${UPSCALE_MAX_OUTPUT_SIDE}px.`, { variant: 'info' });
+        return;
+      }
+      const sourceDimensions = await resolveUpscaleSourceDimensions();
+      if (
+        parsedTargetWidth < sourceDimensions.width ||
+        parsedTargetHeight < sourceDimensions.height ||
+        (
+          parsedTargetWidth === sourceDimensions.width &&
+          parsedTargetHeight === sourceDimensions.height
+        )
+      ) {
+        toast(
+          'Target resolution must upscale at least one side and not reduce source dimensions.',
+          { variant: 'info' }
+        );
+        return;
+      }
+      upscaleRequestPayload = {
+        strategy: 'target_resolution',
+        targetWidth: parsedTargetWidth,
+        targetHeight: parsedTargetHeight,
+      };
+    }
+
+    upscaleRequestInFlightRef.current = true;
     setUpscaleBusy(true);
+    setUpscaleStatus('resolving');
+    const upscaleRequestId = buildUpscaleRequestId();
+    const abortController = new AbortController();
+    upscaleAbortControllerRef.current = abortController;
     try {
       const mode = upscaleMode === 'client_canvas' ? 'client_data_url' : 'server_sharp';
-      let response: { slot?: { id: string; name: string | null } };
+      let response: UpscaleActionResponse;
+      let resolvedMode: 'client_data_url' | 'server_sharp' = mode;
       if (mode === 'client_data_url') {
         const sourceForClientUpscale = clientProcessingImageSrc || workingSlotImageSrc;
         if (!sourceForClientUpscale) {
           throw new Error('No client image source is available for upscale.');
         }
-        const upscaledDataUrl = await upscaleCanvasImage(
-          sourceForClientUpscale,
-          scale,
-          upscaleSmoothingQuality
-        );
-        let uploadBlob: Blob;
         try {
-          const blobResponse = await fetch(upscaledDataUrl);
-          uploadBlob = await blobResponse.blob();
-        } catch {
-          throw new Error('Failed to prepare client upscaled image for upload.');
-        }
-
-        const formData = new FormData();
-        formData.append('mode', mode);
-        formData.append('scale', String(scale));
-        formData.append('smoothingQuality', upscaleSmoothingQuality);
-        formData.append('image', uploadBlob, `upscale-client-${Date.now()}.png`);
-
-        response = await api.post<{ slot?: { id: string; name: string | null } }>(
-          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
-          formData
-        );
-      } else {
-        response = await api.post<{ slot?: { id: string; name: string | null } }>(
-          `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
-          {
-            mode,
-            scale,
+          setUpscaleStatus('preparing');
+          const clientUpscale = await upscaleCanvasImage(
+            sourceForClientUpscale,
+            upscaleRequestPayload,
+            upscaleSmoothingQuality
+          );
+          let uploadBlob: Blob;
+          try {
+            uploadBlob = await dataUrlToUploadBlob(clientUpscale.dataUrl);
+          } catch {
+            throw new Error('Failed to prepare client upscaled image for upload.');
           }
+
+          setUpscaleStatus('uploading');
+          response = await withUpscaleRetry(
+            () => {
+              const formData = new FormData();
+              formData.append('mode', mode);
+              appendUpscaleStrategyToFormData(formData, upscaleRequestPayload);
+              formData.append('smoothingQuality', upscaleSmoothingQuality);
+              formData.append('requestId', upscaleRequestId);
+              formData.append('image', uploadBlob, `upscale-client-${Date.now()}.png`);
+              return api.post<UpscaleActionResponse>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
+                formData,
+                {
+                  signal: abortController.signal,
+                  timeout: UPSCALE_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': upscaleRequestId,
+                  },
+                }
+              );
+            },
+            abortController.signal
+          );
+        } catch (error) {
+          if (!isClientUpscaleCrossOriginError(error)) {
+            throw error;
+          }
+          setUpscaleStatus('processing');
+          response = await withUpscaleRetry(
+            () =>
+              api.post<UpscaleActionResponse>(
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
+                buildUpscaleRequestBody('server_sharp', upscaleRequestPayload, upscaleRequestId),
+                {
+                  signal: abortController.signal,
+                  timeout: UPSCALE_REQUEST_TIMEOUT_MS,
+                  headers: {
+                    'x-idempotency-key': upscaleRequestId,
+                  },
+                }
+              ),
+            abortController.signal
+          );
+          resolvedMode = 'server_sharp';
+          toast('Client upscale was blocked by cross-origin restrictions; used server upscale instead.', {
+            variant: 'info',
+          });
+        }
+      } else {
+        setUpscaleStatus('processing');
+        response = await withUpscaleRetry(
+          () =>
+            api.post<UpscaleActionResponse>(
+              `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
+              buildUpscaleRequestBody(mode, upscaleRequestPayload, upscaleRequestId),
+              {
+                signal: abortController.signal,
+                timeout: UPSCALE_REQUEST_TIMEOUT_MS,
+                headers: {
+                  'x-idempotency-key': upscaleRequestId,
+                },
+              }
+            ),
+          abortController.signal
         );
       }
 
       const normalizedProjectId = projectId?.trim() ?? '';
       if (normalizedProjectId) {
+        setUpscaleStatus('persisting');
         await invalidateImageStudioSlots(queryClient, normalizedProjectId);
         const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
+        const createdSlotId = response.slot?.id ?? '';
+        const mergedSlots =
+          createdSlotId
+            ? [response.slot!, ...slotsSnapshot.filter((slot) => slot.id !== createdSlotId)]
+            : slotsSnapshot;
         queryClient.setQueryData<StudioSlotsResponse>(
           studioKeys.slots(normalizedProjectId),
-          { slots: slotsSnapshot }
+          { slots: mergedSlots }
         );
       }
 
@@ -879,17 +1196,43 @@ export function GenerationToolbar(): React.JSX.Element {
         setWorkingSlotId(response.slot.id);
       }
 
-      const scaleLabel = `${Number(scale.toFixed(2))}x`;
-      const createdLabel = response.slot?.name?.trim() || `Upscale ${scaleLabel}`;
-      toast(`Created ${createdLabel}.`, { variant: 'success' });
+      const effectiveMode = response.effectiveMode ?? resolvedMode;
+      const modeLabel = effectiveMode === 'client_data_url' ? 'Client' : 'Server';
+      const effectiveStrategy = response.strategy ?? upscaleRequestPayload.strategy;
+      const fallbackTargetWidth =
+        upscaleRequestPayload.strategy === 'target_resolution' ? upscaleRequestPayload.targetWidth : null;
+      const fallbackTargetHeight =
+        upscaleRequestPayload.strategy === 'target_resolution' ? upscaleRequestPayload.targetHeight : null;
+      const upscaleLabel =
+        effectiveStrategy === 'target_resolution'
+          ? `${response.targetWidth ?? fallbackTargetWidth}x${response.targetHeight ?? fallbackTargetHeight}`
+          : `${Number(
+            (response.scale ?? (upscaleRequestPayload.strategy === 'scale' ? upscaleRequestPayload.scale : 2))
+              .toFixed(2)
+          )}x`;
+      const createdLabel = response.slot?.name?.trim() || `Upscale ${upscaleLabel}`;
+      toast(`Created ${createdLabel} (${modeLabel} upscale).`, { variant: 'success' });
     } catch (error) {
+      if (isUpscaleAbortError(error)) {
+        toast('Upscale canceled.', { variant: 'info' });
+        return;
+      }
       toast(error instanceof Error ? error.message : 'Failed to upscale image.', { variant: 'error' });
     } finally {
+      upscaleRequestInFlightRef.current = false;
+      upscaleAbortControllerRef.current = null;
       setUpscaleBusy(false);
+      setUpscaleStatus('idle');
     }
   };
 
-  const handleCrop = async (): Promise<void> => {
+  const handleCancelUpscale = (): void => {
+    const controller = upscaleAbortControllerRef.current;
+    if (!controller) return;
+    controller.abort();
+  };
+
+  const handleCrop = async (cropRectOverride?: CropRect): Promise<void> => {
     if (!workingSlot?.id) {
       toast('No active source slot selected.', { variant: 'info' });
       return;
@@ -898,7 +1241,7 @@ export function GenerationToolbar(): React.JSX.Element {
       toast('Select a slot image before cropping.', { variant: 'info' });
       return;
     }
-    if (!hasCropBoundary) {
+    if (!cropRectOverride && !hasCropBoundary) {
       toast('Set a valid crop boundary first.', { variant: 'info' });
       return;
     }
@@ -913,7 +1256,7 @@ export function GenerationToolbar(): React.JSX.Element {
     const abortController = new AbortController();
     cropAbortControllerRef.current = abortController;
     try {
-      const cropRect = await resolveCropRect();
+      const cropRect = cropRectOverride ?? await resolveCropRect();
       let response: CropActionResponse;
       let resolvedMode: CropMode = cropMode;
       if (cropMode === 'client_bbox') {
@@ -926,8 +1269,7 @@ export function GenerationToolbar(): React.JSX.Element {
           const croppedDataUrl = await cropCanvasImage(sourceForClientCrop, cropRect);
           let uploadBlob: Blob;
           try {
-            const blobResponse = await fetch(croppedDataUrl);
-            uploadBlob = await blobResponse.blob();
+            uploadBlob = await dataUrlToUploadBlob(croppedDataUrl);
           } catch {
             throw new Error('Failed to prepare client crop image for upload.');
           }
@@ -1052,6 +1394,55 @@ export function GenerationToolbar(): React.JSX.Element {
     controller.abort();
   };
 
+  const handleSquareCrop = async (): Promise<void> => {
+    if (!workingSlot?.id) {
+      toast('No active source slot selected.', { variant: 'info' });
+      return;
+    }
+    if (!workingSlotImageSrc) {
+      toast('Select a slot image before cropping.', { variant: 'info' });
+      return;
+    }
+    try {
+      const squareCropRect = await resolveCenteredSquareCropRect();
+      await handleCrop(squareCropRect);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', { variant: 'error' });
+    }
+  };
+
+  const handlePreviewViewCrop = async (): Promise<void> => {
+    const activeSlotId = workingSlot?.id?.trim() ?? '';
+    if (!activeSlotId) {
+      toast('No active source slot selected.', { variant: 'info' });
+      return;
+    }
+    if (!workingSlotImageSrc) {
+      toast('Select a slot image before cropping.', { variant: 'info' });
+      return;
+    }
+
+    const previewCrop = getPreviewCanvasViewportCrop();
+    if (!previewCrop) {
+      toast('Preview Canvas crop view is unavailable. Load a slot image in Preview Canvas first.', {
+        variant: 'info',
+      });
+      return;
+    }
+    if (previewCrop.slotId !== activeSlotId) {
+      toast('Preview Canvas is showing a different slot. Switch back to the working slot and try again.', {
+        variant: 'info',
+      });
+      return;
+    }
+
+    try {
+      await handleCrop(previewCrop.cropRect);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', { variant: 'error' });
+    }
+  };
+
   const handleCenterObject = async (): Promise<void> => {
     if (!workingSlot?.id) {
       toast('No active source slot selected.', { variant: 'info' });
@@ -1088,8 +1479,7 @@ export function GenerationToolbar(): React.JSX.Element {
           const centeredDataUrl = await centerCanvasImageObject(sourceForClientCenter);
           let uploadBlob: Blob;
           try {
-            const blobResponse = await fetch(centeredDataUrl);
-            uploadBlob = await blobResponse.blob();
+            uploadBlob = await dataUrlToUploadBlob(centeredDataUrl);
           } catch {
             throw new Error('Failed to prepare client centered image for upload.');
           }
@@ -1215,6 +1605,23 @@ export function GenerationToolbar(): React.JSX.Element {
   const maskGenerationLabel = maskGenerationBusy
     ? 'Generating Mask...'
     : 'Generate Mask';
+  const upscaleBusyLabel = useMemo(() => {
+    if (!upscaleBusy) return 'Upscale';
+    switch (upscaleStatus) {
+      case 'resolving':
+        return 'Upscale: Resolving';
+      case 'preparing':
+        return 'Upscale: Preparing';
+      case 'uploading':
+        return 'Upscale: Uploading';
+      case 'processing':
+        return 'Upscale: Processing';
+      case 'persisting':
+        return 'Upscale: Persisting';
+      default:
+        return 'Upscale';
+    }
+  }, [upscaleBusy, upscaleStatus]);
   const cropBusyLabel = useMemo(() => {
     if (!cropBusy) return 'Crop';
     switch (cropStatus) {
@@ -1286,6 +1693,13 @@ export function GenerationToolbar(): React.JSX.Element {
     () => ([
       { value: 'client_canvas', label: 'Upscale A: Canvas' },
       { value: 'server_sharp', label: 'Upscale Server: Sharp' },
+    ]),
+    []
+  );
+  const upscaleStrategyOptions = useMemo(
+    () => ([
+      { value: 'scale', label: 'By Multiplier' },
+      { value: 'target_resolution', label: 'By Resolution' },
     ]),
     []
   );
@@ -1385,15 +1799,59 @@ export function GenerationToolbar(): React.JSX.Element {
         ariaLabel='Upscale mode'
       />
       <SelectSimple size='sm'
-        className='w-[85px]'
-        value={upscaleScale}
+        className='w-[145px]'
+        value={upscaleStrategy}
         onValueChange={(value: string) => {
-          setUpscaleScale(value);
+          setUpscaleStrategy(value as UpscaleStrategy);
         }}
-        options={upscaleScaleOptions}
+        options={upscaleStrategyOptions}
         triggerClassName='h-8 text-xs'
-        ariaLabel='Upscale scale'
+        ariaLabel='Upscale strategy'
       />
+      {upscaleStrategy === 'scale' ? (
+        <SelectSimple size='sm'
+          className='w-[95px]'
+          value={upscaleScale}
+          onValueChange={(value: string) => {
+            setUpscaleScale(value);
+          }}
+          options={upscaleScaleOptions}
+          triggerClassName='h-8 text-xs'
+          ariaLabel='Upscale multiplier'
+        />
+      ) : (
+        <div className='flex h-8 items-center gap-1 rounded border border-border/60 bg-card/40 px-2'>
+          <input
+            type='number'
+            min={1}
+            max={UPSCALE_MAX_OUTPUT_SIDE}
+            step={1}
+            inputMode='numeric'
+            value={upscaleTargetWidth}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setUpscaleTargetWidth(event.target.value.replace(/[^0-9]/g, ''));
+            }}
+            placeholder='W'
+            className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
+            aria-label='Target upscale width'
+          />
+          <span className='text-[11px] text-gray-500'>x</span>
+          <input
+            type='number'
+            min={1}
+            max={UPSCALE_MAX_OUTPUT_SIDE}
+            step={1}
+            inputMode='numeric'
+            value={upscaleTargetHeight}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setUpscaleTargetHeight(event.target.value.replace(/[^0-9]/g, ''));
+            }}
+            placeholder='H'
+            className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
+            aria-label='Target upscale height'
+          />
+        </div>
+      )}
       {upscaleMode === 'client_canvas' ? (
         <SelectSimple size='sm'
           className='w-[150px]'
@@ -1416,8 +1874,19 @@ export function GenerationToolbar(): React.JSX.Element {
         title='Create an upscaled linked variant from the active slot'
       >
         {upscaleBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-        Upscale
+        {upscaleBusyLabel}
       </Button>
+      {upscaleBusy ? (
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          onClick={handleCancelUpscale}
+          title='Cancel upscale request'
+        >
+          Cancel Upscale
+        </Button>
+      ) : null}
       <SelectSimple size='sm'
         className='w-[185px]'
         value={cropMode}
@@ -1448,6 +1917,28 @@ export function GenerationToolbar(): React.JSX.Element {
       >
         {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
         {cropBusyLabel}
+      </Button>
+      <Button size='xs'
+        type='button'
+        variant='outline'
+        onClick={() => {
+          void handleSquareCrop();
+        }}
+        disabled={!workingSlot || !workingSlotImageSrc || cropBusy}
+        title='Quick centered square crop (1:1) from the active slot'
+      >
+        Square Crop
+      </Button>
+      <Button size='xs'
+        type='button'
+        variant='outline'
+        onClick={() => {
+          void handlePreviewViewCrop();
+        }}
+        disabled={!workingSlot || !workingSlotImageSrc || cropBusy}
+        title='Crop using the currently visible area in Preview Canvas'
+      >
+        View Crop
       </Button>
       {cropBusy ? (
         <Button

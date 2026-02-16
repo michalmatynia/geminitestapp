@@ -230,7 +230,7 @@ export default function PagesPage(): React.ReactNode {
       </ListPanel>
 
       <ConfirmModal
-        open={!!pageToDelete}
+        isOpen={!!pageToDelete}
         onClose={() => setPageToDelete(null)}
         onConfirm={() => { void handleConfirmDelete(); }}
         title='Permanently Delete Page?'

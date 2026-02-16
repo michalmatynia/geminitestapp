@@ -23,6 +23,8 @@ import { Tooltip } from './tooltip';
 export { type VectorPoint, type VectorShape, type VectorShapeType, type VectorToolMode };
 
 export const DEFAULT_VECTOR_VIEWBOX = 1000;
+const MIN_VECTOR_VIEW_SCALE = 0.5;
+const MAX_VECTOR_VIEW_SCALE = 8;
 
 const formatPathNumber = (value: number): string => {
   const rounded = Number(value.toFixed(2));
@@ -30,6 +32,62 @@ const formatPathNumber = (value: number): string => {
 };
 
 const toSvgCoord = (value: number, viewBoxSize: number): number => value * viewBoxSize;
+const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
+
+type VectorViewTransform = {
+  scale: number;
+  panX: number;
+  panY: number;
+  rotateDeg: number;
+};
+
+export interface VectorCanvasViewCropRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
+
+const rotatePoint = (point: { x: number; y: number }, angleRad: number): { x: number; y: number } => {
+  const cos = Math.cos(angleRad);
+  const sin = Math.sin(angleRad);
+  return {
+    x: point.x * cos - point.y * sin,
+    y: point.x * sin + point.y * cos,
+  };
+};
+
+const normalizeAngleDelta = (radians: number): number => {
+  let normalized = radians;
+  while (normalized > Math.PI) normalized -= Math.PI * 2;
+  while (normalized < -Math.PI) normalized += Math.PI * 2;
+  return normalized;
+};
+
+const screenPointToWorld = (
+  point: { x: number; y: number },
+  transform: VectorViewTransform
+): { x: number; y: number } => {
+  const safeScale = Math.max(1e-6, transform.scale);
+  const scaled = {
+    x: (point.x - transform.panX) / safeScale,
+    y: (point.y - transform.panY) / safeScale,
+  };
+  return rotatePoint(scaled, -toRadians(transform.rotateDeg));
+};
+
+const worldPointToScreen = (
+  point: { x: number; y: number },
+  transform: VectorViewTransform
+): { x: number; y: number } => {
+  const rotated = rotatePoint(point, toRadians(transform.rotateDeg));
+  return {
+    x: rotated.x * transform.scale + transform.panX,
+    y: rotated.y * transform.scale + transform.panY,
+  };
+};
 
 export function vectorShapeToPath(shape: VectorShape, viewBoxSize = DEFAULT_VECTOR_VIEWBOX): string | null {
   if (!shape.visible || shape.points.length === 0) return null;
@@ -160,6 +218,8 @@ export interface VectorCanvasProps {
   maskPreviewOpacity?: number;
   maskPreviewFeather?: number;
   showCenterGuides?: boolean;
+  enableTwoFingerRotate?: boolean;
+  onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
   className?: string;
 }
 
@@ -182,6 +242,8 @@ export function VectorCanvas({
   maskPreviewOpacity = 0.48,
   maskPreviewFeather = 0,
   showCenterGuides = false,
+  enableTwoFingerRotate = false,
+  onViewCropRectChange,
   className,
 }: VectorCanvasProps): React.JSX.Element {
   const SHAPE_VIEWBOX_SIZE = 1000;
@@ -194,7 +256,12 @@ export function VectorCanvas({
 
   // --- Zoom & Pan ---
   const viewportRef = useRef<HTMLDivElement | null>(null);
-  const [viewTransform, setViewTransform] = useState({ scale: 1, panX: 0, panY: 0 });
+  const [viewTransform, setViewTransform] = useState<VectorViewTransform>({
+    scale: 1,
+    panX: 0,
+    panY: 0,
+    rotateDeg: 0,
+  });
   const viewTransformRef = useRef(viewTransform);
   viewTransformRef.current = viewTransform;
   const panningRef = useRef(false);
@@ -204,8 +271,15 @@ export function VectorCanvas({
   const [isHoveringEditablePoint, setIsHoveringEditablePoint] = useState(false);
   const [isDraggingEditablePoint, setIsDraggingEditablePoint] = useState(false);
   const [canvasRenderSize, setCanvasRenderSize] = useState<{ width: number; height: number }>({ width: 1, height: 1 });
+  const emittedViewCropRectRef = useRef<VectorCanvasViewCropRect | null>(null);
   const panRafIdRef = useRef<number>(0);
   const pendingPanRef = useRef<{ panX: number; panY: number } | null>(null);
+  const touchGestureRef = useRef<{
+    initialDistance: number;
+    initialAngleRad: number;
+    anchorWorld: { x: number; y: number };
+    startTransform: VectorViewTransform;
+  } | null>(null);
 
   // --- rAF draw batching ---
   const rafIdRef = useRef<number>(0);
@@ -269,7 +343,211 @@ export function VectorCanvas({
     [schedulePanUpdate]
   );
 
+  useEffect(() => {
+    if (!enableTwoFingerRotate) {
+      touchGestureRef.current = null;
+      return;
+    }
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const toContainerPoint = (touch: Touch, rect: DOMRect): { x: number; y: number } => ({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    });
+
+    const readTouchPair = (touches: TouchList): [Touch, Touch] | null => {
+      const first = touches.item(0);
+      const second = touches.item(1);
+      if (!first || !second) return null;
+      return [first, second];
+    };
+
+    const initializeGesture = (touches: TouchList): void => {
+      const pair = readTouchPair(touches);
+      if (!pair) {
+        touchGestureRef.current = null;
+        return;
+      }
+      const [firstTouch, secondTouch] = pair;
+      const rect = container.getBoundingClientRect();
+      const p1 = toContainerPoint(firstTouch, rect);
+      const p2 = toContainerPoint(secondTouch, rect);
+      const initialDistance = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      if (!(initialDistance > 0.5)) {
+        touchGestureRef.current = null;
+        return;
+      }
+      const midpoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      const startTransform = viewTransformRef.current;
+      touchGestureRef.current = {
+        initialDistance,
+        initialAngleRad: Math.atan2(p2.y - p1.y, p2.x - p1.x),
+        anchorWorld: screenPointToWorld(midpoint, startTransform),
+        startTransform,
+      };
+    };
+
+    const onTouchStart = (event: TouchEvent): void => {
+      if (event.touches.length < 2) return;
+      stopPan();
+      dragRef.current = null;
+      dragShapeRef.current = null;
+      drawingRef.current = null;
+      setIsDraggingEditablePoint(false);
+      setIsHoveringEditablePoint(false);
+      initializeGesture(event.touches);
+      event.preventDefault();
+    };
+
+    const onTouchMove = (event: TouchEvent): void => {
+      const gesture = touchGestureRef.current;
+      if (!gesture || event.touches.length < 2) return;
+
+      const pair = readTouchPair(event.touches);
+      if (!pair) return;
+      const [firstTouch, secondTouch] = pair;
+      const rect = container.getBoundingClientRect();
+      const p1 = toContainerPoint(firstTouch, rect);
+      const p2 = toContainerPoint(secondTouch, rect);
+      const midpoint = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      const nextDistance = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      if (!(nextDistance > 0.5)) return;
+      const nextAngleRad = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+      const scaleFactor = nextDistance / gesture.initialDistance;
+      const nextScale = Math.min(
+        MAX_VECTOR_VIEW_SCALE,
+        Math.max(MIN_VECTOR_VIEW_SCALE, gesture.startTransform.scale * scaleFactor)
+      );
+      const angleDelta = normalizeAngleDelta(nextAngleRad - gesture.initialAngleRad);
+      const nextRotateDeg = gesture.startTransform.rotateDeg + (angleDelta * 180) / Math.PI;
+      const anchorScreenWithoutPan = worldPointToScreen(gesture.anchorWorld, {
+        scale: nextScale,
+        panX: 0,
+        panY: 0,
+        rotateDeg: nextRotateDeg,
+      });
+      setViewTransform({
+        scale: nextScale,
+        panX: midpoint.x - anchorScreenWithoutPan.x,
+        panY: midpoint.y - anchorScreenWithoutPan.y,
+        rotateDeg: nextRotateDeg,
+      });
+      event.preventDefault();
+    };
+
+    const onTouchEnd = (event: TouchEvent): void => {
+      if (event.touches.length < 2) {
+        touchGestureRef.current = null;
+        return;
+      }
+      initializeGesture(event.touches);
+    };
+
+    container.addEventListener('touchstart', onTouchStart, { passive: false });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+    container.addEventListener('touchend', onTouchEnd, { passive: false });
+    container.addEventListener('touchcancel', onTouchEnd, { passive: false });
+
+    return (): void => {
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchcancel', onTouchEnd);
+    };
+  }, [enableTwoFingerRotate, stopPan]);
+
   const canDraw = allowWithoutImage || Boolean(src);
+
+  const resolveVisibleViewCropRect = useCallback((): VectorCanvasViewCropRect | null => {
+    if (!src) return null;
+    const container = containerRef.current;
+    const image = imgRef.current;
+    if (!container || !image) return null;
+
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) return null;
+
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+    if (!(containerWidth > 0 && containerHeight > 0)) return null;
+
+    const imageRenderWidth = canvasRenderSize.width;
+    const imageRenderHeight = canvasRenderSize.height;
+    if (!(imageRenderWidth > 0 && imageRenderHeight > 0)) return null;
+
+    const imageLeft = (containerWidth - imageRenderWidth) / 2;
+    const imageRight = imageLeft + imageRenderWidth;
+    const imageTop = 0;
+    const imageBottom = imageRenderHeight;
+
+    const viewTransformSnapshot = viewTransformRef.current;
+    const visibleQuad = [
+      { x: 0, y: 0 },
+      { x: containerWidth, y: 0 },
+      { x: containerWidth, y: containerHeight },
+      { x: 0, y: containerHeight },
+    ].map((point) => screenPointToWorld(point, viewTransformSnapshot));
+
+    const xs = visibleQuad.map((point) => point.x);
+    const ys = visibleQuad.map((point) => point.y);
+    const visibleMinX = Math.max(imageLeft, Math.min(...xs));
+    const visibleMaxX = Math.min(imageRight, Math.max(...xs));
+    const visibleMinY = Math.max(imageTop, Math.min(...ys));
+    const visibleMaxY = Math.min(imageBottom, Math.max(...ys));
+    if (!(visibleMaxX > visibleMinX && visibleMaxY > visibleMinY)) return null;
+
+    const normalizedLeft = clampUnit((visibleMinX - imageLeft) / imageRenderWidth);
+    const normalizedRight = clampUnit((visibleMaxX - imageLeft) / imageRenderWidth);
+    const normalizedTop = clampUnit((visibleMinY - imageTop) / imageRenderHeight);
+    const normalizedBottom = clampUnit((visibleMaxY - imageTop) / imageRenderHeight);
+    if (!(normalizedRight > normalizedLeft && normalizedBottom > normalizedTop)) return null;
+
+    const cropLeft = Math.max(0, Math.min(Math.floor(normalizedLeft * sourceWidth), sourceWidth - 1));
+    const cropTop = Math.max(0, Math.min(Math.floor(normalizedTop * sourceHeight), sourceHeight - 1));
+    const cropRight = Math.max(cropLeft + 1, Math.min(sourceWidth, Math.ceil(normalizedRight * sourceWidth)));
+    const cropBottom = Math.max(cropTop + 1, Math.min(sourceHeight, Math.ceil(normalizedBottom * sourceHeight)));
+    const cropWidth = Math.max(1, cropRight - cropLeft);
+    const cropHeight = Math.max(1, cropBottom - cropTop);
+
+    return {
+      x: cropLeft,
+      y: cropTop,
+      width: cropWidth,
+      height: cropHeight,
+    };
+  }, [canvasRenderSize.height, canvasRenderSize.width, src]);
+
+  useEffect(() => {
+    if (!onViewCropRectChange) {
+      emittedViewCropRectRef.current = null;
+      return;
+    }
+    const nextCropRect = resolveVisibleViewCropRect();
+    const previousCropRect = emittedViewCropRectRef.current;
+    const isSame =
+      nextCropRect === null
+        ? previousCropRect === null
+        : previousCropRect !== null &&
+          previousCropRect.x === nextCropRect.x &&
+          previousCropRect.y === nextCropRect.y &&
+          previousCropRect.width === nextCropRect.width &&
+          previousCropRect.height === nextCropRect.height;
+    if (isSame) return;
+    emittedViewCropRectRef.current = nextCropRect;
+    onViewCropRectChange(nextCropRect);
+  }, [
+    onViewCropRectChange,
+    resolveVisibleViewCropRect,
+    src,
+    viewTransform,
+    canvasRenderSize.width,
+    canvasRenderSize.height,
+  ]);
 
   const getInteractionRect = useCallback((): DOMRect | null => {
     const canvas = canvasRef.current;
@@ -550,9 +828,10 @@ export function VectorCanvas({
   }, [src, syncCanvasSize]);
 
   useEffect(() => {
-    setViewTransform({ scale: 1, panX: 0, panY: 0 });
+    setViewTransform({ scale: 1, panX: 0, panY: 0, rotateDeg: 0 });
     setIsPanning(false);
     panningRef.current = false;
+    touchGestureRef.current = null;
   }, [src]);
 
   // Re-draw when shapes/selection/mask-preview change (draw callback updates)
@@ -603,12 +882,12 @@ export function VectorCanvas({
       const prev = viewTransformRef.current;
       const zoomDelta = Math.max(-220, Math.min(220, e.deltaY));
       const factor = Math.exp(-zoomDelta * 0.00135);
-      const newScale = Math.min(8, Math.max(0.5, prev.scale * factor));
+      const newScale = Math.min(MAX_VECTOR_VIEW_SCALE, Math.max(MIN_VECTOR_VIEW_SCALE, prev.scale * factor));
       if (newScale === prev.scale) return;
       // Keep the point under cursor fixed
       const newPanX = mouseX - (mouseX - prev.panX) * (newScale / prev.scale);
       const newPanY = mouseY - (mouseY - prev.panY) * (newScale / prev.scale);
-      setViewTransform({ scale: newScale, panX: newPanX, panY: newPanY });
+      setViewTransform({ scale: newScale, panX: newPanX, panY: newPanY, rotateDeg: prev.rotateDeg });
     };
     container.addEventListener('wheel', onWheel, { passive: false });
     return (): void => container.removeEventListener('wheel', onWheel);
@@ -630,7 +909,7 @@ export function VectorCanvas({
       if (!e.ctrlKey && !e.metaKey && (e.key === '+' || e.key === '=')) {
         e.preventDefault();
         setViewTransform((prev) => {
-          const newScale = Math.min(8, prev.scale * 1.2);
+          const newScale = Math.min(MAX_VECTOR_VIEW_SCALE, prev.scale * 1.2);
           // Zoom toward center of container
           const container = containerRef.current;
           if (!container) return { ...prev, scale: newScale };
@@ -638,6 +917,7 @@ export function VectorCanvas({
           const cx = rect.width / 2;
           const cy = rect.height / 2;
           return {
+            ...prev,
             scale: newScale,
             panX: cx - (cx - prev.panX) * (newScale / prev.scale),
             panY: cy - (cy - prev.panY) * (newScale / prev.scale),
@@ -648,13 +928,14 @@ export function VectorCanvas({
       if (!e.ctrlKey && !e.metaKey && e.key === '-') {
         e.preventDefault();
         setViewTransform((prev) => {
-          const newScale = Math.max(0.5, prev.scale / 1.2);
+          const newScale = Math.max(MIN_VECTOR_VIEW_SCALE, prev.scale / 1.2);
           const container = containerRef.current;
           if (!container) return { ...prev, scale: newScale };
           const rect = container.getBoundingClientRect();
           const cx = rect.width / 2;
           const cy = rect.height / 2;
           return {
+            ...prev,
             scale: newScale,
             panX: cx - (cx - prev.panX) * (newScale / prev.scale),
             panY: cy - (cy - prev.panY) * (newScale / prev.scale),
@@ -664,7 +945,7 @@ export function VectorCanvas({
       // Reset zoom: 0
       if (!e.ctrlKey && !e.metaKey && e.key === '0') {
         e.preventDefault();
-        setViewTransform({ scale: 1, panX: 0, panY: 0 });
+        setViewTransform({ scale: 1, panX: 0, panY: 0, rotateDeg: 0 });
       }
     };
     const onKeyUp = (e: KeyboardEvent): void => {
@@ -1166,13 +1447,43 @@ export function VectorCanvas({
   );
 
   const handleDoubleClick = useCallback((): void => {
-    setViewTransform({ scale: 1, panX: 0, panY: 0 });
+    setViewTransform({ scale: 1, panX: 0, panY: 0, rotateDeg: 0 });
   }, []);
 
   const handleFitToScreen = useCallback((): void => {
     stopPan();
-    setViewTransform({ scale: 1, panX: 0, panY: 0 });
+    setViewTransform({ scale: 1, panX: 0, panY: 0, rotateDeg: 0 });
   }, [stopPan]);
+
+  const handleResetHorizonLevel = useCallback((): void => {
+    const container = containerRef.current;
+    if (!container) {
+      setViewTransform((prev) => ({ ...prev, rotateDeg: 0 }));
+      return;
+    }
+
+    const containerRect = container.getBoundingClientRect();
+    const anchor = {
+      x: containerRect.width / 2,
+      y: containerRect.height / 2,
+    };
+    setViewTransform((prev) => {
+      if (Math.abs(prev.rotateDeg) < 1e-3) return prev;
+      const anchorWorld = screenPointToWorld(anchor, prev);
+      const leveledScreenWithoutPan = worldPointToScreen(anchorWorld, {
+        scale: prev.scale,
+        panX: 0,
+        panY: 0,
+        rotateDeg: 0,
+      });
+      return {
+        ...prev,
+        panX: anchor.x - leveledScreenWithoutPan.x,
+        panY: anchor.y - leveledScreenWithoutPan.y,
+        rotateDeg: 0,
+      };
+    });
+  }, []);
 
   const handleMouseUp = useCallback((): void => {
     if (panningRef.current || isPanning) {
@@ -1195,7 +1506,8 @@ export function VectorCanvas({
   const showViewTransformHud =
     viewTransform.scale !== 1 ||
     viewTransform.panX !== 0 ||
-    viewTransform.panY !== 0;
+    viewTransform.panY !== 0 ||
+    Math.abs(viewTransform.rotateDeg) > 1e-3;
 
   return (
     <div
@@ -1204,6 +1516,7 @@ export function VectorCanvas({
         'relative flex h-full w-full items-center justify-center overflow-hidden rounded border border-border bg-black/20',
         className
       )}
+      style={enableTwoFingerRotate ? { touchAction: 'none' } : undefined}
     >
       {src ? (
         <>
@@ -1211,9 +1524,12 @@ export function VectorCanvas({
             ref={viewportRef}
             className='relative h-full w-full'
             style={
-              viewTransform.scale !== 1 || viewTransform.panX !== 0 || viewTransform.panY !== 0
+              viewTransform.scale !== 1 ||
+              viewTransform.panX !== 0 ||
+              viewTransform.panY !== 0 ||
+              Math.abs(viewTransform.rotateDeg) > 1e-3
                 ? {
-                  transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale})`,
+                  transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale}) rotate(${viewTransform.rotateDeg}deg)`,
                   transformOrigin: '0 0',
                   transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
                 }
@@ -1350,9 +1666,12 @@ export function VectorCanvas({
               ref={viewportRef}
               className='absolute inset-0'
               style={
-                viewTransform.scale !== 1 || viewTransform.panX !== 0 || viewTransform.panY !== 0
+                viewTransform.scale !== 1 ||
+                viewTransform.panX !== 0 ||
+                viewTransform.panY !== 0 ||
+                Math.abs(viewTransform.rotateDeg) > 1e-3
                   ? {
-                    transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale})`,
+                    transform: `translate(${viewTransform.panX}px, ${viewTransform.panY}px) scale(${viewTransform.scale}) rotate(${viewTransform.rotateDeg}deg)`,
                     transformOrigin: '0 0',
                     transition: isPanning ? 'none' : 'transform 120ms cubic-bezier(0.22, 1, 0.36, 1)',
                   }
@@ -1478,6 +1797,24 @@ export function VectorCanvas({
           <div className='rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90'>
             {Math.round(viewTransform.scale * 100)}%
           </div>
+          {Math.abs(viewTransform.rotateDeg) > 1e-2 ? (
+            <div className='rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90'>
+              {`${viewTransform.rotateDeg >= 0 ? '+' : ''}${viewTransform.rotateDeg.toFixed(1)}°`}
+            </div>
+          ) : null}
+          {enableTwoFingerRotate && Math.abs(viewTransform.rotateDeg) > 1e-2 ? (
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='h-6 bg-black/60 px-2 text-[11px] text-white/90 hover:bg-black/70'
+              onClick={handleResetHorizonLevel}
+              title='Reset horizon level'
+              aria-label='Reset horizon level'
+            >
+              Level
+            </Button>
+          ) : null}
           <Button
             type='button'
             variant='outline'

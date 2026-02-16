@@ -12,6 +12,12 @@ import {
 import { AppModal, Button, Input, Label } from '@/shared/ui';
 
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
+import {
+  normalizeFolderPath,
+  normalizeFolderPaths,
+  renameFolderPath,
+} from '../settings';
+import { isPathWithinFolder } from '../utils/caseResolverUtils';
 
 export function AdminCaseResolverPage(): React.JSX.Element {
   const state = useCaseResolverState();
@@ -20,6 +26,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
+    setSelectedFolderPath,
     folderPanelCollapsed,
     setFolderPanelCollapsed,
     setActiveMainView,
@@ -37,6 +44,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     handleOpenFileEditor,
     activeFile,
     selectedAsset,
+    updateWorkspace,
     handleSaveFileEditor,
   } = state;
 
@@ -46,6 +54,74 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       return { ...curr, documentContent: next };
     });
   }, [setEditingDocumentDraft]);
+
+  const handleMoveFolder = useCallback(
+    async (folderPath: string, targetFolder: string): Promise<void> => {
+      const normalizedSourceFolder = normalizeFolderPath(folderPath);
+      if (!normalizedSourceFolder) return;
+      const normalizedTargetFolder = normalizeFolderPath(targetFolder);
+      const sourceFolderName = normalizedSourceFolder.includes('/')
+        ? normalizedSourceFolder.slice(normalizedSourceFolder.lastIndexOf('/') + 1)
+        : normalizedSourceFolder;
+      const nextRootFolder = normalizeFolderPath(
+        normalizedTargetFolder ? `${normalizedTargetFolder}/${sourceFolderName}` : sourceFolderName
+      );
+      if (!nextRootFolder || nextRootFolder === normalizedSourceFolder) {
+        return;
+      }
+
+      updateWorkspace(
+        (current) => {
+          const now = new Date().toISOString();
+          const renamePath = (value: string): string =>
+            renameFolderPath(value, normalizedSourceFolder, nextRootFolder);
+
+          const movedFolders = current.folders.map((folder: string): string => renamePath(folder));
+          const movedFolderTimestamps = Object.fromEntries(
+            Object.entries(current.folderTimestamps ?? {}).map(([path, timestamps]) => [
+              renamePath(path),
+              timestamps,
+            ])
+          );
+          const movedFiles = current.files.map((file) => {
+            const nextFolder = renamePath(file.folder);
+            if (nextFolder === file.folder) return file;
+            return {
+              ...file,
+              folder: nextFolder,
+              updatedAt: now,
+            };
+          });
+          const movedAssets = current.assets.map((asset) => {
+            const nextFolder = renamePath(asset.folder);
+            if (nextFolder === asset.folder) return asset;
+            return {
+              ...asset,
+              folder: nextFolder,
+              updatedAt: now,
+            };
+          });
+
+          return {
+            ...current,
+            folders: normalizeFolderPaths(movedFolders),
+            folderTimestamps: movedFolderTimestamps,
+            files: movedFiles,
+            assets: movedAssets,
+          };
+        },
+        { persistToast: 'Case Resolver tree changes saved.' }
+      );
+
+      setSelectedFolderPath((current) => {
+        if (!current || !isPathWithinFolder(current, normalizedSourceFolder)) {
+          return current;
+        }
+        return renameFolderPath(current, normalizedSourceFolder, nextRootFolder);
+      });
+    },
+    [setSelectedFolderPath, updateWorkspace]
+  );
 
   // Main Render
   return (
@@ -69,7 +145,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       onUploadAssets: async () => [], // Simplified
       onMoveFile: async () => {},
       onMoveAsset: async () => {},
-      onMoveFolder: async () => {},
+      onMoveFolder: handleMoveFolder,
       onRenameFile: async () => {},
       onRenameAsset: async () => {},
       onRenameFolder: async () => {},

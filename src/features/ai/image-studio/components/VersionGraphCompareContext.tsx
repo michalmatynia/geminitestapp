@@ -8,6 +8,7 @@ import type { ImageStudioSlotRecord } from '../types';
 type VersionGraphCompareContextValue = {
   compareNodes: readonly [VersionNode, VersionNode];
   getSlotImageSrc: (slot: ImageStudioSlotRecord) => string | null;
+  onOpenDetails?: ((id: string) => void) | undefined;
   onSwap: () => void;
   onExit: () => void;
 };

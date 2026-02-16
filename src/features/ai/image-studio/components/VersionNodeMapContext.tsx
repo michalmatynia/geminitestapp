@@ -22,6 +22,7 @@ type VersionNodeMapContextValue = {
   onSelectNode: (id: string | null) => void;
   onHoverNode: (id: string | null) => void;
   onActivateNode: (id: string) => void;
+  onOpenNodeDetails?: ((id: string) => void) | undefined;
   onToggleMergeSelection: (id: string) => void;
   onToggleCompositeSelection: (id: string) => void;
   onToggleCollapse: (id: string) => void;

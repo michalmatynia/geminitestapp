@@ -14,6 +14,7 @@ type VersionGraphInspectorContextValue = {
   onFlattenComposite: (slotId: string) => void;
   onRefreshCompositePreview?: ((slotId: string) => void) | undefined;
   onSelectNode: (id: string | null) => void;
+  onOpenDetails?: ((id: string) => void) | undefined;
   onFocusNode?: ((id: string) => void) | undefined;
   onIsolateBranch?: ((id: string) => void) | undefined;
   annotationDraft: string;

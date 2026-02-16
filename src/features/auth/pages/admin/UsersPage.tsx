@@ -284,7 +284,7 @@ export default function AuthUsersPage(): React.JSX.Element {
       />
 
       <ConfirmModal
-        open={Boolean(userToDelete)}
+        isOpen={Boolean(userToDelete)}
         onClose={() => setUserToDelete(null)}
         title='Permanently Delete User?'
         message={`This will terminate all active sessions for ${userToDelete?.email} and remove their identity record. This action is irreversible.`}

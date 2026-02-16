@@ -27,6 +27,8 @@ export function VectorDrawingCanvas({
   maskPreviewOpacity,
   maskPreviewFeather,
   showCenterGuides,
+  enableTwoFingerRotate,
+  onViewCropRectChange,
   className,
 }: Partial<VectorCanvasProps>): React.JSX.Element {
   const context = useOptionalVectorDrawing();
@@ -76,6 +78,8 @@ export function VectorDrawingCanvas({
       {...(maskPreviewOpacity !== undefined ? { maskPreviewOpacity } : {})}
       {...(maskPreviewFeather !== undefined ? { maskPreviewFeather } : {})}
       {...(showCenterGuides !== undefined ? { showCenterGuides } : {})}
+      {...(enableTwoFingerRotate !== undefined ? { enableTwoFingerRotate } : {})}
+      {...(onViewCropRectChange !== undefined ? { onViewCropRectChange } : {})}
       {...(className !== undefined ? { className } : {})}
     />
   );

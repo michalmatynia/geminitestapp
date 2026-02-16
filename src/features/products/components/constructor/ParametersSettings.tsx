@@ -231,8 +231,9 @@ export function ParametersSettings({
         />
       )}
 
-      <ConfirmModal
-        open={!!parameterToDelete}
+              <ConfirmModal
+
+                isOpen={!!parameterToDelete}
         onClose={() => setParameterToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Parameter'

@@ -31,7 +31,7 @@ describe('decodeImageStudioMasterNodeId', () => {
     expect(decodeImageStudioMasterNodeId('unknown:1')).toBeNull();
   });
 
-  it('excludes generation-derived slots from folder tree nodes', () => {
+  it('keeps generation-derived slots visible in folder tree nodes', () => {
     const nodes = buildMasterNodesFromStudioTree(
       [
         {
@@ -75,7 +75,7 @@ describe('decodeImageStudioMasterNodeId', () => {
     );
 
     expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
-    expect(nodes.some((node) => node.id === 'card:slot-generation')).toBe(false);
+    expect(nodes.some((node) => node.id === 'card:slot-generation')).toBe(true);
   });
 
   it('keeps crop-derived slots visible in folder tree nodes', () => {
@@ -170,5 +170,52 @@ describe('decodeImageStudioMasterNodeId', () => {
 
     expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
     expect(nodes.some((node) => node.id === 'card:slot-center')).toBe(true);
+  });
+
+  it('keeps upscale-derived slots visible in folder tree nodes', () => {
+    const nodes = buildMasterNodesFromStudioTree(
+      [
+        {
+          id: 'slot-base',
+          projectId: 'proj',
+          name: 'Base',
+          folderPath: 'test',
+          position: null,
+          imageFileId: 'file-base',
+          imageUrl: '/uploads/studio/proj/base.png',
+          imageBase64: null,
+          asset3dId: null,
+          screenshotFileId: null,
+          metadata: null,
+          imageFile: null,
+          screenshotFile: null,
+          asset3d: null,
+        },
+        {
+          id: 'slot-upscale',
+          projectId: 'proj',
+          name: 'Base • Upscale',
+          folderPath: 'test',
+          position: null,
+          imageFileId: 'file-upscale',
+          imageUrl: '/uploads/studio/proj/upscale.png',
+          imageBase64: null,
+          asset3dId: null,
+          screenshotFileId: null,
+          metadata: {
+            role: 'generation',
+            sourceSlotId: 'slot-base',
+            relationType: 'upscale:output',
+          },
+          imageFile: null,
+          screenshotFile: null,
+          asset3d: null,
+        },
+      ],
+      ['test']
+    );
+
+    expect(nodes.some((node) => node.id === 'card:slot-base')).toBe(true);
+    expect(nodes.some((node) => node.id === 'card:slot-upscale')).toBe(true);
   });
 });

@@ -120,7 +120,7 @@ export function AdminSyncSettingsPage(): React.JSX.Element {
       />
 
       <ConfirmModal
-        open={isClearQueueConfirmOpen}
+        isOpen={isClearQueueConfirmOpen}
         onClose={() => setIsClearQueueConfirmOpen(false)}
         onConfirm={handleClearQueue}
         title='Clear Offline Queue'

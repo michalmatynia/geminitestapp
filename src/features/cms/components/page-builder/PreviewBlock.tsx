@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Image as ImageIcon,
   Eye,
   EyeOff,
   Trash2,

@@ -1,7 +1,8 @@
 'use client';
 
-import { Undo2, Redo2, Eye, Maximize2, Minimize2 } from 'lucide-react';
+import { Undo2, Redo2, Eye, EyeOff } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { CmsDomainSelector } from '@/features/cms';
 import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
@@ -33,8 +34,6 @@ import type { Slug } from '../../types';
 import type { PageZone, SectionInstance } from '../../types/page-builder';
 
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];
-const EDIT_BUTTON_HIDE_DELAY = 2000;
-
 const normalizePageSlugValues = (slugs: unknown): string[] => {
   if (!Array.isArray(slugs)) return [];
   return slugs
@@ -61,14 +60,12 @@ export function PagePreviewPanel(): React.ReactNode {
   const { toast } = useToast();
   const previousPanelsRef = useRef<{ left: boolean; right: boolean } | null>(null);
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
-  const [showEditButton, setShowEditButton] = useState<boolean>(isViewing);
-  const showEditButtonRef = useRef<boolean>(isViewing);
-  const lastPointerMoveRef = useRef(0);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [canvasScale, setCanvasScale] = useState(1);
   const [canvasWidth, setCanvasWidth] = useState<number | null>(null);
   const [canvasScaledHeight, setCanvasScaledHeight] = useState<number | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
   
   const preferencesQuery = useUserPreferences();
   const userPreferences = preferencesQuery.data;
@@ -347,18 +344,6 @@ export function PagePreviewPanel(): React.ReactNode {
     [dispatch, mediaTarget]
   );
 
-  const showEdit = useCallback((): void => {
-    if (showEditButtonRef.current) return;
-    showEditButtonRef.current = true;
-    setShowEditButton(true);
-  }, []);
-
-  const hideEdit = useCallback((): void => {
-    if (!showEditButtonRef.current) return;
-    showEditButtonRef.current = false;
-    setShowEditButton(false);
-  }, []);
-
   const setPanelsCollapsed = useCallback(
     (leftCollapsed: boolean, rightCollapsed: boolean): void => {
       if (state.leftPanelCollapsed !== leftCollapsed) {
@@ -378,8 +363,6 @@ export function PagePreviewPanel(): React.ReactNode {
         right: state.rightPanelCollapsed,
       };
       setPanelsCollapsed(true, true);
-      lastPointerMoveRef.current = Date.now();
-      showEdit();
       return;
     }
     const previous = previousPanelsRef.current;
@@ -389,29 +372,7 @@ export function PagePreviewPanel(): React.ReactNode {
       setPanelsCollapsed(false, false);
     }
     previousPanelsRef.current = null;
-    hideEdit();
-  }, [hideEdit, isViewing, setPanelsCollapsed, showEdit, state.leftPanelCollapsed, state.rightPanelCollapsed]);
-
-  useEffect((): (() => void) => {
-    if (!isViewing) return (): void => {};
-
-    lastPointerMoveRef.current = Date.now();
-    const handlePointerMove = (): void => {
-      lastPointerMoveRef.current = Date.now();
-      showEdit();
-    };
-    window.addEventListener('pointermove', handlePointerMove);
-    const idleCheck = window.setInterval(() => {
-      if (Date.now() - lastPointerMoveRef.current > EDIT_BUTTON_HIDE_DELAY) {
-        hideEdit();
-      }
-    }, 200);
-
-    return (): void => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.clearInterval(idleCheck);
-    };
-  }, [hideEdit, isViewing, showEdit]);
+  }, [isViewing, setPanelsCollapsed, state.leftPanelCollapsed, state.rightPanelCollapsed]);
 
   // Group sections by zone
   const sectionsByZone = ZONE_ORDER.reduce<Record<PageZone, SectionInstance[]>>(
@@ -475,6 +436,10 @@ export function PagePreviewPanel(): React.ReactNode {
     : {};
 
   useEffect((): (() => void) | void => {
+    setIsHydrated(true);
+  }, []);
+
+  useEffect((): (() => void) | void => {
     if (!isDesktopPreview) return undefined;
     const viewport = canvasRef.current?.closest(
       '[data-cms-canvas-viewport=\'true\']'
@@ -520,8 +485,27 @@ export function PagePreviewPanel(): React.ReactNode {
     };
   }, [isDesktopPreview, canvasScale, state.sections, previewWidthClass]);
 
+  const viewingToggleButton = isHydrated
+    ? createPortal(
+      <Button
+        size='xs'
+        type='button'
+        variant='outline'
+        onClick={handleToggleViewing}
+        disabled={!state.currentPage}
+        title={isViewing ? 'Show side panels' : 'Show canvas only'}
+        aria-label={isViewing ? 'Show side panels' : 'Show canvas only'}
+        className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+      >
+        {isViewing ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+      </Button>,
+      document.body
+    )
+    : null;
+
   return (
     <div className='relative flex min-w-0 flex-1 flex-col bg-gray-950'>
+      {viewingToggleButton}
       {/* Toolbar */}
       <div
         className={`overflow-hidden transition-all duration-300 ease-in-out ${
@@ -614,41 +598,8 @@ export function PagePreviewPanel(): React.ReactNode {
               </Button>
             </>
           )}
-          {!isViewing && (
-            <Button
-              onClick={handleToggleViewing}
-              size='sm'
-              variant='outline'
-              className='text-gray-300 hover:text-white'
-              disabled={!state.currentPage}
-            >
-              <Maximize2 className='mr-2 size-4' />
-              Show
-            </Button>
-          )}
         </div>
       </div>
-
-      {isViewing && (
-        <div className='pointer-events-none absolute right-6 top-4 z-20 flex justify-end'>
-          <div
-            className={`pointer-events-auto transition-all duration-300 ease-in-out ${
-              showEditButton ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-            }`}
-          >
-            <Button
-              onClick={handleToggleViewing}
-              size='sm'
-              variant='outline'
-              className='text-gray-300 hover:text-white opacity-60 hover:opacity-100'
-              disabled={!state.currentPage}
-            >
-              <Minimize2 className='mr-2 size-4' />
-              Edit
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Preview area */}
       <div

@@ -49,7 +49,7 @@ export function ConfirmDialogBatch({
       {dialogs.map((dialog) => (
         <ConfirmModal
           key={dialog.id}
-          open={dialog.open}
+          isOpen={dialog.open}
           onClose={() => dialog.onOpenChange(false)}
           title={dialog.title}
           message={dialog.description}

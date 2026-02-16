@@ -149,7 +149,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
       compareNodeIds,
       onSelectNode,
       onHoverNode,
-      onActivateNode,
+      onOpenNodeDetails,
       onToggleMergeSelection,
       onToggleCompositeSelection,
       onToggleCollapse,
@@ -511,10 +511,6 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                   data-node-id={node.id}
                   className='cursor-pointer'
                   onClick={(e) => handleNodeClick(e, node.id)}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    if (!mergeMode && !compositeMode) onActivateNode(node.id);
-                  }}
                   onContextMenu={(e) => {
                     if (onContextMenu) {
                       e.preventDefault();
@@ -683,6 +679,39 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                       ) : null}
                     </>
                   )}
+                  {onOpenNodeDetails ? (
+                    <g
+                      className='cursor-pointer'
+                      role='button'
+                      aria-label='Open node details'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onOpenNodeDetails(node.id);
+                      }}
+                    >
+                      <circle
+                        cx={NODE_WIDTH - 8}
+                        cy={4}
+                        r={4.5}
+                        fill='#0f172a'
+                        fillOpacity={0.95}
+                        stroke='#60a5fa'
+                        strokeWidth={1}
+                      />
+                      <text
+                        x={NODE_WIDTH - 8}
+                        y={6}
+                        textAnchor='middle'
+                        fill='#bfdbfe'
+                        fontSize={6}
+                        fontWeight={700}
+                        pointerEvents='none'
+                      >
+                        i
+                      </text>
+                    </g>
+                  ) : null}
                 </g>
               );
             })}

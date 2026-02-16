@@ -1,5 +1,6 @@
 'use client';
 
+import { Info } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import { Button } from '@/shared/ui';
@@ -10,7 +11,7 @@ import { compareGenerationParams } from '../utils/version-graph-compare';
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function VersionGraphComparePanel(): React.JSX.Element {
-  const { compareNodes, getSlotImageSrc, onSwap, onExit } = useVersionGraphCompareContext();
+  const { compareNodes, getSlotImageSrc, onOpenDetails, onSwap, onExit } = useVersionGraphCompareContext();
 
   const paramRows = useMemo(
     () => compareGenerationParams(compareNodes[0].slot, compareNodes[1].slot),
@@ -24,7 +25,22 @@ export function VersionGraphComparePanel(): React.JSX.Element {
         {compareNodes.map((cNode) => (
           <div key={cNode.id} className='flex-1 space-y-1'>
             <div className='truncate text-[10px] font-medium text-gray-300'>{cNode.label}</div>
-            <div className='aspect-square overflow-hidden rounded border border-border/60 bg-card/30'>
+            {onOpenDetails ? (
+              <div className='flex justify-end'>
+                <button
+                  type='button'
+                  className='inline-flex h-5 w-5 items-center justify-center rounded border border-blue-400/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 hover:text-blue-200'
+                  title='Open full node/file details'
+                  aria-label='Open full node/file details'
+                  onClick={() => onOpenDetails(cNode.id)}
+                >
+                  <Info className='size-3' />
+                </button>
+              </div>
+            ) : (
+              <div className='h-5' />
+            )}
+            <div className='aspect-square w-full overflow-hidden rounded border border-border/60 bg-card/30'>
               {getSlotImageSrc(cNode.slot) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

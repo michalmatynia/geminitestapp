@@ -239,7 +239,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       </ListPanel>
 
       <ConfirmModal
-        open={!!sessionToDelete}
+        isOpen={!!sessionToDelete}
         onClose={() => setSessionToDelete(null)}
         onConfirm={() => { if (sessionToDelete) void deleteSession(sessionToDelete); }}
         title='Delete Session'
@@ -249,7 +249,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
       />
 
       <ConfirmModal
-        open={isBulkDeleteConfirmOpen}
+        isOpen={isBulkDeleteConfirmOpen}
         onClose={() => setIsBulkDeleteConfirmOpen(false)}
         onConfirm={bulkDelete}
         title='Delete Sessions'

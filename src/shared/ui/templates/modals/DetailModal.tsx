@@ -4,9 +4,9 @@ import React from 'react';
 
 import { AppModal } from '@/shared/ui/app-modal';
 
-export interface DetailModalProps {
-  open: boolean;
-  onClose: () => void;
+import type { ModalStateProps } from '@/shared/types/modal-props';
+
+export interface DetailModalProps extends ModalStateProps {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
@@ -21,7 +21,7 @@ export interface DetailModalProps {
  * Consolidates *DetailModal, *PreviewModal, LogModal patterns.
  */
 export function DetailModal({
-  open,
+  isOpen,
   onClose,
   title,
   subtitle,
@@ -32,7 +32,7 @@ export function DetailModal({
 }: DetailModalProps) {
   return (
     <AppModal
-      open={open}
+      open={isOpen}
       onOpenChange={onClose}
       onClose={onClose}
       title={title}

@@ -86,16 +86,6 @@ const getSlotRelationType = (slot: ImageStudioSlotRecord): string | null => {
   return normalized || null;
 };
 
-const isGenerationDerivedSlot = (slot: ImageStudioSlotRecord): boolean => {
-  const relationType = getSlotRelationType(slot);
-  if (relationType?.startsWith('generation:')) return true;
-
-  const role = getSlotRole(slot);
-  if (role !== 'generation') return false;
-  // Keep legacy generation-only cards hidden while allowing explicit crop/upscale/center variants.
-  return !relationType || relationType.startsWith('generation:');
-};
-
 const getRoleLabel = (slot: ImageStudioSlotRecord, derivedFromCard: boolean): string | null => {
   const metadata = getSlotMetadata(slot);
   const role = getSlotRole(slot);
@@ -162,7 +152,7 @@ const buildStudioTreeRoot = (
     children: [],
   };
 
-  const visibleSlots = slots.filter((slot: ImageStudioSlotRecord) => !isGenerationDerivedSlot(slot));
+  const visibleSlots = slots;
   const slotById = new Map<string, ImageStudioSlotRecord>(
     visibleSlots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
   );

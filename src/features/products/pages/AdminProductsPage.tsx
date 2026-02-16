@@ -14,7 +14,7 @@ export function AdminProductsPage(): React.JSX.Element {
     <>
       {state.isDebugOpen && <DebugPanel />}
       <ConfirmModal
-        open={state.isMassDeleteConfirmOpen}
+        isOpen={state.isMassDeleteConfirmOpen}
         onClose={() => state.setIsMassDeleteConfirmOpen(false)}
         onConfirm={state.handleMassDelete}
         title='Delete Products'
@@ -24,7 +24,7 @@ export function AdminProductsPage(): React.JSX.Element {
         loading={state.bulkDeletePending}
       />
       <ConfirmModal
-        open={!!state.productToDelete}
+        isOpen={!!state.productToDelete}
         onClose={() => state.setProductToDelete(null)}
         onConfirm={state.handleConfirmSingleDelete}
         title='Delete Product'

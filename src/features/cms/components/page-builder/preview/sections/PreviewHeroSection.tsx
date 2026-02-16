@@ -39,10 +39,9 @@ export function PreviewHeroSection({
   const { 
     inspectorSettings, 
     onOpenMedia,
-    showEditorChrome: globalShowEditorChrome 
   } = usePreviewEditor();
 
-  const showEditorChrome = inspectorSettings.showEditorChrome ?? globalShowEditorChrome ?? false;
+  const showEditorChrome = inspectorSettings.showEditorChrome ?? false;
   const sectionStyles = getSectionStyles(section.settings, colorSchemes);
   const sectionImage = section.settings['image'] as string | undefined;
 

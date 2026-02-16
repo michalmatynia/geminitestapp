@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeftRight, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeftRight, Eye, EyeOff, Undo2 } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/shared/ui';
@@ -8,6 +8,8 @@ import { Button } from '@/shared/ui';
 type SplitViewControlsProps = {
   singleVariantView: 'variant' | 'source';
   splitVariantView: boolean;
+  canCompare: boolean;
+  onGoToSourceSlot: () => void;
   onToggleSourceVariantView: () => void;
   onToggleSplitVariantView: () => void;
 };
@@ -15,6 +17,8 @@ type SplitViewControlsProps = {
 export function SplitViewControls({
   singleVariantView,
   splitVariantView,
+  canCompare,
+  onGoToSourceSlot,
   onToggleSourceVariantView,
   onToggleSplitVariantView,
 }: SplitViewControlsProps): React.JSX.Element {
@@ -23,10 +27,24 @@ export function SplitViewControls({
       <Button size='xs'
         type='button'
         variant='outline'
-        onClick={onToggleSourceVariantView}
-        disabled={splitVariantView}
+        onClick={onGoToSourceSlot}
         className='h-7 w-7 bg-background/90 px-0 backdrop-blur'
-        title={singleVariantView === 'variant' ? 'View source' : 'View variant'}
+        title='Go to source slot'
+        aria-label='Go to source slot'
+      >
+        <Undo2 className='size-3.5' />
+      </Button>
+      <Button size='xs'
+        type='button'
+        variant='outline'
+        onClick={onToggleSourceVariantView}
+        disabled={splitVariantView || !canCompare}
+        className='h-7 w-7 bg-background/90 px-0 backdrop-blur'
+        title={
+          canCompare
+            ? (singleVariantView === 'variant' ? 'View source' : 'View variant')
+            : 'Source/variant toggle unavailable'
+        }
         aria-label={singleVariantView === 'variant' ? 'View source' : 'View variant'}
       >
         {singleVariantView === 'variant' ? (
@@ -39,8 +57,13 @@ export function SplitViewControls({
         type='button'
         variant='outline'
         onClick={onToggleSplitVariantView}
+        disabled={!canCompare}
         className='h-7 w-7 bg-background/90 px-0 backdrop-blur'
-        title={splitVariantView ? 'Exit split view' : 'Split view'}
+        title={
+          canCompare
+            ? (splitVariantView ? 'Exit split view' : 'Split view')
+            : 'Split compare unavailable'
+        }
         aria-label={splitVariantView ? 'Exit split view' : 'Split view'}
       >
         <ArrowLeftRight className='size-3.5' />

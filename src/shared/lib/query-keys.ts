@@ -59,6 +59,12 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.products.settings.all, 'validator-config', includeDisabled] as const,
       categoryTree: (catalogId?: string | null) =>
         [...QUERY_KEYS.products.settings.all, 'category-tree', catalogId ?? null] as const,
+      syncProfiles: () =>
+        [...QUERY_KEYS.products.settings.all, 'sync-profiles'] as const,
+      syncRuns: (profileId?: string | null) =>
+        [...QUERY_KEYS.products.settings.all, 'sync-runs', profileId ?? 'all'] as const,
+      syncRunDetail: (runId: string) =>
+        [...QUERY_KEYS.products.settings.all, 'sync-run', runId] as const,
     },
   },
   settings: {

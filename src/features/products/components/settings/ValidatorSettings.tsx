@@ -19,9 +19,9 @@ export function ValidatorSettings(): React.JSX.Element {
         <ValidatorInstanceBehaviorPanel />
         <ValidatorPatternTablePanel />
 
-              <ConfirmModal
+        <ConfirmModal
 
-                isOpen={!!controller.patternToDelete}
+          isOpen={!!controller.patternToDelete}
           onClose={() => controller.setPatternToDelete(null)}
           onConfirm={controller.handleDelete}
           title='Delete Pattern'

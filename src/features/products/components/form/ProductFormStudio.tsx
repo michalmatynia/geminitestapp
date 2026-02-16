@@ -611,6 +611,11 @@ export default function ProductFormStudio(): React.JSX.Element {
               <SplitViewControls
                 singleVariantView={singleVariantView}
                 splitVariantView={splitVariantView}
+                canCompare={canCompareWithSource}
+                onGoToSourceSlot={(): void => {
+                  setSplitVariantView(false);
+                  setSingleVariantView('source');
+                }}
                 onToggleSourceVariantView={(): void => {
                   setSingleVariantView((prev) =>
                     prev === 'variant' ? 'source' : 'variant'

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
 import { resolveScopedVersionGraphSlots } from '@/features/ai/image-studio/utils/version-graph-scope';
 
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
 
 const makeSlot = (
   id: string,

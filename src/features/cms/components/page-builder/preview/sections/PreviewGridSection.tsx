@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import { Trash2 } from 'lucide-react';
+import React from 'react';
 
 import {
   getSectionContainerClass,
@@ -9,6 +9,15 @@ import {
   getTextAlign,
   type ColorSchemeColors,
 } from '@/features/cms/components/frontend/theme-styles';
+import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
+import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
+import {
+  renderBackgroundImageLayer,
+} from '@/features/cms/components/page-builder/preview/image-utils';
+import {
+  InspectorTooltip,
+  InspectorHover,
+} from '@/features/cms/components/page-builder/preview/InspectorOverlay';
 import {
   getGapClass,
   resolveGapValue,
@@ -19,20 +28,11 @@ import {
   collectBackgroundImages,
   getBlockMinHeight,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
+import type { BlockInstance, SectionInstance } from '@/features/cms/types/page-builder';
 import {
   buildScopedCustomCss,
   getCustomCssSelector,
 } from '@/features/cms/utils/custom-css';
-import type { BlockInstance, SectionInstance } from '@/features/cms/types/page-builder';
-import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
-import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
-import {
-  renderBackgroundImageLayer,
-} from '@/features/cms/components/page-builder/preview/image-utils';
-import {
-  InspectorTooltip,
-  InspectorHover,
-} from '@/features/cms/components/page-builder/preview/InspectorOverlay';
 
 interface PreviewGridSectionProps {
   section: SectionInstance;

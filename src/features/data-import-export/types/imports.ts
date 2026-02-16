@@ -1,3 +1,7 @@
+import type {
+  BaseImportRunDetailResponse,
+  BaseImportStartResponse,
+} from '@/features/integrations/types/base-import-runs';
 import type { 
   ImageBase64Mode, 
   ImageTransformOptions, 
@@ -6,10 +10,6 @@ import type {
   ImportExportTemplate as DomainImportExportTemplate,
   ImportExportTemplateMapping as DomainImportExportTemplateMapping
 } from '@/shared/types/domain/integrations';
-import type {
-  BaseImportRunDetailResponse,
-  BaseImportStartResponse,
-} from '@/features/integrations/types/base-import-runs';
 
 export type {
   ImageBase64Mode,

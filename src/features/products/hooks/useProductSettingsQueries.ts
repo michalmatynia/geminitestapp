@@ -466,7 +466,7 @@ export function useDeleteValidationPatternMutation(): DeleteMutation {
 export function useReorderValidationPatternsMutation(): UpdateMutation<
   { updated: ProductValidationPattern[] },
   { updates: api.ReorderValidationPatternUpdatePayload[] }
-> {
+  > {
   const queryClient = useQueryClient();
   const mutationKey = productSettingsKeys.validatorPatterns();
   return createUpdateMutationV2({

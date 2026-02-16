@@ -14,6 +14,7 @@ import { PriceGroupModal } from '@/features/products/components/settings/modals/
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
+import { ProductSyncSettings } from '@/features/products/components/settings/ProductSyncSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
 import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
@@ -241,6 +242,9 @@ export function ProductSettingsPage(): React.JSX.Element {
               )}
               {activeSection === 'Catalogs' && (
                 <CatalogsSettings />
+              )}
+              {activeSection === 'Sync Settings' && (
+                <ProductSyncSettings />
               )}
               {activeSection === 'Images & Studio' && (
                 <ProductImageRoutingSettings />

@@ -2,13 +2,13 @@
 
 import React, { useMemo } from 'react';
 
+import type { EntityModalProps } from '@/shared/types/modal-props';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { readMeta } from '../utils/metadata';
 
 import type { VersionNode } from '../context/VersionGraphContext';
 import type { ImageStudioSlotRecord } from '../types';
-import type { EntityModalProps } from '@/shared/types/modal-props';
 
 type VersionNodeDetailsModalProps = EntityModalProps<VersionNode> & {
   getSlotImageSrc: (slot: ImageStudioSlotRecord) => string | null;
@@ -317,4 +317,3 @@ export function VersionNodeDetailsModal({
     </DetailModal>
   );
 }
-

@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
-import NextImage from 'next/image';
 import { Image as ImageIcon } from 'lucide-react';
+import NextImage from 'next/image';
+import React from 'react';
 
 import {
   getSectionContainerClass,
@@ -10,9 +10,9 @@ import {
   getVerticalAlign,
   type ColorSchemeColors,
 } from '@/features/cms/components/frontend/theme-styles';
-import type { BlockInstance, SectionInstance } from '@/features/cms/types/page-builder';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
+import type { BlockInstance, SectionInstance } from '@/features/cms/types/page-builder';
 
 interface PreviewImageWithTextSectionProps {
   section: SectionInstance;

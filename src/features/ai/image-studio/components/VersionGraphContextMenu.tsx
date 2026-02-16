@@ -6,6 +6,7 @@ import {
   Columns2,
   Copy,
   Crosshair,
+  GitBranchPlus,
   Focus,
   Layers,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
     collapsedNodeIds,
     onClose,
     onSetAsSource,
+    onDetachSubtree,
     onIsolateBranch,
     onToggleCollapse,
     onAddToComposite,
@@ -46,6 +48,17 @@ export function VersionGraphContextMenu(): React.JSX.Element {
         >
           <Crosshair className='size-3' />
           Set as Source
+        </button>
+        <button
+          type='button'
+          className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-amber-300 hover:bg-accent'
+          onClick={() => {
+            onDetachSubtree(menu.nodeId);
+            onClose();
+          }}
+        >
+          <GitBranchPlus className='size-3' />
+          Detach Subtree
         </button>
         <button
           type='button'

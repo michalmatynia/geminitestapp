@@ -1,6 +1,7 @@
+import { recordPromptValidationTiming } from '@/features/prompt-core/runtime-observability';
+
 import { extractParamsFromPrompt } from './prompt-params';
 import { DEFAULT_PROMPT_VALIDATION_SCOPES } from './settings';
-import { recordPromptValidationTiming } from '@/features/prompt-core/runtime-observability';
 
 import type {
   PromptValidationScope,

@@ -44,6 +44,7 @@ import {
   normalizeFolderPath,
   normalizeFolderPaths,
   parseCaseResolverWorkspace,
+  renameFolderPath,
 } from '../settings';
 import {
   buildFileEditDraft,
@@ -357,6 +358,120 @@ export function useCaseResolverState() {
     }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
   }, [updateWorkspace]);
 
+  const handleMoveFile = useCallback(
+    async (fileId: string, targetFolder: string): Promise<void> => {
+      const normalizedTarget = normalizeFolderPath(targetFolder);
+      updateWorkspace((current) => ({
+        ...current,
+        files: current.files.map((file) =>
+          file.id === fileId
+            ? { ...file, folder: normalizedTarget, updatedAt: new Date().toISOString() }
+            : file
+        ),
+        folders: normalizeFolderPaths(
+          normalizedTarget
+            ? [...current.folders, normalizedTarget]
+            : current.folders
+        ),
+      }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    },
+    [updateWorkspace]
+  );
+
+  const handleMoveAsset = useCallback(
+    async (assetId: string, targetFolder: string): Promise<void> => {
+      const normalizedTarget = normalizeFolderPath(targetFolder);
+      updateWorkspace((current) => ({
+        ...current,
+        assets: current.assets.map((asset) =>
+          asset.id === assetId
+            ? { ...asset, folder: normalizedTarget, updatedAt: new Date().toISOString() }
+            : asset
+        ),
+        folders: normalizeFolderPaths(
+          normalizedTarget
+            ? [...current.folders, normalizedTarget]
+            : current.folders
+        ),
+      }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    },
+    [updateWorkspace]
+  );
+
+  const handleRenameFile = useCallback(
+    async (fileId: string, nextName: string): Promise<void> => {
+      const trimmedName = nextName.trim();
+      if (!trimmedName) return;
+      updateWorkspace((current) => ({
+        ...current,
+        files: current.files.map((file) =>
+          file.id === fileId
+            ? { ...file, name: trimmedName, updatedAt: new Date().toISOString() }
+            : file
+        ),
+      }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    },
+    [updateWorkspace]
+  );
+
+  const handleRenameAsset = useCallback(
+    async (assetId: string, nextName: string): Promise<void> => {
+      const trimmedName = nextName.trim();
+      if (!trimmedName) return;
+      updateWorkspace((current) => ({
+        ...current,
+        assets: current.assets.map((asset) =>
+          asset.id === assetId
+            ? { ...asset, name: trimmedName, updatedAt: new Date().toISOString() }
+            : asset
+        ),
+      }), { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+    },
+    [updateWorkspace]
+  );
+
+  const handleRenameFolder = useCallback(
+    async (folderPath: string, nextFolderPath: string): Promise<void> => {
+      const normalizedSource = normalizeFolderPath(folderPath);
+      const normalizedTarget = normalizeFolderPath(nextFolderPath);
+      if (!normalizedSource || !normalizedTarget) return;
+      if (normalizedSource === normalizedTarget) return;
+
+      updateWorkspace((current) => {
+        const now = new Date().toISOString();
+        const rename = (value: string): string =>
+          renameFolderPath(value, normalizedSource, normalizedTarget);
+
+        return {
+          ...current,
+          folders: normalizeFolderPaths(current.folders.map(rename)),
+          folderTimestamps: Object.fromEntries(
+            Object.entries(current.folderTimestamps ?? {}).map(([path, timestamps]) => [
+              rename(path),
+              timestamps,
+            ])
+          ),
+          files: current.files.map((file) => {
+            const nextFolder = rename(file.folder);
+            if (nextFolder === file.folder) return file;
+            return { ...file, folder: nextFolder, updatedAt: now };
+          }),
+          assets: current.assets.map((asset) => {
+            const nextFolder = rename(asset.folder);
+            if (nextFolder === asset.folder) return asset;
+            return { ...asset, folder: nextFolder, updatedAt: now };
+          }),
+        };
+      }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+
+      setSelectedFolderPath((current) => {
+        if (!current || !isPathWithinFolder(current, normalizedSource)) return current;
+        return renameFolderPath(current, normalizedSource, normalizedTarget);
+      });
+    },
+    [setSelectedFolderPath, updateWorkspace]
+  );
+
   const handleOpenFileEditor = useCallback((fileId: string): void => {
     const target = workspace.files.find((file) => file.id === fileId);
     if (!target) {
@@ -540,14 +655,6 @@ export function useCaseResolverState() {
       value: nextExplodedContent,
     });
     const explodedStoredContent = toStorageDocumentValue(canonicalExploded);
-    const proposedAddresserReference =
-      proposalState?.addresser?.action === 'database'
-        ? proposalState?.addresser?.existingReference ?? undefined
-        : undefined;
-    const proposedAddresseeReference =
-      proposalState?.addressee?.action === 'database'
-        ? proposalState?.addressee?.existingReference ?? undefined
-        : undefined;
 
     updateWorkspace((current) => ({
       ...current,
@@ -569,8 +676,6 @@ export function useCaseResolverState() {
           documentConversionWarnings: canonicalExploded.warnings,
           lastContentConversionAt: now,
           documentDate: extractedDocumentDate ?? file.documentDate,
-          ...(proposedAddresserReference ? { addresser: proposedAddresserReference } : {}),
-          ...(proposedAddresseeReference ? { addressee: proposedAddresseeReference } : {}),
           updatedAt: now,
         };
       }),
@@ -595,16 +700,19 @@ export function useCaseResolverState() {
         documentConversionWarnings: canonicalExploded.warnings,
         lastContentConversionAt: now,
         documentDate: extractedDocumentDate ?? current.documentDate,
-        ...(proposedAddresserReference ? { addresser: proposedAddresserReference } : {}),
-        ...(proposedAddresseeReference ? { addressee: proposedAddresseeReference } : {}),
       };
     });
 
     if (proposalState) {
       setPromptExploderPartyProposal(proposalState);
+      setIsApplyingPromptExploderPartyProposal(false);
       if (caseResolverCaptureSettings.autoOpenProposalModal) {
         setIsPromptExploderPartyProposalOpen(true);
       }
+    } else {
+      setPromptExploderPartyProposal(null);
+      setIsPromptExploderPartyProposalOpen(false);
+      setIsApplyingPromptExploderPartyProposal(false);
     }
     toast('Exploded text returned to Case Resolver.', { variant: 'success' });
   }, [
@@ -654,6 +762,11 @@ export function useCaseResolverState() {
     handleCreateFolder,
     handleCreateFile,
     handleDeleteFolder,
+    handleMoveFile,
+    handleMoveAsset,
+    handleRenameFile,
+    handleRenameAsset,
+    handleRenameFolder,
     handleOpenFileEditor,
     activeFile,
     selectedAsset,

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { StartBaseImportRunInput } from '@/features/integrations/services/imports/base-import-service';
 import { startBaseImportRun, startBaseImportRunResponse } from '@/features/integrations/services/imports/base-import-run-starter';
+import type { StartBaseImportRunInput } from '@/features/integrations/services/imports/base-import-service';
 import type {
   BaseImportRunRecord,
   BaseImportStartResponse,
@@ -22,7 +22,7 @@ vi.mock('@/features/jobs/workers/baseImportQueue', () => ({
   enqueueBaseImportRunJob: enqueueBaseImportRunJobMock,
 }));
 
-const input: StartBaseImportRunInput = {
+const input = {
   connectionId: 'connection-1',
   inventoryId: 'inventory-1',
   catalogId: 'catalog-1',
@@ -35,7 +35,7 @@ const input: StartBaseImportRunInput = {
   dryRun: false,
   mode: 'upsert_on_base_id',
   requestId: 'request-1',
-};
+} satisfies StartBaseImportRunInput;
 
 const buildRun = (overrides: Partial<BaseImportRunRecord> = {}): BaseImportRunRecord => ({
   id: 'run-1',

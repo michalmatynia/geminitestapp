@@ -10,6 +10,13 @@ import { CaseResolverRelationsWorkspace } from '@/features/case-resolver/compone
 import {
   CaseResolverPageProvider,
 } from '@/features/case-resolver/context/CaseResolverPageContext';
+import type {
+  CaseResolverCaptureProposalState,
+} from '@/features/case-resolver-capture/proposals';
+import {
+  CASE_RESOLVER_CAPTURE_ACTION_OPTIONS,
+  type CaseResolverCaptureAction,
+} from '@/features/case-resolver-capture/settings';
 import {
   convertHtmlToMarkdown,
   DocumentWysiwygEditor,
@@ -23,9 +30,22 @@ import {
   buildFilemakerPartyOptions,
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
+  resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
-import { AppModal, Button, Input, Label, MultiSelect, SelectSimple, useToast } from '@/shared/ui';
+import {
+  AppModal,
+  Button,
+  Input,
+  Label,
+  MultiSelect,
+  SelectSimple,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  useToast,
+} from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
@@ -116,6 +136,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     updateWorkspace,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,
+    promptExploderPartyProposal,
+    setPromptExploderPartyProposal,
+    isPromptExploderPartyProposalOpen,
+    setIsPromptExploderPartyProposalOpen,
+    isApplyingPromptExploderPartyProposal,
+    setIsApplyingPromptExploderPartyProposal,
   } = state;
 
   React.useEffect(() => {
@@ -151,6 +177,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const [editorTextColor, setEditorTextColor] = React.useState('#e5e7eb');
   const [editorFontFamily, setEditorFontFamily] = React.useState('inherit');
   const [editorWidth, setEditorWidth] = React.useState<number | null>(null);
+  const [editorDetailsTab, setEditorDetailsTab] = React.useState<'document' | 'metadata'>('document');
   const [isDraggingSplitter, setIsDraggingSplitter] = React.useState(false);
   const [isMigratingEditorMode, setIsMigratingEditorMode] = React.useState(false);
   const [editorContentRevisionSeed, setEditorContentRevisionSeed] = React.useState(0);
@@ -187,6 +214,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setEditorTextColor('#e5e7eb');
     setEditorFontFamily('inherit');
     setEditorWidth(null);
+    setEditorDetailsTab('document');
     setEditorShowPreview(editingDocumentDraft.editorType !== 'wysiwyg');
     setEditorContentRevisionSeed((value) => value + 1);
   }, [buildDraftFingerprint, editingDocumentDraft?.id]);
@@ -260,6 +288,150 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     () => buildFilemakerPartyOptions(filemakerDatabase),
     [filemakerDatabase]
   );
+  const [promptExploderProposalDraft, setPromptExploderProposalDraft] =
+    React.useState<CaseResolverCaptureProposalState | null>(null);
+  const captureProposalTargetFileName = React.useMemo(() => {
+    if (!promptExploderProposalDraft) return null;
+    const targetFile = workspace.files.find(
+      (file) => file.id === promptExploderProposalDraft.targetFileId
+    );
+    return targetFile?.name ?? promptExploderProposalDraft.targetFileId;
+  }, [promptExploderProposalDraft, workspace.files]);
+
+  React.useEffect(() => {
+    if (!isPromptExploderPartyProposalOpen || !promptExploderPartyProposal) {
+      setPromptExploderProposalDraft(null);
+      return;
+    }
+    setPromptExploderProposalDraft({
+      targetFileId: promptExploderPartyProposal.targetFileId,
+      addresser: promptExploderPartyProposal.addresser
+        ? {
+          ...promptExploderPartyProposal.addresser,
+          candidate: { ...promptExploderPartyProposal.addresser.candidate },
+          existingReference: promptExploderPartyProposal.addresser.existingReference
+            ? { ...promptExploderPartyProposal.addresser.existingReference }
+            : null,
+        }
+        : null,
+      addressee: promptExploderPartyProposal.addressee
+        ? {
+          ...promptExploderPartyProposal.addressee,
+          candidate: { ...promptExploderPartyProposal.addressee.candidate },
+          existingReference: promptExploderPartyProposal.addressee.existingReference
+            ? { ...promptExploderPartyProposal.addressee.existingReference }
+            : null,
+        }
+        : null,
+    });
+  }, [isPromptExploderPartyProposalOpen, promptExploderPartyProposal]);
+
+  const handleClosePromptExploderProposalModal = useCallback((): void => {
+    if (isApplyingPromptExploderPartyProposal) return;
+    setIsPromptExploderPartyProposalOpen(false);
+  }, [isApplyingPromptExploderPartyProposal, setIsPromptExploderPartyProposalOpen]);
+
+  const updatePromptExploderProposalAction = useCallback(
+    (role: 'addresser' | 'addressee', action: CaseResolverCaptureAction): void => {
+      setPromptExploderProposalDraft((current) => {
+        if (!current) return current;
+        const roleProposal = current[role];
+        if (!roleProposal) return current;
+        return {
+          ...current,
+          [role]: {
+            ...roleProposal,
+            action,
+          },
+        };
+      });
+    },
+    []
+  );
+
+  const updatePromptExploderProposalReference = useCallback(
+    (role: 'addresser' | 'addressee', encodedReference: string): void => {
+      setPromptExploderProposalDraft((current) => {
+        if (!current) return current;
+        const roleProposal = current[role];
+        if (!roleProposal) return current;
+        return {
+          ...current,
+          [role]: {
+            ...roleProposal,
+            existingReference: decodeFilemakerPartyReference(encodedReference),
+          },
+        };
+      });
+    },
+    []
+  );
+
+  const handleApplyPromptExploderProposal = useCallback((): void => {
+    if (!promptExploderProposalDraft) {
+      setIsPromptExploderPartyProposalOpen(false);
+      return;
+    }
+
+    setIsApplyingPromptExploderPartyProposal(true);
+    try {
+      const targetFileId = promptExploderProposalDraft.targetFileId;
+      const addresserReference =
+        promptExploderProposalDraft.addresser?.action === 'database'
+          ? promptExploderProposalDraft.addresser.existingReference ?? null
+          : undefined;
+      const addresseeReference =
+        promptExploderProposalDraft.addressee?.action === 'database'
+          ? promptExploderProposalDraft.addressee.existingReference ?? null
+          : undefined;
+      const shouldPatchAddresser = addresserReference !== undefined;
+      const shouldPatchAddressee = addresseeReference !== undefined;
+      const shouldPersistPatch = shouldPatchAddresser || shouldPatchAddressee;
+
+      if (shouldPersistPatch) {
+        const now = new Date().toISOString();
+        updateWorkspace((current) => ({
+          ...current,
+          files: current.files.map((file) => {
+            if (file.id !== targetFileId) return file;
+            return {
+              ...file,
+              ...(shouldPatchAddresser ? { addresser: addresserReference } : {}),
+              ...(shouldPatchAddressee ? { addressee: addresseeReference } : {}),
+              updatedAt: now,
+            };
+          }),
+        }), { persistToast: 'Capture mapping applied.' });
+        setEditingDocumentDraft((current) => {
+          if (current?.id !== targetFileId) return current;
+          return {
+            ...current,
+            ...(shouldPatchAddresser ? { addresser: addresserReference } : {}),
+            ...(shouldPatchAddressee ? { addressee: addresseeReference } : {}),
+          };
+        });
+      }
+
+      setPromptExploderPartyProposal(promptExploderProposalDraft);
+      setIsPromptExploderPartyProposalOpen(false);
+      toast(
+        shouldPersistPatch
+          ? 'Capture mapping applied to document parties.'
+          : 'No database mapping selected. Document parties were not changed.',
+        { variant: shouldPersistPatch ? 'success' : 'info' }
+      );
+    } finally {
+      setIsApplyingPromptExploderPartyProposal(false);
+    }
+  }, [
+    promptExploderProposalDraft,
+    setEditingDocumentDraft,
+    setIsApplyingPromptExploderPartyProposal,
+    setIsPromptExploderPartyProposalOpen,
+    setPromptExploderPartyProposal,
+    toast,
+    updateWorkspace,
+  ]);
 
   const updateEditingDocumentDraft = useCallback(
     (patch: Partial<CaseResolverFileEditDraft>): void => {
@@ -629,12 +801,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       onCreateScanFile: () => { handleCreateFile(null); }, // Simplified
       onCreateNodeFile: () => { handleCreateFile(null); }, // Simplified
       onUploadAssets: async () => [], // Simplified
-      onMoveFile: async () => {},
-      onMoveAsset: async () => {},
+      onMoveFile: state.handleMoveFile,
+      onMoveAsset: state.handleMoveAsset,
       onMoveFolder: handleMoveFolder,
-      onRenameFile: async () => {},
-      onRenameAsset: async () => {},
-      onRenameFolder: async () => {},
+      onRenameFile: state.handleRenameFile,
+      onRenameAsset: state.handleRenameAsset,
+      onRenameFolder: state.handleRenameFolder,
       onToggleFolderLock: () => {},
       onDeleteFile: () => {},
       onToggleFileLock: () => {},
@@ -736,149 +908,170 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 </div>
               </div>
 
-              <div className='grid gap-3 md:grid-cols-2'>
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Name</Label>
-                  <Input
-                    value={editingDocumentDraft.name}
-                    onChange={(event) => {
-                      updateEditingDocumentDraft({ name: event.target.value });
-                    }}
-                  />
-                </div>
+              <Tabs
+                value={editorDetailsTab}
+                onValueChange={(value: string): void => {
+                  if (value === 'document' || value === 'metadata') {
+                    setEditorDetailsTab(value);
+                  }
+                }}
+                className='space-y-3'
+              >
+                <TabsList className='h-9'>
+                  <TabsTrigger value='document' className='text-xs'>Document</TabsTrigger>
+                  <TabsTrigger value='metadata' className='text-xs'>Case Metadata</TabsTrigger>
+                </TabsList>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Document Date</Label>
-                  <Input
-                    type='date'
-                    value={editingDocumentDraft.documentDate}
-                    onChange={(event) => {
-                      updateEditingDocumentDraft({ documentDate: event.target.value });
-                    }}
-                  />
-                </div>
+                <TabsContent value='document' className='mt-0'>
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Name</Label>
+                      <Input
+                        value={editingDocumentDraft.name}
+                        onChange={(event) => {
+                          updateEditingDocumentDraft({ name: event.target.value });
+                        }}
+                      />
+                    </div>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Parent Case</Label>
-                  <SelectSimple
-                    size='sm'
-                    value={editingDocumentDraft.parentCaseId ?? '__none__'}
-                    onValueChange={(value: string): void => {
-                      updateEditingDocumentDraft({
-                        parentCaseId: value === '__none__' ? null : value,
-                      });
-                    }}
-                    options={parentCaseOptions.filter(
-                      (option) => option.value === '__none__' || option.value !== editingDocumentDraft.id
-                    )}
-                    placeholder='Parent case'
-                    triggerClassName='h-9'
-                  />
-                </div>
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Document Date</Label>
+                      <Input
+                        type='date'
+                        value={editingDocumentDraft.documentDate}
+                        onChange={(event) => {
+                          updateEditingDocumentDraft({ documentDate: event.target.value });
+                        }}
+                      />
+                    </div>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Tag</Label>
-                  <SelectSimple
-                    size='sm'
-                    value={editingDocumentDraft.tagId ?? '__none__'}
-                    onValueChange={(value: string): void => {
-                      updateEditingDocumentDraft({
-                        tagId: value === '__none__' ? null : value,
-                      });
-                    }}
-                    options={caseTagOptions}
-                    placeholder='Select tag'
-                    triggerClassName='h-9'
-                  />
-                </div>
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Addresser</Label>
+                      <SelectSimple
+                        size='sm'
+                        value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
+                        onValueChange={(value: string): void => {
+                          updateEditingDocumentDraft({
+                            addresser: decodeFilemakerPartyReference(value),
+                          });
+                        }}
+                        options={partyOptions}
+                        placeholder='Select addresser'
+                        triggerClassName='h-9'
+                      />
+                    </div>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Case Identifier</Label>
-                  <SelectSimple
-                    size='sm'
-                    value={editingDocumentDraft.caseIdentifierId ?? '__none__'}
-                    onValueChange={(value: string): void => {
-                      updateEditingDocumentDraft({
-                        caseIdentifierId: value === '__none__' ? null : value,
-                      });
-                    }}
-                    options={caseIdentifierOptions}
-                    placeholder='Select case identifier'
-                    triggerClassName='h-9'
-                  />
-                </div>
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Addressee</Label>
+                      <SelectSimple
+                        size='sm'
+                        value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
+                        onValueChange={(value: string): void => {
+                          updateEditingDocumentDraft({
+                            addressee: decodeFilemakerPartyReference(value),
+                          });
+                        }}
+                        options={partyOptions}
+                        placeholder='Select addressee'
+                        triggerClassName='h-9'
+                      />
+                    </div>
 
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Category</Label>
-                  <SelectSimple
-                    size='sm'
-                    value={editingDocumentDraft.categoryId ?? '__none__'}
-                    onValueChange={(value: string): void => {
-                      updateEditingDocumentDraft({
-                        categoryId: value === '__none__' ? null : value,
-                      });
-                    }}
-                    options={caseCategoryOptions}
-                    placeholder='Select category'
-                    triggerClassName='h-9'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Addresser</Label>
-                  <SelectSimple
-                    size='sm'
-                    value={encodeFilemakerPartyReference(editingDocumentDraft.addresser)}
-                    onValueChange={(value: string): void => {
-                      updateEditingDocumentDraft({
-                        addresser: decodeFilemakerPartyReference(value),
-                      });
-                    }}
-                    options={partyOptions}
-                    placeholder='Select addresser'
-                    triggerClassName='h-9'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label className='text-xs text-gray-400'>Addressee</Label>
-                  <SelectSimple
-                    size='sm'
-                    value={encodeFilemakerPartyReference(editingDocumentDraft.addressee)}
-                    onValueChange={(value: string): void => {
-                      updateEditingDocumentDraft({
-                        addressee: decodeFilemakerPartyReference(value),
-                      });
-                    }}
-                    options={partyOptions}
-                    placeholder='Select addressee'
-                    triggerClassName='h-9'
-                  />
-                </div>
-
-                <div className='md:col-span-2'>
-                  <Label className='mb-2 block text-xs text-gray-400'>Reference Cases</Label>
-                  <MultiSelect
-                    options={caseReferenceOptions.filter(
-                      (option) => option.value !== editingDocumentDraft.id
-                    )}
-                    selected={editingDocumentDraft.referenceCaseIds.filter(
-                      (referenceId: string) => referenceId !== editingDocumentDraft.id
-                    )}
-                    onChange={(values: string[]): void => {
-                      updateEditingDocumentDraft({
-                        referenceCaseIds: values.filter(
+                    <div className='md:col-span-2'>
+                      <Label className='mb-2 block text-xs text-gray-400'>Reference Cases</Label>
+                      <MultiSelect
+                        options={caseReferenceOptions.filter(
+                          (option) => option.value !== editingDocumentDraft.id
+                        )}
+                        selected={editingDocumentDraft.referenceCaseIds.filter(
                           (referenceId: string) => referenceId !== editingDocumentDraft.id
-                        ),
-                      });
-                    }}
-                    placeholder='Select reference cases'
-                    searchPlaceholder='Search cases...'
-                    emptyMessage='No cases available.'
-                    className='w-full'
-                  />
-                </div>
-              </div>
+                        )}
+                        onChange={(values: string[]): void => {
+                          updateEditingDocumentDraft({
+                            referenceCaseIds: values.filter(
+                              (referenceId: string) => referenceId !== editingDocumentDraft.id
+                            ),
+                          });
+                        }}
+                        placeholder='Select reference cases'
+                        searchPlaceholder='Search cases...'
+                        emptyMessage='No cases available.'
+                        className='w-full'
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value='metadata' className='mt-0'>
+                  <div className='grid gap-3 md:grid-cols-2'>
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Parent Case</Label>
+                      <SelectSimple
+                        size='sm'
+                        value={editingDocumentDraft.parentCaseId ?? '__none__'}
+                        onValueChange={(value: string): void => {
+                          updateEditingDocumentDraft({
+                            parentCaseId: value === '__none__' ? null : value,
+                          });
+                        }}
+                        options={parentCaseOptions.filter(
+                          (option) => option.value === '__none__' || option.value !== editingDocumentDraft.id
+                        )}
+                        placeholder='Parent case'
+                        triggerClassName='h-9'
+                      />
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Tag</Label>
+                      <SelectSimple
+                        size='sm'
+                        value={editingDocumentDraft.tagId ?? '__none__'}
+                        onValueChange={(value: string): void => {
+                          updateEditingDocumentDraft({
+                            tagId: value === '__none__' ? null : value,
+                          });
+                        }}
+                        options={caseTagOptions}
+                        placeholder='Select tag'
+                        triggerClassName='h-9'
+                      />
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Case Identifier</Label>
+                      <SelectSimple
+                        size='sm'
+                        value={editingDocumentDraft.caseIdentifierId ?? '__none__'}
+                        onValueChange={(value: string): void => {
+                          updateEditingDocumentDraft({
+                            caseIdentifierId: value === '__none__' ? null : value,
+                          });
+                        }}
+                        options={caseIdentifierOptions}
+                        placeholder='Select case identifier'
+                        triggerClassName='h-9'
+                      />
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label className='text-xs text-gray-400'>Category</Label>
+                      <SelectSimple
+                        size='sm'
+                        value={editingDocumentDraft.categoryId ?? '__none__'}
+                        onValueChange={(value: string): void => {
+                          updateEditingDocumentDraft({
+                            categoryId: value === '__none__' ? null : value,
+                          });
+                        }}
+                        options={caseCategoryOptions}
+                        placeholder='Select category'
+                        triggerClassName='h-9'
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
 
               <div className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-3 py-2 text-xs'>
                 <span className='text-gray-400'>
@@ -892,7 +1085,19 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 ) : null}
               </div>
 
-              <div className='flex justify-end'>
+              <div className='flex justify-end gap-2'>
+                {promptExploderPartyProposal?.targetFileId === editingDocumentDraft.id ? (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='h-8'
+                    onClick={(): void => {
+                      setIsPromptExploderPartyProposalOpen(true);
+                    }}
+                  >
+                    Review Capture Mapping
+                  </Button>
+                ) : null}
                 <Button
                   type='button'
                   variant='outline'
@@ -982,6 +1187,137 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               </div>
             </div>
           )}
+        </AppModal>
+
+        <AppModal
+          open={isPromptExploderPartyProposalOpen && promptExploderProposalDraft !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleClosePromptExploderProposalModal();
+            }
+          }}
+          title='Prompt Exploder Capture Mapping'
+          subtitle='Review and edit addresser/addressee mapping before it updates this document.'
+          size='lg'
+          bodyClassName='h-auto max-h-[78vh]'
+          footer={(
+            <>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={handleClosePromptExploderProposalModal}
+                disabled={isApplyingPromptExploderPartyProposal}
+              >
+                Close
+              </Button>
+              <Button
+                type='button'
+                onClick={handleApplyPromptExploderProposal}
+                disabled={!promptExploderProposalDraft || isApplyingPromptExploderPartyProposal}
+              >
+                {isApplyingPromptExploderPartyProposal ? 'Applying...' : 'Apply Mapping'}
+              </Button>
+            </>
+          )}
+        >
+          {promptExploderProposalDraft ? (
+            <div className='space-y-4'>
+              <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
+                Target File: <span className='font-medium text-gray-100'>{captureProposalTargetFileName}</span>
+              </div>
+
+              {(['addresser', 'addressee'] as const).map((role) => {
+                const proposal = promptExploderProposalDraft[role];
+                const roleLabel = role === 'addresser' ? 'Addresser' : 'Addressee';
+                if (!proposal) {
+                  return (
+                    <div
+                      key={role}
+                      className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-3 text-sm text-gray-400'
+                    >
+                      No captured {roleLabel.toLowerCase()} candidate in this Prompt Exploder payload.
+                    </div>
+                  );
+                }
+
+                const matchedPartyLabel = proposal.existingReference
+                  ? (
+                    resolveFilemakerPartyLabel(filemakerDatabase, proposal.existingReference) ??
+                    `${proposal.existingReference.kind}:${proposal.existingReference.id}`
+                  )
+                  : 'None';
+
+                return (
+                  <div key={role} className='space-y-3 rounded border border-border/60 bg-card/25 p-3'>
+                    <div className='flex items-center justify-between gap-3'>
+                      <div className='text-sm font-semibold text-gray-100'>{roleLabel}</div>
+                      <div className='text-[11px] text-gray-400'>
+                        Source role: {proposal.sourceRole}
+                      </div>
+                    </div>
+
+                    <div className='rounded border border-border/60 bg-card/30 p-2'>
+                      <div className='text-[11px] uppercase tracking-wide text-gray-500'>
+                        Captured Text
+                      </div>
+                      <div className='mt-1 whitespace-pre-wrap text-xs text-gray-200'>
+                        {proposal.candidate.rawText || proposal.candidate.displayName || 'No captured text.'}
+                      </div>
+                    </div>
+
+                    <div className='grid gap-3 md:grid-cols-2'>
+                      <div className='space-y-2'>
+                        <Label className='text-xs text-gray-400'>Action</Label>
+                        <SelectSimple
+                          size='sm'
+                          value={proposal.action}
+                          onValueChange={(value: string): void => {
+                            if (
+                              value === 'database' ||
+                              value === 'text' ||
+                              value === 'ignore'
+                            ) {
+                              updatePromptExploderProposalAction(role, value);
+                            }
+                          }}
+                          options={CASE_RESOLVER_CAPTURE_ACTION_OPTIONS}
+                          triggerClassName='h-9'
+                        />
+                      </div>
+
+                      {proposal.action === 'database' ? (
+                        <div className='space-y-2'>
+                          <Label className='text-xs text-gray-400'>Database Party</Label>
+                          <SelectSimple
+                            size='sm'
+                            value={encodeFilemakerPartyReference(proposal.existingReference)}
+                            onValueChange={(value: string): void => {
+                              updatePromptExploderProposalReference(role, value);
+                            }}
+                            options={partyOptions}
+                            triggerClassName='h-9'
+                          />
+                        </div>
+                      ) : (
+                        <div className='space-y-2'>
+                          <Label className='text-xs text-gray-400'>Matched Party</Label>
+                          <div className='h-9 rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-300'>
+                            {matchedPartyLabel}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {proposal.existingAddressId ? (
+                      <div className='text-[11px] text-gray-500'>
+                        Matched address ID: {proposal.existingAddressId}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
         </AppModal>
       </div>
     </CaseResolverPageProvider>

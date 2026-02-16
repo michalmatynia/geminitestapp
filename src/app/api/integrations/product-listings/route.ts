@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository, listAllProductListingsAcrossProviders } from '@/features/integrations/server';
+import { getProductRepository } from '@/features/products/server';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -50,6 +51,30 @@ const inferMarketplaceFromListingMetadata = (
   if (baseData && typeof baseData === 'object') return 'base';
 
   return null;
+};
+
+const listProductsWithBaseIds = async (): Promise<
+  Array<{ id: string; baseProductId: string }>
+> => {
+  const productRepository = await getProductRepository();
+  const pageSize = 500;
+  const maxPages = 40;
+  const products: Array<{ id: string; baseProductId: string }> = [];
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const rows = await productRepository.getProducts({ page, pageSize });
+    if (rows.length === 0) break;
+
+    rows.forEach((product) => {
+      const baseProductId = (product.baseProductId ?? '').trim();
+      if (!baseProductId) return;
+      products.push({ id: product.id, baseProductId });
+    });
+
+    if (rows.length < pageSize) break;
+  }
+
+  return products;
 };
 
 /**
@@ -114,6 +139,19 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
       byProduct.set(listing.productId, {
         ...current,
         [marketplace]: normalizedStatus || 'unknown',
+      });
+    }
+  }
+
+  // Keep BL badge active for previously imported products even before listing
+  // records are fully backfilled.
+  const linkedProducts = await listProductsWithBaseIds();
+  for (const product of linkedProducts) {
+    const current = byProduct.get(product.id) ?? {};
+    if (!current.base) {
+      byProduct.set(product.id, {
+        ...current,
+        base: 'active',
       });
     }
   }

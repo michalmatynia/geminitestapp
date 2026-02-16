@@ -58,6 +58,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     selectNode,
     hoverNode,
     activateNode,
+    detachSubtree,
     toggleMergeMode,
     toggleMergeSelection,
     clearMergeSelection,
@@ -195,6 +196,10 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     setWorkingSlotId(nodeId);
     switchToControls();
   }, [setWorkingSlotId, switchToControls]);
+
+  const handleCtxDetachSubtree = useCallback((nodeId: string) => {
+    void detachSubtree(nodeId);
+  }, [detachSubtree]);
 
   const handleCtxAddToComposite = useCallback((nodeId: string) => {
     if (!compositeMode) toggleCompositeMode();
@@ -489,6 +494,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
               collapsedNodeIds,
               onClose: closeContextMenu,
               onSetAsSource: handleCtxSetAsSource,
+              onDetachSubtree: handleCtxDetachSubtree,
               onIsolateBranch: isolateBranch,
               onToggleCollapse: toggleCollapse,
               onAddToComposite: handleCtxAddToComposite,

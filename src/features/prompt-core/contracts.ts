@@ -5,11 +5,11 @@ import type {
 import type {
   PromptValidationRule,
 } from '@/features/prompt-engine/settings';
+import type { PromptExploderLearnedTemplate } from '@/features/prompt-exploder/types';
 import type {
   PromptExploderRuntimeValidationScope,
   PromptExploderValidationRuleStack,
 } from '@/features/prompt-exploder/validation-stack';
-import type { PromptExploderLearnedTemplate } from '@/features/prompt-exploder/types';
 
 export type PromptValidationRuntimeProfile =
   | 'all'

@@ -3,6 +3,7 @@ export const settingSections = [
   'Tags',
   'Price Groups',
   'Catalogs',
+  'Sync Settings',
   'Images & Studio',
   'Validator',
   'Internationalization',

@@ -10,7 +10,10 @@ export type QueueName =
   | 'image-studio-run'
   | 'base-import'
   | 'tradera-listings'
-  | 'tradera-relist-scheduler';
+  | 'tradera-relist-scheduler'
+  | 'product-sync'
+  | 'product-sync-backfill'
+  | 'product-sync-scheduler';
 
 export type QueueHealthStatus = {
   running: boolean;

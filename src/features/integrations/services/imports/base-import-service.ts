@@ -593,13 +593,14 @@ export const classifyBaseImportError = (
       return result;
     }
     if (error.code === AppErrorCodes.externalService) {
-      return {
+      const result: any = {
         code: 'BASE_FETCH_ERROR',
         errorClass: error.retryable ? 'transient' : 'permanent',
         retryable: error.retryable,
         message,
-        retryAfterMs: error.retryAfterMs,
       };
+      if (error.retryAfterMs !== undefined) result.retryAfterMs = error.retryAfterMs;
+      return result;
     }
     if (error.code === AppErrorCodes.configurationError) {
       return {

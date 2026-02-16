@@ -7,9 +7,9 @@ import {
   getSectionStyles,
   type ColorSchemeColors,
 } from '@/features/cms/components/frontend/theme-styles';
-import type { BlockInstance, SectionInstance } from '@/features/cms/types/page-builder';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
+import type { BlockInstance, SectionInstance } from '@/features/cms/types/page-builder';
 
 interface PreviewHeroSectionProps {
   section: SectionInstance;

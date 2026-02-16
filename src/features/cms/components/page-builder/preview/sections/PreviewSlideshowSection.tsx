@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+
 import { 
   getSectionContainerClass, 
   getSectionStyles,
   type ColorSchemeColors,
 } from '@/features/cms/components/frontend/theme-styles';
+import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
+import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { 
   normalizeSlideshowAnimationType,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
 import type { BlockInstance, SectionInstance } from '@/features/cms/types/page-builder';
-import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
-import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 
 interface PreviewSlideshowSectionProps {
   section: SectionInstance;

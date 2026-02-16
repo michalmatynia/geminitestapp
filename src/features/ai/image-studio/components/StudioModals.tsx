@@ -41,10 +41,10 @@ import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { isParamUiControl, type ParamUiControl } from '../utils/param-ui';
 import { DriveImportModal } from './modals/DriveImportModal';
+import { ExtractPromptParamsModal } from './modals/ExtractPromptParamsModal';
+import { GenerationPreviewModal } from './modals/GenerationPreviewModal';
 import { SlotCreateModal } from './modals/SlotCreateModal';
 import { SlotInlineEditModal } from './modals/SlotInlineEditModal';
-import { GenerationPreviewModal } from './modals/GenerationPreviewModal';
-import { ExtractPromptParamsModal } from './modals/ExtractPromptParamsModal';
 
 import type { ImageStudioSlotRecord } from '../types';
 

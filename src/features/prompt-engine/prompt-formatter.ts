@@ -1,3 +1,5 @@
+import { recordPromptValidationTiming } from '@/features/prompt-core/runtime-observability';
+
 import {
   doesPromptRuleApplyToScope,
   evaluatePromptValidationRule,
@@ -10,7 +12,6 @@ import {
   validateProgrammaticPromptWithRuntime,
   type PromptValidationExecutionContext,
 } from './prompt-validator';
-import { recordPromptValidationTiming } from '@/features/prompt-core/runtime-observability';
 
 import type { PromptAutofixOperation, PromptValidationRule, PromptValidationSettings, PromptValidationSimilarPattern } from './settings';
 

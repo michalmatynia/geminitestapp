@@ -372,7 +372,15 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   >({
     mutationKey: studioKeys.mutation('slots.move'),
     mutationFn: async ({ slot, targetFolder }: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<ImageStudioSlotRecord> => {
-      return updateSlotMutation.mutateAsync({ id: slot.id, data: { folderPath: targetFolder } });
+      const slotId = slot.id.trim();
+      const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(
+        `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
+        { folderPath: targetFolder }
+      );
+      if (!response.slot) {
+        throw new Error('Failed to move image studio slot');
+      }
+      return response.slot;
     },
     onMutate: async ({ slot, targetFolder }: { slot: ImageStudioSlotRecord; targetFolder: string }) => {
       await queryClient.cancelQueries({ queryKey: slotsQueryKey });

@@ -80,6 +80,9 @@ export const initializeQueues = (): void => {
       import('@/features/jobs/workers/traderaListingQueue'),
       import('@/features/jobs/workers/traderaRelistSchedulerQueue'),
       import('@/features/jobs/workers/baseImportQueue'),
+      import('@/features/jobs/workers/productSyncQueue'),
+      import('@/features/jobs/workers/productSyncBackfillQueue'),
+      import('@/features/jobs/workers/productSyncSchedulerQueue'),
     ]);
     const backupSchedulerModule = queueModules[5] as {
       startDatabaseBackupSchedulerQueue?: () => void;
@@ -89,6 +92,10 @@ export const initializeQueues = (): void => {
       startTraderaRelistSchedulerQueue?: () => void;
     };
     traderaSchedulerModule.startTraderaRelistSchedulerQueue?.();
+    const productSyncSchedulerModule = queueModules[12] as {
+      startProductSyncSchedulerQueue?: () => void;
+    };
+    productSyncSchedulerModule.startProductSyncSchedulerQueue?.();
 
     void logSystemEvent({
       level: 'info',

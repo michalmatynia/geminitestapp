@@ -10,6 +10,7 @@ type VersionGraphContextMenuValue = {
   collapsedNodeIds: Set<string>;
   onClose: () => void;
   onSetAsSource: (nodeId: string) => void;
+  onDetachSubtree: (nodeId: string) => void;
   onIsolateBranch: (nodeId: string) => void;
   onToggleCollapse: (nodeId: string) => void;
   onAddToComposite: (nodeId: string) => void;

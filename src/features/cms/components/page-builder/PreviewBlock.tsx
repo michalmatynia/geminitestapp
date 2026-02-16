@@ -55,12 +55,11 @@ import {
   PreviewTextAtomBlock,
   registerPreviewBlockItem,
 } from './preview/PreviewSectionBlocks';
-
-import { PreviewSlideshowSection } from './preview/sections/PreviewSlideshowSection';
 import { PreviewGridSection } from './preview/sections/PreviewGridSection';
-import { PreviewImageWithTextSection } from './preview/sections/PreviewImageWithTextSection';
 import { PreviewHeroSection } from './preview/sections/PreviewHeroSection';
+import { PreviewImageWithTextSection } from './preview/sections/PreviewImageWithTextSection';
 import { PreviewRichTextSection } from './preview/sections/PreviewRichTextSection';
+import { PreviewSlideshowSection } from './preview/sections/PreviewSlideshowSection';
 
 import type { PreviewBlockItemProps } from './preview/types';
 import type {

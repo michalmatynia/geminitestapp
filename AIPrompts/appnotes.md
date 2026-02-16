@@ -3,6 +3,9 @@ When I create Product from Draft, I get Failed to create
 When I create from draft I should be able to choose the first tab selected
 
 
+retrieve app notes from old Prisma backups, I need prisma viewer to find notes somewhere
+
+
 Versioning graph, detach node, flatten
 
 TEST Exploder AGAINST DIFFERENT PROMPTS
@@ -19,7 +22,7 @@ in CMS everything can have file uploadeable background
 
  Queries: Factory-based
    - Mutations: Factory-based 
-   
+
 ---
 * Backup MongoDB
 

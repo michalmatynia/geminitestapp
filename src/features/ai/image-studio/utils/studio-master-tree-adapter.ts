@@ -35,11 +35,24 @@ export const createImageStudioMasterTreeAdapter = ({
           targetParent?.entity === 'folder'
             ? targetParent.id
             : resolveFolderTargetPathForMasterNode(context.nextNodes, operation.targetParentId);
-        if (targetFolder === null) return;
+        if (targetFolder === null) {
+          console.warn('[ImageStudio:tree] onMove skipped: could not resolve targetFolder', {
+            nodeId: node.nodeId,
+            entity: node.entity,
+            targetParentId: operation.targetParentId,
+          });
+          return;
+        }
 
         if (node.entity === 'card') {
           const slot = slotById.get(node.id);
-          if (!slot) return;
+          if (!slot) {
+            console.warn('[ImageStudio:tree] onMove skipped: slot not found in slotById map', {
+              slotId: node.id,
+              targetFolder,
+            });
+            return;
+          }
           await moveSlot({ slot, targetFolder });
           return;
         }

@@ -2,9 +2,9 @@
 
 import React from 'react';
 
+import type { ModalStateProps } from '@/shared/types/modal-props';
 import { AppModal } from '@/shared/ui/app-modal';
 
-import type { ModalStateProps } from '@/shared/types/modal-props';
 
 export interface DetailModalProps extends ModalStateProps {
   title: string;

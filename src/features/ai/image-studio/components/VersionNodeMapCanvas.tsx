@@ -125,6 +125,40 @@ function getNodeStrokeClass(
   return 'fill-card/80 stroke-blue-400/60';
 }
 
+type NodeOperationVisual = {
+  label: string;
+  icon: string;
+  color: string;
+};
+
+function resolveNodeOperationVisual(node: VersionNode): NodeOperationVisual {
+  const meta = readMeta(node.slot);
+  const relationType = typeof meta.relationType === 'string' ? meta.relationType.toLowerCase() : '';
+
+  if (relationType.startsWith('crop:') || meta.crop) {
+    return { label: 'Crop', icon: 'C', color: '#22d3ee' };
+  }
+  if (relationType.startsWith('center:') || meta.center) {
+    return { label: 'Center', icon: 'T', color: '#38bdf8' };
+  }
+  if (relationType.startsWith('upscale:') || meta.upscale) {
+    return { label: 'Upscale', icon: 'U', color: '#60a5fa' };
+  }
+  if (relationType.startsWith('mask:') || meta.maskData || node.hasMask) {
+    return { label: 'Mask', icon: 'K', color: '#a855f7' };
+  }
+  if (relationType.startsWith('merge:') || node.type === 'merge') {
+    return { label: 'Merge', icon: 'M', color: '#a855f7' };
+  }
+  if (relationType.startsWith('composite:') || node.type === 'composite') {
+    return { label: 'Composite', icon: 'O', color: '#14b8a6' };
+  }
+  if (relationType.startsWith('generation:') || node.type === 'generation') {
+    return { label: 'Generation', icon: 'G', color: '#34d399' };
+  }
+  return { label: 'Base', icon: 'B', color: '#9ca3af' };
+}
+
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -230,20 +264,33 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
     const prevEdgeIdsRef = useRef<Set<string>>(new Set());
     const newNodeIdsRef = useRef<Set<string>>(new Set());
     const newEdgeIdsRef = useRef<Set<string>>(new Set());
+    const animationsPrimedRef = useRef(false);
 
     // Compute new items on each render
     const currentNodeIds = new Set(nodes.map((n) => n.id));
     const currentEdgeIds = new Set(edges.map((e) => e.id));
 
-    newNodeIdsRef.current = new Set(
-      [...currentNodeIds].filter((id) => !prevNodeIdsRef.current.has(id)),
-    );
-    newEdgeIdsRef.current = new Set(
-      [...currentEdgeIds].filter((id) => !prevEdgeIdsRef.current.has(id)),
-    );
+    if (!animationsPrimedRef.current) {
+      // Do not animate every node when the graph is first opened.
+      newNodeIdsRef.current = new Set();
+      newEdgeIdsRef.current = new Set();
+    } else {
+      newNodeIdsRef.current = new Set(
+        [...currentNodeIds].filter((id) => !prevNodeIdsRef.current.has(id)),
+      );
+      newEdgeIdsRef.current = new Set(
+        [...currentEdgeIds].filter((id) => !prevEdgeIdsRef.current.has(id)),
+      );
+    }
 
     // Update previous sets after render
     useEffect(() => {
+      if (!animationsPrimedRef.current) {
+        prevNodeIdsRef.current = currentNodeIds;
+        prevEdgeIdsRef.current = currentEdgeIds;
+        animationsPrimedRef.current = true;
+        return;
+      }
       const timeout = setTimeout(() => {
         prevNodeIdsRef.current = currentNodeIds;
         prevEdgeIdsRef.current = currentEdgeIds;
@@ -488,6 +535,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
               const isCollapsed = collapsedNodeIds.has(node.id);
               const isFilteredOut = filteredNodeIds !== null && !filteredNodeIds.has(node.id);
               const imageSrc = getSlotImageSrc(node.slot);
+              const operationVisual = resolveNodeOperationVisual(node);
               const nx = node.x - NODE_WIDTH / 2;
               const ny = node.y - NODE_HEIGHT / 2;
 
@@ -533,7 +581,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                   }}
                 >
                   {/* Accessible title */}
-                  <title>{node.label} ({node.type})</title>
+                  <title>{operationVisual.label} ({node.type})</title>
 
                   {isCompositeNode && compositeLayers.length > 0 ? (
                     <CompositeStackNode
@@ -591,16 +639,35 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                         />
                       )}
 
-                      {/* Label */}
-                      <text
-                        x={NODE_WIDTH / 2}
-                        y={THUMB_SIZE + 6 + LABEL_OFFSET_Y}
-                        textAnchor='middle'
-                        fill='#d1d5db'
-                        fontSize={9}
-                      >
-                        {node.label.length > 10 ? `${node.label.slice(0, 9)}...` : node.label}
-                      </text>
+                      {/* Operation label under thumbnail */}
+                      <g>
+                        <circle
+                          cx={NODE_WIDTH / 2 - 20}
+                          cy={THUMB_SIZE + 6 + LABEL_OFFSET_Y - 2}
+                          r={3}
+                          fill={operationVisual.color}
+                          fillOpacity={0.95}
+                        />
+                        <text
+                          x={NODE_WIDTH / 2 - 14}
+                          y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
+                          textAnchor='start'
+                          fill={operationVisual.color}
+                          fontSize={7}
+                          fontWeight='bold'
+                        >
+                          {operationVisual.icon}
+                        </text>
+                        <text
+                          x={NODE_WIDTH / 2 - 6}
+                          y={THUMB_SIZE + 6 + LABEL_OFFSET_Y + 1}
+                          textAnchor='start'
+                          fill='#d1d5db'
+                          fontSize={8}
+                        >
+                          {operationVisual.label}
+                        </text>
+                      </g>
 
                       {/* Mask badge */}
                       {node.hasMask ? (
@@ -624,25 +691,6 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                           />
                           <title>{annotation}</title>
                         </g>
-                      ) : null}
-
-                      {/* Type badge */}
-                      {node.type !== 'composite' ? (
-                        <text
-                          x={6}
-                          y={12}
-                          fontSize={8}
-                          fill={
-                            node.type === 'merge'
-                              ? '#a855f7'
-                              : node.type === 'generation'
-                                ? '#34d399'
-                                : '#60a5fa'
-                          }
-                          fontWeight='bold'
-                        >
-                          {node.type === 'merge' ? 'M' : node.type === 'generation' ? 'G' : 'B'}
-                        </text>
                       ) : null}
 
                       {/* Collapse toggle button */}

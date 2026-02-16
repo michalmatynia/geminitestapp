@@ -5,6 +5,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useToast } from '@/shared/ui';
 
 import { useSlotsState, useSlotsActions } from './SlotsContext';
+import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import { readMeta } from '../utils/metadata';
 import {
   computeVersionGraph,
@@ -71,6 +72,7 @@ export interface VersionGraphActions {
   selectNode: (slotId: string | null) => void;
   hoverNode: (slotId: string | null) => void;
   activateNode: (slotId: string) => void;
+  detachSubtree: (slotId: string) => Promise<void>;
   toggleMergeMode: () => void;
   toggleMergeSelection: (slotId: string) => void;
   clearMergeSelection: () => void;
@@ -109,6 +111,33 @@ export interface VersionGraphActions {
 
 const VersionGraphStateContext = createContext<VersionGraphState | null>(null);
 const VersionGraphActionsContext = createContext<VersionGraphActions | null>(null);
+
+const VERSION_GRAPH_IMAGE_PRELOAD_LIMIT = 120;
+const versionGraphImagePreloadStatus = new Map<string, 'loading' | 'loaded' | 'error'>();
+
+const preloadVersionGraphImage = (src: string): void => {
+  const normalizedSrc = src.trim();
+  if (!normalizedSrc) return;
+  if (normalizedSrc.startsWith('data:') || normalizedSrc.startsWith('blob:')) {
+    versionGraphImagePreloadStatus.set(normalizedSrc, 'loaded');
+    return;
+  }
+
+  const status = versionGraphImagePreloadStatus.get(normalizedSrc);
+  if (status === 'loading' || status === 'loaded') return;
+
+  versionGraphImagePreloadStatus.set(normalizedSrc, 'loading');
+  const image = new Image();
+  image.loading = 'eager';
+  image.decoding = 'async';
+  image.onload = (): void => {
+    versionGraphImagePreloadStatus.set(normalizedSrc, 'loaded');
+  };
+  image.onerror = (): void => {
+    versionGraphImagePreloadStatus.set(normalizedSrc, 'error');
+  };
+  image.src = normalizedSrc;
+};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -163,6 +192,135 @@ function matchesFilter(
 
   return true;
 }
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const readMetadataSourceIds = (metadata: Record<string, unknown> | null): string[] => {
+  if (!metadata) return [];
+
+  const ordered = new Set<string>();
+  const primary = metadata['sourceSlotId'];
+  if (typeof primary === 'string' && primary.trim()) {
+    ordered.add(primary.trim());
+  }
+
+  const nested = metadata['sourceSlotIds'];
+  if (Array.isArray(nested)) {
+    nested.forEach((value: unknown) => {
+      if (typeof value !== 'string') return;
+      const normalized = value.trim();
+      if (!normalized) return;
+      ordered.add(normalized);
+    });
+  }
+
+  return Array.from(ordered);
+};
+
+const remapMetadataIdList = (
+  value: unknown,
+  idMap: Map<string, string>,
+): string[] => {
+  if (!Array.isArray(value)) return [];
+  const remapped = new Set<string>();
+  value.forEach((entry: unknown) => {
+    if (typeof entry !== 'string') return;
+    const normalized = entry.trim();
+    if (!normalized) return;
+    const mapped = idMap.get(normalized);
+    if (mapped) remapped.add(mapped);
+  });
+  return Array.from(remapped);
+};
+
+const remapMetadataForDetachedCopy = (
+  metadata: Record<string, unknown> | null,
+  idMap: Map<string, string>,
+  isRoot: boolean,
+): Record<string, unknown> | null => {
+  if (!metadata) {
+    return isRoot ? { role: 'base' } : null;
+  }
+
+  const next: Record<string, unknown> = { ...metadata };
+  const remappedSourceIds = Array.from(
+    new Set(
+      readMetadataSourceIds(metadata)
+        .map((sourceId: string) => idMap.get(sourceId))
+        .filter((sourceId): sourceId is string => Boolean(sourceId)),
+    ),
+  );
+
+  if (isRoot || remappedSourceIds.length === 0) {
+    delete next['sourceSlotId'];
+    delete next['sourceSlotIds'];
+  } else if (remappedSourceIds.length === 1) {
+    next['sourceSlotId'] = remappedSourceIds[0];
+    delete next['sourceSlotIds'];
+  } else {
+    next['sourceSlotId'] = remappedSourceIds[0];
+    next['sourceSlotIds'] = remappedSourceIds;
+  }
+
+  const remappedReferenceIds = remapMetadataIdList(next['sourceReferenceIds'], idMap);
+  if (remappedReferenceIds.length > 0) {
+    next['sourceReferenceIds'] = remappedReferenceIds;
+  } else {
+    delete next['sourceReferenceIds'];
+  }
+
+  const compositeConfig = asRecord(next['compositeConfig']);
+  if (compositeConfig) {
+    const remappedLayers = Array.isArray(compositeConfig['layers'])
+      ? (compositeConfig['layers'] as unknown[])
+        .map((layer: unknown): Record<string, unknown> | null => {
+          const layerRecord = asRecord(layer);
+          if (!layerRecord) return null;
+          const rawSlotId = layerRecord['slotId'];
+          if (typeof rawSlotId !== 'string') return null;
+          const mappedSlotId = idMap.get(rawSlotId.trim());
+          if (!mappedSlotId) return null;
+          return { ...layerRecord, slotId: mappedSlotId };
+        })
+        .filter((layer): layer is Record<string, unknown> => Boolean(layer))
+      : [];
+
+    const nextCompositeConfig: Record<string, unknown> = { ...compositeConfig };
+    if (remappedLayers.length > 0) {
+      nextCompositeConfig['layers'] = remappedLayers.map((layer: Record<string, unknown>, index: number) => ({
+        ...layer,
+        order: index,
+      }));
+    } else {
+      delete nextCompositeConfig['layers'];
+    }
+
+    const rawFlattenedId = nextCompositeConfig['flattenedSlotId'];
+    if (typeof rawFlattenedId === 'string') {
+      const mappedFlattenedId = idMap.get(rawFlattenedId.trim());
+      if (mappedFlattenedId) {
+        nextCompositeConfig['flattenedSlotId'] = mappedFlattenedId;
+      } else {
+        delete nextCompositeConfig['flattenedSlotId'];
+      }
+    }
+
+    if (Object.keys(nextCompositeConfig).length > 0) {
+      next['compositeConfig'] = nextCompositeConfig;
+    } else {
+      delete next['compositeConfig'];
+    }
+  }
+
+  if (isRoot) {
+    next['role'] = 'base';
+  }
+
+  return Object.keys(next).length > 0 ? next : null;
+};
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -235,6 +393,17 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     const result = computeTimelineLayout(baseGraph.nodes, baseGraph.edges, orientation);
     return { ...baseGraph, nodes: result.nodes, edges: result.edges };
   }, [baseGraph, layoutMode]);
+
+  // Warm image cache while the graph context is active so thumbnails render quickly on tab open.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const candidates = layoutGraph.nodes.slice(0, VERSION_GRAPH_IMAGE_PRELOAD_LIMIT);
+    candidates.forEach((node) => {
+      const src = getImageStudioSlotImageSrc(node.slot);
+      if (!src) return;
+      preloadVersionGraphImage(src);
+    });
+  }, [layoutGraph.nodes]);
 
   // Compute hidden IDs from collapse
   const hiddenIds = useMemo(
@@ -345,6 +514,93 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     },
     [setWorkingSlotId, setSelectedSlotId],
   );
+
+  const detachSubtree = useCallback(async (slotId: string) => {
+    const nodeById = new Map(layoutGraph.nodes.map((node) => [node.id, node]));
+    const rootNode = nodeById.get(slotId);
+    if (!rootNode) {
+      toast('Selected node no longer exists.', { variant: 'error' });
+      return;
+    }
+
+    const subtreeIds = new Set<string>([slotId]);
+    const queue: string[] = [slotId];
+    while (queue.length > 0) {
+      const currentId = queue.shift();
+      if (!currentId) continue;
+      const currentNode = nodeById.get(currentId);
+      if (!currentNode) continue;
+      currentNode.childIds.forEach((childId: string) => {
+        if (subtreeIds.has(childId)) return;
+        subtreeIds.add(childId);
+        queue.push(childId);
+      });
+    }
+
+    const subtreeNodes = layoutGraph.nodes.filter((node) => subtreeIds.has(node.id));
+    if (subtreeNodes.length === 0) {
+      toast('No detachable subtree found for that node.', { variant: 'error' });
+      return;
+    }
+
+    const orderedNodes = [...subtreeNodes].sort((a, b) => {
+      if (a.id === slotId) return -1;
+      if (b.id === slotId) return 1;
+      if (a.depth !== b.depth) return a.depth - b.depth;
+      return a.id.localeCompare(b.id);
+    });
+
+    const idMap = new Map<string, string>();
+    let detachedRootId: string | null = null;
+
+    try {
+      for (const node of orderedNodes) {
+        const slot = node.slot;
+        const metadata = remapMetadataForDetachedCopy(
+          asRecord(slot.metadata),
+          idMap,
+          node.id === slotId,
+        );
+        const createdSlots = await createSlots([
+          {
+            name: slot.name ?? null,
+            folderPath: slot.folderPath ?? null,
+            imageFileId: slot.imageFileId ?? null,
+            imageUrl: slot.imageUrl ?? null,
+            imageBase64: slot.imageBase64 ?? null,
+            asset3dId: slot.asset3dId ?? null,
+            metadata,
+          },
+        ]);
+
+        const created = createdSlots[0];
+        if (!created) {
+          throw new Error('detached copy failed');
+        }
+
+        idMap.set(node.id, created.id);
+        if (node.id === slotId) {
+          detachedRootId = created.id;
+        }
+      }
+    } catch {
+      toast('Failed to detach the selected subtree.', { variant: 'error' });
+      return;
+    }
+
+    if (!detachedRootId) {
+      toast('Detached subtree was created, but no root was returned.', { variant: 'error' });
+      return;
+    }
+
+    setWorkingSlotId(detachedRootId);
+    setSelectedSlotId(detachedRootId);
+    setSelectedNodeId(detachedRootId);
+    toast(
+      `Detached ${subtreeNodes.length} ${subtreeNodes.length === 1 ? 'node' : 'nodes'} into an independent card tree.`,
+      { variant: 'success' },
+    );
+  }, [layoutGraph.nodes, createSlots, setWorkingSlotId, setSelectedSlotId, toast]);
 
   const toggleMergeMode = useCallback(() => {
     setMergeMode((prev) => {
@@ -751,6 +1007,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       selectNode,
       hoverNode,
       activateNode,
+      detachSubtree,
       toggleMergeMode,
       toggleMergeSelection,
       clearMergeSelection,
@@ -777,7 +1034,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
       setCompareNodeIds: setCompareNodeIdsAction,
     }),
     [
-      selectNode, hoverNode, activateNode,
+      selectNode, hoverNode, activateNode, detachSubtree,
       toggleMergeMode, toggleMergeSelection, clearMergeSelection, executeMerge,
       toggleCollapse, expandAll, collapseAll,
       toggleCompositeMode, toggleCompositeSelection, clearCompositeSelection,

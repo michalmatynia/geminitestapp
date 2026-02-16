@@ -113,7 +113,12 @@ async function parseCenterRequestPayload(
   const contentType = req.headers.get('content-type')?.toLowerCase() ?? '';
   if (!contentType.includes('multipart/form-data')) {
     const jsonBody = (await req.json().catch(() => null)) as unknown;
-    return { body: jsonBody, uploadedClientImage: null };
+    if (jsonBody !== null) {
+      return { body: jsonBody, uploadedClientImage: null };
+    }
+    // Some browser/runtime combinations can send an empty JSON body for POST retries.
+    // Keep the shape object-like so payload recovery can default to server mode.
+    return { body: {}, uploadedClientImage: null };
   }
 
   const form = await req.formData().catch(() => null);
@@ -248,7 +253,7 @@ const readCenterMetadataFromSlot = (
 } => {
   const metadata =
     slot.metadata && typeof slot.metadata === 'object' && !Array.isArray(slot.metadata)
-      ? (slot.metadata as Record<string, unknown>)
+      ? slot.metadata
       : null;
   const center =
     metadata?.['center'] && typeof metadata['center'] === 'object' && !Array.isArray(metadata['center'])
@@ -441,7 +446,15 @@ async function POST_handler(
 
   const startedAt = Date.now();
   const { body, uploadedClientImage } = await parseCenterRequestPayload(req);
-  const parsed = imageStudioCenterRequestSchema.safeParse(body);
+  const normalizedBody =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? { ...(body as Record<string, unknown>) }
+      : {};
+  const normalizedMode = typeof normalizedBody['mode'] === 'string' ? normalizedBody['mode'].trim() : '';
+  if (!normalizedMode) {
+    normalizedBody['mode'] = 'server_alpha_bbox';
+  }
+  const parsed = imageStudioCenterRequestSchema.safeParse(normalizedBody);
   if (!parsed.success) {
     throw centerBadRequest(
       IMAGE_STUDIO_CENTER_ERROR_CODES.INVALID_PAYLOAD,

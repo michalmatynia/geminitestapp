@@ -449,7 +449,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               inputs: safeInputs,
               outputs: safePrevOutputs,
               startedAt: new Date().toISOString(),
-                errorMessage: null,
+              errorMessage: null,
             }),
             throttledSaveIntermediateState(),
           ];

@@ -192,21 +192,50 @@ function ImportsPageContent(): React.JSX.Element {
                 <div className='space-y-2'>
                   {currentTemplateMappings.map((m: TemplateMapping, i: number) => (
                     <div key={i} className='flex gap-2 items-center'>
-                      <Input
-                        value={m.sourceKey}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
-                        placeholder={
-                          templateScope === 'export'
-                            ? 'Source (e.g. category_id)'
-                            : 'Source (type or pick from inventory fields)'
-                        }
-                        list={
-                          templateScope === 'export'
-                            ? 'export-source-field-options'
-                            : 'import-source-field-options'
-                        }
-                        className='flex-1'
-                      />
+                      {templateScope === 'export' ? (
+                        <Input
+                          value={m.sourceKey}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
+                          placeholder='Source (e.g. category_id)'
+                          list='export-source-field-options'
+                          className='flex-1'
+                        />
+                      ) : (
+                        <div className='flex-1'>
+                          <SelectSimple size='sm'
+                            value={m.sourceKey || '__none__'}
+                            onValueChange={(value: string): void =>
+                              updateMapping(i, {
+                                sourceKey:
+                                  value === '__none__'
+                                    ? ''
+                                    : value,
+                              })
+                            }
+                            options={[
+                              { value: '__none__', label: 'Source Field' },
+                              ...(m.sourceKey &&
+                              !importSourceFieldOptions.includes(m.sourceKey)
+                                ? [
+                                  {
+                                    value: m.sourceKey,
+                                    label: `${m.sourceKey} (custom)`,
+                                  },
+                                ]
+                                : []),
+                              ...importSourceFieldOptions.map((field: string) => ({
+                                value: field,
+                                label: importSourceFieldValues[field]
+                                  ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
+                                  : field,
+                              })),
+                            ]}
+                            triggerClassName='w-full bg-gray-900 border border-border p-2 rounded text-sm h-10 text-white'
+                            contentClassName='bg-gray-900 border-border text-white'
+                            placeholder='Select source field'
+                          />
+                        </div>
+                      )}
                       <div className='flex-1'>
                         <SelectSimple size='sm'
                           value={m.targetField}
@@ -239,26 +268,6 @@ function ImportsPageContent(): React.JSX.Element {
                 )}
                 {templateScope === 'import' && (
                   <>
-                    <datalist id='import-source-field-options'>
-                      {importSourceFieldOptions.map((field: string) => {
-                        const preview = importSourceFieldValues[field];
-                        const shortPreview =
-                          preview && preview.length > 80
-                            ? `${preview.slice(0, 77)}...`
-                            : preview;
-                        return (
-                          <option
-                            key={field}
-                            value={field}
-                            label={
-                              shortPreview
-                                ? `${field} (${shortPreview})`
-                                : field
-                            }
-                          />
-                        );
-                      })}
-                    </datalist>
                     <p className='text-xs text-gray-500'>
                       {loadingImportSourceFields
                         ? 'Loading source fields from selected inventory...'

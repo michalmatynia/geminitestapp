@@ -68,6 +68,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
   const {
     setSelectedFolder: onSelectFolder,
     setSelectedSlotId,
+    setWorkingSlotId,
     updateSlotMutation,
     moveSlotMutation,
     deleteSlotMutation,
@@ -162,6 +163,40 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     setSelectedSlotId(slot.id);
   }, [setSelectedSlotId]);
 
+  const resolveOwnerCardSlotId = useCallback((nodeId: MasterTreeId): string | null => {
+    const nodesById = new Map<MasterTreeId, MasterTreeNode>(
+      controller.nodes.map((candidate: MasterTreeNode) => [candidate.id, candidate])
+    );
+    let cursorId: MasterTreeId | null = nodeId;
+    let ownerSlotId: string | null = fromSlotMasterNodeId(nodeId);
+
+    while (cursorId) {
+      const cursorNode = nodesById.get(cursorId);
+      if (!cursorNode) break;
+      const isDerivedNode = Boolean(cursorNode.metadata?.['derivedFromCard']);
+      if (!isDerivedNode) break;
+      const parentId = cursorNode.parentId;
+      if (!parentId) break;
+      const parentSlotId = fromSlotMasterNodeId(parentId);
+      if (!parentSlotId) break;
+      ownerSlotId = parentSlotId;
+      cursorId = parentId;
+    }
+
+    return ownerSlotId;
+  }, [controller.nodes]);
+
+  const onSelectCardNode = useCallback((slot: ImageStudioSlotRecord, nodeId: MasterTreeId): void => {
+    const ownerSlotId = resolveOwnerCardSlotId(nodeId);
+    const isDerivedGeneration = ownerSlotId !== null && ownerSlotId !== slot.id;
+    if (isDerivedGeneration) {
+      setSelectedSlotId(ownerSlotId);
+      setWorkingSlotId(slot.id);
+      return;
+    }
+    onSelectSlot(slot);
+  }, [onSelectSlot, resolveOwnerCardSlotId, setSelectedSlotId, setWorkingSlotId]);
+
   const onMoveSlot = useCallback((slot: ImageStudioSlotRecord, targetFolder: string): void => {
     void moveSlot({ slot, targetFolder });
   }, [moveSlot]);
@@ -210,12 +245,19 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
 
   const treeRef = useRef<HTMLDivElement | null>(null);
   const lastHandledRevealNonceRef = useRef<number>(-1);
+  const pendingFolderSelectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const startFolderRename = useCallback((nodeId: MasterTreeId): void => {
     const folderPath = fromFolderMasterNodeId(nodeId);
     if (!folderPath) return;
     controller.startRename(nodeId);
   }, [controller]);
+
+  const clearPendingFolderSelection = useCallback((): void => {
+    if (!pendingFolderSelectTimerRef.current) return;
+    clearTimeout(pendingFolderSelectTimerRef.current);
+    pendingFolderSelectTimerRef.current = null;
+  }, []);
 
   const commitFolderRename = useCallback((folderNodeId: MasterTreeId): void => {
     const normalizedSource = fromFolderMasterNodeId(folderNodeId);
@@ -302,6 +344,12 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     if (!panelCollapsed) return;
     setPanelCollapsed(false);
   }, [panelCollapsed, setPanelCollapsed]);
+
+  useEffect(() => {
+    return (): void => {
+      clearPendingFolderSelection();
+    };
+  }, [clearPendingFolderSelection]);
 
   useEffect(() => {
     if (!revealRequest?.slotId) return;
@@ -428,7 +476,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           dropPosition,
           select,
           toggleExpand,
-          startRename,
+          startRename: _startRename,
         }) => {
           const folderPath = fromFolderMasterNodeId(node.id);
           const slotId = fromSlotMasterNodeId(node.id);
@@ -556,12 +604,33 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                       className='flex h-full w-full min-w-0 items-center gap-1 text-left'
                       onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                         event.stopPropagation();
+                        if (selectedSlotId) {
+                          clearPendingFolderSelection();
+                          pendingFolderSelectTimerRef.current = setTimeout(() => {
+                            pendingFolderSelectTimerRef.current = null;
+                            if (stickySelectionMode && isSelected) {
+                              clearSelection();
+                              return;
+                            }
+                            select();
+                            onSelectFolder(folderPath);
+                          }, 180);
+                          return;
+                        }
                         if (stickySelectionMode && isSelected) {
                           clearSelection();
                           return;
                         }
                         select();
                         onSelectFolder(folderPath);
+                      }}
+                      onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (selectedSlotId) {
+                          clearPendingFolderSelection();
+                        }
+                        startFolderRename(node.id);
                       }}
                       title={folderPath || 'Project root'}
                       data-folder-path={folderPath}
@@ -599,7 +668,10 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                         onDoubleClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
                           event.preventDefault();
                           event.stopPropagation();
-                          startRename();
+                          if (selectedSlotId) {
+                            clearPendingFolderSelection();
+                          }
+                          startFolderRename(node.id);
                         }}
                         title='Double-click name to rename'
                       >
@@ -659,7 +731,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                   id: 'select-card',
                   label: 'Select card',
                   onSelect: (): void => {
-                    onSelectSlot(card);
+                    onSelectCardNode(card, node.id);
                     select();
                   },
                 },
@@ -766,7 +838,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                         return;
                       }
                       select();
-                      onSelectSlot(card);
+                      onSelectCardNode(card, node.id);
                     }}
                     onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                       event.stopPropagation();

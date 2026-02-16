@@ -125,7 +125,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       const matched = existingByScan.runs.find((run: AiPathRunRecord) => {
         const meta =
           run.meta && typeof run.meta === 'object'
-            ? (run.meta as Record<string, unknown>)
+            ? (run.meta)
             : null;
         return meta?.['requestId'] === requestId;
       });

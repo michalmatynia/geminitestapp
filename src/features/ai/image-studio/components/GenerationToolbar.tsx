@@ -1489,7 +1489,6 @@ export function GenerationToolbar(): React.JSX.Element {
             () => {
               const formData = new FormData();
               formData.append('mode', centerMode);
-              formData.append('dataUrl', centeredDataUrl);
               formData.append('requestId', centerRequestId);
               formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
               return api.post<CenterActionResponse>(
@@ -1580,7 +1579,23 @@ export function GenerationToolbar(): React.JSX.Element {
       const createdLabel = response.slot?.name?.trim() || 'Centered variant';
       const effectiveMode = response.effectiveMode ?? resolvedMode;
       const modeLabel = effectiveMode === 'client_alpha_bbox' ? 'Client' : 'Server';
-      toast(`Created ${createdLabel} (${modeLabel} center).`, { variant: 'success' });
+      const sourceBounds = response.sourceObjectBounds ?? null;
+      const targetBounds = response.targetObjectBounds ?? null;
+      const centerShiftedObject = Boolean(
+        sourceBounds &&
+        targetBounds &&
+        (
+          sourceBounds.left !== targetBounds.left ||
+          sourceBounds.top !== targetBounds.top ||
+          sourceBounds.width !== targetBounds.width ||
+          sourceBounds.height !== targetBounds.height
+        )
+      );
+      if (centerShiftedObject) {
+        toast(`Created ${createdLabel} (${modeLabel} center).`, { variant: 'success' });
+      } else {
+        toast(`${createdLabel} created, but the object was already centered in-frame.`, { variant: 'info' });
+      }
     } catch (error) {
       if (isCenterAbortError(error)) {
         toast('Centering canceled.', { variant: 'info' });
@@ -1730,340 +1745,386 @@ export function GenerationToolbar(): React.JSX.Element {
     []
   );
 
+  const hasSourceImage = Boolean(workingSlot && workingSlotImageSrc);
+
   return (
-    <div className='flex flex-wrap items-center gap-2'>
-      <SelectSimple size='sm'
-        className='w-full min-w-0 sm:w-[min(100%,20rem)]'
-        value={studioSettings.targetAi.openai.model}
-        onValueChange={(value: string) => {
-          setStudioSettings((prev) => ({
-            ...prev,
-            targetAi: {
-              ...prev.targetAi,
-              openai: {
-                ...prev.targetAi.openai,
-                api: 'images',
-                model: value,
-              },
-            },
-          }));
-        }}
-        options={modelOptions}
-        placeholder='Model'
-        triggerClassName='h-8 w-full text-xs'
-        ariaLabel='Generation model'
-      />
-      <SelectSimple size='sm'
-        className='w-[60px]'
-        value={String(studioSettings.targetAi.openai.image.n ?? 1)}
-        onValueChange={(value: string) => {
-          setStudioSettings((prev) => ({
-            ...prev,
-            targetAi: {
-              ...prev.targetAi,
-              openai: {
-                ...prev.targetAi.openai,
-                image: { ...prev.targetAi.openai.image, n: Number(value) },
-              },
-            },
-          }));
-        }}
-        options={imageCountOptions}
-        triggerClassName='h-8 text-xs'
-        ariaLabel='Generation image count'
-      />
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          handleAiMaskGeneration(maskGenMode);
-        }}
-        disabled={!workingSlot || maskGenerationBusy}
-        className='flex-1'
-      >
-        {maskGenerationBusy ? (
-          <Loader2 className='mr-2 size-4 animate-spin' />
-        ) : (
-          <Play className='mr-2 size-4' />
-        )}
-        {maskGenerationLabel}
-      </Button>
-      <SelectSimple size='sm'
-        className='w-[190px]'
-        value={upscaleMode}
-        onValueChange={(value: string) => {
-          setUpscaleMode(value as UpscaleMode);
-        }}
-        options={upscaleModeOptions}
-        triggerClassName='h-8 text-xs'
-        ariaLabel='Upscale mode'
-      />
-      <SelectSimple size='sm'
-        className='w-[145px]'
-        value={upscaleStrategy}
-        onValueChange={(value: string) => {
-          setUpscaleStrategy(value as UpscaleStrategy);
-        }}
-        options={upscaleStrategyOptions}
-        triggerClassName='h-8 text-xs'
-        ariaLabel='Upscale strategy'
-      />
-      {upscaleStrategy === 'scale' ? (
-        <SelectSimple size='sm'
-          className='w-[95px]'
-          value={upscaleScale}
-          onValueChange={(value: string) => {
-            setUpscaleScale(value);
-          }}
-          options={upscaleScaleOptions}
-          triggerClassName='h-8 text-xs'
-          ariaLabel='Upscale multiplier'
-        />
-      ) : (
-        <div className='flex h-8 items-center gap-1 rounded border border-border/60 bg-card/40 px-2'>
-          <input
-            type='number'
-            min={1}
-            max={UPSCALE_MAX_OUTPUT_SIDE}
-            step={1}
-            inputMode='numeric'
-            value={upscaleTargetWidth}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              setUpscaleTargetWidth(event.target.value.replace(/[^0-9]/g, ''));
+    <div className='space-y-3'>
+      <div className='rounded border border-border/60 bg-card/40 p-3'>
+        <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
+          Generation Defaults
+        </div>
+        <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_70px]'>
+          <SelectSimple size='sm'
+            className='w-full min-w-0'
+            value={studioSettings.targetAi.openai.model}
+            onValueChange={(value: string) => {
+              setStudioSettings((prev) => ({
+                ...prev,
+                targetAi: {
+                  ...prev.targetAi,
+                  openai: {
+                    ...prev.targetAi.openai,
+                    api: 'images',
+                    model: value,
+                  },
+                },
+              }));
             }}
-            placeholder='W'
-            className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
-            aria-label='Target upscale width'
+            options={modelOptions}
+            placeholder='Model'
+            triggerClassName='h-8 w-full text-xs'
+            ariaLabel='Generation model'
           />
-          <span className='text-[11px] text-gray-500'>x</span>
-          <input
-            type='number'
-            min={1}
-            max={UPSCALE_MAX_OUTPUT_SIDE}
-            step={1}
-            inputMode='numeric'
-            value={upscaleTargetHeight}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              setUpscaleTargetHeight(event.target.value.replace(/[^0-9]/g, ''));
+          <SelectSimple size='sm'
+            className='w-full'
+            value={String(studioSettings.targetAi.openai.image.n ?? 1)}
+            onValueChange={(value: string) => {
+              setStudioSettings((prev) => ({
+                ...prev,
+                targetAi: {
+                  ...prev.targetAi,
+                  openai: {
+                    ...prev.targetAi.openai,
+                    image: { ...prev.targetAi.openai.image, n: Number(value) },
+                  },
+                },
+              }));
             }}
-            placeholder='H'
-            className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
-            aria-label='Target upscale height'
+            options={imageCountOptions}
+            triggerClassName='h-8 text-xs'
+            ariaLabel='Generation image count'
           />
         </div>
-      )}
-      {upscaleMode === 'client_canvas' ? (
-        <SelectSimple size='sm'
-          className='w-[150px]'
-          value={upscaleSmoothingQuality}
-          onValueChange={(value: string) => {
-            setUpscaleSmoothingQuality(value as UpscaleSmoothingQuality);
-          }}
-          options={upscaleSmoothingOptions}
-          triggerClassName='h-8 text-xs'
-          ariaLabel='Upscale smoothing quality'
-        />
-      ) : null}
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          void handleUpscale();
-        }}
-        disabled={!workingSlot || !workingSlotImageSrc || upscaleBusy}
-        title='Create an upscaled linked variant from the active slot'
-      >
-        {upscaleBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-        {upscaleBusyLabel}
-      </Button>
-      {upscaleBusy ? (
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          onClick={handleCancelUpscale}
-          title='Cancel upscale request'
-        >
-          Cancel Upscale
-        </Button>
-      ) : null}
-      <SelectSimple size='sm'
-        className='w-[185px]'
-        value={cropMode}
-        onValueChange={(value: string) => {
-          setCropMode(value as CropMode);
-        }}
-        options={cropModeOptions}
-        triggerClassName='h-8 text-xs'
-        ariaLabel='Crop mode'
-      />
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={handleCreateCropBox}
-        disabled={!workingSlot || !workingSlotImageSrc}
-        title='Create a dedicated crop rectangle that always works with Crop'
-      >
-        Crop Box Tool
-      </Button>
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          void handleCrop();
-        }}
-        disabled={!workingSlot || !workingSlotImageSrc || cropBusy || !hasCropBoundary}
-        title='Create cropped linked variant from selected boundary'
-      >
-        {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-        {cropBusyLabel}
-      </Button>
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          void handleSquareCrop();
-        }}
-        disabled={!workingSlot || !workingSlotImageSrc || cropBusy}
-        title='Quick centered square crop (1:1) from the active slot'
-      >
-        Square Crop
-      </Button>
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          void handlePreviewViewCrop();
-        }}
-        disabled={!workingSlot || !workingSlotImageSrc || cropBusy}
-        title='Crop using the currently visible area in Preview Canvas'
-      >
-        View Crop
-      </Button>
-      {cropBusy ? (
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          onClick={handleCancelCrop}
-          title='Cancel crop request'
-        >
-          Cancel Crop
-        </Button>
-      ) : null}
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          setCenterGuidesEnabled(!centerGuidesEnabled);
-        }}
-        disabled={!workingSlotImageSrc}
-        title='Toggle center guides overlay'
-      >
-        {centerGuidesEnabled ? 'Hide Guides' : 'Show Guides'}
-      </Button>
-      <SelectSimple size='sm'
-        className='w-[190px]'
-        value={centerMode}
-        onValueChange={(value: string) => {
-          setCenterMode(value as CenterMode);
-        }}
-        options={centerModeOptions}
-        triggerClassName='h-8 text-xs'
-        ariaLabel='Center object mode'
-      />
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          void handleCenterObject();
-        }}
-        disabled={!workingSlot || !workingSlotImageSrc || centerBusy}
-        title='Create a centered linked variant from the active slot'
-      >
-        {centerBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-        {centerBusyLabel}
-      </Button>
-      {centerBusy ? (
-        <Button
-          size='xs'
-          type='button'
-          variant='outline'
-          onClick={handleCancelCenter}
-          title='Cancel centering request'
-        >
-          Cancel Center
-        </Button>
-      ) : null}
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          void attachMaskVariantsFromSelection();
-        }}
-        disabled={!workingSlot || exportMaskCount === 0}
-        title='Create and attach white/black masks and their inverted variants'
-      >
-        Attach Masks
-      </Button>
-      <SelectSimple size='sm'
-        className='w-[185px]'
-        value={maskAttachMode}
-        onValueChange={(value: string) => {
-          setMaskAttachMode(value as MaskAttachMode);
-        }}
-        options={maskAttachModeOptions}
-        triggerClassName='h-8 text-xs'
-        ariaLabel='Mask attach mode'
-      />
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={() => {
-          setMaskPreviewEnabled(true);
-        }}
-        disabled={!workingSlot || exportMaskCount === 0 || maskPreviewEnabled}
-        title='Enable mask preview'
-      >
-        Enable Preview
-      </Button>
-      <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
-        <span>Mask Preview</span>
-        <Switch
-          checked={maskPreviewEnabled}
-          onCheckedChange={(checked: boolean) => setMaskPreviewEnabled(Boolean(checked))}
-          disabled={!workingSlot || exportMaskCount === 0}
-          aria-label='Toggle mask preview'
-        />
-      </label>
-      <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
-        <span>Invert</span>
-        <Switch
-          checked={maskInvert}
-          onCheckedChange={(checked: boolean) => setMaskInvert(Boolean(checked))}
-          disabled={!maskPreviewEnabled || exportMaskCount === 0}
-          aria-label='Toggle mask inversion'
-        />
-      </label>
-      <SelectSimple size='sm'
-        className='w-[130px]'
-        value={maskGenMode}
-        onValueChange={(value: string) => {
-          const mode = value as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
-          setMaskGenMode(mode);
-        }}
-        options={maskModeOptions}
-        placeholder={maskGenLoading ? 'Detecting...' : 'Smart Mask'}
-        triggerClassName='h-8 text-xs'
-        disabled={maskGenLoading || !workingSlot}
-        ariaLabel='Smart mask mode'
-      />
-      {maskGenLoading && <Loader2 className='size-4 animate-spin text-muted-foreground' />}
-      <span className='text-[11px] text-gray-400 whitespace-nowrap'>
-        {exportMaskCount > 0
-          ? `${exportMaskCount} mask shape${exportMaskCount > 1 ? 's' : ''}`
-          : 'No mask'}
-      </span>
+      </div>
+
+      <div className='rounded border border-border/60 bg-card/40 p-3'>
+        <div className='mb-2 flex items-center justify-between gap-2'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Mask</div>
+          <span className='text-[11px] text-gray-400 whitespace-nowrap'>
+            {exportMaskCount > 0
+              ? `${exportMaskCount} mask shape${exportMaskCount > 1 ? 's' : ''}`
+              : 'No mask'}
+          </span>
+        </div>
+
+        <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+          <SelectSimple size='sm'
+            className='w-full'
+            value={maskGenMode}
+            onValueChange={(value: string) => {
+              const mode = value as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
+              setMaskGenMode(mode);
+            }}
+            options={maskModeOptions}
+            placeholder={maskGenLoading ? 'Detecting...' : 'Smart Mask'}
+            triggerClassName='h-8 text-xs'
+            disabled={maskGenLoading || !workingSlot}
+            ariaLabel='Smart mask mode'
+          />
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              handleAiMaskGeneration(maskGenMode);
+            }}
+            disabled={!workingSlot || maskGenerationBusy}
+            className='sm:min-w-[160px]'
+          >
+            {maskGenerationBusy ? (
+              <Loader2 className='mr-2 size-4 animate-spin' />
+            ) : (
+              <Play className='mr-2 size-4' />
+            )}
+            {maskGenerationLabel}
+          </Button>
+        </div>
+
+        <div className='mt-2 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+          <SelectSimple size='sm'
+            className='w-full'
+            value={maskAttachMode}
+            onValueChange={(value: string) => {
+              setMaskAttachMode(value as MaskAttachMode);
+            }}
+            options={maskAttachModeOptions}
+            triggerClassName='h-8 text-xs'
+            ariaLabel='Mask attach mode'
+          />
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              void attachMaskVariantsFromSelection();
+            }}
+            disabled={!workingSlot || exportMaskCount === 0}
+            title='Create and attach white/black masks and their inverted variants'
+            className='sm:min-w-[140px]'
+          >
+            Attach Masks
+          </Button>
+        </div>
+
+        <div className='mt-2 flex flex-wrap items-center gap-2'>
+          <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
+            <span>Mask Preview</span>
+            <Switch
+              checked={maskPreviewEnabled}
+              onCheckedChange={(checked: boolean) => setMaskPreviewEnabled(Boolean(checked))}
+              disabled={!workingSlot || exportMaskCount === 0}
+              aria-label='Toggle mask preview'
+            />
+          </label>
+          <label className='flex items-center gap-2 rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
+            <span>Invert</span>
+            <Switch
+              checked={maskInvert}
+              onCheckedChange={(checked: boolean) => setMaskInvert(Boolean(checked))}
+              disabled={!maskPreviewEnabled || exportMaskCount === 0}
+              aria-label='Toggle mask inversion'
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className='rounded border border-border/60 bg-card/40 p-3'>
+        <div className='mb-2 flex items-center justify-between gap-2'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>Crop</div>
+          <span className='text-[11px] text-gray-500'>
+            {hasCropBoundary ? 'Boundary ready' : 'Set a boundary first'}
+          </span>
+        </div>
+        <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+          <SelectSimple size='sm'
+            className='w-full'
+            value={cropMode}
+            onValueChange={(value: string) => {
+              setCropMode(value as CropMode);
+            }}
+            options={cropModeOptions}
+            triggerClassName='h-8 text-xs'
+            ariaLabel='Crop mode'
+          />
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={handleCreateCropBox}
+            disabled={!hasSourceImage}
+            title='Create a dedicated crop rectangle that always works with Crop'
+          >
+            Crop Box Tool
+          </Button>
+        </div>
+        <div className='mt-2 flex flex-wrap items-center gap-2'>
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              void handleCrop();
+            }}
+            disabled={!hasSourceImage || cropBusy || !hasCropBoundary}
+            title='Create cropped linked variant from selected boundary'
+          >
+            {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            {cropBusyLabel}
+          </Button>
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              void handleSquareCrop();
+            }}
+            disabled={!hasSourceImage || cropBusy}
+            title='Quick centered square crop (1:1) from the active slot'
+          >
+            Square Crop
+          </Button>
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              void handlePreviewViewCrop();
+            }}
+            disabled={!hasSourceImage || cropBusy}
+            title='Crop using the currently visible area in Preview Canvas'
+          >
+            View Crop
+          </Button>
+          {cropBusy ? (
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              onClick={handleCancelCrop}
+              title='Cancel crop request'
+            >
+              Cancel Crop
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className='rounded border border-border/60 bg-card/40 p-3'>
+        <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Upscale</div>
+        <div className='grid gap-2 sm:grid-cols-2'>
+          <SelectSimple size='sm'
+            className='w-full'
+            value={upscaleMode}
+            onValueChange={(value: string) => {
+              setUpscaleMode(value as UpscaleMode);
+            }}
+            options={upscaleModeOptions}
+            triggerClassName='h-8 text-xs'
+            ariaLabel='Upscale mode'
+          />
+          <SelectSimple size='sm'
+            className='w-full'
+            value={upscaleStrategy}
+            onValueChange={(value: string) => {
+              setUpscaleStrategy(value as UpscaleStrategy);
+            }}
+            options={upscaleStrategyOptions}
+            triggerClassName='h-8 text-xs'
+            ariaLabel='Upscale strategy'
+          />
+        </div>
+        <div className='mt-2'>
+          {upscaleStrategy === 'scale' ? (
+            <SelectSimple size='sm'
+              className='w-full sm:w-[130px]'
+              value={upscaleScale}
+              onValueChange={(value: string) => {
+                setUpscaleScale(value);
+              }}
+              options={upscaleScaleOptions}
+              triggerClassName='h-8 text-xs'
+              ariaLabel='Upscale multiplier'
+            />
+          ) : (
+            <div className='flex h-8 w-full items-center gap-1 rounded border border-border/60 bg-card/40 px-2 sm:w-[180px]'>
+              <input
+                type='number'
+                min={1}
+                max={UPSCALE_MAX_OUTPUT_SIDE}
+                step={1}
+                inputMode='numeric'
+                value={upscaleTargetWidth}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  setUpscaleTargetWidth(event.target.value.replace(/[^0-9]/g, ''));
+                }}
+                placeholder='W'
+                className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
+                aria-label='Target upscale width'
+              />
+              <span className='text-[11px] text-gray-500'>x</span>
+              <input
+                type='number'
+                min={1}
+                max={UPSCALE_MAX_OUTPUT_SIDE}
+                step={1}
+                inputMode='numeric'
+                value={upscaleTargetHeight}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  setUpscaleTargetHeight(event.target.value.replace(/[^0-9]/g, ''));
+                }}
+                placeholder='H'
+                className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
+                aria-label='Target upscale height'
+              />
+            </div>
+          )}
+        </div>
+        {upscaleMode === 'client_canvas' ? (
+          <div className='mt-2'>
+            <SelectSimple size='sm'
+              className='w-full sm:w-[180px]'
+              value={upscaleSmoothingQuality}
+              onValueChange={(value: string) => {
+                setUpscaleSmoothingQuality(value as UpscaleSmoothingQuality);
+              }}
+              options={upscaleSmoothingOptions}
+              triggerClassName='h-8 text-xs'
+              ariaLabel='Upscale smoothing quality'
+            />
+          </div>
+        ) : null}
+        <div className='mt-2 flex flex-wrap items-center gap-2'>
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              void handleUpscale();
+            }}
+            disabled={!hasSourceImage || upscaleBusy}
+            title='Create an upscaled linked variant from the active slot'
+          >
+            {upscaleBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            {upscaleBusyLabel}
+          </Button>
+          {upscaleBusy ? (
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              onClick={handleCancelUpscale}
+              title='Cancel upscale request'
+            >
+              Cancel Upscale
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className='rounded border border-border/60 bg-card/40 p-3'>
+        <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Center</div>
+        <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
+          <SelectSimple size='sm'
+            className='w-full'
+            value={centerMode}
+            onValueChange={(value: string) => {
+              setCenterMode(value as CenterMode);
+            }}
+            options={centerModeOptions}
+            triggerClassName='h-8 text-xs'
+            ariaLabel='Center object mode'
+          />
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              setCenterGuidesEnabled(!centerGuidesEnabled);
+            }}
+            disabled={!workingSlotImageSrc}
+            title='Toggle center guides overlay'
+          >
+            {centerGuidesEnabled ? 'Hide Guides' : 'Show Guides'}
+          </Button>
+        </div>
+        <div className='mt-2 flex flex-wrap items-center gap-2'>
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={() => {
+              void handleCenterObject();
+            }}
+            disabled={!hasSourceImage || centerBusy}
+            title='Create a centered linked variant from the active slot'
+          >
+            {centerBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            {centerBusyLabel}
+          </Button>
+          {centerBusy ? (
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              onClick={handleCancelCenter}
+              title='Cancel centering request'
+            >
+              Cancel Center
+            </Button>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

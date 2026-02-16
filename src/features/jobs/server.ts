@@ -29,3 +29,14 @@ export {
   enqueueTraderaListingJob,
 } from './workers/traderaListingQueue';
 export { startTraderaRelistSchedulerQueue } from './workers/traderaRelistSchedulerQueue';
+export {
+  startProductSyncQueue,
+  stopProductSyncQueue,
+  enqueueProductSyncRunJob,
+} from './workers/productSyncQueue';
+export { startProductSyncSchedulerQueue } from './workers/productSyncSchedulerQueue';
+export {
+  startProductSyncBackfillQueue,
+  stopProductSyncBackfillQueue,
+  enqueueProductSyncBackfillJob,
+} from './workers/productSyncBackfillQueue';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Camera, Eye, EyeOff, Loader2, Locate, Trash2 } from 'lucide-react';
+import { Camera, Eye, EyeOff, Info, Loader2, Locate, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -22,6 +22,7 @@ import { cn } from '@/shared/utils';
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
+import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
@@ -43,13 +44,24 @@ import {
   wait,
 } from './center-preview/preview-utils';
 
-import type { SlotGenerationMetadata } from '../types';
+import type { VersionNode } from '../context/VersionGraphContext';
+import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '../types';
 
 const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },
   { value: '3d', label: '3D' },
 ] as const;
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
+const GENERATED_SOURCE_PATH_REGEX = /^\/uploads\/studio\/(?:center|crops|upscale)\/[^/]+\/([^/]+)\//i;
+
+const resolveSourceSlotIdFromGeneratedPath = (slot: ImageStudioSlotRecord | null): string | null => {
+  if (!slot) return null;
+  const sourcePath = normalizeImagePath(slot.imageFile?.filepath ?? slot.imageUrl ?? null);
+  if (!sourcePath) return null;
+  const match = sourcePath.match(GENERATED_SOURCE_PATH_REGEX);
+  const sourceSlotId = match?.[1]?.trim() ?? '';
+  return sourceSlotId || null;
+};
 
 export function CenterPreview(): React.JSX.Element {
   const { isFocusMode, maskPreviewEnabled, centerGuidesEnabled } = useUiState();
@@ -108,6 +120,7 @@ export function CenterPreview(): React.JSX.Element {
     x: number;
     y: number;
   } | null>(null);
+  const [detailsSlotId, setDetailsSlotId] = useState<string | null>(null);
 
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -148,8 +161,9 @@ export function CenterPreview(): React.JSX.Element {
     const fallbackSourceSlotId = workingSlotMetadata.sourceSlotIds.find((id): id is string =>
       typeof id === 'string' && id.trim().length > 0
     );
-    return fallbackSourceSlotId ?? null;
-  }, [workingSlotMetadata]);
+    if (fallbackSourceSlotId) return fallbackSourceSlotId;
+    return resolveSourceSlotIdFromGeneratedPath(workingSlot);
+  }, [workingSlot, workingSlotMetadata]);
   const selectedSourceSlotId = useMemo(() => {
     const primarySourceSlotId =
       typeof selectedSlotMetadata?.sourceSlotId === 'string'
@@ -160,13 +174,19 @@ export function CenterPreview(): React.JSX.Element {
     const fallbackSourceSlotId = selectedSlotMetadata.sourceSlotIds.find((id): id is string =>
       typeof id === 'string' && id.trim().length > 0
     );
-    return fallbackSourceSlotId ?? null;
-  }, [selectedSlotMetadata]);
+    if (fallbackSourceSlotId) return fallbackSourceSlotId;
+    return resolveSourceSlotIdFromGeneratedPath(selectedSlot);
+  }, [selectedSlot, selectedSlotMetadata]);
   const rootVariantSourceSlotId = useMemo(() => {
+    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+    const normalizedWorkingSourceSlotId = sourceSlotId?.trim() ?? '';
+    if (normalizedWorkingSourceSlotId) return normalizedWorkingSourceSlotId;
+    if (normalizedWorkingSlotId) return normalizedWorkingSlotId;
+
     const normalizedSelectedSlotId = selectedSlotId?.trim() ?? '';
     if (!normalizedSelectedSlotId) return null;
     return selectedSourceSlotId ?? normalizedSelectedSlotId;
-  }, [selectedSlotId, selectedSourceSlotId]);
+  }, [selectedSlotId, selectedSourceSlotId, sourceSlotId, workingSlot?.id]);
   const showVariantPanel = Boolean(selectedSlotId?.trim());
 
   const sourceSlot = useMemo(
@@ -179,17 +199,27 @@ export function CenterPreview(): React.JSX.Element {
     [productImagesExternalBaseUrl, sourceSlot]
   );
 
+  const hasSourceSlotReference = useMemo(
+    () => {
+      const normalizedSourceSlotId = sourceSlotId?.trim() ?? '';
+      const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+      return Boolean(
+        previewMode === 'image' &&
+        normalizedSourceSlotId &&
+        normalizedWorkingSlotId &&
+        normalizedSourceSlotId !== normalizedWorkingSlotId
+      );
+    },
+    [previewMode, sourceSlotId, workingSlot?.id]
+  );
+
+  const canNavigateToSource = hasSourceSlotReference;
+
   const canCompareWithSource = useMemo(
     () =>
-      previewMode === 'image' &&
-      Boolean(
-        workingSlot?.id &&
-        workingSlotImageSrc &&
-        sourceSlotImageSrc &&
-        sourceSlot?.id &&
-        sourceSlot.id !== workingSlot.id
-      ),
-    [previewMode, sourceSlot?.id, sourceSlotImageSrc, workingSlot?.id, workingSlotImageSrc]
+      hasSourceSlotReference &&
+      Boolean(workingSlotImageSrc && sourceSlotImageSrc),
+    [hasSourceSlotReference, sourceSlotImageSrc, workingSlotImageSrc]
   );
 
   const activeCanvasImageSrc = useMemo(() => {
@@ -867,10 +897,47 @@ export function CenterPreview(): React.JSX.Element {
     workingSlot?.id,
   ]);
 
+  const resolveVariantSlotId = useCallback((variant: VariantThumbnailInfo): string | null => {
+    const directSlotId = variant.slotId?.trim() ?? '';
+    if (directSlotId && slots.some((slot) => slot.id === directSlotId)) {
+      return directSlotId;
+    }
+
+    if (variant.output?.id) {
+      const matchedByFileId = slots.find((slot) => slot.imageFileId === variant.output?.id);
+      if (matchedByFileId) return matchedByFileId.id;
+    }
+
+    const variantOutputPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
+    if (variantOutputPath) {
+      const matchedByPath = slots.find((slot) => {
+        const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
+        if (imageFilePath && imageFilePath === variantOutputPath) return true;
+        const imageUrlPath = normalizeImagePath(slot.imageUrl);
+        return Boolean(imageUrlPath && imageUrlPath === variantOutputPath);
+      });
+      if (matchedByPath) return matchedByPath.id;
+    }
+
+    return null;
+  }, [slots]);
+
   const handleToggleSourceVariantView = useCallback((): void => {
     setSplitVariantView(false);
     setSingleVariantView((current) => (current === 'variant' ? 'source' : 'variant'));
   }, []);
+
+  const handleGoToSourceSlot = useCallback((): void => {
+    if (!sourceSlot?.id) {
+      toast('Source slot is unavailable for this variant.', { variant: 'info' });
+      return;
+    }
+    setSplitVariantView(false);
+    setSingleVariantView('variant');
+    setSelectedSlotId(sourceSlot.id);
+    setWorkingSlotId(sourceSlot.id);
+    setPreviewMode('image');
+  }, [setPreviewMode, setSelectedSlotId, setWorkingSlotId, sourceSlot?.id, toast]);
 
   const handleToggleSplitVariantView = useCallback((): void => {
     setSplitVariantView((current) => {
@@ -956,30 +1023,6 @@ export function CenterPreview(): React.JSX.Element {
       });
     };
 
-    const resolveVariantSlotId = (): string | null => {
-      if (variant.slotId && slots.some((slot) => slot.id === variant.slotId)) {
-        return variant.slotId;
-      }
-
-      if (variant.output?.id) {
-        const matchedByFileId = slots.find((slot) => slot.imageFileId === variant.output?.id);
-        if (matchedByFileId) return matchedByFileId.id;
-      }
-
-      const variantOutputPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
-      if (variantOutputPath) {
-        const matchedByPath = slots.find((slot) => {
-          const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
-          if (imageFilePath && imageFilePath === variantOutputPath) return true;
-          const imageUrlPath = normalizeImagePath(slot.imageUrl);
-          return Boolean(imageUrlPath && imageUrlPath === variantOutputPath);
-        });
-        if (matchedByPath) return matchedByPath.id;
-      }
-
-      return null;
-    };
-
     const deleteVariantAssetFallback = async (): Promise<void> => {
       const output = variant.output;
       if (!output) return;
@@ -998,7 +1041,7 @@ export function CenterPreview(): React.JSX.Element {
       }
     };
 
-    const targetSlotId = resolveVariantSlotId();
+    const targetSlotId = resolveVariantSlotId(variant);
     if (!targetSlotId) {
       void deleteVariantAssetFallback()
         .then(() => {
@@ -1045,12 +1088,84 @@ export function CenterPreview(): React.JSX.Element {
     deleteSlotMutation,
     projectId,
     queryClient,
+    resolveVariantSlotId,
     setWorkingSlotId,
-    slots,
     toast,
     workingSlot?.id,
     clearActiveRunError,
   ]);
+
+  const handleOpenVariantDetails = useCallback((variant: VariantThumbnailInfo): void => {
+    const slotId = resolveVariantSlotId(variant);
+    if (!slotId) {
+      toast('Variant details are unavailable until slot metadata finishes syncing.', { variant: 'info' });
+      return;
+    }
+    setDetailsSlotId(slotId);
+  }, [resolveVariantSlotId, toast]);
+
+  const handleCloseVariantDetails = useCallback((): void => {
+    setDetailsSlotId(null);
+  }, []);
+
+  const detailsSlot = useMemo(
+    () => (detailsSlotId ? slots.find((slot) => slot.id === detailsSlotId) ?? null : null),
+    [detailsSlotId, slots]
+  );
+
+  const detailsNode = useMemo<VersionNode | null>(() => {
+    if (!detailsSlot) return null;
+    const metadata = asObjectRecord(detailsSlot.metadata) as SlotGenerationMetadata | null;
+    const sourceSlotIds = Array.isArray(metadata?.sourceSlotIds)
+      ? metadata.sourceSlotIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+      : [];
+    const sourceSlotId =
+      typeof metadata?.sourceSlotId === 'string' && metadata.sourceSlotId.trim().length > 0
+        ? metadata.sourceSlotId.trim()
+        : null;
+    const parentIds = sourceSlotIds.length > 0
+      ? sourceSlotIds
+      : sourceSlotId
+        ? [sourceSlotId]
+        : [];
+    const childIds = slots
+      .filter((slot) => {
+        if (slot.id === detailsSlot.id) return false;
+        const slotMetadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
+        if (!slotMetadata) return false;
+        if (slotMetadata.sourceSlotId === detailsSlot.id) return true;
+        return Array.isArray(slotMetadata.sourceSlotIds) && slotMetadata.sourceSlotIds.includes(detailsSlot.id);
+      })
+      .map((slot) => slot.id);
+    let nodeType: VersionNode['type'] = 'base';
+    if (metadata?.role === 'composite') {
+      nodeType = 'composite';
+    } else if (metadata?.role === 'merge' || parentIds.length > 1) {
+      nodeType = 'merge';
+    } else if (metadata?.role === 'generation' || parentIds.length === 1) {
+      nodeType = 'generation';
+    }
+    const label = detailsSlot.name?.trim() || detailsSlot.id;
+    return {
+      id: detailsSlot.id,
+      label,
+      type: nodeType,
+      parentIds,
+      childIds,
+      hasMask: Boolean(asObjectRecord(metadata?.maskData)),
+      slot: detailsSlot,
+      depth: 0,
+      x: 0,
+      y: 0,
+      descendantCount: childIds.length,
+    };
+  }, [detailsSlot, slots]);
+
+  const getSlotImageSrc = useCallback(
+    (slot: ImageStudioSlotRecord): string | null =>
+      getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl),
+    [productImagesExternalBaseUrl]
+  );
 
   const handleSaveScreenshot = useCallback(async (): Promise<void> => {
     if (!workingSlot?.id) {
@@ -1202,15 +1317,17 @@ export function CenterPreview(): React.JSX.Element {
                 </div>
               </div>
             ) : null}
-            {canCompareWithSource ? (
+            {canNavigateToSource ? (
               <SplitViewControls
                 singleVariantView={singleVariantView}
                 splitVariantView={splitVariantView}
+                canCompare={canCompareWithSource}
+                onGoToSourceSlot={handleGoToSourceSlot}
                 onToggleSourceVariantView={handleToggleSourceVariantView}
                 onToggleSplitVariantView={handleToggleSplitVariantView}
               />
             ) : null}
-            <div className='absolute bottom-2 left-2 z-20'>
+            <div className='absolute bottom-2 right-2 z-20'>
               <Button size='xs'
                 type='button'
                 variant='outline'
@@ -1261,6 +1378,16 @@ export function CenterPreview(): React.JSX.Element {
 
                       return (
                         <div key={variant.id} className='relative w-28 shrink-0'>
+                          <Button size='xs'
+                            type='button'
+                            variant='ghost'
+                            onClick={(): void => handleOpenVariantDetails(variant)}
+                            aria-label={`View variant ${variant.index} details`}
+                            title='View variant details'
+                            className='absolute left-1 top-1 z-10 size-5 rounded bg-black/65 text-blue-200 hover:bg-blue-500/20 hover:text-blue-100'
+                          >
+                            <Info className='size-3.5' />
+                          </Button>
                           <button
                             type='button'
                             onClick={(): void => {
@@ -1340,6 +1467,12 @@ export function CenterPreview(): React.JSX.Element {
           ) : null}
         </div>
       </div>
+      <VersionNodeDetailsModal
+        isOpen={Boolean(detailsNode)}
+        item={detailsNode}
+        onClose={handleCloseVariantDetails}
+        getSlotImageSrc={getSlotImageSrc}
+      />
     </div>
   );
 }

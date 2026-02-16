@@ -685,10 +685,10 @@ export function RightSidebar(): React.JSX.Element {
                     </div>
 
                     <div className='rounded border border-border/60 bg-card/30 p-3'>
-                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Mask Generation</div>
-                      <div className='overflow-x-auto pb-1'>
-                        <GenerationToolbar />
+                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
+                        Image Operations
                       </div>
+                      <GenerationToolbar />
                     </div>
 
                     <div className='rounded border border-border/60 bg-card/30 p-3'>

@@ -16,8 +16,8 @@ import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings'
 import type { PageComponent, Slug } from '@/features/cms/types';
 import { buildColorSchemeMap, type ThemeSettings } from '@/features/cms/types/theme-settings';
 import { logSystemEvent } from '@/features/observability/server';
-import { ProductCard } from '@/features/products';
-import type { ProductWithImages } from '@/features/products';
+import { ProductCard } from '@/features/products/public';
+import type { ProductWithImages } from '@/features/products/public';
 import { productService } from '@/features/products/server';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

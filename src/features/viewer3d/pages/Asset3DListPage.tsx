@@ -4,22 +4,20 @@ import {
   Box,
   Loader2,
   Grid,
-  List,
-  Eye,
-  RefreshCw
+  List
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import {
   Button,
   ListPanel,
-  SectionHeader,
   DataTable,
   SelectSimple,
   SearchInput,
   Alert,
   EmptyState,
-  StatusBadge
+  StatusBadge,
+  PanelHeader
 } from '@/shared/ui';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
@@ -138,15 +136,13 @@ export function Asset3DListPage(): React.JSX.Element {
   return (
     <ListPanel
       header={
-        <SectionHeader
+        <PanelHeader
           title='3D Asset Library'
-          description='Browse and preview 3D models'
-          actions={
-            <Button variant='outline' size='xs' className='h-8' onClick={refetch} disabled={loading}>
-              <RefreshCw className={`size-3.5 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-          }
+          description='Browse and preview 3D models and digital twins.'
+          icon={<Box className='size-4' />}
+          refreshable={true}
+          isRefreshing={loading}
+          onRefresh={refetch}
         />
       }
       alerts={error ? <Alert variant='error'>{error}</Alert> : null}
@@ -157,7 +153,7 @@ export function Asset3DListPage(): React.JSX.Element {
             onChange={(e) => setSearchQuery(e.target.value)}
             onClear={() => setSearchQuery('')}
             placeholder='Search assets...'
-            className='h-8'
+            size='sm'
             containerClassName='flex-1 min-w-[200px] max-w-md'
           />
 
@@ -189,7 +185,7 @@ export function Asset3DListPage(): React.JSX.Element {
                       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
                     )
                   }
-                  className='h-7'
+                  className='h-7 px-2 text-[10px]'
                 >
                   {tag}
                 </Button>
@@ -254,24 +250,29 @@ export function Asset3DListPage(): React.JSX.Element {
             <div
               key={asset.id}
               onClick={() => setPreviewAsset(asset)}
-              className='group cursor-pointer overflow-hidden rounded-lg border border-border bg-card/60 transition-colors hover:border-blue-500/60'
+              className='group cursor-pointer overflow-hidden rounded-lg border border-border bg-card/60 transition-all hover:border-blue-500/60 hover:shadow-lg hover:shadow-blue-500/10'
             >
               <div className='relative flex aspect-square items-center justify-center bg-muted/30'>
                 <Box className='h-12 w-12 text-muted-foreground/70' />
                 <div className='absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover:opacity-100'>
-                  <Eye className='h-7 w-7 text-foreground' />
+                  <div className='flex flex-col items-center gap-2'>
+                    <div className='flex size-10 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg'>
+                      <Box className='size-5' />
+                    </div>
+                    <span className='text-[10px] font-bold uppercase tracking-wider text-blue-400'>Preview</span>
+                  </div>
                 </div>
               </div>
 
               <div className='p-3'>
-                <p className='text-sm font-medium text-foreground truncate'>
+                <p className='text-sm font-medium text-foreground truncate' title={asset.name || asset.filename}>
                   {asset.name || asset.filename}
                 </p>
-                <div className='mt-2 flex items-center gap-2'>
-                  {asset.categoryId && (
+                <div className='mt-2 flex items-center justify-between'>
+                  {asset.categoryId ? (
                     <StatusBadge status={asset.categoryId} variant='info' size='sm' className='font-medium' />
-                  )}
-                  <span className='text-xs text-muted-foreground'>
+                  ) : <div />}
+                  <span className='text-[10px] text-muted-foreground font-medium'>
                     {formatFileSize(asset.size)}
                   </span>
                 </div>

@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { normalizeImageRetryPresets } from '@/features/data-import-export';
+import { normalizeImageRetryPresets } from '@/features/data-import-export/public';
 import {
   getExportImageRetryPresets,
   setExportImageRetryPresets

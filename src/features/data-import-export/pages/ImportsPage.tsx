@@ -1,5 +1,5 @@
 'use client';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Download, Upload, ClipboardList } from 'lucide-react';
 import React from 'react';
 
 import {
@@ -19,7 +19,7 @@ import type {
 import {
   Button,
   Checkbox,
-  ConfirmDialog,
+  ConfirmModal,
   Input,
   SelectSimple,
   Tabs,
@@ -27,8 +27,7 @@ import {
   TabsList,
   TabsTrigger,
   Label,
-  SectionHeader,
-  
+  PanelHeader,
 } from '@/shared/ui';
 
 function ImportsPageContent(): React.JSX.Element {
@@ -101,200 +100,262 @@ function ImportsPageContent(): React.JSX.Element {
 
   if (checkingIntegration) {
     return (
-      <div className='w-full py-6'>
-        <div className='rounded-lg border border-border/60 bg-card/40 p-6 text-sm text-gray-400'>
-          Checking integration...
+      <div className='w-full py-10 container mx-auto'>
+        <div className='rounded-lg border border-border/60 bg-card/40 p-12 text-center text-sm text-gray-400'>
+          <div className='inline-block size-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-4' />
+          <p>Checking Base.com integration status...</p>
         </div>
       </div>
     );
   }
   if (!isBaseConnected) {
     return (
-      <div className='w-full py-6'>
-        <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-6 text-sm text-amber-300'>
-          Base.com integration required.
+      <div className='w-full py-10 container mx-auto'>
+        <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-8 text-sm text-amber-300 shadow-lg shadow-amber-900/10'>
+          <h3 className='text-lg font-bold mb-2'>Base.com integration required</h3>
+          <p>Please configure your Base.com API connection in the Integrations settings before using import/export tools.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className='w-full py-6'>
-      <SectionHeader title='Product Import/Export' description='Import products from Base.com or export your products to Base.com' className='mb-6' />
-      <Tabs defaultValue='imports'>
-        <TabsList className='bg-card/70'>
-          <TabsTrigger value='imports'>Imports</TabsTrigger>
-          <TabsTrigger value='exports'>Exports</TabsTrigger>
-          <TabsTrigger value='templates'>Templates</TabsTrigger>
+    <div className='container mx-auto py-10 space-y-6'>
+      <PanelHeader 
+        title='Product Import/Export' 
+        description='Import products from Base.com or export your internal products to the marketplace.' 
+        icon={<ClipboardList className='size-4' />}
+      />
+      
+      <Tabs defaultValue='imports' className='w-full'>
+        <TabsList className='bg-muted/40 p-1'>
+          <TabsTrigger value='imports' className='gap-2'>
+            <Download className='size-3.5' />
+            Imports
+          </TabsTrigger>
+          <TabsTrigger value='exports' className='gap-2'>
+            <Upload className='size-3.5' />
+            Exports
+          </TabsTrigger>
+          <TabsTrigger value='templates' className='gap-2'>
+            <ClipboardList className='size-3.5' />
+            Templates
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value='imports' className='mt-6 space-y-6'>
+        <TabsContent value='imports' className='mt-6 outline-none'>
           <ImportTab />
         </TabsContent>
 
-        <TabsContent value='exports' className='mt-6 space-y-6'>
+        <TabsContent value='exports' className='mt-6 outline-none'>
           <ExportTab />
         </TabsContent>
 
-        <TabsContent value='templates' className='mt-6 space-y-6'>
-          <div className='bg-gray-900 p-4 border border-border rounded-md'>
-            <div className='flex justify-between items-start gap-4 mb-4'>
+        <TabsContent value='templates' className='mt-6 outline-none'>
+          <div className='bg-card/40 p-6 border border-border/60 rounded-xl'>
+            <div className='flex flex-wrap justify-between items-start gap-4 mb-6'>
               <Tabs value={templateScope} onValueChange={(v: string): void => setTemplateScope(v as 'import' | 'export')}>
-                <TabsList>
+                <TabsList className='bg-muted/60'>
                   <TabsTrigger value='import'>Import</TabsTrigger>
                   <TabsTrigger value='export'>Export</TabsTrigger>
                 </TabsList>
               </Tabs>
               <div className='flex gap-2'>
-                <Button variant='secondary' onClick={handleNewTemplate}>New</Button>
+                <Button variant='outline' size='sm' onClick={handleNewTemplate}>New</Button>
                 <Button
-                  variant='secondary'
+                  variant='outline'
+                  size='sm'
                   onClick={() => { void handleDuplicateTemplate(); }}
                   disabled={!currentActiveTemplateId || savingImportTemplate || savingExportTemplate}
                 >
                   Duplicate
                 </Button>
-                <Button onClick={() => { void handleSaveTemplate(); }} disabled={savingImportTemplate || savingExportTemplate}>Save</Button>
+                <Button size='sm' onClick={() => { void handleSaveTemplate(); }} disabled={savingImportTemplate || savingExportTemplate}>
+                  {savingImportTemplate || savingExportTemplate ? 'Saving...' : 'Save Template'}
+                </Button>
                 <Button
                   variant='destructive'
+                  size='sm'
                   onClick={() => setDeleteDialogOpen(true)}
                   disabled={!currentActiveTemplateId}
                 >
-                  Delete
+                  <Trash2 className='size-3.5' />
                 </Button>
               </div>
             </div>
-            <div className='grid md:grid-cols-[220px_1fr] gap-4'>
-              <div className='bg-card/60 p-2 border border-border rounded-md max-h-64 overflow-auto'>
-                {currentTemplates.map((t: Template) => (
-                  <Button key={t.id} variant='ghost' className={`w-full justify-start text-xs mb-1 ${currentActiveTemplateId === t.id ? 'bg-emerald-500/20' : ''}`} onClick={() => applyTemplate(t, templateScope)}>
-                    {t.name}
-                  </Button>
-                ))}
+            
+            <div className='grid md:grid-cols-[240px_1fr] gap-6'>
+              <div className='bg-black/20 p-2 border border-border/40 rounded-lg max-h-[500px] overflow-y-auto space-y-1'>
+                <div className='px-2 py-1.5 text-[10px] uppercase font-bold text-gray-500'>Saved Templates</div>
+                {currentTemplates.length === 0 ? (
+                  <p className='px-2 py-4 text-xs text-gray-600 italic'>No templates found.</p>
+                ) : (
+                  currentTemplates.map((t: Template) => (
+                    <Button 
+                      key={t.id} 
+                      variant='ghost' 
+                      size='sm'
+                      className={`w-full justify-start text-xs font-medium ${currentActiveTemplateId === t.id ? 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : 'text-gray-400'}`} 
+                      onClick={() => applyTemplate(t, templateScope)}
+                    >
+                      {t.name}
+                    </Button>
+                  ))
+                )}
               </div>
-              <div className='space-y-4'>
-                <div className='grid grid-cols-2 gap-3'>
-                  <div className='space-y-1'>
-                    <Label>Name</Label>
-                    <Input value={isImportTemplateScope ? importTemplateName : exportTemplateName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => isImportTemplateScope ? setImportTemplateName(e.target.value) : setExportTemplateName(e.target.value)} />
+              
+              <div className='space-y-6'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                  <div className='space-y-1.5'>
+                    <Label className='text-xs text-gray-400'>Template Name</Label>
+                    <Input 
+                      value={isImportTemplateScope ? importTemplateName : exportTemplateName} 
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => isImportTemplateScope ? setImportTemplateName(e.target.value) : setExportTemplateName(e.target.value)}
+                      placeholder='e.g. Default Producer Import'
+                      className='h-9'
+                    />
                   </div>
-                  <div className='space-y-1'>
-                    <Label>Description</Label>
-                    <Input value={isImportTemplateScope ? importTemplateDescription : exportTemplateDescription} onChange={(e: React.ChangeEvent<HTMLInputElement>) => isImportTemplateScope ? setImportTemplateDescription(e.target.value) : setExportTemplateDescription(e.target.value)} />
+                  <div className='space-y-1.5'>
+                    <Label className='text-xs text-gray-400'>Description</Label>
+                    <Input 
+                      value={isImportTemplateScope ? importTemplateDescription : exportTemplateDescription} 
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => isImportTemplateScope ? setImportTemplateDescription(e.target.value) : setExportTemplateDescription(e.target.value)}
+                      placeholder='Optional notes...'
+                      className='h-9'
+                    />
                   </div>
                 </div>
+
                 {templateScope === 'export' && (
-                  <div className='flex items-center gap-2'>
-                    <Checkbox id='exportImagesAsBase64' checked={exportImagesAsBase64} onCheckedChange={(v: boolean | 'indeterminate') => setExportImagesAsBase64(Boolean(v))} />
-                    <Label htmlFor='exportImagesAsBase64'>Export images as Base64</Label>
-                  </div>
+                  <label className='flex items-center gap-2 cursor-pointer w-fit group'>
+                    <Checkbox 
+                      id='exportImagesAsBase64' 
+                      checked={exportImagesAsBase64} 
+                      onCheckedChange={(v: boolean | 'indeterminate') => setExportImagesAsBase64(Boolean(v))} 
+                    />
+                    <span className='text-sm text-gray-300 group-hover:text-white transition-colors'>Export images as Base64 data strings</span>
+                  </label>
                 )}
-                <div className='space-y-2'>
-                  {currentTemplateMappings.map((m: TemplateMapping, i: number) => (
-                    <div key={i} className='flex gap-2 items-center'>
-                      {templateScope === 'export' ? (
-                        <Input
-                          value={m.sourceKey}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
-                          placeholder='Source (e.g. category_id)'
-                          list='export-source-field-options'
-                          className='flex-1'
-                        />
-                      ) : (
+
+                <div className='space-y-3'>
+                  <Label className='text-xs font-bold uppercase tracking-wider text-gray-500 block mb-1'>Field Mappings</Label>
+                  <div className='space-y-2'>
+                    {currentTemplateMappings.map((m: TemplateMapping, i: number) => (
+                      <div key={i} className='flex gap-2 items-center'>
+                        {templateScope === 'export' ? (
+                          <Input
+                            value={m.sourceKey}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateMapping(i, { sourceKey: e.target.value })}
+                            placeholder='Source (e.g. category_id)'
+                            list='export-source-field-options'
+                            className='flex-1 h-9'
+                          />
+                        ) : (
+                          <div className='flex-1'>
+                            <SelectSimple 
+                              size='sm'
+                              value={m.sourceKey || '__none__'}
+                              onValueChange={(value: string): void =>
+                                updateMapping(i, {
+                                  sourceKey:
+                                    value === '__none__'
+                                      ? ''
+                                      : value,
+                                })
+                              }
+                              options={[
+                                { value: '__none__', label: 'Source Field' },
+                                ...(m.sourceKey &&
+                                !importSourceFieldOptions.includes(m.sourceKey)
+                                  ? [
+                                    {
+                                      value: m.sourceKey,
+                                      label: `${m.sourceKey} (custom)`,
+                                    },
+                                  ]
+                                  : []),
+                                ...importSourceFieldOptions.map((field: string) => ({
+                                  value: field,
+                                  label: importSourceFieldValues[field]
+                                    ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
+                                    : field,
+                                })),
+                              ]}
+                              triggerClassName='w-full h-9 bg-gray-950/40'
+                              placeholder='Select source field'
+                            />
+                          </div>
+                        )}
                         <div className='flex-1'>
-                          <SelectSimple size='sm'
-                            value={m.sourceKey || '__none__'}
-                            onValueChange={(value: string): void =>
-                              updateMapping(i, {
-                                sourceKey:
-                                  value === '__none__'
-                                    ? ''
-                                    : value,
-                              })
-                            }
+                          <SelectSimple 
+                            size='sm'
+                            value={m.targetField}
+                            onValueChange={(v: string): void => updateMapping(i, { targetField: v })}
                             options={[
-                              { value: '__none__', label: 'Source Field' },
-                              ...(m.sourceKey &&
-                              !importSourceFieldOptions.includes(m.sourceKey)
-                                ? [
-                                  {
-                                    value: m.sourceKey,
-                                    label: `${m.sourceKey} (custom)`,
-                                  },
-                                ]
-                                : []),
-                              ...importSourceFieldOptions.map((field: string) => ({
-                                value: field,
-                                label: importSourceFieldValues[field]
-                                  ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
-                                  : field,
-                              })),
+                              { value: '__none__', label: 'Target Field' },
+                              ...PRODUCT_FIELDS,
                             ]}
-                            triggerClassName='w-full bg-gray-900 border border-border p-2 rounded text-sm h-10 text-white'
-                            contentClassName='bg-gray-900 border-border text-white'
-                            placeholder='Select source field'
+                            triggerClassName='w-full h-9 bg-gray-950/40'
+                            placeholder='Target Field'
                           />
                         </div>
-                      )}
-                      <div className='flex-1'>
-                        <SelectSimple size='sm'
-                          value={m.targetField}
-                          onValueChange={(v: string): void => updateMapping(i, { targetField: v })}
-                          options={[
-                            { value: '__none__', label: 'Target Field' },
-                            ...PRODUCT_FIELDS,
-                          ]}
-                          triggerClassName='bg-gray-900 border border-border p-2 rounded text-sm h-10 text-white'
-                          contentClassName='bg-gray-900 border-border text-white'
-                          placeholder='Target Field'
-                        />
+                        <Button 
+                          variant='ghost' 
+                          size='icon' 
+                          className='h-9 w-9 text-gray-500 hover:text-red-400'
+                          onClick={() => removeMappingRow(i)}
+                        >
+                          <Trash2 className='size-4' />
+                        </Button>
                       </div>
-                      <Button variant='ghost' size='icon' onClick={() => removeMappingRow(i)}><Trash2 className='size-4' /></Button>
-                    </div>
-                  ))}
-                  <Button variant='secondary' onClick={addMappingRow}>Add Row</Button>
+                    ))}
+                  </div>
+                  <Button variant='outline' size='sm' className='h-8' onClick={addMappingRow}>
+                    <Plus className='size-3.5 mr-1.5' />
+                    Add Field Row
+                  </Button>
                 </div>
-                {templateScope === 'export' && (
-                  <>
-                    <datalist id='export-source-field-options'>
-                      {exportSourceFieldOptions.map((field: string) => (
-                        <option key={field} value={field} />
-                      ))}
-                    </datalist>
-                    <p className='text-xs text-gray-500'>
-                      For category mapping use: source <code>category_id</code> and target <code>categoryId</code>.
-                    </p>
-                  </>
-                )}
-                {templateScope === 'import' && (
-                  <>
-                    <p className='text-xs text-gray-500'>
+
+                <div className='pt-2'>
+                  {templateScope === 'export' && (
+                    <>
+                      <datalist id='export-source-field-options'>
+                        {exportSourceFieldOptions.map((field: string) => (
+                          <option key={field} value={field} />
+                        ))}
+                      </datalist>
+                      <p className='text-xs text-gray-500 italic'>
+                        Tip: For category mapping use source <code>category_id</code> and target <code>categoryId</code>.
+                      </p>
+                    </>
+                  )}
+                  {templateScope === 'import' && (
+                    <p className='text-xs text-gray-500 italic'>
                       {loadingImportSourceFields
                         ? 'Loading source fields from selected inventory...'
                         : importSourceFieldOptions.length > 0
                           ? `Loaded ${importSourceFieldOptions.length} source fields from the selected inventory schema.`
-                          : 'No source fields loaded yet. In the Imports tab, select connection + inventory to load schema fields.'}
+                          : 'No source fields loaded yet. Go to Imports tab, select connection + inventory to load schema.'}
                     </p>
-                  </>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </TabsContent>
       </Tabs>
 
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title='Delete template'
-        description='Are you sure you want to delete this template? This action cannot be undone.'
-        confirmText='Delete'
-        variant='destructive'
+      <ConfirmModal
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        title='Delete Template'
+        message={`Are you sure you want to permanently delete this ${templateScope} template? This action cannot be undone.`}
+        confirmText='Delete Template'
+        isDangerous={true}
         loading={savingImportTemplate || savingExportTemplate}
         onConfirm={() => {
-          void handleDeleteTemplate().finally(() => setDeleteDialogOpen(false));
+          return handleDeleteTemplate().finally(() => setDeleteDialogOpen(false));
         }}
-        onCancel={() => setDeleteDialogOpen(false)}
       />
     </div>
   );

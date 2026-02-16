@@ -1,3 +1,4 @@
-import { GET as handler } from '@/features/ai/agentcreator/api/agent/[runId]/stream/route';
-export const GET = handler;
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export { AgentCreatorAgentRunStreamGET as GET } from '@/features/ai/agentcreator/server';

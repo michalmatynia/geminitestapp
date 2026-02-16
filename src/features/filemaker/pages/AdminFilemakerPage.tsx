@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit2, Plus, Save, Trash2, X } from 'lucide-react';
+import { Edit2, Plus, Save, Trash2, X, Database } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
@@ -14,7 +14,7 @@ import {
   Input,
   Label,
   SelectSimple,
-  SectionHeader,
+  PanelHeader,
   useToast,
 } from '@/shared/ui';
 
@@ -510,9 +510,10 @@ export function AdminFilemakerPage(): React.JSX.Element {
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
-      <SectionHeader
+      <PanelHeader
         title='Filemaker'
         description='Manage persons and organizations that can be attached as addresser/addressee in Case Resolver documents.'
+        icon={<Database className='size-4' />}
       />
 
       <div className='flex flex-wrap gap-2'>

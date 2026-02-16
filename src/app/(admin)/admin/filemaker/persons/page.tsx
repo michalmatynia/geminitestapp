@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AdminFilemakerPersonsPage } from '@/features/filemaker';
+import { AdminFilemakerPersonsPage } from '@/features/filemaker/public';
 
 export default function AdminFilemakerPersonsRoutePage(): React.JSX.Element {
   return <AdminFilemakerPersonsPage />;

@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import { SlugsPage } from '@/features/cms';
+import { SlugsPage } from '@/features/cms/public';
 
 export default function Page(): JSX.Element {
   return (

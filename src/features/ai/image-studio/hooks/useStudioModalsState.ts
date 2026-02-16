@@ -1,27 +1,28 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useToast } from '@/shared/ui';
-import { api } from '@/shared/lib/api-client';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useState, useCallback, useMemo } from 'react';
+
 import { PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY, DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL } from '@/features/products/constants';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
+
+import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { studioKeys } from '../hooks/useImageStudioQueries';
-import { useProjectsState } from '../context/ProjectsContext';
-import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
-import { usePromptState, usePromptActions } from '../context/PromptContext';
-import { useSettingsState } from '../context/SettingsContext';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
+
+import type { ImageFileSelection } from '@/shared/types/domain/files';
+import { useToast } from '@/shared/ui';
 import {
   toSlotName,
-  buildHeuristicControls,
-  inferParamSpecs,
 } from '../components/studio-modals/prompt-extract-utils';
-import type { ImageStudioSlotRecord } from '../types';
-import type { ParamSpec } from '@/features/prompt-engine/prompt-params';
+import { useProjectsState } from '../context/ProjectsContext';
+import { usePromptState, usePromptActions } from '../context/PromptContext';
+import { useSettingsState } from '../context/SettingsContext';
+import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
+import { studioKeys } from '../hooks/useImageStudioQueries';
+
+import type { PromptExtractHistoryEntry, PromptExtractValidationIssue } from '../components/studio-modals/prompt-extract-utils';
 import type { ParamUiControl } from '../utils/param-ui';
-import type { ImageFileSelection } from '@/shared/types/domain/files';
-import type { PromptExtractApiResponse, PromptExtractHistoryEntry, PromptExtractValidationIssue } from '../components/studio-modals/prompt-extract-utils';
 
 type LinkedGeneratedRunRecord = {
   id: string;
@@ -70,10 +71,7 @@ export function useStudioModalsState() {
     driveImportOpen,
     driveImportMode,
     driveImportTargetId,
-    temporaryObjectUpload,
     slotInlineEditOpen,
-    slotImageUrlDraft,
-    slotBase64Draft,
     slotUpdateBusy,
   } = useSlotsState();
   const {
@@ -82,9 +80,6 @@ export function useStudioModalsState() {
     updateSlotMutation,
     setSlotCreateOpen,
     setDriveImportOpen,
-    setDriveImportMode,
-    setDriveImportTargetId,
-    setTemporaryObjectUpload,
     importFromDriveMutation,
     uploadMutation,
     setSlotInlineEditOpen,
@@ -96,29 +91,23 @@ export function useStudioModalsState() {
   const {
     setExtractReviewOpen,
     setExtractDraftPrompt,
-    setPromptText,
-    setParamsState,
-    setParamSpecs,
-    setParamUiOverrides,
-    setExtractPreviewUiOverrides,
   } = usePromptActions();
   const { studioSettings } = useSettingsState();
 
   const [slotNameDraft, setSlotNameDraft] = useState('');
   const [slotFolderDraft, setSlotFolderDraft] = useState('');
-  const [extractBusy, setExtractBusy] = useState<'none' | 'programmatic' | 'smart' | 'ai' | 'ui'>('none');
-  const [extractError, setExtractError] = useState<string | null>(null);
-  const [previewParams, setPreviewParams] = useState<Record<string, unknown> | null>(null);
-  const [previewSpecs, setPreviewSpecs] = useState<Record<string, ParamSpec> | null>(null);
-  const [previewControls, setPreviewControls] = useState<Record<string, ParamUiControl>>({});
-  const [previewValidation, setPreviewValidation] = useState<{
+  const [extractBusy] = useState<'none' | 'programmatic' | 'smart' | 'ai' | 'ui'>('none');
+  const [extractError] = useState<string | null>(null);
+  const [previewParams] = useState<Record<string, unknown> | null>(null);
+  const [previewControls] = useState<Record<string, ParamUiControl>>({});
+  const [previewValidation] = useState<{
     before: PromptExtractValidationIssue[];
     after: PromptExtractValidationIssue[];
   } | null>(null);
   const [extractHistory, setExtractHistory] = useState<PromptExtractHistoryEntry[]>([]);
   const [selectedExtractHistoryId, setSelectedExtractHistoryId] = useState<string | null>(null);
   const [editCardTab, setEditCardTab] = useState<'card' | 'generations' | 'environment' | 'masks' | 'composites'>('card');
-  const [generationPreviewKey, setGenerationPreviewKey] = useState<string | null>(null);
+  const [generationPreviewKey] = useState<string | null>(null);
   const [generationPreviewModalOpen, setGenerationPreviewModalOpen] = useState(false);
   const [generationModalPreviewNaturalSize, setGenerationModalPreviewNaturalSize] = useState<{ width: number; height: number } | null>(null);
 
@@ -237,6 +226,8 @@ export function useStudioModalsState() {
     }
   };
 
+  const previewLeaves: Array<{ path: string; value: unknown }> = [];
+
   return {
     projectId,
     slots,
@@ -286,7 +277,7 @@ export function useStudioModalsState() {
     handleSuggestUiControls: () => {},
     handleApplyExtraction: () => {},
     handleSaveInlineSlot: () => {},
-    handleCopyCardId: (id: string) => {},
+    handleCopyCardId: (_id: string) => {},
     uploadMutation,
   };
 }

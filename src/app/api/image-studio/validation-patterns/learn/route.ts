@@ -16,7 +16,7 @@ import {
   parsePromptEngineSettings,
   parsePromptValidationRules,
   type PromptValidationRule,
-} from '@/features/prompt-engine';
+} from '@/features/prompt-engine/public';
 import { authError, configurationError, internalError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

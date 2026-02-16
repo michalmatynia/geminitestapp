@@ -1,4 +1,4 @@
-import { AdminPromptExploderSettingsPage } from '@/features/prompt-exploder';
+import { AdminPromptExploderSettingsPage } from '@/features/prompt-exploder/public';
 
 import type { JSX } from 'react';
 

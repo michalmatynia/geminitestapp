@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { tagUpdateSchema } from '@/features/notesapp';
+import { tagUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';

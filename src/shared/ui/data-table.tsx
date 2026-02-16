@@ -41,6 +41,7 @@ interface DataTableProps<TData> {
   renderRowDetails?: (props: { row: Row<TData> }) => React.ReactNode;
   isLoading?: boolean;
   skeletonRows?: React.ReactNode;
+  emptyState?: React.ReactNode;
   meta?: Record<string, unknown>;
   className?: string;
   getRowClassName?: ((row: Row<TData>) => string | undefined) | undefined;
@@ -99,6 +100,7 @@ export const DataTable = memo(function DataTable<TData>({
   renderRowDetails,
   isLoading = false,
   skeletonRows,
+  emptyState,
   meta,
   className,
   getRowClassName,
@@ -240,11 +242,13 @@ export const DataTable = memo(function DataTable<TData>({
                   colSpan={columns.length}
                   className='h-24 py-12'
                 >
-                  <EmptyState 
-                    title='No results' 
-                    description="Try adjusting your filters to find what you're looking for."
-                    className='border-none p-0'
-                  />
+                  {emptyState ?? (
+                    <EmptyState 
+                      title='No results' 
+                      description="Try adjusting your filters to find what you're looking for."
+                      className='border-none p-0'
+                    />
+                  )}
                 </TableCell>
               </TableRow>
             )}

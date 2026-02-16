@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useEffect } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/features/observability/public';
 import { Button } from '@/shared/ui';
 
 export default function AdminError({

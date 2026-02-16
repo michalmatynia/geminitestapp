@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { Trash2, BookOpen, Plus, Search, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
@@ -8,14 +8,15 @@ import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentListItem } 
 import { 
   Button, 
   Input, 
-  SectionHeader, 
   DataTable, 
   Textarea, 
   FormSection, 
   FormField,
   Badge,
-  ConfirmDialog,
-  Alert
+  ConfirmModal,
+  Alert,
+  PanelHeader,
+  ListPanel
 } from '@/shared/ui';
 
 import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
@@ -106,23 +107,28 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
 
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
-      <SectionHeader
+      <PanelHeader
         title={collection ? collection.name : 'Collection'}
         description='Manage documents (original text + embedding vectors).'
+        icon={<BookOpen className='size-4' />}
         eyebrow={(
           <Link href='/admin/agentcreator/teaching/collections' className='text-blue-300 hover:text-blue-200 transition-colors'>
             ← Back to collections
           </Link>
         )}
-        actions={collection ? (
-          <Badge variant='secondary' className='text-xs font-mono'>
-            Model: {collection.embeddingModel}
-          </Badge>
-        ) : undefined}
+        actions={collection ? [
+          {
+            key: 'model',
+            label: `Model: ${collection.embeddingModel}`,
+            variant: 'secondary',
+            onClick: () => {},
+            disabled: true,
+          }
+        ] : undefined}
       />
 
       <div className='grid gap-6 lg:grid-cols-2'>
-        <FormSection title='Add Document' className='p-6'>
+        <FormSection title='Add Document' variant='subtle' className='p-6'>
           <div className='space-y-4'>
             <div className='grid gap-4 md:grid-cols-2'>
               <FormField label='Title (optional)'>
@@ -148,6 +154,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
             </FormField>
             <div className='flex justify-end'>
               <Button onClick={() => void handleAdd()} disabled={adding || deleting || !collectionId || !text.trim()}>
+                <Plus className='mr-2 size-4' />
                 {adding ? 'Embedding...' : 'Add Document'}
               </Button>
             </div>
@@ -157,16 +164,19 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         <FormSection
           title='Semantic Search Simulator'
           description='Test retrieval relevance by running queries against this collection.'
-          actions={(
+          variant='subtle'
+          actions={
             <Button
               variant='outline'
               size='xs'
               onClick={() => void handleSearch()}
               disabled={searching || !collectionId || !searchQuery.trim()}
+              className='gap-2'
             >
+              {searching ? <RefreshCw className='size-3 animate-spin' /> : <Search className='size-3' />}
               {searching ? 'Searching...' : 'Run Search'}
             </Button>
-          )}
+          }
           className='p-6'
         >
           <div className='space-y-4'>
@@ -234,22 +244,23 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         </FormSection>
       </div>
 
-      <div className='rounded-md border border-border bg-gray-950/20'>
+      <ListPanel>
         <DataTable
           columns={columns}
           data={docs}
           isLoading={isLoading}
         />
-      </div>
+      </ListPanel>
 
-      <ConfirmDialog
-        open={!!docToDelete}
-        onOpenChange={(open) => !open && setDocToDelete(null)}
-        title='Delete document'
-        description='This action cannot be undone.'
-        confirmText='Delete'
-        variant='destructive'
+      <ConfirmModal
+        isOpen={!!docToDelete}
+        onClose={() => setDocToDelete(null)}
         onConfirm={() => { void handleDelete(); }}
+        title='Delete document'
+        message='Are you sure you want to delete this document? This action cannot be undone and will remove the vector representation from the embedding collection.'
+        confirmText='Delete'
+        isDangerous={true}
+        loading={deleting}
       />
     </div>
   );

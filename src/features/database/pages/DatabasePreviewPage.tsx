@@ -24,7 +24,6 @@ import React, { Suspense, useMemo, useState } from 'react';
 import {
   Badge,
   Button,
-  Input,
   Pagination,
   SectionHeader,
   FormSection,
@@ -35,6 +34,7 @@ import {
   DataTable,
   StatusBadge,
   Alert,
+  SearchInput,
 } from '@/shared/ui';
 
 import { CrudPanel } from '../components/CrudPanel';
@@ -469,13 +469,13 @@ function DatabasePreviewContent(): React.JSX.Element {
               description={`${filteredTableDetails.length} items`}
               actions={
                 <div className='flex items-center gap-4'>
-                  <Input
+                  <SearchInput
                     size='sm'
-                    type='search'
                     value={tableQuery}
                     onChange={(e) => setTableQuery(e.target.value)}
+                    onClear={() => setTableQuery('')}
                     placeholder='Filter tables...'
-                    className='h-8 w-48 text-xs'
+                    className='h-8 w-48'
                   />
                   <div className='flex items-center gap-2'>
                     <Pagination
@@ -515,12 +515,13 @@ function DatabasePreviewContent(): React.JSX.Element {
               title='Additional Objects'
               description='Functions, views, and sequences'
               actions={
-                <Input
+                <SearchInput
                   size='sm'
                   value={groupQuery}
                   onChange={(e) => setGroupQuery(e.target.value)}
+                  onClear={() => setGroupQuery('')}
                   placeholder='Search objects...'
-                  className='h-8 w-40 text-xs'
+                  className='h-8 w-40'
                 />
               }
               className='p-6'

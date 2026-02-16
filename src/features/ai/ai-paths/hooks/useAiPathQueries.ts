@@ -82,7 +82,16 @@ export function useAiPathRuntimeAnalytics(
   const queryKey = QUERY_KEYS.ai.aiPaths.runtimeAnalytics(range);
   return createSingleQueryV2({
     queryKey,
-    queryFn: () => api.get<AiPathRuntimeAnalyticsSummary>('/api/ai-paths/runtime-analytics', { params: { range } }),
+    queryFn: async () => {
+      const response = await api.get<{ summary?: AiPathRuntimeAnalyticsSummary }>(
+        '/api/ai-paths/runtime-analytics/summary',
+        { params: { range } }
+      );
+      if (!response.summary) {
+        throw new Error('Missing runtime analytics payload.');
+      }
+      return response.summary;
+    },
     id: range,
     enabled,
     meta: {

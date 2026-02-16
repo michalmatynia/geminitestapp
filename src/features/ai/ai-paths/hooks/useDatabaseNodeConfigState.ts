@@ -10,6 +10,7 @@ import {
   safeParseJson, 
   createPresetId,
   extractJsonPathEntries,
+  createParserMappings,
 } from '@/features/ai/ai-paths/lib';
 import type { 
   AiNode, 
@@ -24,15 +25,10 @@ import type {
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
 import { 
   resolveDbActionProvider, 
-  getProviderActionCategoryOptions,
-  getProviderActionOptions,
   isProviderActionCategorySupported,
   resolveProviderAction,
-  getUnsupportedProviderActionMessage,
-  getProviderSpecificActionLabel,
   getDefaultProviderAction
 } from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
-import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { 
   PROMPT_ENGINE_SETTINGS_KEY, 
   parsePromptEngineSettings 
@@ -43,24 +39,8 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { useAiPathConfig } from '../components/AiPathConfigContext';
 import { 
-  buildJsonQueryValidation, 
-  buildMongoQueryValidation, 
-  mergeValidationIssues,
-  buildValidationIssues,
-  getQueryPlaceholderByAction,
-  getUpdatePlaceholderByAction,
-  formatAndFixMongoQuery,
-  type ValidationPaletteRule
-} from '../components/node-config/database/query-utils';
-import { 
-  isProductCollection, 
   toDbSchemaSnapshot,
-  normalizeSchemaCollections,
   applySchemaSelection,
-  buildSchemaPlaceholderContext,
-  toTitleCase,
-  singularize,
-  formatCollectionLabel,
 } from '../utils/database-node-utils';
 
 
@@ -125,7 +105,6 @@ export function useDatabaseNodeConfigState() {
 
   const queryTemplateRef = useRef<HTMLTextAreaElement | null>(null);
   const aiPromptRef = useRef<HTMLTextAreaElement | null>(null);
-  const lastInjectedResponseRef = useRef<string>('');
   const lastAutoFetchedRef = useRef<string>('');
 
   const settingsQuery = useSettingsMap();
@@ -229,16 +208,6 @@ export function useDatabaseNodeConfigState() {
     const provider = schemaConnection.schemaConfig?.provider ?? queryConfig.provider ?? 'auto';
     schemaSyncMutation.mutate(provider);
   }, [queryConfig.provider, schemaConnection.schemaConfig?.provider, schemaSyncMutation]);
-
-  const dbActionMutation = createMutationV2<unknown, Record<string, unknown>>({
-    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('node-config.database.action'),
-    mutationFn: async (payload) => {
-      const res = await dbApi.action<Record<string, unknown>>(payload as any);
-      if (!res.ok) throw new Error(res.error || 'Query failed');
-      return res.data;
-    },
-    meta: { source: 'ai.ai-paths.node-config.database.action', operation: 'action', resource: 'databases.action', domain: 'global' },
-  });
 
   const handleRunQuery = useCallback(async () => {
     setTestQueryLoading(true);

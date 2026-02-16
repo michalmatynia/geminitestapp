@@ -11,7 +11,7 @@ import type { GsapAnimationConfig } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast, SidePanel } from '@/shared/ui';
+import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast, SidePanel, SelectSimple } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { AnimationConfigPanel } from './AnimationConfigPanel';
@@ -330,7 +330,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
                     <div className='rounded border border-border/40 bg-gray-900/40 p-3 mb-4'>
                       <SelectSimple
                         value={currentBackgroundTarget}
-                        onValueChange={(value) => handleBlockSettingChange('backgroundTarget', value)}
+                        onValueChange={(value: string) => handleBlockSettingChange('backgroundTarget', value)}
                         options={backgroundTargetOptions}
                         size='sm'
                         triggerClassName='h-8 bg-gray-800 border-border text-gray-200'

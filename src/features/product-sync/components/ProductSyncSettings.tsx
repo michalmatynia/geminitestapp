@@ -5,6 +5,15 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import {
+  useCreateProductSyncProfileMutation,
+  useDeleteProductSyncProfileMutation,
+  useProductSyncProfiles,
+  useProductSyncRuns,
+  useRelinkBaseProductsMutation,
+  useRunProductSyncProfileMutation,
+  useUpdateProductSyncProfileMutation,
+} from '@/features/product-sync/hooks/useProductSyncSettings';
+import {
   PRODUCT_SYNC_APP_FIELDS,
   PRODUCT_SYNC_DIRECTION_OPTIONS,
 } from '@/features/product-sync/types/product-sync';
@@ -14,15 +23,6 @@ import type {
   ProductSyncFieldRule,
   ProductSyncProfile,
 } from '@/features/product-sync/types/product-sync';
-import {
-  useCreateProductSyncProfileMutation,
-  useDeleteProductSyncProfileMutation,
-  useProductSyncProfiles,
-  useProductSyncRuns,
-  useRelinkBaseProductsMutation,
-  useRunProductSyncProfileMutation,
-  useUpdateProductSyncProfileMutation,
-} from '@/features/product-sync/hooks/useProductSyncSettings';
 import {
   Badge,
   Button,

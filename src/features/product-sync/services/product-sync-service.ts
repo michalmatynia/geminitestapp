@@ -8,6 +8,7 @@ import {
 } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { callBaseApi, fetchBaseProductDetails } from '@/features/integrations/services/imports/base-client';
+import { ErrorSystem } from '@/features/observability/server';
 import {
   getProductSyncProfile,
   getProductSyncRun,
@@ -25,7 +26,6 @@ import type {
   ProductSyncRunStats,
   ProductSyncRunStatus,
 } from '@/features/product-sync/types/product-sync';
-import { ErrorSystem } from '@/features/observability/server';
 import { getProductRepository } from '@/features/products/server';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductUpdateInput } from '@/features/products/validations';

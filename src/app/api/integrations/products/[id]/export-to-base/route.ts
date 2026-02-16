@@ -1,7 +1,6 @@
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { auth } from '@/features/auth/server';
@@ -23,13 +22,10 @@ import {
 } from '@/features/integrations/server';
 import {
   buildBaseProductData,
-  collectProductImageDiagnostics,
   exportProductImagesToBase,
   exportProductToBase,
-  getProductImagesAsBase64,
   normalizeStockKey,
   type ImageBase64Mode,
-  type ImageExportDiagnostics,
   type ImageTransformOptions
 } from '@/features/integrations/server';
 import { checkBaseSkuExists, fetchBaseWarehouses } from '@/features/integrations/server';
@@ -49,175 +45,25 @@ import {
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-const exportSchema = z.object({
-  connectionId: z.string().min(1),
-  inventoryId: z.string().min(1),
-  templateId: z.string().optional(),
-  allowDuplicateSku: z.boolean().optional(), // Allow exporting even if SKU exists in Base.com
-  exportImagesAsBase64: z.boolean().optional(), // Export images as base64 data blobs instead of URLs
-  imageBase64Mode: z.enum(['base-only', 'full-data-uri']).optional(),
-  imagesOnly: z.boolean().optional(),
-  listingId: z.string().optional(),
-  externalListingId: z.string().optional(),
-  imageTransform: z
-    .object({
-      forceJpeg: z.boolean().optional(),
-      maxDimension: z.number().int().positive().optional(),
-      jpegQuality: z.number().int().min(10).max(100).optional()
-    })
-    .optional()
-});
-
-const normalizeSearchText = (value: string) =>
-  value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-const isBaseImageError = (message: string | undefined) => {
-  if (!message) return false;
-  const normalized = normalizeSearchText(message.toLowerCase());
-  return (
-    normalized.includes('zdjec') ||
-    normalized.includes('image') ||
-    normalized.includes('photo')
-  );
-};
-
-const buildImageDiagnosticsLogger = (
-  context: Record<string, unknown>
-): ImageExportDiagnostics => ({
-  log: (message, data) => {
-    void ErrorSystem.logWarning(`[export-to-base][images] ${message}`, {
-      ...context,
-      ...(data ?? {})
-    });
-  }
-});
-
-const logImageDiagnostics = async ({
-  product,
-  imageBaseUrl,
-  includeBase64,
-  base64Mode,
-  transform,
-  context
-}: {
-  product: Parameters<typeof collectProductImageDiagnostics>[0];
-  imageBaseUrl: string | null;
-  includeBase64: boolean;
-  base64Mode: ImageBase64Mode;
-  transform?: ImageTransformOptions | null;
-  context: Record<string, unknown>;
-}) => {
-  const urlDiagnostics = collectProductImageDiagnostics(product, imageBaseUrl);
-  void ErrorSystem.logWarning('[export-to-base][images] Image candidates', {
-    ...context,
-    images: urlDiagnostics
-  });
-
-  if (!includeBase64) return;
-
-  try {
-    const diagnostics = buildImageDiagnosticsLogger(context);
-    await getProductImagesAsBase64(product, {
-      diagnostics,
-      outputMode: base64Mode,
-      transform: transform ?? null
-    });
-  } catch (error) {
-    void ErrorSystem.logWarning('[export-to-base][images] Failed to gather base64 diagnostics', {
-      ...context,
-      error: error instanceof Error ? error.message : String(error)
-    });
-  }
-};
-
-const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
-  'categoryid',
-  'category_id',
-  'category',
-]);
-
-const PRODUCER_ID_TEMPLATE_FIELDS = new Set([
-  'producer',
-  'producers',
-  'producername',
-  'producer_name',
-  'producernames',
-  'producer_names',
-  'producerid',
-  'producer_id',
-  'producerids',
-  'producer_ids',
-  'manufacturer',
-  'manufacturerid',
-  'manufacturer_id',
-  'manufacturerids',
-  'manufacturer_ids',
-]);
-
-const TAG_ID_TEMPLATE_FIELDS = new Set([
-  'tagid',
-  'tag_id',
-  'tagids',
-  'tag_ids',
-]);
-
-const toTrimmedString = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim();
-};
-
-const toTemplateFieldKey = (value: string): string =>
-  value.trim().toLowerCase().replace(/[\s_-]+/g, '');
-
-const matchesTemplateField = (value: string, fields: Set<string>): boolean => {
-  const normalized = value.trim().toLowerCase();
-  if (fields.has(normalized)) return true;
-  const compact = toTemplateFieldKey(normalized);
-  return fields.has(compact);
-};
-
-const isMissingExternalEntity = (
-  entityName: unknown,
-  entityKind: 'category' | 'producer'
-): boolean => {
-  const normalized = toTrimmedString(entityName).toLowerCase();
-  return normalized.startsWith(`[missing external ${entityKind}:`);
-};
-
-const toTimeMs = (value: unknown): number => {
-  if (value instanceof Date) return value.getTime();
-  if (typeof value === 'string' || typeof value === 'number') {
-    const parsed = new Date(value).getTime();
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-};
-
-const getProducerRefId = (value: unknown): string => {
-  if (!value || typeof value !== 'object') return '';
-  const record = value as Record<string, unknown>;
-  return (
-    toTrimmedString(record['producerId']) ||
-    toTrimmedString(record['producer_id']) ||
-    toTrimmedString(record['id']) ||
-    toTrimmedString(record['value'])
-  );
-};
-
-const BASE_EXPORT_RUN_PATH_ID = 'integration-base-export';
-const BASE_EXPORT_RUN_PATH_NAME = 'Base.com Export Jobs';
-const BASE_EXPORT_SOURCE = 'integration_base_export';
-const EXPORT_REQUEST_LOCK_TTL_MS = 2 * 60_000;
-const inFlightExportRequests = new Map<string, number>();
-
-const clearExpiredExportRequestLocks = (): void => {
-  const now = Date.now();
-  for (const [key, createdAt] of inFlightExportRequests.entries()) {
-    if (now - createdAt > EXPORT_REQUEST_LOCK_TTL_MS) {
-      inFlightExportRequests.delete(key);
-    }
-  }
-};
+import {
+  BASE_EXPORT_RUN_PATH_ID,
+  BASE_EXPORT_RUN_PATH_NAME,
+  BASE_EXPORT_SOURCE,
+  CATEGORY_TEMPLATE_PRODUCT_FIELDS,
+  PRODUCER_ID_TEMPLATE_FIELDS,
+  TAG_ID_TEMPLATE_FIELDS,
+  buildImageDiagnosticsLogger,
+  clearExpiredExportRequestLocks,
+  exportSchema,
+  getProducerRefId,
+  inFlightExportRequests,
+  isBaseImageError,
+  isMissingExternalEntity,
+  logImageDiagnostics,
+  matchesTemplateField,
+  toTimeMs,
+  toTrimmedString,
+} from './helpers';
 
 /**
  * POST /api/integrations/products/[id]/export-to-base

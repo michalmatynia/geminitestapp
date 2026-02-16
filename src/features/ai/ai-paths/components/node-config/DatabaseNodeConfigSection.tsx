@@ -1,22 +1,24 @@
 'use client';
 
 import React from 'react';
+
 import { 
   Tabs, 
   TabsContent, 
   TabsList, 
   TabsTrigger, 
 } from '@/shared/ui';
-import { useDatabaseNodeConfigState } from '../../hooks/useDatabaseNodeConfigState';
-import { resolveNodeLabel } from '../../utils/ui-utils';
-import { DatabaseQueryInputControlsContextProvider } from './database/DatabaseQueryInputControlsContext';
-import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';
+
 import { DatabaseConstructorContextProvider } from './database/DatabaseConstructorContext';
+import { DatabaseConstructorTab } from './database/DatabaseConstructorTab';
 import { DatabasePresetsTab } from './database/DatabasePresetsTab';
 import { DatabasePresetsTabContextProvider } from './database/DatabasePresetsTabContext';
-import { DatabaseSettingsTab } from './database/DatabaseSettingsTab';
+import { DatabaseQueryInputControlsContextProvider } from './database/DatabaseQueryInputControlsContext';
 import { DatabaseSaveQueryPresetDialog } from './database/DatabaseSaveQueryPresetDialog';
 import { DatabaseSaveQueryPresetDialogContextProvider } from './database/DatabaseSaveQueryPresetDialogContext';
+import { DatabaseSettingsTab } from './database/DatabaseSettingsTab';
+import { useDatabaseNodeConfigState } from '../../hooks/useDatabaseNodeConfigState';
+import { resolveNodeLabel } from '../../utils/ui-utils';
 
 import type { DatabaseConstructorContextValue } from './database/DatabaseConstructorContext';
 import type { DatabaseQueryInputControlsContextValue } from './database/DatabaseQueryInputControlsContext';

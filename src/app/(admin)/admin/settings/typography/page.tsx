@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AdminTypographySettingsPage } from '@/features/admin';
+import { AdminTypographySettingsPage } from '@/features/admin/public';
 
 export const dynamic = 'force-dynamic';
 

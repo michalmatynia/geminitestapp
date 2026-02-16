@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { AuthUsersPage } from '@/features/auth';
+import { AuthUsersPage } from '@/features/auth/public';
 
 export default function Page(): JSX.Element {
   return <AuthUsersPage />;

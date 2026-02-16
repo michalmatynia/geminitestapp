@@ -18,6 +18,11 @@ type QueryProviderProps = {
   children: React.ReactNode;
 };
 
+const isDevelopment = process.env["NODE_ENV"] === "development";
+const enableAdvancedRuntime =
+  isDevelopment && process.env["NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME"] === "true";
+const enableWarmup = process.env["NEXT_PUBLIC_QUERY_WARMUP"] === "true";
+
 let browserQueryClient: ReturnType<typeof createQueryClient> | null = null;
 
 const getQueryClient = () => {
@@ -30,57 +35,50 @@ const getQueryClient = () => {
   return browserQueryClient;
 };
 
+function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean }): null {
+  usePerformanceMonitor();
+  useQueryMiddleware(
+    isDevelopment
+      ? developmentMiddlewares
+      : productionMiddlewares
+  );
+
+  const { optimizeCache } = useSmartCache();
+  const { warmFrequentlyAccessedData } = useCacheWarming();
+  const { cleanupStaleQueries, optimizeQueryPriorities } = useQueryLifecycle();
+  useQueryBatching({ maxBatchSize: 5, batchDelay: 100 });
+
+  useEffect((): (() => void) => {
+    const optimizeInterval = setInterval((): void => {
+      optimizeCache();
+      optimizeQueryPriorities();
+    }, 5 * 60 * 1000);
+
+    const cleanupInterval = setInterval((): void => {
+      void cleanupStaleQueries();
+    }, 10 * 60 * 1000);
+
+    return (): void => {
+      clearInterval(optimizeInterval);
+      clearInterval(cleanupInterval);
+    };
+  }, [cleanupStaleQueries, optimizeCache, optimizeQueryPriorities]);
+
+  useEffect((): void => {
+    if (!shouldWarmup) return;
+    void warmFrequentlyAccessedData();
+  }, [shouldWarmup, warmFrequentlyAccessedData]);
+
+  return null;
+}
+
 function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element {
-  // Global error handling
   useGlobalQueryErrorHandler({
     showToast: true,
     logErrors: false,
     retryOnError: true,
   });
 
-  // Performance monitoring in development
-  usePerformanceMonitor();
-
-  // Query middleware system
-  useQueryMiddleware(
-    process.env["NODE_ENV"] === 'development' 
-      ? developmentMiddlewares 
-      : productionMiddlewares
-  );
-
-  // Smart cache management
-  const { optimizeCache } = useSmartCache();
-  const { warmFrequentlyAccessedData } = useCacheWarming();
-
-  // Query lifecycle management
-  const { cleanupStaleQueries, optimizeQueryPriorities } = useQueryLifecycle();
-
-  // Query batching for performance
-  useQueryBatching({ maxBatchSize: 5, batchDelay: 100 });
-
-  // Optimize cache and lifecycle periodically
-  useEffect((): (() => void) => {
-    const optimizeInterval = setInterval((): void => {
-      optimizeCache();
-      optimizeQueryPriorities();
-    }, 5 * 60 * 1000); // Every 5 minutes
-
-    const cleanupInterval = setInterval((): void => {
-      void cleanupStaleQueries();
-    }, 10 * 60 * 1000); // Every 10 minutes
-
-    return (): void => {
-      clearInterval(optimizeInterval);
-      clearInterval(cleanupInterval);
-    };
-  }, [optimizeCache, optimizeQueryPriorities, cleanupStaleQueries]);
-
-  // Warm frequently accessed data on mount
-  useEffect((): void => {
-    void warmFrequentlyAccessedData();
-  }, [warmFrequentlyAccessedData]);
-
-  // Persist important queries
   useQueryPersistence({
     key: 'app-queries',
     queryKeys: [
@@ -88,10 +86,17 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
       [...QUERY_KEYS.settings.scope('light')],
       [...QUERY_KEYS.settings.scope('lite')],
     ],
-    ttl: 1000 * 60 * 60, // 1 hour
+    ttl: 1000 * 60 * 60,
   });
 
-  return <>{children}</>;
+  return (
+    <>
+      {enableAdvancedRuntime ? (
+        <QueryProviderAdvancedRuntime shouldWarmup={enableWarmup} />
+      ) : null}
+      {children}
+    </>
+  );
 }
 
 export const QueryProvider = ({ children }: QueryProviderProps): React.JSX.Element => {

@@ -1,5 +1,6 @@
 'use client';
 
+import { Bot, RefreshCw, Trash2, ExternalLink, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo } from 'react';
 
@@ -8,7 +9,17 @@ import {
   useJobsContext,
   type ChatbotJob
 } from '@/features/jobs/context/JobsContext';
-import { Button, SectionHeader,  Input } from '@/shared/ui';
+import { 
+  Button, 
+  DataTable, 
+  ListPanel, 
+  PanelHeader, 
+  SearchInput, 
+  StatusBadge,
+  EmptyState
+} from '@/shared/ui';
+
+import type { ColumnDef } from '@tanstack/react-table';
 
 function ChatbotJobsPageContent(): React.JSX.Element {
   const {
@@ -51,122 +62,150 @@ function ChatbotJobsPageContent(): React.JSX.Element {
     });
   }, [jobs, query]);
 
-  return (
-    <div className='container mx-auto py-10'>
-      <SectionHeader
-        title='Chatbot Jobs'
-        eyebrow={(
-          <Link
-            href='/admin/chatbot'
-            className='text-blue-300 hover:text-blue-200'
-          >
-            ← Back to chatbot
-          </Link>
-        )}
-        className='mb-6'
-      />
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
-        <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
-          <Input
-            className='max-w-sm h-8 text-sm'
-            placeholder='Search jobs...'
-            value={query}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setQuery(event.target.value)}
-          />
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={(): void => { void refetch(); }}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? 'Refreshing...' : 'Refresh'}
-            </Button>
-            <Button
-              variant='destructive'
-              size='sm'
-              onClick={handleClearCompletedChatbotJobs}
-              disabled={isClearingChatbotJobs}
-            >
-              {isClearingChatbotJobs ? 'Deleting jobs...' : 'Delete completed jobs'}
-            </Button>
+  const columns = useMemo<ColumnDef<ChatbotJob>[]>(() => [
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <StatusBadge 
+          status={row.original.status.toUpperCase()} 
+          variant={
+            row.original.status === 'completed' ? 'success' : 
+              row.original.status === 'failed' ? 'error' : 
+                row.original.status === 'running' ? 'processing' : 'pending'
+          }
+          size='sm'
+          className='font-bold'
+        />
+      ),
+    },
+    {
+      id: 'info',
+      header: 'Details',
+      cell: ({ row }) => {
+        const job = row.original;
+        const payload = job.payload as {
+          messages?: Array<{ role?: string; content?: string }>;
+        };
+        const userMessage = payload?.messages
+          ?.filter((msg: { role?: string }) => msg.role === 'user')
+          .at(-1)?.content;
+        
+        return (
+          <div className='flex flex-col gap-1 min-w-[200px] max-w-[400px]'>
+            <div className='flex items-center gap-2 text-xs text-gray-300'>
+              <span className='font-mono text-gray-500'>{job.id.slice(0, 8)}</span>
+              <span>•</span>
+              <span className='font-medium'>{job.model || 'Default model'}</span>
+            </div>
+            {userMessage && (
+              <p className='truncate text-[11px] text-gray-400 italic' title={userMessage}>
+                "{userMessage}"
+              </p>
+            )}
+            {job.errorMessage && (
+              <p className='text-[10px] text-red-400 mt-1' title={job.errorMessage}>
+                {job.errorMessage}
+              </p>
+            )}
           </div>
-        </div>
-        {isLoading ? (
-          <p className='text-sm text-gray-400'>Loading jobs...</p>
-        ) : error ? (
-          <p className='text-sm text-red-400'>{error.message}</p>
-        ) : filteredJobs.length === 0 ? (
-          <div className='text-center py-8'>
-            <p className='text-gray-400'>No jobs yet</p>
-            <p className='text-sm text-gray-500 mt-1'>Chatbot jobs track background processing of AI messages.</p>
-          </div>
-        ) : (
-          <div className='space-y-3'>
-            {filteredJobs.map((job: ChatbotJob) => (
-              <div
-                key={job.id}
-                className='rounded-md border border-border bg-gray-900 px-4 py-3'
+        );
+      },
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => (
+        <span className='text-xs text-gray-500'>
+          {new Date(row.original.createdAt).toLocaleString()}
+        </span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => {
+        const job = row.original;
+        const isCancellable = job.status === 'pending' || job.status === 'running';
+        
+        return (
+          <div className='flex items-center justify-end gap-2'>
+            <Link href={`/admin/chatbot?session=${job.sessionId}`}>
+              <Button variant='outline' size='xs' className='h-7 gap-1.5'>
+                <ExternalLink className='size-3' />
+                Open
+              </Button>
+            </Link>
+            {isCancellable && (
+              <Button
+                variant='destructive'
+                size='xs'
+                className='h-7 gap-1.5'
+                disabled={isCancellingChatbotJob(job.id)}
+                onClick={(): void => { void handleCancelChatbotJob(job.id); }}
               >
-                <div className='flex flex-wrap items-start justify-between gap-3'>
-                  <div>
-                    <p className='text-xs uppercase tracking-wide text-gray-500'>
-                      Chat job
-                    </p>
-                    <p className='text-sm text-white'>
-                      {job.status.toUpperCase()} · {job.model || 'Default model'}
-                    </p>
-                    <p className='text-xs text-gray-500'>
-                      Created {new Date(job.createdAt).toLocaleString()}
-                    </p>
-                    {job.payload ? (
-                      <p className='mt-2 text-xs text-gray-300'>
-                        Prompt:{' '}
-                        {((): string => {
-                          const payload = job.payload as {
-                            messages?: Array<{
-                              role?: string;
-                              content?: string;
-                            }>;
-                          };
-                          const userMessage = payload.messages
-                            ?.filter((msg: { role?: string }) => msg.role === 'user')
-                            .at(-1)?.content;
-                          return userMessage
-                            ? userMessage.slice(0, 160)
-                            : 'Unavailable';
-                        })()}
-                      </p>
-                    ) : null}
-                    {job.errorMessage ? (
-                      <p className='mt-1 text-xs text-red-300'>
-                        {job.errorMessage}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <Link href={`/admin/chatbot?session=${job.sessionId}`}>
-                      <Button variant='outline' size='sm'>
-                        Open session
-                      </Button>
-                    </Link>
-                    {(job.status === 'pending' || job.status === 'running') ? (
-                      <Button
-                        variant='destructive'
-                        size='sm'
-                        disabled={isCancellingChatbotJob(job.id)}
-                        onClick={(): void => { void handleCancelChatbotJob(job.id); }}
-                      >
-                        {isCancellingChatbotJob(job.id) ? 'Canceling...' : 'Cancel'}
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ))}
+                {isCancellingChatbotJob(job.id) ? (
+                  <RefreshCw className='size-3 animate-spin' />
+                ) : (
+                  <XCircle className='size-3' />
+                )}
+                Cancel
+              </Button>
+            )}
           </div>
-        )}
-      </div>
+        );
+      },
+    },
+  ], [handleCancelChatbotJob, isCancellingChatbotJob]);
+
+  return (
+    <div className='container mx-auto space-y-6 py-10'>
+      <PanelHeader
+        title='Chatbot Jobs'
+        description='Monitor background processing of AI messages and sessions.'
+        icon={<Bot className='size-4' />}
+        refreshable={true}
+        isRefreshing={isRefreshing}
+        onRefresh={refetch}
+        actions={[
+          {
+            key: 'clear',
+            label: 'Delete Completed',
+            icon: <Trash2 className='size-3.5' />,
+            variant: 'outline',
+            onClick: handleClearCompletedChatbotJobs,
+            disabled: isClearingChatbotJobs || jobs.length === 0,
+          }
+        ]}
+      />
+
+      <ListPanel
+        filters={
+          <div className='max-w-md'>
+            <SearchInput
+              placeholder='Search by ID, status, model or message...'
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onClear={() => setQuery('')}
+              size='sm'
+            />
+          </div>
+        }
+      >
+        <DataTable
+          columns={columns}
+          data={filteredJobs}
+          isLoading={isLoading}
+          error={error ? error.message : undefined}
+          emptyState={
+            <EmptyState
+              title='No jobs found'
+              description={query ? 'Try adjusting your search filters.' : 'Chatbot jobs track background processing of AI messages.'}
+              icon={<Bot className='size-12 opacity-20' />}
+            />
+          }
+        />
+      </ListPanel>
     </div>
   );
 }

@@ -1,7 +1,16 @@
 'use client';
 
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, GripVertical, Plus, Star, Trash2 } from 'lucide-react';
-import Link from 'next/link';
+import { 
+  ArrowDown, 
+  ArrowUp, 
+  ChevronLeft, 
+  ChevronRight, 
+  GripVertical, 
+  Plus, 
+  Star, 
+  Trash2,
+  Menu
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -27,7 +36,20 @@ import {
 } from '@/features/admin/constants/admin-menu-settings';
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
-import { Button, Checkbox, Input, Label, SearchInput, SectionHeader, Switch, useToast, SelectSimple, FormSection, FormField, StatusBadge } from '@/shared/ui';
+import { 
+  Button, 
+  Checkbox, 
+  Input, 
+  Label, 
+  SearchInput, 
+  Switch, 
+  useToast, 
+  SelectSimple, 
+  FormSection, 
+  FormField, 
+  StatusBadge,
+  PanelHeader
+} from '@/shared/ui';
 import { cn, DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils';
 
 const normalize = (value: string): string =>
@@ -512,48 +534,36 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
 
   return (
     <div className='container mx-auto py-10'>
-      <SectionHeader
+      <PanelHeader
         title='Admin Menu'
         description='Pin favorites, color sections, and build a custom menu layout.'
-        eyebrow={(
-          <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
-            ← Back to settings
-          </Link>
-        )}
-        actions={(
-          <div className='flex flex-wrap gap-2'>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={handleReset}
-              disabled={isDefaultState}
-            >
-              Reset
-            </Button>
-            <Button
-              type='button'
-              size='sm'
-              onClick={() => {
-                void handleSave();
-              }}
-              disabled={!isDirty || updateSettingsBulk.isPending}
-            >
-              {updateSettingsBulk.isPending ? 'Saving...' : 'Save Settings'}
-            </Button>
-          </div>
-        )}
-        className='mb-8'
+        icon={<Menu className='size-4' />}
+        actions={[
+          {
+            key: 'reset',
+            label: 'Reset',
+            variant: 'outline',
+            onClick: handleReset,
+            disabled: isDefaultState,
+          },
+          {
+            key: 'save',
+            label: updateSettingsBulk.isPending ? 'Saving...' : 'Save Settings',
+            onClick: () => { void handleSave(); },
+            disabled: !isDirty || updateSettingsBulk.isPending,
+          }
+        ]}
       />
 
-      <div className='grid gap-6 lg:grid-cols-2'>
+      <div className='mt-8 grid gap-6 lg:grid-cols-2'>
         <FormSection
           title='Favorites'
           description='Pin menu items to appear at the top.'
           actions={<Star className='size-4 text-amber-300' />}
           className='p-6'
+          variant='subtle'
         >
-          <div className='mt-4 space-y-3'>
+          <div className='space-y-3'>
             {favoritesList.length === 0 ? (
               <div className='rounded-md border border-border/40 bg-gray-900/20 p-3 text-xs text-gray-400'>
                 No favorites yet. Select items below to pin them here.
@@ -615,6 +625,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
                 placeholder='Search admin menu…'
                 className='mt-2 h-9 bg-gray-900/40'
                 onClear={() => setQuery('')}
+                size='sm'
               />
             </FormField>
             <div className='mt-3 max-h-72 space-y-2 overflow-auto pr-2'>
@@ -649,8 +660,9 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           title='Section Colors'
           description='Assign accents to top-level menu sections.'
           className='p-6'
+          variant='subtle'
         >
-          <div className='mt-4 space-y-4'>
+          <div className='space-y-4'>
             {sections.map((section: NavItem) => {
               const current = sectionColors[section.id] ?? 'none';
               const colorStyle = current !== 'none' ? ADMIN_MENU_COLOR_MAP[current] : null;
@@ -694,14 +706,15 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           </div>
         )}
         className='mt-6 p-6'
+        variant='subtle'
       >
         {!customEnabled ? (
-          <div className='mt-1 rounded-md border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
+          <div className='mb-4 rounded-md border border-border/60 bg-card/40 px-3 py-2 text-xs text-gray-400'>
             Custom layout is disabled. Enable it to apply this menu structure.
           </div>
         ) : null}
 
-        <div className='mt-2 flex flex-wrap items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
           <Button type='button' size='sm' onClick={() => handleAddRootNode('link')}>
             <Plus className='mr-2 size-4' />
             Add link
@@ -715,7 +728,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
           </Button>
         </div>
 
-        <div className='mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
+        <div className='mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]'>
           <div>
             <h3 className='text-xs font-semibold uppercase tracking-wide text-gray-400'>Layout</h3>
             <p className='mt-1 text-[11px] text-gray-500'>Drag the grip to reorder. Use indent/outdent to nest items.</p>
@@ -877,6 +890,7 @@ export function AdminMenuSettingsPage(): React.JSX.Element {
               placeholder='Search built-in menu…'
               className='mt-2 h-9 bg-gray-900/40'
               onClear={() => setLibraryQuery('')}
+              size='sm'
             />
             <div className='mt-3 max-h-80 space-y-2 overflow-auto pr-2'>
               {filteredLibraryItems.length === 0 ? (

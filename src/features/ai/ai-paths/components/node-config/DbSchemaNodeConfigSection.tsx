@@ -6,7 +6,13 @@ import React from 'react';
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { 
+  Button, 
+  Input, 
+  Label, 
+  SelectSimple, 
+  SearchInput 
+} from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -231,40 +237,36 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
 
             <div>
               <Label className='text-xs text-gray-400'>Schema Provider</Label>
-              <Select
+              <SelectSimple
+                size='sm'
                 value={schemaConfig.provider ?? 'auto'}
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ provider: value as 'auto' | 'mongodb' | 'prisma' | 'all' })
                 }
-              >
-                <SelectTrigger className='mt-2 border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select provider' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='auto'>Auto (Primary DB)</SelectItem>
-                  <SelectItem value='mongodb'>MongoDB</SelectItem>
-                  <SelectItem value='prisma'>Prisma (PostgreSQL)</SelectItem>
-                  <SelectItem value='all'>All Providers</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'auto', label: 'Auto (Primary DB)' },
+                  { value: 'mongodb', label: 'MongoDB' },
+                  { value: 'prisma', label: 'Prisma (PostgreSQL)' },
+                  { value: 'all', label: 'All Providers' },
+                ]}
+                triggerClassName='mt-2 border-border bg-card/70'
+              />
             </div>
 
             <div>
               <Label className='text-xs text-gray-400'>Collection Mode</Label>
-              <Select
+              <SelectSimple
+                size='sm'
                 value={schemaConfig.mode}
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ mode: value as 'all' | 'selected' })
                 }
-              >
-                <SelectTrigger className='mt-2 border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select mode' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>All Collections</SelectItem>
-                  <SelectItem value='selected'>Selected Collections Only</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'all', label: 'All Collections' },
+                  { value: 'selected', label: 'Selected Collections Only' },
+                ]}
+                triggerClassName='mt-2 border-border bg-card/70'
+              />
             </div>
 
             {schemaConfig.mode === 'selected' && (
@@ -343,20 +345,18 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
 
             <div>
               <Label className='text-xs text-gray-400'>Output Format</Label>
-              <Select
+              <SelectSimple
+                size='sm'
                 value={schemaConfig.formatAs}
                 onValueChange={(value: string) =>
                   updateSchemaConfig({ formatAs: value as 'json' | 'text' })
                 }
-              >
-                <SelectTrigger className='mt-2 border-border bg-card/70 text-sm text-white'>
-                  <SelectValue placeholder='Select format' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='text'>Text (Human Readable)</SelectItem>
-                  <SelectItem value='json'>JSON (Structured)</SelectItem>
-                </SelectContent>
-              </Select>
+                options={[
+                  { value: 'text', label: 'Text (Human Readable)' },
+                  { value: 'json', label: 'JSON (Structured)' },
+                ]}
+                triggerClassName='mt-2 border-border bg-card/70'
+              />
             </div>
 
             {/* Preview of selected collections */}
@@ -406,25 +406,22 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 <div className='flex gap-2'>
                   <div className='flex flex-1 flex-col gap-2'>
                     {availableProviders.length > 1 && (
-                      <Select
+                      <SelectSimple
+                        size='sm'
                         value={browseProvider ?? ''}
                         onValueChange={(value: string) => {
                           setBrowseProvider((value as 'mongodb' | 'prisma') || null);
                         }}
-                      >
-                        <SelectTrigger className='border-border bg-card/70 text-sm text-white'>
-                          <SelectValue placeholder='Select provider' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableProviders.map((provider) => (
-                            <SelectItem key={provider} value={provider}>
-                              {provider}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={availableProviders.map((provider) => ({
+                          value: provider,
+                          label: provider,
+                        }))}
+                        triggerClassName='border-border bg-card/70'
+                        placeholder='Select provider'
+                      />
                     )}
-                    <Select
+                    <SelectSimple
+                      size='sm'
                       value={browseCollection ?? ''}
                       onValueChange={(value: string) => {
                         setBrowseCollection(value || null);
@@ -433,23 +430,17 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                         setBrowseQuery('');
                         setExpandedDocId(null);
                       }}
-                    >
-                      <SelectTrigger className='flex-1 border-border bg-card/70 text-sm text-white'>
-                        <SelectValue placeholder='Select collection to browse' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {schemaCollections
-                          .filter((collection) =>
-                            browseProvider ? collection.provider === browseProvider : true
-                          )
-                          .map((coll) => (
-                            <SelectItem key={`${coll.provider ?? 'db'}:${coll.name}`} value={coll.name}>
-                              {coll.name}
-                              {showProviderLabel && coll.provider ? ` (${coll.provider})` : ''}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                      options={schemaCollections
+                        .filter((collection) =>
+                          browseProvider ? collection.provider === browseProvider : true
+                        )
+                        .map((coll) => ({
+                          value: coll.name,
+                          label: coll.name + (showProviderLabel && coll.provider ? ` (${coll.provider})` : ''),
+                        }))}
+                      triggerClassName='flex-1 border-border bg-card/70'
+                      placeholder='Select collection to browse'
+                    />
                   </div>
                   {browseCollection && (
                     <Button
@@ -473,17 +464,23 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
                 <div className='mt-3 space-y-3'>
                   {/* Search */}
                   <div className='flex gap-2'>
-                    <Input
-                      className='flex-1 border-border bg-card/70 text-sm text-white'
+                    <SearchInput
+                      className='flex-1 border-border bg-card/70'
                       placeholder='Search documents...'
                       value={browseSearch}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBrowseSearch(e.target.value)}
+                      onClear={() => {
+                        setBrowseSearch('');
+                        setBrowseSkip(0);
+                        setBrowseQuery('');
+                      }}
                       onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                         if (e.key === 'Enter') {
                           setBrowseSkip(0);
                           setBrowseQuery(browseSearch.trim());
                         }
                       }}
+                      size='sm'
                     />
                     <Button
                       type='button'

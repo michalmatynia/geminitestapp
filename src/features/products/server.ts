@@ -16,6 +16,13 @@ export * from './services/product-provider';
 export * from './services/product-repository';
 export * from './services/productService';
 export * from './services/product-provider';
+export {
+  ProductsImagesUploadPOST,
+} from './api/routes/images-upload-route';
+export {
+  ProductsV2GET,
+  ProductsV2POST,
+} from './api/routes/v2-products-route';
 export * from './types/drafts';
 export * from './types/products-ui';
 // Only re-export server-safe validations (schemas, validators, types).

@@ -155,6 +155,29 @@ module.exports = tseslint.config(
     },
   },
   {
+    // App layer must consume feature public/server entrypoints instead of bare barrels.
+    files: ['src/app/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        'patterns': [
+          {
+            'group': [
+              '@/features/*',
+              '!@/features/*/public',
+              '!@/features/*/server',
+              '!@/features/*/server/*',
+            ],
+            'message': 'Import features through "@/features/<feature>/public" (UI) or server entrypoints.',
+          },
+          {
+            'group': ['use client', 'use server'],
+            'message': 'Prefer module-level directives over restricted imports.',
+          },
+        ],
+      }],
+    },
+  },
+  {
     // Configuration for client-side files (browser environment)
     files: ['src/**/*.{js,jsx,ts,tsx}'],
     ignores: ['src/app/api/**', 'src/middleware.ts', 'src/instrumentation.ts', 'src/**/*.server.ts'],

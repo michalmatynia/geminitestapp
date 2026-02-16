@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, type ChangeEvent } from 'react';
 
-import { CLIENT_LOGGING_KEYS } from '@/features/observability';
+import { CLIENT_LOGGING_KEYS } from '@/features/observability/public';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { Button, useToast, Textarea, SectionHeader, FormSection, FormField } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';

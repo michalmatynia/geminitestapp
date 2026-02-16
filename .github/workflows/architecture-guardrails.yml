@@ -1,0 +1,33 @@
+name: architecture-guardrails
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Collect architecture metrics
+        run: npm run metrics:collect -- --ci
+
+      - name: Generate route hotspot report
+        run: npm run metrics:hotspots
+
+      - name: Enforce guardrails
+        run: npm run metrics:guardrails

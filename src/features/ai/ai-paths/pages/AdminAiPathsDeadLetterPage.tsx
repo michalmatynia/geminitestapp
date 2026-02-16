@@ -1,5 +1,12 @@
 'use client';
 
+import { 
+  RefreshCw, 
+  History, 
+  AlertCircle,
+  Eye,
+  RotateCcw
+} from 'lucide-react';
 import { useMemo } from 'react';
 
 import type { AiPathRunEventRecord, AiPathRunRecord } from '@/shared/types/domain/ai-paths';
@@ -11,15 +18,16 @@ import {
   DialogDescription, 
   DialogHeader, 
   DialogTitle, 
-  Input, 
   SelectSimple, 
-  SectionHeader, 
   DataTable, 
-  ConfirmDialog,
+  ConfirmModal,
   ListPanel,
   FormField,
   StatusBadge,
-  Alert
+  Alert,
+  PanelHeader,
+  SearchInput,
+  PanelPagination
 } from '@/shared/ui';
 
 import {
@@ -35,7 +43,6 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const {
     runs,
     total,
-    totalPages,
     page,
     setPage,
     pageSize,
@@ -157,14 +164,18 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             variant='ghost'
             size='xs'
             onClick={() => { void handleOpenDetail(row.original.id); }}
+            className='h-7'
           >
+            <Eye className='size-3 mr-1.5' />
             View
           </Button>
           <Button
             variant='outline'
             size='xs'
             onClick={() => { void handleRequeueSingle(row.original.id); }}
+            className='h-7'
           >
+            <RotateCcw className='size-3 mr-1.5' />
             Requeue
           </Button>
         </div>
@@ -175,43 +186,35 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
   const nodeStatusSummary = useMemo(() => calculateNodeStatusSummary(detail), [detail]);
 
   return (
-    <div className='mx-auto w-full max-w-none py-10'>
-      <SectionHeader
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
+      <PanelHeader
         title='Dead Letter Queue'
         description='Runs that exceeded retry limits or failed permanently.'
-        actions={
-          <div className='flex items-center gap-2'>
-            <Button
-              variant='outline'
-              size='xs'
-              onClick={refetch}
-              disabled={isFetching}
-            >
-              {isFetching ? 'Refreshing...' : 'Refresh'}
-            </Button>
-          </div>
-        }
-        className='mb-6'
+        icon={<AlertCircle className='size-4' />}
+        refreshable={true}
+        isRefreshing={isFetching}
+        onRefresh={refetch}
       />
 
       <ListPanel
-        variant='flat'
         filters={(
           <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
             <FormField label='Path ID'>
-              <Input
+              <SearchInput
                 size='sm'
                 value={pathId}
                 onChange={(e) => setPathId(e.target.value)}
+                onClear={() => setPathId('')}
                 placeholder='Filter by path...'
                 className='h-8'
               />
             </FormField>
             <FormField label='Search content'>
-              <Input
+              <SearchInput
                 size='sm'
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onClear={() => setSearchQuery('')}
                 placeholder='Run ID, entity, error...'
                 className='h-8'
               />
@@ -250,6 +253,16 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             </div>
           </div>
         )}
+        footer={
+          <PanelPagination
+            page={page}
+            pageSize={pageSize}
+            totalCount={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            pageSizeOptions={PAGE_SIZES}
+          />
+        }
       >
         <div className='rounded-md border border-border bg-gray-900/20'>
           <DataTable
@@ -259,71 +272,33 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             initialSorting={[{ id: 'deadLetteredAt', desc: true }]}
           />
         </div>
-
-        <div className='mt-4 flex items-center justify-between text-xs text-gray-500'>
-          <div>
-            Showing {runs.length} of {total} results
-          </div>
-          <div className='flex items-center gap-4'>
-            <div className='flex items-center gap-2'>
-              <span>Per page</span>
-              <div className='flex gap-1'>
-                {PAGE_SIZES.map((size) => (
-                  <Button
-                    key={size}
-                    variant={size === pageSize ? 'secondary' : 'ghost'}
-                    size='xs'
-                    className='h-6 w-8 p-0'
-                    onClick={() => setPageSize(size)}
-                  >
-                    {size}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div className='flex items-center gap-2'>
-              <Button
-                variant='outline'
-                size='xs'
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                Prev
-              </Button>
-              <span className='min-w-[60px] text-center'>Page {page} of {totalPages}</span>
-              <Button
-                variant='outline'
-                size='xs'
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </div>
       </ListPanel>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className='max-w-4xl border border-border bg-card text-white'>
           <DialogHeader>
-            <DialogTitle>Run Details</DialogTitle>
+            <DialogTitle className='flex items-center gap-2'>
+              <History className='size-5 text-gray-400' />
+              Run Details
+            </DialogTitle>
             <DialogDescription className='text-gray-400'>
               Inspect the run state, node statuses, and events.
             </DialogDescription>
           </DialogHeader>
           
           {detailLoading ? (
-            <div className='py-12 text-center text-sm text-gray-500'>Loading run details...</div>
+            <div className='py-12 text-center text-sm text-gray-500'>
+              <RefreshCw className='size-6 animate-spin mx-auto mb-2' />
+              Loading run details...
+            </div>
           ) : detail ? (
             <div className='space-y-6 max-h-[70vh] overflow-y-auto pr-2'>
-              <div className='rounded-md border border-border/70 bg-black/20 p-4'>
-                <div className='flex items-center justify-between mb-4'>
-                  <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Run Summary</h3>
+              <FormSection 
+                title='Run Summary' 
+                variant='subtle'
+                actions={
                   <div className='flex items-center gap-3'>
-                    <span className='text-[10px] font-mono text-gray-500 uppercase'>
-                      Stream: {streamStatus}
-                    </span>
+                    <StatusBadge status={streamStatus} variant='neutral' size='sm' className='font-mono uppercase' />
                     <Button
                       variant='ghost'
                       size='xs'
@@ -333,8 +308,8 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                       {streamPaused ? 'Resume stream' : 'Pause stream'}
                     </Button>
                   </div>
-                </div>
-                
+                }
+              >
                 <div className='grid gap-4 md:grid-cols-3 text-xs'>
                   <div className='space-y-1'>
                     <div className='text-gray-500'>Run ID</div>
@@ -384,7 +359,7 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
                     </div>
                   )}
                 </div>
-              </div>
+              </FormSection>
 
               <div className='space-y-3'>
                 <div className='flex items-center justify-between'>
@@ -538,14 +513,14 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         </DialogContent>
       </Dialog>
 
-      <ConfirmDialog
-        open={showRetryFailedConfirm}
-        onOpenChange={setShowRetryFailedConfirm}
+      <ConfirmModal
+        isOpen={showRetryFailedConfirm}
+        onClose={() => setShowRetryFailedConfirm(false)}
         onConfirm={() => { void handleRetryFailedNodes(); }}
         title='Retry failed nodes?'
-        description='All failed or blocked nodes in this run will be requeued. This will reset their status to pending and enqueue the run.'
+        message='All failed or blocked nodes in this run will be requeued. This will reset their status to pending and enqueue the run.'
         confirmText='Retry failed nodes'
-        variant='success'
+        isDangerous={false}
         loading={retryFailedPending}
       />
     </div>

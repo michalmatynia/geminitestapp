@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
+
 import { useStudioModalsState } from '../hooks/useStudioModalsState';
 import { DriveImportModal } from './modals/DriveImportModal';
+import { ExtractPromptParamsModal } from './modals/ExtractPromptParamsModal';
+import { GenerationPreviewModal } from './modals/GenerationPreviewModal';
 import { SlotCreateModal } from './modals/SlotCreateModal';
 import { SlotInlineEditModal } from './modals/SlotInlineEditModal';
-import { GenerationPreviewModal } from './modals/GenerationPreviewModal';
-import { ExtractPromptParamsModal } from './modals/ExtractPromptParamsModal';
 
 export function StudioModals(): React.JSX.Element {
   const state = useStudioModalsState();
@@ -18,6 +19,7 @@ export function StudioModals(): React.JSX.Element {
         onClose={() => state.setDriveImportOpen(false)}
         title={state.driveImportMode === 'replace' ? 'Attach Image' : 'Import Images'}
         isUploading={state.uploadMutation.isPending}
+        onLocalUploadTrigger={() => {}}
         onSelectFile={(files) => {
           void state.handleDriveSelection(files);
         }}
@@ -41,6 +43,7 @@ export function StudioModals(): React.JSX.Element {
         onClose={() => state.setSlotInlineEditOpen(false)}
         selectedSlot={state.selectedSlot}
         onCopyId={(id) => state.handleCopyCardId(id)}
+        header='Edit Card'
       >
         <div className='p-4'>
           {/* Card content based on state.editCardTab */}

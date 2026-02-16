@@ -1,8 +1,8 @@
 import 'server-only';
 
+import { ErrorSystem } from '@/features/observability/server';
 import { processProductSyncRun } from '@/features/product-sync/services/product-sync-service';
 import type { ProductSyncRunTrigger } from '@/features/product-sync/types/product-sync';
-import { ErrorSystem } from '@/features/observability/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type ProductSyncQueueJobData = {

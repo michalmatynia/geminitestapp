@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { ProductConstructorPage } from '@/features/products';
+import { ProductConstructorPage } from '@/features/products/public';
 
 export default function Page(): JSX.Element {
   return (

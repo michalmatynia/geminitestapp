@@ -506,7 +506,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
               </p>
             </div>
           }
-          getRowClassName={(row) => (row === projectId ? 'bg-primary/5' : '')}
+          getRowClassName={(row) => (row.original === projectId ? 'bg-primary/5' : '')}
         />
       </ListPanel>
     </div>

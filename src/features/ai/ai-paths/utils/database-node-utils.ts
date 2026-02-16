@@ -1,10 +1,11 @@
 'use client';
 
+import type { DbSchemaSnapshot } from '@/shared/types/domain/ai-paths';
+
 import type { 
   CollectionSchema, 
   SchemaData 
 } from '../components/node-config/database/types';
-import type { DbSchemaSnapshot } from '@/shared/types/domain/ai-paths';
 
 export const toTitleCase = (value: string): string =>
   value

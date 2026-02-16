@@ -1,6 +1,6 @@
 import { JSX } from 'react';
 
-import { CmsHomePage } from '@/features/cms';
+import { CmsHomePage } from '@/features/cms/public';
 
 export const dynamic = 'force-dynamic';
 

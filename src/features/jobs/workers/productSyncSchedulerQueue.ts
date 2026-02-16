@@ -1,11 +1,11 @@
 import 'server-only';
 
+import { ErrorSystem } from '@/features/observability/server';
 import {
   findDueProductSyncProfiles,
   recoverStaleProductSyncRuns,
 } from '@/features/product-sync/services/product-sync-repository';
 import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
-import { ErrorSystem } from '@/features/observability/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type ProductSyncSchedulerJobData = {

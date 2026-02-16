@@ -5,7 +5,7 @@ import React from 'react';
 import { useInternationalizationContext } from '@/features/internationalization';
 import type { PriceGroup } from '@/features/products/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { SettingsFormModal, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
+import { SettingsFormModal, SelectSimple } from '@/shared/ui';
 
 import { usePriceGroupForm } from './hooks/usePriceGroupForm';
 import { PriceGroupFormFields } from './PriceGroupFormFields';
@@ -51,23 +51,19 @@ export function PriceGroupModal({
             {loadingCurrencies ? (
               <p className='text-xs text-gray-500'>Loading currencies...</p>
             ) : (
-              <Select
+              <SelectSimple
+                size='sm'
                 value={form.currencyCode}
                 onValueChange={(value: string) =>
                   setForm((p) => ({ ...p, currencyCode: value }))
                 }
-              >
-                <SelectTrigger className='w-full bg-gray-900 border-border text-white'>
-                  <SelectValue placeholder='Select currency' />
-                </SelectTrigger>
-                <SelectContent>
-                  {currencyOptions.map((curr) => (
-                    <SelectItem key={curr.id} value={curr.code}>
-                      {curr.code} - {curr.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                options={currencyOptions.map((curr) => ({
+                  value: curr.code,
+                  label: `${curr.code} - ${curr.name}`,
+                }))}
+                placeholder='Select currency'
+                triggerClassName='w-full bg-gray-900 border-border text-white'
+              />
             )}
           </div>
         </PriceGroupModalProvider>

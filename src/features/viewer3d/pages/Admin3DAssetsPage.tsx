@@ -25,7 +25,8 @@ import {
   FormSection,
   FormField,
   EmptyState,
-  StatusBadge
+  StatusBadge,
+  PanelHeader
 } from '@/shared/ui';
 
 import { Asset3DCard } from '../components/Asset3DCard';
@@ -158,7 +159,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
   ], [setPreviewAsset, setEditAsset, handleDelete, isDeleting]);
 
   const stats = !loading && assets.length > 0 ? (
-    <div className='text-xs text-muted-foreground'>
+    <div className='text-xs text-muted-foreground font-medium'>
       Showing {assets.length} asset{assets.length !== 1 ? 's' : ''}
       {hasActiveFilters && ' (filtered)'}
     </div>
@@ -166,17 +167,23 @@ export function Admin3DAssetsPage(): React.JSX.Element {
 
   return (
     <ListPanel
-      title='3D Asset Manager'
-      description='Centralized repository for 3D models and digital twins.'
-      refresh={{
-        onRefresh: refetch,
-        isRefreshing: isFetching,
-      }}
-      headerActions={
-        <Button size='sm' onClick={() => setShowUploader(true)} className='h-8 text-xs'>
-          <Upload className='mr-2 h-3.5 w-3.5' />
-          Upload Asset
-        </Button>
+      header={
+        <PanelHeader
+          title='3D Asset Manager'
+          description='Centralized repository for 3D models and digital twins.'
+          icon={<Box className='size-4' />}
+          refreshable={true}
+          isRefreshing={isFetching}
+          onRefresh={refetch}
+          actions={[
+            {
+              key: 'upload',
+              label: 'Upload Asset',
+              icon: <Upload className='size-3.5' />,
+              onClick: () => setShowUploader(true),
+            }
+          ]}
+        />
       }
       alerts={error ? <Alert variant='error'>{error}</Alert> : null}
       filters={
@@ -186,7 +193,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
             onChange={(e) => setSearchQuery(e.target.value)}
             onClear={() => setSearchQuery('')}
             placeholder='Search assets...'
-            className='h-8'
+            size='sm'
             containerClassName='flex-1 min-w-[200px] max-w-md'
           />
 
@@ -234,41 +241,11 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       }
       footer={stats}
     >
-      {loading && (
-        <div className='flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground'>
-          <Loader2 className='h-7 w-7 animate-spin text-blue-400' />
-        </div>
-      )}
-
-      {!loading && assets.length === 0 && (
-        <EmptyState
-          title={hasActiveFilters ? 'No matching assets' : 'Library is empty'}
-          description={hasActiveFilters ? 'Try adjusting your filters.' : 'Upload your first .glb or .gltf file to get started.'}
-          icon={<Box className='h-12 w-12 opacity-60' />}
-          action={
-            !hasActiveFilters ? (
-              <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
-                <Button onClick={() => setShowUploader(true)} size='sm'>
-                  <Upload className='mr-2 h-4 w-4' />
-                  Upload Asset
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => { void handleReindex(); }}
-                  disabled={isReindexing}
-                >
-                  <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isReindexing ? 'animate-spin' : ''}`} />
-                  {isReindexing ? 'Reindexing...' : 'Reindex Local Files'}
-                </Button>
-              </div>
-            ) : undefined
-          }
-        />
-      )}
-
       {showFilters && (
-        <FormSection className='p-4 mb-4 border-t-0 rounded-t-none border-x-0 rounded-b-lg mt-[-1px]'>
+        <FormSection 
+          variant='subtle' 
+          className='p-4 mb-4 border border-border/40'
+        >
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <FormField label='Category'>
               <SelectSimple 
@@ -318,6 +295,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
             </Button>
           )}
           className='p-4 mb-6'
+          variant='glass'
         >
           <div className='mt-4'>
             <Asset3DUploader
@@ -328,6 +306,39 @@ export function Admin3DAssetsPage(): React.JSX.Element {
             />
           </div>
         </FormSection>
+      )}
+
+      {loading && (
+        <div className='flex items-center justify-center rounded-md border border-dashed border-border py-16 text-muted-foreground'>
+          <Loader2 className='h-7 w-7 animate-spin text-blue-400' />
+        </div>
+      )}
+
+      {!loading && assets.length === 0 && (
+        <EmptyState
+          title={hasActiveFilters ? 'No matching assets' : 'Library is empty'}
+          description={hasActiveFilters ? 'Try adjusting your filters.' : 'Upload your first .glb or .gltf file to get started.'}
+          icon={<Box className='h-12 w-12 opacity-60' />}
+          action={
+            !hasActiveFilters ? (
+              <div className='mt-4 flex flex-wrap items-center justify-center gap-2'>
+                <Button onClick={() => setShowUploader(true)} size='sm'>
+                  <Upload className='mr-2 h-4 w-4' />
+                  Upload Asset
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => { void handleReindex(); }}
+                  disabled={isReindexing}
+                >
+                  <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isReindexing ? 'animate-spin' : ''}`} />
+                  {isReindexing ? 'Reindexing...' : 'Reindex Local Files'}
+                </Button>
+              </div>
+            ) : undefined
+          }
+        />
       )}
 
       {!loading && assets.length > 0 && viewMode === 'grid' && (

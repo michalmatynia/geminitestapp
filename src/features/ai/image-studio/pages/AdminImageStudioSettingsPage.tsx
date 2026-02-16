@@ -1,7 +1,6 @@
 'use client';
 
-import { RefreshCcw } from 'lucide-react';
-import Link from 'next/link';
+import { ArrowDown, ArrowUp, RefreshCcw, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
@@ -19,7 +18,7 @@ import {
   Button,
   Input,
   Label,
-  SectionHeader,
+  PanelHeader,
   Tabs,
   TabsContent,
   TabsList,
@@ -27,6 +26,10 @@ import {
   Textarea,
   SelectSimple,
   useToast,
+  FormSection,
+  FormField,
+  StatusBadge,
+  Alert,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -620,80 +623,65 @@ export function AdminImageStudioSettingsPage(
   );
 
   return (
-    <div className={cn('space-y-4', embedded ? '' : 'container mx-auto max-w-5xl py-6')}>
-      <SectionHeader
-        eyebrow='AI · Image Studio'
+    <div className={cn('space-y-6', embedded ? '' : 'container mx-auto max-w-5xl py-6')}>
+      <PanelHeader
         title='Settings'
         description='Configure prompt extraction, prompt validation, and target AI defaults.'
-        actions={
-          <>
-            {!embedded ? (
-              <Button
-                size='xs' type='button' variant='outline' asChild>
-                <Link href='/admin/image-studio'>Back to Studio</Link>
-              </Button>
-            ) : null}
-            <Button
-              size='xs' type='button' variant='outline' asChild>
-              <Link href='/admin/validator'>Global Validation Patterns</Link>
-            </Button>
-            <Button
-              size='xs'
-              type='button'
-              variant='outline'
-              onClick={() => { void handleRefresh(); }}
-              disabled={settingsStore.isFetching}
-              title='Reload settings'
-            >
-              <RefreshCcw className={cn('mr-2 size-4', settingsStore.isFetching ? 'animate-spin' : '')} />
-              Refresh
-            </Button>
-          </>
-        }
+        actions={[
+          ...(!embedded ? [{
+            key: 'back',
+            label: 'Back to Studio',
+            onClick: () => { if (!embedded) window.location.href = '/admin/image-studio'; },
+          }] : []),
+          {
+            key: 'validator',
+            label: 'Global Validation',
+            onClick: () => { window.location.href = '/admin/validator'; },
+          },
+          {
+            key: 'refresh',
+            label: 'Refresh',
+            icon: <RefreshCcw className={cn('size-3.5', settingsStore.isFetching && 'animate-spin')} />,
+            onClick: handleRefresh,
+            disabled: settingsStore.isFetching,
+          },
+          {
+            key: 'reset',
+            label: 'Reset',
+            onClick: resetStudioSettings,
+            disabled: updateSetting.isPending,
+          },
+          {
+            key: 'save',
+            label: updateSetting.isPending ? 'Saving...' : 'Save All',
+            onClick: () => { void saveStudioSettings(); },
+            disabled: updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError),
+          }
+        ]}
       />
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
-        <div className='flex flex-wrap items-center justify-between gap-2'>
-          <div className='text-xs text-gray-300'>Studio Settings</div>
-          <div className='flex items-center gap-2'>
-            <Button
-              size='xs'
-              variant='outline'
-              onClick={resetStudioSettings}
-              disabled={updateSetting.isPending}
-            >
-              Reset
-            </Button>
-            <Button
-              size='xs'
-              onClick={() => { saveStudioSettings().catch(() => {}); }}
-              disabled={updateSetting.isPending || Boolean(advancedOverridesError) || Boolean(promptValidationRulesError)}
-            >
-              {updateSetting.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
+      <div className='space-y-4'>
+        <div className='flex items-center justify-between px-1'>
+          <StatusBadge 
+            status={`Settings Source: ${settingsSource}`} 
+            variant='neutral' 
+            size='sm'
+            className='font-medium'
+          />
+          {settingsStore.isLoading && !settingsLoaded && (
+            <div className='flex items-center gap-2 text-xs text-muted-foreground'>
+              <RefreshCcw className='size-3 animate-spin' />
+              Loading...
+            </div>
+          )}
         </div>
-
-        <div className='mt-1 text-[11px] text-gray-500'>
-          Source: {settingsSource}
-        </div>
-
-        {settingsStore.isLoading && !settingsLoaded ? (
-          <div className='mt-2 text-xs text-gray-500'>Loading settings…</div>
-        ) : null}
 
         <Tabs
           value={activeSettingsTab}
-          onValueChange={(value: string) =>
-            setActiveSettingsTab(
-              value === 'prompt' || value === 'generation' || value === 'validation' || value === 'maintenance'
-                ? value
-                : 'pipeline'
-            )
-          }
-          className='mt-4'
+          onValueChange={(value: string) => setActiveSettingsTab(value as StudioSettingsTab)}
+          className='w-full'
         >
-          <TabsList className='grid h-auto w-full grid-cols-2 gap-1 bg-card/40 p-1 sm:grid-cols-5'>
+          <TabsList className='grid h-auto w-full grid-cols-2 gap-1 bg-muted/40 p-1 sm:grid-cols-5'>
             <TabsTrigger value='pipeline'>Pipeline</TabsTrigger>
             <TabsTrigger value='prompt'>Prompt</TabsTrigger>
             <TabsTrigger value='generation'>Generation</TabsTrigger>
@@ -701,70 +689,72 @@ export function AdminImageStudioSettingsPage(
             <TabsTrigger value='maintenance'>Maintenance</TabsTrigger>
           </TabsList>
 
-          <TabsContent value='pipeline' className='mt-4 space-y-3'>
-            <div className='rounded border border-border/60 bg-card/30 p-3 text-xs text-gray-300'>
-              Main flow: <span className='text-gray-100'>selected preview image + resolved prompt</span> are sent to OpenAI Images API,
-              and returned images are available in Outputs where they can be added to card history/versions.
-            </div>
-            <div className='rounded border border-border/60 bg-card/30 p-3'>
-              <Label className='text-xs text-gray-400'>Project Sequencing</Label>
-              <div className='mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3'>
-                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
-                  <input
-                    type='checkbox'
-                    className='h-3.5 w-3.5'
-                    checked={studioSettings.projectSequencing.enabled}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        projectSequencing: {
-                          ...prev.projectSequencing,
-                          enabled: event.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  Enable Sequence
-                </label>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Trigger</div>
-                  <SelectSimple
-                    size='sm'
-                    value={studioSettings.projectSequencing.trigger}
-                    onValueChange={(value: string) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        projectSequencing: {
-                          ...prev.projectSequencing,
-                          trigger: value === 'manual' ? 'manual' : 'manual',
-                        },
-                      }))
-                    }
-                    options={PROJECT_SEQUENCE_TRIGGER_OPTIONS}
-                    triggerClassName='h-8'
-                    ariaLabel='Project sequence trigger'
-                  />
+          <TabsContent value='pipeline' className='mt-6 space-y-6'>
+            <FormSection 
+              title='Sequence Workflow' 
+              description='Define the automated operations executed when processing images.'
+              variant='subtle'
+            >
+              <div className='space-y-4'>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+                  <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-card/50 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      className='h-4 w-4 rounded border-gray-300'
+                      checked={studioSettings.projectSequencing.enabled}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                        setStudioSettings((prev: ImageStudioSettings) => ({
+                          ...prev,
+                          projectSequencing: {
+                            ...prev.projectSequencing,
+                            enabled: event.target.checked,
+                          },
+                        }))
+                      }
+                    />
+                    Enable Sequencing
+                  </label>
+                  
+                  <FormField label='Trigger'>
+                    <SelectSimple
+                      size='sm'
+                      value={studioSettings.projectSequencing.trigger}
+                      onValueChange={(value: string) =>
+                        setStudioSettings((prev: ImageStudioSettings) => ({
+                          ...prev,
+                          projectSequencing: {
+                            ...prev.projectSequencing,
+                            trigger: value === 'manual' ? 'manual' : 'manual',
+                          },
+                        }))
+                      }
+                      options={PROJECT_SEQUENCE_TRIGGER_OPTIONS}
+                      triggerClassName='h-9'
+                    />
+                  </FormField>
+
+                  <FormField label='Upscale Strategy'>
+                    <SelectSimple
+                      size='sm'
+                      value={studioSettings.projectSequencing.upscaleStrategy}
+                      onValueChange={(value: string) => {
+                        const strategy = value === 'target_resolution' ? 'target_resolution' : 'scale';
+                        setStudioSettings((prev: ImageStudioSettings) => ({
+                          ...prev,
+                          projectSequencing: {
+                            ...prev.projectSequencing,
+                            upscaleStrategy: strategy,
+                          },
+                        }));
+                      }}
+                      options={PROJECT_SEQUENCE_UPSCALE_STRATEGY_OPTIONS}
+                      triggerClassName='h-9'
+                    />
+                  </FormField>
                 </div>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Upscale Strategy</div>
-                  <SelectSimple
-                    size='sm'
-                    value={studioSettings.projectSequencing.upscaleStrategy}
-                    onValueChange={(value: string) => {
-                      const strategy = value === 'target_resolution' ? 'target_resolution' : 'scale';
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        projectSequencing: {
-                          ...prev.projectSequencing,
-                          upscaleStrategy: strategy,
-                        },
-                      }));
-                    }}
-                    options={PROJECT_SEQUENCE_UPSCALE_STRATEGY_OPTIONS}
-                    triggerClassName='h-8'
-                    ariaLabel='Project sequence upscale strategy'
-                  />
-                  {studioSettings.projectSequencing.upscaleStrategy === 'scale' ? (
+
+                {studioSettings.projectSequencing.upscaleStrategy === 'scale' ? (
+                  <FormField label='Upscale Multiplier' className='max-w-[200px]'>
                     <SelectSimple
                       size='sm'
                       value={String(studioSettings.projectSequencing.upscaleScale)}
@@ -780,982 +770,579 @@ export function AdminImageStudioSettingsPage(
                         }));
                       }}
                       options={PROJECT_SEQUENCE_UPSCALE_SCALE_OPTIONS}
-                      triggerClassName='h-8'
-                      ariaLabel='Project sequence upscale scale'
+                      triggerClassName='h-9'
                     />
-                  ) : (
-                    <div className='flex items-center gap-1 rounded border border-border/50 bg-foreground/5 px-2 py-1'>
+                  </FormField>
+                ) : (
+                  <FormField label='Target Resolution' className='max-w-[300px]'>
+                    <div className='flex items-center gap-2'>
                       <Input
                         type='number'
                         min={1}
                         max={32768}
-                        step={1}
                         value={String(studioSettings.projectSequencing.upscaleTargetWidth)}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                          const numeric = Math.floor(Number(event.target.value));
-                          if (!Number.isFinite(numeric) || numeric < 1 || numeric > 32768) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            projectSequencing: {
-                              ...prev.projectSequencing,
-                              upscaleTargetWidth: numeric,
-                            },
-                          }));
+                        onChange={(e) => {
+                          const val = Math.floor(Number(e.target.value));
+                          if (val >= 1) setStudioSettings(p => ({ ...p, projectSequencing: { ...p.projectSequencing, upscaleTargetWidth: val } }));
                         }}
-                        className='h-7 text-xs'
-                        aria-label='Project sequence upscale target width'
+                        className='h-9 font-mono'
                       />
-                      <span className='text-[11px] text-gray-500'>x</span>
+                      <span className='text-gray-500 font-bold'>×</span>
                       <Input
                         type='number'
                         min={1}
                         max={32768}
-                        step={1}
                         value={String(studioSettings.projectSequencing.upscaleTargetHeight)}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                          const numeric = Math.floor(Number(event.target.value));
-                          if (!Number.isFinite(numeric) || numeric < 1 || numeric > 32768) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            projectSequencing: {
-                              ...prev.projectSequencing,
-                              upscaleTargetHeight: numeric,
-                            },
-                          }));
+                        onChange={(e) => {
+                          const val = Math.floor(Number(e.target.value));
+                          if (val >= 1) setStudioSettings(p => ({ ...p, projectSequencing: { ...p.projectSequencing, upscaleTargetHeight: val } }));
                         }}
-                        className='h-7 text-xs'
-                        aria-label='Project sequence upscale target height'
+                        className='h-9 font-mono'
                       />
                     </div>
-                  )}
-                </div>
-              </div>
-              <div className='mt-3 space-y-2'>
-                <div className='text-[11px] text-gray-500'>Operation Order</div>
-                {IMAGE_STUDIO_SEQUENCE_OPERATIONS.map((operation) => {
-                  const operations = studioSettings.projectSequencing.operations;
-                  const enabled = operations.includes(operation);
-                  const orderIndex = operations.indexOf(operation);
-                  return (
-                    <div
-                      key={operation}
-                      className='flex items-center justify-between rounded border border-border/40 bg-foreground/5 px-3 py-2'
-                    >
-                      <label className='flex items-center gap-2 text-[11px] text-gray-200'>
-                        <input
-                          type='checkbox'
-                          className='h-3.5 w-3.5'
-                          checked={enabled}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                            toggleProjectSequencingOperation(operation, event.target.checked)
-                          }
-                        />
-                        <span>{PROJECT_SEQUENCE_OPERATION_LABELS[operation]}</span>
-                        {enabled ? (
-                          <span className='text-gray-500'>#{orderIndex + 1}</span>
-                        ) : null}
-                      </label>
-                      <div className='flex items-center gap-1'>
-                        <Button
-                          size='xs'
-                          type='button'
-                          variant='outline'
-                          className='h-7 px-2 text-xs'
-                          onClick={() => moveProjectSequencingOperation(operation, -1)}
-                          disabled={!enabled || orderIndex <= 0}
-                          title='Move up'
+                  </FormField>
+                )}
+
+                <div className='space-y-3 pt-2'>
+                  <Label className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Operation Order</Label>
+                  <div className='grid gap-2'>
+                    {IMAGE_STUDIO_SEQUENCE_OPERATIONS.map((operation) => {
+                      const operations = studioSettings.projectSequencing.operations;
+                      const enabled = operations.includes(operation);
+                      const orderIndex = operations.indexOf(operation);
+                      return (
+                        <div
+                          key={operation}
+                          className={cn(
+                            'flex items-center justify-between rounded-lg border border-border/40 bg-card/30 px-4 py-2 transition-colors',
+                            enabled ? 'border-primary/20 bg-primary/5' : 'opacity-60'
+                          )}
                         >
-                          Up
-                        </Button>
-                        <Button
-                          size='xs'
-                          type='button'
-                          variant='outline'
-                          className='h-7 px-2 text-xs'
-                          onClick={() => moveProjectSequencingOperation(operation, 1)}
-                          disabled={!enabled || orderIndex < 0 || orderIndex >= operations.length - 1}
-                          title='Move down'
-                        >
-                          Down
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className='mt-2 text-[11px] text-gray-500'>
-                Sequence runs in configured order when triggered.
-              </div>
-            </div>
-            <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
-              <div className='rounded border border-border/60 bg-card/30 p-3'>
-                <div className='text-[11px] text-gray-500'>Main Generation Model</div>
-                <div className='mt-1 text-xs text-gray-100'>{studioSettings.targetAi.openai.model || 'Not set'}</div>
-              </div>
-              <div className='rounded border border-border/60 bg-card/30 p-3'>
-                <div className='text-[11px] text-gray-500'>Model Source</div>
-                <div className='mt-1 text-xs text-gray-100'>
-                  {imageModelsQuery.data?.source === 'openai' ? 'Discovered from OpenAI' : 'Fallback list'}
+                          <label className='flex cursor-pointer items-center gap-3 py-1'>
+                            <input
+                              type='checkbox'
+                              className='h-4 w-4 rounded border-gray-300'
+                              checked={enabled}
+                              onChange={(e) => toggleProjectSequencingOperation(operation, e.target.checked)}
+                            />
+                            <div className='flex items-center gap-2'>
+                              <span className='text-sm font-medium text-gray-200'>{PROJECT_SEQUENCE_OPERATION_LABELS[operation]}</span>
+                              {enabled && (
+                                <StatusBadge status={`Step #${orderIndex + 1}`} variant='info' size='sm' className='font-bold h-5' />
+                              )}
+                            </div>
+                          </label>
+                          <div className='flex items-center gap-1'>
+                            <Button
+                              size='xs'
+                              variant='ghost'
+                              className='h-7 w-7 p-0'
+                              onClick={() => moveProjectSequencingOperation(operation, -1)}
+                              disabled={!enabled || orderIndex <= 0}
+                            >
+                              <ArrowUp className='size-3.5' />
+                            </Button>
+                            <Button
+                              size='xs'
+                              variant='ghost'
+                              className='h-7 w-7 p-0'
+                              onClick={() => moveProjectSequencingOperation(operation, 1)}
+                              disabled={!enabled || orderIndex < 0 || orderIndex >= operations.length - 1}
+                            >
+                              <ArrowDown className='size-3.5' />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-              <div className='rounded border border-border/60 bg-card/30 p-3'>
-                <div className='text-[11px] text-gray-500'>API Key</div>
-                <div className='mt-1 text-xs text-gray-100'>
-                  {imageStudioApiKey.trim() ? 'Configured in Image Studio' : 'Using global/env fallback or missing'}
-                </div>
-              </div>
-            </div>
-            {imageModelsQuery.data?.warning ? (
-              <div className='text-[11px] text-amber-300'>{imageModelsQuery.data.warning}</div>
-            ) : null}
+            </FormSection>
           </TabsContent>
 
-          <TabsContent value='prompt' className='mt-4 space-y-4'>
-            <div className='space-y-2'>
-              <Label className='text-xs text-gray-400'>Prompt Extraction</Label>
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Mode</div>
-                  <SelectSimple
-                    size='sm'
-                    value={studioSettings.promptExtraction.mode}
-                    onValueChange={(value: string) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        promptExtraction: {
-                          ...prev.promptExtraction,
-                          mode: value === 'gpt' || value === 'hybrid' ? value : 'programmatic',
-                        },
-                      }))
-                    }
-                    options={PROMPT_EXTRACTION_MODE_OPTIONS}
-                    triggerClassName='h-8'
-                    ariaLabel='Prompt extraction mode'
-                  />
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Model</div>
-                  <Input
-                    size='sm'
-                    value={studioSettings.promptExtraction.gpt.model}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        promptExtraction: {
-                          ...prev.promptExtraction,
-                          gpt: { ...prev.promptExtraction.gpt, model: e.target.value },
-                        },
-                      }))
-                    }
-                    className='h-8'
-                    placeholder='e.g. gpt-4o-mini'
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Temperature</div>
-                  <Input
-                    size='sm'
-                    type='number'
-                    value={studioSettings.promptExtraction.gpt.temperature ?? ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const raw = e.target.value;
-                      const next = raw === '' ? null : Number(raw);
-                      if (raw !== '' && !Number.isFinite(next)) return;
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        promptExtraction: {
-                          ...prev.promptExtraction,
-                          gpt: { ...prev.promptExtraction.gpt, temperature: next },
-                        },
-                      }));
-                    }}
-                    className='h-8'
-                    min={0}
-                    max={2}
-                    step={0.1}
-                  />
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Top P</div>
-                  <Input
-                    size='sm'
-                    type='number'
-                    value={studioSettings.promptExtraction.gpt.top_p ?? ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const raw = e.target.value;
-                      const next = raw === '' ? null : Number(raw);
-                      if (raw !== '' && !Number.isFinite(next)) return;
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        promptExtraction: {
-                          ...prev.promptExtraction,
-                          gpt: { ...prev.promptExtraction.gpt, top_p: next },
-                        },
-                      }));
-                    }}
-                    className='h-8'
-                    min={0}
-                    max={1}
-                    step={0.05}
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Max Output Tokens</div>
-                  <Input
-                    size='sm'
-                    type='number'
-                    value={studioSettings.promptExtraction.gpt.max_output_tokens ?? ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const raw = e.target.value;
-                      const next = raw === '' ? null : Number(raw);
-                      if (raw !== '' && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        promptExtraction: {
-                          ...prev.promptExtraction,
-                          gpt: { ...prev.promptExtraction.gpt, max_output_tokens: next },
-                        },
-                      }));
-                    }}
-                    className='h-8'
-                    min={1}
-                    step={1}
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
-                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
-                  <input
-                    type='checkbox'
-                    className='h-3.5 w-3.5'
-                    checked={studioSettings.promptExtraction.applyAutofix}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        promptExtraction: {
-                          ...prev.promptExtraction,
-                          applyAutofix: event.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  Apply formatter before extract
-                </label>
-                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
-                  <input
-                    type='checkbox'
-                    className='h-3.5 w-3.5'
-                    checked={studioSettings.promptExtraction.autoApplyFormattedPrompt}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        promptExtraction: {
-                          ...prev.promptExtraction,
-                          autoApplyFormattedPrompt: event.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  Auto-apply formatted prompt
-                </label>
-                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
-                  <input
-                    type='checkbox'
-                    className='h-3.5 w-3.5'
-                    checked={studioSettings.promptExtraction.showValidationSummary}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        promptExtraction: {
-                          ...prev.promptExtraction,
-                          showValidationSummary: event.target.checked,
-                        },
-                      }))
-                    }
-                  />
-                  Show validation summary
-                </label>
-              </div>
-            </div>
-
-            <div className='space-y-2 rounded border border-border/60 bg-card/30 p-3'>
-              <Label className='text-xs text-gray-400'>UI Extractor</Label>
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Mode</div>
-                  <SelectSimple
-                    size='sm'
-                    value={studioSettings.uiExtractor.mode}
-                    onValueChange={(value: string) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        uiExtractor: {
-                          ...prev.uiExtractor,
-                          mode: value === 'ai' || value === 'both' ? value : 'heuristic',
-                        },
-                      }))
-                    }
-                    options={UI_EXTRACTOR_MODE_OPTIONS}
-                    triggerClassName='h-8'
-                    ariaLabel='UI extractor mode'
-                  />
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Model</div>
-                  <Input
-                    size='sm'
-                    value={studioSettings.uiExtractor.model}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        uiExtractor: {
-                          ...prev.uiExtractor,
-                          model: e.target.value,
-                        },
-                      }))
-                    }
-                    className='h-8'
-                    placeholder='e.g. gpt-4o-mini'
-                  />
-                </div>
-              </div>
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Temperature</div>
-                  <Input
-                    size='sm'
-                    type='number'
-                    value={studioSettings.uiExtractor.temperature ?? ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const raw = e.target.value;
-                      const next = raw === '' ? null : Number(raw);
-                      if (raw !== '' && !Number.isFinite(next)) return;
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        uiExtractor: {
-                          ...prev.uiExtractor,
-                          temperature: next,
-                        },
-                      }));
-                    }}
-                    className='h-8'
-                    min={0}
-                    max={2}
-                    step={0.1}
-                  />
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Max Output Tokens</div>
-                  <Input
-                    size='sm'
-                    type='number'
-                    value={studioSettings.uiExtractor.max_output_tokens ?? ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const raw = e.target.value;
-                      const next = raw === '' ? null : Number(raw);
-                      if (raw !== '' && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        uiExtractor: {
-                          ...prev.uiExtractor,
-                          max_output_tokens: next,
-                        },
-                      }));
-                    }}
-                    className='h-8'
-                    min={1}
-                    step={1}
-                  />
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value='generation' className='mt-4 space-y-4'>
-            <div className='space-y-2 rounded border border-border/60 bg-card/30 p-3'>
-              <Label className='text-xs text-gray-400'>Target AI (OpenAI / GPT)</Label>
-              <div className='text-[11px] text-gray-500'>
-                Generation runs with the Images API (image-in, image-out).
-              </div>
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]'>
-                <SelectSimple
-                  size='sm'
-                  value={selectedGenerationModel}
-                  onValueChange={(value: string) => {
-                    setStudioSettings((prev: ImageStudioSettings) => ({
-                      ...prev,
-                      targetAi: {
-                        ...prev.targetAi,
-                        openai: {
-                          ...prev.targetAi.openai,
-                          api: 'images',
-                          model: value,
-                        },
-                      },
-                    }));
-                  }}
-                  options={quickSwitchModelSelectOptions}
-                  placeholder={imageModelsQuery.isFetching ? 'Loading models...' : 'Select model'}
-                  triggerClassName='h-8 text-xs'
-                  ariaLabel='Generation model'
-                />
-                <Button
-                  size='xs'
-                  type='button'
-                  variant='outline'
-                  onClick={() => { void imageModelsQuery.refetch(); }}
-                  disabled={imageModelsQuery.isFetching}
-                >
-                  {imageModelsQuery.isFetching ? 'Refreshing…' : 'Refresh Models'}
-                </Button>
-              </div>
-              <div className='rounded border border-border/60 bg-card/40 p-2'>
-                <div className='mb-2 text-[11px] text-gray-500'>Quick-switch model list</div>
-                <div className='grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]'>
-                  <SelectSimple
-                    size='sm'
-                    value={modelToAdd || ''}
-                    onValueChange={(value: string) => {
-                      setModelToAdd(value);
-                    }}
-                    options={addableModelSelectOptions}
-                    placeholder={addableGenerationModelOptions.length === 0 ? 'No additional models available' : 'Select model to add'}
-                    triggerClassName='h-8 text-xs'
-                    disabled={addableGenerationModelOptions.length === 0}
-                    ariaLabel='Add model to quick-switch list'
-                  />
-                  <Button
-                    size='xs'
-                    type='button'
-                    variant='outline'
-                    disabled={!modelToAdd}
-                    onClick={() => {
-                      if (!modelToAdd) return;
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        targetAi: {
-                          ...prev.targetAi,
-                          openai: {
-                            ...prev.targetAi.openai,
-                            modelPresets: normalizeImageStudioModelPresets(
-                              [...prev.targetAi.openai.modelPresets, modelToAdd],
-                              prev.targetAi.openai.model,
-                            ),
-                          },
-                        },
-                      }));
-                      setModelToAdd('');
-                    }}
-                  >
-                    Add Model
-                  </Button>
-                </div>
-                <div className='mt-2 flex flex-wrap gap-2'>
-                  {quickSwitchModels.map((modelId) => {
-                    const isActive = modelId === studioSettings.targetAi.openai.model;
-                    return (
-                      <div
-                        key={modelId}
-                        className={cn(
-                          'inline-flex items-center gap-2 rounded border px-2 py-1 text-[11px]',
-                          isActive
-                            ? 'border-blue-400/50 bg-blue-500/10 text-blue-100'
-                            : 'border-border/60 bg-card/30 text-gray-300'
-                        )}
-                      >
-                        <Button
-                          size='xs'
-                          type='button'
-                          variant='ghost'
-                          className='h-auto rounded-none border-0 bg-transparent p-0 text-[11px] hover:bg-transparent hover:underline'
-                          onClick={() =>
-                            setStudioSettings((prev: ImageStudioSettings) => ({
-                              ...prev,
-                              targetAi: {
-                                ...prev.targetAi,
-                                openai: {
-                                  ...prev.targetAi.openai,
-                                  api: 'images',
-                                  model: modelId,
-                                },
-                              },
-                            }))
-                          }
-                        >
-                          {modelId}
-                        </Button>
-                        <Button
-                          size='xs'
-                          type='button'
-                          variant='ghost'
-                          className='h-auto rounded-none border-0 bg-transparent p-0 text-[11px] text-gray-400 hover:bg-transparent hover:text-red-300'
-                          title='Remove from quick-switch list'
-                          onClick={() =>
-                            setStudioSettings((prev: ImageStudioSettings) => {
-                              const nextModel = prev.targetAi.openai.model === modelId
-                                ? prev.targetAi.openai.modelPresets.find((entry) => entry !== modelId) ?? prev.targetAi.openai.model
-                                : prev.targetAi.openai.model;
-                              const nextPresets = normalizeImageStudioModelPresets(
-                                prev.targetAi.openai.modelPresets.filter((entry) => entry !== modelId),
-                                nextModel,
-                              );
-                              return {
-                                ...prev,
-                                targetAi: {
-                                  ...prev.targetAi,
-                                  openai: {
-                                    ...prev.targetAi.openai,
-                                    model: nextModel,
-                                    modelPresets: nextPresets,
-                                  },
-                                },
-                              };
-                            })
-                          }
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className='text-[11px] text-gray-500'>
-                Source: {imageModelsQuery.data?.source === 'openai' ? 'OpenAI discovery' : 'fallback list'}
-              </div>
-              {imageModelsQuery.data?.warning ? (
-                <div className='text-[11px] text-amber-300'>{imageModelsQuery.data.warning}</div>
-              ) : null}
-              {isGpt52Model ? (
-                <div className='rounded border border-emerald-500/30 bg-emerald-500/5 p-2 text-[11px] text-emerald-100'>
-                  GPT-5.2 selected. Model-aware mode is active, and unsupported request fields are hidden and omitted at runtime.
-                </div>
-              ) : (
-                <div className='rounded border border-amber-500/30 bg-amber-500/5 p-2 text-[11px] text-amber-100'>
-                  Model-aware mode active. GPT-5.2-only options (moderation, output compression, partial images, stream)
-                  are hidden for this model.
-                </div>
-              )}
-            </div>
-
-            <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-              <div className='space-y-1'>
-                <div className='text-[11px] text-gray-500'>OpenAI API Key</div>
-                <Input
-                  size='sm'
-                  type='password'
-                  value={imageStudioApiKey}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImageStudioApiKey(e.target.value)}
-                  className='h-8'
-                  placeholder='sk-...'
-                  autoComplete='off'
-                />
-                <div className='text-[11px] text-gray-500'>
-                  Used by run, prompt extraction, UI extraction, and AI mask detection.
-                </div>
-              </div>
-              {modelCapabilities.supportsUser ? (
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>User (optional)</div>
-                  <Input
-                    size='sm'
-                    value={studioSettings.targetAi.openai.user ?? ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        targetAi: {
-                          ...prev.targetAi,
-                          openai: {
-                            ...prev.targetAi.openai,
-                            user: e.target.value.trim() ? e.target.value : null,
-                          },
-                        },
-                      }))
-                    }
-                    className='h-8'
-                    placeholder='e.g. user_123'
-                  />
-                </div>
-              ) : null}
-            </div>
-
-            <div className='space-y-2 rounded border border-border/60 bg-card/30 p-3'>
-              <div className='text-xs text-gray-400'>Images API options</div>
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Size</div>
-                  <SelectSimple
-                    size='sm'
-                    value={modelAwareSizeValue}
-                    onValueChange={(value: string) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        targetAi: {
-                          ...prev.targetAi,
-                          openai: {
-                            ...prev.targetAi.openai,
-                            image: {
-                              ...prev.targetAi.openai.image,
-                              size: value === '__null__' ? null : value,
-                            },
-                          },
-                        },
-                      }))
-                    }
-                    options={modelAwareSizeOptions}
-                    triggerClassName='h-8'
-                    ariaLabel='Image size'
-                  />
-                </div>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Quality</div>
-                  <SelectSimple
-                    size='sm'
-                    value={modelAwareQualityValue}
-                    onValueChange={(value: string) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        targetAi: {
-                          ...prev.targetAi,
-                          openai: {
-                            ...prev.targetAi.openai,
-                            image: {
-                              ...prev.targetAi.openai.image,
-                              quality: value === '__null__'
-                                ? null
-                                : value as ImageStudioSettings['targetAi']['openai']['image']['quality'],
-                            },
-                          },
-                        },
-                      }))
-                    }
-                    options={modelAwareQualityOptions}
-                    triggerClassName='h-8'
-                    ariaLabel='Image quality'
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
-                <div className='space-y-1'>
-                  <div className='text-[11px] text-gray-500'>Background</div>
-                  <SelectSimple
-                    size='sm'
-                    value={modelAwareBackgroundValue}
-                    onValueChange={(value: string) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        targetAi: {
-                          ...prev.targetAi,
-                          openai: {
-                            ...prev.targetAi.openai,
-                            image: {
-                              ...prev.targetAi.openai.image,
-                              background: value === '__null__'
-                                ? null
-                                : value as ImageStudioSettings['targetAi']['openai']['image']['background'],
-                            },
-                          },
-                        },
-                      }))
-                    }
-                    options={modelAwareBackgroundOptions}
-                    triggerClassName='h-8'
-                    ariaLabel='Image background'
-                  />
-                </div>
-                {modelCapabilities.supportsOutputFormat ? (
-                  <div className='space-y-1'>
-                    <div className='text-[11px] text-gray-500'>Format</div>
+          <TabsContent value='prompt' className='mt-6 space-y-6'>
+            <FormSection 
+              title='Prompt Extraction' 
+              description='Control how prompt parameters are extracted from raw inputs.'
+              variant='subtle'
+            >
+              <div className='space-y-4'>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <FormField label='Extraction Mode'>
                     <SelectSimple
                       size='sm'
-                      value={modelAwareFormatValue}
-                      onValueChange={(value: string) =>
-                        setStudioSettings((prev: ImageStudioSettings) => ({
-                          ...prev,
-                          targetAi: {
-                            ...prev.targetAi,
-                            openai: {
-                              ...prev.targetAi.openai,
-                              image: {
-                                ...prev.targetAi.openai.image,
-                                format: value as ImageStudioSettings['targetAi']['openai']['image']['format'],
-                              },
-                            },
-                          },
-                        }))
-                      }
-                      options={modelAwareFormatOptions}
-                      triggerClassName='h-8'
-                      ariaLabel='Image format'
+                      value={studioSettings.promptExtraction.mode}
+                      onValueChange={(v) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, mode: v as any } }))}
+                      options={PROMPT_EXTRACTION_MODE_OPTIONS}
+                      triggerClassName='h-9'
                     />
-                  </div>
-                ) : null}
-                {modelCapabilities.supportsCount ? (
-                  <div className='space-y-1'>
-                    <div className='text-[11px] text-gray-500'>N</div>
+                  </FormField>
+                  <FormField label='Model'>
                     <Input
-                      size='sm'
-                      type='number'
-                      value={studioSettings.targetAi.openai.image.n ?? ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const raw = e.target.value;
-                        const next = raw === '' ? null : Number(raw);
-                        if (raw !== '' && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                        setStudioSettings((prev: ImageStudioSettings) => ({
-                          ...prev,
-                          targetAi: {
-                            ...prev.targetAi,
-                            openai: {
-                              ...prev.targetAi.openai,
-                              image: { ...prev.targetAi.openai.image, n: next },
-                            },
-                          },
-                        }));
-                      }}
-                      className='h-8'
-                      min={1}
-                      max={10}
-                      step={1}
+                      value={studioSettings.promptExtraction.gpt.model}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, gpt: { ...p.promptExtraction.gpt, model: e.target.value } } }))}
+                      className='h-9'
+                      placeholder='e.g. gpt-4o-mini'
                     />
-                  </div>
-                ) : null}
-              </div>
+                  </FormField>
+                </div>
 
-              {modelCapabilities.supportsModeration || modelCapabilities.supportsOutputCompression || modelCapabilities.supportsPartialImages ? (
-                <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
-                  {modelCapabilities.supportsModeration ? (
-                    <div className='space-y-1'>
-                      <div className='text-[11px] text-gray-500'>Moderation</div>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+                  <FormField label='Temperature'>
+                    <Input
+                      type='number'
+                      value={studioSettings.promptExtraction.gpt.temperature ?? ''}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, gpt: { ...p.promptExtraction.gpt, temperature: e.target.value === '' ? null : Number(e.target.value) } } }))}
+                      className='h-9'
+                      min={0} max={2} step={0.1}
+                    />
+                  </FormField>
+                  <FormField label='Top P'>
+                    <Input
+                      type='number'
+                      value={studioSettings.promptExtraction.gpt.top_p ?? ''}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, gpt: { ...p.promptExtraction.gpt, top_p: e.target.value === '' ? null : Number(e.target.value) } } }))}
+                      className='h-9'
+                      min={0} max={1} step={0.05}
+                    />
+                  </FormField>
+                  <FormField label='Max Tokens'>
+                    <Input
+                      type='number'
+                      value={studioSettings.promptExtraction.gpt.max_output_tokens ?? ''}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, gpt: { ...p.promptExtraction.gpt, max_output_tokens: e.target.value === '' ? null : Number(e.target.value) } } }))}
+                      className='h-9'
+                      min={1} step={1}
+                    />
+                  </FormField>
+                </div>
+
+                <div className='grid grid-cols-1 gap-3 sm:grid-cols-3 pt-2'>
+                  <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      className='h-4 w-4 rounded'
+                      checked={studioSettings.promptExtraction.applyAutofix}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, applyAutofix: e.target.checked } }))}
+                    />
+                    Apply autofix
+                  </label>
+                  <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      className='h-4 w-4 rounded'
+                      checked={studioSettings.promptExtraction.autoApplyFormattedPrompt}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, autoApplyFormattedPrompt: e.target.checked } }))}
+                    />
+                    Auto-apply format
+                  </label>
+                  <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      className='h-4 w-4 rounded'
+                      checked={studioSettings.promptExtraction.showValidationSummary}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, showValidationSummary: e.target.checked } }))}
+                    />
+                    Show validation
+                  </label>
+                </div>
+              </div>
+            </FormSection>
+
+            <FormSection 
+              title='UI Extractor' 
+              description='Configure how visual parameters are detected from the workspace.'
+              variant='subtle'
+            >
+              <div className='space-y-4'>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <FormField label='Extractor Mode'>
+                    <SelectSimple
+                      size='sm'
+                      value={studioSettings.uiExtractor.mode}
+                      onValueChange={(v) => setStudioSettings(p => ({ ...p, uiExtractor: { ...p.uiExtractor, mode: v as any } }))}
+                      options={UI_EXTRACTOR_MODE_OPTIONS}
+                      triggerClassName='h-9'
+                    />
+                  </FormField>
+                  <FormField label='AI Model'>
+                    <Input
+                      value={studioSettings.uiExtractor.model}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, uiExtractor: { ...p.uiExtractor, model: e.target.value } }))}
+                      className='h-9'
+                      placeholder='e.g. gpt-4o-mini'
+                    />
+                  </FormField>
+                </div>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <FormField label='Temperature'>
+                    <Input
+                      type='number'
+                      value={studioSettings.uiExtractor.temperature ?? ''}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, uiExtractor: { ...p.uiExtractor, temperature: e.target.value === '' ? null : Number(e.target.value) } } ))}
+                      className='h-9'
+                      min={0} max={2} step={0.1}
+                    />
+                  </FormField>
+                  <FormField label='Max Tokens'>
+                    <Input
+                      type='number'
+                      value={studioSettings.uiExtractor.max_output_tokens ?? ''}
+                      onChange={(e) => setStudioSettings(p => ({ ...p, uiExtractor: { ...p.uiExtractor, max_output_tokens: e.target.value === '' ? null : Number(e.target.value) } } ))}
+                      className='h-9'
+                      min={1} step={1}
+                    />
+                  </FormField>
+                </div>
+              </div>
+            </FormSection>
+          </TabsContent>
+
+          <TabsContent value='generation' className='mt-6 space-y-6'>
+            <FormSection 
+              title='Target AI Configuration' 
+              description='Default model and API options for image generation.'
+              variant='subtle'
+            >
+              <div className='space-y-6'>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-[1fr_auto] items-end'>
+                  <FormField label='Primary Generation Model' className='flex-1'>
+                    <SelectSimple
+                      size='sm'
+                      value={selectedGenerationModel}
+                      onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, model: v } } }))}
+                      options={quickSwitchModelSelectOptions}
+                      placeholder='Select model'
+                      triggerClassName='h-10'
+                    />
+                  </FormField>
+                  <Button
+                    variant='outline'
+                    className='h-10'
+                    onClick={() => { void imageModelsQuery.refetch(); }}
+                    disabled={imageModelsQuery.isFetching}
+                  >
+                    <RefreshCcw className={cn('mr-2 size-4', imageModelsQuery.isFetching && 'animate-spin')} />
+                    Sync Models
+                  </Button>
+                </div>
+
+                <div className='rounded-lg border border-border/40 bg-card/20 p-4'>
+                  <Label className='text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3 block'>Quick-switch Presets</Label>
+                  <div className='flex flex-wrap gap-2 mb-4'>
+                    {quickSwitchModels.map((modelId) => {
+                      const isActive = modelId === studioSettings.targetAi.openai.model;
+                      return (
+                        <div
+                          key={modelId}
+                          className={cn(
+                            'group flex items-center gap-2 rounded-full border px-3 py-1 text-xs transition-all',
+                            isActive
+                              ? 'border-primary/50 bg-primary/10 text-primary-foreground font-semibold shadow-sm'
+                              : 'border-border/60 bg-muted/30 text-muted-foreground hover:border-border hover:bg-muted/50'
+                          )}
+                        >
+                          <span 
+                            className='cursor-pointer'
+                            onClick={() => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, model: modelId } } }))}
+                          >
+                            {modelId}
+                          </span>
+                          <button
+                            type='button'
+                            className='ml-1 text-muted-foreground/60 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100'
+                            onClick={() => {
+                              const nextPresets = studioSettings.targetAi.openai.modelPresets.filter(m => m !== modelId);
+                              setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, modelPresets: nextPresets } } }));
+                            }}
+                          >
+                            <X className='size-3' />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className='flex gap-2 items-end max-w-md'>
+                    <FormField label='Add Model to Presets' className='flex-1'>
                       <SelectSimple
                         size='sm'
-                        value={studioSettings.targetAi.openai.image.moderation ?? '__null__'}
-                        onValueChange={(value: string) =>
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: {
-                              ...prev.targetAi,
-                              openai: {
-                                ...prev.targetAi.openai,
-                                image: {
-                                  ...prev.targetAi.openai.image,
-                                  moderation: value === '__null__'
-                                    ? null
-                                    : value as ImageStudioSettings['targetAi']['openai']['image']['moderation'],
-                                },
-                              },
-                            },
-                          }))
-                        }
-                        options={MODERATION_OPTIONS}
-                        triggerClassName='h-8'
-                        ariaLabel='Moderation level'
+                        value={modelToAdd}
+                        onValueChange={setModelToAdd}
+                        options={addableModelSelectOptions}
+                        placeholder='Select model...'
+                        triggerClassName='h-9'
+                        disabled={addableGenerationModelOptions.length === 0}
                       />
-                    </div>
-                  ) : null}
-
-                  {modelCapabilities.supportsOutputCompression ? (
-                    <div className='space-y-1'>
-                      <div className='text-[11px] text-gray-500'>Output Compression</div>
-                      <Input
-                        size='sm'
-                        type='number'
-                        value={studioSettings.targetAi.openai.image.output_compression ?? ''}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === '' ? null : Number(raw);
-                          if (raw !== '' && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: {
-                              ...prev.targetAi,
-                              openai: {
-                                ...prev.targetAi.openai,
-                                image: { ...prev.targetAi.openai.image, output_compression: next },
-                              },
-                            },
-                          }));
-                        }}
-                        className='h-8'
-                        min={0}
-                        max={100}
-                        step={1}
-                      />
-                      <div className='text-[10px] text-gray-500'>
-                        Used for jpeg/webp output formats.
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {modelCapabilities.supportsPartialImages ? (
-                    <div className='space-y-1'>
-                      <div className='text-[11px] text-gray-500'>Partial Images</div>
-                      <Input
-                        size='sm'
-                        type='number'
-                        value={studioSettings.targetAi.openai.image.partial_images ?? ''}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                          const raw = e.target.value;
-                          const next = raw === '' ? null : Number(raw);
-                          if (raw !== '' && (!Number.isFinite(next) || !Number.isInteger(next))) return;
-                          setStudioSettings((prev: ImageStudioSettings) => ({
-                            ...prev,
-                            targetAi: {
-                              ...prev.targetAi,
-                              openai: {
-                                ...prev.targetAi.openai,
-                                image: { ...prev.targetAi.openai.image, partial_images: next },
-                              },
-                            },
-                          }));
-                        }}
-                        className='h-8'
-                        min={0}
-                        max={3}
-                        step={1}
-                      />
-                      <div className='text-[10px] text-gray-500'>
-                        Partial results returned while streaming.
-                      </div>
-                    </div>
-                  ) : null}
+                    </FormField>
+                    <Button
+                      size='sm'
+                      variant='secondary'
+                      className='h-9 px-4'
+                      disabled={!modelToAdd}
+                      onClick={() => {
+                        const nextPresets = [...studioSettings.targetAi.openai.modelPresets, modelToAdd];
+                        setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, modelPresets: nextPresets } } }));
+                        setModelToAdd('');
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
                 </div>
-              ) : null}
 
-              {modelCapabilities.supportsStream ? (
-                <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
+                {isGpt52Model ? (
+                  <Alert variant='success' className='bg-emerald-500/5 border-emerald-500/20'>
+                    GPT-5.2 (advanced) active. Full capability suite enabled.
+                  </Alert>
+                ) : (
+                  <Alert variant='info' className='bg-blue-500/5 border-blue-500/20'>
+                    Standard model active. Advanced GPT-5.2 fields are hidden.
+                  </Alert>
+                )}
+
+                <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
+                  <FormField label='API Access Key' description='Used for all Image Studio AI operations.'>
+                    <Input
+                      type='password'
+                      value={imageStudioApiKey}
+                      onChange={(e) => setImageStudioApiKey(e.target.value)}
+                      className='h-10 font-mono'
+                      placeholder='sk-...'
+                    />
+                  </FormField>
+                  {modelCapabilities.supportsUser && (
+                    <FormField label='OpenAI User Tag' description='Optional metadata for tracking API usage.'>
+                      <Input
+                        value={studioSettings.targetAi.openai.user ?? ''}
+                        onChange={(e) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, user: e.target.value || null } } }))}
+                        className='h-10'
+                        placeholder='e.g. studio_admin'
+                      />
+                    </FormField>
+                  )}
+                </div>
+
+                <div className='space-y-4 rounded-lg border border-border/40 bg-card/20 p-4'>
+                  <Label className='text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 block'>Request Parameters</Label>
+                  <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                    <FormField label='Image Size'>
+                      <SelectSimple
+                        size='sm'
+                        value={modelAwareSizeValue}
+                        onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, size: v === '__null__' ? null : v } } } }))}
+                        options={modelAwareSizeOptions}
+                        triggerClassName='h-9'
+                      />
+                    </FormField>
+                    <FormField label='Quality'>
+                      <SelectSimple
+                        size='sm'
+                        value={modelAwareQualityValue}
+                        onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, quality: v === '__null__' ? null : v as any } } } }))}
+                        options={modelAwareQualityOptions}
+                        triggerClassName='h-9'
+                      />
+                    </FormField>
+                    <FormField label='Background'>
+                      <SelectSimple
+                        size='sm'
+                        value={modelAwareBackgroundValue}
+                        onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, background: v === '__null__' ? null : v as any } } } }))}
+                        options={modelAwareBackgroundOptions}
+                        triggerClassName='h-9'
+                      />
+                    </FormField>
+                    {modelCapabilities.supportsOutputFormat && (
+                      <FormField label='File Format'>
+                        <SelectSimple
+                          size='sm'
+                          value={modelAwareFormatValue}
+                          onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, format: v as any } } } }))}
+                          options={modelAwareFormatOptions}
+                          triggerClassName='h-9'
+                        />
+                      </FormField>
+                    )}
+                    {modelCapabilities.supportsCount && (
+                      <FormField label='Batch Size (N)'>
+                        <Input
+                          type='number'
+                          value={studioSettings.targetAi.openai.image.n ?? ''}
+                          onChange={(e) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, n: e.target.value === '' ? null : Number(e.target.value) } } } }))}
+                          className='h-9'
+                          min={1} max={10}
+                        />
+                      </FormField>
+                    )}
+                  </div>
+
+                  {(modelCapabilities.supportsModeration || modelCapabilities.supportsOutputCompression || modelCapabilities.supportsPartialImages) && (
+                    <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2'>
+                      {modelCapabilities.supportsModeration && (
+                        <FormField label='Moderation'>
+                          <SelectSimple
+                            size='sm'
+                            value={studioSettings.targetAi.openai.image.moderation ?? '__null__'}
+                            onValueChange={(v) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, moderation: v === '__null__' ? null : v as any } } } }))}
+                            options={MODERATION_OPTIONS}
+                            triggerClassName='h-9'
+                          />
+                        </FormField>
+                      )}
+                      {modelCapabilities.supportsOutputCompression && (
+                        <FormField label='Compression'>
+                          <Input
+                            type='number'
+                            value={studioSettings.targetAi.openai.image.output_compression ?? ''}
+                            onChange={(e) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, output_compression: e.target.value === '' ? null : Number(e.target.value) } } } }))}
+                            className='h-9'
+                            min={0} max={100}
+                          />
+                        </FormField>
+                      )}
+                      {modelCapabilities.supportsPartialImages && (
+                        <FormField label='Partial Images'>
+                          <Input
+                            type='number'
+                            value={studioSettings.targetAi.openai.image.partial_images ?? ''}
+                            onChange={(e) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, image: { ...p.targetAi.openai.image, partial_images: e.target.value === '' ? null : Number(e.target.value) } } } }))}
+                            className='h-9'
+                            min={0} max={3}
+                          />
+                        </FormField>
+                      )}
+                    </div>
+                  )}
+
+                  {modelCapabilities.supportsStream && (
+                    <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit mt-2'>
+                      <input
+                        type='checkbox'
+                        className='h-4 w-4 rounded'
+                        checked={studioSettings.targetAi.openai.stream}
+                        onChange={(e) => setStudioSettings(p => ({ ...p, targetAi: { ...p.targetAi, openai: { ...p.targetAi.openai, stream: e.target.checked } } }))}
+                      />
+                      Enable API Streaming
+                    </label>
+                  )}
+                </div>
+
+                <FormField label='Advanced Overrides (JSON)' description='Inject raw parameters directly into the Images API request.'>
+                  <Textarea
+                    value={advancedOverridesText}
+                    onChange={(e) => handleAdvancedOverridesChange(e.target.value)}
+                    className={cn('min-h-[120px] font-mono text-[11px] bg-gray-950/40', advancedOverridesError && 'border-destructive focus-visible:ring-destructive')}
+                    placeholder='{"metadata": {"project": "xyz"}}'
+                  />
+                  {advancedOverridesError && (
+                    <p className='text-[10px] text-destructive mt-1 font-medium'>{advancedOverridesError}</p>
+                  )}
+                </FormField>
+              </div>
+            </FormSection>
+          </TabsContent>
+
+          <TabsContent value='validation' className='mt-6 space-y-6'>
+            <FormSection 
+              title='Prompt Validator' 
+              description='Control programmatic prompt quality using rule-based validation.'
+              variant='subtle'
+            >
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <Label className='text-sm font-medium text-gray-200'>Validator Engine Status</Label>
+                  <label className='flex items-center gap-2 text-xs text-gray-300 hover:text-white cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      className='h-4 w-4 rounded'
+                      checked={promptValidationEnabled}
+                      onChange={(e) => setPromptValidationEnabled(e.target.checked)}
+                    />
+                    Validator Enabled
+                  </label>
+                </div>
+                
+                <FormField label='Validation Rules (JSON)' description='Definition of heuristics and patterns to enforce in prompts.'>
+                  <Textarea
+                    value={promptValidationRulesText}
+                    onChange={(e) => handlePromptValidationRulesChange(e.target.value)}
+                    className={cn('min-h-[300px] font-mono text-[11px] bg-gray-950/40', promptValidationRulesError && 'border-destructive')}
+                    placeholder='[{ "ruleId": "no-brand-names", ... }]'
+                  />
+                  {promptValidationRulesError && (
+                    <p className='text-[10px] text-destructive mt-1 font-medium'>{promptValidationRulesError}</p>
+                  )}
+                </FormField>
+              </div>
+            </FormSection>
+          </TabsContent>
+
+          <TabsContent value='maintenance' className='mt-6 space-y-6'>
+            <FormSection 
+              title='Metadata Migration' 
+              description='Tools for backfilling and normalizing Image Studio data records.'
+              variant='subtle'
+            >
+              <div className='space-y-4'>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                  <FormField label='Target Project' description='Process specific project or leave empty for all.'>
+                    <Input
+                      value={backfillProjectId}
+                      onChange={(e) => setBackfillProjectId(e.target.value)}
+                      className='h-9'
+                      placeholder='global / all'
+                    />
+                  </FormField>
+                  <FormField label='Execution Mode' description='Dry-run will only report changes without writing.'>
+                    <SelectSimple
+                      size='sm'
+                      value={backfillDryRun ? 'dry' : 'write'}
+                      onValueChange={(v) => setBackfillDryRun(v === 'dry')}
+                      options={BACKFILL_EXECUTION_MODE_OPTIONS}
+                      triggerClassName='h-9'
+                    />
+                  </FormField>
+                </div>
+
+                <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
                   <input
                     type='checkbox'
-                    className='h-3.5 w-3.5'
-                    checked={studioSettings.targetAi.openai.stream}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                      setStudioSettings((prev: ImageStudioSettings) => ({
-                        ...prev,
-                        targetAi: {
-                          ...prev.targetAi,
-                          openai: {
-                            ...prev.targetAi.openai,
-                            stream: event.target.checked,
-                          },
-                        },
-                      }))
-                    }
+                    className='h-4 w-4 rounded'
+                    checked={backfillIncludeHeuristicGenerationLinks}
+                    onChange={(e) => setBackfillIncludeHeuristicGenerationLinks(e.target.checked)}
                   />
-                  Stream response events
+                  Include generation heuristic linking
                 </label>
-              ) : null}
-            </div>
 
-            <div className='space-y-1'>
-              <div className='text-[11px] text-gray-500'>Advanced Overrides (JSON)</div>
-              <Textarea
-                size='sm'
-                value={advancedOverridesText}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleAdvancedOverridesChange(e.target.value)}
-                className='h-28 font-mono text-[11px]'
-                placeholder='e.g. {"metadata":{"project":"milkbar-001"}}'
-              />
-              {advancedOverridesError ? (
-                <div className='text-[11px] text-red-300'>{advancedOverridesError}</div>
-              ) : null}
-            </div>
-          </TabsContent>
+                <div className='pt-2'>
+                  <Button
+                    onClick={() => { void runCardBackfill(); }}
+                    disabled={backfillRunning}
+                    className='min-w-[160px]'
+                  >
+                    {backfillRunning ? (
+                      <>
+                        <RefreshCcw className='mr-2 size-4 animate-spin' />
+                        Processing...
+                      </>
+                    ) : (
+                      'Execute Backfill'
+                    )}
+                  </Button>
+                </div>
 
-          <TabsContent value='validation' className='mt-4 space-y-2'>
-            <div className='flex items-center justify-between gap-2'>
-              <Label className='text-xs text-gray-400'>Prompt Validator</Label>
-              <label className='flex items-center gap-2 text-xs text-gray-200'>
-                <input
-                  type='checkbox'
-                  checked={promptValidationEnabled}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setPromptValidationEnabled(e.target.checked)
-                  }
-                />
-                Enabled
-              </label>
-            </div>
-            <div className='text-[11px] text-gray-500'>
-              Validates programmatic prompts and suggests fixes when patterns look almost correct. Auto format uses each rule’s <span className='text-gray-300'>autofix</span> operations.
-            </div>
-            <Textarea
-              size='sm'
-              value={promptValidationRulesText}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handlePromptValidationRulesChange(e.target.value)}
-              className='h-56 font-mono text-[11px]'
-              placeholder='JSON array of validator rules'
-            />
-            {promptValidationRulesError ? (
-              <div className='text-[11px] text-red-300'>{promptValidationRulesError}</div>
-            ) : null}
-          </TabsContent>
-
-          <TabsContent value='maintenance' className='mt-4 space-y-3'>
-            <div className='flex flex-wrap items-center justify-between gap-2'>
-              <div className='text-xs text-gray-300'>Card Metadata Backfill</div>
-              <Button
-                size='xs'
-                type='button'
-                onClick={() => { void runCardBackfill(); }}
-                disabled={backfillRunning}
-              >
-                {backfillRunning ? 'Running...' : backfillDryRun ? 'Run Dry-Run' : 'Run Backfill'}
-              </Button>
-            </div>
-
-            <div className='text-[11px] text-gray-500'>
-              One-time migration utility for older Image Studio data. It backfills card linkage metadata from slot links,
-              mask folder conventions, and optional generation heuristics.
-            </div>
-
-            <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-              <div className='space-y-1'>
-                <Label className='text-xs text-gray-400'>Project ID (optional)</Label>
-                <Input
-                  size='sm'
-                  value={backfillProjectId}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setBackfillProjectId(event.target.value)}
-                  className='h-8'
-                  placeholder='Leave empty to process all projects'
-                />
+                {backfillResultText && (
+                  <div className='space-y-2'>
+                    <Label className='text-[10px] uppercase font-bold text-gray-500'>Result Summary</Label>
+                    <pre className='max-h-80 overflow-auto rounded-lg border border-border/60 bg-gray-950/60 p-4 font-mono text-[11px] text-emerald-400 whitespace-pre-wrap leading-relaxed shadow-inner'>
+                      {backfillResultText}
+                    </pre>
+                  </div>
+                )}
               </div>
-              <div className='space-y-1'>
-                <Label className='text-xs text-gray-400'>Execution Mode</Label>
-                <SelectSimple
-                  size='sm'
-                  value={backfillDryRun ? 'dry' : 'write'}
-                  onValueChange={(value: string) => setBackfillDryRun(value !== 'write')}
-                  options={BACKFILL_EXECUTION_MODE_OPTIONS}
-                  triggerClassName='h-8'
-                  ariaLabel='Backfill execution mode'
-                />
-              </div>
-            </div>
-
-            <label className='flex items-center gap-2 rounded border border-border/40 bg-foreground/5 px-3 py-2 text-[11px] text-gray-300'>
-              <input
-                type='checkbox'
-                className='h-3.5 w-3.5'
-                checked={backfillIncludeHeuristicGenerationLinks}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  setBackfillIncludeHeuristicGenerationLinks(event.target.checked)
-                }
-              />
-              Include generation heuristic linking for legacy output cards
-            </label>
-
-            {backfillResultText ? (
-              <pre className='max-h-64 overflow-auto rounded border border-border/60 bg-black/30 p-2 font-mono text-[11px] text-gray-200 whitespace-pre-wrap'>
-                {backfillResultText}
-              </pre>
-            ) : null}
+            </FormSection>
           </TabsContent>
         </Tabs>
       </div>

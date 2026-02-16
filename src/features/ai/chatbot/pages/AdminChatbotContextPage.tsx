@@ -1,18 +1,20 @@
 'use client';
 
-import { PlusIcon } from 'lucide-react';
-import React, { Suspense, useMemo } from 'react';
+import { PlusIcon, FileUp, Link as LinkIcon, MessageSquareQuote, Save } from 'lucide-react';
+import React, { Suspense, useMemo, useCallback } from 'react';
 
 import { 
   Button, 
-  Input, 
-  SectionHeader, 
   Tag, 
   FileUploadTrigger, 
   type FileUploadHelpers, 
   DataTable, 
   StatusToggle,
-  useToast
+  useToast,
+  ListPanel,
+  PanelHeader,
+  SearchInput,
+  EmptyState
 } from '@/shared/ui';
 
 import { ChatbotContextModal } from '../components/ChatbotContextModal';
@@ -107,6 +109,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
             variant='outline'
             size='xs'
             onClick={() => handleDeleteContext(row.original.id)}
+            className='text-red-300 hover:text-red-200'
           >
             Delete
           </Button>
@@ -115,33 +118,68 @@ function ChatbotContextPageInner(): React.JSX.Element {
     },
   ], [activeIds, toggleActive, openEditModal, handleDeleteContext]);
 
+  const handleCopyLink = useCallback(() => {
+    const params = new URLSearchParams();
+    if (tagQuery.trim()) {
+      params.set('q', tagQuery.trim());
+    }
+    if (tagFilters.length > 0) {
+      params.set('tags', tagFilters.join(','));
+    }
+    const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    void navigator.clipboard.writeText(url);
+    toast('Filtered link copied', { variant: 'success' });
+  }, [tagQuery, tagFilters, toast]);
+
   return (
-    <div className='mx-auto w-full max-w-none py-10'>
-      <SectionHeader
+    <div className='mx-auto w-full max-w-none py-10 space-y-6'>
+      <PanelHeader
         title='Chatbot Context'
-        description='Define global instructions applied to every chat.'
-        eyebrow={(
+        description='Define global instructions and reference material applied to every chat.'
+        icon={<MessageSquareQuote className='size-4' />}
+        eyebrow={
           <a href='/admin/chatbot' className='text-blue-300 hover:text-blue-200'>
             ← Back to chatbot
           </a>
-        )}
-        className='mb-6'
+        }
+        actions={[
+          {
+            key: 'create',
+            label: 'Create Context',
+            icon: <PlusIcon className='size-4' />,
+            onClick: openCreateModal,
+          },
+          {
+            key: 'copy',
+            label: 'Copy Filter Link',
+            icon: <LinkIcon className='size-3.5' />,
+            variant: 'outline',
+            onClick: handleCopyLink,
+          },
+          {
+            key: 'save',
+            label: saving ? 'Saving...' : 'Save Contexts',
+            icon: <Save className='size-3.5' />,
+            onClick: () => { void handleSaveContexts(); },
+            disabled: saving || loading,
+          }
+        ]}
       />
-      <div className='rounded-lg border border-border/60 bg-card/40 p-6'>
-        <SectionHeader
-          title='Global Contexts'
-          size='xs'
-          className='mb-4'
-          actions={
-            <div className='flex items-center gap-2'>
-              <Button
-                onClick={openCreateModal}
-                size='xs'
-                className='h-8'
-              >
-                <PlusIcon className='mr-2 size-4' />
-                Create Context
-              </Button>
+
+      <ListPanel
+        filters={
+          <div className='space-y-4'>
+            <div className='flex flex-wrap items-center gap-3'>
+              <SearchInput
+                placeholder='Search contexts or tags...'
+                value={tagQuery}
+                onChange={(event) => setTagQuery(event.target.value)}
+                onClear={() => setTagQuery('')}
+                className='h-9 w-full max-w-sm'
+                disabled={loading}
+                size='sm'
+              />
+              
               <FileUploadTrigger
                 accept='application/pdf'
                 disabled={loading || saving || uploading}
@@ -152,91 +190,65 @@ function ChatbotContextPageInner(): React.JSX.Element {
                 }}
                 asChild
               >
-                <Button variant='outline' size='xs' className='h-8'>
-                  {uploading ? 'Uploading...' : 'Upload PDF'}
+                <Button variant='outline' size='sm' className='h-9 gap-2'>
+                  <FileUp className={cn('size-4', uploading && 'animate-bounce')} />
+                  {uploading ? 'Uploading PDF...' : 'Upload PDF'}
                 </Button>
               </FileUploadTrigger>
-              <Button
-                type='button'
-                variant='outline'
-                size='xs'
-                className='h-8'
-                onClick={(): void => {
-                  const params = new URLSearchParams();
-                  if (tagQuery.trim()) {
-                    params.set('q', tagQuery.trim());
-                  }
-                  if (tagFilters.length > 0) {
-                    params.set('tags', tagFilters.join(','));
-                  }
-                  const url = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
-                  void navigator.clipboard.writeText(url);
-                  toast('Filtered link copied', { variant: 'success' });
-                }}
-              >
-                Copy link
-              </Button>
             </div>
-          }
-        />
-        <div className='mb-4 flex flex-wrap items-center gap-3'>
-          <Input
-            placeholder='Search contexts or tags...'
-            value={tagQuery}
-            onChange={(event) => setTagQuery(event.target.value)}
-            className='h-8 max-w-xs text-xs'
-            disabled={loading}
-          />
-          <div className='flex flex-wrap gap-2'>
-            {uniqueTags.map((tag: string) => (
-              <Button
-                key={tag}
-                type='button'
-                size='xs'
-                variant={tagFilters.includes(tag) ? 'default' : 'outline'}
-                className='rounded-full'
-                onClick={(): void => {
-                  setTagFilters((prev) =>
-                    prev.includes(tag)
-                      ? prev.filter((item) => item !== tag)
-                      : [...prev, tag]
-                  );
-                }}
-              >
-                {tag}
-              </Button>
-            ))}
-            {tagFilters.length > 0 ? (
-              <Button
-                type='button'
-                variant='ghost'
-                size='xs'
-                onClick={() => setTagFilters([])}
-              >
-                Clear filters
-              </Button>
-            ) : null}
+
+            {uniqueTags.length > 0 && (
+              <div className='flex flex-wrap items-center gap-2 pt-1 border-t border-white/5'>
+                <span className='text-[10px] uppercase font-bold text-gray-500 mr-1'>Quick Filter:</span>
+                {uniqueTags.map((tag: string) => (
+                  <Button
+                    key={tag}
+                    type='button'
+                    size='xs'
+                    variant={tagFilters.includes(tag) ? 'default' : 'outline'}
+                    className='rounded-full h-6 px-3'
+                    onClick={(): void => {
+                      setTagFilters((prev) =>
+                        prev.includes(tag)
+                          ? prev.filter((item) => item !== tag)
+                          : [...prev, tag]
+                      );
+                    }}
+                  >
+                    {tag}
+                  </Button>
+                ))}
+                {tagFilters.length > 0 && (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='xs'
+                    onClick={() => setTagFilters([])}
+                    className='h-6 text-gray-400 hover:text-white'
+                  >
+                    Clear all
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
-        </div>
-        
+        }
+      >
         <div className='rounded-md border border-border bg-gray-900/20'>
           <DataTable
             columns={columns}
             data={filteredContexts}
             isLoading={loading}
+            emptyState={
+              <EmptyState
+                title='No contexts found'
+                description={tagQuery || tagFilters.length > 0 ? 'Try adjusting your filters.' : 'Global contexts provide instructions to the AI.'}
+                icon={<MessageSquareQuote className='size-12 opacity-20' />}
+              />
+            }
           />
         </div>
-
-        <div className='mt-6 flex justify-end'>
-          <Button
-            type='button'
-            onClick={() => { void handleSaveContexts(); }}
-            disabled={saving || loading}
-          >
-            {saving ? 'Saving...' : 'Save Contexts'}
-          </Button>
-        </div>
-      </div>
+      </ListPanel>
 
       <ChatbotContextModal
         isOpen={isModalOpen}
@@ -256,7 +268,7 @@ function ChatbotContextPageInner(): React.JSX.Element {
 
 export default function ChatbotContextPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<div className='p-6 text-sm text-gray-500'>Loading...</div>}>
+    <Suspense fallback={<div className='p-12 text-center text-sm text-gray-500 animate-pulse'>Mounting context environment...</div>}>
       <ChatbotContextPageInner />
     </Suspense>
   );

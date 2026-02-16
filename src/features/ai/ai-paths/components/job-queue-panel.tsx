@@ -18,14 +18,10 @@ import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/s
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
-  ConfirmDialog,
+  ConfirmModal,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  SelectSimple,
   Textarea,
   useToast,
   StatusBadge,
@@ -991,22 +987,17 @@ export function JobQueuePanel({
         </Button>
         <div className='flex items-center gap-2'>
           <Label className='text-[10px] uppercase text-gray-500'>Interval</Label>
-          <Select
+          <SelectSimple
+            size='xs'
             value={String(autoRefreshInterval)}
             onValueChange={(value: string) => setAutoRefreshInterval(Number.parseInt(value, 10))}
             disabled={!autoRefreshEnabled}
-          >
-            <SelectTrigger className='h-7 w-[110px] border-border bg-card/70 text-[11px] text-white'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900 text-white'>
-              {[2000, 5000, 10000, 30000].map((value: number) => (
-                <SelectItem key={value} value={String(value)}>
-                  {value / 1000}s
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={[2000, 5000, 10000, 30000].map((value: number) => ({
+              value: String(value),
+              label: `${value / 1000}s`,
+            }))}
+            triggerClassName='h-7 w-[110px] border-border bg-card/70 text-[11px] text-white'
+          />
         </div>        <Button
           type='button'
           className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
@@ -1263,21 +1254,16 @@ export function JobQueuePanel({
         </div>
         <div className='space-y-1'>
           <Label className='text-[10px] uppercase text-gray-500'>Page size</Label>
-          <Select
+          <SelectSimple
+            size='sm'
             value={String(pageSize)}
             onValueChange={(value: string) => setPageSize(Number.parseInt(value, 10))}
-          >
-            <SelectTrigger className='h-9 w-[110px] border-border bg-card/70 text-[11px] text-white'>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className='border-border bg-gray-900 text-white'>
-              {PAGE_SIZES.map((size: number) => (
-                <SelectItem key={size} value={String(size)}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            options={PAGE_SIZES.map((size: number) => ({
+              value: String(size),
+              label: String(size),
+            }))}
+            triggerClassName='h-9 w-[110px] border-border bg-card/70 text-[11px] text-white'
+          />
         </div>                    </div>
             
       <div className='flex flex-wrap gap-2'>
@@ -1554,23 +1540,19 @@ export function JobQueuePanel({
                               <Label className='text-[10px] uppercase text-gray-500'>
                                 Node
                               </Label>
-                              <Select
-                                {...(selectedHistoryNodeId != null ? { value: selectedHistoryNodeId } : {})}
+                              <SelectSimple
+                                size='sm'
+                                value={selectedHistoryNodeId || ''}
                                 onValueChange={(value: string) =>
                                   setHistorySelection((prev: Record<string, string>) => ({ ...prev, [run.id]: value }))
                                 }
-                              >
-                                <SelectTrigger className='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'>
-                                  <SelectValue placeholder='Select node' />
-                                </SelectTrigger>
-                                <SelectContent className='border-border bg-gray-900 text-white'>
-                                  {historyOptions.map((option: { id: string; label: string }) => (
-                                    <SelectItem key={option.id} value={option.id}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>                            </div>
+                                options={historyOptions.map((option: { id: string; label: string }) => ({
+                                  value: option.id,
+                                  label: option.label,
+                                }))}
+                                placeholder='Select node'
+                                triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
+                              />                            </div>
                           ) : (
                             <div className='mt-2 text-[11px] text-gray-500'>
                               {historyOptions[0]?.label ?? 'No history nodes'}
@@ -1764,39 +1746,39 @@ export function JobQueuePanel({
         </div>
       )}
 
-      <ConfirmDialog
-        open={clearScope === 'terminal'}
-        onOpenChange={(open: boolean): void => setClearScope(open ? 'terminal' : null)}
+      <ConfirmModal
+        isOpen={clearScope === 'terminal'}
+        onClose={() => setClearScope(null)}
         onConfirm={() => clearRunsMutation.mutate('terminal')}
         title='Clear finished AI Path runs'
-        description='Delete completed, failed, canceled, and dead-lettered runs from this queue list.'
+        message='Delete completed, failed, canceled, and dead-lettered runs from this queue list.'
         confirmText='Clear Finished'
-        variant='destructive'
+        isDangerous={true}
         loading={clearRunsMutation.isPending}
       />
 
-      <ConfirmDialog
-        open={clearScope === 'all'}
-        onOpenChange={(open: boolean): void => setClearScope(open ? 'all' : null)}
+      <ConfirmModal
+        isOpen={clearScope === 'all'}
+        onClose={() => setClearScope(null)}
         onConfirm={() => clearRunsMutation.mutate('all')}
         title='Clear all AI Path runs'
-        description='Delete all runs in this queue list, including queued, running, and paused entries.'
+        message='Delete all runs in this queue list, including queued, running, and paused entries.'
         confirmText='Clear All'
-        variant='destructive'
+        isDangerous={true}
         loading={clearRunsMutation.isPending}
       />
 
-      <ConfirmDialog
-        open={runToDelete !== null}
-        onOpenChange={(open: boolean): void => setRunToDelete(open ? runToDelete : null)}
+      <ConfirmModal
+        isOpen={runToDelete !== null}
+        onClose={() => setRunToDelete(null)}
         onConfirm={() => {
           if (!runToDelete) return;
           deleteRunMutation.mutate(runToDelete.id);
         }}
         title='Delete AI Path run'
-        description={`Delete run ${runToDelete?.id ?? ''}? This removes its run, node, and event history.`}
+        message={`Delete run ${runToDelete?.id ?? ''}? This removes its run, node, and event history.`}
         confirmText='Delete Run'
-        variant='destructive'
+        isDangerous={true}
         loading={deleteRunMutation.isPending}
       />
     </div>

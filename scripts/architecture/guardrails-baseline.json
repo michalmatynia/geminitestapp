@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-02-16T21:41:14.581Z",
+  "hardLimits": {
+    "sourceLargestFileLines": 4000
+  },
+  "max": {
+    "source.filesOver1000": 47,
+    "source.filesOver1500": 21,
+    "source.useClientFiles": 897,
+    "source.largestFileLines": 3352,
+    "api.totalRoutes": 294,
+    "api.delegatedServerRoutes": 19,
+    "api.routesWithoutApiHandler": 2,
+    "api.routesWithoutExplicitCachePolicy": 0,
+    "imports.appFeatureBarrelImports": 0,
+    "imports.appFeatureDeepImports": 400,
+    "imports.sharedToFeaturesTotalImports": 15,
+    "architecture.crossFeatureEdgePairs": 118,
+    "runtime.setIntervalOccurrences": 21
+  }
+}

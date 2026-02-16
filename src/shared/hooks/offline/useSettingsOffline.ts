@@ -1,13 +1,13 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-
 import {
   fetchSettingsCached,
   invalidateSettingsCache,
 } from '@/shared/api/settings-client';
 import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import type { ListQuery } from '@/shared/types/query-result-types';
 
 type SettingRecord = SettingRecordDto;
 
@@ -20,7 +20,7 @@ export interface SettingsOfflineHookResult {
 }
 
 export function useSettingsOffline(): SettingsOfflineHookResult {
-  const settingsQuery: UseQueryResult<SettingRecord[], Error> = useQuery({
+  const settingsQuery: ListQuery<SettingRecord, SettingRecord[]> = createListQueryV2<SettingRecord, SettingRecord[]>({
     queryKey: QUERY_KEYS.settings.scope('light'),
     queryFn: async (): Promise<SettingRecord[]> => {
       try {
@@ -33,6 +33,13 @@ export function useSettingsOffline(): SettingsOfflineHookResult {
     },
     staleTime: 1000 * 60 * 30, // 30 minutes - longer for offline support
     networkMode: 'offlineFirst',
+    meta: {
+      source: 'shared.hooks.offline.useSettingsOffline',
+      operation: 'list',
+      resource: 'settings',
+      domain: 'global',
+      tags: ['settings', 'offline'],
+    },
   });
 
   const updateSettingMutation = useOfflineMutation<SettingRecord, Error, { key: string; value: string }, SettingRecord[]>(

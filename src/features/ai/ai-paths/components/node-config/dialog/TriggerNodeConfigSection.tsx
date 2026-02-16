@@ -1,9 +1,10 @@
 'use client';
 
-import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { Label, SelectSimple } from '@/shared/ui';
@@ -20,7 +21,7 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
   const cachedButtons =
     queryClient.getQueryData<AiTriggerButtonRecord[]>(triggerButtonsQueryKey) ?? [];
 
-  return useQuery({
+  return createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
     queryKey: triggerButtonsQueryKey,
     queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
       const result = await triggerButtonsApi.list();
@@ -34,6 +35,13 @@ const useTriggerButtonsQuery = (): UseQueryResult<AiTriggerButtonRecord[], Error
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.node-config.trigger-buttons',
+      operation: 'list',
+      resource: 'ai-paths.trigger-buttons',
+      domain: 'global',
+      tags: ['ai-paths', 'node-config', 'trigger-buttons'],
+    },
   });
 };
 

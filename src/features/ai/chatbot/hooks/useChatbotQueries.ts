@@ -1,8 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-
 import { createListQuery, createSingleQuery } from '@/shared/lib/query-factories';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { chatbotKeys } from '@/shared/lib/query-key-exports';
 import type { ChatSession } from '@/shared/types/domain/chatbot';
 import type { ListQuery, SingleQuery } from '@/shared/types/query-result-types';
@@ -103,7 +102,7 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
  * Query hook for fetching available models from the chatbot API
  */
 export function useChatbotModels(options?: { enabled?: boolean; staleTime?: number }): ListQuery<string> {
-  return useQuery({
+  return createListQueryV2<string, string[]>({
     queryKey: chatbotKeys.models(),
     queryFn: async (): Promise<string[]> => {
       const raw = await fetchChatbotModels();
@@ -111,7 +110,17 @@ export function useChatbotModels(options?: { enabled?: boolean; staleTime?: numb
     },
     staleTime: options?.staleTime ?? 1000 * 60 * 5, // 5 minutes
     enabled: options?.enabled ?? true,
-  }) as ListQuery<string>;
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'chatbot.hooks.useChatbotModels',
+      operation: 'list',
+      resource: 'chatbot.models',
+      domain: 'global',
+      tags: ['chatbot', 'models'],
+    },
+  });
 }
 
 /**

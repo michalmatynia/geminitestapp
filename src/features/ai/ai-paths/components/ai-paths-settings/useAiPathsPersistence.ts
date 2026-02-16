@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type {
@@ -51,6 +51,7 @@ import {
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathSettings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
@@ -239,11 +240,19 @@ export function useAiPathsPersistence({
   toast,
 }: UseAiPathsPersistenceArgs): UseAiPathsPersistenceResult {
   const queryClient = useQueryClient();
-  const updateAiPathsSettingsMutation = useMutation({
+  const updateAiPathsSettingsMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.bulk-update'),
     mutationFn: async (
       payloads: Array<{ key: string; value: string }>
     ): Promise<Array<{ key: string; value: string }>> =>
       await updateAiPathsSettingsBulk(payloads),
+    meta: {
+      source: 'ai.ai-paths.settings.persistence.bulk-update',
+      operation: 'update',
+      resource: 'ai-paths.settings',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'persistence'],
+    },
     onSuccess: (): void => {
       void invalidateAiPathSettings(queryClient);
     },

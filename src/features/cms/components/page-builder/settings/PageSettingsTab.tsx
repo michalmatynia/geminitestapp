@@ -1,6 +1,5 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
 import { Globe, FileText, Pencil, Check, X } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -9,6 +8,8 @@ import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/use
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Switch, Textarea, SelectSimple, useToast } from '@/shared/ui';
@@ -291,7 +292,8 @@ function PageSettingsTab(): React.ReactNode {
     return `${resolved}\n\nPage context:\n${pageContext}\n\nAvailable templates:\n${templateCatalog}`;
   }, [pageAiPrompt, pageAiTask, pageContext, templateCatalog]);
 
-  const generatePageAiMutation = useMutation({
+  const generatePageAiMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.cms.mutation('page-builder.generate-page-ai'),
     mutationFn: async (payload: {
       provider: 'model' | 'agent';
       modelId: string;
@@ -364,6 +366,13 @@ function PageSettingsTab(): React.ReactNode {
 
       pageAiAbortRef.current = null;
       return accumulated;
+    },
+    meta: {
+      source: 'cms.page-builder.page-settings.generate-page-ai',
+      operation: 'action',
+      resource: 'cms.page-builder.ai.page',
+      domain: 'global',
+      tags: ['cms', 'page-builder', 'ai'],
     },
   });
 

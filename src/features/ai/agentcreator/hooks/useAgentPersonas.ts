@@ -40,7 +40,7 @@ export function useSaveAgentPersonasMutation(): UseMutationResult<
   const queryClient = useQueryClient();
 
   return createMutationV2<void, { personas: AgentPersona[] }>({
-    mutationKey: [...agentPersonaKeys.all, 'mutation', 'save'],
+    mutationKey: agentPersonaKeys.mutation('save'),
     mutationFn: async ({ personas }: { personas: AgentPersona[] }): Promise<void> => {
       await api.post('/api/settings', {
         key: AGENT_PERSONA_SETTINGS_KEY,

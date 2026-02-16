@@ -1,5 +1,5 @@
 'use client';
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import type {
@@ -58,6 +58,7 @@ import { deleteAiPathsSettings, updateAiPathsSetting } from '@/features/ai/ai-pa
 import { logClientError } from '@/features/observability';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
 import { useToast } from '@/shared/ui';
@@ -460,7 +461,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   const [loadNonce, setLoadNonce] = useState(0);
   const queryClient = useQueryClient();
 
-  const triggerButtonsQuery = useQuery({
+  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonRecord[], AiTriggerButtonRecord[]>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async (): Promise<AiTriggerButtonRecord[]> => {
       const result = await triggerButtonsApi.list();
@@ -471,6 +472,13 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.settings.trigger-buttons',
+      operation: 'list',
+      resource: 'ai-paths.trigger-buttons',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'trigger-buttons'],
+    },
   });
 
   const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
@@ -499,7 +507,8 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   }, [triggerButtonsQuery.data]);
 
   // Parser sample fetching mutation
-  const fetchParserSampleMutation = useMutation({
+  const fetchParserSampleMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-parser-sample'),
     mutationFn: async ({
       nodeId,
       entityType,
@@ -543,6 +552,13 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       }
       return { nodeId, entityType, entityId, sample };
     },
+    meta: {
+      source: 'ai.ai-paths.settings.fetch-parser-sample',
+      operation: 'action',
+      resource: 'ai-paths.samples.parser',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'samples'],
+    },
     onSuccess: ({ nodeId, entityType, entityId, sample }: { nodeId: string; entityType: string; entityId: string; sample: unknown }): void => {
       setParserSamples((prev: Record<string, ParserSampleState>) => ({
         ...prev,
@@ -579,11 +595,11 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
   };
 
   // Updater sample fetching mutation
-  const fetchUpdaterSampleMutation = useMutation<
+  const fetchUpdaterSampleMutation = createMutationV2<
     FetchUpdaterSampleResult,
-    Error,
     FetchUpdaterSampleVariables
   >({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-updater-sample'),
     mutationFn: async ({
       nodeId,
       entityType,
@@ -686,6 +702,13 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
       }
       return { nodeId, entityType, entityId: fetchedId, sample, notify };
     },
+    meta: {
+      source: 'ai.ai-paths.settings.fetch-updater-sample',
+      operation: 'action',
+      resource: 'ai-paths.samples.updater',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'samples'],
+    },
     onSuccess: ({ nodeId, entityType, entityId, sample, error, notify }: FetchUpdaterSampleResult): void => {
       if (!sample) {
         if (notify) {
@@ -776,7 +799,7 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     [activePathId, activeTab, edges.length, nodes.length, pathName, persistLastError]
   );
 
-  const modelsQuery = useQuery<{ models?: string[] }>({
+  const modelsQuery = createListQueryV2<{ models?: string[] }, { models?: string[] }>({
     queryKey: QUERY_KEYS.ai.chatbot.models(),
     queryFn: async (): Promise<{ models?: string[] }> => {
       try {
@@ -792,6 +815,13 @@ export function useAiPathsSettingsState({ activeTab }: AiPathsSettingsStateOptio
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.settings.models',
+      operation: 'list',
+      resource: 'ai.chatbot.models',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'models'],
+    },
   });
 
   const modelOptions = useMemo((): string[] => {

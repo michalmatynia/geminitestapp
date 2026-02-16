@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, type Query, type UseQueryResult } from '@tanstack/react-query';
+import { type Query, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -10,6 +10,7 @@ import {
   type AiPathRunRecord,
   type RuntimeHistoryEntry,
 } from '@/features/ai/ai-paths/lib';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { buildHistoryNodeOptions, type HistoryNodeOption } from '../run-history-utils';
@@ -250,7 +251,10 @@ export function useAiPathsRunHistory({
       ? runDetailHistory[runDetailSelectedHistoryNodeId] ?? []
       : [];
 
-  const runsQuery = useQuery<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error>({
+  const runsQuery = createListQueryV2<
+    { ok: boolean; data: { runs: AiPathRunRecord[] } },
+    { ok: boolean; data: { runs: AiPathRunRecord[] } }
+  >({
     queryKey: QUERY_KEYS.ai.aiPaths.runs({ pathId: activePathId }),
     queryFn: async () => {
       const res = await runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) });
@@ -269,6 +273,13 @@ export function useAiPathsRunHistory({
         (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
       );
       return hasActive ? 5000 : false;
+    },
+    meta: {
+      source: 'ai.ai-paths.run-history.runs',
+      operation: 'list',
+      resource: 'ai-paths.runs',
+      domain: 'global',
+      tags: ['ai-paths', 'run-history'],
     },
   });
 

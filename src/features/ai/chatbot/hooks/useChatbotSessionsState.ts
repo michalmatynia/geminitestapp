@@ -1,8 +1,9 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
 import { useState, useMemo, useCallback } from 'react';
 
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
@@ -64,8 +65,16 @@ export function useChatbotSessionsState(): UseChatbotSessionsStateReturn {
   const updateTitleMutation = useUpdateSessionTitle();
   const deleteSessionMutation = useDeleteChatbotSession();
   const deleteSessionsMutation = useDeleteChatbotSessions();
-  const selectAllMatchingMutation = useMutation({
+  const selectAllMatchingMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.ai.chatbot.mutation('sessions.select-all-matching'),
     mutationFn: chatbotApi.fetchChatbotSessionIds,
+    meta: {
+      source: 'chatbot.hooks.useChatbotSessionsState.selectAllMatching',
+      operation: 'action',
+      resource: 'chatbot.sessions.ids',
+      domain: 'global',
+      tags: ['chatbot', 'sessions', 'selection'],
+    },
   });
 
   const sessions = sessionsQuery.data ?? [];

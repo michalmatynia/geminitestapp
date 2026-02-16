@@ -1,9 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 export type ImageStudioRunStatus = 'queued' | 'running' | 'completed' | 'failed';
@@ -31,7 +31,7 @@ export function useImageStudioRuns() {
   const [statusFilter, setStatusFilter] = useState<'all' | ImageStudioRunStatus>('all');
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
 
-  const runsQuery = useQuery<RunsResponse>({
+  const runsQuery = createListQueryV2<RunsResponse, RunsResponse>({
     queryKey: QUERY_KEYS.imageStudio.runs({ status: statusFilter }),
     queryFn: async () => {
       return await api.get<RunsResponse>('/api/image-studio/runs', {
@@ -43,6 +43,16 @@ export function useImageStudioRuns() {
       });
     },
     refetchInterval: autoRefreshEnabled ? 3000 : false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.hooks.useImageStudioRuns',
+      operation: 'list',
+      resource: 'image-studio.runs',
+      domain: 'image_studio',
+      tags: ['image-studio', 'runs'],
+    },
   });
 
   const runs = useMemo(() => runsQuery.data?.runs ?? [], [runsQuery.data]);

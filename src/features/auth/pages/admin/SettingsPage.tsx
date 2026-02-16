@@ -1,6 +1,5 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -16,6 +15,8 @@ import {
 } from '@/features/auth/utils/auth-security';
 import { logClientError } from '@/features/observability';
 import { ApiError } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
   Input,
@@ -58,9 +59,39 @@ export default function AuthSettingsPage(): React.JSX.Element {
   const [mfaDisableCode, setMfaDisableCode] = useState('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 
-  const mfaSetupMutation = useMutation({ mutationFn: setupMfa });
-  const mfaVerifyMutation = useMutation({ mutationFn: verifyMfa });
-  const mfaDisableMutation = useMutation({ mutationFn: disableMfa });
+  const mfaSetupMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.auth.mutation('mfa.setup'),
+    mutationFn: setupMfa,
+    meta: {
+      source: 'auth.settings.mfa.setup',
+      operation: 'action',
+      resource: 'auth.mfa.setup',
+      domain: 'global',
+      tags: ['auth', 'mfa', 'settings'],
+    },
+  });
+  const mfaVerifyMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.auth.mutation('mfa.verify'),
+    mutationFn: verifyMfa,
+    meta: {
+      source: 'auth.settings.mfa.verify',
+      operation: 'action',
+      resource: 'auth.mfa.verify',
+      domain: 'global',
+      tags: ['auth', 'mfa', 'settings'],
+    },
+  });
+  const mfaDisableMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.auth.mutation('mfa.disable'),
+    mutationFn: disableMfa,
+    meta: {
+      source: 'auth.settings.mfa.disable',
+      operation: 'action',
+      resource: 'auth.mfa.disable',
+      domain: 'global',
+      tags: ['auth', 'mfa', 'settings'],
+    },
+  });
   const userSecurityQuery = useAuthUserSecurity(session?.user?.id);
 
   const roleOptions = useMemo(
@@ -126,7 +157,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       setMfaSecret(null);
       setMfaOtpAuth(null);
       setRecoveryCodes([]);
-      const res = await mfaSetupMutation.mutateAsync();
+      const res = await mfaSetupMutation.mutateAsync(undefined);
       if (!res.ok) throw new ApiError('Failed to start MFA setup.', 400);
       const payload = res.payload;
       setMfaSecret(payload.secret ?? null);

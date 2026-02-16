@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 
@@ -17,6 +17,7 @@ import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   SelectSimple,
@@ -297,7 +298,10 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const hasCachedAiPathSettings = Boolean(
     queryClient.getQueryState(QUERY_KEYS.ai.aiPaths.settings())?.dataUpdatedAt
   );
-  const settingsQuery = useQuery({
+  const settingsQuery = createListQueryV2<
+    Array<{ key: string; value: string }>,
+    Array<{ key: string; value: string }>
+  >({
     queryKey: QUERY_KEYS.ai.aiPaths.settings(),
     queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
       await fetchAiPathsSettingsCached(),
@@ -306,10 +310,25 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.node-config.regex.settings',
+      operation: 'list',
+      resource: 'ai-paths.settings',
+      domain: 'global',
+      tags: ['ai-paths', 'node-config', 'regex'],
+    },
   });
-  const updateSettingMutation = useMutation({
+  const updateSettingMutation = createMutationV2<void, { key: string; value: string }>({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('regex.update-setting'),
     mutationFn: async (payload: { key: string; value: string }): Promise<void> => {
       await updateAiPathsSetting(payload.key, payload.value);
+    },
+    meta: {
+      source: 'ai.ai-paths.node-config.regex.update-setting',
+      operation: 'update',
+      resource: 'ai-paths.settings.regex',
+      domain: 'global',
+      tags: ['ai-paths', 'node-config', 'regex'],
     },
   });
   const globalTemplatesRaw = React.useMemo(() => {

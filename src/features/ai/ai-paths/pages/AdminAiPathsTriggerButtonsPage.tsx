@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
@@ -16,6 +16,7 @@ import type {
   AiTriggerButtonMode,
   AiTriggerButtonDto,
 } from '@/shared/contracts/ai-trigger-buttons';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { 
@@ -68,7 +69,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
 
-  const triggerButtonsQuery = useQuery<AiTriggerButtonDto[]>({
+  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto[], AiTriggerButtonDto[]>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async () => {
       const result = await triggerButtonsApi.list();
@@ -76,8 +77,16 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       return Array.isArray(result.data) ? result.data : [];
     },
     staleTime: 5 * 60_000,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.pages.trigger-buttons.list',
+      operation: 'list',
+      resource: 'ai-paths.trigger-buttons',
+      domain: 'global',
+      tags: ['ai-paths', 'trigger-buttons'],
+    },
   });
 
   useEffect(() => {
@@ -87,11 +96,19 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     }
   }, [triggerButtonsQuery.error, toast]);
 
-  const createMutation = useMutation({
+  const createMutation = createMutationV2<AiTriggerButtonDto, AiTriggerButtonCreatePayload>({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.create'),
     mutationFn: async (payload: AiTriggerButtonCreatePayload): Promise<AiTriggerButtonDto> => {
       const result = await triggerButtonsApi.create(payload);
       if (!result.ok) throw new Error(result.error);
       return result.data;
+    },
+    meta: {
+      source: 'ai.ai-paths.pages.trigger-buttons.create',
+      operation: 'create',
+      resource: 'ai-paths.trigger-buttons',
+      domain: 'global',
+      tags: ['ai-paths', 'trigger-buttons'],
     },
     onSuccess: async (): Promise<void> => {
       await invalidateAiPathTriggerButtons(queryClient);
@@ -104,7 +121,14 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const updateMutation = useMutation({
+  const updateMutation = createMutationV2<
+    AiTriggerButtonDto,
+    {
+      id: string;
+      input: AiTriggerButtonCreatePayload;
+    }
+  >({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.update'),
     mutationFn: async ({
       id,
       input,
@@ -122,6 +146,13 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       if (!result.ok) throw new Error(result.error);
       return result.data;
     },
+    meta: {
+      source: 'ai.ai-paths.pages.trigger-buttons.update',
+      operation: 'update',
+      resource: 'ai-paths.trigger-buttons',
+      domain: 'global',
+      tags: ['ai-paths', 'trigger-buttons'],
+    },
     onSuccess: async (): Promise<void> => {
       await invalidateAiPathTriggerButtons(queryClient);
       toast('Trigger button updated.', { variant: 'success' });
@@ -133,10 +164,18 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const deleteMutation = useMutation({
+  const deleteMutation = createMutationV2<void, string>({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.delete'),
     mutationFn: async (id: string): Promise<void> => {
       const result = await triggerButtonsApi.remove(id);
       if (!result.ok) throw new Error(result.error);
+    },
+    meta: {
+      source: 'ai.ai-paths.pages.trigger-buttons.delete',
+      operation: 'delete',
+      resource: 'ai-paths.trigger-buttons',
+      domain: 'global',
+      tags: ['ai-paths', 'trigger-buttons'],
     },
     onSuccess: async (): Promise<void> => {
       await invalidateAiPathTriggerButtons(queryClient);
@@ -148,11 +187,19 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     },
   });
 
-  const reorderMutation = useMutation({
+  const reorderMutation = createMutationV2<AiTriggerButtonDto[], string[]>({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('trigger-buttons.reorder'),
     mutationFn: async (orderedIds: string[]): Promise<AiTriggerButtonDto[]> => {
       const result = await triggerButtonsApi.reorder(orderedIds);
       if (!result.ok) throw new Error(result.error);
       return Array.isArray(result.data) ? result.data : [];
+    },
+    meta: {
+      source: 'ai.ai-paths.pages.trigger-buttons.reorder',
+      operation: 'update',
+      resource: 'ai-paths.trigger-buttons.order',
+      domain: 'global',
+      tags: ['ai-paths', 'trigger-buttons'],
     },
     onSuccess: (data: AiTriggerButtonDto[]): void => {
       queryClient.setQueryData(QUERY_KEYS.ai.aiPaths.triggerButtons(), data);

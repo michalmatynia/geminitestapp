@@ -1,8 +1,9 @@
 'use client';
 
-import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface RealtimeConfig {
@@ -22,12 +23,19 @@ export function useRealtimeQuery<TData>(
   const wsRef = useRef<WebSocket | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const query = useQuery({
+  const query = createListQueryV2<TData, TData>({
     queryKey,
     queryFn,
     enabled: config?.enabled !== false,
     refetchInterval: config?.interval || 30000, // Fallback polling
     refetchIntervalInBackground: true,
+    meta: {
+      source: 'shared.hooks.query.useRealtimeQuery',
+      operation: 'polling',
+      resource: 'realtime-query',
+      domain: 'global',
+      tags: ['realtime', 'polling'],
+    },
   });
 
   useEffect((): (() => void) => {

@@ -1,11 +1,12 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
-
+import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { UserPreferences, UserPreferencesUpdate } from '@/shared/types/domain/user-preferences';
+import type { MutationResult, SingleQuery } from '@/shared/types/query-result-types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   normalizeUserPreferencesResponse,
@@ -36,8 +37,9 @@ const hasPreferenceChanged = (
   return currentValue !== nextValue;
 };
 
-export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
-  return useQuery({
+export function useUserPreferences(): SingleQuery<UserPreferences> {
+  return createSingleQueryV2<UserPreferences>({
+    id: 'current-user-preferences',
     queryKey: userPreferencesQueryKey,
     queryFn: ({ signal }) =>
       api.get<unknown>('/api/user/preferences', { signal })
@@ -51,13 +53,21 @@ export function useUserPreferences(): UseQueryResult<UserPreferences, Error> {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,
+    meta: {
+      source: 'shared.hooks.useUserPreferences',
+      operation: 'detail',
+      resource: 'user-preferences',
+      domain: 'global',
+      tags: ['user-preferences'],
+    },
   });
 }
 
-export function useUpdateUserPreferences(): UseMutationResult<UserPreferences, Error, UserPreferencesUpdate> {
+export function useUpdateUserPreferences(): MutationResult<UserPreferences, UserPreferencesUpdate> {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createMutationV2<UserPreferences, UserPreferencesUpdate>({
+    mutationKey: QUERY_KEYS.userPreferences.mutation('update'),
     mutationFn: (data: UserPreferencesUpdate) => {
       const validation = userPreferencesUpdateSchema.safeParse(data);
       if (!validation.success) {
@@ -78,6 +88,13 @@ export function useUpdateUserPreferences(): UseMutationResult<UserPreferences, E
         userPreferencesQueryKey,
         normalizeUserPreferencesResponse(data) as UserPreferences
       );
+    },
+    meta: {
+      source: 'shared.hooks.useUpdateUserPreferences',
+      operation: 'update',
+      resource: 'user-preferences',
+      domain: 'global',
+      tags: ['user-preferences', 'update'],
     },
   });
 }

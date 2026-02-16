@@ -1,6 +1,5 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
 import React from 'react';
 
 import {
@@ -43,6 +42,7 @@ import {
 import { PRODUCT_DB_PROVIDER_SETTING_KEY } from '@/features/products/constants';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings, type PromptValidationRule } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { DbSchemaSnapshot } from '@/shared/types/domain/ai-paths';
 import { Button, Input, Label, Textarea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Tabs, TabsContent, TabsList, TabsTrigger, Checkbox } from '@/shared/ui';
@@ -404,7 +404,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
 
   const schemaProvider = schemaConnection.schemaConfig?.provider ?? 'auto';
 
-  const schemaQuery = useQuery({
+  const schemaQuery = createListQueryV2<SchemaData, SchemaData>({
     queryKey: QUERY_KEYS.system.databases.schema({ provider: schemaProvider }),
     queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema({ provider: schemaProvider });
@@ -414,6 +414,16 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       return result.data as SchemaData;
     },
     enabled: schemaConnection.hasSchemaConnection && isDatabaseSelected,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.node-config.database.schema',
+      operation: 'list',
+      resource: 'databases.schema',
+      domain: 'global',
+      tags: ['ai-paths', 'node-config', 'database'],
+    },
   });
 
   const fetchedDbSchema = React.useMemo((): SchemaData | null => {
@@ -422,13 +432,21 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
   }, [schemaConnection.hasSchemaConnection, schemaConnection.schemaConfig, schemaQuery.data]);
   const schemaLoading = schemaQuery.isFetching;
 
-  const dbActionMutation = useMutation({
+  const dbActionMutation = createMutationV2<unknown, Record<string, unknown>>({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('node-config.database.action'),
     mutationFn: async (payload: Record<string, unknown>): Promise<unknown> => {
       const result = await dbApi.action<Record<string, unknown>>(payload as Parameters<typeof dbApi.action>[0]);
       if (!result.ok) {
         throw new Error(result.error || 'Query failed');
       }
       return result.data;
+    },
+    meta: {
+      source: 'ai.ai-paths.node-config.database.action',
+      operation: 'action',
+      resource: 'databases.action',
+      domain: 'global',
+      tags: ['ai-paths', 'node-config', 'database'],
     },
   });
 
@@ -701,7 +719,8 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     : schemaSnapshot
       ? 'snapshot'
       : 'none';
-  const schemaSyncMutation = useMutation({
+  const schemaSyncMutation = createMutationV2<SchemaData, 'auto' | 'mongodb' | 'prisma' | 'all'>({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('node-config.database.schema-sync'),
     mutationFn: async (
       provider: 'auto' | 'mongodb' | 'prisma' | 'all'
     ): Promise<SchemaData> => {
@@ -710,6 +729,13 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
         throw new Error(result.error || 'Failed to fetch schema.');
       }
       return result.data as SchemaData;
+    },
+    meta: {
+      source: 'ai.ai-paths.node-config.database.schema-sync',
+      operation: 'action',
+      resource: 'databases.schema',
+      domain: 'global',
+      tags: ['ai-paths', 'node-config', 'database'],
     },
     onSuccess: (data: SchemaData): void => {
       const filtered = applySchemaSelection(data, schemaConnection.schemaConfig);

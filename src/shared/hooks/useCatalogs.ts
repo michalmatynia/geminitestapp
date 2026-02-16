@@ -1,9 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { ListQuery } from '@/shared/types/query-result-types';
 
 interface CatalogOption {
   id: string;
@@ -11,9 +11,17 @@ interface CatalogOption {
   isDefault?: boolean;
 }
 
-export function useCatalogs(): ReturnType<typeof useQuery<CatalogOption[]>> {
-  return useQuery({
+export function useCatalogs(): ListQuery<CatalogOption, CatalogOption[]> {
+  return createListQueryV2<CatalogOption, CatalogOption[]>({
     queryKey: QUERY_KEYS.products.metadata.catalogs(),
     queryFn: async () => await api.get<CatalogOption[]>('/api/catalogs'),
+    staleTime: 0,
+    meta: {
+      source: 'shared.hooks.useCatalogs',
+      operation: 'list',
+      resource: 'catalogs',
+      domain: 'products',
+      tags: ['products', 'catalogs'],
+    },
   });
 }

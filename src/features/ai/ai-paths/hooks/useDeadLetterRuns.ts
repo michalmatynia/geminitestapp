@@ -1,10 +1,10 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
 import { logClientError } from '@/features/observability';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   AiPathRunEventRecord,
@@ -90,7 +90,7 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
   const normalizedQuery = debouncedSearchQuery.trim();
   const offset = (page - 1) * pageSize;
 
-  const runsQuery = useQuery<{ runs: AiPathRunRecord[]; total: number }>({
+  const runsQuery = createListQueryV2<{ runs: AiPathRunRecord[]; total: number }, { runs: AiPathRunRecord[]; total: number }>({
     queryKey: QUERY_KEYS.ai.aiPaths.deadLetter({
       status: 'dead_lettered',
       pathId: normalizedPathId,
@@ -110,6 +110,13 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
         throw new Error(response.error || 'Failed to load dead-letter runs.');
       }
       return response.data as { runs: AiPathRunRecord[]; total: number };
+    },
+    meta: {
+      source: 'ai.ai-paths.dead-letter.runs',
+      operation: 'list',
+      resource: 'ai-paths.dead-letter-runs',
+      domain: 'global',
+      tags: ['ai-paths', 'dead-letter'],
     },
   });
 
@@ -283,10 +290,11 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
 
   const clearSelection = useCallback((): void => setSelectedIds(new Set()), []);
 
-  const requeueSelectedMutation = useMutation<
+  const requeueSelectedMutation = createMutationV2<
     { requeued: number; errors?: Array<{ runId: string; error: string }> },
-    Error
+    void
   >({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('dead-letter.requeue-selected'),
     mutationFn: async (): Promise<{ requeued: number; errors?: Array<{ runId: string; error: string }> }> => {
       const response = await runsApi.requeueDeadLetter({
         runIds: Array.from(selectedIds),
@@ -296,6 +304,13 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
         throw new Error(response.error || 'Failed to requeue selected runs.');
       }
       return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
+    },
+    meta: {
+      source: 'ai.ai-paths.dead-letter.requeue-selected',
+      operation: 'action',
+      resource: 'ai-paths.dead-letter-requeue',
+      domain: 'global',
+      tags: ['ai-paths', 'dead-letter', 'requeue'],
     },
     onSuccess: (data: { requeued: number; errors?: Array<{ runId: string; error: string }> }): void => {
       showRequeueResultToast(toast, requeueMode, data);
@@ -310,10 +325,11 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     },
   });
 
-  const requeueAllMutation = useMutation<
+  const requeueAllMutation = createMutationV2<
     { requeued: number; errors?: Array<{ runId: string; error: string }> },
-    Error
+    void
   >({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('dead-letter.requeue-all'),
     mutationFn: async (): Promise<{ requeued: number; errors?: Array<{ runId: string; error: string }> }> => {
       const response = await runsApi.requeueDeadLetter({
         pathId: normalizedPathId || null,
@@ -324,6 +340,13 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
         throw new Error(response.error || 'Failed to requeue dead-letter runs.');
       }
       return response.data as { requeued: number; errors?: Array<{ runId: string; error: string }> };
+    },
+    meta: {
+      source: 'ai.ai-paths.dead-letter.requeue-all',
+      operation: 'action',
+      resource: 'ai-paths.dead-letter-requeue',
+      domain: 'global',
+      tags: ['ai-paths', 'dead-letter', 'requeue'],
     },
     onSuccess: (data: { requeued: number; errors?: Array<{ runId: string; error: string }> }): void => {
       showRequeueResultToast(toast, requeueMode, data);
@@ -389,17 +412,24 @@ export function useDeadLetterRuns(): UseDeadLetterRunsReturn {
     void runsQuery.refetch();
   }, [requeueMode, runsQuery, toast]);
 
-  const retryNodeMutation = useMutation<
+  const retryNodeMutation = createMutationV2<
     { run: unknown },
-    Error,
     { runId: string; nodeId: string }
   >({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('dead-letter.retry-node'),
     mutationFn: async ({ runId, nodeId }: { runId: string; nodeId: string }): Promise<{ run: unknown }> => {
       const response = await runsApi.retryNode(runId, nodeId);
       if (!response.ok) {
         throw new Error(response.error || 'Failed to retry node.');
       }
       return response.data as { run: unknown };
+    },
+    meta: {
+      source: 'ai.ai-paths.dead-letter.retry-node',
+      operation: 'action',
+      resource: 'ai-paths.dead-letter-node-retry',
+      domain: 'global',
+      tags: ['ai-paths', 'dead-letter', 'retry'],
     },
     onSuccess: (_data: { run: unknown }, variables: { runId: string; nodeId: string }): void => {
       toast(`Node ${variables.nodeId} retry queued.`, { variant: 'success' });

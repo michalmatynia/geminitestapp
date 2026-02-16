@@ -1,8 +1,9 @@
 'use client';
 
-import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 interface StreamConfig<T = unknown> {
@@ -64,10 +65,17 @@ export function useStreamingQuery<T>(
     };
   }, [connect]);
 
-  return useQuery({
+  return createListQueryV2<T | null, T | null>({
     queryKey,
     queryFn: async (): Promise<T | null> => await Promise.resolve(null), // Initial empty state
     enabled: false, // Disable automatic fetching since we use streaming
+    meta: {
+      source: 'shared.hooks.query.useStreamingQuery',
+      operation: 'list',
+      resource: 'streaming-query',
+      domain: 'global',
+      tags: ['streaming'],
+    },
   });
 }
 
@@ -161,7 +169,7 @@ export function useSmartPolling<T>(
   const intervalRef = useRef(baseInterval);
   const errorCountRef = useRef(0);
 
-  const query = useQuery({
+  const query = createListQueryV2<T, T>({
     queryKey,
     queryFn,
     refetchInterval: (): number | false => {
@@ -172,6 +180,13 @@ export function useSmartPolling<T>(
       return intervalRef.current;
     },
     refetchIntervalInBackground: !options?.visibilityAware,
+    meta: {
+      source: 'shared.hooks.query.useSmartPolling',
+      operation: 'polling',
+      resource: 'smart-polling',
+      domain: 'global',
+      tags: ['polling', 'smart'],
+    },
   });
 
   useEffect((): void => {

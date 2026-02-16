@@ -1,10 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { Button } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
@@ -209,7 +209,7 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
     setExpandedRunId(null);
   }, [projectId]);
 
-  const runsQuery = useQuery<HistoryRunsResponse>({
+  const runsQuery = createListQueryV2<HistoryRunsResponse, HistoryRunsResponse>({
     queryKey: studioKeys.runs({
       projectId: projectId ?? null,
       page,
@@ -232,6 +232,13 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'image-studio.project-history.runs',
+      operation: 'list',
+      resource: 'image-studio.runs',
+      domain: 'image_studio',
+      tags: ['image-studio', 'history'],
+    },
   });
 
   const runs = useMemo(

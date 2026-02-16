@@ -1,10 +1,10 @@
- 
 'use client';
 
-import { useQuery, useQueryClient, type Query, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type Query, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { fetchLiteSettingsCached } from '@/shared/api/settings-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 // Predefined cache strategies
@@ -211,7 +211,7 @@ export function useAdaptiveQuery<T>(
   const dataType = options?.dataType || 'standard';
   const strategy = cacheStrategies[dataType];
 
-  return useQuery({
+  return createListQueryV2<T, T>({
     queryKey,
     queryFn,
     ...strategy,
@@ -219,5 +219,12 @@ export function useAdaptiveQuery<T>(
     staleTime: options?.priority === 'high' ? 
       Math.min(strategy.staleTime || 0, 1000 * 60) : // Max 1 minute for high priority
       strategy.staleTime,
+    meta: {
+      source: 'shared.hooks.query.useAdaptiveQuery',
+      operation: 'list',
+      resource: 'adaptive-query',
+      domain: 'global',
+      tags: ['cache', 'adaptive'],
+    },
   });
 }

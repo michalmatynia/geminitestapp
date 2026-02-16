@@ -1,6 +1,5 @@
 'use client';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import React from 'react';
 
@@ -15,6 +14,7 @@ import {
   AI_PATHS_RUN_SOURCE_VALUES,
 } from '@/features/ai/ai-paths/lib/run-sources';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
@@ -423,7 +423,10 @@ export function JobQueuePanel({
   const [autoRefreshInterval, setAutoRefreshInterval] = React.useState(5000);
   const [clearScope, setClearScope] = React.useState<'terminal' | 'all' | null>(null);
   const [runToDelete, setRunToDelete] = React.useState<AiPathRunRecord | null>(null);
-  const aiPathsSettingsQuery = useQuery({
+  const aiPathsSettingsQuery = createListQueryV2<
+    Array<{ key: string; value: string }>,
+    Array<{ key: string; value: string }>
+  >({
     queryKey: QUERY_KEYS.ai.aiPaths.settings(),
     queryFn: async (): Promise<Array<{ key: string; value: string }>> =>
       await fetchAiPathsSettingsCached(),
@@ -431,6 +434,13 @@ export function JobQueuePanel({
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.job-queue.settings',
+      operation: 'list',
+      resource: 'ai-paths.settings',
+      domain: 'global',
+      tags: ['ai-paths', 'job-queue'],
+    },
   });
   const heavyMap = React.useMemo(
     () => new Map((aiPathsSettingsQuery.data ?? []).map((item) => [item.key, item.value])),
@@ -477,7 +487,7 @@ export function JobQueuePanel({
     setPage(1);
   }, [normalizedPathFilter, normalizedQuery, statusFilter, pageSize]);
 
-  const runsQuery = useQuery<{ runs: AiPathRunRecord[]; total: number }>({
+  const runsQuery = createListQueryV2<{ runs: AiPathRunRecord[]; total: number }, { runs: AiPathRunRecord[]; total: number }>({
     queryKey: QUERY_KEYS.ai.aiPaths.jobQueue({
       pathId: normalizedPathFilter,
       source: normalizedSourceFilter,
@@ -503,9 +513,16 @@ export function JobQueuePanel({
       return response.data as { runs: AiPathRunRecord[]; total: number };
     },
     refetchInterval: autoRefreshEnabled ? autoRefreshInterval : false,
+    meta: {
+      source: 'ai.ai-paths.job-queue.runs',
+      operation: 'list',
+      resource: 'ai-paths.job-queue',
+      domain: 'global',
+      tags: ['ai-paths', 'job-queue'],
+    },
   });
 
-  const queueStatusQuery = useQuery<{ status: QueueStatus }>({
+  const queueStatusQuery = createListQueryV2<{ status: QueueStatus }, { status: QueueStatus }>({
     queryKey: QUERY_KEYS.ai.aiPaths.queueStatus(),
     queryFn: async () => {
       const response = await runsApi.queueStatus();
@@ -515,9 +532,17 @@ export function JobQueuePanel({
       return response.data as { status: QueueStatus };
     },
     refetchInterval: autoRefreshEnabled ? autoRefreshInterval : false,
+    meta: {
+      source: 'ai.ai-paths.job-queue.status',
+      operation: 'polling',
+      resource: 'ai-paths.queue-status',
+      domain: 'global',
+      tags: ['ai-paths', 'job-queue'],
+    },
   });
 
-  const clearRunsMutation = useMutation({
+  const clearRunsMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.clear-runs'),
     mutationFn: async (scope: 'terminal' | 'all'): Promise<{ deleted: number; scope: 'all' | 'terminal' }> => {
       const response = await runsApi.clear({
         scope,
@@ -528,6 +553,13 @@ export function JobQueuePanel({
         throw new Error(response.error || 'Failed to clear runs.');
       }
       return response.data as { deleted: number; scope: 'all' | 'terminal' };
+    },
+    meta: {
+      source: 'ai.ai-paths.job-queue.clear-runs',
+      operation: 'delete',
+      resource: 'ai-paths.runs',
+      domain: 'global',
+      tags: ['ai-paths', 'job-queue'],
     },
     onSuccess: (result: { deleted: number; scope: 'all' | 'terminal' }) => {
       toast(
@@ -545,7 +577,8 @@ export function JobQueuePanel({
     },
   });
 
-  const cancelRunMutation = useMutation({
+  const cancelRunMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.cancel-run'),
     mutationFn: async (
       runId: string
     ): Promise<{ canceled?: boolean; message?: string | undefined }> => {
@@ -554,6 +587,13 @@ export function JobQueuePanel({
         throw new Error(response.error || 'Failed to cancel run.');
       }
       return (response.data ?? {}) as { canceled?: boolean; message?: string | undefined };
+    },
+    meta: {
+      source: 'ai.ai-paths.job-queue.cancel-run',
+      operation: 'action',
+      resource: 'ai-paths.runs.cancel',
+      domain: 'global',
+      tags: ['ai-paths', 'job-queue'],
     },
     onSuccess: (result: { canceled?: boolean; message?: string | undefined }) => {
       const wasCanceled = result.canceled !== false;
@@ -611,12 +651,20 @@ export function JobQueuePanel({
     });
   }, []);
 
-  const deleteRunMutation = useMutation({
+  const deleteRunMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('job-queue.delete-run'),
     mutationFn: async (runId: string): Promise<void> => {
       const response = await runsApi.remove(runId);
       if (!response.ok) {
         throw new Error(response.error || 'Failed to delete run.');
       }
+    },
+    meta: {
+      source: 'ai.ai-paths.job-queue.delete-run',
+      operation: 'delete',
+      resource: 'ai-paths.runs',
+      domain: 'global',
+      tags: ['ai-paths', 'job-queue'],
     },
     onSuccess: (_data: void, runId: string) => {
       clearRunFromLocalState(runId);

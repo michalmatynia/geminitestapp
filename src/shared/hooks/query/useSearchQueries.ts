@@ -1,9 +1,11 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
+import type { UseQueryResult } from '@tanstack/react-query';
 
 interface SearchConfig<T> {
   searchFn: (query: string) => Promise<T[]>;
@@ -18,12 +20,19 @@ export function useSearchQuery<T>(
 ): UseQueryResult<T[], Error> {
   const { searchFn, minLength = 2, cacheTime = 5 * 60 * 1000 } = config;
 
-  return useQuery({
+  return createListQueryV2<T, T[]>({
     queryKey: QUERY_KEYS.search.term(searchTerm),
     queryFn: (): Promise<T[]> => searchFn(searchTerm),
     enabled: searchTerm.length >= minLength,
     staleTime: cacheTime,
     gcTime: cacheTime * 2,
+    meta: {
+      source: 'shared.hooks.query.useSearchQuery',
+      operation: 'list',
+      resource: 'search',
+      domain: 'global',
+      tags: ['search'],
+    },
   });
 }
 
@@ -90,7 +99,7 @@ export function usePaginatedSearch<T>(
   const pageSize = options?.pageSize || 20;
   const enabled = options?.enabled !== false;
 
-  return useQuery({
+  return createListQueryV2<{ data: T[]; total: number; hasMore: boolean }, { data: T[]; total: number; hasMore: boolean }>({
     queryKey: QUERY_KEYS.search.paginated(searchTerm, pageSize),
     queryFn: async (): Promise<{ data: T[]; total: number; hasMore: boolean }> => {
       const results: T[] = [];
@@ -112,6 +121,13 @@ export function usePaginatedSearch<T>(
     },
     enabled: enabled && searchTerm.length >= 2,
     staleTime: 2 * 60 * 1000, // 2 minutes
+    meta: {
+      source: 'shared.hooks.query.usePaginatedSearch',
+      operation: 'list',
+      resource: 'search',
+      domain: 'global',
+      tags: ['search', 'paginated'],
+    },
   });
 }
 
@@ -120,11 +136,18 @@ export function useSearchSuggestions(
   searchTerm: string,
   getSuggestions: (query: string) => Promise<string[]>
 ): UseQueryResult<string[], Error> {
-  return useQuery({
+  return createListQueryV2<string, string[]>({
     queryKey: QUERY_KEYS.search.suggestions(searchTerm),
     queryFn: (): Promise<string[]> => getSuggestions(searchTerm),
     enabled: searchTerm.length >= 1,
     staleTime: 10 * 60 * 1000, // 10 minutes
     select: (data: string[]): string[] => data.slice(0, 8), // Limit to 8 suggestions
+    meta: {
+      source: 'shared.hooks.query.useSearchSuggestions',
+      operation: 'list',
+      resource: 'search-suggestions',
+      domain: 'global',
+      tags: ['search', 'suggestions'],
+    },
   });
 }

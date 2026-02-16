@@ -1,10 +1,11 @@
-import { useInfiniteQuery, type UseInfiniteQueryOptions, type InfiniteData, type UseInfiniteQueryResult } from '@tanstack/react-query';
-
 import type {
   LegacyPaginatedResponseDto,
   PaginatedResponseDto,
   PaginationDto,
 } from '@/shared/contracts/http';
+import { createInfiniteQueryV2 } from '@/shared/lib/query-factories-v2';
+
+import type { InfiniteData, UseInfiniteQueryOptions, UseInfiniteQueryResult } from '@tanstack/react-query';
 
 export type PaginatedResponse<T> = PaginatedResponseDto<T> | LegacyPaginatedResponseDto<T>;
 
@@ -57,10 +58,21 @@ export function useInfiniteQueryWithPagination<TData>(
     initialParams?: Record<string, unknown>;
   }
 ): UseInfiniteQueryResult<InfiniteData<PaginatedResponse<TData>>, Error> {
-  const pageSize: number = options?.pageSize || 20;
-  const initialParams: Record<string, unknown> = options?.initialParams || {};
+  const pageSize: number = options?.pageSize ?? 20;
+  const initialParams: Record<string, unknown> = options?.initialParams ?? {};
+  const {
+    pageSize: _ignoredPageSize,
+    initialParams: _ignoredInitialParams,
+    ...queryOptions
+  } = options ?? {};
 
-  return useInfiniteQuery({
+  return createInfiniteQueryV2<
+    PaginatedResponse<TData>,
+    Error,
+    InfiniteData<PaginatedResponse<TData>>,
+    unknown[],
+    number
+  >({
     queryKey: [...queryKey, { pageSize, ...initialParams }] as const,
     queryFn: ({ pageParam }: { pageParam: number }): Promise<PaginatedResponse<TData>> => 
       queryFn({
@@ -77,7 +89,14 @@ export function useInfiniteQueryWithPagination<TData>(
       const pagination = toPagination(firstPage);
       return pagination.hasPreviousPage ? pagination.page - 1 : undefined;
     },
-    ...options,
+    ...queryOptions,
+    meta: {
+      source: 'shared.hooks.query.useInfiniteQueryWithPagination',
+      operation: 'infinite',
+      resource: 'pagination',
+      domain: 'global',
+      tags: ['infinite', 'pagination'],
+    },
   });
 }
 

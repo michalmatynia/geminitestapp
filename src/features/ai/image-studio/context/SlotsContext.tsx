@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -14,6 +14,7 @@ import {
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
@@ -364,7 +365,12 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const uploadMutation = useUploadStudioAssets(projectId);
   const importFromDriveMutation = useImportStudioAssetsFromDrive(projectId);
 
-  const moveSlotMutation = useMutation({
+  const moveSlotMutation = createMutationV2<
+    ImageStudioSlotRecord,
+    { slot: ImageStudioSlotRecord; targetFolder: string },
+    { previous?: StudioSlotsResponse | undefined }
+  >({
+    mutationKey: studioKeys.mutation('slots.move'),
     mutationFn: async ({ slot, targetFolder }: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<ImageStudioSlotRecord> => {
       return updateSlotMutation.mutateAsync({ id: slot.id, data: { folderPath: targetFolder } });
     },
@@ -392,6 +398,13 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     },
     onSettled: () => {
       void invalidateImageStudioSlots(queryClient, projectId);
+    },
+    meta: {
+      source: 'image-studio.slots.move',
+      operation: 'update',
+      resource: 'image-studio.slots',
+      domain: 'image_studio',
+      tags: ['image-studio', 'slots', 'tree'],
     },
   });
 
@@ -582,7 +595,8 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     projectId,
   ]);
 
-  const createFolderMutation = useMutation({
+  const createFolderMutation = createMutationV2<string, string>({
+    mutationKey: studioKeys.mutation('folders.create'),
     mutationFn: async (folder: string) => {
       const expanded = expandFolderPath(folder);
       const nextFolders = normalizeFolderPaths([...virtualFolders, ...expanded]);
@@ -593,6 +607,13 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       setVirtualFolders(prev => normalizeFolderPaths([...prev, ...expandFolderPath(folder)]));
       setSelectedFolderRaw(folder);
       toast('Folder created.', { variant: 'success' });
+    },
+    meta: {
+      source: 'image-studio.folders.create',
+      operation: 'create',
+      resource: 'image-studio.folders',
+      domain: 'image_studio',
+      tags: ['image-studio', 'folders', 'tree'],
     },
   });
 

@@ -1,5 +1,8 @@
-import { useQuery, type UseQueryResult, type UndefinedInitialDataOptions } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
+
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+
+import type { UndefinedInitialDataOptions, UseQueryResult } from '@tanstack/react-query';
 
 interface QueryPerformanceMetrics {
   queryKey: string;
@@ -85,7 +88,7 @@ export function useQueryWithPerformance<TData>(
 ): UseQueryResult<TData, Error> {
   const keyString = JSON.stringify(queryKey);
 
-  return useQuery({
+  return createListQueryV2<TData, TData>({
     queryKey,
     queryFn: async (): Promise<TData> => {
       const startTime = Date.now();
@@ -103,6 +106,13 @@ export function useQueryWithPerformance<TData>(
       
       return data;
     },
+    meta: {
+      source: 'shared.hooks.useQueryWithPerformance',
+      operation: 'list',
+      resource: 'query-performance',
+      domain: 'global',
+      tags: ['performance', 'query'],
+    },
     ...options,
-  } as UndefinedInitialDataOptions<TData, Error, TData, unknown[]>);
+  });
 }

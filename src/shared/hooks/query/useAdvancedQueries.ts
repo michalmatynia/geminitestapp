@@ -1,9 +1,9 @@
- 
 'use client';
 
-import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQueries, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 
 // Hook for dependent queries - execute queries in sequence
@@ -19,22 +19,43 @@ export function useDependentQueries<T1, T2, T3>(
   isError: boolean;
   error: Error | null;
 } {
-  const first = useQuery<T1, Error>({
+  const first = createListQueryV2<T1, T1>({
     queryKey: normalizeQueryKey(firstQuery.queryKey),
     queryFn: firstQuery.queryFn,
     enabled: firstQuery.enabled !== false,
+    meta: {
+      source: 'shared.hooks.query.useDependentQueries.first',
+      operation: 'list',
+      resource: 'dependent-query',
+      domain: 'global',
+      tags: ['dependent', 'first'],
+    },
   });
 
-  const second = useQuery<T2, Error>({
+  const second = createListQueryV2<T2, T2>({
     queryKey: normalizeQueryKey([...secondQuery.queryKey, first.data]),
     queryFn: () => secondQuery.queryFn(first.data!),
     enabled: !!first.data && first.isSuccess,
+    meta: {
+      source: 'shared.hooks.query.useDependentQueries.second',
+      operation: 'list',
+      resource: 'dependent-query',
+      domain: 'global',
+      tags: ['dependent', 'second'],
+    },
   });
 
-  const third = useQuery<T3, Error>({
+  const third = createListQueryV2<T3, T3>({
     queryKey: normalizeQueryKey(thirdQuery ? [...thirdQuery.queryKey, second.data] : ['__empty_third__']),
     queryFn: thirdQuery ? () => thirdQuery.queryFn(second.data!) : () => Promise.resolve(null as unknown as T3),
     enabled: !!thirdQuery && !!second.data && second.isSuccess,
+    meta: {
+      source: 'shared.hooks.query.useDependentQueries.third',
+      operation: 'list',
+      resource: 'dependent-query',
+      domain: 'global',
+      tags: ['dependent', 'third'],
+    },
   });
 
   return {
@@ -143,9 +164,16 @@ export function useConditionalQuery<T>(
     return true;
   }, [conditions]);
 
-  return useQuery({
+  return createListQueryV2<T, T>({
     queryKey: normalizeQueryKey(queryKey),
     queryFn,
     enabled,
+    meta: {
+      source: 'shared.hooks.query.useConditionalQuery',
+      operation: 'list',
+      resource: 'conditional-query',
+      domain: 'global',
+      tags: ['conditional'],
+    },
   });
 }

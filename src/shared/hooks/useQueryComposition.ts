@@ -1,7 +1,9 @@
 'use client';
 
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import type { UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
+
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 
 // Hook for query normalization and relationships
 export function useNormalizedQuery<T extends { id: string }>(
@@ -12,10 +14,17 @@ export function useNormalizedQuery<T extends { id: string }>(
   selectMany: (ids: string[]) => T[];
   normalized: { byId: Record<string, T>; allIds: string[] } | undefined;
 } {
-  const query = useQuery({
+  const query = createListQueryV2<T, T[]>({
     queryKey,
     queryFn,
     select: (data: T[]) => data, // Keep original data structure for the main query result
+    meta: {
+      source: 'shared.hooks.useNormalizedQuery',
+      operation: 'list',
+      resource: 'normalized-query',
+      domain: 'global',
+      tags: ['query', 'normalized'],
+    },
   });
 
   // Derived normalized state
@@ -51,10 +60,16 @@ export function useComposedQuery<T, R>(
   transformer: (data: T) => R,
   dependencies: readonly unknown[] = []
 ): UseQueryResult<R, Error> {
-  return useQuery({
+  return createListQueryV2<R, R>({
     queryKey: [...baseQuery.queryKey, 'composed', ...dependencies],
-    queryFn: baseQuery.queryFn,
-    select: transformer,
+    queryFn: async (): Promise<R> => transformer(await baseQuery.queryFn()),
+    meta: {
+      source: 'shared.hooks.useComposedQuery',
+      operation: 'list',
+      resource: 'composed-query',
+      domain: 'global',
+      tags: ['query', 'composed'],
+    },
   });
 }
 
@@ -69,7 +84,17 @@ export function useAggregatedQuery<T, R>(
   error: unknown;
 } {
   const queryResults = queries.map(({ queryKey, queryFn }) =>
-    useQuery({ queryKey, queryFn })
+    createListQueryV2<T, T>({
+      queryKey,
+      queryFn,
+      meta: {
+        source: 'shared.hooks.useAggregatedQuery',
+        operation: 'list',
+        resource: 'aggregated-query',
+        domain: 'global',
+        tags: ['query', 'aggregated'],
+      },
+    })
   );
 
   return useMemo(() => {

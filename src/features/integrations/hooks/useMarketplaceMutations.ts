@@ -17,7 +17,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 export function useFetchExternalCategoriesMutation() {
   const queryClient = useQueryClient();
   return createMutationV2({
-    mutationKey: [...QUERY_KEYS.integrations.marketplace.all, 'mutation', 'fetch-categories'],
+    mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-categories'),
     mutationFn: (payload: { connectionId: string }) => api.post<{ fetched: number; message: string }>('/api/marketplace/categories/fetch', payload),
     meta: {
       source: 'integrations.hooks.marketplace.fetch-categories',
@@ -35,7 +35,7 @@ export function useFetchExternalCategoriesMutation() {
 export function useSaveMappingsMutation() {
   const queryClient = useQueryClient();
   return createMutationV2({
-    mutationKey: [...QUERY_KEYS.integrations.marketplace.all, 'mutation', 'save-mappings'],
+    mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-mappings'),
     mutationFn: (payload: { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }) => 
       api.post<{ upserted: number; message: string }>('/api/marketplace/mappings/bulk', payload),
     meta: {
@@ -54,7 +54,7 @@ export function useSaveMappingsMutation() {
 export function useFetchExternalProducersMutation() {
   const queryClient = useQueryClient();
   return createMutationV2({
-    mutationKey: [...QUERY_KEYS.integrations.marketplace.all, 'mutation', 'fetch-producers'],
+    mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-producers'),
     mutationFn: (payload: { connectionId: string }) =>
       api.post<{ fetched: number; message: string }>(
         '/api/marketplace/producers/fetch',
@@ -76,7 +76,7 @@ export function useFetchExternalProducersMutation() {
 export function useSaveProducerMappingsMutation() {
   const queryClient = useQueryClient();
   return createMutationV2({
-    mutationKey: [...QUERY_KEYS.integrations.marketplace.all, 'mutation', 'save-producer-mappings'],
+    mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-producer-mappings'),
     mutationFn: (payload: {
       connectionId: string;
       mappings: { internalProducerId: string; externalProducerId: string | null }[];
@@ -101,7 +101,7 @@ export function useSaveProducerMappingsMutation() {
 export function useFetchExternalTagsMutation() {
   const queryClient = useQueryClient();
   return createMutationV2({
-    mutationKey: [...QUERY_KEYS.integrations.marketplace.all, 'mutation', 'fetch-tags'],
+    mutationKey: QUERY_KEYS.integrations.marketplace.mutation('fetch-tags'),
     mutationFn: (payload: { connectionId: string }) =>
       api.post<{ fetched: number; message: string }>(
         '/api/marketplace/tags/fetch',
@@ -123,7 +123,7 @@ export function useFetchExternalTagsMutation() {
 export function useSaveTagMappingsMutation() {
   const queryClient = useQueryClient();
   return createMutationV2({
-    mutationKey: [...QUERY_KEYS.integrations.marketplace.all, 'mutation', 'save-tag-mappings'],
+    mutationKey: QUERY_KEYS.integrations.marketplace.mutation('save-tag-mappings'),
     mutationFn: (payload: {
       connectionId: string;
       mappings: { internalTagId: string; externalTagId: string | null }[];

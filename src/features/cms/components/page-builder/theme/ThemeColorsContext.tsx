@@ -1,12 +1,13 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
 import React, { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/features/cms/types/theme-settings';
+import { createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { AgentTeachingAgentRecord } from '@/shared/types/domain/agent-teaching';
 import type { ChatMessage } from '@/shared/types/domain/chatbot';
@@ -283,7 +284,8 @@ ${schemeContext}`;
     }
   }, []);
 
-  const generateSchemeMutation = useMutation({
+  const generateSchemeMutation = createMutationV2({
+    mutationKey: QUERY_KEYS.cms.mutation('page-builder.generate-scheme-ai'),
     mutationFn: async (payload: {
       provider: 'model' | 'agent';
       modelId: string;
@@ -356,6 +358,13 @@ ${schemeContext}`;
 
       schemeAiAbortRef.current = null;
       return accumulated;
+    },
+    meta: {
+      source: 'cms.page-builder.theme-colors.generate-scheme-ai',
+      operation: 'action',
+      resource: 'cms.page-builder.ai.theme-colors',
+      domain: 'global',
+      tags: ['cms', 'page-builder', 'theme', 'ai'],
     },
   });
   const schemeAiLoading = generateSchemeMutation.isPending;

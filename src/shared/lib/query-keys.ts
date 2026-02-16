@@ -63,6 +63,8 @@ export const QUERY_KEYS = {
   },
   settings: {
     all: ['settings'] as const,
+    mutations: () => [...QUERY_KEYS.settings.all, 'mutation'] as const,
+    mutation: (name: string) => [...QUERY_KEYS.settings.mutations(), name] as const,
     scope: (scope: string) => [...QUERY_KEYS.settings.all, scope] as const,
     composed: () => [...QUERY_KEYS.settings.all, 'composed'] as const,
   },
@@ -82,6 +84,8 @@ export const QUERY_KEYS = {
   },
   cms: {
     all: ['cms'] as const,
+    mutations: () => [...QUERY_KEYS.cms.all, 'mutation'] as const,
+    mutation: (name: string) => [...QUERY_KEYS.cms.mutations(), name] as const,
     pages: {
       all: ['cms', 'pages'] as const,
       lists: () => [...QUERY_KEYS.cms.pages.all, 'list'] as const,
@@ -143,6 +147,8 @@ export const QUERY_KEYS = {
     marketplace: {
       all: ['marketplace'] as const,
       lists: () => [...QUERY_KEYS.integrations.marketplace.all, 'list'] as const,
+      mutations: () => [...QUERY_KEYS.integrations.marketplace.all, 'mutation'] as const,
+      mutation: (name: string) => [...QUERY_KEYS.integrations.marketplace.mutations(), name] as const,
       categories: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.lists(), 'categories', connectionId] as const,
       mappings: (connectionId: string, catalogId?: string | null) => [...QUERY_KEYS.integrations.marketplace.lists(), 'mappings', connectionId, catalogId ?? 'all'] as const,
       producers: (connectionId: string) => [...QUERY_KEYS.integrations.marketplace.lists(), 'producers', connectionId] as const,
@@ -171,6 +177,8 @@ export const QUERY_KEYS = {
     chatbot: {
       all: ['ai', 'chatbot'] as const,
       lists: () => [...QUERY_KEYS.ai.chatbot.all, 'list'] as const,
+      mutations: () => [...QUERY_KEYS.ai.chatbot.all, 'mutation'] as const,
+      mutation: (name: string) => [...QUERY_KEYS.ai.chatbot.mutations(), name] as const,
       sessions: () => [...QUERY_KEYS.ai.chatbot.lists(), 'sessions'] as const,
       sessionIds: (query?: string) => [...QUERY_KEYS.ai.chatbot.sessions(), 'ids', query ?? 'all'] as const,
       details: () => [...QUERY_KEYS.ai.chatbot.all, 'detail'] as const,
@@ -187,6 +195,8 @@ export const QUERY_KEYS = {
     aiPaths: {
       all: ['ai', 'ai-paths'] as const,
       lists: () => [...QUERY_KEYS.ai.aiPaths.all, 'list'] as const,
+      mutations: () => [...QUERY_KEYS.ai.aiPaths.all, 'mutation'] as const,
+      mutation: (name: string) => [...QUERY_KEYS.ai.aiPaths.mutations(), name] as const,
       settings: () => [...QUERY_KEYS.ai.aiPaths.all, 'settings'] as const,
       triggerButtons: () => [...QUERY_KEYS.ai.aiPaths.all, 'trigger-buttons'] as const,
       runs: (filters?: unknown) => [...QUERY_KEYS.ai.aiPaths.lists(), 'runs', filters ? { filters } : 'all'] as const,
@@ -216,9 +226,13 @@ export const QUERY_KEYS = {
   },
   userPreferences: {
     all: ['user-preferences'] as const,
+    mutations: () => [...QUERY_KEYS.userPreferences.all, 'mutation'] as const,
+    mutation: (name: string) => [...QUERY_KEYS.userPreferences.mutations(), name] as const,
   },
   auth: {
     all: ['auth'] as const,
+    mutations: () => [...QUERY_KEYS.auth.all, 'mutation'] as const,
+    mutation: (name: string) => [...QUERY_KEYS.auth.mutations(), name] as const,
     user: () => [...QUERY_KEYS.auth.all, 'user'] as const,
     session: () => [...QUERY_KEYS.auth.all, 'session'] as const,
     users: {
@@ -316,6 +330,8 @@ export const QUERY_KEYS = {
   imageStudio: {
     all: ['image-studio'] as const,
     lists: () => [...QUERY_KEYS.imageStudio.all, 'list'] as const,
+    mutations: () => [...QUERY_KEYS.imageStudio.all, 'mutation'] as const,
+    mutation: (name: string) => [...QUERY_KEYS.imageStudio.mutations(), name] as const,
     projects: () => [...QUERY_KEYS.imageStudio.lists(), 'projects'] as const,
     slots: (projectId: string) => [...QUERY_KEYS.imageStudio.lists(), 'slots', projectId] as const,
     models: () => [...QUERY_KEYS.imageStudio.all, 'models'] as const,
@@ -335,6 +351,8 @@ export const QUERY_KEYS = {
   agentPersonas: {
     all: ['agent-personas'] as const,
     lists: () => [...QUERY_KEYS.agentPersonas.all, 'list'] as const,
+    mutations: () => [...QUERY_KEYS.agentPersonas.all, 'mutation'] as const,
+    mutation: (name: string) => [...QUERY_KEYS.agentPersonas.mutations(), name] as const,
   },
   brain: {
     all: ['brain'] as const,
@@ -365,6 +383,11 @@ export const QUERY_KEYS = {
     all: ['files'] as const,
     lists: () => [...QUERY_KEYS.files.all, 'list'] as const,
     list: (params: string) => [...QUERY_KEYS.files.lists(), params] as const,
+  },
+  resources: {
+    all: ['resources'] as const,
+    mutations: (resource: string) => [...QUERY_KEYS.resources.all, resource, 'mutation'] as const,
+    mutation: (resource: string, action: string) => [...QUERY_KEYS.resources.mutations(resource), action] as const,
   },
   navigation: {
     all: ['navigation'] as const,

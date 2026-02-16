@@ -1,12 +1,12 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { Link2, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { NoteWithRelations, RelatedNote } from '@/shared/types/domain/notes';
 import { Button, Input, FormSection } from '@/shared/ui';
@@ -15,12 +15,22 @@ type NotesLookupResult = RelatedNote[];
 
 function useNotesSearch(query: string): { notes: NoteWithRelations[]; loading: boolean } {
   const q = query.trim();
-  const res = useQuery<NoteWithRelations[]>({
+  const res = createListQueryV2<NoteWithRelations[], NoteWithRelations[]>({
     queryKey: QUERY_KEYS.notes.search(q),
     queryFn: () => api.get<NoteWithRelations[]>('/api/notes', {
       params: { truncateContent: 'true', searchScope: 'title', search: q }
     }),
     enabled: q.length >= 2,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'products.form.note-link.search',
+      operation: 'list',
+      resource: 'notes.search',
+      domain: 'global',
+      tags: ['products', 'notes', 'search'],
+    },
   });
 
   return { notes: res.data ?? [], loading: res.isLoading };
@@ -28,12 +38,22 @@ function useNotesSearch(query: string): { notes: NoteWithRelations[]; loading: b
 
 function useNotesLookup(noteIds: string[]): { notes: NotesLookupResult; loading: boolean } {
   const ids = noteIds.filter(Boolean);
-  const res = useQuery<NotesLookupResult>({
+  const res = createListQueryV2<NotesLookupResult, NotesLookupResult>({
     queryKey: QUERY_KEYS.notes.lookup(ids),
     queryFn: () => api.get<NotesLookupResult>('/api/notes/lookup', {
       params: { ids: ids.join(',') }
     }),
     enabled: ids.length > 0,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'products.form.note-link.lookup',
+      operation: 'list',
+      resource: 'notes.lookup',
+      domain: 'global',
+      tags: ['products', 'notes', 'lookup'],
+    },
   });
 
   return { notes: res.data ?? [], loading: res.isLoading };

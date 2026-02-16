@@ -1,9 +1,10 @@
 'use client';
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData } from '@tanstack/react-query';
 import React from 'react';
 
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Button, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui';
 
@@ -80,7 +81,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     formatAs: 'json' | 'text';
   };
 
-  const schemaQuery = useQuery({
+  const schemaQuery = createListQueryV2<SchemaData, SchemaData>({
     queryKey: QUERY_KEYS.system.databases.schema({ provider: schemaConfig.provider ?? 'auto' }),
     queryFn: async (): Promise<SchemaData> => {
       const result = await dbApi.schema({ provider: schemaConfig.provider });
@@ -90,9 +91,22 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
       return result.data as SchemaData;
     },
     enabled: selectedNode.type === 'db_schema',
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.node-config.db-schema.schema',
+      operation: 'list',
+      resource: 'databases.schema',
+      domain: 'global',
+      tags: ['ai-paths', 'node-config', 'db-schema'],
+    },
   });
 
-  const browseQueryResult = useQuery({
+  const browseQueryResult = createListQueryV2<
+    { documents: Record<string, unknown>[]; total: number },
+    { documents: Record<string, unknown>[]; total: number }
+  >({
     queryKey: QUERY_KEYS.system.databases.preview({
       provider: browseProvider,
       collection: browseCollection,
@@ -119,6 +133,16 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
     },
     enabled: Boolean(browseCollection),
     placeholderData: keepPreviousData,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'ai.ai-paths.node-config.db-schema.preview',
+      operation: 'list',
+      resource: 'databases.preview',
+      domain: 'global',
+      tags: ['ai-paths', 'node-config', 'db-schema'],
+    },
   });
 
   const fetchedDbSchema = schemaQuery.data ?? null;

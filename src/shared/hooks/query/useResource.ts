@@ -1,6 +1,9 @@
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { ListQuery, MutationResult } from '@/shared/types/query-result-types';
 
 /**
  * A generic hook to handle standard CRUD operations for a resource
@@ -10,29 +13,48 @@ export function useResource<T extends { id: string }>(
   resourcePath: string,
   queryKey: readonly unknown[]
 ): {
-  list: UseQueryResult<T[], Error>;
-  create: UseMutationResult<T, Error, Partial<T>>;
-  update: UseMutationResult<T, Error, { id: string } & Partial<T>>;
-  remove: UseMutationResult<void, Error, string>;
+  list: ListQuery<T, T[]>;
+  create: MutationResult<T, Partial<T>>;
+  update: MutationResult<T, { id: string } & Partial<T>>;
+  remove: MutationResult<void, string>;
 } {
   const queryClient = useQueryClient();
+  const normalizedResourcePath = resourcePath.replace(/^\/+|\/+$/g, '') || 'resource';
+  const resourceTag = normalizedResourcePath.replaceAll('/', '.');
 
   // List all items
-  const list = useQuery({
+  const list = createListQueryV2<T, T[]>({
     queryKey,
     queryFn: () => api.get<T[]>(resourcePath),
+    staleTime: 0,
+    meta: {
+      source: 'shared.hooks.query.useResource.list',
+      operation: 'list',
+      resource: normalizedResourcePath,
+      domain: 'global',
+      tags: ['resource', resourceTag, 'list'],
+    },
   });
 
   // Create a new item
-  const create = useMutation({
+  const create = createMutationV2<T, Partial<T>>({
+    mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'create'),
     mutationFn: (data: Partial<T>) => api.post<T>(resourcePath, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
     },
+    meta: {
+      source: 'shared.hooks.query.useResource.create',
+      operation: 'create',
+      resource: normalizedResourcePath,
+      domain: 'global',
+      tags: ['resource', resourceTag, 'create'],
+    },
   });
 
   // Update an existing item
-  const update = useMutation({
+  const update = createMutationV2<T, { id: string } & Partial<T>>({
+    mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'update'),
     mutationFn: ({ id, ...data }: { id: string } & Partial<T>) =>
       api.patch<T>(`${resourcePath}/${id}`, data),
     onSuccess: (updated) => {
@@ -43,16 +65,31 @@ export function useResource<T extends { id: string }>(
       // Also invalidate to be sure
       void queryClient.invalidateQueries({ queryKey });
     },
+    meta: {
+      source: 'shared.hooks.query.useResource.update',
+      operation: 'update',
+      resource: normalizedResourcePath,
+      domain: 'global',
+      tags: ['resource', resourceTag, 'update'],
+    },
   });
 
   // Delete an item
-  const remove = useMutation({
+  const remove = createMutationV2<void, string>({
+    mutationKey: QUERY_KEYS.resources.mutation(normalizedResourcePath, 'delete'),
     mutationFn: (id: string) => api.delete<void>(`${resourcePath}/${id}`),
     onSuccess: (_, id) => {
       queryClient.setQueryData(queryKey, (old: T[] | undefined) =>
         old?.filter((item) => item.id !== id)
       );
       void queryClient.invalidateQueries({ queryKey });
+    },
+    meta: {
+      source: 'shared.hooks.query.useResource.delete',
+      operation: 'delete',
+      resource: normalizedResourcePath,
+      domain: 'global',
+      tags: ['resource', resourceTag, 'delete'],
     },
   });
 

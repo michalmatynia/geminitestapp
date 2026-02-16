@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -20,6 +19,7 @@ import {
   type ParamSpec,
 } from '@/features/prompt-engine/prompt-params';
 import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { Button, Input, Label, AppModal, Tabs, TabsList, TabsTrigger, TabsContent, Textarea, useToast } from '@/shared/ui';
@@ -503,7 +503,7 @@ export function StudioModals(): React.JSX.Element {
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
-  const linkedRunsQuery = useQuery<LinkedGeneratedRunsResponse>({
+  const linkedRunsQuery = createListQueryV2<LinkedGeneratedRunsResponse, LinkedGeneratedRunsResponse>({
     queryKey: studioKeys.runs({
       projectId: projectId ?? null,
       sourceSlotId: selectedSlot?.id ?? null,
@@ -527,6 +527,13 @@ export function StudioModals(): React.JSX.Element {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    meta: {
+      source: 'image-studio.modals.linked-runs',
+      operation: 'list',
+      resource: 'image-studio.runs',
+      domain: 'image_studio',
+      tags: ['image-studio', 'runs', 'linked-variants'],
+    },
   });
 
   const linkedGeneratedVariants = useMemo((): LinkedGeneratedVariant[] => {

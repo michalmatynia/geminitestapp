@@ -1,13 +1,6 @@
- 
 'use client';
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  type UseQueryResult,
-  type UseMutationResult,
-} from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   fetchSettingsCached,
@@ -16,9 +9,15 @@ import {
   type SettingsScope,
 } from '@/shared/api/settings-client';
 import { api } from '@/shared/lib/api-client';
+import {
+  createListQueryV2,
+  createMutationV2,
+  createSingleQueryV2,
+} from '@/shared/lib/query-factories-v2';
 import { invalidateAllSettings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SystemSetting } from '@/shared/types/domain/settings';
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/types/query-result-types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 export type { SystemSetting };
@@ -26,39 +25,55 @@ export type { SystemSetting };
 const selectSettingsMap = (data: SystemSetting[]): Map<string, string> =>
   new Map(data.map((item) => [item.key, item.value]));
 
-export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean }): UseQueryResult<SystemSetting[], Error> {
+const fetchSettingsWithFallback = async (scope: SettingsScope, source: string): Promise<SystemSetting[]> => {
+  try {
+    return (await fetchSettingsCached({ scope }));
+  } catch (error) {
+    logClientError(error instanceof Error ? error : new Error(String(error)), {
+      context: { source, action: 'fetchSettings', scope, level: 'warn' },
+    });
+    return [];
+  }
+};
+
+const fetchLiteSettingsWithFallback = async (): Promise<SystemSetting[]> => {
+  try {
+    return (await fetchLiteSettingsCached());
+  } catch (error) {
+    logClientError(error instanceof Error ? error : new Error(String(error)), {
+      context: { source: 'useLiteSettingsMap', action: 'fetchLiteSettings', level: 'warn' },
+    });
+    return [];
+  }
+};
+
+export function useSettings(options?: { scope?: SettingsScope; enabled?: boolean }): ListQuery<SystemSetting, SystemSetting[]> {
   const scope = options?.scope ?? 'light';
-  return useQuery({
+  return createListQueryV2<SystemSetting, SystemSetting[]>({
     queryKey: QUERY_KEYS.settings.scope(scope),
-    queryFn: async (): Promise<SystemSetting[]> => {
-      try {
-        return (await fetchSettingsCached({ scope }));
-      } catch (error) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useSettings', action: 'fetchSettings', scope, level: 'warn' } });
-        return [];
-      }
-    },
+    queryFn: async (): Promise<SystemSetting[]> => await fetchSettingsWithFallback(scope, 'useSettings'),
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,
+    meta: {
+      source: 'shared.hooks.useSettings',
+      operation: 'list',
+      resource: 'settings',
+      domain: 'global',
+      tags: ['settings', scope],
+    },
   });
 }
 
-export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: boolean }): UseQueryResult<Map<string, string>, Error> {
+export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: boolean }): SingleQuery<Map<string, string>> {
   const scope = options?.scope ?? 'light';
-  return useQuery({
+  return createSingleQueryV2<SystemSetting[], Map<string, string>>({
+    id: `settings-map:${scope}`,
     queryKey: QUERY_KEYS.settings.scope(scope),
-    queryFn: async (): Promise<SystemSetting[]> => {
-      try {
-        return (await fetchSettingsCached({ scope }));
-      } catch (error) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useSettings', action: 'fetchSettings', scope, level: 'warn' } });
-        return [];
-      }
-    },
+    queryFn: async (): Promise<SystemSetting[]> => await fetchSettingsWithFallback(scope, 'useSettingsMap'),
     select: selectSettingsMap,
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
@@ -66,20 +81,21 @@ export function useSettingsMap(options?: { scope?: SettingsScope; enabled?: bool
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,
+    meta: {
+      source: 'shared.hooks.useSettingsMap',
+      operation: 'list',
+      resource: 'settings',
+      domain: 'global',
+      tags: ['settings', 'map', scope],
+    },
   });
 }
 
-export function useLiteSettingsMap(options?: { enabled?: boolean }): UseQueryResult<Map<string, string>, Error> {
-  return useQuery({
+export function useLiteSettingsMap(options?: { enabled?: boolean }): SingleQuery<Map<string, string>> {
+  return createSingleQueryV2<SystemSetting[], Map<string, string>>({
+    id: 'settings-map:lite',
     queryKey: QUERY_KEYS.settings.scope('lite'),
-    queryFn: async (): Promise<SystemSetting[]> => {
-      try {
-        return (await fetchLiteSettingsCached());
-      } catch (error) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useLiteSettingsMap', action: 'fetchLiteSettings', level: 'warn' } });
-        return [];
-      }
-    },
+    queryFn: fetchLiteSettingsWithFallback,
     select: selectSettingsMap,
     enabled: options?.enabled ?? true,
     staleTime: 1000 * 60 * 5,
@@ -87,17 +103,21 @@ export function useLiteSettingsMap(options?: { enabled?: boolean }): UseQueryRes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,
+    meta: {
+      source: 'shared.hooks.useLiteSettingsMap',
+      operation: 'list',
+      resource: 'settings',
+      domain: 'global',
+      tags: ['settings', 'map', 'lite'],
+    },
   });
 }
 
-export function useUpdateSetting(): UseMutationResult<
-  SystemSetting,
-  Error,
-  { key: string; value: string }
-  > {
+export function useUpdateSetting(): MutationResult<SystemSetting, { key: string; value: string }> {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createMutationV2<SystemSetting, { key: string; value: string }>({
+    mutationKey: QUERY_KEYS.settings.mutation('update-setting'),
     mutationFn: async ({
       key,
       value,
@@ -112,17 +132,21 @@ export function useUpdateSetting(): UseMutationResult<
     onSuccess: (): void => {
       void invalidateAllSettings(queryClient);
     },
+    meta: {
+      source: 'shared.hooks.useUpdateSetting',
+      operation: 'update',
+      resource: 'settings',
+      domain: 'global',
+      tags: ['settings', 'update'],
+    },
   });
 }
 
-export function useUpdateSettingsBulk(): UseMutationResult<
-  SystemSetting[],
-  Error,
-  Array<{ key: string; value: string }>
-  > {
+export function useUpdateSettingsBulk(): MutationResult<SystemSetting[], Array<{ key: string; value: string }>> {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return createMutationV2<SystemSetting[], Array<{ key: string; value: string }>>({
+    mutationKey: QUERY_KEYS.settings.mutation('update-settings-bulk'),
     mutationFn: async (
       payloads: Array<{ key: string; value: string }>,
     ): Promise<SystemSetting[]> => {
@@ -141,6 +165,13 @@ export function useUpdateSettingsBulk(): UseMutationResult<
     },
     onSuccess: (): void => {
       void invalidateAllSettings(queryClient);
+    },
+    meta: {
+      source: 'shared.hooks.useUpdateSettingsBulk',
+      operation: 'update',
+      resource: 'settings',
+      domain: 'global',
+      tags: ['settings', 'bulk-update'],
     },
   });
 }

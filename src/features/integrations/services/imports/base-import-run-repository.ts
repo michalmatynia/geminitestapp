@@ -7,8 +7,10 @@ import { ObjectId } from 'mongodb';
 import type {
   BaseImportItemRecord,
   BaseImportItemStatus,
+  BaseImportParameterImportSummary,
   BaseImportRunDetailResponse,
   BaseImportErrorClass,
+  BaseImportRunParameterImportSummary,
   BaseImportRunParams,
   BaseImportRunRecord,
   BaseImportRunStats,
@@ -71,6 +73,104 @@ const parseJson = <T>(value: string | null | undefined): T | null => {
     return null;
   }
 };
+
+const toNonNegativeInt = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.max(0, Math.floor(value));
+  }
+  if (typeof value === 'string') {
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isFinite(parsed)) return Math.max(0, parsed);
+  }
+  return 0;
+};
+
+const createEmptyRunParameterImportSummary =
+  (): BaseImportRunParameterImportSummary => ({
+    itemsApplied: 0,
+    extracted: 0,
+    resolved: 0,
+    created: 0,
+    written: 0,
+  });
+
+const normalizeParameterImportSummary = (
+  value: unknown
+): BaseImportParameterImportSummary | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  return {
+    extracted: toNonNegativeInt(record['extracted']),
+    resolved: toNonNegativeInt(record['resolved']),
+    created: toNonNegativeInt(record['created']),
+    written: toNonNegativeInt(record['written']),
+  };
+};
+
+const normalizeRunParameterImportSummary = (
+  value: unknown
+): BaseImportRunParameterImportSummary => {
+  const summary = normalizeParameterImportSummary(value);
+  if (!summary || !value || typeof value !== 'object' || Array.isArray(value)) {
+    return createEmptyRunParameterImportSummary();
+  }
+  const record = value as Record<string, unknown>;
+  return {
+    itemsApplied: toNonNegativeInt(record['itemsApplied']),
+    extracted: summary.extracted,
+    resolved: summary.resolved,
+    created: summary.created,
+    written: summary.written,
+  };
+};
+
+const initialStats = (total = 0): BaseImportRunStats => ({
+  total,
+  pending: total,
+  processing: 0,
+  imported: 0,
+  updated: 0,
+  skipped: 0,
+  failed: 0,
+  parameterImportSummary: createEmptyRunParameterImportSummary(),
+});
+
+const normalizeRunStats = (value: unknown): BaseImportRunStats => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return initialStats(0);
+  }
+  const record = value as Record<string, unknown>;
+  const total = toNonNegativeInt(record['total']);
+  const processing = toNonNegativeInt(record['processing']);
+  const imported = toNonNegativeInt(record['imported']);
+  const updated = toNonNegativeInt(record['updated']);
+  const skipped = toNonNegativeInt(record['skipped']);
+  const failed = toNonNegativeInt(record['failed']);
+  const pendingRaw = toNonNegativeInt(record['pending']);
+  const pendingMax = Math.max(
+    0,
+    total - processing - imported - updated - skipped - failed
+  );
+  return {
+    total,
+    pending: Math.min(pendingRaw, pendingMax),
+    processing,
+    imported,
+    updated,
+    skipped,
+    failed,
+    parameterImportSummary: normalizeRunParameterImportSummary(
+      record['parameterImportSummary']
+    ),
+  };
+};
+
+const normalizeRunRecord = (run: BaseImportRunRecord): BaseImportRunRecord => ({
+  ...run,
+  stats: normalizeRunStats(run.stats),
+});
 
 const readSettingValue = async (key: string): Promise<string | null> => {
   const provider = await resolveProvider();
@@ -164,16 +264,6 @@ const listSettingValuesByPrefix = async (
     .filter((value: string) => value.trim().length > 0);
 };
 
-const initialStats = (total = 0): BaseImportRunStats => ({
-  total,
-  pending: total,
-  processing: 0,
-  imported: 0,
-  updated: 0,
-  skipped: 0,
-  failed: 0,
-});
-
 export const createBaseImportRun = async (input: {
   params: BaseImportRunParams;
   preflight: BaseImportPreflight;
@@ -210,14 +300,15 @@ export const createBaseImportRun = async (input: {
     summaryMessage: input.summaryMessage ?? null,
   };
   await writeSettingValue(runKey(record.id), JSON.stringify(record));
-  return record;
+  return normalizeRunRecord(record);
 };
 
 export const getBaseImportRun = async (
   runId: string
 ): Promise<BaseImportRunRecord | null> => {
   const raw = await readSettingValue(runKey(runId));
-  return parseJson<BaseImportRunRecord>(raw);
+  const parsed = parseJson<BaseImportRunRecord>(raw);
+  return parsed ? normalizeRunRecord(parsed) : null;
 };
 
 export const updateBaseImportRun = async (
@@ -234,8 +325,9 @@ export const updateBaseImportRun = async (
     id: existing.id,
     updatedAt: nowIso(),
   };
-  await writeSettingValue(runKey(runId), JSON.stringify(merged));
-  return merged;
+  const normalized = normalizeRunRecord(merged);
+  await writeSettingValue(runKey(runId), JSON.stringify(normalized));
+  return normalized;
 };
 
 export const listBaseImportRuns = async (
@@ -247,7 +339,8 @@ export const listBaseImportRuns = async (
     .filter(
       (record: BaseImportRunRecord | null): record is BaseImportRunRecord =>
         Boolean(record)
-    );
+    )
+    .map((record: BaseImportRunRecord) => normalizeRunRecord(record));
 };
 
 export const putBaseImportRunItem = async (
@@ -259,6 +352,9 @@ export const putBaseImportRunItem = async (
     retryable: item.retryable ?? null,
     nextRetryAt: item.nextRetryAt ?? null,
     lastErrorAt: item.lastErrorAt ?? null,
+    parameterImportSummary: normalizeParameterImportSummary(
+      item.parameterImportSummary
+    ),
     updatedAt: nowIso(),
   };
   await writeSettingValue(
@@ -287,6 +383,10 @@ export const updateBaseImportRunItem = async (
     retryable: patch.retryable ?? existing.retryable ?? null,
     nextRetryAt: patch.nextRetryAt ?? existing.nextRetryAt ?? null,
     lastErrorAt: patch.lastErrorAt ?? existing.lastErrorAt ?? null,
+    parameterImportSummary:
+      patch.parameterImportSummary !== undefined
+        ? normalizeParameterImportSummary(patch.parameterImportSummary)
+        : normalizeParameterImportSummary(existing.parameterImportSummary),
     updatedAt: nowIso(),
   };
   await writeSettingValue(itemKey(runId, itemId), JSON.stringify(merged));
@@ -298,7 +398,18 @@ export const getBaseImportRunItem = async (
   itemId: string
 ): Promise<BaseImportItemRecord | null> => {
   const raw = await readSettingValue(itemKey(runId, itemId));
-  return parseJson<BaseImportItemRecord>(raw);
+  const parsed = parseJson<BaseImportItemRecord>(raw);
+  if (!parsed) return null;
+  return {
+    ...parsed,
+    errorClass: normalizeItemErrorClass(parsed),
+    retryable: typeof parsed.retryable === 'boolean' ? parsed.retryable : null,
+    nextRetryAt: parsed.nextRetryAt ?? null,
+    lastErrorAt: parsed.lastErrorAt ?? null,
+    parameterImportSummary: normalizeParameterImportSummary(
+      parsed.parameterImportSummary
+    ),
+  };
 };
 
 type ListBaseImportRunItemsOptions = {
@@ -370,6 +481,9 @@ export const listBaseImportRunItems = async (
       retryable: typeof item.retryable === 'boolean' ? item.retryable : null,
       nextRetryAt: item.nextRetryAt ?? null,
       lastErrorAt: item.lastErrorAt ?? null,
+      parameterImportSummary: normalizeParameterImportSummary(
+        item.parameterImportSummary
+      ),
     }))
     .sort((a: BaseImportItemRecord, b: BaseImportItemRecord) => a.itemId.localeCompare(b.itemId));
   return filterItems(items, options);
@@ -433,17 +547,28 @@ export const computeBaseImportRunStats = (
   items: BaseImportItemRecord[]
 ): BaseImportRunStats => {
   const stats: BaseImportRunStats = initialStats(items.length);
+  const parameterImportSummary =
+    stats.parameterImportSummary ?? createEmptyRunParameterImportSummary();
   for (const item of items) {
     if (item.status === 'processing') stats.processing += 1;
     if (item.status === 'imported') stats.imported += 1;
     if (item.status === 'updated') stats.updated += 1;
     if (item.status === 'skipped') stats.skipped += 1;
     if (item.status === 'failed') stats.failed += 1;
+    const itemSummary = normalizeParameterImportSummary(item.parameterImportSummary);
+    if (itemSummary) {
+      parameterImportSummary.itemsApplied += 1;
+      parameterImportSummary.extracted += itemSummary.extracted;
+      parameterImportSummary.resolved += itemSummary.resolved;
+      parameterImportSummary.created += itemSummary.created;
+      parameterImportSummary.written += itemSummary.written;
+    }
   }
   stats.pending = Math.max(
     0,
     stats.total - stats.processing - stats.imported - stats.updated - stats.skipped - stats.failed
   );
+  stats.parameterImportSummary = parameterImportSummary;
   return stats;
 };
 

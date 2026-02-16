@@ -1,113 +1,17 @@
 export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-
-import {
-  deleteAiPathsSettings,
-  listAiPathsSettings,
-  upsertAiPathsSetting,
-  upsertAiPathsSettingsBulk,
-} from '@/features/ai/ai-paths/server/settings-store';
-import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-const settingPayloadSchema = z.object({
-  key: z.string().trim().min(1).refine((value) => value.startsWith('ai_paths_'), {
-    message: 'AI Paths setting keys must start with "ai_paths_".',
-  }),
-  value: z.string(),
+import { DELETE_handler, GET_handler, POST_handler } from './handler';
+
+export const GET = apiHandler(GET_handler, {
+  source: 'ai-paths.settings.GET',
 });
 
-const settingsBulkPayloadSchema = z.object({
-  items: z.array(settingPayloadSchema).min(1),
+export const POST = apiHandler(POST_handler, {
+  source: 'ai-paths.settings.POST',
 });
 
-const deletePayloadSchema = z
-  .object({
-    key: z.string().trim().min(1).optional(),
-    keys: z.array(z.string().trim().min(1)).min(1).optional(),
-  })
-  .refine(
-    (value) => Boolean(value.key) || Boolean(value.keys && value.keys.length > 0),
-    { message: 'Provide "key" or non-empty "keys".' }
-  );
-
-async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const settings = await listAiPathsSettings();
-  return NextResponse.json(settings, {
-    headers: {
-      'Cache-Control': 'private, max-age=10, stale-while-revalidate=30',
-    },
-  });
-}
-
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const rawBody = await req.text();
-  let body: unknown = {};
-  if (rawBody) {
-    try {
-      body = JSON.parse(rawBody);
-    } catch {
-      throw badRequestError('Invalid JSON body.');
-    }
-  }
-
-  const parsedBulk = settingsBulkPayloadSchema.safeParse(body);
-  if (parsedBulk.success) {
-    const updated = await upsertAiPathsSettingsBulk(parsedBulk.data.items);
-    return NextResponse.json(updated);
-  }
-
-  const parsedSingle = settingPayloadSchema.safeParse(body);
-  if (parsedSingle.success) {
-    const updated = await upsertAiPathsSetting(
-      parsedSingle.data.key,
-      parsedSingle.data.value
-    );
-    return NextResponse.json(updated);
-  }
-  throw badRequestError('Invalid AI Paths settings payload.');
-}
-
-async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const rawBody = await req.text();
-  let body: unknown = {};
-  if (rawBody) {
-    try {
-      body = JSON.parse(rawBody);
-    } catch {
-      throw badRequestError('Invalid JSON body.');
-    }
-  }
-
-  const parsed = deletePayloadSchema.safeParse(body);
-  if (!parsed.success) {
-    throw badRequestError('Invalid AI Paths settings delete payload.');
-  }
-  const keys = [
-    ...(parsed.data.key ? [parsed.data.key] : []),
-    ...(parsed.data.keys ?? []),
-  ];
-  const deletedCount = await deleteAiPathsSettings(keys);
-  return NextResponse.json({ deletedCount });
-}
-
-export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
-    GET_handler(req, ctx),
-  { source: 'ai-paths.settings.GET' }
-);
-
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
-    POST_handler(req, ctx),
-  { source: 'ai-paths.settings.POST' }
-);
-
-export const DELETE = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> =>
-    DELETE_handler(req, ctx),
-  { source: 'ai-paths.settings.DELETE' }
-);
+export const DELETE = apiHandler(DELETE_handler, {
+  source: 'ai-paths.settings.DELETE',
+});

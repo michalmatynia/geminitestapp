@@ -5,6 +5,7 @@ import type {
   BaseImportErrorClass,
   BaseImportErrorCode,
   BaseImportItemRecord,
+  BaseImportParameterImportSummary,
   BaseImportItemStatus,
   BaseImportMode,
   BaseImportPreflightIssue,
@@ -80,6 +81,7 @@ export type ProcessItemResult = {
   nextRetryAt?: string | null;
   lastErrorAt?: string | null;
   payloadSnapshot?: ProductCreateInput | null;
+  parameterImportSummary?: BaseImportParameterImportSummary | null;
 };
 
 export type NormalizedMappedProduct = ProductCreateInput & {

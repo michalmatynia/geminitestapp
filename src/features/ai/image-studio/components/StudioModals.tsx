@@ -55,7 +55,6 @@ export function StudioModals(): React.JSX.Element {
         isOpen={state.generationPreviewModalOpen}
         onClose={() => state.setGenerationPreviewModalOpen(false)}
         selectedGenerationPreview={state.selectedGenerationPreview}
-        generationModalPreviewNaturalSize={state.generationModalPreviewNaturalSize}
         selectedGenerationModalDimensions={state.selectedGenerationModalDimensions}
         slotUpdateBusy={state.slotUpdateBusy}
         handleApplyLinkedVariantToCard={state.handleApplyLinkedVariantToCard}

@@ -2,13 +2,14 @@ import type {
   BaseImportRunDetailResponse,
   BaseImportStartResponse,
 } from '@/features/integrations/types/base-import-runs';
-import type { 
+import type {
   ImageBase64Mode, 
   ImageTransformOptions, 
   ImageRetryPreset,
   BaseInventory,
   ImportExportTemplate as DomainImportExportTemplate,
-  ImportExportTemplateMapping as DomainImportExportTemplateMapping
+  ImportExportTemplateMapping as DomainImportExportTemplateMapping,
+  ImportTemplateParameterImport as DomainImportTemplateParameterImport,
 } from '@/shared/types/domain/integrations';
 
 export type {
@@ -53,6 +54,8 @@ export type ImportRunDetail = BaseImportRunDetailResponse;
 export type TemplateMapping = DomainImportExportTemplateMapping;
 
 export type Template = DomainImportExportTemplate;
+
+export type ImportTemplateParameterImport = DomainImportTemplateParameterImport;
 
 export type ExportParameterDoc = {
   key: string;

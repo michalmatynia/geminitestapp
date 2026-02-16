@@ -7,10 +7,12 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import React from 'react';
 import { useState } from 'react';
 
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { Button } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
 
 import { Asset3DPreviewModalViewProvider, useAsset3DPreviewModalViewContext } from './context/Asset3DPreviewModalViewContext';
@@ -36,9 +38,9 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
   const modelUrl = isValidAsset ? `/api/assets3d/${asset.id}/file` : null;
 
   return (
-    <div className='flex flex-col min-h-0 h-full'>
+    <div className='flex flex-col min-h-0 h-[600px]'>
       {/* Main Content */}
-      <div className='flex flex-1 min-h-0'>
+      <div className='flex flex-1 min-h-0 relative'>
         {/* Viewer */}
         <div className={cn('flex-1 bg-black/40', showSettings ? 'lg:w-2/3' : 'w-full')}>
           {!isValidAsset ? (
@@ -69,7 +71,7 @@ function Asset3DPreviewModalContent(): React.JSX.Element {
 
         {/* Settings Panel */}
         {showSettings && (
-          <div className='w-full lg:w-1/3 border-l border-border/60 bg-card/30'>
+          <div className='w-full lg:w-1/3 border-l border-border/60 bg-card/30 absolute right-0 top-0 bottom-0 z-10 lg:static'>
             <Viewer3DSettingsPanel />
           </div>
         )}
@@ -130,19 +132,18 @@ export function Asset3DPreviewModal({
   };
 
   return (
-    <AppModal 
-      open={isOpen} 
-      onClose={onClose} 
+    <DetailModal
+      isOpen={isOpen}
+      onClose={onClose}
       title={asset.name || asset.filename}
       subtitle={formatFileSize(asset.size)}
       size='xl'
-      padding='none'
     >
       <Viewer3DProvider>
         <Asset3DPreviewModalViewProvider value={{ asset }}>
           <Asset3DPreviewModalContent />
         </Asset3DPreviewModalViewProvider>
       </Viewer3DProvider>
-    </AppModal>
+    </DetailModal>
   );
 }

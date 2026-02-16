@@ -1,22 +1,19 @@
 'use client';
 
 import { Plus } from 'lucide-react';
+import React from 'react';
 
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import {
   Button,
   Input,
-  FormModal,
   Alert,
   FormSection,
-  Checkbox,
-  Textarea,
   Tag,
-  FormField,
 } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useAsset3DForm } from '../hooks/useAsset3DForm';
-
 import type { Asset3DRecord } from '../types';
 
 interface Asset3DEditModalProps extends EntityModalProps<Asset3DRecord> {
@@ -29,6 +26,13 @@ const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+};
+
+type AssetFormState = {
+  name: string;
+  description: string;
+  category: string;
+  isPublic: boolean;
 };
 
 export function Asset3DEditModal({
@@ -60,16 +64,26 @@ export function Asset3DEditModal({
     handleSave,
   } = useAsset3DForm(asset, onSave, onClose);
 
-  return (
-    <FormModal
-      open={isOpen}
-      onClose={onClose}
-      title='Edit 3D Asset'
-      onSave={(): void => { void handleSave(); }}
-      isSaving={isSaving}
-      size='md'
-    >
-      <div className='space-y-4 max-h-[60vh] overflow-y-auto pr-1'>
+  const formValues: AssetFormState = {
+    name,
+    description,
+    category,
+    isPublic,
+  };
+
+  const handleChange = (vals: Partial<AssetFormState>) => {
+    if (vals.name !== undefined) setName(vals.name);
+    if (vals.description !== undefined) setDescription(vals.description);
+    if (vals.category !== undefined) setCategory(vals.category);
+    if (vals.isPublic !== undefined) setIsPublic(vals.isPublic);
+  };
+
+  const fields: SettingsField<AssetFormState>[] = [
+    {
+      key: 'name',
+      label: 'Metadata',
+      type: 'custom',
+      render: () => (
         <FormSection variant='subtle-compact' className='p-3 text-sm'>
           <p className='text-gray-400'>
             <span className='text-gray-500'>File:</span> <span className='text-white font-mono text-xs'>{asset.filename}</span>
@@ -78,111 +92,123 @@ export function Asset3DEditModal({
             <span className='text-gray-500'>Size:</span> {formatFileSize(asset.size)}
           </p>
         </FormSection>
-
-        <FormField label='Name'>
+      )
+    },
+    {
+      key: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Enter asset name...',
+      required: true,
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      type: 'textarea',
+      placeholder: 'Enter description...',
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      type: 'custom',
+      render: () => (
+        <div className='flex gap-2'>
           <Input
-            id='name'
-            value={name}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setName(e.target.value)}
-            placeholder='Enter asset name...'
-            className='bg-gray-800 border-gray-700 h-9'
+            id='category'
+            value={category}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
+            placeholder='Enter category...'
+            list='categories-list'
+            className='flex-1 h-9'
           />
-        </FormField>
-
-        <FormField label='Description'>
-          <Textarea
-            id='description'
-            value={description}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => setDescription(e.target.value)}
-            placeholder='Enter description...'
-            className='bg-gray-800 border-gray-700 min-h-[80px] text-sm'
-          />
-        </FormField>
-
-        <FormField label='Category'>
+          <datalist id='categories-list'>
+            {existingCategories.map((cat: string) => (
+              <option key={cat} value={cat} />
+            ))}
+          </datalist>
+        </div>
+      )
+    },
+    {
+      key: 'name', // Custom field for Tags
+      label: 'Tags',
+      type: 'custom',
+      render: () => (
+        <div className='space-y-2 mt-1'>
           <div className='flex gap-2'>
             <Input
-              id='category'
-              value={category}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setCategory(e.target.value)}
-              placeholder='Enter category...'
-              list='categories-list'
-              className='bg-gray-800 border-gray-700 flex-1 h-9'
+              value={newTag}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddTag();
+                }
+              }}
+              placeholder='Add tag...'
+              list='tags-list'
+              className='flex-1 h-9'
             />
-            <datalist id='categories-list'>
-              {existingCategories.map((cat: string) => (
-                <option key={cat} value={cat} />
-              ))}
-            </datalist>
-          </div>
-        </FormField>
-
-        <FormField label='Tags'>
-          <div className='space-y-2 mt-1'>
-            <div className='flex gap-2'>
-              <Input
-                value={newTag}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setNewTag(e.target.value)}
-                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                placeholder='Add tag...'
-                list='tags-list'
-                className='bg-gray-800 border-gray-700 flex-1 h-9'
-              />
-              <datalist id='tags-list'>
-                {existingTags
-                  .filter((t: string) => !tags.includes(t))
-                  .map((tag: string) => (
-                    <option key={tag} value={tag} />
-                  ))}
-              </datalist>
-              <Button
-                type='button'
-                variant='secondary'
-                size='icon'
-                onClick={handleAddTag}
-                className='h-9 w-9'
-              >
-                <Plus className='h-4 w-4' />
-              </Button>
-            </div>
-            {tags.length > 0 && (
-              <div className='flex flex-wrap gap-1 mt-2'>
-                {tags.map((tag: string) => (
-                  <Tag
-                    key={tag}
-                    label={tag}
-                    onRemove={() => handleRemoveTag(tag)}
-                    className='bg-gray-700 text-gray-300 border-none'
-                  />
+            <datalist id='tags-list'>
+              {existingTags
+                .filter((t: string) => !tags.includes(t))
+                .map((tag: string) => (
+                  <option key={tag} value={tag} />
                 ))}
-              </div>
-            )}
+            </datalist>
+            <Button
+              type='button'
+              variant='secondary'
+              size='icon'
+              onClick={handleAddTag}
+              className='h-9 w-9'
+            >
+              <Plus className='h-4 w-4' />
+            </Button>
           </div>
-        </FormField>
-
-        <div className='flex items-center gap-3 p-3 rounded-md border border-border/40 bg-gray-900/40'>
-          <Checkbox
-            id='is-public'
-            checked={isPublic}
-            onCheckedChange={(v: boolean | 'indeterminate'): void => setIsPublic(v === true)}
-          />
-          <label htmlFor='is-public' className='cursor-pointer flex-1'>
-            <span className='text-sm text-white font-medium'>Public visibility</span>
-            <p className='text-[11px] text-gray-500'>Make this asset accessible publicly</p>
-          </label>
+          {tags.length > 0 && (
+            <div className='flex flex-wrap gap-1 mt-2'>
+              {tags.map((tag: string) => (
+                <Tag
+                  key={tag}
+                  label={tag}
+                  onRemove={() => handleRemoveTag(tag)}
+                  className='bg-gray-700 text-gray-300 border-none'
+                />
+              ))}
+            </div>
+          )}
         </div>
+      )
+    },
+    {
+      key: 'isPublic',
+      label: 'Public visibility',
+      type: 'checkbox',
+      helperText: 'Make this asset accessible publicly',
+    }
+  ];
 
-        {error && (
-          <Alert variant='error' className='mt-2'>
+  return (
+    <>
+      <SettingsPanelBuilder
+        open={isOpen}
+        onClose={onClose}
+        title='Edit 3D Asset'
+        fields={fields}
+        values={formValues}
+        onChange={handleChange}
+        onSave={async () => handleSave()}
+        isSaving={isSaving}
+        size='md'
+      />
+      {error && (
+        <div className='fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-4'>
+          <Alert variant='error' className='shadow-2xl'>
             {error}
           </Alert>
-        )}
-      </div>
-    </FormModal>
+        </div>
+      )}
+    </>
   );
 }

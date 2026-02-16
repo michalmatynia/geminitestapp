@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-16T22:06:57.812Z
+Generated at: 2026-02-16T23:53:42.360Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -8,26 +8,26 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/ai-paths/db-action/route.ts` | 575 |
-| `src/app/api/chatbot/route.ts` | 559 |
-| `src/app/api/databases/preview/route.ts` | 550 |
-| `src/app/api/integrations/imports/base/route.ts` | 526 |
-| `src/app/api/auth/users/[id]/route.ts` | 412 |
-| `src/app/api/image-studio/projects/[projectId]/route.ts` | 409 |
-| `src/app/api/image-studio/slots/[slotId]/masks/route.ts` | 395 |
-| `src/app/api/integrations/imports/base/parameters/route.ts` | 383 |
-| `src/app/api/image-studio/projects/[projectId]/assets/import/route.ts` | 372 |
-| `src/app/api/ai-paths/runs/[runId]/stream/route.ts` | 364 |
-| `src/app/api/image-studio/prompt-extract/route.ts` | 359 |
-| `src/app/api/products/validator-patterns/[id]/route.ts` | 349 |
-| `src/app/api/price-groups/route.ts` | 318 |
-| `src/app/api/databases/schema/route.ts` | 306 |
-| `src/app/api/databases/restore/route.ts` | 297 |
-| `src/app/api/user/preferences/route.ts` | 297 |
-| `src/app/api/products/validator-patterns/route.ts` | 293 |
-| `src/app/api/countries/route.ts` | 278 |
-| `src/app/api/image-studio/projects/[projectId]/assets/route.ts` | 271 |
-| `src/app/api/languages/route.ts` | 270 |
+| `src/app/api/integrations/import-templates/[id]/route.ts` | 98 |
+| `src/app/api/settings/database/sync/route.ts` | 97 |
+| `src/app/api/image-studio/mask/ai/route.ts` | 96 |
+| `src/app/api/image-studio/slots/[slotId]/screenshot/route.ts` | 96 |
+| `src/app/api/auth/mfa/disable/route.ts` | 94 |
+| `src/app/api/cms/slugs/[id]/domains/route.ts` | 94 |
+| `src/app/api/marketplace/categories/fetch/route.ts` | 93 |
+| `src/app/api/cms/pages/route.ts` | 91 |
+| `src/app/api/products/[id]/studio/route.ts` | 91 |
+| `src/app/api/integrations/imports/base/runs/route.ts` | 90 |
+| `src/app/api/ai-paths/runtime-analytics/summary/route.ts` | 89 |
+| `src/app/api/currencies/[id]/route.ts` | 89 |
+| `src/app/api/ai-paths/trigger-buttons/[id]/route.ts` | 88 |
+| `src/app/api/integrations/export-templates/[id]/route.ts` | 88 |
+| `src/app/api/databases/backups/route.ts` | 86 |
+| `src/app/api/products/ai-jobs/enqueue/route.ts` | 86 |
+| `src/app/api/ai-paths/runs/enqueue/route.ts` | 85 |
+| `src/app/api/marketplace/mappings/route.ts` | 85 |
+| `src/app/api/notes/[id]/files/route.ts` | 85 |
+| `src/app/api/ai-paths/runs/[runId]/cancel/route.ts` | 84 |
 
 ## Top App Pages by LOC
 
@@ -56,13 +56,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 ## Recommended First Runtime Profiling Targets
 
-- `src/app/api/ai-paths/db-action/route.ts`
-- `src/app/api/chatbot/route.ts`
-- `src/app/api/databases/preview/route.ts`
-- `src/app/api/integrations/imports/base/route.ts`
-- `src/app/api/auth/users/[id]/route.ts`
-- `src/app/api/image-studio/projects/[projectId]/route.ts`
-- `src/app/api/image-studio/slots/[slotId]/masks/route.ts`
-- `src/app/api/integrations/imports/base/parameters/route.ts`
-- `src/app/api/image-studio/projects/[projectId]/assets/import/route.ts`
-- `src/app/api/ai-paths/runs/[runId]/stream/route.ts`
+- `src/app/api/integrations/import-templates/[id]/route.ts`
+- `src/app/api/settings/database/sync/route.ts`
+- `src/app/api/image-studio/mask/ai/route.ts`
+- `src/app/api/image-studio/slots/[slotId]/screenshot/route.ts`
+- `src/app/api/auth/mfa/disable/route.ts`
+- `src/app/api/cms/slugs/[id]/domains/route.ts`
+- `src/app/api/marketplace/categories/fetch/route.ts`
+- `src/app/api/cms/pages/route.ts`
+- `src/app/api/products/[id]/studio/route.ts`
+- `src/app/api/integrations/imports/base/runs/route.ts`

@@ -87,6 +87,7 @@ const base64Array = stringArray.transform((urls: string[]) =>
 const parameterValueSchema = z.object({
   parameterId: trimmedString.min(1, 'Parameter ID is required'),
   value: z.string().nullish(),
+  valuesByLanguage: z.record(z.string(), z.string()).optional(),
 });
 
 const parametersArray = z.preprocess(jsonToValue, z.array(parameterValueSchema).default([]));

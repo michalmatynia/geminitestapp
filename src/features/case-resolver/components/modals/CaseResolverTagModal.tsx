@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { FormField, FormModal, Input, SelectSimple } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { CaseResolverTag } from '../../types';
 
@@ -31,77 +31,51 @@ export function CaseResolverTagModal({
   isSaving,
   onSave,
 }: CaseResolverTagModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
+  const fields: SettingsField<TagFormData>[] = useMemo(() => [
+    {
+      key: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Tag name',
+      required: true,
+    },
+    {
+      key: 'color',
+      label: 'Color',
+      type: 'color',
+      required: true,
+    },
+    {
+      key: 'parentId',
+      label: 'Parent Tag',
+      type: 'select',
+      options: [
+        { value: '__none__', label: 'No parent (root tag)' },
+        ...parentTagOptions,
+      ],
+      placeholder: 'Select parent tag',
+    }
+  ], [parentTagOptions]);
+
+  const handleChange = (vals: Partial<TagFormData>) => {
+    setFormData(prev => {
+      const next = { ...prev, ...vals };
+      if (vals.parentId === '__none__') next.parentId = null;
+      return next;
+    });
+  };
 
   return (
-    <FormModal
+    <SettingsPanelBuilder
       open={isOpen}
       onClose={onClose}
       title={editingTag ? 'Edit Tag' : 'Create Tag'}
-      onSave={onSave}
+      fields={fields}
+      values={formData}
+      onChange={handleChange}
+      onSave={async () => onSave()}
       isSaving={isSaving}
       size='md'
-    >
-      <div className='space-y-4'>
-        <FormField label='Name'>
-          <Input
-            className='h-9'
-            value={formData.name}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setFormData((current: TagFormData) => ({
-                ...current,
-                name: event.target.value,
-              }));
-            }}
-            placeholder='Tag name'
-          />
-        </FormField>
-        <FormField label='Color'>
-          <div className='flex items-center gap-3'>
-            <Input
-              type='color'
-              className='h-10 w-20 cursor-pointer rounded border border-border bg-gray-900 p-0'
-              value={formData.color}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setFormData((current: TagFormData) => ({
-                  ...current,
-                  color: event.target.value,
-                }));
-              }}
-            />
-            <Input
-              type='text'
-              className='h-10 flex-1 font-mono'
-              value={formData.color}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setFormData((current: TagFormData) => ({
-                  ...current,
-                  color: event.target.value,
-                }));
-              }}
-              placeholder='#38bdf8'
-            />
-          </div>
-        </FormField>
-        <FormField label='Parent Tag'>
-          <SelectSimple
-            size='sm'
-            value={formData.parentId ?? '__none__'}
-            onValueChange={(value: string): void => {
-              setFormData((current: TagFormData) => ({
-                ...current,
-                parentId: value === '__none__' ? null : value,
-              }));
-            }}
-            options={[
-              { value: '__none__', label: 'No parent (root tag)' },
-              ...parentTagOptions,
-            ]}
-            placeholder='Select parent tag'
-            triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-          />
-        </FormField>
-      </div>
-    </FormModal>
+    />
   );
 }

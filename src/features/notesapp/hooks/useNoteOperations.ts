@@ -30,6 +30,7 @@ export function useNoteOperations({
   setSelectedNote,
   selectedNote,
   confirmAction,
+  promptAction,
 }: UseNoteOperationsProps): {
   handleCreateFolder: (parentId?: string | null) => Promise<void>;
   handleDeleteFolder: (folderId: string) => Promise<void>;
@@ -51,29 +52,34 @@ export function useNoteOperations({
   const updateNoteMutation = useUpdateNoteMutation();
 
   const handleCreateFolder = useCallback(async (parentId?: string | null): Promise<void> => {
-    const folderName = prompt('Enter folder name:');
-    if (!folderName) return;
+    promptAction({
+      title: 'New Folder',
+      label: 'Folder Name',
+      placeholder: 'e.g. Work, Ideas, etc.',
+      required: true,
+      onConfirm: async (folderName) => {
+        try {
+          if (!selectedNotebookId) return;
+          const created = await createCategoryMutation.mutateAsync({
+            name: folderName,
+            parentId: parentId ?? null,
+            notebookId: selectedNotebookId,
+            themeId: null,
+            color: null,
+            sortIndex: null,
+          });
 
-    try {
-      if (!selectedNotebookId) return;
-      const created = await createCategoryMutation.mutateAsync({
-        name: folderName,
-        parentId: parentId ?? null,
-        notebookId: selectedNotebookId,
-        themeId: null,
-        color: null,
-        sortIndex: null,
-      });
-
-      if (created?.id) {
-        setSelectedFolderId(created.id);
+          if (created?.id) {
+            setSelectedFolderId(created.id);
+          }
+          toast('Folder created successfully');
+        } catch (error: unknown) {
+          logClientError(error, { context: { source: 'useNoteOperations.handleCreateFolder' } });
+          toast('Failed to create folder', { variant: 'error' });
+        }
       }
-      toast('Folder created successfully');
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'useNoteOperations.handleCreateFolder' } });
-      toast('Failed to create folder', { variant: 'error' });
-    }
-  }, [selectedNotebookId, createCategoryMutation, setSelectedFolderId, toast]);
+    });
+  }, [selectedNotebookId, createCategoryMutation, setSelectedFolderId, toast, promptAction]);
 
   const handleDeleteFolder = useCallback(async (folderId: string): Promise<void> => {
     confirmAction({

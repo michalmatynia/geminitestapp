@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { Catalog } from '@/features/products/types';
-import { Label, SelectSimple } from '@/shared/ui';
+import { Label } from '@/shared/ui';
+import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
+import type { PickerGroup, PickerOption } from '@/shared/ui/templates/pickers/types';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
   const {
@@ -15,20 +17,33 @@ export function CategoryMapperCatalogSelector(): React.JSX.Element {
     internalCategories,
   } = useCategoryMapper();
 
+  const groups = useMemo<PickerGroup[]>(() => [
+    {
+      label: 'Available Catalogs',
+      options: catalogs.map((catalog: Catalog) => ({
+        key: catalog.id,
+        label: catalog.name,
+      }))
+    }
+  ], [catalogs]);
+
   return (
     <div className='flex items-center gap-4'>
       <Label className='text-sm text-gray-400'>Target Catalog:</Label>
       <div className='w-[200px]'>
-        <SelectSimple
-          value={selectedCatalogId ?? '__none__'}
-          onValueChange={(v: string): void => setSelectedCatalogId(v === '__none__' ? null : v)}
-          disabled={catalogsLoading}
-          options={[
-            ...(!catalogsLoading && catalogs.length === 0 ? [{ value: '__none__', label: 'No catalogs available' }] : []),
-            ...catalogs.map((catalog: Catalog) => ({ value: catalog.id, label: catalog.name }))
-          ]}
-          placeholder={catalogsLoading ? 'Loading...' : 'Select catalog'}
-          triggerClassName='bg-gray-800 border-border text-white text-sm h-9'
+        <GenericPickerDropdown
+          groups={groups}
+          selectedKey={selectedCatalogId ?? ''}
+          onSelect={(opt: PickerOption) => setSelectedCatalogId(opt.key)}
+          triggerContent={
+            <span className='text-sm truncate'>
+              {catalogsLoading 
+                ? 'Loading...' 
+                : (catalogs.find(c => c.id === selectedCatalogId)?.name || 'Select catalog')}
+            </span>
+          }
+          searchable={catalogs.length > 5}
+          ariaLabel='Select target catalog'
         />
       </div>
 

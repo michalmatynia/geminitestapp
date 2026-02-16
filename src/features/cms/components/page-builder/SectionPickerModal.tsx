@@ -5,7 +5,7 @@ import React, { createContext, useContext, useMemo } from 'react';
 
 import type { SectionDefinition } from '@/features/cms/types/page-builder';
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 import type { GridPickerItem } from '@/shared/ui/templates/pickers/types';
 
@@ -117,23 +117,13 @@ export function SectionPickerModal({
   onSelect,
   onDeleteTemplate,
 }: SectionPickerModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
-
   return (
-    <AppModal
-      open={isOpen}
+    <DetailModal
+      isOpen={isOpen}
       onClose={onClose}
       title='Add a section'
       size='lg'
-      bodyClassName='h-[70vh]'
-      header={
-        <div className='flex items-center justify-between'>
-          <h2 className='text-2xl font-bold text-white'>Add a section</h2>
-          <Button type='button' onClick={onClose} className='min-w-[100px] border border-white/20 hover:border-white/40'>
-            Close
-          </Button>
-        </div>
-      }
+      footer={null}
     >
       <SectionPickerSelectionContext.Provider value={{ onSelect }}>
         <div className='space-y-6'>
@@ -179,6 +169,6 @@ export function SectionPickerModal({
           )}
         </div>
       </SectionPickerSelectionContext.Provider>
-    </AppModal>
+    </DetailModal>
   );
 }

@@ -21,8 +21,9 @@ import {
   StatusBadge,
   SectionHeader,
   FormField,
-  FormSection
+  FormSection,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { cmsDomainCreateSchema, cmsDomainUpdateSchema } from '../../validations/api';
@@ -40,6 +41,7 @@ export default function ZonesPage(): React.JSX.Element {
   const domains = useMemo((): CmsDomain[] => domainsQuery.data ?? [], [domainsQuery.data]);
   const [domain, setDomain] = useState('');
   const [error, setError] = useState('');
+  const [zoneToDelete, setZoneToDelete] = useState<string | null>(null);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -68,10 +70,10 @@ export default function ZonesPage(): React.JSX.Element {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Remove this domain and its slug assignments?')) return;
     try {
       await deleteDomain.mutateAsync(id);
       toast('Zone removed successfully.', { variant: 'success' });
+      setZoneToDelete(null);
     } catch (err: unknown) {
       logClientError(err, { context: { source: 'ZonesPage', action: 'deleteDomain', domainId: id } });
       toast(err instanceof Error ? err.message : 'Failed to delete domain.', { variant: 'error' });
@@ -157,14 +159,14 @@ export default function ZonesPage(): React.JSX.Element {
             variant='ghost' 
             size='xs' 
             className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => { void handleDelete(row.original.id); }}
+            onClick={() => { setZoneToDelete(row.original.id); }}
           >
             <Trash2 className='size-3.5' />
           </Button>
         </div>
       )
     }
-  ], [domains, handleAliasChange, handleDelete]);
+  ], [domains, handleAliasChange]);
 
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
@@ -203,6 +205,20 @@ export default function ZonesPage(): React.JSX.Element {
           />
         </div>
       </ListPanel>
+
+      <ConfirmModal
+        isOpen={Boolean(zoneToDelete)}
+        onClose={() => setZoneToDelete(null)}
+        title='Remove Content Zone?'
+        message='Are you sure you want to remove this domain and its slug assignments? This action cannot be undone.'
+        confirmText='Destroy Zone'
+        isDangerous={true}
+        onConfirm={(): void => {
+          if (zoneToDelete) {
+            void handleDelete(zoneToDelete);
+          }
+        }}
+      />
     </div>
   );
 }

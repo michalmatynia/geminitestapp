@@ -1,10 +1,10 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button, Label, Textarea } from '@/shared/ui';
+import { FormModal, Button, Label, Textarea } from '@/shared/ui';
 
 // TODO: These types should be defined in a more central place
 type ParamUiControl =
@@ -76,80 +76,75 @@ export function ExtractPromptParamsModal({
   previewLeaves,
   previewControls,
 }: ExtractPromptParamsModalProps): React.JSX.Element {
+  const actions = (
+    <>
+      <Button
+        size='sm'
+        variant='outline'
+        onClick={() => { void handleSmartExtraction(); }}
+        disabled={extractBusy !== 'none'}
+        className='gap-2'
+      >
+        {extractBusy === 'smart' ? <Loader2 className='size-4 animate-spin' /> : <Zap className='size-4' />}
+        Smart
+      </Button>
+      <Button
+        size='sm'
+        variant='outline'
+        onClick={() => { void handleProgrammaticExtraction(); }}
+        disabled={extractBusy !== 'none'}
+        className='gap-2'
+      >
+        {extractBusy === 'programmatic' ? <Loader2 className='size-4 animate-spin' /> : <Cpu className='size-4' />}
+        Programmatic
+      </Button>
+      <Button
+        size='sm'
+        variant='outline'
+        onClick={() => { void handleAiExtraction(); }}
+        disabled={extractBusy !== 'none'}
+        className='gap-2'
+      >
+        {extractBusy === 'ai' ? <Loader2 className='size-4 animate-spin' /> : <Sparkles className='size-4' />}
+        AI Only
+      </Button>
+      <Button
+        size='sm'
+        variant='outline'
+        onClick={() => { void handleSuggestUiControls(); }}
+        disabled={!previewParams || extractBusy !== 'none'}
+        className='gap-2'
+      >
+        {extractBusy === 'ui' ? <Loader2 className='size-4 animate-spin' /> : <Wand2 className='size-4' />}
+        Suggest
+      </Button>
+    </>
+  );
+
   return (
-    <AppModal
+    <FormModal
       open={isOpen}
       onClose={onClose}
       title='Extract Prompt Params'
       size='xl'
+      onSave={() => { void handleApplyExtraction(); }}
+      isSaveDisabled={!previewParams}
+      saveText='Apply Changes'
+      actions={actions}
     >
-      <div className='space-y-4'>
-        <div className='space-y-1'>
-          <Label className='text-xs text-gray-400'>Prompt Source</Label>
+      <div className='space-y-6'>
+        <div className='space-y-2'>
+          <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>Prompt Source</Label>
           <Textarea
-            size='sm'
             value={extractDraftPrompt}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => setExtractDraftPrompt(event.target.value)}
-            className='h-36 font-mono text-[11px]'
+            className='h-40 font-mono text-[11px] bg-black/20'
             placeholder='Paste prompt text with params object...'
           />
         </div>
 
-        <div className='flex flex-wrap items-center gap-2'>
-          <Button
-            size='xs'
-            type='button'
-            onClick={() => {
-              void handleSmartExtraction();
-            }}
-            disabled={extractBusy !== 'none'}
-          >
-            {extractBusy === 'smart' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            Smart Extract
-          </Button>
-          <Button
-            size='xs'
-            type='button'
-            variant='outline'
-            onClick={() => {
-              void handleProgrammaticExtraction();
-            }}
-            disabled={extractBusy !== 'none'}
-          >
-            {extractBusy === 'programmatic' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            Programmatic Extract
-          </Button>
-          <Button
-            size='xs'
-            type='button'
-            variant='outline'
-            onClick={() => {
-              void handleAiExtraction();
-            }}
-            disabled={extractBusy !== 'none'}
-          >
-            {extractBusy === 'ai' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            AI Only
-          </Button>
-          <Button
-            size='xs'
-            type='button'
-            variant='outline'
-            onClick={() => {
-              void handleSuggestUiControls();
-            }}
-            disabled={!previewParams || extractBusy !== 'none'}
-          >
-            {extractBusy === 'ui' ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-            Suggest Selectors
-          </Button>
-          <Button size='xs' type='button' onClick={handleApplyExtraction} disabled={!previewParams}>
-            Apply
-          </Button>
-        </div>
-
         {extractError ? (
-          <div className='rounded border border-red-500/40 bg-red-500/10 p-2 text-xs text-red-200'>
+          <div className='rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive'>
             {extractError}
           </div>
         ) : null}
@@ -169,32 +164,32 @@ export function ExtractPromptParamsModal({
         ) : null}
 
         {studioSettings.promptExtraction.showValidationSummary && previewValidation ? (
-          <div className='grid gap-2 rounded border border-cyan-500/35 bg-cyan-500/5 p-3 text-xs text-cyan-100 md:grid-cols-2'>
-            <div className='space-y-1'>
-              <div className='font-medium text-cyan-200'>Validation Before: {previewValidation.before.length}</div>
+          <div className='grid gap-4 rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4 text-xs md:grid-cols-2'>
+            <div className='space-y-2'>
+              <div className='font-bold uppercase tracking-wide text-cyan-400'>Validation Before: {previewValidation.before.length}</div>
               {previewValidation.before.length === 0 ? (
-                <div className='text-cyan-100/70'>No issues.</div>
+                <div className='text-cyan-100/50 italic'>No issues detected.</div>
               ) : (
-                <div className='space-y-1'>
+                <div className='space-y-1.5'>
                   {previewValidation.before.slice(0, 6).map((issue, index) => (
-                    <div key={`before-${issue.ruleId ?? index}`} className='rounded border border-cyan-500/20 bg-cyan-500/5 px-2 py-1'>
-                      <div className='text-cyan-100'>{issue.title ?? issue.ruleId ?? 'Issue'}</div>
-                      <div className='text-cyan-100/70'>{issue.message ?? ''}</div>
+                    <div key={`before-${issue.ruleId ?? index}`} className='rounded border border-cyan-500/10 bg-black/20 px-2 py-1.5'>
+                      <div className='text-cyan-100 font-medium'>{issue.title ?? issue.ruleId ?? 'Issue'}</div>
+                      <div className='text-cyan-100/60 leading-relaxed'>{issue.message ?? ''}</div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            <div className='space-y-1'>
-              <div className='font-medium text-cyan-200'>Validation After: {previewValidation.after.length}</div>
+            <div className='space-y-2'>
+              <div className='font-bold uppercase tracking-wide text-cyan-400'>Validation After: {previewValidation.after.length}</div>
               {previewValidation.after.length === 0 ? (
-                <div className='text-cyan-100/70'>No issues.</div>
+                <div className='text-cyan-100/50 italic'>No issues detected.</div>
               ) : (
-                <div className='space-y-1'>
+                <div className='space-y-1.5'>
                   {previewValidation.after.slice(0, 6).map((issue, index) => (
-                    <div key={`after-${issue.ruleId ?? index}`} className='rounded border border-cyan-500/20 bg-cyan-500/5 px-2 py-1'>
-                      <div className='text-cyan-100'>{issue.title ?? issue.ruleId ?? 'Issue'}</div>
-                      <div className='text-cyan-100/70'>{issue.message ?? ''}</div>
+                    <div key={`after-${issue.ruleId ?? index}`} className='rounded border border-cyan-500/10 bg-black/20 px-2 py-1.5'>
+                      <div className='text-cyan-100 font-medium'>{issue.title ?? issue.ruleId ?? 'Issue'}</div>
+                      <div className='text-cyan-100/60 leading-relaxed'>{issue.message ?? ''}</div>
                     </div>
                   ))}
                 </div>
@@ -203,38 +198,38 @@ export function ExtractPromptParamsModal({
           </div>
         ) : null}
 
-        {previewLeaves.length > 0 ? (
-          <div className='max-h-72 overflow-auto rounded border border-border/60 bg-card/50'>
-            <div className='grid grid-cols-[1.6fr_1fr_1fr] gap-2 border-b border-border/50 px-3 py-2 text-[11px] text-gray-400'>
-              <div>Path</div>
-              <div>Value</div>
-              <div>Selector</div>
+        <div className='space-y-2'>
+          <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>Extracted Parameters</Label>
+          {previewLeaves.length > 0 ? (
+            <div className='max-h-80 overflow-auto rounded-lg border border-border/60 bg-black/20'>
+              <table className='w-full text-left border-collapse'>
+                <thead className='bg-muted/30 sticky top-0'>
+                  <tr className='text-[10px] uppercase font-bold text-muted-foreground'>
+                    <th className='px-4 py-2 border-b border-border/50'>Path</th>
+                    <th className='px-4 py-2 border-b border-border/50'>Value</th>
+                    <th className='px-4 py-2 border-b border-border/50'>Selector</th>
+                  </tr>
+                </thead>
+                <tbody className='divide-y divide-border/40'>
+                  {previewLeaves.map((leaf) => (
+                    <tr key={leaf.path} className='text-[11px] hover:bg-white/5 transition-colors'>
+                      <td className='px-4 py-2 font-mono text-gray-200 truncate max-w-[200px]' title={leaf.path}>{leaf.path}</td>
+                      <td className='px-4 py-2 text-gray-300 truncate max-w-[200px]' title={JSON.stringify(leaf.value)}>
+                        {typeof leaf.value === 'string' ? leaf.value : JSON.stringify(leaf.value)}
+                      </td>
+                      <td className='px-4 py-2 text-gray-400'>{previewControls[leaf.path] ?? 'auto'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div className='divide-y divide-border/40'>
-              {previewLeaves.map((leaf) => (
-                <div
-                  key={leaf.path}
-                  className='grid grid-cols-[1.6fr_1fr_1fr] gap-2 px-3 py-2 text-[11px]'
-                >
-                  <div className='truncate font-mono text-gray-200' title={leaf.path}>
-                    {leaf.path}
-                  </div>
-                  <div className='truncate text-gray-300' title={JSON.stringify(leaf.value)}>
-                    {typeof leaf.value === 'string' ? leaf.value : JSON.stringify(leaf.value)}
-                  </div>
-                  <div className='truncate text-gray-400'>
-                    {previewControls[leaf.path] ?? 'auto'}
-                  </div>
-                </div>
-              ))}
+          ) : (
+            <div className='rounded-lg border border-dashed border-border bg-card/20 py-12 text-center text-xs text-muted-foreground italic'>
+              No parameters extracted yet. Use one of the extraction methods above.
             </div>
-          </div>
-        ) : (
-          <div className='text-xs text-gray-500'>
-            Extracted params will appear here.
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </AppModal>
+    </FormModal>
   );
 }

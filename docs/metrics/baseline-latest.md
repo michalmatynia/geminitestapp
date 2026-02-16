@@ -1,13 +1,13 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-16T22:06:57.112Z
+Generated at: 2026-02-16T23:53:41.748Z
 
 ## Snapshot
 
-- Source files: 2295
-- Source lines: 406018
-- use client files: 895
-- Files >= 1000 LOC: 47
+- Source files: 2398
+- Source lines: 407635
+- use client files: 897
+- Files >= 1000 LOC: 46
 - Files >= 1500 LOC: 20
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
@@ -22,27 +22,27 @@ Generated at: 2026-02-16T22:06:57.112Z
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/ai-paths/db-action/route.ts` | 575 |
-| `src/app/api/chatbot/route.ts` | 559 |
-| `src/app/api/databases/preview/route.ts` | 550 |
-| `src/app/api/integrations/imports/base/route.ts` | 526 |
-| `src/app/api/auth/users/[id]/route.ts` | 412 |
-| `src/app/api/image-studio/projects/[projectId]/route.ts` | 409 |
-| `src/app/api/image-studio/slots/[slotId]/masks/route.ts` | 395 |
-| `src/app/api/integrations/imports/base/parameters/route.ts` | 383 |
-| `src/app/api/image-studio/projects/[projectId]/assets/import/route.ts` | 372 |
-| `src/app/api/ai-paths/runs/[runId]/stream/route.ts` | 364 |
-| `src/app/api/image-studio/prompt-extract/route.ts` | 359 |
-| `src/app/api/products/validator-patterns/[id]/route.ts` | 349 |
-| `src/app/api/price-groups/route.ts` | 318 |
-| `src/app/api/databases/schema/route.ts` | 306 |
-| `src/app/api/databases/restore/route.ts` | 297 |
+| `src/app/api/integrations/import-templates/[id]/route.ts` | 98 |
+| `src/app/api/settings/database/sync/route.ts` | 97 |
+| `src/app/api/image-studio/mask/ai/route.ts` | 96 |
+| `src/app/api/image-studio/slots/[slotId]/screenshot/route.ts` | 96 |
+| `src/app/api/auth/mfa/disable/route.ts` | 94 |
+| `src/app/api/cms/slugs/[id]/domains/route.ts` | 94 |
+| `src/app/api/marketplace/categories/fetch/route.ts` | 93 |
+| `src/app/api/cms/pages/route.ts` | 91 |
+| `src/app/api/products/[id]/studio/route.ts` | 91 |
+| `src/app/api/integrations/imports/base/runs/route.ts` | 90 |
+| `src/app/api/ai-paths/runtime-analytics/summary/route.ts` | 89 |
+| `src/app/api/currencies/[id]/route.ts` | 89 |
+| `src/app/api/ai-paths/trigger-buttons/[id]/route.ts` | 88 |
+| `src/app/api/integrations/export-templates/[id]/route.ts` | 88 |
+| `src/app/api/databases/backups/route.ts` | 86 |
 
 ## Top Cross-Feature Dependencies
 
 | Edge | References |
 | --- | ---: |
-| `integrations -> products` | 44 |
+| `integrations -> products` | 51 |
 | `ai -> observability` | 42 |
 | `products -> observability` | 29 |
 | `jobs -> observability` | 28 |
@@ -78,7 +78,7 @@ Generated at: 2026-02-16T22:06:57.112Z
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1806 |
 | `src/features/ai/ai-paths/components/job-queue-panel.tsx` | 1787 |
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 1725 |
 | `src/features/cms/components/page-builder/registry/block-definitions.ts` | 1692 |
+| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 1663 |
+| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1614 |
 | `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts` | 1555 |
-| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1530 |

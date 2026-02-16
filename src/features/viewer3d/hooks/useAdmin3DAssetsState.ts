@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability/utils/client-error-logger';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
 import { 
@@ -22,6 +23,7 @@ export type ViewMode = 'grid' | 'list';
 export function useAdmin3DAssetsState() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const [showUploader, setShowUploader] = useState(false);
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
   const [editAsset, setEditAsset] = useState<Asset3DRecord | null>(null);
@@ -64,18 +66,22 @@ export function useAdmin3DAssetsState() {
   }, [queryClient]);
 
   const handleDelete = useCallback(async (asset: Asset3DRecord) => {
-    if (!confirm(`Are you sure you want to delete "${asset.name || asset.filename}"?`)) {
-      return;
-    }
-
-    try {
-      await deleteMutation.mutateAsync(asset.id);
-      toast(`Asset "${asset.name || asset.filename}" deleted.`, { variant: 'success' });
-    } catch (err) {
-      logClientError(err, { context: { source: 'useAdmin3DAssetsState', action: 'deleteAsset', assetId: asset.id } });
-      toast(err instanceof Error ? err.message : 'Failed to delete asset', { variant: 'error' });
-    }
-  }, [deleteMutation, toast]);
+    confirm({
+      title: 'Delete 3D Asset?',
+      message: `Are you sure you want to delete "${asset.name || asset.filename}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteMutation.mutateAsync(asset.id);
+          toast(`Asset "${asset.name || asset.filename}" deleted.`, { variant: 'success' });
+        } catch (err) {
+          logClientError(err, { context: { source: 'useAdmin3DAssetsState', action: 'deleteAsset', assetId: asset.id } });
+          toast(err instanceof Error ? err.message : 'Failed to delete asset', { variant: 'error' });
+        }
+      }
+    });
+  }, [confirm, deleteMutation, toast]);
 
   const handleReindex = useCallback(async () => {
     try {
@@ -115,6 +121,7 @@ export function useAdmin3DAssetsState() {
     handleReindex,
     clearFilters,
     hasActiveFilters,
+    ConfirmationModal,
     isDeleting: (id: string) => deleteMutation.isPending && deleteMutation.variables === id,
     isReindexing: reindexMutation.isPending,
     refetch: () => void assetsQuery.refetch(),

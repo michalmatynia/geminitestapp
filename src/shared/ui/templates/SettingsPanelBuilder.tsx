@@ -14,7 +14,7 @@ import { Textarea } from '../textarea';
 
 export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'color' | 'range' | 'custom';
 
-export interface SettingsField<T extends Record<string, unknown>> {
+export interface SettingsField<T extends object> {
   /** Field key in the form data */
   key: keyof T;
   
@@ -56,7 +56,7 @@ export interface SettingsFieldRenderProps {
   disabled?: boolean;
 }
 
-export interface SettingsFieldsRendererProps<T extends Record<string, unknown>> {
+export interface SettingsFieldsRendererProps<T extends object> {
   fields: SettingsField<T>[];
   values: T;
   errors?: Partial<Record<keyof T, string>>;
@@ -68,7 +68,7 @@ export interface SettingsFieldsRendererProps<T extends Record<string, unknown>> 
 /**
  * Renders a list of settings fields based on configuration.
  */
-export function SettingsFieldsRenderer<T extends Record<string, unknown>>({
+export function SettingsFieldsRenderer<T extends object>({
   fields,
   values,
   errors = {},
@@ -220,7 +220,7 @@ export function SettingsFieldsRenderer<T extends Record<string, unknown>>({
   );
 }
 
-export interface SettingsPanelBuilderProps<T extends Record<string, unknown>> extends SettingsFieldsRendererProps<T> {
+export interface SettingsPanelBuilderProps<T extends object> extends SettingsFieldsRendererProps<T> {
   open: boolean;
   onClose: () => void;
   title: string;
@@ -234,7 +234,7 @@ export interface SettingsPanelBuilderProps<T extends Record<string, unknown>> ex
  * Generic settings panel builder modal.
  * Consolidates Theme, Component, Menu, Viewer3D settings patterns.
  */
-export function SettingsPanelBuilder<T extends Record<string, unknown>>({
+export function SettingsPanelBuilder<T extends object>({
   open,
   onClose,
   title,

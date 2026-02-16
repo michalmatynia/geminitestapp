@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { FormModal, Button } from '@/shared/ui';
 
 import { DraftCreator } from './DraftCreator';
 
@@ -27,64 +27,46 @@ export function DraftCreatorModal({
   }, [isOpen, editingDraftId]);
 
   const title = editingDraftId ? 'Edit Draft' : 'Create Draft';
-  const submitText = editingDraftId ? 'Update' : 'Create';
+  const submitText = editingDraftId ? 'Update Draft' : 'Create Draft';
 
-  if (!isOpen) return null;
-
-  const header = (
-    <div className='flex items-center justify-between w-full'>
-      <div className='flex items-center gap-4'>
-        <Button
-          onClick={(): void => {
-            if (formRef.current) {
-              formRef.current.requestSubmit();
-            }
-          }}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          {submitText}
-        </Button>
-        <div className='flex items-center gap-3'>
-          <h2 className='text-2xl font-bold text-white'>{title}</h2>
-          <div className='flex items-center gap-2 rounded-md border border-white/15 bg-white/5 px-2 py-1'>
-            <span className='text-xs text-gray-300'>Quick Create</span>
-            <Button
-              type='button'
-              className={`h-7 min-w-[52px] rounded-md border px-2 text-[10px] font-semibold tracking-wide ${
-                isDraftActive
-                  ? 'border-emerald-700 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
-                  : 'border-red-700 bg-red-500/10 text-red-200 hover:bg-red-500/20'
-              }`}
-              onClick={(): void => setIsDraftActive((prev: boolean) => !prev)}
-              aria-label='Toggle quick create button'
-            >
-              {isDraftActive ? 'ON' : 'OFF'}
-            </Button>
-          </div>
-        </div>
-      </div>
+  const actions = (
+    <div className='flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-3 py-1 mr-2'>
+      <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>Quick Create</span>
       <Button
         type='button'
-        onClick={onClose}
-        className='min-w-[100px] border border-white/20 hover:border-white/40'
+        variant={isDraftActive ? 'default' : 'outline'}
+        size='xs'
+        className={`h-6 min-w-12 text-[10px] font-bold ${
+          isDraftActive 
+            ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30' 
+            : 'text-red-400 hover:bg-red-500/10 border-red-500/30'
+        }`}
+        onClick={(): void => setIsDraftActive((prev: boolean) => !prev)}
       >
-        Close
+        {isDraftActive ? 'ACTIVE' : 'OFF'}
       </Button>
     </div>
   );
 
   return (
-    <AppModal
+    <FormModal
       open={isOpen}
       onClose={onClose}
       title={title}
-      header={header}
-      className='md:min-w-[63rem] max-w-[66rem]'
+      size='xl'
+      className='max-w-5xl'
+      onSave={(): void => {
+        if (formRef.current) {
+          formRef.current.requestSubmit();
+        }
+      }}
+      saveText={submitText}
+      actions={actions}
     >
       <DraftCreator
         active={isDraftActive}
         onActiveChange={(value: boolean): void => setIsDraftActive(value)}
       />
-    </AppModal>
+    </FormModal>
   );
 }

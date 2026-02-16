@@ -8,6 +8,7 @@ import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
 import type { CurrencyOption, CountryOption, Language } from '@/shared/types/domain/internationalization';
 import { useToast } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 interface InternationalizationContextType {
   // Data & Loading
@@ -44,6 +45,22 @@ interface InternationalizationContextType {
   handleOpenCountryModal: (country?: CountryOption | null) => void;
   setCountryModalOpen: (open: boolean) => void;
   handleDeleteCountry: (country: CountryOption) => Promise<void>;
+
+  // Confirmation
+  confirmation: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  } | null;
+  confirmAction: (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }) => void;
 }
 
 export const InternationalizationContext = createContext<InternationalizationContextType | null>(null);
@@ -74,6 +91,23 @@ export function InternationalizationProvider({ children }: { children: ReactNode
   const [editingCurrency, setEditingCurrency] = useState<CurrencyOption | null>(null);
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [editingCountry, setEditingCountry] = useState<CountryOption | null>(null);
+  const [confirmation, setConfirmation] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  } | null>(null);
+
+  const confirmAction = (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }) => {
+    setConfirmation(config);
+  };
 
   // Mutations
   const deleteCurrencyMutation = useDeleteCurrencyMutation();
@@ -95,15 +129,21 @@ export function InternationalizationProvider({ children }: { children: ReactNode
   };
 
   const handleDeleteLanguage = async (l: Language) => {
-    if (confirm(`Delete ${l.name}?`)) {
-      try {
-        await deleteLanguageMutation.mutateAsync(l.id);
-        toast(`Language ${l.name} deleted.`, { variant: 'success' });
-      } catch (error) {
-        logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteLanguage', languageId: l.id } });
-        toast('Failed to delete language.', { variant: 'error' });
+    confirmAction({
+      title: 'Delete Language?',
+      message: `Are you sure you want to delete ${l.name}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteLanguageMutation.mutateAsync(l.id);
+          toast(`Language ${l.name} deleted.`, { variant: 'success' });
+        } catch (error) {
+          logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteLanguage', languageId: l.id } });
+          toast('Failed to delete language.', { variant: 'error' });
+        }
       }
-    }
+    });
   };
 
   const handleOpenCurrencyModal = (currency?: CurrencyOption | null) => {
@@ -112,15 +152,21 @@ export function InternationalizationProvider({ children }: { children: ReactNode
   };
 
   const handleDeleteCurrency = async (c: CurrencyOption) => {
-    if (confirm(`Delete ${c.code}?`)) {
-      try {
-        await deleteCurrencyMutation.mutateAsync(c.id);
-        toast(`Currency ${c.code} deleted.`, { variant: 'success' });
-      } catch (error) {
-        logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCurrency', currencyId: c.id } });
-        toast('Failed to delete currency.', { variant: 'error' });
+    confirmAction({
+      title: 'Delete Currency?',
+      message: `Are you sure you want to delete ${c.code}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteCurrencyMutation.mutateAsync(c.id);
+          toast(`Currency ${c.code} deleted.`, { variant: 'success' });
+        } catch (error) {
+          logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCurrency', currencyId: c.id } });
+          toast('Failed to delete currency.', { variant: 'error' });
+        }
       }
-    }
+    });
   };
 
   const handleOpenCountryModal = (country?: CountryOption | null) => {
@@ -129,15 +175,21 @@ export function InternationalizationProvider({ children }: { children: ReactNode
   };
 
   const handleDeleteCountry = async (c: CountryOption) => {
-    if (confirm(`Delete ${c.name}?`)) {
-      try {
-        await deleteCountryMutation.mutateAsync(c.id);
-        toast(`Country ${c.name} deleted.`, { variant: 'success' });
-      } catch (error) {
-        logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCountry', countryId: c.id } });
-        toast('Failed to delete country.', { variant: 'error' });
+    confirmAction({
+      title: 'Delete Country?',
+      message: `Are you sure you want to delete ${c.name}? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteCountryMutation.mutateAsync(c.id);
+          toast(`Country ${c.name} deleted.`, { variant: 'success' });
+        } catch (error) {
+          logClientError(error, { context: { source: 'InternationalizationContext', action: 'deleteCountry', countryId: c.id } });
+          toast('Failed to delete country.', { variant: 'error' });
+        }
       }
-    }
+    });
   };
 
   const value: InternationalizationContextType = {
@@ -171,11 +223,28 @@ export function InternationalizationProvider({ children }: { children: ReactNode
     handleOpenCountryModal,
     setCountryModalOpen: setShowCountryModal,
     handleDeleteCountry,
+
+    confirmation,
+    confirmAction,
   };
 
   return (
     <InternationalizationContext.Provider value={value}>
       {children}
+      <ConfirmModal
+        isOpen={Boolean(confirmation)}
+        onClose={() => setConfirmation(null)}
+        title={confirmation?.title ?? ''}
+        message={confirmation?.message ?? ''}
+        confirmText={confirmation?.confirmText ?? 'Confirm'}
+        isDangerous={confirmation?.isDangerous ?? false}
+        onConfirm={async () => {
+          if (confirmation?.onConfirm) {
+            await confirmation.onConfirm();
+          }
+          setConfirmation(null);
+        }}
+      />
     </InternationalizationContext.Provider>
   );
 }

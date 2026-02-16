@@ -6,8 +6,9 @@ import React from 'react';
 
 import type { SessionCookie } from '@/features/integrations/types/integrations-ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { DetailModal } from '@/shared/ui/templates/modals';
 import { Badge, StatusBadge } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
+import { cn } from '@/shared/utils';
 
 interface SessionModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;

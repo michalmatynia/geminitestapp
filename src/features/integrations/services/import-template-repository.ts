@@ -2,6 +2,10 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import {
+  normalizeBaseImportParameterImportSettings,
+  defaultBaseImportParameterImportSettings,
+} from '@/features/integrations/types/base-import-parameter-import';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -64,6 +68,9 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
       .map((template: Template) => ({
         ...template,
         mappings: stripBasehostMappings(Array.isArray(template.mappings) ? template.mappings : []),
+        parameterImport: normalizeBaseImportParameterImportSettings(
+          template.parameterImport
+        ),
       })) as Template[];
   } catch (error: unknown) {
     try {
@@ -606,6 +613,7 @@ export const createImportTemplate = async (input: {
   name: string;
   description?: string | null;
   mappings?: TemplateMapping[];
+  parameterImport?: Template['parameterImport'];
 }): Promise<Template> => {
   const templates = await listImportTemplates();
   const now = new Date().toISOString();
@@ -614,6 +622,9 @@ export const createImportTemplate = async (input: {
     name: input.name,
     description: input.description ?? null,
     mappings: input.mappings ?? [],
+    parameterImport: normalizeBaseImportParameterImportSettings(
+      input.parameterImport ?? defaultBaseImportParameterImportSettings
+    ),
     createdAt: now,
     updatedAt: now,
   };
@@ -628,6 +639,7 @@ export const updateImportTemplate = async (
     name: string | undefined;
     description: string | null | undefined;
     mappings: TemplateMapping[] | undefined;
+    parameterImport: Template['parameterImport'];
   }>
 ): Promise<Template | null> => {
   const templates = await listImportTemplates();
@@ -639,6 +651,11 @@ export const updateImportTemplate = async (
     name: input.name ?? existing.name,
     description: input.description !== undefined ? input.description : existing.description,
     mappings: input.mappings ?? existing.mappings,
+    parameterImport: normalizeBaseImportParameterImportSettings(
+      input.parameterImport !== undefined
+        ? input.parameterImport
+        : existing.parameterImport ?? defaultBaseImportParameterImportSettings
+    ),
     createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
   } as Template;

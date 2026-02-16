@@ -5,6 +5,7 @@ import { Profiler, memo, useMemo } from 'react';
 import { useProductListTableContext } from '@/features/products/context/ProductListContext';
 import { useProductsTableProps } from '@/features/products/hooks/useProductsTableProps';
 import { DataTable, Button, ListPanel, Alert } from '@/shared/ui';
+import { PromptModal } from '@/shared/ui/templates/modals';
 
 const ProductListHeader = dynamic(
   () =>
@@ -36,6 +37,9 @@ export const ProductListPanel = memo(function ProductListPanel() {
     actionError,
     onDismissActionError,
     handleProductsTableRender,
+    isPromptOpen,
+    setIsPromptOpen,
+    handleConfirmSku,
   } = useProductListTableContext();
 
   const tableProps = useProductsTableProps();
@@ -79,6 +83,16 @@ export const ProductListPanel = memo(function ProductListPanel() {
       <Profiler id='ProductsTable' onRender={handleProductsTableRender}>
         <DataTable {...tableProps} />
       </Profiler>
+
+      <PromptModal
+        open={isPromptOpen}
+        onClose={() => setIsPromptOpen(false)}
+        onConfirm={handleConfirmSku}
+        title='Create New Product'
+        label='Enter a new unique SKU'
+        placeholder='e.g. ABC-123'
+        required
+      />
     </ListPanel>
   );
 });

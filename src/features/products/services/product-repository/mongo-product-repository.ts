@@ -114,6 +114,58 @@ const normalizeLookupId = (value: unknown): string => {
   return '';
 };
 
+const normalizeProductParameterValues = (
+  input: unknown
+): Array<{ parameterId: string; value: string; valuesByLanguage?: Record<string, string> }> => {
+  if (!Array.isArray(input)) return [];
+  return input.reduce(
+    (
+      acc: Array<{
+        parameterId: string;
+        value: string;
+        valuesByLanguage?: Record<string, string>;
+      }>,
+      raw: unknown
+    ) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return acc;
+      const record = raw as Record<string, unknown>;
+      const parameterId =
+        typeof record['parameterId'] === 'string'
+          ? record['parameterId'].trim()
+          : '';
+      if (!parameterId) return acc;
+      const value =
+        typeof record['value'] === 'string' ? record['value'] : '';
+      const valuesByLanguageRaw = record['valuesByLanguage'];
+      const valuesByLanguage =
+        valuesByLanguageRaw &&
+        typeof valuesByLanguageRaw === 'object' &&
+        !Array.isArray(valuesByLanguageRaw)
+          ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
+            (map: Record<string, string>, [lang, langValue]: [string, unknown]) => {
+              const normalizedLang = lang.trim().toLowerCase();
+              const normalizedValue =
+                typeof langValue === 'string' ? langValue.trim() : '';
+              if (!normalizedLang || !normalizedValue) return map;
+              map[normalizedLang] = normalizedValue;
+              return map;
+            },
+            {}
+          )
+          : {};
+      acc.push({
+        parameterId,
+        value,
+        ...(Object.keys(valuesByLanguage).length > 0
+          ? { valuesByLanguage }
+          : {}),
+      });
+      return acc;
+    },
+    []
+  );
+};
+
 const applyBaseExportedFilter = async (
   filter: Filter<ProductDocument>,
   baseExported: boolean | undefined
@@ -680,7 +732,7 @@ export const mongoProductRepository: ProductRepository = {
       sizeWidth: typeof data.sizeWidth === 'number' ? data.sizeWidth : null,
       weight: typeof data.weight === 'number' ? data.weight : null,
       length: typeof data.length === 'number' ? data.length : null,
-      parameters: Array.isArray(data.parameters) ? (data.parameters as Array<{ parameterId: string; value?: string | null }>).map((p: { parameterId: string; value?: string | null }) => ({ parameterId: p.parameterId, value: p.value || '' })) : [],
+      parameters: normalizeProductParameterValues(data.parameters),
       imageLinks: Array.isArray(data.imageLinks) ? data.imageLinks : [],
       imageBase64s: Array.isArray(data.imageBase64s) ? data.imageBase64s : [],
       noteIds: [],
@@ -742,7 +794,7 @@ export const mongoProductRepository: ProductRepository = {
       ...(data.length !== undefined ? { length: data.length ?? null } : null),
       ...(data.parameters !== undefined
         ? {
-          parameters: Array.isArray(data.parameters) ? (data.parameters as Array<{ parameterId: string; value?: string | null }>).map((p: { parameterId: string; value?: string | null }) => ({ parameterId: p.parameterId, value: p.value || '' })) : [],
+          parameters: normalizeProductParameterValues(data.parameters),
         }
         : null),
       ...(data.imageLinks !== undefined

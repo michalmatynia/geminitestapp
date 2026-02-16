@@ -213,7 +213,6 @@ export default function AuthUsersPage(): React.JSX.Element {
       <UserEditModal
         isOpen={Boolean(editingUser)}
         onClose={() => setEditingUser(null)}
-        onSuccess={() => {}}
         item={editingUser}
         setEditingUser={setEditingUser}
         isSaving={mutations.updateUser.isPending}

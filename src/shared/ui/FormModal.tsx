@@ -13,6 +13,7 @@ interface FormModalProps {
   children: ReactNode;
   onSave: () => void;
   isSaving?: boolean;
+  isSaveDisabled?: boolean;
   saveText?: string;
   cancelText?: string;
   formRef?: React.RefObject<HTMLFormElement | null>;
@@ -20,6 +21,7 @@ interface FormModalProps {
   variant?: 'default' | 'glass';
   padding?: 'default' | 'none';
   actions?: ReactNode;
+  className?: string;
 }
 
 export function FormModal({
@@ -30,6 +32,7 @@ export function FormModal({
   children,
   onSave,
   isSaving = false,
+  isSaveDisabled = false,
   saveText = 'Save',
   cancelText = 'Cancel',
   formRef,
@@ -37,6 +40,7 @@ export function FormModal({
   variant = 'default',
   padding = 'default',
   actions,
+  className,
 }: FormModalProps): React.JSX.Element | null {
   if (!open) return null;
 
@@ -44,7 +48,7 @@ export function FormModal({
     <Button
       type='button'
       onClick={() => formRef.current?.requestSubmit()}
-      disabled={isSaving}
+      disabled={isSaving || isSaveDisabled}
       variant='default'
       className='min-w-[100px]'
     >
@@ -53,7 +57,7 @@ export function FormModal({
   ) : (
     <Button
       onClick={onSave}
-      disabled={isSaving}
+      disabled={isSaving || isSaveDisabled}
       variant='default'
       className='min-w-[100px]'
     >
@@ -61,10 +65,16 @@ export function FormModal({
     </Button>
   );
 
-  const headerActions = (
-    <>
-      {saveButton}
-      {actions}
+  const header = (
+    <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+      <div className='min-w-0'>
+        <div className='flex min-w-0 flex-wrap items-center gap-2'>
+          {saveButton}
+          {actions}
+          <h2 className='text-2xl font-bold tracking-tight text-white'>{title}</h2>
+        </div>
+        {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
+      </div>
       <Button
         type='button'
         onClick={onClose}
@@ -73,7 +83,7 @@ export function FormModal({
       >
         {cancelText}
       </Button>
-    </>
+    </div>
   );
 
   return (
@@ -85,7 +95,9 @@ export function FormModal({
       size={size}
       variant={variant}
       padding={padding}
-      headerActions={headerActions}
+      header={header}
+      showClose={false}
+      className={className}
     >
       {children}
     </AppModal>

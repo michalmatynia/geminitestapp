@@ -193,6 +193,11 @@ describe('Notes Advanced UI', () => {
     const deleteBtn = screen.getByRole('button', { name: 'Delete' });
     await user.click(deleteBtn);
 
+    // Click Delete in ConfirmModal
+    const modal = await screen.findByRole('dialog');
+    const confirmBtn = within(modal).getByRole('button', { name: 'Delete' });
+    await user.click(confirmBtn);
+
     // Should be back to list view, and Banana should be gone
     await waitFor(() => {
       expect(screen.queryByRole('heading', { name: 'Banana' })).not.toBeInTheDocument();

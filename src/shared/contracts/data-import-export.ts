@@ -50,9 +50,23 @@ export const importExportTemplateMappingSchema = z.object({
 
 export type ImportExportTemplateMappingDto = z.infer<typeof importExportTemplateMappingSchema>;
 
+export const importTemplateParameterImportSchema = z.object({
+  enabled: z.boolean().optional(),
+  mode: z.enum(['all', 'mapped']).optional(),
+  languageScope: z.enum(['catalog_languages', 'default_only']).optional(),
+  createMissingParameters: z.boolean().optional(),
+  overwriteExistingValues: z.boolean().optional(),
+  matchBy: z.enum(['base_id_then_name', 'name_only']).optional(),
+});
+
+export type ImportTemplateParameterImportDto = z.infer<
+  typeof importTemplateParameterImportSchema
+>;
+
 export const importExportTemplateSchema = namedDtoSchema.extend({
   mappings: z.array(importExportTemplateMappingSchema),
   exportImagesAsBase64: z.boolean().optional(),
+  parameterImport: importTemplateParameterImportSchema.optional(),
 });
 
 export type ImportExportTemplateDto = z.infer<typeof importExportTemplateSchema>;

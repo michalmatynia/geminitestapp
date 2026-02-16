@@ -14,20 +14,20 @@ import {
   normalizeMenuSettings,
 } from '@/features/cms/types/menu-settings';
 import type { ColorScheme } from '@/features/cms/types/theme-settings';
-import { ANIMATION_PRESETS, type AnimationPreset } from '@/features/gsap/types/animation';
+import { ANIMATION_PRESETS } from '@/features/gsap/types/animation';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Input,
-  Label,
   SelectSimple,
-  Checkbox,
   Button,
   SectionHeader,
-  
   FormSection,
-  FormField,
 } from '@/shared/ui';
+import {
+  SettingsField,
+  SettingsFieldsRenderer,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { useThemeSettings } from './ThemeSettingsContext';
@@ -87,369 +87,6 @@ const FONT_WEIGHT_OPTIONS = [
   { label: '800 – Extra Bold', value: '800' },
   { label: '900 – Black', value: '900' },
 ];
-
-import {
-  SettingsField,
-  SettingsFieldsRenderer,
-} from '@/shared/ui/templates/SettingsPanelBuilder';
-
-// ... existing imports ...
-
-// Remove custom helpers: ColorField, NumberField, RangeField, SelectField, CheckboxField
-// Keep FONT_FAMILY_OPTIONS, FONT_WEIGHT_OPTIONS, etc.
-
-// ... inside MenuSettingsPanel ...
-
-  const getFieldsForSection = useCallback(
-    (section: string): SettingsField<MenuSettings>[] => {
-      switch (section) {
-        case 'Visibility & Placement':
-          return [
-            { key: 'showMenu', label: 'Show menu', type: 'checkbox' },
-            {
-              key: 'menuPlacement',
-              label: 'Menu position',
-              type: 'select',
-              options: [
-                { label: 'Top', value: 'top' },
-                { label: 'Left', value: 'left' },
-                { label: 'Right', value: 'right' },
-              ],
-            },
-            { key: 'collapsible', label: 'Collapsible menu', type: 'checkbox' },
-            ...(settings.collapsible
-              ? [{ key: 'collapsedByDefault', label: 'Collapsed by default', type: 'checkbox' } as SettingsField<MenuSettings>]
-              : []),
-            ...((settings.menuPlacement === 'left' || settings.menuPlacement === 'right')
-              ? [{
-                  key: 'sideWidth',
-                  label: 'Side width',
-                  type: 'range',
-                  min: 160,
-                  max: 420,
-                  suffix: 'px',
-                } as SettingsField<MenuSettings>]
-              : []),
-            ...(settings.collapsible
-              ? [{
-                  key: 'collapsedWidth',
-                  label: 'Collapsed width',
-                  type: 'range',
-                  min: 48,
-                  max: 120,
-                  suffix: 'px',
-                } as SettingsField<MenuSettings>]
-              : []),
-          ];
-
-        case 'Menu Layout':
-          return [
-            {
-              key: 'layoutStyle',
-              label: 'Layout style',
-              type: 'select',
-              options: [
-                { label: 'Horizontal', value: 'horizontal' },
-                { label: 'Vertical', value: 'vertical' },
-                { label: 'Centered', value: 'centered' },
-              ],
-            },
-            {
-              key: 'alignment',
-              label: 'Alignment',
-              type: 'select',
-              options: [
-                { label: 'Left', value: 'left' },
-                { label: 'Center', value: 'center' },
-                { label: 'Right', value: 'right' },
-                { label: 'Space between', value: 'space-between' },
-              ],
-            },
-            {
-              key: 'maxWidth',
-              label: 'Max width',
-              type: 'range',
-              min: 800,
-              max: 1400,
-              suffix: 'px',
-            },
-            { key: 'fullWidth', label: 'Full width', type: 'checkbox' },
-          ];
-
-        case 'Menu Images':
-          return [
-            { key: 'showItemImages', label: 'Show item images', type: 'checkbox' },
-            ...(settings.showItemImages
-              ? [{
-                  key: 'itemImageSize',
-                  label: 'Image size',
-                  type: 'range',
-                  min: 12,
-                  max: 48,
-                  suffix: 'px',
-                } as SettingsField<MenuSettings>]
-              : []),
-          ];
-
-        case 'Typography':
-          return [
-            {
-              key: 'fontFamily',
-              label: 'Font family',
-              type: 'select',
-              options: FONT_FAMILY_OPTIONS,
-            },
-            {
-              key: 'fontSize',
-              label: 'Font size',
-              type: 'number',
-              min: 10,
-              max: 32,
-              suffix: 'px',
-            },
-            {
-              key: 'fontWeight',
-              label: 'Font weight',
-              type: 'select',
-              options: FONT_WEIGHT_OPTIONS,
-            },
-            {
-              key: 'letterSpacing',
-              label: 'Letter spacing',
-              type: 'number',
-              min: -2,
-              max: 10,
-              step: 0.1,
-              suffix: 'px',
-            },
-            {
-              key: 'textTransform',
-              label: 'Text transform',
-              type: 'select',
-              options: [
-                { label: 'None', value: 'none' },
-                { label: 'Uppercase', value: 'uppercase' },
-                { label: 'Capitalize', value: 'capitalize' },
-              ],
-            },
-          ];
-
-        case 'Colors':
-          return [
-            {
-              key: 'menuColorSchemeId',
-              label: 'Color scheme',
-              type: 'select',
-              options: colorSchemeOptions,
-            },
-            ...(menuColorSchemeId === 'custom'
-              ? ([
-                  { key: 'backgroundColor', label: 'Background', type: 'color' },
-                  { key: 'textColor', label: 'Text color', type: 'color' },
-                  { key: 'activeItemColor', label: 'Active item', type: 'color' },
-                  { key: 'borderColor', label: 'Border', type: 'color' },
-                ] as SettingsField<MenuSettings>[])
-              : []),
-          ];
-
-        case 'Spacing':
-            // Custom render for padding grid
-          return [
-              {
-                  key: 'paddingTop',
-                  label: 'Padding Top',
-                  type: 'number',
-                  min: 0,
-                  max: 100,
-                  suffix: 'px'
-              },
-               {
-                  key: 'paddingRight',
-                  label: 'Padding Right',
-                  type: 'number',
-                  min: 0,
-                  max: 100,
-                  suffix: 'px'
-              },
-               {
-                  key: 'paddingBottom',
-                  label: 'Padding Bottom',
-                  type: 'number',
-                  min: 0,
-                  max: 100,
-                  suffix: 'px'
-              },
-               {
-                  key: 'paddingLeft',
-                  label: 'Padding Left',
-                  type: 'number',
-                  min: 0,
-                  max: 100,
-                  suffix: 'px'
-              },
-            {
-              key: 'itemGap',
-              label: 'Item gap',
-              type: 'range',
-              min: 0,
-              max: 40,
-              suffix: 'px',
-            },
-          ];
-
-        case 'Mobile Menu':
-          return [
-            {
-              key: 'mobileBreakpoint',
-              label: 'Breakpoint',
-              type: 'select',
-              options: [
-                { label: '768px (Tablet)', value: '768' },
-                { label: '1024px (Small desktop)', value: '1024' },
-                { label: '1280px (Large desktop)', value: '1280' },
-              ],
-            },
-            {
-              key: 'mobileAnimation',
-              label: 'Animation',
-              type: 'select',
-              options: [
-                { label: 'Slide left', value: 'slide-left' },
-                { label: 'Slide right', value: 'slide-right' },
-                { label: 'Slide down', value: 'slide-down' },
-                { label: 'Fade', value: 'fade' },
-              ],
-            },
-            { key: 'hamburgerColor', label: 'Hamburger color', type: 'color' },
-            { key: 'mobileOverlay', label: 'Show overlay', type: 'checkbox' },
-          ];
-
-        case 'Dropdown Style':
-          return [
-            { key: 'dropdownBg', label: 'Background', type: 'color' },
-            { key: 'dropdownTextColor', label: 'Text color', type: 'color' },
-            {
-              key: 'dropdownRadius',
-              label: 'Border radius',
-              type: 'number',
-              min: 0,
-              max: 24,
-              suffix: 'px',
-            },
-            {
-              key: 'dropdownShadow',
-              label: 'Shadow',
-              type: 'select',
-              options: [
-                { label: 'None', value: 'none' },
-                { label: 'Small', value: 'small' },
-                { label: 'Medium', value: 'medium' },
-                { label: 'Large', value: 'large' },
-              ],
-            },
-            {
-              key: 'dropdownMinWidth',
-              label: 'Min width',
-              type: 'number',
-              min: 100,
-              max: 400,
-              suffix: 'px',
-            },
-          ];
-
-        case 'Sticky Behaviour': {
-            const isSticky = settings.positionMode === 'sticky';
-            const canHideOnScroll = isSticky || settings.menuPlacement === 'left' || settings.menuPlacement === 'right';
-            
-            return [
-                {
-                    key: 'positionMode',
-                    label: 'Menu position',
-                    type: 'select',
-                    options: [
-                        { label: 'Glued to top', value: 'sticky' },
-                        { label: 'Top of page', value: 'static' },
-                    ]
-                },
-                ...(isSticky ? [
-                    { key: 'stickyOffset', label: 'Sticky offset', type: 'number', min: 0, max: 200, suffix: 'px' },
-                    { key: 'shrinkOnScroll', label: 'Shrink on scroll', type: 'checkbox' },
-                    { key: 'stickyBackground', label: 'Sticky background', type: 'color' },
-                ] as SettingsField<MenuSettings>[] : []),
-                ...(canHideOnScroll ? [
-                    { key: 'hideOnScroll', label: 'Hide on scroll', type: 'checkbox' },
-                    ...(settings.hideOnScroll ? [
-                        { key: 'showOnScrollUpAfterPx', label: 'Show on scroll up after', type: 'number', min: 0, max: 600, suffix: 'px' }
-                    ] as SettingsField<MenuSettings>[] : [])
-                ] as SettingsField<MenuSettings>[] : [])
-            ];
-        }
-
-        case 'Active State':
-          return [
-            {
-              key: 'activeStyle',
-              label: 'Style',
-              type: 'select',
-              options: [
-                { label: 'Underline', value: 'underline' },
-                { label: 'Bold', value: 'bold' },
-                { label: 'Background', value: 'background' },
-                { label: 'Border bottom', value: 'border-bottom' },
-                { label: 'None', value: 'none' },
-              ],
-            },
-            { key: 'activeColor', label: 'Active color', type: 'color' },
-          ];
-
-        case 'Hover Effects':
-          return [
-            {
-              key: 'hoverStyle',
-              label: 'Style',
-              type: 'select',
-              options: [
-                { label: 'Underline', value: 'underline' },
-                { label: 'Color shift', value: 'color-shift' },
-                { label: 'Background', value: 'background' },
-                { label: 'Scale', value: 'scale' },
-                { label: 'None', value: 'none' },
-              ],
-            },
-            { key: 'hoverColor', label: 'Hover color', type: 'color' },
-            {
-              key: 'transitionSpeed',
-              label: 'Transition speed',
-              type: 'range',
-              min: 100,
-              max: 500,
-              suffix: 'ms',
-            },
-          ];
-
-        case 'Animations':
-          return [
-            {
-              key: 'menuEntryAnimation',
-              label: 'Entry animation',
-              type: 'select',
-              options: ANIMATION_PRESETS,
-            },
-            {
-              key: 'menuHoverAnimation',
-              label: 'Hover animation',
-              type: 'select',
-              options: ANIMATION_PRESETS,
-            },
-          ];
-
-        default:
-          return [];
-      }
-    },
-    [settings, colorSchemeOptions, menuColorSchemeId]
-  );
-
 
 // ---------------------------------------------------------------------------
 // Panel
@@ -530,10 +167,6 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
     return settingsStore.map.has(menuKey);
   }, [menuKey, settingsStore.map, zoningEnabled]);
 
-  const update = useCallback(<K extends keyof MenuSettings>(key: K, value: MenuSettings[K]): void => {
-    setUserSettings((prev: MenuSettings | null) => ({ ...(prev ?? initialSettings), [key]: value }));
-  }, [initialSettings]);
-
   const addMenuItem = useCallback((): void => {
     setUserSettings((prev: MenuSettings | null) => {
       const current = prev ?? initialSettings;
@@ -568,6 +201,355 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
       };
     });
   }, [initialSettings]);
+
+  const getFieldsForSection = useCallback(
+    (section: string): SettingsField<MenuSettings>[] => {
+      switch (section) {
+        case 'Visibility & Placement':
+          return [
+            { key: 'showMenu', label: 'Show menu', type: 'checkbox' },
+            {
+              key: 'menuPlacement',
+              label: 'Menu position',
+              type: 'select',
+              options: [
+                { label: 'Top', value: 'top' },
+                { label: 'Left', value: 'left' },
+                { label: 'Right', value: 'right' },
+              ],
+            },
+            { key: 'collapsible', label: 'Collapsible menu', type: 'checkbox' },
+            ...(settings.collapsible
+              ? [{ key: 'collapsedByDefault', label: 'Collapsed by default', type: 'checkbox' } as SettingsField<MenuSettings>]
+              : []),
+            ...((settings.menuPlacement === 'left' || settings.menuPlacement === 'right')
+              ? [{
+                key: 'sideWidth',
+                label: 'Side width',
+                type: 'range',
+                min: 160,
+                max: 420,
+                suffix: 'px',
+              } as SettingsField<MenuSettings>]
+              : []),
+            ...(settings.collapsible
+              ? [{
+                key: 'collapsedWidth',
+                label: 'Collapsed width',
+                type: 'range',
+                min: 48,
+                max: 120,
+                suffix: 'px',
+              } as SettingsField<MenuSettings>]
+              : []),
+          ];
+
+        case 'Menu Layout':
+          return [
+            {
+              key: 'layoutStyle',
+              label: 'Layout style',
+              type: 'select',
+              options: [
+                { label: 'Horizontal', value: 'horizontal' },
+                { label: 'Vertical', value: 'vertical' },
+                { label: 'Centered', value: 'centered' },
+              ],
+            },
+            {
+              key: 'alignment',
+              label: 'Alignment',
+              type: 'select',
+              options: [
+                { label: 'Left', value: 'left' },
+                { label: 'Center', value: 'center' },
+                { label: 'Right', value: 'right' },
+                { label: 'Space between', value: 'space-between' },
+              ],
+            },
+            {
+              key: 'maxWidth',
+              label: 'Max width',
+              type: 'range',
+              min: 800,
+              max: 1400,
+              suffix: 'px',
+            },
+            { key: 'fullWidth', label: 'Full width', type: 'checkbox' },
+          ];
+
+        case 'Menu Images':
+          return [
+            { key: 'showItemImages', label: 'Show item images', type: 'checkbox' },
+            ...(settings.showItemImages
+              ? [{
+                key: 'itemImageSize',
+                label: 'Image size',
+                type: 'range',
+                min: 12,
+                max: 48,
+                suffix: 'px',
+              } as SettingsField<MenuSettings>]
+              : []),
+          ];
+
+        case 'Typography':
+          return [
+            {
+              key: 'fontFamily',
+              label: 'Font family',
+              type: 'select',
+              options: FONT_FAMILY_OPTIONS,
+            },
+            {
+              key: 'fontSize',
+              label: 'Font size',
+              type: 'number',
+              min: 10,
+              max: 32,
+              suffix: 'px',
+            },
+            {
+              key: 'fontWeight',
+              label: 'Font weight',
+              type: 'select',
+              options: FONT_WEIGHT_OPTIONS,
+            },
+            {
+              key: 'letterSpacing',
+              label: 'Letter spacing',
+              type: 'number',
+              min: -2,
+              max: 10,
+              step: 0.1,
+              suffix: 'px',
+            },
+            {
+              key: 'textTransform',
+              label: 'Text transform',
+              type: 'select',
+              options: [
+                { label: 'None', value: 'none' },
+                { label: 'Uppercase', value: 'uppercase' },
+                { label: 'Capitalize', value: 'capitalize' },
+              ],
+            },
+          ];
+
+        case 'Colors':
+          return [
+            {
+              key: 'menuColorSchemeId',
+              label: 'Color scheme',
+              type: 'select',
+              options: colorSchemeOptions,
+            },
+            ...(menuColorSchemeId === 'custom'
+              ? ([
+                { key: 'backgroundColor', label: 'Background', type: 'color' },
+                { key: 'textColor', label: 'Text color', type: 'color' },
+                { key: 'activeItemColor', label: 'Active item', type: 'color' },
+                { key: 'borderColor', label: 'Border', type: 'color' },
+              ] as SettingsField<MenuSettings>[])
+              : []),
+          ];
+
+        case 'Spacing':
+          return [
+            {
+              key: 'paddingTop',
+              label: 'Padding Top',
+              type: 'number',
+              min: 0,
+              max: 100,
+              suffix: 'px'
+            },
+            {
+              key: 'paddingRight',
+              label: 'Padding Right',
+              type: 'number',
+              min: 0,
+              max: 100,
+              suffix: 'px'
+            },
+            {
+              key: 'paddingBottom',
+              label: 'Padding Bottom',
+              type: 'number',
+              min: 0,
+              max: 100,
+              suffix: 'px'
+            },
+            {
+              key: 'paddingLeft',
+              label: 'Padding Left',
+              type: 'number',
+              min: 0,
+              max: 100,
+              suffix: 'px'
+            },
+            {
+              key: 'itemGap',
+              label: 'Item gap',
+              type: 'range',
+              min: 0,
+              max: 40,
+              suffix: 'px',
+            },
+          ];
+
+        case 'Mobile Menu':
+          return [
+            {
+              key: 'mobileBreakpoint',
+              label: 'Breakpoint',
+              type: 'select',
+              options: [
+                { label: '768px (Tablet)', value: '768' },
+                { label: '1024px (Small desktop)', value: '1024' },
+                { label: '1280px (Large desktop)', value: '1280' },
+              ],
+            },
+            {
+              key: 'mobileAnimation',
+              label: 'Animation',
+              type: 'select',
+              options: [
+                { label: 'Slide left', value: 'slide-left' },
+                { label: 'Slide right', value: 'slide-right' },
+                { label: 'Slide down', value: 'slide-down' },
+                { label: 'Fade', value: 'fade' },
+              ],
+            },
+            { key: 'hamburgerColor', label: 'Hamburger color', type: 'color' },
+            { key: 'mobileOverlay', label: 'Show overlay', type: 'checkbox' },
+          ];
+
+        case 'Dropdown Style':
+          return [
+            { key: 'dropdownBg', label: 'Background', type: 'color' },
+            { key: 'dropdownTextColor', label: 'Text color', type: 'color' },
+            {
+              key: 'dropdownRadius',
+              label: 'Border radius',
+              type: 'number',
+              min: 0,
+              max: 24,
+              suffix: 'px',
+            },
+            {
+              key: 'dropdownShadow',
+              label: 'Shadow',
+              type: 'select',
+              options: [
+                { label: 'None', value: 'none' },
+                { label: 'Small', value: 'small' },
+                { label: 'Medium', value: 'medium' },
+                { label: 'Large', value: 'large' },
+              ],
+            },
+            {
+              key: 'dropdownMinWidth',
+              label: 'Min width',
+              type: 'number',
+              min: 100,
+              max: 400,
+              suffix: 'px',
+            },
+          ];
+
+        case 'Sticky Behaviour': {
+          const isSticky = settings.positionMode === 'sticky';
+          const canHideOnScroll = isSticky || settings.menuPlacement === 'left' || settings.menuPlacement === 'right';
+            
+          return [
+            {
+              key: 'positionMode',
+              label: 'Menu position',
+              type: 'select',
+              options: [
+                { label: 'Glued to top', value: 'sticky' },
+                { label: 'Top of page', value: 'static' },
+              ]
+            },
+            ...(isSticky ? [
+              { key: 'stickyOffset', label: 'Sticky offset', type: 'number', min: 0, max: 200, suffix: 'px' },
+              { key: 'shrinkOnScroll', label: 'Shrink on scroll', type: 'checkbox' },
+              { key: 'stickyBackground', label: 'Sticky background', type: 'color' },
+            ] as SettingsField<MenuSettings>[] : []),
+            ...(canHideOnScroll ? [
+              { key: 'hideOnScroll', label: 'Hide on scroll', type: 'checkbox' },
+              ...(settings.hideOnScroll ? [
+                { key: 'showOnScrollUpAfterPx', label: 'Show on scroll up after', type: 'number', min: 0, max: 600, suffix: 'px' }
+              ] as SettingsField<MenuSettings>[] : [])
+            ] as SettingsField<MenuSettings>[] : [])
+          ];
+        }
+
+        case 'Active State':
+          return [
+            {
+              key: 'activeStyle',
+              label: 'Style',
+              type: 'select',
+              options: [
+                { label: 'Underline', value: 'underline' },
+                { label: 'Bold', value: 'bold' },
+                { label: 'Background', value: 'background' },
+                { label: 'Border bottom', value: 'border-bottom' },
+                { label: 'None', value: 'none' },
+              ],
+            },
+            { key: 'activeColor', label: 'Active color', type: 'color' },
+          ];
+
+        case 'Hover Effects':
+          return [
+            {
+              key: 'hoverStyle',
+              label: 'Style',
+              type: 'select',
+              options: [
+                { label: 'Underline', value: 'underline' },
+                { label: 'Color shift', value: 'color-shift' },
+                { label: 'Background', value: 'background' },
+                { label: 'Scale', value: 'scale' },
+                { label: 'None', value: 'none' },
+              ],
+            },
+            { key: 'hoverColor', label: 'Hover color', type: 'color' },
+            {
+              key: 'transitionSpeed',
+              label: 'Transition speed',
+              type: 'range',
+              min: 100,
+              max: 500,
+              suffix: 'ms',
+            },
+          ];
+
+        case 'Animations':
+          return [
+            {
+              key: 'menuEntryAnimation',
+              label: 'Entry animation',
+              type: 'select',
+              options: ANIMATION_PRESETS,
+            },
+            {
+              key: 'menuHoverAnimation',
+              label: 'Hover animation',
+              type: 'select',
+              options: ANIMATION_PRESETS,
+            },
+          ];
+
+        default:
+          return [];
+      }
+    },
+    [settings, colorSchemeOptions, menuColorSchemeId]
+  );
 
   useEffect((): void => {
     if (!settingsReady) return;
@@ -606,501 +588,79 @@ export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean 
 
   const renderSectionBody = useCallback(
     (section: string): React.ReactNode => {
-      switch (section) {
-        case 'Visibility & Placement':
-          return (
-            <div className='space-y-3'>
-              <CheckboxField
-                label='Show menu'
-                checked={settings.showMenu}
-                onChange={(v: boolean): void => update('showMenu', v)}
-              />
-              <SelectField
-                label='Menu position'
-                value={settings.menuPlacement}
-                onChange={(v: string): void => update('menuPlacement', v as 'top' | 'left' | 'right')}
-                options={[
-                  { label: 'Top', value: 'top' },
-                  { label: 'Left', value: 'left' },
-                  { label: 'Right', value: 'right' },
-                ]}
-              />
-              <CheckboxField
-                label='Collapsible menu'
-                checked={settings.collapsible}
-                onChange={(v: boolean): void => update('collapsible', v)}
-              />
-              {settings.collapsible && (
-                <CheckboxField
-                  label='Collapsed by default'
-                  checked={settings.collapsedByDefault}
-                  onChange={(v: boolean): void => update('collapsedByDefault', v)}
-                />
-              )}
-              {(settings.menuPlacement === 'left' || settings.menuPlacement === 'right') && (
-                <>
-                  <RangeField
-                    label='Side width'
-                    value={settings.sideWidth}
-                    onChange={(v: number): void => update('sideWidth', v)}
-                    min={160}
-                    max={420}
-                    suffix='px'
-                  />
-                  {settings.collapsible && (
-                    <RangeField
-                      label='Collapsed width'
-                      value={settings.collapsedWidth}
-                      onChange={(v: number): void => update('collapsedWidth', v)}
-                      min={48}
-                      max={120}
-                      suffix='px'
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          );
-
-        case 'Menu Layout':
-          return (
-            <div className='space-y-3'>
-              <SelectField
-                label='Layout style'
-                value={settings.layoutStyle}
-                onChange={(v: string): void => update('layoutStyle', v)}
-                options={[
-                  { label: 'Horizontal', value: 'horizontal' },
-                  { label: 'Vertical', value: 'vertical' },
-                  { label: 'Centered', value: 'centered' },
-                ]}
-              />
-              <SelectField
-                label='Alignment'
-                value={settings.alignment}
-                onChange={(v: string): void => update('alignment', v)}
-                options={[
-                  { label: 'Left', value: 'left' },
-                  { label: 'Center', value: 'center' },
-                  { label: 'Right', value: 'right' },
-                  { label: 'Space between', value: 'space-between' },
-                ]}
-              />
-              <RangeField
-                label='Max width'
-                value={settings.maxWidth}
-                onChange={(v: number): void => update('maxWidth', v)}
-                min={800}
-                max={1400}
-                suffix='px'
-              />
-              <CheckboxField
-                label='Full width'
-                checked={settings.fullWidth}
-                onChange={(v: boolean): void => update('fullWidth', v)}
-              />
-            </div>
-          );
-
-        case 'Menu Items':
-          return (
-            <div className='space-y-2'>
-              {settings.items.map((item: MenuItem) => (
-                <div
-                  key={item.id}
-                  className='flex items-start gap-1.5 rounded-md border border-border/60 bg-card/30 p-2'
-                >
-                  <div className='flex-1 space-y-1.5'>
-                    <Input
-                      value={item.label}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateMenuItem(item.id, 'label', e.target.value)
-                      }
-                      placeholder='Label'
-                      className='h-7 bg-gray-800/40 text-xs'
-                    />
-                    <Input
-                      value={item.url}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                        updateMenuItem(item.id, 'url', e.target.value)
-                      }
-                      placeholder='URL'
-                      className='h-7 bg-gray-800/40 text-xs'
-                    />
-                    {settings.showItemImages && (
-                      <Input
-                        value={item.imageUrl ?? ''}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                          updateMenuItem(item.id, 'imageUrl', e.target.value)
-                        }
-                        placeholder='Image URL'
-                        className='h-7 bg-gray-800/40 text-xs'
-                      />
-                    )}
-                  </div>
-                  <button
-                    type='button'
-                    onClick={(): void => removeMenuItem(item.id)}
-                    className='mt-1 rounded p-1 text-gray-500 hover:text-red-300 hover:bg-red-500/10'
-                    title='Remove item'
-                  >
-                    <Trash2 className='size-3.5' />
-                  </button>
-                </div>
-              ))}
-              <Button
-                size='sm'
-                variant='outline'
-                className='w-full text-xs'
-                onClick={addMenuItem}
+      if (section === 'Menu Items') {
+        return (
+          <div className='space-y-2'>
+            {settings.items.map((item: MenuItem) => (
+              <div
+                key={item.id}
+                className='flex items-start gap-1.5 rounded-md border border-border/60 bg-card/30 p-2'
               >
-                <Plus className='mr-1.5 size-3.5' />
-                Add menu item
-              </Button>
-            </div>
-          );
-
-        case 'Menu Images':
-          return (
-            <div className='space-y-3'>
-              <CheckboxField
-                label='Show item images'
-                checked={settings.showItemImages}
-                onChange={(v: boolean): void => update('showItemImages', v)}
-              />
-              {settings.showItemImages && (
-                <RangeField
-                  label='Image size'
-                  value={settings.itemImageSize}
-                  onChange={(v: number): void => update('itemImageSize', v)}
-                  min={12}
-                  max={48}
-                  suffix='px'
-                />
-              )}
-            </div>
-          );
-
-        case 'Typography':
-          return (
-            <div className='space-y-3'>
-              <SelectField
-                label='Font family'
-                value={settings.fontFamily}
-                onChange={(v: string): void => update('fontFamily', v)}
-                options={FONT_FAMILY_OPTIONS}
-              />
-              <NumberField
-                label='Font size'
-                value={settings.fontSize}
-                onChange={(v: number): void => update('fontSize', v)}
-                suffix='px'
-                min={10}
-                max={32}
-              />
-              <SelectField
-                label='Font weight'
-                value={settings.fontWeight}
-                onChange={(v: string): void => update('fontWeight', v)}
-                options={FONT_WEIGHT_OPTIONS}
-              />
-              <NumberField
-                label='Letter spacing'
-                value={settings.letterSpacing}
-                onChange={(v: number): void => update('letterSpacing', v)}
-                suffix='px'
-                min={-2}
-                max={10}
-              />
-              <SelectField
-                label='Text transform'
-                value={settings.textTransform}
-                onChange={(v: string): void => update('textTransform', v)}
-                options={[
-                  { label: 'None', value: 'none' },
-                  { label: 'Uppercase', value: 'uppercase' },
-                  { label: 'Capitalize', value: 'capitalize' },
-                ]}
-              />
-            </div>
-          );
-
-        case 'Colors':
-          return (
-            <div className='space-y-3'>
-              <SelectField
-                label='Color scheme'
-                value={menuColorSchemeId}
-                onChange={(v: string): void => update('menuColorSchemeId', v)}
-                options={colorSchemeOptions}
-              />
-              {menuColorSchemeId === 'custom' && (
-                <>
-                  <ColorField
-                    label='Background'
-                    value={settings.backgroundColor}
-                    onChange={(v: string): void => update('backgroundColor', v)}
+                <div className='flex-1 space-y-1.5'>
+                  <Input
+                    value={item.label}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateMenuItem(item.id, 'label', e.target.value)
+                    }
+                    placeholder='Label'
+                    className='h-7 bg-gray-800/40 text-xs'
                   />
-                  <ColorField
-                    label='Text color'
-                    value={settings.textColor}
-                    onChange={(v: string): void => update('textColor', v)}
+                  <Input
+                    value={item.url}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateMenuItem(item.id, 'url', e.target.value)
+                    }
+                    placeholder='URL'
+                    className='h-7 bg-gray-800/40 text-xs'
                   />
-                  <ColorField
-                    label='Active item'
-                    value={settings.activeItemColor}
-                    onChange={(v: string): void => update('activeItemColor', v)}
-                  />
-                  <ColorField
-                    label='Border'
-                    value={settings.borderColor}
-                    onChange={(v: string): void => update('borderColor', v)}
-                  />
-                </>
-              )}
-            </div>
-          );
-
-        case 'Spacing':
-          return (
-            <div className='space-y-3'>
-              <Label className='text-[10px] uppercase tracking-wider text-gray-500'>Padding</Label>
-              <div className='grid grid-cols-2 gap-2'>
-                <NumberField label='Top' value={settings.paddingTop} onChange={(v: number): void => update('paddingTop', v)} suffix='px' min={0} max={100} />
-                <NumberField label='Right' value={settings.paddingRight} onChange={(v: number): void => update('paddingRight', v)} suffix='px' min={0} max={100} />
-                <NumberField label='Bottom' value={settings.paddingBottom} onChange={(v: number): void => update('paddingBottom', v)} suffix='px' min={0} max={100} />
-                <NumberField label='Left' value={settings.paddingLeft} onChange={(v: number): void => update('paddingLeft', v)} suffix='px' min={0} max={100} />
-              </div>
-              <RangeField
-                label='Item gap'
-                value={settings.itemGap}
-                onChange={(v: number): void => update('itemGap', v)}
-                min={0}
-                max={40}
-                suffix='px'
-              />
-            </div>
-          );
-
-        case 'Mobile Menu':
-          return (
-            <div className='space-y-3'>
-              <SelectField
-                label='Breakpoint'
-                value={settings.mobileBreakpoint}
-                onChange={(v: string): void => update('mobileBreakpoint', v)}
-                options={[
-                  { label: '768px (Tablet)', value: '768' },
-                  { label: '1024px (Small desktop)', value: '1024' },
-                  { label: '1280px (Large desktop)', value: '1280' },
-                ]}
-              />
-              <SelectField
-                label='Animation'
-                value={settings.mobileAnimation}
-                onChange={(v: string): void => update('mobileAnimation', v)}
-                options={[
-                  { label: 'Slide left', value: 'slide-left' },
-                  { label: 'Slide right', value: 'slide-right' },
-                  { label: 'Slide down', value: 'slide-down' },
-                  { label: 'Fade', value: 'fade' },
-                ]}
-              />
-              <ColorField
-                label='Hamburger color'
-                value={settings.hamburgerColor}
-                onChange={(v: string): void => update('hamburgerColor', v)}
-              />
-              <CheckboxField
-                label='Show overlay'
-                checked={settings.mobileOverlay}
-                onChange={(v: boolean): void => update('mobileOverlay', v)}
-              />
-            </div>
-          );
-
-        case 'Dropdown Style':
-          return (
-            <div className='space-y-3'>
-              <ColorField
-                label='Background'
-                value={settings.dropdownBg}
-                onChange={(v: string): void => update('dropdownBg', v)}
-              />
-              <ColorField
-                label='Text color'
-                value={settings.dropdownTextColor}
-                onChange={(v: string): void => update('dropdownTextColor', v)}
-              />
-              <NumberField
-                label='Border radius'
-                value={settings.dropdownRadius}
-                onChange={(v: number): void => update('dropdownRadius', v)}
-                suffix='px'
-                min={0}
-                max={24}
-              />
-              <SelectField
-                label='Shadow'
-                value={settings.dropdownShadow}
-                onChange={(v: string): void => update('dropdownShadow', v)}
-                options={[
-                  { label: 'None', value: 'none' },
-                  { label: 'Small', value: 'small' },
-                  { label: 'Medium', value: 'medium' },
-                  { label: 'Large', value: 'large' },
-                ]}
-              />
-              <NumberField
-                label='Min width'
-                value={settings.dropdownMinWidth}
-                onChange={(v: number): void => update('dropdownMinWidth', v)}
-                suffix='px'
-                min={100}
-                max={400}
-              />
-            </div>
-          );
-
-        case 'Sticky Behaviour': {
-          const positionMode =
-            settings.positionMode ?? (settings.stickyEnabled ? 'sticky' : 'static');
-          const isSticky = positionMode === 'sticky';
-          const isSide = settings.menuPlacement === 'left' || settings.menuPlacement === 'right';
-          const canHideOnScroll = isSticky || isSide;
-          return (
-            <div className='space-y-3'>
-              <SelectField
-                label='Menu position'
-                value={positionMode}
-                onChange={(v: string): void => update('positionMode', v as 'static' | 'sticky')}
-                options={[
-                  { label: 'Glued to top', value: 'sticky' },
-                  { label: 'Top of page', value: 'static' },
-                ]}
-              />
-              {isSticky && (
-                <>
-                  <NumberField
-                    label='Sticky offset'
-                    value={settings.stickyOffset}
-                    onChange={(v: number): void => update('stickyOffset', v)}
-                    suffix='px'
-                    min={0}
-                    max={200}
-                  />
-                  <CheckboxField
-                    label='Shrink on scroll'
-                    checked={settings.shrinkOnScroll}
-                    onChange={(v: boolean): void => update('shrinkOnScroll', v)}
-                  />
-                  <ColorField
-                    label='Sticky background'
-                    value={settings.stickyBackground}
-                    onChange={(v: string): void => update('stickyBackground', v)}
-                  />
-                </>
-              )}
-              {canHideOnScroll && (
-                <>
-                  <CheckboxField
-                    label='Hide on scroll'
-                    checked={settings.hideOnScroll}
-                    onChange={(v: boolean): void => update('hideOnScroll', v)}
-                  />
-                  {settings.hideOnScroll && (
-                    <NumberField
-                      label='Show on scroll up after'
-                      value={settings.showOnScrollUpAfterPx}
-                      onChange={(v: number): void => update('showOnScrollUpAfterPx', v)}
-                      suffix='px'
-                      min={0}
-                      max={600}
+                  {settings.showItemImages && (
+                    <Input
+                      value={item.imageUrl ?? ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateMenuItem(item.id, 'imageUrl', e.target.value)
+                      }
+                      placeholder='Image URL'
+                      className='h-7 bg-gray-800/40 text-xs'
                     />
                   )}
-                </>
-              )}
-            </div>
-          );
-        }
-
-        case 'Active State':
-          return (
-            <div className='space-y-3'>
-              <SelectField
-                label='Style'
-                value={settings.activeStyle}
-                onChange={(v: string): void => update('activeStyle', v)}
-                options={[
-                  { label: 'Underline', value: 'underline' },
-                  { label: 'Bold', value: 'bold' },
-                  { label: 'Background', value: 'background' },
-                  { label: 'Border bottom', value: 'border-bottom' },
-                  { label: 'None', value: 'none' },
-                ]}
-              />
-              <ColorField
-                label='Active color'
-                value={settings.activeColor}
-                onChange={(v: string): void => update('activeColor', v)}
-              />
-            </div>
-          );
-
-        case 'Hover Effects':
-          return (
-            <div className='space-y-3'>
-              <SelectField
-                label='Style'
-                value={settings.hoverStyle}
-                onChange={(v: string): void => update('hoverStyle', v)}
-                options={[
-                  { label: 'Underline', value: 'underline' },
-                  { label: 'Color shift', value: 'color-shift' },
-                  { label: 'Background', value: 'background' },
-                  { label: 'Scale', value: 'scale' },
-                  { label: 'None', value: 'none' },
-                ]}
-              />
-              <ColorField
-                label='Hover color'
-                value={settings.hoverColor}
-                onChange={(v: string): void => update('hoverColor', v)}
-              />
-              <RangeField
-                label='Transition speed'
-                value={settings.transitionSpeed}
-                onChange={(v: number): void => update('transitionSpeed', v)}
-                min={100}
-                max={500}
-                suffix='ms'
-              />
-            </div>
-          );
-
-        case 'Animations':
-          return (
-            <div className='space-y-3'>
-              <SelectField
-                label='Entry animation'
-                value={settings.menuEntryAnimation}
-                onChange={(v: string): void => update('menuEntryAnimation', v as AnimationPreset)}
-                options={ANIMATION_PRESETS}
-              />
-              <SelectField
-                label='Hover animation'
-                value={settings.menuHoverAnimation}
-                onChange={(v: string): void => update('menuHoverAnimation', v as AnimationPreset)}
-                options={ANIMATION_PRESETS}
-              />
-            </div>
-          );
-
-        default:
-          return <div className='text-xs text-gray-500'>Settings coming soon.</div>;
+                </div>
+                <button
+                  type='button'
+                  onClick={(): void => removeMenuItem(item.id)}
+                  className='mt-1 rounded p-1 text-gray-500 hover:text-red-300 hover:bg-red-500/10'
+                  title='Remove item'
+                >
+                  <Trash2 className='size-3.5' />
+                </button>
+              </div>
+            ))}
+            <Button
+              size='sm'
+              variant='outline'
+              className='w-full text-xs'
+              onClick={addMenuItem}
+            >
+              <Plus className='mr-1.5 size-3.5' />
+              Add menu item
+            </Button>
+          </div>
+        );
       }
+
+      const fields = getFieldsForSection(section);
+      if (fields.length === 0) {
+        return <div className='text-xs text-gray-500'>Settings coming soon.</div>;
+      }
+
+      return (
+        <SettingsFieldsRenderer
+          fields={fields}
+          values={settings}
+          onChange={(values) => setUserSettings(prev => ({ ...(prev ?? initialSettings), ...values }))}
+        />
+      );
     },
-    [settings, update, addMenuItem, updateMenuItem, removeMenuItem, colorSchemeOptions, menuColorSchemeId]
+    [settings, initialSettings, getFieldsForSection, addMenuItem, updateMenuItem, removeMenuItem]
   );
 
   return (

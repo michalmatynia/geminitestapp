@@ -10,19 +10,17 @@ import {
   useSaveProducerMutation,
 } from '@/features/products/hooks/useProductMetadataQueries';
 import type { Producer } from '@/features/products/types';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { 
   Button, 
   EmptyState, 
-  Input, 
-  Label, 
   useToast,
   DataTable,
   ListPanel,
   PanelHeader,
   SearchInput,
-  FormModal,
 } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -31,8 +29,26 @@ type ProducerFormState = {
   website: string;
 };
 
+const FIELDS: SettingsField<ProducerFormState>[] = [
+  {
+    key: 'name',
+    label: 'Name',
+    type: 'text',
+    placeholder: 'Producer name',
+    required: true,
+  },
+  {
+    key: 'website',
+    label: 'Website',
+    type: 'text',
+    placeholder: 'https://...',
+    helperText: 'Optional official website URL',
+  }
+];
+
 export function AdminProductProducersPage(): React.JSX.Element {
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const producersQuery = useProducers();
   const saveMutation = useSaveProducerMutation();
   const deleteMutation = useDeleteProducerMutation();
@@ -42,7 +58,6 @@ export function AdminProductProducersPage(): React.JSX.Element {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Producer | null>(null);
-  const [toDelete, setToDelete] = useState<Producer | null>(null);
   const [form, setForm] = useState<ProducerFormState>({ name: '', website: '' });
 
   const filtered = useMemo((): Producer[] => {
@@ -84,17 +99,26 @@ export function AdminProductProducersPage(): React.JSX.Element {
     }
   };
 
-  const handleConfirmDelete = async (): Promise<void> => {
-    if (!toDelete) return;
-    try {
-      await deleteMutation.mutateAsync(toDelete.id);
-      toast('Producer deleted.', { variant: 'success' });
-    } catch (error) {
-      logClientError(error, { context: { source: 'AdminProductProducersPage', action: 'deleteProducer', producerId: toDelete.id } });
-      toast(error instanceof Error ? error.message : 'Failed to delete producer.', { variant: 'error' });
-    } finally {
-      setToDelete(null);
-    }
+  const handleChange = (vals: Partial<ProducerFormState>) => {
+    setForm(prev => ({ ...prev, ...vals }));
+  };
+
+  const confirmDelete = (producer: Producer): void => {
+    confirm({
+      title: 'Delete producer?',
+      message: `This will delete "${producer.name}".`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteMutation.mutateAsync(producer.id);
+          toast('Producer deleted.', { variant: 'success' });
+        } catch (error) {
+          logClientError(error, { context: { source: 'AdminProductProducersPage', action: 'deleteProducer', producerId: producer.id } });
+          toast(error instanceof Error ? error.message : 'Failed to delete producer.', { variant: 'error' });
+        }
+      }
+    });
   };
 
   const columns = useMemo<ColumnDef<Producer>[]>(() => [
@@ -132,7 +156,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
               type='button'
               size='xs'
               variant='outline'
-              onClick={(): void => setToDelete(producer)}
+              onClick={(): void => confirmDelete(producer)}
               className='text-red-300 hover:text-red-200'
               title='Delete producer'
             >
@@ -192,51 +216,19 @@ export function AdminProductProducersPage(): React.JSX.Element {
         />
       </ListPanel>
 
-      <FormModal
+      <SettingsPanelBuilder
         open={open}
         onClose={() => setOpen(false)}
         title={editing ? 'Edit Producer' : 'Create Producer'}
-        onSave={() => void handleSave()}
+        fields={FIELDS}
+        values={form}
+        onChange={handleChange}
+        onSave={handleSave}
         isSaving={saveMutation.isPending}
         size='sm'
-      >
-        <div className='space-y-4'>
-          <div>
-            <Label htmlFor='producer-name'>Name</Label>
-            <Input
-              id='producer-name'
-              value={form.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setForm((prev: ProducerFormState) => ({ ...prev, name: e.target.value }))
-              }
-              placeholder='Producer name'
-              autoFocus
-            />
-          </div>
-          <div>
-            <Label htmlFor='producer-website'>Website (optional)</Label>
-            <Input
-              id='producer-website'
-              value={form.website}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setForm((prev: ProducerFormState) => ({ ...prev, website: e.target.value }))
-              }
-              placeholder='https://...'
-            />
-          </div>
-        </div>
-      </FormModal>
-
-      <ConfirmModal
-        isOpen={!!toDelete}
-        onClose={() => setToDelete(null)}
-        onConfirm={handleConfirmDelete}
-        title='Delete producer?'
-        message={`This will delete "${toDelete?.name ?? ''}".`}
-        confirmText='Delete'
-        isDangerous={true}
-        loading={deleteMutation.isPending}
       />
+
+      <ConfirmationModal />
     </div>
   );
 }

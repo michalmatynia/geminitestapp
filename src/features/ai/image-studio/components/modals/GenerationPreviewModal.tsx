@@ -1,10 +1,11 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, Check } from 'lucide-react';
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { Button, StatusBadge } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 // TODO: These types should be defined in a more central place
 type LinkedGeneratedVariant = {
@@ -45,12 +46,12 @@ function InlineImagePreviewCanvas({
   }, [imageSrc, imageAlt, onImageDimensionsChange]);
 
   return (
-    <div className='flex h-64 items-center justify-center bg-black/20 rounded-md'>
+    <div className='flex h-[400px] items-center justify-center bg-black/40 rounded-lg border border-border/60 overflow-hidden shadow-inner'>
       {imageSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={imageSrc} alt={imageAlt} className='max-h-full max-w-full object-contain' />
       ) : (
-        <span className='text-gray-500'>No image available</span>
+        <span className='text-sm text-muted-foreground italic'>No preview available</span>
       )}
     </div>
   );
@@ -77,7 +78,6 @@ const formatLinkedVariantTimestamp = (value: string): string => {
 
 interface GenerationPreviewModalProps extends ModalStateProps {
   selectedGenerationPreview: LinkedGeneratedVariant | null;
-  generationModalPreviewNaturalSize: { width: number; height: number } | null;
   selectedGenerationModalDimensions: string;
   slotUpdateBusy: boolean;
   handleApplyLinkedVariantToCard: (variant: LinkedGeneratedVariant) => Promise<void>;
@@ -88,58 +88,73 @@ export function GenerationPreviewModal({
   isOpen,
   onClose,
   selectedGenerationPreview,
-  generationModalPreviewNaturalSize,
   selectedGenerationModalDimensions,
   slotUpdateBusy,
   handleApplyLinkedVariantToCard,
   setGenerationModalPreviewNaturalSize,
 }: GenerationPreviewModalProps): React.JSX.Element {
-  // Use props to satisfy TypeScript
-  React.useEffect(() => {
-    if (selectedGenerationPreview) {
-      console.log('GenerationPreviewModal dimensions:', selectedGenerationModalDimensions);
-      console.log('generationModalPreviewNaturalSize:', generationModalPreviewNaturalSize);
-    }
-  }, [selectedGenerationPreview, selectedGenerationModalDimensions, generationModalPreviewNaturalSize]);
-  
   return (
-    <AppModal
-      open={isOpen}
-      onOpenChange={onClose}
+    <DetailModal
+      isOpen={isOpen}
+      onClose={onClose}
       title='Generation Preview'
+      subtitle={selectedGenerationPreview?.output.filename ?? ''}
       size='xl'
       footer={
-        <div className='flex justify-end gap-2'>
-          <Button variant='outline' onClick={onClose}>Close</Button>
-          {selectedGenerationPreview && (
-            <Button
-              onClick={() => {
-                void handleApplyLinkedVariantToCard(selectedGenerationPreview);
-              }}
-              disabled={slotUpdateBusy}
-            >
-              {slotUpdateBusy && <Loader2 className='mr-2 size-4 animate-spin' />}
-              Apply to card
-            </Button>
-          )}
+        <div className='flex items-center justify-between w-full'>
+          <div className='flex gap-2'>
+            {selectedGenerationPreview && (
+              <StatusBadge status='AI Generated' variant='processing' size='sm' className='font-bold' />
+            )}
+          </div>
+          <div className='flex gap-2'>
+            <Button variant='outline' onClick={onClose}>Close Preview</Button>
+            {selectedGenerationPreview && (
+              <Button
+                onClick={() => {
+                  void handleApplyLinkedVariantToCard(selectedGenerationPreview);
+                }}
+                disabled={slotUpdateBusy}
+                className='gap-2'
+              >
+                {slotUpdateBusy ? <Loader2 className='size-4 animate-spin' /> : <Check className='size-4' />}
+                Apply to Card
+              </Button>
+            )}
+          </div>
         </div>
       }
     >
-      <div className='space-y-4'>
+      <div className='space-y-6'>
         <InlineImagePreviewCanvas
           imageSrc={selectedGenerationPreview?.imageSrc ?? null}
           imageAlt={selectedGenerationPreview?.output.filename || 'Generation preview'}
           onImageDimensionsChange={setGenerationModalPreviewNaturalSize}
         />
+        
         {selectedGenerationPreview && (
-          <div className='grid gap-2 text-xs text-gray-400'>
-            <p>File ID: {selectedGenerationPreview.output.id}</p>
-            <p>Dimensions: {selectedGenerationModalDimensions}</p>
-            <p>Size: {formatBytes(selectedGenerationPreview.output.size)}</p>
-            <p>Generated: {formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}</p>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-4 rounded-lg border border-border/40 bg-card/30 p-4'>
+            <div className='space-y-1'>
+              <p className='text-[10px] uppercase font-bold text-muted-foreground'>File Identifier</p>
+              <p className='text-xs font-mono text-gray-200 truncate' title={selectedGenerationPreview.output.id}>
+                {selectedGenerationPreview.output.id}
+              </p>
+            </div>
+            <div className='space-y-1'>
+              <p className='text-[10px] uppercase font-bold text-muted-foreground'>Dimensions</p>
+              <p className='text-xs font-medium text-gray-200'>{selectedGenerationModalDimensions}</p>
+            </div>
+            <div className='space-y-1'>
+              <p className='text-[10px] uppercase font-bold text-muted-foreground'>File Size</p>
+              <p className='text-xs font-medium text-gray-200'>{formatBytes(selectedGenerationPreview.output.size)}</p>
+            </div>
+            <div className='space-y-1'>
+              <p className='text-[10px] uppercase font-bold text-muted-foreground'>Generated On</p>
+              <p className='text-xs font-medium text-gray-200'>{formatLinkedVariantTimestamp(selectedGenerationPreview.runCreatedAt)}</p>
+            </div>
           </div>
         )}
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }

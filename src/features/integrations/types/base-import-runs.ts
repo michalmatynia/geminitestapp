@@ -55,6 +55,17 @@ export type BaseImportErrorClass =
   | 'configuration'
   | 'canceled';
 
+export type BaseImportParameterImportSummary = {
+  extracted: number;
+  resolved: number;
+  created: number;
+  written: number;
+};
+
+export type BaseImportRunParameterImportSummary = BaseImportParameterImportSummary & {
+  itemsApplied: number;
+};
+
 export type BaseImportRunStats = {
   total: number;
   pending: number;
@@ -63,6 +74,7 @@ export type BaseImportRunStats = {
   updated: number;
   skipped: number;
   failed: number;
+  parameterImportSummary?: BaseImportRunParameterImportSummary;
 };
 
 export type BaseImportRunParams = {
@@ -131,6 +143,7 @@ export type BaseImportItemRecord = {
   lastErrorAt?: string | null;
   importedProductId?: string | null;
   payloadSnapshot?: ProductCreateInput | null;
+  parameterImportSummary?: BaseImportParameterImportSummary | null;
   createdAt: string;
   updatedAt: string;
   startedAt?: string | null;

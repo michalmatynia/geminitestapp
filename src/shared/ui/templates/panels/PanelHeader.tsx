@@ -52,7 +52,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col gap-4 rounded-lg border border-gray-200 bg-white px-4 py-3',
+        'flex flex-col gap-4 rounded-lg border border-border/60 bg-card/40 px-4 py-3',
         compact && 'py-2',
         className
       )}
@@ -60,28 +60,28 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
       {/* Title and Description Section */}
       <div className='flex items-start gap-3'>
         {icon && (
-          <div className='mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-gray-100 text-gray-600'>
+          <div className='mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-muted/40 text-muted-foreground'>
             {icon}
           </div>
         )}
         <div className='flex-1'>
           <div className='flex items-center gap-2'>
-            <h2 className={cn('font-semibold text-gray-900', compact ? 'text-sm' : 'text-base')}>
+            <h2 className={cn('font-semibold text-foreground', compact ? 'text-sm' : 'text-base')}>
               {title}
             </h2>
             {subtitle && (
-              <span className='text-xs text-gray-500 font-medium'>{subtitle}</span>
+              <span className='text-xs text-muted-foreground font-medium'>{subtitle}</span>
             )}
           </div>
           {description && (
-            <p className='text-xs text-gray-600 mt-1'>{description}</p>
+            <p className='text-xs text-muted-foreground mt-1'>{description}</p>
           )}
         </div>
       </div>
 
       {/* Actions Section */}
       {(actions.length > 0 || refreshable || customActions) && (
-        <div className='flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100'>
+        <div className='flex flex-wrap items-center gap-2 pt-2 border-t border-border/50'>
           {/* Custom Actions Slot */}
           {customActions}
 

@@ -42,6 +42,11 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/features/integrations';
 import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
+import {
+  defaultBaseImportParameterImportSettings,
+  normalizeBaseImportParameterImportSettings,
+  type BaseImportParameterImportSettings,
+} from '@/features/integrations/types/base-import-parameter-import';
 import type { BaseImportMode } from '@/features/integrations/types/base-import-runs';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import { useToast } from '@/shared/ui';
@@ -84,6 +89,10 @@ interface ImportExportContextType {
   setExportTemplateDescription: (desc: string) => void;
   importTemplateMappings: TemplateMapping[];
   setImportTemplateMappings: React.Dispatch<React.SetStateAction<TemplateMapping[]>>;
+  importTemplateParameterImport: BaseImportParameterImportSettings;
+  setImportTemplateParameterImport: React.Dispatch<
+    React.SetStateAction<BaseImportParameterImportSettings>
+  >;
   exportTemplateMappings: TemplateMapping[];
   setExportTemplateMappings: React.Dispatch<React.SetStateAction<TemplateMapping[]>>;
   exportImagesAsBase64: boolean;
@@ -204,6 +213,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const [importTemplateDescription, setImportTemplateDescription] = useState('');
   const [exportTemplateDescription, setExportTemplateDescription] = useState('');
   const [importTemplateMappings, setImportTemplateMappings] = useState<TemplateMapping[]>([{ sourceKey: '', targetField: '' }]);
+  const [importTemplateParameterImport, setImportTemplateParameterImport] =
+    useState<BaseImportParameterImportSettings>(
+      defaultBaseImportParameterImportSettings
+    );
   const [exportTemplateMappings, setExportTemplateMappings] = useState<TemplateMapping[]>([{ sourceKey: '', targetField: '' }]);
   const [exportImagesAsBase64, setExportImagesAsBase64] = useState(false);
   const [exportStockFallbackEnabled, setExportStockFallbackEnabled] = useState(false);
@@ -354,6 +367,9 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       setImportTemplateName(template.name);
       setImportTemplateDescription(template.description ?? '');
       setImportTemplateMappings(nextMappings);
+      setImportTemplateParameterImport(
+        normalizeBaseImportParameterImportSettings(template.parameterImport)
+      );
     } else {
       setExportActiveTemplateId(template.id);
       setExportTemplateName(template.name);
@@ -661,11 +677,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       .filter((id: string): id is string => Boolean(id));
     const visibleSet = new Set(visibleIds);
     setSelectedImportIds((previous: Set<string>) => {
+      if (previous.size === 0) return previous;
       const retained = Array.from(previous).filter((id: string) => visibleSet.has(id));
-      if (retained.length > 0) {
-        return new Set(retained);
-      }
-      return new Set(visibleIds);
+      if (retained.length === previous.size) return previous;
+      return new Set(retained);
     });
   }, [importList, importListEnabled]);
 
@@ -899,6 +914,9 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       setImportTemplateName('');
       setImportTemplateDescription('');
       setImportTemplateMappings([{ sourceKey: '', targetField: '' }]);
+      setImportTemplateParameterImport(
+        defaultBaseImportParameterImportSettings
+      );
     } else {
       setExportActiveTemplateId('');
       setExportTemplateName('');
@@ -940,7 +958,16 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
           name: duplicatedName,
           description: sourceTemplate.description?.trim() || undefined,
           mappings: cleanMappings,
-          ...(isImport ? {} : { exportImagesAsBase64: sourceTemplate.exportImagesAsBase64 ?? false }),
+          ...(isImport
+            ? {
+              parameterImport: normalizeBaseImportParameterImportSettings(
+                sourceTemplate.parameterImport
+              ),
+            }
+            : {
+              exportImagesAsBase64:
+                  sourceTemplate.exportImagesAsBase64 ?? false,
+            }),
         },
       })) as Template;
       applyTemplate(duplicated, isImport ? 'import' : 'export');
@@ -979,7 +1006,13 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
           name: name.trim(),
           description: desc.trim() || undefined,
           mappings: cleanedMappings,
-          ...(isImport ? {} : { exportImagesAsBase64 }),
+          ...(isImport
+            ? {
+              parameterImport: normalizeBaseImportParameterImportSettings(
+                importTemplateParameterImport
+              ),
+            }
+            : { exportImagesAsBase64 }),
         }
       })) as Template;
       applyTemplate(res, isImport ? 'import' : 'export');
@@ -1047,6 +1080,8 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     setExportTemplateDescription,
     importTemplateMappings,
     setImportTemplateMappings,
+    importTemplateParameterImport,
+    setImportTemplateParameterImport,
     exportTemplateMappings,
     setExportTemplateMappings,
     exportImagesAsBase64,

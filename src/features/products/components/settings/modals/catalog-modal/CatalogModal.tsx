@@ -5,16 +5,18 @@ import React from 'react';
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import type { Catalog, PriceGroup } from '@/features/products/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { Alert, SettingsFormModal } from '@/shared/ui';
+import { Alert } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import { CatalogFormFields } from './CatalogFormFields';
 import { CatalogLanguagesSection } from './CatalogLanguagesSection';
 import { CatalogPriceGroupsSection } from './CatalogPriceGroupsSection';
 import { CatalogModalProvider } from './context/CatalogModalContext';
 import { useCatalogForm } from './hooks/useCatalogForm';
 import { toggleLanguage, moveLanguage, togglePriceGroup } from './utils/catalogModalUtils';
 
-interface CatalogModalProps extends EntityModalProps<Catalog, PriceGroup> {}
+interface CatalogModalProps extends EntityModalProps<Catalog, PriceGroup> {
+  defaultId?: string;
+}
 
 export function CatalogModal({
   isOpen,
@@ -172,28 +174,58 @@ export function CatalogModal({
     }
   };
 
-  return (
-    <SettingsFormModal
-      open={isOpen}
-      onClose={onClose}
-      title={catalog ? 'Edit Catalog' : 'Create Catalog'}
-      onSave={handleSubmit}
-      isSaving={saveMutation.isPending}
-      size='lg'
-    >
-      <CatalogModalProvider value={contextValue}>
-        <div className='space-y-6'>
-          {error && (
-            <Alert variant='error' className='p-3 text-xs'>
-              {error}
-            </Alert>
-          )}
+  const handleChange = (vals: Partial<typeof form>) => {
+    setForm(prev => ({ ...prev, ...vals }));
+  };
 
-          <CatalogFormFields />
-          <CatalogLanguagesSection />
-          <CatalogPriceGroupsSection />
+  const fields: SettingsField<typeof form>[] = [
+    {
+      key: 'name',
+      label: 'Catalog Name',
+      type: 'text',
+      placeholder: 'e.g. Main Catalog',
+      required: true,
+    },
+    {
+      key: 'isDefault',
+      label: 'Set as default catalog',
+      type: 'checkbox',
+    },
+    {
+      key: 'name', // Using key for custom section
+      label: 'Languages & Pricing',
+      type: 'custom',
+      render: () => (
+        <CatalogModalProvider value={contextValue}>
+          <div className='space-y-6'>
+            <CatalogLanguagesSection />
+            <CatalogPriceGroupsSection />
+          </div>
+        </CatalogModalProvider>
+      )
+    }
+  ];
+
+  return (
+    <>
+      <SettingsPanelBuilder
+        open={isOpen}
+        onClose={onClose}
+        title={catalog ? 'Edit Catalog' : 'Create Catalog'}
+        onSave={handleSubmit}
+        isSaving={saveMutation.isPending}
+        fields={fields}
+        values={form}
+        onChange={handleChange}
+        size='lg'
+      />
+      {error && (
+        <div className='fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-4'>
+          <Alert variant='error' className='shadow-2xl'>
+            {error}
+          </Alert>
         </div>
-      </CatalogModalProvider>
-    </SettingsFormModal>
+      )}
+    </>
   );
 }

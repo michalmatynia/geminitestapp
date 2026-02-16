@@ -16,6 +16,7 @@ import {
   SearchInput,
   EmptyState
 } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { ChatbotContextModal } from '../components/ChatbotContextModal';
 import { useChatbotContextState } from '../hooks/useChatbotContextState';
@@ -137,8 +138,8 @@ function ChatbotContextPageInner(): React.JSX.Element {
         title='Chatbot Context'
         description='Define global instructions and reference material applied to every chat.'
         icon={<MessageSquareQuote className='size-4' />}
-        eyebrow={
-          <a href='/admin/chatbot' className='text-blue-300 hover:text-blue-200'>
+        subtitle={
+          <a href='/admin/chatbot' className='text-blue-300 hover:text-blue-200 ml-2'>
             ← Back to chatbot
           </a>
         }

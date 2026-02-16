@@ -3,7 +3,8 @@
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { FormModal, Button } from '@/shared/ui';
+import { Button } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface SlotCreateModalProps extends ModalStateProps {
   onSelectMode: (mode: 'empty' | 'image' | 'local') => void;
@@ -17,8 +18,8 @@ export function SlotCreateModal({
   disabled = false,
 }: SlotCreateModalProps): React.JSX.Element | null {
   return (
-    <FormModal
-      open={isOpen}
+    <DetailModal
+      isOpen={isOpen}
       onClose={onClose}
       title='New Card'
       size='sm'
@@ -59,6 +60,6 @@ export function SlotCreateModal({
           </div>
         </Button>
       </div>
-    </FormModal>
+    </DetailModal>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
+import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
 import { FormModal, IntegrationSelector } from '@/shared/ui';

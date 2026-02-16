@@ -1,11 +1,13 @@
-import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
-import React from 'react';
+import { Plus, Pin, Archive, ChevronLeft, ChevronRight, FileText, Palette } from 'lucide-react';
+import React, { useMemo } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { DocumentSearchPage } from '@/features/document-search';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import type { NoteWithRelations, ThemeRecord } from '@/shared/types/domain/notes';
-import { Button, EmptyState, Pagination, SelectSimple } from '@/shared/ui';
+import { Button, EmptyState, Pagination } from '@/shared/ui';
+import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
+import type { PickerGroup, PickerOption } from '@/shared/ui/templates/pickers/types';
 
 import { NoteCard } from './NoteCard';
 import { NotesFilters } from './NotesFilters';
@@ -52,6 +54,20 @@ export function NoteListView(): React.JSX.Element {
     setSelectedNote(null);
   };
 
+  const themeGroups = useMemo<PickerGroup[]>(() => [
+    {
+      label: 'Available Themes',
+      icon: <Palette className='h-3 w-3' />,
+      options: [
+        { key: '', label: 'Default' },
+        ...themes.map((theme: ThemeRecord) => ({
+          key: theme.id,
+          label: theme.name,
+        })),
+      ]
+    }
+  ], [themes]);
+
   return (
     <DocumentSearchPage
       title={
@@ -84,20 +100,19 @@ export function NoteListView(): React.JSX.Element {
       titleAdornment={(
         <div className='flex items-center gap-2'>
           <span className='text-xs text-gray-500'>Theme</span>
-          <SelectSimple
-            value={selectedFolderThemeId || ''}
-            onValueChange={(val: string) => {
-              void handleThemeChange(val || null);
+          <GenericPickerDropdown
+            groups={themeGroups}
+            selectedKey={selectedFolderThemeId || ''}
+            onSelect={(opt: PickerOption) => {
+              void handleThemeChange(opt.key || null);
             }}
-            options={[
-              { value: '', label: 'Default' },
-              ...themes.map((theme: ThemeRecord) => ({
-                value: theme.id,
-                label: theme.name,
-              })),
-            ]}
-            size='sm'
-            className='w-32'
+            triggerContent={
+              <span className='text-xs'>
+                {selectedFolderThemeId ? (themeGroups.flatMap(g => g.options).find(o => o.key === selectedFolderThemeId)?.label) : 'Select theme'}
+              </span>
+            }
+            triggerClassName='w-32 justify-between border border-border/40 rounded bg-card/50 text-gray-400 hover:text-gray-200 px-2'
+            ariaLabel='Change folder theme'
           />
         </div>
       )}

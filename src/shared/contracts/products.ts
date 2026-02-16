@@ -195,6 +195,7 @@ export type ProductProducerRelationDto = z.infer<typeof productProducerRelationS
 export const productParameterValueSchema = z.object({
   parameterId: z.string(),
   value: z.string(),
+  valuesByLanguage: z.record(z.string(), z.string()).optional(),
 });
 
 export type ProductParameterValueDto = z.infer<typeof productParameterValueSchema>;
@@ -403,4 +404,3 @@ export const createProductDraftSchema = productDraftSchema.omit({
 
 export type CreateProductDraftDto = z.infer<typeof createProductDraftSchema>;
 export type UpdateProductDraftDto = Partial<CreateProductDraftDto>;
-

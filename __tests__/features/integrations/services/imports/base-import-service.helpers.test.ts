@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   classifyBaseImportError,
   determineBaseImportTerminalStatus,
-} from '@/features/integrations/services/imports/base-import-service';
+} from '@/features/integrations/services/imports/base-import-error-utils';
 import { AppErrorCodes, createAppError } from '@/shared/errors/app-error';
 
 describe('base-import-service helpers', () => {

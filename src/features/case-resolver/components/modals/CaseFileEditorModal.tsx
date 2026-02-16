@@ -3,13 +3,12 @@
 import React from 'react';
 
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { FormModal } from '@/shared/ui';
 
 import type { CaseResolverFileEditDraft } from '../../types';
 
 interface CaseFileEditorModalProps extends EntityModalProps<CaseResolverFileEditDraft> {
   onSave: () => void;
-  // Many other props will be needed here from the massive parent component
   children: React.ReactNode;
 }
 
@@ -21,37 +20,20 @@ export function CaseFileEditorModal({
   onSave,
   children,
 }: CaseFileEditorModalProps): React.JSX.Element | null {
-  if (!isOpen || !draft) return null;
+  if (!draft) return null;
 
   return (
-    <AppModal
+    <FormModal
       open={isOpen}
       onClose={onClose}
       title={draft.fileType === 'scanfile' ? 'Scan File Inspector' : 'Document Editor'}
+      subtitle={`ID: ${draft.id}`}
       size='xl'
-      bodyClassName='bg-background/95'
-      header={
-        <div className='flex items-center justify-between w-full'>
-          <div className='flex items-center gap-3'>
-            <h2 className='text-lg font-bold text-white'>
-              {draft.fileType === 'scanfile' ? 'Scan File Inspector' : 'Document Editor'}
-            </h2>
-            <span className='rounded border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[10px] text-gray-400'>
-              {draft.id}
-            </span>
-          </div>
-          <div className='flex items-center gap-2'>
-            <Button variant='outline' size='sm' onClick={onClose}>
-              Close
-            </Button>
-            <Button size='sm' onClick={() => { onSave(); onSuccess?.(); }}>
-              Save Changes
-            </Button>
-          </div>
-        </div>
-      }
+      onSave={() => { onSave(); onSuccess?.(); }}
+      saveText='Save Changes'
+      cancelText='Close'
     >
       {children}
-    </AppModal>
+    </FormModal>
   );
 }

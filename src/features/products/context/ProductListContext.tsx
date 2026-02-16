@@ -91,6 +91,7 @@ export interface ProductListContextType {
   onProductNameClick: (row: ProductWithImages) => void;
   onProductEditClick: (row: ProductWithImages) => void;
   onProductDeleteClick: (row: ProductWithImages) => void;
+  onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (row: ProductWithImages) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;
@@ -101,6 +102,9 @@ export interface ProductListContextType {
 
   // Modal State
   isCreateOpen: boolean;
+  isPromptOpen: boolean;
+  setIsPromptOpen: (open: boolean) => void;
+  handleConfirmSku: (sku: string) => Promise<void>;
   initialSku: string;
   createDraft: ProductDraftDto | null;
   initialCatalogId: string | null;
@@ -185,6 +189,9 @@ export interface ProductListTableContextType {
   rowSelection: RowSelectionState;
   setRowSelection: OnChangeFn<RowSelectionState>;
   handleProductsTableRender: ProfilerOnRenderCallback;
+  isPromptOpen: boolean;
+  setIsPromptOpen: (open: boolean) => void;
+  handleConfirmSku: (sku: string) => Promise<void>;
   tableColumns: ColumnDef<ProductWithImages>[];
   getRowClassName?: ((row: Row<ProductWithImages>) => string | undefined) | undefined;
   getRowId: (row: ProductWithImages) => string;
@@ -205,6 +212,7 @@ export interface ProductListActionsContextType {
   onProductNameClick: (row: ProductWithImages) => void;
   onProductEditClick: (row: ProductWithImages) => void;
   onProductDeleteClick: (row: ProductWithImages) => void;
+  onDuplicateProduct: (row: ProductWithImages) => void;
   onIntegrationsClick: (row: ProductWithImages) => void;
   onExportSettingsClick: (row: ProductWithImages) => void;
   integrationBadgeIds: Set<string>;
@@ -216,6 +224,9 @@ export interface ProductListActionsContextType {
 
 export interface ProductListModalsContextType {
   isCreateOpen: boolean;
+  isPromptOpen: boolean;
+  setIsPromptOpen: (open: boolean) => void;
+  handleConfirmSku: (sku: string) => Promise<void>;
   initialSku: string;
   createDraft: ProductDraftDto | null;
   initialCatalogId: string | null;
@@ -382,6 +393,9 @@ export function ProductListProvider({
       rowSelection: value.rowSelection,
       setRowSelection: value.setRowSelection,
       handleProductsTableRender: value.handleProductsTableRender,
+      isPromptOpen: value.isPromptOpen,
+      setIsPromptOpen: value.setIsPromptOpen,
+      handleConfirmSku: value.handleConfirmSku,
       tableColumns: value.tableColumns,
       getRowClassName: value.getRowClassName,
       getRowId: value.getRowId,
@@ -405,6 +419,7 @@ export function ProductListProvider({
       onProductNameClick: value.onProductNameClick,
       onProductEditClick: value.onProductEditClick,
       onProductDeleteClick: value.onProductDeleteClick,
+      onDuplicateProduct: value.onDuplicateProduct,
       onIntegrationsClick: value.onIntegrationsClick,
       onExportSettingsClick: value.onExportSettingsClick,
       integrationBadgeIds: value.integrationBadgeIds,
@@ -419,6 +434,9 @@ export function ProductListProvider({
   const modalsValue = useMemo<ProductListModalsContextType>(
     () => ({
       isCreateOpen: value.isCreateOpen,
+      isPromptOpen: value.isPromptOpen,
+      setIsPromptOpen: value.setIsPromptOpen,
+      handleConfirmSku: value.handleConfirmSku,
       initialSku: value.initialSku,
       createDraft: value.createDraft,
       initialCatalogId: value.initialCatalogId,

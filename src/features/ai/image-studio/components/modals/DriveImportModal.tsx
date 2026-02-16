@@ -1,12 +1,13 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 import React from 'react';
 
 import FileManager from '@/features/files/components/FileManager';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { Button } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface DriveImportModalProps extends ModalStateProps {
   title: string;
@@ -23,35 +24,36 @@ export function DriveImportModal({
   onLocalUploadTrigger,
   onSelectFile,
 }: DriveImportModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
-
   return (
-    <AppModal
-      open={isOpen}
+    <DetailModal
+      isOpen={isOpen}
       onClose={onClose}
       title={title}
       size='xl'
-    >
-      <div className='mb-3 flex flex-wrap items-center gap-2'>
+      footer={
         <Button 
-          size='xs'
+          size='sm'
           type='button'
           variant='outline'
           onClick={onLocalUploadTrigger}
           disabled={isUploading}
+          className='gap-2'
         >
-          {isUploading ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+          {isUploading ? <Loader2 className='size-4 animate-spin' /> : <Upload className='size-4' />}
           Upload From Computer
         </Button>
-        <span className='text-xs text-gray-400'>
-          Or select existing files below.
-        </span>
+      }
+    >
+      <div className='space-y-4'>
+        <p className='text-xs text-muted-foreground px-1'>
+          Select existing assets from your drive or upload a new file from your device.
+        </p>
+        <FileManager
+          mode='select'
+          selectionMode='single'
+          onSelectFile={onSelectFile}
+        />
       </div>
-      <FileManager
-        mode='select'
-        selectionMode='single'
-        onSelectFile={onSelectFile}
-      />
-    </AppModal>
+    </DetailModal>
   );
 }

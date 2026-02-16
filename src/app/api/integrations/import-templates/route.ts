@@ -17,10 +17,20 @@ const mappingSchema = z.object({
   targetField: z.string().trim().min(1)
 });
 
+const parameterImportSchema = z.object({
+  enabled: z.boolean().optional(),
+  mode: z.enum(['all', 'mapped']).optional(),
+  languageScope: z.enum(['catalog_languages', 'default_only']).optional(),
+  createMissingParameters: z.boolean().optional(),
+  overwriteExistingValues: z.boolean().optional(),
+  matchBy: z.enum(['base_id_then_name', 'name_only']).optional(),
+});
+
 const templateSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
-  mappings: z.array(mappingSchema).default([])
+  mappings: z.array(mappingSchema).default([]),
+  parameterImport: parameterImportSchema.optional(),
 });
 
 async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -39,7 +49,8 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const template = await createImportTemplate({
     name: data.name,
     description: data.description ?? null,
-    mappings: data.mappings
+    mappings: data.mappings,
+    ...(data.parameterImport ? { parameterImport: data.parameterImport } : {}),
   });
   return NextResponse.json(template);
 }

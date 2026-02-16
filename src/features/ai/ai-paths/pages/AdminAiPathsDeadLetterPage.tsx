@@ -2,7 +2,6 @@
 
 import { 
   RefreshCw, 
-  History, 
   AlertCircle,
   Eye,
   RotateCcw
@@ -13,22 +12,19 @@ import type { AiPathRunEventRecord, AiPathRunRecord } from '@/shared/types/domai
 import { 
   Button, 
   Checkbox, 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
   SelectSimple, 
   DataTable, 
   ConfirmModal,
   ListPanel,
   FormField,
+  FormSection,
   StatusBadge,
   Alert,
   PanelHeader,
   SearchInput,
   PanelPagination
 } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 import {
   PAGE_SIZES,
@@ -274,244 +270,238 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
         </div>
       </ListPanel>
 
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className='max-w-4xl border border-border bg-card text-white'>
-          <DialogHeader>
-            <DialogTitle className='flex items-center gap-2'>
-              <History className='size-5 text-gray-400' />
-              Run Details
-            </DialogTitle>
-            <DialogDescription className='text-gray-400'>
-              Inspect the run state, node statuses, and events.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {detailLoading ? (
-            <div className='py-12 text-center text-sm text-gray-500'>
-              <RefreshCw className='size-6 animate-spin mx-auto mb-2' />
-              Loading run details...
-            </div>
-          ) : detail ? (
-            <div className='space-y-6 max-h-[70vh] overflow-y-auto pr-2'>
-              <FormSection 
-                title='Run Summary' 
-                variant='subtle'
-                actions={
-                  <div className='flex items-center gap-3'>
-                    <StatusBadge status={streamStatus} variant='neutral' size='sm' className='font-mono uppercase' />
-                    <Button
-                      variant='ghost'
-                      size='xs'
-                      className='h-6 text-[10px]'
-                      onClick={() => setStreamPaused(p => !p)}
-                    >
-                      {streamPaused ? 'Resume stream' : 'Pause stream'}
-                    </Button>
-                  </div>
-                }
-              >
-                <div className='grid gap-4 md:grid-cols-3 text-xs'>
-                  <div className='space-y-1'>
-                    <div className='text-gray-500'>Run ID</div>
-                    <div className='font-mono text-gray-200'>{detail.run.id}</div>
-                  </div>
-                  <div className='space-y-1'>
-                    <div className='text-gray-500'>Status</div>
-                    <StatusBadge status={detail.run.status} />
-                  </div>
-                  <div className='space-y-1'>
-                    <div className='text-gray-500'>Path</div>
-                    <div className='text-gray-200'>{detail.run.pathName || 'Untitled'}</div>
-                    <div className='text-[10px] text-gray-500 font-mono'>{detail.run.pathId}</div>
-                  </div>
-                  <div className='space-y-1'>
-                    <div className='text-gray-500'>Entity</div>
-                    <div className='text-gray-200'>{detail.run.entityId || '—'}</div>
-                  </div>
-                  <div className='space-y-1'>
-                    <div className='text-gray-500'>Retries</div>
-                    <div className='text-gray-200'>{(detail.run.retryCount ?? 0)}/{detail.run.maxAttempts ?? 0}</div>
-                  </div>
-                  <div className='space-y-1'>
-                    <div className='text-gray-500'>Dead-lettered</div>
-                    <div className='text-gray-200'>{formatTimestamp(detail.run.deadLetteredAt ?? detail.run.updatedAt)}</div>
-                  </div>
-                  
-                  <div className='md:col-span-3 space-y-1'>
-                    <div className='text-gray-500'>Error Message</div>
-                    <Alert variant='error' className='px-2 py-2 text-xs'>
-                      {detail.run.errorMessage || 'No error message provided.'}
-                    </Alert>
-                  </div>
+      <DetailModal
+        isOpen={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        title='Run Details'
+        subtitle='Inspect the run state, node statuses, and events.'
+        size='xl'
+      >
+        {detailLoading ? (
+          <div className='py-12 text-center text-sm text-gray-500'>
+            <RefreshCw className='size-6 animate-spin mx-auto mb-2' />
+            Loading run details...
+          </div>
+        ) : detail ? (
+          <div className='space-y-6'>
+            <FormSection 
+              title='Run Summary' 
+              variant='subtle'
+              actions={
+                <div className='flex items-center gap-3'>
+                  <StatusBadge status={streamStatus} variant='neutral' size='sm' className='font-mono uppercase' />
+                  <Button
+                    variant='ghost'
+                    size='xs'
+                    className='h-6 text-[10px]'
+                    onClick={() => setStreamPaused(p => !p)}
+                  >
+                    {streamPaused ? 'Resume stream' : 'Pause stream'}
+                  </Button>
+                </div>
+              }
+            >
+              <div className='grid gap-4 md:grid-cols-3 text-xs'>
+                <div className='space-y-1'>
+                  <div className='text-gray-500'>Run ID</div>
+                  <div className='font-mono text-gray-200'>{detail.run.id}</div>
+                </div>
+                <div className='space-y-1'>
+                  <div className='text-gray-500'>Status</div>
+                  <StatusBadge status={detail.run.status} />
+                </div>
+                <div className='space-y-1'>
+                  <div className='text-gray-500'>Path</div>
+                  <div className='text-gray-200'>{detail.run.pathName || 'Untitled'}</div>
+                  <div className='text-[10px] text-gray-500 font-mono'>{detail.run.pathId}</div>
+                </div>
+                <div className='space-y-1'>
+                  <div className='text-gray-500'>Entity</div>
+                  <div className='text-gray-200'>{detail.run.entityId || '—'}</div>
+                </div>
+                <div className='space-y-1'>
+                  <div className='text-gray-500'>Retries</div>
+                  <div className='text-gray-200'>{(detail.run.retryCount ?? 0)}/{detail.run.maxAttempts ?? 0}</div>
+                </div>
+                <div className='space-y-1'>
+                  <div className='text-gray-500'>Dead-lettered</div>
+                  <div className='text-gray-200'>{formatTimestamp(detail.run.deadLetteredAt ?? detail.run.updatedAt)}</div>
+                </div>
+                
+                <div className='md:col-span-3 space-y-1'>
+                  <div className='text-gray-500'>Error Message</div>
+                  <Alert variant='error' className='px-2 py-2 text-xs'>
+                    {detail.run.errorMessage || 'No error message provided.'}
+                  </Alert>
+                </div>
 
-                  {nodeStatusSummary && (
-                    <div className='md:col-span-3 space-y-2 mt-2'>
-                      <div className='flex justify-between text-[10px] text-gray-500 uppercase font-semibold'>
-                        <span>Progress: {nodeStatusSummary.completed}/{nodeStatusSummary.totalNodes} Nodes</span>
-                        <span>{nodeStatusSummary.progress}%</span>
-                      </div>
-                      <div className='h-1.5 w-full overflow-hidden rounded-full bg-black/40'>
-                        <div
-                          className='h-full rounded-full bg-emerald-500/60 transition-all duration-500'
-                          style={{ width: `${nodeStatusSummary.progress}%` }}
-                        />
+                {nodeStatusSummary && (
+                  <div className='md:col-span-3 space-y-2 mt-2'>
+                    <div className='flex justify-between text-[10px] text-gray-500 uppercase font-semibold'>
+                      <span>Progress: {nodeStatusSummary.completed}/{nodeStatusSummary.totalNodes} Nodes</span>
+                      <span>{nodeStatusSummary.progress}%</span>
+                    </div>
+                    <div className='h-1.5 w-full overflow-hidden rounded-full bg-black/40'>
+                      <div
+                        className='h-full rounded-full bg-emerald-500/60 transition-all duration-500'
+                        style={{ width: `${nodeStatusSummary.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </FormSection>
+
+            <div className='space-y-3'>
+              <div className='flex items-center justify-between'>
+                <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Nodes Execution</h3>
+                <div className='flex gap-2'>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={() => setShowRetryFailedConfirm(true)}
+                    disabled={retryFailedPending || !detail.nodes.some(n => n.status === 'failed' || n.status === 'blocked')}
+                  >
+                    Retry Failed Nodes
+                  </Button>
+                </div>
+              </div>
+              
+              <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
+                <DataTable
+                  columns={[
+                    {
+                      accessorKey: 'nodeId',
+                      header: 'Node',
+                      cell: ({ row }) => (
+                        <div className='flex flex-col'>
+                          <span className='font-mono text-[11px] text-gray-200'>{row.original.nodeId}</span>
+                          <span className='text-[10px] text-gray-500'>{row.original.nodeTitle || row.original.nodeType}</span>
+                        </div>
+                      )
+                    },
+                    {
+                      accessorKey: 'status',
+                      header: 'Status',
+                      cell: ({ row }) => <StatusBadge status={row.original.status} size='sm' className='font-bold' />
+                    },
+                    {
+                      id: 'details',
+                      header: 'Details',
+                      cell: ({ row }) => {
+                        const hasData = Boolean(row.original.inputs) || Boolean(row.original.outputs);
+                        const isExpanded = row.getIsExpanded();
+                        return (
+                          <Button
+                            variant='ghost'
+                            size='xs'
+                            className='h-6 text-[10px] gap-1'
+                            onClick={() => toggleNodeExpanded(row.original.nodeId)}
+                            disabled={!hasData}
+                          >
+                            {isExpanded ? 'Hide Data' : 'Show Data'}
+                          </Button>
+                        );
+                      }
+                    },
+                    {
+                      id: 'actions',
+                      header: () => <div className='text-right'>Action</div>,
+                      cell: ({ row }) => {
+                        const isRetryable = row.original.status === 'failed' || row.original.status === 'blocked';
+                        return (
+                          <div className='text-right'>
+                            <Button
+                              variant='outline'
+                              size='xs'
+                              className='h-6 text-[10px]'
+                              onClick={() => retryNode(row.original.nodeId)}
+                              disabled={!isRetryable || retryingNodeId === row.original.nodeId}
+                            >
+                              {retryingNodeId === row.original.nodeId ? 'Retrying...' : 'Retry'}
+                            </Button>
+                          </div>
+                        );
+                      }
+                    }
+                  ]}
+                  data={detail.nodes}
+                  getRowId={(row) => row.nodeId}
+                  expanded={useMemo(() => {
+                    const state: Record<string, boolean> = {};
+                    expandedNodeIds.forEach(id => { state[id] = true; });
+                    return state;
+                  }, [expandedNodeIds])}
+                  renderRowDetails={({ row }) => (
+                    <div className='p-4 bg-black/40 border-t border-white/5'>
+                      <div className='grid gap-4 md:grid-cols-2'>
+                        <div className='space-y-1'>
+                          <span className='text-[10px] uppercase text-gray-600 font-bold'>Inputs</span>
+                          <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
+                            {JSON.stringify(row.original.inputs || {}, null, 2)}
+                          </pre>
+                        </div>
+                        <div className='space-y-1'>
+                          <span className='text-[10px] uppercase text-gray-600 font-bold'>Outputs</span>
+                          <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
+                            {JSON.stringify(row.original.outputs || {}, null, 2)}
+                          </pre>
+                        </div>
                       </div>
                     </div>
                   )}
-                </div>
-              </FormSection>
-
-              <div className='space-y-3'>
-                <div className='flex items-center justify-between'>
-                  <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Nodes Execution</h3>
-                  <div className='flex gap-2'>
-                    <Button
-                      variant='outline'
-                      size='xs'
-                      onClick={() => setShowRetryFailedConfirm(true)}
-                      disabled={retryFailedPending || !detail.nodes.some(n => n.status === 'failed' || n.status === 'blocked')}
-                    >
-                      Retry Failed Nodes
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className='rounded-md border border-border bg-gray-950/20 overflow-hidden'>
-                  <DataTable
-                    columns={[
-                      {
-                        accessorKey: 'nodeId',
-                        header: 'Node',
-                        cell: ({ row }) => (
-                          <div className='flex flex-col'>
-                            <span className='font-mono text-[11px] text-gray-200'>{row.original.nodeId}</span>
-                            <span className='text-[10px] text-gray-500'>{row.original.nodeTitle || row.original.nodeType}</span>
-                          </div>
-                        )
-                      },
-                      {
-                        accessorKey: 'status',
-                        header: 'Status',
-                        cell: ({ row }) => <StatusBadge status={row.original.status} size='sm' className='font-bold' />
-                      },
-                      {
-                        id: 'details',
-                        header: 'Details',
-                        cell: ({ row }) => {
-                          const hasData = Boolean(row.original.inputs) || Boolean(row.original.outputs);
-                          const isExpanded = row.getIsExpanded();
-                          return (
-                            <Button
-                              variant='ghost'
-                              size='xs'
-                              className='h-6 text-[10px] gap-1'
-                              onClick={() => toggleNodeExpanded(row.original.nodeId)}
-                              disabled={!hasData}
-                            >
-                              {isExpanded ? 'Hide Data' : 'Show Data'}
-                            </Button>
-                          );
-                        }
-                      },
-                      {
-                        id: 'actions',
-                        header: () => <div className='text-right'>Action</div>,
-                        cell: ({ row }) => {
-                          const isRetryable = row.original.status === 'failed' || row.original.status === 'blocked';
-                          return (
-                            <div className='text-right'>
-                              <Button
-                                variant='outline'
-                                size='xs'
-                                className='h-6 text-[10px]'
-                                onClick={() => retryNode(row.original.nodeId)}
-                                disabled={!isRetryable || retryingNodeId === row.original.nodeId}
-                              >
-                                {retryingNodeId === row.original.nodeId ? 'Retrying...' : 'Retry'}
-                              </Button>
-                            </div>
-                          );
-                        }
-                      }
-                    ]}
-                    data={detail.nodes}
-                    getRowId={(row) => row.nodeId}
-                    expanded={useMemo(() => {
-                      const state: Record<string, boolean> = {};
-                      expandedNodeIds.forEach(id => { state[id] = true; });
-                      return state;
-                    }, [expandedNodeIds])}
-                    renderRowDetails={({ row }) => (
-                      <div className='p-4 bg-black/40 border-t border-white/5'>
-                        <div className='grid gap-4 md:grid-cols-2'>
-                          <div className='space-y-1'>
-                            <span className='text-[10px] uppercase text-gray-600 font-bold'>Inputs</span>
-                            <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
-                              {JSON.stringify(row.original.inputs || {}, null, 2)}
-                            </pre>
-                          </div>
-                          <div className='space-y-1'>
-                            <span className='text-[10px] uppercase text-gray-600 font-bold'>Outputs</span>
-                            <pre className='text-[10px] p-2 bg-black/40 rounded border border-white/5 overflow-auto max-h-40 font-mono'>
-                              {JSON.stringify(row.original.outputs || {}, null, 2)}
-                            </pre>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  />
-                </div>
+                />
               </div>
+            </div>
 
-              <div className='space-y-3'>
-                <div className='flex items-center justify-between'>
-                  <div className='flex items-center gap-2'>
-                    <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Event Log</h3>
-                    {eventsOverflow && (
-                      <StatusBadge
-                        status='Truncated'
-                        variant='warning'
-                        size='sm'
-                        className='font-bold'
-                      />
-                    )}
-                  </div>
-                  <span className='text-[10px] text-gray-600'>{detail.events.length} Events</span>
+            <div className='space-y-3'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <h3 className='text-xs font-semibold uppercase tracking-wider text-gray-500'>Event Log</h3>
+                  {eventsOverflow && (
+                    <StatusBadge
+                      status='Truncated'
+                      variant='warning'
+                      size='sm'
+                      className='font-bold'
+                    />
+                  )}
                 </div>
-                
-                <div className='rounded-md border border-border bg-black/30 overflow-hidden'>
-                  <div className='max-h-60 overflow-y-auto divide-y divide-white/5'>
-                    {detail.events.map((event: AiPathRunEventRecord) => (
-                      <div key={event.id} className='p-2 hover:bg-white/5 transition-colors'>
-                        <div className='flex justify-between text-[10px] mb-1'>
-                          <span className='text-gray-500'>{formatTimestamp(event.createdAt)}</span>
-                          <StatusBadge
-                            status={event.level}
-                            variant={
-                              event.level === 'error' ? 'error' : 
-                                event.level === 'warning' ? 'warning' : 'info'
-                            }
-                            size='sm'
-                            className='font-bold'
-                          />
-                        </div>
-                        <div className='text-xs text-gray-300'>{event.message}</div>
-                        {event.metadata && (
-                          <pre className='mt-1 text-[9px] text-gray-500 font-mono overflow-x-auto'>
-                            {JSON.stringify(event.metadata, null, 2)}
-                          </pre>
-                        )}
+                <span className='text-[10px] text-gray-600'>{detail.events.length} Events</span>
+              </div>
+              
+              <div className='rounded-md border border-border bg-black/30 overflow-hidden'>
+                <div className='max-h-60 overflow-y-auto divide-y divide-white/5'>
+                  {detail.events.map((event: AiPathRunEventRecord) => (
+                    <div key={event.id} className='p-2 hover:bg-white/5 transition-colors'>
+                      <div className='flex justify-between text-[10px] mb-1'>
+                        <span className='text-gray-500'>{formatTimestamp(event.createdAt)}</span>
+                        <StatusBadge
+                          status={event.level}
+                          variant={
+                            event.level === 'error' ? 'error' : 
+                              event.level === 'warning' ? 'warning' : 'info'
+                          }
+                          size='sm'
+                          className='font-bold'
+                        />
                       </div>
-                    ))}
-                  </div>
+                      <div className='text-xs text-gray-300'>{event.message}</div>
+                      {event.metadata && (
+                        <pre className='mt-1 text-[9px] text-gray-500 font-mono overflow-x-auto'>
+                          {JSON.stringify(event.metadata, null, 2)}
+                        </pre>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          ) : (
-            <div className='py-12 text-center text-sm text-gray-500'>Could not load run details.</div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        ) : (
+          <div className='py-12 text-center text-sm text-gray-500'>Could not load run details.</div>
+        )}
+      </DetailModal>
 
       <ConfirmModal
         isOpen={showRetryFailedConfirm}

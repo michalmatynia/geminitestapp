@@ -4,8 +4,8 @@ import React from 'react';
 
 import type { Asset3DRecord } from '@/features/viewer3d/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { DetailModal } from '@/shared/ui/templates/modals';
 import { StatusBadge } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface AssetPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 

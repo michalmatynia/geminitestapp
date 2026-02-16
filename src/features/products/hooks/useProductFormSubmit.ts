@@ -114,11 +114,42 @@ function buildFormData(
   }
 
   const normalizedParameters = parameterValues
-    .map((entry: ProductParameterValue): { parameterId: string | undefined; value: string } => ({
-      parameterId: entry.parameterId?.trim(),
-      value: typeof entry.value === 'string' ? entry.value.trim() : '',
-    }))
-    .filter((entry: { parameterId: string | undefined; value: string }): boolean => !!entry.parameterId);
+    .map((entry: ProductParameterValue): {
+      parameterId: string | undefined;
+      value: string;
+      valuesByLanguage?: Record<string, string>;
+    } => {
+      const valuesByLanguage =
+        entry.valuesByLanguage &&
+        typeof entry.valuesByLanguage === 'object' &&
+        !Array.isArray(entry.valuesByLanguage)
+          ? Object.entries(entry.valuesByLanguage).reduce(
+            (acc: Record<string, string>, [lang, value]: [string, unknown]) => {
+              const normalizedLang = lang.trim().toLowerCase();
+              const normalizedValue =
+                typeof value === 'string' ? value.trim() : '';
+              if (!normalizedLang || !normalizedValue) return acc;
+              acc[normalizedLang] = normalizedValue;
+              return acc;
+            },
+            {}
+          )
+          : {};
+      return {
+        parameterId: entry.parameterId?.trim(),
+        value: typeof entry.value === 'string' ? entry.value.trim() : '',
+        ...(Object.keys(valuesByLanguage).length > 0
+          ? { valuesByLanguage }
+          : {}),
+      };
+    })
+    .filter(
+      (entry: {
+        parameterId: string | undefined;
+        value: string;
+        valuesByLanguage?: Record<string, string>;
+      }): boolean => !!entry.parameterId
+    );
   formData.append('parameters', JSON.stringify(normalizedParameters));
   formData.append('studioProjectId', studioProjectId ?? '');
 

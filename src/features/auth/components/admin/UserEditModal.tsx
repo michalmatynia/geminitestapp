@@ -3,12 +3,15 @@
 import React from 'react';
 
 import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
-import type { EntityModalProps } from '@/shared/types/modal-props';
-import { Checkbox, FormField, FormModal, Input, Label, StatusToggle } from '@/shared/ui';
+import { Checkbox, Label, StatusToggle } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { AuthUserSummary } from '../../types';
 
-interface UserEditModalProps extends EntityModalProps<AuthUserSummary> {
+interface UserEditModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  item: AuthUserSummary | null;
   setEditingUser: React.Dispatch<React.SetStateAction<AuthUserSummary | null>>;
   isSaving: boolean;
   loadingSecurity: boolean;
@@ -28,40 +31,29 @@ export function UserEditModal({
   userSecurity,
   onSave,
 }: UserEditModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
+  const handleChange = (values: Partial<AuthUserSummary>) => {
+    setEditingUser(prev => prev ? ({ ...prev, ...values }) : null);
+  };
 
-  return (
-    <FormModal
-      open={isOpen}
-      onClose={onClose}
-      title='Identity Inspector'
-      onSave={onSave}
-      isSaving={isSaving}
-      size='md'
-    >
-      <div className='space-y-6'>
-        <div className='grid gap-4 md:grid-cols-2'>
-          <FormField label='Full Name'>
-            <Input
-              value={editingUser?.name ?? ''}
-              onChange={(e) => {
-                setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, name: e.target.value } : null);
-              }}
-              placeholder='Display name'
-            />
-          </FormField>
-          <FormField label='Email Address'>
-            <Input
-              value={editingUser?.email ?? ''}
-              onChange={(e) => {
-                setEditingUser((prev: AuthUserSummary | null) => prev ? { ...prev, email: e.target.value } : null);
-              }}
-              placeholder='user@example.com'
-            />
-          </FormField>
-        </div>
-
-        <div className='p-4 rounded-md border border-white/5 bg-white/5'>
+  const fields: SettingsField<AuthUserSummary>[] = [
+    {
+      key: 'name',
+      label: 'Full Name',
+      type: 'text',
+      placeholder: 'Display name',
+    },
+    {
+      key: 'email',
+      label: 'Email Address',
+      type: 'email',
+      placeholder: 'user@example.com',
+    },
+    {
+      key: 'id',
+      label: 'Security & Metadata',
+      type: 'custom',
+      render: () => (
+        <div className='p-4 rounded-md border border-white/5 bg-white/5 space-y-4'>
           {loadingSecurity ? (
             <div className='py-4 text-center text-xs text-gray-500 animate-pulse'>Fetching security profile...</div>
           ) : (
@@ -96,7 +88,21 @@ export function UserEditModal({
             </div>
           )}
         </div>
-      </div>
-    </FormModal>
+      )
+    }
+  ];
+
+  return (
+    <SettingsPanelBuilder
+      open={isOpen}
+      onClose={onClose}
+      title='Identity Inspector'
+      fields={fields}
+      values={editingUser || ({} as AuthUserSummary)}
+      onChange={handleChange}
+      onSave={async () => onSave()}
+      isSaving={isSaving}
+      size='md'
+    />
   );
 }

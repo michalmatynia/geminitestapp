@@ -16,11 +16,17 @@ import {
   type ProductLookupMaps,
 } from '@/features/integrations/services/imports/base-import-service-shared';
 import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
+import { applyBaseParameterImport } from '@/features/integrations/services/imports/parameter-import';
 import {
   findProductListingByProductAndConnectionAcrossProviders,
   getProductListingRepository,
 } from '@/features/integrations/services/product-listing-repository';
 import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
+import {
+  defaultBaseImportParameterImportSettings,
+  normalizeBaseImportParameterImportSettings,
+  type BaseImportParameterImportSettings,
+} from '@/features/integrations/types/base-import-parameter-import';
 import type {
   BaseImportErrorClass,
   BaseImportErrorCode,
@@ -32,6 +38,7 @@ import { getProducerRepository } from '@/features/products/services/producer-rep
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { getTagRepository } from '@/features/products/services/tag-repository';
 import type { ProductRecord, ProductWithImages } from '@/features/products/types';
+import type { ParameterRepository } from '@/features/products/types/services/parameter-repository';
 import {
   validateProductCreate,
   validateProductUpdate,
@@ -437,11 +444,15 @@ export const importSingleItem = async (input: {
   lookups: ProductLookupMaps;
   templateMappings: Array<{ sourceKey: string; targetField: string }>;
   productRepository: Awaited<ReturnType<typeof getProductRepository>>;
+  parameterRepository: ParameterRepository;
   imageMode: 'links' | 'download';
   dryRun: boolean;
   inventoryId: string;
   mode: BaseImportMode;
   allowDuplicateSku: boolean;
+  parameterImportSettings?: BaseImportParameterImportSettings;
+  catalogLanguageCodes?: string[];
+  defaultLanguageCode?: string | null;
 }): Promise<ProcessItemResult> => {
   const mapped = normalizeMappedProduct(
     input.raw,
@@ -506,6 +517,28 @@ export const importSingleItem = async (input: {
   }
 
   if (decision.type === 'update') {
+    const parameterImportResult = await applyBaseParameterImport({
+      record: input.raw,
+      catalogId: input.targetCatalogId,
+      parameterRepository: input.parameterRepository,
+      existingValues: Array.isArray(decision.target.parameters)
+        ? decision.target.parameters
+        : [],
+      catalogLanguageCodes: input.catalogLanguageCodes ?? [],
+      defaultLanguageCode: input.defaultLanguageCode ?? null,
+      settings: normalizeBaseImportParameterImportSettings(
+        input.parameterImportSettings ??
+          defaultBaseImportParameterImportSettings
+      ),
+      templateMappings: input.templateMappings,
+    });
+    const parameterImportSummary = parameterImportResult.applied
+      ? parameterImportResult.summary
+      : null;
+    if (parameterImportResult.applied) {
+      mapped.parameters = parameterImportResult.parameters;
+    }
+
     const updateData: ProductUpdateInput = {
       baseProductId: mappedBaseProductId ?? decision.target.baseProductId ?? null,
       defaultPriceGroupId: input.defaultPriceGroupId,
@@ -523,6 +556,9 @@ export const importSingleItem = async (input: {
       sizeWidth: mapped.sizeWidth,
       length: mapped.length,
       imageLinks: imageUrls,
+      ...(parameterImportResult.applied
+        ? { parameters: parameterImportResult.parameters }
+        : {}),
     };
 
     if (mappedSku && !input.allowDuplicateSku && mappedSku !== decision.target.sku) {
@@ -539,6 +575,7 @@ export const importSingleItem = async (input: {
           retryable: classified.retryable,
           errorMessage: `SKU ${mappedSku} already belongs to another product.`,
           payloadSnapshot: mapped,
+          parameterImportSummary,
         };
       }
     }
@@ -556,6 +593,7 @@ export const importSingleItem = async (input: {
         retryable: classified.retryable,
         errorMessage: `Validation failed for ${mappedSku ?? mappedBaseProductId ?? input.item.itemId}.`,
         payloadSnapshot: mapped,
+        parameterImportSummary,
       };
     }
 
@@ -567,6 +605,7 @@ export const importSingleItem = async (input: {
         baseProductId: mappedBaseProductId,
         sku: mappedSku,
         payloadSnapshot: mapped,
+        parameterImportSummary,
       };
     }
 
@@ -620,6 +659,7 @@ export const importSingleItem = async (input: {
       baseProductId: mappedBaseProductId,
       sku: mappedSku,
       payloadSnapshot: mapped,
+      parameterImportSummary,
     };
   }
 
@@ -655,6 +695,26 @@ export const importSingleItem = async (input: {
     imageLinks: imageUrls,
   };
 
+  const parameterImportResult = await applyBaseParameterImport({
+    record: input.raw,
+    catalogId: input.targetCatalogId,
+    parameterRepository: input.parameterRepository,
+    existingValues: [],
+    catalogLanguageCodes: input.catalogLanguageCodes ?? [],
+    defaultLanguageCode: input.defaultLanguageCode ?? null,
+    settings: normalizeBaseImportParameterImportSettings(
+      input.parameterImportSettings ?? defaultBaseImportParameterImportSettings
+    ),
+    templateMappings: input.templateMappings,
+  });
+  const parameterImportSummary = parameterImportResult.applied
+    ? parameterImportResult.summary
+    : null;
+  if (parameterImportResult.applied) {
+    createData.parameters = parameterImportResult.parameters;
+    mapped.parameters = parameterImportResult.parameters;
+  }
+
   const validationResult = await validateProductCreate(createData);
   if (!validationResult.success) {
     const classified = classifyByErrorCode('VALIDATION_ERROR');
@@ -668,6 +728,7 @@ export const importSingleItem = async (input: {
       retryable: classified.retryable,
       errorMessage: `Validation failed for ${skuForCreate}.`,
       payloadSnapshot: mapped,
+      parameterImportSummary,
     };
   }
 
@@ -678,6 +739,7 @@ export const importSingleItem = async (input: {
       baseProductId: mappedBaseProductId,
       sku: skuForCreate,
       payloadSnapshot: mapped,
+      parameterImportSummary,
     };
   }
 
@@ -750,5 +812,6 @@ export const importSingleItem = async (input: {
     baseProductId: mappedBaseProductId,
     sku: skuForCreate,
     payloadSnapshot: mapped,
+    parameterImportSummary,
   };
 };

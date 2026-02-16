@@ -7,7 +7,7 @@ import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-butt
 import ProductForm from '@/features/products/components/ProductForm';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { FormModal } from '@/shared/ui';
 
 const FileManager = dynamic(() => import('@/features/files/components/FileManager'), {
   ssr: false,
@@ -40,47 +40,27 @@ function ProductFormModalInner({
     };
   };
 
-  const header = (
-    <div className='flex items-center justify-between gap-3 w-full'>
-      <div className='flex items-center gap-4'>
-        <Button
-          onClick={() => {
-            void handleSubmit();
-          }}
-          disabled={uploading}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          {uploading ? 'Saving...' : submitButtonText}
-        </Button>
-        <div className='flex items-center gap-2'>
-          <h2 className='text-2xl font-bold text-white'>{title}</h2>
-        </div>
-      </div>
-      <div className='flex items-center gap-2'>
-        <TriggerButtonBar
-          location='product_modal'
-          entityType='product'
-          entityId={product?.id ?? null}
-          getEntityJson={getEntityJson}
-        />
-        <Button
-          type='button'
-          onClick={onClose}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          Close
-        </Button>
-      </div>
-    </div>
+  const actions = (
+    <TriggerButtonBar
+      location='product_modal'
+      entityType='product'
+      entityId={product?.id ?? null}
+      getEntityJson={getEntityJson}
+    />
   );
 
   return (
-    <AppModal 
+    <FormModal 
       open={isOpen}
       onClose={onClose}
-      title={title} 
-      header={header}
+      title={title}
+      onSave={() => { void handleSubmit(); }}
+      isSaving={uploading}
+      saveText={submitButtonText}
+      cancelText='Close'
+      size='xl'
       className='md:min-w-[63rem] max-w-[66rem]'
+      actions={actions}
     >
       {showFileManager ? (
         <FileManager onSelectFile={handleMultiFileSelect} />
@@ -95,7 +75,7 @@ function ProductFormModalInner({
           )}
         />
       )}
-    </AppModal>
+    </FormModal>
   );
 }
 

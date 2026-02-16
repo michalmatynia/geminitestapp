@@ -26,7 +26,6 @@ import {
 import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { 
-  Button, 
   Checkbox, 
   Input, 
   Label, 
@@ -38,6 +37,7 @@ import {
   ConfirmModal,
   FormField
 } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { TriggerButtonListManager, type AiTriggerButtonRecord } from '../components/TriggerButtonListManager';

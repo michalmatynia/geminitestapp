@@ -6,17 +6,14 @@ import React, { useMemo, useState, useCallback } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
-  AppModal,
   Button,
   ConfirmModal,
-  Input,
-  Label,
   DataTable,
   ListPanel,
   PanelHeader,
-  Textarea,
   useToast,
 } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import { promptExploderFormatTimestamp } from '../helpers/formatting';
@@ -181,6 +178,38 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
     }
   };
 
+  const handleEditorChange = (vals: Partial<{ name: string; prompt: string }>) => {
+    if (vals.name !== undefined) setDraftName(vals.name);
+    if (vals.prompt !== undefined) setDraftPrompt(vals.prompt);
+  };
+
+  const editorFields: SettingsField<{ name: string; prompt: string }>[] = [
+    {
+      key: 'name',
+      label: 'Project Name',
+      type: 'text',
+      placeholder: 'Enter a descriptive name',
+      required: true,
+    },
+    {
+      key: 'prompt',
+      label: 'Prompt Template',
+      type: 'textarea',
+      placeholder: 'Paste your prompt here...',
+      required: true,
+    },
+    {
+      key: 'prompt',
+      label: '',
+      type: 'custom',
+      render: () => shouldClearDocumentOnSave ? (
+        <div className='rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-200/80 leading-relaxed italic'>
+          Note: Changing the prompt will reset the existing segment analysis for this project.
+        </div>
+      ) : null
+    }
+  ];
+
   const handleDeleteProject = async (): Promise<void> => {
     if (!projectPendingDeleteId) return;
     const target = promptLibraryState.items.find(
@@ -339,51 +368,17 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
         />
       </ListPanel>
 
-      <AppModal
+      <SettingsPanelBuilder
         open={isEditorOpen}
         onClose={closeEditor}
         title={editingProject ? 'Edit Prompt Exploder Project' : 'Create Prompt Exploder Project'}
         size='lg'
-        footer={
-          <div className='flex gap-2'>
-            <Button type='button' variant='outline' onClick={closeEditor} disabled={isBusy}>
-              Cancel
-            </Button>
-            <Button type='button' onClick={() => void handleSaveEditor()} disabled={isBusy}>
-              {editingProject ? 'Save Project' : 'Create Project'}
-            </Button>
-          </div>
-        }
-      >
-        <div className='space-y-4'>
-          <div className='space-y-1'>
-            <Label className='text-xs text-gray-400'>Project Name</Label>
-            <Input
-              value={draftName}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setDraftName(event.target.value);
-              }}
-              placeholder='Project name'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-xs text-gray-400'>Prompt</Label>
-            <Textarea
-              value={draftPrompt}
-              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                setDraftPrompt(event.target.value);
-              }}
-              className='min-h-[240px] font-mono text-[12px]'
-              placeholder='Prompt text'
-            />
-          </div>
-          {shouldClearDocumentOnSave ? (
-            <div className='rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'>
-              Prompt changed. Saving will reset the stored exploded document for this project.
-            </div>
-          ) : null}
-        </div>
-      </AppModal>
+        fields={editorFields}
+        values={{ name: draftName, prompt: draftPrompt }}
+        onChange={handleEditorChange}
+        onSave={() => handleSaveEditor()}
+        isSaving={updateSetting.isPending}
+      />
 
       <ConfirmModal
         isOpen={Boolean(pendingDeleteProject)}

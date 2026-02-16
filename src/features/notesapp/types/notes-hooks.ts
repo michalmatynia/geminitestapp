@@ -46,6 +46,15 @@ export interface UseNoteOperationsProps {
     confirmText?: string;
     isDangerous?: boolean;
   }) => void;
+  promptAction: (config: {
+    title: string;
+    message?: string;
+    label?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (value: string) => void | Promise<void>;
+    required?: boolean;
+  }) => void;
 }
 
 export interface UseNoteFiltersProps {

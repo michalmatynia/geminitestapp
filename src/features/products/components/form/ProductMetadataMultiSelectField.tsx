@@ -72,13 +72,12 @@ export function ProductMetadataMultiSelectField({
   const resolvedOnChange =
     onChangeProp ??
     (metadataContext?.[contextOnChangeKey] as (ids: string[] | string | null) => void) ??
-    (formContext
-      ? (nextIds: string[]): void => {
-        if (single) {
-          const handler = (metadataContext?.[contextOnChangeKey] ?? formContext[contextOnChangeKey]) as (id: string | null) => void;
-          if (handler) {
-            handler(nextIds[0] || null);
-            return;
+          (formContext
+          ? (nextIds: string[]): void => {
+            if (single) {
+              const handler = (metadataContext?.[contextOnChangeKey] ?? (formContext as unknown as Record<string, unknown> | null)?.[contextOnChangeKey]) as (id: string | null) => void;
+              if (handler) {
+                handler(nextIds[0] || null);            return;
           }
         }
 
@@ -119,9 +118,9 @@ export function ProductMetadataMultiSelectField({
       selected={selectedIds}
       onChange={(values: string[]) => {
         if (single) {
-          (resolvedOnChange as (id: string | null) => void)(values[0] || null);
+          (resolvedOnChange as unknown as (id: string | null) => void)(values[0] || null);
         } else {
-          (resolvedOnChange as (ids: string[]) => void)(values);
+          (resolvedOnChange as unknown as (ids: string[]) => void)(values);
         }
       }}
       loading={resolvedLoading}

@@ -4,6 +4,7 @@ import { ArrowLeft, Lock, Plus, Save, Trash2, Unlock } from 'lucide-react';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   Badge,
@@ -64,6 +65,7 @@ const formatUpdatedAt = (value: string): string => {
 
 export function AdminValidatorPatternListsPage(): React.JSX.Element {
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const updateSetting = useUpdateSetting();
   const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
@@ -149,18 +151,20 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         });
         return;
       }
-      if (typeof window !== 'undefined') {
-        const confirmed = window.confirm(
-          `Remove validation pattern list "${list.name}"?`
-        );
-        if (!confirmed) return;
-      }
-      setLists((current: ValidatorPatternList[]) =>
-        current.filter((entry: ValidatorPatternList) => entry.id !== list.id)
-      );
-      toast('List removed. Save to persist.', { variant: 'success' });
+      confirm({
+        title: 'Remove List?',
+        message: `Are you sure you want to remove validation pattern list "${list.name}"? This action must be saved to persist.`,
+        confirmText: 'Remove',
+        isDangerous: true,
+        onConfirm: () => {
+          setLists((current: ValidatorPatternList[]) =>
+            current.filter((entry: ValidatorPatternList) => entry.id !== list.id)
+          );
+          toast('List removed. Save to persist.', { variant: 'success' });
+        }
+      });
     },
-    [lists.length, toast]
+    [lists.length, toast, confirm]
   );
 
   const handleReset = useCallback((): void => {
@@ -437,6 +441,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
           </div>
         )}
       </FormSection>
+      <ConfirmationModal />
     </div>
   );
 }

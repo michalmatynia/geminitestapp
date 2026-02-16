@@ -1,9 +1,11 @@
 'use client';
 
+import { Copy } from 'lucide-react';
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { Button } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 import type { ImageStudioSlotRecord } from '../../types';
 
@@ -22,28 +24,29 @@ export function SlotInlineEditModal({
   header,
   children,
 }: SlotInlineEditModalProps): React.JSX.Element | null {
-  if (!isOpen || !selectedSlot) return null;
+  if (!selectedSlot) return null;
 
   return (
-    <AppModal
-      open={isOpen}
+    <DetailModal
+      isOpen={isOpen}
       onClose={onClose}
-      title={header}
+      title={typeof header === 'string' ? header : 'Edit Card'}
       size='xl'
       footer={
         <Button
-          size='xs'
+          size='sm'
           type='button'
-          variant='outline'
-          className='bg-card/90 font-mono text-[11px] text-gray-200 hover:text-white'
+          variant='ghost'
+          className='font-mono text-[10px] text-muted-foreground hover:text-foreground gap-2'
           onClick={() => onCopyId(selectedSlot.id)}
           title='Click to copy Card ID'
         >
-          Card ID: {selectedSlot.id}
+          <Copy className='size-3' />
+          ID: {selectedSlot.id}
         </Button>
       }
     >
       {children}
-    </AppModal>
+    </DetailModal>
   );
 }

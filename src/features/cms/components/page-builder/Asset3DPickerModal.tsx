@@ -7,7 +7,8 @@ import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { FilterPanel, Button, AppModal, FormSection } from '@/shared/ui';
+import { FilterPanel, Button, FormSection } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
 interface Asset3DPickerModalProps extends EntityModalProps<Asset3DRecord, Asset3DRecord> {
@@ -67,8 +68,6 @@ export function Asset3DPickerModal({
   const assetsQuery = useAssets3D(apiFilters);
   const assets = assetsQuery.data ?? [];
 
-  if (!isOpen) return null;
-
   const handleFilterChange = (key: string, value: unknown) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
@@ -84,7 +83,13 @@ export function Asset3DPickerModal({
 
   return (
     <>
-      <AppModal open={isOpen} onClose={onClose} title='Select 3D asset' size='xl'>
+      <DetailModal
+        isOpen={isOpen}
+        onClose={onClose}
+        title='Select 3D asset'
+        size='xl'
+        footer={null}
+      >
         <div className='space-y-4 text-sm text-gray-200'>
           <FilterPanel
             filters={filterConfig}
@@ -171,7 +176,7 @@ export function Asset3DPickerModal({
             </FormSection>
           </div>
         </div>
-      </AppModal>
+      </DetailModal>
 
       {previewAsset ? (
         <Asset3DPreviewModal

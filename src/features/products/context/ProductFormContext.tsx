@@ -428,6 +428,11 @@ export function ProductFormProvider({
     return input.map((entry: ProductParameterValue) => ({
       parameterId: typeof entry?.parameterId === 'string' ? entry.parameterId : '',
       value: typeof entry?.value === 'string' ? entry.value : '',
+      ...(entry?.valuesByLanguage &&
+      typeof entry.valuesByLanguage === 'object' &&
+      !Array.isArray(entry.valuesByLanguage)
+        ? { valuesByLanguage: entry.valuesByLanguage }
+        : {}),
     }));
   };
 

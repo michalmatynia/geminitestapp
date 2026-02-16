@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 
 import type { Slug } from '@/features/cms/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { AppModal, Button, Checkbox, FormField, SearchInput } from '@/shared/ui';
+import { FormModal, Checkbox, FormField, SearchInput } from '@/shared/ui';
 
 interface AttachSlugModalProps extends EntityModalProps<Slug, Slug> {
   onAttach: (selectedIds: string[]) => Promise<void>;
@@ -72,31 +72,19 @@ export function AttachSlugModal({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <AppModal
+    <FormModal
       open={isOpen}
       onClose={handleClose}
       title='Attach Existing Slug'
+      onSave={() => void handleAttach()}
+      isSaving={isAttaching}
+      saveText={`Attach ${selectedIds.length > 0 ? `(${selectedIds.length})` : ''}`}
+      isSaveDisabled={selectedIds.length === 0}
       size='md'
-      footer={
-        <div className='flex justify-end gap-2'>
-          <Button variant='outline' size='sm' onClick={handleClose} disabled={isAttaching}>
-            Cancel
-          </Button>
-          <Button
-            size='sm'
-            onClick={() => { void handleAttach(); }}
-            disabled={selectedIds.length === 0 || isAttaching}
-          >
-            {isAttaching ? 'Attaching...' : `Attach ${selectedIds.length > 0 ? `(${selectedIds.length})` : ''}`}
-          </Button>
-        </div>
-      }
     >
       <div className='space-y-4'>
-        <FormField label='Search Available Routes'>
+        <FormField label='Search Available Routes' description='Filter global routes that are not yet assigned to this zone.'>
           <SearchInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -107,54 +95,57 @@ export function AttachSlugModal({
         </FormField>
 
         <div className='space-y-2'>
-          <div className='flex items-center justify-between'>
-            <span className='text-[10px] uppercase font-bold text-gray-500'>Available Slugs</span>
+          <div className='flex items-center justify-between px-1'>
+            <span className='text-[10px] uppercase font-bold text-muted-foreground'>Available Slugs</span>
             <div className='flex items-center gap-3 text-[10px] uppercase font-bold'>
               <button
                 type='button'
-                className='text-blue-400 hover:text-blue-300'
+                className='text-primary hover:text-primary/80 transition-colors'
                 onClick={selectAllVisible}
               >
-                All
+                Select All
               </button>
               <button
                 type='button'
-                className='text-gray-500 hover:text-gray-400'
+                className='text-muted-foreground hover:text-foreground transition-colors'
                 onClick={clearSelection}
               >
-                None
+                Clear
               </button>
             </div>
           </div>
 
-          <div className='max-h-60 overflow-y-auto rounded border border-border/60 bg-black/20 p-2 divide-y divide-white/5'>
+          <div className='max-h-60 overflow-y-auto rounded-lg border border-border/60 bg-black/20 p-1 divide-y divide-white/5'>
             {loading ? (
-              <div className='py-8 text-center text-xs text-gray-500 animate-pulse'>
+              <div className='py-8 text-center text-xs text-muted-foreground animate-pulse'>
                 Fetching global slug index...
               </div>
             ) : availableSlugs.length === 0 ? (
-              <div className='py-8 text-center text-xs text-gray-600 italic'>
+              <div className='py-8 text-center text-xs text-muted-foreground/60 italic'>
                 No unassigned routes found matching your criteria.
               </div>
             ) : (
               availableSlugs.map((slug) => (
                 <label
                   key={slug.id}
-                  className='flex items-center gap-3 p-2 hover:bg-white/5 cursor-pointer transition-colors'
+                  className='flex items-center gap-3 p-2.5 hover:bg-white/5 cursor-pointer transition-colors group'
                 >
                   <Checkbox
                     checked={selectedIds.includes(slug.id)}
                     onCheckedChange={() => toggleSelection(slug.id)}
                   />
-                  <span className='text-sm text-gray-300'>/{slug.slug}</span>
+                  <div className='flex flex-col'>
+                    <span className='text-sm font-medium text-gray-200 group-hover:text-white transition-colors'>/{slug.slug}</span>
+                    <span className='text-[10px] text-muted-foreground font-mono'>{slug.id}</span>
+                  </div>
                 </label>
               ))
             )}
           </div>
 
-          {error && <p className='text-xs text-rose-400 font-medium'>{error}</p>}
+          {error && <p className='text-xs text-destructive font-medium px-1'>{error}</p>}
         </div>
       </div>
-    </AppModal>
+    </FormModal>
   );
 }

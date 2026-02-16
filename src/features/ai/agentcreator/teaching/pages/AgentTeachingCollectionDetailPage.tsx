@@ -111,8 +111,8 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
         title={collection ? collection.name : 'Collection'}
         description='Manage documents (original text + embedding vectors).'
         icon={<BookOpen className='size-4' />}
-        eyebrow={(
-          <Link href='/admin/agentcreator/teaching/collections' className='text-blue-300 hover:text-blue-200 transition-colors'>
+        subtitle={(
+          <Link href='/admin/agentcreator/teaching/collections' className='text-blue-300 hover:text-blue-200 transition-colors ml-2'>
             ← Back to collections
           </Link>
         )}
@@ -124,7 +124,7 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
             onClick: () => {},
             disabled: true,
           }
-        ] : undefined}
+        ] : []}
       />
 
       <div className='grid gap-6 lg:grid-cols-2'>

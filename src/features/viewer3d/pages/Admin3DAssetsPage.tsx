@@ -73,6 +73,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
     handleReindex,
     clearFilters,
     hasActiveFilters,
+    ConfirmationModal,
     isDeleting,
     isReindexing,
     refetch,
@@ -383,6 +384,8 @@ export function Admin3DAssetsPage(): React.JSX.Element {
           existingTags={allTags}
         />
       )}
+
+      <ConfirmationModal />
     </ListPanel>
   );
 }

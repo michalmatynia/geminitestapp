@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit2, Plus, Save, Trash2, X, Database } from 'lucide-react';
+import { Edit2, Plus, Trash2, Database } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
@@ -11,12 +11,11 @@ import {
   Badge,
   Button,
   FormSection,
-  Input,
-  Label,
-  SelectSimple,
   PanelHeader,
   useToast,
 } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import {
   createFilemakerOrganization,
@@ -81,43 +80,21 @@ export function AdminFilemakerPage(): React.JSX.Element {
     [countries]
   );
 
-  const [personFirstName, setPersonFirstName] = useState('');
-  const [personLastName, setPersonLastName] = useState('');
-  const [personStreet, setPersonStreet] = useState('');
-  const [personStreetNumber, setPersonStreetNumber] = useState('');
-  const [personCity, setPersonCity] = useState('');
-  const [personPostalCode, setPersonPostalCode] = useState('');
-  const [personCountryId, setPersonCountryId] = useState('');
-  const [personNip, setPersonNip] = useState('');
-  const [personRegon, setPersonRegon] = useState('');
-  const [personPhones, setPersonPhones] = useState('');
+  const [personDraft, setPersonDraft] = useState<Partial<FilemakerPerson>>({});
+  const [orgDraft, setOrgDraft] = useState<Partial<FilemakerOrganization>>({});
+  
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [editingPerson, setEditingPerson] = useState<FilemakerPerson | null>(null);
+  const [editingOrg, setEditingOrg] = useState<FilemakerOrganization | null>(null);
 
-  const [organizationName, setOrganizationName] = useState('');
-  const [organizationStreet, setOrganizationStreet] = useState('');
-  const [organizationStreetNumber, setOrganizationStreetNumber] = useState('');
-  const [organizationCity, setOrganizationCity] = useState('');
-  const [organizationPostalCode, setOrganizationPostalCode] = useState('');
-  const [organizationCountryId, setOrganizationCountryId] = useState('');
-
-  const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
-  const [editingPersonFirstName, setEditingPersonFirstName] = useState('');
-  const [editingPersonLastName, setEditingPersonLastName] = useState('');
-  const [editingPersonStreet, setEditingPersonStreet] = useState('');
-  const [editingPersonStreetNumber, setEditingPersonStreetNumber] = useState('');
-  const [editingPersonCity, setEditingPersonCity] = useState('');
-  const [editingPersonPostalCode, setEditingPersonPostalCode] = useState('');
-  const [editingPersonCountryId, setEditingPersonCountryId] = useState('');
-  const [editingPersonNip, setEditingPersonNip] = useState('');
-  const [editingPersonRegon, setEditingPersonRegon] = useState('');
-  const [editingPersonPhones, setEditingPersonPhones] = useState('');
-
-  const [editingOrganizationId, setEditingOrganizationId] = useState<string | null>(null);
-  const [editingOrganizationName, setEditingOrganizationName] = useState('');
-  const [editingOrganizationStreet, setEditingOrganizationStreet] = useState('');
-  const [editingOrganizationStreetNumber, setEditingOrganizationStreetNumber] = useState('');
-  const [editingOrganizationCity, setEditingOrganizationCity] = useState('');
-  const [editingOrganizationPostalCode, setEditingOrganizationPostalCode] = useState('');
-  const [editingOrganizationCountryId, setEditingOrganizationCountryId] = useState('');
+  const [confirmation, setConfirmation] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  } | null>(null);
 
   useEffect(() => {
     setDatabase(parsedDatabase);
@@ -173,15 +150,16 @@ export function AdminFilemakerPage(): React.JSX.Element {
     [toast, updateSetting]
   );
 
-  const handleAddPerson = useCallback(async (): Promise<void> => {
-    const firstName = personFirstName.trim();
-    const lastName = personLastName.trim();
-    const street = personStreet.trim();
-    const streetNumber = personStreetNumber.trim();
-    const city = personCity.trim();
-    const postalCode = personPostalCode.trim();
-    const countryId = personCountryId.trim();
+  const handleSavePerson = useCallback(async (): Promise<void> => {
+    const firstName = personDraft.firstName?.trim();
+    const lastName = personDraft.lastName?.trim();
+    const street = personDraft.street?.trim() || '';
+    const streetNumber = personDraft.streetNumber?.trim() || '';
+    const city = personDraft.city?.trim() || '';
+    const postalCode = personDraft.postalCode?.trim() || '';
+    const countryId = personDraft.countryId?.trim() || '';
     const country = countryById.get(countryId)?.name ?? '';
+
     if (!firstName || !lastName || !hasAddressFields(street, streetNumber, city, postalCode, countryId)) {
       toast('Person requires first name, last name, street, street number, city, postal code, and country.', {
         variant: 'error',
@@ -189,179 +167,80 @@ export function AdminFilemakerPage(): React.JSX.Element {
       return;
     }
 
-    const person = createFilemakerPerson({
-      id: createId('person'),
-      firstName,
-      lastName,
-      street,
-      streetNumber,
-      city,
-      postalCode,
-      country,
-      countryId,
-      nip: personNip,
-      regon: personRegon,
-      phoneNumbers: personPhones,
-    });
+    const nextPersons = editingPerson
+      ? database.persons.map(p => p.id === editingPerson.id 
+        ? createFilemakerPerson({
+          ...p,
+          ...personDraft,
+          firstName,
+          lastName,
+          country,
+          updatedAt: new Date().toISOString()
+        } as any) 
+        : p)
+      : [...database.persons, createFilemakerPerson({
+        id: createId('person'),
+        ...personDraft,
+        firstName,
+        lastName,
+        country,
+      } as any)];
 
-    await persistDatabase(
-      {
-        ...database,
-        persons: [...database.persons, person],
-      },
-      'Person added.'
-    );
-
-    setPersonFirstName('');
-    setPersonLastName('');
-    setPersonStreet('');
-    setPersonStreetNumber('');
-    setPersonCity('');
-    setPersonPostalCode('');
-    setPersonCountryId('');
-    setPersonNip('');
-    setPersonRegon('');
-    setPersonPhones('');
-  }, [
-    countryById,
-    database,
-    personCity,
-    personCountryId,
-    personFirstName,
-    personLastName,
-    personNip,
-    personPostalCode,
-    personPhones,
-    personRegon,
-    personStreet,
-    personStreetNumber,
-    persistDatabase,
-    toast,
-  ]);
+    await persistDatabase({ ...database, persons: nextPersons }, editingPerson ? 'Person updated.' : 'Person added.');
+    setIsPersonModalOpen(false);
+    setEditingPerson(null);
+    setPersonDraft({});
+  }, [countryById, database, personDraft, editingPerson, persistDatabase, toast]);
 
   const handleDeletePerson = useCallback(
     async (personId: string): Promise<void> => {
       const target = database.persons.find((entry: FilemakerPerson) => entry.id === personId);
       if (!target) return;
-      if (typeof window !== 'undefined') {
-        const confirmed = window.confirm(`Delete person "${target.firstName} ${target.lastName}"?`);
-        if (!confirmed) return;
-      }
 
-      await persistDatabase(
-        {
-          ...database,
-          persons: database.persons.filter((entry: FilemakerPerson) => entry.id !== personId),
-        },
-        'Person deleted.'
-      );
-      if (editingPersonId === personId) {
-        setEditingPersonId(null);
-      }
+      setConfirmation({
+        title: 'Delete Person?',
+        message: `Are you sure you want to delete person "${target.firstName} ${target.lastName}"?`,
+        confirmText: 'Delete Record',
+        isDangerous: true,
+        onConfirm: async () => {
+          await persistDatabase(
+            {
+              ...database,
+              persons: database.persons.filter((entry: FilemakerPerson) => entry.id !== personId),
+            },
+            'Person deleted.'
+          );
+        }
+      });
     },
-    [database, editingPersonId, persistDatabase]
+    [database, persistDatabase]
   );
 
   const handleStartEditPerson = useCallback((person: FilemakerPerson): void => {
-    setEditingPersonId(person.id);
-    setEditingPersonFirstName(person.firstName);
-    setEditingPersonLastName(person.lastName);
-    setEditingPersonStreet(person.street);
-    setEditingPersonStreetNumber(person.streetNumber);
-    setEditingPersonCity(person.city);
-    setEditingPersonPostalCode(person.postalCode);
-    setEditingPersonCountryId(resolveCountryId(person.countryId, person.country));
-    setEditingPersonNip(person.nip);
-    setEditingPersonRegon(person.regon);
-    setEditingPersonPhones(person.phoneNumbers.join(', '));
+    setEditingPerson(person);
+    setPersonDraft({
+      ...person,
+      countryId: resolveCountryId(person.countryId, person.country),
+      phoneNumbers: person.phoneNumbers.join(', ') as any
+    });
+    setIsPersonModalOpen(true);
   }, [resolveCountryId]);
 
-  const handleCancelEditPerson = useCallback((): void => {
-    setEditingPersonId(null);
-    setEditingPersonFirstName('');
-    setEditingPersonLastName('');
-    setEditingPersonStreet('');
-    setEditingPersonStreetNumber('');
-    setEditingPersonCity('');
-    setEditingPersonPostalCode('');
-    setEditingPersonCountryId('');
-    setEditingPersonNip('');
-    setEditingPersonRegon('');
-    setEditingPersonPhones('');
+  const openCreatePerson = useCallback(() => {
+    setEditingPerson(null);
+    setPersonDraft({});
+    setIsPersonModalOpen(true);
   }, []);
 
-  const handleSavePerson = useCallback(async (): Promise<void> => {
-    if (!editingPersonId) return;
-    const firstName = editingPersonFirstName.trim();
-    const lastName = editingPersonLastName.trim();
-    const street = editingPersonStreet.trim();
-    const streetNumber = editingPersonStreetNumber.trim();
-    const city = editingPersonCity.trim();
-    const postalCode = editingPersonPostalCode.trim();
-    const countryId = editingPersonCountryId.trim();
+  const handleSaveOrganization = useCallback(async (): Promise<void> => {
+    const name = orgDraft.name?.trim();
+    const street = orgDraft.street?.trim() || '';
+    const streetNumber = orgDraft.streetNumber?.trim() || '';
+    const city = orgDraft.city?.trim() || '';
+    const postalCode = orgDraft.postalCode?.trim() || '';
+    const countryId = orgDraft.countryId?.trim() || '';
     const country = countryById.get(countryId)?.name ?? '';
-    if (!firstName || !lastName || !hasAddressFields(street, streetNumber, city, postalCode, countryId)) {
-      toast('Person requires first name, last name, street, street number, city, postal code, and country.', {
-        variant: 'error',
-      });
-      return;
-    }
 
-    await persistDatabase(
-      {
-        ...database,
-        persons: database.persons.map((person: FilemakerPerson) =>
-          person.id === editingPersonId
-            ? createFilemakerPerson({
-              id: person.id,
-              firstName,
-              lastName,
-              addressId: person.addressId,
-              street,
-              streetNumber,
-              city,
-              postalCode,
-              country,
-              countryId,
-              nip: editingPersonNip,
-              regon: editingPersonRegon,
-              phoneNumbers: editingPersonPhones,
-              createdAt: person.createdAt,
-              updatedAt: new Date().toISOString(),
-            })
-            : person
-        ),
-      },
-      'Person updated.'
-    );
-    handleCancelEditPerson();
-  }, [
-    countryById,
-    database,
-    editingPersonCity,
-    editingPersonCountryId,
-    editingPersonFirstName,
-    editingPersonId,
-    editingPersonLastName,
-    editingPersonNip,
-    editingPersonPostalCode,
-    editingPersonPhones,
-    editingPersonRegon,
-    editingPersonStreet,
-    editingPersonStreetNumber,
-    handleCancelEditPerson,
-    persistDatabase,
-    toast,
-  ]);
-
-  const handleAddOrganization = useCallback(async (): Promise<void> => {
-    const name = organizationName.trim();
-    const street = organizationStreet.trim();
-    const streetNumber = organizationStreetNumber.trim();
-    const city = organizationCity.trim();
-    const postalCode = organizationPostalCode.trim();
-    const countryId = organizationCountryId.trim();
-    const country = countryById.get(countryId)?.name ?? '';
     if (!name || !hasAddressFields(street, streetNumber, city, postalCode, countryId)) {
       toast('Organization requires name, street, street number, city, postal code, and country.', {
         variant: 'error',
@@ -369,42 +248,28 @@ export function AdminFilemakerPage(): React.JSX.Element {
       return;
     }
 
-    const organization = createFilemakerOrganization({
-      id: createId('organization'),
-      name,
-      street,
-      streetNumber,
-      city,
-      postalCode,
-      country,
-      countryId,
-    });
+    const nextOrgs = editingOrg
+      ? database.organizations.map(o => o.id === editingOrg.id
+        ? createFilemakerOrganization({
+          ...o,
+          ...orgDraft,
+          name,
+          country,
+          updatedAt: new Date().toISOString()
+        } as any)
+        : o)
+      : [...database.organizations, createFilemakerOrganization({
+        id: createId('organization'),
+        ...orgDraft,
+        name,
+        country,
+      } as any)];
 
-    await persistDatabase(
-      {
-        ...database,
-        organizations: [...database.organizations, organization],
-      },
-      'Organization added.'
-    );
-    setOrganizationName('');
-    setOrganizationStreet('');
-    setOrganizationStreetNumber('');
-    setOrganizationCity('');
-    setOrganizationPostalCode('');
-    setOrganizationCountryId('');
-  }, [
-    countryById,
-    database,
-    organizationCity,
-    organizationCountryId,
-    organizationName,
-    organizationPostalCode,
-    organizationStreet,
-    organizationStreetNumber,
-    persistDatabase,
-    toast,
-  ]);
+    await persistDatabase({ ...database, organizations: nextOrgs }, editingOrg ? 'Organization updated.' : 'Organization added.');
+    setIsOrgModalOpen(false);
+    setEditingOrg(null);
+    setOrgDraft({});
+  }, [countryById, database, orgDraft, editingOrg, persistDatabase, toast]);
 
   const handleDeleteOrganization = useCallback(
     async (organizationId: string): Promise<void> => {
@@ -412,101 +277,80 @@ export function AdminFilemakerPage(): React.JSX.Element {
         (entry: FilemakerOrganization) => entry.id === organizationId
       );
       if (!target) return;
-      if (typeof window !== 'undefined') {
-        const confirmed = window.confirm(`Delete organization "${target.name}"?`);
-        if (!confirmed) return;
-      }
 
-      await persistDatabase(
-        {
-          ...database,
-          organizations: database.organizations.filter(
-            (entry: FilemakerOrganization) => entry.id !== organizationId
-          ),
-        },
-        'Organization deleted.'
-      );
-      if (editingOrganizationId === organizationId) {
-        setEditingOrganizationId(null);
-      }
+      setConfirmation({
+        title: 'Delete Organization?',
+        message: `Are you sure you want to delete organization "${target.name}"?`,
+        confirmText: 'Delete Record',
+        isDangerous: true,
+        onConfirm: async () => {
+          await persistDatabase(
+            {
+              ...database,
+              organizations: database.organizations.filter(
+                (entry: FilemakerOrganization) => entry.id !== organizationId
+              ),
+            },
+            'Organization deleted.'
+          );
+        }
+      });
     },
-    [database, editingOrganizationId, persistDatabase]
+    [database, persistDatabase]
   );
 
   const handleStartEditOrganization = useCallback((organization: FilemakerOrganization): void => {
-    setEditingOrganizationId(organization.id);
-    setEditingOrganizationName(organization.name);
-    setEditingOrganizationStreet(organization.street);
-    setEditingOrganizationStreetNumber(organization.streetNumber);
-    setEditingOrganizationCity(organization.city);
-    setEditingOrganizationPostalCode(organization.postalCode);
-    setEditingOrganizationCountryId(resolveCountryId(organization.countryId, organization.country));
+    setEditingOrg(organization);
+    setOrgDraft({
+      ...organization,
+      countryId: resolveCountryId(organization.countryId, organization.country)
+    });
+    setIsOrgModalOpen(true);
   }, [resolveCountryId]);
 
-  const handleCancelEditOrganization = useCallback((): void => {
-    setEditingOrganizationId(null);
-    setEditingOrganizationName('');
-    setEditingOrganizationStreet('');
-    setEditingOrganizationStreetNumber('');
-    setEditingOrganizationCity('');
-    setEditingOrganizationPostalCode('');
-    setEditingOrganizationCountryId('');
+  const openCreateOrg = useCallback(() => {
+    setEditingOrg(null);
+    setOrgDraft({});
+    setIsOrgModalOpen(true);
   }, []);
 
-  const handleSaveOrganization = useCallback(async (): Promise<void> => {
-    if (!editingOrganizationId) return;
-    const name = editingOrganizationName.trim();
-    const street = editingOrganizationStreet.trim();
-    const streetNumber = editingOrganizationStreetNumber.trim();
-    const city = editingOrganizationCity.trim();
-    const postalCode = editingOrganizationPostalCode.trim();
-    const countryId = editingOrganizationCountryId.trim();
-    const country = countryById.get(countryId)?.name ?? '';
-    if (!name || !hasAddressFields(street, streetNumber, city, postalCode, countryId)) {
-      toast('Organization requires name, street, street number, city, postal code, and country.', {
-        variant: 'error',
-      });
-      return;
-    }
+  const personFields: SettingsField<Partial<FilemakerPerson>>[] = useMemo(() => [
+    { key: 'firstName', label: 'First Name', type: 'text', placeholder: 'First name', required: true },
+    { key: 'lastName', label: 'Last Name', type: 'text', placeholder: 'Last name', required: true },
+    { key: 'street', label: 'Street', type: 'text', placeholder: 'Street', required: true },
+    { key: 'streetNumber', label: 'Street Number', type: 'text', placeholder: 'Street number', required: true },
+    { key: 'city', label: 'City', type: 'text', placeholder: 'City', required: true },
+    { key: 'postalCode', label: 'Postal Code', type: 'text', placeholder: 'Postal code', required: true },
+    {
+      key: 'countryId',
+      label: 'Country',
+      type: 'select',
+      options: countryOptions,
+      placeholder: countriesQuery.isLoading ? 'Loading countries...' : 'Select country',
+      disabled: countriesQuery.isLoading,
+      required: true,
+    },
+    { key: 'nip', label: 'NIP', type: 'text', placeholder: 'NIP code' },
+    { key: 'regon', label: 'REGON', type: 'text', placeholder: 'REGON code' },
+    { key: 'phoneNumbers' as any, label: 'Telephone Numbers', type: 'text', placeholder: 'Comma-separated numbers' },
+  ], [countryOptions, countriesQuery.isLoading]);
 
-    await persistDatabase(
-      {
-        ...database,
-        organizations: database.organizations.map((organization: FilemakerOrganization) =>
-          organization.id === editingOrganizationId
-            ? createFilemakerOrganization({
-              id: organization.id,
-              name,
-              addressId: organization.addressId,
-              street,
-              streetNumber,
-              city,
-              postalCode,
-              country,
-              countryId,
-              createdAt: organization.createdAt,
-              updatedAt: new Date().toISOString(),
-            })
-            : organization
-        ),
-      },
-      'Organization updated.'
-    );
-    handleCancelEditOrganization();
-  }, [
-    countryById,
-    database,
-    editingOrganizationCity,
-    editingOrganizationCountryId,
-    editingOrganizationId,
-    editingOrganizationName,
-    editingOrganizationPostalCode,
-    editingOrganizationStreet,
-    editingOrganizationStreetNumber,
-    handleCancelEditOrganization,
-    persistDatabase,
-    toast,
-  ]);
+  const orgFields: SettingsField<Partial<FilemakerOrganization>>[] = useMemo(() => [
+    { key: 'name', label: 'Organization Name', type: 'text', placeholder: 'Organization name', required: true },
+    { key: 'street', label: 'Street', type: 'text', placeholder: 'Street', required: true },
+    { key: 'streetNumber', label: 'Street Number', type: 'text', placeholder: 'Street number', required: true },
+    { key: 'city', label: 'City', type: 'text', placeholder: 'City', required: true },
+    { key: 'postalCode', label: 'Postal Code', type: 'text', placeholder: 'Postal code', required: true },
+    {
+      key: 'countryId',
+      label: 'Country',
+      type: 'select',
+      options: countryOptions,
+      placeholder: countriesQuery.isLoading ? 'Loading countries...' : 'Select country',
+      disabled: countriesQuery.isLoading,
+      required: true,
+    },
+  ], [countryOptions, countriesQuery.isLoading]);
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
@@ -528,9 +372,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
         actions={(
           <Button
             type='button'
-            onClick={(): void => {
-              void handleAddPerson();
-            }}
+            onClick={openCreatePerson}
             disabled={updateSetting.isPending}
             className='h-8'
           >
@@ -539,282 +381,55 @@ export function AdminFilemakerPage(): React.JSX.Element {
           </Button>
         )}
       >
-        <div className='grid gap-3 md:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>First Name</Label>
-            <Input
-              value={personFirstName}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonFirstName(event.target.value);
-              }}
-              placeholder='First name'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Last Name</Label>
-            <Input
-              value={personLastName}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonLastName(event.target.value);
-              }}
-              placeholder='Last name'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Street</Label>
-            <Input
-              value={personStreet}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonStreet(event.target.value);
-              }}
-              placeholder='Street'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Street Number</Label>
-            <Input
-              value={personStreetNumber}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonStreetNumber(event.target.value);
-              }}
-              placeholder='Street number'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>City</Label>
-            <Input
-              value={personCity}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonCity(event.target.value);
-              }}
-              placeholder='City'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Postal Code</Label>
-            <Input
-              value={personPostalCode}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonPostalCode(event.target.value);
-              }}
-              placeholder='Postal code'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Country</Label>
-            <SelectSimple
-              value={personCountryId}
-              onValueChange={(value: string): void => {
-                setPersonCountryId(value);
-              }}
-              options={countryOptions}
-              placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}
-              size='sm'
-              disabled={countriesQuery.isLoading || countriesQuery.isError}
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>NIP</Label>
-            <Input
-              value={personNip}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonNip(event.target.value);
-              }}
-              placeholder='NIP code'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>REGON</Label>
-            <Input
-              value={personRegon}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonRegon(event.target.value);
-              }}
-              placeholder='REGON code'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2 md:col-span-2'>
-            <Label className='text-xs text-gray-400'>Telephone Numbers</Label>
-            <Input
-              value={personPhones}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setPersonPhones(event.target.value);
-              }}
-              placeholder='Comma-separated numbers'
-              className='h-9'
-            />
-          </div>
-        </div>
-
         <div className='space-y-2'>
           {persons.length === 0 ? (
             <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-400'>
               No persons added yet.
             </div>
           ) : (
-            persons.map((person: FilemakerPerson) => {
-              const isEditing = editingPersonId === person.id;
-              return (
-                <div key={person.id} className='rounded-lg border border-border/60 bg-card/35 p-3'>
-                  {isEditing ? (
-                    <div className='grid gap-3 md:grid-cols-2'>
-                      <Input
-                        value={editingPersonFirstName}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonFirstName(event.target.value);
-                        }}
-                        placeholder='First name'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingPersonLastName}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonLastName(event.target.value);
-                        }}
-                        placeholder='Last name'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingPersonStreet}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonStreet(event.target.value);
-                        }}
-                        placeholder='Street'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingPersonStreetNumber}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonStreetNumber(event.target.value);
-                        }}
-                        placeholder='Street number'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingPersonCity}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonCity(event.target.value);
-                        }}
-                        placeholder='City'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingPersonPostalCode}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonPostalCode(event.target.value);
-                        }}
-                        placeholder='Postal code'
-                        className='h-9'
-                      />
-                      <SelectSimple
-                        value={editingPersonCountryId}
-                        onValueChange={(value: string): void => {
-                          setEditingPersonCountryId(value);
-                        }}
-                        options={countryOptions}
-                        placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}
-                        size='sm'
-                        disabled={countriesQuery.isLoading || countriesQuery.isError}
-                      />
-                      <Input
-                        value={editingPersonNip}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonNip(event.target.value);
-                        }}
-                        placeholder='NIP'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingPersonRegon}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonRegon(event.target.value);
-                        }}
-                        placeholder='REGON'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingPersonPhones}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingPersonPhones(event.target.value);
-                        }}
-                        placeholder='Comma-separated numbers'
-                        className='h-9 md:col-span-2'
-                      />
-                      <div className='md:col-span-2 flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          onClick={(): void => {
-                            void handleSavePerson();
-                          }}
-                          disabled={updateSetting.isPending}
-                          className='h-8'
-                        >
-                          <Save className='mr-1.5 size-3.5' />
-                          Save
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          onClick={handleCancelEditPerson}
-                          className='h-8'
-                        >
-                          <X className='mr-1.5 size-3.5' />
-                          Cancel
-                        </Button>
-                      </div>
+            persons.map((person: FilemakerPerson) => (
+              <div key={person.id} className='rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='flex flex-wrap items-start justify-between gap-3'>
+                  <div className='min-w-0 flex-1 space-y-1'>
+                    <div className='text-sm font-semibold text-white'>
+                      {person.firstName} {person.lastName}
                     </div>
-                  ) : (
-                    <div className='flex flex-wrap items-start justify-between gap-3'>
-                      <div className='min-w-0 flex-1 space-y-1'>
-                        <div className='text-sm font-semibold text-white'>
-                          {person.firstName} {person.lastName}
-                        </div>
-                        <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
-                        <div className='text-[11px] text-gray-500'>
-                          NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
-                        </div>
-                        <div className='text-[11px] text-gray-500'>
-                          Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
-                        </div>
-                        <div className='text-[10px] text-gray-600'>
-                          Updated: {formatTimestamp(person.updatedAt)}
-                        </div>
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-8 w-8 p-0'
-                          onClick={(): void => {
-                            handleStartEditPerson(person);
-                          }}
-                        >
-                          <Edit2 className='size-3.5' />
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
-                          onClick={(): void => {
-                            void handleDeletePerson(person.id);
-                          }}
-                        >
-                          <Trash2 className='size-3.5' />
-                        </Button>
-                      </div>
+                    <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
+                    <div className='text-[11px] text-gray-500'>
+                      NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
                     </div>
-                  )}
+                    <div className='text-[11px] text-gray-500'>
+                      Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
+                    </div>
+                    <div className='text-[10px] text-gray-600'>
+                      Updated: {formatTimestamp(person.updatedAt)}
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-8 w-8 p-0'
+                      onClick={(): void => {
+                        handleStartEditPerson(person);
+                      }}
+                    >
+                      <Edit2 className='size-3.5' />
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
+                      onClick={(): void => {
+                        void handleDeletePerson(person.id);
+                      }}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </Button>
+                  </div>
                 </div>
-              );
-            })
+              </div>
+            ))
           )}
         </div>
       </FormSection>
@@ -825,9 +440,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
         actions={(
           <Button
             type='button'
-            onClick={(): void => {
-              void handleAddOrganization();
-            }}
+            onClick={openCreateOrg}
             disabled={updateSetting.isPending}
             className='h-8'
           >
@@ -836,201 +449,89 @@ export function AdminFilemakerPage(): React.JSX.Element {
           </Button>
         )}
       >
-        <div className='grid gap-3 md:grid-cols-2'>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Organization Name</Label>
-            <Input
-              value={organizationName}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setOrganizationName(event.target.value);
-              }}
-              placeholder='Organization name'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Street</Label>
-            <Input
-              value={organizationStreet}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setOrganizationStreet(event.target.value);
-              }}
-              placeholder='Street'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Street Number</Label>
-            <Input
-              value={organizationStreetNumber}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setOrganizationStreetNumber(event.target.value);
-              }}
-              placeholder='Street number'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>City</Label>
-            <Input
-              value={organizationCity}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setOrganizationCity(event.target.value);
-              }}
-              placeholder='City'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Postal Code</Label>
-            <Input
-              value={organizationPostalCode}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setOrganizationPostalCode(event.target.value);
-              }}
-              placeholder='Postal code'
-              className='h-9'
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label className='text-xs text-gray-400'>Country</Label>
-            <SelectSimple
-              value={organizationCountryId}
-              onValueChange={(value: string): void => {
-                setOrganizationCountryId(value);
-              }}
-              options={countryOptions}
-              placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}
-              size='sm'
-              disabled={countriesQuery.isLoading || countriesQuery.isError}
-            />
-          </div>
-        </div>
-
         <div className='space-y-2'>
           {organizations.length === 0 ? (
             <div className='rounded border border-dashed border-border/60 bg-card/20 px-3 py-6 text-sm text-gray-400'>
               No organizations added yet.
             </div>
           ) : (
-            organizations.map((organization: FilemakerOrganization) => {
-              const isEditing = editingOrganizationId === organization.id;
-              return (
-                <div key={organization.id} className='rounded-lg border border-border/60 bg-card/35 p-3'>
-                  {isEditing ? (
-                    <div className='grid gap-3 md:grid-cols-2'>
-                      <Input
-                        value={editingOrganizationName}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingOrganizationName(event.target.value);
-                        }}
-                        placeholder='Organization name'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingOrganizationStreet}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingOrganizationStreet(event.target.value);
-                        }}
-                        placeholder='Street'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingOrganizationStreetNumber}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingOrganizationStreetNumber(event.target.value);
-                        }}
-                        placeholder='Street number'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingOrganizationCity}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingOrganizationCity(event.target.value);
-                        }}
-                        placeholder='City'
-                        className='h-9'
-                      />
-                      <Input
-                        value={editingOrganizationPostalCode}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                          setEditingOrganizationPostalCode(event.target.value);
-                        }}
-                        placeholder='Postal code'
-                        className='h-9'
-                      />
-                      <SelectSimple
-                        value={editingOrganizationCountryId}
-                        onValueChange={(value: string): void => {
-                          setEditingOrganizationCountryId(value);
-                        }}
-                        options={countryOptions}
-                        placeholder={countriesQuery.isLoading ? 'Loading countries...' : 'Select country'}
-                        size='sm'
-                        disabled={countriesQuery.isLoading || countriesQuery.isError}
-                      />
-                      <div className='md:col-span-2 flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          onClick={(): void => {
-                            void handleSaveOrganization();
-                          }}
-                          disabled={updateSetting.isPending}
-                          className='h-8'
-                        >
-                          <Save className='mr-1.5 size-3.5' />
-                          Save
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          onClick={handleCancelEditOrganization}
-                          className='h-8'
-                        >
-                          <X className='mr-1.5 size-3.5' />
-                          Cancel
-                        </Button>
-                      </div>
+            organizations.map((organization: FilemakerOrganization) => (
+              <div key={organization.id} className='rounded-lg border border-border/60 bg-card/35 p-3'>
+                <div className='flex flex-wrap items-start justify-between gap-3'>
+                  <div className='min-w-0 flex-1 space-y-1'>
+                    <div className='text-sm font-semibold text-white'>{organization.name}</div>
+                    <div className='text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
+                    <div className='text-[10px] text-gray-600'>
+                      Updated: {formatTimestamp(organization.updatedAt)}
                     </div>
-                  ) : (
-                    <div className='flex flex-wrap items-start justify-between gap-3'>
-                      <div className='min-w-0 flex-1 space-y-1'>
-                        <div className='text-sm font-semibold text-white'>{organization.name}</div>
-                        <div className='text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
-                        <div className='text-[10px] text-gray-600'>
-                          Updated: {formatTimestamp(organization.updatedAt)}
-                        </div>
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-8 w-8 p-0'
-                          onClick={(): void => {
-                            handleStartEditOrganization(organization);
-                          }}
-                        >
-                          <Edit2 className='size-3.5' />
-                        </Button>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
-                          onClick={(): void => {
-                            void handleDeleteOrganization(organization.id);
-                          }}
-                        >
-                          <Trash2 className='size-3.5' />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-8 w-8 p-0'
+                      onClick={(): void => {
+                        handleStartEditOrganization(organization);
+                      }}
+                    >
+                      <Edit2 className='size-3.5' />
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
+                      onClick={(): void => {
+                        void handleDeleteOrganization(organization.id);
+                      }}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </Button>
+                  </div>
                 </div>
-              );
-            })
+              </div>
+            ))
           )}
         </div>
       </FormSection>
+
+      <SettingsPanelBuilder
+        open={isPersonModalOpen}
+        onClose={() => setIsPersonModalOpen(false)}
+        title={editingPerson ? 'Edit Person' : 'Add Person'}
+        fields={personFields}
+        values={personDraft}
+        onChange={(vals) => setPersonDraft(prev => ({ ...prev, ...vals }))}
+        onSave={handleSavePerson}
+        isSaving={updateSetting.isPending}
+        size='lg'
+      />
+
+      <SettingsPanelBuilder
+        open={isOrgModalOpen}
+        onClose={() => setIsOrgModalOpen(false)}
+        title={editingOrg ? 'Edit Organization' : 'Add Organization'}
+        fields={orgFields}
+        values={orgDraft}
+        onChange={(vals) => setOrgDraft(prev => ({ ...prev, ...vals }))}
+        onSave={handleSaveOrganization}
+        isSaving={updateSetting.isPending}
+        size='md'
+      />
+
+      <ConfirmModal
+        isOpen={Boolean(confirmation)}
+        onClose={() => setConfirmation(null)}
+        title={confirmation?.title ?? ''}
+        message={confirmation?.message ?? ''}
+        confirmText={confirmation?.confirmText ?? 'Confirm'}
+        isDangerous={confirmation?.isDangerous ?? false}
+        onConfirm={async () => {
+          if (confirmation?.onConfirm) {
+            await confirmation.onConfirm();
+          }
+          setConfirmation(null);
+        }}
+      />
     </div>
   );
 }

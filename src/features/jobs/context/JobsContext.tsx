@@ -6,6 +6,7 @@ import type { TraderaQueueHealthResponse } from '@/features/jobs/api';
 import { useCancelListingMutation, useChatbotJobMutation, useClearChatbotJobsMutation } from '@/features/jobs/hooks/useJobMutations';
 import { useIntegrationJobs, useChatbotJobs, useTraderaQueueHealth } from '@/features/jobs/hooks/useJobQueries';
 import { logClientError } from '@/features/observability';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { internalError } from '@/shared/errors/app-error';
 import type { ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 
@@ -59,6 +60,10 @@ interface JobsContextType {
   
   handleClearCompletedChatbotJobs: () => void;
   isClearingChatbotJobs: boolean;
+
+  // Confirmation
+  confirmCancelListing: (productId: string, listingId: string) => void;
+  ConfirmationModal: React.ComponentType;
 }
 
 const JobsContext = createContext<JobsContextType | null>(null);
@@ -88,6 +93,8 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
   const chatbotMutation = useChatbotJobMutation();
   const clearChatbotMutation = useClearChatbotJobsMutation();
 
+  const { confirm, ConfirmationModal } = useConfirm();
+
   // --- Shared UI State ---
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -96,14 +103,21 @@ export function JobsProvider({ children }: { children: ReactNode }): React.JSX.E
 
   // --- Handlers ---
   const handleCancelListing = async (productId: string, listingId: string): Promise<void> => {
-    if (!window.confirm('Cancel this listing job? This will remove it from the queue.')) {
-      return;
-    }
     try {
       await cancelListingMutation.mutateAsync({ productId, listingId });
     } catch (err: unknown) {
       logClientError(err, { context: { source: 'JobsContext', action: 'cancelListing', productId, listingId } });
     }
+  };
+
+  const confirmCancelListing = (productId: string, listingId: string): void => {
+    confirm({
+      title: 'Cancel Listing?',
+      message: 'Cancel this listing job? This will remove it from the queue.',
+      confirmText: 'Cancel Job',
+      isDangerous: true,
+      onConfirm: () => handleCancelListing(productId, listingId),
+    });
   };
 
   const handleCancelChatbotJob = async (jobId: string): Promise<void> => {

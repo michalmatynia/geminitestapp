@@ -1,6 +1,7 @@
 import type {
   ImportExportTemplateDto,
   ImportExportTemplateMappingDto,
+  ImportTemplateParameterImportDto,
 } from '../../contracts/data-import-export';
 import type {
   IntegrationDto,
@@ -75,3 +76,4 @@ export type ImageRetryPreset = ImageRetryPresetDto;
 
 export type ImportExportTemplateMapping = ImportExportTemplateMappingDto;
 export type ImportExportTemplate = ImportExportTemplateDto;
+export type ImportTemplateParameterImport = ImportTemplateParameterImportDto;

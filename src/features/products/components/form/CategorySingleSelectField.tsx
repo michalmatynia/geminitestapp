@@ -18,13 +18,14 @@ type CategorySingleSelectFieldProps = {
   placeholder?: string | undefined;
 };
 
-export function CategorySingleSelectField(props: CategorySingleSelectFieldProps): React.JSX.Element {
+export function CategorySingleSelectField({ onChange, ...props }: CategorySingleSelectFieldProps): React.JSX.Element {
   return (
     <ProductMetadataMultiSelectField
       {...props}
       label='Categories'
       items={props.categories}
       selectedIds={props.selectedCategoryId ? [props.selectedCategoryId] : []}
+      onChange={onChange ? (ids) => onChange(ids[0] || null) : undefined}
       contextItemsKey='categories'
       contextSelectedKey='selectedCategoryId'
       contextLoadingKey='categoriesLoading'

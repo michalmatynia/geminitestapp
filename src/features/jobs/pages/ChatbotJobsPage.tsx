@@ -27,7 +27,6 @@ function ChatbotJobsPageContent(): React.JSX.Element {
     chatbotJobsLoading: isLoading,
     chatbotJobsRefreshing: isRefreshing,
     refetchChatbotJobs: refetch,
-    chatbotJobsError: error,
     query,
     setQuery,
     handleCancelChatbotJob,
@@ -166,7 +165,7 @@ function ChatbotJobsPageContent(): React.JSX.Element {
         icon={<Bot className='size-4' />}
         refreshable={true}
         isRefreshing={isRefreshing}
-        onRefresh={refetch}
+        onRefresh={() => { void refetch(); }}
         actions={[
           {
             key: 'clear',
@@ -196,7 +195,6 @@ function ChatbotJobsPageContent(): React.JSX.Element {
           columns={columns}
           data={filteredJobs}
           isLoading={isLoading}
-          error={error ? error.message : undefined}
           emptyState={
             <EmptyState
               title='No jobs found'

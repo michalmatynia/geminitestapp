@@ -3,8 +3,8 @@
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { DetailModal } from '@/shared/ui/templates/modals';
 import { Button } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface TestResultModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;

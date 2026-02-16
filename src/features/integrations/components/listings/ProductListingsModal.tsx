@@ -11,7 +11,7 @@ import { ProductListingsProvider, useProductListingsContext } from '@/features/i
 import type { ProductListingWithDetails } from '@/features/integrations/types/listings';
 import type { ProductWithImages } from '@/features/products/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { AppModal } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 import {
   ProductListingsModalViewProvider,
@@ -98,10 +98,11 @@ function ProductListingsModalContent(): React.JSX.Element {
   );
 
   return (
-    <AppModal
-      open={true}
+    <DetailModal
+      isOpen={true}
       onClose={onClose}
       title={`Integrations - ${productName}`}
+      size='xl'
     >
       <ProductListingsConfirmDialogs />
       
@@ -134,7 +135,7 @@ function ProductListingsModalContent(): React.JSX.Element {
           </div>
         )}
       </div>
-    </AppModal>
+    </DetailModal>
   );
 }
 

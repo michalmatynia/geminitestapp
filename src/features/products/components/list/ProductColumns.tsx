@@ -2,7 +2,6 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download, MoreVertical } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 
 import {
@@ -15,7 +14,6 @@ import { ProductImageCell } from '@/features/products/components/cells/ProductIm
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListActionsContext } from '@/features/products/context/ProductListContext';
 import { getProductDetailQueryKey, productsListsQueryKey } from '@/features/products/hooks/productCache';
-import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
@@ -364,45 +362,11 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   row,
 }: ColumnActionsProps) => {
   const product: ProductWithImages = row.original;
-  const router = useRouter();
-  const { toast } = useToast();
-  const { mutateAsync: duplicateProduct } = useDuplicateProduct();
   const {
     onProductEditClick,
     onProductDeleteClick,
-    setRefreshTrigger,
+    onDuplicateProduct,
   } = useProductListActionsContext();
-
-  const handleDuplicate = async (): Promise<void> => {
-    const sku: string | null = window.prompt('Enter a new unique SKU for the duplicate:');
-    if (sku === null) return;
-
-    const trimmedSku: string = sku.trim().toUpperCase();
-    const skuPattern: RegExp = /^[A-Z0-9]+$/;
-
-    if (!trimmedSku) {
-      toast('SKU is required.', { variant: 'error' });
-      return;
-    }
-    if (!skuPattern.test(trimmedSku)) {
-      toast('SKU must use uppercase letters and numbers only.', {
-        variant: 'error',
-      });
-      return;
-    }
-
-    try {
-      const duplicated = await duplicateProduct({ id: product.id, sku: trimmedSku });
-      setRefreshTrigger?.((prev: number): number => prev + 1);
-
-      if (duplicated.id) {
-        toast('Product duplicated.', { variant: 'success' });
-        router.push(`/admin/products/${duplicated.id}/edit`);
-      }
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to duplicate product.', { variant: 'error' });
-    }
-  };
 
   return (
     <div className='flex justify-end'>
@@ -432,7 +396,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
           <DropdownMenuItem
             onSelect={(event: Event): void => {
               event.preventDefault();
-              void handleDuplicate();
+              onDuplicateProduct?.(product);
             }}
           >
             Duplicate
@@ -622,7 +586,6 @@ export const getProductColumns = (
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
       const {
-        setRefreshTrigger,
         currencyCode,
         priceGroups,
       } = useProductListActionsContext();
@@ -648,17 +611,6 @@ export const getProductColumns = (
         !!baseCurrencyCode &&
         normalizeCurrencyCode(baseCurrencyCode) !== normalizeCurrencyCode(currencyCode) &&
         displayPrice !== product.price;
-
-      if (!setRefreshTrigger) {
-        return (
-          <div className='flex items-center gap-1'>
-            <span>{displayPrice !== null ? displayPrice.toFixed(2) : '-'}</span>
-            {showCurrencyIndicator && (
-              <span className='text-xs text-muted-foreground'>({actualCurrency})</span>
-            )}
-          </div>
-        );
-      }
 
       if (hasConvertedPrice) {
         return (
@@ -697,7 +649,6 @@ export const getProductColumns = (
                 { queryKey: getProductDetailQueryKey(product.id) },
                 (old: ProductWithImages | undefined) => (old ? { ...old, price: nextValue } : old)
               );
-              setRefreshTrigger((prev: number): number => prev + 1);
             }}
           />
           {showCurrencyIndicator && displayPrice !== product.price && (
@@ -720,12 +671,7 @@ export const getProductColumns = (
     ),
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
-      const { setRefreshTrigger } = useProductListActionsContext();
       const queryClient = useQueryClient();
-
-      if (!setRefreshTrigger) {
-        return <div>{product.stock !== null ? product.stock : '-'}</div>;
-      }
 
       return (
         <EditableCell
@@ -750,7 +696,6 @@ export const getProductColumns = (
               { queryKey: getProductDetailQueryKey(product.id) },
               (old: ProductWithImages | undefined) => (old ? { ...old, stock: nextValue } : old)
             );
-            setRefreshTrigger((prev: number): number => prev + 1);
           }}
         />
       );

@@ -18,7 +18,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord, NoteRelationWithSource, NoteRelationWithTarget } from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
-import { ConfirmModal } from '@/shared/ui/templates/modals';
+import { ConfirmModal, PromptModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type NoteTagWithDetails = NoteTagRecord & { tag: TagRecord };
@@ -86,6 +86,35 @@ export interface NotesAppContextValue {
     isDangerous?: boolean;
   }) => void;
 
+  // Prompt Modal
+  prompt: {
+    title: string;
+    message?: string;
+    label?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (value: string) => void | Promise<void>;
+    required?: boolean;
+  } | null;
+  setPrompt: (val: {
+    title: string;
+    message?: string;
+    label?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (value: string) => void | Promise<void>;
+    required?: boolean;
+  } | null) => void;
+  promptAction: (config: {
+    title: string;
+    message?: string;
+    label?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (value: string) => void | Promise<void>;
+    required?: boolean;
+  }) => void;
+
   // Operations
   operations: ReturnType<typeof useNoteOperations>;
   undoStack: UndoAction[];
@@ -117,25 +146,47 @@ export function NotesAppProvider({
   const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
   const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] = useState<boolean>(false);
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
-  const [confirmation, setConfirmation] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-      } | null>(null);
-
-  const confirmAction = useCallback((config: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  }): void => {
-    setConfirmation(config);
-  }, []);
-
-  // Settings helpers
+    const [confirmation, setConfirmation] = useState<{
+      title: string;
+      message: string;
+      onConfirm: () => void | Promise<void>;
+      confirmText?: string;
+      isDangerous?: boolean;
+    } | null>(null);
+    const [prompt, setPrompt] = useState<{
+      title: string;
+      message?: string;
+      label?: string;
+      defaultValue?: string;
+      placeholder?: string;
+      onConfirm: (value: string) => void | Promise<void>;
+      required?: boolean;
+    } | null>(null);
+  
+    const confirmAction = useCallback((config: {
+      title: string;
+      message: string;
+      onConfirm: () => void | Promise<void>;
+      confirmText?: string;
+      isDangerous?: boolean;
+    }): void => {
+      setConfirmation(config);
+    }, []);
+  
+    const promptAction = useCallback((config: {
+      title: string;
+      message?: string;
+      label?: string;
+      defaultValue?: string;
+      placeholder?: string;
+      onConfirm: (value: string) => void | Promise<void>;
+      required?: boolean;
+    }): void => {
+      setPrompt(config);
+    }, []);
+  
+    // Settings helpers
+  
   const setSelectedFolderId = useCallback((id: string | null): void => {
     updateSettings({ selectedFolderId: id });
   }, [updateSettings]);
@@ -185,6 +236,7 @@ export function NotesAppProvider({
     setSelectedNote,
     selectedNote,
     confirmAction,
+    promptAction,
   });
 
   const themeLogic = useNoteTheme({
@@ -454,6 +506,9 @@ export function NotesAppProvider({
       confirmation,
       setConfirmation,
       confirmAction,
+      prompt,
+      setPrompt,
+      promptAction,
       
       operations,
       undoStack,
@@ -492,6 +547,8 @@ export function NotesAppProvider({
       handleFilterByTag,
       confirmation,
       confirmAction,
+      prompt,
+      promptAction,
       operations,
       undoStack,
       undoHistory,
@@ -505,17 +562,33 @@ export function NotesAppProvider({
     <NotesAppContext.Provider value={contextValue}>
       {children}
       <ConfirmModal
-        open={Boolean(confirmation)}
+        isOpen={Boolean(confirmation)}
         onClose={() => setConfirmation(null)}
         title={confirmation?.title ?? ''}
         message={confirmation?.message ?? ''}
-        confirmText={confirmation?.confirmText}
-        isDangerous={confirmation?.isDangerous}
+        confirmText={confirmation?.confirmText ?? 'Confirm'}
+        isDangerous={confirmation?.isDangerous ?? false}
         onConfirm={async () => {
           if (confirmation?.onConfirm) {
             await confirmation.onConfirm();
           }
           setConfirmation(null);
+        }}
+      />
+      <PromptModal
+        open={Boolean(prompt)}
+        onClose={() => setPrompt(null)}
+        title={prompt?.title ?? ''}
+        message={prompt?.message ?? ''}
+        label={prompt?.label ?? ''}
+        defaultValue={prompt?.defaultValue ?? ''}
+        placeholder={prompt?.placeholder ?? ''}
+        required={prompt?.required ?? false}
+        onConfirm={async (value) => {
+          if (prompt?.onConfirm) {
+            await prompt.onConfirm(value);
+          }
+          setPrompt(null);
         }}
       />
     </NotesAppContext.Provider>

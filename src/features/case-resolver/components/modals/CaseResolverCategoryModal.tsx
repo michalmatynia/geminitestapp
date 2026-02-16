@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { FormField, FormModal, Input, SelectSimple, Textarea } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { CaseResolverCategory } from '../../types';
 
@@ -32,88 +32,57 @@ export function CaseResolverCategoryModal({
   isSaving,
   onSave,
 }: CaseResolverCategoryModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
+  const fields: SettingsField<CategoryFormData>[] = useMemo(() => [
+    {
+      key: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Category name',
+      required: true,
+    },
+    {
+      key: 'parentId',
+      label: 'Parent Category',
+      type: 'select',
+      options: [
+        { value: '__root__', label: 'Root' },
+        ...parentOptions,
+      ],
+      placeholder: 'Root',
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      type: 'textarea',
+      placeholder: 'Optional description',
+    },
+    {
+      key: 'color',
+      label: 'Color',
+      type: 'color',
+      required: true,
+    }
+  ], [parentOptions]);
+
+  const handleChange = (vals: Partial<CategoryFormData>) => {
+    setFormData(prev => {
+      const next = { ...prev, ...vals };
+      if (vals.parentId === '__root__') next.parentId = null;
+      return next;
+    });
+  };
 
   return (
-    <FormModal
+    <SettingsPanelBuilder
       open={isOpen}
       onClose={onClose}
       title={editableCategory ? 'Edit Category' : 'Create Category'}
-      onSave={onSave}
+      fields={fields}
+      values={formData}
+      onChange={handleChange}
+      onSave={async () => onSave()}
       isSaving={isSaving}
       size='md'
-    >
-      <div className='space-y-4'>
-        <FormField label='Name'>
-          <Input
-            className='h-9'
-            value={formData.name}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setFormData((current: CategoryFormData) => ({
-                ...current,
-                name: event.target.value,
-              }));
-            }}
-            placeholder='Category name'
-          />
-        </FormField>
-        <FormField label='Parent Category'>
-          <SelectSimple size='sm'
-            value={formData.parentId ?? '__root__'}
-            onValueChange={(value: string): void => {
-              setFormData((current: CategoryFormData) => ({
-                ...current,
-                parentId: value === '__root__' ? null : value,
-              }));
-            }}
-            options={[
-              { value: '__root__', label: 'Root' },
-              ...parentOptions,
-            ]}
-            placeholder='Root'
-          />
-        </FormField>
-        <FormField label='Description'>
-          <Textarea
-            value={formData.description}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-              setFormData((current: CategoryFormData) => ({
-                ...current,
-                description: event.target.value,
-              }));
-            }}
-            className='min-h-[88px]'
-            placeholder='Optional description'
-          />
-        </FormField>
-        <FormField label='Color'>
-          <div className='flex items-center gap-3'>
-            <Input
-              type='color'
-              className='h-10 w-20 cursor-pointer rounded border border-border bg-gray-900 p-0'
-              value={formData.color}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setFormData((current: CategoryFormData) => ({
-                  ...current,
-                  color: event.target.value,
-                }));
-              }}
-            />
-            <Input
-              type='text'
-              className='h-10 flex-1 font-mono'
-              value={formData.color}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setFormData((current: CategoryFormData) => ({
-                  ...current,
-                  color: event.target.value,
-                }));
-              }}
-              placeholder='#10b981'
-            />
-          </div>
-        </FormField>
-      </div>
-    </FormModal>
+    />
   );
 }

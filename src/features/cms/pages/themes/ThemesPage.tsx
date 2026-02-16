@@ -3,11 +3,12 @@
 import { Edit, Trash2, Palette } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { useCmsThemes, useDeleteTheme } from '@/features/cms/hooks/useCmsQueries';
 import type { CmsTheme } from '@/features/cms/types';
 import { Button, ListPanel, EmptyState, DataTable } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -17,10 +18,15 @@ export default function ThemesPage(): React.ReactNode {
   const deleteMutation = useDeleteTheme();
 
   const themes = useMemo(() => themesQuery.data ?? [], [themesQuery.data]);
+  const [themeToDelete, setThemeToDelete] = React.useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this theme?')) return;
-    await deleteMutation.mutateAsync(id);
+    try {
+      await deleteMutation.mutateAsync(id);
+      setThemeToDelete(null);
+    } catch (err) {
+      // Error handled by mutation or global logger
+    }
   };
 
   const columns = useMemo<ColumnDef<CmsTheme>[]>(() => [
@@ -81,7 +87,7 @@ export default function ThemesPage(): React.ReactNode {
             variant='ghost' 
             size='xs' 
             className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
-            onClick={() => void handleDelete(row.original.id)}
+            onClick={() => setThemeToDelete(row.original.id)}
             aria-label='Delete theme'
           >
             <Trash2 className='size-3.5' />
@@ -89,7 +95,7 @@ export default function ThemesPage(): React.ReactNode {
         </div>
       ),
     },
-  ], [handleDelete]);
+  ], []);
 
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
@@ -123,6 +129,20 @@ export default function ThemesPage(): React.ReactNode {
           </div>
         )}
       </ListPanel>
+
+      <ConfirmModal
+        isOpen={Boolean(themeToDelete)}
+        onClose={() => setThemeToDelete(null)}
+        title='Delete Theme?'
+        message='Are you sure you want to delete this theme? This action cannot be undone and will affect all pages using this theme.'
+        confirmText='Destroy Theme'
+        isDangerous={true}
+        onConfirm={(): void => {
+          if (themeToDelete) {
+            void handleDelete(themeToDelete);
+          }
+        }}
+      />
     </div>
   );
 }

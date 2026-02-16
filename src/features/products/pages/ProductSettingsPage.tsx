@@ -20,6 +20,7 @@ import { ValidatorSettings } from '@/features/products/components/settings/Valid
 import { useCatalogs, useCategories, usePriceGroups, useTags, useDeleteCatalogMutation, useDeletePriceGroupMutation, useUpdatePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import { Catalog, PriceGroup } from '@/features/products/types';
 import { Button, SectionHeader, useToast } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import {
   settingSections,
@@ -67,6 +68,13 @@ export function ProductSettingsPage(): React.JSX.Element {
   const [editingCatalog, setEditingCatalog] = useState<Catalog | null>(null);
   const [showPriceGroupModal, setShowPriceGroupModal] = useState(false);
   const [editingPriceGroup, setEditingPriceGroup] = useState<PriceGroup | null>(null);
+  const [confirmation, setConfirmation] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  } | null>(null);
 
   const { toast } = useToast();
 
@@ -118,12 +126,21 @@ export function ProductSettingsPage(): React.JSX.Element {
   };
 
   const handleDeleteCatalog = async (catalog: Catalog): Promise<void> => {
-    if (!confirm(`Delete catalog "${catalog.name}"?`)) return;
-    try {
-      await deleteCatalogMutation.mutateAsync(catalog.id);
-    } catch (err) {
-      logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteCatalog', catalogId: catalog.id } });
-    }
+    setConfirmation({
+      title: 'Delete Catalog?',
+      message: `Delete catalog "${catalog.name}"? This action cannot be undone and will affect all products in this catalog.`,
+      confirmText: 'Delete Catalog',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteCatalogMutation.mutateAsync(catalog.id);
+          toast('Catalog deleted.', { variant: 'success' });
+        } catch (err) {
+          logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteCatalog', catalogId: catalog.id } });
+          toast('Failed to delete catalog.', { variant: 'error' });
+        }
+      }
+    });
   };
 
   const handleDeleteGroup = async (group: PriceGroup): Promise<void> => {
@@ -131,12 +148,21 @@ export function ProductSettingsPage(): React.JSX.Element {
       toast('At least one price group is required.', { variant: 'error' });
       return;
     }
-    if (!confirm(`Delete price group "${group.name}"?`)) return;
-    try {
-      await deletePriceGroupMutation.mutateAsync(group.id);
-    } catch (err) {
-      logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteGroup', groupId: group.id } });
-    }
+    setConfirmation({
+      title: 'Delete Price Group?',
+      message: `Delete price group "${group.name}"? This will remove all associated price records.`,
+      confirmText: 'Delete Group',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deletePriceGroupMutation.mutateAsync(group.id);
+          toast('Price group deleted.', { variant: 'success' });
+        } catch (err) {
+          logClientError(err, { context: { source: 'ProductSettingsPage', action: 'handleDeleteGroup', groupId: group.id } });
+          toast('Failed to delete price group.', { variant: 'error' });
+        }
+      }
+    });
   };
   const sharedSettingsContextValue = {
     loadingCatalogs,
@@ -279,6 +305,21 @@ export function ProductSettingsPage(): React.JSX.Element {
         />
 
         <InternationalizationModals />
+
+        <ConfirmModal
+          isOpen={Boolean(confirmation)}
+          onClose={() => setConfirmation(null)}
+          title={confirmation?.title ?? ''}
+          message={confirmation?.message ?? ''}
+          confirmText={confirmation?.confirmText ?? 'Confirm'}
+          isDangerous={confirmation?.isDangerous ?? false}
+          onConfirm={async () => {
+            if (confirmation?.onConfirm) {
+              await confirmation.onConfirm();
+            }
+            setConfirmation(null);
+          }}
+        />
       </div>
     </InternationalizationProvider>
   );

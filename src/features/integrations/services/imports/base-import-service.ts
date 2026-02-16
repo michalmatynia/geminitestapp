@@ -49,6 +49,7 @@ import {
   type StartBaseImportRunInput,
 } from '@/features/integrations/services/imports/base-import-service-shared';
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
+import { normalizeBaseImportParameterImportSettings } from '@/features/integrations/types/base-import-parameter-import';
 import type {
   BaseImportErrorCode,
   BaseImportErrorClass,
@@ -61,12 +62,15 @@ import type {
   BaseImportRunRecord,
 } from '@/features/integrations/types/base-import-runs';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
+import { getParameterRepository } from '@/features/products/services/parameter-repository';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import type { ProductWithImages } from '@/features/products/types';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
+
+export type { StartBaseImportRunInput };
 
 const resolvePriceGroupContext = async (
   provider: Awaited<ReturnType<typeof getProductDataProvider>>,
@@ -166,6 +170,104 @@ const resolvePriceGroupContext = async (
   return {
     defaultPriceGroupId: resolved.id,
     preferredCurrencies: Array.from(preferredCurrencies),
+  };
+};
+
+const normalizeLanguageCode = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  return normalized.length > 0 ? normalized : null;
+};
+
+const resolveCatalogLanguageContext = async (
+  provider: Awaited<ReturnType<typeof getProductDataProvider>>,
+  catalog: {
+    languageIds?: string[];
+    defaultLanguageId?: string | null;
+  }
+): Promise<{ languageCodes: string[]; defaultLanguageCode: string | null }> => {
+  const catalogLanguageIds = Array.isArray(catalog.languageIds)
+    ? catalog.languageIds
+      .map((id: string) => (typeof id === 'string' ? id.trim() : ''))
+      .filter((id: string): boolean => id.length > 0)
+    : [];
+  const defaultLanguageId = catalog.defaultLanguageId?.trim() ?? '';
+
+  const idsToResolve = Array.from(
+    new Set(
+      [...catalogLanguageIds, defaultLanguageId].filter(
+        (id: string): boolean => id.length > 0
+      )
+    )
+  );
+  if (idsToResolve.length === 0) {
+    return { languageCodes: [], defaultLanguageCode: null };
+  }
+
+  const idToCode = new Map<string, string>();
+  if (provider === 'mongodb') {
+    const mongo = await getMongoDb();
+    const languageRows = await mongo
+      .collection<{ id?: string; code?: string }>('languages')
+      .find(
+        {
+          $or: [
+            { id: { $in: idsToResolve } },
+            { code: { $in: idsToResolve } },
+          ],
+        },
+        { projection: { id: 1, code: 1 } }
+      )
+      .toArray();
+    languageRows.forEach((row: { id?: string; code?: string }) => {
+      const id = row.id?.trim();
+      const code = normalizeLanguageCode(row.code);
+      if (!id || !code) return;
+      idToCode.set(id, code);
+      idToCode.set(id.toLowerCase(), code);
+      idToCode.set(code, code);
+    });
+  } else {
+    const languageRows = await prisma.language.findMany({
+      where: {
+        OR: [{ id: { in: idsToResolve } }, { code: { in: idsToResolve } }],
+      },
+      select: { id: true, code: true },
+    });
+    languageRows.forEach((row: { id: string; code: string }) => {
+      const id = row.id?.trim();
+      const code = normalizeLanguageCode(row.code);
+      if (!id || !code) return;
+      idToCode.set(id, code);
+      idToCode.set(id.toLowerCase(), code);
+      idToCode.set(code, code);
+    });
+  }
+
+  const languageCodes = Array.from(
+    new Set(
+      catalogLanguageIds
+        .map((id: string) => {
+          const normalizedId = id.trim();
+          const mapped =
+            idToCode.get(normalizedId) ??
+            idToCode.get(normalizedId.toLowerCase()) ??
+            normalizeLanguageCode(normalizedId);
+          return mapped ?? '';
+        })
+        .filter((code: string): boolean => code.length > 0)
+    )
+  );
+
+  const defaultLanguageCode = defaultLanguageId
+    ? idToCode.get(defaultLanguageId) ??
+      idToCode.get(defaultLanguageId.toLowerCase()) ??
+      normalizeLanguageCode(defaultLanguageId)
+    : languageCodes[0] ?? null;
+
+  return {
+    languageCodes,
+    defaultLanguageCode: defaultLanguageCode ?? null,
   };
 };
 
@@ -667,8 +769,16 @@ export const processBaseImportRun = async (
       ? await getImportTemplate(run.params.templateId)
       : null;
     const templateMappings = Array.isArray(template?.mappings) ? template.mappings : [];
+    const templateParameterImportSettings = normalizeBaseImportParameterImportSettings(
+      template?.parameterImport
+    );
     const lookups = await resolveProducerAndTagLookups(connection.connectionId);
     const productRepository = await getProductRepository();
+    const parameterRepository = await getParameterRepository();
+    const catalogLanguageContext = await resolveCatalogLanguageContext(
+      provider,
+      targetCatalog
+    );
     const maxAttempts =
       typeof run.maxAttempts === 'number' &&
       Number.isFinite(run.maxAttempts) &&
@@ -790,11 +900,15 @@ export const processBaseImportRun = async (
             lookups,
             templateMappings,
             productRepository,
+            parameterRepository,
             imageMode: run.params.imageMode,
             dryRun: Boolean(run.params.dryRun),
             inventoryId: run.params.inventoryId,
             mode: resolveMode(run.params.mode),
             allowDuplicateSku: run.params.allowDuplicateSku,
+            parameterImportSettings: templateParameterImportSettings,
+            catalogLanguageCodes: catalogLanguageContext.languageCodes,
+            defaultLanguageCode: catalogLanguageContext.defaultLanguageCode,
           });
 
           const retryableResult = result.status === 'failed' && result.retryable === true;
@@ -810,6 +924,7 @@ export const processBaseImportRun = async (
                 sku: result.sku ?? null,
                 importedProductId: result.importedProductId ?? null,
                 payloadSnapshot: result.payloadSnapshot ?? null,
+                parameterImportSummary: result.parameterImportSummary ?? null,
                 errorCode: result.errorCode ?? null,
                 errorClass: result.errorClass ?? 'transient',
                 errorMessage: result.errorMessage ?? 'Retry scheduled.',
@@ -833,6 +948,7 @@ export const processBaseImportRun = async (
               sku: result.sku ?? null,
               importedProductId: result.importedProductId ?? null,
               payloadSnapshot: result.payloadSnapshot ?? null,
+              parameterImportSummary: result.parameterImportSummary ?? null,
               errorCode: result.errorCode ?? null,
               errorClass: result.errorClass ?? null,
               errorMessage: result.errorMessage ?? null,

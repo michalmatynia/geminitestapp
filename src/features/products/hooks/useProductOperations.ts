@@ -2,10 +2,12 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import { getProductListQueryKey } from '@/features/products/hooks/productCache';
+import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/features/products/types';
 import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { api } from '@/shared/lib/api-client';
@@ -20,10 +22,13 @@ export function useProductOperations(
   setInitialSku: React.Dispatch<React.SetStateAction<string>>;
   editingProduct: ProductWithImages | null;
   setEditingProduct: React.Dispatch<React.SetStateAction<ProductWithImages | null>>;
+  isPromptOpen: boolean;
+  setIsPromptOpen: React.Dispatch<React.SetStateAction<boolean>>;
   lastEditedId: string | null;
   actionError: string | null;
   setActionError: React.Dispatch<React.SetStateAction<string | null>>;
-  handleOpenCreateModal: () => Promise<void>;
+  handleOpenCreateModal: () => void;
+  handleConfirmSku: (skuInput: string) => Promise<void>;
   handleOpenCreateFromDraft: (draft: ProductDraftDto) => void;
   handleCreateSuccess: (info?: { queued?: boolean }) => void;
   handleEditSuccess: (info?: { queued?: boolean }) => void;
@@ -31,24 +36,35 @@ export function useProductOperations(
 } {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const { mutateAsync: duplicateProduct } = useDuplicateProduct();
 
   // UI State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [initialSku, setInitialSku] = useState<string>('');
   const [editingProduct, setEditingProduct] =
     useState<ProductWithImages | null>(null);
   const [lastEditedId, setLastEditedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const handleOpenCreateModal = async (): Promise<void> => {
+  const handleOpenCreateModal = (): void => {
     setActionError(null);
-    const skuInput = window.prompt('Enter a new unique SKU:');
-    if (skuInput === null) return;
+    setIsPromptOpen(true);
+  };
+
+  const handleConfirmSku = async (skuInput: string): Promise<void> => {
     const sku = skuInput.trim().toUpperCase();
     if (!sku) {
       setActionError('SKU is required.');
       return;
     }
+    const skuPattern = /^[A-Z0-9-]+$/;
+    if (!skuPattern.test(sku)) {
+      setActionError('SKU must use uppercase letters, numbers, and dashes only.');
+      return;
+    }
+
     try {
       const products = await queryClient.fetchQuery({
         queryKey: getProductListQueryKey({ sku }),
@@ -67,8 +83,25 @@ export function useProductOperations(
         { variant: 'info' }
       );
     }
-    setInitialSku(sku);
-    setIsCreateOpen(true);
+
+    if (editingProduct) {
+      // Duplication Flow
+      try {
+        const duplicated = await duplicateProduct({ id: editingProduct.id, sku });
+        setRefreshTrigger((prev: number): number => prev + 1);
+        setIsPromptOpen(false);
+        setEditingProduct(null);
+        toast('Product duplicated.', { variant: 'success' });
+        router.push(`/admin/products/${duplicated.id}/edit`);
+      } catch (error) {
+        setActionError(error instanceof Error ? error.message : 'Failed to duplicate product.');
+      }
+    } else {
+      // Creation Flow
+      setInitialSku(sku);
+      setIsPromptOpen(false);
+      setIsCreateOpen(true);
+    }
   };
 
   const handleOpenCreateFromDraft = (draft: ProductDraftDto): void => {
@@ -108,10 +141,13 @@ export function useProductOperations(
     setInitialSku,
     editingProduct,
     setEditingProduct,
+    isPromptOpen,
+    setIsPromptOpen,
     lastEditedId,
     actionError,
     setActionError,
     handleOpenCreateModal,
+    handleConfirmSku,
     handleOpenCreateFromDraft,
     handleCreateSuccess,
     handleEditSuccess,

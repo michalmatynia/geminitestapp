@@ -7,8 +7,9 @@ import { AppModal } from '@/shared/ui/app-modal';
 
 
 export interface DetailModalProps extends ModalStateProps {
-  title: string;
-  subtitle?: string;
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  headerActions?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';

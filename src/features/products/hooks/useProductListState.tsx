@@ -375,6 +375,9 @@ export function useProductListState(): ProductListContextType & {
     handleCreateSuccess,
     handleEditSuccess,
     handleEditSave,
+    isPromptOpen,
+    setIsPromptOpen,
+    handleConfirmSku,
   } = useProductOperations(setRefreshTrigger);
 
   const editingProductDetailQuery = createSingleQueryV2<ProductWithImages>({
@@ -882,6 +885,10 @@ export function useProductListState(): ProductListContextType & {
     onProductNameClick: handleOpenEditModal,
     onProductEditClick: handleOpenEditModal,
     onProductDeleteClick: setProductToDelete,
+    onDuplicateProduct: (product: ProductWithImages) => {
+      setEditingProduct(product);
+      handleOpenCreateModal();
+    },
     onIntegrationsClick: handleOpenIntegrationsModal,
     onExportSettingsClick: handleOpenExportSettings,
     integrationBadgeIds,
@@ -896,6 +903,9 @@ export function useProductListState(): ProductListContextType & {
     stickyHeader: true,
     // Modals
     isCreateOpen,
+    isPromptOpen,
+    setIsPromptOpen,
+    handleConfirmSku,
     initialSku,
     createDraft,
     initialCatalogId:
@@ -985,6 +995,9 @@ export function useProductListState(): ProductListContextType & {
     integrationBadgeStatuses,
     integrationsProduct,
     isCreateOpen,
+    isPromptOpen,
+    setIsPromptOpen,
+    handleConfirmSku,
     isDebugOpen,
     isFetching,
     isLoading,

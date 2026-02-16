@@ -58,6 +58,8 @@ function ImportsPageContent(): React.JSX.Element {
     setExportTemplateDescription,
     importTemplateMappings,
     setImportTemplateMappings,
+    importTemplateParameterImport,
+    setImportTemplateParameterImport,
     exportTemplateMappings,
     setExportTemplateMappings,
     exportImagesAsBase64,
@@ -247,6 +249,115 @@ function ImportsPageContent(): React.JSX.Element {
                     />
                     <span className='text-sm text-gray-300 group-hover:text-white transition-colors'>Export images as Base64 data strings</span>
                   </label>
+                )}
+
+                {templateScope === 'import' && (
+                  <div className='rounded-md border border-border/50 bg-gray-950/30 p-4 space-y-3'>
+                    <div className='flex items-center justify-between gap-3'>
+                      <div>
+                        <p className='text-sm font-medium text-gray-200'>Parameter Import</p>
+                        <p className='text-xs text-gray-500'>
+                          Import dynamic Base.com parameters with multilingual values.
+                        </p>
+                      </div>
+                      <label className='flex items-center gap-2 cursor-pointer'>
+                        <Checkbox
+                          checked={importTemplateParameterImport.enabled}
+                          onCheckedChange={(value: boolean | 'indeterminate'): void =>
+                            setImportTemplateParameterImport((prev) => ({
+                              ...prev,
+                              enabled: Boolean(value),
+                            }))
+                          }
+                        />
+                        <span className='text-xs text-gray-300'>Enabled</span>
+                      </label>
+                    </div>
+
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                      <div className='space-y-1'>
+                        <Label className='text-[11px] text-gray-400'>Language scope</Label>
+                        <SelectSimple
+                          size='sm'
+                          value={importTemplateParameterImport.languageScope}
+                          onValueChange={(value: string): void =>
+                            setImportTemplateParameterImport((prev) => ({
+                              ...prev,
+                              languageScope:
+                                value === 'default_only'
+                                  ? 'default_only'
+                                  : 'catalog_languages',
+                            }))
+                          }
+                          options={[
+                            {
+                              value: 'catalog_languages',
+                              label: 'All catalog languages',
+                            },
+                            {
+                              value: 'default_only',
+                              label: 'Default catalog language',
+                            },
+                          ]}
+                          triggerClassName='w-full h-8 bg-gray-900 border-border text-xs'
+                        />
+                      </div>
+                      <div className='space-y-1'>
+                        <Label className='text-[11px] text-gray-400'>Matching</Label>
+                        <SelectSimple
+                          size='sm'
+                          value={importTemplateParameterImport.matchBy}
+                          onValueChange={(value: string): void =>
+                            setImportTemplateParameterImport((prev) => ({
+                              ...prev,
+                              matchBy:
+                                value === 'name_only'
+                                  ? 'name_only'
+                                  : 'base_id_then_name',
+                            }))
+                          }
+                          options={[
+                            {
+                              value: 'base_id_then_name',
+                              label: 'Base ID, then name',
+                            },
+                            {
+                              value: 'name_only',
+                              label: 'Name only',
+                            },
+                          ]}
+                          triggerClassName='w-full h-8 bg-gray-900 border-border text-xs'
+                        />
+                      </div>
+                    </div>
+
+                    <div className='flex flex-wrap gap-4 pt-1'>
+                      <label className='flex items-center gap-2 cursor-pointer'>
+                        <Checkbox
+                          checked={importTemplateParameterImport.createMissingParameters}
+                          onCheckedChange={(value: boolean | 'indeterminate'): void =>
+                            setImportTemplateParameterImport((prev) => ({
+                              ...prev,
+                              createMissingParameters: Boolean(value),
+                            }))
+                          }
+                        />
+                        <span className='text-xs text-gray-300'>Create missing parameters</span>
+                      </label>
+                      <label className='flex items-center gap-2 cursor-pointer'>
+                        <Checkbox
+                          checked={importTemplateParameterImport.overwriteExistingValues}
+                          onCheckedChange={(value: boolean | 'indeterminate'): void =>
+                            setImportTemplateParameterImport((prev) => ({
+                              ...prev,
+                              overwriteExistingValues: Boolean(value),
+                            }))
+                          }
+                        />
+                        <span className='text-xs text-gray-300'>Overwrite existing values</span>
+                      </label>
+                    </div>
+                  </div>
                 )}
 
                 <div className='space-y-3'>

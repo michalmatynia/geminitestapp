@@ -3,13 +3,27 @@
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { FormModal, Input, Label } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface RenamePathModalProps extends ModalStateProps {
   draftName: string;
   setDraftName: (value: string) => void;
   onSave: () => void;
 }
+
+type RenameFormState = {
+  name: string;
+};
+
+const FIELDS: SettingsField<RenameFormState>[] = [
+  {
+    key: 'name',
+    label: 'Path Name',
+    type: 'text',
+    placeholder: 'e.g. My Automation Path',
+    required: true,
+  }
+];
 
 export function RenamePathModal({
   isOpen,
@@ -18,25 +32,24 @@ export function RenamePathModal({
   setDraftName,
   onSave,
 }: RenamePathModalProps): React.JSX.Element | null {
+  const values: RenameFormState = { name: draftName };
+  
+  const handleChange = (vals: Partial<RenameFormState>) => {
+    if (vals.name !== undefined) {
+      setDraftName(vals.name);
+    }
+  };
+
   return (
-    <FormModal
+    <SettingsPanelBuilder
       open={isOpen}
       onClose={onClose}
       title='Rename Path'
       size='sm'
-      onSave={onSave}
-    >
-      <div className='space-y-4'>
-        <div className='space-y-1.5'>
-          <Label className='text-xs text-muted-foreground'>Path Name</Label>
-          <Input
-            value={draftName}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setDraftName(event.target.value)}
-            placeholder='e.g. My Automation Path'
-            autoFocus
-          />
-        </div>
-      </div>
-    </FormModal>
+      fields={FIELDS}
+      values={values}
+      onChange={handleChange}
+      onSave={async () => onSave()}
+    />
   );
 }

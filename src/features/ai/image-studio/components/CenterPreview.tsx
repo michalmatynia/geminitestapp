@@ -108,6 +108,7 @@ export function CenterPreview(): React.JSX.Element {
   const [variantTimestampQuery, setVariantTimestampQuery] = useState('');
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
+  const [compareVariantIds, setCompareVariantIds] = useState<[string | null, string | null]>([null, null]);
   const [leftSplitZoom, setLeftSplitZoom] = useState(1);
   const [rightSplitZoom, setRightSplitZoom] = useState(1);
   const [dismissedVariantKeys, setDismissedVariantKeys] = useState<Set<string>>(new Set());
@@ -333,12 +334,6 @@ export function CenterPreview(): React.JSX.Element {
     setSingleVariantView('variant');
     setSplitVariantView(false);
   }, [workingSlot?.id]);
-
-  useEffect(() => {
-    if (canCompareWithSource) return;
-    setSingleVariantView('variant');
-    setSplitVariantView(false);
-  }, [canCompareWithSource]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -731,6 +726,39 @@ export function CenterPreview(): React.JSX.Element {
       variant.timestampSearchText.includes(normalizedVariantTimestampQuery)
     );
   }, [normalizedVariantTimestampQuery, visibleVariantThumbnails]);
+  const compareVariantA = useMemo(
+    () => visibleVariantThumbnails.find((variant) => variant.id === compareVariantIds[0]) ?? null,
+    [compareVariantIds, visibleVariantThumbnails]
+  );
+  const compareVariantB = useMemo(
+    () => visibleVariantThumbnails.find((variant) => variant.id === compareVariantIds[1]) ?? null,
+    [compareVariantIds, visibleVariantThumbnails]
+  );
+  const compareVariantImageA = compareVariantA?.imageSrc ?? compareVariantA?.output?.filepath ?? null;
+  const compareVariantImageB = compareVariantB?.imageSrc ?? compareVariantB?.output?.filepath ?? null;
+  const canCompareSelectedVariants = Boolean(compareVariantImageA && compareVariantImageB);
+
+  useEffect(() => {
+    if (canCompareWithSource) return;
+    if (canCompareSelectedVariants) return;
+    setSingleVariantView('variant');
+    setSplitVariantView(false);
+  }, [canCompareSelectedVariants, canCompareWithSource]);
+
+  useEffect(() => {
+    if (previewMode !== 'image') return;
+    if (!canCompareSelectedVariants) return;
+    setSplitVariantView(true);
+  }, [canCompareSelectedVariants, previewMode]);
+
+  useEffect(() => {
+    setCompareVariantIds((prev) => {
+      const nextA = prev[0] && visibleVariantThumbnails.some((variant) => variant.id === prev[0]) ? prev[0] : null;
+      const nextB = prev[1] && visibleVariantThumbnails.some((variant) => variant.id === prev[1]) ? prev[1] : null;
+      if (nextA === prev[0] && nextB === prev[1]) return prev;
+      return [nextA, nextB];
+    });
+  }, [visibleVariantThumbnails]);
 
   const activeVariantId = useMemo((): string | null => {
     if (!workingSlot) return null;
@@ -1336,6 +1364,15 @@ export function CenterPreview(): React.JSX.Element {
                   captureRef={captureRef}
                   className='h-full w-full'
                 />
+              ) : splitVariantView && canCompareSelectedVariants && compareVariantImageA && compareVariantImageB ? (
+                <SplitVariantPreview
+                  sourceSlotImageSrc={compareVariantImageA}
+                  workingSlotImageSrc={compareVariantImageB}
+                  leftSplitZoom={leftSplitZoom}
+                  rightSplitZoom={rightSplitZoom}
+                  onAdjustSplitZoom={adjustSplitZoom}
+                  onResetSplitZoom={resetSplitZoom}
+                />
               ) : splitVariantView && canCompareWithSource && sourceSlotImageSrc && workingSlotImageSrc ? (
                 <SplitVariantPreview
                   sourceSlotImageSrc={sourceSlotImageSrc}
@@ -1409,6 +1446,20 @@ export function CenterPreview(): React.JSX.Element {
                   {filteredVariantThumbnails.length}/{visibleVariantThumbnails.length}
                 </span>
               </div>
+              <div className='mb-2 flex items-center gap-2 text-[11px] text-gray-400'>
+                <span>Compare in canvas:</span>
+                <span className={cn('rounded border px-1.5 py-0.5', compareVariantA ? 'border-cyan-400/60 text-cyan-200' : 'border-border/60')}>1 {compareVariantA ? `#${compareVariantA.index}` : 'unset'}</span>
+                <span className={cn('rounded border px-1.5 py-0.5', compareVariantB ? 'border-amber-400/60 text-amber-200' : 'border-border/60')}>2 {compareVariantB ? `#${compareVariantB.index}` : 'unset'}</span>
+                <Button
+                  size='xs'
+                  type='button'
+                  variant='ghost'
+                  onClick={(): void => setCompareVariantIds([null, null])}
+                  className='h-6 px-2 text-[10px] text-gray-300'
+                >
+                  Clear
+                </Button>
+              </div>
               <div className='overflow-x-auto overflow-y-hidden pb-1 pr-1'>
                 {filteredVariantThumbnails.length > 0 ? (
                   <div className='flex w-max min-w-full gap-2'>
@@ -1419,16 +1470,49 @@ export function CenterPreview(): React.JSX.Element {
                         (variant.status === 'failed' || Boolean(variant.output) || Boolean(variant.slotId));
                       const statusClasses =
                         variant.status === 'completed'
-                          ? 'border-emerald-400/40 bg-emerald-500/5'
+                          ? 'border-border/60 bg-card/30'
                           : variant.status === 'failed'
                             ? 'border-red-400/40 bg-red-500/5'
                             : 'border-border/60 bg-card/30';
                       const activeClasses = isActive
                         ? 'border-sky-400/80 bg-sky-500/15 ring-2 ring-sky-400/70'
                         : '';
+                      const isCompareA = compareVariantIds[0] === variant.id;
+                      const isCompareB = compareVariantIds[1] === variant.id;
+                      const compareClasses = isCompareA
+                        ? 'ring-2 ring-cyan-400/70'
+                        : isCompareB
+                          ? 'ring-2 ring-amber-400/70'
+                          : '';
 
                       return (
                         <div key={variant.id} className='relative w-28 shrink-0'>
+                          <div className='absolute bottom-1 left-1 z-10 flex gap-1'>
+                            <Button
+                              size='xs'
+                              type='button'
+                              variant='ghost'
+                              onClick={(): void => {
+                                setCompareVariantIds((prev) => [variant.id, prev[1] === variant.id ? null : prev[1]]);
+                              }}
+                              title='Set as compare thumbnail 1'
+                              className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-cyan-200 hover:bg-cyan-500/20 hover:text-cyan-100', isCompareA && 'bg-cyan-500/30 text-cyan-100')}
+                            >
+                              1
+                            </Button>
+                            <Button
+                              size='xs'
+                              type='button'
+                              variant='ghost'
+                              onClick={(): void => {
+                                setCompareVariantIds((prev) => [prev[0] === variant.id ? null : prev[0], variant.id]);
+                              }}
+                              title='Set as compare thumbnail 2'
+                              className={cn('size-5 rounded bg-black/65 px-0 text-[10px] text-amber-200 hover:bg-amber-500/20 hover:text-amber-100', isCompareB && 'bg-amber-500/30 text-amber-100')}
+                            >
+                              2
+                            </Button>
+                          </div>
                           <Button size='xs'
                             type='button'
                             variant='ghost'
@@ -1450,7 +1534,7 @@ export function CenterPreview(): React.JSX.Element {
                             onBlur={(): void => setVariantTooltip(null)}
                             disabled={!variant.output || variantLoadingId === variant.id}
                             aria-pressed={isActive}
-                            className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${statusClasses} ${activeClasses}`}
+                            className={`group relative w-full overflow-hidden rounded border p-1 text-left transition ${statusClasses} ${activeClasses} ${compareClasses}`}
                           >
                             <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
                             {variant.output ? (

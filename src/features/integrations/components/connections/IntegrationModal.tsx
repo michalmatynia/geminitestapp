@@ -3,7 +3,8 @@
 import { useMemo } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { Tabs, TabsContent, AppModal } from '@/shared/ui';
+import { Tabs, TabsContent } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
 
 import { AllegroApiConsole } from './AllegroApiConsole';
 import { BaseApiConsole } from './BaseApiConsole';
@@ -96,8 +97,8 @@ export function IntegrationModal(): React.JSX.Element {
 
   return (
     <IntegrationModalViewProvider value={modalViewContextValue}>
-      <AppModal
-        open={true}
+      <DetailModal
+        isOpen={true}
         onClose={onCloseModal}
         title={<IntegrationModalHeader />}
         subtitle={<IntegrationModalSubtitle />}
@@ -168,11 +169,11 @@ export function IntegrationModal(): React.JSX.Element {
         />
 
         {showPlaywrightSaved && (
-          <div className='fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg'>
+          <div className='fixed right-6 top-6 z-[200] rounded-md border border-emerald-400/40 bg-emerald-500/20 px-3 py-2 text-xs font-medium text-emerald-100 shadow-lg animate-in fade-in zoom-in duration-300'>
             Playwright settings saved
           </div>
         )}
-      </AppModal>
+      </DetailModal>
     </IntegrationModalViewProvider>
   );
 }

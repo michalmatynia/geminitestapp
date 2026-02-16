@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { FormField, FormModal, Input, SelectSimple } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { CaseResolverIdentifier } from '../../types';
 
@@ -32,77 +32,51 @@ export function CaseResolverIdentifierModal({
   isSaving,
   onSave,
 }: CaseResolverIdentifierModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
+  const fields: SettingsField<CaseIdentifierFormData>[] = useMemo(() => [
+    {
+      key: 'name',
+      label: 'Name',
+      type: 'text',
+      placeholder: 'Case identifier name',
+      required: true,
+    },
+    {
+      key: 'color',
+      label: 'Color',
+      type: 'color',
+      required: true,
+    },
+    {
+      key: 'parentId',
+      label: 'Parent Case Identifier',
+      type: 'select',
+      options: [
+        { value: '__none__', label: 'No parent (root identifier)' },
+        ...parentIdentifierOptions,
+      ],
+      placeholder: 'Select parent case identifier',
+    }
+  ], [parentIdentifierOptions]);
+
+  const handleChange = (vals: Partial<CaseIdentifierFormData>) => {
+    setFormData(prev => {
+      const next = { ...prev, ...vals };
+      if (vals.parentId === '__none__') next.parentId = null;
+      return next;
+    });
+  };
 
   return (
-    <FormModal
+    <SettingsPanelBuilder
       open={isOpen}
       onClose={onClose}
       title={editingIdentifier ? 'Edit Case Identifier' : 'Create Case Identifier'}
-      onSave={onSave}
+      fields={fields}
+      values={formData}
+      onChange={handleChange}
+      onSave={async () => onSave()}
       isSaving={isSaving}
       size='md'
-    >
-      <div className='space-y-4'>
-        <FormField label='Name'>
-          <Input
-            className='h-9'
-            value={formData.name}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setFormData((current: CaseIdentifierFormData) => ({
-                ...current,
-                name: event.target.value,
-              }));
-            }}
-            placeholder='Case identifier name'
-          />
-        </FormField>
-        <FormField label='Color'>
-          <div className='flex items-center gap-3'>
-            <Input
-              type='color'
-              className='h-10 w-20 cursor-pointer rounded border border-border bg-gray-900 p-0'
-              value={formData.color}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setFormData((current: CaseIdentifierFormData) => ({
-                  ...current,
-                  color: event.target.value,
-                }));
-              }}
-            />
-            <Input
-              type='text'
-              className='h-10 flex-1 font-mono'
-              value={formData.color}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setFormData((current: CaseIdentifierFormData) => ({
-                  ...current,
-                  color: event.target.value,
-                }));
-              }}
-              placeholder='#f59e0b'
-            />
-          </div>
-        </FormField>
-        <FormField label='Parent Case Identifier'>
-          <SelectSimple
-            size='sm'
-            value={formData.parentId ?? '__none__'}
-            onValueChange={(value: string): void => {
-              setFormData((current: CaseIdentifierFormData) => ({
-                ...current,
-                parentId: value === '__none__' ? null : value,
-              }));
-            }}
-            options={[
-              { value: '__none__', label: 'No parent (root identifier)' },
-              ...parentIdentifierOptions,
-            ]}
-            placeholder='Select parent case identifier'
-            triggerClassName='h-9 border-border bg-card/60 text-xs text-white'
-          />
-        </FormField>
-      </div>
-    </FormModal>
+    />
   );
 }

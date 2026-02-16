@@ -14,6 +14,7 @@ import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { NotebookRecord } from '@/shared/types/domain/notes';
 import { Button, useToast, Input,  PageLayout, FormSection, FormField, RefreshButton } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -24,6 +25,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [menuNotebookId, setMenuNotebookId] = useState<string | null>(null);
+  const [notebookToDelete, setNotebookToDelete] = useState<string | null>(null);
 
   const notebooksQuery = useNotebooks();
   const notebooks = useMemo((): NotebookRecord[] => notebooksQuery.data ?? [], [notebooksQuery.data]);
@@ -85,13 +87,13 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
   };
 
   const handleDelete = async (id: string): Promise<void> => {
-    if (!confirm('Delete this notebook and all its notes/tags/folders?')) return;
     try {
       await deleteNotebook.mutateAsync(id);
       if (selectedNotebookId === id) {
         updateSettings({ selectedNotebookId: null });
       }
       toast('Notebook deleted', { variant: 'success' });
+      setNotebookToDelete(null);
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'deleteNotebook', id } });
       toast('Failed to delete notebook', { variant: 'error' });
@@ -282,7 +284,8 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                                   type='button'
                                   onClick={(event: React.MouseEvent): void => {
                                     event.stopPropagation();
-                                    void handleDelete(notebook.id);
+                                    setNotebookToDelete(notebook.id);
+                                    setMenuNotebookId(null);
                                   }}
                                   onClickCapture={(event: React.MouseEvent): void => event.stopPropagation()}
                                   className='flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs text-red-300 hover:bg-muted/50'
@@ -302,6 +305,20 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
           )}
         </FormSection>
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(notebookToDelete)}
+        onClose={() => setNotebookToDelete(null)}
+        title='Delete Notebook?'
+        message='Delete this notebook and all its notes/tags/folders? This action cannot be undone.'
+        confirmText='Destroy Notebook'
+        isDangerous={true}
+        onConfirm={(): void => {
+          if (notebookToDelete) {
+            void handleDelete(notebookToDelete);
+          }
+        }}
+      />
     </PageLayout>
   );
 }

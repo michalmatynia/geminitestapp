@@ -29,6 +29,7 @@ export function useNoteOperations({
   setSelectedFolderId,
   setSelectedNote,
   selectedNote,
+  confirmAction,
 }: UseNoteOperationsProps): {
   handleCreateFolder: (parentId?: string | null) => Promise<void>;
   handleDeleteFolder: (folderId: string) => Promise<void>;
@@ -75,16 +76,22 @@ export function useNoteOperations({
   }, [selectedNotebookId, createCategoryMutation, setSelectedFolderId, toast]);
 
   const handleDeleteFolder = useCallback(async (folderId: string): Promise<void> => {
-    if (!confirm('Delete this folder and all its contents (subfolders, notes, and attachments)? This action cannot be undone.')) return;
-
-    try {
-      await deleteCategoryMutation.mutateAsync(folderId);
-      toast('Folder deleted successfully');
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'useNoteOperations.handleDeleteFolder', folderId } });
-      toast('Failed to delete folder', { variant: 'error' });
-    }
-  }, [deleteCategoryMutation, toast]);
+    confirmAction({
+      title: 'Delete Folder?',
+      message: 'Delete this folder and all its contents (subfolders, notes, and attachments)? This action cannot be undone.',
+      confirmText: 'Delete Folder',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteCategoryMutation.mutateAsync(folderId);
+          toast('Folder deleted successfully');
+        } catch (error: unknown) {
+          logClientError(error, { context: { source: 'useNoteOperations.handleDeleteFolder', folderId } });
+          toast('Failed to delete folder', { variant: 'error' });
+        }
+      },
+    });
+  }, [deleteCategoryMutation, toast, confirmAction]);
 
   const handleRenameFolder = useCallback(async (folderId: string, newName: string): Promise<void> => {
     const currentFolder = findTreeNodeById(folderTreeRef.current, folderId);
@@ -161,19 +168,25 @@ export function useNoteOperations({
   }, [selectedNotebookId, notesRef, createNoteMutation, toast, queryClient]);
 
   const handleDeleteNoteFromTree = useCallback(async (noteId: string): Promise<void> => {
-    if (!confirm('Are you sure you want to delete this note?')) return;
-
-    try {
-      await deleteNoteMutation.mutateAsync(noteId);
-      if (selectedNote?.id === noteId) {
-        setSelectedNote(null);
-      }
-      toast('Note deleted successfully');
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'useNoteOperations.handleDeleteNoteFromTree', noteId } });
-      toast('Failed to delete note', { variant: 'error' });
-    }
-  }, [deleteNoteMutation, selectedNote, setSelectedNote, toast]);
+    confirmAction({
+      title: 'Delete Note?',
+      message: 'Are you sure you want to delete this note?',
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteNoteMutation.mutateAsync(noteId);
+          if (selectedNote?.id === noteId) {
+            setSelectedNote(null);
+          }
+          toast('Note deleted successfully');
+        } catch (error: unknown) {
+          logClientError(error, { context: { source: 'useNoteOperations.handleDeleteNoteFromTree', noteId } });
+          toast('Failed to delete note', { variant: 'error' });
+        }
+      },
+    });
+  }, [deleteNoteMutation, selectedNote, setSelectedNote, toast, confirmAction]);
 
   const handleRenameNote = useCallback(async (noteId: string, newTitle: string): Promise<void> => {
     const currentNote = notesRef.current.find((note: NoteWithRelations) => note.id === noteId);

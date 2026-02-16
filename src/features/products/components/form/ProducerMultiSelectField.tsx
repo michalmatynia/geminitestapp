@@ -1,13 +1,10 @@
 'use client';
 
-import { useContext } from 'react';
+import React from 'react';
 
-import { ProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { Producer } from '@/features/products/types';
-import { internalError } from '@/shared/errors/app-error';
-import { MultiSelect } from '@/shared/ui';
 
-import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+import { ProductMetadataMultiSelectField } from './ProductMetadataMultiSelectField';
 
 type ProducerMultiSelectFieldProps = {
   producers?: Producer[] | undefined;
@@ -18,59 +15,19 @@ type ProducerMultiSelectFieldProps = {
   placeholder?: string | undefined;
 };
 
-export function ProducerMultiSelectField({
-  producers: producersProp,
-  selectedProducerIds: selectedProducerIdsProp,
-  onChange: onChangeProp,
-  loading = false,
-  disabled = false,
-  placeholder = 'Select producers',
-}: ProducerMultiSelectFieldProps): React.JSX.Element {
-  const formContext = useContext(ProductFormContext);
-  const metadataContext = useOptionalProductMetadataFieldContext();
-  const producers = producersProp ?? metadataContext?.producers ?? formContext?.producers ?? [];
-  const selectedProducerIds =
-    selectedProducerIdsProp ??
-    metadataContext?.selectedProducerIds ??
-    formContext?.selectedProducerIds ??
-    [];
-  const resolvedLoading = producersProp
-    ? loading
-    : (metadataContext?.producersLoading ?? formContext?.producersLoading ?? loading);
-  const resolvedOnChange =
-    onChangeProp ??
-    metadataContext?.onProducersChange ??
-    (formContext
-      ? (nextIds: string[]): void => {
-        const previous = new Set(formContext.selectedProducerIds);
-        const next = new Set(nextIds);
-        for (const id of nextIds) {
-          if (!previous.has(id)) formContext.toggleProducer(id);
-        }
-        for (const id of formContext.selectedProducerIds) {
-          if (!next.has(id)) formContext.toggleProducer(id);
-        }
-      }
-      : null);
-
-  if (!resolvedOnChange) {
-    throw internalError(
-      'ProducerMultiSelectField requires `onChange` prop when used outside ProductFormContext.'
-    );
-  }
-
+export function ProducerMultiSelectField(props: ProducerMultiSelectFieldProps): React.JSX.Element {
   return (
-    <MultiSelect
+    <ProductMetadataMultiSelectField
+      {...props}
       label='Producers'
-      options={producers.map((producer: Producer) => ({
-        value: producer.id,
-        label: producer.name,
-      }))}
-      selected={selectedProducerIds}
-      onChange={resolvedOnChange}
-      loading={resolvedLoading}
-      disabled={disabled}
-      placeholder={placeholder}
+      items={props.producers}
+      selectedIds={props.selectedProducerIds}
+      contextItemsKey='producers'
+      contextSelectedKey='selectedProducerIds'
+      contextLoadingKey='producersLoading'
+      contextOnChangeKey='onProducersChange'
+      formContextToggleName='toggleProducer'
+      placeholder={props.placeholder || 'Select producers'}
       searchPlaceholder='Search producers...'
     />
   );

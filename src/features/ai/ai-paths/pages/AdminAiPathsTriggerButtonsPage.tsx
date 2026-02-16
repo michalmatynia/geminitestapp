@@ -1,6 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { MousePointer2, Plus, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
@@ -29,11 +30,13 @@ import {
   Checkbox, 
   Input, 
   Label, 
-  SectionHeader, 
-   
   SelectSimple, 
-  AppModal, 
-  useToast 
+  useToast,
+  FormModal,
+  PanelHeader,
+  ListPanel,
+  ConfirmModal,
+  FormField
 } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -73,6 +76,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
+  const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonDto | null>(null);
 
   const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto[], AiTriggerButtonDto[]>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
@@ -185,6 +189,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     onSuccess: async (): Promise<void> => {
       await invalidateAiPathTriggerButtons(queryClient);
       toast('Trigger button deleted.', { variant: 'success' });
+      setButtonToDelete(null);
     },
     onError: (error: unknown): void => {
       logClientError(error, { context: { source: 'AdminAiPathsTriggerButtonsPage', action: 'deleteTriggerButton' } });
@@ -227,11 +232,16 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     setEditorOpen(true);
   }, []);
 
-  const handleDelete = useCallback((id: string): void => {
-    if (confirm('Are you sure you want to delete this trigger button?')) {
-      deleteMutation.mutate(id);
+  const handleDeleteRequest = useCallback((id: string): void => {
+    const btn = triggerButtonsQuery.data?.find(b => b.id === id);
+    if (btn) setButtonToDelete(btn);
+  }, [triggerButtonsQuery.data]);
+
+  const handleConfirmDelete = useCallback((): void => {
+    if (buttonToDelete) {
+      deleteMutation.mutate(buttonToDelete.id);
     }
-  }, [deleteMutation]);
+  }, [buttonToDelete, deleteMutation]);
 
   const handleOrderChange = useCallback((orderedIds: string[]): void => {
     reorderMutation.mutate(orderedIds);
@@ -266,63 +276,64 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const rows: AiTriggerButtonRecord[] = useMemo(() => {
     return (triggerButtonsQuery.data ?? []).map((btn: AiTriggerButtonDto) => ({
       ...btn,
-      // In a real app, you might want to fetch path names as well
       pathName: 'N/A' 
     }));
   }, [triggerButtonsQuery.data]);
 
   return (
-    <div className='container mx-auto max-w-5xl py-10'>
-      <SectionHeader
+    <div className='container mx-auto max-w-5xl py-10 space-y-6'>
+      <PanelHeader
         title='Trigger Buttons'
-        actions={
-          <div className='flex items-center gap-2'>
-            <Button
-              variant='outline'
-              onClick={() => {
-                void triggerButtonsQuery.refetch();
-              }}
-            >
-              Refresh
-            </Button>
-            <Button onClick={openCreate}>New Trigger Button</Button>
-          </div>
-        }
+        description='Configure interactive buttons that appear in modals and lists to trigger AI path executions.'
+        icon={<MousePointer2 className='size-4' />}
+        refreshable={true}
+        isRefreshing={triggerButtonsQuery.isFetching}
+        onRefresh={() => { void triggerButtonsQuery.refetch(); }}
+        actions={[
+          {
+            key: 'create',
+            label: 'New Trigger Button',
+            icon: <Plus className='size-4' />,
+            onClick: openCreate,
+          }
+        ]}
       />
 
-      <div className='mt-6 rounded-lg border border-border/60 bg-card/40 p-6'>
+      <ListPanel>
         <TriggerButtonListManager
           data={rows}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={handleDeleteRequest}
           onOrderChange={handleOrderChange}
           isLoading={triggerButtonsQuery.isLoading}
         />
-        <div className='mt-2 text-[11px] text-gray-500'>
+        <div className='mt-4 flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>
+          <RefreshCw className='size-3' />
           Drag the handle on the left to reorder. The same order is used in modals and lists.
         </div>
-      </div>
+      </ListPanel>
 
-      <AppModal
+      <FormModal
         open={editorOpen}
         onClose={(): void => setEditorOpen(false)}
         title={draft.id ? 'Edit Trigger Button' : 'Create Trigger Button'}
+        onSave={() => void handleSave()}
+        isSaving={saving}
         size='md'
       >
         <div className='space-y-6'>
-          <div className='space-y-2'>
-            <Label>Name</Label>
+          <FormField label='Button Name' description='Displayed to users in the UI.'>
             <Input
               value={draft.name}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, name: event.target.value }))
               }
               placeholder='e.g. Generate SEO Title'
+              autoFocus
             />
-          </div>
+          </FormField>
 
-          <div className='space-y-2'>
-            <Label>Icon</Label>
+          <FormField label='Icon' description='Choose a visual represention for the button.'>
             <IconSelector
               value={draft.iconId}
               onChange={(nextValue: string | null) =>
@@ -332,34 +343,47 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                 }))
               }
               columns={6}
-              helperText='Click an icon to select it. Click the selected icon again to clear.'
             />
-          </div>
+          </FormField>
 
-          <div className='space-y-2'>
-            <Label>Display</Label>
-            <SelectSimple size='sm'
-              value={draft.display}
-              onValueChange={(value: string): void =>
-                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, display: value as AiTriggerButtonDisplay }))
-              }
-              options={DISPLAY_OPTIONS}
-              placeholder='Select display'
-            />
-            <div className='text-[11px] text-gray-400'>
-              Icon only is useful for tight spaces (modal headers). Icon + label is clearer in lists.
-            </div>
+          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+            <FormField label='Display Style' description='Icon only is best for headers.'>
+              <SelectSimple 
+                size='sm'
+                value={draft.display}
+                onValueChange={(value: string): void =>
+                  setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, display: value as AiTriggerButtonDisplay }))
+                }
+                options={DISPLAY_OPTIONS}
+                placeholder='Select display'
+              />
+            </FormField>
+
+            <FormField label='Trigger Mode' description='How the button behaves when clicked.'>
+              <SelectSimple 
+                size='sm'
+                value={draft.mode}
+                onValueChange={(value: string): void =>
+                  setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, mode: value as AiTriggerButtonMode }))
+                }
+                options={MODE_OPTIONS}
+                placeholder='Select mode'
+              />
+            </FormField>
           </div>
 
           <div className='space-y-3'>
-            <Label>Attach to</Label>
+            <Label className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>Location Visibility</Label>
             <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
               {LOCATION_OPTIONS.map((option: { value: AiTriggerButtonLocation; label: string }): React.JSX.Element => {
                 const checked = draft.locations.includes(option.value);
                 return (
                   <label
                     key={option.value}
-                    className='flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-sm text-gray-200 hover:bg-card/60'
+                    className={cn(
+                      'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card/30 px-3 py-2.5 transition-all hover:bg-card/50',
+                      checked && 'border-primary/30 bg-primary/5'
+                    )}
                   >
                     <Checkbox
                       checked={checked}
@@ -373,38 +397,25 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
                         });
                       }}
                     />
-                    <span className='text-xs'>{option.label}</span>
+                    <span className='text-xs font-medium'>{option.label}</span>
                   </label>
                 );
               })}
             </div>
           </div>
-
-          <div className='space-y-2'>
-            <Label>Trigger condition</Label>
-            <SelectSimple size='sm'
-              value={draft.mode}
-              onValueChange={(value: string): void =>
-                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, mode: value as AiTriggerButtonMode }))
-              }
-              options={MODE_OPTIONS}
-              placeholder='Select mode'
-            />
-            <div className='text-[11px] text-gray-400'>
-              Click triggers fire immediately. Toggle triggers render as an On/Off switch in the UI and fire when changed.
-            </div>
-          </div>
-
-          <div className='flex items-center justify-end gap-2'>
-            <Button variant='outline' onClick={(): void => setEditorOpen(false)} disabled={saving}>
-              Cancel
-            </Button>
-            <Button onClick={(): void => { void handleSave(); }} disabled={saving}>
-              {saving ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
         </div>
-      </AppModal>
+      </FormModal>
+
+      <ConfirmModal
+        isOpen={!!buttonToDelete}
+        onClose={() => setButtonToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title='Delete Trigger Button'
+        message={`Are you sure you want to delete "${buttonToDelete?.name ?? ''}"? This will remove it from all assigned locations.`}
+        confirmText='Delete Button'
+        isDangerous={true}
+        loading={deleteMutation.isPending}
+      />
     </div>
   );
 }

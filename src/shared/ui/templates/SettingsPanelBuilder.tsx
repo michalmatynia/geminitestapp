@@ -12,7 +12,7 @@ import { Label } from '../label';
 import { SelectSimple } from '../select-simple';
 import { Textarea } from '../textarea';
 
-export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'color' | 'range' | 'custom';
+export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'color' | 'range' | 'custom';
 
 export interface SettingsField<T extends Record<string, unknown>> {
   /** Field key in the form data */

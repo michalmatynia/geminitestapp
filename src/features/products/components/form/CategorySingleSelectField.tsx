@@ -1,12 +1,8 @@
 'use client';
 
-import { useContext } from 'react';
+import React from 'react';
 
-import { ProductFormContext } from '@/features/products/context/ProductFormContext';
-import { internalError } from '@/shared/errors/app-error';
-import { MultiSelect } from '@/shared/ui';
-
-import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+import { ProductMetadataMultiSelectField } from './ProductMetadataMultiSelectField';
 
 type CategoryOption = {
   id: string;
@@ -22,48 +18,18 @@ type CategorySingleSelectFieldProps = {
   placeholder?: string | undefined;
 };
 
-export function CategorySingleSelectField({
-  categories: categoriesProp,
-  selectedCategoryId: selectedCategoryIdProp,
-  onChange: onChangeProp,
-  loading = false,
-  disabled = false,
-  placeholder = 'Select category',
-}: CategorySingleSelectFieldProps): React.JSX.Element {
-  const formContext = useContext(ProductFormContext);
-  const metadataContext = useOptionalProductMetadataFieldContext();
-  const categories = categoriesProp ?? metadataContext?.categories ?? formContext?.categories ?? [];
-  const selectedCategoryId =
-    selectedCategoryIdProp ??
-    metadataContext?.selectedCategoryId ??
-    formContext?.selectedCategoryId ??
-    null;
-  const resolvedOnChange =
-    onChangeProp ?? metadataContext?.onCategoryChange ?? formContext?.setCategoryId ?? null;
-  const resolvedLoading = categoriesProp
-    ? loading
-    : (metadataContext?.categoriesLoading ?? formContext?.categoriesLoading ?? loading);
-
-  if (!resolvedOnChange) {
-    throw internalError(
-      'CategorySingleSelectField requires `onChange` prop when used outside ProductFormContext.'
-    );
-  }
-
+export function CategorySingleSelectField(props: CategorySingleSelectFieldProps): React.JSX.Element {
   return (
-    <MultiSelect
+    <ProductMetadataMultiSelectField
+      {...props}
       label='Categories'
-      options={categories.map((category: CategoryOption) => ({
-        value: category.id,
-        label: category.name,
-      }))}
-      selected={selectedCategoryId ? [selectedCategoryId] : []}
-      onChange={(values: string[]): void => {
-        resolvedOnChange(values[0] || null);
-      }}
-      loading={resolvedLoading}
-      disabled={disabled}
-      placeholder={placeholder}
+      items={props.categories}
+      selectedIds={props.selectedCategoryId ? [props.selectedCategoryId] : []}
+      contextItemsKey='categories'
+      contextSelectedKey='selectedCategoryId'
+      contextLoadingKey='categoriesLoading'
+      contextOnChangeKey='onCategoryChange'
+      placeholder={props.placeholder || 'Select category'}
       searchPlaceholder='Search categories...'
       single
     />

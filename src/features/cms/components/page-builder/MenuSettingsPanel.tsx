@@ -88,144 +88,368 @@ const FONT_WEIGHT_OPTIONS = [
   { label: '900 – Black', value: '900' },
 ];
 
-// ---------------------------------------------------------------------------
-// Reusable helpers
-// ---------------------------------------------------------------------------
+import {
+  SettingsField,
+  SettingsFieldsRenderer,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}): React.JSX.Element {
-  return (
-    <FormField label={label}>
-      <div className='flex items-center gap-2 mt-1'>
-        <label className='relative flex size-7 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded border border-border/50'>
-          <input
-            type='color'
-            value={value}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-            className='absolute inset-0 size-full cursor-pointer opacity-0'
-          />
-          <div className='size-full rounded' style={{ backgroundColor: value }} />
-        </label>
-        <Input
-          value={value}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
-          className='h-7 flex-1 bg-gray-800/40 text-xs font-mono'
-        />
-      </div>
-    </FormField>
-  );
-}
+// ... existing imports ...
 
-function NumberField({
-  label,
-  value,
-  onChange,
-  suffix,
-  min,
-  max,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  suffix?: string;
-  min?: number;
-  max?: number;
-}): React.JSX.Element {
-  return (
-    <FormField label={label}>
-      <div className='flex items-center gap-1.5 mt-1'>
-        <Input
-          type='number'
-          value={value}
-          min={min}
-          max={max}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
-          className='h-7 flex-1 bg-gray-800/40 text-xs'
-        />
-        {suffix && <span className='text-[10px] text-gray-500'>{suffix}</span>}
-      </div>
-    </FormField>
-  );
-}
+// Remove custom helpers: ColorField, NumberField, RangeField, SelectField, CheckboxField
+// Keep FONT_FAMILY_OPTIONS, FONT_WEIGHT_OPTIONS, etc.
 
-function RangeField({
-  label,
-  value,
-  onChange,
-  min,
-  max,
-  suffix,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  min: number;
-  max: number;
-  suffix?: string;
-}): React.JSX.Element {
-  return (
-    <FormField label={label} actions={<span className='text-[11px] text-gray-300'>{value}{suffix}</span>}>
-      <input
-        type='range'
-        min={min}
-        max={max}
-        value={value}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(Number(e.target.value))}
-        className='w-full accent-blue-500 mt-1'
-      />
-    </FormField>
-  );
-}
+// ... inside MenuSettingsPanel ...
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { label: string; value: string }[];
-}): React.JSX.Element {
-  return (
-    <FormField label={label}>
-      <SelectSimple size='sm'
-        value={value}
-        onValueChange={onChange}
-        options={options}
-        triggerClassName='h-7 bg-gray-800/40 text-xs mt-1'
-      />
-    </FormField>
-  );
-}
+  const getFieldsForSection = useCallback(
+    (section: string): SettingsField<MenuSettings>[] => {
+      switch (section) {
+        case 'Visibility & Placement':
+          return [
+            { key: 'showMenu', label: 'Show menu', type: 'checkbox' },
+            {
+              key: 'menuPlacement',
+              label: 'Menu position',
+              type: 'select',
+              options: [
+                { label: 'Top', value: 'top' },
+                { label: 'Left', value: 'left' },
+                { label: 'Right', value: 'right' },
+              ],
+            },
+            { key: 'collapsible', label: 'Collapsible menu', type: 'checkbox' },
+            ...(settings.collapsible
+              ? [{ key: 'collapsedByDefault', label: 'Collapsed by default', type: 'checkbox' } as SettingsField<MenuSettings>]
+              : []),
+            ...((settings.menuPlacement === 'left' || settings.menuPlacement === 'right')
+              ? [{
+                  key: 'sideWidth',
+                  label: 'Side width',
+                  type: 'range',
+                  min: 160,
+                  max: 420,
+                  suffix: 'px',
+                } as SettingsField<MenuSettings>]
+              : []),
+            ...(settings.collapsible
+              ? [{
+                  key: 'collapsedWidth',
+                  label: 'Collapsed width',
+                  type: 'range',
+                  min: 48,
+                  max: 120,
+                  suffix: 'px',
+                } as SettingsField<MenuSettings>]
+              : []),
+          ];
 
-function CheckboxField({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}): React.JSX.Element {
-  return (
-    <label className='flex items-center gap-2 cursor-pointer'>
-      <Checkbox
-        checked={checked}
-        onCheckedChange={(v: boolean | 'indeterminate'): void => onChange(v === true)}
-      />
-      <span className='text-xs text-gray-300'>{label}</span>
-    </label>
+        case 'Menu Layout':
+          return [
+            {
+              key: 'layoutStyle',
+              label: 'Layout style',
+              type: 'select',
+              options: [
+                { label: 'Horizontal', value: 'horizontal' },
+                { label: 'Vertical', value: 'vertical' },
+                { label: 'Centered', value: 'centered' },
+              ],
+            },
+            {
+              key: 'alignment',
+              label: 'Alignment',
+              type: 'select',
+              options: [
+                { label: 'Left', value: 'left' },
+                { label: 'Center', value: 'center' },
+                { label: 'Right', value: 'right' },
+                { label: 'Space between', value: 'space-between' },
+              ],
+            },
+            {
+              key: 'maxWidth',
+              label: 'Max width',
+              type: 'range',
+              min: 800,
+              max: 1400,
+              suffix: 'px',
+            },
+            { key: 'fullWidth', label: 'Full width', type: 'checkbox' },
+          ];
+
+        case 'Menu Images':
+          return [
+            { key: 'showItemImages', label: 'Show item images', type: 'checkbox' },
+            ...(settings.showItemImages
+              ? [{
+                  key: 'itemImageSize',
+                  label: 'Image size',
+                  type: 'range',
+                  min: 12,
+                  max: 48,
+                  suffix: 'px',
+                } as SettingsField<MenuSettings>]
+              : []),
+          ];
+
+        case 'Typography':
+          return [
+            {
+              key: 'fontFamily',
+              label: 'Font family',
+              type: 'select',
+              options: FONT_FAMILY_OPTIONS,
+            },
+            {
+              key: 'fontSize',
+              label: 'Font size',
+              type: 'number',
+              min: 10,
+              max: 32,
+              suffix: 'px',
+            },
+            {
+              key: 'fontWeight',
+              label: 'Font weight',
+              type: 'select',
+              options: FONT_WEIGHT_OPTIONS,
+            },
+            {
+              key: 'letterSpacing',
+              label: 'Letter spacing',
+              type: 'number',
+              min: -2,
+              max: 10,
+              step: 0.1,
+              suffix: 'px',
+            },
+            {
+              key: 'textTransform',
+              label: 'Text transform',
+              type: 'select',
+              options: [
+                { label: 'None', value: 'none' },
+                { label: 'Uppercase', value: 'uppercase' },
+                { label: 'Capitalize', value: 'capitalize' },
+              ],
+            },
+          ];
+
+        case 'Colors':
+          return [
+            {
+              key: 'menuColorSchemeId',
+              label: 'Color scheme',
+              type: 'select',
+              options: colorSchemeOptions,
+            },
+            ...(menuColorSchemeId === 'custom'
+              ? ([
+                  { key: 'backgroundColor', label: 'Background', type: 'color' },
+                  { key: 'textColor', label: 'Text color', type: 'color' },
+                  { key: 'activeItemColor', label: 'Active item', type: 'color' },
+                  { key: 'borderColor', label: 'Border', type: 'color' },
+                ] as SettingsField<MenuSettings>[])
+              : []),
+          ];
+
+        case 'Spacing':
+            // Custom render for padding grid
+          return [
+              {
+                  key: 'paddingTop',
+                  label: 'Padding Top',
+                  type: 'number',
+                  min: 0,
+                  max: 100,
+                  suffix: 'px'
+              },
+               {
+                  key: 'paddingRight',
+                  label: 'Padding Right',
+                  type: 'number',
+                  min: 0,
+                  max: 100,
+                  suffix: 'px'
+              },
+               {
+                  key: 'paddingBottom',
+                  label: 'Padding Bottom',
+                  type: 'number',
+                  min: 0,
+                  max: 100,
+                  suffix: 'px'
+              },
+               {
+                  key: 'paddingLeft',
+                  label: 'Padding Left',
+                  type: 'number',
+                  min: 0,
+                  max: 100,
+                  suffix: 'px'
+              },
+            {
+              key: 'itemGap',
+              label: 'Item gap',
+              type: 'range',
+              min: 0,
+              max: 40,
+              suffix: 'px',
+            },
+          ];
+
+        case 'Mobile Menu':
+          return [
+            {
+              key: 'mobileBreakpoint',
+              label: 'Breakpoint',
+              type: 'select',
+              options: [
+                { label: '768px (Tablet)', value: '768' },
+                { label: '1024px (Small desktop)', value: '1024' },
+                { label: '1280px (Large desktop)', value: '1280' },
+              ],
+            },
+            {
+              key: 'mobileAnimation',
+              label: 'Animation',
+              type: 'select',
+              options: [
+                { label: 'Slide left', value: 'slide-left' },
+                { label: 'Slide right', value: 'slide-right' },
+                { label: 'Slide down', value: 'slide-down' },
+                { label: 'Fade', value: 'fade' },
+              ],
+            },
+            { key: 'hamburgerColor', label: 'Hamburger color', type: 'color' },
+            { key: 'mobileOverlay', label: 'Show overlay', type: 'checkbox' },
+          ];
+
+        case 'Dropdown Style':
+          return [
+            { key: 'dropdownBg', label: 'Background', type: 'color' },
+            { key: 'dropdownTextColor', label: 'Text color', type: 'color' },
+            {
+              key: 'dropdownRadius',
+              label: 'Border radius',
+              type: 'number',
+              min: 0,
+              max: 24,
+              suffix: 'px',
+            },
+            {
+              key: 'dropdownShadow',
+              label: 'Shadow',
+              type: 'select',
+              options: [
+                { label: 'None', value: 'none' },
+                { label: 'Small', value: 'small' },
+                { label: 'Medium', value: 'medium' },
+                { label: 'Large', value: 'large' },
+              ],
+            },
+            {
+              key: 'dropdownMinWidth',
+              label: 'Min width',
+              type: 'number',
+              min: 100,
+              max: 400,
+              suffix: 'px',
+            },
+          ];
+
+        case 'Sticky Behaviour': {
+            const isSticky = settings.positionMode === 'sticky';
+            const canHideOnScroll = isSticky || settings.menuPlacement === 'left' || settings.menuPlacement === 'right';
+            
+            return [
+                {
+                    key: 'positionMode',
+                    label: 'Menu position',
+                    type: 'select',
+                    options: [
+                        { label: 'Glued to top', value: 'sticky' },
+                        { label: 'Top of page', value: 'static' },
+                    ]
+                },
+                ...(isSticky ? [
+                    { key: 'stickyOffset', label: 'Sticky offset', type: 'number', min: 0, max: 200, suffix: 'px' },
+                    { key: 'shrinkOnScroll', label: 'Shrink on scroll', type: 'checkbox' },
+                    { key: 'stickyBackground', label: 'Sticky background', type: 'color' },
+                ] as SettingsField<MenuSettings>[] : []),
+                ...(canHideOnScroll ? [
+                    { key: 'hideOnScroll', label: 'Hide on scroll', type: 'checkbox' },
+                    ...(settings.hideOnScroll ? [
+                        { key: 'showOnScrollUpAfterPx', label: 'Show on scroll up after', type: 'number', min: 0, max: 600, suffix: 'px' }
+                    ] as SettingsField<MenuSettings>[] : [])
+                ] as SettingsField<MenuSettings>[] : [])
+            ];
+        }
+
+        case 'Active State':
+          return [
+            {
+              key: 'activeStyle',
+              label: 'Style',
+              type: 'select',
+              options: [
+                { label: 'Underline', value: 'underline' },
+                { label: 'Bold', value: 'bold' },
+                { label: 'Background', value: 'background' },
+                { label: 'Border bottom', value: 'border-bottom' },
+                { label: 'None', value: 'none' },
+              ],
+            },
+            { key: 'activeColor', label: 'Active color', type: 'color' },
+          ];
+
+        case 'Hover Effects':
+          return [
+            {
+              key: 'hoverStyle',
+              label: 'Style',
+              type: 'select',
+              options: [
+                { label: 'Underline', value: 'underline' },
+                { label: 'Color shift', value: 'color-shift' },
+                { label: 'Background', value: 'background' },
+                { label: 'Scale', value: 'scale' },
+                { label: 'None', value: 'none' },
+              ],
+            },
+            { key: 'hoverColor', label: 'Hover color', type: 'color' },
+            {
+              key: 'transitionSpeed',
+              label: 'Transition speed',
+              type: 'range',
+              min: 100,
+              max: 500,
+              suffix: 'ms',
+            },
+          ];
+
+        case 'Animations':
+          return [
+            {
+              key: 'menuEntryAnimation',
+              label: 'Entry animation',
+              type: 'select',
+              options: ANIMATION_PRESETS,
+            },
+            {
+              key: 'menuHoverAnimation',
+              label: 'Hover animation',
+              type: 'select',
+              options: ANIMATION_PRESETS,
+            },
+          ];
+
+        default:
+          return [];
+      }
+    },
+    [settings, colorSchemeOptions, menuColorSchemeId]
   );
-}
+
 
 // ---------------------------------------------------------------------------
 // Panel

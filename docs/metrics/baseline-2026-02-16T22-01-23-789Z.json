@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-16T22:06:57.112Z",
+  "generatedAt": "2026-02-16T22:01:23.789Z",
   "source": {
-    "totalFiles": 2295,
-    "totalLines": 406018,
+    "totalFiles": 2290,
+    "totalLines": 405982,
     "useClientFiles": 895,
     "filesOver800": 81,
     "filesOver1000": 47,
@@ -17,13 +17,33 @@
     "routesWithApiHandler": 273,
     "delegatedServerRoutes": 21,
     "routesWithoutApiHandler": 0,
-    "forceDynamicRoutes": 69,
+    "forceDynamicRoutes": 65,
     "revalidateRoutes": 25,
-    "routesWithCacheHeader": 47,
+    "routesWithCacheHeader": 48,
     "routesWithCacheOption": 21,
     "routesWithExplicitCachePolicy": 294,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/upscale/route.ts",
+        "lines": 1009
+      },
+      {
+        "path": "src/app/api/products/validator-runtime/evaluate/route.ts",
+        "lines": 908
+      },
+      {
+        "path": "src/app/api/settings/route.ts",
+        "lines": 775
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/crop/route.ts",
+        "lines": 765
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/center/route.ts",
+        "lines": 763
+      },
       {
         "path": "src/app/api/ai-paths/db-action/route.ts",
         "lines": 575
@@ -83,26 +103,6 @@
       {
         "path": "src/app/api/databases/restore/route.ts",
         "lines": 297
-      },
-      {
-        "path": "src/app/api/user/preferences/route.ts",
-        "lines": 297
-      },
-      {
-        "path": "src/app/api/products/validator-patterns/route.ts",
-        "lines": 293
-      },
-      {
-        "path": "src/app/api/countries/route.ts",
-        "lines": 278
-      },
-      {
-        "path": "src/app/api/image-studio/projects/[projectId]/assets/route.ts",
-        "lines": 271
-      },
-      {
-        "path": "src/app/api/languages/route.ts",
-        "lines": 270
       }
     ]
   },

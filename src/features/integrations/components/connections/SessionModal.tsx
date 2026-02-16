@@ -2,9 +2,12 @@
 
 
 
-import { SessionCookie } from '@/features/integrations/types/integrations-ui';
+import React from 'react';
+
+import type { SessionCookie } from '@/features/integrations/types/integrations-ui';
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Badge } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals';
+import { Badge, StatusBadge } from '@/shared/ui';
 
 interface SessionModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;
@@ -24,93 +27,93 @@ export function SessionModal({
   origins,
   updatedAt,
 }: SessionModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
-
   return (
-    <AppModal
-      open={isOpen}
+    <DetailModal
+      isOpen={isOpen}
       onClose={onClose}
-      title='Session cookies'
+      title='Session Context'
+      subtitle={updatedAt ? `Last obtained ${new Date(updatedAt).toLocaleString()}` : 'No timestamp available'}
       size='lg'
     >
       {loading ? (
-        <div className='rounded-md border border-border bg-card/60 p-4 text-sm text-gray-400'>
-          Loading session details...
+        <div className='flex flex-col items-center justify-center py-12 text-muted-foreground'>
+          <div className='size-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-4' />
+          <p className='text-sm'>Retrieving session artifacts...</p>
         </div>
       ) : error ? (
-        <div className='rounded-md border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100'>
+        <div className='rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive'>
           {error}
         </div>
       ) : (
-        <div className='space-y-4 text-sm text-gray-200'>
-          <div className='rounded-md border border-border bg-card/60 p-3 text-xs text-gray-300'>
-            <span className='text-gray-400'>Obtained:</span>{' '}
-            {updatedAt ? new Date(updatedAt).toLocaleString() : '—'}
-          </div>
-
+        <div className='space-y-6'>
           <div className='space-y-3'>
+            <div className='flex items-center justify-between px-1'>
+              <h3 className='text-[10px] uppercase font-bold text-gray-500'>Stored Cookies ({cookies.length})</h3>
+              {origins.length > 0 && (
+                <StatusBadge status={`${origins.length} Origins`} variant='neutral' size='sm' className='font-bold' />
+              )}
+            </div>
+
             {cookies.length === 0 ? (
-              <div className='rounded-md border border-border bg-card/60 p-4 text-sm text-gray-400'>
-                  No cookies stored.
+              <div className='rounded-lg border border-dashed border-border bg-card/20 p-8 text-center text-sm text-muted-foreground italic'>
+                No active session cookies detected.
               </div>
             ) : (
-              cookies.map((cookie: SessionCookie, index: number) => (
-                <div
-                  key={`${cookie.name || 'cookie'}-${index}`}
-                  className='rounded-md border border-border bg-card/60 p-3'
-                >
-                  <div className='flex flex-wrap items-center gap-2 text-xs text-gray-300'>
-                    <Badge variant='neutral'>
-                      {cookie.name || 'unknown'}
-                    </Badge>
-                    <span className='text-gray-500'>
-                      {cookie.domain || '—'}
-                    </span>
-                  </div>
-                  <div className='mt-2 grid gap-2 text-xs text-gray-400 md:grid-cols-2'>
-                    <p>
-                      <span className='text-gray-500'>Value:</span>{' '}
-                      <span className='break-all text-gray-200'>
-                        {cookie.value || '—'}
+              <div className='space-y-3'>
+                {cookies.map((cookie: SessionCookie, index: number) => (
+                  <div
+                    key={`${cookie.name || 'cookie'}-${index}`}
+                    className='rounded-lg border border-border bg-card/40 p-4 transition-colors hover:bg-card/60'
+                  >
+                    <div className='flex flex-wrap items-center justify-between gap-2 mb-3'>
+                      <Badge variant='neutral' className='font-mono text-[11px]'>
+                        {cookie.name || 'unknown'}
+                      </Badge>
+                      <span className='text-[11px] font-medium text-gray-400'>
+                        {cookie.domain || '—'}
                       </span>
-                    </p>
-                    <p>
-                      <span className='text-gray-500'>Path:</span>{' '}
-                      {cookie.path || '—'}
-                    </p>
-                    <p>
-                      <span className='text-gray-500'>Expires:</span>{' '}
-                      {cookie.expires
-                        ? new Date(cookie.expires * 1000).toLocaleString()
-                        : 'Session'}
-                    </p>
-                    <p>
-                      <span className='text-gray-500'>Secure:</span>{' '}
-                      {cookie.secure ? 'Yes' : 'No'}
-                    </p>
-                    <p>
-                      <span className='text-gray-500'>HttpOnly:</span>{' '}
-                      {cookie.httpOnly ? 'Yes' : 'No'}
-                    </p>
-                    <p>
-                      <span className='text-gray-500'>SameSite:</span>{' '}
-                      {cookie.sameSite || '—'}
-                    </p>
+                    </div>
+                    <div className='grid gap-x-6 gap-y-3 text-[11px] text-gray-400 md:grid-cols-2'>
+                      <div className='space-y-1 col-span-full'>
+                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>Payload Value</span>
+                        <div className='break-all text-gray-200 bg-black/30 p-2 rounded border border-white/5 font-mono leading-relaxed'>
+                          {cookie.value || '—'}
+                        </div>
+                      </div>
+                      <div className='space-y-1'>
+                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>Target Path</span>
+                        <span className='text-gray-300'>{cookie.path || '—'}</span>
+                      </div>
+                      <div className='space-y-1'>
+                        <span className='text-[10px] uppercase font-bold text-gray-600 block'>Expiration</span>
+                        <span className='text-gray-300'>
+                          {cookie.expires
+                            ? new Date(cookie.expires * 1000).toLocaleString()
+                            : 'Session only'}
+                        </span>
+                      </div>
+                      <div className='flex gap-4 col-span-full pt-1 border-t border-white/5'>
+                        <div className='flex items-center gap-1.5'>
+                          <div className={cn('size-1.5 rounded-full', cookie.secure ? 'bg-emerald-500' : 'bg-gray-600')} />
+                          <span className={cn(cookie.secure ? 'text-emerald-400/80' : 'text-gray-500')}>Secure</span>
+                        </div>
+                        <div className='flex items-center gap-1.5'>
+                          <div className={cn('size-1.5 rounded-full', cookie.httpOnly ? 'bg-emerald-500' : 'bg-gray-600')} />
+                          <span className={cn(cookie.httpOnly ? 'text-emerald-400/80' : 'text-gray-500')}>HttpOnly</span>
+                        </div>
+                        <div className='flex items-center gap-1.5'>
+                          <span className='text-[10px] text-gray-600 uppercase font-bold'>SameSite:</span>
+                          <span className='text-gray-300'>{cookie.sameSite || 'None'}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
-
-          {origins.length > 0 && (
-            <div className='rounded-md border border-border bg-card/60 p-3'>
-              <p className='text-xs text-gray-400'>
-                  Origins stored: {origins.length}
-              </p>
-            </div>
-          )}
         </div>
       )}
-    </AppModal>
+    </DetailModal>
   );
 }

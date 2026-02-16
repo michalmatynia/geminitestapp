@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { FormField, FormModal, Input } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 export interface UserCreateFormState {
   name: string;
@@ -20,6 +20,29 @@ interface UserCreateModalProps extends ModalStateProps {
   onSave: () => void;
 }
 
+const FIELDS: SettingsField<UserCreateFormState>[] = [
+  {
+    key: 'name',
+    label: 'Full Name',
+    type: 'text',
+    placeholder: 'Optional display name',
+  },
+  {
+    key: 'email',
+    label: 'Email Address',
+    type: 'email',
+    placeholder: 'user@example.com',
+    required: true,
+  },
+  {
+    key: 'password',
+    label: 'Initial Password',
+    type: 'password',
+    placeholder: 'Minimum 8 characters',
+    required: true,
+  },
+];
+
 export function UserCreateModal({
   isOpen,
   onClose,
@@ -28,50 +51,22 @@ export function UserCreateModal({
   isSaving,
   onSave,
 }: UserCreateModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
+  const handleChange = (values: Partial<UserCreateFormState>) => {
+    setCreateForm(prev => ({ ...prev, ...values }));
+  };
 
   return (
-    <FormModal
+    <SettingsPanelBuilder
       open={isOpen}
       onClose={onClose}
       title='Provision New Account'
-      onSave={onSave}
+      subtitle='New users will be created with the Default Access Policy. You can adjust their specific roles after creation.'
+      fields={FIELDS}
+      values={createForm}
+      onChange={handleChange}
+      onSave={async () => onSave()}
       isSaving={isSaving}
       size='sm'
-    >
-      <div className='space-y-4'>
-        <FormField label='Full Name'>
-          <Input 
-            value={createForm.name} 
-            onChange={(e) => {
-              setCreateForm((p) => ({ ...p, name: e.target.value }));
-            }}
-            placeholder='Optional display name' 
-          />
-        </FormField>
-        <FormField label='Email Address'>
-          <Input 
-            value={createForm.email} 
-            onChange={(e) => {
-              setCreateForm((p) => ({ ...p, email: e.target.value }));
-            }}
-            placeholder='user@example.com' 
-          />
-        </FormField>
-        <FormField label='Initial Password'>
-          <Input 
-            type='password' 
-            value={createForm.password} 
-            onChange={(e) => {
-              setCreateForm((p) => ({ ...p, password: e.target.value }));
-            }}
-            placeholder='Minimum 8 characters' 
-          />
-        </FormField>
-        <div className='p-3 rounded border border-amber-500/20 bg-amber-500/5 text-[11px] text-amber-300'>
-          New users will be created with the Default Access Policy. You can adjust their specific roles after creation.
-        </div>
-      </div>
-    </FormModal>
+    />
   );
 }

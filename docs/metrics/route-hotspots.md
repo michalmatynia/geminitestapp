@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-16T21:47:34.379Z
+Generated at: 2026-02-16T22:06:57.812Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -8,13 +8,6 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/integrations/products/[id]/export-to-base/route.ts` | 1468 |
-| `src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts` | 1165 |
-| `src/app/api/image-studio/slots/[slotId]/upscale/route.ts` | 1009 |
-| `src/app/api/products/validator-runtime/evaluate/route.ts` | 908 |
-| `src/app/api/settings/route.ts` | 775 |
-| `src/app/api/image-studio/slots/[slotId]/crop/route.ts` | 765 |
-| `src/app/api/image-studio/slots/[slotId]/center/route.ts` | 763 |
 | `src/app/api/ai-paths/db-action/route.ts` | 575 |
 | `src/app/api/chatbot/route.ts` | 559 |
 | `src/app/api/databases/preview/route.ts` | 550 |
@@ -28,6 +21,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/image-studio/prompt-extract/route.ts` | 359 |
 | `src/app/api/products/validator-patterns/[id]/route.ts` | 349 |
 | `src/app/api/price-groups/route.ts` | 318 |
+| `src/app/api/databases/schema/route.ts` | 306 |
+| `src/app/api/databases/restore/route.ts` | 297 |
+| `src/app/api/user/preferences/route.ts` | 297 |
+| `src/app/api/products/validator-patterns/route.ts` | 293 |
+| `src/app/api/countries/route.ts` | 278 |
+| `src/app/api/image-studio/projects/[projectId]/assets/route.ts` | 271 |
+| `src/app/api/languages/route.ts` | 270 |
 
 ## Top App Pages by LOC
 
@@ -56,13 +56,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 ## Recommended First Runtime Profiling Targets
 
-- `src/app/api/integrations/products/[id]/export-to-base/route.ts`
-- `src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts`
-- `src/app/api/image-studio/slots/[slotId]/upscale/route.ts`
-- `src/app/api/products/validator-runtime/evaluate/route.ts`
-- `src/app/api/settings/route.ts`
-- `src/app/api/image-studio/slots/[slotId]/crop/route.ts`
-- `src/app/api/image-studio/slots/[slotId]/center/route.ts`
 - `src/app/api/ai-paths/db-action/route.ts`
 - `src/app/api/chatbot/route.ts`
 - `src/app/api/databases/preview/route.ts`
+- `src/app/api/integrations/imports/base/route.ts`
+- `src/app/api/auth/users/[id]/route.ts`
+- `src/app/api/image-studio/projects/[projectId]/route.ts`
+- `src/app/api/image-studio/slots/[slotId]/masks/route.ts`
+- `src/app/api/integrations/imports/base/parameters/route.ts`
+- `src/app/api/image-studio/projects/[projectId]/assets/import/route.ts`
+- `src/app/api/ai-paths/runs/[runId]/stream/route.ts`

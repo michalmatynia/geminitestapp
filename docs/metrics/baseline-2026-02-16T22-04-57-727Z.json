@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-16T22:06:57.112Z",
+  "generatedAt": "2026-02-16T22:04:57.727Z",
   "source": {
-    "totalFiles": 2295,
-    "totalLines": 406018,
+    "totalFiles": 2294,
+    "totalLines": 406005,
     "useClientFiles": 895,
     "filesOver800": 81,
     "filesOver1000": 47,
@@ -19,11 +19,15 @@
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 69,
     "revalidateRoutes": 25,
-    "routesWithCacheHeader": 47,
+    "routesWithCacheHeader": 48,
     "routesWithCacheOption": 21,
     "routesWithExplicitCachePolicy": 294,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
+      {
+        "path": "src/app/api/settings/route.ts",
+        "lines": 775
+      },
       {
         "path": "src/app/api/ai-paths/db-action/route.ts",
         "lines": 575
@@ -99,10 +103,6 @@
       {
         "path": "src/app/api/image-studio/projects/[projectId]/assets/route.ts",
         "lines": 271
-      },
-      {
-        "path": "src/app/api/languages/route.ts",
-        "lines": 270
       }
     ]
   },

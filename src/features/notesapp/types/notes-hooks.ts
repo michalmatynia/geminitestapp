@@ -39,6 +39,13 @@ export interface UseNoteOperationsProps {
   setSelectedFolderId: (id: string | null) => void;
   setSelectedNote: (note: NoteWithRelations | null) => void;
   selectedNote: NoteWithRelations | null;
+  confirmAction: (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }) => void;
 }
 
 export interface UseNoteFiltersProps {

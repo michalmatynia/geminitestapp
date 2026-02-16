@@ -1,13 +1,10 @@
 'use client';
 
-import { useContext } from 'react';
+import React from 'react';
 
-import { ProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { CatalogRecord } from '@/features/products/types';
-import { internalError } from '@/shared/errors/app-error';
-import { MultiSelect } from '@/shared/ui';
 
-import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+import { ProductMetadataMultiSelectField } from './ProductMetadataMultiSelectField';
 
 type CatalogMultiSelectFieldProps = {
   catalogs?: CatalogRecord[] | undefined;
@@ -18,61 +15,20 @@ type CatalogMultiSelectFieldProps = {
   emptyMessage?: string | undefined;
 };
 
-export function CatalogMultiSelectField({
-  catalogs: catalogsProp,
-  selectedCatalogIds: selectedCatalogIdsProp,
-  onChange: onChangeProp,
-  loading = false,
-  disabled = false,
-  emptyMessage = 'No catalogs found',
-}: CatalogMultiSelectFieldProps): React.JSX.Element {
-  const formContext = useContext(ProductFormContext);
-  const metadataContext = useOptionalProductMetadataFieldContext();
-  const catalogs = catalogsProp ?? metadataContext?.catalogs ?? formContext?.catalogs ?? [];
-  const selectedCatalogIds =
-    selectedCatalogIdsProp ??
-    metadataContext?.selectedCatalogIds ??
-    formContext?.selectedCatalogIds ??
-    [];
-  const resolvedLoading = catalogsProp
-    ? loading
-    : (metadataContext?.catalogsLoading ?? formContext?.catalogsLoading ?? loading);
-  const resolvedOnChange =
-    onChangeProp ??
-    metadataContext?.onCatalogsChange ??
-    (formContext
-      ? (nextIds: string[]): void => {
-        const previous = new Set(formContext.selectedCatalogIds);
-        const next = new Set(nextIds);
-        for (const id of nextIds) {
-          if (!previous.has(id)) formContext.toggleCatalog(id);
-        }
-        for (const id of formContext.selectedCatalogIds) {
-          if (!next.has(id)) formContext.toggleCatalog(id);
-        }
-      }
-      : null);
-
-  if (!resolvedOnChange) {
-    throw internalError(
-      'CatalogMultiSelectField requires `onChange` prop when used outside ProductFormContext.'
-    );
-  }
-
+export function CatalogMultiSelectField(props: CatalogMultiSelectFieldProps): React.JSX.Element {
   return (
-    <MultiSelect
+    <ProductMetadataMultiSelectField
+      {...props}
       label='Catalogs'
-      options={catalogs.map((catalog: CatalogRecord) => ({
-        value: catalog.id,
-        label: catalog.name,
-      }))}
-      selected={selectedCatalogIds}
-      onChange={resolvedOnChange}
-      loading={resolvedLoading}
-      disabled={disabled}
+      items={props.catalogs}
+      selectedIds={props.selectedCatalogIds}
+      contextItemsKey='catalogs'
+      contextSelectedKey='selectedCatalogIds'
+      contextLoadingKey='catalogsLoading'
+      contextOnChangeKey='onCatalogsChange'
+      formContextToggleName='toggleCatalog'
       placeholder='Select catalogs'
       searchPlaceholder='Search catalogs...'
-      emptyMessage={emptyMessage}
     />
   );
 }

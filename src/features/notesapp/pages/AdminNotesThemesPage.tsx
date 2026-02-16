@@ -9,11 +9,10 @@ import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { logClientError } from '@/features/observability';
 import type { ThemeRecord } from '@/shared/types/domain/notes';
 import { Button, useToast, Input, SectionHeader, FormSection, FormField, RefreshButton } from '@/shared/ui';
-
-
-
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {
+
   name: '',
   notebookId: null,
   textColor: '#e5e7eb',           // gray-200 - matches page text
@@ -40,6 +39,8 @@ export function AdminNotesThemesPage(): React.JSX.Element {
   const createTheme: ReturnType<typeof useCreateNoteTheme> = useCreateNoteTheme();
   const updateTheme: ReturnType<typeof useUpdateNoteTheme> = useUpdateNoteTheme();
   const deleteTheme: ReturnType<typeof useDeleteNoteTheme> = useDeleteNoteTheme();
+
+  const [themeToDelete, setThemeToDelete] = useState<string | null>(null);
 
   const themes: ThemeRecord[] = themesQuery.data ?? [];
   const loading: boolean = themesQuery.isPending;
@@ -86,10 +87,10 @@ export function AdminNotesThemesPage(): React.JSX.Element {
   };
 
   const handleDelete = async (themeId: string): Promise<void> => {
-    if (!confirm('Delete this theme?')) return;
     try {
       await deleteTheme.mutateAsync(themeId);
       toast('Theme deleted', { variant: 'success' });
+      setThemeToDelete(null);
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'AdminNotesThemesPage', action: 'deleteTheme', themeId } });
       toast('Failed to delete theme', { variant: 'error' });
@@ -325,7 +326,7 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           </Button>
                         )}
                         <Button
-                          onClick={(): void => { void handleDelete(theme['id']); }}
+                          onClick={(): void => setThemeToDelete(theme['id'])}
                           variant='outline'
                           size='sm'
                           className='border-red-500/40 text-red-300 hover:text-red-200'
@@ -493,6 +494,20 @@ export function AdminNotesThemesPage(): React.JSX.Element {
           )}
         </FormSection>
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(themeToDelete)}
+        onClose={() => setThemeToDelete(null)}
+        title='Delete Theme?'
+        message='Are you sure you want to delete this theme? This action cannot be undone.'
+        confirmText='Delete'
+        isDangerous={true}
+        onConfirm={(): void => {
+          if (themeToDelete) {
+            void handleDelete(themeToDelete);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button } from '@/shared/ui';
+import { FormModal, Button } from '@/shared/ui';
 
 interface SlotCreateModalProps extends ModalStateProps {
   onSelectMode: (mode: 'empty' | 'image' | 'local') => void;
@@ -16,43 +16,49 @@ export function SlotCreateModal({
   onSelectMode,
   disabled = false,
 }: SlotCreateModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
-
   return (
-    <AppModal
+    <FormModal
       open={isOpen}
       onClose={onClose}
       title='New Card'
-      size='md'
+      size='sm'
+      footer={null}
     >
-      <div className='space-y-4 text-sm text-gray-200'>
+      <div className='grid gap-3'>
         <Button 
-          size='xs'
-          variant='outline'
-          onClick={() => onSelectMode('empty')}
+          variant='secondary'
+          onClick={() => { onSelectMode('empty'); onClose(); }}
           disabled={disabled}
-          className='w-full'
+          className='w-full h-12 justify-start px-4 text-sm'
         >
-          Create Empty Card
+          <div className='flex flex-col items-start'>
+            <span className='font-semibold'>Create Empty Card</span>
+            <span className='text-[10px] opacity-70'>Initialize a blank card slot</span>
+          </div>
         </Button>
         <Button 
-          size='xs'
-          onClick={() => onSelectMode('image')}
+          variant='primary'
+          onClick={() => { onSelectMode('image'); onClose(); }}
           disabled={disabled}
-          className='w-full'
+          className='w-full h-12 justify-start px-4 text-sm'
         >
-          Create Card From Image
+          <div className='flex flex-col items-start'>
+            <span className='font-semibold'>Create Card From Image</span>
+            <span className='text-[10px] opacity-90'>Use an existing preview image</span>
+          </div>
         </Button>
         <Button 
-          size='xs'
           variant='outline'
-          onClick={() => onSelectMode('local')}
+          onClick={() => { onSelectMode('local'); onClose(); }}
           disabled={disabled}
-          className='w-full'
+          className='w-full h-12 justify-start px-4 text-sm'
         >
-          Upload Local Image
+          <div className='flex flex-col items-start'>
+            <span className='font-semibold'>Upload Local Image</span>
+            <span className='text-[10px] opacity-70'>Choose a file from your device</span>
+          </div>
         </Button>
       </div>
-    </AppModal>
+    </FormModal>
   );
 }

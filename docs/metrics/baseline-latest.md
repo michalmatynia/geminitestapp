@@ -1,14 +1,14 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-16T21:47:33.844Z
+Generated at: 2026-02-16T22:06:57.112Z
 
 ## Snapshot
 
-- Source files: 2292
-- Source lines: 405956
-- use client files: 897
+- Source files: 2295
+- Source lines: 406018
+- use client files: 895
 - Files >= 1000 LOC: 47
-- Files >= 1500 LOC: 21
+- Files >= 1500 LOC: 20
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
 - API delegated server routes: 21
@@ -22,13 +22,6 @@ Generated at: 2026-02-16T21:47:33.844Z
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/integrations/products/[id]/export-to-base/route.ts` | 1468 |
-| `src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts` | 1165 |
-| `src/app/api/image-studio/slots/[slotId]/upscale/route.ts` | 1009 |
-| `src/app/api/products/validator-runtime/evaluate/route.ts` | 908 |
-| `src/app/api/settings/route.ts` | 775 |
-| `src/app/api/image-studio/slots/[slotId]/crop/route.ts` | 765 |
-| `src/app/api/image-studio/slots/[slotId]/center/route.ts` | 763 |
 | `src/app/api/ai-paths/db-action/route.ts` | 575 |
 | `src/app/api/chatbot/route.ts` | 559 |
 | `src/app/api/databases/preview/route.ts` | 550 |
@@ -37,13 +30,20 @@ Generated at: 2026-02-16T21:47:33.844Z
 | `src/app/api/image-studio/projects/[projectId]/route.ts` | 409 |
 | `src/app/api/image-studio/slots/[slotId]/masks/route.ts` | 395 |
 | `src/app/api/integrations/imports/base/parameters/route.ts` | 383 |
+| `src/app/api/image-studio/projects/[projectId]/assets/import/route.ts` | 372 |
+| `src/app/api/ai-paths/runs/[runId]/stream/route.ts` | 364 |
+| `src/app/api/image-studio/prompt-extract/route.ts` | 359 |
+| `src/app/api/products/validator-patterns/[id]/route.ts` | 349 |
+| `src/app/api/price-groups/route.ts` | 318 |
+| `src/app/api/databases/schema/route.ts` | 306 |
+| `src/app/api/databases/restore/route.ts` | 297 |
 
 ## Top Cross-Feature Dependencies
 
 | Edge | References |
 | --- | ---: |
+| `integrations -> products` | 44 |
 | `ai -> observability` | 42 |
-| `integrations -> products` | 42 |
 | `products -> observability` | 29 |
 | `jobs -> observability` | 28 |
 | `prompt-exploder -> prompt-engine` | 28 |
@@ -73,7 +73,6 @@ Generated at: 2026-02-16T21:47:33.844Z
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
 | `src/features/case-resolver/components/CaseResolverRelationsWorkspace.tsx` | 2031 |
 | `src/shared/ui/vector-canvas.tsx` | 1986 |
-| `src/features/integrations/services/imports/base-import-service.ts` | 1970 |
 | `src/features/prompt-exploder/components/SegmentEditorPanel.tsx` | 1908 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 1882 |
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1806 |
@@ -82,3 +81,4 @@ Generated at: 2026-02-16T21:47:33.844Z
 | `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 1725 |
 | `src/features/cms/components/page-builder/registry/block-definitions.ts` | 1692 |
 | `src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts` | 1555 |
+| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1530 |

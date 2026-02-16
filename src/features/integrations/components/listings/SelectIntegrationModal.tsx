@@ -1,9 +1,10 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { AppModal, Button, IntegrationSelector } from '@/shared/ui';
+import { FormModal, IntegrationSelector } from '@/shared/ui';
 
 import { useIntegrationSelection } from './hooks/useIntegrationSelection';
 
@@ -25,8 +26,6 @@ export default function SelectIntegrationModal({
     setSelectedConnectionId,
   } = useIntegrationSelection();
 
-  if (!isOpen) return null;
-
   const handleContinue = (): void => {
     if (selectedIntegrationId && selectedConnectionId) {
       onSelect(selectedIntegrationId, selectedConnectionId);
@@ -34,15 +33,18 @@ export default function SelectIntegrationModal({
   };
 
   return (
-    <AppModal
+    <FormModal
       open={isOpen}
       onClose={onClose}
       title='Select Marketplace / Integration'
       size='md'
+      onSave={handleContinue}
+      saveText='Continue'
+      isSaveDisabled={!selectedIntegrationId || !selectedConnectionId}
     >
       <div className='space-y-4'>
         {loading ? (
-          <p className='text-sm text-gray-400'>Loading integrations...</p>
+          <p className='text-sm text-muted-foreground'>Loading integrations...</p>
         ) : integrations.length === 0 ? (
           <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-6 text-center'>
             <p className='text-sm text-yellow-200'>No connected integrations</p>
@@ -53,35 +55,15 @@ export default function SelectIntegrationModal({
             </p>
           </div>
         ) : (
-          <>
-            <IntegrationSelector
-              integrations={integrations}
-              selectedIntegrationId={selectedIntegrationId}
-              onIntegrationChange={setSelectedIntegrationId}
-              selectedConnectionId={selectedConnectionId}
-              onConnectionChange={setSelectedConnectionId}
-            />
-
-            <div className='flex justify-end gap-3 pt-4'>
-              <Button
-                type='button'
-                onClick={onClose}
-                className='rounded-md px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors'
-              >
-                Cancel
-              </Button>
-              <Button
-                type='button'
-                onClick={handleContinue}
-                disabled={!selectedIntegrationId || !selectedConnectionId}
-                className='rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
-              >
-                Continue
-              </Button>
-            </div>
-          </>
+          <IntegrationSelector
+            integrations={integrations}
+            selectedIntegrationId={selectedIntegrationId}
+            onIntegrationChange={setSelectedIntegrationId}
+            selectedConnectionId={selectedConnectionId}
+            onConnectionChange={setSelectedConnectionId}
+          />
         )}
       </div>
-    </AppModal>
+    </FormModal>
   );
 }

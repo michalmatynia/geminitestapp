@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-16T22:06:57.112Z",
+  "generatedAt": "2026-02-16T21:59:36.489Z",
   "source": {
-    "totalFiles": 2295,
-    "totalLines": 406018,
+    "totalFiles": 2289,
+    "totalLines": 405982,
     "useClientFiles": 895,
     "filesOver800": 81,
     "filesOver1000": 47,
@@ -14,16 +14,40 @@
   },
   "api": {
     "totalRoutes": 294,
-    "routesWithApiHandler": 273,
+    "routesWithApiHandler": 272,
     "delegatedServerRoutes": 21,
-    "routesWithoutApiHandler": 0,
-    "forceDynamicRoutes": 69,
+    "routesWithoutApiHandler": 1,
+    "forceDynamicRoutes": 64,
     "revalidateRoutes": 25,
-    "routesWithCacheHeader": 47,
+    "routesWithCacheHeader": 48,
     "routesWithCacheOption": 21,
     "routesWithExplicitCachePolicy": 294,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
+      {
+        "path": "src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts",
+        "lines": 1165
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/upscale/route.ts",
+        "lines": 1009
+      },
+      {
+        "path": "src/app/api/products/validator-runtime/evaluate/route.ts",
+        "lines": 908
+      },
+      {
+        "path": "src/app/api/settings/route.ts",
+        "lines": 775
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/crop/route.ts",
+        "lines": 765
+      },
+      {
+        "path": "src/app/api/image-studio/slots/[slotId]/center/route.ts",
+        "lines": 763
+      },
       {
         "path": "src/app/api/ai-paths/db-action/route.ts",
         "lines": 575
@@ -79,30 +103,6 @@
       {
         "path": "src/app/api/databases/schema/route.ts",
         "lines": 306
-      },
-      {
-        "path": "src/app/api/databases/restore/route.ts",
-        "lines": 297
-      },
-      {
-        "path": "src/app/api/user/preferences/route.ts",
-        "lines": 297
-      },
-      {
-        "path": "src/app/api/products/validator-patterns/route.ts",
-        "lines": 293
-      },
-      {
-        "path": "src/app/api/countries/route.ts",
-        "lines": 278
-      },
-      {
-        "path": "src/app/api/image-studio/projects/[projectId]/assets/route.ts",
-        "lines": 271
-      },
-      {
-        "path": "src/app/api/languages/route.ts",
-        "lines": 270
       }
     ]
   },
@@ -231,7 +231,7 @@
       {
         "feature": "products",
         "files": 194,
-        "lines": 37244
+        "lines": 37253
       },
       {
         "feature": "integrations",
@@ -467,7 +467,7 @@
       },
       {
         "path": "src/app/api/integrations/products/[id]/export-to-base/handler.ts",
-        "lines": 1464
+        "lines": 1470
       },
       {
         "path": "src/features/ai/ai-paths/components/canvas-board.tsx",
@@ -502,7 +502,7 @@
         "lines": 1252
       },
       {
-        "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts",
+        "path": "src/app/api/integrations/[id]/connections/[connectionId]/test/route.ts",
         "lines": 1165
       }
     ],

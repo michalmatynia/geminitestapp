@@ -1,13 +1,10 @@
 'use client';
 
-import { useContext } from 'react';
+import React from 'react';
 
-import { ProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductTag } from '@/features/products/types';
-import { internalError } from '@/shared/errors/app-error';
-import { MultiSelect } from '@/shared/ui';
 
-import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
+import { ProductMetadataMultiSelectField } from './ProductMetadataMultiSelectField';
 
 type TagMultiSelectFieldProps = {
   tags?: ProductTag[] | undefined;
@@ -18,56 +15,19 @@ type TagMultiSelectFieldProps = {
   placeholder?: string | undefined;
 };
 
-export function TagMultiSelectField({
-  tags: tagsProp,
-  selectedTagIds: selectedTagIdsProp,
-  onChange: onChangeProp,
-  loading = false,
-  disabled = false,
-  placeholder = 'Select tags',
-}: TagMultiSelectFieldProps): React.JSX.Element {
-  const formContext = useContext(ProductFormContext);
-  const metadataContext = useOptionalProductMetadataFieldContext();
-  const tags = tagsProp ?? metadataContext?.tags ?? formContext?.tags ?? [];
-  const selectedTagIds =
-    selectedTagIdsProp ??
-    metadataContext?.selectedTagIds ??
-    formContext?.selectedTagIds ??
-    [];
-  const resolvedLoading = tagsProp
-    ? loading
-    : (metadataContext?.tagsLoading ?? formContext?.tagsLoading ?? loading);
-  const resolvedOnChange =
-    onChangeProp ??
-    metadataContext?.onTagsChange ??
-    (formContext
-      ? (nextIds: string[]): void => {
-        const previous = new Set(formContext.selectedTagIds);
-        const next = new Set(nextIds);
-        for (const id of nextIds) {
-          if (!previous.has(id)) formContext.toggleTag(id);
-        }
-        for (const id of formContext.selectedTagIds) {
-          if (!next.has(id)) formContext.toggleTag(id);
-        }
-      }
-      : null);
-
-  if (!resolvedOnChange) {
-    throw internalError(
-      'TagMultiSelectField requires `onChange` prop when used outside ProductFormContext.'
-    );
-  }
-
+export function TagMultiSelectField(props: TagMultiSelectFieldProps): React.JSX.Element {
   return (
-    <MultiSelect
+    <ProductMetadataMultiSelectField
+      {...props}
       label='Tags'
-      options={tags.map((tag: ProductTag) => ({ value: tag.id, label: tag.name }))}
-      selected={selectedTagIds}
-      onChange={resolvedOnChange}
-      loading={resolvedLoading}
-      disabled={disabled}
-      placeholder={placeholder}
+      items={props.tags}
+      selectedIds={props.selectedTagIds}
+      contextItemsKey='tags'
+      contextSelectedKey='selectedTagIds'
+      contextLoadingKey='tagsLoading'
+      contextOnChangeKey='onTagsChange'
+      formContextToggleName='toggleTag'
+      placeholder={props.placeholder || 'Select tags'}
       searchPlaceholder='Search tags...'
     />
   );

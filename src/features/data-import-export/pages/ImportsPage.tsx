@@ -1,5 +1,6 @@
 'use client';
-import { Trash2, Download, Upload, ClipboardList } from 'lucide-react';
+import { Trash2, Download, Upload, ClipboardList, Plus } from 'lucide-react';
+import Link from 'next/link';
 import React from 'react';
 
 import {
@@ -27,7 +28,7 @@ import {
   TabsList,
   TabsTrigger,
   Label,
-  PanelHeader,
+  SectionHeader,
 } from '@/shared/ui';
 
 function ImportsPageContent(): React.JSX.Element {
@@ -121,10 +122,21 @@ function ImportsPageContent(): React.JSX.Element {
 
   return (
     <div className='container mx-auto py-10 space-y-6'>
-      <PanelHeader 
-        title='Product Import/Export' 
-        description='Import products from Base.com or export your internal products to the marketplace.' 
-        icon={<ClipboardList className='size-4' />}
+      <SectionHeader
+        title='Product Import/Export'
+        subtitle={(
+          <nav aria-label='Breadcrumb' className='flex flex-wrap items-center gap-1 text-xs text-gray-400'>
+            <Link href='/admin' className='hover:text-gray-200 transition-colors'>
+              Admin
+            </Link>
+            <span>/</span>
+            <Link href='/admin/integrations' className='hover:text-gray-200 transition-colors'>
+              Integrations
+            </Link>
+            <span>/</span>
+            <span className='text-gray-300'>Imports</span>
+          </nav>
+        )}
       />
       
       <Tabs defaultValue='imports' className='w-full'>

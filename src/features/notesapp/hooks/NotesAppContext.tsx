@@ -18,6 +18,7 @@ import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import type { NoteWithRelations, TagRecord, ThemeRecord, CategoryWithChildren, NoteTagRecord, NoteRelationWithSource, NoteRelationWithTarget } from '@/shared/types/domain/notes';
 import { useToast } from '@/shared/ui';
+import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 type NoteTagWithDetails = NoteTagRecord & { tag: TagRecord };
@@ -62,6 +63,29 @@ export interface NotesAppContextValue {
   handleUnlinkRelatedNote: (id: string) => Promise<void>;
   handleFilterByTag: (tagId: string) => void;
   
+  // Confirmation Modal
+  confirmation: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  } | null;
+  setConfirmation: (val: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  } | null) => void;
+  confirmAction: (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }) => void;
+
   // Operations
   operations: ReturnType<typeof useNoteOperations>;
   undoStack: UndoAction[];
@@ -93,6 +117,23 @@ export function NotesAppProvider({
   const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
   const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] = useState<boolean>(false);
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
+  const [confirmation, setConfirmation] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+      } | null>(null);
+
+  const confirmAction = useCallback((config: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  }): void => {
+    setConfirmation(config);
+  }, []);
 
   // Settings helpers
   const setSelectedFolderId = useCallback((id: string | null): void => {
@@ -143,6 +184,7 @@ export function NotesAppProvider({
     setSelectedFolderId,
     setSelectedNote,
     selectedNote,
+    confirmAction,
   });
 
   const themeLogic = useNoteTheme({
@@ -287,16 +329,23 @@ export function NotesAppProvider({
 
   const handleDeleteNote = useCallback(async (): Promise<void> => {
     if (!selectedNote) return;
-    if (!confirm('Are you sure you want to delete this note?')) return;
-    try {
-      await deleteNoteMutation.mutateAsync(selectedNote.id);
-      setSelectedNote(null);
-      setIsEditing(false);
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'NotesAppProvider', action: 'deleteNote', noteId: selectedNote.id } });
-      toast('Failed to delete note', { variant: 'error' });
-    }
-  }, [selectedNote, deleteNoteMutation, toast]);
+    confirmAction({
+      title: 'Delete Note?',
+      message: 'Are you sure you want to delete this note?',
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        try {
+          await deleteNoteMutation.mutateAsync(selectedNote.id);
+          setSelectedNote(null);
+          setIsEditing(false);
+        } catch (error: unknown) {
+          logClientError(error, { context: { source: 'NotesAppProvider', action: 'deleteNote', noteId: selectedNote.id } });
+          toast('Failed to delete note', { variant: 'error' });
+        }
+      },
+    });
+  }, [selectedNote, deleteNoteMutation, toast, confirmAction]);
 
   // Undo Logic
   const formatUndoLabel = useCallback((action: UndoAction): string => {
@@ -402,6 +451,9 @@ export function NotesAppProvider({
       handleCreateSuccess,
       handleUnlinkRelatedNote,
       handleFilterByTag,
+      confirmation,
+      setConfirmation,
+      confirmAction,
       
       operations,
       undoStack,
@@ -438,6 +490,8 @@ export function NotesAppProvider({
       handleCreateSuccess,
       handleUnlinkRelatedNote,
       handleFilterByTag,
+      confirmation,
+      confirmAction,
       operations,
       undoStack,
       undoHistory,
@@ -447,7 +501,25 @@ export function NotesAppProvider({
     ]
   );
 
-  return <NotesAppContext.Provider value={contextValue}>{children}</NotesAppContext.Provider>;
+  return (
+    <NotesAppContext.Provider value={contextValue}>
+      {children}
+      <ConfirmModal
+        open={Boolean(confirmation)}
+        onClose={() => setConfirmation(null)}
+        title={confirmation?.title ?? ''}
+        message={confirmation?.message ?? ''}
+        confirmText={confirmation?.confirmText}
+        isDangerous={confirmation?.isDangerous}
+        onConfirm={async () => {
+          if (confirmation?.onConfirm) {
+            await confirmation.onConfirm();
+          }
+          setConfirmation(null);
+        }}
+      />
+    </NotesAppContext.Provider>
+  );
 }
 
 export function useNotesAppContext(): NotesAppContextValue {

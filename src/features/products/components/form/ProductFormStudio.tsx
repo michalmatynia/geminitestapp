@@ -452,24 +452,28 @@ export default function ProductFormStudio(): React.JSX.Element {
           </Button>
 
           {runStatus ? (
-            <span className='rounded border border-border/60 bg-background/40 px-2 py-1 text-xs text-gray-300'>
-              Run status: {runStatus}
-            </span>
+            <StatusBadge status={`Run status: \${runStatus}`} variant='processing' size='sm' className='font-medium' />
           ) : null}
-          <span className='rounded border border-border/60 bg-background/40 px-2 py-1 text-xs text-gray-300'>
-            Pipeline:{' '}
-            {sequencing?.enabled
-              ? `crop-centered before generation, upscale ${
-                sequencing.upscaleOnAccept
-                  ? `${sequencing.upscaleScale}x on accept`
-                  : 'disabled on accept'
-              }`
-              : 'configured in Image Studio Project Settings'}
-          </span>
+          <StatusBadge
+            status={`Pipeline: \${
+              sequencing?.enabled
+                ? \`crop-centered, upscale \${
+                  sequencing.upscaleOnAccept
+                    ? \`\${sequencing.upscaleScale}x\`
+                    : 'off'
+                } on accept\`
+                : 'Project Settings'
+            }`}
+            variant='neutral'
+            size='sm'
+            className='font-medium'
+          />
         </div>
 
         {studioActionError ? (
-          <p className='mt-2 text-xs text-red-300'>{studioActionError}</p>
+          <Alert variant='error' className='mt-2 py-2 text-xs'>
+            {studioActionError}
+          </Alert>
         ) : null}
       </FormSection>
 
@@ -504,7 +508,7 @@ export default function ProductFormStudio(): React.JSX.Element {
                   />
                   <div className='mt-1 flex items-center justify-between text-[11px] text-gray-300'>
                     <span>{preview.label}</span>
-                    {isSelected ? <span className='text-emerald-300'>Selected</span> : null}
+                    {isSelected ? <StatusBadge status='Selected' variant='active' size='sm' className='font-bold' /> : null}
                   </div>
                 </button>
               );
@@ -548,7 +552,7 @@ export default function ProductFormStudio(): React.JSX.Element {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={src}
-                      alt={slot.name ?? `Variant ${index + 1}`}
+                      alt={slot.name ?? `Variant \${index + 1}`}
                       className='h-24 w-full rounded object-contain bg-black/20'
                     />
                   ) : (
@@ -558,9 +562,9 @@ export default function ProductFormStudio(): React.JSX.Element {
                   )}
                   <div className='mt-1 space-y-0.5 text-[11px] text-gray-300'>
                     <div className='flex items-center justify-between'>
-                      <span className='truncate'>{slot.name ?? `Variant ${index + 1}`}</span>
+                      <span className='truncate'>{slot.name ?? `Variant \${index + 1}`}</span>
                       {isSelected ? (
-                        <span className='text-blue-300'>Selected</span>
+                        <StatusBadge status='Selected' variant='info' size='sm' className='font-bold' />
                       ) : null}
                     </div>
                     <div className='text-[10px] text-gray-500'>

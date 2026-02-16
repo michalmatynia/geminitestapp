@@ -41,7 +41,7 @@ import type { ProductCategory, ProductWithImages } from '@/features/products/typ
 import type { ProductDraftDto } from '@/features/products/types/drafts';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { ApiError, api } from '@/shared/lib/api-client';
-import { createSingleQuery } from '@/shared/lib/query-factories-v2';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -348,7 +348,7 @@ export function useProductListState(): ProductListContextType & {
     handleEditSave,
   } = useProductOperations(setRefreshTrigger);
 
-  const editingProductDetailQuery = createSingleQuery<ProductWithImages>({
+  const editingProductDetailQuery = createSingleQueryV2<ProductWithImages>({
     id: editingProduct?.id,
     queryKey: (id) =>
       id !== 'none'
@@ -356,12 +356,17 @@ export function useProductListState(): ProductListContextType & {
         : [...QUERY_KEYS.products.details(), 'inactive'],
     queryFn: () =>
       api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`),
-    options: {
-      staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
-      refetchOnMount: false,
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
+    staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
+    refetchOnMount: false,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    meta: {
+      source: 'products.hooks.useProductListState.editingProductDetail',
+      operation: 'detail',
+      resource: 'products.detail',
+      domain: 'products',
+      tags: ['products', 'detail', 'editing'],
     },
   });
 

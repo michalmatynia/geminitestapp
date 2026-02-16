@@ -9,7 +9,6 @@ import {
 import React, { useMemo, useRef, useState } from 'react';
 
 import {
-  Badge,
   Button,
   Input,
   Pagination,
@@ -17,6 +16,8 @@ import {
   FormModal,
   SelectSimple,
   FormField,
+  StatusBadge,
+  Alert,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -107,9 +108,12 @@ function RowFormModal({
           >
             <div className='flex flex-col gap-1.5'>
               {col.isPrimaryKey && (
-                <div className='flex items-center gap-2'>
-                  <Badge variant='outline' className='text-[9px] bg-blue-500/10 border-blue-500/20 text-blue-300'>PK</Badge>
-                </div>
+                <StatusBadge
+                  status='PK'
+                  variant='info'
+                  size='sm'
+                  className='font-bold mb-1'
+                />
               )}
               <Input
                 value={formData[col.name] ?? ''}
@@ -250,14 +254,14 @@ export function CrudPanel(props: {
       </div>
 
       {errorMessage && (
-        <div className='rounded-md border border-rose-500/30 bg-rose-900/10 px-3 py-2 text-xs text-rose-300'>
+        <Alert variant='error' className='px-3 py-2 text-xs'>
           {errorMessage}
-        </div>
+        </Alert>
       )}
       {successMessage && (
-        <div className='rounded-md border border-emerald-500/30 bg-emerald-900/10 px-3 py-2 text-xs text-emerald-300'>
+        <Alert variant='success' className='px-3 py-2 text-xs'>
           {successMessage}
-        </div>
+        </Alert>
       )}
 
       {selectedTable && (

@@ -21,7 +21,7 @@ import {
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, SelectSimple, FormSection, FormField, DataTable, Badge } from '@/shared/ui';
+import { Button, Input, SelectSimple, FormSection, FormField, DataTable, StatusBadge, Alert } from '@/shared/ui';
 
 import { ValidatorIssueHint } from './ProductFormGeneral';
 
@@ -249,9 +249,9 @@ export default function ProductFormOther(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       {!hasCatalogs && (
-        <FormSection variant='subtle-compact' className='border-amber-500/40 bg-amber-500/10 text-amber-100'>
+        <Alert variant='warning' className='mb-6'>
           <p className='text-sm'>Select a catalog to set pricing and price groups.</p>
-        </FormSection>
+        </Alert>
       )}
 
       {hasCatalogs && (
@@ -337,7 +337,12 @@ export default function ProductFormOther(): React.JSX.Element {
                             {row.original.name}
                           </span>
                           {row.original.id === selectedDefaultPriceGroupId && (
-                            <Badge variant='outline' className='text-[9px] uppercase font-bold bg-emerald-500/10 text-emerald-400 border-emerald-500/20 px-1 py-0 h-4'>Selected</Badge>
+                            <StatusBadge
+                              status='Selected'
+                              variant='active'
+                              size='sm'
+                              className='font-bold'
+                            />
                           )}
                           {row.original.isCalculated && row.original.sourceGroupName && (
                             <span className='text-[10px] text-gray-500 italic'>

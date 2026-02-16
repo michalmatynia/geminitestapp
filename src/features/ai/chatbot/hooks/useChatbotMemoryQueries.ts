@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutation, createListQuery } from '@/shared/lib/query-factories-v2';
+import { createDeleteMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ListQuery, MutationResult } from '@/shared/types/query-result-types';
 
@@ -15,8 +15,9 @@ export const chatbotMemoryKeys = {
 };
 
 export function useChatbotMemory(params: string = ''): ListQuery<ChatbotMemoryItem> {
-  return createListQuery({
-    queryKey: chatbotMemoryKeys.list(params),
+  const queryKey = chatbotMemoryKeys.list(params);
+  return createListQueryV2({
+    queryKey,
     queryFn: async (): Promise<ChatbotMemoryItem[]> => {
       const queryParams = params
         ? Object.fromEntries(new URLSearchParams(params).entries())
@@ -28,20 +29,36 @@ export function useChatbotMemory(params: string = ''): ListQuery<ChatbotMemoryIt
       if (Array.isArray(data)) return data;
       return Array.isArray(data.items) ? data.items : [];
     },
+    meta: {
+      source: 'chatbot.hooks.useChatbotMemoryList',
+      operation: 'list',
+      resource: 'chatbot.memory',
+      domain: 'global',
+      queryKey,
+      tags: ['chatbot', 'memory'],
+    },
   });
 }
 
 export function useDeleteMemoryItemMutation(): MutationResult<void, string> {
   const queryClient = useQueryClient();
-  
-  return createCreateMutation({
+  const mutationKey = QUERY_KEYS.ai.chatbot.mutation('delete-memory-item');
+
+  return createDeleteMutationV2({
     mutationFn: async (id: string): Promise<void> => {
       await api.delete(`/api/chatbot/memory/${id}`);
     },
-    options: {
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: chatbotMemoryKeys.all() });
-      },
+    mutationKey,
+    meta: {
+      source: 'chatbot.hooks.useDeleteMemoryItemMutation',
+      operation: 'delete',
+      resource: 'chatbot.memory',
+      domain: 'global',
+      mutationKey,
+      tags: ['chatbot', 'memory', 'delete'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: chatbotMemoryKeys.all() });
     },
   });
 }

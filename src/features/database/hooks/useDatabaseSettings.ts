@@ -2,7 +2,7 @@
 
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
 import { api } from '@/shared/lib/api-client';
-import { createSingleQuery, createCreateMutation } from '@/shared/lib/query-factories-v2';
+import { createCreateMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SingleQuery, MutationResult } from '@/shared/types/query-result-types';
 
@@ -17,11 +17,20 @@ const dbKeys = QUERY_KEYS.system.databases;
  * Query hook for fetching provider diagnostics
  */
 export function useProviderDiagnostics(): SingleQuery<ProviderDiagnosticsResponse> {
-  return createSingleQuery({
+  const queryKey = dbKeys.providerDiagnostics();
+  return createSingleQueryV2({
     id: 'diagnostics',
-    queryKey: () => dbKeys.providerDiagnostics(),
+    queryKey,
     queryFn: () => api.get<ProviderDiagnosticsResponse>('/api/settings/providers'),
     staleTime: 15_000,
+    meta: {
+      source: 'database.hooks.useProviderDiagnostics',
+      operation: 'detail',
+      resource: 'system.databases.provider-diagnostics',
+      domain: 'global',
+      queryKey,
+      tags: ['database', 'provider-diagnostics'],
+    },
   });
 }
 
@@ -29,8 +38,18 @@ export function useProviderDiagnostics(): SingleQuery<ProviderDiagnosticsRespons
  * Mutation hook for syncing databases
  */
 export function useSyncDatabaseMutation(): MutationResult<{ error?: string }, DatabaseSyncDirection> {
-  return createCreateMutation({
+  const mutationKey = dbKeys.all;
+  return createCreateMutationV2({
     mutationFn: (payload: DatabaseSyncDirection) => api.post<{ error?: string }>('/api/settings/database/sync', payload),
+    mutationKey,
+    meta: {
+      source: 'database.hooks.useSyncDatabaseMutation',
+      operation: 'create',
+      resource: 'system.databases.sync',
+      domain: 'global',
+      mutationKey,
+      tags: ['database', 'sync'],
+    },
   });
 }
 
@@ -38,8 +57,18 @@ export function useSyncDatabaseMutation(): MutationResult<{ error?: string }, Da
  * Mutation hook for backfilling missing setting keys
  */
 export function useSettingsBackfillMutation(): MutationResult<SettingsBackfillResult, { dryRun: boolean; limit: number }> {
-  return createCreateMutation({
+  const mutationKey = dbKeys.all;
+  return createCreateMutationV2({
     mutationFn: (payload: { dryRun: boolean; limit: number }) => 
       api.post<SettingsBackfillResult>('/api/settings/migrate/backfill-keys', payload),
+    mutationKey,
+    meta: {
+      source: 'database.hooks.useSettingsBackfillMutation',
+      operation: 'create',
+      resource: 'system.databases.settings-backfill',
+      domain: 'global',
+      mutationKey,
+      tags: ['database', 'settings', 'backfill'],
+    },
   });
 }

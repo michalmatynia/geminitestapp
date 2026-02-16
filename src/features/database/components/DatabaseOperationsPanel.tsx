@@ -2,7 +2,7 @@
 
 import { AlertTriangleIcon } from 'lucide-react';
 
-import { FormSection, Tabs, TabsContent, TabsList, TabsTrigger, SelectSimple } from '@/shared/ui';
+import { FormSection, Tabs, TabsContent, TabsList, TabsTrigger, SelectSimple, Alert } from '@/shared/ui';
 
 import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
@@ -31,10 +31,10 @@ function DatabaseOperationsPanelContent(): React.JSX.Element {
       </div>
 
       {isProduction && (
-        <div className='flex items-center gap-2 rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-4 text-xs text-yellow-300'>
+        <Alert variant='warning' className='flex items-center gap-2'>
           <AlertTriangleIcon className='size-4' />
           Database operations are disabled in production environments.
-        </div>
+        </Alert>
       )}
 
       <Tabs defaultValue='sql' className='w-full'>

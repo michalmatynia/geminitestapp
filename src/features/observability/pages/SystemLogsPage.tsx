@@ -22,6 +22,7 @@ import {
   PageLayout, 
   FormSection,
   Badge,
+  Alert,
   type StatusVariant
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
@@ -284,10 +285,10 @@ function AiLogInterpreter(): React.JSX.Element {
               </div>
               <p className='text-sm text-gray-200 leading-relaxed'>{insight.summary}</p>
               {insight.warnings.length > 0 && (
-                <div className='mt-3 p-2 bg-amber-500/5 border border-amber-500/20 rounded text-[11px] text-amber-200 space-y-1'>
+                <Alert variant='warning' className='mt-3 p-2 text-[11px] space-y-1'>
                   <span className='font-bold uppercase text-[9px] block mb-1'>Advisory Warnings</span>
                   {insight.warnings.map((w, i) => <p key={i}>• {w}</p>)}
-                </div>
+                </Alert>
               )}
             </div>
           ))
@@ -416,18 +417,18 @@ function LogList(): React.JSX.Element {
             return (
               <div className='p-6 bg-black/40 space-y-6 border-t border-white/5'>
                 {interpretation && (
-                  <div className='p-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20'>
-                    <div className='flex items-center gap-2 text-emerald-300 font-bold text-[10px] uppercase mb-2'>
+                  <Alert variant='success' className='p-4'>
+                    <div className='flex items-center gap-2 font-bold text-[10px] uppercase mb-2'>
                       <Monitor className='size-3' />
                       AI Interpretation Output
                     </div>
                     <p className='text-sm text-gray-200 leading-relaxed'>{interpretation.summary}</p>
                     {interpretation.warnings?.length ? (
                       <ul className='mt-3 space-y-1 border-t border-emerald-500/10 pt-2'>
-                        {interpretation.warnings.map((w, i) => <li key={i} className='text-[11px] text-emerald-400/80'>• {w}</li>)}
+                        {interpretation.warnings.map((w, i) => <li key={i} className='text-[11px] opacity-80'>• {w}</li>)}
                       </ul>
                     ) : null}
-                  </div>
+                  </Alert>
                 )}
 
                 <div className='grid gap-6 md:grid-cols-2'>

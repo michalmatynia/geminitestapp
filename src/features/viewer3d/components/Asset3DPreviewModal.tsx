@@ -21,9 +21,7 @@ import { Viewer3DProvider, useViewer3D } from '../context/Viewer3DContext';
 
 import type { Asset3DRecord } from '../types';
 
-interface Asset3DPreviewModalProps extends Omit<EntityModalProps<Asset3DRecord>, 'onSuccess'> {
-  onSuccess?: () => void;
-}
+interface Asset3DPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 
 function Asset3DPreviewModalContent(): React.JSX.Element {
   const { asset } = useAsset3DPreviewModalViewContext();

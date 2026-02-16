@@ -1,6 +1,6 @@
 'use client';
 
-import { createSingleQuery } from '@/shared/lib/query-factories-v2';
+import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { SingleQuery } from '@/shared/types/query-result-types';
 
@@ -57,7 +57,7 @@ export function useFileUploadEvents(
   filters: FileUploadEventsFilters,
 ): SingleQuery<FileUploadEventsResponse> {
   const queryKey = QUERY_KEYS.system.uploadEvents.list(filters);
-  return createSingleQuery<FileUploadEventsResponse>({
+  return createSingleQueryV2<FileUploadEventsResponse>({
     queryKey,
     queryFn: async (): Promise<FileUploadEventsResponse> => {
       const query = buildQueryParams(filters);
@@ -66,5 +66,13 @@ export function useFileUploadEvents(
       return res.json() as Promise<FileUploadEventsResponse>;
     },
     id: JSON.stringify(filters),
+    meta: {
+      source: 'files.hooks.useFileUploadEvents',
+      operation: 'detail',
+      resource: 'system.upload-events',
+      domain: 'global',
+      queryKey,
+      tags: ['files', 'upload-events'],
+    },
   });
 }

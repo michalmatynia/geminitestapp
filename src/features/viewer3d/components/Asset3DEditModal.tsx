@@ -19,8 +19,7 @@ import { useAsset3DForm } from '../hooks/useAsset3DForm';
 
 import type { Asset3DRecord } from '../types';
 
-interface Asset3DEditModalProps extends Omit<EntityModalProps<Asset3DRecord>, 'onSuccess'> {
-  onSuccess?: () => void;
+interface Asset3DEditModalProps extends EntityModalProps<Asset3DRecord> {
   onSave: (updated: Asset3DRecord) => void;
   existingCategories?: string[];
   existingTags?: string[];

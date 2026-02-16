@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DListFilters, Asset3DRecord } from '@/features/viewer3d/types';
 import type { EntityModalProps } from '@/shared/types/modal-props';
-import { Input, SelectSimple, Checkbox, Button, AppModal, FormSection } from '@/shared/ui';
+import { FilterPanel, Button, AppModal, FormSection } from '@/shared/ui';
+import type { FilterField } from '@/shared/ui/templates/panels';
 import { cn } from '@/shared/utils';
 
 interface Asset3DPickerModalProps extends EntityModalProps<Asset3DRecord, Asset3DRecord> {
@@ -20,85 +21,83 @@ export function Asset3DPickerModal({
   onSelect,
 }: Asset3DPickerModalProps): React.JSX.Element | null {
   const [previewAsset, setPreviewAsset] = useState<Asset3DRecord | null>(null);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState<string>('__all__');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [isPublicOnly, setIsPublicOnly] = useState<boolean>(false);
+  const [filters, setFilters] = useState({
+    search: '',
+    category: '__all__',
+    tags: [] as string[],
+    isPublicOnly: false,
+  });
 
-  const filters: Asset3DListFilters = {
-    search: search.trim() || null,
-    categoryId: category === '__all__' ? null : category,
-    tags: selectedTags.length > 0 ? selectedTags : [],
-    ...(isPublicOnly ? { isPublic: true } : {}),
-  };
-  const assetsQuery = useAssets3D(filters);
   const categoriesQuery = useAsset3DCategories();
   const tagsQuery = useAsset3DTags();
 
-  const assets = assetsQuery.data ?? [];
   const categories = categoriesQuery.data ?? [];
   const tags = tagsQuery.data ?? [];
 
+  const filterConfig = useMemo<FilterField[]>(() => [
+    {
+      key: 'category',
+      label: 'Category',
+      type: 'select',
+      options: [
+        { value: '__all__', label: 'All categories' },
+        ...categories.map((cat: string) => ({ value: cat, label: cat }))
+      ],
+    },
+    {
+      key: 'tags',
+      label: 'Tags',
+      type: 'select',
+      multi: true,
+      options: tags.map((tag: string) => ({ value: tag, label: tag })),
+    },
+    {
+      key: 'isPublicOnly',
+      label: 'Public only',
+      type: 'checkbox',
+    }
+  ], [categories, tags]);
+
+  const apiFilters: Asset3DListFilters = {
+    search: filters.search.trim() || null,
+    categoryId: filters.category === '__all__' ? null : filters.category,
+    tags: filters.tags,
+    ...(filters.isPublicOnly ? { isPublic: true } : {}),
+  };
+
+  const assetsQuery = useAssets3D(apiFilters);
+  const assets = assetsQuery.data ?? [];
+
   if (!isOpen) return null;
+
+  const handleFilterChange = (key: string, value: unknown) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleReset = () => {
+    setFilters({
+      search: '',
+      category: '__all__',
+      tags: [],
+      isPublicOnly: false,
+    });
+  };
 
   return (
     <>
       <AppModal open={isOpen} onClose={onClose} title='Select 3D asset' size='xl'>
         <div className='space-y-4 text-sm text-gray-200'>
-          <div className='grid gap-2 md:grid-cols-[1fr_200px_200px]'>
-            <Input
-              value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
-              placeholder='Search assets...'
-              className='h-9'
-            />
-            <SelectSimple size='sm'
-              value={category}
-              onValueChange={(value: string) => setCategory(value)}
-              options={[
-                { value: '__all__', label: 'All categories' },
-                ...categories.map((cat: string) => ({ value: cat, label: cat }))
-              ]}
-              placeholder='Category'
-              triggerClassName='h-9'
-            />
-            <div className='flex items-center gap-2'>
-              <Checkbox
-                checked={isPublicOnly}
-                onCheckedChange={(value: boolean | 'indeterminate'): void => setIsPublicOnly(Boolean(value))}
-              />
-              <span className='text-xs text-gray-300'>Public only</span>
-            </div>
-          </div>
-
-          {tags.length > 0 ? (
-            <FormSection title='Tags' variant='subtle' className='p-2'>
-              <div className='mt-2 flex flex-wrap gap-2'>
-                {tags.map((tag: string) => {
-                  const active = selectedTags.includes(tag);
-                  return (
-                    <button
-                      key={tag}
-                      type='button'
-                      className={cn(
-                        'rounded-full border px-2 py-1 text-[11px]',
-                        active
-                          ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-200'
-                          : 'border-border/60 text-gray-300 hover:border-emerald-500/40'
-                      )}
-                      onClick={() => {
-                        setSelectedTags((prev: string[]) =>
-                          prev.includes(tag) ? prev.filter((t: string) => t !== tag) : [...prev, tag]
-                        );
-                      }}
-                    >
-                      {tag}
-                    </button>
-                  );
-                })}
-              </div>
-            </FormSection>
-          ) : null}
+          <FilterPanel
+            filters={filterConfig}
+            values={filters}
+            search={filters.search}
+            searchPlaceholder='Search assets...'
+            onFilterChange={handleFilterChange}
+            onSearchChange={(search) => handleFilterChange('search', search)}
+            onReset={handleReset}
+            showHeader={false}
+            compact
+          />
 
           <div className='grid gap-3 md:grid-cols-[1fr_320px]'>
             <div className='space-y-2'>

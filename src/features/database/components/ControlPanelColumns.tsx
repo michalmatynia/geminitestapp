@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/shared/ui';
+import { Button, StatusBadge } from '@/shared/ui';
 
 import type { ColumnDef, Column } from '@tanstack/react-table';
 
@@ -49,12 +49,12 @@ const ProviderBadge = ({
     return <span className='text-xs text-gray-500'>--</span>;
   }
   return (
-    <span
-      className='inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs border-emerald-500/50 bg-emerald-500/10 text-emerald-200'
+    <StatusBadge
+      status={count !== null ? count.toLocaleString() : '?'}
+      variant='success'
+      size='sm'
       title={label}
-    >
-      {count !== null ? count.toLocaleString() : '?'}
-    </span>
+    />
   );
 };
 

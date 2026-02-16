@@ -61,6 +61,7 @@ export * from './PageLayout';
 export * from './FormModal';
 export * from './form-section';
 export * from './ResourceCard';
+export * from './SidePanel';
 export * from './DynamicFilters';
 export * from './templates/SettingsFormModal';
 export * from './templates/FilterPanel';

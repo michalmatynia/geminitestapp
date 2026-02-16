@@ -11,7 +11,7 @@ import type { GsapAnimationConfig } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast } from '@/shared/ui';
+import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Checkbox, Textarea, useToast, SidePanel } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { AnimationConfigPanel } from './AnimationConfigPanel';
@@ -260,23 +260,29 @@ export function ComponentSettingsPanel(): React.ReactNode {
       contentAiAllowedKeys={contentAiAllowedKeys}
       aiQueriesEnabled={activeTab === 'ai' || activeTab === 'customCss'}
     >
-      <aside className='flex w-80 min-h-0 flex-col border-l border-border bg-gray-900'>
-        <SectionHeader
-          title={selectedTitle} 
-          size='xs'
-          className='p-3 border-b border-border flex-row-reverse' 
-          titleClassName='text-right' 
-          actionsClassName='justify-start'
-          actions={(
-            <div className='flex items-center gap-1'>
-              <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })} className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300' title='Hide right panel' aria-label='Hide right panel'><PanelRightClose className='size-3.5' /></Button>
-              <Button type='button' size='icon' variant='ghost' onClick={handleToggleInspector} className={`h-6 w-6 p-0 ${state.inspectorEnabled ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Toggle inspector' aria-label='Toggle inspector'><MousePointer2 className='size-3.5' /></Button>
-              <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })} className={`h-6 w-6 p-0 ${state.previewMode === 'desktop' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Desktop preview' aria-label='Desktop preview'><Monitor className='size-3.5' /></Button>
-              <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })} className={`h-6 w-6 p-0 ${state.previewMode === 'mobile' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Mobile preview' aria-label='Mobile preview'><Smartphone className='size-3.5' /></Button>
-              <Button type='button' size='icon' variant='ghost' onClick={() => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })} className={`h-6 w-6 p-0 ${inspectorSettings.showEditorChrome ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Toggle editor chrome' aria-label='Toggle editor chrome'><Paintbrush className='size-3.5' /></Button>
-            </div>
-          )}
-        />
+      <SidePanel
+        position='right'
+        width={320}
+        isFocusMode={!state.currentPage}
+        header={(
+          <SectionHeader
+            title={selectedTitle} 
+            size='xs'
+            className='p-3 flex-row-reverse' 
+            titleClassName='text-right' 
+            actionsClassName='justify-start'
+            actions={(
+              <div className='flex items-center gap-1'>
+                <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })} className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300' title='Hide right panel' aria-label='Hide right panel'><PanelRightClose className='size-3.5' /></Button>
+                <Button type='button' size='icon' variant='ghost' onClick={handleToggleInspector} className={`h-6 w-6 p-0 ${state.inspectorEnabled ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Toggle inspector' aria-label='Toggle inspector'><MousePointer2 className='size-3.5' /></Button>
+                <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'desktop' })} className={`h-6 w-6 p-0 ${state.previewMode === 'desktop' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Desktop preview' aria-label='Desktop preview'><Monitor className='size-3.5' /></Button>
+                <Button type='button' size='icon' variant='ghost' onClick={() => dispatch({ type: 'SET_PREVIEW_MODE', mode: 'mobile' })} className={`h-6 w-6 p-0 ${state.previewMode === 'mobile' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Mobile preview' aria-label='Mobile preview'><Smartphone className='size-3.5' /></Button>
+                <Button type='button' size='icon' variant='ghost' onClick={() => updateInspectorSetting({ showEditorChrome: !inspectorSettings.showEditorChrome })} className={`h-6 w-6 p-0 ${inspectorSettings.showEditorChrome ? 'text-blue-300 bg-blue-500/10' : 'text-gray-500 hover:text-gray-300'}`} title='Toggle editor chrome' aria-label='Toggle editor chrome'><Paintbrush className='size-3.5' /></Button>
+              </div>
+            )}
+          />
+        )}
+      >
         {state.inspectorEnabled && (
           <div className='border-b border-border px-4 py-3'>
             <div className='text-[10px] uppercase tracking-wider text-gray-400'>Inspector options</div>
@@ -357,7 +363,7 @@ export function ComponentSettingsPanel(): React.ReactNode {
             {showConnectionsTab && (<TabsContent value='connections' className='flex-1 overflow-y-auto p-4 mt-0'><ConnectionsTab /></TabsContent>)}
           </Tabs>
         )}
-      </aside>
+      </SidePanel>
     </InspectorAiProvider>
   );
 }

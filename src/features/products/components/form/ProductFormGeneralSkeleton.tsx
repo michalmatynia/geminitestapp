@@ -1,11 +1,11 @@
-import { Skeleton } from '@/shared/ui';
+import { Skeleton, Alert } from '@/shared/ui';
 
 export function ProductFormGeneralSkeleton(): React.JSX.Element {
   return (
     <div className='space-y-4'>
-      <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100'>
+      <Alert variant='warning' className='px-4 py-3'>
         <Skeleton className='h-4 w-full' />
-      </div>
+      </Alert>
 
       <div className='space-y-4'>
         <div className='rounded-md border border-slate-500/30 bg-slate-500/5 px-4 py-3'>

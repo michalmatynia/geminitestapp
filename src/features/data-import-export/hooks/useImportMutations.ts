@@ -3,7 +3,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
-import { createCreateMutation } from '@/shared/lib/query-factories-v2';
+import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { CreateMutation } from '@/shared/types/query-result-types';
 
 export function useCsvImportMutation(): CreateMutation<
@@ -11,7 +12,8 @@ export function useCsvImportMutation(): CreateMutation<
   { file: File; onProgress?: (loaded: number, total?: number) => void }
   > {
   const queryClient = useQueryClient();
-  return createCreateMutation({
+  const mutationKey = QUERY_KEYS.products.all;
+  return createCreateMutationV2({
     mutationFn: async ({ file, onProgress }: { file: File; onProgress?: (loaded: number, total?: number) => void }): Promise<unknown> => {
       const formData = new FormData();
       formData.append('file', file);
@@ -24,11 +26,18 @@ export function useCsvImportMutation(): CreateMutation<
       if (!result.ok) throw new Error('Failed to import CSV');
       return result.data;
     },
-    options: {
-      onSuccess: () => {
-        // Invalidate products as they might have been added/updated
-        void invalidateProductsAndCounts(queryClient);
-      },
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useCsvImportMutation',
+      operation: 'upload',
+      resource: 'products.import.csv',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'import', 'csv'],
+    },
+    onSuccess: () => {
+      // Invalidate products as they might have been added/updated
+      void invalidateProductsAndCounts(queryClient);
     },
   });
 }

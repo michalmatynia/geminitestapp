@@ -11,11 +11,10 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
-  
+  SidePanel,
   Tooltip,
   useToast,
 } from '@/shared/ui';
-import { cn } from '@/shared/utils';
 
 import {
   ImageStudioSingleSlotManager,
@@ -349,121 +348,118 @@ export function LeftSidebar(): React.JSX.Element {
   }, [queueRevealInTree, workingSlot?.id]);
 
   return (
-    <>
-      <div
-        className={cn(
-          'order-1 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 transition-all duration-300 ease-in-out p-0',
-          isFocusMode && 'pointer-events-none opacity-0 -translate-x-2'
-        )}
-        aria-hidden={isFocusMode}
-      >
-        <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
-          <div className='px-1 py-1' data-preserve-slot-selection='true'>
-            <Button size='xs'
-              type='button'
-              variant='outline'
-              className='h-7 px-2 text-[11px]'
-              title='Save current Image Studio project state'
-              aria-label='Save current Image Studio project state'
-              disabled={projectSaveBusy || !projectId.trim()}
-              onClick={handleSaveProject}
-              data-preserve-slot-selection='true'
-            >
-              {projectSaveBusy ? 'Saving...' : 'Save Project'}
-            </Button>
-          </div>
-
-          <div
-            className='grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 px-1 py-1'
+    <SidePanel
+      position='left'
+      width={320}
+      isFocusMode={isFocusMode}
+      className='order-1 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40'
+    >
+      <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
+        <div className='px-1 py-1' data-preserve-slot-selection='true'>
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            className='h-7 px-2 text-[11px]'
+            title='Save current Image Studio project state'
+            aria-label='Save current Image Studio project state'
+            disabled={projectSaveBusy || !projectId.trim()}
+            onClick={handleSaveProject}
             data-preserve-slot-selection='true'
           >
-            <div className='min-w-0 overflow-hidden'>
-              <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
-            </div>
-            <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
-              <Tooltip content='Load to canvas'>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  title='Load to canvas'
-                  onClick={handleLoadToCanvas}
-                  disabled={!canLoadToCanvas}
-                  aria-label='Load to canvas'
-                >
-                  <ImagePlus className='size-4' />
-                </Button>
-              </Tooltip>
-              <Tooltip content='De-canvas'>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  title='De-canvas'
-                  onClick={handleDeCanvas}
-                  disabled={!workingSlot}
-                  aria-label='De-canvas'
-                >
-                  <ImageOff className='size-4' />
-                </Button>
-              </Tooltip>
-              <Tooltip content='New Card'>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  title='New Card'
-                  onClick={handleCreateCardFromLoadedImage}
-                  disabled={!projectId}
-                  aria-label='New Card'
-                >
-                  <Plus className='size-4' />
-                </Button>
-              </Tooltip>
-              <Tooltip content='New folder'>
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  title='New folder'
-                  onClick={handleCreateFolder}
-                  disabled={!projectId || createFolderMutation.isPending}
-                  aria-label='New folder'
-                >
-                  <FolderPlus className='size-4' />
-                </Button>
-              </Tooltip>
-              {selectedSlot ? (
-                <Tooltip content='Edit card'>
-                  <Button size='xs'
-                    type='button'
-                    variant='outline'
-                    title='Edit card'
-                    onClick={() => setSlotInlineEditOpen(true)}
-                    aria-label='Edit card'
-                  >
-                    <Settings2 className='size-4' />
-                  </Button>
-                </Tooltip>
-              ) : null}
-            </div>
-          </div>
+            {projectSaveBusy ? 'Saving...' : 'Save Project'}
+          </Button>
+        </div>
 
-          <div className='h-full min-h-0 min-w-0 overflow-hidden'>
-            <SlotTree key={projectId} revealRequest={revealRequest} />
+        <div
+          className='grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 px-1 py-1'
+          data-preserve-slot-selection='true'
+        >
+          <div className='min-w-0 overflow-hidden'>
+            <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
           </div>
+          <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
+            <Tooltip content='Load to canvas'>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                title='Load to canvas'
+                onClick={handleLoadToCanvas}
+                disabled={!canLoadToCanvas}
+                aria-label='Load to canvas'
+              >
+                <ImagePlus className='size-4' />
+              </Button>
+            </Tooltip>
+            <Tooltip content='De-canvas'>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                title='De-canvas'
+                onClick={handleDeCanvas}
+                disabled={!workingSlot}
+                aria-label='De-canvas'
+              >
+                <ImageOff className='size-4' />
+              </Button>
+            </Tooltip>
+            <Tooltip content='New Card'>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                title='New Card'
+                onClick={handleCreateCardFromLoadedImage}
+                disabled={!projectId}
+                aria-label='New Card'
+              >
+                <Plus className='size-4' />
+              </Button>
+            </Tooltip>
+            <Tooltip content='New folder'>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                title='New folder'
+                onClick={handleCreateFolder}
+                disabled={!projectId || createFolderMutation.isPending}
+                aria-label='New folder'
+              >
+                <FolderPlus className='size-4' />
+              </Button>
+            </Tooltip>
+            {selectedSlot ? (
+              <Tooltip content='Edit card'>
+                <Button size='xs'
+                  type='button'
+                  variant='outline'
+                  title='Edit card'
+                  onClick={() => setSlotInlineEditOpen(true)}
+                  aria-label='Edit card'
+                >
+                  <Settings2 className='size-4' />
+                </Button>
+              </Tooltip>
+            ) : null}
+          </div>
+        </div>
 
-          <div className='min-h-0 overflow-hidden rounded border border-border/60 bg-card/40 p-2'>
-            <div className='mb-1 flex items-center justify-between text-[11px] text-gray-400'>
-              <span>Shape Layers</span>
-              <span>{maskShapes.length}</span>
-            </div>
-            <div className='h-full overflow-auto pr-1'>
-              {maskShapes.length > 0 ? (
-                <ShapeListPanel />
-              ) : (
-                <div className='px-2 py-2 text-xs text-gray-500'>No shapes drawn yet.</div>
-              )}
-            </div>
+        <div className='h-full min-h-0 min-w-0 overflow-hidden'>
+          <SlotTree key={projectId} revealRequest={revealRequest} />
+        </div>
+
+        <div className='min-h-0 overflow-hidden rounded border border-border/60 bg-card/40 p-2'>
+          <div className='mb-1 flex items-center justify-between text-[11px] text-gray-400'>
+            <span>Shape Layers</span>
+            <span>{maskShapes.length}</span>
+          </div>
+          <div className='h-full overflow-auto pr-1'>
+            {maskShapes.length > 0 ? (
+              <ShapeListPanel />
+            ) : (
+              <div className='px-2 py-2 text-xs text-gray-500'>No shapes drawn yet.</div>
+            )}
           </div>
         </div>
       </div>
-    </>
+    </SidePanel>
   );
 }

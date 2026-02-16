@@ -206,10 +206,13 @@ function ColumnsTab({ columns }: { columns: DatabaseColumnInfo[] }): React.JSX.E
       id: 'key',
       header: 'Key',
       cell: ({ row }) => row.original.isPrimaryKey && (
-        <Badge variant='secondary' className='h-5 gap-1 text-[9px] uppercase font-bold bg-amber-500/10 text-amber-300 border-amber-500/20'>
-          <KeyIcon className='size-2.5' />
-          PK
-        </Badge>
+        <StatusBadge
+          status='PK'
+          variant='pending'
+          icon={<KeyIcon />}
+          size='sm'
+          className='font-bold'
+        />
       ),
     },
   ], []);
@@ -419,10 +422,10 @@ function DatabasePreviewContent(): React.JSX.Element {
       />
 
       {error && (
-        <div className='rounded-lg border border-rose-500/20 bg-rose-500/5 p-4 text-xs text-rose-300 flex items-center gap-3'>
+        <Alert variant='error' className='flex items-center gap-3'>
           <ShieldCheckIcon className='size-4 shrink-0' />
           {error}
-        </div>
+        </Alert>
       )}
 
       {isLoading ? (

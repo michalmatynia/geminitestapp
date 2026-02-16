@@ -7,7 +7,7 @@ import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthUserSummary } from '@/features/auth/types';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import { logClientError } from '@/features/observability';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader } from '@/shared/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, Alert } from '@/shared/ui';
 
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -55,10 +55,10 @@ export default function AuthDashboardPage(): React.JSX.Element {
   if (!canReadUsers) {
     return (
       <div className='container mx-auto py-10'>
-        <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-6 text-sm text-amber-300'>
+        <Alert variant='warning' className='p-6 text-sm'>
           You don&apos;t have permission to view auth metrics. Ask an admin to grant
           `auth.users.read` or elevate your account.
-        </div>
+        </Alert>
       </div>
     );
   }

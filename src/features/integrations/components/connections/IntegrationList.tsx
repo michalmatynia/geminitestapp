@@ -4,7 +4,7 @@ import { PlusIcon, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
 
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
-import { Button, ListPanel } from '@/shared/ui';
+import { Button, ListPanel, StatusBadge } from '@/shared/ui';
 
 
 export function IntegrationList(): React.JSX.Element {
@@ -47,9 +47,7 @@ export function IntegrationList(): React.JSX.Element {
             <div className='flex flex-wrap items-center justify-center gap-3'>
               {integrationSlugs.includes('tradera') && (
                 <div className='flex items-center gap-2 rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1.5 text-xs text-sky-200'>
-                  <span className='rounded bg-orange-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-orange-100'>
-                    Browser
-                  </span>
+                  <StatusBadge status='Browser' variant='warning' size='sm' className='h-4 font-bold' />
                   Tradera
                   <Button
                     type='button'
@@ -67,9 +65,7 @@ export function IntegrationList(): React.JSX.Element {
               )}
               {integrationSlugs.includes('tradera-api') && (
                 <div className='flex items-center gap-2 rounded-full border border-cyan-400/50 bg-cyan-500/10 px-3 py-1.5 text-xs text-cyan-200'>
-                  <span className='rounded bg-blue-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-blue-100'>
-                    API
-                  </span>
+                  <StatusBadge status='API' variant='info' size='sm' className='h-4 font-bold' />
                   Tradera API
                   <Button
                     type='button'
@@ -87,9 +83,7 @@ export function IntegrationList(): React.JSX.Element {
               )}
               {integrationSlugs.includes('allegro') && (
                 <div className='flex items-center gap-2 rounded-full border border-amber-400/50 bg-amber-500/10 px-3 py-1.5 text-xs text-amber-200'>
-                  <span className='rounded bg-blue-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-blue-100'>
-                    API
-                  </span>
+                  <StatusBadge status='API' variant='info' size='sm' className='h-4 font-bold' />
                   Allegro
                   <Button
                     type='button'
@@ -107,9 +101,7 @@ export function IntegrationList(): React.JSX.Element {
               )}
               {integrationSlugs.includes('baselinker') && (
                 <div className='flex items-center gap-2 rounded-full border border-purple-400/50 bg-purple-500/10 px-3 py-1.5 text-xs text-purple-200'>
-                  <span className='rounded bg-purple-500/30 px-1 py-0.5 text-[9px] uppercase tracking-wider text-purple-100'>
-                    Platform
-                  </span>
+                  <StatusBadge status='Platform' variant='processing' size='sm' className='h-4 font-bold' />
                   Baselinker
                   <Button
                     type='button'

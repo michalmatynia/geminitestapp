@@ -2,20 +2,28 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-
-import type { CatalogOption as CatalogRecord, Template, ImageRetryPreset, BaseInventory, WarehouseOption, ImportListItem, ImportResponse } from '@/features/data-import-export/types/imports';
+import type {
+  BaseInventory,
+  CatalogOption as CatalogRecord,
+  ImageRetryPreset,
+  ImportListItem,
+  ImportResponse,
+  Template,
+  WarehouseOption,
+} from '@/features/data-import-export/types/imports';
 import type { IntegrationWithConnections } from '@/features/integrations';
 import { api } from '@/shared/lib/api-client';
 import {
-  createListQuery,
-  createSingleQuery,
-  createCreateMutation,
+  createCreateMutationV2,
+  createListQueryV2,
+  createMutationV2,
+  createSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
-import type { 
-  ListQuery, 
-  SingleQuery, 
-  MutationResult
+import type {
+  ListQuery,
+  MutationResult,
+  SingleQuery,
 } from '@/shared/types/query-result-types';
 
 export type { CatalogRecord };
@@ -23,27 +31,54 @@ export type { CatalogRecord };
 // --- Queries ---
 
 export function useIntegrationConnections(): ListQuery<IntegrationWithConnections> {
-  return createListQuery({
-    queryKey: integrationKeys.withConnections(),
+  const queryKey = integrationKeys.withConnections();
+  return createListQueryV2({
+    queryKey,
     queryFn: () => api.get<IntegrationWithConnections[]>('/api/integrations/with-connections'),
+    meta: {
+      source: 'importExport.hooks.useIntegrationConnections',
+      operation: 'list',
+      resource: 'integrations.connections',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'connections'],
+    },
   });
 }
 
 export function useCatalogs(): ListQuery<CatalogRecord> {
-  return createListQuery({
-    queryKey: productMetadataKeys.catalogs(),
+  const queryKey = productMetadataKeys.catalogs();
+  return createListQueryV2({
+    queryKey,
     queryFn: () => api.get<CatalogRecord[]>('/api/catalogs'),
+    meta: {
+      source: 'importExport.hooks.useCatalogs',
+      operation: 'list',
+      resource: 'products.metadata.catalogs',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'catalogs'],
+    },
   });
 }
 
 export function useTemplates(scope: 'import' | 'export'): ListQuery<Template> {
-  const endpoint = scope === 'import' 
-    ? '/api/integrations/import-templates' 
+  const endpoint = scope === 'import'
+    ? '/api/integrations/import-templates'
     : '/api/integrations/export-templates';
-    
-  return createListQuery({
-    queryKey: importExportKeys.templates(scope),
+  const queryKey = importExportKeys.templates(scope);
+
+  return createListQueryV2({
+    queryKey,
     queryFn: () => api.get<Template[]>(endpoint, { cache: 'no-store' }),
+    meta: {
+      source: 'importExport.hooks.useTemplates',
+      operation: 'list',
+      resource: `integrations.import-export.templates.${scope}`,
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'templates', scope],
+    },
   });
 }
 
@@ -57,9 +92,10 @@ export function useImportPreference<T>(
   endpoint: string,
   options?: ImportPreferenceOptions<T>
 ): SingleQuery<T> {
-  return createSingleQuery({
+  const queryKey = importExportKeys.pref(key);
+  return createSingleQueryV2({
     id: key,
-    queryKey: importExportKeys.pref(key),
+    queryKey,
     queryFn: async (): Promise<T> => {
       try {
         return await api.get<T>(endpoint, { cache: 'no-store' });
@@ -68,8 +104,14 @@ export function useImportPreference<T>(
         throw error;
       }
     },
-    options: {
-      enabled: options?.enabled ?? true,
+    enabled: options?.enabled ?? true,
+    meta: {
+      source: 'importExport.hooks.useImportPreference',
+      operation: 'detail',
+      resource: 'integrations.import-export.preference',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'preferences'],
     },
   });
 }
@@ -78,16 +120,24 @@ export function useImportPreference<T>(
 
 export function useSavePreferenceMutation(): MutationResult<unknown, { endpoint: string; data: unknown }> {
   const queryClient = useQueryClient();
-  
-  return createCreateMutation({
+  const mutationKey = importExportKeys.preferences();
+
+  return createCreateMutationV2({
     mutationFn: ({ endpoint, data }: { endpoint: string; data: unknown }) => api.post<unknown>(endpoint, data),
-    options: {
-      onSuccess: (_: unknown, { endpoint }: { endpoint: string; data: unknown }) => {
-        void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
-        const key = endpoint.split('/').pop();
-        if (key) {
-          void queryClient.invalidateQueries({ queryKey: importExportKeys.pref(key) });
-        }
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useSavePreferenceMutation',
+      operation: 'update',
+      resource: 'integrations.import-export.preference',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'preferences', 'save'],
+    },
+    onSuccess: (_: unknown, { endpoint }: { endpoint: string; data: unknown }) => {
+      void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
+      const key = endpoint.split('/').pop();
+      if (key) {
+        void queryClient.invalidateQueries({ queryKey: importExportKeys.pref(key) });
       }
     },
   });
@@ -95,84 +145,122 @@ export function useSavePreferenceMutation(): MutationResult<unknown, { endpoint:
 
 export function useTemplateMutation(scope: 'import' | 'export', id?: string): MutationResult<unknown, { data?: unknown; isDelete?: boolean }> {
   const queryClient = useQueryClient();
-  const endpoint = scope === 'import' 
-    ? '/api/integrations/import-templates' 
+  const endpoint = scope === 'import'
+    ? '/api/integrations/import-templates'
     : '/api/integrations/export-templates';
-    
-  return createCreateMutation({
+  const mutationKey = importExportKeys.templates(scope);
+
+  return createMutationV2({
     mutationFn: ({ data, isDelete = false }: { data?: unknown; isDelete?: boolean }): Promise<unknown> => {
       const url = id ? `${endpoint}/${id}` : endpoint;
       if (isDelete) return api.delete(url);
       return id ? api.put(url, data) : api.post(url, data);
     },
-    options: {
-      onSuccess: (result: unknown, variables: { data?: unknown; isDelete?: boolean }) => {
-        queryClient.setQueryData<Template[]>(
-          importExportKeys.templates(scope),
-          (previous: Template[] | undefined): Template[] => {
-            const current = previous ?? [];
-            if (variables.isDelete) {
-              return id ? current.filter((template: Template) => template.id !== id) : current;
-            }
-            if (!result || typeof result !== 'object') return current;
-            const maybeTemplate = result as Partial<Template>;
-            const templateId = typeof maybeTemplate.id === 'string' ? maybeTemplate.id : '';
-            if (!templateId) return current;
-            const nextTemplate = result as Template;
-            const existingIndex = current.findIndex((template: Template) => template.id === templateId);
-            if (existingIndex === -1) {
-              return [nextTemplate, ...current];
-            }
-            return current.map((template: Template, index: number) =>
-              index === existingIndex ? nextTemplate : template
-            );
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useTemplateMutation',
+      operation: 'action',
+      resource: `integrations.import-export.templates.${scope}`,
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'templates', scope, 'save'],
+    },
+    onSuccess: (result: unknown, variables: { data?: unknown; isDelete?: boolean }) => {
+      queryClient.setQueryData<Template[]>(
+        importExportKeys.templates(scope),
+        (previous: Template[] | undefined): Template[] => {
+          const current = previous ?? [];
+          if (variables.isDelete) {
+            return id ? current.filter((template: Template) => template.id !== id) : current;
           }
-        );
-        void queryClient.invalidateQueries({ queryKey: importExportKeys.templates(scope) });
-      }
+          if (!result || typeof result !== 'object') return current;
+          const maybeTemplate = result as Partial<Template>;
+          const templateId = typeof maybeTemplate.id === 'string' ? maybeTemplate.id : '';
+          if (!templateId) return current;
+          const nextTemplate = result as Template;
+          const existingIndex = current.findIndex((template: Template) => template.id === templateId);
+          if (existingIndex === -1) {
+            return [nextTemplate, ...current];
+          }
+          return current.map((template: Template, index: number) =>
+            index === existingIndex ? nextTemplate : template
+          );
+        }
+      );
+      void queryClient.invalidateQueries({ queryKey: importExportKeys.templates(scope) });
     },
   });
 }
 
 export function useInventories(connectionId?: string, enabled: boolean = true): ListQuery<BaseInventory> {
-  return createListQuery({
-    queryKey: importExportKeys.inventories(connectionId),
+  const queryKey = importExportKeys.inventories(connectionId);
+  return createListQueryV2({
+    queryKey,
     queryFn: async (): Promise<BaseInventory[]> => {
       const data = await api.post<{ inventories: BaseInventory[] }>('/api/integrations/imports/base', { action: 'inventories', connectionId });
       return data.inventories;
     },
-    options: {
-      enabled,
+    enabled,
+    meta: {
+      source: 'importExport.hooks.useInventories',
+      operation: 'list',
+      resource: 'integrations.import-export.inventories',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'inventories'],
     },
   });
 }
 
-export function useWarehouses(inventoryId: string, connectionId?: string, includeAll: boolean = false, enabled: boolean = true): SingleQuery<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }> {
-  return createSingleQuery({
+export function useWarehouses(
+  inventoryId: string,
+  connectionId?: string,
+  includeAll: boolean = false,
+  enabled: boolean = true
+): SingleQuery<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }> {
+  const queryKey = importExportKeys.warehouses(inventoryId, connectionId, includeAll);
+  return createSingleQueryV2({
     id: inventoryId || null,
-    queryKey: importExportKeys.warehouses(inventoryId, connectionId, includeAll),
-    queryFn: () => api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>('/api/integrations/imports/base', { 
-      action: 'warehouses', 
-      inventoryId, 
-      connectionId, 
-      includeAllWarehouses: includeAll 
+    queryKey,
+    queryFn: () => api.post<{ warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] }>('/api/integrations/imports/base', {
+      action: 'warehouses',
+      inventoryId,
+      connectionId,
+      includeAllWarehouses: includeAll,
     }),
-    options: {
-      enabled: enabled && !!inventoryId,
+    enabled: enabled && !!inventoryId,
+    meta: {
+      source: 'importExport.hooks.useWarehouses',
+      operation: 'detail',
+      resource: 'integrations.import-export.warehouses',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'warehouses'],
     },
   });
 }
 
-export function useParameters(inventoryId: string, productId: string, enabled: boolean = true): SingleQuery<{ parameters?: Array<{ id: string; name: string }> }> {
-  return createSingleQuery({
+export function useParameters(
+  inventoryId: string,
+  productId: string,
+  enabled: boolean = true
+): SingleQuery<{ parameters?: Array<{ id: string; name: string }> }> {
+  const queryKey = importExportKeys.parameters(inventoryId, productId);
+  return createSingleQueryV2({
     id: inventoryId && productId ? `${inventoryId}-${productId}` : null,
-    queryKey: importExportKeys.parameters(inventoryId, productId),
-    queryFn: () => api.post<{ parameters?: Array<{ id: string; name: string }> }>('/api/integrations/imports/base/parameters', { 
-      inventoryId, 
-      productId 
+    queryKey,
+    queryFn: () => api.post<{ parameters?: Array<{ id: string; name: string }> }>('/api/integrations/imports/base/parameters', {
+      inventoryId,
+      productId,
     }),
-    options: {
-      enabled: enabled && !!inventoryId && !!productId,
+    enabled: enabled && !!inventoryId && !!productId,
+    meta: {
+      source: 'importExport.hooks.useParameters',
+      operation: 'detail',
+      resource: 'integrations.import-export.parameters',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'parameters'],
     },
   });
 }
@@ -190,10 +278,21 @@ export function useImportList(
     searchSku?: string;
   },
   enabled: boolean = true
-): SingleQuery<{ products?: ImportListItem[]; total?: number; filtered?: number; available?: number; existing?: number; skuDuplicates?: number; page?: number; pageSize?: number; totalPages?: number }> {
-  return createSingleQuery({
+): SingleQuery<{
+  products?: ImportListItem[];
+  total?: number;
+  filtered?: number;
+  available?: number;
+  existing?: number;
+  skuDuplicates?: number;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+}> {
+  const queryKey = importExportKeys.importList(inventoryId, params);
+  return createSingleQueryV2({
     id: inventoryId || null,
-    queryKey: importExportKeys.importList(inventoryId, params),
+    queryKey,
     queryFn: () => {
       const { connectionId, catalogId, limit, uniqueOnly, page, pageSize, searchName, searchSku } = params;
       return api.post<{
@@ -219,8 +318,14 @@ export function useImportList(
         searchSku,
       });
     },
-    options: {
-      enabled: enabled && !!inventoryId,
+    enabled: enabled && !!inventoryId,
+    meta: {
+      source: 'importExport.hooks.useImportList',
+      operation: 'detail',
+      resource: 'integrations.import-export.import-list',
+      domain: 'integrations',
+      queryKey,
+      tags: ['import-export', 'import-list'],
     },
   });
 }
@@ -236,11 +341,21 @@ export function useImportMutation(): MutationResult<ImportResponse, {
   allowDuplicateSku: boolean;
   selectedIds?: string[];
 }> {
-  return createCreateMutation({
+  const mutationKey = importExportKeys.lists();
+  return createCreateMutationV2({
     mutationFn: (params) => api.post<ImportResponse>('/api/integrations/imports/base', {
       action: 'import',
       ...params,
     }),
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useImportMutation',
+      operation: 'create',
+      resource: 'integrations.import-export.import',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'import'],
+    },
   });
 }
 
@@ -253,8 +368,9 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
   exportWarehouseId?: string | null;
 }> {
   const queryClient = useQueryClient();
-  
-  return createCreateMutation({
+  const mutationKey = importExportKeys.preferences();
+
+  return createCreateMutationV2({
     mutationFn: async (params: {
       exportActiveTemplateId?: string | null;
       exportInventoryId?: string | null;
@@ -277,25 +393,42 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
           api.post('/api/integrations/imports/base/export-warehouse', {
             warehouseId: normalizedWarehouseId,
             inventoryId: normalizedInventoryId,
-          })
+          }),
         ] : []),
       ]);
     },
-    options: {
-      onSuccess: () => {
-        void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
-      }
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useSaveExportSettingsMutation',
+      operation: 'update',
+      resource: 'integrations.import-export.export-settings',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'export-settings', 'save'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: importExportKeys.preferences() });
     },
   });
 }
 
 export function useClearInventoryMutation(): MutationResult<void, void> {
-  return createCreateMutation({
+  const mutationKey = importExportKeys.inventories(undefined);
+  return createCreateMutationV2({
     mutationFn: async () => {
       await Promise.all([
         api.post('/api/integrations/imports/base/sample-product', { inventoryId: '', saveOnly: true }),
         api.post('/api/integrations/imports/base/parameters', { inventoryId: '', productId: '', clearOnly: true }),
       ]);
+    },
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useClearInventoryMutation',
+      operation: 'delete',
+      resource: 'integrations.import-export.inventory-cache',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'inventory', 'clear'],
     },
   });
 }

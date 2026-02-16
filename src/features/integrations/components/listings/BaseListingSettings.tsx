@@ -4,7 +4,7 @@ import React from 'react';
 
 import type { BaseInventory, Template } from '@/features/data-import-export/types/imports';
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import { Label, SelectSimple, Checkbox } from '@/shared/ui';
+import { SelectSimple, Checkbox, FormField, Label } from '@/shared/ui';
 
 export function BaseListingSettings(): React.JSX.Element {
   const {
@@ -21,10 +21,10 @@ export function BaseListingSettings(): React.JSX.Element {
 
   return (
     <div className='space-y-4'>
-      <div className='space-y-2'>
-        <Label htmlFor='inventory'>
-          Base.com Inventory {loadingInventories && '(Loading...)'}
-        </Label>
+      <FormField 
+        label={`Base.com Inventory \${loadingInventories ? '(Loading...)' : ''}`}
+        id='inventory'
+      >
         <SelectSimple
           value={selectedInventoryId}
           onValueChange={setSelectedInventoryId}
@@ -38,14 +38,17 @@ export function BaseListingSettings(): React.JSX.Element {
           placeholder='Select inventory...'
         />
         {inventories.length === 0 && !loadingInventories && (
-          <p className='text-xs text-red-400'>
+          <p className='text-xs text-red-400 mt-1'>
             No inventories found. Please check your Base.com account.
           </p>
         )}
-      </div>
+      </FormField>
 
-      <div className='space-y-2'>
-        <Label htmlFor='template'>Template (Optional)</Label>
+      <FormField 
+        label='Template (Optional)' 
+        id='template'
+        description='Templates define how product fields map to Base.com fields.'
+      >
         <SelectSimple
           value={selectedTemplateId}
           onValueChange={setSelectedTemplateId}
@@ -60,10 +63,7 @@ export function BaseListingSettings(): React.JSX.Element {
           ]}
           placeholder='No template (use defaults)'
         />
-        <p className='text-xs text-gray-500'>
-          Templates define how product fields map to Base.com fields.
-        </p>
-      </div>
+      </FormField>
 
       <div className='flex items-center gap-2 pt-2'>
         <Checkbox

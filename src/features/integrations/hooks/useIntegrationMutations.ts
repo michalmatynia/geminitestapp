@@ -1,22 +1,38 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 import type { Integration, IntegrationConnection } from '@/features/integrations/types/integrations-ui';
+import { api } from '@/shared/lib/api-client';
 import {
-  createPostMutation,
-  createDeleteMutation,
-  createSaveMutation,
-} from '@/shared/lib/api-hooks';
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createMutationV2,
+} from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { invalidateIntegrations } from '@/shared/lib/query-invalidation';
+import type { MutationResult } from '@/shared/types/query-result-types';
 
 import { invalidateIntegrationConnections } from './integrationCache';
 
-export function useCreateIntegration() {
-  return createPostMutation<Integration, { name: string; slug: string }>({
-    endpoint: '/api/integrations',
-    onSuccess: (_data, _variables, _context, queryClient): void => {
+export function useCreateIntegration(): MutationResult<Integration, { name: string; slug: string }> {
+  const queryClient = useQueryClient();
+  const mutationKey = QUERY_KEYS.integrations.all;
+  return createCreateMutationV2<Integration, { name: string; slug: string }>({
+    mutationFn: (variables) => api.post<Integration>('/api/integrations', variables),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useCreateIntegration',
+      operation: 'create',
+      resource: 'integrations',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'create'],
+    },
+    onSuccess: () => {
       void invalidateIntegrations(queryClient);
     },
-  })();
+  });
 }
 
 type UpsertConnectionVariables = {
@@ -27,13 +43,32 @@ type UpsertConnectionVariables = {
 };
 
 export function useUpsertConnection() {
-  return createSaveMutation<IntegrationConnection, UpsertConnectionVariables & { id?: string }>({
-    createEndpoint: ({ integrationId }) => `/api/integrations/${integrationId}/connections`,
-    updateEndpoint: ({ connectionId }) => `/api/integrations/connections/${connectionId}`,
-    onSuccess: (_data, variables, _context, queryClient): void => {
+  const queryClient = useQueryClient();
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createMutationV2<IntegrationConnection, UpsertConnectionVariables & { id?: string }>({
+    mutationFn: async (variables): Promise<IntegrationConnection> => {
+      const hasConnection = Boolean(variables.connectionId);
+      const url = hasConnection
+        ? `/api/integrations/connections/${variables.connectionId}`
+        : `/api/integrations/${variables.integrationId}/connections`;
+      if (hasConnection) {
+        return api.patch<IntegrationConnection>(url, variables);
+      }
+      return api.post<IntegrationConnection>(url, variables);
+    },
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useUpsertConnection',
+      operation: 'action',
+      resource: 'integrations.connections',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'upsert'],
+    },
+    onSuccess: (_data, variables): void => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
-  })();
+  });
 }
 
 type DeleteConnectionVariables = {
@@ -42,12 +77,24 @@ type DeleteConnectionVariables = {
 };
 
 export function useDeleteConnection() {
-  return createDeleteMutation<Record<string, unknown>, DeleteConnectionVariables>({
-    endpoint: ({ connectionId }) => `/api/integrations/connections/${connectionId}`,
-    onSuccess: (_data, variables, _context, queryClient): void => {
+  const queryClient = useQueryClient();
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createDeleteMutationV2<Record<string, unknown>, DeleteConnectionVariables>({
+    mutationFn: ({ connectionId }: DeleteConnectionVariables): Promise<Record<string, unknown>> =>
+      api.delete<Record<string, unknown>>(`/api/integrations/connections/${connectionId}`),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useDeleteConnection',
+      operation: 'delete',
+      resource: 'integrations.connections',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'delete'],
+    },
+    onSuccess: (_data, variables): void => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
-  })();
+  });
 }
 
 type TestConnectionType = 'test' | 'base/test' | 'allegro/test';
@@ -60,59 +107,147 @@ type TestConnectionVariables = {
 };
 
 export function useTestConnection() {
-  return createPostMutation<Record<string, unknown>, TestConnectionVariables>({
-    endpoint: ({ integrationId, connectionId, type = 'test' }) => 
-      `/api/integrations/${integrationId}/connections/${connectionId}/${type}`,
-    apiOptions: { 
-      // Note: mapping body and timeout is handled by the caller or needs custom mutationFn
-      // For now, keeping it simple as factories might need expansion for these options
-    }
-  })();
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createCreateMutationV2<Record<string, unknown>, TestConnectionVariables>({
+    mutationFn: ({ integrationId, connectionId, type = 'test', ...rest }): Promise<Record<string, unknown>> =>
+      api.post<Record<string, unknown>>(
+        `/api/integrations/${integrationId}/connections/${connectionId}/${type}`,
+        { integrationId, connectionId, type, ...rest }
+      ),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useTestConnection',
+      operation: 'action',
+      resource: 'integrations.connections.test',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'test'],
+    },
+  });
 }
 
 export function useDisconnectAllegro() {
-  return createPostMutation<Record<string, unknown>, { integrationId: string; connectionId: string }>({
-    endpoint: ({ connectionId }) => `/api/integrations/connections/${connectionId}/allegro/disconnect`,
-    onSuccess: (_data, variables, _context, queryClient) => {
+  const queryClient = useQueryClient();
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createCreateMutationV2<Record<string, unknown>, { integrationId: string; connectionId: string }>({
+    mutationFn: ({ integrationId, connectionId }): Promise<Record<string, unknown>> =>
+      api.post<Record<string, unknown>>(
+        `/api/integrations/connections/${connectionId}/allegro/disconnect`,
+        { integrationId, connectionId }
+      ),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useDisconnectAllegro',
+      operation: 'action',
+      resource: 'integrations.connections.allegro.disconnect',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'allegro', 'disconnect'],
+    },
+    onSuccess: (_data, variables) => {
       void invalidateIntegrationConnections(queryClient, variables.integrationId);
     },
-  })();
+  });
 }
 
 export function useBaseApiRequest() {
-  return createPostMutation<
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createCreateMutationV2<
     { data?: unknown },
     { integrationId: string; connectionId: string; method: string; parameters: unknown }
   >({
-    endpoint: ({ integrationId, connectionId }) => 
-      `/api/integrations/${integrationId}/connections/${connectionId}/base/request`,
-  })();
+    mutationFn: ({ integrationId, connectionId, ...rest }) =>
+      api.post<{ data?: unknown }>(
+        `/api/integrations/${integrationId}/connections/${connectionId}/base/request`,
+        { integrationId, connectionId, ...rest }
+      ),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useBaseApiRequest',
+      operation: 'action',
+      resource: 'integrations.connections.base.request',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'base', 'request'],
+    },
+  });
 }
 
 export function useAllegroApiRequest() {
-  return createPostMutation<
+  const mutationKey = QUERY_KEYS.integrations.connections();
+  return createCreateMutationV2<
     { status: number; statusText: string; data?: unknown; refreshed?: boolean },
     { integrationId: string; connectionId: string; method: string; path: string; body?: unknown }
   >({
-    endpoint: ({ integrationId, connectionId }) => 
-      `/api/integrations/${integrationId}/connections/${connectionId}/allegro/request`,
-  })();
+    mutationFn: ({ integrationId, connectionId, ...rest }) =>
+      api.post<{
+        status: number;
+        statusText: string;
+        data?: unknown;
+        refreshed?: boolean;
+      }>(
+        `/api/integrations/${integrationId}/connections/${connectionId}/allegro/request`,
+        { integrationId, connectionId, ...rest }
+      ),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useAllegroApiRequest',
+      operation: 'action',
+      resource: 'integrations.connections.allegro.request',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'connections', 'allegro', 'request'],
+    },
+  });
 }
 
 export function useUpdatePreferredTemplate() {
-  return createPostMutation<void, { templateId: string }>({
-    endpoint: '/api/integrations/exports/base/templates/preferred',
-  })();
+  const mutationKey = QUERY_KEYS.integrations.all;
+  return createCreateMutationV2<void, { templateId: string }>({
+    mutationFn: (variables) =>
+      api.post<void>('/api/integrations/exports/base/templates/preferred', variables),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useUpdatePreferredTemplate',
+      operation: 'update',
+      resource: 'integrations.exports.base.preferred-template',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'exports', 'base', 'preferred-template'],
+    },
+  });
 }
 
 export function useSyncAllBaseImagesMutation() {
-  return createPostMutation<{ message?: string }, void>({
-    endpoint: '/api/integrations/images/sync-base/all',
-  })();
+  const mutationKey = QUERY_KEYS.integrations.all;
+  return createCreateMutationV2<{ message?: string }, void>({
+    mutationFn: () =>
+      api.post<{ message?: string }>('/api/integrations/images/sync-base/all', {}),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useSyncAllBaseImagesMutation',
+      operation: 'action',
+      resource: 'integrations.images.sync-base-all',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'images', 'sync-base'],
+    },
+  });
 }
 
 export function useUpdatePreferredInventory() {
-  return createPostMutation<void, { inventoryId: string; connectionId: string }>({
-    endpoint: '/api/integrations/exports/base/inventories/preferred',
-  })();
+  const mutationKey = QUERY_KEYS.integrations.all;
+  return createCreateMutationV2<void, { inventoryId: string; connectionId: string }>({
+    mutationFn: (variables) =>
+      api.post<void>('/api/integrations/exports/base/inventories/preferred', variables),
+    mutationKey,
+    meta: {
+      source: 'integrations.hooks.useUpdatePreferredInventory',
+      operation: 'update',
+      resource: 'integrations.exports.base.preferred-inventory',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['integrations', 'exports', 'base', 'preferred-inventory'],
+    },
+  });
 }

@@ -31,6 +31,7 @@ import {
   FormSection,
   FormField,
   Checkbox,
+  Alert,
 } from '@/shared/ui';
 
 export default function AuthSettingsPage(): React.JSX.Element {
@@ -477,14 +478,14 @@ export default function AuthSettingsPage(): React.JSX.Element {
                 </div>
               ) : null}
               {recoveryCodes.length > 0 ? (
-                <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-100'>
+                <Alert variant='warning' className='p-3 text-xs'>
                   <div className='font-semibold'>Recovery codes (save these now)</div>
                   <div className='mt-2 grid gap-1'>
                     {recoveryCodes.map((code: string) => (
                       <div key={code}>{code}</div>
                     ))}
                   </div>
-                </div>
+                </Alert>
               ) : null}
             </div>
           ) : (
@@ -511,9 +512,9 @@ export default function AuthSettingsPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-100'>
+      <Alert variant='warning' className='p-4 text-sm'>
         Go to Workflow Database -&gt; Database Engine to configure provider routing and strict fallback policy.
-      </div>
+      </Alert>
       <div>
         <Link
           href='/admin/databases/engine'

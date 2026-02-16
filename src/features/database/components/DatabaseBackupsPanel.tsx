@@ -5,6 +5,7 @@ import {
   DataTable,
   FileUploadButton,
   type FileUploadHelpers,
+  Alert,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -125,16 +126,17 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         isDangerous={true}
       />
 
-      {isProd ? (
-        <div className='rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100'>
+      {isProd && (
+        <Alert variant='warning'>
           Backups are disabled in production. Create or upload backups in a non-production environment.
-        </div>
-      ) : null}
-      {!backupRunNowAllowed || !backupMaintenanceAllowed ? (
-        <div className='rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100'>
+        </Alert>
+      )}
+      
+      {(!backupRunNowAllowed || !backupMaintenanceAllowed) && (
+        <Alert variant='warning'>
           Some backup actions are disabled by Database Engine manual operation controls.
-        </div>
-      ) : null}
+        </Alert>
+      )}
 
       <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
         <DataTable

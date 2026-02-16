@@ -20,7 +20,8 @@ import {
   TabsList,
   TabsTrigger,
   TabsContent,
-  SectionHeader
+  SectionHeader,
+  Alert
 } from '@/shared/ui';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -290,15 +291,15 @@ function DatabaseEngineContent(): React.JSX.Element {
       </Tabs>
 
       {validationErrors.length > 0 && (
-        <div className='rounded-lg border border-rose-500/20 bg-rose-500/10 p-4'>
-          <div className='flex items-center gap-2 text-rose-300 font-bold text-sm mb-2'>
+        <Alert variant='error'>
+          <div className='flex items-center gap-2 font-bold mb-2'>
             <ShieldCheckIcon className='size-4' />
             Blocking Configuration Issues
           </div>
-          <ul className='list-disc list-inside text-xs text-rose-400 space-y-1'>
+          <ul className='list-disc list-inside space-y-1'>
             {validationErrors.map((err, i) => <li key={i}>{err}</li>)}
           </ul>
-        </div>
+        </Alert>
       )}
     </div>
   );

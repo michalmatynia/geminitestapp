@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { useCmsEditor } from '@/features/cms/components/CmsEditorContext';
 import type { Page } from '@/features/cms/types';
-import { Button } from '@/shared/ui';
+import { Button, SectionHeader, SidePanel } from '@/shared/ui';
 
 import RichTextBlock, { type RichTextContent } from './RichTextBlock';
 
@@ -48,19 +48,24 @@ export default function CmsSideMenu(): React.JSX.Element {
 
   if (!page) {
     return (
-      <aside className='w-80 bg-gray-800 p-4'>
-        <h2 className='text-xl font-bold mb-4'>Loading page…</h2>
+      <SidePanel 
+        width={320} 
+        header={<SectionHeader title='Loading page…' size='sm' className='p-4' />}
+        contentClassName='p-4'
+      >
         <p className='text-sm text-gray-300'>
           Select a page or wait for data to load.
         </p>
-      </aside>
+      </SidePanel>
     );
   }
 
   return (
-    <aside className='w-80 bg-gray-800 p-4'>
-      <h2 className='text-xl font-bold mb-4'>Editing: {page.name}</h2>
-
+    <SidePanel
+      width={320}
+      header={<SectionHeader title={`Editing: ${page.name}`} size='sm' className='p-4' />}
+      contentClassName='p-4'
+    >
       <div className='space-y-4'>
         <div>
           <h3 className='font-bold mb-2'>Header</h3>
@@ -91,6 +96,6 @@ export default function CmsSideMenu(): React.JSX.Element {
           {/* Footer components will be listed here */}
         </div>
       </div>
-    </aside>
+    </SidePanel>
   );
 }

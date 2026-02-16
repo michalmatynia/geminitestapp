@@ -188,9 +188,7 @@ export default function AuthUsersPage(): React.JSX.Element {
               />
             </div>
             {dirtyRoles && (
-              <Badge variant='outline' className='bg-amber-500/10 text-amber-400 border-amber-500/20 py-1'>
-                Unsaved Permission Changes
-              </Badge>
+              <StatusBadge status='Unsaved Permission Changes' variant='warning' className='py-1' />
             )}
           </div>
         }

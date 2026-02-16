@@ -31,8 +31,12 @@ import {
 } from '@/features/notesapp/api/useNoteQueries';
 import type { UseNoteDataProps } from '@/features/notesapp/types/notes-hooks';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
-import { ApiError } from '@/shared/lib/api-client';
-import { createMutationHook, createPutMutation, createDeleteMutation } from '@/shared/lib/api-hooks';
+import { api, ApiError } from '@/shared/lib/api-client';
+import {
+  createCreateMutationV2,
+  createDeleteMutationV2,
+  createUpdateMutationV2,
+} from '@/shared/lib/query-factories-v2';
 import {
   invalidateNoteDetail,
 } from '@/shared/lib/query-invalidation';
@@ -182,21 +186,34 @@ export const useDeleteThemeMutation = (): UseMutationResult<DeleteResponse, Erro
 };
 
 export const useUpdateNoteRelationsMutation = (noteId: string) => {
-  return createPutMutation<void, {
+  const queryClient = useQueryClient();
+  const mutationKey = QUERY_KEYS.notes.detail(noteId);
+  return createUpdateMutationV2<void, {
     relationsFrom?: string[];
     relationsTo?: string[];
   }>({
-    endpoint: `/api/notes/${noteId}/relations`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+    mutationFn: (variables) => api.put<void>(`/api/notes/${noteId}/relations`, variables),
+    mutationKey,
+    meta: {
+      source: 'notes.hooks.useUpdateNoteRelationsMutation',
+      operation: 'update',
+      resource: 'notes.relations',
+      domain: 'global',
+      mutationKey,
+      tags: ['notes', 'relations', 'update'],
+    },
+    onSuccess: () => {
       void invalidateNoteDetail(queryClient, noteId);
     },
-  })();
+  });
 };
 
 export const useCreateNoteFileMutation = (
   noteId?: string
 ) => {
-  return createMutationHook<
+  const queryClient = useQueryClient();
+  const mutationKey = QUERY_KEYS.notes.detail(noteId ?? 'none');
+  return createCreateMutationV2<
     NoteFileRecord,
     { slotIndex: number; file: File; onProgress?: (loaded: number, total?: number) => void }
       >({
@@ -228,26 +245,46 @@ export const useCreateNoteFileMutation = (
           }
           return result.data as NoteFileRecord;
         },
-        onSuccess: (_data, _variables, _context, queryClient) => {
+        mutationKey,
+        meta: {
+          source: 'notes.hooks.useCreateNoteFileMutation',
+          operation: 'upload',
+          resource: 'notes.files',
+          domain: 'global',
+          mutationKey,
+          tags: ['notes', 'files', 'upload'],
+        },
+        onSuccess: () => {
           if (noteId) {
             void invalidateNoteDetail(queryClient, noteId);
           }
         },
-      })();
+      });
 };
 
 export const useDeleteNoteFileMutation = (noteId?: string) => {
-  return createDeleteMutation<DeleteResponse, number>({
-    endpoint: (slotIndex) => {
+  const queryClient = useQueryClient();
+  const mutationKey = QUERY_KEYS.notes.detail(noteId ?? 'none');
+  return createDeleteMutationV2<DeleteResponse, number>({
+    mutationFn: (slotIndex) => {
       if (!noteId) throw new ApiError('Note ID is required for file deletion', 400);
-      return `/api/notes/${noteId}/files/${slotIndex}`;
+      return api.delete<DeleteResponse>(`/api/notes/${noteId}/files/${slotIndex}`);
     },
-    onSuccess: (_data, _variables, _context, queryClient) => {
+    mutationKey,
+    meta: {
+      source: 'notes.hooks.useDeleteNoteFileMutation',
+      operation: 'delete',
+      resource: 'notes.files',
+      domain: 'global',
+      mutationKey,
+      tags: ['notes', 'files', 'delete'],
+    },
+    onSuccess: () => {
       if (noteId) {
         void invalidateNoteDetail(queryClient, noteId);
       }
     },
-  })();
+  });
 };
 
 // --- Composite Hook ---

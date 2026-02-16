@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useMemo, useEffect, useRef,
 import { internalError } from '@/shared/errors/app-error';
 import { useUndo } from '@/shared/hooks/ui/use-undo';
 import { api } from '@/shared/lib/api-client';
-import { createListQuery } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { 
@@ -350,7 +350,7 @@ export function NoteFormProvider({
   const editorSplitRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const relatedNoteSearchQuery = createListQuery<NoteWithRelations>({
+  const relatedNoteSearchQuery = createListQueryV2<NoteWithRelations>({
     queryKey: QUERY_KEYS.notes.search(relatedNoteQuery),
     queryFn: async (): Promise<NoteWithRelations[]> => {
       if (!relatedNoteQuery) return [];
@@ -363,8 +363,14 @@ export function NoteFormProvider({
         }
       });
     },
-    options: {
-      enabled: !!relatedNoteQuery,
+    enabled: !!relatedNoteQuery,
+    meta: {
+      source: 'notes.context.NoteFormContext.relatedNoteSearch',
+      operation: 'list',
+      resource: 'notes.search',
+      domain: 'global',
+      queryKey: QUERY_KEYS.notes.search(relatedNoteQuery),
+      tags: ['notes', 'search', 'related'],
     },
   });
 

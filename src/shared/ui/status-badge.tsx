@@ -9,6 +9,7 @@ export type StatusVariant = 'pending' | 'active' | 'failed' | 'removed' | 'neutr
 interface StatusBadgeProps {
   status: string;
   variant?: StatusVariant;
+  size?: 'sm' | 'md';
   icon?: ReactNode;
   hideLabel?: boolean;
   className?: string;
@@ -31,6 +32,7 @@ const statusToVariant = (status: string): StatusVariant => {
 export function StatusBadge({
   status,
   variant,
+  size = 'md',
   icon,
   hideLabel,
   className,
@@ -44,14 +46,15 @@ export function StatusBadge({
     <Badge
       variant={resolvedVariant}
       className={cn(
-        'gap-1 text-[10px] uppercase tracking-wider',
+        'gap-1 uppercase tracking-wider',
+        size === 'sm' ? 'text-[9px] px-1 py-0 h-4' : 'text-[10px] px-2 py-0.5 h-5',
         onClick && 'cursor-pointer hover:opacity-80 transition-opacity',
         className
       )}
       title={title}
       onClick={onClick}
     >
-      {icon && <span className='flex-shrink-0'>{icon}</span>}
+      {icon && <span className={cn('flex-shrink-0', size === 'sm' ? 'size-2.5' : 'size-3')}>{icon}</span>}
       {!hideLabel && label ? <span>{label}</span> : null}
     </Badge>
   );

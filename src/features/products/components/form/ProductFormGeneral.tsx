@@ -35,7 +35,7 @@ import {
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ProductValidationPattern } from '@/shared/types/domain/products';
-import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField } from '@/shared/ui';
+import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 const buildIssueSnippet = (
@@ -459,9 +459,9 @@ export default function ProductFormGeneral(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       {!hasCatalogs && (
-        <FormSection variant='subtle-compact' className='border-amber-500/40 bg-amber-500/10 text-amber-100'>
+        <Alert variant='warning' className='mb-6'>
           <p className='text-sm'>Select a catalog to edit product titles and descriptions. Language fields are based on catalog settings.</p>
-        </FormSection>
+        </Alert>
       )}
 
       {hasCatalogs && !languagesReady && (

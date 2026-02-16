@@ -5,7 +5,7 @@ import { Dispatch, SetStateAction } from 'react';
 
 import type { ProductWithImages } from '@/features/products';
 import { api } from '@/shared/lib/api-client';
-import { createListQuery } from '@/shared/lib/query-factories-v2';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateListingBadges } from '@/shared/lib/query-invalidation';
 
 import { listingBadgesQueryKey } from './listingCache';
@@ -45,8 +45,8 @@ export function useIntegrationOperations(): {
   // Export settings state - opens ListProductModal directly for products with existing listings
   const [exportSettingsProduct, setExportSettingsProduct] = useState<ProductWithImages | null>(null);
 
-  // Load listing badges using createListQuery factory
-  const listingsBadgeQuery = createListQuery<MarketplaceBadgeEntry, ListingBadgesPayload>({
+  // Load listing badges using query factory
+  const listingsBadgeQuery = createListQueryV2<MarketplaceBadgeEntry, ListingBadgesPayload>({
     queryKey: listingBadgesQueryKey,
     queryFn: async (): Promise<ListingBadgesPayload> => {
       try {
@@ -60,27 +60,33 @@ export function useIntegrationOperations(): {
         return {};
       }
     },
-    options: {
-      retry: 1,
-      refetchInterval: (query) => {
-        const data = query.state.data;
-        if (!data) return 5000;
-        const activeStatuses = new Set([
-          'queued',
-          'queued_relist',
-          'pending',
-          'running',
-          'processing',
-          'in_progress',
-        ]);
-        const hasInFlight = Object.values(data).some((entry) =>
-          Object.values(toMarketplaceEntry(entry)).some((status) =>
-            typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
-          )
-        );
-        return hasInFlight ? 2500 : false;
-      },
-      refetchIntervalInBackground: true,
+    retry: 1,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data) return 5000;
+      const activeStatuses = new Set([
+        'queued',
+        'queued_relist',
+        'pending',
+        'running',
+        'processing',
+        'in_progress',
+      ]);
+      const hasInFlight = Object.values(data).some((entry) =>
+        Object.values(toMarketplaceEntry(entry)).some((status) =>
+          typeof status === 'string' && activeStatuses.has(status.trim().toLowerCase())
+        )
+      );
+      return hasInFlight ? 2500 : false;
+    },
+    refetchIntervalInBackground: true,
+    meta: {
+      source: 'integrations.hooks.useIntegrationOperations.listingBadges',
+      operation: 'polling',
+      resource: 'integrations.product-listings.badges',
+      domain: 'integrations',
+      queryKey: listingBadgesQueryKey,
+      tags: ['integrations', 'listings', 'badges'],
     },
   });
 

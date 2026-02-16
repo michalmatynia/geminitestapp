@@ -1,24 +1,48 @@
 'use client';
 
-import { createQueryHook, createDeleteMutation } from '@/shared/lib/api-hooks';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { api } from '@/shared/lib/api-client';
+import { createDeleteMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { AiInsightNotification } from '@/shared/types/ai-insights';
+import type { DeleteMutation, SingleQuery } from '@/shared/types/query-result-types';
 
 export type NotificationsResponse = { notifications: AiInsightNotification[] };
 
 export const aiNotificationsQueryKey = QUERY_KEYS.ai.insights.notifications();
 
-export const useAiInsightsNotifications = createQueryHook<NotificationsResponse, { enabled?: boolean } | void>({
-  queryKeyFactory: () => aiNotificationsQueryKey,
-  endpoint: '/api/ai-insights/notifications',
-  apiOptions: { params: { limit: 30 } },
-});
+export const useAiInsightsNotifications = (params?: { enabled?: boolean } | void): SingleQuery<NotificationsResponse> =>
+  createSingleQueryV2<NotificationsResponse>({
+    id: 'ai-insights-notifications',
+    queryKey: aiNotificationsQueryKey,
+    queryFn: () => api.get<NotificationsResponse>('/api/ai-insights/notifications', { params: { limit: 30 } }),
+    enabled: params?.enabled ?? true,
+    meta: {
+      source: 'admin.hooks.useAiInsightsNotifications',
+      operation: 'detail',
+      resource: 'ai.insights.notifications',
+      domain: 'global',
+      queryKey: aiNotificationsQueryKey,
+      tags: ['ai', 'insights', 'notifications'],
+    },
+  });
 
-export function useClearAiInsightsNotifications() {
-  return createDeleteMutation<void, void>({
-    endpoint: '/api/ai-insights/notifications',
-    onSuccess: (_data, _variables, _context, queryClient) => {
+export function useClearAiInsightsNotifications(): DeleteMutation<void, void> {
+  const queryClient = useQueryClient();
+  return createDeleteMutationV2<void, void>({
+    mutationFn: () => api.delete<void>('/api/ai-insights/notifications'),
+    mutationKey: aiNotificationsQueryKey,
+    meta: {
+      source: 'admin.hooks.useClearAiInsightsNotifications',
+      operation: 'delete',
+      resource: 'ai.insights.notifications',
+      domain: 'global',
+      mutationKey: aiNotificationsQueryKey,
+      tags: ['ai', 'insights', 'notifications', 'clear'],
+    },
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: aiNotificationsQueryKey });
     },
-  })();
+  });
 }

@@ -28,8 +28,7 @@ import { ProductListingsError } from './product-listings-modal/ProductListingsEr
 import { ProductListingsLoading } from './product-listings-modal/ProductListingsLoading';
 import { ProductListingsStartPanel } from './product-listings-modal/ProductListingsStartPanel';
 
-interface ProductListingsModalProps extends Omit<EntityModalProps<ProductWithImages>, 'onSuccess'> {
-  onSuccess?: () => void;
+interface ProductListingsModalProps extends EntityModalProps<ProductWithImages> {
   onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
   filterIntegrationSlug?: string | null | undefined;
   onListingsUpdated?: (() => void) | undefined;

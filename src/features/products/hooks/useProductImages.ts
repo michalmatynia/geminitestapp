@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 import {
@@ -10,7 +11,9 @@ import {
 import { logClientError } from '@/features/observability';
 import type { ProductWithImages, ProductImageRecord } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
-import { createDeleteMutation } from '@/shared/lib/api-hooks';
+import { api } from '@/shared/lib/api-client';
+import { createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
 import { logger } from '@/shared/utils/logger';
 
@@ -87,6 +90,7 @@ export function useProductImages(
   product?: ProductWithImages,
   initialImageLinks?: string[] | null,
 ): ProductImagesHookResult {
+  const queryClient = useQueryClient();
   const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
     () => buildImageSlotsFromProduct(product),
   );
@@ -101,12 +105,22 @@ export function useProductImages(
   const isReorderingRef = useRef(false);
   const pendingRefreshRef = useRef<ProductWithImages | null>(null);
   
-  const disconnectImageMutation = createDeleteMutation<void, { productId: string; imageFileId: string }>({
-    endpoint: ({ productId, imageFileId }) => `/api/products/${productId}/images/${imageFileId}`,
-    onSuccess: (_data, _variables, _context, queryClient) => {
+  const disconnectImageMutation = createDeleteMutationV2<void, { productId: string; imageFileId: string }>({
+    mutationFn: ({ productId, imageFileId }) =>
+      api.delete<void>(`/api/products/${productId}/images/${imageFileId}`),
+    mutationKey: QUERY_KEYS.products.all,
+    meta: {
+      source: 'products.hooks.useProductImages.disconnectImage',
+      operation: 'delete',
+      resource: 'products.images',
+      domain: 'products',
+      mutationKey: QUERY_KEYS.products.all,
+      tags: ['products', 'images', 'disconnect'],
+    },
+    onSuccess: () => {
       void invalidateProducts(queryClient);
     }
-  })();
+  });
 
   // Effect to clean up object URLs when imageSlots change
   useEffect(() => {

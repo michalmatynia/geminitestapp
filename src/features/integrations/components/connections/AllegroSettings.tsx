@@ -74,9 +74,11 @@ export function AllegroSettings(): React.JSX.Element {
             >
               {savingAllegroSandbox ? 'Preparing...' : 'Test Sandbox Connection'}
             </Button>
-            <span className='rounded-full border border-border bg-card/60 px-2 py-1 text-[10px] font-semibold text-gray-300'>
-              {activeConnection?.allegroUseSandbox ? 'Sandbox' : 'Production'}
-            </span>
+            <StatusBadge
+              status={activeConnection?.allegroUseSandbox ? 'Sandbox' : 'Production'}
+              variant={activeConnection?.allegroUseSandbox ? 'warning' : 'neutral'}
+              className='font-semibold'
+            />
             {allegroConnected && (
               <Button
                 type='button'

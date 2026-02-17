@@ -192,13 +192,6 @@ export function LeftSidebar(): React.JSX.Element {
 
   const handleCreateCardFromLoadedImage = useCallback((): void => {
     void (async (): Promise<void> => {
-      const consumedTemporaryUpload =
-        (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: true })) ?? false;
-      if (consumedTemporaryUpload) {
-        toast('Created card from loaded image.', { variant: 'success' });
-        return;
-      }
-
       const sourceSlot = workingSlot ?? selectedSlot;
       const sourceImageUrl = sourceSlot?.imageUrl?.trim() || sourceSlot?.imageFile?.filepath || null;
       const sourceImageBase64 = sourceSlot?.imageBase64?.trim() || null;

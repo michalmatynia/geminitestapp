@@ -44,6 +44,7 @@ export type ImageStudioSlotRecord = {
 };
 
 type SlotCreateInput = {
+  id?: string;
   name?: string | null;
   folderPath?: string | null;
   imageUrl?: string | null;
@@ -285,7 +286,7 @@ export async function createImageStudioSlots(
   const db = await getMongoDb();
   const now = new Date().toISOString();
   const docs: ImageStudioSlotDocument[] = inputs.map((slot: SlotCreateInput) => ({
-    _id: createId(),
+    _id: slot.id?.trim() || createId(),
     projectId,
     name: slot.name ?? null,
     folderPath: slot.folderPath ?? null,

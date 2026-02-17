@@ -2,11 +2,16 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { ObjectId, type Document, type Filter, type WithId } from 'mongodb';
+import { ObjectId, type Document, type Filter } from 'mongodb';
 
 import { mongoImageFileRepository } from '@/features/files/server';
 import { mongoCatalogRepository } from '@/features/products/services/catalog-repository/mongo-catalog-repository';
-import type { ProductRecord, ProductWithImages, ProductImageRecord, CatalogRecord } from '@/features/products/types';
+import {
+  toProductBase,
+  toProductResponse,
+  type ProductDocument,
+} from '@/features/products/services/product-repository/mongo-product-repository-mappers';
+import type { ProductImageRecord, CatalogRecord } from '@/features/products/types';
 import type {
   CreateProductInput,
   ProductFilters,
@@ -19,25 +24,6 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ImageFileRecord } from '@/shared/types/domain/files';
 
 import type { Prisma } from '@prisma/client';
-
-type ProductDocument = Omit<
-  ProductRecord,
-  'createdAt' | 'updatedAt' | 'name' | 'description' | 'published' | 'catalogId' | 'tags' | 'images' | 'catalogs'
-> & {
-  _id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  name?: ProductRecord['name'];
-  description?: ProductRecord['description'];
-  published?: boolean;
-  catalogId?: string;
-  images?: ProductWithImages['images'];
-  catalogs?: ProductWithImages['catalogs'];
-  categories?: Array<{ categoryId: string; assignedAt?: string }>;
-  categoryId?: string | null;
-  tags?: ProductWithImages['tags'];
-  producers?: ProductWithImages['producers'];
-};
 
 const productCollectionName = 'products';
 const integrationCollectionName = 'integrations';
@@ -280,240 +266,6 @@ const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
     unique.add(trimmed);
   }
   return Array.from(unique);
-};
-
-const toTrimmedString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const resolveCategoryId = (doc: ProductDocument): string | null => {
-  const direct = toTrimmedString(doc.categoryId);
-  if (direct) return direct;
-
-  if (Array.isArray(doc.categories)) {
-    for (const entry of doc.categories as unknown[]) {
-      if (!entry || typeof entry !== 'object') continue;
-      const record = entry as Record<string, unknown>;
-      const categoryId =
-        toTrimmedString(record['categoryId']) ??
-        toTrimmedString(record['category_id']) ??
-        toTrimmedString(record['id']) ??
-        toTrimmedString(record['value']);
-      if (categoryId) return categoryId;
-    }
-    return null;
-  }
-
-  if (doc.categories && typeof doc.categories === 'object') {
-    const record = doc.categories as Record<string, unknown>;
-    const categoryId =
-      toTrimmedString(record['categoryId']) ??
-      toTrimmedString(record['category_id']) ??
-      toTrimmedString(record['id']) ??
-      toTrimmedString(record['value']);
-    if (categoryId) return categoryId;
-  }
-
-  return null;
-};
-
-const normalizeProducerRelations = (
-  producers: unknown,
-  fallbackProductId: string,
-  fallbackAssignedAt: string
-): NonNullable<ProductWithImages['producers']> => {
-  if (!Array.isArray(producers)) return [];
-  const normalized: NonNullable<ProductWithImages['producers']> = [];
-  const seen = new Set<string>();
-  for (const entry of producers) {
-    if (!entry || typeof entry !== 'object') continue;
-    const record = entry as Record<string, unknown>;
-    const producerId =
-      toTrimmedString(record['producerId']) ??
-      toTrimmedString(record['producer_id']) ??
-      toTrimmedString(record['id']) ??
-      toTrimmedString(record['value']);
-    if (!producerId || seen.has(producerId)) continue;
-    seen.add(producerId);
-
-    const relationProductId =
-      toTrimmedString(record['productId']) ??
-      toTrimmedString(record['product_id']) ??
-      fallbackProductId;
-
-    const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
-    let assignedAt = fallbackAssignedAt;
-    if (rawAssignedAt && typeof rawAssignedAt === 'object' && rawAssignedAt instanceof Date) {
-      assignedAt = rawAssignedAt.toISOString();
-    } else {
-      assignedAt = toTrimmedString(rawAssignedAt) ?? fallbackAssignedAt;
-    }
-
-    const relation: NonNullable<ProductWithImages['producers']>[number] = {
-      productId: relationProductId,
-      producerId,
-      assignedAt,
-    };
-
-    if (record['producer'] && typeof record['producer'] === 'object') {
-      relation.producer = record['producer'] as NonNullable<ProductWithImages['producers']>[number]['producer'];
-    }
-    normalized.push(relation);
-  }
-  return normalized;
-};
-
-const normalizeTagRelations = (
-  tags: unknown,
-  fallbackProductId: string,
-  fallbackAssignedAt: string
-): NonNullable<ProductRecord['tags']> => {
-  if (!Array.isArray(tags)) return [];
-  const normalized: NonNullable<ProductRecord['tags']> = [];
-  const seen = new Set<string>();
-  for (const entry of tags) {
-    if (!entry || typeof entry !== 'object') continue;
-    const record = entry as Record<string, unknown>;
-    const tagId =
-      toTrimmedString(record['tagId']) ??
-      toTrimmedString(record['tag_id']) ??
-      toTrimmedString(record['id']) ??
-      toTrimmedString(record['value']);
-    if (!tagId || seen.has(tagId)) continue;
-    seen.add(tagId);
-
-    const relationProductId =
-      toTrimmedString(record['productId']) ??
-      toTrimmedString(record['product_id']) ??
-      fallbackProductId;
-
-    const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
-    let assignedAt = fallbackAssignedAt;
-    if (rawAssignedAt && typeof rawAssignedAt === 'object' && rawAssignedAt instanceof Date) {
-      assignedAt = rawAssignedAt.toISOString();
-    } else {
-      assignedAt = toTrimmedString(rawAssignedAt) ?? fallbackAssignedAt;
-    }
-
-    const relation: NonNullable<ProductRecord['tags']>[number] = {
-      productId: relationProductId,
-      tagId,
-      assignedAt,
-    };
-
-    if (record['tag'] && typeof record['tag'] === 'object') {
-      relation.tag = record['tag'] as NonNullable<ProductRecord['tags']>[number]['tag'];
-    }
-    normalized.push(relation);
-  }
-  return normalized;
-};
-
-const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImages => {
-  const productId = doc.id ?? doc._id;
-  const images = Array.isArray(doc.images) ? doc.images : [];
-  const catalogs = Array.isArray(doc.catalogs) ? doc.catalogs : [];
-  const fallbackAssignedAt = doc.updatedAt instanceof Date
-    ? doc.updatedAt.toISOString()
-    : ((doc.updatedAt as unknown as string) || new Date().toISOString());
-  const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
-  const producers = normalizeProducerRelations(doc.producers, productId, fallbackAssignedAt);
-  const noteIds = Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
-    ? ((doc as unknown as { noteIds: string[] }).noteIds)
-    : [];
-
-  return {
-    id: productId,
-    sku: doc.sku ?? null,
-    baseProductId: doc.baseProductId ?? null,
-    defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
-    ean: doc.ean ?? null,
-    gtin: doc.gtin ?? null,
-    asin: doc.asin ?? null,
-    name: doc.name || { en: doc.name_en ?? '', pl: doc.name_pl ?? null, de: doc.name_de ?? null },
-    description: doc.description || { en: doc.description_en ?? '', pl: doc.description_pl ?? null, de: doc.description_de ?? null },
-    name_en: doc.name_en ?? null,
-    name_pl: doc.name_pl ?? null,
-    name_de: doc.name_de ?? null,
-    description_en: doc.description_en ?? null,
-    description_pl: doc.description_pl ?? null,
-    description_de: doc.description_de ?? null,
-    supplierName: doc.supplierName ?? null,
-    supplierLink: doc.supplierLink ?? null,
-    priceComment: doc.priceComment ?? null,
-    stock: doc.stock ?? null,
-    price: doc.price ?? null,
-    sizeLength: doc.sizeLength ?? null,
-    sizeWidth: doc.sizeWidth ?? null,
-    weight: doc.weight ?? null,
-    length: doc.length ?? null,
-    published: doc.published ?? false,
-    catalogId: doc.catalogId ?? '',
-    parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
-    imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
-    imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
-    noteIds,
-    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
-    updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
-    images: images.map(img => ({ ...img, assignedAt: img.assignedAt })),
-    catalogs: catalogs.map(cat => ({ ...cat, assignedAt: cat.assignedAt })),
-    categoryId: resolveCategoryId(doc),
-    tags,
-    producers,
-  };
-};
-
-const toProductBase = (doc: ProductDocument): ProductRecord => {
-  const productId = doc.id ?? doc._id;
-  const noteIds = Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
-    ? ((doc as unknown as { noteIds: string[] }).noteIds)
-    : [];
-  const fallbackAssignedAt = doc.updatedAt instanceof Date
-    ? doc.updatedAt.toISOString()
-    : ((doc.updatedAt as unknown as string) || new Date().toISOString());
-  const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
-  const producers = normalizeProducerRelations(doc.producers, productId, fallbackAssignedAt);
-
-  return {
-    id: productId,
-    sku: doc.sku ?? null,
-    baseProductId: doc.baseProductId ?? null,
-    defaultPriceGroupId: doc.defaultPriceGroupId ?? null,
-    ean: doc.ean ?? null,
-    gtin: doc.gtin ?? null,
-    asin: doc.asin ?? null,
-    name: doc.name || { en: doc.name_en ?? '', pl: doc.name_pl ?? null, de: doc.name_de ?? null },
-    description: doc.description || { en: doc.description_en ?? '', pl: doc.description_pl ?? null, de: doc.description_de ?? null },
-    name_en: doc.name_en ?? null,
-    name_pl: doc.name_pl ?? null,
-    name_de: doc.name_de ?? null,
-    description_en: doc.description_en ?? null,
-    description_pl: doc.description_pl ?? null,
-    description_de: doc.description_de ?? null,
-    supplierName: doc.supplierName ?? null,
-    supplierLink: doc.supplierLink ?? null,
-    priceComment: doc.priceComment ?? null,
-    stock: doc.stock ?? null,
-    price: doc.price ?? null,
-    sizeLength: doc.sizeLength ?? null,
-    sizeWidth: doc.sizeWidth ?? null,
-    weight: doc.weight ?? null,
-    length: doc.length ?? null,
-    published: doc.published ?? false,
-    catalogId: doc.catalogId ?? '',
-    parameters: Array.isArray(doc.parameters) ? doc.parameters : [],
-    imageLinks: Array.isArray(doc.imageLinks) ? doc.imageLinks : [],
-    imageBase64s: Array.isArray(doc.imageBase64s) ? doc.imageBase64s : [],
-    noteIds,
-    createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : (doc.createdAt as unknown as string),
-    updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt as unknown as string),
-    categoryId: resolveCategoryId(doc),
-    tags,
-    producers,
-    images: Array.isArray(doc.images) ? doc.images : [],
-  };
 };
 
 const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => {

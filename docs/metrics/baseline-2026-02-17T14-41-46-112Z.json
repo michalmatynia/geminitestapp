@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-02-17T14:42:07.496Z",
+  "generatedAt": "2026-02-17T14:41:46.112Z",
   "source": {
-    "totalFiles": 2623,
-    "totalLines": 424274,
-    "useClientFiles": 897,
+    "totalFiles": 2622,
+    "totalLines": 423946,
+    "useClientFiles": 898,
     "filesOver800": 83,
     "filesOver1000": 35,
     "filesOver1500": 21,
@@ -220,8 +220,8 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 438,
-        "lines": 118135
+        "files": 437,
+        "lines": 117835
       },
       {
         "feature": "products",
@@ -231,7 +231,7 @@
       {
         "feature": "cms",
         "files": 204,
-        "lines": 38161
+        "lines": 38163
       },
       {
         "feature": "integrations",
@@ -246,7 +246,7 @@
       {
         "feature": "case-resolver",
         "files": 37,
-        "lines": 18311
+        "lines": 18281
       },
       {
         "feature": "notesapp",
@@ -454,12 +454,12 @@
         "lines": 1787
       },
       {
-        "path": "src/features/case-resolver/hooks/useCaseResolverState.ts",
-        "lines": 1787
-      },
-      {
         "path": "src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx",
         "lines": 1763
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useCaseResolverState.ts",
+        "lines": 1757
       },
       {
         "path": "src/features/ai/image-studio/components/RightSidebar.tsx",

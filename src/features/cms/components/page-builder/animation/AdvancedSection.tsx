@@ -1,11 +1,7 @@
 'use client';
 
 import {
-  Hand,
-  Layers,
-  MousePointer2,
   PenLine,
-  RotateCw,
   Trash2,
 } from 'lucide-react';
 import React, { useCallback } from 'react';
@@ -13,14 +9,12 @@ import React, { useCallback } from 'react';
 import type {
   TextEffect,
   DragAxis,
-  ObserverType,
   VelocityEffect,
 } from '@/features/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,
   TEXT_EFFECTS,
   DRAG_AXES,
-  OBSERVER_TYPES,
   VELOCITY_EFFECTS,
 } from '@/features/gsap';
 import {
@@ -34,6 +28,7 @@ import {
   type VectorShape,
 } from '@/shared/ui';
 
+import { AdvancedObserverMagnetSection } from './AdvancedObserverMagnetSection';
 import { useAnimationConfigContext } from './AnimationConfigContext';
 
 import type { VectorOverlayResult } from '../../../hooks/usePageBuilderContext';
@@ -82,31 +77,9 @@ export function AdvancedSection(): React.ReactNode {
     config.draggableCarouselSelector ?? DEFAULT_ANIMATION_CONFIG.draggableCarouselSelector ?? '';
   const draggableCarouselSnapValue =
     config.draggableCarouselSnap ?? DEFAULT_ANIMATION_CONFIG.draggableCarouselSnap ?? true;
-  const observerEnabledValue = config.observerEnabled ?? DEFAULT_ANIMATION_CONFIG.observerEnabled ?? false;
-  const observerTypeValue = config.observerType ?? DEFAULT_ANIMATION_CONFIG.observerType ?? 'wheel,touch';
-  const observerAxisValue = config.observerAxis ?? DEFAULT_ANIMATION_CONFIG.observerAxis ?? 'y';
-  const observerSpeedValue = config.observerSpeed ?? DEFAULT_ANIMATION_CONFIG.observerSpeed ?? 1;
   const velocityEffectValue = config.velocityEffect ?? DEFAULT_ANIMATION_CONFIG.velocityEffect ?? 'none';
   const velocityStrengthValue = config.velocityStrength ?? DEFAULT_ANIMATION_CONFIG.velocityStrength ?? 0.15;
   const velocityMaxValue = config.velocityMax ?? DEFAULT_ANIMATION_CONFIG.velocityMax ?? 20;
-  const magnetEnabledValue = config.magnetEnabled ?? DEFAULT_ANIMATION_CONFIG.magnetEnabled ?? false;
-  const magnetStrengthValue = config.magnetStrength ?? DEFAULT_ANIMATION_CONFIG.magnetStrength ?? 0.35;
-  const magnetRadiusValue = config.magnetRadius ?? DEFAULT_ANIMATION_CONFIG.magnetRadius ?? 140;
-  const magnetAxisValue = config.magnetAxis ?? DEFAULT_ANIMATION_CONFIG.magnetAxis ?? 'x,y';
-  const magnetReturnValue = config.magnetReturn ?? DEFAULT_ANIMATION_CONFIG.magnetReturn ?? 0.35;
-
-  const observerTypeIcons: Record<string, React.ReactNode> = {
-    'wheel,touch': (
-      <span className='flex items-center gap-0.5'>
-        <RotateCw className='size-3.5' />
-        <Hand className='size-3.5' />
-      </span>
-    ),
-    'wheel': <RotateCw className='size-3.5' />,
-    'touch': <Hand className='size-3.5' />,
-    'pointer': <MousePointer2 className='size-3.5' />,
-    'wheel,touch,pointer': <Layers className='size-3.5' />,
-  };
 
   // Motion path handlers
   const handleMotionPathEnabledChange = useCallback(
@@ -435,31 +408,6 @@ export function AdvancedSection(): React.ReactNode {
     [config, onChange]
   );
 
-  // Observer handlers
-  const handleObserverEnabledChange = useCallback(
-    (checked: boolean | 'indeterminate') => {
-      onChange({ ...config, observerEnabled: checked === true });
-    },
-    [config, onChange]
-  );
-
-  const handleObserverAxisChange = useCallback(
-    (value: string) => {
-      onChange({ ...config, observerAxis: value as DragAxis });
-    },
-    [config, onChange]
-  );
-
-  const handleObserverSpeedChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseFloat(e.target.value);
-      if (!isNaN(val)) {
-        onChange({ ...config, observerSpeed: Math.max(0.1, Math.min(5, val)) });
-      }
-    },
-    [config, onChange]
-  );
-
   // Velocity handlers
   const handleVelocityEffectChange = useCallback(
     (value: string) => {
@@ -483,51 +431,6 @@ export function AdvancedSection(): React.ReactNode {
       const val = parseFloat(e.target.value);
       if (!isNaN(val)) {
         onChange({ ...config, velocityMax: Math.max(1, Math.min(60, val)) });
-      }
-    },
-    [config, onChange]
-  );
-
-  // Magnet handlers
-  const handleMagnetEnabledChange = useCallback(
-    (checked: boolean | 'indeterminate') => {
-      onChange({ ...config, magnetEnabled: checked === true });
-    },
-    [config, onChange]
-  );
-
-  const handleMagnetStrengthChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseFloat(e.target.value);
-      if (!isNaN(val)) {
-        onChange({ ...config, magnetStrength: Math.max(0.05, Math.min(1, val)) });
-      }
-    },
-    [config, onChange]
-  );
-
-  const handleMagnetRadiusChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseFloat(e.target.value);
-      if (!isNaN(val)) {
-        onChange({ ...config, magnetRadius: Math.max(40, Math.min(600, val)) });
-      }
-    },
-    [config, onChange]
-  );
-
-  const handleMagnetAxisChange = useCallback(
-    (value: string) => {
-      onChange({ ...config, magnetAxis: value as DragAxis });
-    },
-    [config, onChange]
-  );
-
-  const handleMagnetReturnChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = parseFloat(e.target.value);
-      if (!isNaN(val)) {
-        onChange({ ...config, magnetReturn: Math.max(0.05, Math.min(2, val)) });
       }
     },
     [config, onChange]
@@ -980,129 +883,7 @@ export function AdvancedSection(): React.ReactNode {
         )}
       </FormSection>
 
-      {/* Observer */}
-      <FormSection
-        title='Observer (Events)'
-        variant='subtle-compact'
-        actions={<Checkbox checked={observerEnabledValue} onCheckedChange={handleObserverEnabledChange} />}
-        className='p-3 space-y-4'
-      >
-        {observerEnabledValue && (
-          <div className='mt-4 space-y-4'>
-            <FormField label='Event types'>
-              <div className='space-y-2'>
-                <Input
-                  value={observerTypeValue}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange({ ...config, observerType: e.target.value as ObserverType })}
-                  placeholder='wheel,touch,pointer'
-                  className='h-9'
-                />
-                <div className='flex flex-wrap gap-1.5'>
-                  {OBSERVER_TYPES.map((option: { label: string; value: string }) => (
-                    <Tooltip key={option.label} content={option.label}>
-                      <Button
-                        type='button'
-                        size='sm'
-                        variant={observerTypeValue.includes(option.value) ? 'secondary' : 'outline'}
-                        onClick={(): void => {
-                          const types = observerTypeValue.split(',').map((t: string) => t.trim()).filter(Boolean);
-                          const next = types.includes(option.value)
-                            ? types.filter((t: string) => t !== option.value)
-                            : [...types, option.value];
-                          onChange({ ...config, observerType: next.join(',') as ObserverType });
-                        }}
-                        className='h-7 w-9 p-0'
-                        aria-label={option.label}
-                      >
-                        {observerTypeIcons[option.value] ?? <MousePointer2 className='size-3.5' />}
-                      </Button>
-                    </Tooltip>
-                  ))}
-                </div>
-              </div>
-            </FormField>
-
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <FormField label='Axis'>
-                <SelectSimple size='sm'
-                  value={observerAxisValue}
-                  onValueChange={handleObserverAxisChange}
-                  options={DRAG_AXES}
-                />
-              </FormField>
-              <FormField label='Speed'>
-                <Input
-                  type='number'
-                  min={0.1}
-                  max={5}
-                  step={0.1}
-                  value={observerSpeedValue}
-                  onChange={handleObserverSpeedChange}
-                  className='h-9'
-                />
-              </FormField>
-            </div>
-          </div>
-        )}
-      </FormSection>
-
-      {/* Magnet effect */}
-      <FormSection
-        title='Magnet'
-        variant='subtle-compact'
-        actions={<Checkbox checked={magnetEnabledValue} onCheckedChange={handleMagnetEnabledChange} />}
-        className='p-3 space-y-4'
-      >
-        {magnetEnabledValue && (
-          <div className='mt-4 space-y-4'>
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <FormField label='Strength'>
-                <Input
-                  type='number'
-                  min={0.05}
-                  max={1}
-                  step={0.05}
-                  value={magnetStrengthValue}
-                  onChange={handleMagnetStrengthChange}
-                  className='h-9'
-                />
-              </FormField>
-              <FormField label='Radius (px)'>
-                <Input
-                  type='number'
-                  min={40}
-                  max={600}
-                  step={10}
-                  value={magnetRadiusValue}
-                  onChange={handleMagnetRadiusChange}
-                  className='h-9'
-                />
-              </FormField>
-            </div>
-
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <FormField label='Axis'>
-                <SelectSimple size='sm'
-                  value={magnetAxisValue}
-                  onValueChange={handleMagnetAxisChange}
-                  options={DRAG_AXES}
-                />
-              </FormField>
-              <FormField label='Return speed'>
-                <Input
-                  type='number'
-                  min={0.05}
-                  max={2}
-                  step={0.05}
-                  value={magnetReturnValue}
-                  onChange={handleMagnetReturnChange}
-                  className='h-9'
-                />
-              </FormField>
-            </div>
-          </div>
-        )}
-      </FormSection>
+      <AdvancedObserverMagnetSection config={config} onChange={onChange} />
     </>
   );
 }

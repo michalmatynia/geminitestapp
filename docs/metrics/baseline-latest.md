@@ -1,13 +1,13 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T07:51:24.990Z
+Generated at: 2026-02-17T14:42:07.496Z
 
 ## Snapshot
 
-- Source files: 2611
-- Source lines: 423532
+- Source files: 2623
+- Source lines: 424274
 - use client files: 897
-- Files >= 1000 LOC: 43
+- Files >= 1000 LOC: 35
 - Files >= 1500 LOC: 21
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 293
@@ -42,7 +42,7 @@ Generated at: 2026-02-17T07:51:24.990Z
 
 | Edge | References |
 | --- | ---: |
-| `integrations -> products` | 51 |
+| `integrations -> products` | 54 |
 | `ai -> observability` | 42 |
 | `jobs -> observability` | 30 |
 | `products -> observability` | 29 |
@@ -50,7 +50,7 @@ Generated at: 2026-02-17T07:51:24.990Z
 | `drafter -> products` | 26 |
 | `jobs -> ai` | 26 |
 | `products -> ai` | 25 |
-| `cms -> gsap` | 20 |
+| `cms -> gsap` | 22 |
 | `ai -> products` | 19 |
 | `integrations -> observability` | 19 |
 | `integrations -> data-import-export` | 16 |
@@ -68,17 +68,17 @@ Generated at: 2026-02-17T07:51:24.990Z
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2524 |
 | `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 2481 |
 | `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2422 |
-| `src/features/case-resolver/settings.ts` | 2322 |
+| `src/features/case-resolver/settings.ts` | 2402 |
 | `src/shared/ui/vector-canvas.tsx` | 2236 |
 | `src/features/ai/agent-runtime/planning/llm.ts` | 2225 |
 | `src/features/integrations/services/exports/base-exporter.ts` | 2148 |
 | `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2129 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
-| `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1925 |
 | `src/features/prompt-exploder/components/SegmentEditorPanel.tsx` | 1908 |
 | `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1896 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 1882 |
+| `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1808 |
 | `src/features/ai/ai-paths/components/job-queue-panel.tsx` | 1787 |
+| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1787 |
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
-| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1729 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1690 |

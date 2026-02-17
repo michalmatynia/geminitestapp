@@ -535,6 +535,7 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     documentContentMarkdown: file.documentContentMarkdown,
     documentContentHtml: file.documentContentHtml,
     documentContentPlainText: file.documentContentPlainText,
+    documentHistory: file.documentHistory,
     documentConversionWarnings: file.documentConversionWarnings,
     lastContentConversionAt: file.lastContentConversionAt,
     scanSlots: file.scanSlots,

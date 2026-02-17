@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-02-17T14:42:07.496Z",
+  "generatedAt": "2026-02-17T14:37:08.997Z",
   "source": {
-    "totalFiles": 2623,
-    "totalLines": 424274,
+    "totalFiles": 2620,
+    "totalLines": 423779,
     "useClientFiles": 897,
     "filesOver800": 83,
-    "filesOver1000": 35,
-    "filesOver1500": 21,
+    "filesOver1000": 36,
+    "filesOver1500": 22,
     "largestFile": {
       "path": "src/features/database/services/database-sync.ts",
       "lines": 3352
@@ -150,7 +150,7 @@
       },
       {
         "edge": "cms -> gsap",
-        "references": 22
+        "references": 20
       },
       {
         "edge": "ai -> products",
@@ -220,8 +220,8 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 438,
-        "lines": 118135
+        "files": 437,
+        "lines": 117834
       },
       {
         "feature": "products",
@@ -230,8 +230,8 @@
       },
       {
         "feature": "cms",
-        "files": 204,
-        "lines": 38161
+        "files": 203,
+        "lines": 38123
       },
       {
         "feature": "integrations",
@@ -245,8 +245,8 @@
       },
       {
         "feature": "case-resolver",
-        "files": 37,
-        "lines": 18311
+        "files": 36,
+        "lines": 18155
       },
       {
         "feature": "notesapp",
@@ -411,7 +411,7 @@
       },
       {
         "path": "src/features/case-resolver/settings.ts",
-        "lines": 2402
+        "lines": 2322
       },
       {
         "path": "src/shared/ui/vector-canvas.tsx",
@@ -454,12 +454,12 @@
         "lines": 1787
       },
       {
-        "path": "src/features/case-resolver/hooks/useCaseResolverState.ts",
-        "lines": 1787
-      },
-      {
         "path": "src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx",
         "lines": 1763
+      },
+      {
+        "path": "src/features/case-resolver/hooks/useCaseResolverState.ts",
+        "lines": 1729
       },
       {
         "path": "src/features/ai/image-studio/components/RightSidebar.tsx",
@@ -470,16 +470,16 @@
         "lines": 1682
       },
       {
+        "path": "src/features/case-resolver/pages/AdminCaseResolverPage.tsx",
+        "lines": 1508
+      },
+      {
         "path": "src/features/cms/components/page-builder/registry/block-definitions.ts",
         "lines": 1490
       },
       {
         "path": "src/features/ai/image-studio/pages/AdminImageStudioSettingsPage.tsx",
         "lines": 1480
-      },
-      {
-        "path": "src/features/case-resolver/pages/AdminCaseResolverPage.tsx",
-        "lines": 1475
       },
       {
         "path": "src/features/products/components/settings/validator-settings/useValidatorSettingsController.ts",

@@ -425,8 +425,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const {
     activeFile,
     workspace,
-    onUploadScanFiles,
-    onRunScanFileOcr,
     onUploadAssets,
     onGraphChange,
     onEditFile,
@@ -452,11 +450,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const [isDropImporting, setIsDropImporting] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
   const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
-  const [isUploadingScanFiles, setIsUploadingScanFiles] = useState(false);
-  const [isRunningScanOcr, setIsRunningScanOcr] = useState(false);
-  const scanUploadInputRef = useRef<HTMLInputElement | null>(null);
-  const isScanFile = activeFile?.fileType === 'scanfile';
-  const scanSlots = isScanFile ? activeFile.scanSlots : [];
 
   useEffect(() => {
     if (!configOpen) return;
@@ -1465,119 +1458,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     [availableFilesById, compiled.outputsByNode, normalizedDocumentSourceFileIdByNode, normalizedNodeMeta]
   );
 
-  const triggerScanUpload = React.useCallback((): void => {
-    if (!isScanFile || isUploadingScanFiles) return;
-    scanUploadInputRef.current?.click();
-  }, [isScanFile, isUploadingScanFiles]);
-
-  const handleScanUploadInputChange = React.useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-      const files = Array.from(event.target.files ?? []);
-      event.target.value = '';
-      if (!isScanFile || activeFile?.fileType !== 'scanfile') return;
-      if (files.length === 0) return;
-      setIsUploadingScanFiles(true);
-      try {
-        await onUploadScanFiles(activeFile.id, files);
-      } catch (error: unknown) {
-        toast(
-          error instanceof Error ? error.message : 'Failed to upload scan images.',
-          { variant: 'error' }
-        );
-      } finally {
-        setIsUploadingScanFiles(false);
-      }
-    },
-    [activeFile, isScanFile, onUploadScanFiles, toast]
-  );
-
-  const handleRunScanOcr = React.useCallback(async (): Promise<void> => {
-    if (!isScanFile || activeFile?.fileType !== 'scanfile') return;
-    setIsRunningScanOcr(true);
-    try {
-      await onRunScanFileOcr(activeFile.id);
-    } catch (error: unknown) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to run OCR.',
-        { variant: 'error' }
-      );
-    } finally {
-      setIsRunningScanOcr(false);
-    }
-  }, [activeFile, isScanFile, onRunScanFileOcr, toast]);
-
   return (
     <div className='h-[calc(100vh-120px)] w-full'>
       <div className='flex min-h-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
-        {isScanFile ? (
-          <div className='border-b border-border/60 px-4 py-3'>
-            <input
-              ref={scanUploadInputRef}
-              type='file'
-              accept='image/*'
-              multiple
-              className='hidden'
-              onChange={(event): void => {
-                void handleScanUploadInputChange(event);
-              }}
-            />
-            <div className='flex flex-wrap items-center gap-2'>
-              <div className='text-xs font-medium text-gray-200'>Image Slots</div>
-              <div className='ml-auto flex items-center gap-2'>
-                <Button
-                  type='button'
-                  onClick={triggerScanUpload}
-                  disabled={isUploadingScanFiles || isRunningScanOcr}
-                  className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60'
-                >
-                  {isUploadingScanFiles ? 'Uploading...' : 'Upload Images'}
-                </Button>
-                <Button
-                  type='button'
-                  onClick={(): void => {
-                    void handleRunScanOcr();
-                  }}
-                  disabled={scanSlots.length === 0 || isRunningScanOcr || isUploadingScanFiles}
-                  className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15 disabled:opacity-60'
-                >
-                  {isRunningScanOcr ? 'Running OCR...' : 'Run OCR'}
-                </Button>
-              </div>
-            </div>
-            <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
-              {scanSlots.length === 0 ? (
-                <div className='rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500'>
-                  No images uploaded yet.
-                </div>
-              ) : (
-                scanSlots.map((slot) => (
-                  <div
-                    key={slot.id}
-                    className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-2 py-1.5 text-[11px]'
-                  >
-                    <div className='min-w-0'>
-                      <div className='truncate text-gray-200'>{slot.name || 'Untitled image'}</div>
-                      <div className='text-gray-500'>
-                        {slot.ocrText.trim().length > 0 ? 'OCR extracted' : 'OCR pending'}
-                      </div>
-                    </div>
-                    {slot.filepath ? (
-                      <a
-                        href={slot.filepath}
-                        target='_blank'
-                        rel='noreferrer'
-                        className='text-cyan-200 hover:text-cyan-100'
-                      >
-                        Open
-                      </a>
-                    ) : null}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        ) : null}
-
         <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
           <Button
             type='button'

@@ -21,6 +21,14 @@ import { cn } from '@/shared/utils';
 
 import { useRuleItemDragState } from './context/RuleListDragContext';
 import {
+  addAutofixOperationToRule,
+  addSimilarToRule,
+  removeAutofixOperationFromRule,
+  removeSimilarFromRule,
+  updateAutofixOperationInRule,
+  updateSimilarInRule,
+} from './rule-item-mutations';
+import {
   LAUNCH_OPERATORS,
   PROMPT_EXPLODER_SEGMENT_OPTIONS,
   SCOPE_OPTIONS,
@@ -32,6 +40,7 @@ import {
   normalizeRuleKind,
   normalizeRuleScopes,
 } from './rule-item-utils';
+import { RuleItemSimilarPatternsSection } from './RuleItemSimilarPatternsSection';
 import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
 import {
   type PromptExploderRuleSegmentType,
@@ -130,87 +139,24 @@ export function RuleItem({
 
   const updateSimilar = (
     index: number,
-    patch: Partial<PromptValidationSimilarPattern>
-  ): void => {
-    if (!rule) return;
-    const next = [...(rule.similar ?? [])];
-    const current = next[index];
-    if (!current) return;
-    next[index] = { ...current, ...patch };
-    patchRule({ similar: next });
-  };
+    patch: Partial<PromptValidationSimilarPattern>,
+  ): void => updateSimilarInRule(rule, patchRule, index, patch);
 
-  const removeSimilar = (index: number): void => {
-    if (!rule) return;
-    const next = (rule.similar ?? []).filter((_item, idx) => idx !== index);
-    patchRule({ similar: next });
-  };
+  const removeSimilar = (index: number): void =>
+    removeSimilarFromRule(rule, patchRule, index);
 
-  const addSimilar = (): void => {
-    if (!rule) return;
-    const next = [
-      ...(rule.similar ?? []),
-      {
-        pattern: '',
-        flags: '',
-        suggestion: '',
-        comment: null,
-      },
-    ];
-    patchRule({ similar: next });
-  };
+  const addSimilar = (): void => addSimilarToRule(rule, patchRule);
 
   const updateAutofixOperation = (
     index: number,
-    operation: PromptAutofixOperation
-  ): void => {
-    if (!rule) return;
-    const currentOps = rule.autofix?.operations ?? [];
-    const next = [...currentOps];
-    if (!next[index]) return;
-    next[index] = operation;
-    patchRule({
-      autofix: {
-        enabled: rule.autofix?.enabled ?? true,
-        operations: next,
-      },
-    });
-  };
+    operation: PromptAutofixOperation,
+  ): void => updateAutofixOperationInRule(rule, patchRule, index, operation);
 
-  const removeAutofixOperation = (index: number): void => {
-    if (!rule) return;
-    const currentOps = rule.autofix?.operations ?? [];
-    const next = currentOps.filter((_item, idx) => idx !== index);
-    patchRule({
-      autofix: {
-        enabled: rule.autofix?.enabled ?? true,
-        operations: next,
-      },
-    });
-  };
+  const removeAutofixOperation = (index: number): void =>
+    removeAutofixOperationFromRule(rule, patchRule, index);
 
-  const addAutofixOperation = (kind: PromptAutofixOperation['kind']): void => {
-    if (!rule) return;
-    const currentOps = rule.autofix?.operations ?? [];
-    let nextOperation: PromptAutofixOperation;
-    if (kind === 'params_json') {
-      nextOperation = { kind: 'params_json', comment: null };
-    } else {
-      nextOperation = {
-        kind: 'replace',
-        pattern: '',
-        flags: '',
-        replacement: '',
-        comment: null,
-      };
-    }
-    patchRule({
-      autofix: {
-        enabled: rule.autofix?.enabled ?? true,
-        operations: [...currentOps, nextOperation],
-      },
-    });
-  };
+  const addAutofixOperation = (kind: PromptAutofixOperation['kind']): void =>
+    addAutofixOperationToRule(rule, patchRule, kind);
 
   return (
     <div
@@ -825,84 +771,12 @@ export function RuleItem({
             ) : null}
           </div>
 
-          <div className='space-y-3 rounded border border-border/40 bg-foreground/5 p-3'>
-            <div className='flex items-center justify-between gap-2'>
-              <div className='text-xs font-semibold uppercase tracking-wide text-gray-300'>
-                Similar Patterns
-              </div>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={addSimilar}
-              >
-                Add Similar
-              </Button>
-            </div>
-            {rule.similar.length === 0 ? (
-              <div className='text-xs text-gray-400'>No similar patterns configured.</div>
-            ) : null}
-            {rule.similar.map((sim, index) => (
-              <div
-                key={`${rule.id}-similar-${index}`}
-                className='grid gap-2 rounded border border-border/40 bg-background/40 p-2 md:grid-cols-6'
-              >
-                <div className='space-y-1 md:col-span-3'>
-                  <Label className='text-[11px] text-slate-300'>Pattern</Label>
-                  <Input
-                    className='h-8 font-mono'
-                    value={sim.pattern}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      updateSimilar(index, { pattern: event.target.value });
-                    }}
-                  />
-                </div>
-                <div className='space-y-1 md:col-span-1'>
-                  <Label className='text-[11px] text-slate-300'>Flags</Label>
-                  <Input
-                    className='h-8 font-mono'
-                    value={sim.flags ?? ''}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      updateSimilar(index, { flags: event.target.value.trim() || undefined });
-                    }}
-                  />
-                </div>
-                <div className='space-y-1 md:col-span-2'>
-                  <Label className='text-[11px] text-slate-300'>Suggestion</Label>
-                  <Input
-                    className='h-8'
-                    value={sim.suggestion}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      updateSimilar(index, { suggestion: event.target.value });
-                    }}
-                  />
-                </div>
-                <div className='space-y-1 md:col-span-5'>
-                  <Label className='text-[11px] text-slate-300'>Comment</Label>
-                  <Input
-                    className='h-8'
-                    value={sim.comment ?? ''}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                      updateSimilar(index, {
-                        comment: event.target.value.trim() || null,
-                      });
-                    }}
-                  />
-                </div>
-                <div className='flex items-end md:col-span-1'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={() => removeSimilar(index)}
-                    className='w-full'
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <RuleItemSimilarPatternsSection
+            rule={rule}
+            onAddSimilar={addSimilar}
+            onUpdateSimilar={updateSimilar}
+            onRemoveSimilar={removeSimilar}
+          />
 
           <div className='space-y-3 rounded border border-border/40 bg-foreground/5 p-3'>
             <div className='flex flex-wrap items-center justify-between gap-2'>

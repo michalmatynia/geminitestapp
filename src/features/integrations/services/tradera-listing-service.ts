@@ -17,7 +17,6 @@ import {
 } from '@/features/integrations/constants/slugs';
 import {
   DEFAULT_TRADERA_SYSTEM_SETTINGS,
-  resolveTraderaSystemSettings,
   TRADERA_SETTINGS_KEYS,
   type TraderaSystemSettings,
 } from '@/features/integrations/constants/tradera';
@@ -30,22 +29,21 @@ import {
   addTraderaShopItem,
   type TraderaApiCredentials,
 } from '@/features/integrations/services/tradera-api-client';
+import {
+  parsePersistedStorageState,
+  resolveConnectionPlaywrightSettings,
+} from '@/features/integrations/services/tradera-playwright-settings';
+import {
+  loadTraderaSystemSettings,
+  toTruthyBoolean,
+} from '@/features/integrations/services/tradera-system-settings';
 import type { IntegrationConnectionRecord } from '@/features/integrations/types/integrations';
 import type { ProductListingRecord } from '@/features/integrations/types/listings';
 import { ErrorSystem } from '@/features/observability/server';
-import {
-  defaultPlaywrightSettings,
-  PLAYWRIGHT_PERSONA_SETTINGS_KEY,
-} from '@/features/playwright/constants/playwright';
 import { getProductRepository, getSettingValue } from '@/features/products/server';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import { parseJsonSetting } from '@/shared/utils/settings-json';
-
-type PersistedStorageState = NonNullable<
-  Exclude<BrowserContextOptions['storageState'], string>
->;
 
 export type TraderaListingJobInput = {
   listingId: string;
@@ -151,161 +149,6 @@ const toUserFacingTraderaFailure = (
     return 'Tradera login requires manual verification. Open login window and retry.';
   }
   return message;
-};
-
-const toTruthyBoolean = (value: string | null | undefined, fallback: boolean): boolean => {
-  if (!value) return fallback;
-  const normalized = value.trim().toLowerCase();
-  if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
-  if (['false', '0', 'no', 'off'].includes(normalized)) return false;
-  return fallback;
-};
-
-const parseSettingsFromMap = (map: Map<string, string>): TraderaSystemSettings =>
-  resolveTraderaSystemSettings({
-    get: (key: string): string | null => map.get(key) ?? null,
-  });
-
-const loadTraderaSystemSettings = async (): Promise<TraderaSystemSettings> => {
-  const keys = Object.values(TRADERA_SETTINGS_KEYS);
-  const values = await Promise.all(
-    keys.map(async (key: string) => [key, await getSettingValue(key)] as const)
-  );
-  const map = new Map<string, string>();
-  for (const [key, value] of values) {
-    if (typeof value === 'string') {
-      map.set(key, value);
-    }
-  }
-  return parseSettingsFromMap(map);
-};
-
-type TraderaPlaywrightRuntimeSettings = {
-  headless: boolean;
-  slowMo: number;
-  timeout: number;
-  navigationTimeout: number;
-  proxyEnabled: boolean;
-  proxyServer: string;
-  proxyUsername: string;
-  proxyPassword: string;
-  emulateDevice: boolean;
-  deviceName: string;
-};
-
-const parsePersistedStorageState = (
-  encryptedValue: string | null | undefined
-): PersistedStorageState | null => {
-  if (!encryptedValue) return null;
-  try {
-    const raw = decryptSecret(encryptedValue);
-    const parsed = JSON.parse(raw) as unknown;
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      Array.isArray((parsed as { cookies?: unknown[] }).cookies) &&
-      Array.isArray((parsed as { origins?: unknown[] }).origins)
-    ) {
-      return {
-        cookies: (parsed as PersistedStorageState).cookies,
-        origins: (parsed as PersistedStorageState).origins,
-      };
-    }
-  } catch {
-    return null;
-  }
-  return null;
-};
-
-const toBoolean = (value: unknown, fallback: boolean): boolean =>
-  typeof value === 'boolean' ? value : fallback;
-
-const toFiniteNumber = (
-  value: unknown,
-  fallback: number,
-  min = 0
-): number => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return Math.max(min, Math.floor(value));
-  }
-  return fallback;
-};
-
-const toTrimmedString = (value: unknown, fallback = ''): string =>
-  typeof value === 'string' ? value.trim() : fallback;
-
-const findPersonaSettings = (
-  raw: unknown,
-  personaId: string
-): Record<string, unknown> | null => {
-  if (!Array.isArray(raw)) return null;
-  for (const persona of raw) {
-    if (!persona || typeof persona !== 'object') continue;
-    const id = (persona as { id?: unknown }).id;
-    if (typeof id !== 'string' || id !== personaId) continue;
-    const settings = (persona as { settings?: unknown }).settings;
-    if (!settings || typeof settings !== 'object') return null;
-    return settings as Record<string, unknown>;
-  }
-  return null;
-};
-
-const resolveConnectionPlaywrightSettings = async (
-  connection: IntegrationConnectionRecord
-): Promise<TraderaPlaywrightRuntimeSettings> => {
-  const base: TraderaPlaywrightRuntimeSettings = {
-    headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
-    slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
-    timeout: connection.playwrightTimeout ?? defaultPlaywrightSettings.timeout,
-    navigationTimeout:
-      connection.playwrightNavigationTimeout ??
-      defaultPlaywrightSettings.navigationTimeout,
-    proxyEnabled:
-      connection.playwrightProxyEnabled ?? defaultPlaywrightSettings.proxyEnabled,
-    proxyServer: connection.playwrightProxyServer?.trim() ?? '',
-    proxyUsername: connection.playwrightProxyUsername?.trim() ?? '',
-    proxyPassword: connection.playwrightProxyPassword
-      ? decryptSecret(connection.playwrightProxyPassword)
-      : '',
-    emulateDevice:
-      connection.playwrightEmulateDevice ??
-      defaultPlaywrightSettings.emulateDevice,
-    deviceName:
-      connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName,
-  };
-
-  const personaId = connection.playwrightPersonaId?.trim();
-  if (!personaId) return base;
-
-  const raw = await getSettingValue(PLAYWRIGHT_PERSONA_SETTINGS_KEY);
-  const parsed = parseJsonSetting<unknown>(raw, null);
-  const personaSettings = findPersonaSettings(parsed, personaId);
-  if (!personaSettings) return base;
-
-  const personaProxyPassword = toTrimmedString(
-    personaSettings['proxyPassword'],
-    ''
-  );
-
-  return {
-    headless: toBoolean(personaSettings['headless'], base.headless),
-    slowMo: toFiniteNumber(personaSettings['slowMo'], base.slowMo, 0),
-    timeout: toFiniteNumber(personaSettings['timeout'], base.timeout, 1000),
-    navigationTimeout: toFiniteNumber(
-      personaSettings['navigationTimeout'],
-      base.navigationTimeout,
-      1000
-    ),
-    proxyEnabled: toBoolean(personaSettings['proxyEnabled'], base.proxyEnabled),
-    proxyServer: toTrimmedString(personaSettings['proxyServer'], base.proxyServer),
-    proxyUsername: toTrimmedString(
-      personaSettings['proxyUsername'],
-      base.proxyUsername
-    ),
-    proxyPassword: personaProxyPassword || base.proxyPassword,
-    emulateDevice: toBoolean(personaSettings['emulateDevice'], base.emulateDevice),
-    deviceName: toTrimmedString(personaSettings['deviceName'], base.deviceName),
-  };
 };
 
 const resolveConnectionListingSettings = (

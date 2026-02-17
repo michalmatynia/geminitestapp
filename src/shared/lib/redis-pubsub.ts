@@ -25,6 +25,9 @@ const captureException = async (error: unknown, context: { source: string; conte
       ...context.context,
     });
   } catch {
+    // ignore
+  }
+};
 
 const PUBLISH_CIRCUIT_ID = 'redis-pubsub-publish';
 const PUBLISH_FAILURE_THRESHOLD = 5;

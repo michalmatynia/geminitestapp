@@ -57,6 +57,18 @@ export type CaseResolverScanSlot = {
   ocrText: string;
 };
 
+export type CaseResolverDocumentHistoryEntry = {
+  id: string;
+  savedAt: string;
+  documentContentVersion: number;
+  activeDocumentVersion: CaseResolverDocumentVersion;
+  editorType: CaseResolverEditorType;
+  documentContent: string;
+  documentContentMarkdown: string;
+  documentContentHtml: string;
+  documentContentPlainText: string;
+};
+
 export type CaseResolverNodeMeta = {
   role: CaseResolverNodeRole;
   includeInOutput: boolean;
@@ -135,6 +147,7 @@ export type CaseResolverFile = {
   documentContentMarkdown: string;
   documentContentHtml: string;
   documentContentPlainText: string;
+  documentHistory: CaseResolverDocumentHistoryEntry[];
   documentConversionWarnings: string[];
   lastContentConversionAt: string;
   scanSlots: CaseResolverScanSlot[];
@@ -170,6 +183,7 @@ export type CaseResolverFileEditDraft = {
   documentContentMarkdown: string;
   documentContentHtml: string;
   documentContentPlainText: string;
+  documentHistory: CaseResolverDocumentHistoryEntry[];
   documentConversionWarnings: string[];
   lastContentConversionAt: string;
   scanSlots: CaseResolverScanSlot[];

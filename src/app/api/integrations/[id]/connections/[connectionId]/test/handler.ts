@@ -1,6 +1,3 @@
-import { mkdir, readdir, stat, unlink, writeFile } from 'fs/promises';
-import path from 'path';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { chromium, devices } from 'playwright';
 
@@ -11,6 +8,7 @@ import {
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { getTraderaUserInfo } from '@/features/integrations/services/tradera-api-client';
+import { createTraderaBrowserTestUtils } from '@/features/integrations/services/tradera-browser-test-utils';
 import { internalError } from '@/shared/errors/app-error';
 import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -424,216 +422,36 @@ export async function postTestConnectionHandler(
       return fail('Launching Playwright', message);
     }
     
-    const randomBetween = (min: number, max: number) =>
-      Math.floor(Math.random() * (max - min + 1)) + min;
-    const safeWaitForSelector = async (
-      selector: string,
-      options: Parameters<NonNullable<typeof page>['waitForSelector']>[1],
-      label: string
-    ) => {
-      if (!page) throw internalError('Browser page not initialized');
-      try {
-        return await page.waitForSelector(selector, options);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        throw internalError(`${label} wait failed: ${message}`);
-      }
-    };
-    const safeWaitFor = async (
-      locator: ReturnType<NonNullable<typeof page>['locator']>,
-      options: Parameters<ReturnType<NonNullable<typeof page>['locator']>['waitFor']>[0],
-      label: string
-    ) => {
-      try {
-        await locator.waitFor(options); return;
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        throw internalError(`${label} wait failed: ${message}`);
-      }
-    };
-    const safeCount = async (
-      locator: ReturnType<NonNullable<typeof page>['locator']>,
-      label: string
-    ) => {
-      try {
-        return await locator.count();
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        throw internalError(`${label} count failed: ${message}`);
-      }
-    };
-    const safeIsVisible = async (
-      locator: ReturnType<NonNullable<typeof page>['locator']>,
-      label: string
-    ) => {
-      try {
-        return await locator.isVisible();
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        throw internalError(`${label} visibility check failed: ${message}`);
-      }
-    };
-    const safeInnerText = async (
-      locator: ReturnType<NonNullable<typeof page>['locator']>,
-      label: string
-    ) => {
-      try {
-        return await locator.innerText();
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        throw internalError(`${label} text read failed: ${message}`);
-      }
-    };
-    const safeGoto = async (
-      url: string,
-      options: Parameters<NonNullable<typeof page>['goto']>[1],
-      label: string
-    ) => {
-      if (!page) throw internalError('Browser page not initialized');
-      try {
-        return await page.goto(url, options);
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        throw internalError(`${label} navigation failed: ${message}`);
-      }
-    };
-    const safeWaitForLoadState = async (
-      state: Parameters<NonNullable<typeof page>['waitForLoadState']>[0],
-      options: Parameters<NonNullable<typeof page>['waitForLoadState']>[1],
-      label: string
-    ) => {
-      if (!page) throw internalError('Browser page not initialized');
-      try {
-        await page.waitForLoadState(state, options); return;
-      } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Unknown error';
-        throw internalError(`${label} load state failed: ${message}`);
-      }
-    };
-    const captureDebugArtifacts = async (label: string) => {
-      if (!page) return '';
-      try {
-        const now = new Date().toISOString().replace(/[:.]/g, '-');
-        const safeLabel = label
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .slice(0, 40);
-        const baseDir = path.join(process.cwd(), 'playwright-debug');
-        await mkdir(baseDir, { recursive: true });
-        try {
-          const entries = await readdir(baseDir);
-          const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-          await Promise.all(
-            entries.map(async (entry) => {
-              const entryPath = path.join(baseDir, entry);
-              const info = await stat(entryPath);
-              if (info.mtimeMs < cutoff) {
-                await unlink(entryPath);
-              }
-            })
-          );
-        } catch {
-          // best-effort cleanup only
-        }
-        const prefix = `${connection.id}-${now}-${safeLabel || 'debug'}`;
-        const screenshotPath = path.join(baseDir, `${prefix}.png`);
-        const htmlPath = path.join(baseDir, `${prefix}.html`);
-        await page
-          .screenshot({ path: screenshotPath, fullPage: true })
-          .catch(() => undefined);
-        const html = await page.content().catch(() => '');
-        if (html) {
-          await writeFile(htmlPath, html, 'utf8');
-        }
-        return `Screenshot: ${screenshotPath}\nHTML: ${htmlPath}`;
-      } catch {
-        return '';
-      }
-    };
-    const failWithDebug = async (
-      step: string,
-      detail: string,
-      status = 400
-    ) => {
-      const debugInfo = await captureDebugArtifacts(step);
-      const combined = debugInfo
-        ? `${detail}\n\nDebug:\n${debugInfo}`
-        : detail;
-      return fail(step, combined, status);
-    };
-    const humanizedPause = async (
-      min = actionDelayMin,
-      max = actionDelayMax
-    ) => {
-      if (!humanizeMouse || !page) return;
-      const delay = randomBetween(min, max);
-      if (delay > 0) {
-        await page.waitForTimeout(delay);
-      }
-    };
-    const humanizedClick = async (
-      locator: ReturnType<NonNullable<typeof page>['locator']>
-    ) => {
-      if (!humanizeMouse) {
-        await locator.click();
-        return;
-      }
-      if (!page) {
-        await locator.click();
-        return;
-      }
-      const box = await locator.boundingBox();
-      if (!box) {
-        await locator.click();
-        return;
-      }
-      const offsetX = randomBetween(-mouseJitter, mouseJitter);
-      const offsetY = randomBetween(-mouseJitter, mouseJitter);
-      const targetX = box.x + box.width / 2 + offsetX;
-      const targetY = box.y + box.height / 2 + offsetY;
-      const steps = randomBetween(8, 18);
-      await page.mouse.move(targetX, targetY, { steps });
-      const delay = randomBetween(clickDelayMin, clickDelayMax);
-      await page.mouse.click(targetX, targetY, { delay });
-    };
-    const humanizedFill = async (
-      locator: ReturnType<NonNullable<typeof page>['locator']>,
-      value: string
-    ) => {
-      await locator.fill(value);
-      if (!humanizeMouse || !page) return;
-      const delay = randomBetween(inputDelayMin, inputDelayMax);
-      if (delay > 0) {
-        await page.waitForTimeout(delay);
-      }
-    };
-    const successSelector = [
-      'a[href*="logout"]',
-      'a:has-text("Logga ut")',
-      'a:has-text("Logout")',
-      'a:has-text("Mina sidor")',
-      'a:has-text("My pages")',
-      'button[aria-label*="Account"]',
-      'button[aria-label*="Profile"]',
-      'a[href*="/profile"]',
-      'a[href*="/my"]'
-    ].join(', ');
-    const errorSelector = [
-      '[data-testid*="error"]',
-      '[data-test*="error"]',
-      '[role="alert"]',
-      '.alert',
-      '.form-error',
-      '.error',
-      '.text-red-500'
-    ].join(', ');
+    if (!page) {
+      return fail('Launching Playwright', 'Browser page not initialized');
+    }
+    const {
+      safeWaitForSelector,
+      safeWaitFor,
+      safeCount,
+      safeIsVisible,
+      safeInnerText,
+      safeGoto,
+      safeWaitForLoadState,
+      failWithDebug,
+      humanizedPause,
+      humanizedClick,
+      humanizedFill,
+      successSelector,
+      errorSelector,
+    } = createTraderaBrowserTestUtils({
+      page,
+      connectionId: connection.id,
+      fail,
+      humanizeMouse,
+      mouseJitter,
+      clickDelayMin,
+      clickDelayMax,
+      inputDelayMin,
+      inputDelayMax,
+      actionDelayMin,
+      actionDelayMax,
+    });
 
     let sessionReused = false;
     if (storedState) {

@@ -51,6 +51,7 @@ import {
 } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
+import { buildPathLabelMap } from './admin-case-resolver-page-helpers';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   normalizeFolderPath,
@@ -61,6 +62,7 @@ import { isPathWithinFolder } from '../utils/caseResolverUtils';
 
 import type {
   CaseResolverCategory,
+  CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,
   CaseResolverGraph,
   CaseResolverIdentifier,
@@ -71,38 +73,17 @@ import type {
 const ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR =
   process.env['NEXT_PUBLIC_CASE_RESOLVER_MULTIFORMAT_EDITOR'] !== 'false';
 
-const buildPathLabelMap = <T extends { id: string; name: string; parentId: string | null }>(
-  items: T[]
-): Map<string, string> => {
-  const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
-  const cache = new Map<string, string>();
-
-  const resolveLabel = (id: string, visited: Set<string>): string => {
-    const cached = cache.get(id);
-    if (cached) return cached;
-    const item = byId.get(id);
-    if (!item) return '';
-    if (visited.has(id)) {
-      cache.set(id, item.name);
-      return item.name;
-    }
-    if (!item.parentId || !byId.has(item.parentId)) {
-      cache.set(id, item.name);
-      return item.name;
-    }
-    const nextVisited = new Set(visited);
-    nextVisited.add(id);
-    const parentLabel = resolveLabel(item.parentId, nextVisited);
-    const label = `${parentLabel} / ${item.name}`;
-    cache.set(id, label);
-    return label;
-  };
-
-  items.forEach((item: T): void => {
-    resolveLabel(item.id, new Set<string>());
-  });
-
-  return cache;
+const formatHistoryTimestamp = (value: string): string => {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return value;
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(parsed);
 };
 
 export function AdminCaseResolverPage(): React.JSX.Element {
@@ -186,12 +167,13 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   ]);
 
   const [editorWidth, setEditorWidth] = React.useState<number | null>(null);
-  const [editorDetailsTab, setEditorDetailsTab] = React.useState<'document' | 'metadata'>('document');
+  const [editorDetailsTab, setEditorDetailsTab] = React.useState<'document' | 'metadata' | 'history'>('document');
   const [isDraggingSplitter, setIsDraggingSplitter] = React.useState(false);
   const [editorContentRevisionSeed, setEditorContentRevisionSeed] = React.useState(0);
   const editorSplitRef = React.useRef<HTMLDivElement | null>(null);
   const editorTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const scanDraftUploadInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [isScanDraftDropActive, setIsScanDraftDropActive] = React.useState(false);
   const initialDraftFingerprintRef = React.useRef<string | null>(null);
 
   const preserveWorkspaceView = useCallback(
@@ -493,10 +475,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     scanDraftUploadInputRef.current?.click();
   }, [editingDocumentDraft, isUploadingScanDraftFiles]);
 
-  const handleScanDraftUploadInputChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>): void => {
-      const files = Array.from(event.target.files ?? []);
-      event.target.value = '';
+  const uploadScanDraftFiles = useCallback(
+    (files: File[]): void => {
       if (editingDocumentDraft?.fileType !== 'scanfile') return;
       if (files.length === 0) return;
       void handleUploadScanFiles(editingDocumentDraft.id, files).catch((error: unknown) => {
@@ -509,6 +489,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     [editingDocumentDraft, handleUploadScanFiles, toast]
   );
 
+  const handleScanDraftUploadInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const files = Array.from(event.target.files ?? []);
+      event.target.value = '';
+      uploadScanDraftFiles(files);
+    },
+    [uploadScanDraftFiles]
+  );
+
   const handleRunScanDraftOcr = useCallback((): void => {
     if (editingDocumentDraft?.fileType !== 'scanfile') return;
     void handleRunScanFileOcr(editingDocumentDraft.id).catch((error: unknown) => {
@@ -518,6 +507,50 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       );
     });
   }, [editingDocumentDraft, handleRunScanFileOcr, toast]);
+
+  const handleScanDraftDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsScanDraftDropActive(false);
+      if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      if (isUploadingScanDraftFiles) return;
+      const files = Array.from(event.dataTransfer.files ?? []);
+      uploadScanDraftFiles(files);
+    },
+    [editingDocumentDraft, isUploadingScanDraftFiles, uploadScanDraftFiles]
+  );
+
+  const handleScanDraftDragEnter = useCallback(
+    (event: React.DragEvent<HTMLDivElement>): void => {
+      if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      const hasFiles = Array.from(event.dataTransfer.types ?? []).includes('Files');
+      if (!hasFiles) return;
+      event.preventDefault();
+      setIsScanDraftDropActive(true);
+    },
+    [editingDocumentDraft]
+  );
+
+  const handleScanDraftDragOver = useCallback(
+    (event: React.DragEvent<HTMLDivElement>): void => {
+      if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      const hasFiles = Array.from(event.dataTransfer.types ?? []).includes('Files');
+      if (!hasFiles) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      setIsScanDraftDropActive(true);
+    },
+    [editingDocumentDraft]
+  );
+
+  const handleScanDraftDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
+    const relatedTarget = event.relatedTarget;
+    if (relatedTarget instanceof Node && event.currentTarget.contains(relatedTarget)) {
+      return;
+    }
+    setIsScanDraftDropActive(false);
+  }, []);
 
   const applyDraftCanonicalContent = useCallback(
     (input: {
@@ -574,6 +607,27 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       html: editingDocumentDraft.documentContentHtml,
     });
   }, [applyDraftCanonicalContent, editingDocumentDraft]);
+
+  const handleUseHistoryEntry = useCallback((entry: CaseResolverDocumentHistoryEntry): void => {
+    if (!editingDocumentDraft) return;
+    const nextMode = entry.editorType;
+    applyDraftCanonicalContent({
+      mode: nextMode,
+      value: nextMode === 'wysiwyg' ? entry.documentContentHtml : entry.documentContentMarkdown,
+      html: entry.documentContentHtml,
+      markdown: entry.documentContentMarkdown,
+    });
+    updateEditingDocumentDraft({
+      activeDocumentVersion: entry.activeDocumentVersion,
+    });
+    setEditorDetailsTab('document');
+    toast('Revision loaded into the editor. Save to apply it.', { variant: 'info' });
+  }, [
+    applyDraftCanonicalContent,
+    editingDocumentDraft,
+    toast,
+    updateEditingDocumentDraft,
+  ]);
 
   const handleMoveFolder = useCallback(
     async (folderPath: string, targetFolder: string): Promise<void> => {
@@ -964,7 +1018,17 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               </div>
 
               {editingDocumentDraft.fileType === 'scanfile' ? (
-                <div className='rounded border border-border/60 bg-card/30 px-3 py-3'>
+                <div
+                  className={`rounded border px-3 py-3 transition ${
+                    isScanDraftDropActive
+                      ? 'border-cyan-500/70 bg-cyan-500/10'
+                      : 'border-border/60 bg-card/30'
+                  }`}
+                  onDragEnter={handleScanDraftDragEnter}
+                  onDragOver={handleScanDraftDragOver}
+                  onDragLeave={handleScanDraftDragLeave}
+                  onDrop={handleScanDraftDrop}
+                >
                   <input
                     ref={scanDraftUploadInputRef}
                     type='file'
@@ -997,6 +1061,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                         {uploadingScanSlotId !== null ? 'Running OCR...' : 'Run OCR'}
                       </Button>
                     </div>
+                  </div>
+                  <div className='mt-1 text-[11px] text-gray-500'>
+                    Drag and drop image files here, or use Upload Images.
                   </div>
                   <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
                     {editingDocumentDraft.scanSlots.length === 0 ? (
@@ -1039,7 +1106,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               <Tabs
                 value={editorDetailsTab}
                 onValueChange={(value: string): void => {
-                  if (value === 'document' || value === 'metadata') {
+                  if (value === 'document' || value === 'metadata' || value === 'history') {
                     setEditorDetailsTab(value);
                   }
                 }}
@@ -1048,6 +1115,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 <TabsList className='h-9'>
                   <TabsTrigger value='document' className='text-xs'>Document</TabsTrigger>
                   <TabsTrigger value='metadata' className='text-xs'>Case Metadata</TabsTrigger>
+                  <TabsTrigger value='history' className='text-xs'>History</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value='document' className='mt-0'>
@@ -1199,6 +1267,50 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                       />
                     </div>
                   </div>
+                </TabsContent>
+
+                <TabsContent value='history' className='mt-0'>
+                  {editingDocumentDraft.documentHistory.length === 0 ? (
+                    <div className='rounded border border-dashed border-border/60 px-3 py-3 text-xs text-gray-500'>
+                      No saved versions yet. Once you save an overwrite, the previous text will appear here.
+                    </div>
+                  ) : (
+                    <div className='space-y-2'>
+                      {editingDocumentDraft.documentHistory.map((entry: CaseResolverDocumentHistoryEntry) => (
+                        <div
+                          key={entry.id}
+                          className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'
+                        >
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            <div className='text-gray-300'>
+                              Version {entry.documentContentVersion} · {entry.editorType.toUpperCase()}
+                            </div>
+                            <div className='text-[11px] text-gray-500'>
+                              {formatHistoryTimestamp(entry.savedAt)}
+                            </div>
+                          </div>
+                          <div className='mt-2 max-h-28 overflow-auto rounded border border-border/60 bg-card/30 px-2 py-1.5 font-mono text-[11px] text-gray-400 whitespace-pre-wrap'>
+                            {entry.documentContentPlainText.trim().length > 0
+                              ? entry.documentContentPlainText
+                              : '(Empty version)'}
+                          </div>
+                          <div className='mt-2 flex justify-end'>
+                            <Button
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              className='h-7 text-[11px]'
+                              onClick={(): void => {
+                                handleUseHistoryEntry(entry);
+                              }}
+                            >
+                              Load Into Editor
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
 

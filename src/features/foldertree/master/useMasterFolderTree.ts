@@ -302,7 +302,6 @@ export function useMasterFolderTree(
 
         if (Array.isArray(persisted)) {
           const normalizedPersisted = normalizeMasterTreeNodes(persisted);
-          isApplyingDirectRef.current = false;
           syncState((prev: InternalMasterFolderTreeState) => ({
             ...prev,
             nodes: normalizedPersisted,
@@ -317,16 +316,24 @@ export function useMasterFolderTree(
             isApplying: false,
           }));
         } else {
-          isApplyingDirectRef.current = false;
           syncState((prev: InternalMasterFolderTreeState) => ({
             ...prev,
             isApplying: false,
           }));
         }
+        // Defer clearing the direct ref until AFTER React processes the
+        // state update and fires effects (including external-sync).
+        // This prevents a race where replaceNodes from a refetch-triggered
+        // external sync slips through because the ref was cleared before
+        // the effect had a chance to check it.
+        requestAnimationFrame(() => {
+          isApplyingDirectRef.current = false;
+        });
       } catch (error) {
-        isApplyingDirectRef.current = false;
-
-        if (token !== persistTokenRef.current) return { ok: false, code: 'PERSIST_CONFLICT' };
+        if (token !== persistTokenRef.current) {
+          requestAnimationFrame(() => { isApplyingDirectRef.current = false; });
+          return { ok: false, code: 'PERSIST_CONFLICT' };
+        }
 
         if (process.env.NODE_ENV !== 'production') {
           console.warn('[MasterFolderTree] applyOptimisticOperation failed:', {
@@ -346,6 +353,7 @@ export function useMasterFolderTree(
             cause: error,
           },
         });
+        requestAnimationFrame(() => { isApplyingDirectRef.current = false; });
         return toMasterFolderTreeActionFail('PERSIST_FAILED');
       }
 

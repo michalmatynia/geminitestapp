@@ -20,6 +20,7 @@ import {
   type CaseResolverAssetKind,
   type CaseResolverCategory,
   type CaseResolverDocumentFormatVersion,
+  type CaseResolverDocumentHistoryEntry,
   type CaseResolverIdentifier,
   type CaseResolverDocumentVersion,
   type CaseResolverEdgeMeta,
@@ -440,6 +441,82 @@ const normalizeDocumentContentVersion = (value: unknown): number => {
 const normalizeDocumentFormatVersion = (value: unknown): CaseResolverDocumentFormatVersion => {
   if (value === 1) return 1;
   return 1;
+};
+
+const CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT = 120;
+
+const normalizeCaseResolverDocumentHistory = (
+  input: unknown,
+  fallbackTimestamp: string
+): CaseResolverDocumentHistoryEntry[] => {
+  if (!Array.isArray(input)) return [];
+
+  const seen = new Set<string>();
+  const entries: CaseResolverDocumentHistoryEntry[] = [];
+
+  input.forEach((entry: unknown, index: number): void => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+    const record = entry as Record<string, unknown>;
+
+    const rawId =
+      typeof record['id'] === 'string' && record['id'].trim().length > 0
+        ? record['id'].trim()
+        : `doc-history-${index + 1}`;
+    if (seen.has(rawId)) return;
+    seen.add(rawId);
+
+    const fallbackContent =
+      typeof record['documentContent'] === 'string' ? record['documentContent'] : '';
+    const activeDocumentVersion = normalizeCaseResolverDocumentVersion(
+      record['activeDocumentVersion']
+    );
+    const resolvedMode: DocumentPersistenceMode = normalizeRawDocumentModeFromContent({
+      mode: record['editorType'],
+      rawContent: fallbackContent,
+      rawMarkdown: record['documentContentMarkdown'],
+      rawHtml: record['documentContentHtml'],
+    });
+    const canonical = deriveDocumentContentSync({
+      mode: resolvedMode,
+      value:
+        resolvedMode === 'wysiwyg'
+          ? (typeof record['documentContentHtml'] === 'string'
+            ? record['documentContentHtml']
+            : fallbackContent)
+          : (typeof record['documentContentMarkdown'] === 'string'
+            ? record['documentContentMarkdown']
+            : fallbackContent),
+      previousHtml: typeof record['documentContentHtml'] === 'string'
+        ? record['documentContentHtml']
+        : undefined,
+      previousMarkdown: typeof record['documentContentMarkdown'] === 'string'
+        ? record['documentContentMarkdown']
+        : undefined,
+    });
+
+    entries.push({
+      id: rawId,
+      savedAt: normalizeTimestamp(record['savedAt'], fallbackTimestamp),
+      documentContentVersion: normalizeDocumentContentVersion(record['documentContentVersion']),
+      activeDocumentVersion,
+      editorType: canonical.mode,
+      documentContent: toStorageDocumentValue(canonical),
+      documentContentMarkdown: canonical.markdown,
+      documentContentHtml: canonical.html,
+      documentContentPlainText: canonical.plainText,
+    });
+  });
+
+  return entries
+    .sort((left: CaseResolverDocumentHistoryEntry, right: CaseResolverDocumentHistoryEntry) => {
+      const rightTimestamp = Date.parse(right.savedAt);
+      const leftTimestamp = Date.parse(left.savedAt);
+      if (Number.isFinite(rightTimestamp) && Number.isFinite(leftTimestamp) && rightTimestamp !== leftTimestamp) {
+        return rightTimestamp - leftTimestamp;
+      }
+      return right.documentContentVersion - left.documentContentVersion;
+    })
+    .slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
 };
 
 const resolveSafeCaseParentId = (
@@ -1729,6 +1806,7 @@ export const createCaseResolverFile = (input: {
   documentContentMarkdown?: string | null | undefined;
   documentContentHtml?: string | null | undefined;
   documentContentPlainText?: string | null | undefined;
+  documentHistory?: CaseResolverDocumentHistoryEntry[] | null | undefined;
   documentConversionWarnings?: string[] | null | undefined;
   lastContentConversionAt?: string | null | undefined;
   scanSlots?: CaseResolverScanSlot[] | null | undefined;
@@ -1815,6 +1893,7 @@ export const createCaseResolverFile = (input: {
     documentContentMarkdown: canonicalDocument.markdown,
     documentContentHtml: canonicalDocument.html,
     documentContentPlainText: canonicalDocument.plainText,
+    documentHistory: normalizeCaseResolverDocumentHistory(input.documentHistory, updatedAt),
     documentConversionWarnings,
     lastContentConversionAt,
     scanSlots: normalizeCaseResolverScanSlots(input.scanSlots),
@@ -2121,6 +2200,7 @@ export const normalizeCaseResolverWorkspace = (
         documentContentMarkdown: file.documentContentMarkdown,
         documentContentHtml: file.documentContentHtml,
         documentContentPlainText: file.documentContentPlainText,
+        documentHistory: fileRecord['documentHistory'],
         documentConversionWarnings: file.documentConversionWarnings,
         lastContentConversionAt: file.lastContentConversionAt,
         scanSlots: file.scanSlots,

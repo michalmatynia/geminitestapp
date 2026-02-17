@@ -30,6 +30,12 @@ type UploadedAsset = {
   height?: number | null;
 };
 
+type EnsureSlotFromUploadResponse = {
+  slot?: ImageStudioSlotRecord;
+  created?: boolean;
+  action?: 'reused_existing' | 'reused_selected_slot' | 'created' | 'reused_deterministic';
+};
+
 function toManagedSlot(slot: ImageStudioSlotRecord | null): ProductImageSlot {
   if (!slot?.imageFileId) return null;
   const previewPath = slot.imageFile?.filepath || slot.imageUrl || null;
@@ -85,12 +91,11 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
   function ImageStudioSingleSlotManager(_props, ref): React.JSX.Element {
     const queryClient = useQueryClient();
     const { projectId } = useProjectsState();
-    const { slots, selectedFolder, selectedSlot, temporaryObjectUpload } = useSlotsState();
+    const { selectedFolder, selectedSlot, temporaryObjectUpload } = useSlotsState();
     const {
       setSelectedSlotId,
       setWorkingSlotId,
       setPreviewMode,
-      createSlots,
       updateSlotMutation,
       uploadMutation,
       setDriveImportOpen,
@@ -107,6 +112,8 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     const objectBase64SyncTimeoutRef = useRef<number | null>(null);
     const consumeTemporaryUploadInFlightRef = useRef<Promise<boolean> | null>(null);
     const consumeTemporaryUploadInFlightIdRef = useRef<string | null>(null);
+    const lastConsumedTemporaryUploadIdRef = useRef<string | null>(null);
+    const lastConsumedSlotIdRef = useRef<string | null>(null);
     const suppressNextDraftPersistenceOpsRef = useRef<number>(0);
 
     const clearObjectDraftSyncTimeouts = useCallback((): void => {
@@ -133,6 +140,8 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     }, [clearObjectDraftSyncTimeouts]);
 
     useEffect(() => {
+      lastConsumedTemporaryUploadIdRef.current = null;
+      lastConsumedSlotIdRef.current = null;
       setTemporaryObjectUpload(null);
     }, [projectId, setTemporaryObjectUpload]);
 
@@ -173,163 +182,84 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       async (options?: { loadToCanvas?: boolean }): Promise<boolean> => {
         if (!temporaryObjectUpload) return false;
         const temporaryUploadSnapshot = temporaryObjectUpload;
-        const currentTemporaryUploadId = temporaryObjectUpload.id.trim();
-        if (!currentTemporaryUploadId) return false;
-        const slotHasRenderableImage = (slot: ImageStudioSlotRecord | null | undefined): boolean => {
-          if (!slot) return false;
-          const imageFilePath = slot.imageFile?.filepath?.trim() ?? '';
-          const imageUrl = slot.imageUrl?.trim() ?? '';
-          const imageBase64 = slot.imageBase64?.trim() ?? '';
-          return Boolean(imageFilePath || imageUrl || imageBase64);
-        };
+        const currentTemporaryUploadId = temporaryUploadSnapshot.id.trim();
+        const normalizedTemporaryFilepath = temporaryUploadSnapshot.filepath.trim();
+        if (!currentTemporaryUploadId && !normalizedTemporaryFilepath) return false;
+        // Kept for compatibility with imperative API; consume always loads to canvas.
+        void options;
 
         if (
-          consumeTemporaryUploadInFlightRef.current &&
-          consumeTemporaryUploadInFlightIdRef.current === currentTemporaryUploadId
+          currentTemporaryUploadId &&
+          lastConsumedTemporaryUploadIdRef.current === currentTemporaryUploadId &&
+          lastConsumedSlotIdRef.current
         ) {
-          return consumeTemporaryUploadInFlightRef.current;
-        }
-
-        const normalizedTemporaryFilepath = temporaryUploadSnapshot.filepath.trim();
-        const existingMatchingSlot = [...slots]
-          .filter((slot: ImageStudioSlotRecord): boolean => {
-            const slotImageFileId = slot.imageFileId?.trim() ?? '';
-            if (slotImageFileId && slotImageFileId === currentTemporaryUploadId) return true;
-
-            if (!normalizedTemporaryFilepath) return false;
-            const slotImagePath = (slot.imageFile?.filepath ?? slot.imageUrl ?? '').trim();
-            return slotImagePath === normalizedTemporaryFilepath;
-          })
-          .sort((left: ImageStudioSlotRecord, right: ImageStudioSlotRecord) => {
-            const leftTs = Date.parse(left.updatedAt || left.createdAt || '');
-            const rightTs = Date.parse(right.updatedAt || right.createdAt || '');
-            if (Number.isFinite(leftTs) && Number.isFinite(rightTs) && leftTs !== rightTs) {
-              return rightTs - leftTs;
-            }
-            return (right.createdAt ?? '').localeCompare(left.createdAt ?? '');
-          })[0] ?? null;
-        if (existingMatchingSlot?.id) {
-          let existingTargetSlot = existingMatchingSlot;
-          if (!slotHasRenderableImage(existingMatchingSlot)) {
-            existingTargetSlot = await updateSlotMutation.mutateAsync({
-              id: existingMatchingSlot.id,
-              data: {
-                imageFileId: temporaryUploadSnapshot.id,
-                imageUrl: temporaryUploadSnapshot.filepath,
-                imageBase64: null,
-              },
-            });
-          }
-          const targetSlotId = existingTargetSlot.id;
+          const lastConsumedSlotId = lastConsumedSlotIdRef.current;
           setTemporaryObjectUpload(null);
-          setSelectedSlotId(targetSlotId);
+          setSelectedSlotId(lastConsumedSlotId);
+          setWorkingSlotId(lastConsumedSlotId);
+          setPreviewMode('image');
           if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: targetSlotId } }));
-          }
-          if (options?.loadToCanvas) {
-            setPreviewMode('image');
-            setWorkingSlotId(targetSlotId);
+            window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: lastConsumedSlotId } }));
           }
           return true;
         }
 
-        // Prevent duplicate consumes from racing on the same staged upload.
-        setTemporaryObjectUpload((current) => {
-          const stagedId = current?.id?.trim() ?? '';
-          if (stagedId && stagedId !== currentTemporaryUploadId) {
-            return current;
-          }
-          return null;
-        });
-
-        const loadToCanvas = Boolean(options?.loadToCanvas);
-        const ensureSlotHasTemporaryUploadImage = async (
-          slot: ImageStudioSlotRecord | null | undefined
-        ): Promise<ImageStudioSlotRecord | null> => {
-          if (!slot?.id) return null;
-          if (slotHasRenderableImage(slot)) return slot;
-
-          const nextImageFileId = temporaryUploadSnapshot.id?.trim() ?? '';
-          const nextImageUrl = temporaryUploadSnapshot.filepath?.trim() ?? '';
-          if (!nextImageFileId && !nextImageUrl) return slot;
-
-          const repaired = await updateSlotMutation.mutateAsync({
-            id: slot.id,
-            data: {
-              ...(nextImageFileId ? { imageFileId: nextImageFileId } : {}),
-              ...(nextImageUrl ? { imageUrl: nextImageUrl } : {}),
-              imageBase64: null,
-            },
-          });
-          return repaired;
-        };
+        if (
+          consumeTemporaryUploadInFlightRef.current &&
+          consumeTemporaryUploadInFlightIdRef.current === (currentTemporaryUploadId || normalizedTemporaryFilepath)
+        ) {
+          return consumeTemporaryUploadInFlightRef.current;
+        }
 
         const consumePromise = (async (): Promise<boolean> => {
           setUploadError(null);
-          const applyTemporaryToExistingSlot = async (): Promise<boolean> => {
-            if (!objectSlot?.id) return false;
-            const patchedSlot = await updateSlotMutation.mutateAsync({
-              id: objectSlot.id,
-              data: {
-                imageFileId: temporaryUploadSnapshot.id,
-                imageUrl: temporaryUploadSnapshot.filepath,
-                imageBase64: null,
-              },
-            });
-            const resolvedSlot = await ensureSlotHasTemporaryUploadImage(patchedSlot);
-            const targetSlotId = resolvedSlot?.id ?? objectSlot.id;
+          try {
+            const normalizedProjectId = projectId.trim();
+            if (!normalizedProjectId) {
+              throw new Error('Select a project first.');
+            }
+
+            await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+            const ensured = await api.post<EnsureSlotFromUploadResponse>(
+              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots/ensure-from-upload`,
+              {
+                uploadId: currentTemporaryUploadId || null,
+                filepath: normalizedTemporaryFilepath || null,
+                filename: temporaryUploadSnapshot.filename?.trim() || null,
+                folderPath: getFolderForNewSlot() || null,
+                selectedSlotId: objectSlot?.id ?? null,
+              }
+            );
+            const targetSlotId = ensured.slot?.id?.trim() ?? '';
+            if (!targetSlotId) {
+              throw new Error('Failed to create or resolve card from temporary upload');
+            }
+
+            await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+            const refreshedSlots = queryClient.getQueryData<StudioSlotsResponse>(
+              studioKeys.slots(normalizedProjectId)
+            );
+            const slotExistsInCache = refreshedSlots?.slots.some(
+              (slot: ImageStudioSlotRecord): boolean => slot.id === targetSlotId
+            ) ?? false;
+            if (!slotExistsInCache) {
+              await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+            }
+
             setTemporaryObjectUpload(null);
             setSelectedSlotId(targetSlotId);
+            setWorkingSlotId(targetSlotId);
+            setPreviewMode('image');
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: targetSlotId } }));
             }
-            if (loadToCanvas) {
-              setPreviewMode('image');
-              setWorkingSlotId(targetSlotId);
-            }
-            return true;
-          };
 
-          try {
-            const objectSlotHasImage = Boolean(
-              objectSlot?.imageFileId ||
-              objectSlot?.imageUrl?.trim() ||
-              objectSlot?.imageBase64?.trim()
-            );
-            if (objectSlot?.id && !objectSlotHasImage) {
-              const appliedToSelectedEmptySlot = await applyTemporaryToExistingSlot();
-              if (appliedToSelectedEmptySlot) return true;
-            }
-
-            const created = await createSlots([
-              {
-                name: temporaryUploadSnapshot.filename?.trim() || `Card ${Date.now()}`,
-                ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
-                imageFileId: temporaryUploadSnapshot.id,
-                imageUrl: temporaryUploadSnapshot.filepath,
-                imageBase64: null,
-              },
-            ]);
-            const createdSlot = created[0] ?? null;
-            const nextSlot = await ensureSlotHasTemporaryUploadImage(createdSlot);
-            if (!nextSlot) return false;
-            setTemporaryObjectUpload(null);
-            setSelectedSlotId(nextSlot.id);
-            if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: nextSlot.id } }));
-            }
-            if (loadToCanvas) {
-              setPreviewMode('image');
-              setWorkingSlotId(nextSlot.id);
+            if (currentTemporaryUploadId) {
+              lastConsumedTemporaryUploadIdRef.current = currentTemporaryUploadId;
+              lastConsumedSlotIdRef.current = targetSlotId;
             }
             return true;
           } catch (error: unknown) {
-            try {
-              const fallbackApplied = await applyTemporaryToExistingSlot();
-              if (fallbackApplied) return true;
-            } catch {
-              // Surface the original creation error below.
-            }
             setTemporaryObjectUpload((current) => current ?? temporaryUploadSnapshot);
             setUploadError(error instanceof Error ? error.message : 'Failed to create card from temporary upload');
             return false;
@@ -337,7 +267,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         })();
 
         consumeTemporaryUploadInFlightRef.current = consumePromise;
-        consumeTemporaryUploadInFlightIdRef.current = currentTemporaryUploadId;
+        consumeTemporaryUploadInFlightIdRef.current = currentTemporaryUploadId || normalizedTemporaryFilepath;
 
         try {
           return await consumePromise;
@@ -349,16 +279,15 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         }
       },
       [
-        createSlots,
         getFolderForNewSlot,
         objectSlot,
+        projectId,
+        queryClient,
         setPreviewMode,
         setSelectedSlotId,
         setTemporaryObjectUpload,
         setWorkingSlotId,
-        slots,
         temporaryObjectUpload,
-        updateSlotMutation,
       ]
     );
 
@@ -384,6 +313,8 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           if (!uploaded) {
             throw new Error(result.failures?.[0]?.error || 'Upload failed');
           }
+          lastConsumedTemporaryUploadIdRef.current = null;
+          lastConsumedSlotIdRef.current = null;
           setTemporaryObjectUpload({
             id: uploaded.id,
             filepath: uploaded.filepath,
@@ -472,6 +403,8 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     const handleSlotDisconnectImage = useCallback(
       async (index: number): Promise<void> => {
         if (index !== OBJECT_SLOT_INDEX) return;
+        lastConsumedTemporaryUploadIdRef.current = null;
+        lastConsumedSlotIdRef.current = null;
         clearObjectDraftSyncTimeouts();
         setUploadError(null);
         const previousTemporaryUpload = temporaryObjectUpload;

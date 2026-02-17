@@ -76,6 +76,7 @@ import type {
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 const CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX = 'case-resolver-editor-draft-v1';
+const CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT = 120;
 
 type StoredCaseResolverEditorDraft = {
   fileId: string;
@@ -1397,7 +1398,13 @@ export function useCaseResolverState() {
     const recoveredDraft = readStoredEditorDraft(fileId);
     const canRecoverStoredDraft =
       recoveredDraft?.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
-    const nextDraft = canRecoverStoredDraft ? recoveredDraft.draft : baseDraft;
+    const nextDraft = canRecoverStoredDraft
+      ? {
+        ...baseDraft,
+        ...recoveredDraft.draft,
+        documentHistory: baseDraft.documentHistory,
+      }
+      : baseDraft;
     if (canRecoverStoredDraft) {
       toast('Recovered unsaved draft from local storage.', { variant: 'info' });
     } else if (recoveredDraft) {
@@ -1498,6 +1505,16 @@ export function useCaseResolverState() {
       editingDocumentDraft.activeDocumentVersion === 'exploded'
         ? nextStoredContent
         : editingDocumentDraft.explodedDocumentContent;
+    const hasContentChanges =
+      currentFile.activeDocumentVersion !== editingDocumentDraft.activeDocumentVersion ||
+      currentFile.editorType !== canonical.mode ||
+      currentFile.documentContent !== nextStoredContent ||
+      currentFile.documentContentMarkdown !== canonical.markdown ||
+      currentFile.documentContentHtml !== canonical.html ||
+      currentFile.documentContentPlainText !== canonical.plainText ||
+      JSON.stringify(currentFile.documentConversionWarnings) !== JSON.stringify(canonical.warnings) ||
+      currentFile.originalDocumentContent !== nextOriginalDocumentContent ||
+      currentFile.explodedDocumentContent !== nextExplodedDocumentContent;
     const hasMeaningfulChanges =
       currentFile.name !== editingDocumentDraft.name ||
       currentFile.folder !== editingDocumentDraft.folder ||
@@ -1509,15 +1526,7 @@ export function useCaseResolverState() {
       currentFile.categoryId !== editingDocumentDraft.categoryId ||
       JSON.stringify(currentFile.addresser) !== JSON.stringify(editingDocumentDraft.addresser) ||
       JSON.stringify(currentFile.addressee) !== JSON.stringify(editingDocumentDraft.addressee) ||
-      currentFile.activeDocumentVersion !== editingDocumentDraft.activeDocumentVersion ||
-      currentFile.editorType !== canonical.mode ||
-      currentFile.documentContent !== nextStoredContent ||
-      currentFile.documentContentMarkdown !== canonical.markdown ||
-      currentFile.documentContentHtml !== canonical.html ||
-      currentFile.documentContentPlainText !== canonical.plainText ||
-      JSON.stringify(currentFile.documentConversionWarnings) !== JSON.stringify(canonical.warnings) ||
-      currentFile.originalDocumentContent !== nextOriginalDocumentContent ||
-      currentFile.explodedDocumentContent !== nextExplodedDocumentContent;
+      hasContentChanges;
 
     if (!hasMeaningfulChanges) {
       clearStoredEditorDraft(editingDocumentDraft.id);
@@ -1529,22 +1538,41 @@ export function useCaseResolverState() {
       ...current,
       files: current.files.map((file) =>
         file.id === editingDocumentDraft.id
-          ? {
-            ...file,
-            ...editingDocumentDraft,
-            editorType: canonical.mode,
-            documentContentFormatVersion: 1,
-            documentContentVersion: file.documentContentVersion + 1,
-            documentContent: nextStoredContent,
-            documentContentMarkdown: canonical.markdown,
-            documentContentHtml: canonical.html,
-            documentContentPlainText: canonical.plainText,
-            documentConversionWarnings: canonical.warnings,
-            lastContentConversionAt: now,
-            originalDocumentContent: nextOriginalDocumentContent,
-            explodedDocumentContent: nextExplodedDocumentContent,
-            updatedAt: now,
-          }
+          ? (() => {
+            const nextDocumentHistory = hasContentChanges
+              ? [
+                {
+                  id: createId('case-doc-history'),
+                  savedAt: now,
+                  documentContentVersion: file.documentContentVersion,
+                  activeDocumentVersion: file.activeDocumentVersion,
+                  editorType: file.editorType,
+                  documentContent: file.documentContent,
+                  documentContentMarkdown: file.documentContentMarkdown,
+                  documentContentHtml: file.documentContentHtml,
+                  documentContentPlainText: file.documentContentPlainText,
+                },
+                ...file.documentHistory,
+              ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT)
+              : file.documentHistory;
+            return {
+              ...file,
+              ...editingDocumentDraft,
+              editorType: canonical.mode,
+              documentContentFormatVersion: 1,
+              documentContentVersion: file.documentContentVersion + 1,
+              documentContent: nextStoredContent,
+              documentContentMarkdown: canonical.markdown,
+              documentContentHtml: canonical.html,
+              documentContentPlainText: canonical.plainText,
+              documentHistory: nextDocumentHistory,
+              documentConversionWarnings: canonical.warnings,
+              lastContentConversionAt: now,
+              originalDocumentContent: nextOriginalDocumentContent,
+              explodedDocumentContent: nextExplodedDocumentContent,
+              updatedAt: now,
+            };
+          })()
           : file
       ),
     }), { persistToast: 'Document changes saved.' });
@@ -1595,6 +1623,20 @@ export function useCaseResolverState() {
       activeFileId: targetFileId,
       files: current.files.map((file) => {
         if (file.id !== targetFileId) return file;
+        const nextDocumentHistory = [
+          {
+            id: createId('case-doc-history'),
+            savedAt: now,
+            documentContentVersion: file.documentContentVersion,
+            activeDocumentVersion: file.activeDocumentVersion,
+            editorType: file.editorType,
+            documentContent: file.documentContent,
+            documentContentMarkdown: file.documentContentMarkdown,
+            documentContentHtml: file.documentContentHtml,
+            documentContentPlainText: file.documentContentPlainText,
+          },
+          ...file.documentHistory,
+        ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
         return {
           ...file,
           originalDocumentContent: file.originalDocumentContent ?? file.documentContent,
@@ -1607,6 +1649,7 @@ export function useCaseResolverState() {
           documentContentMarkdown: canonicalExploded.markdown,
           documentContentHtml: canonicalExploded.html,
           documentContentPlainText: canonicalExploded.plainText,
+          documentHistory: nextDocumentHistory,
           documentConversionWarnings: canonicalExploded.warnings,
           lastContentConversionAt: now,
           documentDate: extractedDocumentDate ?? file.documentDate,
@@ -1618,6 +1661,20 @@ export function useCaseResolverState() {
     setEditingDocumentDraft((current) => {
       if (current?.id !== targetFileId) return current;
       const nextVersion = current.documentContentVersion + 1;
+      const nextDocumentHistory = [
+        {
+          id: createId('case-doc-history'),
+          savedAt: now,
+          documentContentVersion: current.documentContentVersion,
+          activeDocumentVersion: current.activeDocumentVersion,
+          editorType: current.editorType,
+          documentContent: current.documentContent,
+          documentContentMarkdown: current.documentContentMarkdown,
+          documentContentHtml: current.documentContentHtml,
+          documentContentPlainText: current.documentContentPlainText,
+        },
+        ...current.documentHistory,
+      ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
       return {
         ...current,
         originalDocumentContent: current.originalDocumentContent || current.documentContent,
@@ -1631,6 +1688,7 @@ export function useCaseResolverState() {
         documentContentMarkdown: canonicalExploded.markdown,
         documentContentHtml: canonicalExploded.html,
         documentContentPlainText: canonicalExploded.plainText,
+        documentHistory: nextDocumentHistory,
         documentConversionWarnings: canonicalExploded.warnings,
         lastContentConversionAt: now,
         documentDate: extractedDocumentDate ?? current.documentDate,

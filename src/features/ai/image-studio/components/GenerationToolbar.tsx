@@ -52,6 +52,7 @@ import { GenerationToolbarMaskSection } from './generation-toolbar/GenerationToo
 import { GenerationToolbarUpscaleSection } from './generation-toolbar/GenerationToolbarUpscaleSection';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
+import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
@@ -1151,6 +1152,17 @@ export function GenerationToolbar(): React.JSX.Element {
   );
 
   const hasSourceImage = Boolean(workingSlot && workingSlotImageSrc);
+  const cropTooltipsEnabled = studioSettings.helpTooltips.cropButtonsEnabled;
+  const cropTooltipContent = useMemo(
+    () => ({
+      cropBoxTool: getImageStudioDocTooltip('crop_box_tool'),
+      crop: getImageStudioDocTooltip('crop'),
+      squareCrop: getImageStudioDocTooltip('square_crop'),
+      viewCrop: getImageStudioDocTooltip('view_crop'),
+      cancelCrop: getImageStudioDocTooltip('cancel_crop'),
+    }),
+    []
+  );
   const generationModel = studioSettings.targetAi.openai.model;
   const generationImageCount = String(studioSettings.targetAi.openai.image.n ?? 1);
 
@@ -1226,6 +1238,8 @@ export function GenerationToolbar(): React.JSX.Element {
         cropBusyLabel={cropBusyLabel}
         cropMode={cropMode}
         cropModeOptions={cropModeOptions}
+        cropTooltipContent={cropTooltipContent}
+        cropTooltipsEnabled={cropTooltipsEnabled}
         hasCropBoundary={hasCropBoundary}
         hasSourceImage={hasSourceImage}
         onCancelCrop={handleCancelCrop}

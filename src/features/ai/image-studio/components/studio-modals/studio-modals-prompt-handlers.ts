@@ -1,6 +1,6 @@
 import { flattenParams, inferParamSpecs, type ParamSpec } from '@/features/prompt-engine/prompt-params';
 import { api } from '@/shared/lib/api-client';
-import type { Dispatch, SetStateAction } from 'react';
+
 
 import {
   buildHeuristicControls,
@@ -11,6 +11,8 @@ import {
   type UiExtractorSuggestion,
 } from './prompt-extract-utils';
 import { isParamUiControl, type ParamUiControl } from '../../utils/param-ui';
+
+import type { Dispatch, SetStateAction } from 'react';
 
 type Toast = (
   message: string,

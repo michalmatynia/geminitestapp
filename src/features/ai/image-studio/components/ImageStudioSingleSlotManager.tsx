@@ -445,6 +445,49 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
 
           lastConsumedTemporaryUploadIdRef.current = null;
           lastConsumedSlotIdRef.current = null;
+          const selectedSlotId = objectSlot?.id?.trim() ?? '';
+          if (selectedSlotId) {
+            const updatePayload = {
+              imageFileId: uploaded.id,
+              imageUrl: uploaded.filepath,
+              imageBase64: null,
+            } as const;
+            const slotIdCandidates = resolveSlotIdCandidates(selectedSlotId);
+            let updatedSlot: ImageStudioSlotRecord | null = null;
+            let updateError: unknown = null;
+            for (const candidate of slotIdCandidates) {
+              try {
+                updatedSlot = await updateSlotMutation.mutateAsync({
+                  id: candidate,
+                  data: updatePayload,
+                });
+                if (updatedSlot) break;
+              } catch (error: unknown) {
+                updateError = error;
+              }
+            }
+            if (!updatedSlot) {
+              throw (updateError instanceof Error
+                ? updateError
+                : new Error('Failed to attach image to selected card.'));
+            }
+
+            setTemporaryObjectUpload(null);
+            setSelectedSlotId(updatedSlot.id);
+            setObjectImageLinkDraft(uploaded.filepath);
+            setObjectImageBase64Draft('');
+            if (previousTemp && previousTemp.id !== uploaded.id) {
+              await deleteUploadedAsset(previousTemp).catch(() => {
+                // Best effort cleanup of replaced temporary upload.
+              });
+            }
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: updatedSlot.id } }));
+            }
+            void invalidateImageStudioSlots(queryClient, normalizedProjectId);
+            return;
+          }
+
           const createdSlots = await createSlots([
             {
               name: uploaded.filename?.trim() || `Card ${Date.now()}`,
@@ -480,11 +523,13 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         createSlots,
         deleteUploadedAsset,
         getFolderForNewSlot,
+        objectSlot,
         projectId,
         queryClient,
         setSelectedSlotId,
         setTemporaryObjectUpload,
         temporaryObjectUpload,
+        updateSlotMutation,
         uploadMutation,
       ]
     );

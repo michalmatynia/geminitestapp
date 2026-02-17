@@ -1,11 +1,19 @@
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, SelectSimple } from '@/shared/ui';
+import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
 type SelectOption = {
   value: string;
   label: string;
+};
+
+type CropTooltipContent = {
+  cancelCrop: string;
+  crop: string;
+  cropBoxTool: string;
+  squareCrop: string;
+  viewCrop: string;
 };
 
 type GenerationToolbarCropSectionProps = {
@@ -13,6 +21,8 @@ type GenerationToolbarCropSectionProps = {
   cropBusyLabel: string;
   cropMode: string;
   cropModeOptions: SelectOption[];
+  cropTooltipContent: CropTooltipContent;
+  cropTooltipsEnabled: boolean;
   hasCropBoundary: boolean;
   hasSourceImage: boolean;
   onCancelCrop: () => void;
@@ -28,6 +38,8 @@ export function GenerationToolbarCropSection({
   cropBusyLabel,
   cropMode,
   cropModeOptions,
+  cropTooltipContent,
+  cropTooltipsEnabled,
   hasCropBoundary,
   hasSourceImage,
   onCancelCrop,
@@ -37,6 +49,15 @@ export function GenerationToolbarCropSection({
   onSquareCrop,
   onViewCrop,
 }: GenerationToolbarCropSectionProps): React.JSX.Element {
+  const maybeWrapTooltip = (content: string, child: React.JSX.Element): React.JSX.Element => {
+    if (!cropTooltipsEnabled) return child;
+    return (
+      <Tooltip content={content}>
+        <span className='inline-flex'>{child}</span>
+      </Tooltip>
+    );
+  };
+
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 flex items-center justify-between gap-2'>
@@ -54,55 +75,70 @@ export function GenerationToolbarCropSection({
           triggerClassName='h-8 text-xs'
           ariaLabel='Crop mode'
         />
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          onClick={onCreateCropBox}
-          disabled={!hasSourceImage}
-          title='Create a dedicated crop rectangle that always works with Crop'
-        >
-          Crop Box Tool
-        </Button>
-      </div>
-      <div className='mt-2 flex flex-wrap items-center gap-2'>
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          onClick={onCrop}
-          disabled={!hasSourceImage || cropBusy || !hasCropBoundary}
-          title='Create cropped linked variant from selected boundary'
-        >
-          {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
-          {cropBusyLabel}
-        </Button>
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          onClick={onSquareCrop}
-          disabled={!hasSourceImage || cropBusy}
-          title='Quick centered square crop (1:1) from the active slot'
-        >
-          Square Crop
-        </Button>
-        <Button size='xs'
-          type='button'
-          variant='outline'
-          onClick={onViewCrop}
-          disabled={!hasSourceImage || cropBusy}
-          title='Crop using the currently visible area in Preview Canvas'
-        >
-          View Crop
-        </Button>
-        {cropBusy ? (
-          <Button
-            size='xs'
+        {maybeWrapTooltip(
+          cropTooltipContent.cropBoxTool,
+          <Button size='xs'
             type='button'
             variant='outline'
-            onClick={onCancelCrop}
-            title='Cancel crop request'
+            onClick={onCreateCropBox}
+            disabled={!hasSourceImage}
+            title={cropTooltipContent.cropBoxTool}
           >
-            Cancel Crop
+            Crop Box Tool
           </Button>
+        )}
+      </div>
+      <div className='mt-2 flex flex-wrap items-center gap-2'>
+        {maybeWrapTooltip(
+          cropTooltipContent.crop,
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={onCrop}
+            disabled={!hasSourceImage || cropBusy || !hasCropBoundary}
+            title={cropTooltipContent.crop}
+          >
+            {cropBusy ? <Loader2 className='mr-2 size-4 animate-spin' /> : null}
+            {cropBusyLabel}
+          </Button>
+        )}
+        {maybeWrapTooltip(
+          cropTooltipContent.squareCrop,
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={onSquareCrop}
+            disabled={!hasSourceImage || cropBusy}
+            title={cropTooltipContent.squareCrop}
+          >
+            Square Crop
+          </Button>
+        )}
+        {maybeWrapTooltip(
+          cropTooltipContent.viewCrop,
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={onViewCrop}
+            disabled={!hasSourceImage || cropBusy}
+            title={cropTooltipContent.viewCrop}
+          >
+            View Crop
+          </Button>
+        )}
+        {cropBusy ? (
+          maybeWrapTooltip(
+            cropTooltipContent.cancelCrop,
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              onClick={onCancelCrop}
+              title={cropTooltipContent.cancelCrop}
+            >
+              Cancel Crop
+            </Button>
+          )
         ) : null}
       </div>
     </div>

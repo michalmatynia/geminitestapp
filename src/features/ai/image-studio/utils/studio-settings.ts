@@ -80,6 +80,9 @@ export type ImageStudioSettings = {
     temperature: number | null;
     max_output_tokens: number | null;
   };
+  helpTooltips: {
+    cropButtonsEnabled: boolean;
+  };
   targetAi: {
     provider: 'openai';
     openai: {
@@ -150,6 +153,9 @@ export const defaultImageStudioSettings: ImageStudioSettings = {
     model: 'gpt-4o-mini',
     temperature: 0.2,
     max_output_tokens: 800,
+  },
+  helpTooltips: {
+    cropButtonsEnabled: true,
   },
   targetAi: {
     provider: 'openai',
@@ -284,6 +290,15 @@ const imageStudioSettingsSchema = z
       })
       .optional()
       .default(defaultImageStudioSettings.uiExtractor),
+    helpTooltips: z
+      .object({
+        cropButtonsEnabled: z
+          .boolean()
+          .optional()
+          .default(defaultImageStudioSettings.helpTooltips.cropButtonsEnabled),
+      })
+      .optional()
+      .default(defaultImageStudioSettings.helpTooltips),
     targetAi: z
       .object({
         provider: z.literal('openai').optional().default('openai'),

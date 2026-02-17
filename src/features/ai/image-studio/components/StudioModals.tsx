@@ -15,7 +15,7 @@ import {
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Tabs, TabsList, TabsTrigger, useToast } from '@/shared/ui';
+import { useToast } from '@/shared/ui';
 
 import {
   buildPromptDiffLines,
@@ -24,16 +24,13 @@ import {
   type PromptExtractValidationIssue,
   toSlotName,
 } from './studio-modals/prompt-extract-utils';
-import { SlotInlineEditCardTab } from './studio-modals/SlotInlineEditCardTab';
-import { SlotInlineEditCompositesTab } from './studio-modals/SlotInlineEditCompositesTab';
-import { SlotInlineEditEnvironmentTab } from './studio-modals/SlotInlineEditEnvironmentTab';
-import { SlotInlineEditGenerationsTab } from './studio-modals/SlotInlineEditGenerationsTab';
-import { SlotInlineEditMasksTab } from './studio-modals/SlotInlineEditMasksTab';
+import { createInlineSlotHandlers } from './studio-modals/studio-modals-inline-slot-handlers';
 import { copyCardIdToClipboard, createPromptExtractionHandlers } from './studio-modals/studio-modals-prompt-handlers';
 import {
   applyEnvironmentReferenceAssetToDraft,
   createUploadHandlers,
 } from './studio-modals/studio-modals-upload-handlers';
+import { StudioInlineEditPanels, type EditCardTab } from './studio-modals/StudioInlineEditPanels';
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
@@ -41,17 +38,10 @@ import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { type ParamUiControl } from '../utils/param-ui';
 import { DriveImportModal } from './modals/DriveImportModal';
-import { ExtractPromptParamsModal } from './modals/ExtractPromptParamsModal';
-import { GenerationPreviewModal } from './modals/GenerationPreviewModal';
 import { SlotCreateModal } from './modals/SlotCreateModal';
-import { SlotInlineEditModal } from './modals/SlotInlineEditModal';
 import {
   EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
   INLINE_CARD_IMAGE_SLOT_INDEX,
-  asRecord,
-  formatBytes,
-  formatDateTime,
-  formatLinkedVariantTimestamp,
   isCardImageRemovalLocked,
   mapActiveCompositeInputImages,
   mapLinkedGeneratedVariants,
@@ -139,9 +129,7 @@ export function StudioModals(): React.JSX.Element {
   } | null>(null);
   const [extractHistory, setExtractHistory] = useState<PromptExtractHistoryEntry[]>([]);
   const [selectedExtractHistoryId, setSelectedExtractHistoryId] = useState<string | null>(null);
-  const [editCardTab, setEditCardTab] = useState<
-    'card' | 'generations' | 'environment' | 'masks' | 'composites'
-  >('card');
+  const [editCardTab, setEditCardTab] = useState<EditCardTab>('card');
   const [environmentReferenceDraft, setEnvironmentReferenceDraft] = useState<EnvironmentReferenceDraft>(
     EMPTY_ENVIRONMENT_REFERENCE_DRAFT
   );
@@ -912,101 +900,27 @@ export function StudioModals(): React.JSX.Element {
     window.setTimeout(() => localUploadInputRef.current?.click(), 0);
   };
 
-  const handleSaveInlineSlot = async () => {
-    if (!selectedSlot) return;
-    setSlotUpdateBusy(true);
-    try {
-      await flushInlineSlotDraftSync();
-      const baseMetadata = asRecord(selectedSlot.metadata)
-        ? { ...(selectedSlot.metadata as Record<string, unknown>) }
-        : {};
-      const hasEnvironmentReference = Boolean(
-        environmentReferenceDraft.imageFileId ||
-        environmentReferenceDraft.imageUrl.trim()
-      );
-      if (hasEnvironmentReference) {
-        baseMetadata['environmentReference'] = {
-          imageFileId: environmentReferenceDraft.imageFileId,
-          imageUrl: environmentReferenceDraft.imageUrl.trim(),
-          filename: environmentReferenceDraft.filename.trim() || null,
-          mimetype: environmentReferenceDraft.mimetype.trim() || null,
-          size: environmentReferenceDraft.size,
-          width: environmentReferenceDraft.width,
-          height: environmentReferenceDraft.height,
-          updatedAt: environmentReferenceDraft.updatedAt ?? new Date().toISOString(),
-        };
-      } else {
-        delete baseMetadata['environmentReference'];
-      }
-
-      await updateSlotMutation.mutateAsync({
-        id: selectedSlot.id,
-        data: {
-          name: slotNameDraft.trim() || selectedSlot.name || `Card ${slots.length + 1}`,
-          folderPath: slotFolderDraft.trim(),
-          metadata: Object.keys(baseMetadata).length > 0 ? baseMetadata : null,
-        },
-      });
-      setSlotInlineEditOpen(false);
-      toast('Card updated.', { variant: 'success' });
-    } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : 'Failed to update card', { variant: 'error' });
-    } finally {
-      setSlotUpdateBusy(false);
-    }
-  };
-
-  const handleClearSlotImage = async () => {
-    if (!selectedSlot) return;
-    if (isCardImageRemovalLocked(selectedSlot)) {
-      toast('Card image is locked and can only be removed by deleting the card.', { variant: 'warning' });
-      return;
-    }
-    setSlotUpdateBusy(true);
-    try {
-      clearInlineSlotSyncTimeouts();
-      await updateSlotMutation.mutateAsync({
-        id: selectedSlot.id,
-        data: {
-          imageFileId: null,
-          imageUrl: null,
-          imageBase64: null,
-        },
-      });
-      setSlotImageUrlDraft('');
-      setSlotBase64Draft('');
-      toast('Card image cleared.', { variant: 'success' });
-    } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : 'Failed to clear card image', { variant: 'error' });
-    } finally {
-      setSlotUpdateBusy(false);
-    }
-  };
-
-  const handleApplyLinkedVariantToCard = async (variant: LinkedGeneratedVariant): Promise<void> => {
-    if (!selectedSlot) return;
-    setLinkedVariantApplyBusyKey(variant.key);
-    setSlotUpdateBusy(true);
-    try {
-      clearInlineSlotSyncTimeouts();
-      await updateSlotMutation.mutateAsync({
-        id: selectedSlot.id,
-        data: {
-          imageFileId: variant.output.id,
-          imageUrl: variant.output.filepath,
-          imageBase64: null,
-        },
-      });
-      setSlotImageUrlDraft(variant.output.filepath);
-      setSlotBase64Draft('');
-      toast('Linked variant applied to card.', { variant: 'success' });
-    } catch (error: unknown) {
-      toast(error instanceof Error ? error.message : 'Failed to apply linked variant.', { variant: 'error' });
-    } finally {
-      setLinkedVariantApplyBusyKey((current) => (current === variant.key ? null : current));
-      setSlotUpdateBusy(false);
-    }
-  };
+  const {
+    handleSaveInlineSlot,
+    handleClearSlotImage,
+    handleApplyLinkedVariantToCard,
+  } = createInlineSlotHandlers({
+    clearInlineSlotSyncTimeouts,
+    environmentReferenceDraft,
+    flushInlineSlotDraftSync,
+    isCardImageRemovalLocked,
+    setLinkedVariantApplyBusyKey,
+    setSlotBase64Draft,
+    setSlotImageUrlDraft,
+    setSlotInlineEditOpen,
+    setSlotUpdateBusy,
+    selectedSlot,
+    slotFolderDraft,
+    slotNameDraft,
+    slotsCount: slots.length,
+    toast,
+    updateSlotMutation,
+  });
 
   const driveImportTitle =
     driveImportMode === 'replace'
@@ -1016,24 +930,6 @@ export function StudioModals(): React.JSX.Element {
         : driveImportMode === 'environment'
           ? 'Select Environment Reference Image'
           : 'Import Images';
-  const editCardModalHeader = (
-    <div className='flex items-center gap-3'>
-      <div className='flex items-center gap-4'>
-        <Button
-          onClick={() => {
-            void handleSaveInlineSlot();
-          }}
-          disabled={slotUpdateBusy || !selectedSlot}
-          className='min-w-[100px] border border-white/20 hover:border-white/40'
-        >
-          {slotUpdateBusy ? 'Saving...' : 'Save Card'}
-        </Button>
-        <div className='flex items-center gap-2'>
-          <h2 className='text-2xl font-bold text-white'>Edit Card</h2>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -1091,190 +987,110 @@ export function StudioModals(): React.JSX.Element {
         }}
       />
 
-      <SlotInlineEditModal
-        isOpen={slotInlineEditOpen}
-        onClose={() => setSlotInlineEditOpen(false)}
-        onSuccess={() => {}}
-        selectedSlot={selectedSlot}
-        onCopyId={(id) => { void copyCardIdToClipboard(id, toast); }}
-        header={editCardModalHeader}
-      >
-        <Tabs
-          value={editCardTab}
-          onValueChange={(value: string) => {
-            if (
-              value === 'card' ||
-              value === 'generations' ||
-              value === 'environment' ||
-              value === 'masks' ||
-              value === 'composites'
-            ) {
-              setEditCardTab(value);
-            }
-          }}
-          className='space-y-4'
-        >
-          <TabsList className='grid w-full grid-cols-5 bg-card/50'>
-            <TabsTrigger value='card' className='text-xs'>Card</TabsTrigger>
-            <TabsTrigger value='generations' className='text-xs'>Generations</TabsTrigger>
-            <TabsTrigger value='environment' className='text-xs'>Environment</TabsTrigger>
-            <TabsTrigger value='masks' className='text-xs'>Masks</TabsTrigger>
-            <TabsTrigger value='composites' className='text-xs'>Composites</TabsTrigger>
-          </TabsList>
-          <SlotInlineEditCardTab
-            clearImageDisabled={slotUpdateBusy || isCardImageRemovalLocked(selectedSlot)}
-            clearImageTitle={
-              isCardImageRemovalLocked(selectedSlot)
-                ? 'Card image is locked and can only be removed by deleting the card.'
-                : undefined
-            }
-            formatBytes={formatBytes}
-            formatDateTime={formatDateTime}
-            formatLinkedVariantTimestamp={formatLinkedVariantTimestamp}
-            inlineCardImageManagerController={inlineCardImageManagerController}
-            inlinePreviewBase64Bytes={inlinePreviewBase64Bytes}
-            inlinePreviewDimensions={inlinePreviewDimensions}
-            inlinePreviewMimeType={inlinePreviewMimeType}
-            inlinePreviewSource={inlinePreviewSource}
-            linkedGeneratedVariants={linkedGeneratedVariants}
-            linkedRunsErrorMessage={
-              linkedRunsQuery.error instanceof Error
-                ? linkedRunsQuery.error.message
-                : 'Failed to load linked variants.'
-            }
-            linkedRunsIsError={linkedRunsQuery.isError}
-            linkedRunsIsFetching={linkedRunsQuery.isFetching}
-            linkedRunsIsLoading={linkedRunsQuery.isLoading}
-            linkedVariantApplyBusyKey={linkedVariantApplyBusyKey}
-            onApplyLinkedVariantToCard={(variant) => {
-              void handleApplyLinkedVariantToCard(variant);
-            }}
-            onClearSlotImage={() => {
-              void handleClearSlotImage();
-            }}
-            onRefreshLinkedRuns={() => {
-              void linkedRunsQuery.refetch();
-            }}
-            onReplaceFromDrive={() => {
-              if (!selectedSlot) return;
-              setSlotInlineEditOpen(false);
-              setDriveImportMode('replace');
-              setDriveImportTargetId(selectedSlot.id);
-              setDriveImportOpen(true);
-            }}
-            onReplaceFromLocal={() => {
-              if (!selectedSlot) return;
-              setSlotInlineEditOpen(false);
-              triggerLocalUpload('replace', selectedSlot.id);
-            }}
-            onSlotFolderChange={setSlotFolderDraft}
-            onSlotNameChange={setSlotNameDraft}
-            selectedSlot={selectedSlot}
-            setInlinePreviewNaturalSize={setInlinePreviewNaturalSize}
-            slotBase64Draft={slotBase64Draft}
-            slotFolderDraft={slotFolderDraft}
-            slotNameDraft={slotNameDraft}
-            slotUpdateBusy={slotUpdateBusy}
-            uploadPending={uploadMutation.isPending}
-          />
-          <SlotInlineEditGenerationsTab
-            formatBytes={formatBytes}
-            formatLinkedVariantTimestamp={formatLinkedVariantTimestamp}
-            linkedGeneratedVariants={linkedGeneratedVariants}
-            linkedRunsErrorMessage={
-              linkedRunsQuery.error instanceof Error
-                ? linkedRunsQuery.error.message
-                : 'Failed to load generated images.'
-            }
-            linkedRunsIsError={linkedRunsQuery.isError}
-            linkedRunsIsFetching={linkedRunsQuery.isFetching}
-            linkedRunsIsLoading={linkedRunsQuery.isLoading}
-            onOpenGenerationPreviewModal={handleOpenGenerationPreviewModal}
-            onRefreshLinkedRuns={() => {
-              void linkedRunsQuery.refetch();
-            }}
-            selectedGenerationPreview={selectedGenerationPreview}
-            selectedGenerationPreviewDimensions={selectedGenerationPreviewDimensions}
-            selectedSlotName={selectedSlot?.name}
-            setGenerationPreviewNaturalSize={setGenerationPreviewNaturalSize}
-            slotNameDraft={slotNameDraft}
-          />
-          <SlotInlineEditEnvironmentTab
-            canClearEnvironmentImage={Boolean(
-              environmentReferenceDraft.imageFileId || environmentReferenceDraft.imageUrl.trim()
-            )}
-            environmentPreviewDimensions={environmentPreviewDimensions}
-            environmentPreviewSource={environmentPreviewSource}
-            environmentReferenceDraft={environmentReferenceDraft}
-            formatBytes={formatBytes}
-            formatDateTime={formatDateTime}
-            onClearEnvironmentImage={() => {
-              setEnvironmentReferenceDraft({ ...EMPTY_ENVIRONMENT_REFERENCE_DRAFT });
-              setEnvironmentPreviewNaturalSize(null);
-            }}
-            onUploadEnvironmentFromDrive={() => {
-              if (!selectedSlot) return;
-              setDriveImportMode('environment');
-              setDriveImportTargetId(selectedSlot.id);
-              setDriveImportOpen(true);
-            }}
-            onUploadEnvironmentFromLocal={() => {
-              if (!selectedSlot) return;
-              triggerLocalUpload('environment', selectedSlot.id);
-            }}
-            selectedSlotName={selectedSlot?.name}
-            setEnvironmentPreviewNaturalSize={setEnvironmentPreviewNaturalSize}
-            slotNameDraft={slotNameDraft}
-            uploadPending={uploadMutation.isPending}
-          />
-          <SlotInlineEditMasksTab
-            linkedMaskSlots={linkedMaskSlots}
-            formatBytes={formatBytes}
-            formatDateTime={formatDateTime}
-          />
-          <SlotInlineEditCompositesTab
-            compositeTabInputImages={compositeTabInputImages}
-            compositeTabInputSourceLabel={compositeTabInputSourceLabel}
-            sourceCompositeImage={sourceCompositeImage}
-            formatBytes={formatBytes}
-            formatDateTime={formatDateTime}
-          />
-        </Tabs>
-      </SlotInlineEditModal>
-
-      <GenerationPreviewModal
-        isOpen={generationPreviewModalOpen}
-        onClose={() => setGenerationPreviewModalOpen(false)}
-        selectedGenerationPreview={selectedGenerationPreview}
-        selectedGenerationModalDimensions={selectedGenerationModalDimensions}
-        slotUpdateBusy={slotUpdateBusy}
-        handleApplyLinkedVariantToCard={handleApplyLinkedVariantToCard}
-        setGenerationModalPreviewNaturalSize={setGenerationModalPreviewNaturalSize}
-      />
-
-      <ExtractPromptParamsModal
-        isOpen={extractReviewOpen}
-        onClose={() => setExtractReviewOpen(false)}
-        extractDraftPrompt={extractDraftPrompt}
-        setExtractDraftPrompt={setExtractDraftPrompt}
+      <StudioInlineEditPanels
+        compositeTabInputImages={compositeTabInputImages}
+        compositeTabInputSourceLabel={compositeTabInputSourceLabel}
+        editCardTab={editCardTab}
+        environmentPreviewDimensions={environmentPreviewDimensions}
+        environmentPreviewSource={environmentPreviewSource}
+        environmentReferenceDraft={environmentReferenceDraft}
         extractBusy={extractBusy}
-        handleSmartExtraction={() => { void handleSmartExtraction(); }}
-        handleProgrammaticExtraction={() => { void handleProgrammaticExtraction(); }}
-        handleAiExtraction={() => { void handleAiExtraction(); }}
-        handleSuggestUiControls={() => { void handleSuggestUiControls(); }}
-        handleApplyExtraction={handleApplyExtraction}
-        previewParams={previewParams}
+        extractDraftPrompt={extractDraftPrompt}
         extractError={extractError}
         extractHistory={extractHistory}
-        selectedExtractHistory={selectedExtractHistory}
-        selectedExtractDiffLines={selectedExtractDiffLines}
-        selectedExtractChanged={selectedExtractChanged}
-        setSelectedExtractHistoryId={setSelectedExtractHistoryId}
-        setExtractHistory={setExtractHistory}
-        studioSettings={studioSettings}
-        previewValidation={previewValidation}
-        previewLeaves={previewLeaves}
+        extractReviewOpen={extractReviewOpen}
+        generationPreviewModalOpen={generationPreviewModalOpen}
+        inlineCardImageManagerController={inlineCardImageManagerController}
+        inlinePreviewBase64Bytes={inlinePreviewBase64Bytes}
+        inlinePreviewDimensions={inlinePreviewDimensions}
+        inlinePreviewMimeType={inlinePreviewMimeType}
+        inlinePreviewSource={inlinePreviewSource}
+        linkedGeneratedVariants={linkedGeneratedVariants}
+        linkedMaskSlots={linkedMaskSlots}
+        linkedRunsErrorMessageForCard={
+          linkedRunsQuery.error instanceof Error
+            ? linkedRunsQuery.error.message
+            : 'Failed to load linked variants.'
+        }
+        linkedRunsErrorMessageForGenerations={
+          linkedRunsQuery.error instanceof Error
+            ? linkedRunsQuery.error.message
+            : 'Failed to load generated images.'
+        }
+        linkedRunsIsError={linkedRunsQuery.isError}
+        linkedRunsIsFetching={linkedRunsQuery.isFetching}
+        linkedRunsIsLoading={linkedRunsQuery.isLoading}
+        linkedVariantApplyBusyKey={linkedVariantApplyBusyKey}
+        onApplyLinkedVariantToCard={handleApplyLinkedVariantToCard}
+        onClearSlotImage={handleClearSlotImage}
+        onCopyCardId={async (id: string): Promise<void> => {
+          await copyCardIdToClipboard(id, toast);
+        }}
+        onOpenGenerationPreviewModal={handleOpenGenerationPreviewModal}
+        onRefreshLinkedRuns={() => {
+          void linkedRunsQuery.refetch();
+        }}
+        onReplaceFromDrive={() => {
+          if (!selectedSlot) return;
+          setSlotInlineEditOpen(false);
+          setDriveImportMode('replace');
+          setDriveImportTargetId(selectedSlot.id);
+          setDriveImportOpen(true);
+        }}
+        onReplaceFromLocal={() => {
+          if (!selectedSlot) return;
+          setSlotInlineEditOpen(false);
+          triggerLocalUpload('replace', selectedSlot.id);
+        }}
+        onSaveInlineSlot={handleSaveInlineSlot}
+        onUploadEnvironmentFromDrive={() => {
+          if (!selectedSlot) return;
+          setDriveImportMode('environment');
+          setDriveImportTargetId(selectedSlot.id);
+          setDriveImportOpen(true);
+        }}
+        onUploadEnvironmentFromLocal={() => {
+          if (!selectedSlot) return;
+          triggerLocalUpload('environment', selectedSlot.id);
+        }}
         previewControls={previewControls}
+        previewLeaves={previewLeaves}
+        previewParams={previewParams}
+        previewValidation={previewValidation}
+        selectedExtractChanged={selectedExtractChanged}
+        selectedExtractDiffLines={selectedExtractDiffLines}
+        selectedExtractHistory={selectedExtractHistory}
+        selectedGenerationModalDimensions={selectedGenerationModalDimensions}
+        selectedGenerationPreview={selectedGenerationPreview}
+        selectedGenerationPreviewDimensions={selectedGenerationPreviewDimensions}
+        selectedSlot={selectedSlot}
+        setEditCardTab={setEditCardTab}
+        setEnvironmentPreviewNaturalSize={setEnvironmentPreviewNaturalSize}
+        setEnvironmentReferenceDraft={setEnvironmentReferenceDraft}
+        setExtractDraftPrompt={setExtractDraftPrompt}
+        setExtractHistory={setExtractHistory}
+        setExtractReviewOpen={setExtractReviewOpen}
+        setGenerationModalPreviewNaturalSize={setGenerationModalPreviewNaturalSize}
+        setGenerationPreviewModalOpen={setGenerationPreviewModalOpen}
+        setGenerationPreviewNaturalSize={setGenerationPreviewNaturalSize}
+        setInlinePreviewNaturalSize={setInlinePreviewNaturalSize}
+        setSelectedExtractHistoryId={setSelectedExtractHistoryId}
+        setSlotFolderDraft={setSlotFolderDraft}
+        setSlotInlineEditOpen={setSlotInlineEditOpen}
+        setSlotNameDraft={setSlotNameDraft}
+        slotBase64Draft={slotBase64Draft}
+        slotFolderDraft={slotFolderDraft}
+        slotInlineEditOpen={slotInlineEditOpen}
+        slotNameDraft={slotNameDraft}
+        slotUpdateBusy={slotUpdateBusy}
+        sourceCompositeImage={sourceCompositeImage}
+        studioSettings={studioSettings}
+        uploadPending={uploadMutation.isPending}
+        handleAiExtraction={handleAiExtraction}
+        handleApplyExtraction={handleApplyExtraction}
+        handleProgrammaticExtraction={handleProgrammaticExtraction}
+        handleSmartExtraction={handleSmartExtraction}
+        handleSuggestUiControls={handleSuggestUiControls}
       />
     </>
   );

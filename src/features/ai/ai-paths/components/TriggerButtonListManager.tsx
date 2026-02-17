@@ -157,7 +157,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       header: 'AI Paths',
       cell: ({ row }) => {
         const names = Array.isArray(row.original.pathNames)
-          ? row.original.pathNames.filter((name): name is string => Boolean(name && name.trim()))
+          ? row.original.pathNames.filter((name): name is string => Boolean(name?.trim()))
           : [];
         if (names.length === 0) {
           return <span className='text-xs text-gray-500'>Not linked</span>;

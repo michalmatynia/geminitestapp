@@ -63,7 +63,11 @@ export default async function Home(): Promise<JSX.Element> {
       const session = await withTiming('auth', () => auth());
       allowDrafts = await withTiming('canPreviewDrafts', () => canPreviewDrafts(session));
     }
-    const hasCmsContent = cmsPage && (allowDrafts || cmsPage.status === 'published') && cmsPage.components.length > 0;
+    const hasCmsContent = Boolean(
+      cmsPage &&
+      (allowDrafts || cmsPage.status === 'published') &&
+      cmsPage.components.length > 0
+    );
     const rendererComponents = (cmsPage?.components ?? []).map((component) => ({
       type: component.type,
       order: component.order || 0,

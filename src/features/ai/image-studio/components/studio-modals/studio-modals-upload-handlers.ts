@@ -1,9 +1,11 @@
+import type { ImageFileSelection } from '@/shared/types/domain/files';
+
 import { setImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
+
+import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
+import type { ImageStudioSlotRecord } from '../../types';
 import type { RefObject } from 'react';
 
-import type { ImageFileSelection } from '@/shared/types/domain/files';
-import type { ImageStudioSlotRecord } from '../../types';
-import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
 
 type Toast = (
   message: string,

@@ -4,8 +4,8 @@ import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { MousePointer2, Plus, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import { useAiPathsSettingsQuery } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import {
   aiTriggerButtonCreateSchema,
   type AiTriggerButtonCreatePayload,

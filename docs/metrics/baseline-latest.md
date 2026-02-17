@@ -1,14 +1,14 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T19:03:04.774Z
+Generated at: 2026-02-17T19:15:16.889Z
 
 ## Snapshot
 
-- Source files: 2708
-- Source lines: 432942
+- Source files: 2710
+- Source lines: 434019
 - use client files: 901
 - Files >= 1000 LOC: 16
-- Files >= 1500 LOC: 10
+- Files >= 1500 LOC: 9
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
 - API delegated server routes: 21
@@ -53,8 +53,8 @@ Generated at: 2026-02-17T19:03:04.774Z
 | `cms -> gsap` | 22 |
 | `ai -> products` | 20 |
 | `integrations -> observability` | 19 |
+| `ai -> prompt-engine` | 16 |
 | `integrations -> data-import-export` | 16 |
-| `ai -> prompt-engine` | 15 |
 | `cms -> observability` | 14 |
 | `data-import-export -> integrations` | 13 |
 
@@ -63,17 +63,17 @@ Generated at: 2026-02-17T19:03:04.774Z
 | File | LOC |
 | --- | ---: |
 | `src/features/database/services/database-sync.ts` | 3352 |
-| `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 2727 |
+| `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 3264 |
 | `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2597 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2524 |
 | `src/shared/ui/vector-canvas.tsx` | 2382 |
-| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 2311 |
+| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 2349 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1808 |
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
-| `src/features/ai/image-studio/components/StudioModals.tsx` | 1728 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1497 |
 | `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 1307 |
+| `src/features/ai/image-studio/components/StudioModals.tsx` | 1282 |
 | `src/features/ai/ai-paths/server/settings-store.ts` | 1262 |
 | `src/features/case-resolver/settings.ts` | 1136 |
 | `src/features/case-resolver/__tests__/settings.test.ts` | 1016 |

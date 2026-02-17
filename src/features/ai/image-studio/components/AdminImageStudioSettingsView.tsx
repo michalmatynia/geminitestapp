@@ -584,6 +584,30 @@ export function AdminImageStudioSettingsView(
                 </div>
               </div>
             </FormSection>
+
+            <FormSection
+              title='Help Tooltips'
+              description='Enable or disable inline help for crop controls. Tooltip copy is sourced from Image Studio Docs.'
+              variant='subtle'
+            >
+              <label className='flex items-center gap-2 rounded-lg border border-border/40 bg-card/30 px-3 py-2 text-xs text-gray-300 hover:bg-card/50 cursor-pointer w-fit'>
+                <input
+                  type='checkbox'
+                  className='h-4 w-4 rounded'
+                  checked={studioSettings.helpTooltips.cropButtonsEnabled}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    setStudioSettings((previous: ImageStudioSettings) => ({
+                      ...previous,
+                      helpTooltips: {
+                        ...previous.helpTooltips,
+                        cropButtonsEnabled: event.target.checked,
+                      },
+                    }))
+                  }
+                />
+                Enable Crop Tooltips
+              </label>
+            </FormSection>
           </TabsContent>
 
           <TabsContent value='generation' className='mt-6 space-y-6'>

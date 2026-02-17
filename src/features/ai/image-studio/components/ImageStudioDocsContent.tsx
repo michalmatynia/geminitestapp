@@ -15,6 +15,7 @@ import { usePromptState } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
 import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '../utils/studio-settings';
+import { IMAGE_STUDIO_CROP_DOC_KEYS, IMAGE_STUDIO_DOCS } from '../utils/studio-docs';
 import { IMAGE_STUDIO_TREE_KEY_PREFIX, parseImageStudioFolderTree } from '../utils/studio-tree';
 import {
   IMAGE_STUDIO_UI_ACTIVE_KEY,
@@ -391,6 +392,12 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         label: 'UI extractor max tokens',
         description: 'Token budget for UI extraction output.',
         value: metricValue(studioSettings.uiExtractor.max_output_tokens),
+      },
+      {
+        path: 'helpTooltips.cropButtonsEnabled',
+        label: 'Crop button tooltips',
+        description: 'Enables crop-control tooltips in Studio UI, sourced from Image Studio Docs.',
+        value: metricValue(studioSettings.helpTooltips.cropButtonsEnabled),
       },
       {
         path: 'targetAi.provider',

@@ -1640,6 +1640,18 @@ export const handleDatabase: NodeHandler = async ({
           productId: resolvedInputs['productId'],
           entityType: resolvedInputs['entityType'],
         };
+        const parameterTargetPath =
+          normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
+          'parameters';
+        const shouldPreserveArrayMappingValue = (
+          mapping: UpdaterMapping,
+          sourceValue: unknown
+        ): boolean =>
+          Boolean(
+            dbConfig.parameterInferenceGuard?.enabled &&
+              mapping.targetPath === parameterTargetPath &&
+              Array.isArray(sourceValue),
+          );
         const buildUpdatesFromMappings = (): {
         updates: Record<string, unknown>;
         primaryTarget: string;
@@ -1683,7 +1695,12 @@ export const handleDatabase: NodeHandler = async ({
             requiredSourcePorts.add(sourcePort);
             const sourceValue: unknown = templateInputs[sourcePort];
             if (sourceValue === undefined) return;
-            let value: unknown = coerceInput(sourceValue);
+            let value: unknown = shouldPreserveArrayMappingValue(
+              mapping,
+              sourceValue
+            )
+              ? sourceValue
+              : coerceInput(sourceValue);
             if (value && typeof value === 'object' && mapping.sourcePath) {
               const resolved: unknown = getValueAtMappingPath(value, mapping.sourcePath);
               if (resolved !== undefined) {
@@ -1736,9 +1753,6 @@ export const handleDatabase: NodeHandler = async ({
           missingSourcePorts,
           unresolvedSourcePorts,
         } = buildUpdatesFromMappings();
-        const parameterTargetPath =
-          normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
-          'parameters';
         const guardResult = applyParameterInferenceGuard({
           dbConfig,
           updates,
@@ -2442,13 +2456,27 @@ export const handleDatabase: NodeHandler = async ({
       let updates: Record<string, unknown> = {};
       const requiredSourcePorts: Set<string> = new Set<string>();
       const unresolvedSourcePorts: Set<string> = new Set<string>();
+      const parameterTargetPath =
+        normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
+        'parameters';
+      const shouldPreserveArrayMappingValue = (
+        mapping: UpdaterMapping,
+        sourceValue: unknown
+      ): boolean =>
+        Boolean(
+          dbConfig.parameterInferenceGuard?.enabled &&
+            mapping.targetPath === parameterTargetPath &&
+            Array.isArray(sourceValue),
+        );
       mappings.forEach((mapping: UpdaterMapping) => {
         const sourcePort = mapping.sourcePort;
         if (!sourcePort) return;
         requiredSourcePorts.add(sourcePort);
         const sourceValue = resolvedInputs[sourcePort];
         if (sourceValue === undefined) return;
-        let value: unknown = coerceInput(sourceValue);
+        let value: unknown = shouldPreserveArrayMappingValue(mapping, sourceValue)
+          ? sourceValue
+          : coerceInput(sourceValue);
         if (value && typeof value === 'object' && mapping.sourcePath) {
           const resolved = getValueAtMappingPath(value, mapping.sourcePath);
           if (resolved !== undefined) {
@@ -2483,9 +2511,6 @@ export const handleDatabase: NodeHandler = async ({
           updates[mapping.targetPath] = value;
         }
       });
-      const parameterTargetPath =
-        normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
-        'parameters';
       const guardResult = applyParameterInferenceGuard({
         dbConfig,
         updates,

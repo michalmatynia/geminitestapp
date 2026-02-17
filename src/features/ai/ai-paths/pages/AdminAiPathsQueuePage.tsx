@@ -42,7 +42,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
     setActiveTab(defaultTab);
   }, [defaultTab]);
 
-  const activeTabMeta = QUEUE_TABS.find((tab) => tab.id === activeTab) ?? QUEUE_TABS[0];
+  const activeTabMeta = QUEUE_TABS.find((tab) => tab.id === activeTab) || QUEUE_TABS[0]!;
   const ActiveTabIcon = activeTabMeta.icon;
 
   const scrollToSection = (sectionId: string): void => {

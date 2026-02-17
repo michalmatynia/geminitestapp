@@ -14,7 +14,7 @@ export type RuleDraft = {
 
 export type RulePatch = Partial<PromptValidationRule>;
 
-const DEFAULT_SEQUENCE_STEP = 10;
+export const DEFAULT_SEQUENCE_STEP = 10;
 const IMAGE_STUDIO_SCOPE_VALUES: PromptValidationScope[] = [
   'image_studio_prompt',
   'image_studio_extraction',

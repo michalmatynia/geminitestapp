@@ -681,7 +681,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   } = createImportExportRuntimeActions({
     toast,
     setInventoriesEnabled,
-    refetchInventories,
+    refetchInventories: refetchInventories as any,
     inventoryId,
     selectedBaseConnectionId,
     refreshImportParameterCacheMutation,
@@ -707,7 +707,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     setActiveImportRunId,
     setPollImportRun,
     activeImportRunId,
-    resumeImportRunMutation,
+    resumeImportRunMutation: resumeImportRunMutation as any,
     cancelImportRunMutation,
     saveExportSettingsMutation,
     exportActiveTemplateId,

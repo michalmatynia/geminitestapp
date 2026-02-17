@@ -45,8 +45,8 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
       { path: 'new-folder', ownerCaseId: 'case-b' },
     ],
     folderTimestamps: {
-      'old-folder': '2026-01-01T00:00:00.000Z',
-      'new-folder': '2026-01-02T00:00:00.000Z',
+      'old-folder': { createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' },
+      'new-folder': { createdAt: '2026-01-02T00:00:00.000Z', updatedAt: '2026-01-02T00:00:00.000Z' },
     },
     files: [caseA, caseB, docA, docB],
     assets: [

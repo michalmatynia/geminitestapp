@@ -812,7 +812,7 @@ export function StudioModals(): React.JSX.Element {
       height?: number | null;
       updatedAt?: string | Date | null;
     }): void => {
-      setEnvironmentReferenceDraft(applyEnvironmentReferenceAssetToDraft(asset));
+      setEnvironmentReferenceDraft(applyEnvironmentReferenceAssetToDraft(asset as any));
       setEnvironmentPreviewNaturalSize(null);
       setEditCardTab('environment');
     },
@@ -830,11 +830,11 @@ export function StudioModals(): React.JSX.Element {
         // Best-effort cleanup for replaced temporary assets.
       });
     },
-    createSlots, driveImportMode, driveImportTargetId, importFromDriveMutation, localUploadInputRef, localUploadMode,
+    createSlots, driveImportMode, driveImportTargetId, importFromDriveMutation: importFromDriveMutation as any, localUploadInputRef, localUploadMode,
     localUploadTargetId, selectedFolder, selectedSlot, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId,
     setLocalUploadMode, setLocalUploadTargetId, setSelectedSlotId, setTemporaryObjectUpload, slotHasRenderableImage,
     slotsCount: slots.length,
-    temporaryObjectUpload, toast, toSlotName, updateSlotMutation, uploadMutation,
+    temporaryObjectUpload: temporaryObjectUpload as any, toast: toast as any, toSlotName, updateSlotMutation, uploadMutation: uploadMutation as any,
   });
 
   const {
@@ -847,7 +847,7 @@ export function StudioModals(): React.JSX.Element {
     extractDraftPrompt, previewControls, previewParams, previewSpecs, setExtractBusy, setExtractDraftPrompt,
     setExtractError, setExtractHistory, setExtractPreviewUiOverrides, setExtractReviewOpen, setParamSpecs,
     setParamUiOverrides, setParamsState, setPreviewControls, setPreviewParams, setPreviewSpecs,
-    setPreviewValidation, setPromptText, setSelectedExtractHistoryId, studioSettings, toast,
+    setPreviewValidation, setPromptText, setSelectedExtractHistoryId, studioSettings, toast: toast as any,
   });
   const handleCreateEmptySlot = async (): Promise<void> => { setSlotCreateOpen(false); await handleCreateEmptySlotCore(); };
   const triggerLocalUpload = (mode: 'create' | 'replace' | 'temporary-object' | 'environment', targetId: string | null): void => {
@@ -863,7 +863,7 @@ export function StudioModals(): React.JSX.Element {
     setLinkedVariantApplyBusyKey, setSlotBase64Draft, setSlotImageUrlDraft, setSlotInlineEditOpen, setSlotUpdateBusy,
     selectedSlot, slotFolderDraft, slotNameDraft,
     slotsCount: slots.length,
-    toast, updateSlotMutation,
+    toast: toast as any, updateSlotMutation,
   });
   return (
     <>
@@ -925,7 +925,7 @@ export function StudioModals(): React.JSX.Element {
         onApplyLinkedVariantToCard={handleApplyLinkedVariantToCard}
         onClearSlotImage={handleClearSlotImage}
         onCopyCardId={async (id: string): Promise<void> => {
-          await copyCardIdToClipboard(id, toast);
+          await copyCardIdToClipboard(id, toast as any);
         }}
         onOpenGenerationPreviewModal={handleOpenGenerationPreviewModal}
         onRefreshLinkedRuns={() => {

@@ -697,7 +697,7 @@ export function AdminImageStudioSettingsPage(
       imageModelsQuery={imageModelsQuery}
       modelToAdd={modelToAdd}
       setModelToAdd={setModelToAdd}
-      addableGenerationModelOptions={addableGenerationModelOptions}
+      addableGenerationModelOptions={addableModelSelectOptions}
       addableModelSelectOptions={addableModelSelectOptions}
       isGpt52Model={isGpt52Model}
       imageStudioApiKey={imageStudioApiKey}

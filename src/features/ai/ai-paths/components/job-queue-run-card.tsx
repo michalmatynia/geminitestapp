@@ -4,6 +4,7 @@ import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
+  RuntimeHistoryEntry,
 } from '@/features/ai/ai-paths/lib';
 import {
   Alert,
@@ -55,7 +56,7 @@ type JobQueueRunCardProps = {
   events: AiPathRunEventRecord[];
   historyOptions: HistoryOption[];
   selectedHistoryNodeId: string | null;
-  historyEntries: unknown[];
+  historyEntries: RuntimeHistoryEntry[];
   onToggleRun: () => void;
   onToggleStream: () => void;
   onRefreshDetail: () => void;

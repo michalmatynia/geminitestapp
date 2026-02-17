@@ -11,7 +11,7 @@ type DatabaseAiPromptConnectionStatusProps = {
   aiPrompt: string;
   sendingToAi: boolean;
   onSendToAi?: ((nodeId: string, prompt: string) => Promise<void>) | null;
-  updateQueryConfig: (patch: { mode?: 'guided' | 'custom'; queryTemplate?: string }) => void;
+  updateQueryConfig: (patch: { mode?: 'preset' | 'custom'; queryTemplate?: string }) => void;
   toast: (
     message: string,
     options?: { variant?: 'success' | 'error' | 'info' | 'warning' }

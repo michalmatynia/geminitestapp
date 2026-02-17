@@ -49,7 +49,7 @@ type StudioInlineEditPanelsProps = {
   extractHistory: PromptExtractHistoryEntry[];
   extractReviewOpen: boolean;
   generationPreviewModalOpen: boolean;
-  inlineCardImageManagerController: ProductImageManagerController | null;
+  inlineCardImageManagerController: ProductImageManagerController;
   inlinePreviewBase64Bytes: number | null;
   inlinePreviewDimensions: string;
   inlinePreviewMimeType: string;
@@ -65,7 +65,7 @@ type StudioInlineEditPanelsProps = {
   onApplyLinkedVariantToCard: (variant: LinkedGeneratedVariantViewModel) => Promise<void>;
   onClearSlotImage: () => Promise<void>;
   onCopyCardId: (cardId: string) => Promise<void>;
-  onOpenGenerationPreviewModal: (variantKey: string) => void;
+  onOpenGenerationPreviewModal: (variant: LinkedGeneratedVariantViewModel) => void;
   onRefreshLinkedRuns: () => void;
   onReplaceFromDrive: () => void;
   onReplaceFromLocal: () => void;
@@ -243,11 +243,12 @@ export function StudioInlineEditPanels({
           </TabsList>
           <SlotInlineEditCardTab
             clearImageDisabled={slotUpdateBusy || isCardImageRemovalLocked(selectedSlot)}
-            clearImageTitle={
-              isCardImageRemovalLocked(selectedSlot)
-                ? 'Card image is locked and can only be removed by deleting the card.'
-                : undefined
-            }
+            {...(isCardImageRemovalLocked(selectedSlot)
+              ? {
+                clearImageTitle:
+                    'Card image is locked and can only be removed by deleting the card.',
+              }
+              : {})}
             formatBytes={formatBytes}
             formatDateTime={formatDateTime}
             formatLinkedVariantTimestamp={formatLinkedVariantTimestamp}
@@ -297,7 +298,7 @@ export function StudioInlineEditPanels({
             }}
             selectedGenerationPreview={selectedGenerationPreview}
             selectedGenerationPreviewDimensions={selectedGenerationPreviewDimensions}
-            selectedSlotName={selectedSlot?.name}
+            selectedSlotName={selectedSlot?.name ?? null}
             setGenerationPreviewNaturalSize={setGenerationPreviewNaturalSize}
             slotNameDraft={slotNameDraft}
           />
@@ -316,7 +317,7 @@ export function StudioInlineEditPanels({
             }}
             onUploadEnvironmentFromDrive={onUploadEnvironmentFromDrive}
             onUploadEnvironmentFromLocal={onUploadEnvironmentFromLocal}
-            selectedSlotName={selectedSlot?.name}
+            selectedSlotName={selectedSlot?.name ?? null}
             setEnvironmentPreviewNaturalSize={setEnvironmentPreviewNaturalSize}
             slotNameDraft={slotNameDraft}
             uploadPending={uploadPending}
@@ -329,7 +330,7 @@ export function StudioInlineEditPanels({
           <SlotInlineEditCompositesTab
             compositeTabInputImages={compositeTabInputImages}
             compositeTabInputSourceLabel={compositeTabInputSourceLabel}
-            sourceCompositeImage={sourceCompositeImage}
+            sourceCompositeImage={sourceCompositeImage as any}
             formatBytes={formatBytes}
             formatDateTime={formatDateTime}
           />

@@ -447,7 +447,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         );
                       }
                     }}
-                    options={EXECUTION_OPTIONS}
+                    options={[...EXECUTION_OPTIONS]}
                     className='w-[160px]'
                     triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}
@@ -467,7 +467,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         );
                       }
                     }}
-                    options={FLOW_OPTIONS}
+                    options={[...FLOW_OPTIONS]}
                     className='w-[160px]'
                     triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}
@@ -485,7 +485,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         handleRunModeChange(value as 'block' | 'queue');
                       }
                     }}
-                    options={RUN_MODE_OPTIONS}
+                    options={[...RUN_MODE_OPTIONS]}
                     className='w-[160px]'
                     triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}

@@ -371,7 +371,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     (reference: { kind: string; id: string } | null | undefined): string => {
       if (!reference) return 'None';
       return (
-        resolveFilemakerPartyLabel(filemakerDatabase, reference) ??
+        resolveFilemakerPartyLabel(filemakerDatabase, { ...reference, kind: reference.kind as any }) ??
         `${reference.kind}:${reference.id}`
       );
     },

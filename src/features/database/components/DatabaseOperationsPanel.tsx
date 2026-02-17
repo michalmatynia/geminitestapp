@@ -32,7 +32,7 @@ const DATABASE_OPTIONS: Array<{
 function DatabaseOperationsPanelContent(): React.JSX.Element {
   const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();
   const isProduction = process.env['NODE_ENV'] === 'production';
-  const selectedDatabase = DATABASE_OPTIONS.find((option) => option.value === dbType) ?? DATABASE_OPTIONS[0];
+  const selectedDatabase = DATABASE_OPTIONS.find((option) => option.value === dbType) ?? DATABASE_OPTIONS[0]!;
 
   return (
     <ListPanel

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-17T20:58:30.863Z",
+  "generatedAt": "2026-02-17T20:46:47.522Z",
   "source": {
-    "totalFiles": 2740,
-    "totalLines": 437592,
+    "totalFiles": 2738,
+    "totalLines": 437253,
     "useClientFiles": 901,
     "filesOver800": 87,
     "filesOver1000": 8,
@@ -220,8 +220,8 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 508,
-        "lines": 126407
+        "files": 506,
+        "lines": 126069
       },
       {
         "feature": "products",
@@ -271,7 +271,7 @@
       {
         "feature": "prompt-engine",
         "files": 20,
-        "lines": 5934
+        "lines": 5933
       },
       {
         "feature": "admin",
@@ -407,7 +407,7 @@
       },
       {
         "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts",
-        "lines": 1550
+        "lines": 2010
       },
       {
         "path": "src/features/case-resolver/__tests__/settings.test.ts",

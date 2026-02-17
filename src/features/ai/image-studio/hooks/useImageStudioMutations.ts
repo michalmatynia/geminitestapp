@@ -420,13 +420,14 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
 
       return { previousSlots };
     },
-    onError: (_error: Error, deletedSlotRawId: string, context?: { previousSlots?: StudioSlotsResponse }) => {
+    onError: (_error: Error, deletedSlotRawId: string, _snapshot: unknown, context: unknown) => {
+      const typedContext = context as { previousSlots?: StudioSlotsResponse } | undefined;
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
       deletedIdsByRequestRef.current.delete(normalizedDeletedSlotId);
-      if (context?.previousSlots) {
+      if (typedContext?.previousSlots) {
         queryClient.setQueryData<StudioSlotsResponse | undefined>(
           QUERY_KEYS.imageStudio.slots(projectId),
-          context.previousSlots,
+          typedContext.previousSlots,
         );
       }
     },

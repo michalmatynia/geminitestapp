@@ -642,8 +642,8 @@ const ensureParameterInferenceDefaults = async (
         name: PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
         locations: Array.from(
           new Set([
-            ...(Array.isArray(existingButton.locations)
-              ? (existingButton.locations as string[])
+            ...(Array.isArray(existingButton['locations'])
+              ? (existingButton['locations'] as string[])
               : []),
             'product_modal',
           ])
@@ -829,10 +829,10 @@ const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean
   );
   if (!parameterButton) return false;
   const buttonName =
-    typeof parameterButton.name === 'string' ? parameterButton.name.trim() : '';
+    typeof parameterButton['name'] === 'string' ? (parameterButton['name'] as string).trim() : '';
   if (buttonName !== PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME) return false;
-  const locations = Array.isArray(parameterButton.locations)
-    ? parameterButton.locations
+  const locations = Array.isArray(parameterButton['locations'])
+    ? parameterButton['locations']
     : [];
   return locations.includes('product_modal');
 };

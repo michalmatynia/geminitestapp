@@ -135,9 +135,14 @@ export function CenterPreview(): React.JSX.Element {
   const [leftSplitZoom, setLeftSplitZoom] = useState(1);
   const [rightSplitZoom, setRightSplitZoom] = useState(1);
   const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
-  const previewCanvasCropRectRef = useRef<VectorCanvasViewCropRect | null>(null);
-  const previewCanvasImageFrameRef = useRef<VectorCanvasImageContentFrame | null>(null);
-  const previewCanvasSlotIdRef = useRef<string | null>(null);
+  const previewCanvasCropBindingRef = useRef<{
+    slotId: string;
+    cropRect: VectorCanvasViewCropRect;
+  } | null>(null);
+  const previewCanvasImageFrameBindingRef = useRef<{
+    slotId: string;
+    frame: VectorCanvasImageContentFrame;
+  } | null>(null);
   const [variantTooltip, setVariantTooltip] = useState<VariantTooltipState | null>(null);
   const [detailsSlotId, setDetailsSlotId] = useState<string | null>(null);
 
@@ -383,15 +388,33 @@ export function CenterPreview(): React.JSX.Element {
   ]);
 
   const handlePreviewCanvasCropRectChange = useCallback((cropRect: VectorCanvasViewCropRect | null): void => {
-    previewCanvasCropRectRef.current = cropRect;
-  }, []);
+    const slotId = activeCanvasSlotId?.trim() ?? '';
+    if (!slotId || !cropRect) {
+      previewCanvasCropBindingRef.current = null;
+      return;
+    }
+    previewCanvasCropBindingRef.current = {
+      slotId,
+      cropRect,
+    };
+  }, [activeCanvasSlotId]);
 
   const handlePreviewCanvasImageFrameChange = useCallback((frame: VectorCanvasImageContentFrame | null): void => {
-    previewCanvasImageFrameRef.current = frame;
-  }, []);
+    const slotId = activeCanvasSlotId?.trim() ?? '';
+    if (!slotId || !frame) {
+      previewCanvasImageFrameBindingRef.current = null;
+      return;
+    }
+    previewCanvasImageFrameBindingRef.current = {
+      slotId,
+      frame,
+    };
+  }, [activeCanvasSlotId]);
 
   useEffect(() => {
-    previewCanvasSlotIdRef.current = activeCanvasSlotId;
+    // Avoid cross-slot leakage when switching the loaded canvas slot.
+    previewCanvasCropBindingRef.current = null;
+    previewCanvasImageFrameBindingRef.current = null;
   }, [activeCanvasSlotId]);
 
   useEffect(() => {
@@ -400,20 +423,14 @@ export function CenterPreview(): React.JSX.Element {
 
   useEffect(() => {
     if (previewMode !== 'image' || splitVariantView) {
-      previewCanvasCropRectRef.current = null;
-      previewCanvasImageFrameRef.current = null;
+      previewCanvasCropBindingRef.current = null;
+      previewCanvasImageFrameBindingRef.current = null;
     }
   }, [previewMode, splitVariantView]);
 
   useEffect(() => {
     registerPreviewCanvasViewportCropResolver(() => {
-      const slotId = previewCanvasSlotIdRef.current?.trim() ?? '';
-      const cropRect = previewCanvasCropRectRef.current;
-      if (!slotId || !cropRect) return null;
-      return {
-        slotId,
-        cropRect,
-      };
+      return previewCanvasCropBindingRef.current;
     });
     return (): void => {
       registerPreviewCanvasViewportCropResolver(null);
@@ -422,13 +439,7 @@ export function CenterPreview(): React.JSX.Element {
 
   useEffect(() => {
     registerPreviewCanvasImageFrameResolver(() => {
-      const slotId = previewCanvasSlotIdRef.current?.trim() ?? '';
-      const frame = previewCanvasImageFrameRef.current;
-      if (!slotId || !frame) return null;
-      return {
-        slotId,
-        frame,
-      };
+      return previewCanvasImageFrameBindingRef.current;
     });
     return (): void => {
       registerPreviewCanvasImageFrameResolver(null);

@@ -50,7 +50,7 @@ type CaseResolverToast = (
 ) => void;
 
 type SettingsStoreLike = {
-  get: (key: string) => string;
+  get: (key: string) => string | undefined;
 };
 
 type UpdateWorkspaceOptions = {

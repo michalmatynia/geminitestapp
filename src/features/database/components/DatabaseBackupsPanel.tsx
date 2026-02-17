@@ -82,7 +82,7 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
 
   const selectedDatabase =
     BACKUP_DATABASE_OPTIONS.find((option) => option.value === activeTab) ??
-    BACKUP_DATABASE_OPTIONS[0];
+    BACKUP_DATABASE_OPTIONS[0]!;
   const backupCountLabel = `${data.length.toLocaleString()} backup${data.length === 1 ? '' : 's'}`;
 
   return (

@@ -177,7 +177,7 @@ export const createPromptExtractionHandlers = (
       appendExtractHistoryEntry({
         runKind: 'smart',
         source: result.source ?? null,
-        modeRequested: result.modeRequested ?? deps.studioSettings.promptExtraction.mode,
+        modeRequested: result.modeRequested ?? (deps.studioSettings.promptExtraction.mode as any),
         fallbackUsed: Boolean(result.fallbackUsed),
         autofixApplied:
           Boolean(result.diagnostics?.autofixApplied) ||

@@ -1,0 +1,76 @@
+import { useCallback } from 'react';
+
+type ConfirmFn = (input: {
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText?: string;
+  isDangerous: boolean;
+  onConfirm: () => void;
+  onCancel?: () => void;
+}) => void;
+
+type ToastFn = (
+  message: string,
+  options?: {
+    variant?: 'info' | 'success' | 'warning' | 'error';
+  },
+) => void;
+
+type UseAiPathsNodeSwitchConfirmInput = {
+  configOpen: boolean;
+  nodeConfigDirty: boolean;
+  selectedNodeId: string | null;
+  setNodeConfigDirty: React.Dispatch<React.SetStateAction<boolean>>;
+  confirm: ConfirmFn;
+  toast: ToastFn;
+};
+
+export type UseAiPathsNodeSwitchConfirmReturn = {
+  confirmNodeSwitch: (nextNodeId: string) => Promise<boolean>;
+};
+
+export function useAiPathsNodeSwitchConfirm({
+  configOpen,
+  nodeConfigDirty,
+  selectedNodeId,
+  setNodeConfigDirty,
+  confirm,
+  toast,
+}: UseAiPathsNodeSwitchConfirmInput): UseAiPathsNodeSwitchConfirmReturn {
+  const confirmNodeSwitch = useCallback(
+    (nextNodeId: string): Promise<boolean> => {
+      if (!configOpen || !nodeConfigDirty) return Promise.resolve(true);
+      if (nextNodeId === selectedNodeId) return Promise.resolve(true);
+
+      return new Promise((resolve) => {
+        confirm({
+          title: 'Unsaved Changes',
+          message:
+            'You have unsaved changes for this node. Discard them and switch?',
+          confirmText: 'Discard & Switch',
+          cancelText: 'Keep Editing',
+          isDangerous: true,
+          onConfirm: () => {
+            setNodeConfigDirty(false);
+            resolve(true);
+          },
+          onCancel: () => {
+            toast('Kept current node.', { variant: 'info' });
+            resolve(false);
+          },
+        });
+      });
+    },
+    [
+      configOpen,
+      confirm,
+      nodeConfigDirty,
+      selectedNodeId,
+      setNodeConfigDirty,
+      toast,
+    ],
+  );
+
+  return { confirmNodeSwitch };
+}

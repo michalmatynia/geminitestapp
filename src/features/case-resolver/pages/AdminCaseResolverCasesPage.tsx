@@ -597,7 +597,6 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       .sort((left, right) => left.label.localeCompare(right.label));
   }, [caseResolverCategories]);
   const defaultTagId = caseResolverTags[0]?.id ?? null;
-  const defaultCaseIdentifierId = caseResolverIdentifiers[0]?.id ?? null;
   const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
   const [workspace, setWorkspace] =
     useState<CaseResolverWorkspace>(parsedWorkspace);
@@ -756,14 +755,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   useEffect(() => {
     setCaseDraft((prev) => {
       const current = prev.caseIdentifierId;
-      const next =
-        !current || !caseResolverIdentifiers.some((id) => id.id === current)
-          ? defaultCaseIdentifierId
-          : current;
+      if (!current) return prev;
+      const next = caseResolverIdentifiers.some((id) => id.id === current)
+        ? current
+        : null;
       if (next === current) return prev;
       return { ...prev, caseIdentifierId: next };
     });
-  }, [caseResolverIdentifiers, defaultCaseIdentifierId]);
+  }, [caseResolverIdentifiers]);
 
   useEffect(() => {
     setCaseDraft((prev) => {
@@ -1337,11 +1336,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         parentCaseId,
         referenceCaseIds: [],
         tagId: defaultTagId,
-        caseIdentifierId: defaultCaseIdentifierId,
+        caseIdentifierId: null,
         categoryId: defaultCategoryId,
       });
     },
-    [defaultCaseIdentifierId, defaultCategoryId, defaultTagId],
+    [defaultCategoryId, defaultTagId],
   );
 
   const handleOpenCreateCaseModal = useCallback(
@@ -1481,7 +1480,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             inputClassName='h-9'
           />
         ),
-        required: true,
+        required: false,
       },
       {
         key: 'categoryId',

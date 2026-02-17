@@ -33,6 +33,7 @@ import {
   sortRuleDraftsBySequence,
   type RuleDraft,
   type RulePatch,
+  DEFAULT_SEQUENCE_STEP,
 } from './prompt-engine-context-utils';
 
 export type SeverityFilter = PromptValidationSeverity | 'all';

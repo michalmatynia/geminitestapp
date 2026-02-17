@@ -600,11 +600,11 @@ export async function runAgentTool(request: AgentToolRequest, injectedBrowser?: 
       }
 
       const extractionResult = await runExtractionRequest({
-        prompt,
+        prompt: prompt ?? '',
         page,
         runId,
         runDir,
-        stepLabel,
+        ...(stepLabel ? { stepLabel } : {}),
         activeStepId,
         targetHostname,
         domText,

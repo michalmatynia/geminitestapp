@@ -1,17 +1,17 @@
 'use client';
 
-import { 
-  ArrowDown, 
-  ArrowUp, 
-  ChevronDown, 
-  ChevronRight, 
-  Edit2, 
-  Eye, 
-  Folder, 
-  FolderOpen, 
-  Link2, 
-  Lock, 
-  Plus, 
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  ChevronRight,
+  Edit2,
+  Eye,
+  Folder,
+  FolderOpen,
+  Link2,
+  Lock,
+  Plus,
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -23,18 +23,21 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { UserPreferences } from '@/shared/types/domain/user-preferences';
 import {
-  Badge, 
-  Button, 
-  FilterPanel, 
-  Input, 
+  Badge,
+  Button,
+  FilterPanel,
+  Input,
   ListPanel,
-  MultiSelect, 
-  SelectSimple, 
-  useToast
+  MultiSelect,
+  SelectSimple,
+  useToast,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
-import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -63,7 +66,10 @@ import type {
 } from '../types';
 
 const createId = (prefix: string): string => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return `${prefix}-${crypto.randomUUID()}`;
   }
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
@@ -94,7 +100,10 @@ type IndexedCaseRow = {
   normalizedCaseIdentifier: string;
   normalizedCategory: string;
 };
-type CaseFileComparator = (left: CaseResolverFile, right: CaseResolverFile) => number;
+type CaseFileComparator = (
+  left: CaseResolverFile,
+  right: CaseResolverFile,
+) => number;
 type CaseIdentifierSelectorOption = {
   id: string;
   label: string;
@@ -115,7 +124,7 @@ type CaseIdentifierTextSelectorProps = {
 
 const defaultCaseComparator: CaseFileComparator = (
   left: CaseResolverFile,
-  right: CaseResolverFile
+  right: CaseResolverFile,
 ): number => {
   const nameDelta = left.name.localeCompare(right.name);
   if (nameDelta !== 0) return nameDelta;
@@ -132,11 +141,12 @@ const stripHtml = (value: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const normalizeIdentifierTerm = (value: string): string => value.trim().toLowerCase();
+const normalizeIdentifierTerm = (value: string): string =>
+  value.trim().toLowerCase();
 
 const buildCaseIdentifierOption = (
   identifier: CaseResolverIdentifier,
-  identifierPathById: Map<string, string>
+  identifierPathById: Map<string, string>,
 ): CaseIdentifierSelectorOption => {
   const label = identifierPathById.get(identifier.id) ?? identifier.name;
   return {
@@ -160,14 +170,15 @@ function CaseIdentifierTextSelector({
   const selectedIdentifier = useMemo(
     () =>
       value
-        ? identifiers.find(
-          (identifier: CaseResolverIdentifier): boolean => identifier.id === value
-        ) ?? null
+        ? (identifiers.find(
+          (identifier: CaseResolverIdentifier): boolean =>
+            identifier.id === value,
+        ) ?? null)
         : null,
-    [identifiers, value]
+    [identifiers, value],
   );
   const selectedIdentifierLabel = selectedIdentifier
-    ? identifierPathById.get(selectedIdentifier.id) ?? selectedIdentifier.name
+    ? (identifierPathById.get(selectedIdentifier.id) ?? selectedIdentifier.name)
     : '';
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -183,16 +194,17 @@ function CaseIdentifierTextSelector({
   const normalizedQuery = normalizeIdentifierTerm(query);
   const options = useMemo(
     (): CaseIdentifierSelectorOption[] =>
-      identifiers.map((identifier: CaseResolverIdentifier): CaseIdentifierSelectorOption =>
-        buildCaseIdentifierOption(identifier, identifierPathById)
+      identifiers.map(
+        (identifier: CaseResolverIdentifier): CaseIdentifierSelectorOption =>
+          buildCaseIdentifierOption(identifier, identifierPathById),
       ),
-    [identifierPathById, identifiers]
+    [identifierPathById, identifiers],
   );
   const filteredOptions = useMemo((): CaseIdentifierSelectorOption[] => {
     if (!normalizedQuery) return options.slice(0, 12);
     return options
       .filter((option: CaseIdentifierSelectorOption): boolean =>
-        option.searchableLabel.includes(normalizedQuery)
+        option.searchableLabel.includes(normalizedQuery),
       )
       .slice(0, 12);
   }, [normalizedQuery, options]);
@@ -201,11 +213,11 @@ function CaseIdentifierTextSelector({
     return (
       options.find(
         (option: CaseIdentifierSelectorOption): boolean =>
-          normalizeIdentifierTerm(option.label) === normalizedQuery
+          normalizeIdentifierTerm(option.label) === normalizedQuery,
       ) ??
       options.find((option: CaseIdentifierSelectorOption): boolean => {
         const identifier = identifiers.find(
-          (entry: CaseResolverIdentifier): boolean => entry.id === option.id
+          (entry: CaseResolverIdentifier): boolean => entry.id === option.id,
         );
         if (!identifier) return false;
         return normalizeIdentifierTerm(identifier.name) === normalizedQuery;
@@ -220,7 +232,7 @@ function CaseIdentifierTextSelector({
       setQuery('');
       setIsOpen(false);
     },
-    [onChange]
+    [onChange],
   );
 
   const handleEnter = useCallback(async (): Promise<void> => {
@@ -249,7 +261,14 @@ function CaseIdentifierTextSelector({
     } finally {
       setIsCreating(false);
     }
-  }, [applySelection, exactMatch, filteredOptions, onChange, onCreateIdentifier, query]);
+  }, [
+    applySelection,
+    exactMatch,
+    filteredOptions,
+    onChange,
+    onCreateIdentifier,
+    query,
+  ]);
 
   const isDisabled = disabled || isCreating;
 
@@ -265,7 +284,11 @@ function CaseIdentifierTextSelector({
             onChange(null);
             return;
           }
-          if (selectedIdentifierLabel && normalizeIdentifierTerm(nextQuery) !== normalizeIdentifierTerm(selectedIdentifierLabel)) {
+          if (
+            selectedIdentifierLabel &&
+            normalizeIdentifierTerm(nextQuery) !==
+              normalizeIdentifierTerm(selectedIdentifierLabel)
+          ) {
             onChange(null);
           }
         }}
@@ -298,7 +321,9 @@ function CaseIdentifierTextSelector({
                 key={option.id}
                 type='button'
                 className='block w-full rounded px-2 py-1.5 text-left text-xs text-popover-foreground hover:bg-muted/70'
-                onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                onMouseDown={(
+                  event: React.MouseEvent<HTMLButtonElement>,
+                ): void => {
                   event.preventDefault();
                   applySelection(option.id);
                 }}
@@ -326,7 +351,10 @@ function CaseIdentifierTextSelector({
               }}
               title='Filter cases by this identifier'
             >
-              <Badge variant='outline' className='w-fit cursor-pointer text-[10px] hover:bg-muted/60'>
+              <Badge
+                variant='outline'
+                className='w-fit cursor-pointer text-[10px] hover:bg-muted/60'
+              >
                 {selectedIdentifierLabel}
               </Badge>
             </button>
@@ -341,10 +369,14 @@ function CaseIdentifierTextSelector({
   );
 }
 
-const buildPathLabelMap = <T extends { id: string; name: string; parentId: string | null }>(
-  items: T[]
-): Map<string, string> => {
-  const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
+const buildPathLabelMap = <
+  T extends { id: string; name: string; parentId: string | null },
+>(
+    items: T[],
+  ): Map<string, string> => {
+  const byId = new Map<string, T>(
+    items.map((item: T): [string, T] => [item.id, item]),
+  );
   const cache = new Map<string, string>();
 
   const resolveLabel = (id: string, visited: Set<string>): string => {
@@ -377,7 +409,7 @@ const buildPathLabelMap = <T extends { id: string; name: string; parentId: strin
 
 const sortCaseNodes = (
   nodes: CaseTreeNode[],
-  comparator: CaseFileComparator = defaultCaseComparator
+  comparator: CaseFileComparator = defaultCaseComparator,
 ): void => {
   nodes.sort((left: CaseTreeNode, right: CaseTreeNode): number => {
     return comparator(left.file, right.file);
@@ -389,13 +421,13 @@ const sortCaseNodes = (
 
 const buildCaseTree = (
   files: CaseResolverFile[],
-  comparator: CaseFileComparator = defaultCaseComparator
+  comparator: CaseFileComparator = defaultCaseComparator,
 ): CaseTreeNode[] => {
   const byId = new Map<string, CaseTreeNode>(
     files.map((file: CaseResolverFile): [string, CaseTreeNode] => [
       file.id,
       { file, children: [] },
-    ])
+    ]),
   );
   const roots: CaseTreeNode[] = [];
 
@@ -419,7 +451,7 @@ const buildCaseTree = (
 
 const flattenCaseTreeOptions = (
   nodes: CaseTreeNode[],
-  depth = 0
+  depth = 0,
 ): Array<{ value: string; label: string }> =>
   nodes.flatMap((node: CaseTreeNode) => [
     { value: node.file.id, label: `${' '.repeat(depth * 2)}${node.file.name}` },
@@ -443,15 +475,17 @@ const DEFAULT_CASE_LIST_VIEW_DEFAULTS: CaseListViewDefaults = {
 };
 
 const normalizeCaseListViewDefaults = (
-  preferences: UserPreferences | undefined
+  preferences: UserPreferences | undefined,
 ): CaseListViewDefaults => ({
-  viewMode: preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
+  viewMode:
+    preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
   sortBy:
     preferences?.caseResolverCaseListSortBy === 'created' ||
     preferences?.caseResolverCaseListSortBy === 'name'
       ? preferences.caseResolverCaseListSortBy
       : 'updated',
-  sortOrder: preferences?.caseResolverCaseListSortOrder === 'asc' ? 'asc' : 'desc',
+  sortOrder:
+    preferences?.caseResolverCaseListSortOrder === 'asc' ? 'asc' : 'desc',
   searchScope:
     preferences?.caseResolverCaseListSearchScope === 'name' ||
     preferences?.caseResolverCaseListSearchScope === 'folder' ||
@@ -470,51 +504,64 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const { toast } = useToast();
   const caseListViewDefaults = useMemo(
     () => normalizeCaseListViewDefaults(preferencesQuery.data),
-    [preferencesQuery.data]
+    [preferencesQuery.data],
   );
 
   const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
-  const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
-  const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
+  const rawCaseResolverIdentifiers = settingsStore.get(
+    CASE_RESOLVER_IDENTIFIERS_KEY,
+  );
+  const rawCaseResolverCategories = settingsStore.get(
+    CASE_RESOLVER_CATEGORIES_KEY,
+  );
   const rawCaseResolverSettings = settingsStore.get(CASE_RESOLVER_SETTINGS_KEY);
   const parsedWorkspace = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
-    [rawWorkspace]
+    [rawWorkspace],
   );
   const canHydrateWorkspaceFromStore = useMemo(
     (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspace),
-    [rawWorkspace]
+    [rawWorkspace],
   );
   const caseResolverTags = useMemo(
     (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
-    [rawCaseResolverTags]
+    [rawCaseResolverTags],
   );
   const caseResolverIdentifiers = useMemo(
-    (): CaseResolverIdentifier[] => parseCaseResolverIdentifiers(rawCaseResolverIdentifiers),
-    [rawCaseResolverIdentifiers]
+    (): CaseResolverIdentifier[] =>
+      parseCaseResolverIdentifiers(rawCaseResolverIdentifiers),
+    [rawCaseResolverIdentifiers],
   );
   const caseResolverCategories = useMemo(
-    (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
-    [rawCaseResolverCategories]
+    (): CaseResolverCategory[] =>
+      parseCaseResolverCategories(rawCaseResolverCategories),
+    [rawCaseResolverCategories],
   );
   const caseResolverSettings = useMemo(
     () => parseCaseResolverSettings(rawCaseResolverSettings),
-    [rawCaseResolverSettings]
+    [rawCaseResolverSettings],
   );
-  const caseResolverTagOptions = useMemo<Array<{ value: string; label: string }>>(
+  const caseResolverTagOptions = useMemo<
+    Array<{ value: string; label: string }>
+  >(
     () =>
       caseResolverTags.map((tag: CaseResolverTag) => ({
         value: tag.id,
         label: tag.name,
       })),
-    [caseResolverTags]
+    [caseResolverTags],
   );
-  const caseResolverCategoryOptions = useMemo<Array<{ value: string; label: string }>>(() => {
+  const caseResolverCategoryOptions = useMemo<
+    Array<{ value: string; label: string }>
+  >(() => {
     const byId = new Map<string, CaseResolverCategory>(
       caseResolverCategories.map(
-        (category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category]
-      )
+        (category: CaseResolverCategory): [string, CaseResolverCategory] => [
+          category.id,
+          category,
+        ],
+      ),
     );
     const resolveDepth = (category: CaseResolverCategory): number => {
       let depth = 0;
@@ -537,42 +584,56 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const defaultTagId = caseResolverTags[0]?.id ?? null;
   const defaultCaseIdentifierId = caseResolverIdentifiers[0]?.id ?? null;
   const defaultCategoryId = caseResolverCategories[0]?.id ?? null;
-  const [workspace, setWorkspace] = useState<CaseResolverWorkspace>(parsedWorkspace);
+  const [workspace, setWorkspace] =
+    useState<CaseResolverWorkspace>(parsedWorkspace);
 
   const [caseDraft, setCaseDraft] = useState<Partial<CaseResolverFile>>({});
   const [isCreateCaseModalOpen, setIsCreateCaseModalOpen] = useState(false);
   const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
   const [editingCaseName, setEditingCaseName] = useState('');
-  const [editingCaseParentId, setEditingCaseParentId] = useState<string | null>(null);
-  const [editingCaseReferenceCaseIds, setEditingCaseReferenceCaseIds] = useState<string[]>([]);
-  const [editingCaseTagId, setEditingCaseTagId] = useState<string | null>(null);
-  const [editingCaseCaseIdentifierId, setEditingCaseCaseIdentifierId] = useState<string | null>(
-    null
+  const [editingCaseParentId, setEditingCaseParentId] = useState<string | null>(
+    null,
   );
-  const [pendingCaseIdentifierIds, setPendingCaseIdentifierIds] = useState<string[]>([]);
-  const [editingCaseCategoryId, setEditingCaseCategoryId] = useState<string | null>(null);
-  const [collapsedCaseIds, setCollapsedCaseIds] = useState<Set<string>>(new Set<string>());
+  const [editingCaseReferenceCaseIds, setEditingCaseReferenceCaseIds] =
+    useState<string[]>([]);
+  const [editingCaseTagId, setEditingCaseTagId] = useState<string | null>(null);
+  const [editingCaseCaseIdentifierId, setEditingCaseCaseIdentifierId] =
+    useState<string | null>(null);
+  const [pendingCaseIdentifierIds, setPendingCaseIdentifierIds] = useState<
+    string[]
+  >([]);
+  const [editingCaseCategoryId, setEditingCaseCategoryId] = useState<
+    string | null
+  >(null);
+  const [collapsedCaseIds, setCollapsedCaseIds] = useState<Set<string>>(
+    new Set<string>(),
+  );
   const [caseSearchQuery, setCaseSearchQuery] = useState('');
   const [caseSearchScope, setCaseSearchScope] = useState<CaseSearchScope>(
-    DEFAULT_CASE_LIST_VIEW_DEFAULTS.searchScope
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.searchScope,
   );
-  const [caseFileTypeFilter, setCaseFileTypeFilter] = useState<CaseFileTypeFilter>('all');
+  const [caseFileTypeFilter, setCaseFileTypeFilter] =
+    useState<CaseFileTypeFilter>('all');
   const [caseFilterTagIds, setCaseFilterTagIds] = useState<string[]>([]);
-  const [caseFilterCaseIdentifierIds, setCaseFilterCaseIdentifierIds] = useState<string[]>([]);
-  const [caseFilterCategoryIds, setCaseFilterCategoryIds] = useState<string[]>([]);
+  const [caseFilterCaseIdentifierIds, setCaseFilterCaseIdentifierIds] =
+    useState<string[]>([]);
+  const [caseFilterCategoryIds, setCaseFilterCategoryIds] = useState<string[]>(
+    [],
+  );
   const [caseFilterFolder, setCaseFilterFolder] = useState('__all__');
   const [caseSortBy, setCaseSortBy] = useState<CaseSortKey>(
-    DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortBy
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortBy,
   );
   const [caseSortOrder, setCaseSortOrder] = useState<CaseSortOrder>(
-    DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortOrder
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortOrder,
   );
   const [caseViewMode, setCaseViewMode] = useState<CaseViewMode>(
-    DEFAULT_CASE_LIST_VIEW_DEFAULTS.viewMode
+    DEFAULT_CASE_LIST_VIEW_DEFAULTS.viewMode,
   );
-  const [caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded] = useState<boolean>(
-    !DEFAULT_CASE_LIST_VIEW_DEFAULTS.filtersCollapsedByDefault
-  );
+  const [caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded] =
+    useState<boolean>(
+      !DEFAULT_CASE_LIST_VIEW_DEFAULTS.filtersCollapsedByDefault,
+    );
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] =
     useState(false);
 
@@ -587,13 +648,17 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-      const currentLatestMs = getCaseResolverWorkspaceLatestTimestampMs(current);
-      const incomingLatestMs = getCaseResolverWorkspaceLatestTimestampMs(parsedWorkspace);
+      const currentLatestMs =
+        getCaseResolverWorkspaceLatestTimestampMs(current);
+      const incomingLatestMs =
+        getCaseResolverWorkspaceLatestTimestampMs(parsedWorkspace);
       const currentItemCount = current.files.length + current.assets.length;
-      const incomingItemCount = parsedWorkspace.files.length + parsedWorkspace.assets.length;
+      const incomingItemCount =
+        parsedWorkspace.files.length + parsedWorkspace.assets.length;
       if (
         incomingLatestMs < currentLatestMs ||
-        (incomingLatestMs === currentLatestMs && incomingItemCount < currentItemCount)
+        (incomingLatestMs === currentLatestMs &&
+          incomingItemCount < currentItemCount)
       ) {
         return current;
       }
@@ -608,7 +673,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     setCaseSortBy(caseListViewDefaults.sortBy);
     setCaseSortOrder(caseListViewDefaults.sortOrder);
     setCaseSearchScope(caseListViewDefaults.searchScope);
-    setCaseFilterPanelDefaultExpanded(!caseListViewDefaults.filtersCollapsedByDefault);
+    setCaseFilterPanelDefaultExpanded(
+      !caseListViewDefaults.filtersCollapsedByDefault,
+    );
     setDidHydrateCaseListViewDefaults(true);
   }, [
     caseListViewDefaults.filtersCollapsedByDefault,
@@ -623,7 +690,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   useEffect(() => {
     setCaseDraft((prev) => {
       const current = prev.tagId;
-      const next = (!current || !caseResolverTags.some((tag) => tag.id === current)) ? defaultTagId : current;
+      const next =
+        !current || !caseResolverTags.some((tag) => tag.id === current)
+          ? defaultTagId
+          : current;
       if (next === current) return prev;
       return { ...prev, tagId: next };
     });
@@ -632,7 +702,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   useEffect(() => {
     setCaseDraft((prev) => {
       const current = prev.caseIdentifierId;
-      const next = (!current || !caseResolverIdentifiers.some((id) => id.id === current)) ? defaultCaseIdentifierId : current;
+      const next =
+        !current || !caseResolverIdentifiers.some((id) => id.id === current)
+          ? defaultCaseIdentifierId
+          : current;
       if (next === current) return prev;
       return { ...prev, caseIdentifierId: next };
     });
@@ -641,7 +714,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   useEffect(() => {
     setCaseDraft((prev) => {
       const current = prev.categoryId;
-      const next = (!current || !caseResolverCategories.some((cat) => cat.id === current)) ? defaultCategoryId : current;
+      const next =
+        !current || !caseResolverCategories.some((cat) => cat.id === current)
+          ? defaultCategoryId
+          : current;
       if (next === current) return prev;
       return { ...prev, categoryId: next };
     });
@@ -657,23 +733,41 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           }
           return left.name.localeCompare(right.name);
         }),
-    [workspace.files]
+    [workspace.files],
   );
 
   useEffect(() => {
-    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
+    const validCaseIds = new Set(
+      files.map((file: CaseResolverFile) => file.id),
+    );
     setCaseDraft((prev) => {
-      const nextParentId = prev.parentCaseId && validCaseIds.has(prev.parentCaseId) ? prev.parentCaseId : null;
-      const nextRefIds = (prev.referenceCaseIds || []).filter(id => validCaseIds.has(id));
-      if (nextParentId === prev.parentCaseId && nextRefIds.length === (prev.referenceCaseIds || []).length) return prev;
-      return { ...prev, parentCaseId: nextParentId, referenceCaseIds: nextRefIds };
+      const nextParentId =
+        prev.parentCaseId && validCaseIds.has(prev.parentCaseId)
+          ? prev.parentCaseId
+          : null;
+      const nextRefIds = (prev.referenceCaseIds || []).filter((id) =>
+        validCaseIds.has(id),
+      );
+      if (
+        nextParentId === prev.parentCaseId &&
+        nextRefIds.length === (prev.referenceCaseIds || []).length
+      )
+        return prev;
+      return {
+        ...prev,
+        parentCaseId: nextParentId,
+        referenceCaseIds: nextRefIds,
+      };
     });
   }, [files]);
 
-  const caseTreeForParents = useMemo((): CaseTreeNode[] => buildCaseTree(files), [files]);
+  const caseTreeForParents = useMemo(
+    (): CaseTreeNode[] => buildCaseTree(files),
+    [files],
+  );
   const caseParentOptions = useMemo(
     () => flattenCaseTreeOptions(caseTreeForParents),
-    [caseTreeForParents]
+    [caseTreeForParents],
   );
   const caseReferenceOptions = useMemo(
     () =>
@@ -681,23 +775,26 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         value: file.id,
         label: file.folder ? `${file.name} (${file.folder})` : file.name,
       })),
-    [files]
+    [files],
   );
   const filesById = useMemo(
-    () => new Map<string, CaseResolverFile>(files.map((file: CaseResolverFile) => [file.id, file])),
-    [files]
+    () =>
+      new Map<string, CaseResolverFile>(
+        files.map((file: CaseResolverFile) => [file.id, file]),
+      ),
+    [files],
   );
   const caseTagPathById = useMemo(
     () => buildPathLabelMap(caseResolverTags),
-    [caseResolverTags]
+    [caseResolverTags],
   );
   const caseIdentifierPathById = useMemo(
     () => buildPathLabelMap(caseResolverIdentifiers),
-    [caseResolverIdentifiers]
+    [caseResolverIdentifiers],
   );
   const caseCategoryPathById = useMemo(
     () => buildPathLabelMap(caseResolverCategories),
-    [caseResolverCategories]
+    [caseResolverCategories],
   );
   const caseTagFilterOptions = useMemo(
     () =>
@@ -705,7 +802,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         value: tag.id,
         label: caseTagPathById.get(tag.id) ?? tag.name,
       })),
-    [caseResolverTags, caseTagPathById]
+    [caseResolverTags, caseTagPathById],
   );
   const caseCategoryFilterOptions = useMemo(
     () =>
@@ -713,7 +810,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         value: category.id,
         label: caseCategoryPathById.get(category.id) ?? category.name,
       })),
-    [caseResolverCategories, caseCategoryPathById]
+    [caseResolverCategories, caseCategoryPathById],
   );
   const caseIdentifierFilterOptions = useMemo(
     () =>
@@ -721,15 +818,15 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         value: identifier.id,
         label: caseIdentifierPathById.get(identifier.id) ?? identifier.name,
       })),
-    [caseIdentifierPathById, caseResolverIdentifiers]
+    [caseIdentifierPathById, caseResolverIdentifiers],
   );
   const folderFilterOptions = useMemo(() => {
     const folders = Array.from(
       new Set(
         files
           .map((file: CaseResolverFile): string => file.folder)
-          .filter((folder: string): boolean => folder.trim() !== '')
-      )
+          .filter((folder: string): boolean => folder.trim() !== ''),
+      ),
     ).sort((left: string, right: string) => left.localeCompare(right));
     return [
       { value: '__all__', label: 'All folders' },
@@ -808,7 +905,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       caseIdentifierFilterOptions,
       caseTagFilterOptions,
       folderFilterOptions,
-    ]
+    ],
   );
   const caseFilterValues = useMemo(
     () => ({
@@ -828,61 +925,66 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       caseFilterCategoryIds,
       caseSearchScope,
       caseSortBy,
-    ]
+    ],
   );
   const caseSortComparator = useMemo<CaseFileComparator>(
-    () => (left: CaseResolverFile, right: CaseResolverFile): number => {
-      const factor = caseSortOrder === 'asc' ? 1 : -1;
-      let delta = 0;
-      if (caseSortBy === 'name') {
-        delta = left.name.localeCompare(right.name);
-      } else if (caseSortBy === 'created') {
-        const leftCreatedAt = Date.parse(left.createdAt);
-        const rightCreatedAt = Date.parse(right.createdAt);
-        delta =
-          (Number.isNaN(leftCreatedAt) ? 0 : leftCreatedAt) -
-          (Number.isNaN(rightCreatedAt) ? 0 : rightCreatedAt);
-      } else {
-        const leftUpdatedAt = Date.parse(left.updatedAt);
-        const rightUpdatedAt = Date.parse(right.updatedAt);
-        delta =
-          (Number.isNaN(leftUpdatedAt) ? 0 : leftUpdatedAt) -
-          (Number.isNaN(rightUpdatedAt) ? 0 : rightUpdatedAt);
-      }
+    () =>
+      (left: CaseResolverFile, right: CaseResolverFile): number => {
+        const factor = caseSortOrder === 'asc' ? 1 : -1;
+        let delta = 0;
+        if (caseSortBy === 'name') {
+          delta = left.name.localeCompare(right.name);
+        } else if (caseSortBy === 'created') {
+          const leftCreatedAt = Date.parse(left.createdAt);
+          const rightCreatedAt = Date.parse(right.createdAt);
+          delta =
+            (Number.isNaN(leftCreatedAt) ? 0 : leftCreatedAt) -
+            (Number.isNaN(rightCreatedAt) ? 0 : rightCreatedAt);
+        } else {
+          const leftUpdatedAt = Date.parse(left.updatedAt);
+          const rightUpdatedAt = Date.parse(right.updatedAt);
+          delta =
+            (Number.isNaN(leftUpdatedAt) ? 0 : leftUpdatedAt) -
+            (Number.isNaN(rightUpdatedAt) ? 0 : rightUpdatedAt);
+        }
 
-      if (delta === 0) {
-        delta = left.name.localeCompare(right.name);
-      }
-      if (delta === 0) {
-        delta = left.id.localeCompare(right.id);
-      }
+        if (delta === 0) {
+          delta = left.name.localeCompare(right.name);
+        }
+        if (delta === 0) {
+          delta = left.id.localeCompare(right.id);
+        }
 
-      return delta * factor;
-    },
-    [caseSortBy, caseSortOrder]
+        return delta * factor;
+      },
+    [caseSortBy, caseSortOrder],
   );
   const indexedCases = useMemo(
     (): IndexedCaseRow[] =>
-      files.map((file: CaseResolverFile): IndexedCaseRow => ({
-        file,
-        normalizedName: file.name.toLowerCase(),
-        normalizedFolder: file.folder.toLowerCase(),
-        normalizedContent: (
-          file.documentContentPlainText.trim().length > 0
+      files.map(
+        (file: CaseResolverFile): IndexedCaseRow => ({
+          file,
+          normalizedName: file.name.toLowerCase(),
+          normalizedFolder: file.folder.toLowerCase(),
+          normalizedContent: (file.documentContentPlainText.trim().length > 0
             ? file.documentContentPlainText
             : stripHtml(file.documentContent)
-        ).toLowerCase(),
-        normalizedTag: (file.tagId ? (caseTagPathById.get(file.tagId) ?? '') : '').toLowerCase(),
-        normalizedCaseIdentifier: (file.caseIdentifierId
-          ? (caseIdentifierPathById.get(file.caseIdentifierId) ?? '')
-          : ''
-        ).toLowerCase(),
-        normalizedCategory: (file.categoryId
-          ? (caseCategoryPathById.get(file.categoryId) ?? '')
-          : ''
-        ).toLowerCase(),
-      })),
-    [caseCategoryPathById, caseIdentifierPathById, caseTagPathById, files]
+          ).toLowerCase(),
+          normalizedTag: (file.tagId
+            ? (caseTagPathById.get(file.tagId) ?? '')
+            : ''
+          ).toLowerCase(),
+          normalizedCaseIdentifier: (file.caseIdentifierId
+            ? (caseIdentifierPathById.get(file.caseIdentifierId) ?? '')
+            : ''
+          ).toLowerCase(),
+          normalizedCategory: (file.categoryId
+            ? (caseCategoryPathById.get(file.categoryId) ?? '')
+            : ''
+          ).toLowerCase(),
+        }),
+      ),
+    [caseCategoryPathById, caseIdentifierPathById, caseTagPathById, files],
   );
   const filteredCases = useMemo((): CaseResolverFile[] => {
     const normalizedQuery = caseSearchQuery.trim().toLowerCase();
@@ -892,9 +994,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
     const matchesSearch = (row: IndexedCaseRow): boolean => {
       if (!normalizedQuery) return true;
-      if (caseSearchScope === 'name') return row.normalizedName.includes(normalizedQuery);
-      if (caseSearchScope === 'folder') return row.normalizedFolder.includes(normalizedQuery);
-      if (caseSearchScope === 'content') return row.normalizedContent.includes(normalizedQuery);
+      if (caseSearchScope === 'name')
+        return row.normalizedName.includes(normalizedQuery);
+      if (caseSearchScope === 'folder')
+        return row.normalizedFolder.includes(normalizedQuery);
+      if (caseSearchScope === 'content')
+        return row.normalizedContent.includes(normalizedQuery);
       return (
         row.normalizedName.includes(normalizedQuery) ||
         row.normalizedFolder.includes(normalizedQuery) ||
@@ -907,9 +1012,21 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
     return indexedCases
       .filter((row: IndexedCaseRow): boolean => {
-        if (caseFileTypeFilter !== 'all' && row.file.fileType !== caseFileTypeFilter) return false;
-        if (caseFilterFolder !== '__all__' && row.file.folder !== caseFilterFolder) return false;
-        if (hasTagFilter && (!row.file.tagId || !caseFilterTagIds.includes(row.file.tagId))) return false;
+        if (
+          caseFileTypeFilter !== 'all' &&
+          row.file.fileType !== caseFileTypeFilter
+        )
+          return false;
+        if (
+          caseFilterFolder !== '__all__' &&
+          row.file.folder !== caseFilterFolder
+        )
+          return false;
+        if (
+          hasTagFilter &&
+          (!row.file.tagId || !caseFilterTagIds.includes(row.file.tagId))
+        )
+          return false;
         if (
           hasCaseIdentifierFilter &&
           (!row.file.caseIdentifierId ||
@@ -919,7 +1036,8 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         }
         if (
           hasCategoryFilter &&
-          (!row.file.categoryId || !caseFilterCategoryIds.includes(row.file.categoryId))
+          (!row.file.categoryId ||
+            !caseFilterCategoryIds.includes(row.file.categoryId))
         ) {
           return false;
         }
@@ -947,21 +1065,28 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       while (current) {
         if (includedIds.has(current.id)) break;
         includedIds.add(current.id);
-        current = current.parentCaseId ? filesById.get(current.parentCaseId) : undefined;
+        current = current.parentCaseId
+          ? filesById.get(current.parentCaseId)
+          : undefined;
       }
     });
 
-    const treeFiles = files.filter((file: CaseResolverFile): boolean => includedIds.has(file.id));
+    const treeFiles = files.filter((file: CaseResolverFile): boolean =>
+      includedIds.has(file.id),
+    );
     return buildCaseTree(treeFiles, caseSortComparator);
   }, [caseSortComparator, filteredCases, files, filesById]);
   const flatCaseNodes = useMemo(
     (): CaseTreeNode[] =>
-      filteredCases.map((file: CaseResolverFile): CaseTreeNode => ({ file, children: [] })),
-    [filteredCases]
+      filteredCases.map(
+        (file: CaseResolverFile): CaseTreeNode => ({ file, children: [] }),
+      ),
+    [filteredCases],
   );
   const displayedCaseNodes = useMemo(
-    (): CaseTreeNode[] => (caseViewMode === 'hierarchy' ? filteredCaseTree : flatCaseNodes),
-    [caseViewMode, filteredCaseTree, flatCaseNodes]
+    (): CaseTreeNode[] =>
+      caseViewMode === 'hierarchy' ? filteredCaseTree : flatCaseNodes,
+    [caseViewMode, filteredCaseTree, flatCaseNodes],
   );
   const hasActiveCaseFilters = useMemo(
     (): boolean =>
@@ -987,51 +1112,71 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       caseSearchScope,
       caseSortBy,
       caseSortOrder,
-    ]
+    ],
   );
-  const handleCaseFilterChange = useCallback((key: string, value: unknown): void => {
-    switch (key) {
-      case 'fileType':
-        setCaseFileTypeFilter(value === 'case' || value === 'all' ? value : 'all');
-        break;
-      case 'folder':
-        setCaseFilterFolder(typeof value === 'string' && value !== '' ? value : '__all__');
-        break;
-      case 'tagIds':
-        setCaseFilterTagIds(
-          Array.isArray(value)
-            ? value.filter((entry): entry is string => typeof entry === 'string')
-            : []
-        );
-        break;
-      case 'caseIdentifierIds':
-        setCaseFilterCaseIdentifierIds(
-          Array.isArray(value)
-            ? value.filter((entry): entry is string => typeof entry === 'string')
-            : []
-        );
-        break;
-      case 'categoryIds':
-        setCaseFilterCategoryIds(
-          Array.isArray(value)
-            ? value.filter((entry): entry is string => typeof entry === 'string')
-            : []
-        );
-        break;
-      case 'searchScope':
-        setCaseSearchScope(
-          value === 'name' || value === 'folder' || value === 'content' || value === 'all'
-            ? value
-            : 'all'
-        );
-        break;
-      case 'sortBy':
-        setCaseSortBy(value === 'created' || value === 'name' || value === 'updated' ? value : 'updated');
-        break;
-      default:
-        break;
-    }
-  }, []);
+  const handleCaseFilterChange = useCallback(
+    (key: string, value: unknown): void => {
+      switch (key) {
+        case 'fileType':
+          setCaseFileTypeFilter(
+            value === 'case' || value === 'all' ? value : 'all',
+          );
+          break;
+        case 'folder':
+          setCaseFilterFolder(
+            typeof value === 'string' && value !== '' ? value : '__all__',
+          );
+          break;
+        case 'tagIds':
+          setCaseFilterTagIds(
+            Array.isArray(value)
+              ? value.filter(
+                (entry): entry is string => typeof entry === 'string',
+              )
+              : [],
+          );
+          break;
+        case 'caseIdentifierIds':
+          setCaseFilterCaseIdentifierIds(
+            Array.isArray(value)
+              ? value.filter(
+                (entry): entry is string => typeof entry === 'string',
+              )
+              : [],
+          );
+          break;
+        case 'categoryIds':
+          setCaseFilterCategoryIds(
+            Array.isArray(value)
+              ? value.filter(
+                (entry): entry is string => typeof entry === 'string',
+              )
+              : [],
+          );
+          break;
+        case 'searchScope':
+          setCaseSearchScope(
+            value === 'name' ||
+              value === 'folder' ||
+              value === 'content' ||
+              value === 'all'
+              ? value
+              : 'all',
+          );
+          break;
+        case 'sortBy':
+          setCaseSortBy(
+            value === 'created' || value === 'name' || value === 'updated'
+              ? value
+              : 'updated',
+          );
+          break;
+        default:
+          break;
+      }
+    },
+    [],
+  );
   const handleResetCaseFilters = useCallback((): void => {
     setCaseSearchQuery('');
     setCaseSearchScope(caseListViewDefaults.searchScope);
@@ -1047,56 +1192,87 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     caseListViewDefaults.sortBy,
     caseListViewDefaults.sortOrder,
   ]);
-  const handleFilterByCaseIdentifier = useCallback((caseIdentifierId: string): void => {
-    setCaseSearchQuery('');
-    setCaseSearchScope('all');
-    setCaseFileTypeFilter('all');
-    setCaseFilterFolder('__all__');
-    setCaseFilterTagIds([]);
-    setCaseFilterCategoryIds([]);
-    setCaseFilterCaseIdentifierIds([caseIdentifierId]);
-  }, []);
+  const handleFilterByCaseIdentifier = useCallback(
+    (caseIdentifierId: string): void => {
+      setCaseSearchQuery('');
+      setCaseSearchScope('all');
+      setCaseFileTypeFilter('all');
+      setCaseFilterFolder('__all__');
+      setCaseFilterTagIds([]);
+      setCaseFilterCategoryIds([]);
+      setCaseFilterCaseIdentifierIds([caseIdentifierId]);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (caseFilterFolder === '__all__') return;
-    if (files.some((file: CaseResolverFile): boolean => file.folder === caseFilterFolder)) return;
+    if (
+      files.some(
+        (file: CaseResolverFile): boolean => file.folder === caseFilterFolder,
+      )
+    )
+      return;
     setCaseFilterFolder('__all__');
   }, [caseFilterFolder, files]);
 
   useEffect(() => {
-    const validTagIds = new Set(caseResolverTags.map((tag: CaseResolverTag): string => tag.id));
+    const validTagIds = new Set(
+      caseResolverTags.map((tag: CaseResolverTag): string => tag.id),
+    );
     setCaseFilterTagIds((current: string[]): string[] =>
-      current.filter((tagId: string): boolean => validTagIds.has(tagId))
+      current.filter((tagId: string): boolean => validTagIds.has(tagId)),
     );
   }, [caseResolverTags]);
 
   useEffect(() => {
     const validCaseIdentifierIds = new Set(
-      caseResolverIdentifiers.map((identifier: CaseResolverIdentifier): string => identifier.id)
+      caseResolverIdentifiers.map(
+        (identifier: CaseResolverIdentifier): string => identifier.id,
+      ),
     );
     setCaseFilterCaseIdentifierIds((current: string[]): string[] =>
       current.filter((caseIdentifierId: string): boolean =>
-        validCaseIdentifierIds.has(caseIdentifierId)
-      )
+        validCaseIdentifierIds.has(caseIdentifierId),
+      ),
     );
   }, [caseResolverIdentifiers]);
 
   useEffect(() => {
     const validCategoryIds = new Set(
-      caseResolverCategories.map((category: CaseResolverCategory): string => category.id)
+      caseResolverCategories.map(
+        (category: CaseResolverCategory): string => category.id,
+      ),
     );
     setCaseFilterCategoryIds((current: string[]): string[] =>
-      current.filter((categoryId: string): boolean => validCategoryIds.has(categoryId))
+      current.filter((categoryId: string): boolean =>
+        validCategoryIds.has(categoryId),
+      ),
     );
   }, [caseResolverCategories]);
 
   useEffect(() => {
-    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
+    const validCaseIds = new Set(
+      files.map((file: CaseResolverFile) => file.id),
+    );
     setCaseDraft((prev) => {
-      const nextParentId = prev.parentCaseId && validCaseIds.has(prev.parentCaseId) ? prev.parentCaseId : null;
-      const nextRefIds = (prev.referenceCaseIds || []).filter(id => validCaseIds.has(id));
-      if (nextParentId === prev.parentCaseId && nextRefIds.length === (prev.referenceCaseIds || []).length) return prev;
-      return { ...prev, parentCaseId: nextParentId, referenceCaseIds: nextRefIds };
+      const nextParentId =
+        prev.parentCaseId && validCaseIds.has(prev.parentCaseId)
+          ? prev.parentCaseId
+          : null;
+      const nextRefIds = (prev.referenceCaseIds || []).filter((id) =>
+        validCaseIds.has(id),
+      );
+      if (
+        nextParentId === prev.parentCaseId &&
+        nextRefIds.length === (prev.referenceCaseIds || []).length
+      )
+        return prev;
+      return {
+        ...prev,
+        parentCaseId: nextParentId,
+        referenceCaseIds: nextRefIds,
+      };
     });
   }, [files]);
 
@@ -1111,18 +1287,20 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         categoryId: defaultCategoryId,
       });
     },
-    [defaultCaseIdentifierId, defaultCategoryId, defaultTagId]
+    [defaultCaseIdentifierId, defaultCategoryId, defaultTagId],
   );
 
   const handleOpenCreateCaseModal = useCallback(
     (parentCaseId: string | null = null): void => {
-      const validCaseIds = new Set(files.map((file: CaseResolverFile): string => file.id));
+      const validCaseIds = new Set(
+        files.map((file: CaseResolverFile): string => file.id),
+      );
       const normalizedParentCaseId =
         parentCaseId && validCaseIds.has(parentCaseId) ? parentCaseId : null;
       resetCreateCaseDraft(normalizedParentCaseId);
       setIsCreateCaseModalOpen(true);
     },
-    [files, resetCreateCaseDraft]
+    [files, resetCreateCaseDraft],
   );
 
   const handleCloseCreateCaseModal = useCallback((): void => {
@@ -1136,7 +1314,8 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
       const existingIdentifier = caseResolverIdentifiers.find(
         (identifier: CaseResolverIdentifier): boolean =>
-          normalizeIdentifierTerm(identifier.name) === normalizeIdentifierTerm(normalizedName)
+          normalizeIdentifierTerm(identifier.name) ===
+          normalizeIdentifierTerm(normalizedName),
       );
       if (existingIdentifier) return existingIdentifier.id;
 
@@ -1158,7 +1337,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         setPendingCaseIdentifierIds((current: string[]): string[] =>
           current.includes(nextIdentifier.id)
             ? current
-            : [...current, nextIdentifier.id]
+            : [...current, nextIdentifier.id],
         );
         toast('Case identifier created.', { variant: 'success' });
         return nextIdentifier.id;
@@ -1167,104 +1346,119 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           error instanceof Error
             ? error.message
             : 'Failed to create case identifier.',
-          { variant: 'error' }
+          { variant: 'error' },
         );
         return null;
       }
     },
-    [caseResolverIdentifiers, toast, updateSetting]
+    [caseResolverIdentifiers, toast, updateSetting],
   );
 
-  const createFields: (SettingsField<Partial<CaseResolverFile>>)[] = useMemo(() => [
-    {
-      key: 'name',
-      label: 'Case Name',
-      type: 'text',
-      placeholder: 'Enter a descriptive case name',
-      required: true,
-    },
-    {
-      key: 'parentCaseId',
-      label: 'Parent Case (Optional)',
-      type: 'select',
-      options: [
-        { value: '__none__', label: 'No parent (root case)' },
-        ...caseParentOptions,
-      ],
-      placeholder: 'Select parent case',
-    },
-    {
-      key: 'referenceCaseIds',
-      label: 'Reference Cases',
-      type: 'custom',
-      render: () => (
-        <MultiSelect
-          options={caseReferenceOptions}
-          selected={caseDraft.referenceCaseIds || []}
-          onChange={(ids) => setCaseDraft(prev => ({ ...prev, referenceCaseIds: ids }))}
-          placeholder='Link to other cases...'
-          searchPlaceholder='Search cases...'
-          emptyMessage='No other cases found.'
-          className='w-full'
-        />
-      )
-    },
-    {
-      key: 'tagId',
-      label: 'Tag',
-      type: 'select',
-      options: [
-        { value: '__none__', label: caseResolverTags.length > 0 ? 'Select tag' : 'No tags defined' },
-        ...caseResolverTagOptions,
-      ],
-      placeholder: 'Assign tag',
-      required: true,
-    },
-    {
-      key: 'caseIdentifierId',
-      label: 'Case Identifier',
-      type: 'custom',
-      render: ({ value, onChange, disabled }) => (
-        <CaseIdentifierTextSelector
-          value={typeof value === 'string' ? value : null}
-          identifiers={caseResolverIdentifiers}
-          identifierPathById={caseIdentifierPathById}
-          placeholder='Type to search identifier or press Enter to create'
-          onChange={(nextValue: string | null): void => {
-            onChange(nextValue);
-          }}
-          onCreateIdentifier={handleCreateCaseIdentifier}
-          onPillClick={handleFilterByCaseIdentifier}
-          disabled={Boolean(disabled)}
-          inputClassName='h-9'
-        />
-      ),
-      required: true,
-    },
-    {
-      key: 'categoryId',
-      label: 'Category',
-      type: 'select',
-      options: [
-        { value: '__none__', label: caseResolverCategories.length > 0 ? 'Select category' : 'No categories defined' },
-        ...caseResolverCategoryOptions,
-      ],
-      placeholder: 'Assign category',
-      required: true,
-    },
-  ], [
-    caseDraft.referenceCaseIds,
-    caseParentOptions,
-    caseReferenceOptions,
-    caseResolverCategories,
-    caseResolverCategoryOptions,
-    caseIdentifierPathById,
-    caseResolverIdentifiers,
-    caseResolverTagOptions,
-    caseResolverTags,
-    handleFilterByCaseIdentifier,
-    handleCreateCaseIdentifier,
-  ]);
+  const createFields: SettingsField<Partial<CaseResolverFile>>[] = useMemo(
+    () => [
+      {
+        key: 'name',
+        label: 'Case Name',
+        type: 'text',
+        placeholder: 'Enter a descriptive case name',
+        required: true,
+      },
+      {
+        key: 'parentCaseId',
+        label: 'Parent Case (Optional)',
+        type: 'select',
+        options: [
+          { value: '__none__', label: 'No parent (root case)' },
+          ...caseParentOptions,
+        ],
+        placeholder: 'Select parent case',
+      },
+      {
+        key: 'referenceCaseIds',
+        label: 'Reference Cases',
+        type: 'custom',
+        render: () => (
+          <MultiSelect
+            options={caseReferenceOptions}
+            selected={caseDraft.referenceCaseIds || []}
+            onChange={(ids) =>
+              setCaseDraft((prev) => ({ ...prev, referenceCaseIds: ids }))
+            }
+            placeholder='Link to other cases...'
+            searchPlaceholder='Search cases...'
+            emptyMessage='No other cases found.'
+            className='w-full'
+          />
+        ),
+      },
+      {
+        key: 'tagId',
+        label: 'Tag',
+        type: 'select',
+        options: [
+          {
+            value: '__none__',
+            label:
+              caseResolverTags.length > 0 ? 'Select tag' : 'No tags defined',
+          },
+          ...caseResolverTagOptions,
+        ],
+        placeholder: 'Assign tag',
+        required: true,
+      },
+      {
+        key: 'caseIdentifierId',
+        label: 'Case Identifier',
+        type: 'custom',
+        render: ({ value, onChange, disabled }) => (
+          <CaseIdentifierTextSelector
+            value={typeof value === 'string' ? value : null}
+            identifiers={caseResolverIdentifiers}
+            identifierPathById={caseIdentifierPathById}
+            placeholder='Type to search identifier or press Enter to create'
+            onChange={(nextValue: string | null): void => {
+              onChange(nextValue);
+            }}
+            onCreateIdentifier={handleCreateCaseIdentifier}
+            onPillClick={handleFilterByCaseIdentifier}
+            disabled={Boolean(disabled)}
+            inputClassName='h-9'
+          />
+        ),
+        required: true,
+      },
+      {
+        key: 'categoryId',
+        label: 'Category',
+        type: 'select',
+        options: [
+          {
+            value: '__none__',
+            label:
+              caseResolverCategories.length > 0
+                ? 'Select category'
+                : 'No categories defined',
+          },
+          ...caseResolverCategoryOptions,
+        ],
+        placeholder: 'Assign category',
+        required: true,
+      },
+    ],
+    [
+      caseDraft.referenceCaseIds,
+      caseParentOptions,
+      caseReferenceOptions,
+      caseResolverCategories,
+      caseResolverCategoryOptions,
+      caseIdentifierPathById,
+      caseResolverIdentifiers,
+      caseResolverTagOptions,
+      caseResolverTags,
+      handleFilterByCaseIdentifier,
+      handleCreateCaseIdentifier,
+    ],
+  );
 
   const childrenByParentId = useMemo((): Map<string, string[]> => {
     const map = new Map<string, string[]>();
@@ -1293,11 +1487,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       visit(caseId);
       return descendants;
     },
-    [childrenByParentId]
+    [childrenByParentId],
   );
 
   const persistWorkspace = useCallback(
-    async (nextWorkspace: CaseResolverWorkspace, successMessage: string): Promise<void> => {
+    async (
+      nextWorkspace: CaseResolverWorkspace,
+      successMessage: string,
+    ): Promise<void> => {
       const normalized = normalizeCaseResolverWorkspace(nextWorkspace);
       try {
         await updateSetting.mutateAsync({
@@ -1311,11 +1508,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           error instanceof Error
             ? error.message
             : 'Failed to save Case Resolver cases.',
-          { variant: 'error' }
+          { variant: 'error' },
         );
       }
     },
-    [toast, updateSetting]
+    [toast, updateSetting],
   );
 
   const handleCreateCase = useCallback(async (): Promise<void> => {
@@ -1326,32 +1523,44 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     }
 
     const normalizedTagId =
-      caseDraft.tagId && caseResolverTags.some((tag: CaseResolverTag) => tag.id === caseDraft.tagId)
+      caseDraft.tagId &&
+      caseResolverTags.some(
+        (tag: CaseResolverTag) => tag.id === caseDraft.tagId,
+      )
         ? caseDraft.tagId
         : null;
     const normalizedCaseIdentifierId =
       caseDraft.caseIdentifierId &&
       (caseResolverIdentifiers.some(
-        (identifier: CaseResolverIdentifier) => identifier.id === caseDraft.caseIdentifierId
+        (identifier: CaseResolverIdentifier) =>
+          identifier.id === caseDraft.caseIdentifierId,
       ) ||
         pendingCaseIdentifierIds.includes(caseDraft.caseIdentifierId))
         ? caseDraft.caseIdentifierId
         : null;
     const normalizedCategoryId =
-      caseDraft.categoryId && caseResolverCategories.some((category: CaseResolverCategory) => category.id === caseDraft.categoryId)
+      caseDraft.categoryId &&
+      caseResolverCategories.some(
+        (category: CaseResolverCategory) =>
+          category.id === caseDraft.categoryId,
+      )
         ? caseDraft.categoryId
         : null;
 
-    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
+    const validCaseIds = new Set(
+      files.map((file: CaseResolverFile) => file.id),
+    );
     const normalizedParentCaseId =
-      caseDraft.parentCaseId && validCaseIds.has(caseDraft.parentCaseId) ? caseDraft.parentCaseId : null;
+      caseDraft.parentCaseId && validCaseIds.has(caseDraft.parentCaseId)
+        ? caseDraft.parentCaseId
+        : null;
     const normalizedReferenceCaseIds = Array.from(
       new Set(
         (caseDraft.referenceCaseIds || []).filter(
           (referenceCaseId: string): boolean =>
-            referenceCaseId !== '' && validCaseIds.has(referenceCaseId)
-        )
-      )
+            referenceCaseId !== '' && validCaseIds.has(referenceCaseId),
+        ),
+      ),
     );
     const file = createCaseResolverFile({
       id: createId('case-file'),
@@ -1415,26 +1624,37 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       return;
     }
     const normalizedTagId =
-      editingCaseTagId && caseResolverTags.some((tag: CaseResolverTag) => tag.id === editingCaseTagId)
+      editingCaseTagId &&
+      caseResolverTags.some(
+        (tag: CaseResolverTag) => tag.id === editingCaseTagId,
+      )
         ? editingCaseTagId
         : null;
     const normalizedCaseIdentifierId =
       editingCaseCaseIdentifierId &&
       (caseResolverIdentifiers.some(
-        (identifier: CaseResolverIdentifier) => identifier.id === editingCaseCaseIdentifierId
+        (identifier: CaseResolverIdentifier) =>
+          identifier.id === editingCaseCaseIdentifierId,
       ) ||
         pendingCaseIdentifierIds.includes(editingCaseCaseIdentifierId))
         ? editingCaseCaseIdentifierId
         : null;
     const normalizedCategoryId =
       editingCaseCategoryId &&
-      caseResolverCategories.some((category: CaseResolverCategory) => category.id === editingCaseCategoryId)
+      caseResolverCategories.some(
+        (category: CaseResolverCategory) =>
+          category.id === editingCaseCategoryId,
+      )
         ? editingCaseCategoryId
         : null;
 
-    const validCaseIds = new Set(files.map((file: CaseResolverFile) => file.id));
+    const validCaseIds = new Set(
+      files.map((file: CaseResolverFile) => file.id),
+    );
     const blockedParentIds = new Set<string>(
-      editingCaseId ? [editingCaseId, ...collectDescendantCaseIds(editingCaseId)] : []
+      editingCaseId
+        ? [editingCaseId, ...collectDescendantCaseIds(editingCaseId)]
+        : [],
     );
     const normalizedParentCaseId =
       editingCaseParentId &&
@@ -1448,9 +1668,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           (referenceCaseId: string): boolean =>
             referenceCaseId !== '' &&
             referenceCaseId !== editingCaseId &&
-            validCaseIds.has(referenceCaseId)
-        )
-      )
+            validCaseIds.has(referenceCaseId),
+        ),
+      ),
     );
 
     const nextWorkspace: CaseResolverWorkspace = {
@@ -1467,7 +1687,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             categoryId: normalizedCategoryId,
             updatedAt: new Date().toISOString(),
           }
-          : file
+          : file,
       ),
       folders: workspace.folders,
     };
@@ -1496,10 +1716,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
   const handleDeleteCase = useCallback(
     async (fileId: string): Promise<void> => {
-      const target = workspace.files.find((file: CaseResolverFile) => file.id === fileId);
+      const target = workspace.files.find(
+        (file: CaseResolverFile) => file.id === fileId,
+      );
       if (!target) return;
       if (target.isLocked) {
-        toast('Case is locked. Unlock it in Case Resolver before removing.', { variant: 'warning' });
+        toast('Case is locked. Unlock it in Case Resolver before removing.', {
+          variant: 'warning',
+        });
         return;
       }
 
@@ -1527,12 +1751,16 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           .filter((file: CaseResolverFile) => !removedIds.has(file.id))
           .map((file: CaseResolverFile): CaseResolverFile => {
             const nextParentCaseId =
-              file.parentCaseId && removedIds.has(file.parentCaseId) ? null : file.parentCaseId;
+              file.parentCaseId && removedIds.has(file.parentCaseId)
+                ? null
+                : file.parentCaseId;
             const nextReferenceCaseIds = file.referenceCaseIds.filter(
-              (referenceCaseId: string): boolean => !removedIds.has(referenceCaseId)
+              (referenceCaseId: string): boolean =>
+                !removedIds.has(referenceCaseId),
             );
             const parentChanged = nextParentCaseId !== file.parentCaseId;
-            const referencesChanged = nextReferenceCaseIds.length !== file.referenceCaseIds.length;
+            const referencesChanged =
+              nextReferenceCaseIds.length !== file.referenceCaseIds.length;
             if (!parentChanged && !referencesChanged) return file;
             return {
               ...file,
@@ -1569,20 +1797,30 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         onConfirm: runDelete,
       });
     },
-    [caseResolverSettings.confirmDeleteDocument, editingCaseId, handleCancelEditCase, persistWorkspace, toast, workspace]
+    [
+      caseResolverSettings.confirmDeleteDocument,
+      editingCaseId,
+      handleCancelEditCase,
+      persistWorkspace,
+      toast,
+      workspace,
+    ],
   );
 
   const handleViewCase = useCallback(
     (fileId: string): void => {
       router.push(`/admin/case-resolver?fileId=${encodeURIComponent(fileId)}`);
     },
-    [router]
+    [router],
   );
 
   const handleCopyCaseId = useCallback(
     async (caseId: string): Promise<void> => {
       try {
-        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        if (
+          typeof navigator !== 'undefined' &&
+          navigator.clipboard?.writeText
+        ) {
           await navigator.clipboard.writeText(caseId);
           toast('Case ID copied.', { variant: 'success' });
           return;
@@ -1591,11 +1829,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       } catch (error) {
         toast(
           error instanceof Error ? error.message : 'Failed to copy case ID.',
-          { variant: 'error' }
+          { variant: 'error' },
         );
       }
     },
-    [toast]
+    [toast],
   );
 
   const toggleCaseCollapsed = useCallback((fileId: string): void => {
@@ -1618,8 +1856,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         excludedIds.add(caseId);
       });
     }
-    return caseParentOptions.filter((option: { value: string; label: string }) =>
-      !excludedIds.has(option.value)
+    return caseParentOptions.filter(
+      (option: { value: string; label: string }) =>
+        !excludedIds.has(option.value),
     );
   }, [caseParentOptions, collectDescendantCaseIds, editingCaseId]);
 
@@ -1633,15 +1872,27 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           const isCollapsed = collapsedCaseIds.has(file.id);
           const caseIdentifierId = file.caseIdentifierId;
           const parentCase = file.parentCaseId
-            ? workspace.files.find((candidate: CaseResolverFile) => candidate.id === file.parentCaseId) ?? null
+            ? (workspace.files.find(
+              (candidate: CaseResolverFile) =>
+                candidate.id === file.parentCaseId,
+            ) ?? null)
             : null;
           const referencedCases = file.referenceCaseIds
-            .map((referenceCaseId: string) =>
-              workspace.files.find((candidate: CaseResolverFile) => candidate.id === referenceCaseId) ?? null
+            .map(
+              (referenceCaseId: string) =>
+                workspace.files.find(
+                  (candidate: CaseResolverFile) =>
+                    candidate.id === referenceCaseId,
+                ) ?? null,
             )
-            .filter((candidate: CaseResolverFile | null): candidate is CaseResolverFile => candidate !== null);
+            .filter(
+              (
+                candidate: CaseResolverFile | null,
+              ): candidate is CaseResolverFile => candidate !== null,
+            );
           const editReferenceOptions = caseReferenceOptions.filter(
-            (option: { value: string; label: string }) => option.value !== file.id
+            (option: { value: string; label: string }) =>
+              option.value !== file.id,
           );
 
           return (
@@ -1656,7 +1907,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                       <Input
                         autoFocus
                         value={editingCaseName}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>,
+                        ): void => {
                           setEditingCaseName(event.target.value);
                         }}
                         placeholder='Case name'
@@ -1682,10 +1935,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                       </Button>
                     </div>
                     <div className='grid gap-3 md:grid-cols-4'>
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         value={editingCaseParentId ?? '__none__'}
                         onValueChange={(value: string): void => {
-                          setEditingCaseParentId(value === '__none__' ? null : value);
+                          setEditingCaseParentId(
+                            value === '__none__' ? null : value,
+                          );
                         }}
                         options={[
                           { value: '__none__', label: 'No parent (root case)' },
@@ -1694,13 +1950,22 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         placeholder='Parent case'
                         triggerClassName='h-9'
                       />
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         value={editingCaseTagId ?? '__none__'}
                         onValueChange={(value: string): void => {
-                          setEditingCaseTagId(value === '__none__' ? null : value);
+                          setEditingCaseTagId(
+                            value === '__none__' ? null : value,
+                          );
                         }}
                         options={[
-                          { value: '__none__', label: caseResolverTags.length > 0 ? 'Select tag' : 'No tags' },
+                          {
+                            value: '__none__',
+                            label:
+                              caseResolverTags.length > 0
+                                ? 'Select tag'
+                                : 'No tags',
+                          },
                           ...caseResolverTagOptions,
                         ]}
                         placeholder='Select tag'
@@ -1717,13 +1982,22 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         disabled={updateSetting.isPending}
                         inputClassName='h-9'
                       />
-                      <SelectSimple size='sm'
+                      <SelectSimple
+                        size='sm'
                         value={editingCaseCategoryId ?? '__none__'}
                         onValueChange={(value: string): void => {
-                          setEditingCaseCategoryId(value === '__none__' ? null : value);
+                          setEditingCaseCategoryId(
+                            value === '__none__' ? null : value,
+                          );
                         }}
                         options={[
-                          { value: '__none__', label: caseResolverCategories.length > 0 ? 'Select category' : 'No categories' },
+                          {
+                            value: '__none__',
+                            label:
+                              caseResolverCategories.length > 0
+                                ? 'Select category'
+                                : 'No categories',
+                          },
                           ...caseResolverCategoryOptions,
                         ]}
                         placeholder='Select category'
@@ -1751,7 +2025,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                             onClick={(): void => {
                               toggleCaseCollapsed(file.id);
                             }}
-                            aria-label={isCollapsed ? `Expand ${file.name}` : `Collapse ${file.name}`}
+                            aria-label={
+                              isCollapsed
+                                ? `Expand ${file.name}`
+                                : `Collapse ${file.name}`
+                            }
                           >
                             {isCollapsed ? (
                               <ChevronRight className='size-3.5' />
@@ -1760,16 +2038,23 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                             )}
                           </button>
                         ) : (
-                          <span className='inline-flex size-5 items-center justify-center text-xs opacity-30'>•</span>
+                          <span className='inline-flex size-5 items-center justify-center text-xs opacity-30'>
+                            •
+                          </span>
                         )}
                         {hasChildren && !isCollapsed ? (
                           <FolderOpen className='size-3.5 text-gray-400' />
                         ) : (
                           <Folder className='size-3.5 text-gray-400' />
                         )}
-                        <div className='truncate text-sm font-semibold text-gray-100'>{file.name}</div>
+                        <div className='truncate text-sm font-semibold text-gray-100'>
+                          {file.name}
+                        </div>
                         {file.isLocked ? (
-                          <Badge variant='outline' className='text-[10px] text-amber-300'>
+                          <Badge
+                            variant='outline'
+                            className='text-[10px] text-amber-300'
+                          >
                             <Lock className='mr-1 size-3' />
                             Locked
                           </Badge>
@@ -1782,12 +2067,15 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         {referencedCases.length > 0 ? (
                           <Badge variant='outline' className='text-[10px]'>
                             <Link2 className='mr-1 size-3' />
-                            {referencedCases.length} reference{referencedCases.length === 1 ? '' : 's'}
+                            {referencedCases.length} reference
+                            {referencedCases.length === 1 ? '' : 's'}
                           </Badge>
                         ) : null}
                         {file.tagId ? (
                           <Badge variant='outline' className='text-[10px]'>
-                            {caseResolverTags.find((tag: CaseResolverTag) => tag.id === file.tagId)?.name ?? 'Tag'}
+                            {caseResolverTags.find(
+                              (tag: CaseResolverTag) => tag.id === file.tagId,
+                            )?.name ?? 'Tag'}
                           </Badge>
                         ) : null}
                         {caseIdentifierId ? (
@@ -1799,11 +2087,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                             }}
                             title='Show cases with this identifier'
                           >
-                            <Badge variant='outline' className='cursor-pointer text-[10px] hover:bg-muted/60'>
+                            <Badge
+                              variant='outline'
+                              className='cursor-pointer text-[10px] hover:bg-muted/60'
+                            >
                               {caseIdentifierPathById.get(caseIdentifierId) ??
                                 caseResolverIdentifiers.find(
                                   (identifier: CaseResolverIdentifier) =>
-                                    identifier.id === caseIdentifierId
+                                    identifier.id === caseIdentifierId,
                                 )?.name ??
                                 'Case Identifier'}
                             </Badge>
@@ -1811,12 +2102,16 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         ) : null}
                         {file.categoryId ? (
                           <Badge variant='outline' className='text-[10px]'>
-                            {caseResolverCategories.find((category: CaseResolverCategory) => category.id === file.categoryId)?.name ?? 'Category'}
+                            {caseResolverCategories.find(
+                              (category: CaseResolverCategory) =>
+                                category.id === file.categoryId,
+                            )?.name ?? 'Category'}
                           </Badge>
                         ) : null}
                       </div>
                       <div className='mt-0.5 text-xs text-gray-400'>
-                        Folder: {file.folder || '(root)'} | Created: {formatCaseTimestamp(file.createdAt)} | Updated:{' '}
+                        Folder: {file.folder || '(root)'} | Created:{' '}
+                        {formatCaseTimestamp(file.createdAt)} | Updated:{' '}
                         {formatCaseTimestamp(file.updatedAt)}
                       </div>
                     </div>
@@ -1877,7 +2172,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                   ID: {file.id}
                 </button>
               </div>
-              {hasChildren && !isCollapsed ? renderCaseTree(node.children, depth + 1) : null}
+              {hasChildren && !isCollapsed
+                ? renderCaseTree(node.children, depth + 1)
+                : null}
             </div>
           );
         })}
@@ -1912,7 +2209,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       toggleCaseCollapsed,
       updateSetting.isPending,
       workspace.files,
-    ]
+    ],
   );
 
   return (
@@ -1925,13 +2222,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         size='lg'
         fields={createFields}
         values={caseDraft}
-        onChange={(vals) => setCaseDraft(prev => ({ ...prev, ...vals }))}
+        onChange={(vals) => setCaseDraft((prev) => ({ ...prev, ...vals }))}
         onSave={handleCreateCase}
         isSaving={updateSetting.isPending}
       />
 
       <ListPanel
-        header={(
+        header={
           <div className='space-y-4'>
             <div className='mb-2 flex flex-wrap items-center gap-2'>
               <Button
@@ -1948,16 +2245,24 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
               </Button>
             </div>
             <div className='space-y-1'>
-              <h1 className='text-3xl font-bold tracking-tight text-white'>Cases</h1>
+              <h1 className='text-3xl font-bold tracking-tight text-white'>
+                Cases
+              </h1>
               <nav
                 aria-label='Breadcrumb'
                 className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
               >
-                <Link href='/admin' className='transition-colors hover:text-gray-200'>
+                <Link
+                  href='/admin'
+                  className='transition-colors hover:text-gray-200'
+                >
                   Admin
                 </Link>
                 <span>/</span>
-                <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
+                <Link
+                  href='/admin/case-resolver'
+                  className='transition-colors hover:text-gray-200'
+                >
                   Case Resolver
                 </Link>
                 <span>/</span>
@@ -1965,11 +2270,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
               </nav>
             </div>
           </div>
-        )}
+        }
       >
         <div className='space-y-6'>
           <div className='text-sm text-muted-foreground'>
-            Case Hierarchy ({filteredCases.length} matches of {files.length} total cases)
+            Case Hierarchy ({filteredCases.length} matches of {files.length}{' '}
+            total cases)
           </div>
 
           <FilterPanel
@@ -1985,11 +2291,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             collapsible
             defaultExpanded={caseFilterPanelDefaultExpanded}
           />
-          
+
           <div className='flex flex-wrap items-center justify-between gap-4 border-t border-border/40 pt-4'>
             <div className='flex items-center gap-4'>
               <div className='flex items-center gap-2'>
-                <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>Sort Order</span>
+                <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
+                  Sort Order
+                </span>
                 <Button
                   type='button'
                   variant='outline'
@@ -1997,24 +2305,32 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                   className='h-8 min-w-32 justify-between px-3'
                   onClick={(): void => {
                     setCaseSortOrder((current: CaseSortOrder) =>
-                      current === 'asc' ? 'desc' : 'asc'
+                      current === 'asc' ? 'desc' : 'asc',
                     );
                   }}
                 >
                   <span className='flex items-center gap-2'>
-                    {caseSortOrder === 'asc' ? <ArrowUp className='size-3' /> : <ArrowDown className='size-3' />}
+                    {caseSortOrder === 'asc' ? (
+                      <ArrowUp className='size-3' />
+                    ) : (
+                      <ArrowDown className='size-3' />
+                    )}
                     {caseSortOrder === 'asc' ? 'Ascending' : 'Descending'}
                   </span>
                 </Button>
               </div>
 
               <div className='flex items-center gap-2'>
-                <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>View Mode</span>
+                <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
+                  View Mode
+                </span>
                 <div className='flex rounded-md border border-border/60 p-0.5 bg-background/50'>
                   <Button
                     type='button'
                     size='sm'
-                    variant={caseViewMode === 'hierarchy' ? 'secondary' : 'ghost'}
+                    variant={
+                      caseViewMode === 'hierarchy' ? 'secondary' : 'ghost'
+                    }
                     className='h-7 px-3 text-xs'
                     onClick={(): void => setCaseViewMode('hierarchy')}
                   >
@@ -2052,10 +2368,12 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             {files.length === 0 ? (
               <div className='flex flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 py-20 text-center'>
                 <Folder className='size-10 text-muted-foreground/20 mb-4' />
-                <p className='text-sm text-muted-foreground'>No cases found. Create your first case to get started.</p>
-                <Button 
-                  variant='outline' 
-                  size='sm' 
+                <p className='text-sm text-muted-foreground'>
+                  No cases found. Create your first case to get started.
+                </p>
+                <Button
+                  variant='outline'
+                  size='sm'
                   className='mt-4'
                   onClick={() => handleOpenCreateCaseModal()}
                 >
@@ -2065,7 +2383,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
               </div>
             ) : filteredCases.length === 0 ? (
               <div className='flex flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-card/20 py-20 text-center'>
-                <p className='text-sm text-muted-foreground font-medium'>No cases match your current filters.</p>
+                <p className='text-sm text-muted-foreground font-medium'>
+                  No cases match your current filters.
+                </p>
                 <Button
                   variant='link'
                   size='sm'

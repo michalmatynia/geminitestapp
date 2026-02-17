@@ -123,6 +123,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setActiveMainView,
     editingDocumentDraft,
     setEditingDocumentDraft,
+    isUploadingScanDraftFiles,
+    uploadingScanSlotId,
     caseResolverTags,
     caseResolverIdentifiers,
     caseResolverCategories,
@@ -137,6 +139,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     handleCreateFile,
     handleCreateScanFile,
     handleCreateImageAsset,
+    handleUploadScanFiles,
+    handleRunScanFileOcr,
     handleUploadAssets,
     handleAttachAssetFile,
     handleDeleteFolder,
@@ -187,6 +191,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const [editorContentRevisionSeed, setEditorContentRevisionSeed] = React.useState(0);
   const editorSplitRef = React.useRef<HTMLDivElement | null>(null);
   const editorTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
+  const scanDraftUploadInputRef = React.useRef<HTMLInputElement | null>(null);
   const initialDraftFingerprintRef = React.useRef<string | null>(null);
 
   const preserveWorkspaceView = useCallback(
@@ -481,6 +486,38 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       toast('Failed to copy file ID.', { variant: 'error' });
     }
   }, [editingDocumentDraft, toast]);
+
+  const handleTriggerScanDraftUpload = useCallback((): void => {
+    if (editingDocumentDraft?.fileType !== 'scanfile') return;
+    if (isUploadingScanDraftFiles) return;
+    scanDraftUploadInputRef.current?.click();
+  }, [editingDocumentDraft, isUploadingScanDraftFiles]);
+
+  const handleScanDraftUploadInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>): void => {
+      const files = Array.from(event.target.files ?? []);
+      event.target.value = '';
+      if (editingDocumentDraft?.fileType !== 'scanfile') return;
+      if (files.length === 0) return;
+      void handleUploadScanFiles(editingDocumentDraft.id, files).catch((error: unknown) => {
+        toast(
+          error instanceof Error ? error.message : 'Failed to upload scan images.',
+          { variant: 'error' }
+        );
+      });
+    },
+    [editingDocumentDraft, handleUploadScanFiles, toast]
+  );
+
+  const handleRunScanDraftOcr = useCallback((): void => {
+    if (editingDocumentDraft?.fileType !== 'scanfile') return;
+    void handleRunScanFileOcr(editingDocumentDraft.id).catch((error: unknown) => {
+      toast(
+        error instanceof Error ? error.message : 'Failed to run OCR.',
+        { variant: 'error' }
+      );
+    });
+  }, [editingDocumentDraft, handleRunScanFileOcr, toast]);
 
   const applyDraftCanonicalContent = useCallback(
     (input: {
@@ -812,6 +849,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       onCreateScanFile: handleCreateScanFile,
       onCreateImageAsset: handleCreateImageAsset,
       onCreateNodeFile: () => { handleCreateFile(null); }, // Simplified
+      onUploadScanFiles: handleUploadScanFiles,
+      onRunScanFileOcr: handleRunScanFileOcr,
       onUploadAssets: handleUploadAssets,
       onAttachAssetFile: handleAttachAssetFile,
       onMoveFile: state.handleMoveFile,
@@ -891,14 +930,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             ) : selectedAsset ? (
               <CaseResolverFileViewer />
             ) : activeFile ? (
-              activeFile.fileType === 'scanfile' ? (
-                <div className='rounded-lg border border-border p-6 bg-card/10'>
-                  <h2 className='text-xl font-semibold mb-4'>Scan Workspace: {activeFile.name}</h2>
-                  <Button onClick={() => handleOpenFileEditor(activeFile.id)}>Open Scan Editor</Button>
-                </div>
-              ) : (
-                <CaseResolverCanvasWorkspace />
-              )
+              <CaseResolverCanvasWorkspace />
             ) : (
               <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed border-border'>
                 <div className='text-center'>
@@ -930,6 +962,79 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                   </div>
                 </div>
               </div>
+
+              {editingDocumentDraft.fileType === 'scanfile' ? (
+                <div className='rounded border border-border/60 bg-card/30 px-3 py-3'>
+                  <input
+                    ref={scanDraftUploadInputRef}
+                    type='file'
+                    accept='image/*'
+                    multiple
+                    className='hidden'
+                    onChange={handleScanDraftUploadInputChange}
+                  />
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <div className='text-xs font-medium text-gray-200'>Image Slots</div>
+                    <div className='ml-auto flex items-center gap-2'>
+                      <Button
+                        type='button'
+                        onClick={handleTriggerScanDraftUpload}
+                        disabled={isUploadingScanDraftFiles}
+                        className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60'
+                      >
+                        {isUploadingScanDraftFiles ? 'Uploading...' : 'Upload Images'}
+                      </Button>
+                      <Button
+                        type='button'
+                        onClick={handleRunScanDraftOcr}
+                        disabled={
+                          editingDocumentDraft.scanSlots.length === 0 ||
+                          isUploadingScanDraftFiles ||
+                          uploadingScanSlotId !== null
+                        }
+                        className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15 disabled:opacity-60'
+                      >
+                        {uploadingScanSlotId !== null ? 'Running OCR...' : 'Run OCR'}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
+                    {editingDocumentDraft.scanSlots.length === 0 ? (
+                      <div className='rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500'>
+                        No images uploaded yet.
+                      </div>
+                    ) : (
+                      editingDocumentDraft.scanSlots.map((slot) => (
+                        <div
+                          key={slot.id}
+                          className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-2 py-1.5 text-[11px]'
+                        >
+                          <div className='min-w-0'>
+                            <div className='truncate text-gray-200'>{slot.name || 'Untitled image'}</div>
+                            <div className='text-gray-500'>
+                              {uploadingScanSlotId === 'all' || uploadingScanSlotId === slot.id
+                                ? 'Processing OCR...'
+                                : slot.ocrText.trim().length > 0
+                                  ? 'OCR extracted'
+                                  : 'OCR pending'}
+                            </div>
+                          </div>
+                          {slot.filepath ? (
+                            <a
+                              href={slot.filepath}
+                              target='_blank'
+                              rel='noreferrer'
+                              className='text-cyan-200 hover:text-cyan-100'
+                            >
+                              Open
+                            </a>
+                          ) : null}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              ) : null}
 
               <Tabs
                 value={editorDetailsTab}

@@ -2,27 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
+  decryptSecret,
   fetchBaseAllWarehouses,
   fetchBaseAllWarehousesDebug,
   fetchBaseInventories,
   fetchBaseInventoriesDebug,
+  fetchBaseProductIds,
+  fetchBaseProductDetails,
   fetchBaseWarehouses,
   fetchBaseWarehousesDebug,
-  fetchBaseProductIds,
-  fetchBaseProductDetails
-} from '@/features/integrations/services/imports/base-client';
-import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
-import {
+  getIntegrationRepository,
+  mapBaseProduct,
+  extractBaseImageUrls,
   startBaseImportRunResponse,
-} from '@/features/integrations/services/imports/base-import-run-starter';
-import { extractBaseImageUrls, mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
-import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
-import { decryptSecret } from '@/features/integrations/utils/encryption';
-import { getCatalogRepository } from '@/features/products/services/catalog-repository';
-import { getProductDataProvider } from '@/features/products/services/product-provider';
-import { getProductRepository } from '@/features/products/services/product-repository';
-import type { ProductWithImages } from '@/features/products/types/records';
-import type { ProductCreateInput } from '@/features/products/validations/schemas';
+} from '@/features/integrations/server';
+import type { BaseProductRecord } from '@/features/integrations/server';
+import {
+  getCatalogRepository,
+  getProductDataProvider,
+  getProductRepository,
+} from '@/features/products/server';
+import type { ProductCreateInput, ProductWithImages } from '@/features/products/server';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

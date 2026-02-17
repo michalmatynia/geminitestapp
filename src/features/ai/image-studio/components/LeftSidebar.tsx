@@ -75,6 +75,8 @@ export function LeftSidebar(): React.JSX.Element {
   const { toast } = useToast();
   const [revealRequest, setRevealRequest] = useState<{ slotId: string; nonce: number } | null>(null);
   const [projectSaveBusy, setProjectSaveBusy] = useState(false);
+  const [loadToCanvasBusy, setLoadToCanvasBusy] = useState(false);
+  const loadToCanvasBusyRef = useRef(false);
   const singleSlotManagerRef = useRef<ImageStudioSingleSlotManagerHandle | null>(null);
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -82,7 +84,10 @@ export function LeftSidebar(): React.JSX.Element {
   const selectedSlotImageSrc = selectedSlot
     ? getImageStudioSlotImageSrc(selectedSlot, productImagesExternalBaseUrl)
     : null;
-  const canLoadToCanvas = Boolean(projectId) && Boolean(temporaryObjectUpload || (selectedSlot?.id && selectedSlotImageSrc));
+  const canLoadToCanvas = Boolean(
+    (temporaryObjectUpload && projectId) ||
+    (selectedSlot?.id && selectedSlotImageSrc)
+  );
 
   const cloneSettingValue = <T,>(value: T): T => {
     const seen = new WeakSet<object>();
@@ -103,6 +108,9 @@ export function LeftSidebar(): React.JSX.Element {
   };
 
   const handleLoadToCanvas = (): void => {
+    if (loadToCanvasBusyRef.current || loadToCanvasBusy) return;
+    loadToCanvasBusyRef.current = true;
+    setLoadToCanvasBusy(true);
     void (async (): Promise<void> => {
       const consumedTemporaryUpload =
         (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: true })) ?? false;
@@ -114,7 +122,11 @@ export function LeftSidebar(): React.JSX.Element {
         return;
       }
       toast('Load to canvas is only available for Object slot upload or a card with an image.', { variant: 'info' });
-    })();
+    })()
+      .finally(() => {
+        loadToCanvasBusyRef.current = false;
+        setLoadToCanvasBusy(false);
+      });
   };
 
   const handleDeCanvas = (): void => {
@@ -384,7 +396,7 @@ export function LeftSidebar(): React.JSX.Element {
                 variant='outline'
                 title='Load to canvas'
                 onClick={handleLoadToCanvas}
-                disabled={!canLoadToCanvas}
+                disabled={loadToCanvasBusy || !canLoadToCanvas}
                 aria-label='Load to canvas'
               >
                 <ImagePlus className='size-4' />

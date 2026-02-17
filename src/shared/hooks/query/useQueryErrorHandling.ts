@@ -1,7 +1,7 @@
 /* eslint-disable */
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { createListQueryV2 } from "@/shared/lib/query-factories-v2";
 import { useToast } from "@/shared/ui";
@@ -143,7 +143,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           // Mark as logged
           if (isLoggableObject(error)) {
             try {
-              error.__logged = true;
+              (error as any).__logged = true;
             } catch {}
           }
         }
@@ -188,10 +188,10 @@ export function useResilientQuery<TData>(
     retryDelay?: number;
     onError?: (error: Error) => void;
   }
-): any {
+): UseQueryResult<TData, Error> {
   const toast = typeof window !== 'undefined' ? useToast().toast : null;
   
-  const query = createListQueryV2<TData, TData>({
+  const query = createListQueryV2<unknown, TData>({
     queryKey,
     queryFn,
     retry: (failureCount: number, error: Error): boolean => {
@@ -206,7 +206,7 @@ export function useResilientQuery<TData>(
       const baseDelay = options?.retryDelay || 1000;
       return Math.min(baseDelay * Math.pow(2, attemptIndex), 30000);
     },
-    placeholderData: options?.fallbackData as any,
+    placeholderData: options?.fallbackData,
     meta: {
       source: 'shared.hooks.query.useResilientQuery',
       operation: 'list',
@@ -238,7 +238,7 @@ export function useCircuitBreakerQuery<TData>(
     resetTimeout?: number;
     fallbackData?: TData;
   }
-): any {
+): UseQueryResult<TData, Error> {
   const failureThreshold = options?.failureThreshold || 5;
   const resetTimeout = options?.resetTimeout || 60000; // 1 minute
   
@@ -254,7 +254,7 @@ export function useCircuitBreakerQuery<TData>(
     localStorage.setItem(circuitKey, JSON.stringify(state));
   }, [circuitKey]);
 
-  return createListQueryV2<TData, TData>({
+  return createListQueryV2<unknown, TData>({
     queryKey,
     queryFn: async (): Promise<TData> => {
       const circuit = getCircuitState();
@@ -314,7 +314,7 @@ function isNetworkError(error: unknown): boolean {
 function isClientError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   if ('status' in error) {
-    const status = (error as any).status;
+    const status = (error as unknown as { status: unknown }).status;
     return typeof status === 'number' && status >= 400 && status < 500;
   }
   return false;

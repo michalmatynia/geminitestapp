@@ -14,7 +14,8 @@ export type QueueName =
   | 'tradera-relist-scheduler'
   | 'product-sync'
   | 'product-sync-backfill'
-  | 'product-sync-scheduler';
+  | 'product-sync-scheduler'
+  | 'case-resolver-ocr';
 
 export type QueueHealthStatus = {
   running: boolean;

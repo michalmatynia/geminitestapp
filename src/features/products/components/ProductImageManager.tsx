@@ -547,12 +547,13 @@ export default function ProductImageManager({
             void (async (): Promise<void> => {
               if (hasUpload) {
                 await handleSlotDisconnectImage(index);
-              }
-              if (hasBase64) {
-                setImageBase64At(index, '');
-              }
-              if (hasLink) {
-                setImageLinkAt(index, '');
+              } else {
+                if (hasBase64) {
+                  setImageBase64At(index, '');
+                }
+                if (hasLink) {
+                  setImageLinkAt(index, '');
+                }
               }
               setSlotViewModes((prev: SlotViewMode[]) => {
                 const next = [...prev];

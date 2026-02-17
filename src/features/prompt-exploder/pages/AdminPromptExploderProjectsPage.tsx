@@ -12,6 +12,8 @@ import {
   ListPanel,
   PanelHeader,
   useToast,
+  DocumentationSection,
+  EmptyState,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
@@ -203,9 +205,11 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
       label: '',
       type: 'custom',
       render: () => shouldClearDocumentOnSave ? (
-        <div className='rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-200/80 leading-relaxed italic'>
-          Note: Changing the prompt will reset the existing segment analysis for this project.
-        </div>
+        <DocumentationSection title='Reset' className='bg-amber-500/5 border-amber-500/20 px-4 py-3'>
+          <div className='text-xs text-amber-200/80 leading-relaxed italic'>
+            Note: Changing the prompt will reset the existing segment analysis for this project.
+          </div>
+        </DocumentationSection>
       ) : null
     }
   ];
@@ -359,11 +363,10 @@ export function AdminPromptExploderProjectsPage(): React.JSX.Element {
           data={projects}
           isLoading={settingsQuery.isLoading}
           emptyState={
-            <div className='flex flex-col items-center justify-center py-12 text-center'>
-              <p className='text-sm text-gray-500'>
-                No projects found. Create your first Prompt Exploder project.
-              </p>
-            </div>
+            <EmptyState
+              title='No projects found'
+              description='Create your first Prompt Exploder project to get started.'
+            />
           }
         />
       </ListPanel>

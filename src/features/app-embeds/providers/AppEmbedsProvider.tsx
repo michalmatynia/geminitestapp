@@ -2,10 +2,10 @@
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
-import { logClientError } from '@/features/observability';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '../lib/constants';

@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { logClientError } from '@/features/observability';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, Label, Textarea, useToast } from '@/shared/ui';
+import { Button, Input, Label, Textarea, useToast, EmptyState } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -166,9 +166,12 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
               {promptEntries.length} prompt{promptEntries.length === 1 ? '' : 's'}
             </div>
             {promptEntries.length === 0 ? (
-              <div className='rounded border border-dashed border-border/60 p-5 text-center text-sm text-gray-500'>
-                No prompts yet. Add your first prompt.
-              </div>
+              <EmptyState
+                variant='compact'
+                title='No prompts yet'
+                description='Add your first reusable prompt to get started.'
+                className='border-none bg-transparent p-0'
+              />
             ) : (
               promptEntries.map((entry: ImageStudioPromptEntry) => {
                 const isSelected = entry.id === selectedPromptId;
@@ -240,9 +243,11 @@ export function AdminImageStudioPromptsPage(): React.JSX.Element {
                 </div>
               </div>
             ) : (
-              <div className='flex min-h-[260px] items-center justify-center rounded border border-dashed border-border/60 text-sm text-gray-500'>
-                Select a prompt to edit.
-              </div>
+              <EmptyState
+                title='Select a prompt'
+                description='Choose a prompt from the list to view or edit its contents.'
+                className='min-h-[260px] border-none bg-transparent'
+              />
             )}
           </div>
         </div>

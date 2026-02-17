@@ -16,7 +16,7 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import type { IntegrationConnectionBasic } from '@/features/integrations';
 import { useCategoryMappingsByConnection } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { Button, Input, Checkbox, Label, SelectSimple } from '@/shared/ui';
+import { Button, Input, Checkbox, Label, SelectSimple, DocumentationSection } from '@/shared/ui';
 
 export function ExportTab(): React.JSX.Element {
   const CATEGORY_TEMPLATE_PRODUCT_FIELDS = new Set([
@@ -429,11 +429,11 @@ export function ExportTab(): React.JSX.Element {
           )}
         </div>
 
-        <div className='rounded-lg border border-blue-900/50 bg-blue-900/20 p-4'>
-          <h3 className='text-sm font-semibold text-blue-200'>
-            Export Guidelines
-          </h3>
-          <ul className='mt-2 space-y-1 text-xs text-blue-300/70'>
+        <DocumentationSection
+          title='Export Guidelines'
+          className='border-blue-900/50 bg-blue-900/20'
+        >
+          <ul className='space-y-1 text-xs text-blue-300/70'>
             <li>
               • Exports use templates to map internal product fields to Base.com
               API parameters
@@ -461,7 +461,7 @@ export function ExportTab(): React.JSX.Element {
               tab
             </li>
           </ul>
-        </div>
+        </DocumentationSection>
 
         <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
           <h3 className='text-sm font-semibold text-white mb-3'>

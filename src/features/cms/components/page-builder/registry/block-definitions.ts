@@ -1,4 +1,8 @@
 import {
+  BLOCK_SECTION_ALLOWED_BLOCK_TYPES,
+  layoutBlockDefinitions,
+} from './block-definitions-layout';
+import {
   WRAP_OPTIONS,
   JUSTIFY_OPTIONS,
   ALIGN_OPTIONS,
@@ -12,15 +16,15 @@ import {
 
 import type { BlockDefinition } from '../../../types/page-builder';
 
+export {
+  BLOCK_SECTION_ALLOWED_BLOCK_TYPES,
+  COLUMN_ALLOWED_BLOCK_TYPES,
+  ROW_ALLOWED_BLOCK_TYPES,
+} from './block-definitions-layout';
+
 // ---------------------------------------------------------------------------
 // Block definitions
 // ---------------------------------------------------------------------------
-
-export const COLUMN_ALLOWED_BLOCK_TYPES = ['Heading', 'Text', 'TextElement', 'TextAtom', 'ImageElement', 'Button', 'Image', 'Model3D', 'Model3DElement', 'VideoEmbed', 'Divider', 'SocialLinks', 'Icon', 'AppEmbed', 'ImageWithText', 'RichText', 'Hero', 'Block', 'Carousel', 'Slideshow'];
-export const BLOCK_SECTION_ALLOWED_BLOCK_TYPES = ['Announcement', ...COLUMN_ALLOWED_BLOCK_TYPES];
-
-// Row can contain columns and also elements/blocks directly (not just inside columns)
-export const ROW_ALLOWED_BLOCK_TYPES = ['Column', 'TextElement', 'ImageElement', 'TextAtom', 'Button', 'Image', 'Heading', 'Text', 'VideoEmbed', 'Divider', 'SocialLinks', 'Icon', 'AppEmbed', 'Hero', 'ImageWithText', 'RichText', 'Block', 'Model3D', 'Model3DElement', 'Carousel', 'Slideshow'];
 
 // Content blocks that can be placed inside a CarouselFrame
 export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = ['ImageElement', 'TextElement', 'TextAtom', 'Block', 'Button', 'Heading', 'Text', 'VideoEmbed', 'Divider', 'SocialLinks', 'Icon'];
@@ -29,213 +33,7 @@ export const CAROUSEL_FRAME_ALLOWED_BLOCK_TYPES = ['ImageElement', 'TextElement'
 export const SLIDESHOW_FRAME_ALLOWED_BLOCK_TYPES = ['ImageElement', 'Image', 'Heading', 'Text', 'TextElement', 'TextAtom', 'Block', 'Button', 'AppEmbed'];
 
 export const BLOCK_DEFINITIONS: Record<string, BlockDefinition> = {
-  Row: {
-    type: 'Row',
-    label: 'Row',
-    icon: 'GripVertical',
-    allowedBlockTypes: ROW_ALLOWED_BLOCK_TYPES,
-    defaultSettings: {
-      gap: 'inherit',
-      gapPx: 0,
-      direction: 'horizontal',
-      wrap: 'wrap',
-      justifyContent: 'start',
-      alignItems: 'stretch',
-      heightMode: 'inherit',
-      height: 0,
-      minHeight: 0,
-      maxWidth: 0,
-      overflow: 'visible',
-      opacity: 100,
-      zIndex: 0,
-      paddingTop: 0,
-      paddingBottom: 0,
-      paddingLeft: 0,
-      paddingRight: 0,
-      marginTop: 0,
-      marginBottom: 0,
-      marginLeft: 0,
-      marginRight: 0,
-      background: { type: 'none' },
-      sectionBorder: { width: 0, style: 'none', color: '#4b5563', radius: 0 },
-      sectionShadow: { x: 0, y: 0, blur: 0, spread: 0, color: '#00000000' },
-      customCss: '',
-    },
-    settingsSchema: [
-      {
-        key: 'direction',
-        label: 'Direction',
-        type: 'select',
-        options: [
-          { label: 'Horizontal (side by side)', value: 'horizontal' },
-          { label: 'Vertical (stacked)', value: 'vertical' },
-        ],
-        defaultValue: 'horizontal',
-      },
-      {
-        key: 'gap',
-        label: 'Item gap',
-        type: 'select',
-        options: [
-          { label: 'Inherit section gap', value: 'inherit' },
-          { label: 'None', value: 'none' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
-        defaultValue: 'inherit',
-      },
-      { key: 'gapPx', label: 'Custom gap (px)', type: 'number', defaultValue: 0 },
-      {
-        key: 'wrap',
-        label: 'Wrap',
-        type: 'select',
-        options: WRAP_OPTIONS,
-        defaultValue: 'wrap',
-      },
-      {
-        key: 'justifyContent',
-        label: 'Justify content',
-        type: 'select',
-        options: JUSTIFY_OPTIONS,
-        defaultValue: 'start',
-      },
-      {
-        key: 'alignItems',
-        label: 'Align items',
-        type: 'select',
-        options: ALIGN_OPTIONS,
-        defaultValue: 'stretch',
-      },
-      {
-        key: 'heightMode',
-        label: 'Row height',
-        type: 'select',
-        options: [
-          { label: 'Inherit from blocks', value: 'inherit' },
-          { label: 'Fixed height', value: 'fixed' },
-        ],
-        defaultValue: 'inherit',
-      },
-      { key: 'height', label: 'Row height (px)', type: 'range', defaultValue: 0, min: 0, max: 1000 },
-      ...paddingFields(),
-      ...marginFields(),
-      ...sectionStyleFields(),
-      ...layoutFields(),
-    ],
-  },
-  Announcement: {
-    type: 'Announcement',
-    label: 'Announcement',
-    icon: 'Megaphone',
-    defaultSettings: { text: 'Announcement', link: '' },
-    settingsSchema: [
-      { key: 'text', label: 'Text', type: 'text', defaultValue: 'Announcement' },
-      { key: 'link', label: 'Link', type: 'link', defaultValue: '' },
-    ],
-  },
-  Column: {
-    type: 'Column',
-    label: 'Column',
-    icon: 'Columns',
-    defaultSettings: {
-      gap: 'medium',
-      gapPx: 0,
-      paddingTop: 0,
-      paddingBottom: 0,
-      paddingLeft: 0,
-      paddingRight: 0,
-      marginTop: 0,
-      marginBottom: 0,
-      heightMode: 'inherit',
-      height: 0,
-      minHeight: 0,
-      maxWidth: 0,
-      overflow: 'visible',
-      opacity: 100,
-      zIndex: 0,
-      colorScheme: 'scheme-1',
-      verticalAlignment: 'top',
-      justifyContent: 'start',
-      alignItems: 'stretch',
-      textAlign: 'left',
-      background: { type: 'none' },
-      sectionBorder: { width: 0, style: 'none', color: '#4b5563', radius: 0 },
-      sectionShadow: { x: 0, y: 0, blur: 0, spread: 0, color: '#00000000' },
-      customCss: '',
-    },
-    settingsSchema: [
-      {
-        key: 'gap',
-        label: 'Content gap',
-        type: 'select',
-        options: [
-          { label: 'None', value: 'none' },
-          { label: 'Small', value: 'small' },
-          { label: 'Medium', value: 'medium' },
-          { label: 'Large', value: 'large' },
-        ],
-        defaultValue: 'medium',
-      },
-      { key: 'gapPx', label: 'Custom gap (px)', type: 'number', defaultValue: 0 },
-      { key: 'paddingTop', label: 'Top padding', type: 'number', defaultValue: 0 },
-      { key: 'paddingBottom', label: 'Bottom padding', type: 'number', defaultValue: 0 },
-      { key: 'paddingLeft', label: 'Left padding', type: 'number', defaultValue: 0 },
-      { key: 'paddingRight', label: 'Right padding', type: 'number', defaultValue: 0 },
-      { key: 'marginTop', label: 'Top margin', type: 'number', defaultValue: 0 },
-      { key: 'marginBottom', label: 'Bottom margin', type: 'number', defaultValue: 0 },
-      {
-        key: 'heightMode',
-        label: 'Column height',
-        type: 'select',
-        options: [
-          { label: 'Inherit from blocks', value: 'inherit' },
-          { label: 'Fixed height', value: 'fixed' },
-        ],
-        defaultValue: 'inherit',
-      },
-      { key: 'height', label: 'Column height (px)', type: 'range', defaultValue: 0, min: 0, max: 1000 },
-      {
-        key: 'justifyContent',
-        label: 'Vertical alignment',
-        type: 'select',
-        options: JUSTIFY_OPTIONS,
-        defaultValue: 'start',
-      },
-      {
-        key: 'alignItems',
-        label: 'Horizontal alignment',
-        type: 'select',
-        options: ALIGN_OPTIONS,
-        defaultValue: 'stretch',
-      },
-      {
-        key: 'textAlign',
-        label: 'Text alignment',
-        type: 'select',
-        options: [
-          { label: 'Left', value: 'left' },
-          { label: 'Center', value: 'center' },
-          { label: 'Right', value: 'right' },
-        ],
-        defaultValue: 'left',
-      },
-      colorSchemeField('colorScheme', 'Color scheme'),
-      {
-        key: 'verticalAlignment',
-        label: 'Vertical alignment',
-        type: 'select',
-        options: [
-          { label: 'Top', value: 'top' },
-          { label: 'Center', value: 'center' },
-          { label: 'Bottom', value: 'bottom' },
-        ],
-        defaultValue: 'top',
-      },
-      ...sectionStyleFields(),
-      ...layoutFields(),
-    ],
-  },
+  ...layoutBlockDefinitions,
   Block: {
     type: 'Block',
     label: 'Block',

@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
-import { Button, Input, Label } from '@/shared/ui';
+import { Button, Input, Label, DocumentationSection } from '@/shared/ui';
 
 import { RuleListDragProvider } from './context/RuleListDragContext';
 import { RuleItem } from './RuleItem';
@@ -203,7 +203,7 @@ export function RuleList(): React.JSX.Element {
           </div>
         ) : null}
         {sequencingLocked ? (
-          <div className='rounded-lg border border-amber-500/40 bg-amber-500/10 p-4'>
+          <DocumentationSection title='Sequencing Locked' className='bg-amber-500/10 border-amber-500/40 p-4'>
             <div className='text-xs text-amber-200'>
               Sequence drag-and-drop is disabled while filters are active. Clear search, set severity to
               <span className='mx-1 font-medium'>All</span>
@@ -213,7 +213,7 @@ export function RuleList(): React.JSX.Element {
               <span className='mx-1 font-medium'>Include disabled</span>
               to reorder/group rules.
             </div>
-          </div>
+          </DocumentationSection>
         ) : null}
         {entries.map((entry) => {
           if (entry.kind === 'rule') {

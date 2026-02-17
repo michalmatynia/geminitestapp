@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { CopyButton, Input,  FormSection } from '@/shared/ui';
+import { CopyButton, Input,  FormSection, MetadataItem, DocumentationSection } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { useGenerationState } from '../context/GenerationContext';
@@ -37,16 +37,6 @@ function metricValue(value: string | number | boolean | null | undefined): strin
   if (value === null || value === undefined) return 'null';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   return String(value);
-}
-
-function MetricCard({ label, value, hint }: { label: string; value: string; hint?: string | undefined }): React.JSX.Element {
-  return (
-    <div className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
-      <div className='text-[11px] uppercase tracking-wide text-gray-500'>{label}</div>
-      <div className='mt-1 text-sm text-gray-100'>{value}</div>
-      {hint ? <div className='mt-1 text-[11px] text-gray-500'>{hint}</div> : null}
-    </div>
-  );
 }
 
 export function ImageStudioDocsContent(): React.JSX.Element {
@@ -618,26 +608,26 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         <div className='space-y-3 rounded-lg border border-border/60 bg-card/40 p-5'>
           <h3 className='text-base font-semibold text-white'>Current Runtime State</h3>
           <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
-            <MetricCard label='Project' value={projectId || 'none'} hint={`${projectsQuery.data?.length ?? 0} total`} />
-            <MetricCard label='Slots' value={String(slots.length)} hint={`selected: ${selectedSlot?.name ?? selectedSlot?.id ?? 'none'}`} />
-            <MetricCard label='Working Slot' value={workingSlot?.name ?? workingSlot?.id ?? 'none'} hint={`folder: ${selectedFolder || 'root'}`} />
-            <MetricCard label='Preview Mode' value={previewMode} hint={`composite: ${compositeAssets.length}`} />
-            <MetricCard label='Prompt Length' value={String(promptText.length)} hint={`${promptIssueCount} validation issue(s)`} />
-            <MetricCard label='Params' value={String(paramsState ? Object.keys(paramsState).length : 0)} hint={`specs: ${paramSpecs ? Object.keys(paramSpecs).length : 0}`} />
-            <MetricCard label='Mask Shapes' value={String(maskShapes.length)} hint={`${maskEligibleCount} eligible polygon/lasso`} />
-            <MetricCard label='Generation' value={runMutation.isPending ? 'running' : 'idle'} hint={`${runOutputs.length} output(s), ${generationHistory.length} history`} />
+            <MetadataItem label='Project' value={projectId || 'none'} hint={`${projectsQuery.data?.length ?? 0} total`} />
+            <MetadataItem label='Slots' value={String(slots.length)} hint={`selected: ${selectedSlot?.name ?? selectedSlot?.id ?? 'none'}`} />
+            <MetadataItem label='Working Slot' value={workingSlot?.name ?? workingSlot?.id ?? 'none'} hint={`folder: ${selectedFolder || 'root'}`} />
+            <MetadataItem label='Preview Mode' value={previewMode} hint={`composite: ${compositeAssets.length}`} />
+            <MetadataItem label='Prompt Length' value={String(promptText.length)} hint={`${promptIssueCount} validation issue(s)`} />
+            <MetadataItem label='Params' value={String(paramsState ? Object.keys(paramsState).length : 0)} hint={`specs: ${paramSpecs ? Object.keys(paramSpecs).length : 0}`} />
+            <MetadataItem label='Mask Shapes' value={String(maskShapes.length)} hint={`${maskEligibleCount} eligible polygon/lasso`} />
+            <MetadataItem label='Generation' value={runMutation.isPending ? 'running' : 'idle'} hint={`${runOutputs.length} output(s), ${generationHistory.length} history`} />
           </div>
           <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
-            <MetricCard label='Mask Tool' value={tool} hint={`active mask: ${activeMaskId ?? 'none'}`} />
-            <MetricCard label='Mask Mode' value={maskGenMode} hint={`loading: ${metricValue(maskGenLoading)}`} />
-            <MetricCard label='Mask Controls' value={`invert=${metricValue(maskInvert)}`} hint={`feather=${maskFeather}, brush=${brushRadius}`} />
-            <MetricCard label='Detection' value={`threshold=${maskThresholdSensitivity}`} hint={`edges=${maskEdgeSensitivity}`} />
+            <MetadataItem label='Mask Tool' value={tool} hint={`active mask: ${activeMaskId ?? 'none'}`} />
+            <MetadataItem label='Mask Mode' value={maskGenMode} hint={`loading: ${metricValue(maskGenLoading)}`} />
+            <MetadataItem label='Mask Controls' value={`invert=${metricValue(maskInvert)}`} hint={`feather=${maskFeather}, brush=${brushRadius}`} />
+            <MetadataItem label='Detection' value={`threshold=${maskThresholdSensitivity}`} hint={`edges=${maskEdgeSensitivity}`} />
           </div>
           <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
-            <MetricCard label='Project Search' value={projectSearch || '(empty)'} />
-            <MetricCard label='Virtual Folders' value={String(virtualFolders.length)} hint={`persisted: ${persistedTree.folders.length}`} />
-            <MetricCard label='Extraction Review' value={metricValue(extractReviewOpen)} hint={`draft length: ${extractDraftPrompt.length}`} />
-            <MetricCard label='Slot UI Drafts' value={`url=${slotImageUrlDraft.trim().length}`} hint={`base64=${slotBase64Draft.trim().length}`} />
+            <MetadataItem label='Project Search' value={projectSearch || '(empty)'} />
+            <MetadataItem label='Virtual Folders' value={String(virtualFolders.length)} hint={`persisted: ${persistedTree.folders.length}`} />
+            <MetadataItem label='Extraction Review' value={metricValue(extractReviewOpen)} hint={`draft length: ${extractDraftPrompt.length}`} />
+            <MetadataItem label='Slot UI Drafts' value={`url=${slotImageUrlDraft.trim().length}`} hint={`base64=${slotBase64Draft.trim().length}`} />
           </div>
         </div>
       ) : null}
@@ -695,15 +685,14 @@ export function ImageStudioDocsContent(): React.JSX.Element {
       ) : null}
 
       {includeByQuery(['docs coverage', 'what is included']) ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>Docs Coverage</h3>
-          <ul className='mt-2 list-disc space-y-1 pl-5 text-sm text-gray-400'>
+        <DocumentationSection title='Docs Coverage'>
+          <ul className='mt-2 list-disc space-y-1 pl-5 text-sm'>
             <li>Live runtime state for projects, slots, prompt, masks, and generation.</li>
             <li>All Image Studio settings from <code>image_studio_settings</code>.</li>
             <li>API key status, UI preset state, prompt validation rule summary, and folder-tree persistence.</li>
             <li>Raw JSON snapshots so you can audit exactly what the application is currently using.</li>
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {slotsQuery.isLoading || projectsQuery.isLoading || heavySettings.isLoading ? (

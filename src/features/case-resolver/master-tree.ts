@@ -146,6 +146,11 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
     });
   });
   workspace.assets.forEach((asset: CaseResolverAssetFile) => {
+    const isHiddenImagePlaceholder =
+      asset.kind === 'image' &&
+      (typeof asset.filepath !== 'string' || asset.filepath.trim().length === 0);
+    if (isHiddenImagePlaceholder) return;
+
     appendFileEntry(asset.folder, {
       id: asset.id,
       name: asset.name,

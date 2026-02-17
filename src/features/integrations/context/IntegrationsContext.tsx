@@ -17,6 +17,13 @@ import {
   isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
+import type {
+  ConnectionFormState,
+  IntegrationsContextType,
+  SessionPayload,
+  StepWithResult,
+} from '@/features/integrations/context/integrations-context-types';
+import { createEmptyConnectionForm } from '@/features/integrations/context/integrations-context-types';
 import { invalidateIntegrationConnections } from '@/features/integrations/hooks/integrationCache';
 import {
   useCreateIntegration,
@@ -37,160 +44,14 @@ import {
   Integration,
   IntegrationConnection,
   TestLogEntry,
-  SessionCookie,
   integrationDefinitions,
 } from '@/features/integrations/types/integrations-ui';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/features/observability';
 import { defaultPlaywrightSettings } from '@/features/playwright';
-import type { PlaywrightPersona, PlaywrightSettings } from '@/features/playwright';
+import type { PlaywrightPersona } from '@/features/playwright';
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
-
-type ConnectionFormState = {
-  name: string;
-  username: string;
-  password: string;
-  traderaDefaultTemplateId: string;
-  traderaDefaultDurationHours: number;
-  traderaAutoRelistEnabled: boolean;
-  traderaAutoRelistLeadMinutes: number;
-  traderaApiAppId: string;
-  traderaApiAppKey: string;
-  traderaApiPublicKey: string;
-  traderaApiUserId: string;
-  traderaApiToken: string;
-  traderaApiSandbox: boolean;
-};
-
-const createEmptyConnectionForm = (): ConnectionFormState => ({
-  name: '',
-  username: '',
-  password: '',
-  traderaDefaultTemplateId: '',
-  traderaDefaultDurationHours: 72,
-  traderaAutoRelistEnabled: true,
-  traderaAutoRelistLeadMinutes: 180,
-  traderaApiAppId: '',
-  traderaApiAppKey: '',
-  traderaApiPublicKey: '',
-  traderaApiUserId: '',
-  traderaApiToken: '',
-  traderaApiSandbox: false,
-});
-
-interface IntegrationsContextType {
-  // Queries
-  integrations: Integration[];
-  integrationsLoading: boolean;
-  activeIntegration: Integration | null;
-  connections: IntegrationConnection[];
-  connectionsLoading: boolean;
-  playwrightPersonas: PlaywrightPersona[];
-  playwrightPersonasLoading: boolean;
-  
-  // Active state setters
-  setActiveIntegration: (integration: Integration | null) => void;
-  
-  // UI State
-  isModalOpen: boolean;
-  setIsModalOpen: (open: boolean) => void;
-  editingConnectionId: string | null;
-  setEditingConnectionId: (id: string | null) => void;
-  connectionForm: ConnectionFormState;
-  setConnectionForm: React.Dispatch<React.SetStateAction<ConnectionFormState>>;
-  
-  // Testing State
-  isTesting: boolean;
-  testLog: TestLogEntry[];
-  showTestLogModal: boolean;
-  setShowTestLogModal: (open: boolean) => void;
-  selectedStep: (TestLogEntry & { status: 'ok' | 'failed' }) | null;
-  setSelectedStep: (step: (TestLogEntry & { status: 'ok' | 'failed' }) | null) => void;
-  
-  showTestErrorModal: boolean;
-  setShowTestErrorModal: (open: boolean) => void;
-  testError: string | null;
-  testErrorMeta: {
-    errorId?: string;
-    integrationId?: string | null;
-    connectionId?: string | null;
-  } | null;
-  
-  showTestSuccessModal: boolean;
-  setShowTestSuccessModal: (open: boolean) => void;
-  testSuccessMessage: string | null;
-  
-  // Session State
-  showSessionModal: boolean;
-  setShowSessionModal: (open: boolean) => void;
-  sessionLoading: boolean;
-  sessionError: string | null;
-  sessionCookies: SessionCookie[];
-  sessionOrigins: unknown[];
-  sessionUpdatedAt: string | null;
-  
-  // Playwright State
-  playwrightSettings: PlaywrightSettings;
-  setPlaywrightSettings: React.Dispatch<React.SetStateAction<PlaywrightSettings>>;
-  playwrightPersonaId: string | null;
-  showPlaywrightSaved: boolean;
-  
-  // API Console State (Base)
-  baseApiMethod: string;
-  setBaseApiMethod: (method: string) => void;
-  baseApiParams: string;
-  setBaseApiParams: (params: string) => void;
-  baseApiLoading: boolean;
-  baseApiError: string | null;
-  baseApiResponse: { data: unknown } | null;
-  
-  // API Console State (Allegro)
-  allegroApiMethod: string;
-  setAllegroApiMethod: (method: string) => void;
-  allegroApiPath: string;
-  setAllegroApiPath: (path: string) => void;
-  allegroApiBody: string;
-  setAllegroApiBody: (body: string) => void;
-  allegroApiLoading: boolean;
-  allegroApiError: string | null;
-  allegroApiResponse: {
-    status: number;
-    statusText: string;
-    data?: unknown;
-    refreshed?: boolean;
-  } | null;
-  
-  // Allegro specific
-  savingAllegroSandbox: boolean;
-
-  // Actions
-  handleIntegrationClick: (definition: (typeof integrationDefinitions)[number]) => Promise<void>;
-  handleSaveConnection: () => Promise<void>;
-  handleDeleteConnection: (connection: IntegrationConnection) => void;
-  handleConfirmDeleteConnection: () => Promise<void>;
-  connectionToDelete: IntegrationConnection | null;
-  setConnectionToDelete: (conn: IntegrationConnection | null) => void;
-  
-  handleBaselinkerTest: (connection: IntegrationConnection) => Promise<void>;
-  handleAllegroTest: (connection: IntegrationConnection) => Promise<void>;
-  handleTestConnection: (connection: IntegrationConnection) => Promise<void>;
-  handleTraderaManualLogin: (connection: IntegrationConnection) => Promise<void>;
-  
-  handleSelectPlaywrightPersona: (personaId: string | null) => Promise<void>;
-  handleSavePlaywrightSettings: () => Promise<void>;
-  
-  handleAllegroAuthorize: () => void;
-  handleAllegroDisconnect: () => Promise<void>;
-  handleAllegroSandboxToggle: (value: boolean) => Promise<void>;
-  handleAllegroSandboxConnect: () => Promise<void>;
-  
-  handleBaseApiRequest: () => Promise<void>;
-  handleAllegroApiRequest: () => Promise<void>;
-  
-  onCloseModal: () => void;
-  onOpenSessionModal: () => void;
-}
 
 const IntegrationsContext = createContext<IntegrationsContextType | null>(null);
 
@@ -257,7 +118,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   } | null>(null);
   const [showTestSuccessModal, setShowTestSuccessModal] = useState(false);
   const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(null);
-  const [selectedStep, setSelectedStep] = useState<(TestLogEntry & { status: 'ok' | 'failed' }) | null>(null);
+  const [selectedStep, setSelectedStep] = useState<StepWithResult | null>(null);
 
   // Session State
   const [showSessionModal, setShowSessionModal] = useState(false);
@@ -265,13 +126,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     connections.find((connection: IntegrationConnection) => connection.id === editingConnectionId) ??
     connections[0] ??
     null;
-
-  interface SessionPayload {
-    cookies?: SessionCookie[];
-    origins?: unknown[];
-    updatedAt?: string;
-    error?: string;
-  }
 
   const sessionQuery = useConnectionSession(activeConnection?.id, {
     enabled: showSessionModal,

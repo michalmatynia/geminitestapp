@@ -35,9 +35,9 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
     // Dynamically import to avoid circular dependency (shared -> features -> shared)
     // eslint-disable-next-line import/no-restricted-paths
-    const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
+    const mod = await import('@/features/observability/server');
      
-    await realLogSystemEvent(params as any);
+    await mod.logSystemEvent(params as any);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error, { context: params });
   }
@@ -46,8 +46,8 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
     // eslint-disable-next-line import/no-restricted-paths
-    const { getErrorFingerprint: realGetFingerprint } = await import('@/features/observability/server');
-    return realGetFingerprint(params as any);
+    const mod = await import('@/features/observability/server');
+    return mod.getErrorFingerprint(params);
   } catch (error) {
     logger.error('Failed to get error fingerprint via observability feature', error, { context: params });
     return `${params.source}-${params.statusCode}-${Date.now()}`;

@@ -1,41 +1,12 @@
 export const runtime = 'nodejs';
 
-import { NextRequest, NextResponse } from 'next/server';
-
-import { notebookUpdateSchema } from '@/features/notesapp/public';
-import { noteService } from '@/features/notesapp/server';
-import { parseJsonBody } from '@/features/products/server';
-import type { UpdateNotebookDto } from '@/shared/contracts/notes';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
-import { removeUndefined } from '@/shared/utils';
 
-/**
- * PATCH /api/notes/notebooks/[id]
- * Updates a notebook.
- */
-async function PATCH_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  const { id } = params;
-  const parsed = await parseJsonBody(req, notebookUpdateSchema, {
-    logPrefix: 'notebooks.PATCH',
-    allowEmpty: true,
-  });
-  if (!parsed.ok) {
-    return parsed.response;
-  }
-  const notebook = await noteService.updateNotebook(id, removeUndefined(parsed.data) as Partial<UpdateNotebookDto>);
-  return NextResponse.json(notebook);
-}
+import { DELETE_handler, PATCH_handler } from './handler';
 
-/**
- * DELETE /api/notes/notebooks/[id]
- * Deletes a notebook (and its notes/tags/categories).
- */
-async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
-  const { id } = params;
-  await noteService.deleteNotebook(id);
-  return NextResponse.json({ success: true });
-}
-
-export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, { source: 'notes.notebooks.[id].PATCH' });
-export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, { source: 'notes.notebooks.[id].DELETE' });
+export const PATCH = apiHandlerWithParams<{ id: string }>(PATCH_handler, {
+  source: 'notes.notebooks.[id].PATCH',
+});
+export const DELETE = apiHandlerWithParams<{ id: string }>(DELETE_handler, {
+  source: 'notes.notebooks.[id].DELETE',
+});

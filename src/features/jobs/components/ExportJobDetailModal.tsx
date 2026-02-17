@@ -50,7 +50,7 @@ export function ExportJobDetailModal({
             </div>
             <div>
               <p className='text-gray-500'>Source</p>
-              <p className='text-gray-200'>{listing.source || 'n/a'}</p>
+              <p className='text-gray-200'>{listing.integrationName || 'n/a'}</p>
             </div>
             <div>
               <p className='text-gray-500'>Last Sync</p>
@@ -68,7 +68,7 @@ export function ExportJobDetailModal({
               ) : (
                 selectedListing.listing.exportHistory.map((entry: ListingAttempt, i: number) => (
                   <div key={i} className='flex justify-between border-b border-border/30 pb-2 text-[11px]'>
-                    <span className='text-gray-300'>{entry.message}</span>
+                    <span className='text-gray-300'>{entry.status || entry.failureReason || 'Sync attempt'}</span>
                     <span className='text-gray-500'>{formatDateTime(entry.exportedAt)}</span>
                   </div>
                 ))

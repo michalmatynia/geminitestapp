@@ -72,8 +72,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
+  const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonDto | null>(null);
 
-  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto[], Error>({
+  const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
     queryFn: async (): Promise<AiTriggerButtonDto[]> => {
       const result = await triggerButtonsApi.list();
@@ -407,7 +408,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         onClose={(): void => { setButtonToDelete(null); }}
         onConfirm={(): void => { handleConfirmDelete(); }}
         title='Delete Trigger Button'
-        message={`Are you sure you want to delete "${buttonToDelete ? (buttonToDelete as AiTriggerButtonDto).name : ''}"? This will remove it from all assigned locations.`}
+        message={`Are you sure you want to delete "${buttonToDelete?.name ?? ''}"? This will remove it from all assigned locations.`}
         confirmText='Delete Button'
         isDangerous={true}
         loading={deleteMutation.isPending}

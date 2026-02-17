@@ -363,6 +363,7 @@ export function useMasterFolderTree(
       // to prevent stale external state from overwriting the optimistic nodes.
       // Use direct ref (set synchronously, not through setState) for reliable timing.
       if (reason === 'external_sync' && (isApplyingDirectRef.current || stateRef.current.isApplying)) {
+        console.warn('[MasterFolderTree] replaceNodes BLOCKED (isApplying)', { reason, isApplyingDirect: isApplyingDirectRef.current, isApplyingState: stateRef.current.isApplying });
         return { ok: true };
       }
 
@@ -370,6 +371,14 @@ export function useMasterFolderTree(
       const previousNodes = stateRef.current.nodes;
       if (reason === 'external_sync' && areMasterTreeNodesEqual(previousNodes, normalized)) {
         return { ok: true };
+      }
+      if (reason === 'external_sync') {
+        console.warn('[MasterFolderTree] replaceNodes PROCEEDING with external_sync', {
+          incomingCount: normalized.length,
+          previousCount: previousNodes.length,
+          incomingNodes: normalized.map((n: MasterTreeNode) => ({ id: n.id, parentId: n.parentId, type: n.type })),
+          previousNodes: previousNodes.map((n: MasterTreeNode) => ({ id: n.id, parentId: n.parentId, type: n.type })),
+        });
       }
       syncState((prev: InternalMasterFolderTreeState) => ({
         ...prev,
@@ -655,12 +664,23 @@ export function useMasterFolderTree(
         targetIndex,
         profile,
       });
-      if (!result.ok) return toMasterFolderTreeActionFail(result.code);
-      return applyOptimisticOperation(
+      if (!result.ok) {
+        console.warn('[MasterFolderTree] moveNode REJECTED by engine:', {
+          nodeId,
+          targetParentId,
+          code: result.code,
+          nodeCount: stateRef.current.nodes.length,
+        });
+        return toMasterFolderTreeActionFail(result.code);
+      }
+      console.warn('[MasterFolderTree] moveNode ACCEPTED, applying optimistic operation');
+      const opResult = await applyOptimisticOperation(
         { type: 'move', nodeId, targetParentId, ...(targetIndex !== undefined ? { targetIndex } : {}) },
         result.nodes,
         'Move node'
       );
+      console.warn('[MasterFolderTree] moveNode applyOptimisticOperation result:', { ok: opResult.ok, code: 'code' in opResult ? opResult.code : undefined });
+      return opResult;
     },
     [applyOptimisticOperation, profile]
   );

@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 
 import { useAiPathRuntimeAnalytics } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
 import type { AiNode } from '@/features/ai/ai-paths/lib';
-import type { PathMeta } from '@/shared/types/domain/ai-paths';
 import {
   Button,
   Label,
@@ -40,46 +39,18 @@ import { RunHistoryPanel } from '../run-history-panel';
 import { RuntimeEventLogPanel } from '../runtime-event-log-panel';
 import { SimulationDialog } from '../simulation-dialog';
 import { DocsTabPanel, PathsTabPanel } from '../ui-panels';
-
-const formatDurationMs = (value: number | null | undefined): string => {
-  if (value === null || value === undefined || !Number.isFinite(value))
-    return '—';
-  if (value < 1000) return `${Math.round(value)}ms`;
-  const seconds = Math.round(value / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  return `${minutes}m ${remaining}s`;
-};
-
-const formatPercent = (value: number): string => `${value.toFixed(1)}%`;
-
-const formatStatusLabel = (status: string): string =>
-  status
-    .split('_')
-    .map((part: string) =>
-      part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part,
-    )
-    .join(' ');
-
-const statusToVariant = (status: string): StatusVariant => {
-  const s = status.toLowerCase();
-  if (s === 'completed' || s === 'cached' || s === 'success') return 'success';
-  if (s === 'failed' || s === 'canceled' || s === 'timeout' || s === 'error')
-    return 'error';
-  if (s === 'queued' || s === 'pending') return 'warning';
-  if (
-    s === 'running' ||
-    s === 'polling' ||
-    s === 'waiting_callback' ||
-    s === 'advance_pending' ||
-    s === 'paused' ||
-    s === 'processing'
-  ) {
-    return 'processing';
-  }
-  return 'neutral';
-};
+import {
+  FLOW_OPTIONS,
+  RUN_MODE_OPTIONS,
+  EXECUTION_OPTIONS,
+  buildHistoryRetentionOptions,
+  buildSwitchPathOptions,
+  formatDurationMs,
+  formatPercent,
+  formatStatusLabel,
+  sortPathMetas,
+  statusToVariant,
+} from './ai-paths-settings-view-utils';
 
 export function AiPathsSettingsView(): React.JSX.Element {
   const {
@@ -196,80 +167,19 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const { setNodes } = useGraphActions();
   const { runSimulation } = useRuntimeActions();
 
-  const sortedPaths = useMemo(
+  const sortedPaths = useMemo(() => sortPathMetas(paths), [paths]);
+  const switchPathOptions = useMemo(
+    () => buildSwitchPathOptions(sortedPaths),
+    [sortedPaths],
+  );
+  const historyRetentionOptions = useMemo(
     () =>
-      [...paths].sort((a: PathMeta, b: PathMeta): number => {
-        const isTemplateName = (name: string): boolean =>
-          /^new path\b/i.test(name) || /^e2e test path\b/i.test(name);
-        const templateA = isTemplateName(a.name);
-        const templateB = isTemplateName(b.name);
-        if (templateA !== templateB) {
-          return templateA ? 1 : -1;
-        }
-        if (a.updatedAt !== b.updatedAt) {
-          return b.updatedAt.localeCompare(a.updatedAt);
-        }
-        return a.name.localeCompare(b.name);
-      }),
-    [paths],
+      buildHistoryRetentionOptions(
+        historyRetentionPasses,
+        historyRetentionOptionsMax,
+      ),
+    [historyRetentionOptionsMax, historyRetentionPasses],
   );
-  const switchPathOptions = useMemo(() => {
-    const nameCounts = sortedPaths.reduce<Map<string, number>>(
-      (acc, path: PathMeta) => {
-        acc.set(path.name, (acc.get(path.name) ?? 0) + 1);
-        return acc;
-      },
-      new Map<string, number>(),
-    );
-    return sortedPaths.map((path: PathMeta) => {
-      const isDuplicateName = (nameCounts.get(path.name) ?? 0) > 1;
-      const isGenericName =
-        /^new path\b/i.test(path.name) || /^path\b/i.test(path.name);
-      const suffix =
-        isDuplicateName || isGenericName ? ` · ${path.id.slice(-6)}` : '';
-      return {
-        value: path.id,
-        label: `${path.name}${suffix}`,
-      };
-    });
-  }, [sortedPaths]);
-
-  const executionOptions = useMemo(
-    () => [
-      { value: 'server', label: 'Run on Server' },
-      { value: 'local', label: 'Run Locally' },
-    ],
-    [],
-  );
-  const flowOptions = useMemo(
-    () => [
-      { value: 'off', label: 'Flow: Off' },
-      { value: 'low', label: 'Flow: Low' },
-      { value: 'medium', label: 'Flow: Medium' },
-      { value: 'high', label: 'Flow: High' },
-    ],
-    [],
-  );
-  const runModeOptions = useMemo(
-    () => [
-      { value: 'block', label: 'Run: Block' },
-      { value: 'queue', label: 'Run: Queue' },
-    ],
-    [],
-  );
-  const historyRetentionOptions = useMemo(() => {
-    const optionCount = Math.max(
-      historyRetentionPasses,
-      historyRetentionOptionsMax,
-    );
-    return Array.from({ length: optionCount }, (_value, index) => {
-      const passes = index + 1;
-      return {
-        value: String(passes),
-        label: `${passes} pass${passes === 1 ? '' : 'es'}`,
-      };
-    });
-  }, [historyRetentionOptionsMax, historyRetentionPasses]);
 
   const runtimeAnalyticsQuery = useAiPathRuntimeAnalytics(
     '24h',
@@ -535,7 +445,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         );
                       }
                     }}
-                    options={executionOptions}
+                    options={EXECUTION_OPTIONS}
                     className='w-[160px]'
                     triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}
@@ -555,7 +465,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         );
                       }
                     }}
-                    options={flowOptions}
+                    options={FLOW_OPTIONS}
                     className='w-[160px]'
                     triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}
@@ -573,7 +483,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
                         handleRunModeChange(value as 'block' | 'queue');
                       }
                     }}
-                    options={runModeOptions}
+                    options={RUN_MODE_OPTIONS}
                     className='w-[160px]'
                     triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
                     disabled={isPathLocked}

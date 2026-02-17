@@ -24,7 +24,7 @@ export default function ThemesPage(): React.ReactNode {
     try {
       await deleteMutation.mutateAsync(id);
       setThemeToDelete(null);
-    } catch (err) {
+    } catch (_err) {
       // Error handled by mutation or global logger
     }
   };

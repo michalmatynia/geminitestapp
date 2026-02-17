@@ -1,6 +1,6 @@
 'use client';
 
-import { DataTable } from '@/shared/ui';
+import { DataTable, SectionPanel } from '@/shared/ui';
 
 import { useAnalytics } from '../context/AnalyticsContext';
 
@@ -47,7 +47,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
 
   return (
     <div className='mt-6 grid gap-6 lg:grid-cols-2'>
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <SectionPanel className='p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>Top Pages</h2>
         <MiniTable
           rows={(summary?.topPages ?? []).map((item: { path: string; count: number }) => ({
@@ -57,9 +57,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No pageviews yet.'
         />
-      </div>
+      </SectionPanel>
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <SectionPanel className='p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Referrers
         </h2>
@@ -71,9 +71,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No referrers yet.'
         />
-      </div>
+      </SectionPanel>
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <SectionPanel className='p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Languages
         </h2>
@@ -85,9 +85,9 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No language data yet.'
         />
-      </div>
+      </SectionPanel>
 
-      <div className='rounded-lg border border-border/60 bg-card/40 p-4'>
+      <SectionPanel className='p-4'>
         <h2 className='mb-3 text-sm font-semibold text-white'>
           Top Countries
         </h2>
@@ -99,7 +99,7 @@ export function AnalyticsTopStats(): React.JSX.Element {
           }))}
           emptyLabel='No geo data yet.'
         />
-      </div>
+      </SectionPanel>
     </div>
   );
 }

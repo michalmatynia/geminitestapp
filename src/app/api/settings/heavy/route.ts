@@ -1,16 +1,14 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-import { NextRequest } from 'next/server';
-
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-import { GET_handler } from '../route';
-
-const disableSettingsRateLimit = process.env['NODE_ENV'] !== 'production';
+import {
+  disableSettingsRateLimit,
+  GET_heavy_handler,
+} from './handler';
 
 export const GET = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => GET_handler(req, ctx, 'heavy'),
+  GET_heavy_handler,
   { source: 'settings.GET.heavy', rateLimitKey: disableSettingsRateLimit ? false : 'api' }
 );

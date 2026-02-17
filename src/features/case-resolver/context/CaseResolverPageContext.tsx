@@ -30,9 +30,11 @@ export type CaseResolverPageContextValue = {
   onSelectFolder: (folderPath: string | null) => void;
   onCreateFolder: (targetFolderPath: string | null) => void;
   onCreateFile: (targetFolderPath: string | null) => void;
-  onCreateScanFile: (targetFolderPath: string | null, files: File[]) => Promise<void>;
+  onCreateScanFile: (targetFolderPath: string | null) => void;
   onCreateNodeFile: (targetFolderPath: string | null) => void;
   onCreateImageAsset: (targetFolderPath: string | null) => void;
+  onUploadScanFiles: (fileId: string, files: File[]) => Promise<void>;
+  onRunScanFileOcr: (fileId: string) => Promise<void>;
   onUploadAssets: (
     files: File[],
     targetFolderPath: string | null

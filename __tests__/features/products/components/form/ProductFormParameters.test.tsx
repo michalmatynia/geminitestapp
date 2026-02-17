@@ -73,7 +73,10 @@ vi.mock('@/shared/ui', () => ({
         if (!React.isValidElement(child)) return child;
         const childType = child.type as { displayName?: string };
         if (childType.displayName === 'TabsList') {
-          return React.cloneElement(child as any, { activeValue: value, onValueChange });
+          return React.cloneElement(child as any, {
+            ...(value !== undefined ? { activeValue: value } : {}),
+            ...(onValueChange !== undefined ? { onValueChange } : {}),
+          });
         }
         return child;
       })}
@@ -92,7 +95,10 @@ vi.mock('@/shared/ui', () => ({
       <div>
         {React.Children.map(children, (child: React.ReactNode) =>
           React.isValidElement(child)
-            ? React.cloneElement(child as any, { activeValue, onValueChange })
+            ? React.cloneElement(child as any, {
+              ...(activeValue !== undefined ? { activeValue } : {}),
+              ...(onValueChange !== undefined ? { onValueChange } : {}),
+            })
             : child
         )}
       </div>

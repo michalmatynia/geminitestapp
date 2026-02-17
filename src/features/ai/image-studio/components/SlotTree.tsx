@@ -71,19 +71,12 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     setSelectedSlotId,
     setWorkingSlotId,
     updateSlotMutation,
-    moveSlotMutation,
+    moveSlot,
     deleteSlotMutation,
     handleMoveFolder: onMoveFolder,
     handleRenameFolder: onRenameFolder,
     handleDeleteFolder: onDeleteFolderPath,
   } = useSlotsActions();
-  const moveSlotMutateAsync = moveSlotMutation.mutateAsync;
-  const moveSlot = useCallback(
-    async (input: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<void> => {
-      await moveSlotMutateAsync(input);
-    },
-    [moveSlotMutateAsync]
-  );
   const updateSlotMutateAsync = updateSlotMutation.mutateAsync;
   const updateSlot = useCallback(
     async (input: { id: string; data: { name: string } }): Promise<void> => {
@@ -454,6 +447,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           ctlr
         ): Promise<void> => {
           const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
+          console.warn('[SlotTree:onNodeDrop]', { draggedNodeId, targetId, position, isInternalNode, nodeCount: ctlr.nodes.length });
           if (isInternalNode) {
             await applyInternalMasterTreeDrop({
               controller: ctlr,

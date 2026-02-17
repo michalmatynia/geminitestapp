@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
-import { Checkbox, Label, StatusToggle } from '@/shared/ui';
+import { Checkbox, Label, StatusToggle, MetadataItem } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { AuthUserSummary } from '../../types';
@@ -81,10 +81,12 @@ export function UserEditModal({
                 </div>
               )}
 
-              <div className='p-3 rounded border border-white/5 bg-black/20 text-[10px] text-gray-500 uppercase font-bold flex justify-between items-center'>
-                <span>System ID</span>
-                <span className='font-mono text-gray-400 select-all'>{editingUser?.id}</span>
-              </div>
+              <MetadataItem
+                label='System ID'
+                value={editingUser?.id}
+                mono
+                className='p-3'
+              />
             </div>
           )}
         </div>

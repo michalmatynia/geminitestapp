@@ -8,7 +8,7 @@ import {
   useClearAiInsightsNotifications,
 } from '@/features/admin/hooks/useAiInsightsNotifications';
 import type { AiInsightNotification } from '@/shared/types';
-import { Button, StatusBadge } from '@/shared/ui';
+import { Button, StatusBadge, DocumentationSection } from '@/shared/ui';
 import { useToast } from '@/shared/ui';
 
 export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
@@ -94,11 +94,13 @@ export function AiInsightsNotificationsDrawer(): React.JSX.Element | null {
                   </div>
                   <div className='mt-2 text-sm text-white'>{notification.summary}</div>
                   {notification.warnings.length > 0 ? (
-                    <ul className='mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
-                      {notification.warnings.map((warning: string, index: number) => (
-                        <li key={`${notification.id}-warn-${index}`}>{warning}</li>
-                      ))}
-                    </ul>
+                    <DocumentationSection title='Issues' className='mt-3 p-3 bg-amber-500/5 border-amber-500/20'>
+                      <ul className='list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
+                        {notification.warnings.map((warning: string, index: number) => (
+                          <li key={`${notification.id}-warn-${index}`}>{warning}</li>
+                        ))}
+                      </ul>
+                    </DocumentationSection>
                   ) : null}
                 </div>
               ))}

@@ -14,7 +14,7 @@ import {
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
-import { createCreateMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
+import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { ImageFileSelection } from '@/shared/types/domain/files';
@@ -176,7 +176,7 @@ export interface SlotsActions {
   createSlots: (slots: Array<Partial<ImageStudioSlotRecord>>) => Promise<ImageStudioSlotRecord[]>;
   updateSlotMutation: UseMutationResult<ImageStudioSlotRecord, Error, { id: string; data: Partial<ImageStudioSlotRecord> }>;
   deleteSlotMutation: UseMutationResult<void, Error, string>;
-  moveSlotMutation: UseMutationResult<ImageStudioSlotRecord, Error, { slot: ImageStudioSlotRecord; targetFolder: string }>;
+  moveSlot: (input: { slot: ImageStudioSlotRecord; targetFolder: string }) => Promise<void>;
   handleMoveFolder: (folderPath: string, targetFolder: string) => Promise<void>;
   handleRenameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
   handleDeleteFolder: (folderPath: string) => Promise<void>;
@@ -232,11 +232,29 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     () => new Set(slots.map((slot: ImageStudioSlotRecord) => slot.id)),
     [slots],
   );
+  const missingSelectedSlotTrackerRef = useRef<{ id: string; count: number } | null>(null);
+  const missingWorkingSlotTrackerRef = useRef<{ id: string; count: number } | null>(null);
   const selectedSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === selectedSlotId) ?? null, [slots, selectedSlotId]);
   const workingSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === workingSlotId) ?? null, [slots, workingSlotId]);
 
   useEffect(() => {
-    if (!selectedSlotId || slotIdSet.has(selectedSlotId)) return;
+    if (!selectedSlotId || slotIdSet.has(selectedSlotId)) {
+      missingSelectedSlotTrackerRef.current = null;
+      return;
+    }
+
+    const previous = missingSelectedSlotTrackerRef.current;
+    if (previous?.id !== selectedSlotId) {
+      missingSelectedSlotTrackerRef.current = { id: selectedSlotId, count: 1 };
+      return;
+    }
+
+    if (previous.count < 1) {
+      missingSelectedSlotTrackerRef.current = { id: selectedSlotId, count: previous.count + 1 };
+      return;
+    }
+
+    missingSelectedSlotTrackerRef.current = null;
     if (workingSlotId && slotIdSet.has(workingSlotId)) {
       setSelectedSlotId(workingSlotId);
       return;
@@ -245,7 +263,23 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   }, [selectedSlotId, slotIdSet, slots, workingSlotId]);
 
   useEffect(() => {
-    if (!workingSlotId || slotIdSet.has(workingSlotId)) return;
+    if (!workingSlotId || slotIdSet.has(workingSlotId)) {
+      missingWorkingSlotTrackerRef.current = null;
+      return;
+    }
+
+    const previous = missingWorkingSlotTrackerRef.current;
+    if (previous?.id !== workingSlotId) {
+      missingWorkingSlotTrackerRef.current = { id: workingSlotId, count: 1 };
+      return;
+    }
+
+    if (previous.count < 1) {
+      missingWorkingSlotTrackerRef.current = { id: workingSlotId, count: previous.count + 1 };
+      return;
+    }
+
+    missingWorkingSlotTrackerRef.current = null;
     if (selectedSlotId && slotIdSet.has(selectedSlotId)) {
       setWorkingSlotId(selectedSlotId);
       return;
@@ -381,56 +415,38 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const uploadMutation = useUploadStudioAssets(projectId);
   const importFromDriveMutation = useImportStudioAssetsFromDrive(projectId);
 
-  const moveSlotMutation = createUpdateMutationV2<
-    ImageStudioSlotRecord,
-    { slot: ImageStudioSlotRecord; targetFolder: string },
-    { previous?: StudioSlotsResponse | undefined }
-  >({
-    mutationKey: studioKeys.mutation('slots.move'),
-    mutationFn: async ({ slot, targetFolder }: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<ImageStudioSlotRecord> => {
-      const slotId = slot.id.trim();
-      const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(
-        `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
-        { folderPath: targetFolder }
-      );
-      if (!response.slot) {
-        throw new Error('Failed to move image studio slot');
-      }
-      return response.slot;
-    },
-    onMutate: async ({ slot, targetFolder }: { slot: ImageStudioSlotRecord; targetFolder: string }) => {
-      await queryClient.cancelQueries({ queryKey: slotsQueryKey });
-      const previous = queryClient.getQueryData<StudioSlotsResponse>(slotsQueryKey);
-      const normalizedTarget = targetFolder.trim();
-      queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
-        if (!current) return current;
-        return {
-          ...current,
-          slots: current.slots.map((item: ImageStudioSlotRecord) =>
-            item.id === slot.id
-              ? { ...item, folderPath: normalizedTarget || null }
-              : item
-          ),
-        };
+  const moveSlot = useCallback(async (input: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<void> => {
+    const { slot, targetFolder } = input;
+    const normalizedTarget = targetFolder.trim();
+    console.warn('[SlotsContext:moveSlot] START', { slotId: slot.id, targetFolder: normalizedTarget });
+
+    // Optimistic cache update — move the slot to the target folder immediately.
+    await queryClient.cancelQueries({ queryKey: slotsQueryKey });
+    queryClient.setQueryData<StudioSlotsResponse>(slotsQueryKey, (current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        slots: current.slots.map((item: ImageStudioSlotRecord) =>
+          item.id === slot.id
+            ? { ...item, folderPath: normalizedTarget || null }
+            : item
+        ),
+      };
+    });
+
+    // Use the existing updateSlotMutation (same endpoint as rename, proven to work).
+    // Its onSuccess invalidation will eventually sync the cache with the server.
+    try {
+      await updateSlotMutation.mutateAsync({
+        id: slot.id,
+        data: { folderPath: normalizedTarget || null },
       });
-      return { previous };
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(slotsQueryKey, context.previous);
-      }
-    },
-    onSettled: () => {
-      void invalidateImageStudioSlots(queryClient, projectId);
-    },
-    meta: {
-      source: 'image-studio.slots.move',
-      operation: 'update',
-      resource: 'image-studio.slots',
-      domain: 'image_studio',
-      tags: ['image-studio', 'slots', 'tree'],
-    },
-  });
+      console.warn('[SlotsContext:moveSlot] SUCCESS', { slotId: slot.id });
+    } catch (error) {
+      console.warn('[SlotsContext:moveSlot] FAILED', { slotId: slot.id, error: error instanceof Error ? error.message : error });
+      throw error;
+    }
+  }, [queryClient, slotsQueryKey, updateSlotMutation]);
 
   const handleMoveFolder = useCallback(async (folderPath: string, targetFolder: string) => {
     const source = normalizeTreePath(folderPath);
@@ -664,7 +680,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     () => ({
       setSelectedSlotId, setWorkingSlotId, setVirtualFolders,
       setSelectedFolder: handleSelectFolder, createSlots,
-      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
+      updateSlotMutation, deleteSlotMutation, moveSlot, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
       setSlotCreateOpen, setDriveImportOpen, setDriveImportMode, setDriveImportTargetId, setTemporaryObjectUpload,
       setSlotUpdateBusy, setSlotInlineEditOpen, setSlotImageUrlDraft, setSlotBase64Draft, setMoveTargetFolder,
@@ -672,7 +688,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     }),
     [
       handleSelectFolder, createSlots,
-      updateSlotMutation, deleteSlotMutation, moveSlotMutation, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
+      updateSlotMutation, deleteSlotMutation, moveSlot, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
       setTemporaryObjectUpload,
     ]

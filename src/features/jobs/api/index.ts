@@ -1,5 +1,3 @@
-'use client';
-
 import { api } from '@/shared/lib/api-client';
 import type { QueueHealthStatus } from '@/shared/lib/queue/types';
 import type { ProductAiJob } from '@/shared/types/domain/jobs';

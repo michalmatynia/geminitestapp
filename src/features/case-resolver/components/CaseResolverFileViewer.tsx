@@ -58,7 +58,7 @@ export function CaseResolverFileViewer(): React.JSX.Element {
 
   const handleAttachImageFile = React.useCallback(
     async (file: File): Promise<void> => {
-      if (!selectedAsset || selectedAsset.kind !== 'image') return;
+      if (selectedAsset?.kind !== 'image') return;
       setIsAttachingImage(true);
       try {
         await onAttachAssetFile(selectedAsset.id, file, { expectedKind: 'image' });

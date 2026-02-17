@@ -117,12 +117,20 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
 
   // Auto-select active project when available, otherwise fall back to first project.
   useEffect(() => {
+    if (
+      heavySettings.isLoading ||
+      userPreferencesQuery.isLoading ||
+      projectsQuery.isLoading ||
+      projectsQuery.isFetching
+    ) {
+      return;
+    }
+
     if (availableProjectIds.length === 0) {
       if (projectId) setProjectId('');
       return;
     }
     if (projectId && availableProjectIds.includes(projectId)) return;
-    if (heavySettings.isLoading || userPreferencesQuery.isLoading) return;
 
     const preferred = activeProjectId && availableProjectIds.includes(activeProjectId)
       ? activeProjectId
@@ -135,6 +143,8 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     availableProjectIds,
     activeProjectId,
     heavySettings.isLoading,
+    projectsQuery.isLoading,
+    projectsQuery.isFetching,
     userPreferencesQuery.isLoading,
   ]);
 

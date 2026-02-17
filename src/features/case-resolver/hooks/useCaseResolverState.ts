@@ -31,6 +31,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 
 import {
+  DEFAULT_CASE_RESOLVER_OCR_PROMPT,
   CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY,
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
@@ -68,6 +69,7 @@ import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,
   CaseResolverIdentifier,
+  CaseResolverScanSlot,
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '../types';
@@ -179,13 +181,6 @@ const normalizeUploadedCaseResolverFile = (
   };
 };
 
-const stripExtension = (name: string): string => {
-  const trimmed = name.trim();
-  const dotIndex = trimmed.lastIndexOf('.');
-  if (dotIndex <= 0) return trimmed;
-  return trimmed.slice(0, dotIndex).trim();
-};
-
 const IMAGE_FILENAME_EXTENSION_PATTERN =
   /\.(jpg|jpeg|png|webp|gif|bmp|avif|heic|heif|tif|tiff|svg)$/i;
 
@@ -194,6 +189,14 @@ const isLikelyImageFile = (file: File): boolean => {
   if (mimeType.startsWith('image/')) return true;
   return IMAGE_FILENAME_EXTENSION_PATTERN.test(file.name.trim());
 };
+
+const CASE_RESOLVER_OCR_JOB_POLL_INTERVAL_MS = 900;
+const CASE_RESOLVER_OCR_JOB_TIMEOUT_MS = 120_000;
+
+const sleep = (durationMs: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, Math.max(0, durationMs));
+  });
 
 const createPlaceholderAssetName = ({
   assets,
@@ -210,6 +213,34 @@ const createPlaceholderAssetName = ({
     assets
       .filter((asset: CaseResolverAssetFile): boolean => asset.folder === normalizedFolder)
       .map((asset: CaseResolverAssetFile): string => asset.name.trim().toLowerCase())
+  );
+  if (!namesInFolder.has(normalizedBase.toLowerCase())) return normalizedBase;
+  let index = 2;
+  while (index < 10_000) {
+    const candidate = `${normalizedBase} ${index}`;
+    if (!namesInFolder.has(candidate.toLowerCase())) {
+      return candidate;
+    }
+    index += 1;
+  }
+  return `${normalizedBase}-${createId('dup')}`;
+};
+
+const createUniqueCaseFileName = ({
+  files,
+  folder,
+  baseName,
+}: {
+  files: CaseResolverFile[];
+  folder: string;
+  baseName: string;
+}): string => {
+  const normalizedBase = baseName.trim() || 'Untitled File';
+  const normalizedFolder = normalizeFolderPath(folder);
+  const namesInFolder = new Set(
+    files
+      .filter((file: CaseResolverFile): boolean => file.folder === normalizedFolder)
+      .map((file: CaseResolverFile): string => file.name.trim().toLowerCase())
   );
   if (!namesInFolder.has(normalizedBase.toLowerCase())) return normalizedBase;
   let index = 2;
@@ -565,128 +596,235 @@ export function useCaseResolverState() {
     []
   );
 
-  const handleCreateScanFile = useCallback(
-    async (targetFolderPath: string | null, files: File[]): Promise<void> => {
+  const resolveRuntimeScanOcrSettings = useCallback(
+    (): { model: string; prompt: string } => {
+      const runtimeCaseResolverSettings = parseCaseResolverSettings(
+        settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
+      );
+      return {
+        model:
+          runtimeCaseResolverSettings.ocrModel.trim() ||
+          (settingsStore.get('openai_model') ?? '').trim(),
+        prompt:
+          runtimeCaseResolverSettings.ocrPrompt.trim() ||
+          DEFAULT_CASE_RESOLVER_OCR_PROMPT,
+      };
+    },
+    [settingsStore]
+  );
+
+  const enqueueImageOcrRuntimeJob = useCallback(
+    async (input: {
+      filepath: string;
+      runtime: { model: string; prompt: string };
+    }): Promise<string> => {
+      const response = await fetch('/api/case-resolver/ocr/jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filepath: input.filepath,
+          model: input.runtime.model,
+          prompt: input.runtime.prompt,
+        }),
+      });
+      if (!response.ok) {
+        const fallbackMessage = `Failed to queue OCR runtime job (${response.status})`;
+        const errorBody = await response.text();
+        throw new Error(errorBody || fallbackMessage);
+      }
+      const payload = (await response.json()) as {
+        job?: { id?: unknown } | null;
+      };
+      const jobIdRaw = payload.job?.id;
+      if (typeof jobIdRaw !== 'string' || jobIdRaw.trim().length === 0) {
+        throw new Error('OCR runtime job id was not returned.');
+      }
+      return jobIdRaw.trim();
+    },
+    []
+  );
+
+  const pollImageOcrRuntimeJob = useCallback(
+    async (jobId: string): Promise<string> => {
+      const startedAt = Date.now();
+      while (Date.now() - startedAt <= CASE_RESOLVER_OCR_JOB_TIMEOUT_MS) {
+        const response = await fetch(
+          `/api/case-resolver/ocr/jobs/${encodeURIComponent(jobId)}`,
+          {
+            method: 'GET',
+            cache: 'no-store',
+          }
+        );
+        if (!response.ok) {
+          const fallbackMessage = `Failed to read OCR runtime job (${response.status})`;
+          const errorBody = await response.text();
+          throw new Error(errorBody || fallbackMessage);
+        }
+
+        const payload = (await response.json()) as {
+          job?: {
+            status?: unknown;
+            resultText?: unknown;
+            errorMessage?: unknown;
+          } | null;
+        };
+        const status =
+          typeof payload.job?.status === 'string'
+            ? payload.job.status.trim().toLowerCase()
+            : '';
+
+        if (status === 'completed') {
+          return typeof payload.job?.resultText === 'string'
+            ? payload.job.resultText.trim()
+            : '';
+        }
+        if (status === 'failed') {
+          const errorMessage = payload.job?.errorMessage;
+          throw new Error(
+            typeof errorMessage === 'string' && errorMessage.trim().length > 0
+              ? errorMessage.trim()
+              : 'OCR runtime job failed.'
+          );
+        }
+
+        await sleep(CASE_RESOLVER_OCR_JOB_POLL_INTERVAL_MS);
+      }
+
+      throw new Error('OCR runtime job timed out.');
+    },
+    []
+  );
+
+  const handleCreateScanFile = useCallback((targetFolderPath: string | null): void => {
+    const folder = normalizeFolderPath(targetFolderPath ?? '');
+    const runtimeCaseResolverSettings = parseCaseResolverSettings(
+      settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
+    );
+    const runtimeDefaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
+      settingsStore.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY),
+      runtimeCaseResolverSettings.defaultDocumentFormat
+    );
+    const createdFileId = createId('case-file');
+
+    updateWorkspace((current) => {
+      const name = createUniqueCaseFileName({
+        files: current.files,
+        folder,
+        baseName: 'New Image',
+      });
+      const createdFile = createCaseResolverFile({
+        id: createdFileId,
+        fileType: 'scanfile',
+        name,
+        folder,
+        parentCaseId: selectedCaseContainerId,
+        editorType: runtimeDefaultDocumentFormat,
+        scanSlots: [],
+        tagId: defaultTagId,
+        caseIdentifierId: defaultCaseIdentifierId,
+        categoryId: defaultCategoryId,
+      });
+      return {
+        ...current,
+        files: [...current.files, createdFile],
+        folders: normalizeFolderPaths([...current.folders, folder]),
+      };
+    }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+
+    toast('New image file created.', { variant: 'success' });
+  }, [
+    defaultCaseIdentifierId,
+    defaultCategoryId,
+    defaultTagId,
+    selectedCaseContainerId,
+    settingsStore,
+    toast,
+    updateWorkspace,
+  ]);
+
+  const handleUploadScanFiles = useCallback(
+    async (fileId: string, files: File[]): Promise<void> => {
+      const targetFile = workspace.files.find(
+        (file: CaseResolverFile): boolean => file.id === fileId
+      );
+      if (targetFile?.fileType !== 'scanfile') {
+        throw new Error('Scan file no longer exists.');
+      }
+
       const sourceFiles = files.filter(
         (file: File): boolean => file instanceof File && file.size >= 0
       );
       if (sourceFiles.length === 0) return;
 
-      const normalizedFolder = normalizeFolderPath(targetFolderPath ?? '');
-      const runtimeCaseResolverSettings = parseCaseResolverSettings(
-        settingsStore.get(CASE_RESOLVER_SETTINGS_KEY)
-      );
-      const configuredOcrModel =
-        runtimeCaseResolverSettings.ocrModel.trim() ||
-        (settingsStore.get('openai_model') ?? '').trim();
-
-      const runImageOcr = async (sourceFile: File): Promise<string> => {
-        const messages = [
-          {
-            role: 'user',
-            content:
-              'Extract all readable text from the attached image and return plain text only. Keep line breaks. Do not add commentary.',
-          },
-        ];
-        const ocrFormData = new FormData();
-        ocrFormData.append('messages', JSON.stringify(messages));
-        if (configuredOcrModel) {
-          ocrFormData.append('model', configuredOcrModel);
-        }
-        ocrFormData.append('files', sourceFile);
-        const ocrResponse = await fetch('/api/chatbot', {
-          method: 'POST',
-          body: ocrFormData,
-        });
-        if (!ocrResponse.ok) {
-          const fallbackMessage = `OCR request failed (${ocrResponse.status})`;
-          const errorBody = await ocrResponse.text();
-          throw new Error(errorBody || fallbackMessage);
-        }
-        const ocrPayload = (await ocrResponse.json()) as {
-          message?: unknown;
-        };
-        return typeof ocrPayload.message === 'string' ? ocrPayload.message.trim() : '';
-      };
-
-      const createdFiles: CaseResolverFile[] = [];
+      const normalizedFolder = normalizeFolderPath(targetFile.folder);
+      const createdSlots: CaseResolverScanSlot[] = [];
+      const createdFolders = new Set<string>();
       const failedFiles: string[] = [];
 
       for (const sourceFile of sourceFiles) {
+        if (!isLikelyImageFile(sourceFile)) {
+          failedFiles.push(`${sourceFile.name || 'file'}: Only image files are supported.`);
+          continue;
+        }
         try {
           const uploadBaseFolder = resolveUploadBaseFolder(normalizedFolder, 'image');
           const uploaded = await uploadSourceFileToCaseResolver(sourceFile, uploadBaseFolder);
-          const normalizedMimeType = (uploaded.mimetype ?? sourceFile.type ?? '')
-            .trim()
-            .toLowerCase();
-          if (!normalizedMimeType.startsWith('image/')) {
-            throw new Error('Only image files are supported for scan OCR.');
-          }
-          const extractedText = await runImageOcr(sourceFile);
-
-          const canonicalDocument = deriveDocumentContentSync({
-            mode: 'markdown',
-            value: extractedText,
+          createdSlots.push({
+            id: createId('scan-slot'),
+            name: uploaded.originalName,
+            filepath: uploaded.filepath,
+            sourceFileId: uploaded.id,
+            mimeType: uploaded.mimetype,
+            size: uploaded.size,
+            ocrText: '',
           });
-          const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
-          const defaultName = stripExtension(uploaded.originalName);
-          const displayName = defaultName || `Scan ${createdFiles.length + 1}`;
-          const scanFile = createCaseResolverFile({
-            id: createId('case-file'),
-            fileType: 'scanfile',
-            name: displayName,
-            folder: normalizeFolderPath(uploaded.folder || normalizedFolder),
-            parentCaseId: selectedCaseContainerId,
-            editorType: 'markdown',
-            documentContent: storedDocumentContent,
-            documentContentMarkdown: canonicalDocument.markdown,
-            documentContentHtml: canonicalDocument.html,
-            documentContentPlainText: canonicalDocument.plainText,
-            documentConversionWarnings: canonicalDocument.warnings,
-            scanSlots: [
-              {
-                id: createId('scan-slot'),
-                name: uploaded.originalName,
-                filepath: uploaded.filepath,
-                sourceFileId: uploaded.id,
-                mimeType: uploaded.mimetype,
-                size: uploaded.size,
-                ocrText: extractedText,
-              },
-            ],
-            tagId: defaultTagId,
-            caseIdentifierId: defaultCaseIdentifierId,
-            categoryId: defaultCategoryId,
-          });
-          createdFiles.push(scanFile);
+          createdFolders.add(normalizeFolderPath(uploaded.folder || normalizedFolder));
         } catch (error: unknown) {
           failedFiles.push(
-            `${sourceFile.name || 'scan file'}: ${
-              error instanceof Error ? error.message : 'Upload/OCR failed'
+            `${sourceFile.name || 'file'}: ${
+              error instanceof Error ? error.message : 'Upload failed'
             }`
           );
         }
       }
 
-      if (createdFiles.length > 0) {
-        const foldersToMerge = createdFiles.map((file: CaseResolverFile): string => file.folder);
-        updateWorkspace(
-          (current) => ({
+      if (createdSlots.length > 0) {
+        updateWorkspace((current) => {
+          const now = new Date().toISOString();
+          let didUpdate = false;
+          const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
+            if (file.id !== fileId || file.fileType !== 'scanfile') return file;
+            didUpdate = true;
+            return {
+              ...file,
+              scanSlots: [...file.scanSlots, ...createdSlots],
+              updatedAt: now,
+            };
+          });
+          if (!didUpdate) return current;
+          return {
             ...current,
-            files: [...current.files, ...createdFiles],
-            activeFileId: createdFiles[0]?.id ?? current.activeFileId,
-            folders: normalizeFolderPaths([...current.folders, ...foldersToMerge]),
-          }),
-          { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST }
-        );
-        const firstCreatedFileId = createdFiles[0]?.id ?? null;
-        setSelectedFileId(firstCreatedFileId);
-        setSelectedFolderPath(null);
-        setSelectedAssetId(null);
+            files: nextFiles,
+            folders: normalizeFolderPaths([
+              ...current.folders,
+              ...Array.from(createdFolders),
+            ]),
+          };
+        }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+        setEditingDocumentDraft((current) => {
+          if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
+          return {
+            ...current,
+            scanSlots: [...current.scanSlots, ...createdSlots],
+            updatedAt: new Date().toISOString(),
+          };
+        });
         toast(
-          createdFiles.length === 1
-            ? 'Scan file created and OCR applied.'
-            : `${createdFiles.length} scan files created and OCR applied.`,
+          createdSlots.length === 1
+            ? 'Image uploaded to scan file.'
+            : `${createdSlots.length} images uploaded to scan file.`,
           { variant: 'success' }
         );
       }
@@ -694,21 +832,158 @@ export function useCaseResolverState() {
       if (failedFiles.length > 0) {
         toast(
           failedFiles.length === 1
-            ? failedFiles[0] ?? 'Failed to create scan file.'
-            : `${failedFiles.length} files failed during scan OCR processing.`,
+            ? failedFiles[0] ?? 'Failed to upload image.'
+            : `${failedFiles.length} images failed to upload.`,
           { variant: 'error' }
         );
       }
     },
+    [toast, updateWorkspace, uploadSourceFileToCaseResolver, workspace.files]
+  );
+
+  const handleRunScanFileOcr = useCallback(
+    async (fileId: string): Promise<void> => {
+      const targetFile = workspace.files.find(
+        (file: CaseResolverFile): boolean => file.id === fileId
+      );
+      if (targetFile?.fileType !== 'scanfile') {
+        throw new Error('Scan file no longer exists.');
+      }
+      if (targetFile.scanSlots.length === 0) {
+        toast('Upload at least one image to this file before running OCR.', {
+          variant: 'warning',
+        });
+        return;
+      }
+
+      setIsUploadingScanDraftFiles(true);
+      setUploadingScanSlotId('all');
+
+      try {
+        const runtime = resolveRuntimeScanOcrSettings();
+        const nextSlots: CaseResolverScanSlot[] = [];
+        const failedSlots: string[] = [];
+        let successfulSlots = 0;
+
+        for (let index = 0; index < targetFile.scanSlots.length; index += 1) {
+          const slot = targetFile.scanSlots[index];
+          if (!slot) continue;
+          setUploadingScanSlotId(slot.id);
+          if (!slot.filepath) {
+            nextSlots.push(slot);
+            failedSlots.push(`${slot.name || `Slot ${index + 1}`}: Missing file path.`);
+            continue;
+          }
+          try {
+            const runtimeJobId = await enqueueImageOcrRuntimeJob({
+              filepath: slot.filepath,
+              runtime,
+            });
+            const extractedText = await pollImageOcrRuntimeJob(runtimeJobId);
+            nextSlots.push({
+              ...slot,
+              ocrText: extractedText,
+            });
+            successfulSlots += 1;
+          } catch (error: unknown) {
+            nextSlots.push(slot);
+            failedSlots.push(
+              `${slot.name || `Slot ${index + 1}`}: ${
+                error instanceof Error ? error.message : 'OCR failed'
+              }`
+            );
+          }
+        }
+
+        if (successfulSlots > 0) {
+          updateWorkspace((current) => {
+            const now = new Date().toISOString();
+            let didUpdate = false;
+            const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
+              if (file.id !== fileId || file.fileType !== 'scanfile') return file;
+              didUpdate = true;
+              const mergedText = nextSlots
+                .map((slot: CaseResolverScanSlot): string => slot.ocrText.trim())
+                .filter((text: string): boolean => text.length > 0)
+                .join('\n\n');
+              const canonicalDocument = deriveDocumentContentSync({
+                mode: file.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown',
+                value: mergedText,
+              });
+              const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
+              return {
+                ...file,
+                scanSlots: nextSlots,
+                documentContentVersion: file.documentContentVersion + 1,
+                documentContent: storedDocumentContent,
+                documentContentMarkdown: canonicalDocument.markdown,
+                documentContentHtml: canonicalDocument.html,
+                documentContentPlainText: canonicalDocument.plainText,
+                documentConversionWarnings: canonicalDocument.warnings,
+                lastContentConversionAt: now,
+                updatedAt: now,
+              };
+            });
+            if (!didUpdate) return current;
+            return {
+              ...current,
+              files: nextFiles,
+            };
+          }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+          setEditingDocumentDraft((current) => {
+            if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
+            const now = new Date().toISOString();
+            const mergedText = nextSlots
+              .map((slot: CaseResolverScanSlot): string => slot.ocrText.trim())
+              .filter((text: string): boolean => text.length > 0)
+              .join('\n\n');
+            const canonicalDocument = deriveDocumentContentSync({
+              mode: current.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown',
+              value: mergedText,
+            });
+            const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
+            return {
+              ...current,
+              scanSlots: nextSlots,
+              baseDocumentContentVersion: current.baseDocumentContentVersion + 1,
+              documentContentVersion: current.documentContentVersion + 1,
+              documentContent: storedDocumentContent,
+              documentContentMarkdown: canonicalDocument.markdown,
+              documentContentHtml: canonicalDocument.html,
+              documentContentPlainText: canonicalDocument.plainText,
+              documentConversionWarnings: canonicalDocument.warnings,
+              lastContentConversionAt: now,
+              updatedAt: now,
+            };
+          });
+          toast(
+            successfulSlots === 1
+              ? 'OCR finished for 1 image.'
+              : `OCR finished for ${successfulSlots} images.`,
+            { variant: 'success' }
+          );
+        }
+
+        if (failedSlots.length > 0) {
+          toast(
+            failedSlots.length === 1
+              ? failedSlots[0] ?? 'OCR failed for one image.'
+              : `${failedSlots.length} images failed during OCR.`,
+            { variant: 'error' }
+          );
+        }
+      } finally {
+        setUploadingScanSlotId(null);
+        setIsUploadingScanDraftFiles(false);
+      }
+    },
     [
-      defaultCaseIdentifierId,
-      defaultCategoryId,
-      defaultTagId,
-      selectedCaseContainerId,
-      settingsStore,
+      enqueueImageOcrRuntimeJob,
+      pollImageOcrRuntimeJob,
+      resolveRuntimeScanOcrSettings,
       toast,
       updateWorkspace,
-      uploadSourceFileToCaseResolver,
+      workspace.files,
     ]
   );
 
@@ -1423,6 +1698,8 @@ export function useCaseResolverState() {
     handleCreateFile,
     handleCreateScanFile,
     handleCreateImageAsset,
+    handleUploadScanFiles,
+    handleRunScanFileOcr,
     handleUploadAssets,
     handleAttachAssetFile,
     handleDeleteFolder,

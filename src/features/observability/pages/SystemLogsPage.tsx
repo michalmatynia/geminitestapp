@@ -23,6 +23,7 @@ import {
   FormSection,
   Alert,
   ListPanel,
+  MetadataItem,
   type StatusVariant
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -450,15 +451,17 @@ function LogList(): React.JSX.Element {
                   <div className='space-y-4'>
                     <div>
                       <h4 className='text-[10px] uppercase font-bold text-gray-600 mb-2'>Identification</h4>
-                      <div className='grid grid-cols-2 gap-2 text-xs'>
-                        <div className='p-2 rounded bg-white/5 border border-white/5'>
-                          <span className='block text-gray-500 text-[9px] uppercase'>Request ID</span>
-                          <span className='font-mono text-gray-300'>{log.requestId || '—'}</span>
-                        </div>
-                        <div className='p-2 rounded bg-white/5 border border-white/5'>
-                          <span className='block text-gray-500 text-[9px] uppercase'>User ID</span>
-                          <span className='font-mono text-gray-300'>{log.userId || '—'}</span>
-                        </div>
+                      <div className='grid grid-cols-2 gap-2'>
+                        <MetadataItem
+                          label='Request ID'
+                          value={log.requestId}
+                          mono
+                        />
+                        <MetadataItem
+                          label='User ID'
+                          value={log.userId}
+                          mono
+                        />
                       </div>
                     </div>
 

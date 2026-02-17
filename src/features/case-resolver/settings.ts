@@ -52,14 +52,19 @@ export const CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP = '1970-01-01T00:00:
 
 export type CaseResolverDefaultDocumentFormat = Extract<CaseResolverEditorType, 'markdown' | 'wysiwyg'>;
 
+export const DEFAULT_CASE_RESOLVER_OCR_PROMPT =
+  'Extract all readable text from the attached image and return plain text only. Keep line breaks. Do not add commentary.';
+
 export type CaseResolverSettings = {
   ocrModel: string;
+  ocrPrompt: string;
   defaultDocumentFormat: CaseResolverDefaultDocumentFormat;
   confirmDeleteDocument: boolean;
 };
 
 export const DEFAULT_CASE_RESOLVER_SETTINGS: CaseResolverSettings = {
   ocrModel: '',
+  ocrPrompt: DEFAULT_CASE_RESOLVER_OCR_PROMPT,
   defaultDocumentFormat: 'markdown',
   confirmDeleteDocument: true,
 };
@@ -863,6 +868,9 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
   }
   const record = input as Record<string, unknown>;
   const ocrModel = typeof record['ocrModel'] === 'string' ? record['ocrModel'].trim() : '';
+  const ocrPrompt = typeof record['ocrPrompt'] === 'string'
+    ? record['ocrPrompt'].trim()
+    : '';
   const rawFormatCandidate =
     typeof record['defaultDocumentFormat'] === 'string'
       ? record['defaultDocumentFormat']
@@ -877,6 +885,7 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
   const confirmDeleteDocument = record['confirmDeleteDocument'] !== false;
   return {
     ocrModel,
+    ocrPrompt: ocrPrompt || DEFAULT_CASE_RESOLVER_SETTINGS.ocrPrompt,
     defaultDocumentFormat,
     confirmDeleteDocument,
   };

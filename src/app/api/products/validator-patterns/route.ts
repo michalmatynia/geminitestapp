@@ -1,7 +1,6 @@
 export const runtime = 'nodejs';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 import {
   createPatternSchema,
@@ -10,8 +9,7 @@ import {
 } from './handler';
 
 export const GET = apiHandler(
-  async (req, ctx: ApiHandlerContext): Promise<Response> =>
-    getValidatorPatternsHandler(req, ctx),
+  getValidatorPatternsHandler,
   {
     source: 'products.validator-patterns.GET',
     cacheControl: 'no-store',
@@ -19,8 +17,7 @@ export const GET = apiHandler(
 );
 
 export const POST = apiHandler(
-  async (req, ctx: ApiHandlerContext): Promise<Response> =>
-    postValidatorPatternsHandler(req, ctx),
+  postValidatorPatternsHandler,
   {
     source: 'products.validator-patterns.POST',
     parseJsonBody: true,

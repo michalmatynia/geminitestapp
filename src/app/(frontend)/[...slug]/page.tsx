@@ -1,75 +1,15 @@
-import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { JSX } from 'react';
 
-import { auth } from '@/features/auth/auth';
-import { getUserPreferences } from '@/features/auth/server';
 import { CmsPageRenderer } from '@/features/cms/components/frontend/CmsPageRenderer';
 import { CmsPageShell } from '@/features/cms/components/frontend/CmsPageShell';
-import { getMediaInlineStyles, getMediaStyleVars } from '@/features/cms/components/frontend/theme-styles';
 import { ThemeProvider } from '@/features/cms/components/frontend/ThemeProvider';
-import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
-import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
-import { getCmsRepository } from '@/features/cms/services/cms-repository';
-import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
-import type { Page, CmsTheme, PageComponent } from '@/features/cms/types';
-import { buildColorSchemeMap } from '@/features/cms/types/theme-settings';
+
+import { buildSlugMetadata, loadSlugRenderData, resolveSlugToPage } from './slug-page-data';
 
 import type { Metadata } from 'next';
-import type { Session } from 'next-auth';
-
-
-const isAdminSession = (session: Session | null): boolean => {
-  if (!session?.user) return false;
-  const user = session.user as Session['user'] & { isElevated?: boolean; role?: string | null };
-  if (user.isElevated) return true;
-  const role = user.role ?? '';
-  return ['admin', 'super_admin', 'superuser'].includes(role);
-};
-
-const canPreviewDrafts = async (
-  session: Session | null
-): Promise<boolean> => {
-  if (!isAdminSession(session)) return false;
-  const userId = session?.user?.id;
-  if (!userId) return false;
-  try {
-    const prefs = await getUserPreferences(userId);
-    return prefs.cmsPreviewEnabled === true;
-  } catch {
-    return false;
-  }
-};
 
 export const revalidate = 3600; // Hourly revalidation for CMS slug pages
-
-// ---------------------------------------------------------------------------
-// Resolve slug → published page
-// ---------------------------------------------------------------------------
-
-async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
-  try {
-    const slugValue = slugSegments.join('/');
-    const cmsRepository = await getCmsRepository();
-    const hdrs = await headers();
-    const domain = await resolveCmsDomainFromHeaders(hdrs);
-    const domainSlug = await getSlugForDomainByValue(domain.id, slugValue, cmsRepository);
-    if (!domainSlug) return null;
-    const page = await cmsRepository.getPageBySlug(slugValue);
-    if (!page) return null;
-    if (page.status === 'published') return page;
-    const session = await auth();
-    const allowDrafts = await canPreviewDrafts(session);
-    if (!allowDrafts) return null;
-    return page;
-  } catch {
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// SEO metadata
-// ---------------------------------------------------------------------------
 
 interface SlugPageProps {
   params: Promise<{ slug: string[] }>;
@@ -83,33 +23,8 @@ export async function generateMetadata({ params }: SlugPageProps): Promise<Metad
     return { title: 'Page Not Found' };
   }
 
-  const metadata: Metadata = {
-    title: page.seoTitle || page.name,
-    robots: page.robotsMeta || 'index,follow',
-  };
-
-  if (page.seoDescription) {
-    metadata.description = page.seoDescription;
-  }
-
-  if (page.seoOgImage) {
-    metadata.openGraph = {
-      images: [{ url: page.seoOgImage }],
-    };
-  }
-
-  if (page.seoCanonical) {
-    metadata.alternates = {
-      canonical: page.seoCanonical,
-    };
-  }
-
-  return metadata;
+  return buildSlugMetadata(page);
 }
-
-// ---------------------------------------------------------------------------
-// Page component
-// ---------------------------------------------------------------------------
 
 export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JSX.Element> {
   const { slug } = await params;
@@ -119,48 +34,29 @@ export default async function CmsSlugPage({ params }: SlugPageProps): Promise<JS
     notFound();
   }
 
-  let theme: CmsTheme | null = null;
-  if (page.themeId) {
-    const cmsRepository = await getCmsRepository();
-    theme = await cmsRepository.getThemeById(page.themeId);
-  }
-
-  const hdrs = await headers();
-  const domain = await resolveCmsDomainFromHeaders(hdrs);
-  const themeSettings = await getCmsThemeSettings();
-  const menuSettings = await getCmsMenuSettings(domain.id);
-  const colorSchemes = buildColorSchemeMap(themeSettings);
-  const layout = { fullWidth: themeSettings.fullWidth };
-  const mediaVars = getMediaStyleVars(themeSettings);
-  const mediaStyles = getMediaInlineStyles(themeSettings);
-  const showMenu = page.showMenu !== false;
-  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
-    type: component.type,
-    order: component.order || 0,
-    content: (component.content as Record<string, unknown>) ?? {},
-  }));
+  const renderData = await loadSlugRenderData(page);
   const content = (
     <CmsPageShell
-      menu={menuSettings}
-      theme={themeSettings}
-      colorSchemes={colorSchemes}
-      showMenu={showMenu}
+      menu={renderData.menuSettings}
+      theme={renderData.themeSettings}
+      colorSchemes={renderData.colorSchemes}
+      showMenu={renderData.showMenu}
     >
       <CmsPageRenderer
-        components={rendererComponents}
-        colorSchemes={colorSchemes}
-        layout={layout}
-        hoverEffect={themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined}
-        hoverScale={themeSettings.enableAnimations ? themeSettings.hoverScale : undefined}
-        mediaVars={mediaVars}
-        mediaStyles={mediaStyles}
+        components={renderData.rendererComponents}
+        colorSchemes={renderData.colorSchemes}
+        layout={renderData.layout}
+        hoverEffect={renderData.hoverEffect}
+        hoverScale={renderData.hoverScale}
+        mediaVars={renderData.mediaVars}
+        mediaStyles={renderData.mediaStyles}
       />
     </CmsPageShell>
   );
 
   return (
     <div className='min-h-screen bg-gray-950 text-white'>
-      {theme ? <ThemeProvider theme={theme}>{content}</ThemeProvider> : content}
+      {renderData.theme ? <ThemeProvider theme={renderData.theme}>{content}</ThemeProvider> : content}
     </div>
   );
 }

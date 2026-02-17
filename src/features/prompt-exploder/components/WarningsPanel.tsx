@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { FormSection } from '@/shared/ui';
+import { FormSection, DocumentationSection } from '@/shared/ui';
 
 import { useDocumentState } from '../context/hooks/useDocument';
 
@@ -19,11 +19,13 @@ export function WarningsPanel(): React.JSX.Element {
       {!documentState || documentState.warnings.length === 0 ? (
         <div className='text-xs text-gray-500'>No warnings.</div>
       ) : (
-        <ul className='list-disc pl-5 text-xs text-amber-200'>
-          {documentState.warnings.map((warning) => (
-            <li key={warning}>{warning}</li>
-          ))}
-        </ul>
+        <DocumentationSection title='Issues' className='bg-amber-500/5 border-amber-500/20 p-3'>
+          <ul className='list-disc pl-5 text-xs text-amber-200'>
+            {documentState.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </DocumentationSection>
       )}
     </FormSection>
   );

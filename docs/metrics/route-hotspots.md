@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-17T00:41:53.526Z
+Generated at: 2026-02-17T07:51:25.525Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -8,39 +8,39 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/integrations/route.ts` | 52 |
-| `src/app/api/system/activity/route.ts` | 52 |
-| `src/app/api/system/logs/interpret/route.ts` | 52 |
-| `src/app/api/ai-paths/runs/[runId]/resume/route.ts` | 51 |
-| `src/app/api/ai-paths/runs/[runId]/retry-node/route.ts` | 51 |
-| `src/app/api/products/sync/runs/[runId]/route.ts` | 51 |
-| `src/app/api/image-studio/runs/route.ts` | 50 |
-| `src/app/api/integrations/exports/base/active-template/route.ts` | 50 |
-| `src/app/api/integrations/imports/base/active-template/route.ts` | 50 |
-| `src/app/api/databases/delete/route.ts` | 49 |
-| `src/app/api/drafts/route.ts` | 49 |
-| `src/app/api/integrations/connections/[id]/session/route.ts` | 49 |
-| `src/app/api/integrations/exports/base/default-connection/route.ts` | 49 |
-| `src/app/api/notes/categories/[id]/route.ts` | 49 |
-| `src/app/api/system/upload-events/route.ts` | 49 |
-| `src/app/api/image-studio/cards/backfill/route.ts` | 48 |
-| `src/app/api/products/validator-decisions/route.ts` | 48 |
-| `src/app/api/agentcreator/teaching/collections/route.ts` | 47 |
-| `src/app/api/cms/media/route.ts` | 47 |
-| `src/app/api/integrations/imports/base/export-warehouse/route.ts` | 47 |
+| `src/app/api/integrations/exports/base/[setting]/route.ts` | 86 |
+| `src/app/api/integrations/imports/base/[setting]/route.ts` | 70 |
+| `src/app/api/marketplace/[resource]/route.ts` | 38 |
+| `src/app/api/products/[id]/route.ts` | 36 |
+| `src/app/api/products/sync/profiles/[id]/route.ts` | 28 |
+| `src/app/api/auth/users/[id]/route.ts` | 27 |
+| `src/app/api/products/validator-patterns/route.ts` | 27 |
+| `src/app/api/user/preferences/route.ts` | 26 |
+| `src/app/api/integrations/imports/base/runs/route.ts` | 25 |
+| `src/app/api/products/categories/[id]/route.ts` | 25 |
+| `src/app/api/chatbot/sessions/route.ts` | 24 |
+| `src/app/api/integrations/export-templates/[id]/route.ts` | 24 |
+| `src/app/api/integrations/import-templates/[id]/route.ts` | 24 |
+| `src/app/api/settings/route.ts` | 23 |
+| `src/app/api/auth/users/[id]/security/route.ts` | 21 |
+| `src/app/api/products/categories/route.ts` | 21 |
+| `src/app/api/products/validator-settings/route.ts` | 21 |
+| `src/app/api/price-groups/route.ts` | 20 |
+| `src/app/api/products/parameters/[id]/route.ts` | 20 |
+| `src/app/api/products/validator-patterns/[id]/route.ts` | 20 |
 
 ## Top App Pages by LOC
 
 | Page | LOC |
 | --- | ---: |
-| `src/app/(frontend)/page.tsx` | 452 |
-| `src/app/(admin)/admin/settings/recovery/page.tsx` | 332 |
-| `src/app/(frontend)/[...slug]/page.tsx` | 167 |
-| `src/app/(admin)/admin/settings/logging/page.tsx` | 137 |
-| `src/app/(admin)/admin/page.tsx` | 102 |
-| `src/app/(frontend)/preview/[id]/page.tsx` | 101 |
+| `src/app/(frontend)/page.tsx` | 113 |
+| `src/app/(frontend)/[...slug]/page.tsx` | 63 |
+| `src/app/(frontend)/preview/[id]/page.tsx` | 63 |
 | `src/app/(admin)/admin/agentcreator/page.tsx` | 45 |
 | `src/app/(admin)/admin/agentcreator/teaching/page.tsx` | 45 |
+| `src/app/(admin)/admin/settings/recovery/page.tsx` | 45 |
+| `src/app/(admin)/admin/page.tsx` | 39 |
+| `src/app/(admin)/admin/settings/logging/page.tsx` | 32 |
 | `src/app/(admin)/admin/chatbot/context/page.tsx` | 14 |
 | `src/app/(admin)/admin/chatbot/page.tsx` | 14 |
 | `src/app/(admin)/admin/integrations/marketplaces/page.tsx` | 14 |
@@ -56,13 +56,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 ## Recommended First Runtime Profiling Targets
 
-- `src/app/api/integrations/route.ts`
-- `src/app/api/system/activity/route.ts`
-- `src/app/api/system/logs/interpret/route.ts`
-- `src/app/api/ai-paths/runs/[runId]/resume/route.ts`
-- `src/app/api/ai-paths/runs/[runId]/retry-node/route.ts`
-- `src/app/api/products/sync/runs/[runId]/route.ts`
-- `src/app/api/image-studio/runs/route.ts`
-- `src/app/api/integrations/exports/base/active-template/route.ts`
-- `src/app/api/integrations/imports/base/active-template/route.ts`
-- `src/app/api/databases/delete/route.ts`
+- `src/app/api/integrations/exports/base/[setting]/route.ts`
+- `src/app/api/integrations/imports/base/[setting]/route.ts`
+- `src/app/api/marketplace/[resource]/route.ts`
+- `src/app/api/products/[id]/route.ts`
+- `src/app/api/products/sync/profiles/[id]/route.ts`
+- `src/app/api/auth/users/[id]/route.ts`
+- `src/app/api/products/validator-patterns/route.ts`
+- `src/app/api/user/preferences/route.ts`
+- `src/app/api/integrations/imports/base/runs/route.ts`
+- `src/app/api/products/categories/[id]/route.ts`

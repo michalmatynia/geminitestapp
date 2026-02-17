@@ -26,7 +26,8 @@ import {
   FormSection, 
   SearchInput, 
   PanelHeader,
-  ListPanel 
+  ListPanel,
+  EmptyState
 } from '@/shared/ui';
 
 type RouteMapEntry = FlattenedNavItem & {
@@ -245,9 +246,10 @@ export function AdminRouteMapPage(): React.JSX.Element {
         }
       >
         {grouped.length === 0 ? (
-          <div className='py-12 text-center text-sm text-gray-500'>
-            No routes match your search.
-          </div>
+          <EmptyState
+            title='No routes found'
+            description='No routes match your search criteria. Try different keywords or labels.'
+          />
         ) : (
           <div className='space-y-8'>
             {grouped.map(([section, sectionEntries]: [string, RouteMapEntry[]]) => (

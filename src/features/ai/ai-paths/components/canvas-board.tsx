@@ -174,7 +174,7 @@ export function CanvasBoard({
     fitToNodes,
     resetView,
     ConfirmationModal,
-  } = useCanvasInteractions({ confirmNodeSwitch });
+  } = useCanvasInteractions(confirmNodeSwitch ? { confirmNodeSwitch } : {});
 
   // --- Local State & Refs ---
   const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);

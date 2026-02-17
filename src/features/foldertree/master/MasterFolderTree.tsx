@@ -219,6 +219,9 @@ export function MasterFolderTree({
     ? resolveDropAllowance(activeDraggedNodeId, null, 'inside')
     : false;
   const showRootDropZones = enableDnd && rootDropEnabled && canDropToRoot;
+  if (activeDraggedNodeId) {
+    console.warn('[MasterTree:rootDrop] state', { activeDraggedNodeId, canDropToRoot, showRootDropZones, enableDnd, rootDropEnabled });
+  }
 
   const clearDragIndicators = React.useCallback((): void => {
     setExternalDraggedNodeId(null);
@@ -406,18 +409,17 @@ export function MasterFolderTree({
                   ? (event: React.DragEvent<HTMLDivElement>): void => {
                     const draggedNodeId = resolveDraggedNode(event);
                     if (!draggedNodeId) {
-                      // DEBUG: drag node not resolved
-                      console.debug('[MasterTree:dragover] no draggedNodeId for target', node.id, 'dragState:', controller.dragState);
+                      console.warn('[MasterTree:dragover] no draggedNodeId for target', node.id, 'dragState:', controller.dragState);
                       return;
                     }
                     setRootDropHoverZone(null);
                     const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, node);
                     if (!resolvedPosition) {
-                      // DEBUG: drop not allowed
                       const defaultCheck = controller.canDropNode(draggedNodeId, node.id, 'inside');
-                      console.debug('[MasterTree:dragover] resolvedPosition=null for', draggedNodeId, '→', node.id, 'defaultCheck:', defaultCheck, 'nodeType:', node.type, 'parentId:', node.parentId);
+                      console.warn('[MasterTree:dragover] resolvedPosition=null for', draggedNodeId, '→', node.id, 'defaultCheck:', defaultCheck, 'nodeType:', node.type, 'parentId:', node.parentId);
                       return;
                     }
+                    console.warn('[MasterTree:dragover] ACCEPTED', { draggedNodeId, targetId: node.id, position: resolvedPosition, targetType: node.type });
                     event.preventDefault();
                     event.stopPropagation();
                     if (!controller.dragState) {
@@ -434,9 +436,16 @@ export function MasterFolderTree({
                 enableDnd
                   ? (event: React.DragEvent<HTMLDivElement>): void => {
                     const draggedNodeId = resolveDraggedNode(event);
-                    if (!draggedNodeId) return;
+                    if (!draggedNodeId) {
+                      console.warn('[MasterTree:drop] no draggedNodeId for target', node.id);
+                      return;
+                    }
                     const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, node);
-                    if (!resolvedPosition) return;
+                    if (!resolvedPosition) {
+                      console.warn('[MasterTree:drop] resolvedPosition=null for', draggedNodeId, '→', node.id);
+                      return;
+                    }
+                    console.warn('[MasterTree:drop] EXECUTING', { draggedNodeId, targetId: node.id, position: resolvedPosition });
                     event.preventDefault();
                     event.stopPropagation();
                     void (async (): Promise<void> => {
@@ -499,7 +508,11 @@ export function MasterFolderTree({
                 setExternalDraggedNodeId(draggedNodeId);
               }
               setRootDropHoverZone(null);
-              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) return;
+              if (!resolveDropAllowance(draggedNodeId, null, 'inside')) {
+                console.warn('[MasterTree:container:dragover] root drop NOT ALLOWED for', draggedNodeId);
+                return;
+              }
+              console.warn('[MasterTree:container:dragover] root drop ALLOWED for', draggedNodeId);
               event.preventDefault();
               if (controller.dragState) {
                 controller.updateDragTarget(null, 'inside');

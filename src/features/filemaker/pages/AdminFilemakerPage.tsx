@@ -32,6 +32,10 @@ import type {
   FilemakerPerson,
 } from '../types';
 
+type PersonDraft = Partial<Omit<FilemakerPerson, 'phoneNumbers'>> & {
+  phoneNumbers?: string;
+};
+
 const createId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `${prefix}-${crypto.randomUUID()}`;
@@ -80,7 +84,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
     [countries]
   );
 
-  const [personDraft, setPersonDraft] = useState<Partial<FilemakerPerson>>({});
+  const [personDraft, setPersonDraft] = useState<PersonDraft>({});
   const [orgDraft, setOrgDraft] = useState<Partial<FilemakerOrganization>>({});
   
   const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
@@ -314,7 +318,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
     setIsOrgModalOpen(true);
   }, []);
 
-  const personFields: SettingsField<Partial<FilemakerPerson>>[] = useMemo(() => [
+  const personFields: SettingsField<PersonDraft>[] = useMemo(() => [
     { key: 'firstName', label: 'First Name', type: 'text', placeholder: 'First name', required: true },
     { key: 'lastName', label: 'Last Name', type: 'text', placeholder: 'Last name', required: true },
     { key: 'street', label: 'Street', type: 'text', placeholder: 'Street', required: true },
@@ -494,7 +498,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <SettingsPanelBuilder
+      <SettingsPanelBuilder<PersonDraft>
         open={isPersonModalOpen}
         onClose={() => setIsPersonModalOpen(false)}
         title={editingPerson ? 'Edit Person' : 'Add Person'}

@@ -7,7 +7,7 @@ import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthUserSummary } from '@/features/auth/types';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import { logClientError } from '@/features/observability';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, Alert } from '@/shared/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, Alert, MetadataItem } from '@/shared/ui';
 
 export default function AuthDashboardPage(): React.JSX.Element {
   const { toast } = useToast();
@@ -83,42 +83,34 @@ export default function AuthDashboardPage(): React.JSX.Element {
       </div>
 
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        <Card className='bg-card border-border'>
-          <CardHeader>
-            <CardTitle className='text-white text-lg'>Total Users</CardTitle>
-            <CardDescription className='text-gray-500'>All accounts</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-semibold text-white'>{metrics.total}</div>
-          </CardContent>
-        </Card>
-        <Card className='bg-card border-border'>
-          <CardHeader>
-            <CardTitle className='text-white text-lg'>Verified Emails</CardTitle>
-            <CardDescription className='text-gray-500'>Email verified</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-semibold text-white'>{metrics.verified}</div>
-          </CardContent>
-        </Card>
-        <Card className='bg-card border-border'>
-          <CardHeader>
-            <CardTitle className='text-white text-lg'>Unverified</CardTitle>
-            <CardDescription className='text-gray-500'>Pending verification</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-semibold text-white'>{metrics.unverified}</div>
-          </CardContent>
-        </Card>
-        <Card className='bg-card border-border'>
-          <CardHeader>
-            <CardTitle className='text-white text-lg'>Unassigned Roles</CardTitle>
-            <CardDescription className='text-gray-500'>No role assigned</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='text-3xl font-semibold text-white'>{metrics.unassigned}</div>
-          </CardContent>
-        </Card>
+        <MetadataItem
+          label='Total Users'
+          hint='All accounts'
+          value={metrics.total}
+          valueClassName='text-3xl font-semibold text-white'
+          className='p-4'
+        />
+        <MetadataItem
+          label='Verified Emails'
+          hint='Email verified'
+          value={metrics.verified}
+          valueClassName='text-3xl font-semibold text-white'
+          className='p-4'
+        />
+        <MetadataItem
+          label='Unverified'
+          hint='Pending verification'
+          value={metrics.unverified}
+          valueClassName='text-3xl font-semibold text-white'
+          className='p-4'
+        />
+        <MetadataItem
+          label='Unassigned Roles'
+          hint='No role assigned'
+          value={metrics.unassigned}
+          valueClassName='text-3xl font-semibold text-white'
+          className='p-4'
+        />
       </div>
 
       <Card className='bg-card border-border'>
@@ -130,16 +122,14 @@ export default function AuthDashboardPage(): React.JSX.Element {
         </CardHeader>
         <CardContent className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
           {roles.map((role: AuthRole) => (
-            <div
+            <MetadataItem
               key={role.id}
-              className='rounded-md border border-border bg-card/50 px-4 py-3'
-            >
-              <div className='text-sm font-semibold text-white'>{role.name}</div>
-              <div className='text-xs text-gray-400'>{role.description ?? role.id}</div>
-              <div className='mt-2 text-2xl font-semibold text-white'>
-                {metrics.roleCounts[role.id] ?? 0}
-              </div>
-            </div>
+              label={role.name}
+              hint={role.description ?? role.id}
+              value={metrics.roleCounts[role.id] ?? 0}
+              valueClassName='text-2xl font-semibold text-white'
+              className='p-4 bg-card/50'
+            />
           ))}
         </CardContent>
       </Card>

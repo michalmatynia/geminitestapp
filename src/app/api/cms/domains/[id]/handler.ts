@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+import { deleteCmsDomain, setCmsDomainAlias } from '@/features/cms/services/cms-domain';
+import { cmsDomainUpdateSchema } from '@/features/cms/validations/api';
+import { parseJsonBody } from '@/features/products/server';
+import type { ApiHandlerContext } from '@/shared/types/api/api';
+import { ApiParams } from '@/shared/types/core/base-types';
+
+export async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: ApiParams
+): Promise<Response> {
+  const parsed = await parseJsonBody(req, cmsDomainUpdateSchema, {
+    logPrefix: 'cms-domains',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const updated = await setCmsDomainAlias(params.id, parsed.data.aliasOf ?? null);
+  return NextResponse.json(updated ?? {});
+}
+
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: ApiParams
+): Promise<Response> {
+  await deleteCmsDomain(params.id);
+  return new Response(null, { status: 204 });
+}

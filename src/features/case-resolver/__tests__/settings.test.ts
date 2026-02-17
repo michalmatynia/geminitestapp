@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
+  DEFAULT_CASE_RESOLVER_OCR_PROMPT,
   extractCaseResolverDocumentDate,
   getCaseResolverWorkspaceLatestTimestampMs,
   hasCaseResolverWorkspaceFilesArray,
@@ -595,21 +596,25 @@ describe('case-resolver settings', () => {
     const parsedWithValues = parseCaseResolverSettings(
       JSON.stringify({
         ocrModel: '  llama3.2-vision  ',
+        ocrPrompt: '  Extract everything exactly as plain text.  ',
         defaultDocumentFormat: 'wysiwyg',
         confirmDeleteDocument: false,
       })
     );
     expect(parsedWithValues.ocrModel).toBe('llama3.2-vision');
+    expect(parsedWithValues.ocrPrompt).toBe('Extract everything exactly as plain text.');
     expect(parsedWithValues.defaultDocumentFormat).toBe('wysiwyg');
     expect(parsedWithValues.confirmDeleteDocument).toBe(false);
 
     const parsedDefaults = parseCaseResolverSettings(JSON.stringify({}));
     expect(parsedDefaults.ocrModel).toBe('');
+    expect(parsedDefaults.ocrPrompt).toBe(DEFAULT_CASE_RESOLVER_OCR_PROMPT);
     expect(parsedDefaults.defaultDocumentFormat).toBe('markdown');
     expect(parsedDefaults.confirmDeleteDocument).toBe(true);
 
     const parsedNull = parseCaseResolverSettings(null);
     expect(parsedNull.ocrModel).toBe('');
+    expect(parsedNull.ocrPrompt).toBe(DEFAULT_CASE_RESOLVER_OCR_PROMPT);
     expect(parsedNull.defaultDocumentFormat).toBe('markdown');
     expect(parsedNull.confirmDeleteDocument).toBe(true);
 

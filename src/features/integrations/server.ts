@@ -10,6 +10,7 @@ export * from './services/external-producer-repository';
 export * from './services/external-tag-repository';
 export * from './services/import-template-repository';
 export * from './services/imports/base-client';
+export * from './services/imports/base-import-run-starter';
 export * from './services/imports/base-mapper';
 export * from './services/integration-repository';
 export * from './services/integration-service';

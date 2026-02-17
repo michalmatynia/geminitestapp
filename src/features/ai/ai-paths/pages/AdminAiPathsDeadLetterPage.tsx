@@ -22,7 +22,8 @@ import {
   Alert,
   PanelHeader,
   SearchInput,
-  PanelPagination
+  PanelPagination,
+  EmptyState
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
@@ -266,6 +267,12 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             data={runs}
             isLoading={loading}
             initialSorting={[{ id: 'deadLetteredAt', desc: true }]}
+            emptyState={
+              <EmptyState
+                title='Queue empty'
+                description={pathId || searchQuery ? 'No dead-letter runs match your search.' : 'All runs are processing correctly (or none have failed yet).'}
+              />
+            }
           />
         </div>
       </ListPanel>
@@ -499,7 +506,11 @@ export function AdminAiPathsDeadLetterPage(): React.JSX.Element {
             </div>
           </div>
         ) : (
-          <div className='py-12 text-center text-sm text-gray-500'>Could not load run details.</div>
+          <EmptyState
+            icon={<AlertCircle className='size-12 text-rose-500' />}
+            title='Could not load details'
+            description='The run record might have been deleted or there was a problem fetching the data.'
+          />
         )}
       </DetailModal>
 

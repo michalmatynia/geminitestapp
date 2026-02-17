@@ -4,7 +4,7 @@ import { Loader2, Zap, Cpu, Sparkles, Wand2 } from 'lucide-react';
 import React from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { FormModal, Button, Label, Textarea } from '@/shared/ui';
+import { FormModal, Button, Label, Textarea, DataTable } from '@/shared/ui';
 
 import type {
   PromptExtractHistoryEntry,
@@ -12,6 +12,7 @@ import type {
   PromptDiffLine,
   ParamUiControl,
 } from '../studio-modals/prompt-extract-utils';
+import type { ColumnDef } from '@tanstack/react-table';
 
 // TODO: These components should be moved to a shared location
 function PromptExtractionHistoryPanel(props: {
@@ -76,6 +77,35 @@ export function ExtractPromptParamsModal({
   previewLeaves,
   previewControls,
 }: ExtractPromptParamsModalProps): React.JSX.Element {
+  const columns = React.useMemo<ColumnDef<{ path: string; value: unknown }>[]>(
+    () => [
+      {
+        accessorKey: 'path',
+        header: 'Path',
+        cell: ({ row }) => (
+          <div className='font-mono text-gray-200 truncate max-w-[200px]' title={row.original.path}>
+            {row.original.path}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'value',
+        header: 'Value',
+        cell: ({ row }) => (
+          <div className='text-gray-300 truncate max-w-[200px]' title={JSON.stringify(row.original.value)}>
+            {typeof row.original.value === 'string' ? row.original.value : JSON.stringify(row.original.value)}
+          </div>
+        ),
+      },
+      {
+        id: 'selector',
+        header: 'Selector',
+        cell: ({ row }) => <div className='text-gray-400'>{previewControls[row.original.path] ?? 'auto'}</div>,
+      },
+    ],
+    [previewControls]
+  );
+
   const actions = (
     <>
       <Button
@@ -228,26 +258,10 @@ export function ExtractPromptParamsModal({
           <Label className='text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1'>Extracted Parameters</Label>
           {previewLeaves.length > 0 ? (
             <div className='max-h-80 overflow-auto rounded-lg border border-border/60 bg-black/20'>
-              <table className='w-full text-left border-collapse'>
-                <thead className='bg-muted/30 sticky top-0'>
-                  <tr className='text-[10px] uppercase font-bold text-muted-foreground'>
-                    <th className='px-4 py-2 border-b border-border/50'>Path</th>
-                    <th className='px-4 py-2 border-b border-border/50'>Value</th>
-                    <th className='px-4 py-2 border-b border-border/50'>Selector</th>
-                  </tr>
-                </thead>
-                <tbody className='divide-y divide-border/40'>
-                  {previewLeaves.map((leaf) => (
-                    <tr key={leaf.path} className='text-[11px] hover:bg-white/5 transition-colors'>
-                      <td className='px-4 py-2 font-mono text-gray-200 truncate max-w-[200px]' title={leaf.path}>{leaf.path}</td>
-                      <td className='px-4 py-2 text-gray-300 truncate max-w-[200px]' title={JSON.stringify(leaf.value)}>
-                        {typeof leaf.value === 'string' ? leaf.value : JSON.stringify(leaf.value)}
-                      </td>
-                      <td className='px-4 py-2 text-gray-400'>{previewControls[leaf.path] ?? 'auto'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <DataTable
+                columns={columns}
+                data={previewLeaves}
+              />
             </div>
           ) : (
             <div className='rounded-lg border border-dashed border-border bg-card/20 py-12 text-center text-xs text-muted-foreground italic'>

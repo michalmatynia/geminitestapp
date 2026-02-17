@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
 import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
-import { Button, SearchInput, DataTable } from '@/shared/ui';
+import { Button, SearchInput, DataTable, DocumentationSection } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { useGraphState } from '../context';
@@ -309,22 +309,20 @@ export function DocsTabPanel(): React.JSX.Element {
       </div>
 
       {showHowItWorks ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>How AI Paths Works</h3>
-          <ul className='mt-3 space-y-2 text-gray-400'>
+        <DocumentationSection title='How AI Paths Works'>
+          <ul className='space-y-2'>
             {overviewLines.map((line: string, index: number) => (
               <li key={`${line}-${index}`} className='leading-relaxed'>
                 {line}
               </li>
             ))}
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {showSystemOverview ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>System Overview</h3>
-          <ul className='mt-3 space-y-2 text-gray-400'>
+        <DocumentationSection title='System Overview'>
+          <ul className='space-y-2'>
             <li>
               Graphs run from a <span className='text-white'>Trigger</span> node and
               propagate data through connected ports.
@@ -343,13 +341,12 @@ export function DocsTabPanel(): React.JSX.Element {
               files), and the Model node converts URLs to base64 when calling the model.
             </li>
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {showExecutionState ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>Execution & State</h3>
-          <ul className='mt-3 space-y-2 text-gray-400'>
+        <DocumentationSection title='Execution & State'>
+          <ul className='space-y-2'>
             <li>
               Trigger fires the graph evaluation. Nodes like{' '}
               <span className='text-white'>Model</span>,{' '}
@@ -366,13 +363,12 @@ export function DocsTabPanel(): React.JSX.Element {
               in settings so you can resume where you left off.
             </li>
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {showExecutionControls ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>Execution Controls</h3>
-          <ul className='mt-3 space-y-2 text-gray-400'>
+        <DocumentationSection title='Execution Controls'>
+          <ul className='space-y-2'>
             <li>
               <span className='text-white'>Execution (Server / Local):</span> controls where the
               run executes. Server runs are queued/executed on the server and streamed back;
@@ -387,14 +383,13 @@ export function DocsTabPanel(): React.JSX.Element {
               trigger clicks while a run is active; Queue enqueues them to run sequentially.
             </li>
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       <div className='grid gap-4 lg:grid-cols-2'>
         {showCoreFlow ? (
-          <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-            <h3 className='text-base font-semibold text-white'>Core Flow</h3>
-            <ul className='mt-3 space-y-2 text-gray-400'>
+          <DocumentationSection title='Core Flow'>
+            <ul className='space-y-2'>
               <li>
                 <span className='text-white'>Trigger → Context Filter:</span> Connect
                 <span className='text-emerald-200'> context</span> from Trigger to Context Filter
@@ -418,13 +413,12 @@ export function DocsTabPanel(): React.JSX.Element {
                 <span className='text-amber-200'> triggerName</span> into Result Viewer.
               </li>
             </ul>
-          </div>
+          </DocumentationSection>
         ) : null}
 
         {showPortRules ? (
-          <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-            <h3 className='text-base font-semibold text-white'>Port Rules</h3>
-            <ul className='mt-3 space-y-2 text-gray-400'>
+          <DocumentationSection title='Port Rules'>
+            <ul className='space-y-2'>
               <li>Ports must match exactly (e.g. result → result).</li>
               <li>Context Filter accepts context input or can fetch context if left unconnected.</li>
               <li>Viewer is terminal (no outputs).</li>
@@ -433,37 +427,34 @@ export function DocsTabPanel(): React.JSX.Element {
               <li>Multiple wires into the same input are collected as arrays.</li>
               <li>Gate expects valid from a Validator node.</li>
             </ul>
-          </div>
+          </DocumentationSection>
         ) : null}
       </div>
 
       {showContextPresets ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>Context Presets</h3>
-          <p className='mt-2 text-gray-400'>
+        <DocumentationSection title='Context Presets'>
+          <p className='text-gray-400'>
             Use Light/Medium/Full presets on Context Filter nodes to quickly scope the entity
             payload. Target Fields lets you toggle exact fields to include.
           </p>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {showDescriptionFlow ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>AI Description Flow</h3>
-          <ol className='mt-3 space-y-2 text-gray-400'>
+        <DocumentationSection title='AI Description Flow'>
+          <ol className='space-y-2'>
             <li>Context Filter.entityJson → Parser.entityJson</li>
             <li>Parser.title/images → AI Description Generator</li>
             <li>AI Description Generator.description_en → Database.content_en</li>
             <li>Parser.productId → Database.entityId</li>
             <li>(Optional) Database.result → Result Viewer.result</li>
           </ol>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {showJobQueue ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>AI Job Queue (AI Paths)</h3>
-          <ul className='mt-3 space-y-2 text-gray-400'>
+        <DocumentationSection title='AI Job Queue (AI Paths)'>
+          <ul className='space-y-2'>
             <li>
               <span className='text-white'>Model node</span> enqueues a job and can
               either wait for completion or emit only a jobId.
@@ -477,23 +468,22 @@ export function DocsTabPanel(): React.JSX.Element {
               or Database Update to save outputs.
             </li>
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {showClusterPresets ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>Cluster Presets</h3>
-          <p className='mt-2 text-gray-400'>
+        <DocumentationSection title='Cluster Presets'>
+          <p className='text-gray-400'>
             Use Cluster Presets to save reusable Bundle + Template pairs. Apply them to
             any canvas to bootstrap repeatable data clusters across apps.
           </p>
-          <ul className='mt-3 space-y-2 text-gray-400'>
+          <ul className='mt-3 space-y-2'>
             <li>Define bundle ports (context/meta/value/etc) to capture shared signals.</li>
             <li>Write a template prompt with placeholders to standardize outputs.</li>
             <li>Apply the preset to drop a Bundle + Template pair onto the canvas.</li>
             <li>Select a Template or Bundle node connected together and click “From Selection”.</li>
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {showQuickWiring ? (
@@ -670,20 +660,18 @@ export function DocsTabPanel(): React.JSX.Element {
       ) : null}
 
       {showSavingDebugging ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>Saving & Debugging</h3>
-          <ul className='mt-3 space-y-2 text-gray-400'>
+        <DocumentationSection title='Saving & Debugging'>
+          <ul className='space-y-2'>
             <li>Use “Save Path” to persist the canvas.</li>
             <li>Errors are logged to System Logs with an AI Paths badge.</li>
             <li>The “Last error” badge links directly to filtered logs.</li>
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {showTroubleshooting ? (
-        <div className='rounded-lg border border-border/60 bg-card/40 p-5'>
-          <h3 className='text-base font-semibold text-white'>Troubleshooting</h3>
-          <ul className='mt-3 space-y-2 text-gray-400'>
+        <DocumentationSection title='Troubleshooting'>
+          <ul className='space-y-2'>
             <li>
               <span className='text-white'>No result in Viewer:</span> check that the
               input/output port names match (e.g. result → result).
@@ -709,7 +697,7 @@ export function DocsTabPanel(): React.JSX.Element {
               exactly and node types must be compatible.
             </li>
           </ul>
-        </div>
+        </DocumentationSection>
       ) : null}
 
       {!hasAnyResults ? (

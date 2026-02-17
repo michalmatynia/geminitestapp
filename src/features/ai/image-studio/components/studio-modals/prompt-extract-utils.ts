@@ -2,6 +2,8 @@ import { flattenParams, type ParamSpec } from '@/features/prompt-engine/prompt-p
 
 import { recommendParamUiControl, type ParamUiControl } from '../../utils/param-ui';
 
+export type { ParamUiControl };
+
 export type UiExtractorSuggestion = {
   path: string;
   control: ParamUiControl;

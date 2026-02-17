@@ -8,7 +8,7 @@ import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settin
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Button, FormSection, Input, Label, SectionHeader, SelectSimple, useToast } from '@/shared/ui';
+import { Button, FormSection, Input, Label, SectionHeader, SelectSimple, Textarea, useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -135,6 +135,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     if (!draft) return;
     const nextSettings: CaseResolverSettings = {
       ocrModel: draft.ocrModel.trim(),
+      ocrPrompt: draft.ocrPrompt.trim(),
       defaultDocumentFormat: draft.defaultDocumentFormat === 'wysiwyg' ? 'wysiwyg' : 'markdown',
       confirmDeleteDocument: draft.confirmDeleteDocument !== false,
     };
@@ -262,6 +263,28 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
             />
             <div className='text-[11px] text-gray-500'>
               Use this field if your model is not shown in the discovered list.
+            </div>
+          </div>
+          <div className='space-y-1 md:col-span-2'>
+            <Label className='text-[11px] text-gray-400'>OCR Prompt Template</Label>
+            <Textarea
+              value={draft.ocrPrompt}
+              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                const value = event.target.value;
+                setDraft((previous: CaseResolverSettings | null) =>
+                  previous
+                    ? {
+                      ...previous,
+                      ocrPrompt: value,
+                    }
+                    : previous
+                );
+              }}
+              className='min-h-[88px] text-xs'
+              placeholder='Instructions used for OCR extraction.'
+            />
+            <div className='text-[11px] text-gray-500'>
+              Edit the default OCR instruction sent with uploaded scan images.
             </div>
           </div>
         </div>

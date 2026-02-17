@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
+import { startIntervalTask } from '@/shared/lib/timers';
 
 export const runtime = 'nodejs';
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -55,7 +56,7 @@ async function GET_handler(req: NextRequest,
       };
 
       await sendSnapshot();
-      timer = setInterval(() => { void sendSnapshot(); }, 2000);
+      timer = startIntervalTask(sendSnapshot, 2000);
 
       req.signal.addEventListener('abort', () => {
         if (timer) {

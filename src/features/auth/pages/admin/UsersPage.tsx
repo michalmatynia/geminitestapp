@@ -19,7 +19,8 @@ import {
   StatusBadge,
   useToast,
   PanelHeader,
-  SearchInput
+  SearchInput,
+  EmptyState
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
@@ -137,10 +138,12 @@ export default function AuthUsersPage(): React.JSX.Element {
 
   if (!canReadUsers) {
     return (
-      <div className='p-12 text-center'>
-        <ShieldAlertIcon className='size-12 text-rose-500 mx-auto mb-4' />
-        <h2 className='text-lg font-bold text-white mb-2'>Access Restricted</h2>
-        <p className='text-sm text-gray-500 max-w-md mx-auto'>You do not have the required permissions to view the user management console. Please contact a system administrator.</p>
+      <div className='container mx-auto py-20'>
+        <EmptyState
+          icon={<ShieldAlertIcon className='size-12 text-rose-500' />}
+          title='Access Restricted'
+          description='You do not have the required permissions to view the user management console. Please contact a system administrator.'
+        />
       </div>
     );
   }
@@ -203,9 +206,10 @@ export default function AuthUsersPage(): React.JSX.Element {
           data={filteredUsers}
           isLoading={isLoading}
           emptyState={
-            <div className='py-12 text-center text-sm text-gray-500'>
-              {search ? 'No users found matching your search.' : 'No users found in directory.'}
-            </div>
+            <EmptyState
+              title={search ? 'No users found' : 'Directory empty'}
+              description={search ? 'Try adjusting your search terms.' : 'No users have been provisioned in the current directory.'}
+            />
           }
         />
       </ListPanel>

@@ -21,6 +21,10 @@ import { performanceMonitor } from '@/features/products/performance';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
 import { getProductRepository } from '@/features/products/services/product-repository';
+import {
+  getProductImageFilepath,
+  parseProductForm,
+} from '@/features/products/services/product-service-form-utils';
 import { setProductStudioProject } from '@/features/products/services/product-studio-config';
 import type {
   ProductWithImages,
@@ -46,58 +50,6 @@ const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
   getImageFileRepository();
 
 const tempProductPathPrefix = '/uploads/products/temp/';
-
-type ParsedProductForm = {
-  rawData: Record<string, unknown>;
-  images: File[];
-  imageFileIds: string[];
-  catalogIds: string[];
-  categoryId: string | null;
-  tagIds: string[];
-  producerIds: string[];
-  noteIds: string[];
-  studioProjectId: string | null;
-};
-
-/**
- * Parses FormData into a structured object for product operations.
- */
-function parseProductForm(formData: FormData): ParsedProductForm {
-  const rawData = Object.fromEntries(formData.entries());
-  const images = formData.getAll('images').filter((x): x is File => x instanceof File && x.size > 0);
-  const imageFileIds = formData.getAll('imageFileIds').filter((x): x is string => typeof x === 'string');
-  const catalogIds = normalizeCatalogIds(formData.getAll('catalogIds'));
-  const categoryId = normalizeCategoryId(formData);
-  const tagIds = normalizeTagIds(formData.getAll('tagIds'));
-  const producerIds = normalizeProducerIds(formData.getAll('producerIds'));
-  const noteIds = normalizeNoteIds(formData.getAll('noteIds'));
-  const studioProjectId = normalizeStudioProjectId(formData);
-
-  return {
-    rawData,
-    images,
-    imageFileIds,
-    catalogIds,
-    categoryId,
-    tagIds,
-    producerIds,
-    noteIds,
-    studioProjectId,
-  };
-}
-
-const getProductImageFilepath = (
-  image: ProductImageRecord
-): string | null => {
-  const imageFile = image.imageFile as unknown;
-  if (!imageFile || typeof imageFile !== 'object' || Array.isArray(imageFile)) {
-    return null;
-  }
-  const filepath = (imageFile as { filepath?: unknown }).filepath;
-  if (typeof filepath !== 'string') return null;
-  const normalized = filepath.trim();
-  return normalized.length > 0 ? normalized : null;
-};
 
 /**
  * Retrieves a list of products based on the provided filters.
@@ -792,57 +744,6 @@ async function linkImagesToProduct(
       productId,
     });
   }
-}
-
-// Why: HTML form's getAll("catalogIds") returns entries for EACH selected item.
-// Normalize to trim whitespace (user selection artifacts) and filter empty strings
-// (unchecked checkboxes). This prevents invalid IDs from entering the database.
-function normalizeCatalogIds(entries: FormDataEntryValue[]): string[] {
-  return entries
-    .map((entry: FormDataEntryValue): string =>
-      typeof entry === 'string' ? entry.trim() : '',
-    )
-    .filter((entry: string): boolean => entry.length > 0);
-}
-
-function normalizeCategoryId(formData: FormData): string | null {
-  const direct = formData.get('categoryId');
-  if (typeof direct === 'string') {
-    const trimmed = direct.trim();
-    if (trimmed) return trimmed;
-  }
-  return null;
-}
-
-function normalizeTagIds(entries: FormDataEntryValue[]): string[] {
-  return entries
-    .map((entry: FormDataEntryValue): string =>
-      typeof entry === 'string' ? entry.trim() : '',
-    )
-    .filter((entry: string): boolean => entry.length > 0);
-}
-
-function normalizeProducerIds(entries: FormDataEntryValue[]): string[] {
-  return entries
-    .map((entry: FormDataEntryValue): string =>
-      typeof entry === 'string' ? entry.trim() : '',
-    )
-    .filter((entry: string): boolean => entry.length > 0);
-}
-
-function normalizeNoteIds(entries: FormDataEntryValue[]): string[] {
-  return entries
-    .map((entry: FormDataEntryValue): string =>
-      typeof entry === 'string' ? entry.trim() : '',
-    )
-    .filter((entry: string): boolean => entry.length > 0);
-}
-
-function normalizeStudioProjectId(formData: FormData): string | null {
-  const raw = formData.get('studioProjectId');
-  if (typeof raw !== 'string') return null;
-  const normalized = raw.trim();
-  return normalized.length > 0 ? normalized : null;
 }
 
 async function updateProductCatalogs(

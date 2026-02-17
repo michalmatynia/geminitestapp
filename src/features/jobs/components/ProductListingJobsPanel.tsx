@@ -5,7 +5,19 @@ import Link from 'next/link';
 
 import { JobsProvider, useJobsContext } from '@/features/jobs/context/JobsContext';
 import { useProductListingJobsProps } from '@/features/jobs/hooks/useProductListingJobsProps';
-import { Button, ListPanel, SectionHeader, StatusBadge, Pagination, DynamicFilters, RefreshButton, type FilterField, FormSection, Alert } from '@/shared/ui';
+import {
+  Button,
+  ListPanel,
+  SectionHeader,
+  StatusBadge,
+  Pagination,
+  DynamicFilters,
+  RefreshButton,
+  type FilterField,
+  FormSection,
+  Alert,
+  MetadataItem,
+} from '@/shared/ui';
 
 import { ProductListingJobsPanelViewProvider, useProductListingJobsPanelView } from './context/ProductListingJobsPanelViewContext';
 import { ExportJobDetailModal } from './ExportJobDetailModal';
@@ -122,10 +134,25 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
             <StatusBadge status={traderaListingsQueue?.running ? 'Active' : 'Paused'} variant={traderaListingsQueue?.running ? 'success' : 'warning'} className='text-[9px]' />
           </div>
           
-          <div className='grid grid-cols-3 gap-1 text-[10px] text-center uppercase font-bold'>
-            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Wait</span><span className='text-blue-400'>{traderaListingsQueue?.waitingCount ?? 0}</span></div>
-            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Busy</span><span className='text-amber-400'>{traderaListingsQueue?.activeCount ?? 0}</span></div>
-            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Fail</span><span className='text-rose-400'>{traderaListingsQueue?.failedCount ?? 0}</span></div>
+          <div className='grid grid-cols-3 gap-1'>
+            <MetadataItem
+              label='Wait'
+              value={traderaListingsQueue?.waitingCount ?? 0}
+              valueClassName='text-blue-400 text-center font-bold'
+              className='p-1.5'
+            />
+            <MetadataItem
+              label='Busy'
+              value={traderaListingsQueue?.activeCount ?? 0}
+              valueClassName='text-amber-400 text-center font-bold'
+              className='p-1.5'
+            />
+            <MetadataItem
+              label='Fail'
+              value={traderaListingsQueue?.failedCount ?? 0}
+              valueClassName='text-rose-400 text-center font-bold'
+              className='p-1.5'
+            />
           </div>
         </FormSection>
 
@@ -135,9 +162,19 @@ function ProductListingJobsPanelContent(): React.JSX.Element {
             <StatusBadge status={traderaSchedulerQueue?.running ? 'Polling' : 'Idle'} variant={traderaSchedulerQueue?.running ? 'success' : 'warning'} className='text-[9px]' />
           </div>
           
-          <div className='grid grid-cols-2 gap-1 text-[10px] text-center uppercase font-bold'>
-            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Pending</span><span className='text-blue-400'>{traderaSchedulerQueue?.waitingCount ?? 0}</span></div>
-            <div className='bg-black/20 p-1 rounded'><span className='block text-gray-500'>Active</span><span className='text-amber-400'>{traderaSchedulerQueue?.activeCount ?? 0}</span></div>
+          <div className='grid grid-cols-2 gap-1'>
+            <MetadataItem
+              label='Pending'
+              value={traderaSchedulerQueue?.waitingCount ?? 0}
+              valueClassName='text-blue-400 text-center font-bold'
+              className='p-1.5'
+            />
+            <MetadataItem
+              label='Active'
+              value={traderaSchedulerQueue?.activeCount ?? 0}
+              valueClassName='text-amber-400 text-center font-bold'
+              className='p-1.5'
+            />
           </div>
         </FormSection>
       </div>

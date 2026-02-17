@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 
 import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server/sequence-run-repository';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { startIntervalTask } from '@/shared/lib/timers';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 const REDIS_CONNECT_TIMEOUT_MS = 3000;
@@ -141,7 +142,7 @@ export async function GET_handler(
         return;
       }
 
-      heartbeatTimer = setInterval(() => {
+      heartbeatTimer = startIntervalTask(() => {
         send({ type: 'heartbeat', ts: Date.now() });
       }, HEARTBEAT_INTERVAL_MS);
     },

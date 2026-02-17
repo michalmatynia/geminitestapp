@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { AiInsightRecord } from '@/shared/types';
-import { StatusBadge, Card } from '@/shared/ui';
+import { StatusBadge, Card, DocumentationSection } from '@/shared/ui';
 
 export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JSX.Element {
   return (
@@ -16,11 +16,13 @@ export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JS
       </div>
       <div className='mt-2 text-sm text-white'>{insight.summary}</div>
       {insight.warnings.length > 0 ? (
-        <ul className='mt-2 list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
-          {insight.warnings.map((warning: string, index: number) => (
-            <li key={`${insight.id}-warn-${index}`}>{warning}</li>
-          ))}
-        </ul>
+        <DocumentationSection title='Warnings' className='mt-3 p-3 bg-amber-500/5 border-amber-500/20'>
+          <ul className='list-disc space-y-1 pl-4 text-[11px] text-amber-200'>
+            {insight.warnings.map((warning: string, index: number) => (
+              <li key={`${insight.id}-warn-${index}`}>{warning}</li>
+            ))}
+          </ul>
+        </DocumentationSection>
       ) : null}
     </Card>
   );

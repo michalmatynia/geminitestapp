@@ -84,6 +84,7 @@ export const initializeQueues = (): void => {
       import('@/features/jobs/workers/productSyncQueue'),
       import('@/features/jobs/workers/productSyncBackfillQueue'),
       import('@/features/jobs/workers/productSyncSchedulerQueue'),
+      import('@/features/jobs/workers/caseResolverOcrQueue'),
     ]);
     const backupSchedulerModule = queueModules[5] as {
       startDatabaseBackupSchedulerQueue?: () => void;

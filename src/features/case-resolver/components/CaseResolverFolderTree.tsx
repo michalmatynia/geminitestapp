@@ -8,7 +8,6 @@ import {
   FileImage,
   FilePlus,
   FileText,
-  Image as ImageIcon,
   Eye,
   Folder,
   FolderOpen,
@@ -19,10 +18,9 @@ import {
   Sparkles,
   Trash2,
   Unlock,
-  Upload,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { palette, type NodeDefinition } from '@/features/ai/ai-paths/lib';
 import {
@@ -120,10 +118,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onCreateFolder,
     onCreateFile,
     onCreateScanFile,
-    onCreateImageAsset,
     onCreateNodeFile,
-    onUploadAssets,
-    onAttachAssetFile,
     onMoveFile,
     onMoveAsset,
     onMoveFolder,
@@ -136,16 +131,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onToggleFileLock,
     onEditFile,
     activeFile,
-    selectedAsset,
   } = useCaseResolverPageContext();
   const { toast } = useToast();
-  const [isUploadingAssets, setIsUploadingAssets] = useState(false);
-  const [isAttachingAssetFile, setIsAttachingAssetFile] = useState(false);
-  const [isCreatingScanFiles, setIsCreatingScanFiles] = useState(false);
   const [isRootExplicitlySelected, setIsRootExplicitlySelected] = useState(true);
-  const uploadInputRef = useRef<HTMLInputElement | null>(null);
-  const attachUploadInputRef = useRef<HTMLInputElement | null>(null);
-  const scanUploadInputRef = useRef<HTMLInputElement | null>(null);
 
   const treeWorkspace = useMemo((): CaseResolverWorkspace => {
     const selectedCase =
@@ -433,82 +421,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     [resolveIcon]
   );
 
-  const canAttachSelectedAssetFile = Boolean(selectedAsset && !selectedAsset.filepath);
-
-  const triggerAssetUpload = (): void => {
-    if (canAttachSelectedAssetFile) {
-      attachUploadInputRef.current?.click();
-      return;
-    }
-    uploadInputRef.current?.click();
-  };
-
-  const triggerScanUpload = (): void => {
-    scanUploadInputRef.current?.click();
-  };
-
-  const handleUploadInputChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ): Promise<void> => {
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = '';
-    if (files.length === 0) return;
-
-    setIsUploadingAssets(true);
-    try {
-      await onUploadAssets(files, selectedFolderForCreate);
-    } catch (error: unknown) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to upload files.',
-        { variant: 'error' }
-      );
-    } finally {
-      setIsUploadingAssets(false);
-    }
-  };
-
-  const handleAttachUploadInputChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ): Promise<void> => {
-    const selectedFile = event.target.files?.[0] ?? null;
-    event.target.value = '';
-    if (!selectedFile || !selectedAsset) return;
-
-    setIsAttachingAssetFile(true);
-    try {
-      await onAttachAssetFile(selectedAsset.id, selectedFile, {
-        expectedKind: selectedAsset.kind,
-      });
-    } catch (error: unknown) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to attach file to placeholder.',
-        { variant: 'error' }
-      );
-    } finally {
-      setIsAttachingAssetFile(false);
-    }
-  };
-
-  const handleScanUploadInputChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ): Promise<void> => {
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = '';
-    if (files.length === 0) return;
-
-    setIsCreatingScanFiles(true);
-    try {
-      await onCreateScanFile(selectedFolderForCreate, files);
-    } catch (error: unknown) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to create scan file.',
-        { variant: 'error' }
-      );
-    } finally {
-      setIsCreatingScanFiles(false);
-    }
-  };
-
   const handleNodePaletteDragStart = (
     event: React.DragEvent<HTMLDivElement>,
     definition: NodeDefinition | null
@@ -559,26 +471,15 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               </Button>
               <Button
                 type='button'
-                onClick={triggerScanUpload}
-                size='sm'
-                variant='outline'
-                disabled={isCreatingScanFiles}
-                className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50 disabled:opacity-60'
-                title='Add scan file'
-              >
-                <FileImage className='size-4' />
-              </Button>
-              <Button
-                type='button'
                 onClick={(): void => {
-                  onCreateImageAsset(selectedFolderForCreate);
+                  onCreateScanFile(selectedFolderForCreate);
                 }}
                 size='sm'
                 variant='outline'
                 className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
-                title='Create image placeholder'
+                title='Create new image file'
               >
-                <ImageIcon className='size-4' />
+                <FileImage className='size-4' />
               </Button>
               <Button
                 type='button'
@@ -591,17 +492,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 title='Add node file'
               >
                 <FileCode2 className='size-4' />
-              </Button>
-              <Button
-                type='button'
-                onClick={triggerAssetUpload}
-                size='sm'
-                variant='outline'
-                disabled={isUploadingAssets || isAttachingAssetFile}
-                className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50 disabled:opacity-60'
-                title={canAttachSelectedAssetFile ? 'Upload to selected placeholder' : 'Upload files'}
-              >
-                <Upload className='size-4' />
               </Button>
             </>
           )}
@@ -623,37 +513,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
         </TreeHeader>
       )}
     >
-      <input
-        ref={scanUploadInputRef}
-        type='file'
-        accept='image/*'
-        multiple
-        className='hidden'
-        onChange={(event): void => {
-          void handleScanUploadInputChange(event);
-        }}
-      />
-
-      <input
-        ref={uploadInputRef}
-        type='file'
-        multiple
-        className='hidden'
-        onChange={(event): void => {
-          void handleUploadInputChange(event);
-        }}
-      />
-
-      <input
-        ref={attachUploadInputRef}
-        type='file'
-        accept={selectedAsset?.kind === 'image' ? 'image/*' : undefined}
-        className='hidden'
-        onChange={(event): void => {
-          void handleAttachUploadInputChange(event);
-        }}
-      />
-
       <div className='border-b border-border/60 p-2'>
         <div className='mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-gray-400'>
           Node Palette
@@ -801,7 +660,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               (isCaseFileKind || fileType === 'document' || fileType === 'scanfile');
             const isScanCaseFile =
               Boolean(fileId) && (node.kind === 'case_file_scan' || fileType === 'scanfile');
-            const isDocumentCaseFile = Boolean(fileId) && isCaseFile && !isScanCaseFile;
+            const isCanvasCaseFile = Boolean(fileId) && isCaseFile;
             const linkedDocumentNodeIds = fileId
               ? documentNodeIdsBySourceFileId.get(fileId) ?? []
               : [];
@@ -827,7 +686,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               if (node.kind === 'case_file_scan') {
                 return ScanCaseFileIcon;
               }
-              if (isDocumentCaseFile) {
+              if (isCanvasCaseFile && !isScanCaseFile) {
                 return DefaultFileIcon;
               }
               if (node.kind === 'asset_image') {
@@ -854,12 +713,12 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             return (
               <div
                 className={`group flex items-center gap-1 rounded px-2 py-1.5 text-sm ${stateClassName} ${
-                  isDocumentCaseFile ? 'cursor-grab active:cursor-grabbing' : ''
+                  isCanvasCaseFile ? 'cursor-grab active:cursor-grabbing' : ''
                 }`}
                 style={{ paddingLeft: `${depth * 16 + 8}px` }}
                 role='button'
                 tabIndex={0}
-                title={isDocumentCaseFile ? 'Drag document to canvas' : node.name}
+                title={isCanvasCaseFile ? 'Drag file to canvas' : node.name}
                 onClick={(): void => {
                   setIsRootExplicitlySelected(false);
                   if (!isSelected) {
@@ -906,7 +765,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 <DragHandleIcon
                   data-master-tree-drag-handle='true'
                   className={`size-3 shrink-0 ${
-                    isDocumentCaseFile
+                    isCanvasCaseFile
                       ? 'text-sky-300/90 opacity-0 transition-opacity group-hover:opacity-100'
                       : 'text-gray-500'
                   }`}
@@ -1049,17 +908,17 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                     }`}
                   >
-                    {isDocumentCaseFile ? (
+                    {isCanvasCaseFile ? (
                       <button
                         type='button'
                         className='inline-flex size-6 items-center justify-center rounded border border-sky-500/40 bg-sky-500/10 text-sky-200 transition hover:bg-sky-500/20 hover:text-sky-100'
-                        title={hasDocumentNodeInCanvas ? 'Show document in canvas' : 'Drop document onto canvas'}
-                        aria-label={hasDocumentNodeInCanvas ? 'Show document in canvas' : 'Drop document onto canvas'}
+                        title={hasDocumentNodeInCanvas ? 'Show file in canvas' : 'Drop file onto canvas'}
+                        aria-label={hasDocumentNodeInCanvas ? 'Show file in canvas' : 'Drop file onto canvas'}
                         onClick={(event): void => {
                           event.preventDefault();
                           event.stopPropagation();
-                          if (activeFile?.fileType !== 'document') {
-                            toast('Open a document canvas file to manage document text nodes.', {
+                          if (activeFile?.fileType === 'case') {
+                            toast('Open a non-case file to manage canvas text nodes.', {
                               variant: 'warning',
                             });
                             return;

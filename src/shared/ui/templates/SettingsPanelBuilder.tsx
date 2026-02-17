@@ -10,9 +10,10 @@ import { FormModal } from '../FormModal';
 import { Input } from '../input';
 import { Label } from '../label';
 import { SelectSimple } from '../select-simple';
+import { Switch } from '../switch';
 import { Textarea } from '../textarea';
 
-export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'color' | 'range' | 'custom';
+export type FieldType = 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'switch' | 'color' | 'range' | 'custom';
 
 export interface SettingsField<T extends object> {
   /** Field key in the form data */
@@ -142,6 +143,23 @@ export function SettingsFieldsRenderer<T extends object>({
               </Label>
               {field.helperText && <p className='text-xs text-muted-foreground ml-6'>{field.helperText}</p>}
               {errors[field.key] && <p className='text-xs text-red-500 ml-6'>{errors[field.key]}</p>}
+            </div>
+          ) : field.type === 'switch' ? (
+            <div className='flex items-center justify-between p-3 rounded-md border border-white/5 bg-card/30 transition-colors hover:bg-card/50'>
+              <div className='flex flex-col gap-0.5'>
+                <Label htmlFor={String(field.key)} className='text-sm font-medium text-gray-200 cursor-pointer'>
+                  {field.label}
+                  {field.required && <span className='text-red-500 ml-1'>*</span>}
+                </Label>
+                {field.helperText && <p className='text-[11px] text-muted-foreground'>{field.helperText}</p>}
+              </div>
+              <Switch
+                id={String(field.key)}
+                checked={(values[field.key] as boolean) || false}
+                onCheckedChange={checked => handleFieldChange(field.key, !!checked)}
+                disabled={field.disabled || disabled}
+              />
+              {errors[field.key] && <p className='text-xs text-red-500 mt-1'>{errors[field.key]}</p>}
             </div>
           ) : field.type === 'color' ? (
             <FormField 

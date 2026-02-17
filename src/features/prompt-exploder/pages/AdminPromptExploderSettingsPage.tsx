@@ -14,16 +14,11 @@ import {
 } from '@/features/ai/brain/settings';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { FormSection, SectionHeader, Button, useToast } from '@/shared/ui';
 import {
-  FormSection,
-  Label,
-  SectionHeader,
-  StatusToggle,
-  Button,
-  Input,
-  SelectSimple,
-  useToast,
-} from '@/shared/ui';
+  SettingsFieldsRenderer,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -67,7 +62,10 @@ const AI_PROVIDER_OPTIONS: Array<{
   { value: 'gemini', label: 'Gemini' },
 ];
 
-type SettingsDraft = Pick<PromptExploderSettings, 'runtime' | 'learning' | 'ai'>;
+type SettingsDraft = Pick<
+  PromptExploderSettings,
+  'runtime' | 'learning' | 'ai'
+>;
 
 const toSettingsDraft = (settings: PromptExploderSettings): SettingsDraft => ({
   runtime: settings.runtime,
@@ -115,7 +113,14 @@ const normalizeModelValues = (values: unknown): string[] => {
     }
 
     const record = value as Record<string, unknown>;
-    const keyOrder = ['models', 'data', 'id', 'model', 'name', 'value'] as const;
+    const keyOrder = [
+      'models',
+      'data',
+      'id',
+      'model',
+      'name',
+      'value',
+    ] as const;
     let matchedKnownKey = false;
     keyOrder.forEach((key: (typeof keyOrder)[number]): void => {
       if (!(key in record)) return;
@@ -151,27 +156,28 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
   const [loadedFrom, setLoadedFrom] = useState<string | null>(null);
 
-  const rawSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
+  const rawSettings =
+    settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
   const rawValidatorPatternLists =
     settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
   const parsedSettings = useMemo(
     () => parsePromptExploderSettings(rawSettings),
-    [rawSettings]
+    [rawSettings],
   );
   const validatorPatternLists = useMemo(
     () => parseValidatorPatternLists(rawValidatorPatternLists),
-    [rawValidatorPatternLists]
+    [rawValidatorPatternLists],
   );
   const validationPatternStackOptions = useMemo(
     () => buildPromptExploderValidationRuleStackOptions(validatorPatternLists),
-    [validatorPatternLists]
+    [validatorPatternLists],
   );
   const providerCatalog = useMemo(
     () =>
       parseBrainProviderCatalog(
-        settingsQuery.data?.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null
+        settingsQuery.data?.get(AI_BRAIN_PROVIDER_CATALOG_KEY) ?? null,
       ),
-    [settingsQuery.data]
+    [settingsQuery.data],
   );
 
   useEffect(() => {
@@ -183,7 +189,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         ...parsedSettings.runtime,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
           parsedSettings.runtime.validationRuleStack,
-          validatorPatternLists
+          validatorPatternLists,
         ),
       },
     });
@@ -195,7 +201,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       if (!previous) return previous;
       const normalizedStack = normalizePromptExploderValidationRuleStack(
         previous.runtime.validationRuleStack,
-        validatorPatternLists
+        validatorPatternLists,
       );
       if (normalizedStack === previous.runtime.validationRuleStack) {
         return previous;
@@ -211,7 +217,11 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   }, [validatorPatternLists]);
 
   const modelOptions = useMemo(() => {
-    const options: Array<{ value: string; label: string; description: string }> = [];
+    const options: Array<{
+      value: string;
+      label: string;
+      description: string;
+    }> = [];
     const seen = new Set<string>();
 
     const append = (values: unknown, source: string): void => {
@@ -268,6 +278,170 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     providerCatalog.paidModels,
   ]);
 
+  const aiFields: SettingsField<PromptExploderSettings['ai']>[] = useMemo(
+    () => [
+      {
+        key: 'operationMode',
+        label: 'Operation Mode',
+        type: 'select',
+        options: OPERATION_MODE_OPTIONS,
+      },
+      {
+        key: 'provider',
+        label: 'Provider',
+        type: 'select',
+        options: AI_PROVIDER_OPTIONS,
+      },
+      {
+        key: 'modelId',
+        label: 'Primary AI Model',
+        type: 'select',
+        options: modelOptions,
+        placeholder: 'Choose model',
+      },
+      {
+        key: 'modelId',
+        label: 'Custom Primary Model',
+        type: 'text',
+        placeholder: 'Type model id (e.g. llama3.2)',
+      },
+      {
+        key: 'fallbackModelId',
+        label: 'Fallback Model',
+        type: 'select',
+        options: modelOptions,
+        placeholder: 'Optional fallback',
+      },
+      {
+        key: 'fallbackModelId',
+        label: 'Custom Fallback Model',
+        type: 'text',
+        placeholder: 'Type fallback model id',
+      },
+      {
+        key: 'temperature',
+        label: 'Temperature',
+        type: 'number',
+        min: 0,
+        max: 2,
+        step: 0.1,
+      },
+      {
+        key: 'maxTokens',
+        label: 'Max Tokens',
+        type: 'number',
+        min: 1,
+        max: 8192,
+      },
+    ],
+    [modelOptions],
+  );
+
+  const runtimeFields: SettingsField<PromptExploderSettings['runtime']>[] =
+    useMemo(
+      () => [
+        {
+          key: 'orchestratorEnabled',
+          label: 'Orchestrator Runtime',
+          type: 'switch',
+        },
+        {
+          key: 'validationRuleStack',
+          label: 'Validation Stack',
+          type: 'select',
+          options: validationPatternStackOptions,
+        },
+        {
+          key: 'ruleProfile',
+          label: 'Runtime Rule Profile',
+          type: 'select',
+          options: [
+            { value: 'all', label: 'All Rules' },
+            { value: 'pattern_pack', label: 'Pattern Pack Only' },
+            { value: 'learned_only', label: 'Learned Only' },
+          ],
+        },
+        {
+          key: 'benchmarkSuite',
+          label: 'Benchmark Suite',
+          type: 'select',
+          options: [
+            { value: 'default', label: 'Default' },
+            { value: 'extended', label: 'Extended' },
+            { value: 'custom', label: 'Custom' },
+          ],
+        },
+        {
+          key: 'benchmarkLowConfidenceThreshold',
+          label: 'Low Confidence Threshold',
+          type: 'number',
+          min: 0.3,
+          max: 0.9,
+          step: 0.01,
+        },
+        {
+          key: 'benchmarkSuggestionLimit',
+          label: 'Suggestion Limit',
+          type: 'number',
+          min: 1,
+          max: 20,
+        },
+      ],
+      [validationPatternStackOptions],
+    );
+
+  const learningFields: SettingsField<PromptExploderSettings['learning']>[] =
+    useMemo(
+      () => [
+        {
+          key: 'enabled',
+          label: 'Learning Enabled',
+          type: 'switch',
+        },
+        {
+          key: 'similarityThreshold',
+          label: 'Similarity Threshold',
+          type: 'number',
+          min: 0.3,
+          max: 0.95,
+          step: 0.01,
+        },
+        {
+          key: 'templateMergeThreshold',
+          label: 'Merge Threshold',
+          type: 'number',
+          min: 0.3,
+          max: 0.95,
+          step: 0.01,
+        },
+        {
+          key: 'minApprovalsForMatching',
+          label: 'Min Approvals',
+          type: 'number',
+          min: 1,
+          max: 20,
+        },
+        {
+          key: 'maxTemplates',
+          label: 'Template Cap',
+          type: 'number',
+          min: 50,
+          max: 5000,
+        },
+        {
+          key: 'autoActivateLearnedTemplates',
+          label: 'Auto Activate Learned',
+          type: 'switch',
+        },
+        {
+          key: 'benchmarkSuggestionUpsertTemplates',
+          label: 'Benchmark Template Upsert',
+          type: 'switch',
+        },
+      ],
+      [],
+    );
+
   const saveDisabled =
     !draft ||
     settingsQuery.isLoading ||
@@ -282,17 +456,17 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         ...draft.runtime,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
           draft.runtime.validationRuleStack,
-          validatorPatternLists
+          validatorPatternLists,
         ),
         benchmarkLowConfidenceThreshold: clampNumber(
           draft.runtime.benchmarkLowConfidenceThreshold,
           0.3,
-          0.9
+          0.9,
         ),
         benchmarkSuggestionLimit: toIntInRange(
           draft.runtime.benchmarkSuggestionLimit,
           1,
-          20
+          20,
         ),
       },
       learning: {
@@ -300,17 +474,17 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         similarityThreshold: clampNumber(
           draft.learning.similarityThreshold,
           0.3,
-          0.95
+          0.95,
         ),
         templateMergeThreshold: clampNumber(
           draft.learning.templateMergeThreshold,
           0.3,
-          0.95
+          0.95,
         ),
         minApprovalsForMatching: toIntInRange(
           draft.learning.minApprovalsForMatching,
           1,
-          20
+          20,
         ),
         maxTemplates: toIntInRange(draft.learning.maxTemplates, 50, 5000),
       },
@@ -350,7 +524,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         error instanceof Error
           ? error.message
           : 'Failed to save Prompt Exploder settings.',
-        { variant: 'error' }
+        { variant: 'error' },
       );
     }
   };
@@ -398,552 +572,73 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
         }
       />
 
-      <FormSection
-        title='AI Operations'
-        description='Choose the AI model and provider used for AI-assisted Prompt Exploder operations.'
-        variant='subtle'
-        className='p-4'
-        actions={
-          <div className='flex items-center gap-2 text-xs text-gray-400'>
-            <Settings2 className='size-3.5' />
-            <span>{modelDiscoverySummary}</span>
-          </div>
-        }
-      >
-        <div className='grid gap-3 md:grid-cols-3'>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Operation Mode</Label>
-            <SelectSimple
-              value={draft.ai.operationMode}
-              onValueChange={(value: string) => {
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ai: {
-                        ...previous.ai,
-                        operationMode: value as PromptExploderOperationMode,
-                      },
-                    }
-                    : previous
-                );
-              }}
-              options={OPERATION_MODE_OPTIONS}
-              size='sm'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Provider</Label>
-            <SelectSimple
-              value={draft.ai.provider}
-              onValueChange={(value: string) => {
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ai: {
-                        ...previous.ai,
-                        provider: value as PromptExploderAiProvider,
-                      },
-                    }
-                    : previous
-                );
-              }}
-              options={AI_PROVIDER_OPTIONS}
-              size='sm'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Primary AI Model</Label>
-            <SelectSimple
-              value={draft.ai.modelId}
-              onValueChange={(value: string) => {
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ai: {
-                        ...previous.ai,
-                        modelId: value,
-                      },
-                    }
-                    : previous
-                );
-              }}
-              options={modelOptions}
-              placeholder='Choose model'
-              size='sm'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Custom Primary Model</Label>
-            <Input
-              size='sm'
-              value={draft.ai.modelId}
-              onChange={(event) => {
-                const value = event.target.value;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ai: {
-                        ...previous.ai,
-                        modelId: value,
-                      },
-                    }
-                    : previous
-                );
-              }}
-              placeholder='Type model id (for example llama3.2:latest)'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Fallback Model</Label>
-            <SelectSimple
-              value={draft.ai.fallbackModelId}
-              onValueChange={(value: string) => {
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ai: {
-                        ...previous.ai,
-                        fallbackModelId: value,
-                      },
-                    }
-                    : previous
-                );
-              }}
-              options={modelOptions}
-              placeholder='Optional fallback'
-              size='sm'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Custom Fallback Model</Label>
-            <Input
-              size='sm'
-              value={draft.ai.fallbackModelId}
-              onChange={(event) => {
-                const value = event.target.value;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ai: {
-                        ...previous.ai,
-                        fallbackModelId: value,
-                      },
-                    }
-                    : previous
-                );
-              }}
-              placeholder='Type fallback model id'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Temperature</Label>
-            <Input
-              size='sm'
-              type='number'
-              min={0}
-              max={2}
-              step={0.1}
-              value={String(draft.ai.temperature)}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (!Number.isFinite(value)) return;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ai: {
-                        ...previous.ai,
-                        temperature: clampNumber(value, 0, 2),
-                      },
-                    }
-                    : previous
-                );
-              }}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Max Tokens</Label>
-            <Input
-              size='sm'
-              type='number'
-              min={1}
-              max={8192}
-              step={1}
-              value={String(draft.ai.maxTokens)}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (!Number.isFinite(value)) return;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ai: {
-                        ...previous.ai,
-                        maxTokens: toIntInRange(value, 1, 8192),
-                      },
-                    }
-                    : previous
-                );
-              }}
-            />
-          </div>
-        </div>
-      </FormSection>
+      <div className='grid gap-6'>
+        <FormSection
+          title='AI Operations'
+          description='Choose the AI model and provider used for AI-assisted operations.'
+          variant='subtle'
+          className='p-4'
+          actions={
+            <div className='flex items-center gap-2 text-xs text-gray-400'>
+              <Settings2 className='size-3.5' />
+              <span>{modelDiscoverySummary}</span>
+            </div>
+          }
+        >
+          <SettingsFieldsRenderer
+            fields={aiFields}
+            values={draft.ai}
+            onChange={(vals) =>
+              setDraft((prev) =>
+                prev ? { ...prev, ai: { ...prev.ai, ...vals } } : null,
+              )
+            }
+            className='grid gap-x-6 gap-y-2 md:grid-cols-3 lg:grid-cols-4'
+          />
+        </FormSection>
 
-      <FormSection
-        title='Runtime'
-        description='Rule-profile and benchmark defaults for Prompt Exploder.'
-        variant='subtle'
-        className='p-4'
-      >
-        <div className='grid gap-3 md:grid-cols-6'>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Orchestrator Runtime</Label>
-            <div className='flex h-10 items-center rounded border border-border/60 bg-card/30 px-3'>
-              <StatusToggle
-                enabled={draft.runtime.orchestratorEnabled}
-                onToggle={() => {
-                  setDraft((previous) =>
-                    previous
-                      ? {
-                        ...previous,
-                        runtime: {
-                          ...previous.runtime,
-                          orchestratorEnabled: !previous.runtime.orchestratorEnabled,
-                        },
-                      }
-                      : previous
-                  );
-                }}
-              />
-            </div>
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
-            <SelectSimple
-              value={draft.runtime.validationRuleStack}
-              onValueChange={(value: string) => {
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      runtime: {
-                        ...previous.runtime,
-                        validationRuleStack: value,
-                      },
-                    }
-                    : previous
-                );
-              }}
-              options={validationPatternStackOptions.map((option) => ({
-                value: option.value,
-                label: option.label,
-              }))}
-              size='sm'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
-            <SelectSimple
-              value={draft.runtime.ruleProfile}
-              onValueChange={(value: string) => {
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      runtime: {
-                        ...previous.runtime,
-                        ruleProfile: value as PromptExploderSettings['runtime']['ruleProfile'],
-                      },
-                    }
-                    : previous
-                );
-              }}
-              options={[
-                { value: 'all', label: 'All Rules' },
-                { value: 'pattern_pack', label: 'Pattern Pack Only' },
-                { value: 'learned_only', label: 'Learned Only' },
-              ]}
-              size='sm'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Benchmark Suite</Label>
-            <SelectSimple
-              value={draft.runtime.benchmarkSuite}
-              onValueChange={(value: string) => {
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      runtime: {
-                        ...previous.runtime,
-                        benchmarkSuite:
-                            value as PromptExploderSettings['runtime']['benchmarkSuite'],
-                      },
-                    }
-                    : previous
-                );
-              }}
-              options={[
-                { value: 'default', label: 'Default' },
-                { value: 'extended', label: 'Extended' },
-                { value: 'custom', label: 'Custom' },
-              ]}
-              size='sm'
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>
-              Benchmark Low Confidence Threshold
-            </Label>
-            <Input
-              size='sm'
-              type='number'
-              min={0.3}
-              max={0.9}
-              step={0.01}
-              value={String(draft.runtime.benchmarkLowConfidenceThreshold)}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (!Number.isFinite(value)) return;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      runtime: {
-                        ...previous.runtime,
-                        benchmarkLowConfidenceThreshold: clampNumber(
-                          value,
-                          0.3,
-                          0.9
-                        ),
-                      },
-                    }
-                    : previous
-                );
-              }}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>
-              Benchmark Suggestion Limit
-            </Label>
-            <Input
-              size='sm'
-              type='number'
-              min={1}
-              max={20}
-              step={1}
-              value={String(draft.runtime.benchmarkSuggestionLimit)}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (!Number.isFinite(value)) return;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      runtime: {
-                        ...previous.runtime,
-                        benchmarkSuggestionLimit: toIntInRange(value, 1, 20),
-                      },
-                    }
-                    : previous
-                );
-              }}
-            />
-          </div>
-        </div>
-      </FormSection>
+        <FormSection
+          title='Runtime Defaults'
+          description='Rule-profile and benchmark defaults.'
+          variant='subtle'
+          className='p-4'
+        >
+          <SettingsFieldsRenderer
+            fields={runtimeFields}
+            values={draft.runtime}
+            onChange={(vals) =>
+              setDraft((prev) =>
+                prev
+                  ? { ...prev, runtime: { ...prev.runtime, ...vals } }
+                  : null,
+              )
+            }
+            className='grid gap-x-6 gap-y-2 md:grid-cols-2 lg:grid-cols-3'
+          />
+        </FormSection>
 
-      <FormSection
-        title='Learning'
-        description='Controls template matching, approvals, and auto-learning behavior.'
-        variant='subtle'
-        className='p-4'
-      >
-        <div className='grid gap-3 md:grid-cols-4'>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Learning Enabled</Label>
-            <div className='flex h-10 items-center rounded border border-border/60 bg-card/30 px-3'>
-              <StatusToggle
-                enabled={draft.learning.enabled}
-                onToggle={() => {
-                  setDraft((previous) =>
-                    previous
-                      ? {
-                        ...previous,
-                        learning: {
-                          ...previous.learning,
-                          enabled: !previous.learning.enabled,
-                        },
-                      }
-                      : previous
-                  );
-                }}
-              />
-            </div>
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Similarity Threshold</Label>
-            <Input
-              size='sm'
-              type='number'
-              min={0.3}
-              max={0.95}
-              step={0.01}
-              value={String(draft.learning.similarityThreshold)}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (!Number.isFinite(value)) return;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      learning: {
-                        ...previous.learning,
-                        similarityThreshold: clampNumber(value, 0.3, 0.95),
-                      },
-                    }
-                    : previous
-                );
-              }}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Template Merge Threshold</Label>
-            <Input
-              size='sm'
-              type='number'
-              min={0.3}
-              max={0.95}
-              step={0.01}
-              value={String(draft.learning.templateMergeThreshold)}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (!Number.isFinite(value)) return;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      learning: {
-                        ...previous.learning,
-                        templateMergeThreshold: clampNumber(value, 0.3, 0.95),
-                      },
-                    }
-                    : previous
-                );
-              }}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Min Approvals For Match</Label>
-            <Input
-              size='sm'
-              type='number'
-              min={1}
-              max={20}
-              step={1}
-              value={String(draft.learning.minApprovalsForMatching)}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (!Number.isFinite(value)) return;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      learning: {
-                        ...previous.learning,
-                        minApprovalsForMatching: toIntInRange(value, 1, 20),
-                      },
-                    }
-                    : previous
-                );
-              }}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Runtime Template Cap</Label>
-            <Input
-              size='sm'
-              type='number'
-              min={50}
-              max={5000}
-              step={10}
-              value={String(draft.learning.maxTemplates)}
-              onChange={(event) => {
-                const value = Number(event.target.value);
-                if (!Number.isFinite(value)) return;
-                setDraft((previous) =>
-                  previous
-                    ? {
-                      ...previous,
-                      learning: {
-                        ...previous.learning,
-                        maxTemplates: toIntInRange(value, 50, 5000),
-                      },
-                    }
-                    : previous
-                );
-              }}
-            />
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>Auto Activate Learned</Label>
-            <div className='flex h-10 items-center rounded border border-border/60 bg-card/30 px-3'>
-              <StatusToggle
-                enabled={draft.learning.autoActivateLearnedTemplates}
-                onToggle={() => {
-                  setDraft((previous) =>
-                    previous
-                      ? {
-                        ...previous,
-                        learning: {
-                          ...previous.learning,
-                          autoActivateLearnedTemplates:
-                              !previous.learning.autoActivateLearnedTemplates,
-                        },
-                      }
-                      : previous
-                  );
-                }}
-              />
-            </div>
-          </div>
-          <div className='space-y-1'>
-            <Label className='text-[11px] text-gray-400'>
-              Benchmark Template Upsert
-            </Label>
-            <div className='flex h-10 items-center rounded border border-border/60 bg-card/30 px-3'>
-              <StatusToggle
-                enabled={draft.learning.benchmarkSuggestionUpsertTemplates}
-                onToggle={() => {
-                  setDraft((previous) =>
-                    previous
-                      ? {
-                        ...previous,
-                        learning: {
-                          ...previous.learning,
-                          benchmarkSuggestionUpsertTemplates:
-                              !previous.learning.benchmarkSuggestionUpsertTemplates,
-                        },
-                      }
-                      : previous
-                  );
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      </FormSection>
+        <FormSection
+          title='Learning behavior'
+          description='Controls template matching and auto-learning.'
+          variant='subtle'
+          className='p-4'
+        >
+          <SettingsFieldsRenderer
+            fields={learningFields}
+            values={draft.learning}
+            onChange={(vals) =>
+              setDraft((prev) =>
+                prev
+                  ? { ...prev, learning: { ...prev.learning, ...vals } }
+                  : null,
+              )
+            }
+            className='grid gap-x-6 gap-y-2 md:grid-cols-2 lg:grid-cols-4'
+          />
+        </FormSection>
+      </div>
 
-      <div className='flex flex-wrap items-center gap-2'>
+      <div className='flex flex-wrap items-center gap-2 pt-4 border-t border-white/5'>
         <Button
           type='button'
           size='sm'
@@ -969,7 +664,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           {chatbotModelsQuery.isLoading
             ? 'Loading model discovery...'
             : chatbotModelsQuery.error
-              ? 'Live model discovery unavailable. AI Brain catalog models are still available.'
+              ? 'Live model discovery unavailable.'
               : 'Live model discovery connected.'}
         </span>
       </div>

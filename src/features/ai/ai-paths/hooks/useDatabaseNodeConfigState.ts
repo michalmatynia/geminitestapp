@@ -210,15 +210,24 @@ export function useDatabaseNodeConfigState() {
   }, [queryConfig.provider, schemaConnection.schemaConfig?.provider, schemaSyncMutation]);
 
   const handleRunQuery = useCallback(async () => {
+
     setTestQueryLoading(true);
+
     setTestQueryResult('');
+
     try {
-      const ctx = { ...runtimeState.outputs[selectedNodeId], ...runtimeState.inputs[selectedNodeId] };
-      const rawValue = runtimeState.inputs[selectedNodeId]?.['value'] || runtimeState.inputs[selectedNodeId]?.['jobId'];
-      const val = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+
+      const inputs = runtimeState.inputs[selectedNodeId];
+
+      const ctx = { ...runtimeState.outputs[selectedNodeId], ...inputs };
+
+      const rawValue = inputs?.['value'] ?? inputs?.['jobId'];
+
+      const val = Array.isArray(rawValue) ? (rawValue as unknown[])[0] : rawValue;
+
       const activeVal = isUpdateAction ? databaseConfig.updateTemplate : queryTemplateValue;
-      const rendered = renderTemplate(activeVal || '', ctx, val ?? '');
-      const parsed = safeParseJson(rendered);
+
+      const rendered = renderTemplate(activeVal || '', ctx, val ?? '');      const parsed = safeParseJson(rendered);
       if (parsed.error) throw new Error(parsed.error);
 
       const res = await dbApi.action({

@@ -3,9 +3,12 @@ import { z } from 'zod';
 const captureException = async (error: unknown, context: { source: string; context?: Record<string, unknown>; critical?: boolean }): Promise<void> => {
   try {
     // eslint-disable-next-line import/no-restricted-paths
-    const { ErrorSystem } = await import('@/features/observability/server');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-    await ErrorSystem.captureException(error, context as any);
+    const mod = await import('@/features/observability/server');
+    await mod.ErrorSystem.captureException(error, {
+      service: context.source,
+      ...context.context,
+      critical: context.critical,
+    });
   } catch {
     // ignore
   }

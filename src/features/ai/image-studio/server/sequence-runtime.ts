@@ -15,7 +15,6 @@ import {
   normalizeImageStudioSequenceSteps,
   parseImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
-  type ImageStudioSequenceOperation,
   type ImageStudioSequenceStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
 import {

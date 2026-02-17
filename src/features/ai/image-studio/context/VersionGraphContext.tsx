@@ -5,6 +5,14 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { useToast } from '@/shared/ui';
 
 import { useSlotsState, useSlotsActions } from './SlotsContext';
+import {
+  VERSION_GRAPH_IMAGE_PRELOAD_LIMIT,
+  asRecord,
+  collectHiddenIds,
+  matchesFilter,
+  preloadVersionGraphImage,
+  remapMetadataForDetachedCopy,
+} from './version-graph-context-utils';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import { readMeta } from '../utils/metadata';
 import {
@@ -17,317 +25,25 @@ import {
 import { resolveScopedVersionGraphSlots } from '../utils/version-graph-scope';
 
 import type { CompositeLayerConfig } from '../types';
+import type {
+  VersionGraphActions,
+  VersionGraphFilterType,
+  VersionGraphState,
+} from './version-graph-context-types';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type { VersionNode, VersionEdge, LayoutMode };
-
-export interface VersionGraphState {
-  /** Visible nodes (after collapse filtering) */
-  nodes: VersionNode[];
-  /** Visible edges (after collapse filtering) */
-  edges: VersionEdge[];
-  /** All nodes before collapse filtering */
-  allNodes: VersionNode[];
-  rootNodes: VersionNode[];
-  selectedNodeId: string | null;
-  hoveredNodeId: string | null;
-  mergeMode: boolean;
-  mergeSelectedIds: string[];
-  /** Collapse */
-  collapsedNodeIds: Set<string>;
-  /** Filter */
-  filterQuery: string;
-  filterTypes: Set<'base' | 'generation' | 'merge' | 'composite'>;
-  filterHasMask: boolean | null;
-  filteredNodeIds: Set<string> | null;
-  /** Layout */
-  layoutMode: LayoutMode;
-  /** Stats */
-  graphStats: {
-    totalNodes: number;
-    baseCount: number;
-    generationCount: number;
-    mergeCount: number;
-    compositeCount: number;
-    maxDepth: number;
-    maskedCount: number;
-  };
-  /** Composite mode */
-  compositeMode: boolean;
-  compositeSelectedIds: string[];
-  compositeResultCache: Map<string, string>;
-  compositeLoading: boolean;
-  /** Isolate branch */
-  isolatedNodeId: string | null;
-  isolatedNodeIds: Set<string> | null;
-  /** Leaf filter */
-  filterLeafOnly: boolean;
-  /** Compare mode */
-  compareMode: boolean;
-  compareNodeIds: [string, string] | null;
-}
-
-export interface VersionGraphActions {
-  selectNode: (slotId: string | null) => void;
-  hoverNode: (slotId: string | null) => void;
-  activateNode: (slotId: string) => void;
-  detachSubtree: (slotId: string) => Promise<void>;
-  toggleMergeMode: () => void;
-  toggleMergeSelection: (slotId: string) => void;
-  clearMergeSelection: () => void;
-  executeMerge: () => Promise<void>;
-  /** Collapse */
-  toggleCollapse: (nodeId: string) => void;
-  expandAll: () => void;
-  collapseAll: () => void;
-  /** Filter */
-  setFilterQuery: (q: string) => void;
-  toggleFilterType: (t: 'base' | 'generation' | 'merge' | 'composite') => void;
-  setFilterHasMask: (v: boolean | null) => void;
-  clearFilters: () => void;
-  /** Layout */
-  setLayoutMode: (mode: LayoutMode) => void;
-  /** Composite mode */
-  toggleCompositeMode: () => void;
-  toggleCompositeSelection: (slotId: string) => void;
-  clearCompositeSelection: () => void;
-  executeComposite: () => Promise<void>;
-  reorderCompositeLayer: (compositeSlotId: string, fromIndex: number, toIndex: number) => Promise<void>;
-  flattenComposite: (compositeSlotId: string) => Promise<void>;
-  refreshCompositePreview: (compositeSlotId: string) => Promise<void>;
-  /** Isolate branch */
-  isolateBranch: (nodeId: string | null) => void;
-  /** Annotations */
-  setAnnotation: (nodeId: string, text: string) => Promise<void>;
-  /** Leaf filter */
-  toggleFilterLeafOnly: () => void;
-  /** Compare mode */
-  toggleCompareMode: () => void;
-  setCompareNodeIds: (ids: [string, string] | null) => void;
-}
+export type {
+  VersionGraphState,
+  VersionGraphActions,
+  VersionGraphFilterType,
+} from './version-graph-context-types';
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
 
 const VersionGraphStateContext = createContext<VersionGraphState | null>(null);
 const VersionGraphActionsContext = createContext<VersionGraphActions | null>(null);
-
-const VERSION_GRAPH_IMAGE_PRELOAD_LIMIT = 120;
-const versionGraphImagePreloadStatus = new Map<string, 'loading' | 'loaded' | 'error'>();
-
-const preloadVersionGraphImage = (src: string): void => {
-  const normalizedSrc = src.trim();
-  if (!normalizedSrc) return;
-  if (normalizedSrc.startsWith('data:') || normalizedSrc.startsWith('blob:')) {
-    versionGraphImagePreloadStatus.set(normalizedSrc, 'loaded');
-    return;
-  }
-
-  const status = versionGraphImagePreloadStatus.get(normalizedSrc);
-  if (status === 'loading' || status === 'loaded') return;
-
-  versionGraphImagePreloadStatus.set(normalizedSrc, 'loading');
-  const image = new Image();
-  image.loading = 'eager';
-  image.decoding = 'async';
-  image.onload = (): void => {
-    versionGraphImagePreloadStatus.set(normalizedSrc, 'loaded');
-  };
-  image.onerror = (): void => {
-    versionGraphImagePreloadStatus.set(normalizedSrc, 'error');
-  };
-  image.src = normalizedSrc;
-};
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Collect all recursive descendant IDs for a set of collapsed nodes. */
-function collectHiddenIds(
-  collapsedIds: Set<string>,
-  allNodes: VersionNode[],
-): Set<string> {
-  const nodeById = new Map(allNodes.map((n) => [n.id, n]));
-  const hidden = new Set<string>();
-
-  function walkDown(nodeId: string): void {
-    const node = nodeById.get(nodeId);
-    if (!node) return;
-    for (const childId of node.childIds) {
-      if (hidden.has(childId)) continue;
-      hidden.add(childId);
-      // If the child is also collapsed, still hide its descendants
-      walkDown(childId);
-    }
-  }
-
-  for (const cid of collapsedIds) {
-    walkDown(cid);
-  }
-
-  return hidden;
-}
-
-/** Check if a node matches the filter criteria. */
-function matchesFilter(
-  node: VersionNode,
-  query: string,
-  types: Set<'base' | 'generation' | 'merge' | 'composite'>,
-  hasMask: boolean | null,
-): boolean {
-  // Type filter
-  if (types.size > 0 && !types.has(node.type)) return false;
-
-  // Mask filter
-  if (hasMask === true && !node.hasMask) return false;
-  if (hasMask === false && node.hasMask) return false;
-
-  // Text query
-  if (query) {
-    const q = query.toLowerCase();
-    const labelMatch = node.label.toLowerCase().includes(q);
-    const meta = readMeta(node.slot);
-    const promptMatch = meta.generationParams?.prompt?.toLowerCase().includes(q) ?? false;
-    if (!labelMatch && !promptMatch) return false;
-  }
-
-  return true;
-}
-
-const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-
-const readMetadataSourceIds = (metadata: Record<string, unknown> | null): string[] => {
-  if (!metadata) return [];
-
-  const ordered = new Set<string>();
-  const primary = metadata['sourceSlotId'];
-  if (typeof primary === 'string' && primary.trim()) {
-    ordered.add(primary.trim());
-  }
-
-  const nested = metadata['sourceSlotIds'];
-  if (Array.isArray(nested)) {
-    nested.forEach((value: unknown) => {
-      if (typeof value !== 'string') return;
-      const normalized = value.trim();
-      if (!normalized) return;
-      ordered.add(normalized);
-    });
-  }
-
-  return Array.from(ordered);
-};
-
-const remapMetadataIdList = (
-  value: unknown,
-  idMap: Map<string, string>,
-): string[] => {
-  if (!Array.isArray(value)) return [];
-  const remapped = new Set<string>();
-  value.forEach((entry: unknown) => {
-    if (typeof entry !== 'string') return;
-    const normalized = entry.trim();
-    if (!normalized) return;
-    const mapped = idMap.get(normalized);
-    if (mapped) remapped.add(mapped);
-  });
-  return Array.from(remapped);
-};
-
-const remapMetadataForDetachedCopy = (
-  metadata: Record<string, unknown> | null,
-  idMap: Map<string, string>,
-  isRoot: boolean,
-): Record<string, unknown> | null => {
-  if (!metadata) {
-    return isRoot ? { role: 'base' } : null;
-  }
-
-  const next: Record<string, unknown> = { ...metadata };
-  const remappedSourceIds = Array.from(
-    new Set(
-      readMetadataSourceIds(metadata)
-        .map((sourceId: string) => idMap.get(sourceId))
-        .filter((sourceId): sourceId is string => Boolean(sourceId)),
-    ),
-  );
-
-  if (isRoot || remappedSourceIds.length === 0) {
-    delete next['sourceSlotId'];
-    delete next['sourceSlotIds'];
-  } else if (remappedSourceIds.length === 1) {
-    next['sourceSlotId'] = remappedSourceIds[0];
-    delete next['sourceSlotIds'];
-  } else {
-    next['sourceSlotId'] = remappedSourceIds[0];
-    next['sourceSlotIds'] = remappedSourceIds;
-  }
-
-  const remappedReferenceIds = remapMetadataIdList(next['sourceReferenceIds'], idMap);
-  if (remappedReferenceIds.length > 0) {
-    next['sourceReferenceIds'] = remappedReferenceIds;
-  } else {
-    delete next['sourceReferenceIds'];
-  }
-
-  const compositeConfig = asRecord(next['compositeConfig']);
-  if (compositeConfig) {
-    const remappedLayers = Array.isArray(compositeConfig['layers'])
-      ? (compositeConfig['layers'] as unknown[])
-        .map((layer: unknown): Record<string, unknown> | null => {
-          const layerRecord = asRecord(layer);
-          if (!layerRecord) return null;
-          const rawSlotId = layerRecord['slotId'];
-          if (typeof rawSlotId !== 'string') return null;
-          const mappedSlotId = idMap.get(rawSlotId.trim());
-          if (!mappedSlotId) return null;
-          return { ...layerRecord, slotId: mappedSlotId };
-        })
-        .filter((layer): layer is Record<string, unknown> => Boolean(layer))
-      : [];
-
-    const nextCompositeConfig: Record<string, unknown> = { ...compositeConfig };
-    if (remappedLayers.length > 0) {
-      nextCompositeConfig['layers'] = remappedLayers.map((layer: Record<string, unknown>, index: number) => ({
-        ...layer,
-        order: index,
-      }));
-    } else {
-      delete nextCompositeConfig['layers'];
-    }
-
-    const rawFlattenedId = nextCompositeConfig['flattenedSlotId'];
-    if (typeof rawFlattenedId === 'string') {
-      const mappedFlattenedId = idMap.get(rawFlattenedId.trim());
-      if (mappedFlattenedId) {
-        nextCompositeConfig['flattenedSlotId'] = mappedFlattenedId;
-      } else {
-        delete nextCompositeConfig['flattenedSlotId'];
-      }
-    }
-
-    if (Object.keys(nextCompositeConfig).length > 0) {
-      next['compositeConfig'] = nextCompositeConfig;
-    } else {
-      delete next['compositeConfig'];
-    }
-  }
-
-  if (isRoot) {
-    delete next['relationType'];
-    delete next['generationRunId'];
-    delete next['generationOutputIndex'];
-    delete next['generationOutputCount'];
-    delete next['sourceSlotId'];
-    delete next['sourceSlotIds'];
-    delete next['sourceReferenceIds'];
-    next['role'] = 'base';
-  }
-
-  return Object.keys(next).length > 0 ? next : null;
-};
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -352,7 +68,9 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
 
   // Filter state
   const [filterQuery, setFilterQuery] = useState('');
-  const [filterTypes, setFilterTypes] = useState<Set<'base' | 'generation' | 'merge' | 'composite'>>(new Set());
+  const [filterTypes, setFilterTypes] = useState<Set<VersionGraphFilterType>>(
+    new Set(),
+  );
   const [filterHasMask, setFilterHasMask] = useState<boolean | null>(null);
   const [filterLeafOnly, setFilterLeafOnly] = useState(false);
 
@@ -909,7 +627,7 @@ export function VersionGraphProvider({ children }: { children: React.ReactNode }
     setFilterQuery(q);
   }, []);
 
-  const toggleFilterType = useCallback((t: 'base' | 'generation' | 'merge' | 'composite') => {
+  const toggleFilterType = useCallback((t: VersionGraphFilterType) => {
     setFilterTypes((prev) => {
       const next = new Set(prev);
       if (next.has(t)) {

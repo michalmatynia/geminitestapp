@@ -128,6 +128,25 @@ type EnvironmentReferenceDraft = {
   updatedAt: string | Date | null;
 };
 
+const resolveSlotIdCandidates = (rawId: string): string[] => {
+  const normalized = rawId.trim();
+  if (!normalized) return [];
+
+  const unprefixed = normalized.startsWith('slot:')
+    ? normalized.slice('slot:'.length).trim()
+    : normalized.startsWith('card:')
+      ? normalized.slice('card:'.length).trim()
+      : normalized;
+
+  const candidates = new Set<string>([normalized]);
+  if (unprefixed) {
+    candidates.add(unprefixed);
+    candidates.add(`slot:${unprefixed}`);
+    candidates.add(`card:${unprefixed}`);
+  }
+  return Array.from(candidates);
+};
+
 const EMPTY_ENVIRONMENT_REFERENCE_DRAFT: EnvironmentReferenceDraft = {
   imageFileId: null,
   imageUrl: '',
@@ -499,6 +518,7 @@ export function StudioModals(): React.JSX.Element {
   const [inlineSlotUploadError, setInlineSlotUploadError] = useState<string | null>(null);
   const inlineSlotLinkSyncTimeoutRef = useRef<number | null>(null);
   const inlineSlotBase64SyncTimeoutRef = useRef<number | null>(null);
+  const suppressNextInlineDraftPersistenceOpsRef = useRef<number>(0);
 
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -1048,6 +1068,10 @@ export function StudioModals(): React.JSX.Element {
     (index: number, value: string): void => {
       if (index !== INLINE_CARD_IMAGE_SLOT_INDEX) return;
       setSlotImageUrlDraft(value);
+      if (suppressNextInlineDraftPersistenceOpsRef.current > 0) {
+        suppressNextInlineDraftPersistenceOpsRef.current -= 1;
+        return;
+      }
       if (!selectedSlot?.id) return;
       scheduleInlineSlotLinkPersistence(selectedSlot.id, value);
     },
@@ -1058,6 +1082,10 @@ export function StudioModals(): React.JSX.Element {
     (index: number, value: string): void => {
       if (index !== INLINE_CARD_IMAGE_SLOT_INDEX) return;
       setSlotBase64Draft(value);
+      if (suppressNextInlineDraftPersistenceOpsRef.current > 0) {
+        suppressNextInlineDraftPersistenceOpsRef.current -= 1;
+        return;
+      }
       if (!selectedSlot?.id) return;
       scheduleInlineSlotBase64Persistence(selectedSlot.id, value);
     },
@@ -1125,16 +1153,63 @@ export function StudioModals(): React.JSX.Element {
       clearInlineSlotSyncTimeouts();
       setSlotUpdateBusy(true);
       try {
-        await updateSlotMutation.mutateAsync({
-          id: selectedSlot.id,
-          data: {
-            imageFileId: null,
-            imageUrl: null,
-            imageBase64: null,
-          },
-        });
+        const clearPayload = {
+          imageFileId: null,
+          imageUrl: null,
+          imageBase64: null,
+        } as const;
+        const slotIdCandidates = resolveSlotIdCandidates(selectedSlot.id);
+        let cleared = false;
+        let clearError: unknown = null;
+
+        for (const candidate of slotIdCandidates) {
+          try {
+            await updateSlotMutation.mutateAsync({
+              id: candidate,
+              data: clearPayload,
+            });
+            cleared = true;
+            break;
+          } catch (error: unknown) {
+            clearError = error;
+          }
+        }
+
+        if (!cleared) {
+          for (const candidate of slotIdCandidates) {
+            if (!candidate) continue;
+            try {
+              const response = await api.patch<{ slot?: ImageStudioSlotRecord }>(
+                `/api/image-studio/slots/${encodeURIComponent(candidate)}`,
+                clearPayload
+              );
+              if (response.slot) {
+                cleared = true;
+                break;
+              }
+            } catch (error: unknown) {
+              clearError = error;
+            }
+          }
+        }
+
+        if (!cleared) {
+          throw (clearError instanceof Error ? clearError : new Error('Failed to remove image'));
+        }
+
+        // Legacy rows can still exist under alias ids; clear them best-effort.
+        await Promise.all(
+          slotIdCandidates
+            .filter((candidate: string) => candidate)
+            .map((candidate: string) =>
+              api.patch(`/api/image-studio/slots/${encodeURIComponent(candidate)}`, clearPayload).catch(() => null)
+            )
+        );
+
         setSlotImageUrlDraft('');
         setSlotBase64Draft('');
+        // ProductImageManager clear flow triggers both link/base64 setters after disconnect.
+        suppressNextInlineDraftPersistenceOpsRef.current = 2;
       } catch (error: unknown) {
         setInlineSlotUploadError(error instanceof Error ? error.message : 'Failed to remove image');
       } finally {

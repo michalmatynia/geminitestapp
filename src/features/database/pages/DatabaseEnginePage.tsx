@@ -21,7 +21,8 @@ import {
   TabsTrigger,
   TabsContent,
   SectionHeader,
-  Alert
+  Alert,
+  MetadataItem
 } from '@/shared/ui';
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
@@ -246,14 +247,16 @@ function DatabaseEngineContent(): React.JSX.Element {
               {redisOverview ? (
                 <div className='space-y-4'>
                   <div className='grid grid-cols-2 gap-4'>
-                    <div className='p-3 rounded border border-white/5 bg-black/20'>
-                      <span className='block text-[10px] uppercase font-bold text-gray-500'>Memory Usage</span>
-                      <span className='text-lg font-mono text-white'>{redisOverview.usedMemory}</span>
-                    </div>
-                    <div className='p-3 rounded border border-white/5 bg-black/20'>
-                      <span className='block text-[10px] uppercase font-bold text-gray-500'>Total Keys</span>
-                      <span className='text-lg font-mono text-white'>{redisOverview.dbSize}</span>
-                    </div>
+                    <MetadataItem
+                      label='Memory Usage'
+                      value={redisOverview.usedMemory}
+                      mono
+                    />
+                    <MetadataItem
+                      label='Total Keys'
+                      value={redisOverview.dbSize}
+                      mono
+                    />
                   </div>
                   <div className='max-h-40 overflow-y-auto space-y-1 pr-2'>
                     {redisOverview.namespaces.map(ns => (

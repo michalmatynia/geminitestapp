@@ -1,10 +1,7 @@
-export const runtime = 'nodejs';
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getProducerMappingRepository } from '@/features/integrations/server';
 import { badRequestError, validationError } from '@/shared/errors/app-error';
-import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
 type BulkProducerMappingRequest = {
@@ -16,7 +13,10 @@ type BulkProducerMappingRequest = {
  * POST /api/marketplace/producer-mappings/bulk
  * Creates or updates multiple producer mappings at once.
  */
-async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  request: NextRequest,
+  _ctx: ApiHandlerContext
+): Promise<Response> {
   const body = (await request.json()) as BulkProducerMappingRequest;
   const { connectionId, mappings } = body;
 
@@ -52,8 +52,3 @@ async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext): Prom
     message: `Successfully saved ${upsertedCount} producer mappings`,
   });
 }
-
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: 'marketplace.producer-mappings.bulk.POST' }
-);

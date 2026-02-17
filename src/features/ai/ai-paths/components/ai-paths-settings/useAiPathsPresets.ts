@@ -78,7 +78,6 @@ export interface AiPathsPresets {
   togglePaletteGroup: (title: string) => void;
   normalizeDbQueryPreset: (raw: Partial<DbQueryPreset>) => DbQueryPreset;
   normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
-  ConfirmationModal: React.ComponentType;
 }
 
 export function useAiPathsPresets({
@@ -359,7 +358,7 @@ export function useAiPathsPresets({
         setClusterPresets(nextPresets);
         await saveClusterPresets(nextPresets);
         toast('Presets imported.', { variant: 'success' });
-      } catch (error) {
+      } catch (error: unknown) {
         reportAiPathsError(error, { action: 'importPresets' }, 'Failed to import presets:');
         toast('Failed to import presets. Check JSON format.', { variant: 'error' });
       }
@@ -479,6 +478,5 @@ export function useAiPathsPresets({
     togglePaletteGroup,
     normalizeDbQueryPreset,
     normalizeDbNodePreset,
-    ConfirmationModal,
   };
 }

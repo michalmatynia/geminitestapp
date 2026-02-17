@@ -15,12 +15,12 @@ import {
   ImportExportProvider,
   useImportExport,
 } from '@/features/data-import-export/context/ImportExportContext';
-import { useParameters as useProductParameters } from '@/features/products/hooks/useProductSettingsQueries';
-import type { ProductParameter } from '@/features/products/types';
 import type {
   Template,
   TemplateMapping,
 } from '@/features/data-import-export/types/imports';
+import { useParameters as useProductParameters } from '@/features/products/hooks/useProductSettingsQueries';
+import type { ProductParameter } from '@/features/products/types';
 import {
   Button,
   Checkbox,

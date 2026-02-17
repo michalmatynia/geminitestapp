@@ -1,11 +1,11 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T00:27:46.104Z
+Generated at: 2026-02-17T00:41:52.914Z
 
 ## Snapshot
 
-- Source files: 2468
-- Source lines: 412044
+- Source files: 2493
+- Source lines: 412647
 - use client files: 897
 - Files >= 1000 LOC: 47
 - Files >= 1500 LOC: 21
@@ -22,21 +22,21 @@ Generated at: 2026-02-17T00:27:46.104Z
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/integrations/imports/base/runs/[runId]/route.ts` | 60 |
-| `src/app/api/marketplace/producer-mappings/bulk/route.ts` | 60 |
-| `src/app/api/marketplace/tag-mappings/bulk/route.ts` | 60 |
-| `src/app/api/ai-paths/runs/[runId]/route.ts` | 59 |
-| `src/app/api/databases/upload/route.ts` | 59 |
-| `src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts` | 59 |
-| `src/app/api/products/ai-jobs/[jobId]/route.ts` | 59 |
-| `src/app/api/prompt-runtime/health/route.ts` | 59 |
-| `src/app/api/databases/engine/backup-scheduler/tick/route.ts` | 58 |
-| `src/app/api/marketplace/mappings/bulk/route.ts` | 58 |
-| `src/app/api/products/images/base64/route.ts` | 58 |
-| `src/app/api/integrations/exports/base/image-retry-presets/route.ts` | 57 |
-| `src/app/api/integrations/imports/base/runs/[runId]/resume/route.ts` | 57 |
-| `src/app/api/assets3d/[id]/route.ts` | 56 |
-| `src/app/api/products/[id]/studio/accept/route.ts` | 56 |
+| `src/app/api/integrations/route.ts` | 52 |
+| `src/app/api/system/activity/route.ts` | 52 |
+| `src/app/api/system/logs/interpret/route.ts` | 52 |
+| `src/app/api/ai-paths/runs/[runId]/resume/route.ts` | 51 |
+| `src/app/api/ai-paths/runs/[runId]/retry-node/route.ts` | 51 |
+| `src/app/api/products/sync/runs/[runId]/route.ts` | 51 |
+| `src/app/api/image-studio/runs/route.ts` | 50 |
+| `src/app/api/integrations/exports/base/active-template/route.ts` | 50 |
+| `src/app/api/integrations/imports/base/active-template/route.ts` | 50 |
+| `src/app/api/databases/delete/route.ts` | 49 |
+| `src/app/api/drafts/route.ts` | 49 |
+| `src/app/api/integrations/connections/[id]/session/route.ts` | 49 |
+| `src/app/api/integrations/exports/base/default-connection/route.ts` | 49 |
+| `src/app/api/notes/categories/[id]/route.ts` | 49 |
+| `src/app/api/system/upload-events/route.ts` | 49 |
 
 ## Top Cross-Feature Dependencies
 
@@ -65,8 +65,8 @@ Generated at: 2026-02-17T00:27:46.104Z
 | `src/features/database/services/database-sync.ts` | 3352 |
 | `src/features/prompt-exploder/parser.ts` | 2811 |
 | `src/features/ai/image-studio/components/StudioModals.tsx` | 2685 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2524 |
 | `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 2481 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2260 |
 | `src/features/ai/agent-runtime/planning/llm.ts` | 2225 |
 | `src/features/integrations/services/exports/base-exporter.ts` | 2148 |
 | `src/features/case-resolver/settings.ts` | 2145 |
@@ -81,4 +81,4 @@ Generated at: 2026-02-17T00:27:46.104Z
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
 | `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 1726 |
 | `src/features/cms/components/page-builder/registry/block-definitions.ts` | 1692 |
-| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1627 |
+| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1629 |

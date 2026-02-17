@@ -4,6 +4,7 @@ import {
   PlusIcon,
   Package,
 } from 'lucide-react';
+import Link from 'next/link';
 import { memo } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
@@ -55,6 +56,23 @@ export const ProductListHeader = memo(function ProductListHeader({
     catalogs,
   } = useProductListFiltersContext();
 
+  const headerBreadcrumb = (
+    <nav
+      aria-label='Breadcrumb'
+      className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
+    >
+      <Link href='/admin' className='transition-colors hover:text-gray-200'>
+        Admin
+      </Link>
+      <span>/</span>
+      <Link href='/admin/products' className='transition-colors hover:text-gray-200'>
+        Products
+      </Link>
+      <span>/</span>
+      <span className='text-gray-300'>Product List</span>
+    </nav>
+  );
+
   return (
     <div className='space-y-4'>
       {showHeader && (
@@ -92,7 +110,10 @@ export const ProductListHeader = memo(function ProductListHeader({
           </div>
 
           <div className='space-y-3 lg:hidden'>
-            <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
+            <div>
+              <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
+              {headerBreadcrumb}
+            </div>
             <div className='flex w-full items-center justify-end gap-2 max-sm:flex-wrap'>
               <SelectSimple
                 size='sm'
@@ -157,6 +178,7 @@ export const ProductListHeader = memo(function ProductListHeader({
           <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center lg:grid'>
             <div className='min-w-0'>
               <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
+              {headerBreadcrumb}
             </div>
             <div className='flex justify-center'>
               <Pagination

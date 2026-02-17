@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-17T00:27:46.837Z
+Generated at: 2026-02-17T00:41:53.526Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -8,26 +8,26 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/integrations/imports/base/runs/[runId]/route.ts` | 60 |
-| `src/app/api/marketplace/producer-mappings/bulk/route.ts` | 60 |
-| `src/app/api/marketplace/tag-mappings/bulk/route.ts` | 60 |
-| `src/app/api/ai-paths/runs/[runId]/route.ts` | 59 |
-| `src/app/api/databases/upload/route.ts` | 59 |
-| `src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts` | 59 |
-| `src/app/api/products/ai-jobs/[jobId]/route.ts` | 59 |
-| `src/app/api/prompt-runtime/health/route.ts` | 59 |
-| `src/app/api/databases/engine/backup-scheduler/tick/route.ts` | 58 |
-| `src/app/api/marketplace/mappings/bulk/route.ts` | 58 |
-| `src/app/api/products/images/base64/route.ts` | 58 |
-| `src/app/api/integrations/exports/base/image-retry-presets/route.ts` | 57 |
-| `src/app/api/integrations/imports/base/runs/[runId]/resume/route.ts` | 57 |
-| `src/app/api/assets3d/[id]/route.ts` | 56 |
-| `src/app/api/products/[id]/studio/accept/route.ts` | 56 |
-| `src/app/api/cms/themes/[id]/route.ts` | 55 |
-| `src/app/api/integrations/export-templates/route.ts` | 55 |
-| `src/app/api/notes/categories/route.ts` | 54 |
-| `src/app/api/notes/tags/route.ts` | 54 |
-| `src/app/api/products/[id]/studio/send/route.ts` | 54 |
+| `src/app/api/integrations/route.ts` | 52 |
+| `src/app/api/system/activity/route.ts` | 52 |
+| `src/app/api/system/logs/interpret/route.ts` | 52 |
+| `src/app/api/ai-paths/runs/[runId]/resume/route.ts` | 51 |
+| `src/app/api/ai-paths/runs/[runId]/retry-node/route.ts` | 51 |
+| `src/app/api/products/sync/runs/[runId]/route.ts` | 51 |
+| `src/app/api/image-studio/runs/route.ts` | 50 |
+| `src/app/api/integrations/exports/base/active-template/route.ts` | 50 |
+| `src/app/api/integrations/imports/base/active-template/route.ts` | 50 |
+| `src/app/api/databases/delete/route.ts` | 49 |
+| `src/app/api/drafts/route.ts` | 49 |
+| `src/app/api/integrations/connections/[id]/session/route.ts` | 49 |
+| `src/app/api/integrations/exports/base/default-connection/route.ts` | 49 |
+| `src/app/api/notes/categories/[id]/route.ts` | 49 |
+| `src/app/api/system/upload-events/route.ts` | 49 |
+| `src/app/api/image-studio/cards/backfill/route.ts` | 48 |
+| `src/app/api/products/validator-decisions/route.ts` | 48 |
+| `src/app/api/agentcreator/teaching/collections/route.ts` | 47 |
+| `src/app/api/cms/media/route.ts` | 47 |
+| `src/app/api/integrations/imports/base/export-warehouse/route.ts` | 47 |
 
 ## Top App Pages by LOC
 
@@ -56,13 +56,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 ## Recommended First Runtime Profiling Targets
 
-- `src/app/api/integrations/imports/base/runs/[runId]/route.ts`
-- `src/app/api/marketplace/producer-mappings/bulk/route.ts`
-- `src/app/api/marketplace/tag-mappings/bulk/route.ts`
-- `src/app/api/ai-paths/runs/[runId]/route.ts`
-- `src/app/api/databases/upload/route.ts`
-- `src/app/api/integrations/[id]/connections/[connectionId]/base/inventories/route.ts`
-- `src/app/api/products/ai-jobs/[jobId]/route.ts`
-- `src/app/api/prompt-runtime/health/route.ts`
-- `src/app/api/databases/engine/backup-scheduler/tick/route.ts`
-- `src/app/api/marketplace/mappings/bulk/route.ts`
+- `src/app/api/integrations/route.ts`
+- `src/app/api/system/activity/route.ts`
+- `src/app/api/system/logs/interpret/route.ts`
+- `src/app/api/ai-paths/runs/[runId]/resume/route.ts`
+- `src/app/api/ai-paths/runs/[runId]/retry-node/route.ts`
+- `src/app/api/products/sync/runs/[runId]/route.ts`
+- `src/app/api/image-studio/runs/route.ts`
+- `src/app/api/integrations/exports/base/active-template/route.ts`
+- `src/app/api/integrations/imports/base/active-template/route.ts`
+- `src/app/api/databases/delete/route.ts`

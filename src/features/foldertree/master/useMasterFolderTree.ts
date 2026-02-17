@@ -113,6 +113,9 @@ export function useMasterFolderTree(
 
   const stateRef = useRef(state);
   const persistTokenRef = useRef(0);
+  /** Direct ref for isApplying – set synchronously outside setState so external sync guards
+   *  are reliable regardless of React batching timing. */
+  const isApplyingDirectRef = useRef(false);
 
   const resolveStateUpdater = useCallback(
     (
@@ -228,6 +231,11 @@ export function useMasterFolderTree(
       pushUndoEntry(undoLabel);
       const normalizedNext = normalizeMasterTreeNodes(nextNodes);
 
+      // Set direct ref BEFORE React state so external sync guards are immediate.
+      if (adapter?.applyOperation) {
+        isApplyingDirectRef.current = true;
+      }
+
       syncState((prev: InternalMasterFolderTreeState) => ({
         ...prev,
         nodes: normalizedNext,
@@ -260,6 +268,7 @@ export function useMasterFolderTree(
 
         if (Array.isArray(persisted)) {
           const normalizedPersisted = normalizeMasterTreeNodes(persisted);
+          isApplyingDirectRef.current = false;
           syncState((prev: InternalMasterFolderTreeState) => ({
             ...prev,
             nodes: normalizedPersisted,
@@ -274,13 +283,23 @@ export function useMasterFolderTree(
             isApplying: false,
           }));
         } else {
+          isApplyingDirectRef.current = false;
           syncState((prev: InternalMasterFolderTreeState) => ({
             ...prev,
             isApplying: false,
           }));
         }
       } catch (error) {
+        isApplyingDirectRef.current = false;
+
         if (token !== persistTokenRef.current) return { ok: false, code: 'PERSIST_CONFLICT' };
+
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[MasterFolderTree] applyOptimisticOperation failed:', {
+            operationType: operation.type,
+            error: error instanceof Error ? error.message : error,
+          });
+        }
 
         syncState({
           ...previousSnapshot,
@@ -308,7 +327,8 @@ export function useMasterFolderTree(
     ): Promise<MasterFolderTreeActionResult> => {
       // Skip external sync while an optimistic operation is in progress
       // to prevent stale external state from overwriting the optimistic nodes.
-      if (reason === 'external_sync' && stateRef.current.isApplying) {
+      // Use direct ref (set synchronously, not through setState) for reliable timing.
+      if (reason === 'external_sync' && (isApplyingDirectRef.current || stateRef.current.isApplying)) {
         return { ok: true };
       }
 

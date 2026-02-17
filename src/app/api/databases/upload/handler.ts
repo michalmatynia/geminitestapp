@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -16,10 +14,9 @@ import {
 import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
 import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
-import { apiHandler } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
 
@@ -52,7 +49,3 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
 
   return NextResponse.json({ message: 'Backup uploaded' });
 }
-
-export const POST = apiHandler(
-  async (req: NextRequest, ctx: ApiHandlerContext): Promise<Response> => POST_handler(req, ctx),
-  { source: 'databases.upload.POST' });

@@ -1,17 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { 
   Button, 
   Input, 
-  Textarea, 
-  FormModal, 
-  Checkbox, 
   Tag, 
-  FormField,
 } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import type { ContextDraft } from '../hooks/useChatbotContextState';
 
@@ -35,33 +32,21 @@ export function ChatbotContextModal({
   isSaving,
   onSave,
 }: ChatbotContextModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
-
-  return (
-    <FormModal
-      open={isOpen}
-      onClose={onClose}
-      title={editingItem ? 'Edit context' : 'New context'}
-      onSave={onSave}
-      isSaving={isSaving}
-      saveText='Save context'
-      size='lg'
-    >
-      <div className='space-y-4'>
-        <FormField label='Title'>
-          <Input
-            value={modalDraft.title}
-            onChange={(event) =>
-              setModalDraft((prev) =>
-                prev ? { ...prev, title: event.target.value } : prev
-              )
-            }
-            disabled={isSaving}
-          />
-        </FormField>
-
-        <FormField label='Tags'>
-          <div className='flex flex-wrap gap-2 mb-2'>
+  const fields: SettingsField<ContextDraft>[] = useMemo(() => [
+    {
+      key: 'title',
+      label: 'Title',
+      type: 'text',
+      placeholder: 'Enter a descriptive title',
+      required: true,
+    },
+    {
+      key: 'tags',
+      label: 'Tags',
+      type: 'custom',
+      render: () => (
+        <div className='space-y-2'>
+          <div className='flex flex-wrap gap-2'>
             {(modalDraft.tags || []).map((tag: string) => (
               <Tag
                 key={tag}
@@ -105,10 +90,12 @@ export function ChatbotContextModal({
                 }
               }}
               disabled={isSaving}
+              className='h-9'
             />
             <Button
               type='button'
               variant='outline'
+              size='sm'
               onClick={() => {
                 const nextTag = tagDraft.trim();
                 if (!nextTag) return;
@@ -125,38 +112,43 @@ export function ChatbotContextModal({
                 setTagDraft('');
               }}
               disabled={isSaving}
+              className='h-9'
             >
               Add
             </Button>
           </div>
-        </FormField>
+        </div>
+      )
+    },
+    {
+      key: 'content',
+      label: 'Content',
+      type: 'textarea',
+      placeholder: 'Add instructions...',
+      className: 'min-h-[240px] font-mono text-xs',
+    },
+    {
+      key: 'active',
+      label: 'Active in global context',
+      type: 'checkbox',
+    }
+  ], [modalDraft.tags, tagDraft, isSaving, setModalDraft, setTagDraft]);
 
-        <FormField label='Content'>
-          <Textarea
-            placeholder='Add instructions...'
-            value={modalDraft.content}
-            onChange={(event) =>
-              setModalDraft((prev) =>
-                prev ? { ...prev, content: event.target.value } : prev
-              )
-            }
-            className='min-h-[240px] font-mono text-xs'
-            disabled={isSaving}
-          />
-        </FormField>
+  const handleChange = (vals: Partial<ContextDraft>) => {
+    setModalDraft(prev => prev ? ({ ...prev, ...vals }) : prev);
+  };
 
-        <label className='flex items-center gap-2 text-sm text-gray-300 cursor-pointer'>
-          <Checkbox
-            checked={modalDraft.active}
-            onCheckedChange={(checked) =>
-              setModalDraft((prev) =>
-                prev ? { ...prev, active: Boolean(checked) } : prev
-              )
-            }
-          />
-          Active in global context
-        </label>
-      </div>
-    </FormModal>
+  return (
+    <SettingsPanelBuilder
+      open={isOpen}
+      onClose={onClose}
+      title={editingItem ? 'Edit Context' : 'New Context'}
+      fields={fields}
+      values={modalDraft}
+      onChange={handleChange}
+      onSave={async () => onSave()}
+      isSaving={isSaving}
+      size='lg'
+    />
   );
 }

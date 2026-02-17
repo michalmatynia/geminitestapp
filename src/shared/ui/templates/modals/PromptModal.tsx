@@ -50,7 +50,7 @@ export function PromptModal({
 
   const handleConfirm = () => {
     if (required && !value.trim()) return;
-    onConfirm(value);
+    void onConfirm(value);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

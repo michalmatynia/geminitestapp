@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
@@ -11,10 +9,9 @@ import {
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import { notFoundError } from '@/shared/errors/app-error';
-import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-async function GET_handler(
+export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
@@ -32,7 +29,7 @@ async function GET_handler(
   return NextResponse.json({ run, nodes, events });
 }
 
-async function DELETE_handler(
+export async function DELETE_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { runId: string }
@@ -53,6 +50,3 @@ async function DELETE_handler(
   }
   return NextResponse.json({ deleted: true, runId });
 }
-
-export const GET = apiHandlerWithParams<{ runId: string }>(GET_handler, { source: 'ai-paths.runs.detail' });
-export const DELETE = apiHandlerWithParams<{ runId: string }>(DELETE_handler, { source: 'ai-paths.runs.delete' });

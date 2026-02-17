@@ -27,16 +27,12 @@ import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation'
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { 
   Checkbox, 
-  Input, 
-  Label, 
-  SelectSimple, 
   useToast,
-  FormModal,
   PanelHeader,
   ListPanel,
   ConfirmModal,
-  FormField
 } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { cn } from '@/shared/utils';
 import { validateFormData } from '@/shared/validations/form-validation';
 
@@ -247,6 +243,86 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     reorderMutation.mutate(orderedIds);
   }, [reorderMutation]);
 
+  const editorFields: SettingsField<TriggerButtonDraft>[] = useMemo(() => [
+    {
+      key: 'name',
+      label: 'Button Name',
+      type: 'text',
+      placeholder: 'e.g. Generate SEO Title',
+      helperText: 'Displayed to users in the UI.',
+      required: true,
+    },
+    {
+      key: 'iconId',
+      label: 'Icon',
+      type: 'custom',
+      render: () => (
+        <IconSelector
+          value={draft.iconId}
+          onChange={(nextValue: string | null) =>
+            setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({
+              ...prev,
+              iconId: nextValue,
+            }))
+          }
+          columns={6}
+        />
+      ),
+      helperText: 'Choose a visual representation for the button.',
+    },
+    {
+      key: 'display',
+      label: 'Display Style',
+      type: 'select',
+      options: DISPLAY_OPTIONS,
+      placeholder: 'Select display',
+      helperText: 'Icon only is best for headers.',
+    },
+    {
+      key: 'mode',
+      label: 'Trigger Mode',
+      type: 'select',
+      options: MODE_OPTIONS,
+      placeholder: 'Select mode',
+      helperText: 'How the button behaves when clicked.',
+    },
+    {
+      key: 'locations' as any,
+      label: 'Location Visibility',
+      type: 'custom',
+      render: () => (
+        <div className='grid grid-cols-1 gap-2 sm:grid-cols-2 mt-2'>
+          {LOCATION_OPTIONS.map((option): React.JSX.Element => {
+            const checked = draft.locations.includes(option.value);
+            return (
+              <label
+                key={option.value}
+                className={cn(
+                  'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card/30 px-3 py-2.5 transition-all hover:bg-card/50',
+                  checked && 'border-primary/30 bg-primary/5'
+                )}
+              >
+                <Checkbox
+                  checked={checked}
+                  onCheckedChange={(value: boolean | 'indeterminate') => {
+                    const nextChecked = Boolean(value);
+                    setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => {
+                      const next = new Set(prev.locations);
+                      if (nextChecked) next.add(option.value);
+                      else next.delete(option.value);
+                      return { ...prev, locations: Array.from(next.values()) };
+                    });
+                  }}
+                />
+                <span className='text-xs font-medium'>{option.label}</span>
+              </label>
+            );
+          })}
+        </div>
+      )
+    }
+  ], [draft.iconId, draft.locations]);
+
   const handleSave = async (): Promise<void> => {
     const validation = validateFormData(
       aiTriggerButtonCreateSchema,
@@ -313,98 +389,17 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         </div>
       </ListPanel>
 
-      <FormModal
+      <SettingsPanelBuilder
         open={editorOpen}
         onClose={(): void => setEditorOpen(false)}
         title={draft.id ? 'Edit Trigger Button' : 'Create Trigger Button'}
-        onSave={() => void handleSave()}
+        fields={editorFields}
+        values={draft}
+        onChange={(vals) => setDraft(prev => ({ ...prev, ...vals }))}
+        onSave={handleSave}
         isSaving={saving}
         size='md'
-      >
-        <div className='space-y-6'>
-          <FormField label='Button Name' description='Displayed to users in the UI.'>
-            <Input
-              value={draft.name}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, name: event.target.value }))
-              }
-              placeholder='e.g. Generate SEO Title'
-              autoFocus
-            />
-          </FormField>
-
-          <FormField label='Icon' description='Choose a visual represention for the button.'>
-            <IconSelector
-              value={draft.iconId}
-              onChange={(nextValue: string | null) =>
-                setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({
-                  ...prev,
-                  iconId: nextValue,
-                }))
-              }
-              columns={6}
-            />
-          </FormField>
-
-          <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
-            <FormField label='Display Style' description='Icon only is best for headers.'>
-              <SelectSimple 
-                size='sm'
-                value={draft.display}
-                onValueChange={(value: string): void =>
-                  setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, display: value as AiTriggerButtonDisplay }))
-                }
-                options={DISPLAY_OPTIONS}
-                placeholder='Select display'
-              />
-            </FormField>
-
-            <FormField label='Trigger Mode' description='How the button behaves when clicked.'>
-              <SelectSimple 
-                size='sm'
-                value={draft.mode}
-                onValueChange={(value: string): void =>
-                  setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({ ...prev, mode: value as AiTriggerButtonMode }))
-                }
-                options={MODE_OPTIONS}
-                placeholder='Select mode'
-              />
-            </FormField>
-          </div>
-
-          <div className='space-y-3'>
-            <Label className='text-xs font-semibold uppercase tracking-wider text-muted-foreground'>Location Visibility</Label>
-            <div className='grid grid-cols-1 gap-2 sm:grid-cols-2'>
-              {LOCATION_OPTIONS.map((option: { value: AiTriggerButtonLocation; label: string }): React.JSX.Element => {
-                const checked = draft.locations.includes(option.value);
-                return (
-                  <label
-                    key={option.value}
-                    className={cn(
-                      'flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card/30 px-3 py-2.5 transition-all hover:bg-card/50',
-                      checked && 'border-primary/30 bg-primary/5'
-                    )}
-                  >
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={(value: boolean | 'indeterminate') => {
-                        const nextChecked = Boolean(value);
-                        setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => {
-                          const next = new Set(prev.locations);
-                          if (nextChecked) next.add(option.value);
-                          else next.delete(option.value);
-                          return { ...prev, locations: Array.from(next.values()) };
-                        });
-                      }}
-                    />
-                    <span className='text-xs font-medium'>{option.label}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </FormModal>
+      />
 
       <ConfirmModal
         isOpen={!!buttonToDelete}

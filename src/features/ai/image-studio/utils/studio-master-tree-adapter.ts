@@ -30,7 +30,7 @@ export const createImageStudioMasterTreeAdapter = ({
   createMasterFolderTreeAdapter({
     decodeNodeId: decodeImageStudioMasterNodeId,
     handlers: {
-      onMove: async ({ operation, context, node, targetParent }): Promise<void> => {
+      onMove: async ({ operation, context, node, targetParent }): Promise<MasterTreeNode[] | void> => {
         const targetFolder =
           targetParent?.entity === 'folder'
             ? targetParent.id
@@ -54,14 +54,17 @@ export const createImageStudioMasterTreeAdapter = ({
             return;
           }
           await moveSlot({ slot, targetFolder });
-          return;
+          // Return the optimistic nodes so the tree controller uses them directly
+          // instead of waiting for external sync (which can race with refetch).
+          return context.nextNodes;
         }
 
         if (canMoveTreePath(node.id, targetFolder)) {
           await moveFolder(node.id, targetFolder);
+          return context.nextNodes;
         }
       },
-      onReorder: async ({ operation, context, node }): Promise<void> => {
+      onReorder: async ({ operation, context, node }): Promise<MasterTreeNode[] | void> => {
         const targetNode = context.previousNodes.find(
           (candidate: MasterTreeNode): boolean => candidate.id === operation.targetId
         );
@@ -75,11 +78,12 @@ export const createImageStudioMasterTreeAdapter = ({
           const slot = slotById.get(node.id);
           if (!slot) return;
           await moveSlot({ slot, targetFolder });
-          return;
+          return context.nextNodes;
         }
 
         if (canMoveTreePath(node.id, targetFolder)) {
           await moveFolder(node.id, targetFolder);
+          return context.nextNodes;
         }
       },
       onRename: async ({ node, nextName }): Promise<void> => {

@@ -25,7 +25,7 @@ describe('Base Mapper', () => {
     it('maps basic fields correctly', () => {
       const record = {
         product_id: '123',
-        name: 'Test Product',
+        name_en: 'Test Product',
         sku: 'SKU123',
         price: 99.99,
         stock: 10,
@@ -42,7 +42,7 @@ describe('Base Mapper', () => {
       const record = {
         text_fields: {
           name_en: 'Nested Name',
-          description: 'Nested Desc',
+          description_en: 'Nested Desc',
         },
         prices: {
           '0': { price_brutto: 150 }

@@ -18,9 +18,8 @@ import {
   sanitizeEdges,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
+import { type ConfirmConfig, useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { ToastFn } from '@/shared/types/domain/ai-paths-runtime';
-import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { useToast } from '@/shared/ui';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 
 type UseAiPathsCanvasInteractionsArgs = {
@@ -32,6 +31,7 @@ type UseAiPathsCanvasInteractionsArgs = {
   selectedNodeId: string | null;
   setSelectedNodeId: (value: string | null) => void;
   confirmNodeSwitch?: (nextNodeId: string) => boolean | Promise<boolean>;
+  confirm: (config: ConfirmConfig) => void;
   clearRuntimeInputsForEdges: (removed: Edge[], remaining: Edge[]) => void;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
   toast: ToastFn;
@@ -77,6 +77,7 @@ export interface AiPathsCanvasInteractions {
   zoomTo: (targetScale: number) => void;
   fitToNodes: () => void;
   resetView: () => void;
+  ConfirmationModal: React.ComponentType;
 }
 
 export function useAiPathsCanvasInteractions({
@@ -88,6 +89,7 @@ export function useAiPathsCanvasInteractions({
   selectedNodeId,
   setSelectedNodeId,
   confirmNodeSwitch,
+  confirm,
   clearRuntimeInputsForEdges,
   reportAiPathsError,
   toast,
@@ -112,7 +114,7 @@ export function useAiPathsCanvasInteractions({
   } | null>(null);
   const { selectedEdgeId, selectedNodeId: selectedNodeIdCtx } = useSelectionState();
   const { selectEdge, selectNode } = useSelectionActions();
-  const { confirm, ConfirmationModal } = useConfirm();
+  const { ConfirmationModal } = useConfirm();
 
   const { viewportRef, canvasRef } = useCanvasRefs();
   const pendingDragRef = useRef<{ nodeId: string; x: number; y: number } | null>(null);

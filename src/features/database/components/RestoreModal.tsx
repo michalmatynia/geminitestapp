@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { Label, Checkbox, FormModal } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface RestoreModalProps extends ModalStateProps {
   backupName: string;
@@ -11,6 +11,10 @@ interface RestoreModalProps extends ModalStateProps {
   title?: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
+
+type RestoreFormState = {
+  truncate: boolean;
+};
 
 export const RestoreModal = ({
   isOpen,
@@ -21,33 +25,42 @@ export const RestoreModal = ({
   title = 'Restore Database',
   size = 'sm',
 }: RestoreModalProps): React.JSX.Element | null => {
-  const [truncate, setTruncate] = useState(true);
+  const [values, setValues] = useState<RestoreFormState>({ truncate: true });
 
-  if (!isOpen) return null;
+  const fields: SettingsField<RestoreFormState>[] = useMemo(() => [
+    {
+      key: 'truncate',
+      label: 'Confirmation',
+      type: 'custom',
+      render: () => (
+        <p className='text-gray-300'>
+          Are you sure you want to restore backup <strong>{backupName}</strong>?
+        </p>
+      )
+    },
+    {
+      key: 'truncate',
+      label: 'Truncate (delete) existing data before restore',
+      type: 'checkbox',
+    }
+  ], [backupName]);
+
+  const handleSave = async () => {
+    onConfirm(values.truncate);
+    onSuccess?.();
+  };
 
   return (
-    <FormModal
+    <SettingsPanelBuilder
       open={isOpen}
       onClose={onClose}
       title={title}
-      onSave={(): void => { onConfirm(truncate); onSuccess?.(); }}
+      fields={fields}
+      values={values}
+      onChange={(vals) => setValues(prev => ({ ...prev, ...vals }))}
+      onSave={handleSave}
       saveText='Restore'
-      cancelText='Cancel'
       size={size}
-    >
-      <p className='mb-4 text-gray-300'>
-        Are you sure you want to restore backup <strong>{backupName}</strong>?
-      </p>
-      <Label className='mb-6 flex cursor-pointer items-center gap-2'>
-        <Checkbox
-          className='size-4 accent-emerald-500'
-          checked={truncate}
-          onCheckedChange={(checked: boolean | 'indeterminate'): void => setTruncate(Boolean(checked))}
-        />
-        <span className='text-sm text-gray-300'>
-          Truncate (delete) existing data before restore
-        </span>
-      </Label>
-    </FormModal>
+    />
   );
 };

@@ -491,7 +491,7 @@ export function useProductListState(): ProductListContextType & {
 
   const handleOpenCreate = useCallback(() => {
     setCreateDraft(null);
-    void handleOpenCreateModal();
+    handleOpenCreateModal();
   }, [handleOpenCreateModal]);
 
   const handleOpenIntegrationsModal = useCallback((product: ProductWithImages) => {

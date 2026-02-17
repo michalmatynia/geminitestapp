@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import type { ModalStateProps } from '@/shared/types/modal-props';
-import { FormField, FormModal, Input } from '@/shared/ui';
+import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 interface MockSignInModalProps extends ModalStateProps {
   email: string;
@@ -13,6 +13,11 @@ interface MockSignInModalProps extends ModalStateProps {
   isSaving: boolean;
   onSave: () => void;
 }
+
+type MockSignInFormState = {
+  email: string;
+  password: string;
+};
 
 export function MockSignInModal({
   isOpen,
@@ -24,27 +29,41 @@ export function MockSignInModal({
   isSaving,
   onSave,
 }: MockSignInModalProps): React.JSX.Element | null {
-  if (!isOpen) return null;
+  const values: MockSignInFormState = { email, password };
+
+  const fields: SettingsField<MockSignInFormState>[] = useMemo(() => [
+    {
+      key: 'email',
+      label: 'Email',
+      type: 'email',
+      required: true,
+    },
+    {
+      key: 'password',
+      label: 'Password',
+      type: 'password',
+      required: true,
+    }
+  ], []);
+
+  const handleChange = (vals: Partial<MockSignInFormState>) => {
+    if (vals.email !== undefined) setEmail(vals.email);
+    if (vals.password !== undefined) setPassword(vals.password);
+  };
 
   return (
-    <FormModal
+    <SettingsPanelBuilder
       open={isOpen}
       onClose={onClose}
       title='Identity Validator'
+      subtitle='Test authentication against the live identity provider without affecting your current session.'
       saveText='Verify Credentials'
-      onSave={onSave}
+      fields={fields}
+      values={values}
+      onChange={handleChange}
+      onSave={async () => onSave()}
       isSaving={isSaving}
       size='sm'
-    >
-      <div className='space-y-4'>
-        <p className='text-xs text-gray-500'>Test authentication against the live identity provider without affecting your current session.</p>
-        <FormField label='Email'>
-          <Input value={email} onChange={(e) => setEmail(e.target.value)} />
-        </FormField>
-        <FormField label='Password'>
-          <Input type='password' value={password} onChange={(e) => setPassword(e.target.value)} />
-        </FormField>
-      </div>
-    </FormModal>
+    />
   );
 }

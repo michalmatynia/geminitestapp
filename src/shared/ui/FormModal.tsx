@@ -68,21 +68,23 @@ export function FormModal({
   const header = (
     <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
       <div className='min-w-0'>
-        <div className='flex min-w-0 flex-wrap items-center gap-2'>
+        <div className='flex min-w-0 items-center gap-2'>
           {saveButton}
-          {actions}
-          <h2 className='text-2xl font-bold tracking-tight text-white'>{title}</h2>
+          <h2 className='truncate text-2xl font-bold tracking-tight text-white'>{title}</h2>
         </div>
         {subtitle ? <p className='mt-1 text-sm text-gray-400'>{subtitle}</p> : null}
       </div>
-      <Button
-        type='button'
-        onClick={onClose}
-        variant='outline'
-        className='min-w-[100px]'
-      >
-        {cancelText}
-      </Button>
+      <div className='flex flex-wrap items-center justify-end gap-2'>
+        {actions}
+        <Button
+          type='button'
+          onClick={onClose}
+          variant='outline'
+          className='min-w-[100px]'
+        >
+          {cancelText}
+        </Button>
+      </div>
     </div>
   );
 

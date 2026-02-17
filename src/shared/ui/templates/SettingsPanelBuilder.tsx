@@ -228,6 +228,7 @@ export interface SettingsPanelBuilderProps<T extends object> extends SettingsFie
   onSave: () => Promise<void>;
   isSaving?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  saveText?: string;
 }
 
 /**
@@ -246,6 +247,7 @@ export function SettingsPanelBuilder<T extends object>({
   onSave,
   isSaving = false,
   size = 'md',
+  saveText,
 }: SettingsPanelBuilderProps<T>) {
   const handleSave = () => {
     void onSave();
@@ -260,7 +262,7 @@ export function SettingsPanelBuilder<T extends object>({
       onSave={handleSave}
       isSaving={isSaving}
       size={size}
-      saveText={isSaving ? 'Saving...' : 'Save'}
+      saveText={saveText ?? (isSaving ? 'Saving...' : 'Save')}
     >
       <SettingsFieldsRenderer
         fields={fields}

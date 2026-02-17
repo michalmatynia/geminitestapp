@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Camera, Eye, EyeOff, Info, Loader2, Locate, Trash2 } from 'lucide-react';
+import { Camera, Eye, EyeOff, Loader2, Locate, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -1557,27 +1557,29 @@ export function CenterPreview(): React.JSX.Element {
                               </Button>
                             </div>
                             <div className='flex items-center gap-1'>
-                              <Button size='xs'
+                              <Button
+                                size='xs'
                                 type='button'
                                 variant='ghost'
                                 onClick={(): void => handleOpenVariantDetails(variant)}
                                 aria-label={`View variant ${variant.index} details`}
                                 title='View variant details'
-                                className='size-5 rounded bg-black/65 text-blue-200 hover:bg-blue-500/20 hover:text-blue-100'
+                                className='size-6 rounded bg-black/65 hover:bg-blue-500/20'
                               >
-                                <Info className='size-3.5' />
+                                <Eye className='size-4 shrink-0 stroke-[2.25] text-blue-200' />
                               </Button>
                               {canDeleteVariant ? (
-                                <Button size='xs'
+                                <Button
+                                  size='xs'
                                   type='button'
                                   variant='ghost'
                                   onClick={(): void => handleDeleteVariant(variant)}
                                   disabled={deleteSlotMutation.isPending}
                                   aria-label={`Delete variant ${variant.index}`}
                                   title='Delete variant'
-                                  className='size-5 rounded bg-black/65 text-red-200 hover:bg-red-500/20 hover:text-red-100'
+                                  className='size-6 rounded bg-black/65 hover:bg-red-500/20'
                                 >
-                                  <Trash2 className='size-3.5' />
+                                  <Trash2 className='size-4 shrink-0 stroke-[2.25] text-red-200' />
                                 </Button>
                               ) : null}
                             </div>

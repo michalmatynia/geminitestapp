@@ -1085,13 +1085,13 @@ export function CanvasBoard({
                 width: NODE_WIDTH,
                 transform: `translate(${node.position.x}px, ${node.position.y}px)`,
               }}
-              onPointerDown={(event) => { handlePointerDownNode(event, node.id); }}
-              onPointerMove={(event) => { handlePointerMoveNode(event, node.id); }}
-              onPointerUp={(event) => { handlePointerUpNode(event, node.id); }}
-              onClick={() => { handleSelectNode(node.id); }}
+              onPointerDown={(event) => { void handlePointerDownNode(event, node.id); }}
+              onPointerMove={(event) => { void handlePointerMoveNode(event, node.id); }}
+              onPointerUp={(event) => { void handlePointerUpNode(event, node.id); }}
+              onClick={() => { void handleSelectNode(node.id); }}
               onDoubleClick={(event) => {
                 event.stopPropagation();
-                handleSelectNode(node.id);
+                void handleSelectNode(node.id);
                 setConfigOpen(true);
               }}
             >
@@ -1213,11 +1213,11 @@ export function CanvasBoard({
                                     prev === connectorKey ? null : connectorKey
                                   );
                                 }}
-                                                                  onContextMenu={(event) => {
-                                                                    event.preventDefault();
-                                                                    event.stopPropagation();
-                                                                    handleDisconnectPort('input', node.id, input);
-                                                                  }}                                aria-label={`Connect to ${formatPortLabel(input)}`}
+                                onContextMenu={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  handleDisconnectPort('input', node.id, input);
+                                }}                                aria-label={`Connect to ${formatPortLabel(input)}`}
                                 title={`Input: ${formatPortLabel(input)}`}
                               />
                               {hasMismatch ? (
@@ -1300,7 +1300,7 @@ export function CanvasBoard({
                                   height: PORT_SIZE + 2,
                                 }}
                                 onPointerDown={(event) =>
-                                  { void handleStartConnection(event, node, output); }
+                                { void handleStartConnection(event, node, output); }
                                 }
                                 onClick={(event) => {
                                   event.stopPropagation();
@@ -1308,11 +1308,11 @@ export function CanvasBoard({
                                     prev === connectorKey ? null : connectorKey
                                   );
                                 }}
-                                                                  onContextMenu={(event) => {
-                                                                    event.preventDefault();
-                                                                    event.stopPropagation();
-                                                                    handleDisconnectPort('output', node.id, output);
-                                                                  }}                                aria-label={`Start connection from ${formatPortLabel(output)}`}
+                                onContextMenu={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  handleDisconnectPort('output', node.id, output);
+                                }}                                aria-label={`Start connection from ${formatPortLabel(output)}`}
                                 title={`Output: ${formatPortLabel(output)}`}
                               />
                               {hasMismatch ? (

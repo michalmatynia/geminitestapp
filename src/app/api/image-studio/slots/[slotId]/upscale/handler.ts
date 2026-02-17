@@ -49,7 +49,6 @@ type UploadedClientUpscaleImage = {
   buffer: Buffer;
   mime: string;
 };
-
 type UpscaleProcessingResult = {
   outputBuffer: Buffer;
   outputMime: string;

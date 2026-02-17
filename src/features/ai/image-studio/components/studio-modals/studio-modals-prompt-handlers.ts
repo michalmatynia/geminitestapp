@@ -177,6 +177,7 @@ export const createPromptExtractionHandlers = (
       appendExtractHistoryEntry({
         runKind: 'smart',
         source: result.source ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         modeRequested: result.modeRequested ?? (deps.studioSettings.promptExtraction.mode as any),
         fallbackUsed: Boolean(result.fallbackUsed),
         autofixApplied:

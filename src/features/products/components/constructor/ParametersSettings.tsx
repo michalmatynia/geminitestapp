@@ -35,12 +35,15 @@ const SELECTOR_TYPE_OPTIONS: Array<{ value: ParameterSelectorType; label: string
   { value: 'radio', label: 'Radio Buttons' },
   { value: 'select', label: 'Select List' },
   { value: 'dropdown', label: 'Dropdown' },
+  { value: 'checklist', label: 'Checklist' },
+  { value: 'checkbox', label: 'Checkbox' },
 ];
 
 const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<ParameterSelectorType>([
   'radio',
   'select',
   'dropdown',
+  'checklist',
 ]);
 
 const normalizeOptionLabels = (input: string): string[] => {

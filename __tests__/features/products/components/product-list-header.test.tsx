@@ -7,6 +7,10 @@ import type { ProductListContextType } from '@/features/products/context/Product
 
 import { render, screen, fireEvent } from '../../../test-utils';
 
+vi.mock('@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
+  TriggerButtonBar: () => null,
+}));
+
 vi.mock('@/shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/shared/ui')>();
   return {
@@ -158,12 +162,12 @@ describe('ProductListHeader Component', () => {
     renderWithContext(<ProductListHeader />);
 
     expect(screen.getAllByText('Products').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText('Create new product')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Create new product').length).toBeGreaterThan(0);
   });
 
   it('calls onCreateProduct when create button is clicked', () => {
     renderWithContext(<ProductListHeader />);
-    fireEvent.click(screen.getByLabelText('Create new product'));
+    fireEvent.click(screen.getAllByLabelText('Create new product')[0]!);
     expect(mockContextValue.onCreateProduct).toHaveBeenCalled();
   });
 

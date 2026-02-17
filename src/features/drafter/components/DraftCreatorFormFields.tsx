@@ -8,7 +8,10 @@ import { CategorySingleSelectField } from '@/features/products/components/form/C
 import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
 import { ProductMetadataFieldProvider } from '@/features/products/components/form/ProductMetadataFieldContext';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
-import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
+import type {
+  ProductSimpleParameter,
+  ProductParameterValue,
+} from '@/features/products/types';
 import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS, type ProductDraftOpenFormTab } from '@/features/products/types/drafts';
 import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
 
@@ -28,6 +31,7 @@ const OPEN_PRODUCT_FORM_TAB_LABELS: Record<ProductDraftOpenFormTab, string> = {
   general: 'General',
   other: 'Other',
   parameters: 'Parameters',
+  'custom-fields': 'Custom Fields',
   images: 'Images',
   studio: 'Studio',
   'import-info': 'Import Info',
@@ -646,7 +650,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
     [parameterValues]
   );
 
-  const getParameterLabel = (parameter: ProductParameter): string =>
+  const getParameterLabel = (parameter: ProductSimpleParameter): string =>
     parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
 
   return (
@@ -683,8 +687,8 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
       ) : (
         <div className='space-y-3'>
           {parameterValues.map((entry: ProductParameterValue, index: number): React.JSX.Element => {
-            const availableOptions: ProductParameter[] = parameters.filter(
-              (parameter: ProductParameter): boolean =>
+            const availableOptions: ProductSimpleParameter[] = parameters.filter(
+              (parameter: ProductSimpleParameter): boolean =>
                 !selectedParameterIds.includes(parameter.id) ||
                 parameter.id === entry.parameterId
             );
@@ -695,7 +699,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
               >
                 <div className='w-full md:w-64'>
                   <SelectSimple size='sm'
-                    options={availableOptions.map((parameter: ProductParameter) => ({
+                    options={availableOptions.map((parameter: ProductSimpleParameter) => ({
                       value: parameter.id,
                       label: getParameterLabel(parameter),
                     }))}

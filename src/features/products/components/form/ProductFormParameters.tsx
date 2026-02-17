@@ -6,7 +6,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import type { ProductParameter, ProductParameterValue } from '@/features/products/types';
 import type { Language } from '@/shared/types/domain/internationalization';
-import { Button, Input, FormSection, SelectSimple, Alert, Textarea, RadioGroup, RadioGroupItem, Label, Tabs, TabsList, TabsTrigger } from '@/shared/ui';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  FormSection,
+  Input,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+  SelectSimple,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+} from '@/shared/ui';
 
 const getParameterLabel = (
   parameter: { name_en: string; name_pl?: string | null; name_de?: string | null },
@@ -22,6 +36,7 @@ const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<ProductParameter['selectorType'
   'radio',
   'select',
   'dropdown',
+  'checklist',
 ]);
 
 type CatalogLanguageOption = {
@@ -33,6 +48,22 @@ const normalizeLanguageCode = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   return value.trim().toLowerCase();
 };
+
+const parseChecklistValues = (value: string): string[] => {
+  const seen = new Set<string>();
+  return value
+    .split(/[,;\n]/)
+    .map((entry: string) => entry.trim())
+    .filter((entry: string) => {
+      if (!entry) return false;
+      const key = entry.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
+const formatChecklistValues = (values: string[]): string => values.join(', ');
 
 export default function ProductFormParameters(): React.JSX.Element {
   const {
@@ -111,7 +142,7 @@ export default function ProductFormParameters(): React.JSX.Element {
   return (
     <div className='space-y-6'>
       <FormSection
-        title='Parameters'
+        title='Custom Fields'
         description='Choose custom fields and provide values for this product.'
       >
         <div className='mb-2 flex justify-end'>
@@ -122,7 +153,7 @@ export default function ProductFormParameters(): React.JSX.Element {
             onClick={addParameterValue}
             disabled={parametersLoading || parameters.length === 0}
           >
-            Add parameter
+            Add custom field
           </Button>
         </div>
 
@@ -136,7 +167,7 @@ export default function ProductFormParameters(): React.JSX.Element {
           </div>
         ) : parameterValues.length === 0 ? (
           <div className='rounded-md border border-dashed border p-4 text-center text-sm text-gray-400'>
-            Add your first parameter to start building values.
+            Add your first custom field to start building values.
           </div>
         ) : (
           <div className='space-y-3'>
@@ -208,6 +239,30 @@ export default function ProductFormParameters(): React.JSX.Element {
                   updateParameterValue(index, nextValue);
                 }
               };
+              const currentChecklistValues = parseChecklistValues(
+                getLanguageValue(activeParameterLanguage.code)
+              );
+              const optionLookup = new Map<string, string>();
+              normalizedOptionLabels.forEach((label: string) => {
+                optionLookup.set(label.trim().toLowerCase(), label);
+              });
+              const checklistValues = currentChecklistValues.map(
+                (value: string): string =>
+                  optionLookup.get(value.trim().toLowerCase()) ?? value
+              );
+              const checklistValueKeys = new Set<string>(
+                checklistValues.map((value: string) => value.trim().toLowerCase())
+              );
+              const checklistOptions = [...normalizedOptionLabels];
+              checklistValues.forEach((value: string) => {
+                const key = value.trim().toLowerCase();
+                const alreadyIncluded = checklistOptions.some(
+                  (option: string) => option.trim().toLowerCase() === key
+                );
+                if (!alreadyIncluded) {
+                  checklistOptions.push(value);
+                }
+              });
 
               return (
                 <div
@@ -223,7 +278,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                           value: param.id,
                           label: getParameterLabel(param, preferredLocale),
                         }))}
-                        placeholder='Select parameter'
+                        placeholder='Select custom field'
                         triggerClassName='h-9 bg-gray-900 border-border/50'
                       />
                     </div>
@@ -267,6 +322,79 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 );
                               })}
                             </RadioGroup>
+                          </div>
+                        ) : selectorType === 'checkbox' ? (
+                          <div className='rounded-md border border-border/50 bg-gray-900/50 p-3'>
+                            <label className='flex items-center gap-2'>
+                              <Checkbox
+                                checked={((): boolean => {
+                                  const currentValue = getLanguageValue(activeParameterLanguage.code).trim().toLowerCase();
+                                  const optionValue =
+                                    normalizedOptionLabels[0]?.trim().toLowerCase() ?? '';
+                                  return (
+                                    currentValue === 'true' ||
+                                    currentValue === '1' ||
+                                    currentValue === 'yes' ||
+                                    currentValue === 'on' ||
+                                    (optionValue ? currentValue === optionValue : false)
+                                  );
+                                })()}
+                                onCheckedChange={(checked: boolean | 'indeterminate'): void =>
+                                  handleLanguageValueChange(
+                                    activeParameterLanguage.code,
+                                    checked === true
+                                      ? normalizedOptionLabels[0] ?? 'true'
+                                      : ''
+                                  )
+                                }
+                                disabled={!entry.parameterId}
+                              />
+                              <span className='text-sm text-gray-200'>
+                                {normalizedOptionLabels[0] ?? 'Enabled'}
+                              </span>
+                            </label>
+                          </div>
+                        ) : selectorType === 'checklist' ? (
+                          <div className='rounded-md border border-border/50 bg-gray-900/50 p-3'>
+                            <div className='space-y-2'>
+                              {checklistOptions.map((optionLabel: string) => {
+                                const optionKey = optionLabel.trim().toLowerCase();
+                                const checkboxId = `product-param-checklist-${index}-${activeParameterLanguage.code}-${optionKey}`;
+                                return (
+                                  <label key={optionLabel} htmlFor={checkboxId} className='flex items-center gap-2'>
+                                    <Checkbox
+                                      id={checkboxId}
+                                      checked={checklistValueKeys.has(optionKey)}
+                                      onCheckedChange={(checked: boolean | 'indeterminate'): void => {
+                                        const nextValues = checked === true
+                                          ? [...checklistValues, optionLabel]
+                                          : checklistValues.filter(
+                                            (value: string) =>
+                                              value.trim().toLowerCase() !== optionKey
+                                          );
+                                        handleLanguageValueChange(
+                                          activeParameterLanguage.code,
+                                          formatChecklistValues(
+                                            Array.from(
+                                              new Map<string, string>(
+                                                nextValues.map((value: string) => [
+                                                  value.trim().toLowerCase(),
+                                                  value,
+                                                ])
+                                              ).values()
+                                            )
+                                          )
+                                        );
+                                      }}
+                                      disabled={!entry.parameterId}
+                                    />
+                                    <span className='text-sm text-gray-200'>
+                                      {optionLabel}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
                           </div>
                         ) : selectorType === 'select' || selectorType === 'dropdown' ? (
                           <SelectSimple

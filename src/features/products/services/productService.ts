@@ -27,6 +27,8 @@ import {
 } from '@/features/products/services/product-service-form-utils';
 import { setProductStudioProject } from '@/features/products/services/product-studio-config';
 import type {
+  ProductParameterValue,
+  ProductSimpleParameterValue,
   ProductWithImages,
   ProductImageRecord,
   ProductRecord,
@@ -35,6 +37,7 @@ import type {
   ProductFilters,
   ProductRepository,
 } from '@/features/products/types/services/product-repository';
+import { mergeProductParameterValues } from '@/features/products/utils/parameter-partition';
 import {
   validateProductCreate,
   validateProductUpdate,
@@ -50,6 +53,31 @@ const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
   getImageFileRepository();
 
 const tempProductPathPrefix = '/uploads/products/temp/';
+
+const normalizeProductPayloadForStorage = <
+  TData extends Record<string, unknown>,
+>(
+    data: TData
+  ): TData => {
+  const payload = data as TData & {
+    parameters?: ProductParameterValue[] | null;
+    simpleParameters?: ProductSimpleParameterValue[] | null;
+  };
+  const mergedParameters = mergeProductParameterValues({
+    customFieldValues: Array.isArray(payload.parameters)
+      ? payload.parameters
+      : [],
+    simpleParameterValues: Array.isArray(payload.simpleParameters)
+      ? payload.simpleParameters
+      : [],
+  });
+
+  const { simpleParameters: _simpleParameters, ...rest } = payload;
+  return {
+    ...(rest as TData),
+    parameters: mergedParameters,
+  } as TData;
+};
 
 /**
  * Retrieves a list of products based on the provided filters.
@@ -333,7 +361,9 @@ async function createProduct(
       });
     }
     
-    const validatedData = validationResult.data;
+    const validatedData = normalizeProductPayloadForStorage(
+      validationResult.data
+    );
     await ErrorSystem.logInfo('Validated data', { validatedData });
     const productRepository = await resolveProductRepository();
     const product = await productRepository.createProduct(validatedData);
@@ -448,7 +478,9 @@ async function updateProduct(
       });
     }
 
-    const validatedData = validationResult.data;
+    const validatedData = normalizeProductPayloadForStorage(
+      validationResult.data
+    );
     await ErrorSystem.logInfo('Validated data', { validatedData });
     const productRepository = await resolveProductRepository();
     const updatedProduct = await productRepository.updateProduct(

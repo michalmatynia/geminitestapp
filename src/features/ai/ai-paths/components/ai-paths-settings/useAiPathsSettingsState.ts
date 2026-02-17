@@ -42,7 +42,9 @@ import {
   triggers,
   triggerButtonsApi,
 } from '@/features/ai/ai-paths/lib';
-import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
+import {
+  updateAiPathsSetting,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
@@ -68,7 +70,9 @@ import { useAiPathsSettingsDocsActions } from './useAiPathsSettingsDocsActions';
 import { useAiPathsSettingsModeActions } from './useAiPathsSettingsModeActions';
 import { useAiPathsSettingsPathActions } from './useAiPathsSettingsPathActions';
 import { useAiPathsSettingsSamples } from './useAiPathsSettingsSamples';
-import { buildPersistedRuntimeState } from '../AiPathsSettingsUtils';
+import {
+  buildPersistedRuntimeState,
+} from '../AiPathsSettingsUtils';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 import type { RunHistoryFilter } from '../run-history-panel';
@@ -996,7 +1000,7 @@ export function useAiPathsSettingsState({
     pathConfigs,
     setPathConfigs,
     paths,
-    persistPathSettings,
+    persistPathSettings: async (...args) => { await persistPathSettings(...args); },
     reportAiPathsError,
     pruneRuntimeInputs,
   });
@@ -1159,7 +1163,7 @@ export function useAiPathsSettingsState({
     paths,
     setPaths,
     setPathConfigs,
-    persistPathSettings,
+    persistPathSettings: async (...args) => { await persistPathSettings(...args); },
     persistSettingsBulk,
     reportAiPathsError,
     toast,

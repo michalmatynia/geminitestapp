@@ -5,6 +5,7 @@ export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS = [
   'general',
   'other',
   'parameters',
+  'custom-fields',
   'images',
   'studio',
   'import-info',

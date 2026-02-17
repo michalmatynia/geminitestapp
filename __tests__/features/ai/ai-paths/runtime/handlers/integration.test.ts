@@ -332,7 +332,6 @@ describe('Integration Handlers', () => {
       });
 
       const result = await handleDatabase(ctx);
-
       expect(api.entityApi.update).toHaveBeenCalledWith(
         expect.objectContaining({
           updates: expect.objectContaining({
@@ -350,6 +349,332 @@ describe('Integration Handlers', () => {
       ).toEqual(
         expect.objectContaining({
           targetPath: 'parameters',
+        })
+      );
+    });
+
+    it('canonicalizes checklist inference values against option labels', async () => {
+      vi.mocked(api.entityApi.update).mockResolvedValue({
+        ok: true,
+        data: { modifiedCount: 1 },
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-guard-checklist',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+              entityType: 'product',
+              mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              query: {
+                provider: 'mongodb',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                single: true,
+              },
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'parameters',
+                definitionsPort: 'result',
+                allowUnknownParameterIds: false,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          entityId: 'product-1',
+          context: {
+            entity: {
+              parameters: [{ parameterId: 'p_features', value: '' }],
+            },
+          },
+          value: [
+            {
+              parameterId: 'p_features',
+              value: ['waterproof', 'bluetooth'],
+            },
+          ],
+          result: [
+            {
+              id: 'p_features',
+              selectorType: 'checklist',
+              optionLabels: ['Waterproof', 'Bluetooth'],
+            },
+          ],
+        },
+      });
+
+      await handleDatabase(ctx);
+
+      expect(api.entityApi.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          updates: expect.objectContaining({
+            parameters: [
+              { parameterId: 'p_features', value: 'Waterproof, Bluetooth' },
+            ],
+          }),
+        })
+      );
+    });
+
+    it('updates only existing parameter rows and does not append inferred unknown rows', async () => {
+      vi.mocked(api.entityApi.update).mockResolvedValue({
+        ok: true,
+        data: { modifiedCount: 1 },
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-guard-no-append',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+              entityType: 'product',
+              mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              query: {
+                provider: 'mongodb',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                single: true,
+              },
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'parameters',
+                definitionsPort: 'result',
+                allowUnknownParameterIds: false,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          entityId: 'product-1',
+          context: {
+            entity: {
+              parameters: [
+                { parameterId: 'p_material', value: '' },
+                { parameterId: 'p_color', value: '' },
+              ],
+            },
+          },
+          value: [
+            { parameterId: 'p_material', value: 'Metal' },
+            { parameterId: 'p_color', value: 'Blue' },
+            { parameterId: 'p_new', value: 'Extra' },
+          ],
+          result: [
+            { id: 'p_material', selectorType: 'text', optionLabels: [] },
+            { id: 'p_color', selectorType: 'text', optionLabels: [] },
+            { id: 'p_new', selectorType: 'text', optionLabels: [] },
+          ],
+        },
+      });
+
+      await handleDatabase(ctx);
+
+      expect(api.entityApi.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          updates: expect.objectContaining({
+            parameters: [
+              { parameterId: 'p_material', value: 'Metal' },
+              { parameterId: 'p_color', value: 'Blue' },
+            ],
+          }),
+        })
+      );
+    });
+
+    it('fetches existing product parameters when update node has no context and preserves full array', async () => {
+      vi.mocked(api.entityApi.update).mockResolvedValue({
+        ok: true,
+        data: { modifiedCount: 1 },
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-guard-fetch-existing',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+              entityType: 'product',
+              mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              query: {
+                provider: 'mongodb',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                single: true,
+              },
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'parameters',
+                definitionsPort: 'result',
+                allowUnknownParameterIds: false,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          entityId: 'product-1',
+          value: [
+            { parameterId: 'p_material', value: 'Metal' },
+            { parameterId: 'p_color', value: 'Blue' },
+          ],
+          result: [
+            { id: 'p_material', selectorType: 'text', optionLabels: [] },
+            { id: 'p_color', selectorType: 'text', optionLabels: [] },
+          ],
+        },
+        fetchEntityCached: vi.fn().mockResolvedValue({
+          id: 'product-1',
+          parameters: [
+            { parameterId: 'p_model_name', value: '' },
+            { parameterId: 'p_color', value: '' },
+            { parameterId: 'p_model_number', value: '' },
+            { parameterId: 'p_tags', value: '' },
+            { parameterId: 'p_brand_attrs', value: '' },
+            { parameterId: 'p_material', value: '' },
+          ],
+        }),
+      });
+
+      await handleDatabase(ctx);
+
+      expect(ctx.fetchEntityCached).toHaveBeenCalledWith('product', 'product-1');
+      expect(api.entityApi.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          updates: expect.objectContaining({
+            parameters: [
+              { parameterId: 'p_model_name', value: '' },
+              { parameterId: 'p_color', value: 'Blue' },
+              { parameterId: 'p_model_number', value: '' },
+              { parameterId: 'p_tags', value: '' },
+              { parameterId: 'p_brand_attrs', value: '' },
+              { parameterId: 'p_material', value: 'Metal' },
+            ],
+          }),
+        })
+      );
+    });
+
+    it('skips parameter write when existing parameter rows are unavailable', async () => {
+      vi.mocked(api.entityApi.update).mockResolvedValue({
+        ok: true,
+        data: { modifiedCount: 1 },
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-guard-skip-missing-existing',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+              entityType: 'product',
+              mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              query: {
+                provider: 'mongodb',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                single: true,
+              },
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'parameters',
+                definitionsPort: 'result',
+                allowUnknownParameterIds: false,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          entityId: 'product-1',
+          value: [{ parameterId: 'p_material', value: 'Metal' }],
+          result: [{ id: 'p_material', selectorType: 'text', optionLabels: [] }],
+        },
+      });
+
+      await handleDatabase(ctx);
+
+      expect(api.entityApi.update).not.toHaveBeenCalled();
+    });
+
+    it('passes simple parameter inference updates through without legacy merge truncation', async () => {
+      vi.mocked(api.entityApi.update).mockResolvedValue({
+        ok: true,
+        data: { modifiedCount: 1 },
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-guard-simple-parameters',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+              entityType: 'product',
+              mappings: [{ targetPath: 'simpleParameters', sourcePort: 'value' }],
+              query: {
+                provider: 'mongodb',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                single: true,
+              },
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'simpleParameters',
+                definitionsPort: 'result',
+                allowUnknownParameterIds: false,
+                enforceOptionLabels: false,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          entityId: 'product-1',
+          value: [
+            { parameterId: 'p_color', value: 'Blue' },
+            { parameterId: 'p_material', value: 'Metal' },
+          ],
+          result: [
+            { id: 'p_color', selectorType: 'text', optionLabels: [] },
+            { id: 'p_material', selectorType: 'text', optionLabels: [] },
+          ],
+        },
+      });
+
+      await handleDatabase(ctx);
+
+      expect(api.entityApi.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          updates: expect.objectContaining({
+            simpleParameters: [
+              { parameterId: 'p_color', value: 'Blue' },
+              { parameterId: 'p_material', value: 'Metal' },
+            ],
+          }),
         })
       );
     });

@@ -55,6 +55,18 @@ export type ProductParameter = Entity & {
 
 export type ProductParameterValue = ProductParameterValueDto;
 
+export type ProductSimpleParameter = Entity & {
+  catalogId: string;
+  name_en: string;
+  name_pl: string | null;
+  name_de: string | null;
+};
+
+export type ProductSimpleParameterValue = {
+  parameterId: string;
+  value?: string | null;
+};
+
 export type CurrencyRecord = Entity & {
   code: string;
   name: string;

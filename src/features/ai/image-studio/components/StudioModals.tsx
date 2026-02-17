@@ -812,6 +812,7 @@ export function StudioModals(): React.JSX.Element {
       height?: number | null;
       updatedAt?: string | Date | null;
     }): void => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
       setEnvironmentReferenceDraft(applyEnvironmentReferenceAssetToDraft(asset as any));
       setEnvironmentPreviewNaturalSize(null);
       setEditCardTab('environment');
@@ -830,10 +831,12 @@ export function StudioModals(): React.JSX.Element {
         // Best-effort cleanup for replaced temporary assets.
       });
     },
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     createSlots, driveImportMode, driveImportTargetId, importFromDriveMutation: importFromDriveMutation as any, localUploadInputRef, localUploadMode,
     localUploadTargetId, selectedFolder, selectedSlot, setDriveImportMode, setDriveImportOpen, setDriveImportTargetId,
     setLocalUploadMode, setLocalUploadTargetId, setSelectedSlotId, setTemporaryObjectUpload, slotHasRenderableImage,
     slotsCount: slots.length,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     temporaryObjectUpload: temporaryObjectUpload as any, toast: toast as any, toSlotName, updateSlotMutation, uploadMutation: uploadMutation as any,
   });
 
@@ -844,9 +847,11 @@ export function StudioModals(): React.JSX.Element {
     handleSuggestUiControls,
     handleApplyExtraction,
   } = createPromptExtractionHandlers({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     extractDraftPrompt, previewControls, previewParams, previewSpecs, setExtractBusy, setExtractDraftPrompt,
     setExtractError, setExtractHistory, setExtractPreviewUiOverrides, setExtractReviewOpen, setParamSpecs,
     setParamUiOverrides, setParamsState, setPreviewControls, setPreviewParams, setPreviewSpecs,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setPreviewValidation, setPromptText, setSelectedExtractHistoryId, studioSettings, toast: toast as any,
   });
   const handleCreateEmptySlot = async (): Promise<void> => { setSlotCreateOpen(false); await handleCreateEmptySlotCore(); };
@@ -855,6 +860,7 @@ export function StudioModals(): React.JSX.Element {
     window.setTimeout(() => localUploadInputRef.current?.click(), 0);
   };
   const {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     handleSaveInlineSlot,
     handleClearSlotImage,
     handleApplyLinkedVariantToCard,
@@ -863,6 +869,7 @@ export function StudioModals(): React.JSX.Element {
     setLinkedVariantApplyBusyKey, setSlotBase64Draft, setSlotImageUrlDraft, setSlotInlineEditOpen, setSlotUpdateBusy,
     selectedSlot, slotFolderDraft, slotNameDraft,
     slotsCount: slots.length,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     toast: toast as any, updateSlotMutation,
   });
   return (
@@ -925,6 +932,7 @@ export function StudioModals(): React.JSX.Element {
         onApplyLinkedVariantToCard={handleApplyLinkedVariantToCard}
         onClearSlotImage={handleClearSlotImage}
         onCopyCardId={async (id: string): Promise<void> => {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
           await copyCardIdToClipboard(id, toast as any);
         }}
         onOpenGenerationPreviewModal={handleOpenGenerationPreviewModal}

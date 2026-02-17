@@ -15,6 +15,7 @@ import {
   moveMasterTreeNode,
   normalizeMasterTreeNodes,
   reorderMasterTreeNode,
+  validateMasterTreeNodes,
 } from '@/shared/utils/master-folder-tree-engine';
 
 import {
@@ -113,6 +114,46 @@ const areMasterTreeNodesStructurallyEqual = (
  *  state and would otherwise trigger a redundant replaceNodes. */
 const OPTIMISTIC_SETTLE_COOLDOWN_MS = 3_000;
 
+/** Maximum time (ms) the isApplyingDirectRef guard can stay active before
+ *  being force-cleared. Prevents the tree from becoming permanently frozen
+ *  if an adapter throws an unhandled error or a requestAnimationFrame callback
+ *  is never invoked (e.g. background tab throttling). */
+const APPLYING_GUARD_TIMEOUT_MS = 10_000;
+
+// ─── Dev-only guardrails ──────────────────────────────────────────────
+
+const DEV = process.env.NODE_ENV !== 'production';
+
+/** Warn when tree validation detects structural issues after an operation. */
+const devWarnTreeIntegrity = (
+  nodes: MasterTreeNode[],
+  context: string
+): void => {
+  if (!DEV) return;
+  const issues = validateMasterTreeNodes(nodes);
+  if (issues.length === 0) return;
+  console.warn(
+    `[MasterFolderTree:guardrail] Tree integrity issues after ${context}:`,
+    issues.map((i) => `${i.code}: ${i.message}`)
+  );
+};
+
+/** Warn when an adapter returns void instead of nodes. Adapters that return
+ *  void force the tree to rely on external sync, which is vulnerable to races. */
+const devWarnAdapterVoidReturn = (
+  persisted: unknown,
+  operationType: string
+): void => {
+  if (!DEV) return;
+  if (Array.isArray(persisted)) return;
+  console.warn(
+    `[MasterFolderTree:guardrail] Adapter returned void for "${operationType}". ` +
+    'Returning context.nextNodes from the adapter is recommended to avoid race conditions.'
+  );
+};
+
+// ─── End guardrails ───────────────────────────────────────────────────
+
 const cloneMasterTreeNodes = (nodes: MasterTreeNode[]): MasterTreeNode[] => {
   if (typeof globalThis.structuredClone === 'function') {
     return globalThis.structuredClone(nodes);
@@ -184,6 +225,9 @@ export function useMasterFolderTree(
    *  Used as a cooldown guard: external_sync that only differs cosmetically
    *  (e.g. sortOrder) is suppressed within OPTIMISTIC_SETTLE_COOLDOWN_MS. */
   const lastOptimisticSettleRef = useRef(0);
+  /** Safety-net timer that auto-clears isApplyingDirectRef if it stays stuck
+   *  (e.g. adapter throws unhandled, rAF never fires in background tab). */
+  const applyingGuardTimerRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
 
   const resolveStateUpdater = useCallback(
     (
@@ -282,6 +326,52 @@ export function useMasterFolderTree(
     [maxUndoEntries, syncState]
   );
 
+  // ─── Guard arming helpers ──────────────────────────────────────────
+
+  /** Activate the direct-ref guard and start a safety-net timeout that
+   *  force-clears the guard if the normal rAF-based clear never fires
+   *  (e.g. tab is backgrounded, adapter throws unexpected error). */
+  const armApplyingGuard = useCallback((): void => {
+    isApplyingDirectRef.current = true;
+    if (applyingGuardTimerRef.current !== null) {
+      globalThis.clearTimeout(applyingGuardTimerRef.current);
+    }
+    applyingGuardTimerRef.current = globalThis.setTimeout(() => {
+      if (isApplyingDirectRef.current) {
+        if (DEV) {
+          console.warn(
+            '[MasterFolderTree:guardrail] isApplyingDirectRef was stuck for',
+            APPLYING_GUARD_TIMEOUT_MS,
+            'ms — force-clearing to unblock external sync.'
+          );
+        }
+        isApplyingDirectRef.current = false;
+      }
+      applyingGuardTimerRef.current = null;
+    }, APPLYING_GUARD_TIMEOUT_MS);
+  }, []);
+
+  /** Clear the direct-ref guard and cancel the safety-net timeout. */
+  const disarmApplyingGuard = useCallback((): void => {
+    if (applyingGuardTimerRef.current !== null) {
+      globalThis.clearTimeout(applyingGuardTimerRef.current);
+      applyingGuardTimerRef.current = null;
+    }
+    requestAnimationFrame(() => {
+      isApplyingDirectRef.current = false;
+    });
+  }, []);
+
+  // Clean up guard timer on unmount
+  useEffect(() => {
+    return (): void => {
+      if (applyingGuardTimerRef.current !== null) {
+        globalThis.clearTimeout(applyingGuardTimerRef.current);
+        applyingGuardTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const applyOptimisticOperation = useCallback(
     async (
       operation: MasterFolderTreePersistOperation,
@@ -299,9 +389,13 @@ export function useMasterFolderTree(
       pushUndoEntry(undoLabel);
       const normalizedNext = normalizeMasterTreeNodes(nextNodes);
 
-      // Set direct ref BEFORE React state so external sync guards are immediate.
+      // Guardrail: validate optimistic nodes before applying them.
+      devWarnTreeIntegrity(normalizedNext, `optimistic ${operation.type}`);
+
+      // Arm the applying guard BEFORE React state so external sync guards
+      // are immediate. The guard timer ensures auto-clear if something goes wrong.
       if (adapter?.applyOperation) {
-        isApplyingDirectRef.current = true;
+        armApplyingGuard();
       }
 
       syncState((prev: InternalMasterFolderTreeState) => ({
@@ -334,8 +428,13 @@ export function useMasterFolderTree(
 
         if (token !== persistTokenRef.current) return { ok: true };
 
+        // Guardrail: warn when adapter doesn't return nodes.
+        devWarnAdapterVoidReturn(persisted, operation.type);
+
         if (Array.isArray(persisted)) {
           const normalizedPersisted = normalizeMasterTreeNodes(persisted);
+          // Guardrail: validate adapter-returned nodes.
+          devWarnTreeIntegrity(normalizedPersisted, `adapter ${operation.type}`);
           syncState((prev: InternalMasterFolderTreeState) => ({
             ...prev,
             nodes: normalizedPersisted,
@@ -358,22 +457,17 @@ export function useMasterFolderTree(
         // Mark the settle timestamp so the cooldown guard in replaceNodes can
         // suppress cosmetic-only external syncs that arrive shortly after.
         lastOptimisticSettleRef.current = Date.now();
-        // Defer clearing the direct ref until AFTER React processes the
-        // state update and fires effects (including external-sync).
-        // This prevents a race where replaceNodes from a refetch-triggered
-        // external sync slips through because the ref was cleared before
-        // the effect had a chance to check it.
-        requestAnimationFrame(() => {
-          isApplyingDirectRef.current = false;
-        });
+        // Disarm the guard (deferred via rAF to survive the React render+effects
+        // cycle, with a safety-net timeout as backup).
+        disarmApplyingGuard();
       } catch (error) {
         if (token !== persistTokenRef.current) {
-          requestAnimationFrame(() => { isApplyingDirectRef.current = false; });
+          disarmApplyingGuard();
           return { ok: false, code: 'PERSIST_CONFLICT' };
         }
 
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('[MasterFolderTree] applyOptimisticOperation failed:', {
+        if (DEV) {
+          console.warn('[MasterFolderTree:guardrail] applyOptimisticOperation failed:', {
             operationType: operation.type,
             error: error instanceof Error ? error.message : error,
           });
@@ -390,13 +484,13 @@ export function useMasterFolderTree(
             cause: error,
           },
         });
-        requestAnimationFrame(() => { isApplyingDirectRef.current = false; });
+        disarmApplyingGuard();
         return toMasterFolderTreeActionFail('PERSIST_FAILED');
       }
 
       return { ok: true };
     },
-    [adapter, profile, pushUndoEntry, syncState]
+    [adapter, armApplyingGuard, disarmApplyingGuard, profile, pushUndoEntry, syncState]
   );
 
   const replaceNodes = useCallback(
@@ -404,19 +498,25 @@ export function useMasterFolderTree(
       incomingNodes: MasterTreeNode[],
       reason: 'refresh' | 'external_sync' = 'external_sync'
     ): Promise<MasterFolderTreeActionResult> => {
-      // Skip external sync while an optimistic operation is in progress
+      // Guard 1: Skip external sync while an optimistic operation is in progress
       // to prevent stale external state from overwriting the optimistic nodes.
       // Use direct ref (set synchronously, not through setState) for reliable timing.
       if (reason === 'external_sync' && (isApplyingDirectRef.current || stateRef.current.isApplying)) {
+        if (DEV) {
+          console.debug(
+            '[MasterFolderTree:guard] Blocked external_sync — optimistic operation in progress'
+          );
+        }
         return { ok: true };
       }
 
       const normalized = normalizeMasterTreeNodes(incomingNodes);
       const previousNodes = stateRef.current.nodes;
+      // Guard 2: Skip if the incoming nodes are identical to current nodes.
       if (reason === 'external_sync' && areMasterTreeNodesEqual(previousNodes, normalized)) {
         return { ok: true };
       }
-      // Cooldown guard: within a short window after an optimistic operation settles,
+      // Guard 3: Cooldown — within a short window after an optimistic operation settles,
       // suppress external_sync if the incoming nodes are structurally identical
       // (same parent-child relationships, names, types). This prevents races where
       // mutation side-effects (onSuccess cache update, onSettled refetch) produce nodes
@@ -425,6 +525,12 @@ export function useMasterFolderTree(
       if (reason === 'external_sync' && lastOptimisticSettleRef.current > 0) {
         const elapsed = Date.now() - lastOptimisticSettleRef.current;
         if (elapsed < OPTIMISTIC_SETTLE_COOLDOWN_MS && areMasterTreeNodesStructurallyEqual(previousNodes, normalized)) {
+          if (DEV) {
+            console.debug(
+              '[MasterFolderTree:guard] Blocked external_sync — cooldown active, structurally identical',
+              { elapsedMs: elapsed, cooldownMs: OPTIMISTIC_SETTLE_COOLDOWN_MS }
+            );
+          }
           return { ok: true };
         }
       }
@@ -713,9 +819,6 @@ export function useMasterFolderTree(
         profile,
       });
       if (!result.ok) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.warn('[MasterFolderTree] moveNode rejected:', result.code, { nodeId, targetParentId });
-        }
         return toMasterFolderTreeActionFail(result.code);
       }
       const opResult = await applyOptimisticOperation(
@@ -886,7 +989,16 @@ export function useMasterFolderTree(
     }
   }, [adapter, profile, syncState]);
 
-  const built = useMemo(() => buildMasterTree(state.nodes), [state.nodes]);
+  const built = useMemo(() => {
+    const result = buildMasterTree(state.nodes);
+    if (DEV && result.issues.length > 0) {
+      console.warn(
+        '[MasterFolderTree:guardrail] Tree validation issues detected:',
+        result.issues.map((i) => `${i.code}: ${i.message}`)
+      );
+    }
+    return result;
+  }, [state.nodes]);
   const selectedNode = useMemo(
     () =>
       state.selectedNodeId

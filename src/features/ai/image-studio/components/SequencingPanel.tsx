@@ -25,7 +25,12 @@ import { usePromptState } from '../context/PromptContext';
 import { useSettingsActions, useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions } from '../context/UiContext';
+import { studioKeys } from '../hooks/useImageStudioQueries';
 import { resolvePromptPlaceholders } from '../utils/run-request-preview';
+import {
+  resolveRenderableSlotById,
+  resolveStudioSlotIdCandidates,
+} from '../utils/sequence-slot-resolution';
 import {
   normalizeImageStudioSequenceSteps,
   resolveImageStudioSequenceActiveSteps,
@@ -34,6 +39,8 @@ import {
   type ImageStudioSequenceStep,
   type ImageStudioSequenceUpscaleStep,
 } from '../utils/studio-settings';
+
+import type { StudioSlotsResponse } from '../types';
 
 type SequenceRunStatus =
   | 'queued'
@@ -53,6 +60,7 @@ type SequenceRunHistoryEvent = {
 
 type SequenceRunRecord = {
   id: string;
+  sourceSlotId: string;
   status: SequenceRunStatus;
   currentSlotId: string;
   activeStepIndex: number | null;
@@ -73,6 +81,11 @@ type SequenceRunsListResponse = {
 
 type SequenceRunDetailResponse = {
   run: SequenceRunRecord;
+  currentSlot?: {
+    id: string | null;
+    imagePath: string | null;
+    renderable: boolean;
+  };
 };
 
 type SequenceRunStartResponse = {
@@ -84,6 +97,22 @@ type SequenceRunStartResponse = {
 };
 
 const POLL_INTERVAL_MS = 1500;
+const SLOT_RESOLUTION_RETRY_MS = 220;
+const SLOT_RESOLUTION_ATTEMPTS = 10;
+const ENABLE_SEQUENCE_SSE = process.env['NEXT_PUBLIC_IMAGE_STUDIO_SEQUENCE_SSE'] !== 'false';
+const ENABLE_ROBUST_SEQUENCE_SYNC =
+  process.env['NEXT_PUBLIC_IMAGE_STUDIO_SEQUENCE_ROBUST_SYNC'] !== 'false';
+
+type SequencerDisplayState =
+  | 'idle'
+  | 'running'
+  | 'resolving_terminal_slot'
+  | 'terminal';
+
+const wait = async (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 const deriveLegacySequencingFields = (steps: ImageStudioSequenceStep[]): {
   operations: ImageStudioSequenceOperation[];
@@ -147,10 +176,17 @@ export function SequencingPanel(): React.JSX.Element {
   const { toast } = useToast();
 
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const streamRef = useRef<EventSource | null>(null);
+  const sourceSlotIdRef = useRef<string | null>(null);
+  const lastTerminalSnapshotRef = useRef<string | null>(null);
 
   const { projectId } = useProjectsState();
   const { workingSlot, compositeAssetIds } = useSlotsState();
-  const { setWorkingSlotId, setSelectedSlotId } = useSlotsActions();
+  const {
+    setWorkingSlotId,
+    setSelectedSlotId,
+    setSlotSelectionLocked,
+  } = useSlotsActions();
   const { promptText, paramsState } = usePromptState();
   const { maskShapes, maskInvert, maskFeather } = useMaskingState();
   const { studioSettings } = useSettingsState();
@@ -164,6 +200,9 @@ export function SequencingPanel(): React.JSX.Element {
   const [sequenceError, setSequenceError] = useState<string | null>(null);
   const [selectedPresetId, setSelectedPresetId] = useState<string>('');
   const [presetNameDraft, setPresetNameDraft] = useState<string>('');
+  const [displayState, setDisplayState] = useState<SequencerDisplayState>('idle');
+  const [pendingTerminalSlotId, setPendingTerminalSlotId] = useState<string | null>(null);
+  const [slotSyncWarning, setSlotSyncWarning] = useState<string | null>(null);
 
   const editableSequenceSteps = useMemo(
     () => normalizeImageStudioSequenceSteps(studioSettings.projectSequencing.steps, {
@@ -247,11 +286,94 @@ export function SequencingPanel(): React.JSX.Element {
     }
   }, []);
 
+  const stopStreaming = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.close();
+      streamRef.current = null;
+    }
+  }, []);
+
+  const resolveTerminalSlotSelection = useCallback(
+    async (input: {
+      run: SequenceRunRecord;
+      hintedSlot: SequenceRunDetailResponse['currentSlot'] | null;
+    }): Promise<boolean> => {
+      const normalizedProjectId = projectId.trim();
+      if (!normalizedProjectId) return false;
+
+      const slotIdCandidates = resolveStudioSlotIdCandidates(input.run.currentSlotId);
+      if (slotIdCandidates.length === 0) return false;
+
+      setSlotSelectionLocked(true);
+      try {
+        for (let attempt = 0; attempt < SLOT_RESOLUTION_ATTEMPTS; attempt += 1) {
+          await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+          await queryClient.refetchQueries({
+            queryKey: studioKeys.slots(normalizedProjectId),
+            type: 'all',
+          });
+
+          const cached = queryClient.getQueryData<StudioSlotsResponse>(
+            studioKeys.slots(normalizedProjectId),
+          );
+          const cachedSlots = Array.isArray(cached?.slots) ? cached.slots : [];
+          const resolvedSlot = resolveRenderableSlotById(
+            cachedSlots,
+            input.run.currentSlotId,
+          );
+
+          if (resolvedSlot) {
+            setWorkingSlotId(resolvedSlot.id);
+            setSelectedSlotId(resolvedSlot.id);
+            return true;
+          }
+
+          const hintedSlotId = input.hintedSlot?.id ?? null;
+          if (input.hintedSlot?.renderable && hintedSlotId) {
+            const hintedResolved = resolveRenderableSlotById(cachedSlots, hintedSlotId);
+            if (hintedResolved) {
+              setWorkingSlotId(hintedResolved.id);
+              setSelectedSlotId(hintedResolved.id);
+              return true;
+            }
+          }
+
+          if (attempt < SLOT_RESOLUTION_ATTEMPTS - 1) {
+            await wait(SLOT_RESOLUTION_RETRY_MS);
+          }
+        }
+      } finally {
+        setSlotSelectionLocked(false);
+      }
+
+      return false;
+    },
+    [
+      projectId,
+      queryClient,
+      setSelectedSlotId,
+      setSlotSelectionLocked,
+      setWorkingSlotId,
+    ],
+  );
+
   const applyRunSnapshot = useCallback(
-    async (run: SequenceRunRecord): Promise<void> => {
+    async (snapshot: SequenceRunDetailResponse): Promise<void> => {
+      const run = snapshot.run;
       setActiveSequenceRunId(run.id);
       setActiveSequenceStatus(run.status);
       setSequenceError(run.errorMessage ?? null);
+
+      const normalizedSourceSlotId = run.sourceSlotId?.trim() ?? '';
+      if (normalizedSourceSlotId) {
+        sourceSlotIdRef.current = normalizedSourceSlotId;
+      }
+
+      if (run.status === 'queued' || run.status === 'running') {
+        setDisplayState('running');
+        setPendingTerminalSlotId(null);
+        setSlotSyncWarning(null);
+      }
 
       const historyEvents = Array.isArray(run.historyEvents) ? run.historyEvents : [];
       const nextLogs = historyEvents
@@ -273,43 +395,107 @@ export function SequencingPanel(): React.JSX.Element {
           : null,
       );
 
-      if (run.status === 'completed' || run.status === 'failed' || run.status === 'cancelled') {
-        stopPolling();
-        await invalidateImageStudioSlots(queryClient, projectId);
-        if (run.currentSlotId) {
-          setWorkingSlotId(run.currentSlotId);
-          setSelectedSlotId(run.currentSlotId);
-        }
+      if (run.status !== 'completed' && run.status !== 'failed' && run.status !== 'cancelled') {
+        return;
+      }
 
-        if (run.status === 'completed') {
-          toast('Sequence completed.', { variant: 'success' });
-        } else if (run.status === 'cancelled') {
-          toast('Sequence cancelled.', { variant: 'info' });
-        } else if (run.errorMessage) {
-          toast(run.errorMessage, { variant: 'error' });
+      const terminalKey = `${run.id}:${run.status}:${run.currentSlotId}`;
+      if (lastTerminalSnapshotRef.current === terminalKey) {
+        return;
+      }
+      lastTerminalSnapshotRef.current = terminalKey;
+
+      stopPolling();
+      stopStreaming();
+      setDisplayState('resolving_terminal_slot');
+
+      if (!ENABLE_ROBUST_SEQUENCE_SYNC) {
+        const normalizedProjectId = projectId.trim();
+        if (normalizedProjectId) {
+          await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+        }
+        const directSlotId = run.currentSlotId?.trim() ?? '';
+        if (directSlotId) {
+          setWorkingSlotId(directSlotId);
+          setSelectedSlotId(directSlotId);
+        }
+      } else {
+        const resolved = await resolveTerminalSlotSelection({
+          run,
+          hintedSlot: snapshot.currentSlot ?? null,
+        });
+
+        if (!resolved) {
+          const fallbackSourceSlotId = sourceSlotIdRef.current;
+          if (fallbackSourceSlotId) {
+            setWorkingSlotId(fallbackSourceSlotId);
+            setSelectedSlotId(fallbackSourceSlotId);
+          }
+          setPendingTerminalSlotId(run.currentSlotId ?? null);
+          setSlotSyncWarning(
+            'Sequence finished, but output card is still syncing. Keeping current canvas image.',
+          );
+          toast(
+            'Sequence output is syncing. Current image stays visible until the new output card is ready.',
+            { variant: 'warning' },
+          );
+        } else {
+          setPendingTerminalSlotId(null);
+          setSlotSyncWarning(null);
         }
       }
+
+      setDisplayState('terminal');
+      if (run.status === 'completed') {
+        toast('Sequence completed.', { variant: 'success' });
+      } else if (run.status === 'cancelled') {
+        toast('Sequence cancelled.', { variant: 'info' });
+      } else if (run.errorMessage) {
+        toast(run.errorMessage, { variant: 'error' });
+      }
     },
-    [projectId, queryClient, setSelectedSlotId, setWorkingSlotId, stopPolling, toast],
+    [
+      projectId,
+      queryClient,
+      resolveTerminalSlotSelection,
+      setSelectedSlotId,
+      setWorkingSlotId,
+      stopPolling,
+      stopStreaming,
+      toast,
+    ],
+  );
+
+  const fetchRunSnapshot = useCallback(
+    async (runId: string): Promise<SequenceRunDetailResponse | null> => {
+      try {
+        const response = await api.get<SequenceRunDetailResponse>(
+          `/api/image-studio/sequences/${encodeURIComponent(runId)}`,
+          { cache: 'no-store', logError: false },
+        );
+        if (!response.run) return null;
+        return response;
+      } catch (error) {
+        setActiveSequenceStatus('failed');
+        setSequenceError(error instanceof Error ? error.message : 'Sequence polling failed.');
+        return null;
+      }
+    },
+    [],
   );
 
   const pollRun = useCallback(
     (runId: string): void => {
       stopPolling();
+      stopStreaming();
 
       const tick = async (): Promise<void> => {
-        try {
-          const response = await api.get<SequenceRunDetailResponse>(
-            `/api/image-studio/sequences/${encodeURIComponent(runId)}`,
-            { cache: 'no-store', logError: false },
-          );
-          if (!response.run) return;
-          await applyRunSnapshot(response.run);
-        } catch (error) {
-          setActiveSequenceStatus('failed');
-          setSequenceError(error instanceof Error ? error.message : 'Sequence polling failed.');
+        const snapshot = await fetchRunSnapshot(runId);
+        if (!snapshot) {
           stopPolling();
+          return;
         }
+        await applyRunSnapshot(snapshot);
       };
 
       void tick();
@@ -317,14 +503,74 @@ export function SequencingPanel(): React.JSX.Element {
         void tick();
       }, POLL_INTERVAL_MS);
     },
-    [applyRunSnapshot, stopPolling],
+    [applyRunSnapshot, fetchRunSnapshot, stopPolling, stopStreaming],
+  );
+
+  const monitorRun = useCallback(
+    (runId: string): void => {
+      if (!ENABLE_SEQUENCE_SSE || typeof EventSource === 'undefined') {
+        pollRun(runId);
+        return;
+      }
+
+      stopPolling();
+      stopStreaming();
+
+      let source: EventSource;
+      try {
+        source = new EventSource(
+          `/api/image-studio/sequences/${encodeURIComponent(runId)}/stream`,
+        );
+      } catch {
+        pollRun(runId);
+        return;
+      }
+      streamRef.current = source;
+
+      const fallbackToPolling = (): void => {
+        if (streamRef.current !== source) return;
+        source.close();
+        streamRef.current = null;
+        pollRun(runId);
+      };
+
+      const refresh = (): void => {
+        void fetchRunSnapshot(runId).then((snapshot) => {
+          if (!snapshot) return;
+          void applyRunSnapshot(snapshot);
+        });
+      };
+
+      source.onopen = () => {
+        refresh();
+      };
+      source.onmessage = (event: MessageEvent<string>) => {
+        try {
+          const payload = JSON.parse(event.data) as { type?: string };
+          if (payload.type === 'heartbeat') return;
+          if (payload.type === 'fallback') {
+            fallbackToPolling();
+            return;
+          }
+        } catch {
+          // Treat non-json data as a signal to refresh run snapshot.
+        }
+        refresh();
+      };
+      source.onerror = () => {
+        fallbackToPolling();
+      };
+    },
+    [applyRunSnapshot, fetchRunSnapshot, pollRun, stopPolling, stopStreaming],
   );
 
   useEffect(() => {
     return () => {
       stopPolling();
+      stopStreaming();
+      setSlotSelectionLocked(false);
     };
-  }, [stopPolling]);
+  }, [setSlotSelectionLocked, stopPolling, stopStreaming]);
 
   useEffect(() => {
     if (sequencePresets.length === 0) {
@@ -350,11 +596,18 @@ export function SequencingPanel(): React.JSX.Element {
   useEffect(() => {
     if (!projectId) {
       stopPolling();
+      stopStreaming();
+      setSlotSelectionLocked(false);
+      sourceSlotIdRef.current = null;
+      lastTerminalSnapshotRef.current = null;
       setActiveSequenceRunId(null);
       setActiveSequenceStatus(null);
       setActiveStepLabel(null);
       setSequenceLog([]);
       setSequenceError(null);
+      setDisplayState('idle');
+      setPendingTerminalSlotId(null);
+      setSlotSyncWarning(null);
       return;
     }
 
@@ -382,9 +635,9 @@ export function SequencingPanel(): React.JSX.Element {
 
         if (!active) return;
 
-        await applyRunSnapshot(active);
+        await applyRunSnapshot({ run: active });
         if (active.status === 'queued' || active.status === 'running') {
-          pollRun(active.id);
+          monitorRun(active.id);
         }
       } catch {
         // Keep current UI state if hydration fails.
@@ -396,7 +649,7 @@ export function SequencingPanel(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [applyRunSnapshot, pollRun, projectId, stopPolling]);
+  }, [applyRunSnapshot, monitorRun, projectId, setSlotSelectionLocked, stopPolling, stopStreaming]);
 
   const mutateSteps = useCallback(
     (updater: (steps: ImageStudioSequenceStep[]) => ImageStudioSequenceStep[]) => {
@@ -575,6 +828,11 @@ export function SequencingPanel(): React.JSX.Element {
       setSequenceLog([]);
       setSequenceError(null);
       setActiveStepLabel(null);
+      setDisplayState('running');
+      setPendingTerminalSlotId(null);
+      setSlotSyncWarning(null);
+      lastTerminalSnapshotRef.current = null;
+      sourceSlotIdRef.current = workingSlot.id;
 
       const polygons = collectSequenceMaskPolygons(
         maskShapes,
@@ -614,7 +872,7 @@ export function SequencingPanel(): React.JSX.Element {
           variant: 'info',
         });
       }
-      pollRun(result.runId);
+      monitorRun(result.runId);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to start sequence.';
@@ -631,7 +889,7 @@ export function SequencingPanel(): React.JSX.Element {
     workingSlotImageWidth,
     sequenceImageContentFrame,
     paramsState,
-    pollRun,
+    monitorRun,
     projectId,
     promptText,
     studioSettings,
@@ -655,6 +913,37 @@ export function SequencingPanel(): React.JSX.Element {
       toast(message, { variant: 'error' });
     }
   }, [activeSequenceRunId, toast]);
+
+  const handleRetryPendingSlotSync = useCallback(async (): Promise<void> => {
+    if (!activeSequenceRunId || !pendingTerminalSlotId) return;
+
+    const snapshot = await fetchRunSnapshot(activeSequenceRunId);
+    if (!snapshot?.run) {
+      toast('Unable to refresh sequence run snapshot.', { variant: 'error' });
+      return;
+    }
+
+    setDisplayState('resolving_terminal_slot');
+    const resolved = await resolveTerminalSlotSelection({
+      run: snapshot.run,
+      hintedSlot: snapshot.currentSlot ?? null,
+    });
+    if (resolved) {
+      setPendingTerminalSlotId(null);
+      setSlotSyncWarning(null);
+      setDisplayState('terminal');
+      toast('Sequence output synced to canvas.', { variant: 'success' });
+      return;
+    }
+    setDisplayState('terminal');
+    toast('Output card is still syncing. Try again in a moment.', { variant: 'info' });
+  }, [
+    activeSequenceRunId,
+    fetchRunSnapshot,
+    pendingTerminalSlotId,
+    resolveTerminalSlotSelection,
+    toast,
+  ]);
 
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4 pt-2'>
@@ -806,9 +1095,32 @@ export function SequencingPanel(): React.JSX.Element {
               Run: {activeSequenceRunId} ({activeSequenceStatus ?? 'unknown'})
             </div>
           ) : null}
+          {displayState !== 'idle' ? (
+            <div className='text-[11px] text-gray-500'>
+              Sync state: {displayState.replaceAll('_', ' ')}
+            </div>
+          ) : null}
           {activeStepLabel ? (
             <div className='text-[11px] text-gray-400'>
               Active step: {activeStepLabel}
+            </div>
+          ) : null}
+          {slotSyncWarning ? (
+            <div className='text-[11px] text-amber-300'>{slotSyncWarning}</div>
+          ) : null}
+          {pendingTerminalSlotId ? (
+            <div className='flex justify-start'>
+              <Button
+                size='xs'
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  void handleRetryPendingSlotSync();
+                }}
+                disabled={displayState === 'resolving_terminal_slot'}
+              >
+                Retry Sync Output
+              </Button>
             </div>
           ) : null}
           {sequenceError ? (

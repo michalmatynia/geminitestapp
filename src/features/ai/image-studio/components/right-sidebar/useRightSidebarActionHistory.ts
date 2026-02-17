@@ -144,8 +144,11 @@ export function useRightSidebarActionHistory({
 }: UseRightSidebarActionHistoryArgs): UseRightSidebarActionHistoryResult {
   const [actionHistoryEntries, setActionHistoryEntries] = useState<StudioActionHistoryEntry[]>([]);
   const [activeActionHistoryIndex, setActiveActionHistoryIndex] = useState(-1);
+  const [pendingRestoreIndex, setPendingRestoreIndex] = useState<number | null>(null);
   const isApplyingActionHistoryRef = useRef(false);
   const applyingActionHistorySignatureRef = useRef<string | null>(null);
+  const actionHistoryEntriesRef = useRef<StudioActionHistoryEntry[]>([]);
+  const activeActionHistoryIndexRef = useRef(-1);
 
   const applyActionHistoryEntry = useCallback((entry: StudioActionHistoryEntry): void => {
     isApplyingActionHistoryRef.current = true;
@@ -153,38 +156,53 @@ export function useRightSidebarActionHistory({
     applySnapshot(entry.snapshot);
   }, [applySnapshot]);
 
+  useEffect(() => {
+    actionHistoryEntriesRef.current = actionHistoryEntries;
+  }, [actionHistoryEntries]);
+
+  useEffect(() => {
+    activeActionHistoryIndexRef.current = activeActionHistoryIndex;
+  }, [activeActionHistoryIndex]);
+
+  useEffect(() => {
+    if (pendingRestoreIndex === null) return;
+    const targetEntry = actionHistoryEntriesRef.current[pendingRestoreIndex];
+    if (targetEntry) {
+      applyActionHistoryEntry(targetEntry);
+    }
+    setPendingRestoreIndex(null);
+  }, [pendingRestoreIndex, applyActionHistoryEntry]);
+
   const handleUndoAction = useCallback((): void => {
-    setActiveActionHistoryIndex((prevIndex) => {
-      if (prevIndex <= 0) return prevIndex;
-      const nextIndex = prevIndex - 1;
-      const targetEntry = actionHistoryEntries[nextIndex];
-      if (targetEntry) applyActionHistoryEntry(targetEntry);
-      return nextIndex;
-    });
-  }, [actionHistoryEntries, applyActionHistoryEntry]);
+    const prevIndex = activeActionHistoryIndexRef.current;
+    if (prevIndex <= 0) return;
+    const nextIndex = prevIndex - 1;
+    setActiveActionHistoryIndex(nextIndex);
+    setPendingRestoreIndex(nextIndex);
+  }, []);
 
   const handleRedoAction = useCallback((): void => {
-    setActiveActionHistoryIndex((prevIndex) => {
-      if (prevIndex < 0 || prevIndex >= actionHistoryEntries.length - 1) return prevIndex;
-      const nextIndex = prevIndex + 1;
-      const targetEntry = actionHistoryEntries[nextIndex];
-      if (targetEntry) applyActionHistoryEntry(targetEntry);
-      return nextIndex;
-    });
-  }, [actionHistoryEntries, applyActionHistoryEntry]);
+    const prevIndex = activeActionHistoryIndexRef.current;
+    const maxIndex = actionHistoryEntriesRef.current.length - 1;
+    if (prevIndex < 0 || prevIndex >= maxIndex) return;
+    const nextIndex = prevIndex + 1;
+    setActiveActionHistoryIndex(nextIndex);
+    setPendingRestoreIndex(nextIndex);
+  }, []);
 
   const handleRestoreActionStep = useCallback((targetIndex: number): void => {
-    if (targetIndex < 0 || targetIndex >= actionHistoryEntries.length) return;
-    if (targetIndex === activeActionHistoryIndex) return;
-    const targetEntry = actionHistoryEntries[targetIndex];
-    if (!targetEntry) return;
-    applyActionHistoryEntry(targetEntry);
+    const entries = actionHistoryEntriesRef.current;
+    const currentIndex = activeActionHistoryIndexRef.current;
+    if (targetIndex < 0 || targetIndex >= entries.length) return;
+    if (targetIndex === currentIndex) return;
     setActiveActionHistoryIndex(targetIndex);
-  }, [actionHistoryEntries, activeActionHistoryIndex, applyActionHistoryEntry]);
+    setPendingRestoreIndex(targetIndex);
+  }, []);
 
   useEffect(() => {
     setActionHistoryEntries([]);
     setActiveActionHistoryIndex(-1);
+    setPendingRestoreIndex(null);
     isApplyingActionHistoryRef.current = false;
     applyingActionHistorySignatureRef.current = null;
   }, [projectId]);

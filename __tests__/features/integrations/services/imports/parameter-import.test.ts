@@ -13,7 +13,7 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
     name_en: string;
     name_pl: string | null;
     name_de: string | null;
-    selectorType: 'text' | 'select' | 'textarea' | 'radio' | 'dropdown';
+    selectorType: 'text' | 'select' | 'textarea' | 'radio' | 'dropdown' | 'checkbox' | 'checklist';
     optionLabels: string[];
   }> = [];
   let counter = 1;

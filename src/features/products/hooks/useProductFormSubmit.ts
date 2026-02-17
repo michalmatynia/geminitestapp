@@ -10,6 +10,7 @@ import type {
   ProductWithImages,
   ProductFormData,
   ProductParameterValue,
+  ProductSimpleParameterValue,
 } from '@/features/products/types';
 import type { ProductImageSlot } from '@/features/products/types/products-ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -35,6 +36,7 @@ export interface UseProductFormSubmitProps {
   selectedProducerIds: string[];
   selectedNoteIds: string[];
   parameterValues: ProductParameterValue[];
+  simpleParameterValues: ProductSimpleParameterValue[];
   studioProjectId: string | null;
   refreshImages: (savedProduct: ProductWithImages) => void;
   onSuccess?: ((info?: { queued?: boolean }) => void) | undefined;
@@ -60,6 +62,7 @@ function buildFormData(
   selectedProducerIds: string[],
   selectedNoteIds: string[],
   parameterValues: ProductParameterValue[],
+  simpleParameterValues: ProductSimpleParameterValue[],
   studioProjectId: string | null,
 ): FormData {
   const formData = new FormData();
@@ -163,6 +166,21 @@ function buildFormData(
       }): boolean => !!entry.parameterId
     );
   formData.append('parameters', JSON.stringify(normalizedParameters));
+
+  const normalizedSimpleParameters = simpleParameterValues
+    .map(
+      (
+        entry: ProductSimpleParameterValue
+      ): { parameterId: string | undefined; value: string } => ({
+        parameterId: entry.parameterId?.trim(),
+        value: typeof entry.value === 'string' ? entry.value : '',
+      })
+    )
+    .filter(
+      (entry: { parameterId: string | undefined; value: string }): boolean =>
+        Boolean(entry.parameterId)
+    );
+  formData.append('simpleParameters', JSON.stringify(normalizedSimpleParameters));
   formData.append('studioProjectId', studioProjectId ?? '');
 
   return formData;
@@ -180,6 +198,7 @@ export function useProductFormSubmit({
   selectedProducerIds,
   selectedNoteIds,
   parameterValues,
+  simpleParameterValues,
   studioProjectId,
   refreshImages,
   onSuccess,
@@ -227,6 +246,7 @@ export function useProductFormSubmit({
           selectedProducerIds,
           selectedNoteIds,
           parameterValues,
+          simpleParameterValues,
           studioProjectId,
         );
 
@@ -289,7 +309,7 @@ export function useProductFormSubmit({
     }
 
     await performSubmit();
-  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, studioProjectId, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast, confirm]);
+  }, [product, imageSlots, imageLinks, imageBase64s, selectedCatalogIds, selectedCategoryId, selectedTagIds, selectedProducerIds, selectedNoteIds, parameterValues, simpleParameterValues, studioProjectId, createMutation, updateMutation, onSuccess, queryClient, refreshImages, onEditSave, toast, confirm]);
 
   const submitHandler = useCallback(
     (e?: BaseSyntheticEvent): Promise<void> => methods.handleSubmit(onSubmit)(e),

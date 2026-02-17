@@ -8,11 +8,11 @@ import { registerQueue } from './registry';
 import type { QueueConfig, ManagedQueue, QueueHealthStatus } from './types';
 import type { Job } from 'bullmq';
 
-const logSystemEvent = async (params: { level: string; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
+const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
   try {
     // eslint-disable-next-line import/no-restricted-paths
-    const mod = await import('@/features/observability/server');
-    await mod.logSystemEvent(params as any);
+    const mod = await import('@/features/observability/server') as { logSystemEvent: (input: unknown) => Promise<void> };
+    await mod.logSystemEvent(params);
   } catch {
     // ignore
   }

@@ -13,7 +13,8 @@ import {
   ProductCategory, 
   ProductCategoryWithChildren,
   ProductTag, 
-  ProductParameter 
+  ProductParameter,
+  ProductSimpleParameter,
 } from '../types';
 
 
@@ -135,6 +136,14 @@ export async function getParameters(catalogId: string | null): Promise<ProductPa
   });
 }
 
+export async function getSimpleParameters(
+  catalogId: string | null
+): Promise<ProductSimpleParameter[]> {
+  return api.get<ProductSimpleParameter[]>('/api/products/simple-parameters', {
+    params: { catalogId: catalogId || undefined }
+  });
+}
+
 export async function createParameter(data: Partial<ProductParameter>): Promise<ProductParameter> {
   return api.post<ProductParameter>('/api/products/parameters', data);
 }
@@ -145,6 +154,23 @@ export async function updateParameter(id: string, data: Partial<ProductParameter
 
 export async function deleteParameter(id: string): Promise<void> {
   return api.delete(`/api/products/parameters/${id}`);
+}
+
+export async function createSimpleParameter(
+  data: Partial<ProductSimpleParameter>
+): Promise<ProductSimpleParameter> {
+  return api.post<ProductSimpleParameter>('/api/products/simple-parameters', data);
+}
+
+export async function updateSimpleParameter(
+  id: string,
+  data: Partial<ProductSimpleParameter>
+): Promise<ProductSimpleParameter> {
+  return api.put<ProductSimpleParameter>(`/api/products/simple-parameters/${id}`, data);
+}
+
+export async function deleteSimpleParameter(id: string): Promise<void> {
+  return api.delete(`/api/products/simple-parameters/${id}`);
 }
 
 export async function getValidatorSettings(): Promise<ProductValidatorSettings> {

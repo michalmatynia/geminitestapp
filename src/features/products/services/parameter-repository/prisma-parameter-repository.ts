@@ -17,6 +17,8 @@ const ALLOWED_SELECTOR_TYPES = new Set<ProductParameter['selectorType']>([
   'radio',
   'select',
   'dropdown',
+  'checkbox',
+  'checklist',
 ]);
 
 const normalizeSelectorType = (value: unknown): ProductParameter['selectorType'] => {

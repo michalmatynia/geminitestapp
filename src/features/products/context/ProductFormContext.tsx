@@ -30,10 +30,19 @@ import type {
   ProductFormData,
   ProductDraft,
 } from '@/features/products/types';
-import type { ProductCategory, ProductTag, ProductParameter, ProductParameterValue, Producer } from '@/features/products/types';
+import type {
+  ProductCategory,
+  ProductTag,
+  ProductParameter,
+  ProductParameterValue,
+  ProductSimpleParameter,
+  ProductSimpleParameterValue,
+  Producer,
+} from '@/features/products/types';
 import {
   ProductImageSlot,
 } from '@/features/products/types/products-ui';
+import { splitProductParameterValues } from '@/features/products/utils/parameter-partition';
 import {
   productCreateSchema,
   productUpdateSchema,
@@ -162,6 +171,13 @@ export interface ProductFormContextType {
     value: string
   ) => void;
   removeParameterValue: (index: number) => void;
+  simpleParameters: ProductSimpleParameter[];
+  simpleParametersLoading: boolean;
+  simpleParameterValues: ProductSimpleParameterValue[];
+  addSimpleParameterValue: () => void;
+  updateSimpleParameterId: (index: number, parameterId: string) => void;
+  updateSimpleParameterValue: (index: number, value: string) => void;
+  removeSimpleParameterValue: (index: number) => void;
   filteredLanguages: Language[];
   filteredPriceGroups: PriceGroupWithDetails[];
   generationError: string | null;
@@ -391,6 +407,8 @@ export function ProductFormProvider({
     toggleProducer,
     parameters,
     parametersLoading,
+    simpleParameters,
+    simpleParametersLoading,
     filteredLanguages,
     filteredPriceGroups,
   } = useProductMetadata({
@@ -427,7 +445,7 @@ export function ProductFormProvider({
     setSelectedNoteIds((prev: string[]) => prev.filter((n: string) => n !== id));
   };
 
-  const normalizeParameterValues = (
+  const normalizeCustomFieldValues = (
     input?: ProductParameterValue[] | null
   ): ProductParameterValue[] => {
     if (!Array.isArray(input)) return [];
@@ -468,9 +486,44 @@ export function ProductFormProvider({
     });
   };
 
+  const normalizeSimpleParameterValues = (
+    input?: Array<ProductSimpleParameterValue | ProductParameterValue> | null
+  ): ProductSimpleParameterValue[] => {
+    if (!Array.isArray(input)) return [];
+    return input.reduce(
+      (
+        acc: ProductSimpleParameterValue[],
+        entry: ProductSimpleParameterValue | ProductParameterValue
+      ): ProductSimpleParameterValue[] => {
+        const parameterId =
+          typeof entry?.parameterId === 'string'
+            ? entry.parameterId.trim()
+            : '';
+        if (!parameterId) return acc;
+        const value = typeof entry?.value === 'string' ? entry.value : '';
+        acc.push({ parameterId, value });
+        return acc;
+      },
+      []
+    );
+  };
+
   const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>(
-    () => normalizeParameterValues(product?.parameters ?? draft?.parameters ?? [])
+    () => {
+      const splitValues = splitProductParameterValues(product?.parameters);
+      return normalizeCustomFieldValues(splitValues.customFieldValues);
+    }
   );
+
+  const [simpleParameterValues, setSimpleParameterValues] = useState<
+    ProductSimpleParameterValue[]
+  >(() => {
+    if (product) {
+      const splitValues = splitProductParameterValues(product.parameters);
+      return normalizeSimpleParameterValues(splitValues.simpleParameterValues);
+    }
+    return normalizeSimpleParameterValues(draft?.parameters ?? []);
+  });
 
   const {
     handleSubmit: submitHandler,
@@ -490,6 +543,7 @@ export function ProductFormProvider({
     selectedProducerIds,
     selectedNoteIds,
     parameterValues,
+    simpleParameterValues,
     studioProjectId,
     refreshImages,
     onSuccess,
@@ -587,6 +641,46 @@ export function ProductFormProvider({
             }),
           removeParameterValue: (index: number): void =>
             setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => prev.filter((_: ProductParameterValue, i: number): boolean => i !== index)),
+          simpleParameters,
+          simpleParametersLoading,
+          simpleParameterValues,
+          addSimpleParameterValue: (): void =>
+            setSimpleParameterValues((prev: ProductSimpleParameterValue[]): ProductSimpleParameterValue[] => [
+              ...prev,
+              { parameterId: '', value: '' },
+            ]),
+          updateSimpleParameterId: (index: number, parameterId: string): void =>
+            setSimpleParameterValues(
+              (
+                prev: ProductSimpleParameterValue[]
+              ): ProductSimpleParameterValue[] => {
+                const next = [...prev];
+                if (!next[index]) return prev;
+                next[index] = { ...next[index], parameterId };
+                return next;
+              }
+            ),
+          updateSimpleParameterValue: (index: number, value: string): void =>
+            setSimpleParameterValues(
+              (
+                prev: ProductSimpleParameterValue[]
+              ): ProductSimpleParameterValue[] => {
+                const next = [...prev];
+                if (!next[index]) return prev;
+                next[index] = { ...next[index], value };
+                return next;
+              }
+            ),
+          removeSimpleParameterValue: (index: number): void =>
+            setSimpleParameterValues(
+              (
+                prev: ProductSimpleParameterValue[]
+              ): ProductSimpleParameterValue[] =>
+                prev.filter(
+                  (_: ProductSimpleParameterValue, i: number): boolean =>
+                    i !== index
+                )
+            ),
           filteredLanguages,
           filteredPriceGroups,
           generationError,

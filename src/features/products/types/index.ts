@@ -18,6 +18,8 @@ export type {
   ProductMigrationDirection,
   ProductParameter,
   ProductParameterValue,
+  ProductSimpleParameter,
+  ProductSimpleParameterValue,
   ProductAiJobType,
   ProductMigrationBatchResult,
   SyncDirection,

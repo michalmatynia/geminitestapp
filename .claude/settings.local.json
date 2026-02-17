@@ -79,7 +79,8 @@
       "Bash(npx prisma:*)",
       "Bash(npm ls:*)",
       "Bash(git diff:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(npx jest:*)"
     ]
   }
 }

@@ -330,6 +330,7 @@ export function StudioInlineEditPanels({
           <SlotInlineEditCompositesTab
             compositeTabInputImages={compositeTabInputImages}
             compositeTabInputSourceLabel={compositeTabInputSourceLabel}
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
             sourceCompositeImage={sourceCompositeImage as any}
             formatBytes={formatBytes}
             formatDateTime={formatDateTime}

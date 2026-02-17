@@ -240,10 +240,10 @@ export const deleteVariantFromCenterPreview = async ({
       attempts: 4,
       projectId,
       queryClient,
-          refreshSlots: async (): Promise<void> => {
-            if (!projectId) return;
-            await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
-          },      rootVariantSourceSlotId,
+      refreshSlots: async (): Promise<void> => {
+        if (!projectId) return;
+        await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
+      },      rootVariantSourceSlotId,
       slots,
       variant,
     });

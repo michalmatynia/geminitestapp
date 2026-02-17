@@ -55,9 +55,11 @@ export const invalidateCatalogScopedData = (queryClient: QueryClient, catalogId:
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(catalogId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.simpleParameters(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.tags(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.parameters(catalogId) }),
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.simpleParameters(catalogId) }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categoryTree(catalogId) }),
   ]);
 };

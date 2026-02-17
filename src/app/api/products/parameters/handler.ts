@@ -5,12 +5,13 @@ import { getParameterRepository } from '@/features/products/server';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
-const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown'] as const;
+const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown', 'checkbox', 'checklist'] as const;
 const selectorTypeSchema = z.enum(SELECTOR_TYPES);
 const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<typeof SELECTOR_TYPES[number]>([
   'radio',
   'select',
   'dropdown',
+  'checklist',
 ]);
 
 const normalizeOptionLabels = (input: unknown): string[] => {

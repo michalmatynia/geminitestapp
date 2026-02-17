@@ -128,6 +128,8 @@ export const productParameterSelectorTypeSchema = z.enum([
   'radio',
   'select',
   'dropdown',
+  'checkbox',
+  'checklist',
 ]);
 
 export type ProductParameterSelectorTypeDto = z.infer<

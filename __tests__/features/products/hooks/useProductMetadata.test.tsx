@@ -17,6 +17,7 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useCategories: vi.fn(),
   useLanguages: vi.fn(),
   useParameters: vi.fn(),
+  useSimpleParameters: vi.fn(),
   usePriceGroups: vi.fn(),
   useProducers: vi.fn(),
   useTags: vi.fn(),
@@ -58,6 +59,7 @@ describe('useProductMetadata', () => {
     vi.mocked(metadataQueries.useProducers).mockReturnValue(queryResult([]) as never);
     vi.mocked(metadataQueries.useTags).mockReturnValue(queryResult([]) as never);
     vi.mocked(metadataQueries.useParameters).mockReturnValue(queryResult([]) as never);
+    vi.mocked(metadataQueries.useSimpleParameters).mockReturnValue(queryResult([]) as never);
     vi.mocked(metadataQueries.useCategories).mockImplementation((catalogId?: string) => {
       void catalogId;
       return queryResult([]) as never;

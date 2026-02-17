@@ -12,10 +12,10 @@ export const isLegacyParameterInferencePathName = (value: unknown): boolean =>
 export const buildParameterInferencePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 2,
+    version: 3,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
-      'Infer product parameter values from name and images, then update product parameters.',
+      'Infer product simple parameter values from name and images, then update product parameters.',
     trigger: 'Product Modal - Infer Parameters',
     executionMode: 'server',
     flowIntensity: 'medium',
@@ -67,57 +67,29 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         },
       },
       {
-        type: 'database',
-        title: 'Database Query',
-        description: 'Load available parameters for product catalog.',
+        type: 'http',
+        title: 'HTTP Fetch',
+        description: 'Load available simple parameters for product catalog.',
         inputs: [
+          'context',
+          'bundle',
+          'prompt',
+          'result',
+          'value',
           'entityId',
           'entityType',
-          'productId',
-          'context',
-          'query',
-          'value',
-          'bundle',
-          'result',
-          'content_en',
-          'queryCallback',
-          'schema',
-          'aiQuery',
         ],
-        outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
+        outputs: ['value', 'bundle'],
         id: 'node-query-params',
         position: { x: 560, y: 110 },
         config: {
-          database: {
-            operation: 'query',
-            entityType: 'product',
-            idField: 'entityId',
-            mode: 'replace',
-            updateStrategy: 'one',
-            useMongoActions: false,
-            mappings: [{ targetPath: 'content_en', sourcePort: 'result' }],
-            query: {
-              provider: 'auto',
-              collection: 'product_parameters',
-              mode: 'custom',
-              preset: 'by_id',
-              field: '_id',
-              idType: 'string',
-              queryTemplate: '{\n  "catalogId": "{{context.entity.catalogId}}"\n}',
-              limit: 200,
-              sort: '',
-              projection: '',
-              single: false,
-            },
-            writeSource: 'bundle',
-            writeSourcePath: '',
-            dryRun: false,
-            distinctField: '',
-            updateTemplate: '',
-            skipEmpty: false,
-            trimStrings: false,
-            aiPrompt: '',
-            validationRuleIds: [],
+          http: {
+            url: '/api/products/simple-parameters?catalogId={{context.entity.catalogId}}',
+            method: 'GET',
+            headers: '{}',
+            bodyTemplate: '',
+            responseMode: 'json',
+            responsePath: '',
           },
           runtime: { waitForInputs: true },
         },
@@ -133,7 +105,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         config: {
           prompt: {
             template:
-              'Infer product parameter values in ENGLISH from the product data below.\n' +
+              'Infer product PARAMETERS (not custom fields) in ENGLISH from the product data below.\n' +
               'Product name: "{{title}}"\n' +
               'Product description: "{{content_en}}"\n' +
               'Available parameters JSON: {{result}}\n\n' +
@@ -141,11 +113,9 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
               '1. Return ONLY valid JSON array.\n' +
               '2. Output schema per item: {"parameterId":"<id>","value":"<english value>"}.\n' +
               '3. Use only parameterId values that exist in the provided parameter list.\n' +
-              '4. For selectorType radio/select/dropdown choose exactly one label from optionLabels.\n' +
-              '5. For text/textarea provide concise English value.\n' +
-              '6. Skip parameters you cannot infer confidently.\n' +
-              '7. No markdown, no explanations, no code fences.\n' +
-              '8. If nothing can be inferred, return [].',
+              '4. Skip parameters you cannot infer confidently.\n' +
+              '5. No markdown, no explanations, no code fences.\n' +
+              '6. If nothing can be inferred, return [].',
           },
         },
       },
@@ -196,7 +166,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       {
         type: 'database',
         title: 'Database Query',
-        description: 'Update product.parameters with inferred values.',
+        description: 'Update product simple parameters with inferred values.',
         inputs: [
           'entityId',
           'entityType',
@@ -224,7 +194,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             useMongoActions: true,
             actionCategory: 'update',
             action: 'updateOne',
-            mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+            mappings: [{ targetPath: 'simpleParameters', sourcePort: 'value' }],
             query: {
               provider: 'auto',
               collection: 'products',
@@ -249,10 +219,10 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             validationRuleIds: [],
             parameterInferenceGuard: {
               enabled: true,
-              targetPath: 'parameters',
+              targetPath: 'simpleParameters',
               definitionsPort: 'result',
               definitionsPath: '',
-              enforceOptionLabels: true,
+              enforceOptionLabels: false,
               allowUnknownParameterIds: false,
             },
           },
@@ -286,7 +256,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         id: 'edge-params-04',
         from: 'node-query-params',
         to: 'node-prompt-params',
-        fromPort: 'result',
+        fromPort: 'value',
         toPort: 'result',
       },
       {
@@ -335,7 +305,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         id: 'edge-params-11',
         from: 'node-query-params',
         to: 'node-update-params',
-        fromPort: 'result',
+        fromPort: 'value',
         toPort: 'result',
       },
     ],
@@ -405,25 +375,50 @@ export const needsParameterInferenceConfigUpgrade = (
         )['enabled'] === true
         : false;
     if (!guardEnabled) return true;
+    const guardTargetPath =
+      updateDatabase &&
+      typeof updateDatabase['parameterInferenceGuard'] === 'object' &&
+      updateDatabase['parameterInferenceGuard'] !== null
+        ? (
+          updateDatabase['parameterInferenceGuard'] as Record<string, unknown>
+        )['targetPath']
+        : null;
+    if (guardTargetPath !== 'simpleParameters') return true;
+    const updateMappings = Array.isArray(updateDatabase?.['mappings'])
+      ? (updateDatabase['mappings'] as Array<Record<string, unknown>>)
+      : [];
+    const writesSimpleParameters = updateMappings.some((mapping) => {
+      if (!mapping || typeof mapping !== 'object') return false;
+      return mapping['targetPath'] === 'simpleParameters';
+    });
+    if (!writesSimpleParameters) return true;
 
     const queryNode = nodes.find((node) => node?.['id'] === 'node-query-params');
-    const queryDatabase =
+    const queryType = queryNode?.['type'];
+    if (queryType !== 'http') return true;
+    const queryHttp =
       queryNode &&
       typeof queryNode === 'object' &&
       queryNode['config'] &&
       typeof queryNode['config'] === 'object' &&
-      (queryNode['config'] as Record<string, unknown>)['database'] &&
-      typeof (queryNode['config'] as Record<string, unknown>)['database'] ===
+      (queryNode['config'] as Record<string, unknown>)['http'] &&
+      typeof (queryNode['config'] as Record<string, unknown>)['http'] ===
         'object'
         ? ((queryNode['config'] as Record<string, unknown>)[
-          'database'
+          'http'
         ] as Record<string, unknown>)
         : null;
-    const queryProvider =
-      queryDatabase?.['query'] && typeof queryDatabase['query'] === 'object'
-        ? (queryDatabase['query'] as Record<string, unknown>)['provider']
+    const queryUrl =
+      queryHttp && typeof queryHttp['url'] === 'string'
+        ? queryHttp['url']
         : null;
-    if (queryProvider !== 'auto' && queryProvider !== 'mongodb') return true;
+    if (
+      !queryUrl ||
+      !queryUrl.includes('/api/products/simple-parameters') ||
+      !queryUrl.includes('catalogId=')
+    ) {
+      return true;
+    }
 
     const edges = Array.isArray(parsed['edges'])
       ? (parsed['edges'] as Array<Record<string, unknown>>)
@@ -433,7 +428,7 @@ export const needsParameterInferenceConfigUpgrade = (
       return (
         edge['from'] === 'node-query-params' &&
         edge['to'] === 'node-update-params' &&
-        edge['fromPort'] === 'result' &&
+        edge['fromPort'] === 'value' &&
         edge['toPort'] === 'result'
       );
     });

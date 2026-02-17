@@ -1,19 +1,19 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T21:00:26.940Z
+Generated at: 2026-02-17T22:10:20.795Z
 
 ## Snapshot
 
-- Source files: 2742
-- Source lines: 437699
-- use client files: 901
-- Files >= 1000 LOC: 8
+- Source files: 2767
+- Source lines: 441084
+- use client files: 903
+- Files >= 1000 LOC: 10
 - Files >= 1500 LOC: 5
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
-- API routes: 294
+- API routes: 296
 - API delegated server routes: 21
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 294/294 (100.0%)
+- API explicit cache policy coverage: 296/296 (100.0%)
 - Cross-feature dependency pairs: 118
 - Shared -> features imports: 15
 - setInterval occurrences: 22
@@ -63,22 +63,22 @@ Generated at: 2026-02-17T21:00:26.940Z
 | File | LOC |
 | --- | ---: |
 | `src/features/database/services/database-sync.ts` | 3352 |
-| `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 3289 |
 | `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2603 |
 | `src/shared/ui/vector-canvas.tsx` | 2472 |
-| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2056 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1498 |
+| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 1968 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1502 |
+| `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1148 |
+| `src/features/foldertree/master/useMasterFolderTree.ts` | 1056 |
 | `src/features/case-resolver/__tests__/settings.test.ts` | 1016 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1014 |
+| `src/features/ai/image-studio/components/StudioModals.tsx` | 1007 |
 | `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 999 |
-| `src/features/ai/image-studio/components/StudioModals.tsx` | 999 |
+| `src/features/data-import-export/context/ImportExportContext.tsx` | 997 |
 | `src/features/ai/ai-paths/components/canvas-board.tsx` | 996 |
 | `src/features/integrations/services/tradera-listing-service.ts` | 996 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 995 |
-| `src/features/data-import-export/context/ImportExportContext.tsx` | 995 |
 | `src/features/products/services/product-studio-service.ts` | 990 |
 | `src/features/prompt-exploder/pattern-pack-rules.ts` | 990 |
 | `src/features/ai/agent-runtime/planning/llm.ts` | 989 |
 | `src/features/integrations/services/category-mapping-repository.ts` | 988 |
 | `src/app/api/integrations/products/[id]/export-to-base/handler.ts` | 986 |
-| `src/features/integrations/services/exports/base-exporter-template-mappings.ts` | 985 |

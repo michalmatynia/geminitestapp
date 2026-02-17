@@ -6,8 +6,17 @@ import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hoo
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
 import { IconSelector } from '@/features/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
-import type { ProductCategoryDto, ProductTag, ProductParameter, ProductParameterValue } from '@/features/products';
-import { getCategoriesFlat, getTags, getParameters } from '@/features/products/api/settings';
+import type {
+  ProductCategoryDto,
+  ProductTag,
+  ProductSimpleParameter,
+  ProductParameterValue,
+} from '@/features/products';
+import {
+  getCategoriesFlat,
+  getSimpleParameters,
+  getTags,
+} from '@/features/products/api/settings';
 import { ProductImagesTabContent } from '@/features/products/components/form/ProductImagesTabContent';
 import { ProductImagesTabProvider } from '@/features/products/components/form/ProductImagesTabContext';
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
@@ -129,14 +138,17 @@ export function DraftCreator({
 
   const parameterQueries = useQueries({
     queries: selectedCatalogIds.map((id: string) => ({
-      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.parameters(id)),
-      queryFn: () => getParameters(id),
+      queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.simpleParameters(id)),
+      queryFn: () => getSimpleParameters(id),
     }))
   });
 
   const categories = useMemo(() => categoryQueries.flatMap((q) => (q.data as ProductCategoryDto[]) || []), [categoryQueries]);
   const tags = useMemo(() => tagQueries.flatMap((q) => (q.data as ProductTag[]) || []), [tagQueries]);
-  const parameters = useMemo(() => parameterQueries.flatMap((q) => (q.data as ProductParameter[]) || []), [parameterQueries]);
+  const parameters = useMemo(
+    () => parameterQueries.flatMap((q) => (q.data as ProductSimpleParameter[]) || []),
+    [parameterQueries]
+  );
   const parametersLoading = useMemo(() => parameterQueries.some((q) => q.isLoading), [parameterQueries]);
   const active = propActive ?? activeState;
   

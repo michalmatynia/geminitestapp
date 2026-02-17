@@ -14,6 +14,14 @@ import {
   PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
   PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
 } from './settings-store-parameter-inference';
+import {
+  buildDescriptionInferenceV2PathConfigValue,
+  DESCRIPTION_INFERENCE_V2_PATH_ID,
+  DESCRIPTION_INFERENCE_V2_PATH_NAME,
+  DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
+  DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME,
+  needsDescriptionInferenceV2ConfigUpgrade,
+} from './settings-store-description-inference';
 
 export type AiPathsSettingRecord = SettingRecordDto;
 
@@ -829,7 +837,7 @@ const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean
   );
   if (!parameterButton) return false;
   const buttonName =
-    typeof parameterButton['name'] === 'string' ? (parameterButton['name'] as string).trim() : '';
+    typeof parameterButton['name'] === 'string' ? (parameterButton['name']).trim() : '';
   if (buttonName !== PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME) return false;
   const locations = Array.isArray(parameterButton['locations'])
     ? parameterButton['locations']

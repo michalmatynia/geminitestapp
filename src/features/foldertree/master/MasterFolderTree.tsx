@@ -409,9 +409,6 @@ export function MasterFolderTree({
                     setRootDropHoverZone(null);
                     const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, node);
                     if (!resolvedPosition) {
-                      if (process.env.NODE_ENV !== 'production' && node.type === 'folder') {
-                        console.warn('[MasterTree:dragover] REJECTED for folder target', { draggedNodeId, targetId: node.id, targetType: node.type, targetKind: node.kind });
-                      }
                       return;
                     }
                     event.preventDefault();
@@ -431,20 +428,11 @@ export function MasterFolderTree({
                   ? (event: React.DragEvent<HTMLDivElement>): void => {
                     const draggedNodeId = resolveDraggedNode(event);
                     if (!draggedNodeId) {
-                      if (process.env.NODE_ENV !== 'production') {
-                        console.warn('[MasterTree:drop] no draggedNodeId for', node.id);
-                      }
                       return;
                     }
                     const resolvedPosition = resolveNodeDropPosition(event, draggedNodeId, node);
                     if (!resolvedPosition) {
-                      if (process.env.NODE_ENV !== 'production') {
-                        console.warn('[MasterTree:drop] resolvedPosition=null', { draggedNodeId, targetId: node.id, targetType: node.type });
-                      }
                       return;
-                    }
-                    if (process.env.NODE_ENV !== 'production') {
-                      console.warn('[MasterTree:drop] EXECUTING', { draggedNodeId, targetId: node.id, position: resolvedPosition, targetType: node.type });
                     }
                     event.preventDefault();
                     event.stopPropagation();

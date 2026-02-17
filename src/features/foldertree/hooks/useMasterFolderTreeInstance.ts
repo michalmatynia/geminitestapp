@@ -26,7 +26,18 @@ export type UseMasterFolderTreeInstanceOptions = Omit<
   instance: FolderTreeInstance;
 };
 
+const DEV = process.env.NODE_ENV !== 'production';
+
 const EXPANDED_STATE_PERSIST_DEBOUNCE_MS = 220;
+
+/** If isApplying stays true for longer than this, warn in dev mode.
+ *  Likely indicates an adapter that never resolves or an unhandled error. */
+const APPLYING_STALL_WARN_MS = 8_000;
+
+/** If replaceNodes fires more than this many times within the sampling window,
+ *  warn in dev mode. Indicates unstable external data source causing thrashing. */
+const EXTERNAL_SYNC_THRASH_LIMIT = 10;
+const EXTERNAL_SYNC_THRASH_WINDOW_MS = 2_000;
 
 const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, string> = {
   notes: 'Folder tree changes saved.',
@@ -50,7 +61,7 @@ const shouldNotifyMasterTreePersistErrorByInstance: Record<FolderTreeInstance, b
   image_studio: true,
   product_categories: false,
   cms_page_builder: true,
-  case_resolver: false,
+  case_resolver: true,
 };
 
 const normalizeExpandedNodeIds = (values: Iterable<MasterTreeId>): MasterTreeId[] => {
@@ -310,6 +321,94 @@ export function useMasterFolderTreeInstance({
     }
     previousApplyingRef.current = isApplying;
   }, [controller.isApplying, controller.lastError, controller.nodes, instance, toast]);
+
+  // ─── Instance-level guardrails (dev-only) ──────────────────────────
+
+  // Guardrail: warn if isApplying stays true for too long (stalled adapter).
+  const applyingStallTimerRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  useEffect(() => {
+    if (!DEV) return;
+    if (controller.isApplying) {
+      if (applyingStallTimerRef.current === null) {
+        applyingStallTimerRef.current = globalThis.setTimeout(() => {
+          if (controller.isApplying) {
+            console.warn(
+              `[MasterFolderTree:${instance}] isApplying has been true for ${APPLYING_STALL_WARN_MS}ms. ` +
+              'The adapter may be stalled or an error was swallowed.'
+            );
+          }
+          applyingStallTimerRef.current = null;
+        }, APPLYING_STALL_WARN_MS);
+      }
+    } else {
+      if (applyingStallTimerRef.current !== null) {
+        globalThis.clearTimeout(applyingStallTimerRef.current);
+        applyingStallTimerRef.current = null;
+      }
+    }
+    return (): void => {
+      if (applyingStallTimerRef.current !== null) {
+        globalThis.clearTimeout(applyingStallTimerRef.current);
+        applyingStallTimerRef.current = null;
+      }
+    };
+  }, [controller.isApplying, instance]);
+
+  // Guardrail: detect external sync thrashing (too many node replacements).
+  const externalSyncTimestampsRef = useRef<number[]>([]);
+  const prevNodeCountRef = useRef<number>(controller.nodes.length);
+  useEffect(() => {
+    if (!DEV) return;
+    const now = Date.now();
+    const timestamps = externalSyncTimestampsRef.current;
+    timestamps.push(now);
+    // Trim timestamps outside the window.
+    const cutoff = now - EXTERNAL_SYNC_THRASH_WINDOW_MS;
+    while (timestamps.length > 0 && (timestamps[0] ?? 0) < cutoff) {
+      timestamps.shift();
+    }
+    if (timestamps.length > EXTERNAL_SYNC_THRASH_LIMIT) {
+      console.warn(
+        `[MasterFolderTree:${instance}] External sync thrashing detected: ` +
+        `${timestamps.length} node updates in ${EXTERNAL_SYNC_THRASH_WINDOW_MS}ms. ` +
+        'Check that the nodes prop has a stable reference when data has not changed.'
+      );
+      // Reset to avoid spamming.
+      externalSyncTimestampsRef.current = [];
+    }
+    prevNodeCountRef.current = controller.nodes.length;
+  }, [controller.nodes, instance]);
+
+  // Guardrail: warn if node count drops to 0 unexpectedly after having data.
+  useEffect(() => {
+    if (!DEV) return;
+    if (controller.nodes.length === 0 && prevNodeCountRef.current > 0) {
+      console.warn(
+        `[MasterFolderTree:${instance}] Node count dropped to 0 from ${prevNodeCountRef.current}. ` +
+        'This may indicate a data loading issue or accidental state wipe.'
+      );
+    }
+  }, [controller.nodes.length, instance]);
+
+  // Guardrail: warn if adapter reference is unstable (changes every render).
+  const adapterRef = useRef(restControllerOptions.adapter);
+  const adapterChangeCountRef = useRef(0);
+  useEffect(() => {
+    if (!DEV) return;
+    if (restControllerOptions.adapter !== adapterRef.current) {
+      adapterRef.current = restControllerOptions.adapter;
+      adapterChangeCountRef.current += 1;
+      if (adapterChangeCountRef.current > 5) {
+        console.warn(
+          `[MasterFolderTree:${instance}] Adapter reference changed ${adapterChangeCountRef.current} times. ` +
+          'Consider memoizing the adapter with useMemo to prevent unnecessary tree reinitialization.'
+        );
+        adapterChangeCountRef.current = 0;
+      }
+    }
+  }, [instance, restControllerOptions.adapter]);
+
+  // ─── End instance guardrails ───────────────────────────────────────
 
   return {
     profile,

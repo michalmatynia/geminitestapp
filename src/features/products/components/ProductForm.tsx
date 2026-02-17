@@ -40,6 +40,7 @@ import ProductFormImportInfo from './form/ProductFormImportInfo';
 import ProductFormNoteLink from './form/ProductFormNoteLink';
 import ProductFormOther from './form/ProductFormOther';
 import ProductFormParameters from './form/ProductFormParameters';
+import ProductFormSimpleParameters from './form/ProductFormSimpleParameters';
 import ProductFormStudio from './form/ProductFormStudio';
 
 interface ProductFormProps {
@@ -632,11 +633,12 @@ export default function ProductForm({
           className='w-full'
         >
           <TabsList
-            className='grid w-full grid-cols-4 md:grid-cols-8'
+            className='grid w-full grid-cols-4 md:grid-cols-9'
           >
             <TabsTrigger value='general'>General</TabsTrigger>
             <TabsTrigger value='other'>Other</TabsTrigger>
             <TabsTrigger value='parameters'>Parameters</TabsTrigger>
+            <TabsTrigger value='custom-fields'>Custom Fields</TabsTrigger>
             <TabsTrigger value='images'>Images</TabsTrigger>
             <TabsTrigger value='studio'>Studio</TabsTrigger>
             <TabsTrigger value='import-info'>Import Info</TabsTrigger>
@@ -654,6 +656,9 @@ export default function ProductForm({
             <ProductFormOther visibleFieldIssues={visibleFieldIssues} />
           </TabsContent>
           <TabsContent value='parameters' className='mt-4'>
+            <ProductFormSimpleParameters />
+          </TabsContent>
+          <TabsContent value='custom-fields' className='mt-4'>
             <ProductFormParameters />
           </TabsContent>
           <TabsContent value='images' className='mt-4'>

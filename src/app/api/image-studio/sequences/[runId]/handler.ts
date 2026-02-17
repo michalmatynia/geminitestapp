@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getImageStudioSequenceRunById } from '@/features/ai/image-studio/server/sequence-run-repository';
+import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
+import {
+  resolveStudioSlotIdCandidates,
+  slotHasRenderableImage,
+} from '@/features/ai/image-studio/utils/sequence-slot-resolution';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -19,5 +24,27 @@ export async function GET_handler(
     throw notFoundError('Sequence run not found.', { runId });
   }
 
-  return NextResponse.json({ run });
+  const currentSlotCandidates = resolveStudioSlotIdCandidates(run.currentSlotId);
+  let resolvedCurrentSlotId: string | null = null;
+  let resolvedCurrentSlotImagePath: string | null = null;
+  let resolvedCurrentSlotRenderable = false;
+
+  for (const slotIdCandidate of currentSlotCandidates) {
+    const slot = await getImageStudioSlotById(slotIdCandidate);
+    if (slot?.projectId !== run.projectId) continue;
+    resolvedCurrentSlotId = slot.id;
+    resolvedCurrentSlotImagePath =
+      slot.imageFile?.filepath?.trim() || slot.imageUrl?.trim() || null;
+    resolvedCurrentSlotRenderable = slotHasRenderableImage(slot);
+    if (resolvedCurrentSlotRenderable) break;
+  }
+
+  return NextResponse.json({
+    run,
+    currentSlot: {
+      id: resolvedCurrentSlotId,
+      imagePath: resolvedCurrentSlotImagePath,
+      renderable: resolvedCurrentSlotRenderable,
+    },
+  });
 }

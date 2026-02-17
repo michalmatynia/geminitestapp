@@ -92,6 +92,16 @@ const parameterValueSchema = z.object({
 
 const parametersArray = z.preprocess(jsonToValue, z.array(parameterValueSchema).default([]));
 
+const simpleParameterValueSchema = z.object({
+  parameterId: trimmedString.min(1, 'Parameter ID is required'),
+  value: z.string().optional().nullable(),
+});
+
+const simpleParametersArray = z.preprocess(
+  jsonToValue,
+  z.array(simpleParameterValueSchema).default([])
+);
+
 // Core product schema
 const productBaseSchema = z.object({
   // Optional custom ID (e.g. from AI Paths modular nodes)
@@ -134,6 +144,7 @@ const productBaseSchema = z.object({
   imageLinks: imageUrlArray.optional(),
   imageBase64s: base64Array.optional(),
   parameters: parametersArray.optional(),
+  simpleParameters: simpleParametersArray.optional(),
 });
 
 // Export schemas

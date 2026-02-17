@@ -14,6 +14,14 @@ import { parseJsonBody } from '@/features/products/server';
 import { productUpdateSchema } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
+import type {
+  ProductParameterValue,
+  ProductSimpleParameterValue,
+} from '@/features/products/types';
+import {
+  mergeProductParameterValues,
+  splitProductParameterValues,
+} from '@/features/products/utils/parameter-partition';
 import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
@@ -63,6 +71,82 @@ const applyAppendMode = (
     next[key] = mergeAppendValue(current[key], value);
   });
   return next;
+};
+
+const toTrimmedString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const normalizeSimpleParameterUpdates = (
+  value: unknown
+): ProductSimpleParameterValue[] => {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value.reduce(
+    (acc: ProductSimpleParameterValue[], entry: unknown) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+        return acc;
+      }
+      const record = entry as Record<string, unknown>;
+      const parameterId =
+        toTrimmedString(record['parameterId']) || toTrimmedString(record['id']);
+      if (!parameterId || seen.has(parameterId)) return acc;
+      const inferredValue = toTrimmedString(record['value']);
+      if (!inferredValue) return acc;
+      seen.add(parameterId);
+      acc.push({
+        parameterId,
+        value: inferredValue,
+      });
+      return acc;
+    },
+    []
+  );
+};
+
+const mergeSimpleParameterInferenceWithExisting = (args: {
+  existingParameters: ProductParameterValue[] | null | undefined;
+  inferredSimpleParameters: ProductSimpleParameterValue[];
+}): ProductParameterValue[] => {
+  const existingSplit = splitProductParameterValues(args.existingParameters ?? []);
+  if (existingSplit.simpleParameterValues.length === 0) {
+    return mergeProductParameterValues({
+      customFieldValues: existingSplit.customFieldValues,
+      simpleParameterValues: [],
+    });
+  }
+
+  const nextSimpleValues = existingSplit.simpleParameterValues.map(
+    (entry: ProductSimpleParameterValue): ProductSimpleParameterValue => ({
+      parameterId: entry.parameterId,
+      value: typeof entry.value === 'string' ? entry.value : '',
+    })
+  );
+  const existingIndexById = new Map<string, number>();
+  nextSimpleValues.forEach((entry: ProductSimpleParameterValue, index: number) => {
+    const id = toTrimmedString(entry.parameterId);
+    if (!id || existingIndexById.has(id)) return;
+    existingIndexById.set(id, index);
+  });
+
+  args.inferredSimpleParameters.forEach((entry: ProductSimpleParameterValue) => {
+    const parameterId = toTrimmedString(entry.parameterId);
+    if (!parameterId) return;
+    const existingIndex = existingIndexById.get(parameterId);
+    if (existingIndex === undefined) return;
+    const currentValue = toTrimmedString(nextSimpleValues[existingIndex]?.value);
+    if (currentValue) return;
+    nextSimpleValues[existingIndex] = {
+      parameterId,
+      value: toTrimmedString(entry.value),
+    };
+  });
+
+  return mergeProductParameterValues({
+    customFieldValues: existingSplit.customFieldValues,
+    simpleParameterValues: nextSimpleValues,
+  });
 };
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -123,7 +207,31 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         issues: validated.error.flatten(),
       });
     }
-    const updateData = removeUndefined(validated.data);
+    let updateData = removeUndefined(validated.data);
+    if (
+      updateData.simpleParameters !== undefined &&
+      updateData.parameters === undefined
+    ) {
+      const existingProduct =
+        existing ?? await productRepository.getProductById(entityId as string);
+      if (!existingProduct) {
+        throw notFoundError('Product not found', { productId: entityId });
+      }
+      const inferredSimpleParameters = normalizeSimpleParameterUpdates(
+        updateData.simpleParameters
+      );
+      const mergedParameters = mergeSimpleParameterInferenceWithExisting({
+        existingParameters: Array.isArray(existingProduct.parameters)
+          ? (existingProduct.parameters as ProductParameterValue[])
+          : [],
+        inferredSimpleParameters,
+      });
+      const { simpleParameters: _simpleParameters, ...rest } = updateData;
+      updateData = {
+        ...rest,
+        parameters: mergedParameters,
+      };
+    }
     if (Object.keys(updateData).length === 0) {
       throw badRequestError('No valid product fields to update');
     }
@@ -177,4 +285,3 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   throw badRequestError('Unsupported entity type');
 }
-

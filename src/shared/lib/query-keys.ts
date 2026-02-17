@@ -38,6 +38,8 @@ export const QUERY_KEYS = {
       tags: (catalogId: string | null) => [...QUERY_KEYS.products.metadata.all, 'tags', catalogId] as const,
       producers: () => [...QUERY_KEYS.products.metadata.all, 'producers'] as const,
       parameters: (catalogId: string | null) => [...QUERY_KEYS.products.metadata.all, 'parameters', catalogId] as const,
+      simpleParameters: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.metadata.all, 'simple-parameters', catalogId] as const,
       languages: () => [...QUERY_KEYS.products.metadata.all, 'languages'] as const,
       priceGroups: () => [...QUERY_KEYS.products.metadata.all, 'price-groups'] as const,
     },
@@ -51,6 +53,8 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.products.settings.all, 'tags', catalogId] as const,
       parameters: (catalogId: string | null) =>
         [...QUERY_KEYS.products.settings.all, 'parameters', catalogId] as const,
+      simpleParameters: (catalogId: string | null) =>
+        [...QUERY_KEYS.products.settings.all, 'simple-parameters', catalogId] as const,
       validatorSettings: () =>
         [...QUERY_KEYS.products.settings.all, 'validator-settings'] as const,
       validatorPatterns: () =>

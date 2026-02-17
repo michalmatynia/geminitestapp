@@ -371,6 +371,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     (reference: { kind: string; id: string } | null | undefined): string => {
       if (!reference) return 'None';
       return (
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
         resolveFilemakerPartyLabel(filemakerDatabase, { ...reference, kind: reference.kind as any }) ??
         `${reference.kind}:${reference.id}`
       );

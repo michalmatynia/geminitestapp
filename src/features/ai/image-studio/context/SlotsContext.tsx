@@ -39,6 +39,8 @@ import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 
+const SLOT_FALLBACK_MISSING_GRACE_MS = 1400;
+
 function sanitizeStudioProjectId(value: string): string {
   return value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
 }
@@ -137,6 +139,7 @@ function collectSlotsToDeleteForFolder(
 export interface SlotsState {
   slots: ImageStudioSlotRecord[];
   slotsQuery: UseQueryResult<StudioSlotsResponse>;
+  slotSelectionLocked: boolean;
   selectedSlotId: string | null;
   selectedSlot: ImageStudioSlotRecord | null;
   workingSlotId: string | null;
@@ -171,6 +174,7 @@ export interface SlotsState {
 export interface SlotsActions {
   setSelectedSlotId: (id: string | null) => void;
   setWorkingSlotId: (id: string | null) => void;
+  setSlotSelectionLocked: (locked: boolean) => void;
   setVirtualFolders: React.Dispatch<React.SetStateAction<string[]>>;
   setSelectedFolder: (f: string) => void;
   createSlots: (slots: Array<Partial<ImageStudioSlotRecord>>) => Promise<ImageStudioSlotRecord[]>;
@@ -226,14 +230,15 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const slotsQuery = useStudioSlots(projectId);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [workingSlotId, setWorkingSlotId] = useState<string | null>(null);
+  const [slotSelectionLocked, setSlotSelectionLocked] = useState<boolean>(false);
 
   const slots = useMemo(() => slotsQuery.data?.slots ?? [], [slotsQuery.data?.slots]);
   const slotIdSet = useMemo(
     () => new Set(slots.map((slot: ImageStudioSlotRecord) => slot.id)),
     [slots],
   );
-  const missingSelectedSlotTrackerRef = useRef<{ id: string; count: number } | null>(null);
-  const missingWorkingSlotTrackerRef = useRef<{ id: string; count: number } | null>(null);
+  const missingSelectedSlotTrackerRef = useRef<{ id: string; firstMissingAt: number } | null>(null);
+  const missingWorkingSlotTrackerRef = useRef<{ id: string; firstMissingAt: number } | null>(null);
   const selectedSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === selectedSlotId) ?? null, [slots, selectedSlotId]);
   const workingSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === workingSlotId) ?? null, [slots, workingSlotId]);
 
@@ -243,24 +248,36 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       return;
     }
 
+    if (slotSelectionLocked || slotsQuery.isFetching || slotsQuery.isPending) {
+      return;
+    }
+
     const previous = missingSelectedSlotTrackerRef.current;
+    const now = Date.now();
     if (previous?.id !== selectedSlotId) {
-      missingSelectedSlotTrackerRef.current = { id: selectedSlotId, count: 1 };
+      missingSelectedSlotTrackerRef.current = { id: selectedSlotId, firstMissingAt: now };
       return;
     }
 
-    if (previous.count < 1) {
-      missingSelectedSlotTrackerRef.current = { id: selectedSlotId, count: previous.count + 1 };
+    if (now - previous.firstMissingAt < SLOT_FALLBACK_MISSING_GRACE_MS) {
       return;
     }
 
-    missingSelectedSlotTrackerRef.current = null;
+    missingWorkingSlotTrackerRef.current = null;
     if (workingSlotId && slotIdSet.has(workingSlotId)) {
       setSelectedSlotId(workingSlotId);
       return;
     }
     setSelectedSlotId(slots[0]?.id ?? null);
-  }, [selectedSlotId, slotIdSet, slots, workingSlotId]);
+  }, [
+    selectedSlotId,
+    slotIdSet,
+    slots,
+    slotsQuery.isFetching,
+    slotsQuery.isPending,
+    slotSelectionLocked,
+    workingSlotId,
+  ]);
 
   useEffect(() => {
     if (!workingSlotId || slotIdSet.has(workingSlotId)) {
@@ -268,24 +285,36 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       return;
     }
 
+    if (slotSelectionLocked || slotsQuery.isFetching || slotsQuery.isPending) {
+      return;
+    }
+
     const previous = missingWorkingSlotTrackerRef.current;
+    const now = Date.now();
     if (previous?.id !== workingSlotId) {
-      missingWorkingSlotTrackerRef.current = { id: workingSlotId, count: 1 };
+      missingWorkingSlotTrackerRef.current = { id: workingSlotId, firstMissingAt: now };
       return;
     }
 
-    if (previous.count < 1) {
-      missingWorkingSlotTrackerRef.current = { id: workingSlotId, count: previous.count + 1 };
+    if (now - previous.firstMissingAt < SLOT_FALLBACK_MISSING_GRACE_MS) {
       return;
     }
 
-    missingWorkingSlotTrackerRef.current = null;
+    missingSelectedSlotTrackerRef.current = null;
     if (selectedSlotId && slotIdSet.has(selectedSlotId)) {
       setWorkingSlotId(selectedSlotId);
       return;
     }
     setWorkingSlotId(slots[0]?.id ?? null);
-  }, [selectedSlotId, slotIdSet, slots, workingSlotId]);
+  }, [
+    selectedSlotId,
+    slotIdSet,
+    slots,
+    slotsQuery.isFetching,
+    slotsQuery.isPending,
+    slotSelectionLocked,
+    workingSlotId,
+  ]);
 
   // ── Folders ──
   const [selectedFolder, setSelectedFolderRaw] = useState<string>('');
@@ -373,6 +402,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
     if (projectId) return;
     setSelectedSlotId(null);
     setWorkingSlotId(null);
+    setSlotSelectionLocked(false);
     setSelectedFolderRaw('');
     setCompositeAssetIds([]);
     setPreviewMode('image');
@@ -435,19 +465,15 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 
     // Use the existing updateSlotMutation (same endpoint as rename, proven to work).
     // Its onSuccess invalidation will eventually sync the cache with the server.
-    try {
-      await updateSlotMutation.mutateAsync({
-        id: slot.id,
-        data: { folderPath: normalizedTarget || null },
-      });
-      // Cancel the background refetch triggered by updateSlotMutation's onSettled
-      // (invalidateImageStudioSlots). The cache already has correct data from onSuccess.
-      // Without this, the refetch completes after the tree's isApplying guard drops
-      // and replaceNodes overwrites the optimistic state, causing a "jump back".
-      void queryClient.cancelQueries({ queryKey: slotsQueryKey });
-    } catch (error) {
-      throw error;
-    }
+    await updateSlotMutation.mutateAsync({
+      id: slot.id,
+      data: { folderPath: normalizedTarget || null },
+    });
+    // Cancel the background refetch triggered by updateSlotMutation's onSettled
+    // (invalidateImageStudioSlots). The cache already has correct data from onSuccess.
+    // Without this, the refetch completes after the tree's isApplying guard drops
+    // and replaceNodes overwrites the optimistic state, causing a "jump back".
+    void queryClient.cancelQueries({ queryKey: slotsQueryKey });
   }, [queryClient, slotsQueryKey, updateSlotMutation]);
 
   const handleMoveFolder = useCallback(async (folderPath: string, targetFolder: string) => {
@@ -663,14 +689,14 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 
   const state = useMemo<SlotsState>(
     () => ({
-      slots, slotsQuery, selectedSlotId, selectedSlot, workingSlotId, workingSlot,
+      slots, slotsQuery, slotSelectionLocked, selectedSlotId, selectedSlot, workingSlotId, workingSlot,
       virtualFolders, selectedFolder,
       slotCreateOpen, driveImportOpen, driveImportMode, driveImportTargetId, temporaryObjectUpload,
       slotUpdateBusy, slotInlineEditOpen, slotImageUrlDraft, slotBase64Draft, moveTargetFolder,
       compositeAssetIds, compositeAssets, compositeAssetOptions, previewMode, captureRef,
     }),
     [
-      slots, slotsQuery, selectedSlotId, selectedSlot, workingSlotId, workingSlot,
+      slots, slotsQuery, slotSelectionLocked, selectedSlotId, selectedSlot, workingSlotId, workingSlot,
       virtualFolders, selectedFolder,
       slotCreateOpen, driveImportOpen, driveImportMode, driveImportTargetId, temporaryObjectUpload,
       slotUpdateBusy, slotInlineEditOpen, slotImageUrlDraft, slotBase64Draft, moveTargetFolder,
@@ -680,7 +706,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
 
   const actions = useMemo<SlotsActions>(
     () => ({
-      setSelectedSlotId, setWorkingSlotId, setVirtualFolders,
+      setSelectedSlotId, setWorkingSlotId, setSlotSelectionLocked, setVirtualFolders,
       setSelectedFolder: handleSelectFolder, createSlots,
       updateSlotMutation, deleteSlotMutation, moveSlot, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
@@ -693,6 +719,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       updateSlotMutation, deleteSlotMutation, moveSlot, handleMoveFolder, handleRenameFolder, handleDeleteFolder,
       createFolderMutation, uploadMutation, importFromDriveMutation,
       setTemporaryObjectUpload,
+      setSlotSelectionLocked,
     ]
   );
 

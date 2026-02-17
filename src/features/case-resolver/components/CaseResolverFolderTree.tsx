@@ -46,7 +46,6 @@ import {
   fromCaseResolverAssetNodeId,
   fromCaseResolverFileNodeId,
   fromCaseResolverFolderNodeId,
-  resolveCaseResolverFolderTargetForNode,
   toCaseResolverAssetNodeId,
   toCaseResolverFileNodeId,
   toCaseResolverFolderNodeId,
@@ -529,26 +528,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
           ): Promise<void> => {
             const isInternal = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
             if (!isInternal) return;
-            const dragged = decodeCaseResolverMasterNodeId(draggedNodeId);
-            const targetFolderPath =
-              targetId === null
-                ? ''
-                : position === 'inside'
-                  ? (fromCaseResolverFolderNodeId(targetId) ?? '')
-                  : (resolveCaseResolverFolderTargetForNode(ctlr.nodes, targetId) ?? '');
-
-            if (
-              position === 'inside' &&
-              dragged &&
-              (dragged.entity === 'file' || dragged.entity === 'asset')
-            ) {
-              if (dragged.entity === 'file') {
-                await onMoveFile(dragged.id, targetFolderPath);
-                return;
-              }
-              await onMoveAsset(dragged.id, targetFolderPath);
-              return;
-            }
             await applyInternalMasterTreeDrop({
               controller: ctlr,
               draggedNodeId,

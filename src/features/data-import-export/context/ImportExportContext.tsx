@@ -681,6 +681,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   } = createImportExportRuntimeActions({
     toast,
     setInventoriesEnabled,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     refetchInventories: refetchInventories as any,
     inventoryId,
     selectedBaseConnectionId,
@@ -707,6 +708,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     setActiveImportRunId,
     setPollImportRun,
     activeImportRunId,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
     resumeImportRunMutation: resumeImportRunMutation as any,
     cancelImportRunMutation,
     saveExportSettingsMutation,

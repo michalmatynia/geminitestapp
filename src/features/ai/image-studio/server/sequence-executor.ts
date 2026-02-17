@@ -26,6 +26,9 @@ import {
 } from '@/features/ai/image-studio/server/upscale-utils';
 import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import {
+  slotHasRenderableImage,
+} from '@/features/ai/image-studio/utils/sequence-slot-resolution';
+import {
   normalizeImageStudioSequenceSteps,
   parseImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
@@ -91,6 +94,16 @@ const resolveSlotImagePath = (slot: ImageStudioSlotRecord): string | null =>
   asTrimmedString(slot.imageFile?.filepath)
   ?? asTrimmedString(slot.imageUrl)
   ?? null;
+
+const ensureRenderableSlot = (
+  slot: ImageStudioSlotRecord | null | undefined,
+  contextLabel: string,
+): ImageStudioSlotRecord => {
+  if (!slot || !slotHasRenderableImage(slot)) {
+    throw new Error(`Sequence step produced a non-renderable slot (${contextLabel}).`);
+  }
+  return slot;
+};
 
 const loadSourceBuffer = async (
   slot: ImageStudioSlotRecord
@@ -590,6 +603,7 @@ const executeCropStep = async (params: {
       paddingPercent: params.step.config.paddingPercent,
     },
   });
+  ensureRenderableSlot(createdSlot, `crop:${params.step.id}`);
 
   return {
     nextSlotId: createdSlot.id,
@@ -655,6 +669,7 @@ const executeMaskStep = async (params: {
       variant: params.step.config.variant,
     },
   });
+  ensureRenderableSlot(maskSlot, `mask:${params.step.id}`);
 
   return {
     nextSlotId: params.currentSlot.id,
@@ -773,9 +788,20 @@ const executeGenerateStep = async (params: {
     throw new Error('Generation run completed but produced no slot outputs.');
   }
 
+  const renderableSlotIds: string[] = [];
+  for (const slotId of uniqueSlotIds) {
+    const slot = await getImageStudioSlotById(slotId);
+    if (slot?.projectId !== params.run.projectId) continue;
+    if (!slotHasRenderableImage(slot)) continue;
+    renderableSlotIds.push(slot.id);
+  }
+  if (renderableSlotIds.length === 0) {
+    throw new Error('Generation run completed but returned no renderable slot outputs.');
+  }
+
   return {
-    nextSlotId: uniqueSlotIds[0]!,
-    producedSlotIds: uniqueSlotIds,
+    nextSlotId: renderableSlotIds[0]!,
+    producedSlotIds: renderableSlotIds,
     generatedRunId: generationRun.id,
   };
 };
@@ -823,6 +849,7 @@ const executeUpscaleStep = async (params: {
       smoothingQuality: params.step.config.smoothingQuality,
     },
   });
+  ensureRenderableSlot(createdSlot, `upscale:${params.step.id}`);
 
   return {
     nextSlotId: createdSlot.id,

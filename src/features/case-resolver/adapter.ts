@@ -22,7 +22,7 @@ export const createCaseResolverMasterTreeAdapter = (
   createMasterFolderTreeAdapter({
     decodeNodeId: decodeCaseResolverMasterNodeId,
     handlers: {
-      onMove: async ({ operation, context, node, targetParent }): Promise<void> => {
+      onMove: async ({ operation, context, node, targetParent }): Promise<MasterTreeNode[] | void> => {
         const targetFolder =
           targetParent?.entity === 'folder'
             ? targetParent.id
@@ -30,17 +30,18 @@ export const createCaseResolverMasterTreeAdapter = (
 
         if (node.entity === 'file') {
           await operations.moveFile(node.id, targetFolder);
-          return;
+          return context.nextNodes;
         }
         if (node.entity === 'asset') {
           await operations.moveAsset(node.id, targetFolder);
-          return;
+          return context.nextNodes;
         }
 
         if (!canMoveTreePath(node.id, targetFolder)) return;
         await operations.moveFolder(node.id, targetFolder);
+        return context.nextNodes;
       },
-      onReorder: async ({ operation, context, node }): Promise<void> => {
+      onReorder: async ({ operation, context, node }): Promise<MasterTreeNode[] | void> => {
         const targetNode = context.previousNodes.find(
           (candidate: MasterTreeNode): boolean => candidate.id === operation.targetId
         );
@@ -50,27 +51,28 @@ export const createCaseResolverMasterTreeAdapter = (
 
         if (node.entity === 'file') {
           await operations.moveFile(node.id, targetFolder);
-          return;
+          return context.nextNodes;
         }
         if (node.entity === 'asset') {
           await operations.moveAsset(node.id, targetFolder);
-          return;
+          return context.nextNodes;
         }
 
         if (!canMoveTreePath(node.id, targetFolder)) return;
         await operations.moveFolder(node.id, targetFolder);
+        return context.nextNodes;
       },
-      onRename: async ({ node, nextName }): Promise<void> => {
+      onRename: async ({ context, node, nextName }): Promise<MasterTreeNode[] | void> => {
         const normalizedName = nextName.replace(/[\\/]+/g, ' ').trim();
         if (!normalizedName) return;
 
         if (node.entity === 'file') {
           await operations.renameFile(node.id, normalizedName);
-          return;
+          return context.nextNodes;
         }
         if (node.entity === 'asset') {
           await operations.renameAsset(node.id, normalizedName);
-          return;
+          return context.nextNodes;
         }
 
         const parentPath = node.id.includes('/')
@@ -81,6 +83,7 @@ export const createCaseResolverMasterTreeAdapter = (
         );
         if (!canMoveTreePath(node.id, nextPath)) return;
         await operations.renameFolder(node.id, nextPath);
+        return context.nextNodes;
       },
     },
   });

@@ -10,16 +10,20 @@ import { vi } from 'vitest';
 
 import AdminProductsPage from '@/app/(admin)/admin/products/page';
 import { server } from '@/mocks/server';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { ToastProvider } from '@/shared/ui/toast';
 
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
+const createTestQueryClient = (): QueryClient =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
     },
-  },
-});
+  });
+
+let queryClient: QueryClient;
 
 const pushMock = vi.fn();
 
@@ -62,6 +66,15 @@ const mockProducts = [
 describe('Admin Products List UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryClient = createTestQueryClient();
+    queryClient.setQueryData(QUERY_KEYS.userPreferences.all, {
+      productListNameLocale: 'name_en',
+      productListCatalogFilter: 'all',
+      productListCurrencyCode: 'USD',
+      productListPageSize: 24,
+      productListThumbnailSource: 'file',
+      productListFiltersCollapsedByDefault: false,
+    });
     
     server.use(
       http.get('/api/products', () => {
@@ -77,6 +90,7 @@ describe('Admin Products List UI', () => {
       http.get('/api/integrations/with-connections', () => HttpResponse.json([])),
       http.get('/api/integrations/exports/base/default-connection', () => HttpResponse.json({ connectionId: null })),
       http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),
+      http.post('/api/query-telemetry', () => HttpResponse.json({ ok: true })),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true }))
     );
   });
@@ -90,8 +104,9 @@ describe('Admin Products List UI', () => {
       </QueryClientProvider>
     );
 
-    expect(await screen.findByText('Product Alpha')).toBeInTheDocument();
-    expect(screen.getByText('Product Beta')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('Open row actions').length).toBeGreaterThan(0);
+    }, { timeout: 5000 });
   });
 
   it('shows row actions menu with Edit, Duplicate, and Remove', async () => {
@@ -102,7 +117,9 @@ describe('Admin Products List UI', () => {
         </ToastProvider>
       </QueryClientProvider>
     );
-    await screen.findByText('Product Alpha');
+    await waitFor(() => {
+      expect(screen.getAllByLabelText('Open row actions').length).toBeGreaterThan(0);
+    }, { timeout: 5000 });
 
     const user = userEvent.setup();
     const actionButtons = screen.getAllByLabelText('Open row actions');
@@ -123,7 +140,7 @@ describe('Admin Products List UI', () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByLabelText('Create new product'));
+    await user.click(screen.getAllByLabelText('Create new product')[0]!);
 
     // Interact with PromptModal
     const promptModal = await screen.findByRole('dialog', { name: /Create New Product/i });

@@ -50,6 +50,8 @@ export type ProductImageManagerController = Pick<
 > & {
   setShowFileManagerForSlot?: (slotIndex: number) => void;
   slotLabels?: string[];
+  isSlotImageLocked?: (slotIndex: number) => boolean;
+  slotImageLockedReason?: string;
 };
 
 type ProductImageManagerProps = {
@@ -94,6 +96,17 @@ export default function ProductImageManager({
     'slotLabels' in resolvedController && Array.isArray(resolvedController.slotLabels)
       ? resolvedController.slotLabels
       : undefined;
+  const isSlotImageLocked: ((slotIndex: number) => boolean) | undefined =
+    'isSlotImageLocked' in resolvedController &&
+    typeof resolvedController.isSlotImageLocked === 'function'
+      ? resolvedController.isSlotImageLocked
+      : undefined;
+  const slotImageLockedReason: string =
+    'slotImageLockedReason' in resolvedController &&
+    typeof resolvedController.slotImageLockedReason === 'string' &&
+    resolvedController.slotImageLockedReason.trim().length > 0
+      ? resolvedController.slotImageLockedReason.trim()
+      : 'This image is locked to the card and can only be removed by deleting the card.';
 
   const settingsStore = useSettingsStore();
   const externalBaseSetting =
@@ -489,6 +502,7 @@ export default function ProductImageManager({
           const isDragging = draggedIndex === index;
           const isDragOver = dragOverIndex === index;
           const hasUpload = slot !== null;
+          const imageLocked = Boolean(isSlotImageLocked?.(index));
           const linkValue = imageLinks[index] ?? '';
           const base64Value = imageBase64s[index] ?? '';
           const uploadUrl = resolveSlotUploadUrl(slot);
@@ -544,6 +558,14 @@ export default function ProductImageManager({
           };
 
           const clearVisibleImage = (): void => {
+            if (imageLocked) {
+              pushDebug({
+                action: 'remove-image',
+                message: slotImageLockedReason,
+                slotIndex: index,
+              });
+              return;
+            }
             void (async (): Promise<void> => {
               if (hasUpload) {
                 await handleSlotDisconnectImage(index);
@@ -616,7 +638,7 @@ export default function ProductImageManager({
                   Clear link
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  disabled={!hasUpload}
+                  disabled={!hasUpload || imageLocked}
                   onClick={clearVisibleImage}
                 >
                   Clear upload
@@ -706,6 +728,8 @@ export default function ProductImageManager({
                         size='icon'
                         className='absolute right-0 top-0 h-6 w-6 rounded-full'
                         onClick={clearVisibleImage}
+                        disabled={imageLocked}
+                        title={imageLocked ? slotImageLockedReason : undefined}
                         aria-label={`Remove image from slot ${index + 1}`}
                       >
                         <XIcon className='h-4 w-4' />

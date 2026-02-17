@@ -447,7 +447,6 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
           ctlr
         ): Promise<void> => {
           const isInternalNode = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
-          console.warn('[SlotTree:onNodeDrop]', { draggedNodeId, targetId, position, isInternalNode, nodeCount: ctlr.nodes.length });
           if (isInternalNode) {
             await applyInternalMasterTreeDrop({
               controller: ctlr,

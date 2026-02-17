@@ -15,6 +15,10 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { isLikelyImageStudioErrorText } from '../utils/image-src';
+import {
+  isImageStudioSlotImageLocked,
+  setImageStudioSlotImageLocked,
+} from '../utils/slot-image-lock';
 
 import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
@@ -82,6 +86,15 @@ const resolveSlotIdCandidates = (rawId: string): string[] => {
   }
   return Array.from(candidates);
 };
+
+function slotHasRenderableImage(slot: ImageStudioSlotRecord | null | undefined): boolean {
+  if (!slot) return false;
+  const imageFileId = slot.imageFileId?.trim() ?? '';
+  const imageFilePath = slot.imageFile?.filepath?.trim() ?? '';
+  const imageUrl = slot.imageUrl?.trim() ?? '';
+  const imageBase64 = slot.imageBase64?.trim() ?? '';
+  return Boolean(imageFileId || imageFilePath || imageUrl || imageBase64);
+}
 
 export interface ImageStudioSingleSlotManagerHandle {
   consumeTemporaryObjectUpload: (options?: { loadToCanvas?: boolean }) => Promise<boolean>;
@@ -218,33 +231,140 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
             if (!normalizedProjectId) {
               throw new Error('Select a project first.');
             }
-
-            await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-            const ensured = await api.post<EnsureSlotFromUploadResponse>(
-              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots/ensure-from-upload`,
-              {
-                uploadId: currentTemporaryUploadId || null,
-                filepath: normalizedTemporaryFilepath || null,
-                filename: temporaryUploadSnapshot.filename?.trim() || null,
-                folderPath: getFolderForNewSlot() || null,
-                selectedSlotId: objectSlot?.id ?? null,
-              }
+            const selectedSlotIdBeforeEnsure = objectSlot?.id?.trim() ?? '';
+            const selectedSlotWasEmpty = Boolean(
+              selectedSlotIdBeforeEnsure && !slotHasRenderableImage(objectSlot)
             );
-            const targetSlotId = ensured.slot?.id?.trim() ?? '';
+            const selectedSlotCandidateSet = new Set<string>(
+              resolveSlotIdCandidates(selectedSlotIdBeforeEnsure)
+            );
+
+            const findMatchingSlot = (slotsToScan: ImageStudioSlotRecord[]): ImageStudioSlotRecord | null => {
+              const matches = slotsToScan.filter((slot: ImageStudioSlotRecord): boolean => {
+                const slotImageFileId = slot.imageFileId?.trim() ?? '';
+                if (currentTemporaryUploadId && slotImageFileId === currentTemporaryUploadId) return true;
+                if (!normalizedTemporaryFilepath) return false;
+                const slotPath = (slot.imageFile?.filepath ?? slot.imageUrl ?? '').trim();
+                return slotPath === normalizedTemporaryFilepath;
+              });
+              return matches[0] ?? null;
+            };
+
+            const resolveFallbackSlot = async (): Promise<ImageStudioSlotRecord | null> => {
+              await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+              const refreshed = queryClient.getQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId));
+              const refreshedSlots = refreshed?.slots ?? [];
+              const existingMatch = findMatchingSlot(refreshedSlots);
+              if (existingMatch) {
+                if (slotHasRenderableImage(existingMatch)) return existingMatch;
+                const patchedExisting = await updateSlotMutation.mutateAsync({
+                  id: existingMatch.id,
+                  data: {
+                    ...(currentTemporaryUploadId ? { imageFileId: currentTemporaryUploadId } : {}),
+                    ...(normalizedTemporaryFilepath ? { imageUrl: normalizedTemporaryFilepath } : {}),
+                    imageBase64: null,
+                  },
+                });
+                return patchedExisting;
+              }
+
+              if (objectSlot?.id && !slotHasRenderableImage(objectSlot)) {
+                const patchedSelected = await updateSlotMutation.mutateAsync({
+                  id: objectSlot.id,
+                  data: {
+                    ...(currentTemporaryUploadId ? { imageFileId: currentTemporaryUploadId } : {}),
+                    ...(normalizedTemporaryFilepath ? { imageUrl: normalizedTemporaryFilepath } : {}),
+                    imageBase64: null,
+                  },
+                });
+                return patchedSelected;
+              }
+
+              const created = await api.post<StudioSlotsResponse>(
+                `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
+                {
+                  slots: [
+                    {
+                      name: temporaryUploadSnapshot.filename?.trim() || `Card ${Date.now()}`,
+                      ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
+                      ...(currentTemporaryUploadId ? { imageFileId: currentTemporaryUploadId } : {}),
+                      ...(normalizedTemporaryFilepath ? { imageUrl: normalizedTemporaryFilepath } : {}),
+                      imageBase64: null,
+                    },
+                  ],
+                }
+              );
+              return created.slots[0] ?? null;
+            };
+
+            let ensuredSlot: ImageStudioSlotRecord | null = null;
+            try {
+              const ensured = await api.post<EnsureSlotFromUploadResponse>(
+                `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots/ensure-from-upload`,
+                {
+                  uploadId: currentTemporaryUploadId || null,
+                  filepath: normalizedTemporaryFilepath || null,
+                  filename: temporaryUploadSnapshot.filename?.trim() || null,
+                  folderPath: getFolderForNewSlot() || null,
+                  selectedSlotId: objectSlot?.id ?? null,
+                }
+              );
+              ensuredSlot = ensured.slot ?? null;
+            } catch {
+              ensuredSlot = await resolveFallbackSlot();
+            }
+            if (!ensuredSlot?.id) {
+              ensuredSlot = await resolveFallbackSlot();
+            }
+            const targetSlotId = ensuredSlot?.id?.trim() ?? '';
             if (!targetSlotId) {
               throw new Error('Failed to create or resolve card from temporary upload');
             }
 
-            await invalidateImageStudioSlots(queryClient, normalizedProjectId);
-            const refreshedSlots = queryClient.getQueryData<StudioSlotsResponse>(
-              studioKeys.slots(normalizedProjectId)
-            );
-            const slotExistsInCache = refreshedSlots?.slots.some(
-              (slot: ImageStudioSlotRecord): boolean => slot.id === targetSlotId
-            ) ?? false;
-            if (!slotExistsInCache) {
-              await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+            if (
+              selectedSlotWasEmpty &&
+              selectedSlotCandidateSet.has(targetSlotId) &&
+              !isImageStudioSlotImageLocked(ensuredSlot)
+            ) {
+              try {
+                ensuredSlot = await updateSlotMutation.mutateAsync({
+                  id: targetSlotId,
+                  data: {
+                    metadata: setImageStudioSlotImageLocked(
+                      ensuredSlot?.metadata ?? objectSlot?.metadata ?? null,
+                      true
+                    ),
+                  },
+                });
+              } catch {
+                // Non-blocking: keep the ensured slot even if lock metadata update fails.
+              }
             }
+
+            queryClient.setQueryData<StudioSlotsResponse>(
+              studioKeys.slots(normalizedProjectId),
+              (current) => {
+                if (!current || !Array.isArray(current.slots)) {
+                  return { slots: ensuredSlot ? [ensuredSlot] : [] };
+                }
+                if (!ensuredSlot) return current;
+                const existingIndex = current.slots.findIndex(
+                  (slot: ImageStudioSlotRecord): boolean => slot.id === ensuredSlot.id
+                );
+                if (existingIndex < 0) {
+                  return {
+                    ...current,
+                    slots: [...current.slots, ensuredSlot],
+                  };
+                }
+                const nextSlots = [...current.slots];
+                nextSlots[existingIndex] = ensuredSlot;
+                return {
+                  ...current,
+                  slots: nextSlots,
+                };
+              }
+            );
 
             setTemporaryObjectUpload(null);
             setSelectedSlotId(targetSlotId);
@@ -258,6 +378,8 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
               lastConsumedTemporaryUploadIdRef.current = currentTemporaryUploadId;
               lastConsumedSlotIdRef.current = targetSlotId;
             }
+            // Keep server data authoritative after optimistic cache upsert.
+            void invalidateImageStudioSlots(queryClient, normalizedProjectId);
             return true;
           } catch (error: unknown) {
             setTemporaryObjectUpload((current) => current ?? temporaryUploadSnapshot);
@@ -288,6 +410,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         setTemporaryObjectUpload,
         setWorkingSlotId,
         temporaryObjectUpload,
+        updateSlotMutation,
       ]
     );
 
@@ -313,6 +436,30 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           if (!uploaded) {
             throw new Error(result.failures?.[0]?.error || 'Upload failed');
           }
+
+          const selectedSlotId = objectSlot?.id?.trim() ?? '';
+          const selectedSlotIsEmpty = Boolean(selectedSlotId && !slotHasRenderableImage(objectSlot));
+          if (selectedSlotIsEmpty) {
+            await updateSlotMutation.mutateAsync({
+              id: selectedSlotId,
+              data: {
+                imageFileId: uploaded.id,
+                imageUrl: uploaded.filepath,
+                imageBase64: null,
+                metadata: setImageStudioSlotImageLocked(objectSlot?.metadata ?? null, true),
+              },
+            });
+            setTemporaryObjectUpload(null);
+            setObjectImageLinkDraft(uploaded.filepath);
+            setObjectImageBase64Draft('');
+            if (previousTemp && previousTemp.id !== uploaded.id) {
+              await deleteUploadedAsset(previousTemp).catch(() => {
+                // Best effort cleanup of replaced temporary upload.
+              });
+            }
+            return;
+          }
+
           lastConsumedTemporaryUploadIdRef.current = null;
           lastConsumedSlotIdRef.current = null;
           setTemporaryObjectUpload({
@@ -337,10 +484,12 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
       [
         deleteUploadedAsset,
         getFolderForNewSlot,
+        objectSlot,
         projectId,
         setPreviewMode,
         setTemporaryObjectUpload,
         temporaryObjectUpload,
+        updateSlotMutation,
         uploadMutation,
       ]
     );
@@ -408,7 +557,15 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         clearObjectDraftSyncTimeouts();
         setUploadError(null);
         const previousTemporaryUpload = temporaryObjectUpload;
+        const selectedSlotImageLocked = Boolean(
+          objectSlot && isImageStudioSlotImageLocked(objectSlot)
+        );
         try {
+          let clearedCardImage = false;
+          if (!previousTemporaryUpload && selectedSlotImageLocked) {
+            throw new Error('Card image is locked and can only be removed by deleting the card.');
+          }
+
           if (previousTemporaryUpload) {
             await deleteUploadedAsset(previousTemporaryUpload).catch(() => {
               // Best effort cleanup.
@@ -416,7 +573,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
             setTemporaryObjectUpload(null);
           }
 
-          if (objectSlot) {
+          if (objectSlot && !previousTemporaryUpload) {
             const clearPayload = {
               imageFileId: null,
               imageUrl: null,
@@ -513,17 +670,23 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
                 }
               );
             }
-          } else if (previousTemporaryUpload) {
+            clearedCardImage = true;
+          } else if (!objectSlot && previousTemporaryUpload) {
             // Keep selection reset for pure temporary-object flows.
             setSelectedSlotId(null);
-          } else {
+          } else if (!objectSlot) {
             return;
           }
 
-          setObjectImageLinkDraft('');
-          setObjectImageBase64Draft('');
-          // ProductImageManager may still call setImageLinkAt/setImageBase64At during clear flow.
-          suppressNextDraftPersistenceOpsRef.current = 2;
+          if (clearedCardImage || !objectSlot) {
+            setObjectImageLinkDraft('');
+            setObjectImageBase64Draft('');
+            // ProductImageManager may still call setImageLinkAt/setImageBase64At during clear flow.
+            suppressNextDraftPersistenceOpsRef.current = 2;
+          } else {
+            setObjectImageLinkDraft(objectSlot.imageUrl ?? objectSlot.imageFile?.filepath ?? '');
+            setObjectImageBase64Draft(objectSlot.imageBase64 ?? '');
+          }
           if (projectId.trim()) {
             await invalidateImageStudioSlots(queryClient, projectId);
           }
@@ -579,6 +742,11 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           openFileManagerForObject();
         },
         slotLabels: [''],
+        isSlotImageLocked: (slotIndex: number): boolean =>
+          slotIndex === OBJECT_SLOT_INDEX &&
+          !temporaryObjectUpload &&
+          isImageStudioSlotImageLocked(objectSlot),
+        slotImageLockedReason: 'Card image is locked and can only be removed by deleting the card.',
         swapImageSlots: (): void => {
           // Single-slot layout: no reordering.
         },
@@ -593,10 +761,12 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
         managedObjectSlot,
         objectImageBase64Draft,
         objectImageLinkDraft,
+        objectSlot,
         openFileManagerForObject,
         setImageBase64At,
         setImageLinkAt,
         setShowFileManager,
+        temporaryObjectUpload,
         uploadError,
       ]
     );

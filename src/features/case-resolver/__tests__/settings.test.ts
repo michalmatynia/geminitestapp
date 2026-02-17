@@ -259,6 +259,58 @@ describe('case-resolver settings', () => {
     expect(file?.documentContentPlainText).toContain('World');
   });
 
+  it('normalizes and preserves document history snapshots', () => {
+    const raw = JSON.stringify({
+      version: 2,
+      folders: [],
+      files: [
+        {
+          id: 'case-history',
+          name: 'History Case',
+          folder: '',
+          documentHistory: [
+            {
+              id: 'entry-1',
+              savedAt: '2026-02-16T10:00:00.000Z',
+              documentContentVersion: 2,
+              activeDocumentVersion: 'original',
+              editorType: 'markdown',
+              documentContentMarkdown: '# First version',
+            },
+            {
+              id: 'entry-2',
+              savedAt: '2026-02-17T10:00:00.000Z',
+              documentContentVersion: 3,
+              activeDocumentVersion: 'exploded',
+              editorType: 'wysiwyg',
+              documentContentHtml: '<p>Second version</p>',
+            },
+          ],
+          graph: {
+            nodes: [],
+            edges: [],
+            nodeMeta: {},
+            edgeMeta: {},
+          },
+        },
+      ],
+      assets: [],
+      activeFileId: 'case-history',
+    });
+
+    const workspace = parseCaseResolverWorkspace(raw);
+    const file = workspace.files[0];
+
+    expect(file?.documentHistory).toHaveLength(2);
+    expect(file?.documentHistory[0]?.id).toBe('entry-2');
+    expect(file?.documentHistory[0]?.documentContentVersion).toBe(3);
+    expect(file?.documentHistory[0]?.editorType).toBe('wysiwyg');
+    expect(file?.documentHistory[0]?.documentContentPlainText).toContain('Second version');
+    expect(file?.documentHistory[1]?.id).toBe('entry-1');
+    expect(file?.documentHistory[1]?.editorType).toBe('markdown');
+    expect(file?.documentHistory[1]?.documentContentMarkdown).toContain('# First version');
+  });
+
   it('synchronizes relation graph structure and preserves custom links', () => {
     const raw = JSON.stringify({
       version: 2,

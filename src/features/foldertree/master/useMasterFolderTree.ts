@@ -83,6 +83,36 @@ const areMasterTreeNodesEqual = (
   return true;
 };
 
+/**
+ * Structural equality check that ignores cosmetic differences (sortOrder, metadata).
+ * Used by the post-optimistic cooldown guard: if the tree structure (parent-child
+ * relationships, names, types) hasn't changed, external sync can safely be skipped
+ * even when sortOrder or metadata differ due to rebuild from server data.
+ */
+const areMasterTreeNodesStructurallyEqual = (
+  left: MasterTreeNode[],
+  right: MasterTreeNode[]
+): boolean => {
+  if (left.length !== right.length) return false;
+  const leftById = new Map(left.map((n: MasterTreeNode) => [n.id, n]));
+  for (const rightNode of right) {
+    const leftNode = leftById.get(rightNode.id);
+    if (!leftNode) return false;
+    if (leftNode.type !== rightNode.type) return false;
+    if (leftNode.kind !== rightNode.kind) return false;
+    if (leftNode.parentId !== rightNode.parentId) return false;
+    if (leftNode.name !== rightNode.name) return false;
+  }
+  return true;
+};
+
+/** Cooldown period (ms) after an optimistic operation during which external_sync
+ *  replacements are suppressed when the incoming tree is structurally identical.
+ *  This guards against races where adapter-side effects (mutation onSettled refetch)
+ *  produce nodes that differ only cosmetically (e.g. sortOrder) from the optimistic
+ *  state and would otherwise trigger a redundant replaceNodes. */
+const OPTIMISTIC_SETTLE_COOLDOWN_MS = 3_000;
+
 const cloneMasterTreeNodes = (nodes: MasterTreeNode[]): MasterTreeNode[] => {
   if (typeof globalThis.structuredClone === 'function') {
     return globalThis.structuredClone(nodes);
@@ -150,6 +180,10 @@ export function useMasterFolderTree(
   /** Direct ref for isApplying – set synchronously outside setState so external sync guards
    *  are reliable regardless of React batching timing. */
   const isApplyingDirectRef = useRef(false);
+  /** Timestamp of the last successful optimistic operation completion.
+   *  Used as a cooldown guard: external_sync that only differs cosmetically
+   *  (e.g. sortOrder) is suppressed within OPTIMISTIC_SETTLE_COOLDOWN_MS. */
+  const lastOptimisticSettleRef = useRef(0);
 
   const resolveStateUpdater = useCallback(
     (
@@ -321,6 +355,9 @@ export function useMasterFolderTree(
             isApplying: false,
           }));
         }
+        // Mark the settle timestamp so the cooldown guard in replaceNodes can
+        // suppress cosmetic-only external syncs that arrive shortly after.
+        lastOptimisticSettleRef.current = Date.now();
         // Defer clearing the direct ref until AFTER React processes the
         // state update and fires effects (including external-sync).
         // This prevents a race where replaceNodes from a refetch-triggered
@@ -371,7 +408,6 @@ export function useMasterFolderTree(
       // to prevent stale external state from overwriting the optimistic nodes.
       // Use direct ref (set synchronously, not through setState) for reliable timing.
       if (reason === 'external_sync' && (isApplyingDirectRef.current || stateRef.current.isApplying)) {
-        console.warn('[MasterFolderTree] replaceNodes BLOCKED (isApplying)', { reason, isApplyingDirect: isApplyingDirectRef.current, isApplyingState: stateRef.current.isApplying });
         return { ok: true };
       }
 
@@ -380,13 +416,17 @@ export function useMasterFolderTree(
       if (reason === 'external_sync' && areMasterTreeNodesEqual(previousNodes, normalized)) {
         return { ok: true };
       }
-      if (reason === 'external_sync') {
-        console.warn('[MasterFolderTree] replaceNodes PROCEEDING with external_sync', {
-          incomingCount: normalized.length,
-          previousCount: previousNodes.length,
-          incomingNodes: normalized.map((n: MasterTreeNode) => ({ id: n.id, parentId: n.parentId, type: n.type })),
-          previousNodes: previousNodes.map((n: MasterTreeNode) => ({ id: n.id, parentId: n.parentId, type: n.type })),
-        });
+      // Cooldown guard: within a short window after an optimistic operation settles,
+      // suppress external_sync if the incoming nodes are structurally identical
+      // (same parent-child relationships, names, types). This prevents races where
+      // mutation side-effects (onSuccess cache update, onSettled refetch) produce nodes
+      // that differ only cosmetically (sortOrder, metadata timestamps) from the
+      // optimistic state, which would otherwise cause a visual "jump back".
+      if (reason === 'external_sync' && lastOptimisticSettleRef.current > 0) {
+        const elapsed = Date.now() - lastOptimisticSettleRef.current;
+        if (elapsed < OPTIMISTIC_SETTLE_COOLDOWN_MS && areMasterTreeNodesStructurallyEqual(previousNodes, normalized)) {
+          return { ok: true };
+        }
       }
       syncState((prev: InternalMasterFolderTreeState) => ({
         ...prev,
@@ -673,21 +713,16 @@ export function useMasterFolderTree(
         profile,
       });
       if (!result.ok) {
-        console.warn('[MasterFolderTree] moveNode REJECTED by engine:', {
-          nodeId,
-          targetParentId,
-          code: result.code,
-          nodeCount: stateRef.current.nodes.length,
-        });
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[MasterFolderTree] moveNode rejected:', result.code, { nodeId, targetParentId });
+        }
         return toMasterFolderTreeActionFail(result.code);
       }
-      console.warn('[MasterFolderTree] moveNode ACCEPTED, applying optimistic operation');
       const opResult = await applyOptimisticOperation(
         { type: 'move', nodeId, targetParentId, ...(targetIndex !== undefined ? { targetIndex } : {}) },
         result.nodes,
         'Move node'
       );
-      console.warn('[MasterFolderTree] moveNode applyOptimisticOperation result:', { ok: opResult.ok, code: 'code' in opResult ? opResult.code : undefined });
       return opResult;
     },
     [applyOptimisticOperation, profile]

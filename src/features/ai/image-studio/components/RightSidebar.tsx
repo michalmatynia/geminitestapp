@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock3, Eye, GitBranch, Loader2, Play, Redo2, SlidersHorizontal, Sparkles, Undo2, Workflow } from 'lucide-react';
+import { Clock3, Eye, GitBranch, Loader2, Move, Play, Redo2, SlidersHorizontal, Sparkles, Undo2, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -59,6 +59,7 @@ import {
   type ImageStudioProjectSession,
 } from '../utils/project-session';
 import { buildRunRequestPreview, resolvePromptPlaceholders } from '../utils/run-request-preview';
+import { isImageStudioSlotImageLocked } from '../utils/slot-image-lock';
 import { normalizeImageStudioModelPresets, resolveImageStudioSequenceActiveSteps } from '../utils/studio-settings';
 
 import type { ImageStudioSlotRecord } from '../types';
@@ -96,6 +97,8 @@ type StudioActionHistorySnapshot = {
   previewMode: 'image' | '3d';
   compositeAssetIds: string[];
   tool: VectorToolMode;
+  imageTransformMode: 'none' | 'move';
+  canvasImageOffset: { x: number; y: number };
   maskShapes: VectorShape[];
   activeMaskId: string | null;
   selectedPointIndex: number | null;
@@ -258,8 +261,20 @@ const resolveModelCostProfile = (model: string): ModelCostProfile => {
 export function RightSidebar(): React.JSX.Element {
   const router = useRouter();
   const updateSetting = useUpdateSetting();
-  const { isFocusMode, validatorEnabled, formatterEnabled } = useUiState();
-  const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
+  const {
+    isFocusMode,
+    validatorEnabled,
+    formatterEnabled,
+    imageTransformMode,
+    canvasImageOffset,
+  } = useUiState();
+  const {
+    setValidatorEnabled,
+    setFormatterEnabled,
+    setImageTransformMode,
+    setCanvasImageOffset,
+    resetCanvasImageOffset,
+  } = useUiActions();
   const { projectId } = useProjectsState();
   const {
     tool,
@@ -285,6 +300,7 @@ export function RightSidebar(): React.JSX.Element {
   } = useMaskingActions();
   const {
     workingSlot,
+    selectedSlot,
     slots,
     selectedFolder,
     selectedSlotId,
@@ -386,6 +402,11 @@ export function RightSidebar(): React.JSX.Element {
       ? 'Queued...'
       : 'Generating...'
     : `Generate From Prompt ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`;
+  const hasCanvasImage = Boolean(
+    workingSlot ||
+    (selectedSlot && !isImageStudioSlotImageLocked(selectedSlot))
+  );
+  const canResetCanvasImageOffset = Math.abs(canvasImageOffset.x) > 0.5 || Math.abs(canvasImageOffset.y) > 0.5;
 
   const buildActionHistorySnapshot = useCallback((): StudioActionHistorySnapshot => ({
     selectedFolder,
@@ -394,6 +415,8 @@ export function RightSidebar(): React.JSX.Element {
     previewMode,
     compositeAssetIds: cloneSerializableValue(compositeAssetIds),
     tool,
+    imageTransformMode,
+    canvasImageOffset: cloneSerializableValue(canvasImageOffset),
     maskShapes: cloneSerializableValue(maskShapes),
     activeMaskId: typeof activeMaskId === 'string' ? String(activeMaskId) : null,
     selectedPointIndex: Number.isFinite(selectedPointIndex) ? Number(selectedPointIndex) : null,
@@ -414,6 +437,8 @@ export function RightSidebar(): React.JSX.Element {
     previewMode,
     compositeAssetIds,
     tool,
+    imageTransformMode,
+    canvasImageOffset,
     maskShapes,
     activeMaskId,
     selectedPointIndex,
@@ -436,6 +461,13 @@ export function RightSidebar(): React.JSX.Element {
     if (!previous) return 'Initial editor state';
     if (previous.promptText !== next.promptText) return 'Control prompt updated';
     if (previous.tool !== next.tool) return 'Drawing tool changed';
+    if (previous.imageTransformMode !== next.imageTransformMode) return 'Image transform tool changed';
+    if (
+      previous.canvasImageOffset.x !== next.canvasImageOffset.x ||
+      previous.canvasImageOffset.y !== next.canvasImageOffset.y
+    ) {
+      return 'Canvas image position adjusted';
+    }
     if (previous.maskShapes.length !== next.maskShapes.length) {
       return next.maskShapes.length > previous.maskShapes.length ? 'Shape added' : 'Shape removed';
     }
@@ -492,6 +524,8 @@ export function RightSidebar(): React.JSX.Element {
     setCompositeAssetIds(cloneSerializableValue(snapshot.compositeAssetIds));
 
     setTool(snapshot.tool);
+    setImageTransformMode(snapshot.imageTransformMode);
+    setCanvasImageOffset(cloneSerializableValue(snapshot.canvasImageOffset));
     setMaskShapes(cloneSerializableValue(snapshot.maskShapes));
     setActiveMaskId(snapshot.activeMaskId);
     setSelectedPointIndex(snapshot.selectedPointIndex);
@@ -518,6 +552,8 @@ export function RightSidebar(): React.JSX.Element {
     setPreviewMode,
     setCompositeAssetIds,
     setTool,
+    setImageTransformMode,
+    setCanvasImageOffset,
     setMaskShapes,
     setActiveMaskId,
     setSelectedPointIndex,
@@ -1448,6 +1484,43 @@ export function RightSidebar(): React.JSX.Element {
                           Select a drawing tool to see contextual settings.
                         </div>
                       )}
+                    </div>
+
+                    <div className='rounded border border-border/60 bg-card/30 p-3'>
+                      <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Image Transform</div>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <Button
+                          size='xs'
+                          type='button'
+                          variant={imageTransformMode === 'move' ? 'default' : 'outline'}
+                          onClick={() => {
+                            setImageTransformMode(imageTransformMode === 'move' ? 'none' : 'move');
+                          }}
+                          disabled={!hasCanvasImage}
+                          title='Enable image reposition mode in canvas'
+                          aria-label='Toggle image move mode'
+                        >
+                          <Move className='mr-1.5 size-3.5' />
+                          Move Image
+                        </Button>
+                        <Button
+                          size='xs'
+                          type='button'
+                          variant='outline'
+                          onClick={() => {
+                            resetCanvasImageOffset();
+                            setImageTransformMode('none');
+                          }}
+                          disabled={!canResetCanvasImageOffset}
+                          title='Re-center image on canvas'
+                          aria-label='Re-center image on canvas'
+                        >
+                          Re-center
+                        </Button>
+                      </div>
+                      <div className='mt-2 text-[11px] text-gray-500'>
+                        Use Move Image, then drag the canvas image to manually align it in frame.
+                      </div>
                     </div>
 
                     <div className='rounded border border-border/60 bg-card/30 p-3'>

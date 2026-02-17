@@ -32,6 +32,9 @@ export function VectorDrawingCanvas({
   baseCanvasHeightPx,
   onViewCropRectChange,
   showCanvasGrid: propShowCanvasGrid,
+  imageMoveEnabled,
+  imageOffset,
+  onImageOffsetChange,
   className,
 }: Partial<VectorCanvasProps>): React.JSX.Element {
   const context = useOptionalVectorDrawing();
@@ -87,6 +90,9 @@ export function VectorDrawingCanvas({
       {...(baseCanvasHeightPx !== undefined ? { baseCanvasHeightPx } : {})}
       {...(onViewCropRectChange !== undefined ? { onViewCropRectChange } : {})}
       {...(showCanvasGrid !== undefined ? { showCanvasGrid } : {})}
+      {...(imageMoveEnabled !== undefined ? { imageMoveEnabled } : {})}
+      {...(imageOffset !== undefined ? { imageOffset } : {})}
+      {...(onImageOffsetChange !== undefined ? { onImageOffsetChange } : {})}
       {...(className !== undefined ? { className } : {})}
     />
   );

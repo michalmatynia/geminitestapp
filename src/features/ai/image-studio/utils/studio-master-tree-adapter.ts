@@ -31,31 +31,15 @@ export const createImageStudioMasterTreeAdapter = ({
     decodeNodeId: decodeImageStudioMasterNodeId,
     handlers: {
       onMove: async ({ operation, context, node, targetParent }): Promise<MasterTreeNode[] | void> => {
-        console.warn('[ImageStudio:adapter:onMove] START', { nodeId: node.nodeId, entity: node.entity, id: node.id, targetParentEntity: targetParent?.entity, targetParentId: targetParent?.id });
         const targetFolder =
           targetParent?.entity === 'folder'
             ? targetParent.id
             : resolveFolderTargetPathForMasterNode(context.nextNodes, operation.targetParentId);
-        if (targetFolder === null) {
-          console.warn('[ImageStudio:tree] onMove skipped: could not resolve targetFolder', {
-            nodeId: node.nodeId,
-            entity: node.entity,
-            targetParentId: operation.targetParentId,
-          });
-          return;
-        }
+        if (targetFolder === null) return;
 
         if (node.entity === 'card') {
           const slot = slotById.get(node.id);
-          console.warn('[ImageStudio:adapter:onMove] card lookup', { slotId: node.id, found: !!slot, slotByIdSize: slotById.size, targetFolder });
-          if (!slot) {
-            console.warn('[ImageStudio:tree] onMove skipped: slot not found in slotById map', {
-              slotId: node.id,
-              targetFolder,
-              availableSlotIds: Array.from(slotById.keys()).slice(0, 5),
-            });
-            return;
-          }
+          if (!slot) return;
           await moveSlot({ slot, targetFolder });
           // Return the optimistic nodes so the tree controller uses them directly
           // instead of waiting for external sync (which can race with refetch).

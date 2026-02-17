@@ -1,19 +1,19 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T14:42:07.496Z
+Generated at: 2026-02-17T15:42:29.459Z
 
 ## Snapshot
 
-- Source files: 2623
-- Source lines: 424274
+- Source files: 2648
+- Source lines: 426537
 - use client files: 897
-- Files >= 1000 LOC: 35
+- Files >= 1000 LOC: 25
 - Files >= 1500 LOC: 21
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
-- API routes: 293
+- API routes: 294
 - API delegated server routes: 21
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 293/293 (100.0%)
+- API explicit cache policy coverage: 294/294 (100.0%)
 - Cross-feature dependency pairs: 118
 - Shared -> features imports: 15
 - setInterval occurrences: 21
@@ -45,8 +45,8 @@ Generated at: 2026-02-17T14:42:07.496Z
 | `integrations -> products` | 54 |
 | `ai -> observability` | 42 |
 | `jobs -> observability` | 30 |
+| `prompt-exploder -> prompt-engine` | 30 |
 | `products -> observability` | 29 |
-| `prompt-exploder -> prompt-engine` | 28 |
 | `drafter -> products` | 26 |
 | `jobs -> ai` | 26 |
 | `products -> ai` | 25 |
@@ -56,20 +56,20 @@ Generated at: 2026-02-17T14:42:07.496Z
 | `integrations -> data-import-export` | 16 |
 | `ai -> prompt-engine` | 15 |
 | `cms -> observability` | 14 |
-| `integrations -> playwright` | 13 |
+| `data-import-export -> integrations` | 13 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
 | `src/features/database/services/database-sync.ts` | 3352 |
+| `src/features/ai/image-studio/components/StudioModals.tsx` | 2839 |
 | `src/features/prompt-exploder/parser.ts` | 2811 |
-| `src/features/ai/image-studio/components/StudioModals.tsx` | 2764 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2524 |
 | `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 2481 |
 | `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2422 |
-| `src/features/case-resolver/settings.ts` | 2402 |
-| `src/shared/ui/vector-canvas.tsx` | 2236 |
+| `src/features/case-resolver/settings.ts` | 2408 |
+| `src/shared/ui/vector-canvas.tsx` | 2364 |
 | `src/features/ai/agent-runtime/planning/llm.ts` | 2225 |
 | `src/features/integrations/services/exports/base-exporter.ts` | 2148 |
 | `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2129 |
@@ -77,8 +77,8 @@ Generated at: 2026-02-17T14:42:07.496Z
 | `src/features/prompt-exploder/components/SegmentEditorPanel.tsx` | 1908 |
 | `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1896 |
 | `src/features/ai/agent-runtime/tools/index.ts` | 1882 |
+| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1817 |
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1808 |
 | `src/features/ai/ai-paths/components/job-queue-panel.tsx` | 1787 |
-| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1787 |
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
-| `src/features/ai/image-studio/components/RightSidebar.tsx` | 1690 |
+| `src/features/ai/image-studio/components/RightSidebar.tsx` | 1763 |

@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Brain,
   ChevronDown,
   ChevronRight,
   FileCode2,
@@ -15,14 +14,13 @@ import {
   GripVertical,
   Lock,
   Pencil,
-  Sparkles,
   Trash2,
   Unlock,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { palette, type NodeDefinition } from '@/features/ai/ai-paths/lib';
+import type { NodeDefinition } from '@/features/ai/ai-paths/lib';
 import {
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
@@ -47,61 +45,22 @@ import {
   fromCaseResolverAssetNodeId,
   fromCaseResolverFileNodeId,
   fromCaseResolverFolderNodeId,
+  resolveCaseResolverFolderTargetForNode,
   toCaseResolverAssetNodeId,
   toCaseResolverFileNodeId,
   toCaseResolverFolderNodeId,
 } from '../master-tree';
+import {
+  CASE_RESOLVER_PALETTE,
+  parseNullableNumber,
+  parseNullableString,
+  parseString,
+  resolveAssetKind,
+  type FolderCaseFileStats,
+  type PaletteEntry,
+} from './CaseResolverFolderTree.helpers';
 
 import type { CaseResolverFile, CaseResolverWorkspace } from '../types';
-
-type PaletteEntry = {
-  id: string;
-  label: string;
-  description: string;
-  definition: NodeDefinition | null;
-  toneClassName: string;
-  Icon: React.ComponentType<{ className?: string }>;
-};
-
-type FolderCaseFileStats = {
-  total: number;
-  locked: number;
-};
-
-const resolveAssetKind = (kind: unknown): 'node_file' | 'image' | 'pdf' | 'file' => {
-  if (kind === 'node_file' || kind === 'image' || kind === 'pdf' || kind === 'file') {
-    return kind;
-  }
-  return 'file';
-};
-
-const parseString = (value: unknown): string => (typeof value === 'string' ? value : '');
-const parseNullableString = (value: unknown): string | null =>
-  typeof value === 'string' && value.trim().length > 0 ? value : null;
-const parseNullableNumber = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) ? value : null;
-
-const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt') ?? null;
-const modelDefinition = palette.find((entry: NodeDefinition) => entry.type === 'model') ?? null;
-
-const CASE_RESOLVER_PALETTE: PaletteEntry[] = [
-  {
-    id: 'prompt',
-    label: 'Prompt Node',
-    description: 'Functional runtime prompt node.',
-    definition: promptDefinition,
-    toneClassName: 'border-violet-500/40 text-violet-100 hover:bg-violet-500/12',
-    Icon: Sparkles,
-  },
-  {
-    id: 'model',
-    label: 'AI Model Node',
-    description: 'Functional model execution node.',
-    definition: modelDefinition,
-    toneClassName: 'border-cyan-500/40 text-cyan-100 hover:bg-cyan-500/12',
-    Icon: Brain,
-  },
-];
 
 export function CaseResolverFolderTree(): React.JSX.Element {
   const router = useRouter();
@@ -134,6 +93,19 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   } = useCaseResolverPageContext();
   const { toast } = useToast();
   const [isRootExplicitlySelected, setIsRootExplicitlySelected] = useState(true);
+  const dragHandleNodeIdRef = React.useRef<string | null>(null);
+
+  useEffect((): (() => void) => {
+    const clearDragHandleArming = (): void => {
+      dragHandleNodeIdRef.current = null;
+    };
+    window.addEventListener('pointerup', clearDragHandleArming);
+    window.addEventListener('dragend', clearDragHandleArming);
+    return (): void => {
+      window.removeEventListener('pointerup', clearDragHandleArming);
+      window.removeEventListener('dragend', clearDragHandleArming);
+    };
+  }, []);
 
   const treeWorkspace = useMemo((): CaseResolverWorkspace => {
     const selectedCase =
@@ -210,16 +182,12 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       registerFolderPath(file.folder);
     });
 
-    const scopedFolderTimestamps = Object.fromEntries(
-      Object.entries(workspace.folderTimestamps ?? {}).filter(([folderPath]: [string, unknown]): boolean =>
-        folderPaths.has(folderPath)
-      )
-    );
-
     return {
       ...workspace,
-      folders: workspace.folders.filter((folderPath: string): boolean => folderPaths.has(folderPath)),
-      folderTimestamps: scopedFolderTimestamps,
+      // Preserve empty folders in scoped mode so newly created folders do not disappear
+      // before any document is moved into them.
+      folders: workspace.folders,
+      folderTimestamps: workspace.folderTimestamps,
       files: scopedFiles,
       assets: [],
       activeFileId: scopedFiles.some((file: CaseResolverFile): boolean => file.id === selectedCase.id)
@@ -292,8 +260,14 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     ({ node, event }): boolean => {
       if (node.type !== 'file') return true;
       const eventTarget = event.target;
-      if (!(eventTarget instanceof Element)) return false;
-      return eventTarget.closest('[data-master-tree-drag-handle="true"]') !== null;
+      if (eventTarget instanceof Element) {
+        const fromHandle = eventTarget.closest('[data-master-tree-drag-handle="true"]') !== null;
+        if (fromHandle) {
+          dragHandleNodeIdRef.current = node.id;
+          return true;
+        }
+      }
+      return dragHandleNodeIdRef.current === node.id;
     },
     []
   );
@@ -626,6 +600,26 @@ export function CaseResolverFolderTree(): React.JSX.Element {
           ): Promise<void> => {
             const isInternal = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
             if (!isInternal) return;
+            const dragged = decodeCaseResolverMasterNodeId(draggedNodeId);
+            const targetFolderPath =
+              targetId === null
+                ? ''
+                : position === 'inside'
+                  ? (fromCaseResolverFolderNodeId(targetId) ?? '')
+                  : (resolveCaseResolverFolderTargetForNode(ctlr.nodes, targetId) ?? '');
+
+            if (
+              position === 'inside' &&
+              dragged &&
+              (dragged.entity === 'file' || dragged.entity === 'asset')
+            ) {
+              if (dragged.entity === 'file') {
+                await onMoveFile(dragged.id, targetFolderPath);
+                return;
+              }
+              await onMoveAsset(dragged.id, targetFolderPath);
+              return;
+            }
             await applyInternalMasterTreeDrop({
               controller: ctlr,
               draggedNodeId,
@@ -764,6 +758,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               >
                 <DragHandleIcon
                   data-master-tree-drag-handle='true'
+                  onPointerDown={(): void => {
+                    dragHandleNodeIdRef.current = node.id;
+                  }}
                   className={`size-3 shrink-0 ${
                     isCanvasCaseFile
                       ? 'text-sky-300/90 opacity-0 transition-opacity group-hover:opacity-100'

@@ -40,6 +40,10 @@ import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 import { isParamUiControl, type ParamUiControl } from '../utils/param-ui';
+import {
+  isImageStudioSlotImageLocked,
+  setImageStudioSlotImageLocked,
+} from '../utils/slot-image-lock';
 import { DriveImportModal } from './modals/DriveImportModal';
 import { ExtractPromptParamsModal } from './modals/ExtractPromptParamsModal';
 import { GenerationPreviewModal } from './modals/GenerationPreviewModal';
@@ -166,6 +170,15 @@ const asRecord = (value: unknown): Record<string, unknown> | null => {
 const asFiniteNumber = (value: unknown): number | null => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   return value;
+};
+
+const slotHasRenderableImage = (slot: ImageStudioSlotRecord | null | undefined): boolean => {
+  if (!slot) return false;
+  const fileId = slot.imageFileId?.trim() ?? '';
+  const filePath = slot.imageFile?.filepath?.trim() ?? '';
+  const imageUrl = slot.imageUrl?.trim() ?? '';
+  const imageBase64 = slot.imageBase64?.trim() ?? '';
+  return Boolean(fileId || filePath || imageUrl || imageBase64);
 };
 
 const readEnvironmentReferenceDraft = (
@@ -1149,6 +1162,10 @@ export function StudioModals(): React.JSX.Element {
   const handleInlineCardDisconnectImage = useCallback(
     async (index: number): Promise<void> => {
       if (index !== INLINE_CARD_IMAGE_SLOT_INDEX || !selectedSlot?.id) return;
+      if (isImageStudioSlotImageLocked(selectedSlot)) {
+        setInlineSlotUploadError('Card image is locked and can only be removed by deleting the card.');
+        return;
+      }
       setInlineSlotUploadError(null);
       clearInlineSlotSyncTimeouts();
       setSlotUpdateBusy(true);
@@ -1218,6 +1235,7 @@ export function StudioModals(): React.JSX.Element {
     },
     [
       clearInlineSlotSyncTimeouts,
+      selectedSlot,
       selectedSlot?.id,
       setSlotBase64Draft,
       setSlotImageUrlDraft,
@@ -1265,6 +1283,9 @@ export function StudioModals(): React.JSX.Element {
         openInlineCardFileManager();
       },
       slotLabels: [''],
+      isSlotImageLocked: (slotIndex: number): boolean =>
+        slotIndex === INLINE_CARD_IMAGE_SLOT_INDEX && isImageStudioSlotImageLocked(selectedSlot),
+      slotImageLockedReason: 'Card image is locked and can only be removed by deleting the card.',
       swapImageSlots: (): void => {
         // Single-slot manager: no reordering.
       },
@@ -1279,6 +1300,7 @@ export function StudioModals(): React.JSX.Element {
       inlineSlotUploadError,
       managedInlineCardImageSlot,
       openInlineCardFileManager,
+      selectedSlot,
       setInlineCardImageBase64At,
       setInlineCardImageLinkAt,
       setInlineCardShowFileManager,
@@ -1408,19 +1430,41 @@ export function StudioModals(): React.JSX.Element {
 
       if (driveImportMode === 'temporary-object') {
         const primary = imported[0]!;
-        setTemporaryObjectUpload({
-          id: primary.id,
-          filepath: primary.filepath,
-          filename: primary.filename,
-          width: primary.width,
-          height: primary.height,
-        });
-        if (previousTemporary && previousTemporary.id !== primary.id) {
-          await deleteStagedAsset(previousTemporary).catch(() => {
-            // Best-effort cleanup for replaced temporary assets.
+        const selectedSlotId = selectedSlot?.id?.trim() ?? '';
+        const selectedSlotIsEmpty = Boolean(selectedSlotId && !slotHasRenderableImage(selectedSlot));
+        if (selectedSlotIsEmpty) {
+          await updateSlotMutation.mutateAsync({
+            id: selectedSlotId,
+            data: {
+              imageFileId: primary.id,
+              imageUrl: primary.filepath,
+              imageBase64: null,
+              metadata: setImageStudioSlotImageLocked(selectedSlot?.metadata ?? null, true),
+            },
           });
+          setTemporaryObjectUpload(null);
+          setSelectedSlotId(selectedSlotId);
+          if (previousTemporary && previousTemporary.id !== primary.id) {
+            await deleteStagedAsset(previousTemporary).catch(() => {
+              // Best-effort cleanup for replaced temporary assets.
+            });
+          }
+          toast('Imported image attached to selected card.', { variant: 'success' });
+        } else {
+          setTemporaryObjectUpload({
+            id: primary.id,
+            filepath: primary.filepath,
+            filename: primary.filename,
+            width: primary.width,
+            height: primary.height,
+          });
+          if (previousTemporary && previousTemporary.id !== primary.id) {
+            await deleteStagedAsset(previousTemporary).catch(() => {
+              // Best-effort cleanup for replaced temporary assets.
+            });
+          }
+          toast('Imported to temporary object slot. Load to canvas to create a card.', { variant: 'success' });
         }
-        toast('Imported to temporary object slot. Load to canvas to create a card.', { variant: 'success' });
       } else if (driveImportMode === 'environment') {
         const targetId = driveImportTargetId ?? selectedSlot?.id ?? null;
         if (!targetId) {
@@ -1512,19 +1556,41 @@ export function StudioModals(): React.JSX.Element {
 
       if (localUploadMode === 'temporary-object') {
         const primary = uploaded[0]!;
-        setTemporaryObjectUpload({
-          id: primary.id,
-          filepath: primary.filepath,
-          filename: primary.filename,
-          width: primary.width,
-          height: primary.height,
-        });
-        if (previousTemporary && previousTemporary.id !== primary.id) {
-          await deleteStagedAsset(previousTemporary).catch(() => {
-            // Best-effort cleanup for replaced temporary assets.
+        const selectedSlotId = selectedSlot?.id?.trim() ?? '';
+        const selectedSlotIsEmpty = Boolean(selectedSlotId && !slotHasRenderableImage(selectedSlot));
+        if (selectedSlotIsEmpty) {
+          await updateSlotMutation.mutateAsync({
+            id: selectedSlotId,
+            data: {
+              imageFileId: primary.id,
+              imageUrl: primary.filepath,
+              imageBase64: null,
+              metadata: setImageStudioSlotImageLocked(selectedSlot?.metadata ?? null, true),
+            },
           });
+          setTemporaryObjectUpload(null);
+          setSelectedSlotId(selectedSlotId);
+          if (previousTemporary && previousTemporary.id !== primary.id) {
+            await deleteStagedAsset(previousTemporary).catch(() => {
+              // Best-effort cleanup for replaced temporary assets.
+            });
+          }
+          toast('Uploaded image attached to selected card.', { variant: 'success' });
+        } else {
+          setTemporaryObjectUpload({
+            id: primary.id,
+            filepath: primary.filepath,
+            filename: primary.filename,
+            width: primary.width,
+            height: primary.height,
+          });
+          if (previousTemporary && previousTemporary.id !== primary.id) {
+            await deleteStagedAsset(previousTemporary).catch(() => {
+              // Best-effort cleanup for replaced temporary assets.
+            });
+          }
+          toast('Uploaded to temporary object slot. Load to canvas to create a card.', { variant: 'success' });
         }
-        toast('Uploaded to temporary object slot. Load to canvas to create a card.', { variant: 'success' });
       } else if (localUploadMode === 'environment') {
         const targetId = localUploadTargetId ?? selectedSlot?.id ?? null;
         if (!targetId) {
@@ -1625,6 +1691,10 @@ export function StudioModals(): React.JSX.Element {
 
   const handleClearSlotImage = async () => {
     if (!selectedSlot) return;
+    if (isImageStudioSlotImageLocked(selectedSlot)) {
+      toast('Card image is locked and can only be removed by deleting the card.', { variant: 'warning' });
+      return;
+    }
     setSlotUpdateBusy(true);
     try {
       clearInlineSlotSyncTimeouts();
@@ -2281,7 +2351,12 @@ export function StudioModals(): React.JSX.Element {
                 onClick={() => {
                   void handleClearSlotImage();
                 }}
-                disabled={slotUpdateBusy}
+                disabled={slotUpdateBusy || isImageStudioSlotImageLocked(selectedSlot)}
+                title={
+                  isImageStudioSlotImageLocked(selectedSlot)
+                    ? 'Card image is locked and can only be removed by deleting the card.'
+                    : undefined
+                }
               >
               Clear Image
               </Button>

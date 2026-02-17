@@ -355,6 +355,9 @@ export interface VectorCanvasProps {
   baseCanvasHeightPx?: number | null;
   onViewCropRectChange?: (cropRect: VectorCanvasViewCropRect | null) => void;
   showCanvasGrid?: boolean;
+  imageMoveEnabled?: boolean;
+  imageOffset?: { x: number; y: number };
+  onImageOffsetChange?: (offset: { x: number; y: number }) => void;
   className?: string;
 }
 
@@ -382,12 +385,21 @@ export function VectorCanvas({
   baseCanvasHeightPx = null,
   onViewCropRectChange,
   showCanvasGrid = false,
+  imageMoveEnabled = false,
+  imageOffset = { x: 0, y: 0 },
+  onImageOffsetChange,
   className,
 }: VectorCanvasProps): React.JSX.Element {
   const SHAPE_VIEWBOX_SIZE = 1000;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const imageDragRef = useRef<{
+    startClientX: number;
+    startClientY: number;
+    startOffsetX: number;
+    startOffsetY: number;
+  } | null>(null);
   const dragRef = useRef<{ shapeId: string; pointIndex: number } | null>(null);
   const dragShapeRef = useRef<{ shapeId: string; lastPoint: VectorPoint } | null>(null);
   const drawingRef = useRef<{ shapeId: string; type: VectorShapeType; anchor?: VectorPoint } | null>(null);
@@ -406,6 +418,7 @@ export function VectorCanvas({
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
   const spaceDownRef = useRef(false);
   const [isPanning, setIsPanning] = useState(false);
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
   const [isHoveringEditablePoint, setIsHoveringEditablePoint] = useState(false);
   const [isDraggingEditablePoint, setIsDraggingEditablePoint] = useState(false);
   const [canvasRenderSize, setCanvasRenderSize] = useState<{ width: number; height: number }>({ width: 1, height: 1 });
@@ -434,6 +447,13 @@ export function VectorCanvas({
     anchorWorld: { x: number; y: number };
     startTransform: VectorViewTransform;
   } | null>(null);
+  const resolvedImageOffset = useMemo(
+    () => ({
+      x: Number.isFinite(imageOffset.x) ? imageOffset.x : 0,
+      y: Number.isFinite(imageOffset.y) ? imageOffset.y : 0,
+    }),
+    [imageOffset.x, imageOffset.y]
+  );
 
   // --- rAF draw batching ---
   const rafIdRef = useRef<number>(0);
@@ -634,8 +654,8 @@ export function VectorCanvas({
     const imageRenderHeight = canvasRenderSize.height;
     if (!(imageRenderWidth > 0 && imageRenderHeight > 0)) return null;
 
-    const imageElementLeft = (containerWidth - imageRenderWidth) / 2;
-    const imageElementTop = 0;
+    const imageElementLeft = ((containerWidth - imageRenderWidth) / 2) + resolvedImageOffset.x;
+    const imageElementTop = resolvedImageOffset.y;
     const renderAspect = imageRenderWidth / imageRenderHeight;
     const sourceAspect = sourceWidth / sourceHeight;
     let contentWidth = imageRenderWidth;
@@ -690,7 +710,7 @@ export function VectorCanvas({
       width: cropWidth,
       height: cropHeight,
     };
-  }, [canvasRenderSize.height, canvasRenderSize.width, src]);
+  }, [canvasRenderSize.height, canvasRenderSize.width, resolvedImageOffset.x, resolvedImageOffset.y, src]);
 
   useEffect(() => {
     if (!onViewCropRectChange) {
@@ -1064,6 +1084,39 @@ export function VectorCanvas({
     };
   }, [isPanning, stopPan, updatePanFromPointer]);
 
+  useEffect(() => {
+    if (!isDraggingImage) return;
+
+    const onWindowMouseMove = (event: MouseEvent): void => {
+      const dragState = imageDragRef.current;
+      if (!dragState) return;
+      const dx = event.clientX - dragState.startClientX;
+      const dy = event.clientY - dragState.startClientY;
+      onImageOffsetChange?.({
+        x: dragState.startOffsetX + dx,
+        y: dragState.startOffsetY + dy,
+      });
+    };
+
+    const onWindowMouseUp = (): void => {
+      imageDragRef.current = null;
+      setIsDraggingImage(false);
+    };
+
+    window.addEventListener('mousemove', onWindowMouseMove);
+    window.addEventListener('mouseup', onWindowMouseUp);
+    return (): void => {
+      window.removeEventListener('mousemove', onWindowMouseMove);
+      window.removeEventListener('mouseup', onWindowMouseUp);
+    };
+  }, [isDraggingImage, onImageOffsetChange]);
+
+  useEffect(() => {
+    if (imageMoveEnabled && src) return;
+    imageDragRef.current = null;
+    setIsDraggingImage(false);
+  }, [imageMoveEnabled, src]);
+
   // --- Wheel zoom (attached with passive:false to prevent page scroll) ---
   useEffect(() => {
     const container = containerRef.current;
@@ -1391,6 +1444,22 @@ export function VectorCanvas({
         beginPan(event.clientX, event.clientY);
         return;
       }
+      if (imageMoveEnabled && src && event.button === 0) {
+        event.preventDefault();
+        imageDragRef.current = {
+          startClientX: event.clientX,
+          startClientY: event.clientY,
+          startOffsetX: resolvedImageOffset.x,
+          startOffsetY: resolvedImageOffset.y,
+        };
+        setIsDraggingImage(true);
+        dragRef.current = null;
+        dragShapeRef.current = null;
+        drawingRef.current = null;
+        setIsDraggingEditablePoint(false);
+        setIsHoveringEditablePoint(false);
+        return;
+      }
       if (!canDraw) return;
       if (tool === 'select') {
         if (event.shiftKey) {
@@ -1511,7 +1580,26 @@ export function VectorCanvas({
         onChange([...shapes, newShape]);
       }
     },
-    [activeShapeId, beginPan, canDraw, hitTestPoint, hitTestSegment, hitTestShape, onChange, onSelectPoint, onSelectShape, shapes, syncCanvasSize, toPoint, tool]
+    [
+      activeShapeId,
+      beginPan,
+      canDraw,
+      hitTestPoint,
+      hitTestSegment,
+      hitTestShape,
+      imageMoveEnabled,
+      onChange,
+      onImageOffsetChange,
+      onSelectPoint,
+      onSelectShape,
+      resolvedImageOffset.x,
+      resolvedImageOffset.y,
+      shapes,
+      src,
+      syncCanvasSize,
+      toPoint,
+      tool,
+    ]
   );
 
   useEffect(() => {
@@ -1539,6 +1627,16 @@ export function VectorCanvas({
     (event: React.MouseEvent<HTMLCanvasElement>): void => {
       if (panningRef.current) {
         updatePanFromPointer(event.clientX, event.clientY);
+        return;
+      }
+      if (imageDragRef.current) {
+        const dragState = imageDragRef.current;
+        const dx = event.clientX - dragState.startClientX;
+        const dy = event.clientY - dragState.startClientY;
+        onImageOffsetChange?.({
+          x: dragState.startOffsetX + dx,
+          y: dragState.startOffsetY + dy,
+        });
         return;
       }
       if (!canDraw) return;
@@ -1677,7 +1775,18 @@ export function VectorCanvas({
         );
       }
     },
-    [brushRadius, canDraw, getInteractionRect, hitTestPoint, onChange, shapes, toPoint, tool, updatePanFromPointer]
+    [
+      brushRadius,
+      canDraw,
+      getInteractionRect,
+      hitTestPoint,
+      onChange,
+      onImageOffsetChange,
+      shapes,
+      toPoint,
+      tool,
+      updatePanFromPointer,
+    ]
   );
 
   const handleDoubleClick = useCallback((): void => {
@@ -1724,6 +1833,11 @@ export function VectorCanvas({
       stopPan();
       return;
     }
+    if (imageDragRef.current) {
+      imageDragRef.current = null;
+      setIsDraggingImage(false);
+      return;
+    }
     if (drawingRef.current) {
       onChange(
         shapes.map((shape: VectorShape) =>
@@ -1744,7 +1858,7 @@ export function VectorCanvas({
     Math.abs(viewTransform.rotateDeg) > 1e-3;
   const canvasGridLayer = showCanvasGrid ? (
     <div
-      className='pointer-events-none absolute left-1/2 top-0 z-[5] -translate-x-1/2 border border-slate-700/70 bg-slate-900 [background-size:24px_24px] [background-image:linear-gradient(to_right,rgba(148,163,184,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.16)_1px,transparent_1px)]'
+      className='pointer-events-none absolute left-1/2 top-0 z-[5] -translate-x-1/2 border border-slate-700/70 bg-transparent [background-size:24px_24px] [background-image:linear-gradient(to_right,rgba(148,163,184,0.22)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.22)_1px,transparent_1px)]'
       style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
       aria-hidden='true'
     />
@@ -1783,8 +1897,14 @@ export function VectorCanvas({
               ref={imgRef}
               src={src}
               alt='Selected slot'
-              className='pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 select-none object-contain object-top'
-              style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
+              className='pointer-events-none absolute select-none object-contain object-top'
+              style={{
+                width: `${canvasRenderSize.width}px`,
+                height: `${canvasRenderSize.height}px`,
+                left: `calc(50% + ${resolvedImageOffset.x}px)`,
+                top: `${resolvedImageOffset.y}px`,
+                transform: 'translateX(-50%)',
+              }}
               onLoad={() => syncCanvasSize()}
               draggable={false}
             />
@@ -1794,13 +1914,17 @@ export function VectorCanvas({
                 'absolute left-1/2 top-0 z-20 -translate-x-1/2',
                 isPanning
                   ? 'cursor-grabbing'
-                  : isDraggingEditablePoint
+                  : isDraggingImage
                     ? 'cursor-grabbing'
-                    : isHoveringEditablePoint
-                      ? 'cursor-pointer'
-                      : spaceDownRef.current || tool === 'select'
-                        ? 'cursor-grab'
-                        : 'cursor-crosshair'
+                    : isDraggingEditablePoint
+                      ? 'cursor-grabbing'
+                      : isHoveringEditablePoint
+                        ? 'cursor-pointer'
+                        : imageMoveEnabled && src
+                          ? 'cursor-grab'
+                          : spaceDownRef.current || tool === 'select'
+                            ? 'cursor-grab'
+                            : 'cursor-crosshair'
               )}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -1928,13 +2052,17 @@ export function VectorCanvas({
                   'absolute left-1/2 top-0 z-20 -translate-x-1/2',
                   isPanning
                     ? 'cursor-grabbing'
-                    : isDraggingEditablePoint
+                    : isDraggingImage
                       ? 'cursor-grabbing'
-                      : isHoveringEditablePoint
-                        ? 'cursor-pointer'
-                        : spaceDownRef.current || tool === 'select'
-                          ? 'cursor-grab'
-                          : 'cursor-crosshair'
+                      : isDraggingEditablePoint
+                        ? 'cursor-grabbing'
+                        : isHoveringEditablePoint
+                          ? 'cursor-pointer'
+                          : imageMoveEnabled && src
+                            ? 'cursor-grab'
+                            : spaceDownRef.current || tool === 'select'
+                              ? 'cursor-grab'
+                              : 'cursor-crosshair'
                 )}
                 style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
                 onMouseDown={handleMouseDown}

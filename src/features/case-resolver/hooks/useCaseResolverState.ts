@@ -15,6 +15,7 @@ import {
 } from '@/features/case-resolver-capture/settings';
 import {
   deriveDocumentContentSync,
+  ensureSafeDocumentHtml,
   normalizeRawDocumentModeFromContent,
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
@@ -56,6 +57,7 @@ import {
   renameFolderPath,
 } from '../settings';
 import {
+  buildCombinedOcrText,
   buildFileEditDraft,
   createId,
   createUniqueFolderPath,
@@ -850,7 +852,16 @@ export function useCaseResolverState() {
       if (targetFile?.fileType !== 'scanfile') {
         throw new Error('Scan file no longer exists.');
       }
-      if (targetFile.scanSlots.length === 0) {
+      const draftScanSlots =
+        editingDocumentDraft?.id === fileId && editingDocumentDraft.fileType === 'scanfile'
+          ? editingDocumentDraft.scanSlots
+          : null;
+      const scanSlotsForOcr =
+        draftScanSlots && draftScanSlots.length > 0
+          ? draftScanSlots
+          : targetFile.scanSlots;
+
+      if (scanSlotsForOcr.length === 0) {
         toast('Upload at least one image to this file before running OCR.', {
           variant: 'warning',
         });
@@ -866,8 +877,8 @@ export function useCaseResolverState() {
         const failedSlots: string[] = [];
         let successfulSlots = 0;
 
-        for (let index = 0; index < targetFile.scanSlots.length; index += 1) {
-          const slot = targetFile.scanSlots[index];
+        for (let index = 0; index < scanSlotsForOcr.length; index += 1) {
+          const slot = scanSlotsForOcr[index];
           if (!slot) continue;
           setUploadingScanSlotId(slot.id);
           if (!slot.filepath) {
@@ -903,23 +914,32 @@ export function useCaseResolverState() {
             const nextFiles = current.files.map((file: CaseResolverFile): CaseResolverFile => {
               if (file.id !== fileId || file.fileType !== 'scanfile') return file;
               didUpdate = true;
-              const mergedText = nextSlots
-                .map((slot: CaseResolverScanSlot): string => slot.ocrText.trim())
-                .filter((text: string): boolean => text.length > 0)
-                .join('\n\n');
+              const mergedText = buildCombinedOcrText(nextSlots);
+              const mode = file.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown';
               const canonicalDocument = deriveDocumentContentSync({
-                mode: file.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown',
-                value: mergedText,
+                mode,
+                value: mode === 'wysiwyg' ? ensureSafeDocumentHtml(mergedText) : mergedText,
               });
               const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
+              const nextOriginalDocumentContent =
+                file.activeDocumentVersion === 'original'
+                  ? storedDocumentContent
+                  : file.originalDocumentContent;
+              const nextExplodedDocumentContent =
+                file.activeDocumentVersion === 'exploded'
+                  ? storedDocumentContent
+                  : file.explodedDocumentContent;
               return {
                 ...file,
                 scanSlots: nextSlots,
+                editorType: canonicalDocument.mode,
                 documentContentVersion: file.documentContentVersion + 1,
                 documentContent: storedDocumentContent,
                 documentContentMarkdown: canonicalDocument.markdown,
                 documentContentHtml: canonicalDocument.html,
                 documentContentPlainText: canonicalDocument.plainText,
+                originalDocumentContent: nextOriginalDocumentContent,
+                explodedDocumentContent: nextExplodedDocumentContent,
                 documentConversionWarnings: canonicalDocument.warnings,
                 lastContentConversionAt: now,
                 updatedAt: now,
@@ -934,24 +954,33 @@ export function useCaseResolverState() {
           setEditingDocumentDraft((current) => {
             if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
             const now = new Date().toISOString();
-            const mergedText = nextSlots
-              .map((slot: CaseResolverScanSlot): string => slot.ocrText.trim())
-              .filter((text: string): boolean => text.length > 0)
-              .join('\n\n');
+            const mergedText = buildCombinedOcrText(nextSlots);
+            const mode = current.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown';
             const canonicalDocument = deriveDocumentContentSync({
-              mode: current.editorType === 'wysiwyg' ? 'wysiwyg' : 'markdown',
-              value: mergedText,
+              mode,
+              value: mode === 'wysiwyg' ? ensureSafeDocumentHtml(mergedText) : mergedText,
             });
             const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
+            const nextOriginalDocumentContent =
+              current.activeDocumentVersion === 'original'
+                ? storedDocumentContent
+                : current.originalDocumentContent;
+            const nextExplodedDocumentContent =
+              current.activeDocumentVersion === 'exploded'
+                ? storedDocumentContent
+                : current.explodedDocumentContent;
             return {
               ...current,
               scanSlots: nextSlots,
+              editorType: canonicalDocument.mode,
               baseDocumentContentVersion: current.baseDocumentContentVersion + 1,
               documentContentVersion: current.documentContentVersion + 1,
               documentContent: storedDocumentContent,
               documentContentMarkdown: canonicalDocument.markdown,
               documentContentHtml: canonicalDocument.html,
               documentContentPlainText: canonicalDocument.plainText,
+              originalDocumentContent: nextOriginalDocumentContent,
+              explodedDocumentContent: nextExplodedDocumentContent,
               documentConversionWarnings: canonicalDocument.warnings,
               lastContentConversionAt: now,
               updatedAt: now,
@@ -980,6 +1009,7 @@ export function useCaseResolverState() {
     },
     [
       enqueueImageOcrRuntimeJob,
+      editingDocumentDraft,
       pollImageOcrRuntimeJob,
       resolveRuntimeScanOcrSettings,
       toast,

@@ -2,7 +2,7 @@
 
 import { Copy } from 'lucide-react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import {
@@ -13,7 +13,6 @@ import {
   TabsTrigger,
   Tooltip,
   Button,
-  SelectSimple,
   useToast,
 } from '@/shared/ui';
 
@@ -98,11 +97,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     router.replace(query ? `${pathname}?${query}` : pathname);
   }, [pathname, router, searchParams]);
 
-  const projectSelectOptions = useMemo(
-    () => (projectsQuery.data ?? []).map((project) => ({ value: project.id, label: project.id })),
-    [projectsQuery.data]
-  );
-
   const handleOpenProjectEditor = useCallback((nextProjectId: string): void => {
     const normalizedProjectId = nextProjectId.trim();
     if (!normalizedProjectId) return;
@@ -173,14 +167,6 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                       <Copy className='size-3.5' />
                     </Button>
                   </Tooltip>
-                  <SelectSimple size='sm'
-                    className='w-[320px] shrink-0'
-                    value={projectId || undefined}
-                    onValueChange={(value: string) => setProjectId(value)}
-                    options={projectSelectOptions}
-                    placeholder={projectsQuery.isLoading ? 'Loading projects...' : 'Select project'}
-                    ariaLabel='Select project'
-                  />
                 </div>
               </div>
             </div>

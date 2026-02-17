@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type {
   AiNode,
@@ -9,23 +9,12 @@ import type {
   DbNodePreset,
   DbQueryPreset,
   Edge,
-  NodeConfig,
-  ParserSampleState,
   PathConfig,
-  PathExecutionMode,
-  PathFlowIntensity,
-  PathRunMode,
   PathDebugSnapshot,
   PathMeta,
-  RuntimeState,
-  UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 import {
-  AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_KEY,
-  AI_PATHS_HISTORY_RETENTION_MAX,
-  AI_PATHS_HISTORY_RETENTION_MIN,
-  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
   AI_PATHS_LAST_ERROR_KEY,
   AI_PATHS_UI_STATE_KEY,
@@ -60,125 +49,25 @@ import {
   parseRuntimeState,
   sanitizePathConfig,
 } from '../AiPathsSettingsUtils';
-
-
-type ToastFn = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-) => void;
-
-type UseAiPathsPersistenceArgs = {
-  activePathId: string | null;
-  activeTrigger: string;
-  edges: Edge[];
-  expandedPaletteGroups: Set<string>;
-  isPathActive: boolean;
-  isPathLocked: boolean;
-  lastRunAt: string | null;
-  loadNonce: number;
-  loading: boolean;
-  nodes: AiNode[];
-  paletteCollapsed: boolean;
-  parserSamples: Record<string, ParserSampleState>;
-  pathConfigs: Record<string, PathConfig>;
-  pathDescription: string;
-  pathName: string;
-  paths: PathMeta[];
-  executionMode: PathExecutionMode;
-  flowIntensity: PathFlowIntensity;
-  runMode: PathRunMode;
-  selectedNodeId: string | null;
-  runtimeState: RuntimeState;
-  updaterSamples: Record<string, UpdaterSampleState>;
-  normalizeDbNodePreset: (raw: Partial<DbNodePreset>) => DbNodePreset;
-  normalizeDbQueryPreset: (raw: Partial<DbQueryPreset>) => DbQueryPreset;
-  normalizeTriggerLabel: (value?: string | null) => string;
-  persistLastError: (
-    payload: { message: string; time: string; pathId?: string | null } | null
-  ) => Promise<void>;
-  reportAiPathsError: (
-    error: unknown,
-    context: Record<string, unknown>,
-    fallbackMessage?: string
-  ) => void;
-  setActivePathId: (value: string | null) => void;
-  setActiveTrigger: (value: string) => void;
-  setClusterPresets: React.Dispatch<React.SetStateAction<ClusterPreset[]>>;
-  setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
-  setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
-  setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
-  setExpandedPaletteGroups: React.Dispatch<React.SetStateAction<Set<string>>>;
-  setLastError: React.Dispatch<
-    React.SetStateAction<{ message: string; time: string; pathId?: string | null } | null>
-  >;
-  setLastRunAt: (value: string | null) => void;
-  setLoading: (value: boolean) => void;
-  setIsPathActive: (value: boolean) => void;
-  setIsPathLocked: (value: boolean) => void;
-  setNodes: React.Dispatch<React.SetStateAction<AiNode[]>>;
-  setPaletteCollapsed: (value: boolean) => void;
-  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
-  setPathConfigs: React.Dispatch<React.SetStateAction<Record<string, PathConfig>>>;
-  setPathDebugSnapshots: React.Dispatch<React.SetStateAction<Record<string, PathDebugSnapshot>>>;
-  setPathDescription: (value: string) => void;
-  setExecutionMode: (value: PathExecutionMode) => void;
-  setFlowIntensity: (value: PathFlowIntensity) => void;
-  setRunMode: (value: PathRunMode) => void;
-  setHistoryRetentionPasses: (value: number) => void;
-  setHistoryRetentionOptionsMax: (value: number) => void;
-  setPathName: (value: string) => void;
-  setPaths: React.Dispatch<React.SetStateAction<PathMeta[]>>;
-  setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
-  setConfigOpen: (value: boolean) => void;
-  setSelectedNodeId: (value: string | null) => void;
-  setUpdaterSamples: React.Dispatch<React.SetStateAction<Record<string, UpdaterSampleState>>>;
-  toast: ToastFn;
-};
-
-type PersistSettingsPayload = Array<{ key: string; value: string }>;
-type AiPathsUiState = {
-  activePathId?: string | null;
-  expandedGroups?: string[];
-  paletteCollapsed?: boolean;
-};
-type AiPathsUserPreferences = {
-  aiPathsActivePathId?: string | null;
-};
-const USER_PREFERENCES_STALE_MS = 5 * 60_000;
-
-const resolvePreferredActivePathId = (
-  preferences: AiPathsUserPreferences | null | undefined
-): string | null => {
-  const value = preferences?.aiPathsActivePathId;
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
-};
-
-type UseAiPathsPersistenceResult = {
-  autoSaveAt: string | null;
-  autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error';
-  handleSave: (options?: {
-    silent?: boolean | undefined;
-    includeNodeConfig?: boolean | undefined;
-    force?: boolean | undefined;
-    pathNameOverride?: string | undefined;
-    nodesOverride?: AiNode[] | undefined;
-    nodeOverride?: AiNode | undefined;
-    edgesOverride?: Edge[] | undefined;
-  }) => Promise<boolean>;
-  persistActivePathPreference: (pathId: string | null) => Promise<void>;
-  persistPathSettings: (
-    nextPaths: PathMeta[],
-    configId: string,
-    config: PathConfig
-  ) => Promise<PathConfig | null>;
-  persistRuntimePathState: (
-    configId: string,
-    config: PathConfig
-  ) => Promise<void>;
-  persistSettingsBulk: (payload: PersistSettingsPayload) => Promise<void>;
-  savePathIndex: (nextPaths: PathMeta[]) => Promise<void>;
-  saving: boolean;
-};
+import {
+  buildNodesForAutoSave as buildNodesForAutoSaveHelper,
+  mergeNodeOverride,
+  normalizeConfigForHash,
+  normalizeHistoryRetentionOptionsMax,
+  normalizeHistoryRetentionPasses,
+  resolvePathSaveBlockedMessage,
+  stripNodeConfig,
+} from './useAiPathsPersistence.helpers';
+import {
+  USER_PREFERENCES_STALE_MS,
+  resolvePreferredActivePathId,
+  type AiPathsUiState,
+  type AiPathsUserPreferences,
+  type PathSaveOptions,
+  type PersistSettingsPayload,
+  type UseAiPathsPersistenceArgs,
+  type UseAiPathsPersistenceResult,
+} from './useAiPathsPersistence.types';
 
 export function useAiPathsPersistence({
   activePathId,
@@ -287,42 +176,6 @@ export function useAiPathsPersistence({
   useEffect((): void => {
     pathConfigsRef.current = pathConfigs;
   }, [pathConfigs]);
-
-  const normalizeHistoryRetentionPasses = useCallback((value: unknown): number => {
-    const parsed =
-      typeof value === 'number'
-        ? value
-        : Number.parseInt(typeof value === 'string' ? value : '', 10);
-    if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
-      return AI_PATHS_HISTORY_RETENTION_DEFAULT;
-    }
-    return Math.min(
-      AI_PATHS_HISTORY_RETENTION_MAX,
-      Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(parsed))
-    );
-  }, []);
-  const normalizeHistoryRetentionOptionsMax = useCallback((value: unknown): number => {
-    const parsed =
-      typeof value === 'number'
-        ? value
-        : Number.parseInt(typeof value === 'string' ? value : '', 10);
-    if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
-      return AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT;
-    }
-    return Math.min(
-      AI_PATHS_HISTORY_RETENTION_MAX,
-      Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(parsed))
-    );
-  }, []);
-
-  const normalizeConfigForHash = useCallback(
-    (config: PathConfig): PathConfig => ({
-      ...config,
-      nodes: [...config.nodes].sort((a: AiNode, b: AiNode): number => a.id.localeCompare(b.id)),
-      edges: [...config.edges].sort((a: Edge, b: Edge): number => a.id.localeCompare(b.id)),
-    }),
-    []
-  );
 
   const persistSettingsBulk = useCallback(
     async (payload: PersistSettingsPayload): Promise<void> => {
@@ -730,9 +583,6 @@ export function useAiPathsPersistence({
     reportAiPathsError,
     loadNonce,
     updateAiPathsSettingsMutation,
-    normalizeConfigForHash,
-    normalizeHistoryRetentionPasses,
-    normalizeHistoryRetentionOptionsMax,
     persistLastError,
     resolveUserPreferences,
     setLoading,
@@ -826,28 +676,11 @@ export function useAiPathsPersistence({
     [updateAiPathsSettingsMutation]
   );
 
-  const stripNodeConfig = useCallback(
-    (items: AiNode[]): AiNode[] =>
-      items.map((node: AiNode): AiNode => {
-        if (!node.config) return { ...node };
-        return { ...node, config: undefined };
-      }),
-    []
-  );
-
   const buildNodesForAutoSave = useCallback(
-    (baseNodes: AiNode[] = nodes): AiNode[] => {
-      const savedNodes = activePathId ? pathConfigs[activePathId]?.nodes ?? [] : [];
-      const savedConfigById = new Map(
-        savedNodes.map((node: AiNode): [string, NodeConfig | undefined] => [node.id, node.config])
-      );
-      return baseNodes.map((node: AiNode): AiNode => {
-        if (savedConfigById.has(node.id)) {
-          return { ...node, config: savedConfigById.get(node.id) };
-        }
-        return { ...node };
-      });
-    }, [activePathId, nodes, pathConfigs]);
+    (baseNodes: AiNode[] = nodes): AiNode[] =>
+      buildNodesForAutoSaveHelper(baseNodes, activePathId, pathConfigs),
+    [activePathId, nodes, pathConfigs]
+  );
 
   const buildPathSnapshot = useCallback(
     (nameOverride?: string): string =>
@@ -941,28 +774,16 @@ export function useAiPathsPersistence({
   );
 
   const persistPathConfig = useCallback(
-    async (options?: {
-      silent?: boolean | undefined;
-      force?: boolean | undefined;
-      includeNodeConfig?: boolean | undefined;
-      pathNameOverride?: string | undefined;
-      nodesOverride?: AiNode[] | undefined;
-      nodeOverride?: AiNode | undefined;
-      edgesOverride?: Edge[] | undefined;
-    }): Promise<boolean> => {
+    async (options?: PathSaveOptions): Promise<boolean> => {
       if (!activePathId) return false;
       const silent = options?.silent ?? false;
       const force = options?.force ?? false;
       const includeNodeConfig = options?.includeNodeConfig ?? true;
       const resolvedName = options?.pathNameOverride ?? pathName;
-      if (isPathLocked || !isPathActive) {
+      const blockedMessage = resolvePathSaveBlockedMessage(isPathLocked, isPathActive);
+      if (blockedMessage) {
         if (!silent) {
-          toast(
-            isPathLocked
-              ? 'This path is locked. Unlock it to save.'
-              : 'This path is deactivated. Activate it to save.',
-            { variant: 'info' }
-          );
+          toast(blockedMessage, { variant: 'info' });
         }
         return false;
       }
@@ -976,18 +797,7 @@ export function useAiPathsPersistence({
       try {
         const updatedAt = new Date().toISOString();
         const baseNodes = options?.nodesOverride ?? nodesRef.current;
-        const resolvedNodes = options?.nodeOverride
-          ? (() => {
-            const targetNode = options.nodeOverride;
-            let replaced = false;
-            const next = baseNodes.map((node: AiNode): AiNode => {
-              if (node.id !== targetNode.id) return node;
-              replaced = true;
-              return targetNode;
-            });
-            return replaced ? next : [...next, targetNode];
-          })()
-          : baseNodes;
+        const resolvedNodes = mergeNodeOverride(baseNodes, options?.nodeOverride);
         const nodesForSave = includeNodeConfig
           ? resolvedNodes
           : buildNodesForAutoSave(resolvedNodes);
@@ -1062,24 +872,12 @@ export function useAiPathsPersistence({
   );
 
   const handleSave = useCallback(
-    async (options?: {
-      silent?: boolean | undefined;
-      includeNodeConfig?: boolean | undefined;
-      force?: boolean | undefined;
-      pathNameOverride?: string | undefined;
-      nodesOverride?: AiNode[] | undefined;
-      nodeOverride?: AiNode | undefined;
-      edgesOverride?: Edge[] | undefined;
-    }): Promise<boolean> => {
+    async (options?: PathSaveOptions): Promise<boolean> => {
       const silent = options?.silent ?? false;
-      if (isPathLocked || !isPathActive) {
+      const blockedMessage = resolvePathSaveBlockedMessage(isPathLocked, isPathActive);
+      if (blockedMessage) {
         if (!silent) {
-          toast(
-            isPathLocked
-              ? 'This path is locked. Unlock it to save.'
-              : 'This path is deactivated. Activate it to save.',
-            { variant: 'info' }
-          );
+          toast(blockedMessage, { variant: 'info' });
         }
         return false;
       }

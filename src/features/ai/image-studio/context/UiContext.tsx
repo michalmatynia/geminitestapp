@@ -15,6 +15,18 @@ export interface PreviewCanvasViewportCrop {
 }
 
 export type PreviewCanvasViewportCropResolver = () => PreviewCanvasViewportCrop | null;
+export type ImageTransformMode = 'none' | 'move';
+
+export interface CanvasImageOffset {
+  x: number;
+  y: number;
+}
+
+const DEFAULT_CANVAS_IMAGE_OFFSET: CanvasImageOffset = { x: 0, y: 0 };
+const normalizeCanvasImageOffset = (offset: CanvasImageOffset): CanvasImageOffset => ({
+  x: Number.isFinite(offset.x) ? offset.x : 0,
+  y: Number.isFinite(offset.y) ? offset.y : 0,
+});
 
 export interface UiState {
   isFocusMode: boolean;
@@ -22,6 +34,8 @@ export interface UiState {
   centerGuidesEnabled: boolean;
   validatorEnabled: boolean;
   formatterEnabled: boolean;
+  imageTransformMode: ImageTransformMode;
+  canvasImageOffset: CanvasImageOffset;
 }
 
 export interface UiActions {
@@ -31,6 +45,9 @@ export interface UiActions {
   setCenterGuidesEnabled: (value: boolean) => void;
   setValidatorEnabled: (value: boolean) => void;
   setFormatterEnabled: (value: boolean) => void;
+  setImageTransformMode: (mode: ImageTransformMode) => void;
+  setCanvasImageOffset: (offset: CanvasImageOffset) => void;
+  resetCanvasImageOffset: () => void;
   registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null) => void;
   getPreviewCanvasViewportCrop: () => PreviewCanvasViewportCrop | null;
 }
@@ -44,6 +61,8 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [centerGuidesEnabled, setCenterGuidesEnabled] = useState(false);
   const [validatorEnabled, setValidatorEnabledState] = useState(true);
   const [formatterEnabled, setFormatterEnabledState] = useState(false);
+  const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
+  const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(DEFAULT_CANVAS_IMAGE_OFFSET);
   const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
 
   const state = useMemo<UiState>(
@@ -53,8 +72,18 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       centerGuidesEnabled,
       validatorEnabled,
       formatterEnabled,
+      imageTransformMode,
+      canvasImageOffset: canvasImageOffsetState,
     }),
-    [centerGuidesEnabled, formatterEnabled, isFocusMode, maskPreviewEnabled, validatorEnabled]
+    [
+      centerGuidesEnabled,
+      formatterEnabled,
+      imageTransformMode,
+      isFocusMode,
+      maskPreviewEnabled,
+      validatorEnabled,
+      canvasImageOffsetState,
+    ]
   );
 
   const actions = useMemo<UiActions>(
@@ -73,6 +102,13 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       },
       setFormatterEnabled: (value: boolean): void => {
         setFormatterEnabledState(value);
+      },
+      setImageTransformMode,
+      setCanvasImageOffset: (offset: CanvasImageOffset): void => {
+        setCanvasImageOffsetState(normalizeCanvasImageOffset(offset));
+      },
+      resetCanvasImageOffset: (): void => {
+        setCanvasImageOffsetState(DEFAULT_CANVAS_IMAGE_OFFSET);
       },
       registerPreviewCanvasViewportCropResolver: (resolver: PreviewCanvasViewportCropResolver | null): void => {
         previewCanvasViewportCropResolverRef.current = resolver;

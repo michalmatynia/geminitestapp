@@ -418,7 +418,6 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const moveSlot = useCallback(async (input: { slot: ImageStudioSlotRecord; targetFolder: string }): Promise<void> => {
     const { slot, targetFolder } = input;
     const normalizedTarget = targetFolder.trim();
-    console.warn('[SlotsContext:moveSlot] START', { slotId: slot.id, targetFolder: normalizedTarget });
 
     // Optimistic cache update — move the slot to the target folder immediately.
     await queryClient.cancelQueries({ queryKey: slotsQueryKey });
@@ -441,9 +440,12 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
         id: slot.id,
         data: { folderPath: normalizedTarget || null },
       });
-      console.warn('[SlotsContext:moveSlot] SUCCESS', { slotId: slot.id });
+      // Cancel the background refetch triggered by updateSlotMutation's onSettled
+      // (invalidateImageStudioSlots). The cache already has correct data from onSuccess.
+      // Without this, the refetch completes after the tree's isApplying guard drops
+      // and replaceNodes overwrites the optimistic state, causing a "jump back".
+      void queryClient.cancelQueries({ queryKey: slotsQueryKey });
     } catch (error) {
-      console.warn('[SlotsContext:moveSlot] FAILED', { slotId: slot.id, error: error instanceof Error ? error.message : error });
       throw error;
     }
   }, [queryClient, slotsQueryKey, updateSlotMutation]);

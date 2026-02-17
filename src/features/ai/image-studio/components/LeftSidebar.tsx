@@ -116,6 +116,11 @@ export function LeftSidebar(): React.JSX.Element {
         (await singleSlotManagerRef.current?.consumeTemporaryObjectUpload({ loadToCanvas: true })) ?? false;
       if (consumedTemporaryUpload) return;
 
+      if (temporaryObjectUpload) {
+        toast('Failed to load uploaded image onto canvas. Try uploading again.', { variant: 'error' });
+        return;
+      }
+
       if (selectedSlot?.id && selectedSlotImageSrc) {
         setPreviewMode('image');
         setWorkingSlotId(selectedSlot.id);
@@ -381,6 +386,11 @@ export function LeftSidebar(): React.JSX.Element {
         >
           <div className='min-w-0 overflow-hidden'>
             <ImageStudioSingleSlotManager ref={singleSlotManagerRef} />
+            {temporaryObjectUpload ? (
+              <p className='mt-1 px-1 text-[10px] leading-snug text-amber-300'>
+                Temporary upload is staged. Click Load to canvas to create one card and load it.
+              </p>
+            ) : null}
           </div>
           <div className='flex shrink-0 flex-col items-center gap-2 self-start'>
             <Tooltip content='Load to canvas'>

@@ -467,14 +467,24 @@ const normalizeCaseResolverDocumentHistory = (
 
     const fallbackContent =
       typeof record['documentContent'] === 'string' ? record['documentContent'] : '';
+    const rawEditorType =
+      typeof record['editorType'] === 'string' ? record['editorType'] : undefined;
+    const rawMarkdown =
+      typeof record['documentContentMarkdown'] === 'string'
+        ? record['documentContentMarkdown']
+        : undefined;
+    const rawHtml =
+      typeof record['documentContentHtml'] === 'string'
+        ? record['documentContentHtml']
+        : undefined;
     const activeDocumentVersion = normalizeCaseResolverDocumentVersion(
       record['activeDocumentVersion']
     );
     const resolvedMode: DocumentPersistenceMode = normalizeRawDocumentModeFromContent({
-      mode: record['editorType'],
+      mode: rawEditorType,
       rawContent: fallbackContent,
-      rawMarkdown: record['documentContentMarkdown'],
-      rawHtml: record['documentContentHtml'],
+      rawMarkdown,
+      rawHtml,
     });
     const canonical = deriveDocumentContentSync({
       mode: resolvedMode,
@@ -486,12 +496,8 @@ const normalizeCaseResolverDocumentHistory = (
           : (typeof record['documentContentMarkdown'] === 'string'
             ? record['documentContentMarkdown']
             : fallbackContent),
-      previousHtml: typeof record['documentContentHtml'] === 'string'
-        ? record['documentContentHtml']
-        : undefined,
-      previousMarkdown: typeof record['documentContentMarkdown'] === 'string'
-        ? record['documentContentMarkdown']
-        : undefined,
+      previousHtml: rawHtml,
+      previousMarkdown: rawMarkdown,
     });
 
     entries.push({
@@ -2200,7 +2206,7 @@ export const normalizeCaseResolverWorkspace = (
         documentContentMarkdown: file.documentContentMarkdown,
         documentContentHtml: file.documentContentHtml,
         documentContentPlainText: file.documentContentPlainText,
-        documentHistory: fileRecord['documentHistory'],
+        documentHistory: fileRecord['documentHistory'] as CaseResolverDocumentHistoryEntry[] | null | undefined,
         documentConversionWarnings: file.documentConversionWarnings,
         lastContentConversionAt: file.lastContentConversionAt,
         scanSlots: file.scanSlots,

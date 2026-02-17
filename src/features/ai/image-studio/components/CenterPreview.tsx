@@ -32,6 +32,7 @@ import { useUiActions, useUiState } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
 import { estimateGenerationCost } from '../utils/generation-cost';
 import { getImageStudioSlotImageSrc, isLikelyImageStudioErrorText } from '../utils/image-src';
+import { isImageStudioSlotImageLocked } from '../utils/slot-image-lock';
 import {
   asFiniteNumber,
   asObjectRecord,
@@ -85,8 +86,19 @@ const isTreeRevealableCardSlot = (slot: ImageStudioSlotRecord | null): boolean =
 };
 
 export function CenterPreview(): React.JSX.Element {
-  const { isFocusMode, maskPreviewEnabled, centerGuidesEnabled } = useUiState();
-  const { toggleFocusMode, registerPreviewCanvasViewportCropResolver } = useUiActions();
+  const {
+    isFocusMode,
+    maskPreviewEnabled,
+    centerGuidesEnabled,
+    imageTransformMode,
+    canvasImageOffset,
+  } = useUiState();
+  const {
+    toggleFocusMode,
+    registerPreviewCanvasViewportCropResolver,
+    setCanvasImageOffset,
+    resetCanvasImageOffset,
+  } = useUiActions();
   const { projectId, projectsQuery } = useProjectsState();
   const {
     workingSlot,
@@ -95,6 +107,7 @@ export function CenterPreview(): React.JSX.Element {
     previewMode,
     captureRef,
     slots,
+    temporaryObjectUpload,
   } = useSlotsState();
   const {
     setPreviewMode,
@@ -166,6 +179,18 @@ export function CenterPreview(): React.JSX.Element {
   const workingSlotImageSrc = useMemo(() => {
     return getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
   }, [workingSlot, productImagesExternalBaseUrl]);
+  const selectedSlotImageSrc = useMemo(() => {
+    return getImageStudioSlotImageSrc(selectedSlot, productImagesExternalBaseUrl);
+  }, [productImagesExternalBaseUrl, selectedSlot]);
+  const selectedSlotImageLocked = useMemo(
+    () => isImageStudioSlotImageLocked(selectedSlot),
+    [selectedSlot]
+  );
+  const temporaryObjectImageSrc = useMemo(() => {
+    const raw = temporaryObjectUpload?.filepath?.trim() ?? '';
+    if (!raw) return null;
+    return raw;
+  }, [temporaryObjectUpload?.filepath]);
 
   const workingSlotMetadata = useMemo(
     () => asObjectRecord(workingSlot?.metadata) as SlotGenerationMetadata | null,
@@ -256,19 +281,40 @@ export function CenterPreview(): React.JSX.Element {
     // Composite preview: use composited result image when available
     if (isCompositeSlot && compositeResultImage) return compositeResultImage;
     if (canCompareWithSource && singleVariantView === 'source') return sourceSlotImageSrc;
-    return workingSlotImageSrc;
-  }, [isCompositeSlot, compositeResultImage, canCompareWithSource, singleVariantView, sourceSlotImageSrc, workingSlotImageSrc]);
+    const selectedCanvasImageSrc = selectedSlotImageLocked ? null : selectedSlotImageSrc;
+    return workingSlotImageSrc ?? selectedCanvasImageSrc ?? temporaryObjectImageSrc;
+  }, [
+    isCompositeSlot,
+    compositeResultImage,
+    canCompareWithSource,
+    selectedSlotImageLocked,
+    selectedSlotImageSrc,
+    temporaryObjectImageSrc,
+    singleVariantView,
+    sourceSlotImageSrc,
+    workingSlotImageSrc,
+  ]);
 
   const activeCanvasSlotId = useMemo((): string | null => {
     if (previewMode !== 'image' || splitVariantView) return null;
     if (canCompareWithSource && singleVariantView === 'source') {
       return sourceSlot?.id ?? null;
     }
-    return workingSlot?.id ?? null;
-  }, [canCompareWithSource, previewMode, singleVariantView, sourceSlot?.id, splitVariantView, workingSlot?.id]);
+    return workingSlot?.id ?? (selectedSlotImageLocked ? null : selectedSlot?.id ?? null);
+  }, [
+    canCompareWithSource,
+    previewMode,
+    selectedSlot?.id,
+    selectedSlotImageLocked,
+    singleVariantView,
+    sourceSlot?.id,
+    splitVariantView,
+    workingSlot?.id,
+  ]);
+  const revealableCanvasSlot = workingSlot ?? (selectedSlotImageLocked ? null : selectedSlot) ?? null;
   const canRevealLoadedCardInTree = useMemo(
-    () => isTreeRevealableCardSlot(workingSlot),
-    [workingSlot]
+    () => isTreeRevealableCardSlot(revealableCanvasSlot),
+    [revealableCanvasSlot]
   );
   const activeProject = useMemo(
     () =>
@@ -370,6 +416,10 @@ export function CenterPreview(): React.JSX.Element {
   useEffect(() => {
     previewCanvasSlotIdRef.current = activeCanvasSlotId;
   }, [activeCanvasSlotId]);
+
+  useEffect(() => {
+    resetCanvasImageOffset();
+  }, [activeCanvasSlotId, temporaryObjectUpload?.id, resetCanvasImageOffset]);
 
   useEffect(() => {
     if (previewMode !== 'image' || splitVariantView) {
@@ -1082,7 +1132,7 @@ export function CenterPreview(): React.JSX.Element {
   }, []);
 
   const handleRevealInTreeFromCanvas = useCallback((): void => {
-    const targetSlotId = workingSlot?.id ?? null;
+    const targetSlotId = activeCanvasSlotId ?? null;
     if (!targetSlotId) {
       toast('No card is currently loaded in the preview.', { variant: 'info' });
       return;
@@ -1091,7 +1141,7 @@ export function CenterPreview(): React.JSX.Element {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent(REVEAL_IN_TREE_EVENT, { detail: { slotId: targetSlotId } }));
     }
-  }, [setSelectedSlotId, toast, workingSlot?.id]);
+  }, [activeCanvasSlotId, setSelectedSlotId, toast]);
 
   const adjustSplitZoom = useCallback((pane: 'left' | 'right', delta: number): void => {
     if (pane === 'left') {
@@ -1449,6 +1499,9 @@ export function CenterPreview(): React.JSX.Element {
                   enableTwoFingerRotate
                   baseCanvasWidthPx={projectCanvasSize?.width ?? null}
                   baseCanvasHeightPx={projectCanvasSize?.height ?? null}
+                  imageMoveEnabled={imageTransformMode === 'move'}
+                  imageOffset={canvasImageOffset}
+                  onImageOffsetChange={setCanvasImageOffset}
                   onViewCropRectChange={handlePreviewCanvasCropRectChange}
                   className={previewCanvasClassName}
                 />
@@ -1474,17 +1527,16 @@ export function CenterPreview(): React.JSX.Element {
               />
             ) : null}
             {canRevealLoadedCardInTree ? (
-              <div className='absolute bottom-2 right-2 z-20'>
+              <div className='absolute bottom-2 left-2 z-20'>
                 <Button size='xs'
                   type='button'
                   variant='outline'
                   onClick={handleRevealInTreeFromCanvas}
                   title='Reveal loaded card in tree'
                   aria-label='Reveal loaded card in tree'
-                  className='h-7 bg-black/70 px-2 text-[11px] text-gray-100 backdrop-blur-sm'
+                  className='h-7 w-7 bg-black/70 px-0 text-[11px] text-gray-100 backdrop-blur-sm'
                 >
-                  <Locate className='mr-1.5 size-3.5' />
-                  Reveal in tree
+                  <Locate className='size-3.5' />
                 </Button>
               </div>
             ) : null}

@@ -1,14 +1,14 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T17:15:09.857Z
+Generated at: 2026-02-17T17:56:27.917Z
 
 ## Snapshot
 
-- Source files: 2670
-- Source lines: 428752
-- use client files: 898
-- Files >= 1000 LOC: 16
-- Files >= 1500 LOC: 16
+- Source files: 2681
+- Source lines: 429409
+- use client files: 901
+- Files >= 1000 LOC: 14
+- Files >= 1500 LOC: 14
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
 - API delegated server routes: 21
@@ -44,9 +44,9 @@ Generated at: 2026-02-17T17:15:09.857Z
 | --- | ---: |
 | `integrations -> products` | 56 |
 | `ai -> observability` | 45 |
+| `prompt-exploder -> prompt-engine` | 32 |
 | `jobs -> observability` | 30 |
 | `products -> observability` | 30 |
-| `prompt-exploder -> prompt-engine` | 30 |
 | `drafter -> products` | 26 |
 | `jobs -> ai` | 26 |
 | `products -> ai` | 25 |
@@ -64,21 +64,21 @@ Generated at: 2026-02-17T17:15:09.857Z
 | --- | ---: |
 | `src/features/database/services/database-sync.ts` | 3352 |
 | `src/features/ai/image-studio/components/StudioModals.tsx` | 2842 |
-| `src/features/prompt-exploder/parser.ts` | 2811 |
+| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2534 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 2524 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2500 |
 | `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 2481 |
 | `src/shared/ui/vector-canvas.tsx` | 2382 |
 | `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2135 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2045 |
 | `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1960 |
-| `src/features/prompt-exploder/components/SegmentEditorPanel.tsx` | 1908 |
 | `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1896 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1861 |
 | `src/features/case-resolver/components/CaseResolverCanvasWorkspace.tsx` | 1808 |
-| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1768 |
 | `src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx` | 1763 |
+| `src/features/ai/image-studio/components/CenterPreview.tsx` | 1738 |
 | `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 999 |
 | `src/features/case-resolver/components/CaseResolverFolderTree.tsx` | 998 |
 | `src/features/ai/ai-paths/components/canvas-board.tsx` | 996 |
 | `src/features/integrations/services/tradera-listing-service.ts` | 996 |
+| `src/features/ai/agent-runtime/tools/index.ts` | 995 |
+| `src/features/data-import-export/context/ImportExportContext.tsx` | 995 |

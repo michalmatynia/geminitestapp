@@ -86,6 +86,7 @@ const PRISMA_COLLECTION_DELEGATES: Record<string, string> = {
   products: 'product',
   product_drafts: 'productDraft',
   product_categories: 'productCategory',
+  product_parameters: 'productParameter',
   product_category_assignments: 'productCategoryAssignment',
   product_tags: 'productTag',
   product_tag_assignments: 'productTagAssignment',

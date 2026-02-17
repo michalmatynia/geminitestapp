@@ -1,0 +1,443 @@
+'use client';
+
+import { Plus, Trash2 } from 'lucide-react';
+import React from 'react';
+
+import {
+  Button,
+  Input,
+  Label,
+  SelectSimple,
+} from '@/shared/ui';
+
+import { promptExploderSafeJsonStringify } from '../helpers/formatting';
+import {
+  createLogicalCondition,
+  PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS,
+  PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS,
+  PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS,
+  isLogicalComparator,
+  isLogicalJoin,
+} from '../helpers/logical-conditions';
+import { sanitizeParamJsonValue } from '../params-editor';
+
+import type {
+  PromptExploderListItem,
+  PromptExploderLogicalComparator,
+  PromptExploderLogicalCondition,
+  PromptExploderLogicalOperator,
+} from '../types';
+
+type LogicalParamOption = {
+  value: string;
+  label: string;
+};
+
+type LogicalParamEntry = {
+  spec?: {
+    kind?: string | null;
+    enumOptions?: string[] | null;
+  } | null;
+};
+
+function normalizeLogicalConditionList(
+  item: PromptExploderListItem,
+  sourceConditions: PromptExploderLogicalCondition[],
+  logicalOperator: PromptExploderLogicalOperator
+): PromptExploderLogicalCondition[] {
+  const fallbackComparator: PromptExploderLogicalComparator =
+    logicalOperator === 'unless' ? 'falsy' : 'truthy';
+  const baseConditions = sourceConditions.length
+    ? sourceConditions
+    : [
+      createLogicalCondition({
+        id: `${item.id}_condition_1`,
+        comparator: fallbackComparator,
+        value: null,
+      }),
+    ];
+
+  return baseConditions.map((condition, index) => {
+    const comparator = condition.comparator ?? fallbackComparator;
+    return createLogicalCondition({
+      id: condition.id || `${item.id}_condition_${index + 1}`,
+      paramPath: (condition.paramPath ?? '').trim(),
+      comparator,
+      value:
+        comparator === 'truthy' || comparator === 'falsy'
+          ? null
+          : condition.value ?? null,
+      joinWithPrevious:
+        index === 0
+          ? null
+          : (condition.joinWithPrevious === 'or' ? 'or' : 'and'),
+    });
+  });
+}
+
+function deriveLegacyLogicalConditions(
+  item: PromptExploderListItem
+): PromptExploderLogicalCondition[] {
+  const legacyPath = (item.referencedParamPath ?? '').trim();
+  if (!legacyPath) return [];
+  return [
+    createLogicalCondition({
+      id: `${item.id}_legacy`,
+      paramPath: legacyPath,
+      comparator:
+        item.referencedComparator ??
+        (item.logicalOperator === 'unless' ? 'falsy' : 'truthy'),
+      value: item.referencedValue ?? null,
+      joinWithPrevious: null,
+    }),
+  ];
+}
+
+function getEditableLogicalConditions(
+  item: PromptExploderListItem
+): PromptExploderLogicalCondition[] {
+  if ((item.logicalConditions ?? []).length > 0) {
+    return item.logicalConditions ?? [];
+  }
+  const legacy = deriveLegacyLogicalConditions(item);
+  if (legacy.length > 0) return legacy;
+  if (item.logicalOperator) {
+    return [
+      createLogicalCondition({
+        id: `${item.id}_condition_1`,
+        comparator: item.logicalOperator === 'unless' ? 'falsy' : 'truthy',
+        joinWithPrevious: null,
+      }),
+    ];
+  }
+  return [];
+}
+
+function normalizeListItemLogicalState(
+  item: PromptExploderListItem,
+  override: Partial<PromptExploderListItem>
+): PromptExploderListItem {
+  const next = {
+    ...item,
+    ...override,
+  };
+  const logicalOperator = next.logicalOperator ?? null;
+  if (!logicalOperator) {
+    return {
+      ...next,
+      logicalOperator: null,
+      logicalConditions: [],
+      referencedParamPath: null,
+      referencedComparator: null,
+      referencedValue: null,
+    };
+  }
+
+  const sourcedConditions =
+    override.logicalConditions !== undefined
+      ? (override.logicalConditions ?? [])
+      : ((next.logicalConditions ?? []).length > 0
+        ? (next.logicalConditions ?? [])
+        : deriveLegacyLogicalConditions(next));
+
+  const logicalConditions = normalizeLogicalConditionList(
+    next,
+    sourcedConditions,
+    logicalOperator
+  );
+
+  const firstConfiguredCondition =
+    logicalConditions.find((condition) => condition.paramPath.trim().length > 0) ?? null;
+
+  return {
+    ...next,
+    logicalOperator,
+    logicalConditions,
+    referencedParamPath: firstConfiguredCondition?.paramPath ?? null,
+    referencedComparator: firstConfiguredCondition?.comparator ?? null,
+    referencedValue:
+      firstConfiguredCondition &&
+        firstConfiguredCondition.comparator !== 'truthy' &&
+        firstConfiguredCondition.comparator !== 'falsy'
+        ? firstConfiguredCondition.value
+        : null,
+  };
+}
+
+export function SegmentEditorListItemLogicalEditor(args: {
+  item: PromptExploderListItem;
+  onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
+  listParamOptions: LogicalParamOption[];
+  listParamEntryByPath: ReadonlyMap<string, LogicalParamEntry>;
+}): React.JSX.Element {
+  const { item, onChange, listParamOptions, listParamEntryByPath } = args;
+  const operatorValue = item.logicalOperator ?? 'none';
+  const logicalConditions =
+    operatorValue === 'none' ? [] : getEditableLogicalConditions(item);
+
+  const applyPatch = (patch: Partial<PromptExploderListItem>): void => {
+    onChange((current) => normalizeListItemLogicalState(current, patch));
+  };
+
+  const updateCondition = (
+    conditionIndex: number,
+    patch: Partial<PromptExploderLogicalCondition>
+  ): void => {
+    const nextConditions = logicalConditions.map((condition, index) =>
+      index === conditionIndex ? createLogicalCondition({ ...condition, ...patch }) : condition
+    );
+    applyPatch({
+      logicalConditions: nextConditions,
+    });
+  };
+
+  const addCondition = (): void => {
+    if (operatorValue === 'none') return;
+    const fallbackComparator: PromptExploderLogicalComparator =
+      operatorValue === 'unless' ? 'falsy' : 'truthy';
+    applyPatch({
+      logicalConditions: [
+        ...logicalConditions,
+        createLogicalCondition({
+          comparator: fallbackComparator,
+          joinWithPrevious: 'and',
+        }),
+      ],
+    });
+  };
+
+  const removeCondition = (conditionIndex: number): void => {
+    const nextConditions = logicalConditions.filter((_, index) => index !== conditionIndex);
+    applyPatch({
+      logicalConditions: nextConditions,
+    });
+  };
+
+  return (
+    <div className='mt-2 space-y-2 rounded border border-border/50 bg-card/20 p-2'>
+      <div className='space-y-1'>
+        <Label className='text-[10px] text-gray-500'>Logical Operator</Label>
+        <SelectSimple size='sm'
+          value={operatorValue}
+          onValueChange={(next: string) => {
+            if (next === 'none') {
+              applyPatch({
+                logicalOperator: null,
+                logicalConditions: [],
+                referencedParamPath: null,
+                referencedComparator: null,
+                referencedValue: null,
+              });
+              return;
+            }
+            const nextOperator = next as PromptExploderLogicalOperator;
+            applyPatch({
+              logicalOperator: nextOperator,
+            });
+          }}
+          options={PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
+        />
+      </div>
+
+      {operatorValue !== 'none' ? (
+        <div className='space-y-2'>
+          {logicalConditions.map((condition, conditionIndex) => {
+            const selectedParamPath = (condition.paramPath ?? '').trim();
+            const selectedParamEntry = selectedParamPath
+              ? (listParamEntryByPath.get(selectedParamPath) ?? null)
+              : null;
+            const comparatorValue =
+              condition.comparator ?? (operatorValue === 'unless' ? 'falsy' : 'truthy');
+            const needsValue =
+              selectedParamPath.length > 0 &&
+              comparatorValue !== 'truthy' &&
+              comparatorValue !== 'falsy';
+            const paramOptions =
+              selectedParamPath &&
+                !listParamOptions.some((option) => option.value === selectedParamPath)
+                ? [{ value: selectedParamPath, label: selectedParamPath }, ...listParamOptions]
+                : listParamOptions;
+
+            return (
+              <div
+                key={condition.id}
+                className='grid gap-2 md:grid-cols-[120px_minmax(0,1fr)_120px_minmax(0,1fr)_64px]'
+              >
+                <div className='space-y-1'>
+                  <Label className='text-[10px] text-gray-500'>Join</Label>
+                  {conditionIndex === 0 ? (
+                    <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+                      START
+                    </div>
+                  ) : (
+                    <SelectSimple size='sm'
+                      value={condition.joinWithPrevious === 'or' ? 'or' : 'and'}
+                      onValueChange={(next: string) => {
+                        if (!isLogicalJoin(next)) return;
+                        updateCondition(conditionIndex, {
+                          joinWithPrevious: next,
+                        });
+                      }}
+                      options={PROMPT_EXPLODER_LOGICAL_JOIN_OPTIONS.map((option) => ({
+                        value: option.value,
+                        label: option.label,
+                      }))}
+                    />
+                  )}
+                </div>
+
+                <div className='space-y-1'>
+                  <Label className='text-[10px] text-gray-500'>Referenced Param</Label>
+                  <SelectSimple size='sm'
+                    value={selectedParamPath}
+                    onValueChange={(next: string) => {
+                      updateCondition(conditionIndex, {
+                        paramPath: next.trim(),
+                      });
+                    }}
+                    options={
+                      paramOptions.length > 0
+                        ? paramOptions
+                        : [{ value: '', label: 'No parameters available' }]
+                    }
+                  />
+                </div>
+
+                <div className='space-y-1'>
+                  <Label className='text-[10px] text-gray-500'>Comparator</Label>
+                  <SelectSimple size='sm'
+                    value={comparatorValue}
+                    onValueChange={(next: string) => {
+                      if (!isLogicalComparator(next)) return;
+                      updateCondition(conditionIndex, {
+                        comparator: next,
+                        value:
+                          next === 'truthy' || next === 'falsy'
+                            ? null
+                            : condition.value ?? null,
+                      });
+                    }}
+                    options={PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS.map((option) => ({
+                      value: option.value,
+                      label: option.label,
+                    }))}
+                  />
+                </div>
+
+                <div className='space-y-1'>
+                  <Label className='text-[10px] text-gray-500'>Value</Label>
+                  {needsValue ? (
+                    selectedParamEntry?.spec?.kind === 'boolean' ? (
+                      <SelectSimple size='sm'
+                        value={String(Boolean(condition.value))}
+                        onValueChange={(next: string) => {
+                          updateCondition(conditionIndex, {
+                            value: next === 'true',
+                          });
+                        }}
+                        options={[
+                          { value: 'true', label: 'true' },
+                          { value: 'false', label: 'false' },
+                        ]}
+                      />
+                    ) : selectedParamEntry?.spec?.kind === 'enum' &&
+                      selectedParamEntry.spec.enumOptions ? (
+                        <SelectSimple size='sm'
+                          value={String(condition.value ?? selectedParamEntry.spec.enumOptions[0] ?? '')}
+                          onValueChange={(next: string) => {
+                            updateCondition(conditionIndex, {
+                              value: next,
+                            });
+                          }}
+                          options={selectedParamEntry.spec.enumOptions.map((value) => ({
+                            value,
+                            label: value,
+                          }))}
+                        />
+                      ) : selectedParamEntry?.spec?.kind === 'number' ? (
+                        <Input
+                          type='number'
+                          value={String(condition.value ?? '')}
+                          onChange={(event) => {
+                            const next = Number(event.target.value);
+                            if (!Number.isFinite(next)) return;
+                            updateCondition(conditionIndex, {
+                              value: next,
+                            });
+                          }}
+                        />
+                      ) : (
+                        <Input
+                          value={
+                            typeof condition.value === 'string'
+                              ? condition.value
+                              : promptExploderSafeJsonStringify(condition.value ?? '')
+                          }
+                          onChange={(event) => {
+                            const rawValue = event.target.value;
+                            if (
+                              selectedParamEntry?.spec?.kind === 'rgb' ||
+                              selectedParamEntry?.spec?.kind === 'tuple2' ||
+                              selectedParamEntry?.spec?.kind === 'json'
+                            ) {
+                              updateCondition(conditionIndex, {
+                                value: sanitizeParamJsonValue(
+                                  rawValue,
+                                  condition.value
+                                ),
+                              });
+                              return;
+                            }
+                            updateCondition(conditionIndex, {
+                              value: rawValue,
+                            });
+                          }}
+                        />
+                      )
+                  ) : (
+                    <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+                      {selectedParamPath ? 'Value not needed' : 'Select parameter'}
+                    </div>
+                  )}
+                </div>
+
+                <div className='space-y-1'>
+                  <Label className='text-[10px] text-gray-500'>Actions</Label>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='h-9 w-full px-2'
+                    onClick={() => {
+                      removeCondition(conditionIndex);
+                    }}
+                    disabled={logicalConditions.length <= 1}
+                  >
+                    <Trash2 className='size-3.5' />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          <div className='flex justify-end'>
+            <Button
+              type='button'
+              variant='outline'
+              className='h-8 px-2 text-xs'
+              onClick={addCondition}
+            >
+              <Plus className='mr-1 size-3.5' />
+              Add condition
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className='h-9 rounded border border-dashed border-border/60 bg-card/20 px-2 text-[11px] leading-9 text-gray-500'>
+          No condition
+        </div>
+      )}
+    </div>
+  );
+}

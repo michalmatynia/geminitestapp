@@ -171,26 +171,31 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
                 <div className='ml-auto flex min-w-0 flex-col items-end gap-1 text-right'>
-                  <span
-                    className='w-[220px] shrink-0 truncate text-right text-[13px] text-muted-foreground'
-                    title={activeProjectNameLabel}
-                  >
-                    {activeProjectNameLabel}
-                  </span>
                   <div className='flex min-w-0 items-center justify-end gap-2'>
+                    <span
+                      className='w-[280px] shrink-0 truncate text-left text-[13px] text-muted-foreground'
+                      title={activeProjectNameLabel}
+                    >
+                      {activeProjectNameLabel}
+                    </span>
                     {activeTab === 'studio' ? (
-                      <div className='flex items-center gap-2'>
-                        <span className='text-[10px] uppercase tracking-wide text-muted-foreground'>Canvas</span>
-                        <ToggleButtonGroup
-                          value={previewCanvasSize}
-                          onChange={setPreviewCanvasSize}
-                          options={PREVIEW_CANVAS_SIZE_OPTIONS}
-                          className='text-[11px] text-muted-foreground'
-                          size='xs'
-                        />
-                      </div>
+                      <>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-[10px] uppercase tracking-wide text-muted-foreground'>Canvas</span>
+                          <ToggleButtonGroup
+                            value={previewCanvasSize}
+                            onChange={setPreviewCanvasSize}
+                            options={PREVIEW_CANVAS_SIZE_OPTIONS}
+                            className='text-[11px] text-muted-foreground'
+                            size='xs'
+                          />
+                        </div>
+                      </>
                     ) : null}
-                    <span className='w-[280px] shrink-0 truncate text-right text-xs text-muted-foreground'>
+                    <span className='size-7 shrink-0 opacity-0 pointer-events-none' aria-hidden='true' />
+                  </div>
+                  <div className='flex min-w-0 items-center justify-end gap-2'>
+                    <span className='w-[280px] shrink-0 truncate text-left text-xs text-muted-foreground'>
                       {selectedSlot
                         ? selectedSlot.name || selectedSlot.id
                         : 'No active card selected. Pick a card from the tree.'}

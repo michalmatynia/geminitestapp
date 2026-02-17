@@ -427,7 +427,7 @@ export function useCaseResolverState() {
         queuedMutationIdRef.current = null;
         pendingSaveToastRef.current = null;
         setWorkspace(serverWorkspace);
-        toast('Case Resolver workspace changed in another tab. Loaded latest server state.', {
+        toast('Case Resolver workspace changed before save completed. Loaded latest server state.', {
           variant: 'warning',
         });
         return;

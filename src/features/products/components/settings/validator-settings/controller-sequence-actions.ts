@@ -549,20 +549,78 @@ export function createSequenceActions({
     );
     const sequenceGroupId = createSequenceGroupId();
     const sequenceGroupLabel = 'Name EN -> PL Mirror';
+    const categoryNameMappings: Array<{
+      sourceLabel: string;
+      sourceRegex: string;
+      replacement: string;
+    }> = [
+      {
+        sourceLabel: 'Keychain',
+        sourceRegex: 'Keychain',
+        replacement: 'Brelok',
+      },
+      {
+        sourceLabel: 'Pin',
+        sourceRegex: '\\bPin\\b',
+        replacement: 'Przypinka',
+      },
+      {
+        sourceLabel: 'Pendant',
+        sourceRegex: '\\bPendant\\b',
+        replacement: 'Zawieszka',
+      },
+      {
+        sourceLabel: 'Ring',
+        sourceRegex: '\\bRing\\b',
+        replacement: 'Pierścień',
+      },
+      {
+        sourceLabel: 'Earrings',
+        sourceRegex: '\\bEarrings\\b',
+        replacement: 'Kolczyki',
+      },
+      {
+        sourceLabel: 'Figurine',
+        sourceRegex: '\\bFigurine\\b',
+        replacement: 'Figurka',
+      },
+      {
+        sourceLabel: 'Cards',
+        sourceRegex: '\\bCards\\b',
+        replacement: 'Karty',
+      },
+    ];
     const maxSequence = orderedPatterns.reduce(
       (max: number, pattern: ProductValidationPattern, index: number) =>
         Math.max(max, getPatternSequence(pattern, index)),
       0
     );
     const firstSequence = maxSequence + 10;
-    const secondSequence = maxSequence + 20;
-    const thirdSequence = maxSequence + 30;
 
-    const mirrorLabel = buildUniqueLabel('Mirror Name EN to Name PL', existingLabels);
-    existingLabels.add(mirrorLabel.toLowerCase());
-    const keychainLabel = buildUniqueLabel('Name PL: Keychain -> Brelok', existingLabels);
-    existingLabels.add(keychainLabel.toLowerCase());
-    const pinLabel = buildUniqueLabel('Name PL: Pin -> Przypinka', existingLabels);
+    const mirrorBaseLabel = 'Mirror Name EN to Name PL';
+    const shouldCreateMirrorPattern = !existingLabels.has(
+      mirrorBaseLabel.toLowerCase()
+    );
+    const mirrorLabel = shouldCreateMirrorPattern
+      ? buildUniqueLabel(mirrorBaseLabel, existingLabels)
+      : mirrorBaseLabel;
+    if (shouldCreateMirrorPattern) {
+      existingLabels.add(mirrorLabel.toLowerCase());
+    }
+
+    const categoryMappingsToCreate = categoryNameMappings.filter((mapping) => {
+      const baseLabel = `Name PL: ${mapping.sourceLabel} -> ${mapping.replacement}`.toLowerCase();
+      return !existingLabels.has(baseLabel);
+    });
+
+    const categoryMappingLabels = categoryMappingsToCreate.map((mapping) => {
+      const label = buildUniqueLabel(
+        `Name PL: ${mapping.sourceLabel} -> ${mapping.replacement}`,
+        existingLabels
+      );
+      existingLabels.add(label.toLowerCase());
+      return label;
+    });
 
     const mirrorRecipe = encodeDynamicReplacementRecipe({
       version: 1,
@@ -588,96 +646,76 @@ export function createSequenceActions({
     });
 
     try {
-      await createPattern.mutateAsync({
-        label: mirrorLabel,
-        target: 'name',
-        locale: 'pl',
-        regex: '^.*$',
-        flags: null,
-        message:
-          'Mirror English name into Polish name before running Polish replacement rules.',
-        severity: 'warning',
-        enabled: true,
-        replacementEnabled: true,
-        replacementAutoApply: true,
-        replacementValue: mirrorRecipe,
-        replacementFields: ['name_pl'],
-        postAcceptBehavior: 'revalidate',
-        validationDebounceMs: 300,
-        sequenceGroupId,
-        sequenceGroupLabel,
-        sequenceGroupDebounceMs: 300,
-        sequence: firstSequence,
-        chainMode: 'continue',
-        maxExecutions: 1,
-        passOutputToNext: true,
-        launchEnabled: true,
-        launchSourceMode: 'form_field',
-        launchSourceField: 'name_en',
-        launchOperator: 'is_not_empty',
-        launchValue: null,
-        launchFlags: null,
-      });
+      if (shouldCreateMirrorPattern) {
+        await createPattern.mutateAsync({
+          label: mirrorLabel,
+          target: 'name',
+          locale: 'pl',
+          regex: '^.*$',
+          flags: null,
+          message:
+            'Mirror English name into Polish name before running Polish replacement rules.',
+          severity: 'warning',
+          enabled: true,
+          replacementEnabled: true,
+          replacementAutoApply: true,
+          replacementValue: mirrorRecipe,
+          replacementFields: ['name_pl'],
+          postAcceptBehavior: 'revalidate',
+          validationDebounceMs: 300,
+          sequenceGroupId,
+          sequenceGroupLabel,
+          sequenceGroupDebounceMs: 300,
+          sequence: firstSequence,
+          chainMode: 'continue',
+          maxExecutions: 1,
+          passOutputToNext: true,
+          launchEnabled: true,
+          launchSourceMode: 'form_field',
+          launchSourceField: 'name_en',
+          launchOperator: 'is_not_empty',
+          launchValue: null,
+          launchFlags: null,
+        });
+      }
 
-      await createPattern.mutateAsync({
-        label: keychainLabel,
-        target: 'name',
-        locale: 'pl',
-        regex: 'Keychain',
-        flags: 'gi',
-        message: 'Replace "Keychain" with "Brelok" in Polish name.',
-        severity: 'warning',
-        enabled: true,
-        replacementEnabled: true,
-        replacementAutoApply: true,
-        replacementValue: 'Brelok',
-        replacementFields: ['name_pl'],
-        postAcceptBehavior: 'revalidate',
-        validationDebounceMs: 300,
-        sequenceGroupId,
-        sequenceGroupLabel,
-        sequenceGroupDebounceMs: 0,
-        sequence: secondSequence,
-        chainMode: 'continue',
-        maxExecutions: 3,
-        passOutputToNext: true,
-        launchEnabled: false,
-        launchSourceMode: 'current_field',
-        launchSourceField: null,
-        launchOperator: 'equals',
-        launchValue: null,
-        launchFlags: null,
-      });
+      for (let index = 0; index < categoryMappingsToCreate.length; index += 1) {
+        const mapping = categoryMappingsToCreate[index];
+        if (!mapping) continue;
+        const label = categoryMappingLabels[index];
+        if (!label) continue;
+        const isLast = index === categoryMappingsToCreate.length - 1;
 
-      await createPattern.mutateAsync({
-        label: pinLabel,
-        target: 'name',
-        locale: 'pl',
-        regex: '\\bPin\\b',
-        flags: 'gi',
-        message: 'Replace "Pin" with "Przypinka" in Polish name.',
-        severity: 'warning',
-        enabled: true,
-        replacementEnabled: true,
-        replacementAutoApply: true,
-        replacementValue: 'Przypinka',
-        replacementFields: ['name_pl'],
-        postAcceptBehavior: 'revalidate',
-        validationDebounceMs: 300,
-        sequenceGroupId,
-        sequenceGroupLabel,
-        sequenceGroupDebounceMs: 0,
-        sequence: thirdSequence,
-        chainMode: 'continue',
-        maxExecutions: 3,
-        passOutputToNext: false,
-        launchEnabled: false,
-        launchSourceMode: 'current_field',
-        launchSourceField: null,
-        launchOperator: 'equals',
-        launchValue: null,
-        launchFlags: null,
-      });
+        await createPattern.mutateAsync({
+          label,
+          target: 'name',
+          locale: 'pl',
+          regex: mapping.sourceRegex,
+          flags: 'gi',
+          message: `Replace "${mapping.sourceLabel}" with "${mapping.replacement}" in Polish name.`,
+          severity: 'warning',
+          enabled: true,
+          replacementEnabled: true,
+          replacementAutoApply: true,
+          replacementValue: mapping.replacement,
+          replacementFields: ['name_pl'],
+          postAcceptBehavior: 'revalidate',
+          validationDebounceMs: 300,
+          sequenceGroupId,
+          sequenceGroupLabel,
+          sequenceGroupDebounceMs: 0,
+          sequence: firstSequence + (index + 1) * 10,
+          chainMode: 'continue',
+          maxExecutions: 3,
+          passOutputToNext: !isLast,
+          launchEnabled: false,
+          launchSourceMode: 'current_field',
+          launchSourceField: null,
+          launchOperator: 'equals',
+          launchValue: null,
+          launchFlags: null,
+        });
+      }
 
       setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
         ...prev,

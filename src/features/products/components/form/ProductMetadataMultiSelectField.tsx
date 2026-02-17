@@ -8,7 +8,120 @@ import { MultiSelect } from '@/shared/ui';
 
 import { useOptionalProductMetadataFieldContext } from './ProductMetadataFieldContext';
 
-type MetadataItem = { id: string; name: string };
+type MetadataItem = {
+  id: string;
+  name: string;
+  parentId?: string | null;
+  sortIndex?: number | null;
+};
+
+const ROOT_PARENT_KEY = '__root__';
+
+const toTrimmedString = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+
+const toNumberOrNull = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.floor(value);
+  }
+  return null;
+};
+
+const compareCategoryItems = (a: MetadataItem, b: MetadataItem): number => {
+  const aSort = toNumberOrNull(a.sortIndex);
+  const bSort = toNumberOrNull(b.sortIndex);
+  if (aSort !== null || bSort !== null) {
+    if (aSort === null) return 1;
+    if (bSort === null) return -1;
+    if (aSort !== bSort) return aSort - bSort;
+  }
+
+  const aName = toTrimmedString(a.name).toLowerCase();
+  const bName = toTrimmedString(b.name).toLowerCase();
+  if (aName < bName) return -1;
+  if (aName > bName) return 1;
+
+  const aId = toTrimmedString(a.id);
+  const bId = toTrimmedString(b.id);
+  return aId.localeCompare(bId);
+};
+
+const buildCategoryTreeOptions = (
+  rawItems: MetadataItem[]
+): Array<{ value: string; label: string }> => {
+  const normalizedItems: MetadataItem[] = [];
+  const byId = new Map<string, MetadataItem>();
+
+  rawItems.forEach((rawItem: MetadataItem): void => {
+    const id = toTrimmedString(rawItem.id);
+    if (!id) return;
+    const name = toTrimmedString(rawItem.name) || id;
+    const parentId = toTrimmedString(rawItem.parentId);
+    const normalizedItem: MetadataItem = {
+      ...rawItem,
+      id,
+      name,
+      parentId: parentId || null,
+      sortIndex: toNumberOrNull(rawItem.sortIndex),
+    };
+    normalizedItems.push(normalizedItem);
+    byId.set(id, normalizedItem);
+  });
+
+  const childrenByParent = new Map<string, MetadataItem[]>();
+  const appendChild = (parentKey: string, child: MetadataItem): void => {
+    const existing = childrenByParent.get(parentKey);
+    if (existing) {
+      existing.push(child);
+      return;
+    }
+    childrenByParent.set(parentKey, [child]);
+  };
+
+  normalizedItems.forEach((item: MetadataItem): void => {
+    const parentId = toTrimmedString(item.parentId);
+    const hasValidParent =
+      parentId.length > 0 && parentId !== item.id && byId.has(parentId);
+    appendChild(hasValidParent ? parentId : ROOT_PARENT_KEY, item);
+  });
+
+  childrenByParent.forEach((items: MetadataItem[]): void => {
+    items.sort(compareCategoryItems);
+  });
+
+  const options: Array<{ value: string; label: string }> = [];
+  const visited = new Set<string>();
+
+  const visit = (item: MetadataItem, level: number): void => {
+    if (visited.has(item.id)) return;
+    visited.add(item.id);
+    const levelPrefix = level > 0 ? `${'|-- '.repeat(level)}` : '';
+    options.push({
+      value: item.id,
+      label: `${levelPrefix}${item.name}`,
+    });
+
+    const children = childrenByParent.get(item.id) ?? [];
+    children.forEach((child: MetadataItem): void => {
+      visit(child, level + 1);
+    });
+  };
+
+  (childrenByParent.get(ROOT_PARENT_KEY) ?? []).forEach(
+    (rootItem: MetadataItem): void => {
+      visit(rootItem, 0);
+    }
+  );
+
+  normalizedItems
+    .slice()
+    .sort(compareCategoryItems)
+    .forEach((item: MetadataItem): void => {
+      visit(item, 0);
+    });
+
+  return options;
+};
 
 export interface ProductMetadataMultiSelectFieldProps {
   label: string;
@@ -108,13 +221,20 @@ export function ProductMetadataMultiSelectField({
     );
   }
 
+  const options = (() => {
+    if (contextItemsKey === 'categories') {
+      return buildCategoryTreeOptions(items);
+    }
+    return items.map((item) => ({
+      value: item.id,
+      label: item.name,
+    }));
+  })();
+
   return (
     <MultiSelect
       label={label}
-      options={items.map((item) => ({
-        value: item.id,
-        label: item.name,
-      }))}
+      options={options}
       selected={selectedIds}
       onChange={(values: string[]) => {
         if (single) {

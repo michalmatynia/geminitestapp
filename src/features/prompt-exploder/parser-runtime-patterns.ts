@@ -13,6 +13,7 @@ import type {
 } from '@/features/prompt-engine/settings';
 
 import { DEFAULT_PATTERN_IDS } from './parser-default-patterns';
+
 import type {
   PromptExploderSegmentType,
 } from './types';

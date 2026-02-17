@@ -58,6 +58,7 @@ import {
 } from '../settings';
 import {
   createCaseResolverWorkspaceMutationId,
+  fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
   persistCaseResolverWorkspaceSnapshot,
@@ -1549,7 +1550,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           getCaseResolverWorkspaceRevision(serverWorkspace);
         setWorkspace(serverWorkspace);
         toast(
-          'Case Resolver workspace changed in another tab. Latest server state has been loaded.',
+          'Case Resolver workspace changed before save completed. Latest server state has been loaded. Please retry.',
           { variant: 'warning' },
         );
         return false;
@@ -1809,11 +1810,44 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       }
 
       const runDelete = async (): Promise<void> => {
+        const latestWorkspaceSnapshot = await fetchCaseResolverWorkspaceSnapshot(
+          'cases_page_delete_prepare',
+        );
+        const localRevision = getCaseResolverWorkspaceRevision(workspace);
+        const latestRevision = latestWorkspaceSnapshot
+          ? getCaseResolverWorkspaceRevision(latestWorkspaceSnapshot)
+          : -1;
+        const baseWorkspace =
+          latestWorkspaceSnapshot && latestRevision > localRevision
+            ? latestWorkspaceSnapshot
+            : workspace;
+
+        if (baseWorkspace !== workspace) {
+          lastPersistedWorkspaceValueRef.current = JSON.stringify(baseWorkspace);
+          lastPersistedWorkspaceRevisionRef.current =
+            getCaseResolverWorkspaceRevision(baseWorkspace);
+          setWorkspace(baseWorkspace);
+        }
+
+        const targetInBase = baseWorkspace.files.find(
+          (file: CaseResolverFile): boolean => file.id === fileId,
+        );
+        if (!targetInBase) {
+          toast('Case no longer exists.', { variant: 'warning' });
+          return;
+        }
+        if (targetInBase.isLocked) {
+          toast('Case is locked. Unlock it in Case Resolver before removing.', {
+            variant: 'warning',
+          });
+          return;
+        }
+
         const removedIds = new Set<string>([fileId]);
         let expanded = true;
         while (expanded) {
           expanded = false;
-          workspace.files.forEach((file: CaseResolverFile): void => {
+          baseWorkspace.files.forEach((file: CaseResolverFile): void => {
             if (removedIds.has(file.id)) return;
             if (!file.parentCaseId) return;
             if (!removedIds.has(file.parentCaseId)) return;
@@ -1823,7 +1857,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         }
 
         const now = new Date().toISOString();
-        const nextFiles = workspace.files
+        const nextFiles = baseWorkspace.files
           .filter((file: CaseResolverFile) => !removedIds.has(file.id))
           .map((file: CaseResolverFile): CaseResolverFile => {
             const nextReferenceCaseIds = file.referenceCaseIds.filter(
@@ -1840,16 +1874,16 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             };
           });
         const nextWorkspace: CaseResolverWorkspace = {
-          ...workspace,
+          ...baseWorkspace,
           files: nextFiles,
           activeFileId:
-            workspace.activeFileId && removedIds.has(workspace.activeFileId)
+            baseWorkspace.activeFileId && removedIds.has(baseWorkspace.activeFileId)
               ? (
                 nextFiles.find((file: CaseResolverFile): boolean => file.fileType === 'case')?.id ??
                 nextFiles[0]?.id ??
                 null
               )
-              : workspace.activeFileId,
+              : baseWorkspace.activeFileId,
         };
 
         const didPersist = await persistWorkspace(nextWorkspace, 'Case removed.', {

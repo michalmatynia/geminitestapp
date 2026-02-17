@@ -137,7 +137,10 @@ export const logCaseResolverWorkspaceEvent = (
     console.info('[case-resolver][workspace]', entry);
   }
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME));
+    // Defer notification so debug-panel state updates never run inside another component render.
+    window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME));
+    }, 0);
   }
 };
 

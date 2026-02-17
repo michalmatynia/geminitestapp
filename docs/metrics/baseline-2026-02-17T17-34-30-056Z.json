@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-02-17T17:56:27.917Z",
+  "generatedAt": "2026-02-17T17:34:30.056Z",
   "source": {
-    "totalFiles": 2681,
-    "totalLines": 429409,
-    "useClientFiles": 901,
+    "totalFiles": 2676,
+    "totalLines": 429075,
+    "useClientFiles": 898,
     "filesOver800": 85,
-    "filesOver1000": 14,
-    "filesOver1500": 14,
+    "filesOver1000": 16,
+    "filesOver1500": 15,
     "largestFile": {
       "path": "src/features/database/services/database-sync.ts",
       "lines": 3352
@@ -126,7 +126,7 @@
       },
       {
         "edge": "prompt-exploder -> prompt-engine",
-        "references": 32
+        "references": 31
       },
       {
         "edge": "jobs -> observability",
@@ -221,7 +221,7 @@
       {
         "feature": "ai",
         "files": 461,
-        "lines": 120135
+        "lines": 120109
       },
       {
         "feature": "products",
@@ -239,14 +239,14 @@
         "lines": 29087
       },
       {
-        "feature": "prompt-exploder",
-        "files": 84,
-        "lines": 19917
-      },
-      {
         "feature": "case-resolver",
         "files": 47,
-        "lines": 19819
+        "lines": 19785
+      },
+      {
+        "feature": "prompt-exploder",
+        "files": 79,
+        "lines": 19644
       },
       {
         "feature": "notesapp",
@@ -394,12 +394,12 @@
         "lines": 2842
       },
       {
-        "path": "src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx",
-        "lines": 2534
-      },
-      {
         "path": "src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts",
         "lines": 2524
+      },
+      {
+        "path": "src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx",
+        "lines": 2500
       },
       {
         "path": "src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts",
@@ -422,6 +422,10 @@
         "lines": 1960
       },
       {
+        "path": "src/features/prompt-exploder/components/SegmentEditorPanel.tsx",
+        "lines": 1908
+      },
+      {
         "path": "src/features/ai/image-studio/components/SequencingPanel.tsx",
         "lines": 1896
       },
@@ -439,7 +443,11 @@
       },
       {
         "path": "src/features/ai/image-studio/components/CenterPreview.tsx",
-        "lines": 1738
+        "lines": 1749
+      },
+      {
+        "path": "src/features/prompt-exploder/parser.ts",
+        "lines": 1491
       },
       {
         "path": "src/app/api/image-studio/slots/[slotId]/upscale/handler.ts",
@@ -496,14 +504,6 @@
       {
         "path": "src/features/cms/components/page-builder/settings/PageSettingsTab.tsx",
         "lines": 978
-      },
-      {
-        "path": "src/features/ai/image-studio/utils/prompt-params.ts",
-        "lines": 970
-      },
-      {
-        "path": "src/features/prompt-engine/prompt-params.ts",
-        "lines": 970
       }
     ],
     "topPagesByLines": [

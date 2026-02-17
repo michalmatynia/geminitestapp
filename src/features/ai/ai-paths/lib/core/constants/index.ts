@@ -138,6 +138,7 @@ export const DB_COLLECTION_OPTIONS = [
   { value: 'products', label: 'Products' },
   { value: 'product_drafts', label: 'Product Drafts' },
   { value: 'product_categories', label: 'Product Categories' },
+  { value: 'product_parameters', label: 'Product Parameters' },
   { value: 'product_tags', label: 'Product Tags' },
   { value: 'catalogs', label: 'Catalogs' },
   { value: 'image_files', label: 'Image Files' },

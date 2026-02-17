@@ -844,10 +844,6 @@ export function CenterPreview(): React.JSX.Element {
   const compareVariantImageA = compareVariantA?.imageSrc ?? compareVariantA?.output?.filepath ?? null;
   const compareVariantImageB = compareVariantB?.imageSrc ?? compareVariantB?.output?.filepath ?? null;
   const canCompareSelectedVariants = Boolean(compareVariantImageA && compareVariantImageB);
-  const activeProjectIdLabel = useMemo(() => {
-    const normalized = projectId.trim();
-    return normalized || 'No project';
-  }, [projectId]);
   const previewGridStyle = useMemo((): React.CSSProperties => {
     const canvasMinHeightPx = PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE[previewCanvasSize];
     if (!showVariantPanel) {
@@ -1456,14 +1452,7 @@ export function CenterPreview(): React.JSX.Element {
           ) : null}
         </div>
         <div />
-        <div className='flex min-w-0 items-center justify-end gap-2'>
-          <span
-            className='order-2 max-w-[220px] truncate rounded border border-border/60 bg-card/30 px-2 py-1 text-[11px] text-gray-300'
-            title={activeProjectIdLabel}
-          >
-            {activeProjectIdLabel}
-          </span>
-        </div>
+        <div />
       </div>
       {focusToggleButton}
       {variantPointerTooltip}

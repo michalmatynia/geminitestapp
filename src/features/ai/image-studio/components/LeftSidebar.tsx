@@ -1,7 +1,7 @@
 'use client';
 
 import { Copy, FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -11,6 +11,7 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Button,
+  Input,
   SidePanel,
   Tooltip,
   useToast,
@@ -40,7 +41,7 @@ import {
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 
 export function LeftSidebar(): React.JSX.Element {
-  const { projectId } = useProjectsState();
+  const { projectId, projectsQuery } = useProjectsState();
   const { isFocusMode } = useUiState();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
@@ -89,6 +90,22 @@ export function LeftSidebar(): React.JSX.Element {
     (temporaryObjectUpload && projectId) ||
     (selectedSlot?.id && selectedSlotImageSrc)
   );
+  const activeProjectNameFieldValue = useMemo((): string => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) return '';
+    const rawProjects: unknown = projectsQuery.data;
+    const projectList: unknown[] = Array.isArray(rawProjects) ? (rawProjects as unknown[]) : [];
+    const activeProject = projectList.find((candidate): boolean => {
+      if (!candidate || typeof candidate !== 'object') return false;
+      const projectRecord = candidate as Record<string, unknown>;
+      return projectRecord['id'] === normalizedProjectId;
+    });
+    if (!activeProject || typeof activeProject !== 'object') return normalizedProjectId;
+    const activeProjectRecord = activeProject as Record<string, unknown>;
+    const activeProjectNameRaw = activeProjectRecord['name'];
+    const activeProjectName = typeof activeProjectNameRaw === 'string' ? activeProjectNameRaw.trim() : '';
+    return activeProjectName || normalizedProjectId;
+  }, [projectId, projectsQuery.data]);
 
   const cloneSettingValue = <T,>(value: T): T => {
     const seen = new WeakSet<object>();
@@ -392,11 +409,11 @@ export function LeftSidebar(): React.JSX.Element {
       className='order-1 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40'
     >
       <div className='grid min-h-0 flex-1 grid-rows-[auto_auto_clamp(240px,38vh,420px)_minmax(160px,1fr)] gap-3 overflow-hidden p-4'>
-        <div className='px-1 py-1' data-preserve-slot-selection='true'>
+        <div className='flex items-center gap-2 px-1 py-1' data-preserve-slot-selection='true'>
           <Button size='xs'
             type='button'
             variant='outline'
-            className='h-7 px-2 text-[11px]'
+            className='h-7 shrink-0 px-2 text-[11px]'
             title='Save current Image Studio project state'
             aria-label='Save current Image Studio project state'
             disabled={projectSaveBusy || !projectId.trim()}
@@ -405,6 +422,16 @@ export function LeftSidebar(): React.JSX.Element {
           >
             {projectSaveBusy ? 'Saving...' : 'Save Project'}
           </Button>
+          <Input
+            size='sm'
+            value={activeProjectNameFieldValue}
+            readOnly
+            placeholder='No active project'
+            title={activeProjectNameFieldValue || 'No active project'}
+            className='h-7 min-w-0 flex-1 text-[11px]'
+            data-preserve-slot-selection='true'
+            aria-label='Active project name'
+          />
         </div>
 
         <div

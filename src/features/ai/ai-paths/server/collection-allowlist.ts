@@ -4,6 +4,7 @@ const DEFAULT_COLLECTION_ALLOWLIST = [
   'products',
   'product_drafts',
   'product_categories',
+  'product_parameters',
   'product_category_assignments',
   'product_tags',
   'product_tag_assignments',

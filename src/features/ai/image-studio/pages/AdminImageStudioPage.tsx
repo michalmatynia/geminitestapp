@@ -23,13 +23,19 @@ import { ImageStudioDocsContent } from '../components/ImageStudioDocsContent';
 import { StudioMainContent } from '../components/StudioMainContent';
 import { StudioModals } from '../components/StudioModals';
 import { StudioProjectsList } from '../components/StudioProjectsList';
+import { ToggleButtonGroup } from '../components/ToggleButtonGroup';
 import { ImageStudioProvider } from '../context/ImageStudioProvider';
 import { useProjectsActions, useProjectsState } from '../context/ProjectsContext';
 import { useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState } from '../context/SlotsContext';
-import { useUiState } from '../context/UiContext';
+import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 
 type StudioTab = 'studio' | 'projects' | 'settings' | 'validation' | 'prompts' | 'docs';
+const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
+  { value: 'regular', label: 'Regular' },
+  { value: 'large', label: 'Large' },
+  { value: 'xlarge', label: 'XLarge' },
+];
 
 function AdminImageStudioPageContent(): React.JSX.Element {
   const { handleRefreshSettings } = useSettingsActions();
@@ -41,7 +47,8 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<StudioTab>('studio');
-  const { isFocusMode } = useUiState();
+  const { isFocusMode, previewCanvasSize } = useUiState();
+  const { setPreviewCanvasSize } = useUiActions();
   const { setIsMenuHidden } = useAdminLayout();
   const hideTopBar = activeTab === 'studio' && isFocusMode;
   const activeProjectNameLabel = useMemo((): string => {
@@ -163,32 +170,46 @@ function AdminImageStudioPageContent(): React.JSX.Element {
                   <TabsTrigger value='prompts'>Prompts</TabsTrigger>
                   <TabsTrigger value='docs'>Docs</TabsTrigger>
                 </TabsList>
-                <div className='ml-auto flex min-w-0 items-center gap-2'>
-                  <span className='w-[280px] shrink-0 truncate text-xs text-muted-foreground'>
-                    {selectedSlot
-                      ? selectedSlot.name || selectedSlot.id
-                      : 'No active card selected. Pick a card from the tree.'}
-                  </span>
-                  <Tooltip content={selectedSlot ? 'Copy card name' : 'Select a card first'}>
-                    <Button
-                      type='button'
-                      size='xs'
-                      variant='ghost'
-                      className='size-7 shrink-0'
-                      onClick={handleCopyActiveCardName}
-                      disabled={!selectedSlot?.id}
-                      title='Copy card name'
-                      aria-label='Copy card name'
-                    >
-                      <Copy className='size-3.5' />
-                    </Button>
-                  </Tooltip>
+                <div className='ml-auto flex min-w-0 flex-col items-end gap-1 text-right'>
                   <span
-                    className='w-[220px] shrink-0 truncate text-[13px] text-muted-foreground'
+                    className='w-[220px] shrink-0 truncate text-right text-[13px] text-muted-foreground'
                     title={activeProjectNameLabel}
                   >
                     {activeProjectNameLabel}
                   </span>
+                  <div className='flex min-w-0 items-center justify-end gap-2'>
+                    {activeTab === 'studio' ? (
+                      <div className='flex items-center gap-2'>
+                        <span className='text-[10px] uppercase tracking-wide text-muted-foreground'>Canvas</span>
+                        <ToggleButtonGroup
+                          value={previewCanvasSize}
+                          onChange={setPreviewCanvasSize}
+                          options={PREVIEW_CANVAS_SIZE_OPTIONS}
+                          className='text-[11px] text-muted-foreground'
+                          size='xs'
+                        />
+                      </div>
+                    ) : null}
+                    <span className='w-[280px] shrink-0 truncate text-right text-xs text-muted-foreground'>
+                      {selectedSlot
+                        ? selectedSlot.name || selectedSlot.id
+                        : 'No active card selected. Pick a card from the tree.'}
+                    </span>
+                    <Tooltip content={selectedSlot ? 'Copy card name' : 'Select a card first'}>
+                      <Button
+                        type='button'
+                        size='xs'
+                        variant='ghost'
+                        className='size-7 shrink-0'
+                        onClick={handleCopyActiveCardName}
+                        disabled={!selectedSlot?.id}
+                        title='Copy card name'
+                        aria-label='Copy card name'
+                      >
+                        <Copy className='size-3.5' />
+                      </Button>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
             </div>

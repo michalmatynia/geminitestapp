@@ -446,7 +446,6 @@ export function useCaseResolverState() {
         flushWorkspacePersist();
       }
     });
-    });
   }, [toast]);
 
   // Sync with store

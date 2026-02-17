@@ -16,6 +16,7 @@ export interface PreviewCanvasViewportCrop {
 
 export type PreviewCanvasViewportCropResolver = () => PreviewCanvasViewportCrop | null;
 export type ImageTransformMode = 'none' | 'move';
+export type PreviewCanvasSize = 'regular' | 'large' | 'xlarge';
 
 export interface CanvasImageOffset {
   x: number;
@@ -35,6 +36,7 @@ export interface UiState {
   validatorEnabled: boolean;
   formatterEnabled: boolean;
   canvasSelectionEnabled: boolean;
+  previewCanvasSize: PreviewCanvasSize;
   imageTransformMode: ImageTransformMode;
   canvasImageOffset: CanvasImageOffset;
 }
@@ -47,6 +49,7 @@ export interface UiActions {
   setValidatorEnabled: (value: boolean) => void;
   setFormatterEnabled: (value: boolean) => void;
   setCanvasSelectionEnabled: (value: boolean) => void;
+  setPreviewCanvasSize: (size: PreviewCanvasSize) => void;
   setImageTransformMode: (mode: ImageTransformMode) => void;
   setCanvasImageOffset: (offset: CanvasImageOffset) => void;
   resetCanvasImageOffset: () => void;
@@ -64,6 +67,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [validatorEnabled, setValidatorEnabledState] = useState(true);
   const [formatterEnabled, setFormatterEnabledState] = useState(false);
   const [canvasSelectionEnabled, setCanvasSelectionEnabled] = useState(true);
+  const [previewCanvasSize, setPreviewCanvasSize] = useState<PreviewCanvasSize>('regular');
   const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
   const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(DEFAULT_CANVAS_IMAGE_OFFSET);
   const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
@@ -76,12 +80,14 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       validatorEnabled,
       formatterEnabled,
       canvasSelectionEnabled,
+      previewCanvasSize,
       imageTransformMode,
       canvasImageOffset: canvasImageOffsetState,
     }),
     [
       centerGuidesEnabled,
       canvasSelectionEnabled,
+      previewCanvasSize,
       formatterEnabled,
       imageTransformMode,
       isFocusMode,
@@ -109,6 +115,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
         setFormatterEnabledState(value);
       },
       setCanvasSelectionEnabled,
+      setPreviewCanvasSize,
       setImageTransformMode,
       setCanvasImageOffset: (offset: CanvasImageOffset): void => {
         setCanvasImageOffsetState(normalizeCanvasImageOffset(offset));

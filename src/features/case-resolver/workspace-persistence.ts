@@ -134,7 +134,6 @@ export const logCaseResolverWorkspaceEvent = (
   const nextEvents = [...readDebugBuffer(), entry].slice(-CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT);
   writeDebugBuffer(nextEvents);
   if (process.env['NODE_ENV'] !== 'production') {
-    // eslint-disable-next-line no-console
     console.info('[case-resolver][workspace]', entry);
   }
   if (typeof window !== 'undefined') {
@@ -239,7 +238,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       expectedRevision: input.expectedRevision,
       workspaceRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
       currentRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
-      message: payload?.idempotent === true ? 'idempotent' : undefined,
+      ...(payload?.idempotent === true ? { message: 'idempotent' } : {}),
     });
     return {
       ok: true,
@@ -287,4 +286,3 @@ export const persistCaseResolverWorkspaceSnapshot = async (
     error: message,
   };
 };
-

@@ -25,8 +25,8 @@ import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt
 import { useToast } from '@/shared/ui';
 
 import { buildPathLabelMap } from './admin-case-resolver-page-helpers';
-import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorkspaceDebugPanel';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
+import { CaseResolverWorkspaceDebugPanel } from '../components/CaseResolverWorkspaceDebugPanel';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   normalizeFolderPath,

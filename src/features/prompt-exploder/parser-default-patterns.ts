@@ -1,0 +1,20 @@
+export const DEFAULT_PATTERN_IDS: Record<string, RegExp> = {
+  'segment.metadata.banner': /^\s*={3,}.+={3,}\s*$/,
+  'segment.params.block': /^\s*params\s*=\s*\{/i,
+  'segment.reference.code': /^\s*(P\d+|RL\d+|QA(?:_R)?\d+)\b/i,
+  'segment.list.numeric': /^\s*\d+[.)]\s+/,
+  'segment.list.bullet': /^\s*[*-]\s+/,
+  'segment.list.alpha_sequence': /^\s*[A-Z]\)\s+/,
+  'segment.pipeline.step': /^\s*\d+\.\s+/,
+  'segment.conditional.only_if': /\bonly if\b/i,
+  'segment.conditional.fix_until': /\bfix\s+until\b/i,
+  'segment.comment.patch': /^\s*\/\/\s*PATCH\b/i,
+  'segment.subsection.alpha_heading': /^\s*([A-Z])\)\s+(.+)$/,
+  'segment.subsection.reference_named':
+    /^\s*(RL\d+|P\d+|QA(?:_R)?\d+)\s+\(([^)]+)\)\s*:\s*(.*)$/i,
+  'segment.subsection.reference_plain': /^\s*(RL\d+|P\d+|QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i,
+  'segment.subsection.qa_code': /^\s*(QA(?:_R)?\d+)\b\s*[—:-]?\s*(.*)$/i,
+  'segment.subsection.numeric_bracket_heading': /^\s*\d+\.\s+\[([A-Z0-9 _()\-/:&+.,]{2,})]$/,
+  'segment.subsection.bracket_heading': /^\s*\[([A-Z0-9 _()\-/:&+.,]{2,})]$/,
+  'segment.subsection.markdown_heading': /^\s*#{1,6}\s+(.+)$/,
+};

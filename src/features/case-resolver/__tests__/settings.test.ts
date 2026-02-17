@@ -38,6 +38,64 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(null);
     expect(workspace.files).toEqual([]);
     expect(workspace.activeFileId).toBeNull();
+    expect(workspace.workspaceRevision).toBe(0);
+    expect(workspace.lastMutationId).toBeNull();
+  });
+
+  it('preserves workspace revision metadata when present', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 8,
+        lastMutationId: 'mutation-abc',
+        lastMutationAt: '2026-02-17T17:00:00.000Z',
+        folders: [],
+        files: [],
+        assets: [],
+        activeFileId: null,
+      })
+    );
+
+    expect(workspace.workspaceRevision).toBe(8);
+    expect(workspace.lastMutationId).toBe('mutation-abc');
+    expect(workspace.lastMutationAt).toBe('2026-02-17T17:00:00.000Z');
+  });
+
+  it('removes legacy non-case files that are detached from a case container', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 2,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-a',
+            fileType: 'case',
+            name: 'Case A',
+            folder: '',
+            parentCaseId: null,
+            referenceCaseIds: [],
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+          {
+            id: 'legacy-doc-root',
+            fileType: 'document',
+            name: 'Legacy Root Doc',
+            folder: '',
+            parentCaseId: null,
+            referenceCaseIds: [],
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+        ],
+        assets: [],
+        activeFileId: 'legacy-doc-root',
+      })
+    );
+
+    expect(workspace.files.map((file) => file.id)).toEqual(['case-a']);
+    expect(workspace.activeFileId).toBe('case-a');
   });
 
   it('detects whether raw workspace payload includes a files array', () => {
@@ -53,9 +111,9 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
         folders: [],
         files: [
           {
@@ -772,9 +830,9 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
         folders: [],
         files: [
           {
@@ -815,9 +873,9 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
-      workspaceRevision: 0,
-      lastMutationId: null,
-      lastMutationAt: null,
+        workspaceRevision: 0,
+        lastMutationId: null,
+        lastMutationAt: null,
         folders: [],
         files: [
           {

@@ -1,0 +1,115 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { CASE_RESOLVER_WORKSPACE_KEY, createDefaultCaseResolverWorkspace } from '@/features/case-resolver/settings';
+import {
+  getCaseResolverWorkspaceRevision,
+  persistCaseResolverWorkspaceSnapshot,
+  stampCaseResolverWorkspaceMutation,
+} from '@/features/case-resolver/workspace-persistence';
+
+const toJsonResponse = (status: number, body: unknown): Response =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+describe('case-resolver workspace persistence', () => {
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+
+  afterEach(() => {
+    if (originalFetch) {
+      globalThis.fetch = originalFetch;
+    }
+    vi.restoreAllMocks();
+  });
+
+  it('stamps workspace mutations with monotonic revision metadata', () => {
+    const workspace = createDefaultCaseResolverWorkspace();
+    const first = stampCaseResolverWorkspaceMutation(workspace, {
+      baseRevision: 0,
+      mutationId: 'mutation-a',
+      timestamp: '2026-02-17T18:00:00.000Z',
+    });
+    const second = stampCaseResolverWorkspaceMutation(first, {
+      baseRevision: first.workspaceRevision,
+      mutationId: 'mutation-b',
+      timestamp: '2026-02-17T18:01:00.000Z',
+    });
+
+    expect(first.workspaceRevision).toBe(1);
+    expect(first.lastMutationId).toBe('mutation-a');
+    expect(first.lastMutationAt).toBe('2026-02-17T18:00:00.000Z');
+    expect(second.workspaceRevision).toBe(2);
+    expect(second.lastMutationId).toBe('mutation-b');
+    expect(getCaseResolverWorkspaceRevision(second)).toBe(2);
+  });
+
+  it('returns conflict details with server workspace on CAS mismatch', async () => {
+    const localWorkspace = stampCaseResolverWorkspaceMutation(
+      createDefaultCaseResolverWorkspace(),
+      { baseRevision: 0, mutationId: 'mutation-local' }
+    );
+    const serverWorkspace = stampCaseResolverWorkspaceMutation(
+      createDefaultCaseResolverWorkspace(),
+      { baseRevision: 2, mutationId: 'mutation-server' }
+    );
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      toJsonResponse(409, {
+        key: CASE_RESOLVER_WORKSPACE_KEY,
+        value: JSON.stringify(serverWorkspace),
+        conflict: true,
+        currentRevision: serverWorkspace.workspaceRevision,
+      })
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await persistCaseResolverWorkspaceSnapshot({
+      workspace: localWorkspace,
+      expectedRevision: 0,
+      mutationId: 'mutation-local',
+      source: 'test',
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok && result.conflict) {
+      expect(result.currentRevision).toBe(serverWorkspace.workspaceRevision);
+      expect(result.workspace.lastMutationId).toBe('mutation-server');
+    }
+  });
+
+  it('treats idempotent server acknowledgement as success', async () => {
+    const localWorkspace = stampCaseResolverWorkspaceMutation(
+      createDefaultCaseResolverWorkspace(),
+      { baseRevision: 0, mutationId: 'mutation-repeat' }
+    );
+
+    const fetchMock = vi.fn().mockResolvedValue(
+      toJsonResponse(200, {
+        key: CASE_RESOLVER_WORKSPACE_KEY,
+        value: JSON.stringify(localWorkspace),
+        idempotent: true,
+      })
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await persistCaseResolverWorkspaceSnapshot({
+      workspace: localWorkspace,
+      expectedRevision: 0,
+      mutationId: 'mutation-repeat',
+      source: 'test',
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.idempotent).toBe(true);
+      expect(result.workspace.lastMutationId).toBe('mutation-repeat');
+    }
+  });
+});

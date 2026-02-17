@@ -22,13 +22,12 @@ import { cn } from '@/shared/utils';
 
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
-import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
 import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
-import { useUiActions, useUiState } from '../context/UiContext';
+import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
 import { estimateGenerationCost } from '../utils/generation-cost';
 import { getImageStudioSlotImageSrc, isLikelyImageStudioErrorText } from '../utils/image-src';
@@ -52,12 +51,6 @@ const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },
   { value: '3d', label: '3D' },
 ] as const;
-type PreviewCanvasSize = 'regular' | 'large' | 'xlarge';
-const PREVIEW_CANVAS_SIZE_OPTIONS: Array<{ value: PreviewCanvasSize; label: string }> = [
-  { value: 'regular', label: 'Regular' },
-  { value: 'large', label: 'Large' },
-  { value: 'xlarge', label: 'XLarge' },
-];
 const PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE: Record<PreviewCanvasSize, number> = {
   regular: 280,
   large: 380,
@@ -103,6 +96,7 @@ export function CenterPreview(): React.JSX.Element {
     maskPreviewEnabled,
     centerGuidesEnabled,
     canvasSelectionEnabled,
+    previewCanvasSize,
     imageTransformMode,
     canvasImageOffset,
   } = useUiState();
@@ -163,7 +157,6 @@ export function CenterPreview(): React.JSX.Element {
   const [variantTimestampQuery, setVariantTimestampQuery] = useState('');
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
-  const [previewCanvasSize, setPreviewCanvasSize] = useState<PreviewCanvasSize>('regular');
   const [compareVariantIds, setCompareVariantIds] = useState<[string | null, string | null]>([null, null]);
   const [leftSplitZoom, setLeftSplitZoom] = useState(1);
   const [rightSplitZoom, setRightSplitZoom] = useState(1);
@@ -1464,18 +1457,6 @@ export function CenterPreview(): React.JSX.Element {
         </div>
         <div />
         <div className='flex min-w-0 items-center justify-end gap-2'>
-          {previewMode === 'image' ? (
-            <div className='order-1 flex items-center gap-2'>
-              <span className='text-[10px] uppercase tracking-wide text-gray-500'>Canvas</span>
-              <ToggleButtonGroup
-                value={previewCanvasSize}
-                onChange={setPreviewCanvasSize}
-                options={PREVIEW_CANVAS_SIZE_OPTIONS}
-                className='text-[11px] text-gray-300'
-                size='xs'
-              />
-            </div>
-          ) : null}
           <span
             className='order-2 max-w-[220px] truncate rounded border border-border/60 bg-card/30 px-2 py-1 text-[11px] text-gray-300'
             title={activeProjectIdLabel}

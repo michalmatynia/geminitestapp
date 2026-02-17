@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-02-17T17:15:09.857Z",
+  "generatedAt": "2026-02-17T17:06:38.233Z",
   "source": {
-    "totalFiles": 2670,
-    "totalLines": 428752,
+    "totalFiles": 2667,
+    "totalLines": 428506,
     "useClientFiles": 898,
     "filesOver800": 84,
-    "filesOver1000": 16,
+    "filesOver1000": 17,
     "filesOver1500": 16,
     "largestFile": {
       "path": "src/features/database/services/database-sync.ts",
@@ -240,8 +240,8 @@
       },
       {
         "feature": "case-resolver",
-        "files": 47,
-        "lines": 19785
+        "files": 44,
+        "lines": 19539
       },
       {
         "feature": "prompt-exploder",
@@ -423,7 +423,7 @@
       },
       {
         "path": "src/features/case-resolver/hooks/useCaseResolverState.ts",
-        "lines": 1960
+        "lines": 1961
       },
       {
         "path": "src/features/prompt-exploder/components/SegmentEditorPanel.tsx",
@@ -448,6 +448,10 @@
       {
         "path": "src/features/ai/ai-paths/components/node-config/dialog/RegexNodeConfigSection.tsx",
         "lines": 1763
+      },
+      {
+        "path": "src/features/case-resolver/settings.ts",
+        "lines": 1455
       },
       {
         "path": "src/app/api/image-studio/slots/[slotId]/upscale/handler.ts",
@@ -500,10 +504,6 @@
       {
         "path": "src/app/api/integrations/[id]/connections/[connectionId]/test/handler.ts",
         "lines": 979
-      },
-      {
-        "path": "src/features/cms/components/page-builder/settings/PageSettingsTab.tsx",
-        "lines": 978
       }
     ],
     "topPagesByLines": [

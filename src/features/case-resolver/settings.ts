@@ -1,4 +1,3 @@
-import { type AiNode, type Edge } from '@/features/ai/ai-paths/lib';
 import {
   deriveDocumentContentSync,
   normalizeRawDocumentModeFromContent,
@@ -7,7 +6,20 @@ import {
 } from '@/features/document-editor/content-format';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+import { sanitizeGraph } from './settings-graph';
+export { createEmptyCaseResolverGraph } from './settings-graph';
 import { buildCaseResolverRelationGraph } from './settings-relation-graph';
+import {
+  createCaseResolverAssetFile,
+  normalizeCaseResolverFolderTimestamps,
+} from './settings-workspace-helpers';
+export {
+  createCaseResolverAssetFile,
+  getCaseResolverWorkspaceLatestTimestampMs,
+  inferCaseResolverAssetKind,
+  renameFolderPath,
+  resolveCaseResolverUploadFolder,
+} from './settings-workspace-helpers';
 export {
   createEmptyCaseResolverRelationGraph,
   toCaseResolverRelationAssetFileNodeId,
@@ -15,30 +27,27 @@ export {
   toCaseResolverRelationCaseNodeId,
   toCaseResolverRelationFolderNodeId,
 } from './settings-relation-graph';
+export {
+  buildCaseResolverCategoryTree,
+  normalizeCaseResolverCategories,
+  normalizeCaseResolverIdentifiers,
+  normalizeCaseResolverTags,
+  parseCaseResolverCategories,
+  parseCaseResolverIdentifiers,
+  parseCaseResolverTags,
+  type CaseResolverCategoryTreeNode,
+} from './settings-taxonomy';
 import {
-  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
-  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
-  DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
-  DEFAULT_CASE_RESOLVER_EDGE_META,
-  DEFAULT_CASE_RESOLVER_NODE_META,
   type CaseResolverAssetFile,
-  type CaseResolverAssetKind,
-  type CaseResolverCategory,
   type CaseResolverDocumentFormatVersion,
   type CaseResolverDocumentHistoryEntry,
-  type CaseResolverIdentifier,
   type CaseResolverDocumentVersion,
-  type CaseResolverEdgeMeta,
   type CaseResolverEditorType,
   type CaseResolverFile,
   type CaseResolverFileType,
-  type CaseResolverFolderTimestamp,
   type CaseResolverGraph,
-  type CaseResolverNodeMeta,
   type CaseResolverPartyReference,
   type CaseResolverScanSlot,
-  type CaseResolverTag,
-  type CaseResolverPdfExtractionPresetId,
   type CaseResolverWorkspace,
 } from './types';
 
@@ -137,48 +146,6 @@ const normalizeTimestamp = (value: unknown, fallback: string): string =>
 const normalizeOptionalTimestamp = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
-const toTimestampMs = (value: string | null | undefined): number | null => {
-  if (!value) return null;
-  const timestamp = Date.parse(value);
-  return Number.isFinite(timestamp) ? timestamp : null;
-};
-
-const pickEarliestTimestamp = (
-  values: Array<string | null | undefined>,
-  fallback: string
-): string => {
-  let best = fallback;
-  let bestMs = toTimestampMs(fallback);
-  values.forEach((value: string | null | undefined): void => {
-    if (typeof value !== 'string') return;
-    const valueMs = toTimestampMs(value);
-    if (valueMs === null) return;
-    if (bestMs === null || valueMs < bestMs) {
-      best = value;
-      bestMs = valueMs;
-    }
-  });
-  return best;
-};
-
-const pickLatestTimestamp = (
-  values: Array<string | null | undefined>,
-  fallback: string
-): string => {
-  let best = fallback;
-  let bestMs = toTimestampMs(fallback);
-  values.forEach((value: string | null | undefined): void => {
-    if (typeof value !== 'string') return;
-    const valueMs = toTimestampMs(value);
-    if (valueMs === null) return;
-    if (bestMs === null || valueMs > bestMs) {
-      best = value;
-      bestMs = valueMs;
-    }
-  });
-  return best;
-};
-
 const sanitizeOptionalId = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const normalized = value.trim();
@@ -206,15 +173,6 @@ const normalizeWorkspaceRevision = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
   if (value <= 0) return 0;
   return Math.floor(value);
-};
-
-const normalizeHexColor = (value: unknown, fallback: string): string => {
-  if (typeof value !== 'string') return fallback;
-  const normalized = value.trim();
-  if (/^#[0-9a-fA-F]{6}$/.test(normalized) || /^#[0-9a-fA-F]{3}$/.test(normalized)) {
-    return normalized;
-  }
-  return fallback;
 };
 
 const normalizeDocumentDate = (value: unknown): string => {
@@ -318,101 +276,6 @@ export const extractCaseResolverDocumentDate = (source: string): string | null =
     if (labeledMatch) return labeledMatch;
   }
   return findFirstDateMatch(text);
-};
-
-const sanitizeNodeMeta = (
-  source: Record<string, CaseResolverNodeMeta> | null | undefined
-): Record<string, CaseResolverNodeMeta> => {
-  if (!source || typeof source !== 'object') return {};
-  const next: Record<string, CaseResolverNodeMeta> = {};
-  Object.entries(source).forEach(([nodeId, meta]: [string, CaseResolverNodeMeta]) => {
-    if (!nodeId || !meta || typeof meta !== 'object') return;
-    const role =
-      meta.role === 'text_note' || meta.role === 'explanatory' || meta.role === 'ai_prompt'
-        ? meta.role
-        : DEFAULT_CASE_RESOLVER_NODE_META.role;
-    const quoteMode =
-      meta.quoteMode === 'none' || meta.quoteMode === 'double' || meta.quoteMode === 'single'
-        ? meta.quoteMode
-        : DEFAULT_CASE_RESOLVER_NODE_META.quoteMode;
-    next[nodeId] = {
-      role,
-      quoteMode,
-      includeInOutput:
-        typeof meta.includeInOutput === 'boolean'
-          ? meta.includeInOutput
-          : DEFAULT_CASE_RESOLVER_NODE_META.includeInOutput,
-      surroundPrefix:
-        typeof meta.surroundPrefix === 'string'
-          ? meta.surroundPrefix
-          : DEFAULT_CASE_RESOLVER_NODE_META.surroundPrefix,
-      surroundSuffix:
-        typeof meta.surroundSuffix === 'string'
-          ? meta.surroundSuffix
-          : DEFAULT_CASE_RESOLVER_NODE_META.surroundSuffix,
-    };
-  });
-  return next;
-};
-
-const sanitizeEdgeMeta = (
-  source: Record<string, CaseResolverEdgeMeta> | null | undefined
-): Record<string, CaseResolverEdgeMeta> => {
-  if (!source || typeof source !== 'object') return {};
-  const next: Record<string, CaseResolverEdgeMeta> = {};
-  Object.entries(source).forEach(([edgeId, meta]: [string, CaseResolverEdgeMeta]) => {
-    if (!edgeId || !meta || typeof meta !== 'object') return;
-    const joinMode =
-      meta.joinMode === 'newline' ||
-      meta.joinMode === 'tab' ||
-      meta.joinMode === 'space' ||
-      meta.joinMode === 'none'
-        ? meta.joinMode
-        : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
-    next[edgeId] = { joinMode };
-  });
-  return next;
-};
-
-const sanitizeDocumentFileLinksByNode = (
-  source: unknown,
-  validNodeIds: Set<string>
-): Record<string, string[]> => {
-  if (!source || typeof source !== 'object' || Array.isArray(source)) {
-    return {};
-  }
-  const result: Record<string, string[]> = {};
-  Object.entries(source as Record<string, unknown>).forEach(([nodeId, rawLinks]: [string, unknown]) => {
-    if (!validNodeIds.has(nodeId)) return;
-    if (!Array.isArray(rawLinks)) return;
-    const unique = new Set<string>();
-    rawLinks.forEach((entry: unknown) => {
-      if (typeof entry !== 'string') return;
-      const normalized = entry.trim();
-      if (!normalized) return;
-      unique.add(normalized);
-    });
-    result[nodeId] = Array.from(unique);
-  });
-  return result;
-};
-
-const sanitizeDocumentSourceFileIdByNode = (
-  source: unknown,
-  validNodeIds: Set<string>
-): Record<string, string> => {
-  if (!source || typeof source !== 'object' || Array.isArray(source)) {
-    return {};
-  }
-  const result: Record<string, string> = {};
-  Object.entries(source as Record<string, unknown>).forEach(([nodeId, rawFileId]: [string, unknown]) => {
-    if (!validNodeIds.has(nodeId)) return;
-    if (typeof rawFileId !== 'string') return;
-    const normalizedFileId = rawFileId.trim();
-    if (!normalizedFileId) return;
-    result[nodeId] = normalizedFileId;
-  });
-  return result;
 };
 
 const sanitizePartyReference = (value: unknown): CaseResolverPartyReference | null => {
@@ -592,320 +455,6 @@ const normalizeCaseResolverScanSlots = (input: unknown): CaseResolverScanSlot[] 
   return slots;
 };
 
-export const normalizeCaseResolverIdentifiers = (input: unknown): CaseResolverIdentifier[] => {
-  const now = new Date().toISOString();
-  if (!Array.isArray(input)) return [];
-
-  const seen = new Set<string>();
-  const raw: CaseResolverIdentifier[] = [];
-
-  input.forEach((entry: unknown, index: number): void => {
-    if (!entry || typeof entry !== 'object') return;
-    const record = entry as Record<string, unknown>;
-    const rawId =
-      typeof record['id'] === 'string' && record['id'].trim().length > 0
-        ? record['id'].trim()
-        : `identifier-${index + 1}`;
-    if (seen.has(rawId)) return;
-    seen.add(rawId);
-
-    const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
-    raw.push({
-      id: rawId,
-      name: rawName || `Case Identifier ${raw.length + 1}`,
-      parentId: sanitizeOptionalId(record['parentId']),
-      color: normalizeHexColor(record['color'], '#f59e0b'),
-      createdAt: normalizeTimestamp(record['createdAt'], now),
-      updatedAt: normalizeTimestamp(record['updatedAt'], now),
-    });
-  });
-
-  const byId = new Map<string, CaseResolverIdentifier>(
-    raw.map(
-      (identifier: CaseResolverIdentifier): [string, CaseResolverIdentifier] => [
-        identifier.id,
-        identifier,
-      ]
-    )
-  );
-  const normalizedParents = raw.map(
-    (identifier: CaseResolverIdentifier): CaseResolverIdentifier => ({
-      ...identifier,
-      parentId: resolveSafeIdentifierParentId(identifier.id, identifier.parentId, byId),
-    })
-  );
-
-  const grouped = new Map<string, CaseResolverIdentifier[]>();
-  const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
-  normalizedParents.forEach((identifier: CaseResolverIdentifier): void => {
-    const key = getGroupKey(identifier.parentId);
-    const current = grouped.get(key) ?? [];
-    current.push(identifier);
-    grouped.set(key, current);
-  });
-
-  const output: CaseResolverIdentifier[] = [];
-  const visit = (parentId: string | null): void => {
-    const group = grouped.get(getGroupKey(parentId)) ?? [];
-    group
-      .sort((left: CaseResolverIdentifier, right: CaseResolverIdentifier) => {
-        const nameDelta = left.name.localeCompare(right.name);
-        if (nameDelta !== 0) return nameDelta;
-        return left.id.localeCompare(right.id);
-      })
-      .forEach((identifier: CaseResolverIdentifier): void => {
-        output.push(identifier);
-        visit(identifier.id);
-      });
-  };
-
-  visit(null);
-  return output;
-};
-
-export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => {
-  const now = new Date().toISOString();
-  if (!Array.isArray(input)) return [];
-
-  const seen = new Set<string>();
-  const raw: CaseResolverTag[] = [];
-
-  input.forEach((entry: unknown, index: number): void => {
-    if (!entry || typeof entry !== 'object') return;
-    const record = entry as Record<string, unknown>;
-    const rawId =
-      typeof record['id'] === 'string' && record['id'].trim().length > 0
-        ? record['id'].trim()
-        : `tag-${index + 1}`;
-    if (seen.has(rawId)) return;
-    seen.add(rawId);
-
-    const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
-    raw.push({
-      id: rawId,
-      name: rawName || `Tag ${raw.length + 1}`,
-      parentId: sanitizeOptionalId(record['parentId']),
-      color: normalizeHexColor(record['color'], '#38bdf8'),
-      createdAt: normalizeTimestamp(record['createdAt'], now),
-      updatedAt: normalizeTimestamp(record['updatedAt'], now),
-    });
-  });
-
-  const byId = new Map<string, CaseResolverTag>(
-    raw.map((tag: CaseResolverTag): [string, CaseResolverTag] => [tag.id, tag])
-  );
-  const normalizedParents = raw.map((tag: CaseResolverTag): CaseResolverTag => ({
-    ...tag,
-    parentId: resolveSafeTagParentId(tag.id, tag.parentId, byId),
-  }));
-
-  const grouped = new Map<string, CaseResolverTag[]>();
-  const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
-  normalizedParents.forEach((tag: CaseResolverTag): void => {
-    const key = getGroupKey(tag.parentId);
-    const current = grouped.get(key) ?? [];
-    current.push(tag);
-    grouped.set(key, current);
-  });
-
-  const output: CaseResolverTag[] = [];
-  const visit = (parentId: string | null): void => {
-    const group = grouped.get(getGroupKey(parentId)) ?? [];
-    group
-      .sort((left: CaseResolverTag, right: CaseResolverTag) => {
-        const nameDelta = left.name.localeCompare(right.name);
-        if (nameDelta !== 0) return nameDelta;
-        return left.id.localeCompare(right.id);
-      })
-      .forEach((tag: CaseResolverTag): void => {
-        output.push(tag);
-        visit(tag.id);
-      });
-  };
-
-  visit(null);
-  return output;
-};
-
-function resolveSafeIdentifierParentId(
-  identifierId: string,
-  parentId: string | null,
-  identifierMap: Map<string, CaseResolverIdentifier>
-): string | null {
-  if (!parentId || !identifierMap.has(parentId) || parentId === identifierId) return null;
-  let current: string | null = parentId;
-  const visited = new Set<string>();
-  while (current) {
-    if (current === identifierId || visited.has(current)) return null;
-    visited.add(current);
-    const parent = identifierMap.get(current);
-    current = parent?.parentId ?? null;
-  }
-  return parentId;
-}
-
-function resolveSafeTagParentId(
-  tagId: string,
-  parentId: string | null,
-  tagMap: Map<string, CaseResolverTag>
-): string | null {
-  if (!parentId || !tagMap.has(parentId) || parentId === tagId) return null;
-  let current: string | null = parentId;
-  const visited = new Set<string>();
-  while (current) {
-    if (current === tagId || visited.has(current)) return null;
-    visited.add(current);
-    const parent = tagMap.get(current);
-    current = parent?.parentId ?? null;
-  }
-  return parentId;
-}
-
-const resolveSafeCategoryParentId = (
-  categoryId: string,
-  parentId: string | null,
-  categoryMap: Map<string, CaseResolverCategory>
-): string | null => {
-  if (!parentId || !categoryMap.has(parentId) || parentId === categoryId) return null;
-  let current: string | null = parentId;
-  while (current) {
-    if (current === categoryId) return null;
-    const parent = categoryMap.get(current);
-    current = parent?.parentId ?? null;
-  }
-  return parentId;
-};
-
-export const normalizeCaseResolverCategories = (input: unknown): CaseResolverCategory[] => {
-  const now = new Date().toISOString();
-  if (!Array.isArray(input)) return [];
-
-  const seen = new Set<string>();
-  const raw: CaseResolverCategory[] = [];
-  input.forEach((entry: unknown, index: number): void => {
-    if (!entry || typeof entry !== 'object') return;
-    const record = entry as Record<string, unknown>;
-    const rawId =
-      typeof record['id'] === 'string' && record['id'].trim().length > 0
-        ? record['id'].trim()
-        : `category-${index + 1}`;
-    if (seen.has(rawId)) return;
-    seen.add(rawId);
-
-    const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
-    raw.push({
-      id: rawId,
-      name: rawName || `Category ${raw.length + 1}`,
-      parentId: sanitizeOptionalId(record['parentId']),
-      sortOrder:
-        typeof record['sortOrder'] === 'number' && Number.isFinite(record['sortOrder'])
-          ? record['sortOrder']
-          : index,
-      description: typeof record['description'] === 'string' ? record['description'] : '',
-      color: normalizeHexColor(record['color'], '#10b981'),
-      createdAt: normalizeTimestamp(record['createdAt'], now),
-      updatedAt: normalizeTimestamp(record['updatedAt'], now),
-    });
-  });
-
-  const byId = new Map<string, CaseResolverCategory>(
-    raw.map((category: CaseResolverCategory): [string, CaseResolverCategory] => [category.id, category])
-  );
-  const normalizedParents = raw.map((category: CaseResolverCategory): CaseResolverCategory => ({
-    ...category,
-    parentId: resolveSafeCategoryParentId(category.id, category.parentId, byId),
-  }));
-
-  const grouped = new Map<string, CaseResolverCategory[]>();
-  const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
-  normalizedParents.forEach((category: CaseResolverCategory): void => {
-    const key = getGroupKey(category.parentId);
-    const current = grouped.get(key) ?? [];
-    current.push(category);
-    grouped.set(key, current);
-  });
-
-  const output: CaseResolverCategory[] = [];
-  const visit = (parentId: string | null): void => {
-    const key = getGroupKey(parentId);
-    const group = grouped.get(key) ?? [];
-    group
-      .sort((left: CaseResolverCategory, right: CaseResolverCategory) => {
-        const sortDelta = left.sortOrder - right.sortOrder;
-        if (sortDelta !== 0) return sortDelta;
-        const nameDelta = left.name.localeCompare(right.name);
-        if (nameDelta !== 0) return nameDelta;
-        return left.id.localeCompare(right.id);
-      })
-      .forEach((category: CaseResolverCategory, index: number): void => {
-        output.push({
-          ...category,
-          sortOrder: index,
-        });
-        visit(category.id);
-      });
-  };
-
-  visit(null);
-  return output;
-};
-
-export type CaseResolverCategoryTreeNode = CaseResolverCategory & {
-  children: CaseResolverCategoryTreeNode[];
-};
-
-export const buildCaseResolverCategoryTree = (
-  categories: CaseResolverCategory[]
-): CaseResolverCategoryTreeNode[] => {
-  const byId = new Map<string, CaseResolverCategoryTreeNode>();
-  categories.forEach((category: CaseResolverCategory): void => {
-    byId.set(category.id, { ...category, children: [] });
-  });
-
-  const roots: CaseResolverCategoryTreeNode[] = [];
-  categories.forEach((category: CaseResolverCategory): void => {
-    const current = byId.get(category.id);
-    if (!current) return;
-    if (!category.parentId) {
-      roots.push(current);
-      return;
-    }
-    const parent = byId.get(category.parentId);
-    if (!parent) {
-      roots.push(current);
-      return;
-    }
-    parent.children.push(current);
-  });
-
-  const sortNodes = (nodes: CaseResolverCategoryTreeNode[]): void => {
-    nodes.sort((left: CaseResolverCategoryTreeNode, right: CaseResolverCategoryTreeNode) => {
-      const sortDelta = left.sortOrder - right.sortOrder;
-      if (sortDelta !== 0) return sortDelta;
-      const nameDelta = left.name.localeCompare(right.name);
-      if (nameDelta !== 0) return nameDelta;
-      return left.id.localeCompare(right.id);
-    });
-    nodes.forEach((node: CaseResolverCategoryTreeNode): void => {
-      if (node.children.length > 0) sortNodes(node.children);
-    });
-  };
-  sortNodes(roots);
-
-  return roots;
-};
-
-export const parseCaseResolverTags = (raw: string | null | undefined): CaseResolverTag[] =>
-  normalizeCaseResolverTags(parseJsonSetting<unknown>(raw, []));
-
-export const parseCaseResolverIdentifiers = (
-  raw: string | null | undefined
-): CaseResolverIdentifier[] =>
-  normalizeCaseResolverIdentifiers(parseJsonSetting<unknown>(raw, []));
-
-export const parseCaseResolverCategories = (raw: string | null | undefined): CaseResolverCategory[] =>
-  normalizeCaseResolverCategories(parseJsonSetting<unknown>(raw, []));
-
 const normalizeCaseResolverDefaultDocumentFormatValue = (
   input: unknown
 ): CaseResolverDefaultDocumentFormat | null => {
@@ -992,160 +541,6 @@ export const parseCaseResolverSettings = (raw: string | null | undefined): CaseR
   }
   return normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
 };
-
-const ensureDocumentPromptPorts = (
-  nodes: AiNode[],
-  nodeMeta: Record<string, CaseResolverNodeMeta>,
-  documentSourceFileIdByNode: Record<string, string>
-): AiNode[] =>
-  nodes.map((node: AiNode): AiNode => {
-    if (node.type !== 'prompt') return node;
-    const isTextNode =
-      nodeMeta[node.id]?.role === 'text_note' || Boolean(documentSourceFileIdByNode[node.id]);
-    if (!isTextNode) return node;
-    const currentInputs = Array.isArray(node.inputs) ? node.inputs : [];
-    const currentOutputs = Array.isArray(node.outputs) ? node.outputs : [];
-    const nextInputs = [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS];
-    const nextOutputs = [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS];
-    const sameInputs =
-      nextInputs.length === currentInputs.length &&
-      nextInputs.every((port: string, index: number): boolean => port === currentInputs[index]);
-    const sameOutputs =
-      nextOutputs.length === currentOutputs.length &&
-      nextOutputs.every((port: string, index: number): boolean => port === currentOutputs[index]);
-    if (sameInputs && sameOutputs) return node;
-    return {
-      ...node,
-      inputs: nextInputs,
-      outputs: nextOutputs,
-    };
-  });
-
-const sanitizeTextNodeEdgePorts = (
-  edges: Edge[],
-  textNodeIds: Set<string>
-): Edge[] => {
-  if (edges.length === 0 || textNodeIds.size === 0) return edges;
-  const textfieldPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'textfield';
-  const contentPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
-  const plainTextPort = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
-
-  const normalizeInputPort = (value: string | undefined): string => {
-    if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
-    if (value === 'prompt') return textfieldPort;
-    if (value === 'result') return contentPort;
-    return contentPort;
-  };
-
-  const normalizeOutputPort = (value: string | undefined): string => {
-    if (value === textfieldPort || value === contentPort || value === plainTextPort) return value;
-    if (value === 'prompt') return textfieldPort;
-    if (value === 'result') return contentPort;
-    return contentPort;
-  };
-
-  return edges.map((edge: Edge): Edge => {
-    let nextFromPort = edge.fromPort;
-    let nextToPort = edge.toPort;
-    if (textNodeIds.has(edge.from)) {
-      const normalized = normalizeOutputPort(edge.fromPort);
-      if (normalized !== edge.fromPort) {
-        nextFromPort = normalized;
-      }
-    }
-    if (textNodeIds.has(edge.to)) {
-      const normalized = normalizeInputPort(edge.toPort);
-      if (normalized !== edge.toPort) {
-        nextToPort = normalized;
-      }
-    }
-    if (nextFromPort === edge.fromPort && nextToPort === edge.toPort) return edge;
-    return {
-      ...edge,
-      fromPort: nextFromPort,
-      toPort: nextToPort,
-    };
-  });
-};
-
-const sanitizeGraph = (graph: unknown): CaseResolverGraph => {
-  const graphRecord = graph && typeof graph === 'object' ? (graph as Record<string, unknown>) : {};
-  const rawNodes = Array.isArray(graphRecord['nodes']) ? (graphRecord['nodes'] as AiNode[]) : [];
-  const edges = Array.isArray(graphRecord['edges']) ? (graphRecord['edges'] as Edge[]) : [];
-  const validNodeIds = new Set<string>(
-    rawNodes
-      .map((node: AiNode) => (typeof node?.id === 'string' ? node.id : ''))
-      .filter(Boolean)
-  );
-  const edgesByNodeId = edges.filter(
-    (edge: Edge): boolean =>
-      typeof edge?.id === 'string' &&
-      typeof edge.from === 'string' &&
-      typeof edge.to === 'string' &&
-      validNodeIds.has(edge.from) &&
-      validNodeIds.has(edge.to)
-  );
-
-  const presetRaw = graphRecord['pdfExtractionPresetId'];
-  const pdfExtractionPresetId: CaseResolverPdfExtractionPresetId =
-    presetRaw === 'plain_text' || presetRaw === 'structured_sections' || presetRaw === 'facts_entities'
-      ? presetRaw
-      : DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID;
-  const documentFileLinksByNode = sanitizeDocumentFileLinksByNode(
-    graphRecord['documentFileLinksByNode'],
-    validNodeIds
-  );
-  const documentSourceFileIdByNode = sanitizeDocumentSourceFileIdByNode(
-    graphRecord['documentSourceFileIdByNode'],
-    validNodeIds
-  );
-  const sanitizedNodeMeta = sanitizeNodeMeta(
-    graphRecord['nodeMeta'] as Record<string, CaseResolverNodeMeta> | null | undefined
-  );
-  const nodes = ensureDocumentPromptPorts(rawNodes, sanitizedNodeMeta, documentSourceFileIdByNode);
-  const textNodeIds = new Set<string>(
-    nodes
-      .filter((node: AiNode): boolean => {
-        if (node.type !== 'prompt') return false;
-        return (
-          sanitizedNodeMeta[node.id]?.role === 'text_note' || Boolean(documentSourceFileIdByNode[node.id])
-        );
-      })
-      .map((node: AiNode): string => node.id)
-  );
-  const sanitizedEdges = sanitizeTextNodeEdgePorts(edgesByNodeId, textNodeIds);
-  const rawDocumentDropNodeId = graphRecord['documentDropNodeId'];
-  const documentDropNodeId =
-    typeof rawDocumentDropNodeId === 'string' &&
-      rawDocumentDropNodeId.trim().length > 0 &&
-      validNodeIds.has(rawDocumentDropNodeId)
-      ? rawDocumentDropNodeId
-      : null;
-
-  return {
-    nodes,
-    edges: sanitizedEdges,
-    nodeMeta: sanitizedNodeMeta,
-    edgeMeta: sanitizeEdgeMeta(
-      graphRecord['edgeMeta'] as Record<string, CaseResolverEdgeMeta> | null | undefined
-    ),
-    pdfExtractionPresetId,
-    documentFileLinksByNode,
-    documentDropNodeId,
-    documentSourceFileIdByNode,
-  };
-};
-
-export const createEmptyCaseResolverGraph = (): CaseResolverGraph => ({
-  nodes: [],
-  edges: [],
-  nodeMeta: {},
-  edgeMeta: {},
-  pdfExtractionPresetId: DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
-  documentFileLinksByNode: {},
-  documentDropNodeId: null,
-  documentSourceFileIdByNode: {},
-});
 
 export const createCaseResolverFile = (input: {
   id: string;
@@ -1277,210 +672,6 @@ export const createCaseResolverFile = (input: {
   };
 };
 
-export const inferCaseResolverAssetKind = ({
-  kind,
-  mimeType,
-  name,
-}: {
-  kind?: string | null | undefined;
-  mimeType?: string | null | undefined;
-  name?: string | null | undefined;
-}): CaseResolverAssetKind => {
-  const normalizedKind = (kind ?? '').trim().toLowerCase();
-  if (
-    normalizedKind === 'node_file' ||
-    normalizedKind === 'image' ||
-    normalizedKind === 'pdf' ||
-    normalizedKind === 'file'
-  ) {
-    return normalizedKind;
-  }
-
-  const normalizedMime = (mimeType ?? '').trim().toLowerCase();
-  if (normalizedMime.startsWith('image/')) return 'image';
-  if (normalizedMime === 'application/pdf') return 'pdf';
-
-  const normalizedName = (name ?? '').trim().toLowerCase();
-  if (
-    normalizedName.endsWith('.jpg') ||
-    normalizedName.endsWith('.jpeg') ||
-    normalizedName.endsWith('.png') ||
-    normalizedName.endsWith('.webp') ||
-    normalizedName.endsWith('.gif') ||
-    normalizedName.endsWith('.bmp') ||
-    normalizedName.endsWith('.avif') ||
-    normalizedName.endsWith('.heic') ||
-    normalizedName.endsWith('.heif') ||
-    normalizedName.endsWith('.tif') ||
-    normalizedName.endsWith('.tiff') ||
-    normalizedName.endsWith('.svg')
-  ) {
-    return 'image';
-  }
-  if (normalizedName.endsWith('.pdf')) return 'pdf';
-  return 'file';
-};
-
-const resolveUploadBucketForAssetKind = (
-  kind: CaseResolverAssetKind
-): 'images' | 'pdfs' | 'files' => {
-  if (kind === 'image') return 'images';
-  if (kind === 'pdf') return 'pdfs';
-  return 'files';
-};
-
-export const resolveCaseResolverUploadFolder = ({
-  baseFolder,
-  kind,
-  mimeType,
-  name,
-}: {
-  baseFolder?: string | null | undefined;
-  kind?: string | null | undefined;
-  mimeType?: string | null | undefined;
-  name?: string | null | undefined;
-}): string => {
-  const base = normalizeFolderPath(baseFolder ?? '');
-  const inferredKind = inferCaseResolverAssetKind({ kind, mimeType, name });
-
-  if (inferredKind === 'node_file') {
-    return base;
-  }
-
-  const bucket = resolveUploadBucketForAssetKind(inferredKind);
-  return normalizeFolderPath(base ? `${base}/${bucket}` : bucket);
-};
-
-export const createCaseResolverAssetFile = (input: {
-  id: string;
-  name: string;
-  folder?: string;
-  kind?: string | null | undefined;
-  filepath?: string | null | undefined;
-  sourceFileId?: string | null | undefined;
-  mimeType?: string | null | undefined;
-  size?: number | null | undefined;
-  textContent?: string | null | undefined;
-  description?: string | null | undefined;
-  createdAt?: string;
-  updatedAt?: string;
-}): CaseResolverAssetFile => {
-  const now = new Date().toISOString();
-  const createdAt = normalizeTimestamp(input.createdAt, now);
-  const updatedAt = normalizeTimestamp(input.updatedAt, createdAt);
-  return {
-    id: input.id,
-    name: input.name.trim() || 'Untitled File',
-    folder: normalizeFolderPath(input.folder ?? ''),
-    kind: inferCaseResolverAssetKind({ kind: input.kind, mimeType: input.mimeType, name: input.name }),
-    filepath:
-      typeof input.filepath === 'string' && input.filepath.trim().length > 0
-        ? input.filepath.trim()
-        : null,
-    sourceFileId:
-      typeof input.sourceFileId === 'string' && input.sourceFileId.trim().length > 0
-        ? input.sourceFileId.trim()
-        : null,
-    mimeType:
-      typeof input.mimeType === 'string' && input.mimeType.trim().length > 0
-        ? input.mimeType.trim().toLowerCase()
-        : null,
-    size:
-      typeof input.size === 'number' && Number.isFinite(input.size) && input.size >= 0
-        ? Math.round(input.size)
-        : null,
-    textContent:
-      typeof input.textContent === 'string'
-        ? input.textContent
-        : '',
-    description:
-      typeof input.description === 'string'
-        ? input.description
-        : '',
-    createdAt,
-    updatedAt,
-  };
-};
-
-const normalizeCaseResolverFolderTimestamps = ({
-  source,
-  folders,
-  files,
-  assets,
-  fallbackTimestamp,
-}: {
-  source: unknown;
-  folders: string[];
-  files: CaseResolverFile[];
-  assets: CaseResolverAssetFile[];
-  fallbackTimestamp: string;
-}): Record<string, CaseResolverFolderTimestamp> => {
-  const sourceRecord =
-    source && typeof source === 'object' && !Array.isArray(source)
-      ? (source as Record<string, unknown>)
-      : {};
-
-  const contentStatsByFolder = new Map<string, { createdAt: string; updatedAt: string }>();
-  const registerContentTimestamps = (folderPath: string, createdAt: string, updatedAt: string): void => {
-    const ancestors = expandFolderPath(folderPath);
-    ancestors.forEach((ancestor: string): void => {
-      const current = contentStatsByFolder.get(ancestor);
-      if (!current) {
-        contentStatsByFolder.set(ancestor, { createdAt, updatedAt });
-        return;
-      }
-      contentStatsByFolder.set(ancestor, {
-        createdAt: pickEarliestTimestamp([current.createdAt, createdAt], current.createdAt),
-        updatedAt: pickLatestTimestamp([current.updatedAt, updatedAt], current.updatedAt),
-      });
-    });
-  };
-
-  files.forEach((file: CaseResolverFile): void => {
-    registerContentTimestamps(
-      file.folder,
-      normalizeTimestamp(file.createdAt, fallbackTimestamp),
-      normalizeTimestamp(file.updatedAt, normalizeTimestamp(file.createdAt, fallbackTimestamp))
-    );
-  });
-  assets.forEach((asset: CaseResolverAssetFile): void => {
-    registerContentTimestamps(
-      asset.folder,
-      normalizeTimestamp(asset.createdAt, fallbackTimestamp),
-      normalizeTimestamp(asset.updatedAt, normalizeTimestamp(asset.createdAt, fallbackTimestamp))
-    );
-  });
-
-  const folderTimestamps: Record<string, CaseResolverFolderTimestamp> = {};
-  folders.forEach((folderPath: string): void => {
-    const rawEntry = sourceRecord[folderPath];
-    const entryRecord =
-      rawEntry && typeof rawEntry === 'object' && !Array.isArray(rawEntry)
-        ? (rawEntry as Record<string, unknown>)
-        : {};
-
-    const recordedCreatedAt = normalizeTimestamp(entryRecord['createdAt'], fallbackTimestamp);
-    const recordedUpdatedAt = normalizeTimestamp(entryRecord['updatedAt'], recordedCreatedAt);
-    const contentStats = contentStatsByFolder.get(folderPath);
-
-    const createdAt = pickEarliestTimestamp(
-      [recordedCreatedAt, contentStats?.createdAt],
-      recordedCreatedAt
-    );
-    const updatedAt = pickLatestTimestamp(
-      [recordedUpdatedAt, contentStats?.updatedAt, createdAt],
-      recordedUpdatedAt
-    );
-
-    folderTimestamps[folderPath] = {
-      createdAt,
-      updatedAt,
-    };
-  });
-
-  return folderTimestamps;
-};
-
 export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
   const relationGraph = buildCaseResolverRelationGraph({
     source: null,
@@ -1605,10 +796,13 @@ export const normalizeCaseResolverWorkspace = (
       referenceCaseIds: uniqueReferenceCaseIds,
     };
   });
-  const normalizedFilesWithoutOrphans = normalizedFilesWithCaseRelations.filter(
-    (file: CaseResolverFile): boolean =>
-      file.fileType === 'case' || Boolean(file.parentCaseId)
-  );
+  const normalizedFilesWithoutOrphans =
+    caseFilesById.size > 0
+      ? normalizedFilesWithCaseRelations.filter(
+        (file: CaseResolverFile): boolean =>
+          file.fileType === 'case' || Boolean(file.parentCaseId)
+      )
+      : normalizedFilesWithCaseRelations;
   const normalizedFileIds = new Set<string>(
     normalizedFilesWithoutOrphans.map((file: CaseResolverFile): string => file.id)
   );
@@ -1731,33 +925,6 @@ export const hasCaseResolverWorkspaceFilesArray = (
   }
 };
 
-const parseWorkspaceTimestampMs = (value: string | null | undefined): number => {
-  if (!value) return 0;
-  const parsed = Date.parse(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
-export const getCaseResolverWorkspaceLatestTimestampMs = (
-  workspace: CaseResolverWorkspace
-): number => {
-  let latest = 0;
-  workspace.files.forEach((file: CaseResolverFile): void => {
-    latest = Math.max(
-      latest,
-      parseWorkspaceTimestampMs(file.createdAt),
-      parseWorkspaceTimestampMs(file.updatedAt)
-    );
-  });
-  workspace.assets.forEach((asset: CaseResolverAssetFile): void => {
-    latest = Math.max(
-      latest,
-      parseWorkspaceTimestampMs(asset.createdAt),
-      parseWorkspaceTimestampMs(asset.updatedAt)
-    );
-  });
-  return latest;
-};
-
 export const upsertFileGraph = (
   workspace: CaseResolverWorkspace,
   fileId: string,
@@ -1776,22 +943,4 @@ export const upsertFileGraph = (
     ...workspace,
     files: nextFiles,
   });
-};
-
-export const renameFolderPath = (
-  value: string,
-  sourceFolder: string,
-  targetFolder: string
-): string => {
-  const normalizedValue = normalizeFolderPath(value);
-  const normalizedSource = normalizeFolderPath(sourceFolder);
-  const normalizedTarget = normalizeFolderPath(targetFolder);
-  if (!normalizedSource) return normalizedValue;
-  if (normalizedValue === normalizedSource) return normalizedTarget;
-  if (normalizedValue.startsWith(`${normalizedSource}/`)) {
-    const suffix = normalizedValue.slice(normalizedSource.length + 1);
-    if (!normalizedTarget) return suffix;
-    return `${normalizedTarget}/${suffix}`;
-  }
-  return normalizedValue;
 };

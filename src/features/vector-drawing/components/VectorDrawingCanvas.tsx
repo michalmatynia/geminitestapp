@@ -33,6 +33,7 @@ export function VectorDrawingCanvas({
   onViewCropRectChange,
   showCanvasGrid: propShowCanvasGrid,
   imageMoveEnabled,
+  selectionEnabled,
   imageOffset,
   onImageOffsetChange,
   className,
@@ -91,6 +92,7 @@ export function VectorDrawingCanvas({
       {...(onViewCropRectChange !== undefined ? { onViewCropRectChange } : {})}
       {...(showCanvasGrid !== undefined ? { showCanvasGrid } : {})}
       {...(imageMoveEnabled !== undefined ? { imageMoveEnabled } : {})}
+      {...(selectionEnabled !== undefined ? { selectionEnabled } : {})}
       {...(imageOffset !== undefined ? { imageOffset } : {})}
       {...(onImageOffsetChange !== undefined ? { onImageOffsetChange } : {})}
       {...(className !== undefined ? { className } : {})}

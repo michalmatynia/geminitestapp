@@ -34,6 +34,7 @@ export interface UiState {
   centerGuidesEnabled: boolean;
   validatorEnabled: boolean;
   formatterEnabled: boolean;
+  canvasSelectionEnabled: boolean;
   imageTransformMode: ImageTransformMode;
   canvasImageOffset: CanvasImageOffset;
 }
@@ -45,6 +46,7 @@ export interface UiActions {
   setCenterGuidesEnabled: (value: boolean) => void;
   setValidatorEnabled: (value: boolean) => void;
   setFormatterEnabled: (value: boolean) => void;
+  setCanvasSelectionEnabled: (value: boolean) => void;
   setImageTransformMode: (mode: ImageTransformMode) => void;
   setCanvasImageOffset: (offset: CanvasImageOffset) => void;
   resetCanvasImageOffset: () => void;
@@ -61,6 +63,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const [centerGuidesEnabled, setCenterGuidesEnabled] = useState(false);
   const [validatorEnabled, setValidatorEnabledState] = useState(true);
   const [formatterEnabled, setFormatterEnabledState] = useState(false);
+  const [canvasSelectionEnabled, setCanvasSelectionEnabled] = useState(true);
   const [imageTransformMode, setImageTransformMode] = useState<ImageTransformMode>('none');
   const [canvasImageOffsetState, setCanvasImageOffsetState] = useState<CanvasImageOffset>(DEFAULT_CANVAS_IMAGE_OFFSET);
   const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
@@ -72,11 +75,13 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       centerGuidesEnabled,
       validatorEnabled,
       formatterEnabled,
+      canvasSelectionEnabled,
       imageTransformMode,
       canvasImageOffset: canvasImageOffsetState,
     }),
     [
       centerGuidesEnabled,
+      canvasSelectionEnabled,
       formatterEnabled,
       imageTransformMode,
       isFocusMode,
@@ -103,6 +108,7 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
       setFormatterEnabled: (value: boolean): void => {
         setFormatterEnabledState(value);
       },
+      setCanvasSelectionEnabled,
       setImageTransformMode,
       setCanvasImageOffset: (offset: CanvasImageOffset): void => {
         setCanvasImageOffsetState(normalizeCanvasImageOffset(offset));

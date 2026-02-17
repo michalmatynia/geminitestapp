@@ -377,14 +377,29 @@ export async function deleteImageStudioSlotCascade(
   if (slotIdCandidates.length === 0) {
     return { deleted: false, deletedSlotIds: [] };
   }
-  const rootDoc = await collection.findOne({ _id: { $in: slotIdCandidates } });
-  if (!rootDoc) return { deleted: false, deletedSlotIds: [] };
 
-  const projectDocs = await collection
-    .find({ projectId: rootDoc.projectId })
+  const rootDocs = await collection
+    .find({ _id: { $in: slotIdCandidates } })
     .toArray();
+  if (rootDocs.length === 0) return { deleted: false, deletedSlotIds: [] };
 
-  const slotIdsToDelete = collectCascadeSlotIds(rootDoc._id, projectDocs);
+  const projectDocCache = new Map<string, ImageStudioSlotDocument[]>();
+  const slotIdsToDeleteSet = new Set<string>();
+  for (const rootDoc of rootDocs) {
+    const projectId = rootDoc.projectId;
+    let projectDocs = projectDocCache.get(projectId);
+    if (!projectDocs) {
+      projectDocs = await collection
+        .find({ projectId })
+        .toArray();
+      projectDocCache.set(projectId, projectDocs);
+    }
+    collectCascadeSlotIds(rootDoc._id, projectDocs).forEach((candidateSlotId: string) => {
+      slotIdsToDeleteSet.add(candidateSlotId);
+    });
+  }
+
+  const slotIdsToDelete = Array.from(slotIdsToDeleteSet);
   if (slotIdsToDelete.length === 0) {
     return { deleted: false, deletedSlotIds: [] };
   }
@@ -397,8 +412,9 @@ export async function deleteImageStudioSlotCascade(
     }
   }
 
+  const rootSlotIdSet = new Set<string>(rootDocs.map((rootDoc: ImageStudioSlotDocument) => rootDoc._id));
   return {
-    deleted: deletedSlotIds.includes(rootDoc._id),
+    deleted: deletedSlotIds.some((deletedSlotId: string) => rootSlotIdSet.has(deletedSlotId)),
     deletedSlotIds,
   };
 }

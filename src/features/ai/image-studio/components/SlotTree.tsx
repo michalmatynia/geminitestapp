@@ -608,7 +608,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                   >
                     <button
                       type='button'
-                      className='flex h-full w-full min-w-0 items-center gap-1 text-left'
+                      className='flex h-full w-full min-w-0 cursor-pointer items-center gap-1 text-left'
                       onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
                         event.stopPropagation();
                         if (selectedSlotId) {
@@ -671,7 +671,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
                         </span>
                       )}
                       <span
-                        className='min-w-0 flex-1 truncate'
+                        className='min-w-0 flex-1 cursor-pointer truncate'
                         onDoubleClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
                           event.preventDefault();
                           event.stopPropagation();

@@ -1,6 +1,6 @@
 'use client';
 
-import { FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
+import { Copy, FolderPlus, ImageOff, ImagePlus, Plus, Settings2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
@@ -76,6 +76,7 @@ export function LeftSidebar(): React.JSX.Element {
   const [revealRequest, setRevealRequest] = useState<{ slotId: string; nonce: number } | null>(null);
   const [projectSaveBusy, setProjectSaveBusy] = useState(false);
   const [loadToCanvasBusy, setLoadToCanvasBusy] = useState(false);
+  const [duplicateCardBusy, setDuplicateCardBusy] = useState(false);
   const loadToCanvasBusyRef = useRef(false);
   const singleSlotManagerRef = useRef<ImageStudioSingleSlotManagerHandle | null>(null);
   const productImagesExternalBaseUrl =
@@ -197,55 +198,26 @@ export function LeftSidebar(): React.JSX.Element {
 
   const handleCreateCardFromLoadedImage = useCallback((): void => {
     void (async (): Promise<void> => {
-      const sourceSlot = workingSlot ?? selectedSlot;
-      const sourceImageUrl = sourceSlot?.imageUrl?.trim() || sourceSlot?.imageFile?.filepath || null;
-      const sourceImageBase64 = sourceSlot?.imageBase64?.trim() || null;
-      const sourceImageFileId = sourceSlot?.imageFileId ?? null;
-      const hasSourceImage = Boolean(sourceImageFileId || sourceImageUrl || sourceImageBase64);
-
       // Resolve target folder: card selected → card's folder, folder selected → that folder, else root
       const resolvedTargetFolder = selectedSlotId
         ? (selectedSlot?.folderPath?.trim() ?? '')
         : selectedFolder.trim();
 
-      if (!sourceSlot || !hasSourceImage) {
-        // No loaded image — create an empty card in the resolved folder
-        const created = await createSlots([
-          {
-            name: `Card ${Date.now()}`,
-            ...(resolvedTargetFolder ? { folderPath: resolvedTargetFolder } : {}),
-          },
-        ]);
-        const nextCard = created[0] ?? null;
-        if (!nextCard) {
-          throw new Error('Failed to create card.');
-        }
-        queueRevealInTree(nextCard.id);
-        toast('Created empty card.', { variant: 'success' });
-        return;
-      }
-
-      const targetFolder = sourceSlot.folderPath?.trim() || resolvedTargetFolder;
       const created = await createSlots([
         {
-          name: sourceSlot.name?.trim() ? `${sourceSlot.name.trim()} Copy` : `Card ${Date.now()}`,
-          ...(targetFolder ? { folderPath: targetFolder } : {}),
-          ...(sourceImageFileId ? { imageFileId: sourceImageFileId } : {}),
-          ...(sourceImageUrl ? { imageUrl: sourceImageUrl } : {}),
-          ...(sourceImageBase64 ? { imageBase64: sourceImageBase64 } : {}),
+          name: `Card ${Date.now()}`,
+          ...(resolvedTargetFolder ? { folderPath: resolvedTargetFolder } : {}),
         },
       ]);
 
       const nextCard = created[0] ?? null;
       if (!nextCard) {
-        throw new Error('Failed to create card from loaded image.');
+        throw new Error('Failed to create card.');
       }
       queueRevealInTree(nextCard.id);
-      setPreviewMode('image');
-      setWorkingSlotId(nextCard.id);
-      toast('Created card from loaded image.', { variant: 'success' });
+      toast('Created empty card.', { variant: 'success' });
     })().catch((error: unknown) => {
-      toast(error instanceof Error ? error.message : 'Failed to create card from loaded image.', { variant: 'error' });
+      toast(error instanceof Error ? error.message : 'Failed to create card.', { variant: 'error' });
     });
   }, [
     createSlots,
@@ -253,10 +225,65 @@ export function LeftSidebar(): React.JSX.Element {
     selectedFolder,
     selectedSlot,
     selectedSlotId,
-    setPreviewMode,
-    setWorkingSlotId,
     toast,
-    workingSlot,
+  ]);
+
+  const handleDuplicateSelectedCard = useCallback((): void => {
+    if (duplicateCardBusy) return;
+    if (!projectId.trim()) {
+      toast('Select a project first.', { variant: 'info' });
+      return;
+    }
+    if (!selectedSlot) {
+      toast('Select a card to duplicate.', { variant: 'info' });
+      return;
+    }
+
+    setDuplicateCardBusy(true);
+    void (async (): Promise<void> => {
+      const sourceName = selectedSlot.name?.trim() || selectedSlot.id;
+      const sourceFolder = selectedSlot.folderPath?.trim() ?? '';
+      const sourceImageUrl = selectedSlot.imageUrl?.trim() ?? '';
+      const sourceImageBase64 = selectedSlot.imageBase64?.trim() ?? '';
+      const sourceMetadata =
+        selectedSlot.metadata &&
+        typeof selectedSlot.metadata === 'object' &&
+        !Array.isArray(selectedSlot.metadata)
+          ? cloneSettingValue(selectedSlot.metadata)
+          : null;
+
+      const created = await createSlots([
+        {
+          name: sourceName ? `${sourceName} Copy` : `Card ${Date.now()}`,
+          ...(sourceFolder ? { folderPath: sourceFolder } : {}),
+          ...(selectedSlot.imageFileId ? { imageFileId: selectedSlot.imageFileId } : {}),
+          ...(sourceImageUrl ? { imageUrl: sourceImageUrl } : {}),
+          ...(sourceImageBase64 ? { imageBase64: sourceImageBase64 } : {}),
+          ...(selectedSlot.asset3dId ? { asset3dId: selectedSlot.asset3dId } : {}),
+          ...(selectedSlot.screenshotFileId ? { screenshotFileId: selectedSlot.screenshotFileId } : {}),
+          ...(sourceMetadata ? { metadata: sourceMetadata } : {}),
+        },
+      ]);
+
+      const duplicatedCard = created[0] ?? null;
+      if (!duplicatedCard) {
+        throw new Error('Failed to duplicate card.');
+      }
+
+      queueRevealInTree(duplicatedCard.id);
+      toast('Card duplicated.', { variant: 'success' });
+    })().catch((error: unknown) => {
+      toast(error instanceof Error ? error.message : 'Failed to duplicate card.', { variant: 'error' });
+    }).finally(() => {
+      setDuplicateCardBusy(false);
+    });
+  }, [
+    createSlots,
+    duplicateCardBusy,
+    projectId,
+    queueRevealInTree,
+    selectedSlot,
+    toast,
   ]);
 
   const handleSaveProject = (): void => {
@@ -360,7 +387,7 @@ export function LeftSidebar(): React.JSX.Element {
   return (
     <SidePanel
       position='left'
-      width={320}
+      width='100%'
       isFocusMode={isFocusMode}
       className='order-1 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40'
     >
@@ -403,6 +430,18 @@ export function LeftSidebar(): React.JSX.Element {
                 aria-label='Edit card'
               >
                 <Settings2 className='size-4' />
+              </Button>
+            </Tooltip>
+            <Tooltip content={selectedSlot ? 'Duplicate card' : 'Select card to duplicate'}>
+              <Button size='xs'
+                type='button'
+                variant='outline'
+                title='Duplicate card'
+                onClick={handleDuplicateSelectedCard}
+                disabled={!selectedSlot || duplicateCardBusy}
+                aria-label='Duplicate card'
+              >
+                <Copy className='size-4' />
               </Button>
             </Tooltip>
           </div>

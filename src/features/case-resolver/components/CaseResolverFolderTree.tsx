@@ -111,8 +111,17 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
     );
     const contextFileId = selectedFileId ?? workspace.activeFileId;
-    const contextFile = contextFileId ? (filesById.get(contextFileId) ?? null) : null;
-    if (!contextFile) return workspace;
+    if (!contextFileId) return workspace;
+    const contextFile = filesById.get(contextFileId) ?? null;
+    if (!contextFile) {
+      if (!selectedFileId || selectedFileId !== contextFileId) return workspace;
+      return {
+        ...workspace,
+        files: [],
+        assets: [],
+        activeFileId: null,
+      };
+    }
 
     const scopedRootCaseId =
       contextFile.fileType === 'case'

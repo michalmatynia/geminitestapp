@@ -283,7 +283,12 @@ const resolveMaskColors = (
 
 export function GenerationToolbar(): React.JSX.Element {
   const { maskPreviewEnabled, centerGuidesEnabled } = useUiState();
-  const { setMaskPreviewEnabled, setCenterGuidesEnabled, getPreviewCanvasViewportCrop } = useUiActions();
+  const {
+    setMaskPreviewEnabled,
+    setCenterGuidesEnabled,
+    setCanvasSelectionEnabled,
+    getPreviewCanvasViewportCrop,
+  } = useUiActions();
   const { projectId } = useProjectsState();
   const { workingSlot } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
@@ -845,6 +850,7 @@ export function GenerationToolbar(): React.JSX.Element {
     ]);
     setActiveMaskId(shapeId);
     setTool('select');
+    setCanvasSelectionEnabled(true);
     toast('Crop box created. Adjust the rectangle, then click Crop.', { variant: 'success' });
   };
 

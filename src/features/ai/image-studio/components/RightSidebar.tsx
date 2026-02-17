@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock3, Eye, GitBranch, Loader2, Move, Play, Redo2, SlidersHorizontal, Sparkles, Undo2, Workflow } from 'lucide-react';
+import { Clock3, Eye, GitBranch, Loader2, MousePointer2, Move, Play, Redo2, SlidersHorizontal, Sparkles, Undo2, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -99,6 +99,7 @@ type StudioActionHistorySnapshot = {
   previewMode: 'image' | '3d';
   compositeAssetIds: string[];
   tool: VectorToolMode;
+  canvasSelectionEnabled: boolean;
   imageTransformMode: 'none' | 'move';
   canvasImageOffset: { x: number; y: number };
   maskShapes: VectorShape[];
@@ -267,12 +268,14 @@ export function RightSidebar(): React.JSX.Element {
     isFocusMode,
     validatorEnabled,
     formatterEnabled,
+    canvasSelectionEnabled,
     imageTransformMode,
     canvasImageOffset,
   } = useUiState();
   const {
     setValidatorEnabled,
     setFormatterEnabled,
+    setCanvasSelectionEnabled,
     setImageTransformMode,
     setCanvasImageOffset,
     resetCanvasImageOffset,
@@ -412,6 +415,28 @@ export function RightSidebar(): React.JSX.Element {
   const canResetCanvasImageOffset = Math.abs(canvasImageOffset.x) > 0.5 || Math.abs(canvasImageOffset.y) > 0.5;
   const isMoveImageActive = imageTransformMode === 'move';
   const canRecenterCanvasImage = isMoveImageActive && canResetCanvasImageOffset;
+  const isSelectToolActive = tool === 'select' && canvasSelectionEnabled;
+  const activeShapeDrawingTool = tool === 'select' ? null : tool;
+
+  const handleToggleSelectTool = useCallback((): void => {
+    if (isSelectToolActive) {
+      setCanvasSelectionEnabled(false);
+      return;
+    }
+    setTool('select');
+    setCanvasSelectionEnabled(true);
+  }, [isSelectToolActive, setCanvasSelectionEnabled, setTool]);
+
+  const handleSelectShapeTool = useCallback((nextTool: VectorToolMode): void => {
+    setTool(nextTool);
+    if (nextTool === 'select') {
+      setCanvasSelectionEnabled(true);
+      return;
+    }
+    if (canvasSelectionEnabled) {
+      setCanvasSelectionEnabled(false);
+    }
+  }, [canvasSelectionEnabled, setCanvasSelectionEnabled, setTool]);
 
   const buildActionHistorySnapshot = useCallback((): StudioActionHistorySnapshot => ({
     selectedFolder,
@@ -420,6 +445,7 @@ export function RightSidebar(): React.JSX.Element {
     previewMode,
     compositeAssetIds: cloneSerializableValue(compositeAssetIds),
     tool,
+    canvasSelectionEnabled,
     imageTransformMode,
     canvasImageOffset: cloneSerializableValue(canvasImageOffset),
     maskShapes: cloneSerializableValue(maskShapes),
@@ -442,6 +468,7 @@ export function RightSidebar(): React.JSX.Element {
     previewMode,
     compositeAssetIds,
     tool,
+    canvasSelectionEnabled,
     imageTransformMode,
     canvasImageOffset,
     maskShapes,
@@ -466,6 +493,7 @@ export function RightSidebar(): React.JSX.Element {
     if (!previous) return 'Initial editor state';
     if (previous.promptText !== next.promptText) return 'Control prompt updated';
     if (previous.tool !== next.tool) return 'Drawing tool changed';
+    if (previous.canvasSelectionEnabled !== next.canvasSelectionEnabled) return 'Select tool toggled';
     if (previous.imageTransformMode !== next.imageTransformMode) return 'Image transform tool changed';
     if (
       previous.canvasImageOffset.x !== next.canvasImageOffset.x ||
@@ -529,6 +557,7 @@ export function RightSidebar(): React.JSX.Element {
     setCompositeAssetIds(cloneSerializableValue(snapshot.compositeAssetIds));
 
     setTool(snapshot.tool);
+    setCanvasSelectionEnabled(snapshot.canvasSelectionEnabled);
     setImageTransformMode(snapshot.imageTransformMode);
     setCanvasImageOffset(cloneSerializableValue(snapshot.canvasImageOffset));
     setMaskShapes(cloneSerializableValue(snapshot.maskShapes));
@@ -557,6 +586,7 @@ export function RightSidebar(): React.JSX.Element {
     setPreviewMode,
     setCompositeAssetIds,
     setTool,
+    setCanvasSelectionEnabled,
     setImageTransformMode,
     setCanvasImageOffset,
     setMaskShapes,
@@ -1487,14 +1517,37 @@ export function RightSidebar(): React.JSX.Element {
                 <div className='space-y-3 shrink-0'>
                   <div className='rounded border border-border/60 bg-card/30 p-3'>
                     <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Shape Tools</div>
+                    <div className='mb-2 flex items-center gap-2'>
+                      <Button
+                        size='xs'
+                        type='button'
+                        variant={isSelectToolActive ? 'default' : 'outline'}
+                        onClick={handleToggleSelectTool}
+                        aria-pressed={isSelectToolActive}
+                        title={isSelectToolActive
+                          ? 'Disable selection mode (canvas drag pans view)'
+                          : 'Enable selection mode for canvas elements'}
+                        aria-label='Toggle select tool mode'
+                        className={cn(
+                          isSelectToolActive
+                            ? 'border-cyan-400/70 bg-cyan-500/20 text-cyan-100 hover:bg-cyan-500/30'
+                            : undefined
+                        )}
+                      >
+                        <MousePointer2 className='mr-1.5 size-3.5' />
+                        Select
+                      </Button>
+                      <span className='text-[11px] text-gray-500'>When off, drag to pan.</span>
+                    </div>
                     <VectorDrawingToolbar
                       tool={tool}
-                      onSelectTool={setTool}
+                      onSelectTool={handleSelectShapeTool}
+                      showSelectTool={false}
                       onClear={handleClearAllShapes}
                       disableClear={maskShapes.length === 0}
                       className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
                     />
-                    {tool !== 'select' ? (
+                    {activeShapeDrawingTool ? (
                       <div className='mt-3 rounded border border-border/60 bg-card/30 p-3'>
                         <div className='grid grid-cols-[auto_1fr] gap-x-2 gap-y-2'>
                           <LabeledSlider
@@ -1502,7 +1555,7 @@ export function RightSidebar(): React.JSX.Element {
                             value={maskFeather}
                             onChange={setMaskFeather}
                           />
-                          {tool === 'brush' ? (
+                          {activeShapeDrawingTool === 'brush' ? (
                             <LabeledSlider
                               label='Brush Radius'
                               value={brushRadius}
@@ -1516,7 +1569,9 @@ export function RightSidebar(): React.JSX.Element {
                       </div>
                     ) : (
                       <div className='mt-2 text-[11px] text-gray-500'>
-                          Select a drawing tool to see contextual settings.
+                        {isSelectToolActive
+                          ? 'Select mode is active. Click shapes to edit points or drag empty area to pan.'
+                          : 'Select mode is off. Drag canvas to pan, or choose a drawing tool.'}
                       </div>
                     )}
                   </div>

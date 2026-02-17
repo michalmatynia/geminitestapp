@@ -334,6 +334,7 @@ export function vectorShapesToPathWithBounds(
 export interface VectorCanvasProps {
   src?: string | null;
   tool: VectorToolMode;
+  selectionEnabled?: boolean;
   shapes: VectorShape[];
   activeShapeId: string | null;
   selectedPointIndex: number | null;
@@ -364,6 +365,7 @@ export interface VectorCanvasProps {
 export function VectorCanvas({
   src,
   tool,
+  selectionEnabled = true,
   shapes,
   activeShapeId,
   selectedPointIndex,
@@ -634,6 +636,7 @@ export function VectorCanvas({
   }, [enableTwoFingerRotate, stopPan]);
 
   const canDraw = allowWithoutImage || Boolean(src);
+  const selectToolActive = tool === 'select' && selectionEnabled;
 
   const resolveVisibleViewCropRect = useCallback((): VectorCanvasViewCropRect | null => {
     if (!src) return null;
@@ -1461,7 +1464,7 @@ export function VectorCanvas({
         return;
       }
       if (!canDraw) return;
-      if (tool === 'select') {
+      if (selectToolActive) {
         if (event.shiftKey) {
           const hitSegment = hitTestSegment(event);
           if (hitSegment) {
@@ -1500,6 +1503,12 @@ export function VectorCanvas({
           return;
         }
         // Select mode acts like hand tool on empty area
+        if (event.button === 0) {
+          beginPan(event.clientX, event.clientY);
+        }
+        return;
+      }
+      if (tool === 'select') {
         if (event.button === 0) {
           beginPan(event.clientX, event.clientY);
         }
@@ -1596,6 +1605,7 @@ export function VectorCanvas({
       resolvedImageOffset.y,
       shapes,
       src,
+      selectToolActive,
       syncCanvasSize,
       toPoint,
       tool,
@@ -1676,7 +1686,7 @@ export function VectorCanvas({
         );
         return;
       }
-      if (tool === 'select') {
+      if (selectToolActive) {
         const hoveredPoint = hitTestPoint(event);
         setIsHoveringEditablePoint((prev) => (prev === Boolean(hoveredPoint) ? prev : Boolean(hoveredPoint)));
       } else {
@@ -1782,9 +1792,9 @@ export function VectorCanvas({
       hitTestPoint,
       onChange,
       onImageOffsetChange,
+      selectToolActive,
       shapes,
       toPoint,
-      tool,
       updatePanFromPointer,
     ]
   );

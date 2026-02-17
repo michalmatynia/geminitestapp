@@ -370,6 +370,7 @@ export function useCaseResolverState() {
   const persistWorkspaceTimerRef = useRef<number | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
   const handledRequestedFileIdRef = useRef<string | null>(null);
+  const requestedWorkspaceRefreshFileIdRef = useRef<string | null>(null);
 
   const flushWorkspacePersist = useCallback((): void => {
     if (persistWorkspaceInFlightRef.current) return;
@@ -405,22 +406,36 @@ export function useCaseResolverState() {
   // Sync with store
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
+    const incomingSerialized = JSON.stringify(parsedWorkspace);
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+      const currentSerialized = JSON.stringify(current);
+      if (incomingSerialized === currentSerialized) {
+        return current;
+      }
+
+      if (requestedFileId) {
+        const currentHasRequestedFile = current.files.some(
+          (file: CaseResolverFile): boolean => file.id === requestedFileId
+        );
+        const incomingHasRequestedFile = parsedWorkspace.files.some(
+          (file: CaseResolverFile): boolean => file.id === requestedFileId
+        );
+        if (!currentHasRequestedFile && incomingHasRequestedFile) {
+          lastPersistedValueRef.current = incomingSerialized;
+          queuedSerializedWorkspaceRef.current = null;
+          return parsedWorkspace;
+        }
+      }
+
       const currentLatestMs = getCaseResolverWorkspaceLatestTimestampMs(current);
       const incomingLatestMs = getCaseResolverWorkspaceLatestTimestampMs(parsedWorkspace);
-      const currentItemCount = current.files.length + current.assets.length;
-      const incomingItemCount = parsedWorkspace.files.length + parsedWorkspace.assets.length;
-      const shouldKeepCurrent =
-        incomingLatestMs < currentLatestMs ||
-        (incomingLatestMs === currentLatestMs && incomingItemCount < currentItemCount);
+      if (incomingLatestMs <= currentLatestMs) return current;
 
-      if (shouldKeepCurrent) return current;
-
-      lastPersistedValueRef.current = JSON.stringify(parsedWorkspace);
+      lastPersistedValueRef.current = incomingSerialized;
       queuedSerializedWorkspaceRef.current = null;
       return parsedWorkspace;
     });
-  }, [canHydrateWorkspaceFromStore, parsedWorkspace]);
+  }, [canHydrateWorkspaceFromStore, parsedWorkspace, requestedFileId]);
 
   // Handle auto-save
   useEffect(() => {
@@ -1194,6 +1209,58 @@ export function useCaseResolverState() {
 
   useEffect(() => {
     if (!requestedFileId) {
+      requestedWorkspaceRefreshFileIdRef.current = null;
+      return;
+    }
+    const requestedFileExists = workspace.files.some(
+      (file: CaseResolverFile): boolean => file.id === requestedFileId
+    );
+    if (requestedFileExists) {
+      requestedWorkspaceRefreshFileIdRef.current = null;
+      return;
+    }
+    if (requestedWorkspaceRefreshFileIdRef.current === requestedFileId) return;
+
+    requestedWorkspaceRefreshFileIdRef.current = requestedFileId;
+    let isCancelled = false;
+    void (async (): Promise<void> => {
+      try {
+        const response = await fetch('/api/settings?scope=light', {
+          method: 'GET',
+          cache: 'no-store',
+        });
+        if (!response.ok) return;
+        const payload = (await response.json()) as Array<{
+          key?: unknown;
+          value?: unknown;
+        }>;
+        const workspaceEntry = payload.find(
+          (entry): boolean => entry?.key === CASE_RESOLVER_WORKSPACE_KEY
+        );
+        const rawWorkspaceValue =
+          typeof workspaceEntry?.value === 'string' ? workspaceEntry.value : null;
+        const refreshedWorkspace = parseCaseResolverWorkspace(rawWorkspaceValue);
+        const refreshedHasRequestedFile = refreshedWorkspace.files.some(
+          (file: CaseResolverFile): boolean => file.id === requestedFileId
+        );
+        if (isCancelled || !refreshedHasRequestedFile) return;
+
+        lastPersistedValueRef.current = JSON.stringify(refreshedWorkspace);
+        queuedSerializedWorkspaceRef.current = null;
+        setWorkspace(refreshedWorkspace);
+        handledRequestedFileIdRef.current = null;
+      } catch {
+        // Keep current workspace if refresh fails; route/file selection effect will retry on the next change.
+      }
+    })();
+
+    return (): void => {
+      isCancelled = true;
+    };
+  }, [requestedFileId, workspace.files]);
+
+  useEffect(() => {
+    if (!requestedFileId) {
       handledRequestedFileIdRef.current = null;
       return;
     }
@@ -1201,7 +1268,12 @@ export function useCaseResolverState() {
     const requestedFileExists = workspace.files.some(
       (file: CaseResolverFile): boolean => file.id === requestedFileId
     );
-    if (!requestedFileExists) return;
+    if (!requestedFileExists) {
+      setSelectedFileId(requestedFileId);
+      setSelectedAssetId(null);
+      setSelectedFolderPath(null);
+      return;
+    }
 
     handledRequestedFileIdRef.current = requestedFileId;
     setSelectedFileId(requestedFileId);

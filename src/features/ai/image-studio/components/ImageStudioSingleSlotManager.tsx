@@ -91,7 +91,11 @@ function slotHasRenderableImage(slot: ImageStudioSlotRecord | null | undefined):
   if (!slot) return false;
   const imageFileId = slot.imageFileId?.trim() ?? '';
   const imageFilePath = slot.imageFile?.filepath?.trim() ?? '';
-  const imageUrl = slot.imageUrl?.trim() ?? '';
+  const rawImageUrl = slot.imageUrl?.trim() ?? '';
+  const imageUrl =
+    rawImageUrl && !isLikelyImageStudioErrorText(rawImageUrl)
+      ? rawImageUrl
+      : '';
   const imageBase64 = slot.imageBase64?.trim() ?? '';
   return Boolean(imageFileId || imageFilePath || imageUrl || imageBase64);
 }
@@ -438,13 +442,23 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
           }
 
           const selectedSlotId = objectSlot?.id?.trim() ?? '';
-          const selectedSlotIsEmpty = Boolean(selectedSlotId && !slotHasRenderableImage(objectSlot));
+          const selectedSlotCandidates = new Set(resolveSlotIdCandidates(selectedSlotId));
+          const cachedSlots =
+            queryClient.getQueryData<StudioSlotsResponse>(studioKeys.slots(projectId.trim()))?.slots ?? [];
+          const selectedSlotSnapshot =
+            (selectedSlotCandidates.size > 0
+              ? cachedSlots.find((slot: ImageStudioSlotRecord) => selectedSlotCandidates.has(slot.id)) ?? null
+              : null) ??
+            objectSlot;
+          const selectedSlotIsEmpty = Boolean(
+            selectedSlotId && !slotHasRenderableImage(selectedSlotSnapshot)
+          );
           if (selectedSlotIsEmpty) {
             const updatePayload = {
               imageFileId: uploaded.id,
               imageUrl: uploaded.filepath,
               imageBase64: null,
-              metadata: setImageStudioSlotImageLocked(objectSlot?.metadata ?? null, true),
+              metadata: setImageStudioSlotImageLocked(selectedSlotSnapshot?.metadata ?? null, true),
             } as const;
             const slotIdCandidates = resolveSlotIdCandidates(selectedSlotId);
             let updatedSlot: ImageStudioSlotRecord | null = null;

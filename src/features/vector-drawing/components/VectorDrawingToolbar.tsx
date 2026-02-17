@@ -29,6 +29,7 @@ export type VectorDrawingToolbarVariant = 'full' | 'min';
 export interface VectorDrawingToolbarProps {
   tool?: VectorToolMode;
   onSelectTool?: (tool: VectorToolMode) => void;
+  showSelectTool?: boolean | undefined;
   onUndo?: (() => void) | undefined;
   onRedo?: (() => void) | undefined;
   onClose?: (() => void) | undefined;
@@ -70,6 +71,7 @@ const MIN_TOOLS: ToolOption[] = [
 export function VectorDrawingToolbar({
   tool: propTool,
   onSelectTool: propOnSelectTool,
+  showSelectTool = true,
   onUndo: propOnUndo,
   onRedo: propOnRedo,
   onClose: propOnClose,
@@ -110,7 +112,10 @@ export function VectorDrawingToolbar({
     return <div />;
   }
 
-  const toolOptions = variant === 'min' ? MIN_TOOLS : FULL_TOOLS;
+  const baseToolOptions = variant === 'min' ? MIN_TOOLS : FULL_TOOLS;
+  const toolOptions = showSelectTool
+    ? baseToolOptions
+    : baseToolOptions.filter((option) => option.key !== 'select');
   const hasActions = Boolean(onUndo || onRedo || onClose || onDetach || onClear || onSmooth || onSimplify);
 
   return (

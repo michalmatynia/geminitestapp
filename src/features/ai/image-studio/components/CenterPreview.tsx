@@ -102,6 +102,7 @@ export function CenterPreview(): React.JSX.Element {
     isFocusMode,
     maskPreviewEnabled,
     centerGuidesEnabled,
+    canvasSelectionEnabled,
     imageTransformMode,
     canvasImageOffset,
   } = useUiState();
@@ -1531,6 +1532,7 @@ export function CenterPreview(): React.JSX.Element {
                   baseCanvasWidthPx={projectCanvasSize?.width ?? null}
                   baseCanvasHeightPx={projectCanvasSize?.height ?? null}
                   imageMoveEnabled={imageTransformMode === 'move'}
+                  selectionEnabled={canvasSelectionEnabled}
                   imageOffset={canvasImageOffset}
                   onImageOffsetChange={setCanvasImageOffset}
                   onViewCropRectChange={handlePreviewCanvasCropRectChange}

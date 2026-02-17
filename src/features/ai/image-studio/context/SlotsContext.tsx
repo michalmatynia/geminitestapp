@@ -224,20 +224,30 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const [workingSlotId, setWorkingSlotId] = useState<string | null>(null);
 
   const slots = useMemo(() => slotsQuery.data?.slots ?? [], [slotsQuery.data?.slots]);
+  const slotIdSet = useMemo(
+    () => new Set(slots.map((slot: ImageStudioSlotRecord) => slot.id)),
+    [slots],
+  );
   const selectedSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === selectedSlotId) ?? null, [slots, selectedSlotId]);
   const workingSlot = useMemo(() => slots.find((s: ImageStudioSlotRecord) => s.id === workingSlotId) ?? null, [slots, workingSlotId]);
 
   useEffect(() => {
-    if (selectedSlotId && !slots.some((slot: ImageStudioSlotRecord) => slot.id === selectedSlotId)) {
-      setSelectedSlotId(null);
+    if (!selectedSlotId || slotIdSet.has(selectedSlotId)) return;
+    if (workingSlotId && slotIdSet.has(workingSlotId)) {
+      setSelectedSlotId(workingSlotId);
+      return;
     }
-  }, [slots, selectedSlotId]);
+    setSelectedSlotId(slots[0]?.id ?? null);
+  }, [selectedSlotId, slotIdSet, slots, workingSlotId]);
 
   useEffect(() => {
-    if (workingSlotId && !slots.some((slot: ImageStudioSlotRecord) => slot.id === workingSlotId)) {
-      setWorkingSlotId(null);
+    if (!workingSlotId || slotIdSet.has(workingSlotId)) return;
+    if (selectedSlotId && slotIdSet.has(selectedSlotId)) {
+      setWorkingSlotId(selectedSlotId);
+      return;
     }
-  }, [slots, workingSlotId]);
+    setWorkingSlotId(slots[0]?.id ?? null);
+  }, [selectedSlotId, slotIdSet, slots, workingSlotId]);
 
   // ── Folders ──
   const [selectedFolder, setSelectedFolderRaw] = useState<string>('');

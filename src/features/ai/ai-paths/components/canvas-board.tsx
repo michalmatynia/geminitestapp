@@ -38,9 +38,6 @@ import {
   useSelectionState,
   useSelectionActions,
 } from '../context';
-import {
-  useAiPathsSettingsOrchestrator,
-} from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { NodeProcessingDots } from './NodeProcessingDots';
 import { SignalDots } from './SignalDots';
 import { formatPortLabel } from '../utils/ui-utils';
@@ -89,6 +86,7 @@ export type CanvasBoardConnectorTooltipOverride = {
 type CanvasBoardProps = {
   /** Optional class name for the viewport container */
   viewportClassName?: string | undefined;
+  confirmNodeSwitch?: ((nodeId: string) => boolean | Promise<boolean>) | undefined;
   resolveConnectorTooltip?:
     | ((
         input: CanvasBoardConnectorTooltipOverrideInput
@@ -138,6 +136,7 @@ const BLOCKER_PROCESSING_STATUSES = new Set<string>([
 
 export function CanvasBoard({
   viewportClassName,
+  confirmNodeSwitch,
   resolveConnectorTooltip,
 }: CanvasBoardProps): React.JSX.Element {
   // --- Context Hooks ---
@@ -154,7 +153,6 @@ export function CanvasBoard({
   const { fireTrigger } = useRuntimeActions();
   const { selectedNodeId, selectedEdgeId } = useSelectionState();
   const { selectEdge, setConfigOpen } = useSelectionActions();
-  const { confirmNodeSwitch } = useAiPathsSettingsOrchestrator();
   const {
     edgePaths,
     handlePointerDownNode,
@@ -1085,10 +1083,18 @@ export function CanvasBoard({
                 width: NODE_WIDTH,
                 transform: `translate(${node.position.x}px, ${node.position.y}px)`,
               }}
-              onPointerDown={(event) => { void handlePointerDownNode(event, node.id); }}
-              onPointerMove={(event) => { void handlePointerMoveNode(event, node.id); }}
-              onPointerUp={(event) => { void handlePointerUpNode(event, node.id); }}
-              onClick={() => { void handleSelectNode(node.id); }}
+              onPointerDown={(event) => {
+                void handlePointerDownNode(event, node.id);
+              }}
+              onPointerMove={(event) => {
+                void handlePointerMoveNode(event, node.id);
+              }}
+              onPointerUp={(event) => {
+                void handlePointerUpNode(event, node.id);
+              }}
+              onClick={() => {
+                void handleSelectNode(node.id);
+              }}
               onDoubleClick={(event) => {
                 event.stopPropagation();
                 void handleSelectNode(node.id);

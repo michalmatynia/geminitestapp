@@ -1,6 +1,6 @@
-"use client";
-import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
-import React, { useCallback, useMemo, useState } from "react";
+'use client';
+import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import type {
   AiNode,
@@ -25,8 +25,8 @@ import type {
   ClusterPreset,
   DbQueryPreset,
   DbNodePreset,
-} from "@/features/ai/ai-paths/lib";
-import { dbApi, entityApi } from "@/features/ai/ai-paths/lib";
+} from '@/features/ai/ai-paths/lib';
+import { dbApi, entityApi } from '@/features/ai/ai-paths/lib';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_KEY,
@@ -53,45 +53,45 @@ import {
   TRIGGER_OUTPUT_PORTS,
   triggers,
   triggerButtonsApi,
-} from "@/features/ai/ai-paths/lib";
+} from '@/features/ai/ai-paths/lib';
 import {
   deleteAiPathsSettings,
   updateAiPathsSetting,
-} from "@/features/ai/ai-paths/lib/settings-store-client";
-import { logClientError } from "@/features/observability";
-import { getProductDetailQueryKey } from "@/features/products/hooks/productCache";
-import { useConfirm } from "@/shared/hooks/ui/useConfirm";
-import { api } from "@/shared/lib/api-client";
+} from '@/features/ai/ai-paths/lib/settings-store-client';
+import { logClientError } from '@/features/observability';
+import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
   createMutationV2,
-} from "@/shared/lib/query-factories-v2";
-import { QUERY_KEYS } from "@/shared/lib/query-keys";
-import type { AiTriggerButtonRecord } from "@/shared/types/domain/ai-trigger-buttons";
-import { useToast } from "@/shared/ui";
+} from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import type { AiTriggerButtonRecord } from '@/shared/types/domain/ai-trigger-buttons';
+import { useToast } from '@/shared/ui';
 
 import {
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
   DOCS_OVERVIEW_SNIPPET,
   DOCS_WIRING_SNIPPET,
-} from "./docs-snippets";
-import { useAiPathsCanvasInteractions } from "./useAiPathsCanvasInteractions";
-import { useAiPathsPersistence } from "./useAiPathsPersistence";
-import { useAiPathsPresets } from "./useAiPathsPresets";
-import { useAiPathsRunHistory } from "./useAiPathsRunHistory";
-import { useAiPathsRuntime } from "./useAiPathsRuntime";
+} from './docs-snippets';
+import { useAiPathsCanvasInteractions } from './useAiPathsCanvasInteractions';
+import { useAiPathsPersistence } from './useAiPathsPersistence';
+import { useAiPathsPresets } from './useAiPathsPresets';
+import { useAiPathsRunHistory } from './useAiPathsRunHistory';
+import { useAiPathsRuntime } from './useAiPathsRuntime';
 import {
   buildPersistedRuntimeState,
   parseRuntimeState,
-} from "../AiPathsSettingsUtils";
+} from '../AiPathsSettingsUtils';
 
-import type { ClusterPresetDraft } from "../cluster-presets-panel";
-import type { RunHistoryFilter } from "../run-history-panel";
-import type { HistoryNodeOption } from "../run-history-utils";
+import type { ClusterPresetDraft } from '../cluster-presets-panel';
+import type { RunHistoryFilter } from '../run-history-panel';
+import type { HistoryNodeOption } from '../run-history-utils';
 
 type AiPathsSettingsStateOptions = {
-  activeTab: "canvas" | "paths" | "docs";
+  activeTab: 'canvas' | 'paths' | 'docs';
 };
 
 export interface UseAiPathsSettingsStateReturn {
@@ -105,7 +105,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleCopyDocsJobs: () => void;
   autoSaveLabel: string;
   autoSaveClasses: string;
-  autoSaveStatus: "idle" | "saving" | "saved" | "error";
+  autoSaveStatus: 'idle' | 'saving' | 'saved' | 'error';
   autoSaveAt: string | null;
   saving: boolean;
   handleCreatePath: () => void;
@@ -224,7 +224,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleClearHistory: () => Promise<void>;
   handleClearNodeHistory: (nodeId: string) => Promise<void>;
   handleDisconnectPort: (
-    direction: "input" | "output",
+    direction: 'input' | 'output',
     nodeId: string,
     port: string,
   ) => void;
@@ -289,7 +289,7 @@ export interface UseAiPathsSettingsStateReturn {
     React.SetStateAction<Record<string, string>>
   >;
   handleOpenRunDetail: (runId: string) => Promise<void>;
-  handleResumeRun: (runId: string, mode: "resume" | "replay") => Promise<void>;
+  handleResumeRun: (runId: string, mode: 'resume' | 'replay') => Promise<void>;
   handleCancelRun: (runId: string) => Promise<void>;
   handleRequeueDeadLetter: (runId: string) => Promise<void>;
   viewportRef: React.RefObject<HTMLDivElement | null>;
@@ -326,7 +326,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleResumeActiveRun: () => void;
   handleStepActiveRun: (triggerNode?: AiNode) => void;
   handleCancelActiveRun: () => void;
-  runtimeRunStatus: "idle" | "running" | "paused" | "stepping";
+  runtimeRunStatus: 'idle' | 'running' | 'paused' | 'stepping';
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeEvents: AiPathRuntimeEvent[];
   nodeDurations: Record<string, number>;
@@ -355,7 +355,7 @@ export interface UseAiPathsSettingsStateReturn {
       events: AiPathRunEventRecord[];
     } | null>
   >;
-  runStreamStatus: "connecting" | "live" | "stopped" | "paused";
+  runStreamStatus: 'connecting' | 'live' | 'stopped' | 'paused';
   runStreamPaused: boolean;
   setRunStreamPaused: React.Dispatch<React.SetStateAction<boolean>>;
   runNodeSummary: {
@@ -374,7 +374,7 @@ export interface UseAiPathsSettingsStateReturn {
   setPresetsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   presetsJson: string;
   setPresetsJson: React.Dispatch<React.SetStateAction<string>>;
-  handleImportPresets: (mode: "merge" | "replace") => Promise<void>;
+  handleImportPresets: (mode: 'merge' | 'replace') => Promise<void>;
   simulationOpenNodeId: string | null;
   ConfirmationModal: React.ComponentType;
   confirmNodeSwitch: (nodeId: string) => boolean | Promise<boolean>;
@@ -386,7 +386,7 @@ export interface UseAiPathsSettingsStateReturn {
   toast: (
     message: string,
     options?: {
-      variant?: "info" | "success" | "warning" | "error";
+      variant?: 'info' | 'success' | 'warning' | 'error';
     },
   ) => void;
 }
@@ -399,9 +399,9 @@ export function useAiPathsSettingsState({
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const normalizeTriggerLabel = (value?: string | null): string =>
-    value === "Product Modal - Context Grabber"
-      ? "Product Modal - Context Filter"
-      : (value ?? triggers[0] ?? "Product Modal - Context Filter");
+    value === 'Product Modal - Context Grabber'
+      ? 'Product Modal - Context Filter'
+      : (value ?? triggers[0] ?? 'Product Modal - Context Filter');
   const [nodes, setNodes] = useState<AiNode[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [paths, setPaths] = useState<PathMeta[]>([]);
@@ -420,16 +420,16 @@ export function useAiPathsSettingsState({
   const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<
     string | null
   >(null);
-  const [pathName, setPathName] = useState("AI Description Path");
+  const [pathName, setPathName] = useState('AI Description Path');
   const [pathDescription, setPathDescription] = useState(
-    "Visual analysis + description generation with structured updates.",
+    'Visual analysis + description generation with structured updates.',
   );
-  const [activeTrigger, setActiveTrigger] = useState(triggers[0] ?? "");
+  const [activeTrigger, setActiveTrigger] = useState(triggers[0] ?? '');
   const [executionMode, setExecutionMode] =
-    useState<PathExecutionMode>("server");
+    useState<PathExecutionMode>('server');
   const [flowIntensity, setFlowIntensity] =
-    useState<PathFlowIntensity>("medium");
-  const [runMode, setRunMode] = useState<PathRunMode>("block");
+    useState<PathFlowIntensity>('medium');
+  const [runMode, setRunMode] = useState<PathRunMode>('block');
   const [historyRetentionPasses, setHistoryRetentionPasses] = useState<number>(
     AI_PATHS_HISTORY_RETENTION_DEFAULT,
   );
@@ -454,12 +454,12 @@ export function useAiPathsSettingsState({
     time: string;
     pathId?: string | null;
   } | null>(null);
-  const runtimePersistenceKeyRef = React.useRef<string>("");
+  const runtimePersistenceKeyRef = React.useRef<string>('');
 
   const lastGraphModelPayload = useMemo(() => {
     for (let index = nodes.length - 1; index >= 0; index -= 1) {
       const node = nodes[index];
-      if (!node || node.type !== "model") continue;
+      if (!node || node.type !== 'model') continue;
       const output = runtimeState.outputs[node.id] as
         | { debugPayload?: unknown }
         | undefined;
@@ -477,18 +477,18 @@ export function useAiPathsSettingsState({
 
       return new Promise((resolve) => {
         confirm({
-          title: "Unsaved Changes",
+          title: 'Unsaved Changes',
           message:
-            "You have unsaved changes for this node. Discard them and switch?",
-          confirmText: "Discard & Switch",
-          cancelText: "Keep Editing",
+            'You have unsaved changes for this node. Discard them and switch?',
+          confirmText: 'Discard & Switch',
+          cancelText: 'Keep Editing',
           isDangerous: true,
           onConfirm: () => {
             setNodeConfigDirty(false);
             resolve(true);
           },
           onCancel: () => {
-            toast("Kept current node.", { variant: "info" });
+            toast('Kept current node.', { variant: 'info' });
             resolve(false);
           },
         });
@@ -514,11 +514,11 @@ export function useAiPathsSettingsState({
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     meta: {
-      source: "ai.ai-paths.settings.trigger-buttons",
-      operation: "list",
-      resource: "ai-paths.trigger-buttons",
-      domain: "global",
-      tags: ["ai-paths", "settings", "trigger-buttons"],
+      source: 'ai.ai-paths.settings.trigger-buttons',
+      operation: 'list',
+      resource: 'ai-paths.trigger-buttons',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'trigger-buttons'],
     },
   });
 
@@ -537,7 +537,7 @@ export function useAiPathsSettingsState({
         : baseTitle;
       usedTitles.add(title);
       derived.push({
-        type: "trigger",
+        type: 'trigger',
         title,
         description: `User trigger button (${button.id}).`,
         inputs: TRIGGER_INPUT_PORTS,
@@ -551,7 +551,7 @@ export function useAiPathsSettingsState({
 
   // Parser sample fetching mutation
   const fetchParserSampleMutation = createMutationV2({
-    mutationKey: QUERY_KEYS.ai.aiPaths.mutation("settings.fetch-parser-sample"),
+    mutationKey: QUERY_KEYS.ai.aiPaths.mutation('settings.fetch-parser-sample'),
     mutationFn: async ({
       nodeId,
       entityType,
@@ -567,20 +567,20 @@ export function useAiPathsSettingsState({
       sample: Record<string, unknown>;
     }> => {
       if (!entityId.trim()) {
-        throw new Error("Enter an entity ID to load a sample.");
+        throw new Error('Enter an entity ID to load a sample.');
       }
-      if (entityType === "custom") {
-        throw new Error("Use pasted JSON for custom samples.");
+      if (entityType === 'custom') {
+        throw new Error('Use pasted JSON for custom samples.');
       }
       const normalized = entityType.trim().toLowerCase();
       const resolvedType =
-        normalized === "products"
-          ? "product"
-          : normalized === "notes"
-            ? "note"
+        normalized === 'products'
+          ? 'product'
+          : normalized === 'notes'
+            ? 'note'
             : normalized;
       let sample: Record<string, unknown> | null = null;
-      if (resolvedType === "product") {
+      if (resolvedType === 'product') {
         sample = await queryClient.fetchQuery({
           queryKey: getProductDetailQueryKey(entityId),
           queryFn: async () => {
@@ -589,7 +589,7 @@ export function useAiPathsSettingsState({
           },
           staleTime: AI_PATHS_SAMPLE_STALE_MS,
         });
-      } else if (resolvedType === "note") {
+      } else if (resolvedType === 'note') {
         sample = await queryClient.fetchQuery({
           queryKey: QUERY_KEYS.notes.detail(entityId),
           queryFn: async () => {
@@ -600,16 +600,16 @@ export function useAiPathsSettingsState({
         });
       }
       if (!sample) {
-        throw new Error("No sample found for that ID.");
+        throw new Error('No sample found for that ID.');
       }
       return { nodeId, entityType, entityId, sample };
     },
     meta: {
-      source: "ai.ai-paths.settings.fetch-parser-sample",
-      operation: "action",
-      resource: "ai-paths.samples.parser",
-      domain: "global",
-      tags: ["ai-paths", "settings", "samples"],
+      source: 'ai.ai-paths.settings.fetch-parser-sample',
+      operation: 'action',
+      resource: 'ai-paths.samples.parser',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'samples'],
     },
     onSuccess: ({
       nodeId,
@@ -628,17 +628,17 @@ export function useAiPathsSettingsState({
           entityType,
           entityId,
           json: JSON.stringify(sample, null, 2),
-          mappingMode: prev[nodeId]?.mappingMode ?? "top",
+          mappingMode: prev[nodeId]?.mappingMode ?? 'top',
           depth: prev[nodeId]?.depth ?? 2,
-          keyStyle: prev[nodeId]?.keyStyle ?? "path",
+          keyStyle: prev[nodeId]?.keyStyle ?? 'path',
           includeContainers: prev[nodeId]?.includeContainers ?? false,
         },
       }));
     },
     onError: (error: Error): void => {
       toast(
-        error instanceof Error ? error.message : "Failed to fetch sample.",
-        { variant: "error" },
+        error instanceof Error ? error.message : 'Failed to fetch sample.',
+        { variant: 'error' },
       );
     },
   });
@@ -665,7 +665,7 @@ export function useAiPathsSettingsState({
     FetchUpdaterSampleVariables
   >({
     mutationKey: QUERY_KEYS.ai.aiPaths.mutation(
-      "settings.fetch-updater-sample",
+      'settings.fetch-updater-sample',
     ),
     mutationFn: async ({
       nodeId,
@@ -673,13 +673,13 @@ export function useAiPathsSettingsState({
       entityId,
       notify = true,
     }: FetchUpdaterSampleVariables): Promise<FetchUpdaterSampleResult> => {
-      if (entityType === "custom") {
+      if (entityType === 'custom') {
         return {
           nodeId,
           entityType,
           entityId,
           sample: null,
-          error: "Use pasted JSON for custom samples.",
+          error: 'Use pasted JSON for custom samples.',
           notify,
         };
       }
@@ -693,24 +693,24 @@ export function useAiPathsSettingsState({
       ): Promise<{ sample: unknown | null; fetchedId: string }> => {
         const queries: Array<{
           query: Record<string, unknown>;
-          idType?: "string" | "objectId";
+          idType?: 'string' | 'objectId';
         }> = [];
         if (id?.trim()) {
-          queries.push({ query: { id }, idType: "string" });
+          queries.push({ query: { id }, idType: 'string' });
           if (isObjectId(id)) {
-            queries.push({ query: { _id: id }, idType: "objectId" });
+            queries.push({ query: { _id: id }, idType: 'objectId' });
           } else {
-            queries.push({ query: { _id: id }, idType: "string" });
+            queries.push({ query: { _id: id }, idType: 'string' });
           }
         } else {
-          queries.push({ query: {}, idType: "string" });
+          queries.push({ query: {}, idType: 'string' });
         }
         for (const candidate of queries) {
           const result = await dbApi.query<{
             item?: unknown;
             items?: unknown[];
           }>({
-            provider: "auto",
+            provider: 'auto',
             collection,
             query: candidate.query,
             single: true,
@@ -724,24 +724,24 @@ export function useAiPathsSettingsState({
           const resolvedSample = payload?.item ?? payload?.items?.[0] ?? null;
           if (resolvedSample) {
             const rawId =
-              (resolvedSample as Record<string, unknown>)?.["_id"] ??
-              (resolvedSample as Record<string, unknown>)?.["id"];
+              (resolvedSample as Record<string, unknown>)?.['_id'] ??
+              (resolvedSample as Record<string, unknown>)?.['id'];
             const nextId =
-              (rawId as { toString?: () => string })?.toString?.() ?? id ?? "";
+              (rawId as { toString?: () => string })?.toString?.() ?? id ?? '';
             return { sample: resolvedSample, fetchedId: nextId };
           }
         }
-        return { sample: null, fetchedId: id ?? "" };
+        return { sample: null, fetchedId: id ?? '' };
       };
 
       // If no entityId provided, fetch first document from collection
       if (!entityId.trim()) {
-        const fetched = await fetchViaDbQuery(entityType, "");
+        const fetched = await fetchViaDbQuery(entityType, '');
         sample = fetched.sample;
         fetchedId = fetched.fetchedId;
       } else {
         const normalized = entityType.toLowerCase();
-        if (normalized === "product") {
+        if (normalized === 'product') {
           sample = await queryClient.fetchQuery({
             queryKey: getProductDetailQueryKey(entityId),
             queryFn: async () => {
@@ -750,7 +750,7 @@ export function useAiPathsSettingsState({
             },
             staleTime: AI_PATHS_SAMPLE_STALE_MS,
           });
-        } else if (normalized === "note") {
+        } else if (normalized === 'note') {
           sample = await queryClient.fetchQuery({
             queryKey: QUERY_KEYS.notes.detail(entityId),
             queryFn: async () => {
@@ -772,18 +772,18 @@ export function useAiPathsSettingsState({
           entityType,
           entityId: fetchedId,
           sample: null,
-          error: "No sample found.",
+          error: 'No sample found.',
           notify,
         };
       }
       return { nodeId, entityType, entityId: fetchedId, sample, notify };
     },
     meta: {
-      source: "ai.ai-paths.settings.fetch-updater-sample",
-      operation: "action",
-      resource: "ai-paths.samples.updater",
-      domain: "global",
-      tags: ["ai-paths", "settings", "samples"],
+      source: 'ai.ai-paths.settings.fetch-updater-sample',
+      operation: 'action',
+      resource: 'ai-paths.samples.updater',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'samples'],
     },
     onSuccess: ({
       nodeId,
@@ -795,7 +795,7 @@ export function useAiPathsSettingsState({
     }: FetchUpdaterSampleResult): void => {
       if (!sample) {
         if (notify) {
-          toast(error ?? "No sample found.", { variant: "error" });
+          toast(error ?? 'No sample found.', { variant: 'error' });
         }
         return;
       }
@@ -810,7 +810,7 @@ export function useAiPathsSettingsState({
         },
       }));
       if (notify) {
-        toast("Sample fetched.", { variant: "success" });
+        toast('Sample fetched.', { variant: 'success' });
       }
     },
     onError: (error: Error, variables: FetchUpdaterSampleVariables): void => {
@@ -818,8 +818,8 @@ export function useAiPathsSettingsState({
         return;
       }
       toast(
-        error instanceof Error ? error.message : "Failed to fetch sample.",
-        { variant: "error" },
+        error instanceof Error ? error.message : 'Failed to fetch sample.',
+        { variant: 'error' },
       );
     },
   });
@@ -835,13 +835,13 @@ export function useAiPathsSettingsState({
       try {
         await updateAiPathsSetting(
           AI_PATHS_LAST_ERROR_KEY,
-          payload ? JSON.stringify(payload) : "",
+          payload ? JSON.stringify(payload) : '',
         );
       } catch (error: unknown) {
         logClientError(error, {
           context: {
-            source: "useAiPathsSettingsState",
-            action: "persistLastError",
+            source: 'useAiPathsSettingsState',
+            action: 'persistLastError',
           },
         });
       }
@@ -857,7 +857,7 @@ export function useAiPathsSettingsState({
     ): void => {
       const rawMessage =
         error instanceof Error ? error.message : safeStringify(error);
-      const summary = (fallbackMessage ?? rawMessage).replace(/:$/, "");
+      const summary = (fallbackMessage ?? rawMessage).replace(/:$/, '');
       const logMessage = `[AI Paths] ${summary}`;
       const logError = new Error(logMessage);
       if (error instanceof Error && error.stack) {
@@ -873,7 +873,7 @@ export function useAiPathsSettingsState({
       void persistLastError(payload);
       logClientError(logError, {
         context: {
-          feature: "ai-paths",
+          feature: 'ai-paths',
           pathId: activePathId,
           pathName,
           tab: activeTab,
@@ -902,14 +902,14 @@ export function useAiPathsSettingsState({
     queryKey: QUERY_KEYS.ai.chatbot.models(),
     queryFn: async (): Promise<{ models?: string[] }> => {
       try {
-        return await api.get<{ models?: string[] }>("/api/chatbot", {
+        return await api.get<{ models?: string[] }>('/api/chatbot', {
           logError: false,
         });
       } catch (error) {
         logClientError(error, {
           context: {
-            source: "useAiPathsSettingsState",
-            action: "modelsQueryFn",
+            source: 'useAiPathsSettingsState',
+            action: 'modelsQueryFn',
           },
         });
         return { models: [] };
@@ -920,18 +920,18 @@ export function useAiPathsSettingsState({
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     meta: {
-      source: "ai.ai-paths.settings.models",
-      operation: "list",
-      resource: "ai.chatbot.models",
-      domain: "global",
-      tags: ["ai-paths", "settings", "models"],
+      source: 'ai.ai-paths.settings.models',
+      operation: 'list',
+      resource: 'ai.chatbot.models',
+      domain: 'global',
+      tags: ['ai-paths', 'settings', 'models'],
     },
   });
 
   const modelOptions = useMemo((): string[] => {
     const apiModels = modelsQuery.data?.models;
     const savedModels = nodes
-      .filter((node: AiNode): boolean => node.type === "model")
+      .filter((node: AiNode): boolean => node.type === 'model')
       .map((node: AiNode): string | undefined => node.config?.model?.modelId)
       .filter((modelId: string | undefined): modelId is string =>
         Boolean(modelId?.trim()),
@@ -1272,17 +1272,17 @@ export function useAiPathsSettingsState({
   const handleClearWires = async (): Promise<void> => {
     if (!activePathId) return;
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to edit nodes or connections.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to edit nodes or connections.', {
+        variant: 'info',
       });
       return;
     }
 
     confirm({
-      title: "Clear All Wires?",
+      title: 'Clear All Wires?',
       message:
-        "Are you sure you want to remove all connections in this path? This action cannot be undone.",
-      confirmText: "Clear Wires",
+        'Are you sure you want to remove all connections in this path? This action cannot be undone.',
+      confirmText: 'Clear Wires',
       isDangerous: true,
       onConfirm: async () => {
         const updatedAt = new Date().toISOString();
@@ -1318,14 +1318,14 @@ export function useAiPathsSettingsState({
         setPathConfigs(nextConfigs);
         try {
           await persistPathSettings(paths, activePathId, config);
-          toast("Wires cleared.", { variant: "success" });
+          toast('Wires cleared.', { variant: 'success' });
         } catch (error) {
           reportAiPathsError(
             error,
-            { action: "clearWires" },
-            "Failed to clear wires:",
+            { action: 'clearWires' },
+            'Failed to clear wires:',
           );
-          toast("Failed to clear wires.", { variant: "error" });
+          toast('Failed to clear wires.', { variant: 'error' });
         }
       },
     });
@@ -1334,17 +1334,17 @@ export function useAiPathsSettingsState({
   const handleClearConnectorData = async (): Promise<void> => {
     if (!activePathId) return;
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to edit nodes or connections.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to edit nodes or connections.', {
+        variant: 'info',
       });
       return;
     }
 
     confirm({
-      title: "Clear Connector Data?",
+      title: 'Clear Connector Data?',
       message:
-        "Remove all inputs and outputs for all nodes in this path? This will reset the runtime state.",
-      confirmText: "Clear Data",
+        'Remove all inputs and outputs for all nodes in this path? This will reset the runtime state.',
+      confirmText: 'Clear Data',
       isDangerous: true,
       onConfirm: async () => {
         const nextRuntimeState: RuntimeState = { inputs: {}, outputs: {} };
@@ -1377,16 +1377,16 @@ export function useAiPathsSettingsState({
         setPathConfigs(nextConfigs);
         try {
           await persistPathSettings(paths, activePathId, config);
-          toast("Connector data cleared for current path.", {
-            variant: "success",
+          toast('Connector data cleared for current path.', {
+            variant: 'success',
           });
         } catch (error) {
           reportAiPathsError(
             error,
-            { action: "clearConnectorData", pathId: activePathId },
-            "Failed to clear connector data:",
+            { action: 'clearConnectorData', pathId: activePathId },
+            'Failed to clear connector data:',
           );
-          toast("Failed to clear connector data.", { variant: "error" });
+          toast('Failed to clear connector data.', { variant: 'error' });
         }
       },
     });
@@ -1395,21 +1395,21 @@ export function useAiPathsSettingsState({
   const handleClearHistory = async (): Promise<void> => {
     if (!activePathId) return;
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to clear history.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to clear history.', {
+        variant: 'info',
       });
       return;
     }
     const currentHistory = runtimeState.history ?? {};
     if (Object.keys(currentHistory).length === 0) {
-      toast("No history recorded for this path yet.", { variant: "info" });
+      toast('No history recorded for this path yet.', { variant: 'info' });
       return;
     }
 
     confirm({
-      title: "Clear Execution History?",
-      message: "Remove all historical logs and execution data for this path?",
-      confirmText: "Clear History",
+      title: 'Clear Execution History?',
+      message: 'Remove all historical logs and execution data for this path?',
+      confirmText: 'Clear History',
       isDangerous: true,
       onConfirm: async () => {
         const nextRuntimeState: RuntimeState = { ...runtimeState };
@@ -1443,16 +1443,16 @@ export function useAiPathsSettingsState({
         setPathConfigs(nextConfigs);
         try {
           await persistPathSettings(paths, activePathId, config);
-          toast("History cleared for the current path.", {
-            variant: "success",
+          toast('History cleared for the current path.', {
+            variant: 'success',
           });
         } catch (error) {
           reportAiPathsError(
             error,
-            { action: "clearHistory", pathId: activePathId },
-            "Failed to clear history:",
+            { action: 'clearHistory', pathId: activePathId },
+            'Failed to clear history:',
           );
-          toast("Failed to clear history.", { variant: "error" });
+          toast('Failed to clear history.', { variant: 'error' });
         }
       },
     });
@@ -1461,14 +1461,14 @@ export function useAiPathsSettingsState({
   const handleClearNodeHistory = async (nodeId: string): Promise<void> => {
     if (!activePathId) return;
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to clear history.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to clear history.', {
+        variant: 'info',
       });
       return;
     }
     const currentHistory = runtimeState.history ?? {};
     if (!currentHistory[nodeId] || currentHistory[nodeId].length === 0) {
-      toast("No history recorded for this node yet.", { variant: "info" });
+      toast('No history recorded for this node yet.', { variant: 'info' });
       return;
     }
     const nextHistory = { ...currentHistory };
@@ -1508,14 +1508,14 @@ export function useAiPathsSettingsState({
     setPathConfigs(nextConfigs);
     try {
       await persistPathSettings(paths, activePathId, config);
-      toast("Node history cleared.", { variant: "success" });
+      toast('Node history cleared.', { variant: 'success' });
     } catch (error) {
       reportAiPathsError(
         error,
-        { action: "clearNodeHistory", pathId: activePathId, nodeId },
-        "Failed to clear node history:",
+        { action: 'clearNodeHistory', pathId: activePathId, nodeId },
+        'Failed to clear node history:',
       );
-      toast("Failed to clear node history.", { variant: "error" });
+      toast('Failed to clear node history.', { variant: 'error' });
     }
   };
 
@@ -1526,8 +1526,8 @@ export function useAiPathsSettingsState({
     const targetNodeId = options?.nodeId ?? selectedNodeId;
     if (!targetNodeId) return;
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to edit nodes or connections.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to edit nodes or connections.', {
+        variant: 'info',
       });
       return;
     }
@@ -1548,10 +1548,10 @@ export function useAiPathsSettingsState({
             const currentValue = currentConfig[key];
             if (
               patchValue &&
-              typeof patchValue === "object" &&
+              typeof patchValue === 'object' &&
               !Array.isArray(patchValue) &&
               currentValue &&
-              typeof currentValue === "object" &&
+              typeof currentValue === 'object' &&
               !Array.isArray(currentValue)
             ) {
               (mergedConfig as Record<string, unknown>)[key] = {
@@ -1570,13 +1570,13 @@ export function useAiPathsSettingsState({
       if (!foundTarget) {
         const isFullNodePatch =
           patch.id === targetNodeId &&
-          typeof patch.type === "string" &&
-          typeof patch.title === "string" &&
-          typeof patch.description === "string" &&
+          typeof patch.type === 'string' &&
+          typeof patch.title === 'string' &&
+          typeof patch.description === 'string' &&
           Array.isArray(patch.inputs) &&
           Array.isArray(patch.outputs) &&
-          typeof patch.position?.x === "number" &&
-          typeof patch.position?.y === "number";
+          typeof patch.position?.x === 'number' &&
+          typeof patch.position?.y === 'number';
         if (isFullNodePatch) {
           next.push(patch as AiNode);
         }
@@ -1591,8 +1591,8 @@ export function useAiPathsSettingsState({
   const updateSelectedNodeConfig = (patch: NodeConfig): void => {
     if (!selectedNodeId) return;
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to edit nodes or connections.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to edit nodes or connections.', {
+        variant: 'info',
       });
       return;
     }
@@ -1612,10 +1612,10 @@ export function useAiPathsSettingsState({
           // Deep merge objects (but not arrays)
           if (
             patchValue &&
-            typeof patchValue === "object" &&
+            typeof patchValue === 'object' &&
             !Array.isArray(patchValue) &&
             currentValue &&
-            typeof currentValue === "object" &&
+            typeof currentValue === 'object' &&
             !Array.isArray(currentValue)
           ) {
             (mergedConfig as Record<string, unknown>)[key] = {
@@ -1676,8 +1676,8 @@ export function useAiPathsSettingsState({
       return;
     }
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to change execution mode.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to change execution mode.', {
+        variant: 'info',
       });
       return;
     }
@@ -1697,8 +1697,8 @@ export function useAiPathsSettingsState({
       return;
     }
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to change flow intensity.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to change flow intensity.', {
+        variant: 'info',
       });
       return;
     }
@@ -1721,8 +1721,8 @@ export function useAiPathsSettingsState({
       return;
     }
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to change run mode.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to change run mode.', {
+        variant: 'info',
       });
       return;
     }
@@ -1765,10 +1765,10 @@ export function useAiPathsSettingsState({
         setHistoryRetentionPasses(previous);
         reportAiPathsError(
           error,
-          { action: "saveHistoryRetention", previous, nextValue },
-          "Failed to save AI Paths history retention:",
+          { action: 'saveHistoryRetention', previous, nextValue },
+          'Failed to save AI Paths history retention:',
         );
-        toast("Failed to save history retention.", { variant: "error" });
+        toast('Failed to save history retention.', { variant: 'error' });
       }
     },
     [
@@ -1826,14 +1826,14 @@ export function useAiPathsSettingsState({
       } catch (error) {
         reportAiPathsError(
           error,
-          { action: "togglePathLock", pathId: activePathId },
-          "Failed to save path lock:",
+          { action: 'togglePathLock', pathId: activePathId },
+          'Failed to save path lock:',
         );
-        toast("Failed to save path lock.", { variant: "error" });
+        toast('Failed to save path lock.', { variant: 'error' });
       }
     })();
-    toast(nextLocked ? "Path locked." : "Path unlocked.", {
-      variant: "success",
+    toast(nextLocked ? 'Path locked.' : 'Path unlocked.', {
+      variant: 'success',
     });
   };
 
@@ -1883,22 +1883,22 @@ export function useAiPathsSettingsState({
       } catch (error) {
         reportAiPathsError(
           error,
-          { action: "togglePathActive", pathId: activePathId },
-          "Failed to save path activation:",
+          { action: 'togglePathActive', pathId: activePathId },
+          'Failed to save path activation:',
         );
-        toast("Failed to save path activation.", { variant: "error" });
+        toast('Failed to save path activation.', { variant: 'error' });
       }
     })();
-    toast(nextActive ? "Path activated." : "Path deactivated.", {
-      variant: "success",
+    toast(nextActive ? 'Path activated.' : 'Path deactivated.', {
+      variant: 'success',
     });
   };
 
   const handleReset = (): void => {
     if (!activePathId) return;
     if (isPathLocked) {
-      toast("This path is locked. Unlock it to edit nodes or connections.", {
-        variant: "info",
+      toast('This path is locked. Unlock it to edit nodes or connections.', {
+        variant: 'info',
       });
       return;
     }
@@ -1911,9 +1911,9 @@ export function useAiPathsSettingsState({
     setPathName(resetConfig.name);
     setPathDescription(resetConfig.description);
     setActiveTrigger(normalizeTriggerLabel(resetConfig.trigger));
-    setExecutionMode(resetConfig.executionMode ?? "server");
-    setFlowIntensity(resetConfig.flowIntensity ?? "medium");
-    setRunMode(resetConfig.runMode ?? "block");
+    setExecutionMode(resetConfig.executionMode ?? 'server');
+    setFlowIntensity(resetConfig.flowIntensity ?? 'medium');
+    setRunMode(resetConfig.runMode ?? 'block');
     setParserSamples(resetConfig.parserSamples ?? {});
     setUpdaterSamples(resetConfig.updaterSamples ?? {});
     setIsPathLocked(Boolean(resetConfig.isLocked));
@@ -1935,11 +1935,11 @@ export function useAiPathsSettingsState({
       id,
       version: STORAGE_VERSION,
       name,
-      description: "",
-      trigger: triggers[0] ?? "Product Modal - Context Filter",
-      executionMode: "server",
-      flowIntensity: "medium",
-      runMode: "block",
+      description: '',
+      trigger: triggers[0] ?? 'Product Modal - Context Filter',
+      executionMode: 'server',
+      flowIntensity: 'medium',
+      runMode: 'block',
       nodes: [],
       edges: [],
       updatedAt: now,
@@ -1971,11 +1971,11 @@ export function useAiPathsSettingsState({
     setNodes([]);
     setEdges([]);
     setPathName(name);
-    setPathDescription("");
+    setPathDescription('');
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
-    setExecutionMode(config.executionMode ?? "server");
-    setFlowIntensity(config.flowIntensity ?? "medium");
-    setRunMode(config.runMode ?? "block");
+    setExecutionMode(config.executionMode ?? 'server');
+    setFlowIntensity(config.flowIntensity ?? 'medium');
+    setRunMode(config.runMode ?? 'block');
     setParserSamples({});
     setUpdaterSamples({});
     setRuntimeState({ inputs: {}, outputs: {} });
@@ -2010,9 +2010,9 @@ export function useAiPathsSettingsState({
     setPathName(config.name);
     setPathDescription(config.description);
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
-    setExecutionMode(config.executionMode ?? "server");
-    setFlowIntensity(config.flowIntensity ?? "medium");
-    setRunMode(config.runMode ?? "block");
+    setExecutionMode(config.executionMode ?? 'server');
+    setFlowIntensity(config.flowIntensity ?? 'medium');
+    setRunMode(config.runMode ?? 'block');
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -2029,7 +2029,7 @@ export function useAiPathsSettingsState({
         : (normalizedNodes[0]?.id ?? null);
     setSelectedNodeId(resolvedNodeId);
     setConfigOpen(false);
-    toast("AI Description Path created.", { variant: "success" });
+    toast('AI Description Path created.', { variant: 'success' });
   };
 
   const handleDeletePath = async (pathId?: string): Promise<void> => {
@@ -2039,16 +2039,16 @@ export function useAiPathsSettingsState({
     const label = targetPath?.name || targetId;
 
     confirm({
-      title: "Delete AI Path?",
+      title: 'Delete AI Path?',
       message: `Are you sure you want to delete "${label}"? This will permanently remove all node configurations and history for this path.`,
-      confirmText: "Delete Path",
+      confirmText: 'Delete Path',
       isDangerous: true,
       onConfirm: async () => {
         const nextPaths = paths.filter(
           (path: PathMeta): boolean => path.id !== targetId,
         );
         if (nextPaths.length === 0) {
-          const fallbackId = "default";
+          const fallbackId = 'default';
           const fallback = createDefaultPathConfig(fallbackId);
           const fallbackMeta = createPathMeta(fallback);
           setPaths([fallbackMeta]);
@@ -2060,9 +2060,9 @@ export function useAiPathsSettingsState({
           setPathName(fallback.name);
           setPathDescription(fallback.description);
           setActiveTrigger(normalizeTriggerLabel(fallback.trigger));
-          setExecutionMode(fallback.executionMode ?? "server");
-          setFlowIntensity(fallback.flowIntensity ?? "medium");
-          setRunMode(fallback.runMode ?? "block");
+          setExecutionMode(fallback.executionMode ?? 'server');
+          setFlowIntensity(fallback.flowIntensity ?? 'medium');
+          setRunMode(fallback.runMode ?? 'block');
           setParserSamples(fallback.parserSamples ?? {});
           setUpdaterSamples(fallback.updaterSamples ?? {});
           setRuntimeState(parseRuntimeState(fallback.runtimeState));
@@ -2089,13 +2089,13 @@ export function useAiPathsSettingsState({
           } catch (error) {
             reportAiPathsError(
               error,
-              { action: "deleteLastPathFallback", pathId: targetId },
-              "Failed to persist fallback path:",
+              { action: 'deleteLastPathFallback', pathId: targetId },
+              'Failed to persist fallback path:',
             );
-            toast("Failed to persist fallback path.", { variant: "error" });
+            toast('Failed to persist fallback path.', { variant: 'error' });
           }
-          toast("Cannot delete the last path. Reset to default instead.", {
-            variant: "info",
+          toast('Cannot delete the last path. Reset to default instead.', {
+            variant: 'info',
           });
           return;
         }
@@ -2114,9 +2114,9 @@ export function useAiPathsSettingsState({
           setPathName(nextConfig.name);
           setPathDescription(nextConfig.description);
           setActiveTrigger(normalizeTriggerLabel(nextConfig.trigger));
-          setExecutionMode(nextConfig.executionMode ?? "server");
-          setFlowIntensity(nextConfig.flowIntensity ?? "medium");
-          setRunMode(nextConfig.runMode ?? "block");
+          setExecutionMode(nextConfig.executionMode ?? 'server');
+          setFlowIntensity(nextConfig.flowIntensity ?? 'medium');
+          setRunMode(nextConfig.runMode ?? 'block');
           setParserSamples(nextConfig.parserSamples ?? {});
           setUpdaterSamples(nextConfig.updaterSamples ?? {});
           setRuntimeState(parseRuntimeState(nextConfig.runtimeState));
@@ -2150,14 +2150,14 @@ export function useAiPathsSettingsState({
             `${PATH_CONFIG_PREFIX}${targetId}`,
             `${PATH_DEBUG_PREFIX}${targetId}`,
           ]);
-          toast("Path removed from the index.", { variant: "success" });
+          toast('Path removed from the index.', { variant: 'success' });
         } catch (error) {
           reportAiPathsError(
             error,
-            { action: "deletePath", pathId: targetId },
-            "Failed to update path index:",
+            { action: 'deletePath', pathId: targetId },
+            'Failed to update path index:',
           );
-          toast("Failed to update path index.", { variant: "error" });
+          toast('Failed to update path index.', { variant: 'error' });
         }
       },
     });
@@ -2174,9 +2174,9 @@ export function useAiPathsSettingsState({
     setPathName(config.name);
     setPathDescription(config.description);
     setActiveTrigger(normalizeTriggerLabel(config.trigger));
-    setExecutionMode(config.executionMode ?? "server");
-    setFlowIntensity(config.flowIntensity ?? "medium");
-    setRunMode(config.runMode ?? "block");
+    setExecutionMode(config.executionMode ?? 'server');
+    setFlowIntensity(config.flowIntensity ?? 'medium');
+    setRunMode(config.runMode ?? 'block');
     setParserSamples(config.parserSamples ?? {});
     setUpdaterSamples(config.updaterSamples ?? {});
     setRuntimeState(parseRuntimeState(config.runtimeState));
@@ -2198,42 +2198,42 @@ export function useAiPathsSettingsState({
   const handleCopyDocsWiring = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(DOCS_WIRING_SNIPPET);
-      toast("Wiring copied to clipboard.", { variant: "success" });
+      toast('Wiring copied to clipboard.', { variant: 'success' });
     } catch (error) {
       reportAiPathsError(
         error,
-        { action: "copyDocsWiring" },
-        "Failed to copy wiring:",
+        { action: 'copyDocsWiring' },
+        'Failed to copy wiring:',
       );
-      toast("Failed to copy wiring.", { variant: "error" });
+      toast('Failed to copy wiring.', { variant: 'error' });
     }
   };
 
   const handleCopyDocsDescription = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(DOCS_DESCRIPTION_SNIPPET);
-      toast("AI Description wiring copied.", { variant: "success" });
+      toast('AI Description wiring copied.', { variant: 'success' });
     } catch (error) {
       reportAiPathsError(
         error,
-        { action: "copyDocsDescription" },
-        "Failed to copy wiring:",
+        { action: 'copyDocsDescription' },
+        'Failed to copy wiring:',
       );
-      toast("Failed to copy wiring.", { variant: "error" });
+      toast('Failed to copy wiring.', { variant: 'error' });
     }
   };
 
   const handleCopyDocsJobs = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(DOCS_JOBS_SNIPPET);
-      toast("AI job wiring copied.", { variant: "success" });
+      toast('AI job wiring copied.', { variant: 'success' });
     } catch (error) {
       reportAiPathsError(
         error,
-        { action: "copyDocsJobs" },
-        "Failed to copy wiring:",
+        { action: 'copyDocsJobs' },
+        'Failed to copy wiring:',
       );
-      toast("Failed to copy wiring.", { variant: "error" });
+      toast('Failed to copy wiring.', { variant: 'error' });
     }
   };
 
@@ -2245,7 +2245,7 @@ export function useAiPathsSettingsState({
       runtimeState,
       persistedNodes,
     );
-    const snapshotKey = `${activePathId}:${lastRunAt ?? ""}:${runtimeSnapshot}`;
+    const snapshotKey = `${activePathId}:${lastRunAt ?? ''}:${runtimeSnapshot}`;
     if (snapshotKey === runtimePersistenceKeyRef.current) return;
 
     const timeout = setTimeout((): void => {
@@ -2272,8 +2272,8 @@ export function useAiPathsSettingsState({
         (error: unknown): void => {
           logClientError(error, {
             context: {
-              source: "useAiPathsSettingsState",
-              action: "autoPersistRuntimeState",
+              source: 'useAiPathsSettingsState',
+              action: 'autoPersistRuntimeState',
               pathId: activePathId,
             },
           });
@@ -2293,22 +2293,22 @@ export function useAiPathsSettingsState({
   ]);
 
   const autoSaveLabel = loading
-    ? "Loading AI Paths..."
+    ? 'Loading AI Paths...'
     : saving
-      ? "Saving..."
-      : autoSaveStatus === "saved"
-        ? `Saved${autoSaveAt ? ` at ${new Date(autoSaveAt).toLocaleTimeString()}` : ""}`
-        : autoSaveStatus === "error"
-          ? "Save failed"
-          : "Manual save only";
+      ? 'Saving...'
+      : autoSaveStatus === 'saved'
+        ? `Saved${autoSaveAt ? ` at ${new Date(autoSaveAt).toLocaleTimeString()}` : ''}`
+        : autoSaveStatus === 'error'
+          ? 'Save failed'
+          : 'Manual save only';
   const autoSaveClasses =
-    autoSaveStatus === "saved"
-      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-      : autoSaveStatus === "error"
-        ? "border-rose-500/40 bg-rose-500/10 text-rose-200"
-        : autoSaveStatus === "saving"
-          ? "border-sky-500/40 bg-sky-500/10 text-sky-200"
-          : "border bg-card/60 text-gray-300";
+    autoSaveStatus === 'saved'
+      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+      : autoSaveStatus === 'error'
+        ? 'border-rose-500/40 bg-rose-500/10 text-rose-200'
+        : autoSaveStatus === 'saving'
+          ? 'border-sky-500/40 bg-sky-500/10 text-sky-200'
+          : 'border bg-card/60 text-gray-300';
 
   const pathFlagsById = useMemo((): Record<
     string,

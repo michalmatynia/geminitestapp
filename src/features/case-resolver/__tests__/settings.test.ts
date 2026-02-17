@@ -535,14 +535,22 @@ describe('case-resolver settings', () => {
   });
 
   it('parses OCR settings safely', () => {
-    expect(
-      parseCaseResolverSettings(
-        JSON.stringify({ ocrModel: '  llama3.2-vision  ' })
-      ).ocrModel
-    ).toBe('llama3.2-vision');
+    const parsedWithValues = parseCaseResolverSettings(
+      JSON.stringify({
+        ocrModel: '  llama3.2-vision  ',
+        defaultDocumentFormat: 'wysiwyg',
+      })
+    );
+    expect(parsedWithValues.ocrModel).toBe('llama3.2-vision');
+    expect(parsedWithValues.defaultDocumentFormat).toBe('wysiwyg');
 
-    expect(parseCaseResolverSettings(JSON.stringify({})).ocrModel).toBe('');
-    expect(parseCaseResolverSettings(null).ocrModel).toBe('');
+    const parsedDefaults = parseCaseResolverSettings(JSON.stringify({}));
+    expect(parsedDefaults.ocrModel).toBe('');
+    expect(parsedDefaults.defaultDocumentFormat).toBe('markdown');
+
+    const parsedNull = parseCaseResolverSettings(null);
+    expect(parsedNull.ocrModel).toBe('');
+    expect(parsedNull.defaultDocumentFormat).toBe('markdown');
   });
 
   it('extracts document date from exploded text formats', () => {

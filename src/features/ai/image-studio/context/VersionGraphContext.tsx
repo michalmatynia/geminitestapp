@@ -316,6 +316,13 @@ const remapMetadataForDetachedCopy = (
   }
 
   if (isRoot) {
+    delete next['relationType'];
+    delete next['generationRunId'];
+    delete next['generationOutputIndex'];
+    delete next['generationOutputCount'];
+    delete next['sourceSlotId'];
+    delete next['sourceSlotIds'];
+    delete next['sourceReferenceIds'];
     next['role'] = 'base';
   }
 

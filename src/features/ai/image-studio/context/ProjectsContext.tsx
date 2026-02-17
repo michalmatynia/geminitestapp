@@ -46,11 +46,13 @@ import {
   serializeImageStudioActiveProject,
 } from '../utils/project-session';
 
+import type { ImageStudioProjectRecord } from '../types';
+
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export interface ProjectsState {
   projectId: string;
-  projectsQuery: UseQueryResult<string[]>;
+  projectsQuery: UseQueryResult<ImageStudioProjectRecord[]>;
   projectSearch: string;
 }
 
@@ -107,26 +109,29 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
   );
   const activeProjectId =
     activeProjectIdFromPreferences || localActiveProjectId || legacyActiveProjectId;
+  const availableProjectIds: string[] = useMemo(
+    () => (projectsQuery.data ?? []).map((project: ImageStudioProjectRecord) => project.id),
+    [projectsQuery.data]
+  );
 
   // Auto-select active project when available, otherwise fall back to first project.
   useEffect(() => {
-    const availableProjects = projectsQuery.data ?? [];
-    if (availableProjects.length === 0) {
+    if (availableProjectIds.length === 0) {
       if (projectId) setProjectId('');
       return;
     }
-    if (projectId && availableProjects.includes(projectId)) return;
+    if (projectId && availableProjectIds.includes(projectId)) return;
     if (heavySettings.isLoading || userPreferencesQuery.isLoading) return;
 
-    const preferred = activeProjectId && availableProjects.includes(activeProjectId)
+    const preferred = activeProjectId && availableProjectIds.includes(activeProjectId)
       ? activeProjectId
-      : availableProjects[0] ?? '';
+      : availableProjectIds[0] ?? '';
     if (preferred && preferred !== projectId) {
       setProjectId(preferred);
     }
   }, [
     projectId,
-    projectsQuery.data,
+    availableProjectIds,
     activeProjectId,
     heavySettings.isLoading,
     userPreferencesQuery.isLoading,
@@ -143,8 +148,7 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
       return;
     }
     const normalizedProjectId = projectId.trim();
-    const availableProjects = projectsQuery.data ?? [];
-    if (!normalizedProjectId && availableProjects.length > 0) return;
+    if (!normalizedProjectId && availableProjectIds.length > 0) return;
 
     if (localActiveProjectId !== normalizedProjectId) {
       saveImageStudioActiveProjectLocal(normalizedProjectId);
@@ -194,10 +198,10 @@ export function ProjectsProvider({ children }: { children: React.ReactNode }): R
     })();
   }, [
     activeProjectIdFromPreferences,
+    availableProjectIds,
     heavySettings.isLoading,
     legacyActiveProjectId,
     localActiveProjectId,
-    projectsQuery.data,
     projectsQuery.isLoading,
     projectId,
     updateSetting,

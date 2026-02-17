@@ -8,7 +8,6 @@ import {
   Trash2,
   Unlock,
   X,
-  Folder,
 } from 'lucide-react';
 import React, { useMemo, useCallback } from 'react';
 
@@ -23,7 +22,6 @@ import {
   Input,
   DataTable,
   ListPanel,
-  PanelHeader,
   SearchInput,
   useToast,
 } from '@/shared/ui';
@@ -40,11 +38,18 @@ import {
   setImageStudioProjectDeletionLock,
 } from '../utils/project-locks';
 
+import type { ImageStudioProjectRecord } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface StudioProjectsListProps {
   onOpenProject?: (projectId: string) => void;
 }
+
+const formatProjectTimestamp = (value: string): string => {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return value || 'n/a';
+  return new Date(parsed).toLocaleString();
+};
 
 export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): React.JSX.Element {
   const { toast } = useToast();
@@ -77,17 +82,19 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     [settingsQuery.data]
   );
 
-  const filteredProjects = useMemo((): string[] => {
+  const filteredProjects = useMemo((): ImageStudioProjectRecord[] => {
     const list = projectsQuery.data ?? [];
     const term = projectSearch.trim().toLowerCase();
     if (!term) return list;
-    return list.filter((id: string) => id.toLowerCase().includes(term));
+    return list.filter((project: ImageStudioProjectRecord) =>
+      project.id.toLowerCase().includes(term)
+    );
   }, [projectSearch, projectsQuery.data]);
 
   const lockedProjectsCount = useMemo(
     () =>
-      filteredProjects.filter((id: string) =>
-        isImageStudioProjectLocked(projectLocks, id)
+      filteredProjects.filter((project: ImageStudioProjectRecord) =>
+        isImageStudioProjectLocked(projectLocks, project.id)
       ).length,
     [filteredProjects, projectLocks]
   );
@@ -239,12 +246,13 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
     [onOpenProject, setProjectId]
   );
 
-  const columns = useMemo<ColumnDef<string>[]>(() => [
+  const columns = useMemo<ColumnDef<ImageStudioProjectRecord>[]>(() => [
     {
       accessorKey: 'id',
       header: 'Project',
       cell: ({ row }) => {
-        const id = row.original;
+        const project = row.original;
+        const id = project.id;
         const isEditing = editingProjectId === id;
         const isSelected = projectId === id;
 
@@ -288,10 +296,28 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       },
     },
     {
+      accessorKey: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => (
+        <span className='text-xs text-gray-400'>
+          {formatProjectTimestamp(row.original.createdAt)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'updatedAt',
+      header: 'Updated',
+      cell: ({ row }) => (
+        <span className='text-xs text-gray-400'>
+          {formatProjectTimestamp(row.original.updatedAt)}
+        </span>
+      ),
+    },
+    {
       id: 'lock',
       header: () => <div className='text-center'>Lock</div>,
       cell: ({ row }) => {
-        const id = row.original;
+        const id = row.original.id;
         const locked = isImageStudioProjectLocked(projectLocks, id);
         const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
 
@@ -325,7 +351,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       id: 'actions',
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => {
-        const id = row.original;
+        const id = row.original.id;
         const locked = isImageStudioProjectLocked(projectLocks, id);
         const isEditing = editingProjectId === id;
         const rowPending = renameProjectMutation.isPending || projectLocksMutation.isPending;
@@ -444,13 +470,6 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
       </div>
 
       <ListPanel
-        header={
-          <PanelHeader
-            title='Studio Projects'
-            description='Manage and organize your image studio projects.'
-            icon={<Folder className='size-4' />}
-          />
-        }
         filters={
           <div className='flex flex-wrap items-center gap-2'>
             <SearchInput
@@ -483,7 +502,7 @@ export function StudioProjectsList({ onOpenProject }: StudioProjectsListProps): 
               </p>
             </div>
           }
-          getRowClassName={(row) => (row.original === projectId ? 'bg-primary/5' : '')}
+          getRowClassName={(row) => (row.original.id === projectId ? 'bg-primary/5' : '')}
         />
       </ListPanel>
       <ConfirmationModal />

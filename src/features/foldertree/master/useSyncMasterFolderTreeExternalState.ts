@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
@@ -23,18 +23,33 @@ export function useSyncMasterFolderTreeExternalState({
   expandedNodeIds,
 }: UseSyncMasterFolderTreeExternalStateOptions): void {
   const { replaceNodes, selectNode, setExpandedNodeIds } = controller;
+  const replaceNodesRef = useRef(replaceNodes);
+  const selectNodeRef = useRef(selectNode);
+  const setExpandedNodeIdsRef = useRef(setExpandedNodeIds);
 
   useEffect(() => {
-    void replaceNodes(nodes, 'external_sync');
-  }, [nodes, replaceNodes]);
+    replaceNodesRef.current = replaceNodes;
+  }, [replaceNodes]);
+
+  useEffect(() => {
+    selectNodeRef.current = selectNode;
+  }, [selectNode]);
+
+  useEffect(() => {
+    setExpandedNodeIdsRef.current = setExpandedNodeIds;
+  }, [setExpandedNodeIds]);
+
+  useEffect(() => {
+    void replaceNodesRef.current(nodes, 'external_sync');
+  }, [nodes]);
 
   useEffect(() => {
     if (selectedNodeId === undefined) return;
-    selectNode(selectedNodeId ?? null);
-  }, [selectedNodeId, selectNode]);
+    selectNodeRef.current(selectedNodeId ?? null);
+  }, [selectedNodeId]);
 
   useEffect(() => {
     if (expandedNodeIds === undefined) return;
-    setExpandedNodeIds(expandedNodeIds);
-  }, [expandedNodeIds, setExpandedNodeIds]);
+    setExpandedNodeIdsRef.current(expandedNodeIds);
+  }, [expandedNodeIds]);
 }

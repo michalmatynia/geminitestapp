@@ -32,8 +32,12 @@ type ProductStudioVariantsResponse = {
 
 type ProductStudioSendResponse = {
   runId: string;
-  runStatus: 'queued' | 'running' | 'completed' | 'failed';
+  runStatus: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
   expectedOutputs: number;
+  dispatchMode: 'queued' | 'inline';
+  runKind: 'generation' | 'sequence';
+  sequenceRunId: string | null;
+  warnings?: string[];
 };
 
 type ProductStudioAcceptResponse = {
@@ -44,6 +48,13 @@ type RunStatusResponse = {
   run?: {
     id: string;
     status: 'queued' | 'running' | 'completed' | 'failed';
+  };
+};
+
+type SequenceRunStatusResponse = {
+  run?: {
+    id: string;
+    status: 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
   };
 };
 
@@ -92,9 +103,9 @@ export default function ProductFormStudio(): React.JSX.Element {
   const studioProjectOptions = useMemo(
     () => [
       { value: '', label: 'Not Connected' },
-      ...(studioProjectsQuery.data ?? []).map((projectId: string) => ({
-        value: projectId,
-        label: projectId,
+      ...(studioProjectsQuery.data ?? []).map((project) => ({
+        value: project.id,
+        label: project.id,
       })),
     ],
     [studioProjectsQuery.data]
@@ -115,8 +126,9 @@ export default function ProductFormStudio(): React.JSX.Element {
   const [sending, setSending] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [activeRunKind, setActiveRunKind] = useState<'generation' | 'sequence' | null>(null);
   const [runStatus, setRunStatus] = useState<
-    'queued' | 'running' | 'completed' | 'failed' | null
+    'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null
   >(null);
   const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
   const [splitVariantView, setSplitVariantView] = useState(false);
@@ -210,33 +222,48 @@ export default function ProductFormStudio(): React.JSX.Element {
   }, [refreshVariants]);
 
   useEffect(() => {
-    if (!activeRunId || !product?.id || selectedImageIndex === null || !studioProjectId) {
+    if (!activeRunId || !activeRunKind || !product?.id || selectedImageIndex === null || !studioProjectId) {
       return;
     }
 
     let cancelled = false;
     const timer = setInterval(() => {
-      void api
-        .get<RunStatusResponse>(
-          `/api/image-studio/runs/${encodeURIComponent(activeRunId)}`,
+      const request = activeRunKind === 'sequence'
+        ? api.get<SequenceRunStatusResponse>(
+          `/api/image-studio/sequences/${encodeURIComponent(activeRunId)}`,
           {
             cache: 'no-store',
             logError: false,
           }
         )
+        : api.get<RunStatusResponse>(
+          `/api/image-studio/runs/${encodeURIComponent(activeRunId)}`,
+          {
+            cache: 'no-store',
+            logError: false,
+          }
+        );
+
+      void request
         .then((response) => {
           if (cancelled) return;
           const status = response.run?.status ?? null;
           if (!status) return;
           setRunStatus(status);
-          if (status === 'completed' || status === 'failed') {
+          const terminal =
+            status === 'completed' ||
+            status === 'failed' ||
+            status === 'cancelled';
+          if (terminal) {
             setActiveRunId(null);
+            setActiveRunKind(null);
             void refreshVariants();
           }
         })
         .catch(() => {
           if (cancelled) return;
           setActiveRunId(null);
+          setActiveRunKind(null);
           setRunStatus('failed');
         });
     }, 2000);
@@ -245,7 +272,7 @@ export default function ProductFormStudio(): React.JSX.Element {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [activeRunId, product?.id, refreshVariants, selectedImageIndex, studioProjectId]);
+  }, [activeRunId, activeRunKind, product?.id, refreshVariants, selectedImageIndex, studioProjectId]);
 
   const selectedSourcePreview = useMemo(() => {
     if (selectedImageIndex === null) return null;
@@ -292,8 +319,21 @@ export default function ProductFormStudio(): React.JSX.Element {
       );
 
       setActiveRunId(result.runId);
+      setActiveRunKind(result.runKind);
       setRunStatus(result.runStatus);
-      toast('Image sent to Studio.', { variant: 'success' });
+      toast(
+        result.runKind === 'sequence'
+          ? 'Sequence started in Studio runtime.'
+          : 'Image sent to Studio.',
+        { variant: 'success' }
+      );
+      if (Array.isArray(result.warnings) && result.warnings.length > 0) {
+        result.warnings.forEach((message) => {
+          const warning = message.trim();
+          if (!warning) return;
+          toast(warning, { variant: 'warning' });
+        });
+      }
       await refreshVariants();
     } catch (error) {
       const message =

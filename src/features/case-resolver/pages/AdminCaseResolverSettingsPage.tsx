@@ -12,6 +12,7 @@ import { Button, FormSection, Input, Label, SectionHeader, SelectSimple, useToas
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 import {
+  CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS,
   CASE_RESOLVER_SETTINGS_KEY,
   parseCaseResolverSettings,
   type CaseResolverSettings,
@@ -98,11 +99,28 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     draft.ocrModel.trim().length === 0;
 
   const modelSummary = `${modelsQuery.data?.models?.length ?? 0} discovered model(s) available`;
+  const headerBreadcrumb = (
+    <nav
+      aria-label='Breadcrumb'
+      className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
+    >
+      <Link href='/admin' className='transition-colors hover:text-gray-200'>
+        Admin
+      </Link>
+      <span>/</span>
+      <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
+        Case Resolver
+      </Link>
+      <span>/</span>
+      <span className='text-gray-300'>Settings</span>
+    </nav>
+  );
 
   const handleSave = async (): Promise<void> => {
     if (!draft) return;
     const nextSettings: CaseResolverSettings = {
       ocrModel: draft.ocrModel.trim(),
+      defaultDocumentFormat: draft.defaultDocumentFormat === 'wysiwyg' ? 'wysiwyg' : 'markdown',
     };
 
     if (!nextSettings.ocrModel) {
@@ -117,7 +135,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       });
       setDraft(nextSettings);
       setLoadedFrom(`${serializeSetting(nextSettings)}|${openaiModelFallback}`);
-      toast('Case Resolver OCR settings saved.', { variant: 'success' });
+      toast('Case Resolver settings saved.', { variant: 'success' });
     } catch (error) {
       toast(
         error instanceof Error ? error.message : 'Failed to save Case Resolver settings.',
@@ -132,7 +150,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
         <SectionHeader
           eyebrow='AI · Case Resolver'
           title='Case Resolver Settings'
-          description='Loading OCR model settings...'
+          subtitle={headerBreadcrumb}
         />
       </div>
     );
@@ -143,7 +161,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
       <SectionHeader
         eyebrow='AI · Case Resolver'
         title='Case Resolver Settings'
-        description='Configure OCR model defaults used by Case Resolver scan files.'
+        subtitle={headerBreadcrumb}
         actions={(
           <div className='flex flex-wrap items-center gap-2'>
             <Button
@@ -225,6 +243,38 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
             />
             <div className='text-[11px] text-gray-500'>
               Use this field if your model is not shown in the discovered list.
+            </div>
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection
+        title='Document Defaults'
+        description='Choose which editor format is assigned to newly created documents. Existing documents keep their stored format.'
+        variant='subtle'
+        className='p-4'
+      >
+        <div className='grid gap-3 md:grid-cols-2'>
+          <div className='space-y-1'>
+            <Label className='text-[11px] text-gray-400'>Default Document Format</Label>
+            <SelectSimple
+              value={draft.defaultDocumentFormat}
+              onValueChange={(value: string): void => {
+                if (value !== 'markdown' && value !== 'wysiwyg') return;
+                setDraft((previous: CaseResolverSettings | null) =>
+                  previous
+                    ? {
+                      ...previous,
+                      defaultDocumentFormat: value,
+                    }
+                    : previous
+                );
+              }}
+              options={CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS}
+              placeholder='Select default document format'
+            />
+            <div className='text-[11px] text-gray-500'>
+              Legacy documents continue to open using their stored format (for example WYSIWYG documents stay WYSIWYG).
             </div>
           </div>
         </div>

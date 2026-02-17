@@ -20,10 +20,108 @@ import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
 
+const asMetadataRecord = (
+  value: unknown
+): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const resolveStudioSlotIdCandidates = (rawId: string): string[] => {
+  const normalized = normalizeStudioSlotId(rawId);
+  if (!normalized) return [];
+
+  const unprefixed = normalized.startsWith('slot:')
+    ? normalizeStudioSlotId(normalized.slice('slot:'.length))
+    : normalized.startsWith('card:')
+      ? normalizeStudioSlotId(normalized.slice('card:'.length))
+      : normalized;
+  const candidates = new Set<string>([normalized]);
+  if (unprefixed) {
+    candidates.add(unprefixed);
+    candidates.add(`slot:${unprefixed}`);
+    candidates.add(`card:${unprefixed}`);
+  }
+  return Array.from(candidates);
+};
+
+const getSlotSourceIds = (slot: ImageStudioSlotRecord): string[] => {
+  const metadata = asMetadataRecord(slot.metadata);
+  if (!metadata) return [];
+  const sourceIds = new Set<string>();
+
+  const primary = metadata['sourceSlotId'];
+  if (typeof primary === 'string' && primary.trim().length > 0) {
+    resolveStudioSlotIdCandidates(primary).forEach((candidate: string) => {
+      sourceIds.add(candidate);
+    });
+  }
+
+  const nested = metadata['sourceSlotIds'];
+  if (Array.isArray(nested)) {
+    nested.forEach((value: unknown) => {
+      if (typeof value !== 'string' || value.trim().length === 0) return;
+      resolveStudioSlotIdCandidates(value).forEach((candidate: string) => {
+        sourceIds.add(candidate);
+      });
+    });
+  }
+
+  return Array.from(sourceIds);
+};
+
+const collectSlotsToDeleteFromRoots = (
+  slots: ImageStudioSlotRecord[],
+  rootSlotCandidates: Set<string>
+): Set<string> => {
+  if (slots.length === 0 || rootSlotCandidates.size === 0) return new Set();
+
+  const slotById = new Map<string, ImageStudioSlotRecord>(
+    slots.map((slot: ImageStudioSlotRecord) => [slot.id, slot])
+  );
+  const childIdsBySource = new Map<string, Set<string>>();
+  slots.forEach((slot: ImageStudioSlotRecord) => {
+    getSlotSourceIds(slot).forEach((sourceSlotId: string) => {
+      const resolvedSourceSlotId = resolveStudioSlotIdCandidates(sourceSlotId).find((candidate: string) =>
+        slotById.has(candidate)
+      );
+      if (!resolvedSourceSlotId) return;
+      const childIds = childIdsBySource.get(resolvedSourceSlotId) ?? new Set<string>();
+      childIds.add(slot.id);
+      childIdsBySource.set(resolvedSourceSlotId, childIds);
+    });
+  });
+
+  const deleteIds = new Set<string>();
+  const queue: string[] = [];
+  rootSlotCandidates.forEach((rootCandidate: string) => {
+    const resolvedRootId = resolveStudioSlotIdCandidates(rootCandidate).find((candidate: string) =>
+      slotById.has(candidate)
+    );
+    if (!resolvedRootId || deleteIds.has(resolvedRootId)) return;
+    deleteIds.add(resolvedRootId);
+    queue.push(resolvedRootId);
+  });
+
+  while (queue.length > 0) {
+    const sourceSlotId = queue.shift();
+    if (!sourceSlotId) continue;
+    const childIds = childIdsBySource.get(sourceSlotId);
+    if (!childIds || childIds.size === 0) continue;
+    childIds.forEach((childId: string) => {
+      if (deleteIds.has(childId)) return;
+      deleteIds.add(childId);
+      queue.push(childId);
+    });
+  }
+
+  return deleteIds;
+};
+
 export interface RunStudioPayload {
   projectId: string;
   operation?: 'generate' | 'center_object' | undefined;
-  asset: { filepath: string; id?: string | undefined };
+  asset?: { filepath: string; id?: string | undefined } | undefined;
   referenceAssets?: Array<{ filepath: string; id?: string | undefined }> | undefined;
   prompt: string;
   mask?: {
@@ -277,22 +375,18 @@ export function useDeleteStudioSlot(projectId: string): DeleteMutation<void, str
     },
     onSuccess: (_result: void, deletedSlotRawId: string) => {
       const normalizedDeletedSlotId = normalizeStudioSlotId(deletedSlotRawId);
-      const deletedSlotCandidates = new Set<string>([normalizedDeletedSlotId]);
-      if (normalizedDeletedSlotId.startsWith('slot:')) {
-        const unprefixed = normalizeStudioSlotId(normalizedDeletedSlotId.slice('slot:'.length));
-        if (unprefixed) deletedSlotCandidates.add(unprefixed);
-      }
-      if (normalizedDeletedSlotId.startsWith('card:')) {
-        const unprefixed = normalizeStudioSlotId(normalizedDeletedSlotId.slice('card:'.length));
-        if (unprefixed) deletedSlotCandidates.add(unprefixed);
-      }
+      const deletedSlotCandidates = new Set<string>(
+        resolveStudioSlotIdCandidates(normalizedDeletedSlotId)
+      );
 
       queryClient.setQueryData<StudioSlotsResponse | undefined>(
         QUERY_KEYS.imageStudio.slots(projectId),
         (current: StudioSlotsResponse | undefined): StudioSlotsResponse | undefined => {
           if (!current?.slots?.length) return current;
+          const deleteIds = collectSlotsToDeleteFromRoots(current.slots, deletedSlotCandidates);
+          if (deleteIds.size === 0) return current;
           const nextSlots = current.slots.filter(
-            (slot: ImageStudioSlotRecord) => !deletedSlotCandidates.has(slot.id),
+            (slot: ImageStudioSlotRecord) => !deleteIds.has(slot.id),
           );
           if (nextSlots.length === current.slots.length) return current;
           return {

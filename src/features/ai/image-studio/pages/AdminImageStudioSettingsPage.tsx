@@ -988,7 +988,7 @@ export function AdminImageStudioSettingsPage(
                     <SelectSimple
                       size='sm'
                       value={studioSettings.promptExtraction.mode}
-                      onValueChange={(v) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, mode: v as any } }))}
+                      onValueChange={(v) => setStudioSettings(p => ({ ...p, promptExtraction: { ...p.promptExtraction, mode: v as 'programmatic' | 'gpt' | 'hybrid' } }))}
                       options={PROMPT_EXTRACTION_MODE_OPTIONS}
                       triggerClassName='h-9'
                     />

@@ -704,11 +704,25 @@ export function normalizeImageStudioSequenceSteps(
   },
 ): ImageStudioSequenceStep[] {
   const operations = normalizeImageStudioSequenceOperations(params?.fallbackOperations);
+  const fallbackStepParams: {
+    upscaleStrategy?: 'scale' | 'target_resolution';
+    upscaleScale?: number;
+    upscaleTargetWidth?: number;
+    upscaleTargetHeight?: number;
+  } = {
+    ...(params?.upscaleStrategy ? { upscaleStrategy: params.upscaleStrategy } : {}),
+    ...(typeof params?.upscaleScale === 'number'
+      ? { upscaleScale: params.upscaleScale }
+      : {}),
+    ...(typeof params?.upscaleTargetWidth === 'number'
+      ? { upscaleTargetWidth: params.upscaleTargetWidth }
+      : {}),
+    ...(typeof params?.upscaleTargetHeight === 'number'
+      ? { upscaleTargetHeight: params.upscaleTargetHeight }
+      : {}),
+  };
   const fallbackSteps = buildSequenceStepsFromOperations(operations, {
-    upscaleStrategy: params?.upscaleStrategy,
-    upscaleScale: params?.upscaleScale,
-    upscaleTargetWidth: params?.upscaleTargetWidth,
-    upscaleTargetHeight: params?.upscaleTargetHeight,
+    ...fallbackStepParams,
   });
 
   if (!Array.isArray(input)) {
@@ -934,7 +948,7 @@ const finiteNumberOrNull = z.number().finite().nullable().optional().default(nul
 const intOrNull = z.number().int().nullable().optional().default(null);
 const nonEmptyStringOrNull = z.string().trim().min(1).nullable().optional().default(null);
 
-const imageStudioSettingsSchema: z.ZodType<ImageStudioSettings> = z
+const imageStudioSettingsSchema = z
   .object({
     version: z.literal(1).optional().default(1),
     projectSequencing: z

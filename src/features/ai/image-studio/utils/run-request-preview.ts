@@ -112,14 +112,8 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
   if (!projectId.trim()) {
     errors.push('Select a project first.');
   }
-  if (!workingSlot) {
-    errors.push('Select a working card first.');
-  }
-
-  const filepath = workingSlot?.imageFile?.filepath || '';
-  if (!filepath) {
-    errors.push('Working card has no image filepath.');
-  }
+  const sourceFilepath = workingSlot?.imageFile?.filepath || workingSlot?.imageUrl || '';
+  const hasSourceAsset = Boolean(sourceFilepath);
 
   const resolvedPrompt = resolvePromptPlaceholders(promptText, paramsState).trim();
   if (!resolvedPrompt) {
@@ -130,7 +124,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
     (shape) => shape.visible && shape.closed && (shape.type === 'polygon' || shape.type === 'lasso') && shape.points.length >= 3
   );
   const mask: RunStudioPayload['mask'] =
-    eligibleShapes.length > 0
+    hasSourceAsset && eligibleShapes.length > 0
       ? {
         type: 'polygons',
         polygons: eligibleShapes.map((shape: VectorShape) =>
@@ -141,7 +135,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
       }
       : null;
 
-  const referenceSlots = compositeAssetIds
+  const referenceSlots = (hasSourceAsset ? compositeAssetIds : [])
     .map((id: string) => slots.find((slot) => slot.id === id))
     .filter((slot): slot is ImageStudioSlotRecord => Boolean(slot));
 
@@ -151,7 +145,7 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
       filepath: slot.imageFile?.filepath || slot.imageUrl || '',
     }))
     .filter((asset) => Boolean(asset.filepath));
-  const environmentReferenceAsset = readEnvironmentReferenceAsset(workingSlot);
+  const environmentReferenceAsset = hasSourceAsset ? readEnvironmentReferenceAsset(workingSlot) : null;
   if (environmentReferenceAsset) {
     const exists = referenceAssets.some(
       (asset) =>
@@ -167,12 +161,12 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
   }
 
   const images: RequestPreviewImage[] = [];
-  if (filepath) {
+  if (sourceFilepath) {
     images.push({
       kind: 'base',
       id: workingSlot?.id,
       name: workingSlot?.name || workingSlot?.id || 'Base image',
-      filepath,
+      filepath: sourceFilepath,
     });
   }
   referenceSlots.forEach((slot) => {
@@ -213,13 +207,17 @@ export function buildRunRequestPreview(input: BuildRunRequestPayloadInput): RunR
 
   const payload: RunStudioPayload = {
     projectId: projectId.trim(),
-    asset: {
-      filepath,
-      ...(workingSlot?.id ? { id: workingSlot.id } : {}),
-    },
-    ...(referenceAssets.length > 0 ? { referenceAssets } : {}),
+    ...(hasSourceAsset
+      ? {
+        asset: {
+          filepath: sourceFilepath,
+          ...(workingSlot?.id ? { id: workingSlot.id } : {}),
+        },
+      }
+      : {}),
+    ...(hasSourceAsset && referenceAssets.length > 0 ? { referenceAssets } : {}),
     prompt: resolvedPrompt,
-    mask,
+    ...(hasSourceAsset ? { mask } : {}),
     studioSettings: studioSettings as unknown as Record<string, unknown>,
   };
 

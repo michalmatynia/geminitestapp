@@ -28,6 +28,7 @@ import {
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
   MasterFolderTree,
+  type MasterFolderTreeProps,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
 import { Button, FolderTreePanel, TreeHeader, useToast } from '@/shared/ui';
@@ -287,6 +288,16 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       setPanelCollapsed(panelCollapsed);
     }
   }, [panelCollapsed, persistedCollapsed, setPanelCollapsed]);
+
+  const canStartTreeDrag = React.useCallback<NonNullable<MasterFolderTreeProps['canStartDrag']>>(
+    ({ node, event }): boolean => {
+      if (node.type !== 'file') return true;
+      const eventTarget = event.target;
+      if (!(eventTarget instanceof Element)) return false;
+      return eventTarget.closest('[data-master-tree-drag-handle="true"]') !== null;
+    },
+    []
+  );
 
   useEffect(() => {
     if (selectedFileId || selectedAssetId || selectedFolderPath !== null) {
@@ -578,6 +589,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
       <div className='min-h-0 flex-1 overflow-auto p-2'>
         <MasterFolderTree
           controller={controller}
+          canStartDrag={canStartTreeDrag}
           rootDropUi={rootDropUi}
           canDrop={(
             { draggedNodeId, targetId, position, defaultAllowed }
@@ -686,11 +698,14 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             const folderPath = fromCaseResolverFolderNodeId(node.id);
             const fileId = fromCaseResolverFileNodeId(node.id);
             const assetId = fromCaseResolverAssetNodeId(node.id);
+            const fileType = parseString(node.metadata?.['fileType']);
+            const isCaseFileKind = node.kind.startsWith('case_file');
             const isCaseFile =
               Boolean(fileId) &&
-              (node.kind === 'case_file' || node.kind === 'case_file_scan');
-            const isScanCaseFile = Boolean(fileId) && node.kind === 'case_file_scan';
-            const isDocumentCaseFile = Boolean(fileId) && node.kind === 'case_file';
+              (isCaseFileKind || fileType === 'document' || fileType === 'scanfile');
+            const isScanCaseFile =
+              Boolean(fileId) && (node.kind === 'case_file_scan' || fileType === 'scanfile');
+            const isDocumentCaseFile = Boolean(fileId) && isCaseFile && !isScanCaseFile;
             const linkedDocumentNodeIds = fileId
               ? documentNodeIdsBySourceFileId.get(fileId) ?? []
               : [];
@@ -715,6 +730,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               }
               if (node.kind === 'case_file_scan') {
                 return ScanCaseFileIcon;
+              }
+              if (isDocumentCaseFile) {
+                return DefaultFileIcon;
               }
               if (node.kind === 'asset_image') {
                 return ImageFileIcon;
@@ -756,6 +774,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                     return;
                   }
                   if (fileId) {
+                    if (isSelected) return;
                     onSelectFile(fileId);
                     return;
                   }
@@ -778,6 +797,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       return;
                     }
                     if (fileId) {
+                      if (isSelected) return;
                       onSelectFile(fileId);
                       return;
                     }
@@ -788,6 +808,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 }}
               >
                 <DragHandleIcon
+                  data-master-tree-drag-handle='true'
                   className={`size-3 shrink-0 ${
                     isDocumentCaseFile
                       ? 'text-sky-300/90 opacity-0 transition-opacity group-hover:opacity-100'
@@ -857,7 +878,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       {isCaseFile && fileId ? (
                         <button
                           type='button'
-                          className='inline-flex size-4 shrink-0 items-center justify-center rounded text-gray-300/80 transition hover:bg-muted/60 hover:text-white'
+                          className={`inline-flex size-4 shrink-0 items-center justify-center rounded text-gray-300/80 transition hover:bg-muted/60 hover:text-white ${
+                            isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                          }`}
                           title={isScanCaseFile ? 'Edit scan file' : 'Edit document'}
                           aria-label={isScanCaseFile ? 'Edit scan file' : 'Edit document'}
                           onClick={(event): void => {
@@ -925,7 +948,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   </div>
                 ) : null}
                 {!isRenaming && isCaseFile && fileId ? (
-                  <div className='flex shrink-0 items-center gap-1'>
+                  <div
+                    className={`flex shrink-0 items-center gap-1 transition ${
+                      isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                    }`}
+                  >
                     {isDocumentCaseFile ? (
                       <button
                         type='button'

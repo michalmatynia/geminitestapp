@@ -27,7 +27,6 @@ export function CaseFileEditorModal({
       open={isOpen}
       onClose={onClose}
       title={draft.fileType === 'scanfile' ? 'Scan File Inspector' : 'Document Editor'}
-      subtitle={`ID: ${draft.id}`}
       size='xl'
       onSave={() => { onSave(); onSuccess?.(); }}
       saveText='Save Changes'

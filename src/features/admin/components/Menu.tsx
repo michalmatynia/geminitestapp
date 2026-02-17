@@ -696,7 +696,35 @@ export const buildAdminNav = (handlers: {
     children: [
       { id: 'integrations/connections', label: 'Connections', href: '/admin/integrations' },
       { id: 'integrations/add', label: 'Add Integration', href: '/admin/integrations/add' },
-      { id: 'integrations/imports', label: 'Imports', href: '/admin/integrations/imports' },
+      {
+        id: 'integrations/aggregators',
+        label: 'Aggregators',
+        href: '/admin/integrations/aggregators',
+        children: [
+          {
+            id: 'integrations/aggregators/base-com',
+            label: 'Base.com',
+            href: '/admin/integrations/aggregators/base-com',
+            children: [
+              {
+                id: 'integrations/aggregators/base-com/synchronization-engine',
+                label: 'Synchronization Engine',
+                href: '/admin/integrations/aggregators/base-com/synchronization-engine',
+              },
+              {
+                id: 'integrations/aggregators/base-com/category-mapping',
+                label: 'Category Mapping',
+                href: '/admin/integrations/aggregators/base-com/category-mapping',
+              },
+              {
+                id: 'integrations/aggregators/base-com/import-export',
+                label: 'Import / Export',
+                href: '/admin/integrations/aggregators/base-com/import-export',
+              },
+            ],
+          },
+        ],
+      },
       {
         id: 'integrations/marketplaces',
         label: 'Marketplaces',
@@ -715,7 +743,6 @@ export const buildAdminNav = (handlers: {
               { id: 'integrations/marketplaces/allegro/shipping-price-management', label: 'Shipping Price Management', href: '/admin/integrations/marketplaces/allegro/shipping-price-management' },
             ],
           },
-          { id: 'integrations/marketplaces/category-mapper', label: 'Category Mapper', href: '/admin/integrations/marketplaces/category-mapper' },
           { id: 'integrations/marketplaces/tradera', label: 'Tradera', href: '/admin/integrations/tradera' },
         ],
       },

@@ -68,6 +68,16 @@ function isDalleImageModel(modelId: string): boolean {
   return normalizeModelId(modelId).startsWith('dall-e');
 }
 
+export function supportsImageSequenceGeneration(modelId: string): boolean {
+  const normalized = normalizeModelId(modelId);
+  if (!normalized) return false;
+  if (isDalleImageModel(normalized)) return false;
+  if (isGpt52ImageModel(normalized)) return true;
+  if (isGptImageModel(normalized)) return true;
+  if (normalized.startsWith('gpt-')) return true;
+  return normalized.includes('sequence');
+}
+
 export function getImageModelCapabilities(modelId: string): ImageModelCapabilities {
   if (isGpt52ImageModel(modelId)) {
     return {

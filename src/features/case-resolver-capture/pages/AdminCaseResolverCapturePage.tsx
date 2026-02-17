@@ -107,6 +107,22 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
       },
     });
   };
+  const headerBreadcrumb = (
+    <nav
+      aria-label='Breadcrumb'
+      className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
+    >
+      <Link href='/admin' className='transition-colors hover:text-gray-200'>
+        Admin
+      </Link>
+      <span>/</span>
+      <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
+        Case Resolver
+      </Link>
+      <span>/</span>
+      <span className='text-gray-300'>Capture</span>
+    </nav>
+  );
 
   if (!draft) {
     return (
@@ -114,7 +130,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
         <SectionHeader
           eyebrow='AI · Case Resolver Capture'
           title='Case Resolver Capture'
-          description='Loading capture settings...'
+          subtitle={headerBreadcrumb}
         />
       </div>
     );
@@ -125,7 +141,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
       <SectionHeader
         eyebrow='AI · Case Resolver Capture'
         title='Case Resolver Capture'
-        description='Configure capture mappings from Prompt Exploder payloads into Case Resolver + Filemaker matching.'
+        subtitle={headerBreadcrumb}
         actions={(
           <div className='flex flex-wrap items-center gap-2'>
             <Button

@@ -381,7 +381,7 @@ export const updateProductSyncProfile = async (
       ? { lastRunAt: toTrimmedString(patch.lastRunAt) || null }
       : {}),
     updatedAt: nowIso(),
-  } as any;
+  };
 
   profiles[index] = merged;
   await writeProfiles(profiles);

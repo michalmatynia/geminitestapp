@@ -16,7 +16,6 @@ export function VersionGraphInspector(): React.JSX.Element {
     compositeLoading,
     compositeBusy,
     getSlotImageSrc,
-    onSetAsSource,
     onFlattenComposite,
     onRefreshCompositePreview,
     onSelectNode,
@@ -132,14 +131,6 @@ export function VersionGraphInspector(): React.JSX.Element {
       </div>
 
       <div className='mt-2 flex gap-2'>
-        <Button size='xs'
-          variant='outline'
-          className='flex-1 text-xs'
-          onClick={onSetAsSource}
-        >
-          <Crosshair className='mr-1.5 size-3' />
-          Set as Source
-        </Button>
         {selectedNode.type === 'composite' ? (
           <Button size='xs'
             variant='outline'
@@ -200,7 +191,7 @@ export function VersionGraphInspector(): React.JSX.Element {
           <button
             type='button'
             className='flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] text-gray-500 hover:bg-accent hover:text-gray-300'
-            title='Isolate this branch'
+            title='Create a new card tree rooted at this node'
             onClick={() => onIsolateBranch(selectedNode.id)}
           >
             <Crosshair className='size-2.5' />

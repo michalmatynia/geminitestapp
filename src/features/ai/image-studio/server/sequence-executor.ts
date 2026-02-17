@@ -5,12 +5,15 @@ import path from 'path';
 
 import sharp from 'sharp';
 
+import { resolveExpectedOutputCount } from '@/features/ai/image-studio/server/run-executor';
 import {
   createImageStudioRun,
   getImageStudioRunById,
   type ImageStudioRunRecord,
 } from '@/features/ai/image-studio/server/run-repository';
-import { resolveExpectedOutputCount } from '@/features/ai/image-studio/server/run-executor';
+import {
+  upsertImageStudioSlotLink,
+} from '@/features/ai/image-studio/server/slot-link-repository';
 import {
   getImageStudioSlotById,
   listImageStudioSlots,
@@ -18,12 +21,10 @@ import {
   type ImageStudioSlotRecord,
 } from '@/features/ai/image-studio/server/slot-repository';
 import {
-  upsertImageStudioSlotLink,
-} from '@/features/ai/image-studio/server/slot-link-repository';
-import {
   validateUpscaleSourceDimensions,
   upscaleImageWithSharp,
 } from '@/features/ai/image-studio/server/upscale-utils';
+import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import {
   parseImageStudioSettings,
   resolveImageStudioSequenceActiveSteps,
@@ -33,7 +34,6 @@ import {
   type ImageStudioSequenceStep,
   type ImageStudioSequenceUpscaleStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import { resolvePromptPlaceholders } from '@/features/ai/image-studio/utils/run-request-preview';
 import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
 import {
   enqueueImageStudioRunJob,
@@ -84,45 +84,6 @@ const guessExtensionFromMime = (mime: string): string => {
   if (normalized.includes('webp')) return '.webp';
   if (normalized.includes('avif')) return '.avif';
   return '.png';
-};
-
-const toSequenceMaskContext = (
-  input: ImageStudioSequenceMaskContext | null | undefined
-): ImageStudioSequenceMaskContext => {
-  if (!input || !Array.isArray(input.polygons) || input.polygons.length === 0) {
-    return null;
-  }
-  const polygons = input.polygons
-    .map((polygon: Array<{ x: number; y: number }> | unknown) => {
-      if (!Array.isArray(polygon)) return null;
-      const points = polygon
-        .map((point) => {
-          if (!point || typeof point !== 'object' || Array.isArray(point)) return null;
-          const record = point as Record<string, unknown>;
-          const x = typeof record['x'] === 'number' && Number.isFinite(record['x'])
-            ? Math.max(0, Math.min(1, record['x']))
-            : null;
-          const y = typeof record['y'] === 'number' && Number.isFinite(record['y'])
-            ? Math.max(0, Math.min(1, record['y']))
-            : null;
-          if (x === null || y === null) return null;
-          return { x, y };
-        })
-        .filter((point): point is { x: number; y: number } => Boolean(point));
-      return points.length >= 3 ? points : null;
-    })
-    .filter((polygon): polygon is Array<{ x: number; y: number }> => Boolean(polygon));
-
-  if (polygons.length === 0) return null;
-
-  return {
-    polygons,
-    invert: Boolean(input.invert),
-    feather:
-      typeof input.feather === 'number' && Number.isFinite(input.feather)
-        ? Math.max(0, Math.min(50, Number(input.feather.toFixed(2))))
-        : 0,
-  };
 };
 
 const resolveSlotImagePath = (slot: ImageStudioSlotRecord): string | null =>
@@ -489,8 +450,8 @@ const buildMaskBuffer = async (params: {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${params.width}" height="${params.height}" viewBox="0 0 ${params.width} ${params.height}">
       <rect x="0" y="0" width="${params.width}" height="${params.height}" fill="${background}" />
       ${params.polygons
-        .map((polygon) => `<polygon points="${toPolygonPointsSvg(polygon, params.width, params.height)}" fill="${fill}" />`)
-        .join('')}
+    .map((polygon) => `<polygon points="${toPolygonPointsSvg(polygon, params.width, params.height)}" fill="${fill}" />`)
+    .join('')}
     </svg>`,
     'utf8',
   );
@@ -538,7 +499,7 @@ const readRunCreatedSlotIds = (run: ImageStudioRunRecord): string[] => {
   history.reverse();
 
   for (const event of history) {
-    if (!event || event.type !== 'completed') continue;
+    if (event?.type !== 'completed') continue;
     const payload = isRecord(event.payload) ? event.payload : null;
     if (!payload) continue;
     const idsRaw = payload['createdSlotIds'];
@@ -888,7 +849,7 @@ export async function executeImageStudioSequenceStep(
   context: ImageStudioSequenceStepExecutionContext,
 ): Promise<ImageStudioSequenceStepExecutionResult> {
   const currentSlot = await getImageStudioSlotById(context.currentSlotId);
-  if (!currentSlot || currentSlot.projectId !== context.run.projectId) {
+  if (currentSlot?.projectId !== context.run.projectId) {
     throw new Error('Current slot is missing or does not belong to the sequence project.');
   }
 
@@ -943,6 +904,10 @@ export async function executeImageStudioSequenceStep(
         outputCount: result.producedSlotIds.length,
       },
     };
+  }
+
+  if (context.step.type !== 'upscale') {
+    throw new Error(`Unsupported sequence step type: ${context.step.type}`);
   }
 
   const upscaleResult = await executeUpscaleStep({

@@ -49,6 +49,40 @@ const dedupeStringList = (values: string[]): string[] => {
   return Array.from(seen);
 };
 
+const areMetadataValuesEqual = (
+  left: Record<string, unknown> | undefined,
+  right: Record<string, unknown> | undefined
+): boolean => {
+  if (left === right) return true;
+  try {
+    return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+  } catch {
+    return false;
+  }
+};
+
+const areMasterTreeNodesEqual = (
+  left: MasterTreeNode[],
+  right: MasterTreeNode[]
+): boolean => {
+  if (left.length !== right.length) return false;
+  for (let index = 0; index < left.length; index += 1) {
+    const leftNode = left[index];
+    const rightNode = right[index];
+    if (!leftNode || !rightNode) return false;
+    if (leftNode.id !== rightNode.id) return false;
+    if (leftNode.type !== rightNode.type) return false;
+    if (leftNode.kind !== rightNode.kind) return false;
+    if (leftNode.parentId !== rightNode.parentId) return false;
+    if (leftNode.name !== rightNode.name) return false;
+    if (leftNode.path !== rightNode.path) return false;
+    if (leftNode.sortOrder !== rightNode.sortOrder) return false;
+    if ((leftNode.icon ?? null) !== (rightNode.icon ?? null)) return false;
+    if (!areMetadataValuesEqual(leftNode.metadata, rightNode.metadata)) return false;
+  }
+  return true;
+};
+
 const cloneMasterTreeNodes = (nodes: MasterTreeNode[]): MasterTreeNode[] => {
   if (typeof globalThis.structuredClone === 'function') {
     return globalThis.structuredClone(nodes);
@@ -334,6 +368,9 @@ export function useMasterFolderTree(
 
       const normalized = normalizeMasterTreeNodes(incomingNodes);
       const previousNodes = stateRef.current.nodes;
+      if (reason === 'external_sync' && areMasterTreeNodesEqual(previousNodes, normalized)) {
+        return { ok: true };
+      }
       syncState((prev: InternalMasterFolderTreeState) => ({
         ...prev,
         nodes: normalized,

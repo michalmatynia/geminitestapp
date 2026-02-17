@@ -122,6 +122,60 @@ export function useAiPathsCanvasInteractions({
   const lastDropTimerRef = useRef<number | null>(null);
   const lockedToastAtRef = useRef<number>(0);
 
+  const getPointerCaptureTarget = (
+    event: React.PointerEvent<HTMLElement>
+  ): (Element & {
+    setPointerCapture?: (pointerId: number) => void;
+    releasePointerCapture?: (pointerId: number) => void;
+    hasPointerCapture?: (pointerId: number) => boolean;
+  }) | null => {
+    const nativeCurrentTarget = event.nativeEvent.currentTarget;
+    const candidates: EventTarget[] = [
+      event.currentTarget,
+      ...(nativeCurrentTarget ? [nativeCurrentTarget] : []),
+      event.target,
+    ];
+    for (const candidate of candidates) {
+      if (candidate instanceof Element) {
+        return candidate as Element & {
+          setPointerCapture?: (pointerId: number) => void;
+          releasePointerCapture?: (pointerId: number) => void;
+          hasPointerCapture?: (pointerId: number) => boolean;
+        };
+      }
+    }
+    return null;
+  };
+
+  const setPointerCaptureSafe = (
+    target: (Element & { setPointerCapture?: (pointerId: number) => void }) | null,
+    pointerId: number
+  ): void => {
+    if (!target || typeof target.setPointerCapture !== 'function') return;
+    try {
+      target.setPointerCapture(pointerId);
+    } catch {
+      // Ignore pointer-capture errors from detached/non-capturing targets.
+    }
+  };
+
+  const releasePointerCaptureSafe = (
+    target: (Element & {
+      releasePointerCapture?: (pointerId: number) => void;
+      hasPointerCapture?: (pointerId: number) => boolean;
+    }) | null,
+    pointerId: number
+  ): void => {
+    if (!target || typeof target.releasePointerCapture !== 'function') return;
+    try {
+      if (typeof target.hasPointerCapture !== 'function' || target.hasPointerCapture(pointerId)) {
+        target.releasePointerCapture(pointerId);
+      }
+    } catch {
+      // Ignore release failures for already-detached targets.
+    }
+  };
+
   const notifyLocked = useCallback((): void => {
     const now = Date.now();
     if (now - lockedToastAtRef.current < 800) return;
@@ -530,8 +584,7 @@ export function useAiPathsCanvasInteractions({
       return;
     }
     event.stopPropagation();
-    const target = event.currentTarget;
-    target.setPointerCapture(event.pointerId);
+    setPointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
     const viewport = viewportRef.current?.getBoundingClientRect();
     if (!viewport) return;
     const node = nodes.find((item: AiNode): boolean => item.id === nodeId);
@@ -583,7 +636,7 @@ export function useAiPathsCanvasInteractions({
     nodeId: string
   ): void => {
     if (dragState?.nodeId !== nodeId) return;
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    releasePointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
 
     // Flush any pending RAF drag update immediately on pointer up
     if (rafIdRef.current !== null) {
@@ -776,8 +829,7 @@ export function useAiPathsCanvasInteractions({
       setConnectingPos(null);
       return;
     }
-    const target = event.currentTarget;
-    target.setPointerCapture(event.pointerId);
+    setPointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
     setPanState({
       startX: event.clientX,
       startY: event.clientY,
@@ -805,7 +857,7 @@ export function useAiPathsCanvasInteractions({
 
   const handlePanEnd = (event: React.PointerEvent<HTMLDivElement>): void => {
     if (panState) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+      releasePointerCaptureSafe(getPointerCaptureTarget(event), event.pointerId);
       setPanState(null);
     }
     if (connecting) {

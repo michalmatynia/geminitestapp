@@ -5,7 +5,6 @@ import {
   ChevronUp,
   Columns2,
   Copy,
-  Crosshair,
   GitBranchPlus,
   Focus,
   Layers,
@@ -22,7 +21,6 @@ export function VersionGraphContextMenu(): React.JSX.Element {
     node,
     collapsedNodeIds,
     onClose,
-    onSetAsSource,
     onDetachSubtree,
     onIsolateBranch,
     onToggleCollapse,
@@ -38,17 +36,6 @@ export function VersionGraphContextMenu(): React.JSX.Element {
         className='fixed z-50 min-w-[140px] rounded border border-border/60 bg-card py-1 shadow-lg'
         style={{ left: menu.x, top: menu.y }}
       >
-        <button
-          type='button'
-          className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-gray-300 hover:bg-accent'
-          onClick={() => {
-            onSetAsSource(menu.nodeId);
-            onClose();
-          }}
-        >
-          <Crosshair className='size-3' />
-          Set as Source
-        </button>
         <button
           type='button'
           className='flex w-full items-center gap-2 px-3 py-1.5 text-left text-[11px] text-amber-300 hover:bg-accent'
@@ -69,7 +56,7 @@ export function VersionGraphContextMenu(): React.JSX.Element {
           }}
         >
           <Focus className='size-3' />
-          Isolate Branch
+          Isolate to New Card
         </button>
         {node.childIds.length > 0 ? (
           <button

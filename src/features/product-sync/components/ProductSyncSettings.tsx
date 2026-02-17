@@ -3,7 +3,11 @@
 import { Plus, Play, RefreshCw, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
+import {
+  useDefaultExportConnection,
+  useDefaultExportInventory,
+  useIntegrationsWithConnections,
+} from '@/features/integrations/hooks/useIntegrationQueries';
 import {
   useCreateProductSyncProfileMutation,
   useDeleteProductSyncProfileMutation,
@@ -45,6 +49,11 @@ type ProductSyncProfileDraft = {
   fieldRules: ProductSyncFieldRule[];
 };
 
+type ProductSyncDraftDefaults = {
+  connectionId?: string;
+  inventoryId?: string;
+};
+
 const makeRuleId = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -52,11 +61,14 @@ const makeRuleId = (): string => {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
-const defaultDraft = (connectionId = ''): ProductSyncProfileDraft => ({
+const defaultDraft = ({
+  connectionId = '',
+  inventoryId = '',
+}: ProductSyncDraftDefaults = {}): ProductSyncProfileDraft => ({
   name: 'Base Product Sync',
   enabled: true,
   connectionId,
-  inventoryId: '',
+  inventoryId,
   catalogId: '',
   scheduleIntervalMinutes: 30,
   batchSize: 100,
@@ -126,6 +138,8 @@ export function ProductSyncSettings(): React.JSX.Element {
   const runNowMutation = useRunProductSyncProfileMutation();
   const relinkMutation = useRelinkBaseProductsMutation();
   const integrationsQuery = useIntegrationsWithConnections();
+  const defaultExportConnectionQuery = useDefaultExportConnection();
+  const defaultExportInventoryQuery = useDefaultExportInventory();
 
   const profiles = profilesQuery.data ?? [];
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
@@ -143,10 +157,33 @@ export function ProductSyncSettings(): React.JSX.Element {
     return baseIntegration?.connections ?? [];
   }, [integrationsQuery.data]);
 
+  const preferredConnectionId = useMemo(() => {
+    const preferredConnection = (defaultExportConnectionQuery.data?.connectionId ?? '').trim();
+    if (
+      preferredConnection &&
+      baseConnections.some((connection) => connection.id === preferredConnection)
+    ) {
+      return preferredConnection;
+    }
+    return baseConnections[0]?.id ?? '';
+  }, [defaultExportConnectionQuery.data?.connectionId, baseConnections]);
+
+  const preferredInventoryId = useMemo(() => {
+    return (defaultExportInventoryQuery.data?.inventoryId ?? '').trim();
+  }, [defaultExportInventoryQuery.data?.inventoryId]);
+
+  const newProfileDefaults = useMemo<ProductSyncDraftDefaults>(
+    () => ({
+      connectionId: preferredConnectionId,
+      inventoryId: preferredInventoryId,
+    }),
+    [preferredConnectionId, preferredInventoryId]
+  );
+
   useEffect(() => {
     if (profiles.length === 0) {
       setSelectedProfileId('');
-      setDraft(defaultDraft(baseConnections[0]?.id ?? ''));
+      setDraft(defaultDraft(newProfileDefaults));
       return;
     }
 
@@ -159,19 +196,19 @@ export function ProductSyncSettings(): React.JSX.Element {
     const first = profiles[0];
     if (!first) {
       setSelectedProfileId('');
-      setDraft(defaultDraft(baseConnections[0]?.id ?? ''));
+      setDraft(defaultDraft(newProfileDefaults));
       return;
     }
     setSelectedProfileId(first.id);
     setDraft(profileToDraft(first));
-  }, [profiles, selectedProfileId, baseConnections]);
+  }, [profiles, selectedProfileId, newProfileDefaults]);
 
   const isSaving =
     createProfileMutation.isPending || updateProfileMutation.isPending;
 
   const handleNewProfile = (): void => {
     setSelectedProfileId('');
-    setDraft(defaultDraft(baseConnections[0]?.id ?? ''));
+    setDraft(defaultDraft(newProfileDefaults));
   };
 
   const handleSave = async (): Promise<void> => {
@@ -232,7 +269,7 @@ export function ProductSyncSettings(): React.JSX.Element {
           await deleteProfileMutation.mutateAsync(selectedProfileId);
           toast('Sync profile deleted.', { variant: 'success' });
           setSelectedProfileId('');
-          setDraft(defaultDraft(baseConnections[0]?.id ?? ''));
+          setDraft(defaultDraft(newProfileDefaults));
         } catch (error) {
           toast(error instanceof Error ? error.message : 'Failed to delete profile.', {
             variant: 'error',

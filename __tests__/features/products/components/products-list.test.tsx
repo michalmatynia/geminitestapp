@@ -3,7 +3,7 @@
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { vi } from 'vitest';
@@ -114,10 +114,6 @@ describe('Admin Products List UI', () => {
   });
 
   it('prompts for SKU before opening the create modal and pre-fills SKU', async () => {
-    const promptMock = vi
-      .spyOn(window, 'prompt')
-      .mockReturnValue('abc123');
-    
     render(
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
@@ -129,16 +125,18 @@ describe('Admin Products List UI', () => {
     const user = userEvent.setup();
     await user.click(screen.getByLabelText('Create new product'));
 
-    await screen.findAllByRole('heading', { name: /Create Product/i });
-    
-    // Find the input with id="sku" specifically
-    const skuInput = document.getElementById('sku') as HTMLInputElement;
-    expect(skuInput).toBeInTheDocument();
-    
+    // Interact with PromptModal
+    const promptModal = await screen.findByRole('dialog', { name: /Create New Product/i });
+    const promptInput = within(promptModal).getByRole('textbox');
+    await user.type(promptInput, 'abc123');
+    await user.click(within(promptModal).getByRole('button', { name: /Confirm/i }));
+
+    // Wait for Product Form Modal and pre-filled SKU
+    // We skip waiting for the heading because AppModal renders it twice (visible + sr-only), causing ambiguity
     await waitFor(() => {
+      const skuInput = document.getElementById('sku') as HTMLInputElement;
+      expect(skuInput).toBeInTheDocument();
       expect(skuInput.value).toBe('ABC123');
     });
-
-    promptMock.mockRestore();
   });
 });

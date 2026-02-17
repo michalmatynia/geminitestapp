@@ -19,7 +19,7 @@ import { useMaskingState, useMaskingActions } from './MaskingContext';
 import { useProjectsState } from './ProjectsContext';
 import { usePromptState, usePromptActions } from './PromptContext';
 import { useSettingsState } from './SettingsContext';
-import { useSlotsState } from './SlotsContext';
+import { useSlotsState, useSlotsActions } from './SlotsContext';
 import { buildRunRequestPreview } from '../utils/run-request-preview';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -79,6 +79,56 @@ const SSE_FALLBACK_POLL_INTERVAL_MS = 5000;
 const POLL_MAX_ATTEMPTS = 600;
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
+const readCreatedSlotIdsFromPayload = (payload: unknown): string[] => {
+  const payloadRecord = asRecord(payload);
+  if (!payloadRecord) return [];
+
+  const createdIds: string[] = [];
+  const pushIds = (value: unknown): void => {
+    if (!Array.isArray(value)) return;
+    value.forEach((entry: unknown) => {
+      if (typeof entry !== 'string') return;
+      const normalized = entry.trim();
+      if (!normalized) return;
+      createdIds.push(normalized);
+    });
+  };
+
+  pushIds(payloadRecord['createdSlotIds']);
+  const callbackPayload = asRecord(payloadRecord['callbackPayload']);
+  if (callbackPayload) {
+    pushIds(callbackPayload['createdSlotIds']);
+  }
+
+  return createdIds;
+};
+
+const extractCreatedSlotIdsFromRun = (run: ImageStudioRunRecord): string[] => {
+  const historyEvents = Array.isArray(run.historyEvents) ? [...run.historyEvents].reverse() : [];
+  const createdSlotIds: string[] = [];
+  const seen = new Set<string>();
+
+  for (const event of historyEvents) {
+    const nextIds = readCreatedSlotIdsFromPayload(event.payload);
+    nextIds.forEach((slotId: string) => {
+      if (seen.has(slotId)) return;
+      seen.add(slotId);
+      createdSlotIds.push(slotId);
+    });
+
+    if (event.type === 'completed' && createdSlotIds.length > 0) {
+      break;
+    }
+  }
+
+  return createdSlotIds;
+};
 
 const normalizeExpectedOutputs = (value: unknown, fallback = 1): number => {
   const parsed = typeof value === 'number' ? value : Number(value);
@@ -157,6 +207,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   // Cross-domain reads
   const { projectId } = useProjectsState();
   const { workingSlot, slots, compositeAssetIds } = useSlotsState();
+  const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
   const { maskShapes, maskInvert, maskFeather } = useMaskingState();
   const { setMaskInvert, setMaskFeather } = useMaskingActions();
   const { promptText, paramsState } = usePromptState();
@@ -171,6 +222,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   const [activeRunStatus, setActiveRunStatus] = useState<ImageStudioRunStatus | null>(null);
   const [activeRunError, setActiveRunError] = useState<string | null>(null);
   const [landingSlots, setLandingSlots] = useState<GenerationLandingSlot[]>([]);
+  const [pendingSourceSlotId, setPendingSourceSlotId] = useState<string | null>(null);
 
   const pollTokenRef = useRef<PollToken | null>(null);
 
@@ -197,6 +249,16 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       cancelCurrentPoll();
     };
   }, [cancelCurrentPoll]);
+
+  useEffect(() => {
+    if (!pendingSourceSlotId) return;
+    const sourceSlotExists = slots.some((slot) => slot.id === pendingSourceSlotId);
+    if (!sourceSlotExists) return;
+
+    setSelectedSlotId(pendingSourceSlotId);
+    setWorkingSlotId(pendingSourceSlotId);
+    setPendingSourceSlotId(null);
+  }, [pendingSourceSlotId, setSelectedSlotId, setWorkingSlotId, slots]);
 
   const pollRunUntilFinished = useCallback(
     async (params: {
@@ -248,9 +310,15 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
         const expectedOutputs = normalizeExpectedOutputs(run.expectedOutputs, params.expectedOutputs);
         if (run.status === 'completed') {
           const outputs = Array.isArray(run.outputs) ? run.outputs : [];
+          const createdSlotIds = extractCreatedSlotIdsFromRun(run);
+          const generatedSourceSlotId = createdSlotIds[0] ?? null;
+          const shouldPromoteGeneratedSource = params.submittedSlotId.trim().length === 0;
 
           setRunOutputs(outputs);
           void invalidateImageStudioSlots(queryClient, projectId);
+          if (generatedSourceSlotId && shouldPromoteGeneratedSource) {
+            setPendingSourceSlotId(generatedSourceSlotId);
+          }
           setLandingSlots(buildLandingSlotsFromRun({
             ...run,
             expectedOutputs,
@@ -385,6 +453,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
       setActiveRunSourceSlotId(null);
       setActiveRunStatus(null);
       setActiveRunError(null);
+      setPendingSourceSlotId(null);
       return;
     }
 
@@ -475,13 +544,8 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   }, [projectId, cancelCurrentPoll]);
 
   const handleRunGeneration = useCallback(() => {
-    if (!projectId || !workingSlot) {
-      toast('Select a project and choose a card image to generate.', { variant: 'info' });
-      return;
-    }
-    const filepath = workingSlot.imageFile?.filepath;
-    if (!filepath) {
-      toast('Working card has no image file.', { variant: 'info' });
+    if (!projectId) {
+      toast('Select a project before generating.', { variant: 'info' });
       return;
     }
     if (!promptText.trim()) {
@@ -520,6 +584,7 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     setActiveRunId('pending');
     setActiveRunSourceSlotId(submittedSlotId || null);
     setActiveRunStatus('queued');
+    setPendingSourceSlotId(null);
     setLandingSlots(buildPendingLandingSlots('pending', expectedOutputs));
 
     runMutation.mutate(requestPreview.payload, {

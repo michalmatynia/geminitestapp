@@ -20,6 +20,7 @@ const renameProjectSchema = z.object({
 const SLOT_COLLECTION = 'image_studio_slots';
 const RUN_COLLECTION = 'image_studio_runs';
 const SLOT_LINK_COLLECTION = 'image_studio_slot_links';
+const PROJECT_METADATA_FILENAME = '.image-studio-project.json';
 
 const sanitizeProjectId = (value: string): string =>
   value.trim().replace(/[^a-zA-Z0-9-_]/g, '_');
@@ -42,6 +43,74 @@ const resolveProjectDir = (candidate: string): string | null => {
   const resolved = path.resolve(projectsRootResolved, candidate);
   if (!resolved.startsWith(`${projectsRootResolved}${path.sep}`)) return null;
   return resolved;
+};
+
+const parseTimestamp = (value: unknown, fallback: string): string => {
+  if (typeof value !== 'string') return fallback;
+  const parsedMs = Date.parse(value);
+  if (!Number.isFinite(parsedMs)) return fallback;
+  return new Date(parsedMs).toISOString();
+};
+
+const resolveProjectSummaryFromDirectory = async (
+  projectId: string
+): Promise<{ createdAt: string; updatedAt: string } | null> => {
+  const projectDir = resolveProjectDir(projectId);
+  if (!projectDir) return null;
+
+  const dirStats = await fs.stat(projectDir).catch(() => null);
+  if (!dirStats?.isDirectory()) return null;
+
+  const createdMs =
+    Number.isFinite(dirStats.birthtimeMs) && dirStats.birthtimeMs > 0
+      ? dirStats.birthtimeMs
+      : Date.now();
+  const updatedMs =
+    Number.isFinite(dirStats.mtimeMs) && dirStats.mtimeMs > 0
+      ? dirStats.mtimeMs
+      : createdMs;
+  const fallbackCreatedAt = new Date(createdMs).toISOString();
+  const fallbackUpdatedAt = new Date(updatedMs).toISOString();
+
+  const metadataPath = path.join(projectDir, PROJECT_METADATA_FILENAME);
+  const metadataRaw = await fs.readFile(metadataPath, 'utf8').catch(() => null);
+  if (!metadataRaw) {
+    return { createdAt: fallbackCreatedAt, updatedAt: fallbackUpdatedAt };
+  }
+
+  try {
+    const parsed = JSON.parse(metadataRaw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { createdAt: fallbackCreatedAt, updatedAt: fallbackUpdatedAt };
+    }
+    const metadata = parsed as Record<string, unknown>;
+    return {
+      createdAt: parseTimestamp(metadata['createdAt'], fallbackCreatedAt),
+      updatedAt: parseTimestamp(metadata['updatedAt'], fallbackUpdatedAt),
+    };
+  } catch {
+    return { createdAt: fallbackCreatedAt, updatedAt: fallbackUpdatedAt };
+  }
+};
+
+const upsertProjectSummary = async (
+  projectId: string
+): Promise<{ id: string; createdAt: string; updatedAt: string }> => {
+  const projectDir = resolveProjectDir(projectId);
+  if (!projectDir) {
+    throw badRequestError('Invalid target project id.');
+  }
+  const existing = await resolveProjectSummaryFromDirectory(projectId);
+  const nowIso = new Date().toISOString();
+  const summary = {
+    id: projectId,
+    createdAt: existing?.createdAt ?? nowIso,
+    updatedAt: nowIso,
+  };
+  await fs.mkdir(projectDir, { recursive: true });
+  const metadataPath = path.join(projectDir, PROJECT_METADATA_FILENAME);
+  await fs.writeFile(metadataPath, JSON.stringify(summary, null, 2), 'utf8');
+  return summary;
 };
 
 const normalizePublicPath = (filepath: string | null | undefined): string | null => {
@@ -328,8 +397,10 @@ export async function patchImageStudioProjectHandler(
   }
 
   if (fromProjectIds.includes(toProjectId)) {
+    const project = await upsertProjectSummary(toProjectId);
     return NextResponse.json({
       projectId: toProjectId,
+      project,
       fromProjectId: rawProjectId,
       renamed: false,
       stats: {
@@ -377,9 +448,11 @@ export async function patchImageStudioProjectHandler(
   const updatedRuns = await migrateRunRecords(fromProjectIds, toProjectId);
   const updatedSlotLinks = await migrateSlotLinkRecords(fromProjectIds, toProjectId);
   const updatedImageFiles = await migrateImageFilePaths(fromProjectIds, toProjectId);
+  const project = await upsertProjectSummary(toProjectId);
 
   return NextResponse.json({
     projectId: toProjectId,
+    project,
     fromProjectId: rawProjectId,
     renamed: true,
     stats: {

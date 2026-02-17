@@ -1,9 +1,13 @@
 'use client';
 
-import { FileText } from 'lucide-react';
+import { Copy, FileText } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useCallback } from 'react';
 
+import {
+  stableStringify,
+} from '@/features/ai/ai-paths/lib';
 import { CaseResolverCanvasWorkspace } from '@/features/case-resolver/components/CaseResolverCanvasWorkspace';
 import { CaseResolverFolderTree } from '@/features/case-resolver/components/CaseResolverFolderTree';
 import { CaseResolverRelationsWorkspace } from '@/features/case-resolver/components/CaseResolverRelationsWorkspace';
@@ -18,12 +22,10 @@ import {
   type CaseResolverCaptureAction,
 } from '@/features/case-resolver-capture/settings';
 import {
-  convertHtmlToMarkdown,
   DocumentWysiwygEditor,
   deriveDocumentContentSync,
   ensureHtmlForPreview,
   MarkdownSplitEditor,
-  MarkdownToolbar,
   toStorageDocumentValue,
 } from '@/features/document-editor';
 import {
@@ -112,6 +114,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
+    setSelectedFileId,
+    setSelectedAssetId,
     setSelectedFolderPath,
     folderPanelCollapsed,
     setFolderPanelCollapsed,
@@ -142,7 +146,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
     setIsApplyingPromptExploderPartyProposal,
-    confirmAction,
     ConfirmationModal,
     PromptInputModal,
   } = state;
@@ -176,13 +179,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     workspace.files,
   ]);
 
-  const [editorShowPreview, setEditorShowPreview] = React.useState(true);
-  const [editorTextColor, setEditorTextColor] = React.useState('#e5e7eb');
-  const [editorFontFamily, setEditorFontFamily] = React.useState('inherit');
   const [editorWidth, setEditorWidth] = React.useState<number | null>(null);
   const [editorDetailsTab, setEditorDetailsTab] = React.useState<'document' | 'metadata'>('document');
   const [isDraggingSplitter, setIsDraggingSplitter] = React.useState(false);
-  const [isMigratingEditorMode, setIsMigratingEditorMode] = React.useState(false);
   const [editorContentRevisionSeed, setEditorContentRevisionSeed] = React.useState(0);
   const editorSplitRef = React.useRef<HTMLDivElement | null>(null);
   const editorTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -214,11 +213,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       return;
     }
     initialDraftFingerprintRef.current = buildDraftFingerprint(editingDocumentDraft);
-    setEditorTextColor('#e5e7eb');
-    setEditorFontFamily('inherit');
     setEditorWidth(null);
     setEditorDetailsTab('document');
-    setEditorShowPreview(editingDocumentDraft.editorType !== 'wysiwyg');
     setEditorContentRevisionSeed((value) => value + 1);
   }, [buildDraftFingerprint, editingDocumentDraft?.id]);
 
@@ -464,6 +460,16 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     router.push(`/admin/prompt-exploder?returnTo=${encodeURIComponent(returnTo)}`);
   }, [editingDocumentDraft, router, toast]);
 
+  const handleCopyDraftFileId = useCallback(async (): Promise<void> => {
+    if (!editingDocumentDraft) return;
+    try {
+      await navigator.clipboard.writeText(editingDocumentDraft.id);
+      toast('File ID copied to clipboard.', { variant: 'success' });
+    } catch {
+      toast('Failed to copy file ID.', { variant: 'error' });
+    }
+  }, [editingDocumentDraft, toast]);
+
   const applyDraftCanonicalContent = useCallback(
     (input: {
       mode: 'markdown' | 'wysiwyg' | 'code';
@@ -519,173 +525,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       html: editingDocumentDraft.documentContentHtml,
     });
   }, [applyDraftCanonicalContent, editingDocumentDraft]);
-
-  const handleSwitchEditorMode = useCallback(async (nextMode: 'markdown' | 'wysiwyg' | 'code'): Promise<void> => {
-    if (!editingDocumentDraft) return;
-    if (nextMode === editingDocumentDraft.editorType) return;
-
-    const performSwitch = (markdownValue?: string, htmlValue?: string, warnings?: string[]) => {
-      applyDraftCanonicalContent({
-        mode: nextMode,
-        value: markdownValue || htmlValue || '',
-        markdown: markdownValue,
-        html: htmlValue,
-        warnings,
-      });
-    };
-
-    setIsMigratingEditorMode(true);
-    try {
-      if (nextMode === 'wysiwyg') {
-        const sourceMarkdown =
-          editingDocumentDraft.documentContentMarkdown || editingDocumentDraft.documentContent;
-        performSwitch(sourceMarkdown, ensureHtmlForPreview(sourceMarkdown, 'markdown'));
-        return;
-      }
-
-      const sourceHtml =
-        editingDocumentDraft.documentContentHtml ||
-        ensureHtmlForPreview(editingDocumentDraft.documentContent, 'markdown');
-      const markdownConversion = await convertHtmlToMarkdown(sourceHtml);
-      
-      if (markdownConversion.warnings.length > 0) {
-        confirmAction({
-          title: 'Switch Editor Mode?',
-          message: `${markdownConversion.warnings[0]}\n\nContinue mode switch anyway? Content may be partially lost or reformatted.`,
-          confirmText: 'Switch Anyway',
-          isDangerous: true,
-          onConfirm: () => {
-            performSwitch(markdownConversion.markdown, sourceHtml, markdownConversion.warnings);
-          }
-        });
-        return;
-      }
-
-      performSwitch(markdownConversion.markdown, sourceHtml, markdownConversion.warnings);
-    } finally {
-      setIsMigratingEditorMode(false);
-    }
-  }, [applyDraftCanonicalContent, editingDocumentDraft, confirmAction]);
-
-  const applyWrap = useCallback((prefix: string, suffix: string, placeholder: string): void => {
-    const textarea = editorTextareaRef.current;
-    if (!textarea || !editingDocumentDraft) return;
-    const source = editingDocumentDraft.documentContentMarkdown || editingDocumentDraft.documentContent;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = source.slice(start, end) || placeholder;
-    const nextValue = source.slice(0, start) + prefix + selected + suffix + source.slice(end);
-    handleUpdateDraftDocumentContent(nextValue);
-    requestAnimationFrame((): void => {
-      const cursor = start + prefix.length + selected.length + suffix.length;
-      textarea.focus();
-      textarea.setSelectionRange(cursor, cursor);
-    });
-  }, [editingDocumentDraft, handleUpdateDraftDocumentContent]);
-
-  const insertAtCursor = useCallback((value: string): void => {
-    const textarea = editorTextareaRef.current;
-    if (!textarea || !editingDocumentDraft) return;
-    const source = editingDocumentDraft.documentContentMarkdown || editingDocumentDraft.documentContent;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const nextValue = source.slice(0, start) + value + source.slice(end);
-    handleUpdateDraftDocumentContent(nextValue);
-    requestAnimationFrame((): void => {
-      const cursor = start + value.length;
-      textarea.focus();
-      textarea.setSelectionRange(cursor, cursor);
-    });
-  }, [editingDocumentDraft, handleUpdateDraftDocumentContent]);
-
-  const applyLinePrefix = useCallback((prefix: string): void => {
-    const textarea = editorTextareaRef.current;
-    if (!textarea || !editingDocumentDraft) return;
-    const source = editingDocumentDraft.documentContentMarkdown || editingDocumentDraft.documentContent;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const blockStart = source.lastIndexOf('\n', start - 1) + 1;
-    const blockEndIndex = source.indexOf('\n', end);
-    const blockEnd = blockEndIndex === -1 ? source.length : blockEndIndex;
-    const block = source.slice(blockStart, blockEnd);
-    const updated = block
-      .split(/\r?\n/)
-      .map((line: string): string => (line.trim().length ? `${prefix}${line}` : line))
-      .join('\n');
-    const nextValue = source.slice(0, blockStart) + updated + source.slice(blockEnd);
-    handleUpdateDraftDocumentContent(nextValue);
-    requestAnimationFrame((): void => {
-      textarea.focus();
-      textarea.setSelectionRange(blockStart, blockStart + updated.length);
-    });
-  }, [editingDocumentDraft, handleUpdateDraftDocumentContent]);
-
-  const applyBulletList = useCallback((): void => {
-    const textarea = editorTextareaRef.current;
-    if (!textarea || !editingDocumentDraft) return;
-    const source = editingDocumentDraft.documentContentMarkdown || editingDocumentDraft.documentContent;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const blockStart = source.lastIndexOf('\n', start - 1) + 1;
-    const blockEndIndex = source.indexOf('\n', end);
-    const blockEnd = blockEndIndex === -1 ? source.length : blockEndIndex;
-    const block = source.slice(blockStart, blockEnd);
-    const updated = block
-      .split(/\r?\n/)
-      .map((line: string): string => (line.trim().startsWith('- ') ? line : `- ${line}`))
-      .join('\n');
-    const nextValue = source.slice(0, blockStart) + updated + source.slice(blockEnd);
-    handleUpdateDraftDocumentContent(nextValue);
-    requestAnimationFrame((): void => {
-      textarea.focus();
-      textarea.setSelectionRange(blockStart, blockStart + updated.length);
-    });
-  }, [editingDocumentDraft, handleUpdateDraftDocumentContent]);
-
-  const applyChecklist = useCallback((): void => {
-    const textarea = editorTextareaRef.current;
-    if (!textarea || !editingDocumentDraft) return;
-    const source = editingDocumentDraft.documentContentMarkdown || editingDocumentDraft.documentContent;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const blockStart = source.lastIndexOf('\n', start - 1) + 1;
-    const blockEndIndex = source.indexOf('\n', end);
-    const blockEnd = blockEndIndex === -1 ? source.length : blockEndIndex;
-    const block = source.slice(blockStart, blockEnd);
-    const updated = block
-      .split(/\r?\n/)
-      .map((line: string): string => (line.trim().startsWith('- [') ? line : `- [ ] ${line}`))
-      .join('\n');
-    const nextValue = source.slice(0, blockStart) + updated + source.slice(blockEnd);
-    handleUpdateDraftDocumentContent(nextValue);
-    requestAnimationFrame((): void => {
-      textarea.focus();
-      textarea.setSelectionRange(blockStart, blockStart + updated.length);
-    });
-  }, [editingDocumentDraft, handleUpdateDraftDocumentContent]);
-
-  const applySpanStyle = useCallback((colorValue: string, fontValue: string): void => {
-    const textarea = editorTextareaRef.current;
-    if (!textarea || !editingDocumentDraft) return;
-    const source = editingDocumentDraft.documentContentMarkdown || editingDocumentDraft.documentContent;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = source.slice(start, end);
-    const styleParts: string[] = [];
-    if (colorValue) styleParts.push(`color: ${colorValue}`);
-    if (fontValue && fontValue !== 'inherit') styleParts.push(`font-family: ${fontValue}`);
-    const styleAttribute = styleParts.length > 0 ? ` style="${styleParts.join('; ')}"` : '';
-    const openingTag = `<span${styleAttribute}>`;
-    const closingTag = '</span>';
-    const wrapped = `${openingTag}${selected}${closingTag}`;
-    const nextValue = source.slice(0, start) + wrapped + source.slice(end);
-    handleUpdateDraftDocumentContent(nextValue);
-    requestAnimationFrame((): void => {
-      const cursor = selected.length > 0 ? start + wrapped.length : start + openingTag.length;
-      textarea.focus();
-      textarea.setSelectionRange(cursor, cursor);
-    });
-  }, [editingDocumentDraft, handleUpdateDraftDocumentContent]);
 
   const handleMoveFolder = useCallback(
     async (folderPath: string, targetFolder: string): Promise<void> => {
@@ -755,6 +594,108 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     [setSelectedFolderPath, updateWorkspace]
   );
 
+  const handleToggleFolderLock = useCallback(
+    (folderPath: string): void => {
+      const normalizedFolderPath = normalizeFolderPath(folderPath);
+      if (!normalizedFolderPath) return;
+      updateWorkspace(
+        (current) => {
+          const folderFiles = current.files.filter((file) =>
+            isPathWithinFolder(file.folder, normalizedFolderPath)
+          );
+          if (folderFiles.length === 0) return current;
+
+          const shouldLock = folderFiles.some((file) => !file.isLocked);
+          const now = new Date().toISOString();
+          let changed = false;
+          const nextFiles = current.files.map((file) => {
+            if (!isPathWithinFolder(file.folder, normalizedFolderPath)) return file;
+            if (file.isLocked === shouldLock) return file;
+            changed = true;
+            return {
+              ...file,
+              isLocked: shouldLock,
+              updatedAt: now,
+            };
+          });
+          if (!changed) return current;
+          return {
+            ...current,
+            files: nextFiles,
+          };
+        },
+        { persistToast: 'Case Resolver tree changes saved.' }
+      );
+    },
+    [updateWorkspace]
+  );
+
+  const handleToggleFileLock = useCallback(
+    (fileId: string): void => {
+      updateWorkspace(
+        (current) => {
+          const target = current.files.find((file) => file.id === fileId);
+          if (!target) return current;
+          const nextLocked = !target.isLocked;
+          const now = new Date().toISOString();
+          const nextFiles = current.files.map((file) =>
+            file.id === fileId
+              ? {
+                ...file,
+                isLocked: nextLocked,
+                updatedAt: now,
+              }
+              : file
+          );
+          return {
+            ...current,
+            files: nextFiles,
+          };
+        },
+        { persistToast: 'Case Resolver tree changes saved.' }
+      );
+    },
+    [updateWorkspace]
+  );
+
+  const handleDeleteFile = useCallback(
+    (fileId: string): void => {
+      updateWorkspace(
+        (current) => {
+          const exists = current.files.some((file) => file.id === fileId);
+          if (!exists) return current;
+          const nextFiles = current.files.filter((file) => file.id !== fileId);
+          return {
+            ...current,
+            files: nextFiles,
+            activeFileId:
+              current.activeFileId === fileId
+                ? (nextFiles[0]?.id ?? null)
+                : current.activeFileId,
+          };
+        },
+        { persistToast: 'Case removed.' }
+      );
+      if (selectedFileId === fileId) {
+        setSelectedFileId(null);
+        setSelectedAssetId(null);
+        setSelectedFolderPath(null);
+      }
+      if (editingDocumentDraft?.id === fileId) {
+        setEditingDocumentDraft(null);
+      }
+    },
+    [
+      editingDocumentDraft?.id,
+      selectedFileId,
+      setEditingDocumentDraft,
+      setSelectedAssetId,
+      setSelectedFileId,
+      setSelectedFolderPath,
+      updateWorkspace,
+    ]
+  );
+
   const handleGraphChange = useCallback(
     (nextGraph: CaseResolverGraph): void => {
       updateWorkspace((current) => {
@@ -782,10 +723,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleRelationGraphChange = useCallback(
     (nextGraph: CaseResolverRelationGraph): void => {
-      updateWorkspace((current) => ({
-        ...current,
-        relationGraph: nextGraph,
-      }));
+      updateWorkspace((current) => {
+        if (stableStringify(current.relationGraph) === stableStringify(nextGraph)) {
+          return current;
+        }
+        return {
+          ...current,
+          relationGraph: nextGraph,
+        };
+      });
     },
     [updateWorkspace]
   );
@@ -816,9 +762,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       onRenameFile: state.handleRenameFile,
       onRenameAsset: state.handleRenameAsset,
       onRenameFolder: state.handleRenameFolder,
-      onToggleFolderLock: () => {},
-      onDeleteFile: () => {},
-      onToggleFileLock: () => {},
+      onToggleFolderLock: handleToggleFolderLock,
+      onDeleteFile: handleDeleteFile,
+      onToggleFileLock: handleToggleFileLock,
       onEditFile: handleOpenFileEditor,
       caseResolverTags,
       caseResolverIdentifiers,
@@ -842,7 +788,16 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             <div className='mb-6 flex items-center justify-between'>
               <div>
                 <h1 className='text-2xl font-bold text-white'>Case Resolver</h1>
-                <p className='text-sm text-gray-400'>Manage complex document sets and canvas workspaces.</p>
+                <nav
+                  aria-label='Breadcrumb'
+                  className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
+                >
+                  <Link href='/admin' className='transition-colors hover:text-gray-200'>
+                    Admin
+                  </Link>
+                  <span>/</span>
+                  <span className='text-gray-300'>Case Resolver</span>
+                </nav>
               </div>
               <div className='flex gap-2'>
                 <Button
@@ -1120,34 +1075,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
               {ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR ? (
                 <>
-                  <MarkdownToolbar
-                    mode={editingDocumentDraft.editorType}
-                    onModeChange={(mode): void => {
-                      void handleSwitchEditorMode(mode);
-                    }}
-                    isMigrating={isMigratingEditorMode}
-                    onMigrateToWysiwyg={(): void => {
-                      void handleSwitchEditorMode('wysiwyg');
-                    }}
-                    onMigrateToMarkdown={(): void => {
-                      void handleSwitchEditorMode('markdown');
-                    }}
-                    showPreview={editorShowPreview}
-                    onTogglePreview={(): void => {
-                      setEditorShowPreview((value) => !value);
-                    }}
-                    textColor={editorTextColor}
-                    onTextColorChange={setEditorTextColor}
-                    fontFamily={editorFontFamily}
-                    onFontFamilyChange={setEditorFontFamily}
-                    onApplyWrap={applyWrap}
-                    onApplyLinePrefix={applyLinePrefix}
-                    onInsertAtCursor={insertAtCursor}
-                    onApplyBulletList={applyBulletList}
-                    onApplyChecklist={applyChecklist}
-                    onApplySpanStyle={applySpanStyle}
-                  />
-
                   {editingDocumentDraft.editorType === 'wysiwyg' ? (
                     <DocumentWysiwygEditor
                       key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
@@ -1163,7 +1090,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                       key={`case-resolver-markdown-${editorContentRevisionSeed}`}
                       value={editingDocumentDraft.documentContentMarkdown}
                       onChange={handleUpdateDraftDocumentContent}
-                      showPreview={editorShowPreview}
+                      showPreview
                       renderPreviewHtml={(value: string): string => ensureHtmlForPreview(value, 'markdown')}
                       sanitizePreviewHtml={sanitizeHtml}
                       textareaRef={editorTextareaRef}
@@ -1191,8 +1118,21 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
               <div className='flex justify-end gap-2'>
                 <Button variant='outline' onClick={handleDiscardFileEditorDraft}>Discard</Button>
-                <Button onClick={handleSaveFileEditor} disabled={isMigratingEditorMode}>
+                <Button onClick={handleSaveFileEditor}>
                   Save Changes
+                </Button>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  className='h-9 max-w-[220px] gap-1.5 truncate px-2 text-[11px] text-gray-400 hover:text-gray-100'
+                  onClick={(): void => {
+                    void handleCopyDraftFileId();
+                  }}
+                  title='Copy file ID'
+                >
+                  <span className='truncate'>ID: {editingDocumentDraft.id}</span>
+                  <Copy className='size-3' />
                 </Button>
               </div>
             </div>

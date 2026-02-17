@@ -223,7 +223,7 @@ export function useDatabaseNodeConfigState() {
 
       const res = await dbApi.action({
         provider: queryConfig.provider || 'auto',
-        action: databaseConfig.action as any,
+        action: databaseConfig.action as DatabaseAction,
         collection: queryConfig.collection || 'products',
         [databaseConfig.actionCategory === 'create' ? 'document' : databaseConfig.actionCategory === 'aggregate' ? 'pipeline' : 'filter']: parsed.value,
         idType: queryConfig.idType || 'string',
@@ -231,9 +231,10 @@ export function useDatabaseNodeConfigState() {
       if (!res.ok) throw new Error(res.error || 'Query failed');
       setTestQueryResult(JSON.stringify(res.data, null, 2));
       toast('Success', { variant: 'success' });
-    } catch (e: any) {
-      setTestQueryResult(JSON.stringify({ error: e.message }, null, 2));
-      toast(e.message, { variant: 'error' });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setTestQueryResult(JSON.stringify({ error: message }, null, 2));
+      toast(message, { variant: 'error' });
     } finally {
       setTestQueryLoading(false);
     }

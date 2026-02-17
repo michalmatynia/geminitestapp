@@ -90,6 +90,15 @@ export type MasterFolderTreeProps = {
         controller: MasterFolderTreeController
       ) => void)
     | undefined;
+  canStartDrag?:
+    | ((
+        input: {
+          node: MasterTreeViewNode;
+          event: React.DragEvent<HTMLDivElement>;
+        },
+        controller: MasterFolderTreeController
+      ) => boolean)
+    | undefined;
   rootDropUi?:
     | {
         enabled?: boolean | undefined;
@@ -163,6 +172,7 @@ export function MasterFolderTree({
   onNodeDrop,
   resolveDropPosition,
   onNodeDragStart,
+  canStartDrag,
   rootDropUi,
 }: MasterFolderTreeProps): React.JSX.Element {
   const [externalDraggedNodeId, setExternalDraggedNodeId] = React.useState<MasterTreeId | null>(null);
@@ -346,6 +356,20 @@ export function MasterFolderTree({
               onDragStart={
                 enableDnd
                   ? (event: React.DragEvent<HTMLDivElement>): void => {
+                    if (
+                      canStartDrag &&
+                      !canStartDrag(
+                        {
+                          node,
+                          event,
+                        },
+                        controller
+                      )
+                    ) {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      return;
+                    }
                     // Set drag data synchronously — dataTransfer is only writable
                     // during the dragStart event.
                     try {

@@ -99,13 +99,13 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
         <div className='space-y-4'>
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <h3 className='text-sm font-medium text-white'>
-              Database Node: {resolveNodeLabel(selectedNode.type, (selectedNode.config?.database as any)?.label)}
+              Database Node: {resolveNodeLabel(selectedNode.type, (selectedNode.config?.database as { label?: string } | undefined)?.label)}
             </h3>
           </div>
 
           <Tabs
             value={state.databaseTab}
-            onValueChange={(value: string) => state.setDatabaseTab(value as any)}
+            onValueChange={(value: string) => state.setDatabaseTab(value as 'settings' | 'constructor' | 'presets')}
             className='space-y-4'
           >
             <TabsList className='justify-start border border-border bg-card/60'>

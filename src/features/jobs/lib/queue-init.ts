@@ -77,6 +77,7 @@ export const initializeQueues = (): void => {
       import('@/features/jobs/workers/aiInsightsQueue'),
       import('@/features/jobs/workers/databaseBackupSchedulerQueue'),
       import('@/features/jobs/workers/imageStudioRunQueue'),
+      import('@/features/jobs/workers/imageStudioSequenceQueue'),
       import('@/features/jobs/workers/traderaListingQueue'),
       import('@/features/jobs/workers/traderaRelistSchedulerQueue'),
       import('@/features/jobs/workers/baseImportQueue'),
@@ -88,11 +89,11 @@ export const initializeQueues = (): void => {
       startDatabaseBackupSchedulerQueue?: () => void;
     };
     backupSchedulerModule.startDatabaseBackupSchedulerQueue?.();
-    const traderaSchedulerModule = queueModules[8] as {
+    const traderaSchedulerModule = queueModules[9] as {
       startTraderaRelistSchedulerQueue?: () => void;
     };
     traderaSchedulerModule.startTraderaRelistSchedulerQueue?.();
-    const productSyncSchedulerModule = queueModules[12] as {
+    const productSyncSchedulerModule = queueModules[13] as {
       startProductSyncSchedulerQueue?: () => void;
     };
     productSyncSchedulerModule.startProductSyncSchedulerQueue?.();

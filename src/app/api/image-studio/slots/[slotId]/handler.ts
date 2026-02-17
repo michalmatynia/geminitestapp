@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { deleteImageStudioSlot, updateImageStudioSlot } from '@/features/ai/image-studio/server/slot-repository';
+import {
+  deleteImageStudioSlotCascade,
+  updateImageStudioSlot,
+} from '@/features/ai/image-studio/server/slot-repository';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/types/api/api';
 
@@ -92,10 +95,13 @@ export async function DELETE_handler(
   if (slotIdCandidates.length === 0) throw badRequestError('Slot id is required');
 
   let deleted = false;
+  let deletedSlotIds: string[] = [];
   for (const slotIdCandidate of slotIdCandidates) {
-    deleted = await deleteImageStudioSlot(slotIdCandidate);
+    const result = await deleteImageStudioSlotCascade(slotIdCandidate);
+    deleted = result.deleted;
+    deletedSlotIds = result.deletedSlotIds;
     if (deleted) break;
   }
   if (!deleted) throw notFoundError('Slot not found');
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, deletedSlotIds });
 }

@@ -259,7 +259,7 @@ export function ExportTab(): React.JSX.Element {
             ) : activeCategoryMappings.length === 0 ? (
               <span>
                 No active mappings found for this connection. Add mappings in{' '}
-                <Link href='/admin/integrations/marketplaces/category-mapper' className='text-amber-300 underline'>
+                <Link href='/admin/integrations/aggregators/base-com/category-mapping' className='text-amber-300 underline'>
                   Category Mapper
                 </Link>
                 .

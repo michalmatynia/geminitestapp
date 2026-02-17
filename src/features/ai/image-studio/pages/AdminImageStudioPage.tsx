@@ -66,7 +66,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
     if (!requestedProjectId || requestedProjectId === projectId) return;
     if (projectsQuery.isLoading) return;
     const availableProjects = projectsQuery.data ?? [];
-    if (availableProjects.length > 0 && !availableProjects.includes(requestedProjectId)) return;
+    if (availableProjects.length > 0 && !availableProjects.some((project) => project.id === requestedProjectId)) return;
     setProjectId(requestedProjectId);
   }, [projectId, projectsQuery.data, projectsQuery.isLoading, searchParams, setProjectId]);
 
@@ -99,7 +99,7 @@ function AdminImageStudioPageContent(): React.JSX.Element {
   }, [pathname, router, searchParams]);
 
   const projectSelectOptions = useMemo(
-    () => (projectsQuery.data ?? []).map((id: string) => ({ value: id, label: id })),
+    () => (projectsQuery.data ?? []).map((project) => ({ value: project.id, label: project.id })),
     [projectsQuery.data]
   );
 

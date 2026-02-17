@@ -9,7 +9,12 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   PRODUCT_IMAGES_EXTERNAL_ROUTES_SETTING_KEY,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
+  PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
 } from '@/features/products/constants';
+import {
+  normalizeProductStudioSequenceGenerationMode,
+  type ProductStudioSequenceGenerationMode,
+} from '@/features/products/types/product-studio';
 import { normalizeProductImageExternalBaseUrl } from '@/features/products/utils/image-routing';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -64,6 +69,7 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
   const settingsStore = useSettingsStore();
   const studioProjectsQuery = useStudioProjects();
   const updateStudioProjectSetting = useUpdateSetting();
+  const updateSequenceGenerationModeSetting = useUpdateSetting();
   const updateSettingsBulk = useUpdateSettingsBulk();
 
   const persistedBaseUrlRaw =
@@ -77,6 +83,9 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
   const persistedStudioProjectRaw =
     settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY) ?? '';
   const persistedStudioProject = persistedStudioProjectRaw.trim();
+  const persistedSequenceGenerationMode = normalizeProductStudioSequenceGenerationMode(
+    settingsStore.get(PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY)
+  );
 
   const [routes, setRoutes] = useState<string[]>(
     parseRoutesSetting(persistedRoutesRaw, persistedBaseUrl)
@@ -86,13 +95,17 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
   const [selectedStudioProject, setSelectedStudioProject] = useState<string>(
     persistedStudioProject || STUDIO_PROJECT_NONE
   );
+  const [sequenceGenerationMode, setSequenceGenerationMode] =
+    useState<ProductStudioSequenceGenerationMode>(
+      persistedSequenceGenerationMode
+    );
 
   const studioProjectOptions = useMemo(
     () => [
       { value: STUDIO_PROJECT_NONE, label: 'Not Connected' },
-      ...(studioProjectsQuery.data ?? []).map((projectId: string) => ({
-        value: projectId,
-        label: projectId,
+      ...(studioProjectsQuery.data ?? []).map((project) => ({
+        value: project.id,
+        label: project.id,
       })),
     ],
     [studioProjectsQuery.data]
@@ -103,6 +116,8 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
       : selectedStudioProject.trim();
   const isStudioProjectDirty =
     normalizedSelectedStudioProject !== persistedStudioProject;
+  const isSequenceGenerationModeDirty =
+    sequenceGenerationMode !== persistedSequenceGenerationMode;
 
   useEffect(() => {
     const nextRoutes = parseRoutesSetting(persistedRoutesRaw, persistedBaseUrl);
@@ -116,6 +131,10 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
   useEffect(() => {
     setSelectedStudioProject(persistedStudioProject || STUDIO_PROJECT_NONE);
   }, [persistedStudioProject]);
+
+  useEffect(() => {
+    setSequenceGenerationMode(persistedSequenceGenerationMode);
+  }, [persistedSequenceGenerationMode]);
 
   const handleAddRoute = (): void => {
     const normalized = normalizeProductImageExternalBaseUrl(newRoute);
@@ -214,6 +233,28 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
     );
   };
 
+  const handleSaveSequenceGenerationMode = (): void => {
+    updateSequenceGenerationModeSetting.mutate(
+      {
+        key: PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
+        value: sequenceGenerationMode,
+      },
+      {
+        onSuccess: () => {
+          settingsStore.refetch();
+          toast('Image Studio sequence generation mode saved.', {
+            variant: 'success',
+          });
+        },
+        onError: () => {
+          toast('Failed to save Image Studio sequence generation mode.', {
+            variant: 'error',
+          });
+        },
+      }
+    );
+  };
+
   const handleStartStudioConnection = (): void => {
     const params = new URLSearchParams();
     if (normalizedSelectedStudioProject) {
@@ -273,6 +314,59 @@ export function ProductImageRoutingSettings(): React.JSX.Element {
               {normalizedSelectedStudioProject
                 ? 'Start Image Studio Connection'
                 : 'Open Image Studio Projects'}
+            </Button>
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection
+        title='Image Studio Sequence Mode'
+        description='Choose whether Product Studio runs sequencing in Image Studio runtime or delegates full sequencing to the AI model.'
+      >
+        <div className='space-y-4'>
+          <FormField
+            id='productStudioSequenceGenerationMode'
+            label='Generation + Sequencing Mode'
+            description='If model-native full sequencing is selected but unsupported by the current model, Product Studio falls back to Image Studio sequencing and shows a warning.'
+          >
+            <SelectSimple size='sm'
+              value={sequenceGenerationMode}
+              onValueChange={(value: string) => {
+                if (
+                  value !== 'studio_prompt_then_sequence' &&
+                  value !== 'model_full_sequence'
+                ) {
+                  return;
+                }
+                setSequenceGenerationMode(value);
+              }}
+              options={[
+                {
+                  value: 'studio_prompt_then_sequence',
+                  label: 'Prompt then Image Studio Sequencer',
+                },
+                {
+                  value: 'model_full_sequence',
+                  label: 'Model Full Sequence (if supported)',
+                },
+              ]}
+              disabled={updateSequenceGenerationModeSetting.isPending}
+              triggerClassName='h-9'
+              ariaLabel='Product Studio sequence generation mode'
+            />
+          </FormField>
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button size='xs'
+              type='button'
+              onClick={handleSaveSequenceGenerationMode}
+              disabled={
+                updateSequenceGenerationModeSetting.isPending ||
+                !isSequenceGenerationModeDirty
+              }
+            >
+              {updateSequenceGenerationModeSetting.isPending
+                ? 'Saving...'
+                : 'Save Sequence Mode'}
             </Button>
           </div>
         </div>

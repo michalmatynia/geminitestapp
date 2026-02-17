@@ -92,7 +92,7 @@ export const imageStudioRunRequestSchema = z.object({
   asset: z.object({
     filepath: z.string().min(1),
     id: z.string().optional(),
-  }),
+  }).optional(),
   referenceAssets: z
     .array(
       z.object({
@@ -527,19 +527,27 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   const projectId = sanitizeImageStudioProjectId(request.projectId);
   if (!projectId) throw badRequestError('Project id is required.');
 
-  const assetPath = normalizePublicAssetPath(request.asset.filepath);
-  if (!isProjectScopedAssetPath(assetPath, projectId)) {
-    throw badRequestError('Asset must belong to the current project.');
+  const assetPath = normalizePublicAssetPath(request.asset?.filepath ?? '');
+  const hasSourceAsset = Boolean(assetPath);
+  let diskPath: string | null = null;
+
+  if (hasSourceAsset) {
+    if (!isProjectScopedAssetPath(assetPath, projectId)) {
+      throw badRequestError('Asset must belong to the current project.');
+    }
+
+    const resolvedDiskPath = resolveAssetPath(assetPath);
+    ensureWithinProject(resolvedDiskPath, projectId);
+    await fs.stat(resolvedDiskPath).catch(() => {
+      throw badRequestError('Asset file not found.');
+    });
+    diskPath = resolvedDiskPath;
   }
 
-  const diskPath = resolveAssetPath(assetPath);
-  ensureWithinProject(diskPath, projectId);
-
-  await fs.stat(diskPath).catch(() => {
-    throw badRequestError('Asset file not found.');
-  });
-
   if (operation === 'center_object') {
+    if (!diskPath) {
+      throw badRequestError('Source asset is required for center operation.');
+    }
     return executeCenterOperation({
       request,
       projectId,
@@ -590,18 +598,18 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     }
   }
   const mask =
-    polygons.length > 0
+    diskPath && polygons.length > 0
       ? await buildMaskBuffer({ imagePath: diskPath, polygons, invert, feather })
       : null;
 
-  const referenceAssets = request.referenceAssets ?? [];
+  const referenceAssets = hasSourceAsset ? (request.referenceAssets ?? []) : [];
   const referencePaths: string[] = [];
   const seenPaths = new Set<string>();
 
   for (const ref of referenceAssets) {
     const refPath = normalizePublicAssetPath(ref.filepath);
     if (!refPath) continue;
-    if (refPath === assetPath) continue;
+    if (assetPath && refPath === assetPath) continue;
     if (seenPaths.has(refPath)) continue;
     if (!isProjectScopedAssetPath(refPath, projectId)) {
       throw badRequestError('Reference asset must belong to the current project.');
@@ -616,7 +624,7 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   }
 
   const maxImages = 16;
-  if (referencePaths.length + 1 > maxImages) {
+  if (hasSourceAsset && referencePaths.length + 1 > maxImages) {
     throw badRequestError(`Too many input images. Limit is ${maxImages} total.`);
   }
 
@@ -626,7 +634,7 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   }
   const modelName = (resolvedModel ?? '').toLowerCase();
   const modelCapabilities = getImageModelCapabilities(resolvedModel);
-  if (modelName.includes('dall-e-2') && referencePaths.length > 0) {
+  if (hasSourceAsset && modelName.includes('dall-e-2') && referencePaths.length > 0) {
     throw badRequestError('Multiple input images are only supported for GPT image models.');
   }
   const requestedFormat = settings.targetAi.openai.image.format ?? 'png';
@@ -634,35 +642,48 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     ? requestedFormat
     : (modelCapabilities.formatOptions[0] ?? 'png');
 
+  const requestMode: 'edit' | 'generate' = hasSourceAsset && diskPath ? 'edit' : 'generate';
   let dalle2BaseSize: '256x256' | '512x512' | '1024x1024' | null = null;
-  let imageFiles: Array<Awaited<ReturnType<typeof toFile>>>;
-  if (modelName.includes('dall-e-2')) {
-    const dalle2Base = await toDalle2UploadableImageFile(diskPath);
-    imageFiles = [dalle2Base.file];
-    dalle2BaseSize = dalle2Base.size;
-  } else {
-    const baseName = path.basename(diskPath, path.extname(diskPath)) || 'image';
-    const baseImage = await toUploadableImageFile({
-      diskPath,
-      fileNameBase: baseName,
-    });
-    const referenceImages = await Promise.all(
-      referencePaths.map((refPath: string, index: number) =>
-        toUploadableImageFile({
-          diskPath: refPath,
-          fileNameBase: `reference-${index + 1}`,
-        })
-      )
-    );
-    imageFiles = [baseImage, ...referenceImages];
-  }
-  const imagePayload = imageFiles.length === 1 ? imageFiles[0]! : imageFiles;
+  let imageFiles: Array<Awaited<ReturnType<typeof toFile>>> = [];
+  let payload: OpenAI.Images.ImageEditParamsNonStreaming | OpenAI.Images.ImageGenerateParamsNonStreaming;
 
-  const payload: OpenAI.Images.ImageEditParamsNonStreaming = {
-    model: resolvedModel,
-    prompt: modelName.includes('dall-e-2') ? clampPromptForDalle2(request.prompt) : request.prompt,
-    image: imagePayload as unknown as OpenAI.Images.ImageEditParamsNonStreaming['image'],
-  };
+  if (requestMode === 'edit') {
+    if (!diskPath) {
+      throw badRequestError('Source asset is required for image edit runs.');
+    }
+    if (modelName.includes('dall-e-2')) {
+      const dalle2Base = await toDalle2UploadableImageFile(diskPath);
+      imageFiles = [dalle2Base.file];
+      dalle2BaseSize = dalle2Base.size;
+    } else {
+      const baseName = path.basename(diskPath, path.extname(diskPath)) || 'image';
+      const baseImage = await toUploadableImageFile({
+        diskPath,
+        fileNameBase: baseName,
+      });
+      const referenceImages = await Promise.all(
+        referencePaths.map((refPath: string, index: number) =>
+          toUploadableImageFile({
+            diskPath: refPath,
+            fileNameBase: `reference-${index + 1}`,
+          })
+        )
+      );
+      imageFiles = [baseImage, ...referenceImages];
+    }
+    const imagePayload = imageFiles.length === 1 ? imageFiles[0]! : imageFiles;
+    payload = {
+      model: resolvedModel,
+      prompt: modelName.includes('dall-e-2') ? clampPromptForDalle2(request.prompt) : request.prompt,
+      image: imagePayload as unknown as OpenAI.Images.ImageEditParamsNonStreaming['image'],
+    };
+  } else {
+    payload = {
+      model: resolvedModel,
+      prompt: modelName.includes('dall-e-2') ? clampPromptForDalle2(request.prompt) : request.prompt,
+    };
+  }
+
   const payloadRecord = payload as unknown as Record<string, unknown>;
   let effectiveFormat: 'png' | 'jpeg' | 'webp' = format;
   if (IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT && modelCapabilities.supportsOutputFormat) {
@@ -678,7 +699,7 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     payloadRecord['n'] = settings.targetAi.openai.image.n;
   }
   const size = coerceImageSize(settings.targetAi.openai.image.size ?? null);
-  if (modelName.includes('dall-e-2') && dalle2BaseSize) {
+  if (requestMode === 'edit' && modelName.includes('dall-e-2') && dalle2BaseSize) {
     payloadRecord['size'] = dalle2BaseSize;
   } else if (size && modelCapabilities.sizeOptions.includes(size)) {
     payloadRecord['size'] = size;
@@ -713,33 +734,34 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
   ) {
     payloadRecord['partial_images'] = settings.targetAi.openai.image.partial_images;
   }
-  if (modelCapabilities.supportsStream && typeof settings.targetAi.openai.stream === 'boolean') {
+  if (
+    requestMode === 'edit' &&
+    modelCapabilities.supportsStream &&
+    typeof settings.targetAi.openai.stream === 'boolean'
+  ) {
     payloadRecord['stream'] = settings.targetAi.openai.stream;
   }
   if (modelCapabilities.supportsUser && settings.targetAi.openai.user) {
     payloadRecord['user'] = settings.targetAi.openai.user;
   }
 
-  if (mask) {
+  if (requestMode === 'edit' && mask) {
     payloadRecord['mask'] = await toFile(mask, 'mask.png', { type: 'image/png' });
   }
 
   if (overrides) {
-    const { image, mask: overrideMask, prompt, ...rest } =
-      overrides as Partial<OpenAI.Images.ImageEditParamsNonStreaming>;
-    void image;
-    void overrideMask;
-    void prompt;
-    const target = payload as unknown as Record<string, unknown>;
-    Object.entries(rest).forEach(([key, value]) => {
+    Object.entries(overrides).forEach(([key, value]) => {
       if (value !== undefined) {
+        if (key === 'image' || key === 'mask' || key === 'prompt') {
+          return;
+        }
         if (key === 'output_format' && !(IMAGE_STUDIO_ENABLE_OUTPUT_FORMAT && modelCapabilities.supportsOutputFormat)) {
           return;
         }
         if (key === 'response_format' && !modelCapabilities.supportsResponseFormat) {
           return;
         }
-        if (key === 'stream' && !modelCapabilities.supportsStream) {
+        if (key === 'stream' && (requestMode !== 'edit' || !modelCapabilities.supportsStream)) {
           return;
         }
         if (key === 'moderation' && !modelCapabilities.supportsModeration) {
@@ -751,7 +773,7 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
         if (key === 'partial_images' && !modelCapabilities.supportsPartialImages) {
           return;
         }
-        target[key] = value as unknown;
+        payloadRecord[key] = value;
       }
     });
   }
@@ -760,14 +782,16 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
     delete payloadRecord['output_format'];
   }
 
-  let response: Awaited<ReturnType<typeof client.images.edit>> | null = null;
+  let response: OpenAI.ImagesResponse | null = null;
   let dalle2ModelFallbackApplied = false;
   const unknownParameterDrops: string[] = [];
   let apiAttemptCount = 0;
   for (let attempt = 0; attempt < MAX_UNKNOWN_PARAMETER_RETRIES; attempt += 1) {
     try {
       apiAttemptCount += 1;
-      response = await client.images.edit(payload);
+      response = requestMode === 'edit'
+        ? await client.images.edit(payload as OpenAI.Images.ImageEditParamsNonStreaming) as OpenAI.ImagesResponse
+        : await client.images.generate(payload as OpenAI.Images.ImageGenerateParamsNonStreaming) as OpenAI.ImagesResponse;
       break;
     } catch (error) {
       const message = extractErrorMessage(error);
@@ -777,11 +801,19 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
         activeModel !== 'dall-e-2' &&
         MODEL_MUST_BE_DALLE2_REGEX.test(message)
       ) {
-        const fallbackImage = await toDalle2UploadableImageFile(diskPath);
         payloadRecord['model'] = 'dall-e-2';
         payloadRecord['prompt'] = clampPromptForDalle2(String(payloadRecord['prompt'] ?? request.prompt));
-        payloadRecord['image'] = fallbackImage.file;
-        payloadRecord['size'] = fallbackImage.size;
+        if (requestMode === 'edit' && diskPath) {
+          const fallbackImage = await toDalle2UploadableImageFile(diskPath);
+          payloadRecord['image'] = fallbackImage.file;
+          payloadRecord['size'] = fallbackImage.size;
+        } else if (
+          payloadRecord['size'] !== '256x256' &&
+          payloadRecord['size'] !== '512x512' &&
+          payloadRecord['size'] !== '1024x1024'
+        ) {
+          payloadRecord['size'] = '1024x1024';
+        }
         payloadRecord['quality'] = 'standard';
         payloadRecord['response_format'] = 'b64_json';
         delete payloadRecord['output_format'];
@@ -803,8 +835,7 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
       if (
         unknownParameter === 'model' ||
         unknownParameter === 'prompt' ||
-        unknownParameter === 'image' ||
-        unknownParameter === 'mask'
+        (requestMode === 'edit' && (unknownParameter === 'image' || unknownParameter === 'mask'))
       ) {
         throw error;
       }
@@ -861,8 +892,8 @@ export async function executeImageStudioRun(rawRequest: unknown): Promise<ImageS
       outputFormat: effectiveFormat,
       requestedOutputCount: Math.max(1, Math.min(10, Math.floor(settings.targetAi.openai.image.n || 1))),
       responseImageCount: images.length,
-      inputImageCount: imageFiles.length,
-      usedMask: Boolean(payloadRecord['mask']),
+      inputImageCount: requestMode === 'edit' ? imageFiles.length : 0,
+      usedMask: requestMode === 'edit' && Boolean(payloadRecord['mask']),
       requestedSize: settings.targetAi.openai.image.size ?? null,
       effectiveSize:
         typeof effectiveSizeRaw === 'string' && effectiveSizeRaw.trim()

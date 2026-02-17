@@ -211,7 +211,12 @@ export default function ProductForm({
     [validatorConfigQuery.data?.patterns]
   );
   const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
-  const primaryCatalogId = selectedCatalogIds[0] ?? '';
+  const primaryCatalogId = useMemo((): string => {
+    const selected = selectedCatalogIds[0]?.trim() ?? '';
+    if (selected) return selected;
+    const fallback = typeof product?.catalogId === 'string' ? product.catalogId.trim() : '';
+    return fallback;
+  }, [product?.catalogId, selectedCatalogIds]);
   const selectedCategoryName = useMemo((): string => {
     if (!selectedCategoryId) return '';
     const category =

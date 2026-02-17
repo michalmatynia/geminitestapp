@@ -64,6 +64,26 @@ const resolveSourceSlotIdFromGeneratedPath = (slot: ImageStudioSlotRecord | null
   return sourceSlotId || null;
 };
 
+const isTreeRevealableCardSlot = (slot: ImageStudioSlotRecord | null): boolean => {
+  if (!slot?.id) return false;
+  const metadata = asObjectRecord(slot.metadata);
+  if (!metadata) return true;
+
+  const role = typeof metadata['role'] === 'string' ? metadata['role'].trim().toLowerCase() : '';
+  const relationType = typeof metadata['relationType'] === 'string'
+    ? metadata['relationType'].trim().toLowerCase()
+    : '';
+
+  const isGenerationDerived =
+    role === 'generation' ||
+    relationType.startsWith('generation:') ||
+    relationType.startsWith('center:') ||
+    relationType.startsWith('crop:') ||
+    relationType.startsWith('upscale:');
+
+  return !isGenerationDerived;
+};
+
 export function CenterPreview(): React.JSX.Element {
   const { isFocusMode, maskPreviewEnabled, centerGuidesEnabled } = useUiState();
   const { toggleFocusMode, registerPreviewCanvasViewportCropResolver } = useUiActions();
@@ -239,6 +259,15 @@ export function CenterPreview(): React.JSX.Element {
     }
     return workingSlot?.id ?? null;
   }, [canCompareWithSource, previewMode, singleVariantView, sourceSlot?.id, splitVariantView, workingSlot?.id]);
+  const useBlankWhiteCanvas = useMemo(
+    () => previewMode === 'image' && !splitVariantView && !activeCanvasImageSrc,
+    [activeCanvasImageSrc, previewMode, splitVariantView]
+  );
+
+  const canRevealLoadedCardInTree = useMemo(
+    () => isTreeRevealableCardSlot(workingSlot),
+    [workingSlot]
+  );
 
   const eligibleMaskShapes = useMemo(
     () =>
@@ -1136,23 +1165,11 @@ export function CenterPreview(): React.JSX.Element {
 
           try {
             await deleteSlotMutation.mutateAsync(targetSlotId);
-            if (workingSlot?.id === targetSlotId) {
-              setWorkingSlotId(null);
-            }
-            if (selectedSlotId === targetSlotId) {
-              setSelectedSlotId(null);
-            }
             dismissVariantFromUi();
             refreshGenerationQueries();
           } catch (error: unknown) {
             if (error instanceof ApiError && error.status === 404) {
               await deleteVariantAssetFallback();
-              if (workingSlot?.id === targetSlotId) {
-                setWorkingSlotId(null);
-              }
-              if (selectedSlotId === targetSlotId) {
-                setSelectedSlotId(null);
-              }
               dismissVariantFromUi();
               refreshGenerationQueries();
               return;
@@ -1171,12 +1188,8 @@ export function CenterPreview(): React.JSX.Element {
     projectId,
     queryClient,
     resolveVariantSlotId,
-    selectedSlotId,
-    setSelectedSlotId,
-    setWorkingSlotId,
     slots,
     toast,
-    workingSlot?.id,
     clearActiveRunError,
   ]);
 
@@ -1399,6 +1412,7 @@ export function CenterPreview(): React.JSX.Element {
                   showCenterGuides={centerGuidesEnabled}
                   enableTwoFingerRotate
                   onViewCropRectChange={handlePreviewCanvasCropRectChange}
+                  className={useBlankWhiteCanvas ? 'bg-white' : undefined}
                 />
               )}
             </VectorDrawingProvider>
@@ -1421,20 +1435,21 @@ export function CenterPreview(): React.JSX.Element {
                 onToggleSplitVariantView={handleToggleSplitVariantView}
               />
             ) : null}
-            <div className='absolute bottom-2 right-2 z-20'>
-              <Button size='xs'
-                type='button'
-                variant='outline'
-                onClick={handleRevealInTreeFromCanvas}
-                disabled={!workingSlot?.id}
-                title='Reveal loaded card in tree'
-                aria-label='Reveal loaded card in tree'
-                className='h-7 bg-black/70 px-2 text-[11px] text-gray-100 backdrop-blur-sm disabled:opacity-60'
-              >
-                <Locate className='mr-1.5 size-3.5' />
-                Reveal in tree
-              </Button>
-            </div>
+            {canRevealLoadedCardInTree ? (
+              <div className='absolute bottom-2 right-2 z-20'>
+                <Button size='xs'
+                  type='button'
+                  variant='outline'
+                  onClick={handleRevealInTreeFromCanvas}
+                  title='Reveal loaded card in tree'
+                  aria-label='Reveal loaded card in tree'
+                  className='h-7 bg-black/70 px-2 text-[11px] text-gray-100 backdrop-blur-sm'
+                >
+                  <Locate className='mr-1.5 size-3.5' />
+                  Reveal in tree
+                </Button>
+              </div>
+            ) : null}
           </div>
           {showVariantPanel ? (
             <div className='shrink-0 overflow-hidden rounded-lg border border-border/60 bg-card/40 p-2'>

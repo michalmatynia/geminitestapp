@@ -53,6 +53,7 @@ export function ConfirmModal({
       title={title}
       subtitle={subtitle}
       size={size}
+      showClose={false}
       footer={
         <div className='flex gap-2'>
           <Button

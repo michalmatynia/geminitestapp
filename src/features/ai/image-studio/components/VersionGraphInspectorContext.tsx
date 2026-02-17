@@ -10,7 +10,6 @@ type VersionGraphInspectorContextValue = {
   compositeLoading: boolean;
   compositeBusy: boolean;
   getSlotImageSrc: (slot: ImageStudioSlotRecord) => string | null;
-  onSetAsSource: () => void;
   onFlattenComposite: (slotId: string) => void;
   onRefreshCompositePreview?: ((slotId: string) => void) | undefined;
   onSelectNode: (id: string | null) => void;

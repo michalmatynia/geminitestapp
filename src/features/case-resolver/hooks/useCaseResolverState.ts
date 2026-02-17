@@ -33,11 +33,13 @@ import { useToast } from '@/shared/ui';
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
+  CASE_RESOLVER_SETTINGS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   extractCaseResolverDocumentDate,
   parseCaseResolverCategories,
   parseCaseResolverIdentifiers,
+  parseCaseResolverSettings,
   parseCaseResolverTags,
   createCaseResolverFile,
   normalizeCaseResolverWorkspace,
@@ -123,6 +125,7 @@ export function useCaseResolverState() {
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
+  const rawCaseResolverSettings = settingsStore.get(CASE_RESOLVER_SETTINGS_KEY);
   const rawFilemakerDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const rawCaseResolverCaptureSettings = settingsStore.get(CASE_RESOLVER_CAPTURE_SETTINGS_KEY);
   
@@ -141,6 +144,10 @@ export function useCaseResolverState() {
   const caseResolverCategories = useMemo(
     (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
     [rawCaseResolverCategories]
+  );
+  const caseResolverSettings = useMemo(
+    () => parseCaseResolverSettings(rawCaseResolverSettings),
+    [rawCaseResolverSettings]
   );
   const filemakerDatabase = useMemo(
     () => parseFilemakerDatabase(rawFilemakerDatabase),
@@ -179,6 +186,7 @@ export function useCaseResolverState() {
   const queuedSerializedWorkspaceRef = useRef<string | null>(null);
   const persistWorkspaceTimerRef = useRef<number | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
+  const handledRequestedFileIdRef = useRef<string | null>(null);
 
   const flushWorkspacePersist = useCallback((): void => {
     if (persistWorkspaceInFlightRef.current) return;
@@ -322,6 +330,7 @@ export function useCaseResolverState() {
           fileType: 'document',
           name: fileName,
           folder,
+          editorType: caseResolverSettings.defaultDocumentFormat,
           tagId: defaultTagId,
           caseIdentifierId: defaultCaseIdentifierId,
           categoryId: defaultCategoryId,
@@ -337,7 +346,39 @@ export function useCaseResolverState() {
         setSelectedAssetId(null);
       }
     });
-  }, [defaultCaseIdentifierId, defaultCategoryId, defaultTagId, updateWorkspace, prompt]);
+  }, [
+    caseResolverSettings.defaultDocumentFormat,
+    defaultCaseIdentifierId,
+    defaultCategoryId,
+    defaultTagId,
+    updateWorkspace,
+    prompt,
+  ]);
+
+  useEffect(() => {
+    if (!requestedFileId) {
+      handledRequestedFileIdRef.current = null;
+      return;
+    }
+    if (handledRequestedFileIdRef.current === requestedFileId) return;
+    const requestedFileExists = workspace.files.some(
+      (file: CaseResolverFile): boolean => file.id === requestedFileId
+    );
+    if (!requestedFileExists) return;
+
+    handledRequestedFileIdRef.current = requestedFileId;
+    setSelectedFileId(requestedFileId);
+    setSelectedAssetId(null);
+    setSelectedFolderPath(null);
+    updateWorkspace((current: CaseResolverWorkspace) =>
+      current.activeFileId === requestedFileId
+        ? current
+        : {
+          ...current,
+          activeFileId: requestedFileId,
+        }
+    );
+  }, [requestedFileId, updateWorkspace, workspace.files]);
 
   const handleDeleteFolder = useCallback((folderPath: string): void => {
     const normalizedFolder = normalizeFolderPath(folderPath);
@@ -349,6 +390,19 @@ export function useCaseResolverState() {
       confirmText: 'Delete Folder',
       isDangerous: true,
       onConfirm: () => {
+        const filesInDeletedFolder = workspace.files.filter((file: CaseResolverFile): boolean =>
+          isPathWithinFolder(file.folder, normalizedFolder)
+        );
+        const assetsInDeletedFolder = workspace.assets.filter((asset: CaseResolverAssetFile): boolean =>
+          isPathWithinFolder(asset.folder, normalizedFolder)
+        );
+        const removedFileIds = new Set<string>(
+          filesInDeletedFolder.map((file: CaseResolverFile): string => file.id)
+        );
+        const removedAssetIds = new Set<string>(
+          assetsInDeletedFolder.map((asset: CaseResolverAssetFile): string => asset.id)
+        );
+
         updateWorkspace((current) => {
           const currentRemovedFileIds = new Set(
             current.files
@@ -367,9 +421,19 @@ export function useCaseResolverState() {
               : current.activeFileId,
           };
         }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+
+        setSelectedFileId((current: string | null): string | null =>
+          current && removedFileIds.has(current) ? null : current
+        );
+        setSelectedAssetId((current: string | null): string | null =>
+          current && removedAssetIds.has(current) ? null : current
+        );
+        setSelectedFolderPath((current: string | null): string | null =>
+          current && isPathWithinFolder(current, normalizedFolder) ? null : current
+        );
       }
     });
-  }, [updateWorkspace, confirm]);
+  }, [confirm, setSelectedAssetId, setSelectedFileId, setSelectedFolderPath, updateWorkspace, workspace.assets, workspace.files]);
 
   const handleMoveFile = useCallback(
     async (fileId: string, targetFolder: string): Promise<void> => {

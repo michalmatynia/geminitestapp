@@ -150,7 +150,7 @@ const resolveSequenceSteps = (params: {
     : resolveImageStudioSequenceActiveSteps(sequenceSettings);
 
   if (isSequenceStepArray(params.requestedSteps)) {
-    const fallbackOperations = fallbackSteps.map((step) => step.type) as ImageStudioSequenceOperation[];
+    const fallbackOperations = fallbackSteps.map((step) => step.type);
     return normalizeImageStudioSequenceSteps(params.requestedSteps, {
       fallbackOperations,
       upscaleStrategy: sequenceSettings.upscaleStrategy,
@@ -177,7 +177,7 @@ export async function startImageStudioSequenceRun(
   }
 
   const sourceSlot = await getImageStudioSlotById(sourceSlotId);
-  if (!sourceSlot || sourceSlot.projectId !== projectId) {
+  if (sourceSlot?.projectId !== projectId) {
     throw notFoundError('Source slot not found in selected project.', {
       sourceSlotId,
       projectId,

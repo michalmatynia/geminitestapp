@@ -1,13 +1,12 @@
 'use client';
 
-import { Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Brush, Circle, Eye, EyeOff, Lasso, PenLine, RectangleHorizontal, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
 import type { VectorShape, VectorShapeRole } from '@/shared/types/domain/vector';
 import {
   Button,
   Input,
-  SelectSimple,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -27,6 +26,25 @@ const SHAPE_COLOR_MAP: Record<string, string> = {
   ellipse: 'rgb(251, 146, 60)',
   brush: 'rgb(168, 85, 247)',
 };
+
+const SHAPE_ICON_MAP = {
+  polygon: PenLine,
+  lasso: Lasso,
+  rect: RectangleHorizontal,
+  ellipse: Circle,
+  brush: Brush,
+} as const;
+
+const SHAPE_ICON_COLOR_MAP: Record<string, string> = {
+  polygon: 'text-sky-300',
+  lasso: 'text-sky-300',
+  rect: 'text-orange-300',
+  ellipse: 'text-orange-300',
+  brush: 'text-violet-300',
+};
+
+const isVectorShapeRole = (value: string): value is VectorShapeRole =>
+  value === 'product' || value === 'shadow' || value === 'background' || value === 'custom';
 
 export interface ShapeListPanelProps {
   className?: string | undefined;
@@ -81,6 +99,8 @@ export function ShapeListPanel({
       {maskShapes.map((shape) => {
         const isActive = shape.id === activeMaskId;
         const displayColor = shape.color ?? SHAPE_COLOR_MAP[shape.type] ?? '#888';
+        const ShapeIcon = SHAPE_ICON_MAP[shape.type] ?? PenLine;
+        const iconColorClass = SHAPE_ICON_COLOR_MAP[shape.type] ?? 'text-gray-300';
         const isMaskEligible =
           (shape.type === 'polygon' || shape.type === 'lasso') &&
           shape.closed &&
@@ -101,6 +121,10 @@ export function ShapeListPanel({
             <span
               className='inline-block size-2.5 shrink-0 rounded-full'
               style={{ backgroundColor: displayColor }}
+            />
+            <ShapeIcon
+              className={cn('size-3 shrink-0', iconColorClass)}
+              aria-hidden='true'
             />
 
             {/* Name / rename */}
@@ -138,24 +162,31 @@ export function ShapeListPanel({
             {/* Role selector */}
             {isActive && (
               <div
-                onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
-                onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+                className='shrink-0'
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                className='w-[86px]'
+                onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
               >
-                <SelectSimple
-                  size='xs'
-                  value={shape.role || ''}
-                  onValueChange={(value: string): void => {
-                    if (!value) return;
-                    handleUpdateShape(shape.id, { role: value as VectorShapeRole });
+                <select
+                  className='h-5 w-[86px] rounded border border-border/60 bg-card/80 px-1 text-[10px] text-foreground'
+                  value={shape.role ?? ''}
+                  aria-label='Shape role'
+                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
+                    const nextValue = event.target.value.trim();
+                    if (!nextValue) {
+                      handleUpdateShape(shape.id, { role: undefined });
+                      return;
+                    }
+                    if (!isVectorShapeRole(nextValue)) return;
+                    handleUpdateShape(shape.id, { role: nextValue });
                   }}
-                  options={[
-                    { value: '', label: 'Role' },
-                    ...ROLE_OPTIONS
-                  ]}
-                  triggerClassName='h-5 bg-card/50 px-1 text-[10px]'
-                />
+                >
+                  <option value=''>Role</option>
+                  {ROLE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 
@@ -163,28 +194,28 @@ export function ShapeListPanel({
             <Button size='xs'
               type='button'
               variant='ghost'
-              className='size-5 opacity-60 hover:opacity-100'
+              className='size-5 shrink-0 text-gray-300 opacity-90 hover:text-white hover:opacity-100'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 handleUpdateShape(shape.id, { visible: !shape.visible });
               }}
               title={shape.visible ? 'Hide shape' : 'Show shape'}
             >
-              {shape.visible ? <Eye className='size-3' /> : <EyeOff className='size-3' />}
+              {shape.visible ? <Eye className='size-3.5' /> : <EyeOff className='size-3.5' />}
             </Button>
 
             {/* Delete */}
             <Button size='xs'
               type='button'
               variant='ghost'
-              className='size-5 opacity-0 group-hover:opacity-60 hover:!opacity-100 text-destructive'
+              className='size-5 shrink-0 text-destructive/80 opacity-70 hover:opacity-100 hover:text-destructive'
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 handleDeleteShape(shape.id);
               }}
               title='Delete shape'
             >
-              <Trash2 className='size-3' />
+              <Trash2 className='size-3.5' />
             </Button>
           </div>
         );

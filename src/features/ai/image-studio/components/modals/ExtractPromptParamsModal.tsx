@@ -6,22 +6,22 @@ import React from 'react';
 import type { ModalStateProps } from '@/shared/types/modal-props';
 import { FormModal, Button, Label, Textarea } from '@/shared/ui';
 
-// TODO: These types should be defined in a more central place
-type ParamUiControl =
-  | 'auto'
-  | 'checkbox'
-  | 'buttons'
-  | 'select'
-  | 'slider'
-  | 'number'
-  | 'text'
-  | 'textarea'
-  | 'json'
-  | 'rgb'
-  | 'tuple2';
+import type {
+  PromptExtractHistoryEntry,
+  PromptExtractValidationIssue,
+  PromptDiffLine,
+  ParamUiControl,
+} from '../studio-modals/prompt-extract-utils';
 
 // TODO: These components should be moved to a shared location
-function PromptExtractionHistoryPanel(props: any): React.JSX.Element {
+function PromptExtractionHistoryPanel(props: {
+  extractHistory: PromptExtractHistoryEntry[];
+  selectedExtractHistory: PromptExtractHistoryEntry | null;
+  selectedExtractDiffLines: PromptDiffLine[];
+  selectedExtractChanged: boolean;
+  onSelectExtractHistory: (id: string | null) => void;
+  onClearHistory: () => void;
+}): React.JSX.Element {
   console.log('PromptExtractionHistoryPanel props:', props);
   return <div>PromptExtractionHistoryPanel</div>;
 }
@@ -37,18 +37,18 @@ interface ExtractPromptParamsModalProps extends ModalStateProps {
   handleApplyExtraction: () => void;
   previewParams: Record<string, unknown> | null;
   extractError: string | null;
-  extractHistory: any[];
-  selectedExtractHistory: any;
-  selectedExtractDiffLines: any[];
+  extractHistory: PromptExtractHistoryEntry[];
+  selectedExtractHistory: PromptExtractHistoryEntry | null;
+  selectedExtractDiffLines: PromptDiffLine[];
   selectedExtractChanged: boolean;
   setSelectedExtractHistoryId: (id: string | null) => void;
-  setExtractHistory: (history: any[]) => void;
+  setExtractHistory: (history: PromptExtractHistoryEntry[]) => void;
   studioSettings: { promptExtraction: { showValidationSummary: boolean } };
   previewValidation: {
-    before: any[];
-    after: any[];
+    before: PromptExtractValidationIssue[];
+    after: PromptExtractValidationIssue[];
   } | null;
-  previewLeaves: Array<{ path: string, value: unknown }>;
+  previewLeaves: Array<{ path: string; value: unknown }>;
   previewControls: Record<string, ParamUiControl>;
 }
 
@@ -81,41 +81,65 @@ export function ExtractPromptParamsModal({
       <Button
         size='sm'
         variant='outline'
-        onClick={() => { void handleSmartExtraction(); }}
+        onClick={() => {
+          handleSmartExtraction();
+        }}
         disabled={extractBusy !== 'none'}
         className='gap-2'
       >
-        {extractBusy === 'smart' ? <Loader2 className='size-4 animate-spin' /> : <Zap className='size-4' />}
+        {extractBusy === 'smart' ? (
+          <Loader2 className='size-4 animate-spin' />
+        ) : (
+          <Zap className='size-4' />
+        )}
         Smart
       </Button>
       <Button
         size='sm'
         variant='outline'
-        onClick={() => { void handleProgrammaticExtraction(); }}
+        onClick={() => {
+          handleProgrammaticExtraction();
+        }}
         disabled={extractBusy !== 'none'}
         className='gap-2'
       >
-        {extractBusy === 'programmatic' ? <Loader2 className='size-4 animate-spin' /> : <Cpu className='size-4' />}
+        {extractBusy === 'programmatic' ? (
+          <Loader2 className='size-4 animate-spin' />
+        ) : (
+          <Cpu className='size-4' />
+        )}
         Programmatic
       </Button>
       <Button
         size='sm'
         variant='outline'
-        onClick={() => { void handleAiExtraction(); }}
+        onClick={() => {
+          handleAiExtraction();
+        }}
         disabled={extractBusy !== 'none'}
         className='gap-2'
       >
-        {extractBusy === 'ai' ? <Loader2 className='size-4 animate-spin' /> : <Sparkles className='size-4' />}
+        {extractBusy === 'ai' ? (
+          <Loader2 className='size-4 animate-spin' />
+        ) : (
+          <Sparkles className='size-4' />
+        )}
         AI Only
       </Button>
       <Button
         size='sm'
         variant='outline'
-        onClick={() => { void handleSuggestUiControls(); }}
+        onClick={() => {
+          handleSuggestUiControls();
+        }}
         disabled={!previewParams || extractBusy !== 'none'}
         className='gap-2'
       >
-        {extractBusy === 'ui' ? <Loader2 className='size-4 animate-spin' /> : <Wand2 className='size-4' />}
+        {extractBusy === 'ui' ? (
+          <Loader2 className='size-4 animate-spin' />
+        ) : (
+          <Wand2 className='size-4' />
+        )}
         Suggest
       </Button>
     </>
@@ -127,7 +151,9 @@ export function ExtractPromptParamsModal({
       onClose={onClose}
       title='Extract Prompt Params'
       size='xl'
-      onSave={() => { void handleApplyExtraction(); }}
+      onSave={() => {
+        handleApplyExtraction();
+      }}
       isSaveDisabled={!previewParams}
       saveText='Apply Changes'
       actions={actions}

@@ -90,5 +90,11 @@ export interface CompositeLayerConfig {
   blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | undefined;
 }
 
-export type StudioProjectsResponse = { projects: string[] };
+export type ImageStudioProjectRecord = {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StudioProjectsResponse = { projects: ImageStudioProjectRecord[] };
 export type StudioSlotsResponse = { slots: ImageStudioSlotRecord[] };

@@ -48,13 +48,34 @@ export const CASE_RESOLVER_IDENTIFIERS_KEY = 'case_resolver_identifiers_v1';
 export const CASE_RESOLVER_CATEGORIES_KEY = 'case_resolver_categories_v1';
 export const CASE_RESOLVER_SETTINGS_KEY = 'case_resolver_settings_v1';
 
+export type CaseResolverDefaultDocumentFormat = Extract<CaseResolverEditorType, 'markdown' | 'wysiwyg'>;
+
 export type CaseResolverSettings = {
   ocrModel: string;
+  defaultDocumentFormat: CaseResolverDefaultDocumentFormat;
 };
 
 export const DEFAULT_CASE_RESOLVER_SETTINGS: CaseResolverSettings = {
   ocrModel: '',
+  defaultDocumentFormat: 'markdown',
 };
+
+export const CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_OPTIONS: Array<{
+  value: CaseResolverDefaultDocumentFormat;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'wysiwyg',
+    label: 'WYSIWYG',
+    description: 'Open and create documents using rich text editor mode.',
+  },
+  {
+    value: 'markdown',
+    label: 'Markdown',
+    description: 'Open and create documents using markdown mode.',
+  },
+];
 
 export const normalizeFolderPath = (value: string): string => {
   const normalized = value.replace(/\\/g, '/').trim();
@@ -765,8 +786,12 @@ const normalizeCaseResolverSettings = (input: unknown): CaseResolverSettings => 
   }
   const record = input as Record<string, unknown>;
   const ocrModel = typeof record['ocrModel'] === 'string' ? record['ocrModel'].trim() : '';
+  const defaultDocumentFormat = record['defaultDocumentFormat'] === 'wysiwyg'
+    ? 'wysiwyg'
+    : 'markdown';
   return {
     ocrModel,
+    defaultDocumentFormat,
   };
 };
 
@@ -1211,6 +1236,13 @@ const relationFolderEntityIdFromPath = (folderPath: string): string => {
 const relationFolderPathFromEntityId = (entityId: string): string | null =>
   entityId === CASE_RESOLVER_RELATION_ROOT_FOLDER_ID ? '' : entityId;
 
+const normalizeRelationMetaFolderPath = (
+  value: string | null | undefined
+): string | null => {
+  const normalized = normalizeFolderPath(value ?? '');
+  return normalized.length > 0 ? normalized : null;
+};
+
 const parentRelationFolderEntityId = (entityId: string): string | null => {
   if (entityId === CASE_RESOLVER_RELATION_ROOT_FOLDER_ID) return null;
   const folderPath = relationFolderPathFromEntityId(entityId) ?? '';
@@ -1352,7 +1384,7 @@ const buildCaseResolverRelationGraph = ({
           : `Folder path: ${folderPath}`,
       group: 'folder',
       fileKind: null,
-      folderPath,
+      folderPath: normalizeRelationMetaFolderPath(folderPath),
       sourceFileId: null,
       isStructural: true,
     });
@@ -1368,7 +1400,7 @@ const buildCaseResolverRelationGraph = ({
       description: `Case ID: ${file.id}`,
       group: 'case',
       fileKind: null,
-      folderPath: file.folder,
+      folderPath: normalizeRelationMetaFolderPath(file.folder),
       sourceFileId: file.id,
       isStructural: true,
     });
@@ -1382,7 +1414,7 @@ const buildCaseResolverRelationGraph = ({
       description: `Case file (${file.fileType})`,
       group: 'file',
       fileKind: 'case_file',
-      folderPath: file.folder,
+      folderPath: normalizeRelationMetaFolderPath(file.folder),
       sourceFileId: file.id,
       isStructural: true,
     });
@@ -1398,7 +1430,7 @@ const buildCaseResolverRelationGraph = ({
       description: `Asset file (${asset.kind})`,
       group: 'file',
       fileKind: 'asset_file',
-      folderPath: asset.folder,
+      folderPath: normalizeRelationMetaFolderPath(asset.folder),
       sourceFileId: asset.id,
       isStructural: true,
     });
@@ -2013,7 +2045,7 @@ export const normalizeCaseResolverWorkspace = (
     })
     .filter((file: CaseResolverFile | null): file is CaseResolverFile => Boolean(file));
 
-  const normalizedFilesBase = files.length > 0 ? files : createDefaultCaseResolverWorkspace().files;
+  const normalizedFilesBase = files;
   const filesById = new Map<string, CaseResolverFile>(
     normalizedFilesBase.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
   );

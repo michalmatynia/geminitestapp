@@ -33,9 +33,15 @@ export const folderBaseName = (path: string): string => {
   return normalized.slice(normalized.lastIndexOf('/') + 1);
 };
 
-export const isPathWithinFolder = (candidatePath: string, folderPath: string): boolean => (
-  candidatePath === folderPath || candidatePath.startsWith(`${folderPath}/`)
-);
+export const isPathWithinFolder = (candidatePath: string, folderPath: string): boolean => {
+  const normalizedCandidatePath = normalizeFolderPath(candidatePath);
+  const normalizedFolderPath = normalizeFolderPath(folderPath);
+  if (!normalizedFolderPath) return false;
+  return (
+    normalizedCandidatePath === normalizedFolderPath ||
+    normalizedCandidatePath.startsWith(`${normalizedFolderPath}/`)
+  );
+};
 
 export const createUniqueFolderPath = (existingFolders: string[], targetFolderPath: string | null): string => {
   const parent = normalizeFolderPath(targetFolderPath ?? '');

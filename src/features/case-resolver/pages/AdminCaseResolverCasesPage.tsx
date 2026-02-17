@@ -14,6 +14,7 @@ import {
   Plus, 
   Trash2,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -39,12 +40,14 @@ import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
   CASE_RESOLVER_IDENTIFIERS_KEY,
+  CASE_RESOLVER_SETTINGS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
   createCaseResolverFile,
   normalizeCaseResolverWorkspace,
   parseCaseResolverCategories,
   parseCaseResolverIdentifiers,
+  parseCaseResolverSettings,
   parseCaseResolverTags,
   parseCaseResolverWorkspace,
 } from '../settings';
@@ -247,6 +250,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
+  const rawCaseResolverSettings = settingsStore.get(CASE_RESOLVER_SETTINGS_KEY);
   const parsedWorkspace = useMemo(
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
     [rawWorkspace]
@@ -262,6 +266,10 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const caseResolverCategories = useMemo(
     (): CaseResolverCategory[] => parseCaseResolverCategories(rawCaseResolverCategories),
     [rawCaseResolverCategories]
+  );
+  const caseResolverSettings = useMemo(
+    () => parseCaseResolverSettings(rawCaseResolverSettings),
+    [rawCaseResolverSettings]
   );
   const caseResolverTagOptions = useMemo(
     () =>
@@ -895,7 +903,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       placeholder: 'Select parent case',
     },
     {
-      key: 'referenceCaseIds' as any,
+      key: 'referenceCaseIds',
       label: 'Reference Cases',
       type: 'custom',
       render: () => (
@@ -1051,6 +1059,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       id: createId('case-file'),
       fileType: 'document',
       name: normalizedName,
+      editorType: caseResolverSettings.defaultDocumentFormat,
       parentCaseId: normalizedParentCaseId,
       referenceCaseIds: normalizedReferenceCaseIds,
       tagId: normalizedTagId,
@@ -1071,6 +1080,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   }, [
     caseResolverCategories,
     caseResolverIdentifiers,
+    caseResolverSettings.defaultDocumentFormat,
     caseResolverTags,
     caseDraft,
     persistWorkspace,
@@ -1576,7 +1586,22 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <SectionHeader
         title='Case Resolver Cases'
-        description='Manage all cases in one place. Open a case to work on its full node-map editor.'
+        subtitle={(
+          <nav
+            aria-label='Breadcrumb'
+            className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
+          >
+            <Link href='/admin' className='transition-colors hover:text-gray-200'>
+              Admin
+            </Link>
+            <span>/</span>
+            <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
+              Case Resolver
+            </Link>
+            <span>/</span>
+            <span className='text-gray-300'>Cases</span>
+          </nav>
+        )}
       />
 
       <SettingsPanelBuilder

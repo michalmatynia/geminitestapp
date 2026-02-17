@@ -111,12 +111,6 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     [],
   );
 
-  const handleSetAsSource = useCallback(() => {
-    if (!selectedNodeId) return;
-    setWorkingSlotId(selectedNodeId);
-    switchToControls();
-  }, [selectedNodeId, setWorkingSlotId, switchToControls]);
-
   const handleActivateNode = useCallback(
     (id: string) => {
       activateNode(id);
@@ -192,12 +186,11 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     setContextMenu(null);
   }, []);
 
-  const handleCtxSetAsSource = useCallback((nodeId: string) => {
-    setWorkingSlotId(nodeId);
-    switchToControls();
-  }, [setWorkingSlotId, switchToControls]);
-
   const handleCtxDetachSubtree = useCallback((nodeId: string) => {
+    void detachSubtree(nodeId);
+  }, [detachSubtree]);
+
+  const handleIsolateToNewCard = useCallback((nodeId: string) => {
     void detachSubtree(nodeId);
   }, [detachSubtree]);
 
@@ -338,7 +331,6 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     compositeLoading,
     compositeBusy,
     getSlotImageSrc,
-    onSetAsSource: handleSetAsSource,
     onFlattenComposite: (slotId: string): void => {
       void handleFlattenComposite(slotId);
     },
@@ -348,7 +340,7 @@ export function VersionNodeMapPanel(): React.JSX.Element {
     onSelectNode: selectNode,
     onOpenDetails: handleOpenNodeDetails,
     onFocusNode: handleFocusNode,
-    onIsolateBranch: isolateBranch,
+    onIsolateBranch: handleIsolateToNewCard,
     annotationDraft,
     onAnnotationChange: setAnnotationDraft,
     onAnnotationBlur: handleAnnotationBlur,
@@ -493,9 +485,8 @@ export function VersionNodeMapPanel(): React.JSX.Element {
               node: contextMenuNode,
               collapsedNodeIds,
               onClose: closeContextMenu,
-              onSetAsSource: handleCtxSetAsSource,
               onDetachSubtree: handleCtxDetachSubtree,
-              onIsolateBranch: isolateBranch,
+              onIsolateBranch: handleIsolateToNewCard,
               onToggleCollapse: toggleCollapse,
               onAddToComposite: handleCtxAddToComposite,
               onCompareWith: handleCtxCompareWith,

@@ -107,7 +107,11 @@ async function parseCropRequestPayload(
   const contentType = req.headers.get('content-type')?.toLowerCase() ?? '';
   if (!contentType.includes('multipart/form-data')) {
     const jsonBody = (await req.json().catch(() => null)) as unknown;
-    return { body: jsonBody, uploadedClientImage: null };
+    if (jsonBody !== null) {
+      return { body: jsonBody, uploadedClientImage: null };
+    }
+    // Keep payload object-like so downstream normalization can infer mode from cropRect/polygon.
+    return { body: {}, uploadedClientImage: null };
   }
 
   const form = await req.formData().catch(() => null);
@@ -475,7 +479,20 @@ export async function postCropSlotHandler(
 
   const startedAt = Date.now();
   const { body, uploadedClientImage } = await parseCropRequestPayload(req);
-  const parsed = imageStudioCropRequestSchema.safeParse(body);
+  const normalizedBody =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? { ...(body as Record<string, unknown>) }
+      : {};
+  const normalizedMode = typeof normalizedBody['mode'] === 'string' ? normalizedBody['mode'].trim() : '';
+  if (normalizedMode) {
+    normalizedBody['mode'] = normalizedMode;
+  } else if (Array.isArray(normalizedBody['polygon'])) {
+    normalizedBody['mode'] = 'server_polygon';
+  } else if (normalizedBody['cropRect'] && typeof normalizedBody['cropRect'] === 'object') {
+    normalizedBody['mode'] = 'server_bbox';
+  }
+
+  const parsed = imageStudioCropRequestSchema.safeParse(normalizedBody);
   if (!parsed.success) {
     throw cropBadRequest(
       IMAGE_STUDIO_CROP_ERROR_CODES.INVALID_PAYLOAD,

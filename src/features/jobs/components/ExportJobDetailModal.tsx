@@ -1,11 +1,16 @@
-'use client';
-
 import React from 'react';
 
+import type { ListingAttempt, ListingJob, ProductJob } from '@/shared/types/domain/listing-jobs';
 import type { EntityModalProps } from '@/shared/types/modal-props';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-export interface ExportJobDetailModalProps extends EntityModalProps<any, any> {}
+export interface ExportJobDetailItem {
+  job: ProductJob;
+  listing: ListingJob;
+  history?: ListingAttempt[];
+}
+
+export interface ExportJobDetailModalProps extends EntityModalProps<ExportJobDetailItem, never> {}
 
 export function ExportJobDetailModal({
   isOpen,
@@ -14,14 +19,14 @@ export function ExportJobDetailModal({
 }: ExportJobDetailModalProps): React.JSX.Element | null {
   if (!isOpen || !selectedListing) return null;
 
-  const formatDateTime = (value: Date | string | null): string => {
+  const formatDateTime = (value: Date | string | null | undefined): string => {
     if (!value) return '—';
     const date: Date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return '—';
     return date.toLocaleString();
   };
 
-  const listing = selectedListing.listing || {};
+  const listing = selectedListing.listing;
   const selectedStatus = listing.status ?? 'n/a';
 
   return (
@@ -54,17 +59,17 @@ export function ExportJobDetailModal({
           </div>
         </div>
 
-        {selectedListing.history && (
+        {selectedListing.listing.exportHistory && (
           <div className='rounded-lg border border-border/60 bg-card/35 p-4'>
             <h3 className='text-sm font-medium text-white mb-4'>Sync History</h3>
             <div className='space-y-2'>
-              {selectedListing.history.length === 0 ? (
+              {selectedListing.listing.exportHistory.length === 0 ? (
                 <p className='text-gray-500 italic'>No history available.</p>
               ) : (
-                selectedListing.history.map((entry: any, i: number) => (
+                selectedListing.listing.exportHistory.map((entry: ListingAttempt, i: number) => (
                   <div key={i} className='flex justify-between border-b border-border/30 pb-2 text-[11px]'>
                     <span className='text-gray-300'>{entry.message}</span>
-                    <span className='text-gray-500'>{formatDateTime(entry.createdAt)}</span>
+                    <span className='text-gray-500'>{formatDateTime(entry.exportedAt)}</span>
                   </div>
                 ))
               )}

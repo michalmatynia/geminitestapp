@@ -12,6 +12,7 @@ import type {
   Producer,
 } from '@/features/products/types';
 import type { ProductFormData } from '@/features/products/types';
+import { api } from '@/shared/lib/api-client';
 import type { Language } from '@/shared/types/domain/internationalization';
 
 import {
@@ -74,6 +75,74 @@ export interface UseProductMetadataProps {
   getValues?: UseFormGetValues<ProductFormData> | undefined;
 }
 
+const toTrimmedString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const normalizeCatalogIdList = (values: ReadonlyArray<unknown>): string[] => {
+  const resolveCatalogId = (value: unknown): string => {
+    if (typeof value === 'string') {
+      return toTrimmedString(value);
+    }
+    if (!value || typeof value !== 'object') return '';
+    const record = value as Record<string, unknown>;
+    const direct =
+      toTrimmedString(record['catalogId']) ||
+      toTrimmedString(record['catalog_id']) ||
+      toTrimmedString(record['id']) ||
+      toTrimmedString(record['value']);
+    if (direct) return direct;
+
+    const nestedCatalog = record['catalog'];
+    if (!nestedCatalog || typeof nestedCatalog !== 'object') return '';
+    const nestedRecord = nestedCatalog as Record<string, unknown>;
+    return (
+      toTrimmedString(nestedRecord['id']) ||
+      toTrimmedString(nestedRecord['catalogId']) ||
+      toTrimmedString(nestedRecord['catalog_id'])
+    );
+  };
+
+  const unique = new Set<string>();
+  for (const value of values) {
+    const trimmed = resolveCatalogId(value);
+    if (!trimmed) continue;
+    unique.add(trimmed);
+  }
+  return Array.from(unique);
+};
+
+const resolveCategoryIdFromProduct = (product?: ProductWithImages): string | null => {
+  if (!product) return null;
+  const direct = toTrimmedString(product.categoryId);
+  if (direct) return direct;
+
+  const relations = (product as ProductWithImages & { categories?: unknown }).categories;
+  if (Array.isArray(relations)) {
+    for (const relation of relations) {
+      if (!relation || typeof relation !== 'object') continue;
+      const record = relation as Record<string, unknown>;
+      const relationCategoryId =
+        toTrimmedString(record['categoryId']) ||
+        toTrimmedString(record['category_id']) ||
+        toTrimmedString(record['id']) ||
+        toTrimmedString(record['value']);
+      if (relationCategoryId) return relationCategoryId;
+    }
+  } else if (relations && typeof relations === 'object') {
+    const record = relations as Record<string, unknown>;
+    const relationCategoryId =
+      toTrimmedString(record['categoryId']) ||
+      toTrimmedString(record['category_id']) ||
+      toTrimmedString(record['id']) ||
+      toTrimmedString(record['value']);
+    if (relationCategoryId) return relationCategoryId;
+  }
+
+  return null;
+};
+
 // Composite hook that combines all metadata functionality
 export function useProductMetadata({
   product,
@@ -89,21 +158,37 @@ export function useProductMetadata({
   const producersQuery = useProducers();
   // Initialize selections based on product or initial values
   const initialCatalogSelection = React.useMemo(() => {
-    if (product?.catalogs) {
-      return product.catalogs.map((c: { catalogId: string }) => c.catalogId);
+    if (product) {
+      const productCatalogIds = Array.isArray(product.catalogs)
+        ? normalizeCatalogIdList(product.catalogs)
+        : [];
+      if (productCatalogIds.length > 0) {
+        return productCatalogIds;
+      }
+      const fallbackCatalogId =
+        typeof product.catalogId === 'string' ? product.catalogId.trim() : '';
+      if (fallbackCatalogId) {
+        return [fallbackCatalogId];
+      }
     }
-    if (initialCatalogIds && initialCatalogIds.length > 0) {
-      return initialCatalogIds;
+    const normalizedInitialCatalogIds = normalizeCatalogIdList(
+      initialCatalogIds ?? [],
+    );
+    if (normalizedInitialCatalogIds.length > 0) {
+      return normalizedInitialCatalogIds;
     }
-    if (initialCatalogId) {
-      return [initialCatalogId];
+    const fallbackInitialCatalogId =
+      typeof initialCatalogId === 'string' ? initialCatalogId.trim() : '';
+    if (fallbackInitialCatalogId) {
+      return [fallbackInitialCatalogId];
     }
     return [];
   }, [product, initialCatalogIds, initialCatalogId]);
 
   const initialCategorySelection = React.useMemo(() => {
-    if (product?.categoryId) {
-      return product.categoryId;
+    const resolvedProductCategoryId = resolveCategoryIdFromProduct(product);
+    if (resolvedProductCategoryId) {
+      return resolvedProductCategoryId;
     }
     if (initialCategoryId) {
       return initialCategoryId;
@@ -127,43 +212,129 @@ export function useProductMetadata({
     }
     return [];
   }, [product, initialProducerIds]);
-  
-  const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>(initialCatalogSelection);
-  const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(initialCategorySelection);
-  const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>(initialTagSelection);
-  const [selectedProducerIds, setSelectedProducerIds] = React.useState<string[]>(initialProducerSelection);
+
+  const [selectedCatalogIds, setSelectedCatalogIds] = React.useState<string[]>(
+    initialCatalogSelection,
+  );
+  const [selectedCategoryId, setSelectedCategoryId] = React.useState<
+    string | null
+  >(initialCategorySelection);
+  const [selectedTagIds, setSelectedTagIds] =
+    React.useState<string[]>(initialTagSelection);
+  const [selectedProducerIds, setSelectedProducerIds] = React.useState<
+    string[]
+  >(initialProducerSelection);
 
   const arraysEqual = (a: string[], b: string[]): boolean =>
-    a.length === b.length && a.every((value: string, index: number) => value === b[index]);
+    a.length === b.length &&
+    a.every((value: string, index: number) => value === b[index]);
 
   React.useEffect(() => {
-    setSelectedCatalogIds((prev: string[]) => (arraysEqual(prev, initialCatalogSelection) ? prev : initialCatalogSelection));
+    setSelectedCatalogIds((prev: string[]) =>
+      arraysEqual(prev, initialCatalogSelection)
+        ? prev
+        : initialCatalogSelection,
+    );
   }, [initialCatalogSelection]);
 
   React.useEffect(() => {
-    setSelectedCategoryId((prev: string | null) => (prev === initialCategorySelection ? prev : initialCategorySelection));
+    setSelectedCategoryId((prev: string | null) =>
+      prev === initialCategorySelection ? prev : initialCategorySelection,
+    );
   }, [initialCategorySelection]);
 
   React.useEffect(() => {
-    setSelectedTagIds((prev: string[]) => (arraysEqual(prev, initialTagSelection) ? prev : initialTagSelection));
+    setSelectedTagIds((prev: string[]) =>
+      arraysEqual(prev, initialTagSelection) ? prev : initialTagSelection,
+    );
   }, [initialTagSelection]);
 
   React.useEffect(() => {
     setSelectedProducerIds((prev: string[]) =>
-      arraysEqual(prev, initialProducerSelection) ? prev : initialProducerSelection
+      arraysEqual(prev, initialProducerSelection)
+        ? prev
+        : initialProducerSelection,
     );
   }, [initialProducerSelection]);
-  
+
   const primaryCatalogId = selectedCatalogIds[0] || '';
   const categoriesQuery = useCategories(primaryCatalogId);
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);
+  const categories = categoriesQuery.data || [];
+  const isSelectedCategoryInPrimaryCatalog = React.useMemo((): boolean => {
+    if (!selectedCategoryId) return true;
+    return categories.some(
+      (category: ProductCategory) => category.id === selectedCategoryId,
+    );
+  }, [categories, selectedCategoryId]);
+  const attemptedCategoryCatalogResolutionsRef = React.useRef<Set<string>>(
+    new Set(),
+  );
+
+  React.useEffect(() => {
+    attemptedCategoryCatalogResolutionsRef.current.clear();
+  }, [initialCategorySelection, product?.id]);
+
+  React.useEffect(() => {
+    if (!product?.id) return;
+    if (!selectedCategoryId) return;
+    if (selectedCategoryId !== initialCategorySelection) return;
+    if (!arraysEqual(selectedCatalogIds, initialCatalogSelection)) return;
+    if (categoriesQuery.isLoading) return;
+    if (isSelectedCategoryInPrimaryCatalog) return;
+
+    const resolutionKey = `${selectedCategoryId}:${primaryCatalogId || 'none'}`;
+    if (attemptedCategoryCatalogResolutionsRef.current.has(resolutionKey))
+      return;
+    attemptedCategoryCatalogResolutionsRef.current.add(resolutionKey);
+
+    let cancelled = false;
+    void api
+      .get<ProductCategory>(
+        `/api/products/categories/${encodeURIComponent(selectedCategoryId)}`,
+        {
+          logError: false,
+        },
+      )
+      .then((category: ProductCategory) => {
+        if (cancelled) return;
+        const categoryCatalogId =
+          typeof category?.catalogId === 'string'
+            ? category.catalogId.trim()
+            : '';
+        if (!categoryCatalogId) return;
+        setSelectedCatalogIds((prev: string[]) => {
+          if (prev[0] === categoryCatalogId) return prev;
+          const withoutCurrent = prev.filter(
+            (id: string) => id !== categoryCatalogId,
+          );
+          return [categoryCatalogId, ...withoutCurrent];
+        });
+      })
+      .catch(() => {
+        // Best effort fallback only.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    categoriesQuery.isLoading,
+    initialCatalogSelection,
+    initialCategorySelection,
+    isSelectedCategoryInPrimaryCatalog,
+    primaryCatalogId,
+    product?.id,
+    selectedCategoryId,
+    selectedCatalogIds,
+  ]);
 
   const toggleCatalog = (catalogId: string): void => {
-    setSelectedCatalogIds((prev: string[]) => 
-      prev.includes(catalogId) 
+    setSelectedCatalogIds((prev: string[]) =>
+      prev.includes(catalogId)
         ? prev.filter((id: string) => id !== catalogId)
-        : [...prev, catalogId]
+        : [...prev, catalogId],
     );
   };
 
@@ -173,10 +344,10 @@ export function useProductMetadata({
   };
 
   const toggleTag = (tagId: string): void => {
-    setSelectedTagIds((prev: string[]) => 
-      prev.includes(tagId) 
+    setSelectedTagIds((prev: string[]) =>
+      prev.includes(tagId)
         ? prev.filter((id: string) => id !== tagId)
-        : [...prev, tagId]
+        : [...prev, tagId],
     );
   };
 
@@ -184,7 +355,7 @@ export function useProductMetadata({
     setSelectedProducerIds((prev: string[]) =>
       prev.includes(producerId)
         ? prev.filter((id: string) => id !== producerId)
-        : [...prev, producerId]
+        : [...prev, producerId],
     );
   };
 
@@ -202,28 +373,39 @@ export function useProductMetadata({
     }
 
     const selectedCatalogs = catalogs.filter((catalog: CatalogRecord) =>
-      selectedCatalogIds.includes(catalog.id)
+      selectedCatalogIds.includes(catalog.id),
     );
     const languageIdSet = new Set(
-      selectedCatalogs.flatMap((catalog: CatalogRecord) => catalog.languageIds ?? [])
+      selectedCatalogs.flatMap(
+        (catalog: CatalogRecord) => catalog.languageIds ?? [],
+      ),
     );
     const normalizedLanguageSet = new Set(
-      Array.from(languageIdSet).map((value: string) => String(value).trim().toUpperCase())
+      Array.from(languageIdSet).map((value: string) =>
+        String(value).trim().toUpperCase(),
+      ),
     );
 
     const filteredLanguages = languageIdSet.size
       ? languages.filter((language: Language) => {
         const idKey = String(language.id).trim().toUpperCase();
         const codeKey = String(language.code).trim().toUpperCase();
-        return normalizedLanguageSet.has(idKey) || normalizedLanguageSet.has(codeKey);
+        return (
+          normalizedLanguageSet.has(idKey) ||
+            normalizedLanguageSet.has(codeKey)
+        );
       })
       : languages;
 
     const priceGroupIdSet = new Set(
-      selectedCatalogs.flatMap((catalog: CatalogRecord) => catalog.priceGroupIds ?? [])
+      selectedCatalogs.flatMap(
+        (catalog: CatalogRecord) => catalog.priceGroupIds ?? [],
+      ),
     );
     const filteredPriceGroups = priceGroupIdSet.size
-      ? priceGroups.filter((group: PriceGroupWithDetails) => priceGroupIdSet.has(group.id))
+      ? priceGroups.filter((group: PriceGroupWithDetails) =>
+        priceGroupIdSet.has(group.id),
+      )
       : priceGroups;
 
     return { filteredLanguages, filteredPriceGroups };
@@ -240,7 +422,7 @@ export function useProductMetadata({
     catalogsError: (catalogsQuery.error as Error)?.message || null,
     selectedCatalogIds,
     toggleCatalog,
-    categories: categoriesQuery.data || [],
+    categories,
     categoriesLoading: categoriesQuery.isLoading,
     selectedCategoryId,
     setCategoryId,

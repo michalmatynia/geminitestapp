@@ -1280,7 +1280,6 @@ export function GenerationToolbar(): React.JSX.Element {
               const formData = new FormData();
               formData.append('mode', cropMode);
               formData.append('cropRect', JSON.stringify(cropRect));
-              formData.append('dataUrl', croppedDataUrl);
               formData.append('requestId', cropRequestId);
               formData.append('image', uploadBlob, `crop-client-${Date.now()}.png`);
               return api.post<CropActionResponse>(

@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Folder, FolderOpen, Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
@@ -329,7 +330,22 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <SectionHeader
         title='Case Resolver Categories'
-        description='Manage the category tree used by Case Resolver documents.'
+        subtitle={(
+          <nav
+            aria-label='Breadcrumb'
+            className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
+          >
+            <Link href='/admin' className='transition-colors hover:text-gray-200'>
+              Admin
+            </Link>
+            <span>/</span>
+            <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
+              Case Resolver
+            </Link>
+            <span>/</span>
+            <span className='text-gray-300'>Categories</span>
+          </nav>
+        )}
       />
 
       <div className='flex justify-start'>

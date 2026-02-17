@@ -175,8 +175,9 @@ export function useStudioModalsState() {
       setSlotImageUrlDraft(variant.output.filepath);
       setSlotBase64Draft('');
       toast('Linked variant applied to card.', { variant: 'success' });
-    } catch (e: any) {
-      toast(e.message || 'Failed to apply variant', { variant: 'error' });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast(message || 'Failed to apply variant', { variant: 'error' });
     } finally {
       setSlotUpdateBusy(false);
     }
@@ -206,8 +207,9 @@ export function useStudioModalsState() {
         if (created[0]) setSelectedSlotId(created[0].id);
         toast('Created card from import.', { variant: 'success' });
       }
-    } catch (e: any) {
-      toast(e.message || 'Import failed', { variant: 'error' });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast(message || 'Import failed', { variant: 'error' });
     }
   };
 
@@ -219,8 +221,9 @@ export function useStudioModalsState() {
         folderPath: selectedFolder,
       }]);
       if (created[0]) setSelectedSlotId(created[0].id);
-    } catch (e: any) {
-      toast(e.message || 'Failed to create card', { variant: 'error' });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      toast(message || 'Failed to create card', { variant: 'error' });
     }
   };
 

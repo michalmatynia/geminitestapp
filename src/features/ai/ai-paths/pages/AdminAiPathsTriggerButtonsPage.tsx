@@ -30,7 +30,6 @@ import {
   useToast,
   PanelHeader,
   ListPanel,
-  ConfirmModal,
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 import { cn } from '@/shared/utils';
@@ -72,7 +71,6 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
-  const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonDto | null>(null);
 
   const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto[], AiTriggerButtonDto[]>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
@@ -287,7 +285,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       helperText: 'How the button behaves when clicked.',
     },
     {
-      key: 'locations' as any,
+      key: 'locations' as unknown as keyof TriggerButtonDraft,
       label: 'Location Visibility',
       type: 'custom',
       render: () => (

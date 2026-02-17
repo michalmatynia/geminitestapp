@@ -201,6 +201,28 @@ export function useDefaultExportInventory(): SingleQuery<{ inventoryId?: string 
   });
 }
 
+export function useDefaultExportConnection(): SingleQuery<{ connectionId?: string | null }> {
+  const queryKey = integrationKeys.selection.defaultConnection();
+  const queryFn = async (): Promise<{ connectionId?: string | null }> =>
+    api.get<{ connectionId?: string | null }>(
+      '/api/integrations/exports/base/default-connection'
+    );
+
+  return createSingleQueryV2({
+    id: 'default-export-connection',
+    queryKey,
+    queryFn,
+    meta: {
+      source: 'integrations.hooks.useDefaultExportConnection',
+      operation: 'detail',
+      resource: 'integrations.default-export-connection',
+      domain: 'integrations',
+      queryKey,
+      tags: ['integrations', 'connection'],
+    },
+  });
+}
+
 export function useBaseInventories(connectionId: string, enabled: boolean = true): ListQuery<BaseInventory> {
   const queryKey = integrationKeys.baseInventories(connectionId);
   const queryFn = async (): Promise<BaseInventory[]> => {

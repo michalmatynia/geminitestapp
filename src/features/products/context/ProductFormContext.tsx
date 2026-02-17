@@ -156,6 +156,11 @@ export interface ProductFormContextType {
   addParameterValue: () => void;
   updateParameterId: (index: number, parameterId: string) => void;
   updateParameterValue: (index: number, value: string) => void;
+  updateParameterValueByLanguage: (
+    index: number,
+    languageCode: string,
+    value: string
+  ) => void;
   removeParameterValue: (index: number) => void;
   filteredLanguages: Language[];
   filteredPriceGroups: PriceGroupWithDetails[];
@@ -426,15 +431,41 @@ export function ProductFormProvider({
     input?: ProductParameterValue[] | null
   ): ProductParameterValue[] => {
     if (!Array.isArray(input)) return [];
-    return input.map((entry: ProductParameterValue) => ({
-      parameterId: typeof entry?.parameterId === 'string' ? entry.parameterId : '',
-      value: typeof entry?.value === 'string' ? entry.value : '',
-      ...(entry?.valuesByLanguage &&
-      typeof entry.valuesByLanguage === 'object' &&
-      !Array.isArray(entry.valuesByLanguage)
-        ? { valuesByLanguage: entry.valuesByLanguage }
-        : {}),
-    }));
+    return input.map((entry: ProductParameterValue) => {
+      const valuesByLanguage =
+        entry?.valuesByLanguage &&
+        typeof entry.valuesByLanguage === 'object' &&
+        !Array.isArray(entry.valuesByLanguage)
+          ? Object.entries(entry.valuesByLanguage).reduce(
+            (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
+              const normalizedLang = lang.trim().toLowerCase();
+              if (!normalizedLang) return acc;
+              const normalizedValue =
+                typeof rawValue === 'string' ? rawValue : '';
+              acc[normalizedLang] = normalizedValue;
+              return acc;
+            },
+            {}
+          )
+          : {};
+      const directValue = typeof entry?.value === 'string' ? entry.value : '';
+      const fallbackValue =
+        directValue ||
+        valuesByLanguage['default'] ||
+        valuesByLanguage['en'] ||
+        Object.values(valuesByLanguage).find(
+          (value: string): boolean => typeof value === 'string' && value.length > 0
+        ) ||
+        '';
+
+      return {
+        parameterId: typeof entry?.parameterId === 'string' ? entry.parameterId : '',
+        value: fallbackValue,
+        ...(Object.keys(valuesByLanguage).length > 0
+          ? { valuesByLanguage }
+          : {}),
+      };
+    });
   };
 
   const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>(
@@ -528,6 +559,30 @@ export function ProductFormProvider({
               const next = [...prev];
               if (!next[index]) return prev;
               next[index] = { ...next[index], value };
+              return next;
+            }),
+          updateParameterValueByLanguage: (
+            index: number,
+            languageCode: string,
+            value: string
+          ): void =>
+            setParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+              const next = [...prev];
+              if (!next[index]) return prev;
+              const normalizedLang = languageCode.trim().toLowerCase();
+              if (!normalizedLang) return prev;
+              const current = next[index];
+              const currentValues =
+                current.valuesByLanguage &&
+                typeof current.valuesByLanguage === 'object' &&
+                !Array.isArray(current.valuesByLanguage)
+                  ? { ...current.valuesByLanguage }
+                  : {};
+              currentValues[normalizedLang] = value;
+              next[index] = {
+                ...current,
+                valuesByLanguage: currentValues,
+              };
               return next;
             }),
           removeParameterValue: (index: number): void =>

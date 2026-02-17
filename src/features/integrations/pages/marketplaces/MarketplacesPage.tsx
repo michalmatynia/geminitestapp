@@ -19,7 +19,7 @@ const marketplaces = [
     name: 'Category Mapper',
     description:
       'Map external marketplace categories to your internal product categories for import/export.',
-    href: '/admin/integrations/marketplaces/category-mapper',
+    href: '/admin/integrations/aggregators/base-com/category-mapping',
   },
 ];
 

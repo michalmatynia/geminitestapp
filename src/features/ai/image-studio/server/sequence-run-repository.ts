@@ -1,8 +1,8 @@
 import 'server-only';
 
+import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import type { ImageStudioSequenceStep } from '@/features/ai/image-studio/utils/studio-settings';
 
 export type ImageStudioSequenceRunStatus =
   | 'queued'

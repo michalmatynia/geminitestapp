@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -130,7 +131,22 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
       <SectionHeader
         title='Case Resolver Preferences'
         size='md'
-        description='Configure default Case List view behavior.'
+        subtitle={(
+          <nav
+            aria-label='Breadcrumb'
+            className='mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-400'
+          >
+            <Link href='/admin' className='transition-colors hover:text-gray-200'>
+              Admin
+            </Link>
+            <span>/</span>
+            <Link href='/admin/case-resolver' className='transition-colors hover:text-gray-200'>
+              Case Resolver
+            </Link>
+            <span>/</span>
+            <span className='text-gray-300'>Preferences</span>
+          </nav>
+        )}
         actions={(
           <Button
             type='button'

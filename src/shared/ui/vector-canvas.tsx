@@ -33,6 +33,128 @@ const formatPathNumber = (value: number): string => {
 
 const toSvgCoord = (value: number, viewBoxSize: number): number => value * viewBoxSize;
 const clampUnit = (value: number): number => Math.max(0, Math.min(1, value));
+const resolveSignedAxisLimit = (origin: number, direction: number): number => (direction >= 0 ? 1 - origin : origin);
+const CENTERED_SQUARE_SENSITIVITY_EXPONENT = 2.1;
+
+export function resolveRectDragPoints(
+  anchor: VectorPoint,
+  pointer: VectorPoint,
+  options?: {
+    scaleFromCenter?: boolean;
+    lockSquare?: boolean;
+    viewportWidth?: number;
+    viewportHeight?: number;
+    centeredSquareExponent?: number;
+  }
+): [VectorPoint, VectorPoint] {
+  const scaleFromCenter = options?.scaleFromCenter ?? false;
+  const lockSquare = options?.lockSquare ?? false;
+  const viewportWidth = Number.isFinite(options?.viewportWidth) && (options?.viewportWidth ?? 0) > 0
+    ? (options?.viewportWidth as number)
+    : 1;
+  const viewportHeight = Number.isFinite(options?.viewportHeight) && (options?.viewportHeight ?? 0) > 0
+    ? (options?.viewportHeight as number)
+    : 1;
+  const centeredSquareExponent = options?.centeredSquareExponent ?? CENTERED_SQUARE_SENSITIVITY_EXPONENT;
+  const rawDx = pointer.x - anchor.x;
+  const rawDy = pointer.y - anchor.y;
+  const directionX = rawDx < 0 ? -1 : 1;
+  const directionY = rawDy < 0 ? -1 : 1;
+  const limitX = resolveSignedAxisLimit(anchor.x, directionX);
+  const limitY = resolveSignedAxisLimit(anchor.y, directionY);
+
+  if (scaleFromCenter) {
+    let deltaX = Math.min(Math.abs(rawDx), limitX);
+    let deltaY = Math.min(Math.abs(rawDy), limitY);
+
+    if (lockSquare) {
+      const deltaXPx = deltaX * viewportWidth;
+      const deltaYPx = deltaY * viewportHeight;
+      const limitXPx = limitX * viewportWidth;
+      const limitYPx = limitY * viewportHeight;
+      const maxHalfSidePx = Math.min(limitXPx, limitYPx);
+      const requestedHalfSidePx = Math.min(Math.min(deltaXPx, deltaYPx), maxHalfSidePx);
+      const progress = maxHalfSidePx > 0 ? Math.max(0, Math.min(1, requestedHalfSidePx / maxHalfSidePx)) : 0;
+      const easedHalfSidePx = maxHalfSidePx * Math.pow(progress, centeredSquareExponent);
+      deltaX = easedHalfSidePx / viewportWidth;
+      deltaY = easedHalfSidePx / viewportHeight;
+    }
+
+    return [
+      {
+        x: clampUnit(anchor.x - (directionX * deltaX)),
+        y: clampUnit(anchor.y - (directionY * deltaY)),
+      },
+      {
+        x: clampUnit(anchor.x + (directionX * deltaX)),
+        y: clampUnit(anchor.y + (directionY * deltaY)),
+      },
+    ];
+  }
+
+  if (!lockSquare) {
+    return [anchor, pointer];
+  }
+
+  const deltaXPx = Math.abs(rawDx) * viewportWidth;
+  const deltaYPx = Math.abs(rawDy) * viewportHeight;
+  const limitXPx = limitX * viewportWidth;
+  const limitYPx = limitY * viewportHeight;
+  const sidePx = Math.min(Math.min(deltaXPx, deltaYPx), limitXPx, limitYPx);
+  return [
+    anchor,
+    {
+      x: clampUnit(anchor.x + (directionX * (sidePx / viewportWidth))),
+      y: clampUnit(anchor.y + (directionY * (sidePx / viewportHeight))),
+    },
+  ];
+}
+
+export function resolveRectResizePoints(
+  points: VectorPoint[],
+  draggedPointIndex: number,
+  pointer: VectorPoint,
+  options?: {
+    scaleFromCenter?: boolean;
+    lockSquare?: boolean;
+    viewportWidth?: number;
+    viewportHeight?: number;
+    centeredSquareExponent?: number;
+  }
+): [VectorPoint, VectorPoint] | null {
+  const first = points[0];
+  const second = points[1];
+  if (!first || !second) return null;
+
+  const scaleFromCenter = options?.scaleFromCenter ?? false;
+  const lockSquare = options?.lockSquare ?? false;
+  const viewportOptions = {
+    viewportWidth: options?.viewportWidth,
+    viewportHeight: options?.viewportHeight,
+    centeredSquareExponent: options?.centeredSquareExponent,
+  };
+
+  if (scaleFromCenter) {
+    const center = {
+      x: (first.x + second.x) / 2,
+      y: (first.y + second.y) / 2,
+    };
+    return resolveRectDragPoints(center, pointer, {
+      scaleFromCenter: true,
+      lockSquare,
+      ...viewportOptions,
+    });
+  }
+
+  const dragIndex = draggedPointIndex === 0 ? 0 : 1;
+  const anchor = dragIndex === 0 ? second : first;
+  const [anchorPoint, movedPoint] = resolveRectDragPoints(anchor, pointer, {
+    scaleFromCenter: false,
+    lockSquare,
+    ...viewportOptions,
+  });
+  return dragIndex === 0 ? [movedPoint, anchorPoint] : [anchorPoint, movedPoint];
+}
 
 type VectorViewTransform = {
   scale: number;
@@ -252,7 +374,7 @@ export function VectorCanvas({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const dragRef = useRef<{ shapeId: string; pointIndex: number } | null>(null);
   const dragShapeRef = useRef<{ shapeId: string; lastPoint: VectorPoint } | null>(null);
-  const drawingRef = useRef<{ shapeId: string; type: VectorShapeType } | null>(null);
+  const drawingRef = useRef<{ shapeId: string; type: VectorShapeType; anchor?: VectorPoint } | null>(null);
 
   // --- Zoom & Pan ---
   const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -1312,7 +1434,7 @@ export function VectorCanvas({
           closed: true,
           visible: true,
         };
-        drawingRef.current = { shapeId: newShape.id, type: newShape.type };
+        drawingRef.current = { shapeId: newShape.id, type: newShape.type, anchor: nextPoint };
         onSelectShape(newShape.id);
         onChange([...shapes, newShape]);
       }
@@ -1352,9 +1474,31 @@ export function VectorCanvas({
         const currentDrag = dragRef.current;
         const nextPoint = toPoint(event);
         if (!nextPoint) return;
+        const interactionRect = getInteractionRect();
+        const rectOptions = interactionRect
+          ? {
+            viewportWidth: interactionRect.width,
+            viewportHeight: interactionRect.height,
+          }
+          : {};
         onChange(
           shapes.map((shape: VectorShape) => {
             if (shape.id !== currentDrag.shapeId) return shape;
+            if (shape.type === 'rect' && shape.points.length >= 2 && (event.shiftKey || event.altKey)) {
+              const nextRectPoints = resolveRectResizePoints(
+                shape.points,
+                currentDrag.pointIndex,
+                nextPoint,
+                {
+                  scaleFromCenter: event.altKey,
+                  lockSquare: event.shiftKey,
+                  centeredSquareExponent: 1,
+                  ...rectOptions,
+                }
+              );
+              if (!nextRectPoints) return shape;
+              return { ...shape, points: nextRectPoints };
+            }
             const nextPoints = [...shape.points];
             nextPoints[currentDrag.pointIndex] = nextPoint;
             return { ...shape, points: nextPoints };
@@ -1420,9 +1564,10 @@ export function VectorCanvas({
       if (drawingRef.current) {
         const nextPoint = toPoint(event);
         if (!nextPoint) return;
+        const drawState = drawingRef.current;
         onChange(
           shapes.map((shape: VectorShape) => {
-            if (shape.id !== drawingRef.current?.shapeId) return shape;
+            if (shape.id !== drawState.shapeId) return shape;
             if (shape.type === 'lasso' || shape.type === 'brush') {
               const last = shape.points[shape.points.length - 1];
               if (last) {
@@ -1434,7 +1579,24 @@ export function VectorCanvas({
               }
               return { ...shape, points: [...shape.points, nextPoint] };
             }
-            if (shape.type === 'rect' || shape.type === 'ellipse') {
+            if (shape.type === 'rect') {
+              const anchor = drawState.anchor ?? shape.points[0] ?? nextPoint;
+              const interactionRect = getInteractionRect();
+              const rectOptions = interactionRect
+                ? {
+                  viewportWidth: interactionRect.width,
+                  viewportHeight: interactionRect.height,
+                }
+                : {};
+              const [firstPoint, secondPoint] = resolveRectDragPoints(anchor, nextPoint, {
+                scaleFromCenter: event.altKey,
+                lockSquare: event.altKey && event.shiftKey,
+                ...rectOptions,
+              });
+              const nextPoints = [firstPoint, secondPoint];
+              return { ...shape, points: nextPoints };
+            }
+            if (shape.type === 'ellipse') {
               const nextPoints = shape.points.length >= 2 ? [shape.points[0]!, nextPoint] : [nextPoint, nextPoint];
               return { ...shape, points: nextPoints };
             }
@@ -1443,7 +1605,7 @@ export function VectorCanvas({
         );
       }
     },
-    [brushRadius, canDraw, hitTestPoint, onChange, shapes, toPoint, tool, updatePanFromPointer]
+    [brushRadius, canDraw, getInteractionRect, hitTestPoint, onChange, shapes, toPoint, tool, updatePanFromPointer]
   );
 
   const handleDoubleClick = useCallback((): void => {

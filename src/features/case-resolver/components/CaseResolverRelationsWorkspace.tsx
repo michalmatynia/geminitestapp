@@ -42,12 +42,14 @@ import {
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
+  normalizeCaseResolverWorkspace,
   toCaseResolverRelationAssetFileNodeId,
   toCaseResolverRelationCaseNodeId,
   toCaseResolverRelationFolderNodeId,
 } from '../settings';
 import {
   CASE_RESOLVER_RELATION_EDGE_KIND_OPTIONS,
+  CASE_RESOLVER_RELATION_ROOT_FOLDER_ID,
   DEFAULT_CASE_RESOLVER_RELATION_EDGE_META,
   DEFAULT_CASE_RESOLVER_RELATION_NODE_META,
   type CaseResolverRelationEdgeKind,
@@ -725,19 +727,32 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
     () => ensureRelationEdgeMeta(edges, edgeMetaState, fallbackTimestampRef.current),
     [edgeMetaState, edges]
   );
-
-  useEffect(() => {
-    const nextGraph: CaseResolverRelationGraph = {
+  const normalizedNextGraph = useMemo((): CaseResolverRelationGraph => {
+    const candidateGraph: CaseResolverRelationGraph = {
       nodes,
       edges,
       nodeMeta,
       edgeMeta,
     };
-    const hash = stableStringify(nextGraph);
-    if (hash === lastEmittedHashRef.current) return;
-    lastEmittedHashRef.current = hash;
-    onRelationGraphChange(nextGraph);
-  }, [edgeMeta, edges, nodeMeta, nodes, onRelationGraphChange]);
+    return normalizeCaseResolverWorkspace({
+      ...workspace,
+      relationGraph: candidateGraph,
+    }).relationGraph;
+  }, [edgeMeta, edges, nodeMeta, nodes, workspace]);
+  const normalizedNextGraphHash = useMemo(
+    () => stableStringify(normalizedNextGraph),
+    [normalizedNextGraph]
+  );
+
+  useEffect(() => {
+    if (normalizedNextGraphHash === relationGraphHash) {
+      lastEmittedHashRef.current = normalizedNextGraphHash;
+      return;
+    }
+    if (normalizedNextGraphHash === lastEmittedHashRef.current) return;
+    lastEmittedHashRef.current = normalizedNextGraphHash;
+    onRelationGraphChange(normalizedNextGraph);
+  }, [normalizedNextGraph, normalizedNextGraphHash, onRelationGraphChange, relationGraphHash]);
 
   const selectedNode = useMemo(
     (): AiNode | null =>
@@ -1276,9 +1291,17 @@ function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
       onSelectFile(selectedNodeMeta.sourceFileId);
       return;
     }
-    if (selectedNodeMeta.entityType === 'folder' && selectedNodeMeta.folderPath !== null) {
-      onSelectFolder(selectedNodeMeta.folderPath);
-      return;
+    if (selectedNodeMeta.entityType === 'folder') {
+      const targetFolderPath =
+        selectedNodeMeta.folderPath !== null
+          ? selectedNodeMeta.folderPath
+          : selectedNodeMeta.entityId === CASE_RESOLVER_RELATION_ROOT_FOLDER_ID
+            ? ''
+            : null;
+      if (targetFolderPath !== null) {
+        onSelectFolder(targetFolderPath);
+        return;
+      }
     }
     if (
       selectedNodeMeta.entityType === 'file' &&

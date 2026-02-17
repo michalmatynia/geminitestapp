@@ -11,7 +11,7 @@ import type {
   SingleQuery 
 } from '@/shared/types/query-result-types';
 
-import type { StudioProjectsResponse, StudioSlotsResponse } from '../types';
+import type { ImageStudioProjectRecord, StudioProjectsResponse, StudioSlotsResponse } from '../types';
 
 export { studioKeys };
 
@@ -21,11 +21,48 @@ export type StudioImageModelsResponse = {
   warning?: string;
 };
 
-export function useStudioProjects(): ListQuery<string> {
+const normalizeProjectRecord = (
+  entry: unknown
+): ImageStudioProjectRecord | null => {
+  if (typeof entry === 'string') {
+    const id = entry.trim();
+    if (!id) return null;
+    const now = new Date().toISOString();
+    return {
+      id,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
+  const record = entry as Record<string, unknown>;
+  const id = typeof record['id'] === 'string' ? record['id'].trim() : '';
+  if (!id) return null;
+  const createdAt =
+    typeof record['createdAt'] === 'string' && record['createdAt'].trim()
+      ? record['createdAt'].trim()
+      : new Date().toISOString();
+  const updatedAt =
+    typeof record['updatedAt'] === 'string' && record['updatedAt'].trim()
+      ? record['updatedAt'].trim()
+      : createdAt;
+  return { id, createdAt, updatedAt };
+};
+
+export function useStudioProjects(): ListQuery<ImageStudioProjectRecord> {
   const queryKey = studioKeys.projects();
-  const queryFn = async (): Promise<string[]> => {
+  const queryFn = async (): Promise<ImageStudioProjectRecord[]> => {
     const data = await api.get<StudioProjectsResponse>('/api/image-studio/projects');
-    return Array.isArray(data.projects) ? data.projects : [];
+    if (!Array.isArray(data.projects)) return [];
+    const normalized = data.projects
+      .map((entry: unknown) => normalizeProjectRecord(entry))
+      .filter((entry): entry is ImageStudioProjectRecord => Boolean(entry));
+    const seen = new Set<string>();
+    return normalized.filter((project: ImageStudioProjectRecord) => {
+      if (seen.has(project.id)) return false;
+      seen.add(project.id);
+      return true;
+    });
   };
 
   return createListQueryV2({

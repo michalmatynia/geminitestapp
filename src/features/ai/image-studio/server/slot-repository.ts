@@ -140,6 +140,98 @@ const asTrimmedString = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const resolveSlotIdAliases = (slotId: string): string[] => {
+  const normalized = asTrimmedString(slotId);
+  if (!normalized) return [];
+
+  const unprefixed = normalized.startsWith('slot:')
+    ? asTrimmedString(normalized.slice('slot:'.length))
+    : normalized.startsWith('card:')
+      ? asTrimmedString(normalized.slice('card:'.length))
+      : normalized;
+  const candidates = new Set<string>([normalized]);
+  if (unprefixed) {
+    candidates.add(unprefixed);
+    candidates.add(`slot:${unprefixed}`);
+    candidates.add(`card:${unprefixed}`);
+  }
+
+  return Array.from(candidates);
+};
+
+const getSourceSlotIdsFromMetadata = (metadata: Record<string, unknown> | null): string[] => {
+  if (!metadata) return [];
+  const sourceIds = new Set<string>();
+
+  const primarySourceSlotId = asTrimmedString(metadata['sourceSlotId']);
+  if (primarySourceSlotId) {
+    resolveSlotIdAliases(primarySourceSlotId).forEach((candidate: string) => {
+      sourceIds.add(candidate);
+    });
+  }
+
+  const nestedSourceSlotIds = metadata['sourceSlotIds'];
+  if (Array.isArray(nestedSourceSlotIds)) {
+    nestedSourceSlotIds.forEach((value: unknown) => {
+      const sourceId = asTrimmedString(value);
+      if (!sourceId) return;
+      resolveSlotIdAliases(sourceId).forEach((candidate: string) => {
+        sourceIds.add(candidate);
+      });
+    });
+  }
+
+  return Array.from(sourceIds);
+};
+
+const collectCascadeSlotIds = (
+  rootSlotId: string,
+  docs: ImageStudioSlotDocument[]
+): string[] => {
+  if (docs.length === 0) return [];
+
+  const docsById = new Map<string, ImageStudioSlotDocument>(
+    docs.map((doc: ImageStudioSlotDocument) => [doc._id, doc])
+  );
+  const rootCandidates = resolveSlotIdAliases(rootSlotId).filter((candidate: string) =>
+    docsById.has(candidate)
+  );
+  const resolvedRootSlotId = rootCandidates[0];
+  if (!resolvedRootSlotId) return [];
+
+  const childIdsBySource = new Map<string, Set<string>>();
+  docs.forEach((doc: ImageStudioSlotDocument) => {
+    if (!doc.metadata) return;
+    const metadata = asRecord(doc.metadata);
+    const sourceSlotIds = getSourceSlotIdsFromMetadata(metadata);
+    sourceSlotIds.forEach((sourceSlotId: string) => {
+      const normalizedSourceSlotId = resolveSlotIdAliases(sourceSlotId).find((candidate: string) =>
+        docsById.has(candidate)
+      );
+      if (!normalizedSourceSlotId) return;
+      const childIds = childIdsBySource.get(normalizedSourceSlotId) ?? new Set<string>();
+      childIds.add(doc._id);
+      childIdsBySource.set(normalizedSourceSlotId, childIds);
+    });
+  });
+
+  const deletedSlotIds = new Set<string>();
+  const queue: string[] = [resolvedRootSlotId];
+  while (queue.length > 0) {
+    const currentSlotId = queue.shift();
+    if (!currentSlotId || deletedSlotIds.has(currentSlotId)) continue;
+    deletedSlotIds.add(currentSlotId);
+    const childIds = childIdsBySource.get(currentSlotId);
+    if (!childIds || childIds.size === 0) continue;
+    childIds.forEach((childId: string) => {
+      if (deletedSlotIds.has(childId)) return;
+      queue.push(childId);
+    });
+  }
+
+  return Array.from(deletedSlotIds);
+};
+
 const isGenerationDerivedSlotMetadata = (metadata: Record<string, unknown> | null): boolean => {
   if (!metadata) return false;
   const role = asTrimmedString(metadata['role'])?.toLowerCase() ?? '';
@@ -266,6 +358,48 @@ export async function deleteImageStudioSlot(slotId: string): Promise<boolean> {
     }
   }
   return deleted;
+}
+
+export type DeleteImageStudioSlotCascadeResult = {
+  deleted: boolean;
+  deletedSlotIds: string[];
+};
+
+export async function deleteImageStudioSlotCascade(
+  slotId: string
+): Promise<DeleteImageStudioSlotCascadeResult> {
+  await ensureIndexesOnce();
+  const db = await getMongoDb();
+  const collection = db.collection<ImageStudioSlotDocument>(COLLECTION);
+
+  const slotIdCandidates = resolveSlotIdAliases(slotId);
+  if (slotIdCandidates.length === 0) {
+    return { deleted: false, deletedSlotIds: [] };
+  }
+  const rootDoc = await collection.findOne({ _id: { $in: slotIdCandidates } });
+  if (!rootDoc) return { deleted: false, deletedSlotIds: [] };
+
+  const projectDocs = await collection
+    .find({ projectId: rootDoc.projectId })
+    .toArray();
+
+  const slotIdsToDelete = collectCascadeSlotIds(rootDoc._id, projectDocs);
+  if (slotIdsToDelete.length === 0) {
+    return { deleted: false, deletedSlotIds: [] };
+  }
+
+  const deletedSlotIds: string[] = [];
+  for (const slotIdToDelete of slotIdsToDelete) {
+    const deleted = await deleteImageStudioSlot(slotIdToDelete);
+    if (deleted) {
+      deletedSlotIds.push(slotIdToDelete);
+    }
+  }
+
+  return {
+    deleted: deletedSlotIds.includes(rootDoc._id),
+    deletedSlotIds,
+  };
 }
 
 export async function deleteImageStudioSlotsByProject(projectId: string): Promise<number> {

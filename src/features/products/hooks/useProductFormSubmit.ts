@@ -137,9 +137,19 @@ function buildFormData(
             {}
           )
           : {};
+      const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
+      const fallbackLocalizedValue =
+        valuesByLanguage['default'] ||
+        valuesByLanguage['en'] ||
+        valuesByLanguage['pl'] ||
+        valuesByLanguage['de'] ||
+        Object.values(valuesByLanguage).find(
+          (value: string): boolean => typeof value === 'string' && value.length > 0
+        ) ||
+        '';
       return {
         parameterId: entry.parameterId?.trim(),
-        value: typeof entry.value === 'string' ? entry.value.trim() : '',
+        value: directValue || fallbackLocalizedValue,
         ...(Object.keys(valuesByLanguage).length > 0
           ? { valuesByLanguage }
           : {}),

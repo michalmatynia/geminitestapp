@@ -19,6 +19,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 export type AiTriggerButtonRecord = AiTriggerButtonDto & {
   pathName?: string;
   pathId?: string;
+  pathNames?: string[];
+  pathIds?: string[];
 };
 
 type TriggerButtonListManagerProps = {
@@ -152,8 +154,28 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     },
     {
       accessorKey: 'pathName',
-      header: 'Path',
-      cell: ({ row }) => <span className='text-xs text-gray-500'>{row.original.pathName || 'N/A'}</span>,
+      header: 'AI Paths',
+      cell: ({ row }) => {
+        const names = Array.isArray(row.original.pathNames)
+          ? row.original.pathNames.filter((name): name is string => Boolean(name && name.trim()))
+          : [];
+        if (names.length === 0) {
+          return <span className='text-xs text-gray-500'>Not linked</span>;
+        }
+        return (
+          <div className='flex max-w-[360px] flex-wrap gap-1'>
+            {names.map((name: string, idx: number): React.JSX.Element => (
+              <StatusBadge
+                key={`${name}-${idx}`}
+                status={name}
+                variant='neutral'
+                size='sm'
+                className='font-medium'
+              />
+            ))}
+          </div>
+        );
+      },
     },
     {
       id: 'actions',

@@ -825,16 +825,7 @@ export function StudioModals(): React.JSX.Element {
       height?: number | null;
       updatedAt?: string | Date | null;
     }): void => {
-      setEnvironmentReferenceDraft({
-        imageFileId: asset.id,
-        imageUrl: asset.filepath,
-        filename: asset.filename?.trim() ?? '',
-        mimetype: asset.mimetype?.trim() ?? '',
-        size: typeof asset.size === 'number' && Number.isFinite(asset.size) ? asset.size : null,
-        width: typeof asset.width === 'number' && Number.isFinite(asset.width) ? asset.width : null,
-        height: typeof asset.height === 'number' && Number.isFinite(asset.height) ? asset.height : null,
-        updatedAt: asset.updatedAt ?? new Date().toISOString(),
-      });
+      setEnvironmentReferenceDraft(applyEnvironmentReferenceAssetToDraft(asset));
       setEnvironmentPreviewNaturalSize(null);
       setEditCardTab('environment');
     },
@@ -1105,7 +1096,7 @@ export function StudioModals(): React.JSX.Element {
         onClose={() => setSlotInlineEditOpen(false)}
         onSuccess={() => {}}
         selectedSlot={selectedSlot}
-        onCopyId={(id) => { void handleCopyCardId(id); }}
+        onCopyId={(id) => { void copyCardIdToClipboard(id, toast); }}
         header={editCardModalHeader}
       >
         <Tabs

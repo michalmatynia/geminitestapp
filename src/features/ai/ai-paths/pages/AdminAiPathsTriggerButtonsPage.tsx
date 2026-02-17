@@ -4,12 +4,13 @@ import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { MousePointer2, Plus, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { triggerButtonsApi } from '@/features/ai/ai-paths/lib';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
+import { useAiPathsSettingsQuery } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
 import {
   aiTriggerButtonCreateSchema,
   type AiTriggerButtonCreatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
-import { IconSelector } from '@/features/icons';
+import { ICON_LIBRARY, IconSelector } from '@/features/icons';
 import { logClientError } from '@/features/observability';
 import type {
   AiTriggerButtonDisplay,
@@ -25,7 +26,9 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathTriggerButtons } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { 
+import {
+  AppModal,
+  Button,
   Checkbox, 
   useToast,
   PanelHeader,
@@ -39,6 +42,7 @@ import { validateFormData } from '@/shared/validations/form-validation';
 import { TriggerButtonListManager, type AiTriggerButtonRecord } from '../components/TriggerButtonListManager';
 
 type TriggerButtonDraft = AiTriggerButtonCreatePayload & { id?: string };
+type TriggerButtonPathUsage = { id: string; name: string };
 
 const LOCATION_OPTIONS: Array<{ value: AiTriggerButtonLocation; label: string }> = [
   { value: 'product_modal', label: 'Products: Product Modal' },
@@ -66,13 +70,106 @@ const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft 
   display: record?.display ?? 'icon_label',
 });
 
+const BUILT_IN_TRIGGER_EVENTS = new Set<string>(['manual', 'scheduled_run']);
+
+const extractTriggerButtonPathUsageMap = (
+  settings: Array<{ key: string; value: string }>
+): Map<string, TriggerButtonPathUsage[]> => {
+  const map = new Map<string, string>(settings.map((item) => [item.key, item.value]));
+  const usageByButtonId = new Map<string, TriggerButtonPathUsage[]>();
+  const indexRaw = map.get(PATH_INDEX_KEY);
+  if (!indexRaw) return usageByButtonId;
+
+  let parsedIndex: unknown;
+  try {
+    parsedIndex = JSON.parse(indexRaw);
+  } catch {
+    return usageByButtonId;
+  }
+  if (!Array.isArray(parsedIndex)) return usageByButtonId;
+
+  const pathMetas = parsedIndex
+    .map((entry: unknown): { id: string; name: string } | null => {
+      if (!entry || typeof entry !== 'object') return null;
+      const id = (entry as { id?: unknown }).id;
+      if (typeof id !== 'string' || id.trim().length === 0) return null;
+      const name = (entry as { name?: unknown }).name;
+      return {
+        id,
+        name: typeof name === 'string' ? name.trim() : '',
+      };
+    })
+    .filter((entry: { id: string; name: string } | null): entry is { id: string; name: string } =>
+      Boolean(entry)
+    );
+
+  pathMetas.forEach((meta: { id: string; name: string }) => {
+    const configRaw = map.get(`${PATH_CONFIG_PREFIX}${meta.id}`);
+    if (!configRaw) return;
+
+    let parsedConfig: unknown;
+    try {
+      parsedConfig = JSON.parse(configRaw);
+    } catch {
+      return;
+    }
+    if (!parsedConfig || typeof parsedConfig !== 'object') return;
+
+    const configNameRaw = (parsedConfig as { name?: unknown }).name;
+    const configName =
+      typeof configNameRaw === 'string' && configNameRaw.trim().length > 0
+        ? configNameRaw.trim()
+        : '';
+    const pathName = meta.name || configName || `Path ${meta.id.slice(0, 6)}`;
+
+    const nodes = (parsedConfig as { nodes?: unknown }).nodes;
+    if (!Array.isArray(nodes)) return;
+
+    const usedButtonIds = new Set<string>();
+    nodes.forEach((node: unknown) => {
+      if (!node || typeof node !== 'object') return;
+      const nodeType = (node as { type?: unknown }).type;
+      if (nodeType !== 'trigger') return;
+
+      const eventValue = (
+        node as {
+          config?: { trigger?: { event?: unknown } };
+        }
+      ).config?.trigger?.event;
+      if (typeof eventValue !== 'string') return;
+      const event = eventValue.trim();
+      if (!event || BUILT_IN_TRIGGER_EVENTS.has(event)) return;
+      usedButtonIds.add(event);
+    });
+
+    usedButtonIds.forEach((buttonId: string) => {
+      const existing = usageByButtonId.get(buttonId) ?? [];
+      if (existing.some((entry: TriggerButtonPathUsage) => entry.id === meta.id)) return;
+      usageByButtonId.set(buttonId, [...existing, { id: meta.id, name: pathName }]);
+    });
+  });
+
+  usageByButtonId.forEach((entries: TriggerButtonPathUsage[], buttonId: string) => {
+    usageByButtonId.set(
+      buttonId,
+      [...entries].sort((a: TriggerButtonPathUsage, b: TriggerButtonPathUsage) =>
+        a.name.localeCompare(b.name)
+      )
+    );
+  });
+
+  return usageByButtonId;
+};
+
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [editorOpen, setEditorOpen] = useState(false);
+  const [iconLibraryOpen, setIconLibraryOpen] = useState(false);
   const [draft, setDraft] = useState<TriggerButtonDraft>(() => normalizeDraft(null));
   const [buttonToDelete, setButtonToDelete] = useState<AiTriggerButtonDto | null>(null);
+  const aiPathsSettingsQuery = useAiPathsSettingsQuery();
 
   const triggerButtonsQuery = createListQueryV2<AiTriggerButtonDto>({
     queryKey: QUERY_KEYS.ai.aiPaths.triggerButtons(),
@@ -220,13 +317,21 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
 
   const openCreate = (): void => {
     setDraft(normalizeDraft(null));
+    setIconLibraryOpen(false);
     setEditorOpen(true);
   };
 
   const handleEdit = useCallback((record: AiTriggerButtonDto): void => {
     setDraft(normalizeDraft(record));
+    setIconLibraryOpen(false);
     setEditorOpen(true);
   }, []);
+
+  useEffect(() => {
+    if (!editorOpen) {
+      setIconLibraryOpen(false);
+    }
+  }, [editorOpen]);
 
   const handleDeleteRequest = useCallback((id: string): void => {
     const list = triggerButtonsQuery.data ?? [];
@@ -244,6 +349,26 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     reorderMutation.mutate(orderedIds);
   }, [reorderMutation]);
 
+  const triggerButtonPathUsageMap = useMemo(
+    () => extractTriggerButtonPathUsageMap(aiPathsSettingsQuery.data ?? []),
+    [aiPathsSettingsQuery.data]
+  );
+  const draftPathUsage = useMemo<TriggerButtonPathUsage[]>(
+    () => (draft.id ? triggerButtonPathUsageMap.get(draft.id) ?? [] : []),
+    [draft.id, triggerButtonPathUsageMap]
+  );
+  const selectedIconItem = useMemo(
+    () => ICON_LIBRARY.find((item) => item.id === draft.iconId) ?? null,
+    [draft.iconId]
+  );
+  const handleSelectIcon = useCallback((nextIcon: string | null): void => {
+    setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({
+      ...prev,
+      iconId: nextIcon,
+    }));
+    setIconLibraryOpen(false);
+  }, []);
+
   const editorFields: SettingsField<TriggerButtonDraft>[] = useMemo(() => [
     {
       key: 'name',
@@ -258,16 +383,45 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       label: 'Icon',
       type: 'custom',
       render: () => (
-        <IconSelector
-          value={draft.iconId}
-          onChange={(nextValue: string | null) =>
-            setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({
-              ...prev,
-              iconId: nextValue,
-            }))
-          }
-          columns={6}
-        />
+        <div className='space-y-2'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setIconLibraryOpen(true);
+              }}
+            >
+              {draft.iconId ? 'Change Icon' : 'Choose Icon'}
+            </Button>
+            {draft.iconId ? (
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                onClick={(): void =>
+                  setDraft((prev: TriggerButtonDraft): TriggerButtonDraft => ({
+                    ...prev,
+                    iconId: null,
+                  }))
+                }
+              >
+                Clear
+              </Button>
+            ) : null}
+          </div>
+          <div className='flex items-center gap-2 rounded-lg border border-border bg-card/40 px-3 py-2'>
+            {selectedIconItem ? (
+              <selectedIconItem.icon className='size-4 text-primary' />
+            ) : (
+              <MousePointer2 className='size-4 text-gray-500' />
+            )}
+            <span className='text-xs text-gray-300'>
+              {selectedIconItem?.label ?? 'No icon selected'}
+            </span>
+          </div>
+        </div>
       ),
       helperText: 'Choose a visual representation for the button.',
     },
@@ -321,8 +475,40 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
           })}
         </div>
       )
-    }
-  ], [draft.iconId, draft.locations]);
+    },
+    {
+      key: 'id' as unknown as keyof TriggerButtonDraft,
+      label: 'Used In AI Paths',
+      type: 'custom',
+      render: () => (
+        <div className='mt-2'>
+          {draft.id ? (
+            draftPathUsage.length > 0 ? (
+              <div className='flex flex-wrap gap-1.5'>
+                {draftPathUsage.map((path: TriggerButtonPathUsage): React.JSX.Element => (
+                  <span
+                    key={path.id}
+                    className='inline-flex items-center rounded-full border border-border bg-muted/30 px-2 py-0.5 text-[11px] text-gray-300'
+                  >
+                    {path.name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className='text-xs text-gray-500'>
+                This button is not linked to any AI Path trigger node yet.
+              </p>
+            )
+          ) : (
+            <p className='text-xs text-gray-500'>
+              Save the button first to see where it is used.
+            </p>
+          )}
+        </div>
+      ),
+      helperText: 'Paths containing Trigger nodes configured for this button.',
+    },
+  ], [draft.iconId, draft.id, draft.locations, draftPathUsage, selectedIconItem]);
 
   const handleSave = async (): Promise<void> => {
     const validation = validateFormData(
@@ -354,9 +540,12 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
     const list = triggerButtonsQuery.data ?? [];
     return list.map((btn: AiTriggerButtonDto): AiTriggerButtonRecord => ({
       ...btn,
-      pathName: 'N/A' 
+      pathName: (triggerButtonPathUsageMap.get(btn.id) ?? []).map((entry: TriggerButtonPathUsage) => entry.name).join(', '),
+      pathId: (triggerButtonPathUsageMap.get(btn.id) ?? []).map((entry: TriggerButtonPathUsage) => entry.id).join(', '),
+      pathNames: (triggerButtonPathUsageMap.get(btn.id) ?? []).map((entry: TriggerButtonPathUsage) => entry.name),
+      pathIds: (triggerButtonPathUsageMap.get(btn.id) ?? []).map((entry: TriggerButtonPathUsage) => entry.id),
     }));
-  }, [triggerButtonsQuery.data]);
+  }, [triggerButtonsQuery.data, triggerButtonPathUsageMap]);
 
   return (
     <div className='container mx-auto max-w-5xl py-10 space-y-6'>
@@ -400,8 +589,26 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         onChange={(vals: Partial<TriggerButtonDraft>): void => { setDraft(prev => ({ ...prev, ...vals })); }}
         onSave={async (): Promise<void> => { await handleSave(); }}
         isSaving={saving}
-        size='md'
+        size='xl'
       />
+      <AppModal
+        open={iconLibraryOpen}
+        onClose={(): void => {
+          setIconLibraryOpen(false);
+        }}
+        title='Choose Icon'
+        size='xl'
+        className='md:min-w-[72rem] max-w-[80rem]'
+        bodyClassName='h-[76vh]'
+      >
+        <IconSelector
+          value={draft.iconId}
+          onChange={handleSelectIcon}
+          columns={12}
+          showSearch
+          helperText='Search and pick an icon. Selecting an icon applies it immediately.'
+        />
+      </AppModal>
 
       <ConfirmModal
         isOpen={!!buttonToDelete}

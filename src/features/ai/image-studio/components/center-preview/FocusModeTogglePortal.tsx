@@ -1,0 +1,33 @@
+'use client';
+
+import { Eye, EyeOff } from 'lucide-react';
+import React from 'react';
+import { createPortal } from 'react-dom';
+
+import { Button } from '@/shared/ui';
+
+type FocusModeTogglePortalProps = {
+  isFocusMode: boolean;
+  onToggleFocusMode: () => void;
+};
+
+export function FocusModeTogglePortal({
+  isFocusMode,
+  onToggleFocusMode,
+}: FocusModeTogglePortalProps): React.JSX.Element | null {
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
+    <Button size='xs'
+      type='button'
+      variant='outline'
+      onClick={onToggleFocusMode}
+      title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
+      aria-label={isFocusMode ? 'Show side panels' : 'Show canvas only'}
+      className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+    >
+      {isFocusMode ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+    </Button>,
+    document.body,
+  );
+}

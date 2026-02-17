@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Camera, Eye, EyeOff, Loader2, Locate, Trash2 } from 'lucide-react';
+import { Camera, Loader2, Locate } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -20,8 +20,11 @@ import type { VectorCanvasViewCropRect } from '@/shared/ui';
 import { Button, Input, useToast } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
+import { VariantPanel } from './center-preview/VariantPanel';
+import { VariantTooltipPortal, type VariantTooltipState } from './center-preview/VariantTooltipPortal';
 import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
 import { useMaskingActions, useMaskingState } from '../context/MaskingContext';
@@ -29,16 +32,17 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { useUiActions, useUiState, type PreviewCanvasSize } from '../context/UiContext';
 import { useVersionGraphState } from '../context/VersionGraphContext';
-import { estimateGenerationCost } from '../utils/generation-cost';
-import { getImageStudioSlotImageSrc, isLikelyImageStudioErrorText } from '../utils/image-src';
+import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import {
-  asFiniteNumber,
+  buildDetailsNodeForCenterPreview,
+  buildVariantThumbnails,
+  isTreeRevealableCardSlot,
+  resolveSourceSlotIdFromGeneratedPath,
+  resolveVariantSlotIdForCenterPreview,
+} from './center-preview/variant-thumbnails';
+import {
   asObjectRecord,
-  buildTimestampSearchText,
   clampSplitZoom,
-  formatBytes,
-  formatTimestamp,
-  formatUsd,
   normalizeImagePath,
   type VariantThumbnailInfo,
   wait,
@@ -59,36 +63,6 @@ const PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE: Record<PreviewCanvasSize, number> = {
 const PREVIEW_VARIANT_PANEL_HEIGHT = '15rem';
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
-const GENERATED_SOURCE_PATH_REGEX = /^\/uploads\/studio\/(?:center|crops|upscale)\/[^/]+\/([^/]+)\//i;
-
-const resolveSourceSlotIdFromGeneratedPath = (slot: ImageStudioSlotRecord | null): string | null => {
-  if (!slot) return null;
-  const sourcePath = normalizeImagePath(slot.imageFile?.filepath ?? slot.imageUrl ?? null);
-  if (!sourcePath) return null;
-  const match = sourcePath.match(GENERATED_SOURCE_PATH_REGEX);
-  const sourceSlotId = match?.[1]?.trim() ?? '';
-  return sourceSlotId || null;
-};
-
-const isTreeRevealableCardSlot = (slot: ImageStudioSlotRecord | null): boolean => {
-  if (!slot?.id) return false;
-  const metadata = asObjectRecord(slot.metadata);
-  if (!metadata) return true;
-
-  const role = typeof metadata['role'] === 'string' ? metadata['role'].trim().toLowerCase() : '';
-  const relationType = typeof metadata['relationType'] === 'string'
-    ? metadata['relationType'].trim().toLowerCase()
-    : '';
-
-  const isGenerationDerived =
-    role === 'generation' ||
-    relationType.startsWith('generation:') ||
-    relationType.startsWith('center:') ||
-    relationType.startsWith('crop:') ||
-    relationType.startsWith('upscale:');
-
-  return !isGenerationDerived;
-};
 
 export function CenterPreview(): React.JSX.Element {
   const {
@@ -165,11 +139,7 @@ export function CenterPreview(): React.JSX.Element {
   const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
   const previewCanvasCropRectRef = useRef<VectorCanvasViewCropRect | null>(null);
   const previewCanvasSlotIdRef = useRef<string | null>(null);
-  const [variantTooltip, setVariantTooltip] = useState<{
-    variant: VariantThumbnailInfo;
-    x: number;
-    y: number;
-  } | null>(null);
+  const [variantTooltip, setVariantTooltip] = useState<VariantTooltipState | null>(null);
   const [detailsSlotId, setDetailsSlotId] = useState<string | null>(null);
 
   const productImagesExternalBaseUrl =
@@ -506,304 +476,24 @@ export function CenterPreview(): React.JSX.Element {
     []
   );
 
-  const variantThumbnails = useMemo((): VariantThumbnailInfo[] => {
-    const rootSourceSlotId = rootVariantSourceSlotId;
-    if (!rootSourceSlotId) return [];
-
-    const isGenerationSlotLinkedToRoot = (slot: (typeof slots)[number]): boolean => {
-      const metadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
-      if (!metadata) return false;
-      const relationType = typeof metadata.relationType === 'string' ? metadata.relationType : '';
-      const source = typeof metadata.sourceSlotId === 'string' ? metadata.sourceSlotId.trim() : '';
-      const sourceIds = Array.isArray(metadata.sourceSlotIds)
-        ? metadata.sourceSlotIds.filter(
-          (value): value is string => typeof value === 'string' && value.trim().length > 0
-        )
-        : [];
-      const linkedToSource = source === rootSourceSlotId || sourceIds.includes(rootSourceSlotId);
-      const isGeneration =
-        metadata.role === 'generation' ||
-        relationType.startsWith('generation:') ||
-        relationType.startsWith('center:') ||
-        relationType.startsWith('crop:') ||
-        relationType.startsWith('upscale:');
-      const imageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
-      return linkedToSource && isGeneration && Boolean(imageSrc || slot.imageFileId);
-    };
-
-    const buildVariantFromSlot = (
-      slot: (typeof slots)[number],
-      fallbackIndex: number
-    ): VariantThumbnailInfo => {
-      const metadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
-      const generationParams = asObjectRecord(metadata?.generationParams);
-      const generationRequest = asObjectRecord(metadata?.generationRequest);
-      const generationCosts = asObjectRecord(metadata?.generationCosts);
-
-      const model =
-        (typeof generationParams?.['model'] === 'string' ? generationParams['model'] : null) ??
-        (typeof generationRequest?.['model'] === 'string' ? generationRequest['model'] : null) ??
-        null;
-      const timestamp =
-        (typeof generationParams?.['timestamp'] === 'string' ? generationParams['timestamp'] : null) ??
-        (typeof generationRequest?.['timestamp'] === 'string' ? generationRequest['timestamp'] : null) ??
-        null;
-      const prompt =
-        (typeof generationParams?.['prompt'] === 'string' ? generationParams['prompt'] : null) ??
-        (typeof generationRequest?.['prompt'] === 'string' ? generationRequest['prompt'] : null) ??
-        '';
-      const outputCountCandidate =
-        asFiniteNumber(metadata?.generationOutputCount) ??
-        asFiniteNumber(generationParams?.['outputCount']) ??
-        null;
-      const outputCount = outputCountCandidate ?? 1;
-
-      let tokenCostUsd = asFiniteNumber(generationCosts?.['tokenCostUsd']);
-      let actualCostUsd = asFiniteNumber(generationCosts?.['actualCostUsd']);
-      let costEstimated = generationCosts?.['estimated'] !== false;
-
-      if ((tokenCostUsd === null || actualCostUsd === null) && model) {
-        const estimate = estimateGenerationCost({
-          prompt,
-          model,
-          outputCount,
-        });
-        if (tokenCostUsd === null) tokenCostUsd = estimate.promptCostUsdPerOutput;
-        if (actualCostUsd === null) actualCostUsd = estimate.totalCostUsdPerOutput;
-        costEstimated = true;
-      }
-
-      const slotImageFile = slot.imageFile ?? null;
-      const resolvedSlotImageSrc = getImageStudioSlotImageSrc(slot, productImagesExternalBaseUrl);
-      const rawSlotImageUrl = typeof slot.imageUrl === 'string' ? slot.imageUrl.trim() : '';
-      const safeSlotImageUrl =
-        rawSlotImageUrl && !isLikelyImageStudioErrorText(rawSlotImageUrl)
-          ? rawSlotImageUrl
-          : '';
-      const output = slotImageFile
-        ? {
-          id: slotImageFile.id,
-          filepath: slotImageFile.filepath,
-          filename: slotImageFile.filename || slot.name || `Generated ${fallbackIndex}`,
-          size: slotImageFile.size,
-          width: slotImageFile.width,
-          height: slotImageFile.height,
-        }
-        : slot.imageFileId || safeSlotImageUrl
-          ? {
-            id: slot.imageFileId ?? `slot:${slot.id}`,
-            filepath: safeSlotImageUrl,
-            filename: slot.name || `Generated ${fallbackIndex}`,
-            size: 0,
-            width: null,
-            height: null,
-          }
-          : null;
-
-      const imageSrc = resolvedSlotImageSrc || output?.filepath || null;
-      const rawIndex =
-        asFiniteNumber(metadata?.generationOutputIndex) ??
-        asFiniteNumber(generationParams?.['outputIndex']) ??
-        fallbackIndex;
-      const index = Math.max(1, Math.floor(rawIndex));
-
-      return {
-        id: `slot:${slot.id}`,
-        index,
-        status: output ? 'completed' : 'failed',
-        imageSrc,
-        output,
-        slotId: slot.id,
-        model,
-        timestamp,
-        timestampLabel: formatTimestamp(timestamp),
-        timestampSearchText: buildTimestampSearchText(timestamp),
-        tokenCostUsd,
-        actualCostUsd,
-        costEstimated,
-      };
-    };
-
-    const historicalVariants: VariantThumbnailInfo[] = slots
-      .filter((slot) => isGenerationSlotLinkedToRoot(slot))
-      .map((slot, index) => buildVariantFromSlot(slot, index + 1))
-      .sort((a, b) => {
-        const aTs = a.timestamp ? Date.parse(a.timestamp) : Number.NaN;
-        const bTs = b.timestamp ? Date.parse(b.timestamp) : Number.NaN;
-        if (Number.isFinite(aTs) && Number.isFinite(bTs) && aTs !== bTs) {
-          return bTs - aTs;
-        }
-        return b.index - a.index;
-      });
-
-    const historicalSlotIds = new Set<string>(
-      historicalVariants
-        .map((variant) => variant.slotId)
-        .filter((slotId): slotId is string => typeof slotId === 'string' && slotId.length > 0)
-    );
-    const normalizedRootSourceSlotId = rootSourceSlotId.trim();
-    const normalizedActiveRunSourceSlotId = activeRunSourceSlotId?.trim() ?? '';
-    const canShowActiveRunLandingSlots =
-      !normalizedActiveRunSourceSlotId ||
-      normalizedActiveRunSourceSlotId === normalizedRootSourceSlotId;
-
-    const transientVariants = landingSlots
-      .map((landingSlot): VariantThumbnailInfo | null => {
-        const output = landingSlot.output ?? null;
-        const normalizedOutputPath = normalizeImagePath(output?.filepath);
-        const matchingSlots = slots.filter((slot) => {
-          const metadata = asObjectRecord(slot.metadata);
-          const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
-          const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
-            ? metadata['generationOutputIndex']
-            : null;
-
-          if (activeRunId && runId === activeRunId && outputIndex === landingSlot.index) {
-            return true;
-          }
-          if (!output) {
-            return false;
-          }
-          if (slot.imageFileId === output.id) {
-            return true;
-          }
-          if (normalizedOutputPath) {
-            if (normalizeImagePath(slot.imageFile?.filepath) === normalizedOutputPath) {
-              return true;
-            }
-            if (normalizeImagePath(slot.imageUrl) === normalizedOutputPath) {
-              return true;
-            }
-          }
-          return false;
-        });
-        const matchedSlot = matchingSlots.find((slot) => {
-          const metadata = asObjectRecord(slot.metadata);
-          const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
-          const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
-            ? metadata['generationOutputIndex']
-            : null;
-          return Boolean(activeRunId && runId === activeRunId && outputIndex === landingSlot.index);
-        }) ?? matchingSlots[0] ?? null;
-        if (!matchedSlot || !isGenerationSlotLinkedToRoot(matchedSlot)) {
-          if (!canShowActiveRunLandingSlots) {
-            return null;
-          }
-
-          return {
-            id: `run:${activeRunId ?? 'pending'}:${landingSlot.index}`,
-            index: landingSlot.index,
-            status: landingSlot.status,
-            imageSrc: output?.filepath ?? null,
-            output: output
-              ? {
-                id: output.id,
-                filepath: output.filepath,
-                filename: output.filename || `Generated ${landingSlot.index}`,
-                size: output.size,
-                width: output.width,
-                height: output.height,
-              }
-              : null,
-            slotId: null,
-            model: null,
-            timestamp: null,
-            timestampLabel: formatTimestamp(null),
-            timestampSearchText: buildTimestampSearchText(null),
-            tokenCostUsd: null,
-            actualCostUsd: null,
-            costEstimated: false,
-          };
-        }
-
-        if (historicalSlotIds.has(matchedSlot.id)) {
-          return null;
-        }
-
-        const imageSrc =
-          getImageStudioSlotImageSrc(matchedSlot, productImagesExternalBaseUrl) ?? output?.filepath ?? null;
-
-        const metadata = asObjectRecord(matchedSlot.metadata) as SlotGenerationMetadata | null;
-        const generationParams = asObjectRecord(metadata?.generationParams);
-        const generationRequest = asObjectRecord(metadata?.generationRequest);
-        const generationCosts = asObjectRecord(metadata?.generationCosts);
-
-        const model =
-          (typeof generationParams?.['model'] === 'string' ? generationParams['model'] : null) ??
-          (typeof generationRequest?.['model'] === 'string' ? generationRequest['model'] : null) ??
-          null;
-        const timestamp =
-          (typeof generationParams?.['timestamp'] === 'string' ? generationParams['timestamp'] : null) ??
-          (typeof generationRequest?.['timestamp'] === 'string' ? generationRequest['timestamp'] : null) ??
-          null;
-        const prompt =
-          (typeof generationParams?.['prompt'] === 'string' ? generationParams['prompt'] : null) ??
-          (typeof generationRequest?.['prompt'] === 'string' ? generationRequest['prompt'] : null) ??
-          '';
-        const outputCountCandidate =
-          asFiniteNumber(metadata?.generationOutputCount) ??
-          asFiniteNumber(generationParams?.['outputCount']) ??
-          (landingSlots.length > 0 ? landingSlots.length : null);
-        const outputCount = outputCountCandidate ?? 1;
-
-        let tokenCostUsd = asFiniteNumber(generationCosts?.['tokenCostUsd']);
-        let actualCostUsd = asFiniteNumber(generationCosts?.['actualCostUsd']);
-        let costEstimated = generationCosts?.['estimated'] !== false;
-
-        if ((tokenCostUsd === null || actualCostUsd === null) && model) {
-          const estimate = estimateGenerationCost({
-            prompt,
-            model,
-            outputCount,
-          });
-          if (tokenCostUsd === null) tokenCostUsd = estimate.promptCostUsdPerOutput;
-          if (actualCostUsd === null) actualCostUsd = estimate.totalCostUsdPerOutput;
-          costEstimated = true;
-        }
-
-        return {
-          id: `slot:${matchedSlot.id}`,
-          index: landingSlot.index,
-          status: landingSlot.status,
-          imageSrc,
-          output: output
-            ? {
-              id: output.id,
-              filepath: output.filepath,
-              filename: output.filename || `Generated ${landingSlot.index}`,
-              size: output.size,
-              width: output.width,
-              height: output.height,
-            }
-            : null,
-          slotId: matchedSlot.id,
-          model,
-          timestamp,
-          timestampLabel: formatTimestamp(timestamp),
-          timestampSearchText: buildTimestampSearchText(timestamp),
-          tokenCostUsd,
-          actualCostUsd,
-          costEstimated,
-        };
-      })
-      .filter((variant): variant is VariantThumbnailInfo => Boolean(variant));
-
-    const deduped = new Map<string, VariantThumbnailInfo>();
-    [...transientVariants, ...historicalVariants].forEach((variant) => {
-      if (!deduped.has(variant.id)) {
-        deduped.set(variant.id, variant);
-      }
-    });
-
-    return Array.from(deduped.values());
-  }, [
+  const variantThumbnails = useMemo(
+    () => buildVariantThumbnails({
+      activeRunId,
+      activeRunSourceSlotId,
+      landingSlots,
+      productImagesExternalBaseUrl,
+      rootVariantSourceSlotId,
+      slots,
+    }),
+    [
     activeRunId,
     activeRunSourceSlotId,
     landingSlots,
     productImagesExternalBaseUrl,
     rootVariantSourceSlotId,
     slots,
-  ]);
+    ],
+  );
 
   const visibleVariantThumbnails = useMemo(
     () =>
@@ -931,47 +621,13 @@ export function CenterPreview(): React.JSX.Element {
     if (variantLoadingId === variant.id) return;
     setVariantLoadingId(variant.id);
 
-    const resolveFallbackSlotId = (
-      candidateSlots: typeof slots
-    ): string | null => {
-      if (variant.slotId && candidateSlots.some((slot) => slot.id === variant.slotId)) {
-        return variant.slotId;
-      }
-
-      const matchedByRunMetadata = candidateSlots.find((slot) => {
-        const metadata = asObjectRecord(slot.metadata);
-        const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'] : null;
-        const outputIndex = typeof metadata?.['generationOutputIndex'] === 'number'
-          ? metadata['generationOutputIndex']
-          : null;
-        return Boolean(activeRunId && runId === activeRunId && outputIndex === variant.index);
-      });
-      if (matchedByRunMetadata) {
-        return matchedByRunMetadata.id;
-      }
-
-      const output = variant.output;
-      if (!output) return null;
-
-      const matchedByFileId = candidateSlots.find((slot) => slot.imageFileId === output.id);
-      if (matchedByFileId) {
-        return matchedByFileId.id;
-      }
-
-      const outputPath = normalizeImagePath(output.filepath);
-      if (!outputPath) return null;
-
-      const matchedByPath = candidateSlots.find((slot) => {
-        const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
-        if (imageFilePath && imageFilePath === outputPath) return true;
-        const imageUrlPath = normalizeImagePath(slot.imageUrl);
-        return Boolean(imageUrlPath && imageUrlPath === outputPath);
-      });
-      return matchedByPath?.id ?? null;
-    };
-
     try {
-      let resolvedSlotId = resolveFallbackSlotId(slots);
+      let resolvedSlotId = resolveVariantSlotIdForCenterPreview({
+        activeRunId,
+        candidateSlots: slots,
+        rootVariantSourceSlotId,
+        variant,
+      });
 
       if (!resolvedSlotId) {
         for (let attempt = 0; attempt < 6; attempt += 1) {
@@ -984,7 +640,12 @@ export function CenterPreview(): React.JSX.Element {
             studioKeys.slots(projectId)
           );
           const candidateSlots = Array.isArray(cached?.slots) ? cached.slots : slots;
-          resolvedSlotId = resolveFallbackSlotId(candidateSlots);
+          resolvedSlotId = resolveVariantSlotIdForCenterPreview({
+            activeRunId,
+            candidateSlots,
+            rootVariantSourceSlotId,
+            variant,
+          });
           if (resolvedSlotId) break;
           await wait(180);
         }
@@ -1034,6 +695,7 @@ export function CenterPreview(): React.JSX.Element {
     activeRunId,
     projectId,
     queryClient,
+    rootVariantSourceSlotId,
     setPreviewMode,
     setSelectedSlotId,
     setTemporaryObjectUpload,
@@ -1041,68 +703,18 @@ export function CenterPreview(): React.JSX.Element {
     slots,
     toast,
     variantLoadingId,
-    workingSlot?.folderPath,
-    workingSlot?.id,
   ]);
 
   const resolveVariantSlotId = useCallback(
     (
       variant: VariantThumbnailInfo,
       candidateSlots: ImageStudioSlotRecord[] = slots,
-    ): string | null => {
-      const directSlotId = variant.slotId?.trim() ?? '';
-      if (directSlotId && candidateSlots.some((slot) => slot.id === directSlotId)) {
-        return directSlotId;
-      }
-
-      if (variant.output?.id) {
-        const matchedByFileId = candidateSlots.find((slot) => slot.imageFileId === variant.output?.id);
-        if (matchedByFileId) return matchedByFileId.id;
-      }
-
-      const variantOutputPath = normalizeImagePath(variant.output?.filepath ?? variant.imageSrc);
-      if (variantOutputPath) {
-        const matchedByPath = candidateSlots.find((slot) => {
-          const imageFilePath = normalizeImagePath(slot.imageFile?.filepath);
-          if (imageFilePath && imageFilePath === variantOutputPath) return true;
-          const imageUrlPath = normalizeImagePath(slot.imageUrl);
-          return Boolean(imageUrlPath && imageUrlPath === variantOutputPath);
-        });
-        if (matchedByPath) return matchedByPath.id;
-      }
-
-      const runIdFromVariantId = variant.id.startsWith('run:')
-        ? variant.id.split(':')[1]?.trim() ?? ''
-        : '';
-      const normalizedRunId = runIdFromVariantId || activeRunId?.trim() || '';
-      const normalizedRootSourceId = rootVariantSourceSlotId?.trim() ?? '';
-      if (normalizedRunId) {
-        const matchedByRunMetadata = candidateSlots.find((slot) => {
-          const metadata = asObjectRecord(slot.metadata);
-          const runId = typeof metadata?.['generationRunId'] === 'string' ? metadata['generationRunId'].trim() : '';
-          if (!runId || runId !== normalizedRunId) return false;
-          const outputIndex =
-            typeof metadata?.['generationOutputIndex'] === 'number' && Number.isFinite(metadata['generationOutputIndex'])
-              ? metadata['generationOutputIndex']
-              : null;
-          if (outputIndex !== variant.index) return false;
-          if (!normalizedRootSourceId) return true;
-
-          const sourceSlotId = typeof metadata?.['sourceSlotId'] === 'string' ? metadata['sourceSlotId'].trim() : '';
-          if (sourceSlotId && sourceSlotId === normalizedRootSourceId) return true;
-          const sourceSlotIds = Array.isArray(metadata?.['sourceSlotIds'])
-            ? metadata['sourceSlotIds']
-              .filter((value): value is string => typeof value === 'string')
-              .map((value: string) => value.trim())
-              .filter(Boolean)
-            : [];
-          return sourceSlotIds.includes(normalizedRootSourceId);
-        });
-        if (matchedByRunMetadata) return matchedByRunMetadata.id;
-      }
-
-      return null;
-    },
+    ): string | null => resolveVariantSlotIdForCenterPreview({
+      activeRunId,
+      candidateSlots,
+      rootVariantSourceSlotId,
+      variant,
+    }),
     [activeRunId, rootVariantSourceSlotId, slots],
   );
 
@@ -1300,53 +912,10 @@ export function CenterPreview(): React.JSX.Element {
     [detailsSlotId, slots]
   );
 
-  const detailsNode = useMemo<VersionNode | null>(() => {
-    if (!detailsSlot) return null;
-    const metadata = asObjectRecord(detailsSlot.metadata) as SlotGenerationMetadata | null;
-    const sourceSlotIds = Array.isArray(metadata?.sourceSlotIds)
-      ? metadata.sourceSlotIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
-      : [];
-    const sourceSlotId =
-      typeof metadata?.sourceSlotId === 'string' && metadata.sourceSlotId.trim().length > 0
-        ? metadata.sourceSlotId.trim()
-        : null;
-    const parentIds = sourceSlotIds.length > 0
-      ? sourceSlotIds
-      : sourceSlotId
-        ? [sourceSlotId]
-        : [];
-    const childIds = slots
-      .filter((slot) => {
-        if (slot.id === detailsSlot.id) return false;
-        const slotMetadata = asObjectRecord(slot.metadata) as SlotGenerationMetadata | null;
-        if (!slotMetadata) return false;
-        if (slotMetadata.sourceSlotId === detailsSlot.id) return true;
-        return Array.isArray(slotMetadata.sourceSlotIds) && slotMetadata.sourceSlotIds.includes(detailsSlot.id);
-      })
-      .map((slot) => slot.id);
-    let nodeType: VersionNode['type'] = 'base';
-    if (metadata?.role === 'composite') {
-      nodeType = 'composite';
-    } else if (metadata?.role === 'merge' || parentIds.length > 1) {
-      nodeType = 'merge';
-    } else if (metadata?.role === 'generation' || parentIds.length === 1) {
-      nodeType = 'generation';
-    }
-    const label = detailsSlot.name?.trim() || detailsSlot.id;
-    return {
-      id: detailsSlot.id,
-      label,
-      type: nodeType,
-      parentIds,
-      childIds,
-      hasMask: Boolean(asObjectRecord(metadata?.maskData)),
-      slot: detailsSlot,
-      depth: 0,
-      x: 0,
-      y: 0,
-      descendantCount: childIds.length,
-    };
-  }, [detailsSlot, slots]);
+  const detailsNode = useMemo<VersionNode | null>(
+    () => buildDetailsNodeForCenterPreview(detailsSlot, slots),
+    [detailsSlot, slots]
+  );
 
   const getSlotImageSrc = useCallback(
     (slot: ImageStudioSlotRecord): string | null =>
@@ -1386,47 +955,6 @@ export function CenterPreview(): React.JSX.Element {
     }
   }, [captureRef, projectId, queryClient, toast, workingSlot]);
 
-  const focusToggleButton = typeof document !== 'undefined'
-    ? createPortal(
-      <Button size='xs'
-        type='button'
-        variant='outline'
-        onClick={toggleFocusMode}
-        title={isFocusMode ? 'Show side panels' : 'Show canvas only'}
-        aria-label={isFocusMode ? 'Show side panels' : 'Show canvas only'}
-        className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
-      >
-        {isFocusMode ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
-      </Button>,
-      document.body
-    )
-    : null;
-
-  const variantPointerTooltip = typeof document !== 'undefined' && variantTooltip && variantTooltipPosition
-    ? createPortal(
-      <div
-        className='pointer-events-none fixed z-50 w-[250px] rounded border border-border/60 bg-black/85 p-2 text-[10px] text-gray-100 shadow-xl backdrop-blur-sm'
-        style={{ left: variantTooltipPosition.left, top: variantTooltipPosition.top }}
-      >
-        <div className='truncate'><span className='text-gray-400'>Model:</span> {variantTooltip.variant.model || 'n/a'}</div>
-        <div className='truncate'><span className='text-gray-400'>Timestamp:</span> {variantTooltip.variant.timestampLabel}</div>
-        <div>
-          <span className='text-gray-400'>Resolution:</span>{' '}
-          {variantTooltip.variant.output?.width && variantTooltip.variant.output?.height
-            ? `${variantTooltip.variant.output.width}x${variantTooltip.variant.output.height}`
-            : 'n/a'}
-        </div>
-        <div><span className='text-gray-400'>File size:</span> {formatBytes(variantTooltip.variant.output?.size ?? null)}</div>
-        <div><span className='text-gray-400'>Token cost:</span> {formatUsd(variantTooltip.variant.tokenCostUsd)}</div>
-        <div>
-          <span className='text-gray-400'>Actual cost:</span> {formatUsd(variantTooltip.variant.actualCostUsd)}
-          {variantTooltip.variant.costEstimated ? ' (est.)' : ''}
-        </div>
-      </div>,
-      document.body
-    )
-    : null;
-
   return (
     <div className='order-2 relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
       <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>
@@ -1454,8 +982,14 @@ export function CenterPreview(): React.JSX.Element {
         <div />
         <div />
       </div>
-      {focusToggleButton}
-      {variantPointerTooltip}
+      <FocusModeTogglePortal
+        isFocusMode={isFocusMode}
+        onToggleFocusMode={toggleFocusMode}
+      />
+      <VariantTooltipPortal
+        tooltip={variantTooltip}
+        position={variantTooltipPosition}
+      />
       <div className='flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-3 pt-0'>
         <div
           className='grid content-start gap-3'

@@ -33,8 +33,18 @@ const AI_PATHS_SETTINGS_COLLECTION = 'ai_paths_settings';
 const AI_PATHS_KEY_PREFIX = 'ai_paths_';
 const AI_PATHS_INDEX_KEY = 'ai_paths_index';
 const AI_PATHS_CONFIG_KEY_PREFIX = 'ai_paths_config_';
+const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 const MONGO_INDEX_NAME = 'ai_paths_settings_key';
 const AI_PATHS_CONFIG_COMPACTION_THRESHOLD = 120_000;
+const INFER_FIELDS_TRIGGER_BUTTON_ID = 'c5288f60-3a78-4415-891c-8953c3187b5a';
+const PARAMETER_INFERENCE_PATH_ID = 'path_syr8f4';
+const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';
+const PARAMETER_INFERENCE_TRIGGER_BUTTON_ID = '0ef40981-7ac6-416e-9205-7200289f851c';
+const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
+
+type TriggerButtonSettingRecord = Record<string, unknown> & {
+  id: string;
+};
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
@@ -481,6 +491,459 @@ const parsePathConfigMeta = (id: string, raw: string): ParsedPathMeta | null => 
   }
 };
 
+const parseTriggerButtons = (
+  raw: string | undefined
+): TriggerButtonSettingRecord[] | null => {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((entry: unknown): TriggerButtonSettingRecord | null => {
+        if (!entry || typeof entry !== 'object') return null;
+        const id = (entry as { id?: unknown }).id;
+        if (typeof id !== 'string' || id.trim().length === 0) return null;
+        return {
+          ...(entry as Record<string, unknown>),
+          id: id.trim(),
+        };
+      })
+      .filter((entry: TriggerButtonSettingRecord | null): entry is TriggerButtonSettingRecord =>
+        Boolean(entry)
+      );
+  } catch {
+    return null;
+  }
+};
+
+const buildParameterInferencePathConfigValue = (timestamp: string): string =>
+  JSON.stringify({
+    id: PARAMETER_INFERENCE_PATH_ID,
+    version: 1,
+    name: PARAMETER_INFERENCE_PATH_NAME,
+    description:
+      'Infer product parameter values from name and images, then update product parameters.',
+    trigger: 'Product Modal - Infer Parameters',
+    executionMode: 'server',
+    flowIntensity: 'medium',
+    runMode: 'block',
+    nodes: [
+      {
+        type: 'trigger',
+        title: 'Trigger: Infer Parameters',
+        description: `User trigger button (${PARAMETER_INFERENCE_TRIGGER_BUTTON_ID}).`,
+        inputs: ['context'],
+        outputs: [
+          'trigger',
+          'triggerName',
+          'context',
+          'meta',
+          'entityId',
+          'entityType',
+        ],
+        config: {
+          trigger: {
+            event: PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
+          },
+        },
+        id: 'node-trigger-params',
+        position: { x: 16, y: 560 },
+      },
+      {
+        type: 'simulation',
+        title: 'Simulation: Entity Modal',
+        description: 'Simulate a modal action by Entity ID.',
+        inputs: ['trigger'],
+        outputs: ['context', 'entityId', 'entityType', 'productId'],
+        id: 'node-sim-params',
+        position: { x: 16, y: 280 },
+        config: {
+          simulation: {
+            productId: 'cmlfnkx87001dggc9lji1wiw3',
+            entityType: 'products',
+            entityId: 'cmlfnkx87001dggc9lji1wiw3',
+          },
+        },
+      },
+      {
+        type: 'parser',
+        title: 'JSON Parser',
+        description: 'Extract fields into outputs or a single bundle.',
+        inputs: ['entityJson', 'context'],
+        outputs: ['bundle', 'images'],
+        id: 'node-parser-params',
+        position: { x: 540, y: 470 },
+        config: {
+          parser: {
+            mappings: {
+              content_en: '',
+              images: '',
+              productId: '',
+              title: '',
+            },
+            outputMode: 'bundle',
+            presetId: 'product_core',
+          },
+          notes: {
+            text: 'Grab product name, description and images.',
+          },
+        },
+      },
+      {
+        type: 'database',
+        title: 'Database Query',
+        description: 'Load available parameters for product catalog.',
+        inputs: [
+          'entityId',
+          'entityType',
+          'productId',
+          'context',
+          'query',
+          'value',
+          'bundle',
+          'result',
+          'content_en',
+          'queryCallback',
+          'schema',
+          'aiQuery',
+        ],
+        outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
+        id: 'node-query-params',
+        position: { x: 560, y: 110 },
+        config: {
+          database: {
+            operation: 'query',
+            entityType: 'product',
+            idField: 'entityId',
+            mode: 'replace',
+            updateStrategy: 'one',
+            useMongoActions: false,
+            mappings: [{ targetPath: 'content_en', sourcePort: 'result' }],
+            query: {
+              provider: 'prisma',
+              collection: 'product_parameters',
+              mode: 'custom',
+              preset: 'by_id',
+              field: '_id',
+              idType: 'string',
+              queryTemplate: '{\n  "catalogId": "{{context.entity.catalogId}}"\n}',
+              limit: 200,
+              sort: '',
+              projection: '',
+              single: false,
+            },
+            writeSource: 'bundle',
+            writeSourcePath: '',
+            dryRun: false,
+            distinctField: '',
+            updateTemplate: '',
+            skipEmpty: false,
+            trimStrings: false,
+            aiPrompt: '',
+            validationRuleIds: [],
+          },
+          runtime: { waitForInputs: true },
+        },
+      },
+      {
+        type: 'prompt',
+        title: 'Prompt',
+        description: 'Build prompt for parameter inference.',
+        inputs: ['bundle', 'title', 'images', 'result', 'entityId'],
+        outputs: ['prompt', 'images'],
+        id: 'node-prompt-params',
+        position: { x: 1080, y: 260 },
+        config: {
+          prompt: {
+            template:
+              'Infer product parameter values in ENGLISH from the product data below.\n' +
+              'Product name: "{{title}}"\n' +
+              'Product description: "{{content_en}}"\n' +
+              'Available parameters JSON: {{result}}\n\n' +
+              'Rules:\n' +
+              '1. Return ONLY valid JSON array.\n' +
+              '2. Output schema per item: {"parameterId":"<id>","value":"<english value>"}.\n' +
+              '3. Use only parameterId values that exist in the provided parameter list.\n' +
+              '4. For selectorType radio/select/dropdown choose exactly one label from optionLabels.\n' +
+              '5. For text/textarea provide concise English value.\n' +
+              '6. Skip parameters you cannot infer confidently.\n' +
+              '7. No markdown, no explanations, no code fences.\n' +
+              '8. If nothing can be inferred, return [].',
+          },
+        },
+      },
+      {
+        type: 'model',
+        title: 'Model',
+        description: 'Run vision model to infer parameters.',
+        inputs: ['prompt', 'images', 'context'],
+        outputs: ['result', 'jobId'],
+        id: 'node-model-params',
+        position: { x: 1540, y: 520 },
+        config: {
+          model: {
+            modelId: 'gemma3:12b',
+            temperature: 0.2,
+            maxTokens: 900,
+            vision: true,
+            waitForResult: true,
+          },
+        },
+      },
+      {
+        type: 'regex',
+        title: 'Regex JSON Extract',
+        description: 'Extract JSON array from model response.',
+        inputs: ['value', 'prompt', 'regexCallback'],
+        outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+        id: 'node-regex-params',
+        position: { x: 2000, y: 520 },
+        config: {
+          regex: {
+            pattern: '\\[[\\s\\S]*\\]',
+            flags: '',
+            mode: 'extract_json',
+            matchMode: 'first_overall',
+            groupBy: 'match',
+            outputMode: 'object',
+            includeUnmatched: false,
+            unmatchedKey: '__unmatched__',
+            splitLines: false,
+            sampleText: '',
+            aiPrompt: '',
+            aiAutoRun: false,
+          },
+          runtime: { waitForInputs: true },
+        },
+      },
+      {
+        type: 'database',
+        title: 'Database Query',
+        description: 'Update product.parameters with inferred values.',
+        inputs: [
+          'entityId',
+          'entityType',
+          'productId',
+          'context',
+          'query',
+          'value',
+          'bundle',
+          'result',
+          'content_en',
+          'queryCallback',
+          'schema',
+          'aiQuery',
+        ],
+        outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
+        id: 'node-update-params',
+        position: { x: 2460, y: 520 },
+        config: {
+          database: {
+            operation: 'update',
+            entityType: 'product',
+            idField: 'entityId',
+            mode: 'replace',
+            updateStrategy: 'one',
+            useMongoActions: true,
+            actionCategory: 'update',
+            action: 'updateOne',
+            mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: '_id',
+              idType: 'string',
+              queryTemplate: '{\n  "id": "{{entityId}}"\n}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+            writeSource: 'bundle',
+            writeSourcePath: '',
+            dryRun: false,
+            distinctField: '',
+            updateTemplate: '',
+            skipEmpty: true,
+            trimStrings: false,
+            aiPrompt: '',
+            validationRuleIds: [],
+          },
+          runtime: { waitForInputs: true },
+        },
+      },
+    ],
+    edges: [
+      {
+        id: 'edge-params-01',
+        from: 'node-trigger-params',
+        to: 'node-sim-params',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-params-02',
+        from: 'node-sim-params',
+        to: 'node-trigger-params',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-params-03',
+        from: 'node-trigger-params',
+        to: 'node-parser-params',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-params-04',
+        from: 'node-trigger-params',
+        to: 'node-query-params',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-params-05',
+        from: 'node-parser-params',
+        to: 'node-prompt-params',
+        fromPort: 'bundle',
+        toPort: 'bundle',
+      },
+      {
+        id: 'edge-params-06',
+        from: 'node-query-params',
+        to: 'node-prompt-params',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+      {
+        id: 'edge-params-07',
+        from: 'node-prompt-params',
+        to: 'node-model-params',
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      },
+      {
+        id: 'edge-params-08',
+        from: 'node-prompt-params',
+        to: 'node-model-params',
+        fromPort: 'images',
+        toPort: 'images',
+      },
+      {
+        id: 'edge-params-09',
+        from: 'node-model-params',
+        to: 'node-regex-params',
+        fromPort: 'result',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-params-10',
+        from: 'node-regex-params',
+        to: 'node-update-params',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-params-11',
+        from: 'node-trigger-params',
+        to: 'node-update-params',
+        fromPort: 'entityId',
+        toPort: 'entityId',
+      },
+      {
+        id: 'edge-params-12',
+        from: 'node-trigger-params',
+        to: 'node-update-params',
+        fromPort: 'entityType',
+        toPort: 'entityType',
+      },
+    ],
+    updatedAt: timestamp,
+    isLocked: false,
+    isActive: true,
+    parserSamples: {},
+    updaterSamples: {},
+  });
+
+const ensureParameterInferenceDefaults = async (
+  records: AiPathsSettingRecord[]
+): Promise<AiPathsSettingRecord[]> => {
+  const map = new Map<string, string>(
+    records.map((entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value])
+  );
+  const updates: AiPathsSettingRecord[] = [];
+  const now = new Date().toISOString();
+  const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`;
+
+  let pathConfigRaw = map.get(pathConfigKey);
+  const parsedConfigMeta = pathConfigRaw
+    ? parsePathConfigMeta(PARAMETER_INFERENCE_PATH_ID, pathConfigRaw)
+    : null;
+  if (!pathConfigRaw || !parsedConfigMeta) {
+    pathConfigRaw = buildParameterInferencePathConfigValue(now);
+    map.set(pathConfigKey, pathConfigRaw);
+    updates.push({ key: pathConfigKey, value: pathConfigRaw });
+  }
+
+  const currentMetas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
+  if (!currentMetas.some((meta: ParsedPathMeta): boolean => meta.id === PARAMETER_INFERENCE_PATH_ID)) {
+    const fallbackMeta: ParsedPathMeta = {
+      id: PARAMETER_INFERENCE_PATH_ID,
+      name: PARAMETER_INFERENCE_PATH_NAME,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const configMeta = pathConfigRaw
+      ? parsePathConfigMeta(PARAMETER_INFERENCE_PATH_ID, pathConfigRaw)
+      : null;
+    const nextMetas = [...currentMetas, configMeta ?? fallbackMeta].sort(
+      (a: ParsedPathMeta, b: ParsedPathMeta) => b.updatedAt.localeCompare(a.updatedAt)
+    );
+    const indexValue = JSON.stringify(nextMetas);
+    map.set(AI_PATHS_INDEX_KEY, indexValue);
+    updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
+  }
+
+  const parsedButtons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
+  if (parsedButtons && !parsedButtons.some((button) => button.id === PARAMETER_INFERENCE_TRIGGER_BUTTON_ID)) {
+    const seededButton: TriggerButtonSettingRecord = {
+      id: PARAMETER_INFERENCE_TRIGGER_BUTTON_ID,
+      name: PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME,
+      iconId: null,
+      locations: ['product_modal'],
+      mode: 'click',
+      display: 'icon_label',
+      createdAt: now,
+      updatedAt: now,
+    };
+    const insertAfterIndex = parsedButtons.findIndex(
+      (button: TriggerButtonSettingRecord): boolean =>
+        button.id === INFER_FIELDS_TRIGGER_BUTTON_ID
+    );
+    const nextButtons = [...parsedButtons];
+    if (insertAfterIndex >= 0) {
+      nextButtons.splice(insertAfterIndex + 1, 0, seededButton);
+    } else {
+      nextButtons.push(seededButton);
+    }
+    const triggerButtonsValue = JSON.stringify(nextButtons);
+    map.set(AI_PATHS_TRIGGER_BUTTONS_KEY, triggerButtonsValue);
+    updates.push({
+      key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+      value: triggerButtonsValue,
+    });
+  }
+
+  if (updates.length === 0) return records;
+  await upsertMongoAiPathsSettingsBatch(updates);
+  return Array.from(map.entries()).map(
+    ([key, value]): AiPathsSettingRecord => ({ key, value })
+  );
+};
+
 const repairPathIndexFromConfigs = (records: Map<string, string>): string | null => {
   const existingIndexRaw = records.get(AI_PATHS_INDEX_KEY);
   const existingIndex = parsePathMetas(existingIndexRaw);
@@ -531,8 +994,9 @@ export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   const settings = await listMongoAiPathsSettings();
   const compacted = await compactOversizedPathConfigs(settings);
   const consistent = await ensurePathIndexConsistency(compacted);
-  setCachedAiPathsSettings(consistent);
-  return consistent;
+  const ensuredDefaults = await ensureParameterInferenceDefaults(consistent);
+  setCachedAiPathsSettings(ensuredDefaults);
+  return ensuredDefaults;
 }
 
 export async function getAiPathsSetting(key: string): Promise<string | null> {

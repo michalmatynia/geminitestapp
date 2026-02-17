@@ -700,6 +700,166 @@ const ensureParameterInferenceDefaults = async (
   );
 };
 
+const ensureDescriptionInferenceV2Defaults = async (
+  records: AiPathsSettingRecord[]
+): Promise<AiPathsSettingRecord[]> => {
+  const map = new Map<string, string>(
+    records.map((entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value])
+  );
+  const updates: AiPathsSettingRecord[] = [];
+  const now = new Date().toISOString();
+  const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_V2_PATH_ID}`;
+
+  let pathConfigRaw = map.get(pathConfigKey);
+  const parsedConfigMeta = pathConfigRaw
+    ? parsePathConfigMeta(DESCRIPTION_INFERENCE_V2_PATH_ID, pathConfigRaw)
+    : null;
+  if (
+    !pathConfigRaw ||
+    !parsedConfigMeta ||
+    needsDescriptionInferenceV2ConfigUpgrade(pathConfigRaw)
+  ) {
+    pathConfigRaw = buildDescriptionInferenceV2PathConfigValue(now);
+    map.set(pathConfigKey, pathConfigRaw);
+    updates.push({ key: pathConfigKey, value: pathConfigRaw });
+  }
+
+  const currentMetas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
+  const descriptionPathMetaIndex = currentMetas.findIndex(
+    (meta: ParsedPathMeta): boolean => meta.id === DESCRIPTION_INFERENCE_V2_PATH_ID
+  );
+  if (descriptionPathMetaIndex === -1) {
+    const fallbackMeta: ParsedPathMeta = {
+      id: DESCRIPTION_INFERENCE_V2_PATH_ID,
+      name: DESCRIPTION_INFERENCE_V2_PATH_NAME,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const configMeta = pathConfigRaw
+      ? parsePathConfigMeta(DESCRIPTION_INFERENCE_V2_PATH_ID, pathConfigRaw)
+      : null;
+    const nextMetas = [...currentMetas, configMeta ?? fallbackMeta].sort(
+      (a: ParsedPathMeta, b: ParsedPathMeta) => b.updatedAt.localeCompare(a.updatedAt)
+    );
+    const indexValue = JSON.stringify(nextMetas);
+    map.set(AI_PATHS_INDEX_KEY, indexValue);
+    updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
+  } else {
+    const currentMeta = currentMetas[descriptionPathMetaIndex];
+    if (
+      currentMeta &&
+      (typeof currentMeta.name !== 'string' || currentMeta.name.trim().length === 0)
+    ) {
+      const nextMetas = [...currentMetas];
+      nextMetas[descriptionPathMetaIndex] = {
+        ...currentMeta,
+        name: DESCRIPTION_INFERENCE_V2_PATH_NAME,
+        updatedAt: now,
+      };
+      const indexValue = JSON.stringify(nextMetas);
+      map.set(AI_PATHS_INDEX_KEY, indexValue);
+      updates.push({ key: AI_PATHS_INDEX_KEY, value: indexValue });
+    }
+  }
+
+  const parsedButtons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
+  if (parsedButtons === null) {
+    const triggerButtonsValue = JSON.stringify([
+      {
+        id: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
+        name: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME,
+        iconId: null,
+        locations: ['product_modal'],
+        mode: 'click',
+        display: 'icon_label',
+        createdAt: now,
+        updatedAt: now,
+      },
+    ]);
+    map.set(AI_PATHS_TRIGGER_BUTTONS_KEY, triggerButtonsValue);
+    updates.push({
+      key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+      value: triggerButtonsValue,
+    });
+  } else if (parsedButtons) {
+    const seededButton: TriggerButtonSettingRecord = {
+      id: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID,
+      name: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME,
+      iconId: null,
+      locations: ['product_modal'],
+      mode: 'click',
+      display: 'icon_label',
+      createdAt: now,
+      updatedAt: now,
+    };
+    const nextButtons = [...parsedButtons];
+    const existingIndex = nextButtons.findIndex(
+      (button: TriggerButtonSettingRecord): boolean =>
+        button.id === DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID
+    );
+    if (existingIndex >= 0) {
+      const existingButton = nextButtons[existingIndex]!;
+      nextButtons[existingIndex] = {
+        ...existingButton,
+        name: DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME,
+        locations: Array.from(
+          new Set([
+            ...(Array.isArray(existingButton['locations'])
+              ? (existingButton['locations'] as string[])
+              : []),
+            'product_modal',
+          ])
+        ),
+        mode: 'click',
+        display: 'icon_label',
+        updatedAt: now,
+      };
+    } else {
+      nextButtons.push(seededButton);
+    }
+
+    const descriptionIndex = nextButtons.findIndex(
+      (button: TriggerButtonSettingRecord): boolean =>
+        button.id === DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID
+    );
+    if (descriptionIndex >= 0) {
+      const [descriptionButton] = nextButtons.splice(descriptionIndex, 1);
+      if (descriptionButton) {
+        const anchorIndex = nextButtons.findIndex(
+          (button: TriggerButtonSettingRecord): boolean =>
+            button.id === PARAMETER_INFERENCE_TRIGGER_BUTTON_ID
+        );
+        const inferFieldsIndex = nextButtons.findIndex(
+          (button: TriggerButtonSettingRecord): boolean =>
+            button.id === INFER_FIELDS_TRIGGER_BUTTON_ID
+        );
+        const targetIndex =
+          anchorIndex >= 0
+            ? Math.min(anchorIndex + 1, nextButtons.length)
+            : inferFieldsIndex >= 0
+              ? Math.min(inferFieldsIndex + 1, nextButtons.length)
+              : nextButtons.length;
+        nextButtons.splice(targetIndex, 0, descriptionButton);
+      }
+    }
+
+    if (JSON.stringify(nextButtons) !== JSON.stringify(parsedButtons)) {
+      const triggerButtonsValue = JSON.stringify(nextButtons);
+      map.set(AI_PATHS_TRIGGER_BUTTONS_KEY, triggerButtonsValue);
+      updates.push({
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: triggerButtonsValue,
+      });
+    }
+  }
+
+  if (updates.length === 0) return records;
+  await upsertMongoAiPathsSettingsBatch(updates);
+  return Array.from(map.entries()).map(
+    ([key, value]): AiPathsSettingRecord => ({ key, value })
+  );
+};
+
 const repairPathIndexFromConfigs = (records: Map<string, string>): string | null => {
   const existingIndexRaw = records.get(AI_PATHS_INDEX_KEY);
   const existingIndex = parsePathMetas(existingIndexRaw);
@@ -845,15 +1005,60 @@ const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean
   return locations.includes('product_modal');
 };
 
+const hasDescriptionInferenceV2Defaults = (
+  records: AiPathsSettingRecord[]
+): boolean => {
+  if (records.length === 0) return false;
+  const map = new Map<string, string>(
+    records.map((entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value])
+  );
+  const configRaw = map.get(
+    `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_V2_PATH_ID}`
+  );
+  if (needsDescriptionInferenceV2ConfigUpgrade(configRaw)) return false;
+  const configMeta = configRaw
+    ? parsePathConfigMeta(DESCRIPTION_INFERENCE_V2_PATH_ID, configRaw)
+    : null;
+  if (!configMeta) return false;
+
+  const metas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
+  const descriptionMeta = metas.find(
+    (meta: ParsedPathMeta): boolean => meta.id === DESCRIPTION_INFERENCE_V2_PATH_ID
+  );
+  if (!descriptionMeta) return false;
+
+  const buttons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
+  if (buttons === null) return false;
+  const descriptionButton = buttons.find(
+    (button: TriggerButtonSettingRecord): boolean =>
+      button.id === DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID
+  );
+  if (!descriptionButton) return false;
+  const buttonName =
+    typeof descriptionButton['name'] === 'string' ? (descriptionButton['name']).trim() : '';
+  if (buttonName !== DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_NAME) return false;
+  const locations = Array.isArray(descriptionButton['locations'])
+    ? descriptionButton['locations']
+    : [];
+  return locations.includes('product_modal');
+};
+
+const hasAiPathsSeedDefaults = (records: AiPathsSettingRecord[]): boolean =>
+  hasParameterInferenceDefaults(records) &&
+  hasDescriptionInferenceV2Defaults(records);
+
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
   const cached = getCachedAiPathsSettings();
-  if (cached && hasParameterInferenceDefaults(cached)) return cached;
+  if (cached && hasAiPathsSeedDefaults(cached)) return cached;
 
   const settings = await listMongoAiPathsSettings();
   const compacted = await compactOversizedPathConfigs(settings);
   const consistent = await ensurePathIndexConsistency(compacted);
-  const ensuredDefaults = await ensureParameterInferenceDefaults(consistent);
+  const withParameterDefaults = await ensureParameterInferenceDefaults(consistent);
+  const ensuredDefaults = await ensureDescriptionInferenceV2Defaults(
+    withParameterDefaults
+  );
   setCachedAiPathsSettings(ensuredDefaults);
   return ensuredDefaults;
 }

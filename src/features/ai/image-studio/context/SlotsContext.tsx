@@ -263,7 +263,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       return;
     }
 
-    missingWorkingSlotTrackerRef.current = null;
+    missingSelectedSlotTrackerRef.current = null;
     if (workingSlotId && slotIdSet.has(workingSlotId)) {
       setSelectedSlotId(workingSlotId);
       return;
@@ -300,7 +300,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
       return;
     }
 
-    missingSelectedSlotTrackerRef.current = null;
+    missingWorkingSlotTrackerRef.current = null;
     if (selectedSlotId && slotIdSet.has(selectedSlotId)) {
       setWorkingSlotId(selectedSlotId);
       return;

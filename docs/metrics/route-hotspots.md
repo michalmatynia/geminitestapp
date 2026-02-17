@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-17T19:33:24.551Z
+Generated at: 2026-02-17T22:24:34.071Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -24,10 +24,10 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/settings/route.ts` | 23 |
 | `src/app/api/auth/users/[id]/security/route.ts` | 21 |
 | `src/app/api/products/categories/route.ts` | 21 |
+| `src/app/api/products/simple-parameters/route.ts` | 21 |
 | `src/app/api/products/validator-settings/route.ts` | 21 |
 | `src/app/api/price-groups/route.ts` | 20 |
 | `src/app/api/products/parameters/[id]/route.ts` | 20 |
-| `src/app/api/products/validator-patterns/[id]/route.ts` | 20 |
 
 ## Top App Pages by LOC
 

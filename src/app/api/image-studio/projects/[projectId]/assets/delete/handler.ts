@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { removeImageStudioRunOutputs } from '@/features/ai/image-studio/server/run-repository';
 import {
-  deleteImageStudioSlot,
+  deleteImageStudioSlotCascade,
   listImageStudioSlots,
 } from '@/features/ai/image-studio/server/slot-repository';
 import { getImageFileRepository } from '@/features/files/server';
@@ -38,6 +38,35 @@ const asRecord = (value: unknown): Record<string, unknown> | null =>
 const asTrimmedLowerString = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   return value.trim().toLowerCase();
+};
+
+const asTrimmedString = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim();
+};
+
+const asFiniteNumber = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return value;
+};
+
+const resolveSlotIdAliases = (slotIdRaw: string): string[] => {
+  const normalized = asTrimmedString(slotIdRaw);
+  if (!normalized) return [];
+
+  const unprefixed = normalized.startsWith('slot:')
+    ? asTrimmedString(normalized.slice('slot:'.length))
+    : normalized.startsWith('card:')
+      ? asTrimmedString(normalized.slice('card:'.length))
+      : normalized;
+
+  const candidates = new Set<string>([normalized]);
+  if (unprefixed) {
+    candidates.add(unprefixed);
+    candidates.add(`slot:${unprefixed}`);
+    candidates.add(`card:${unprefixed}`);
+  }
+  return Array.from(candidates);
 };
 
 const isGenerationDerivedSlot = (metadata: unknown): boolean => {
@@ -97,36 +126,83 @@ function resolveDiskPathFromPublicUploadPath(filepath: string): string | null {
 const deleteSchema = z.object({
   id: z.string().optional(),
   filepath: z.string().optional(),
+  slotId: z.string().optional(),
+  generationRunId: z.string().optional(),
+  generationOutputIndex: z.number().optional(),
+  sourceSlotId: z.string().optional(),
 });
 
 async function deleteGenerationSlotsLinkedToAsset(params: {
   projectId: string;
   assetId?: string | null;
   filepath?: string | null;
+  slotId?: string | null;
+  generationRunId?: string | null;
+  generationOutputIndex?: number | null;
+  sourceSlotId?: string | null;
 }): Promise<void> {
   const normalizedFilepath = normalizePublicPath(params.filepath ?? null);
-  if (!params.assetId && !normalizedFilepath) return;
+  const slotIdCandidates = resolveSlotIdAliases(params.slotId ?? '');
+  const normalizedRunId = asTrimmedString(params.generationRunId);
+  const outputIndex = asFiniteNumber(params.generationOutputIndex);
+  const sourceSlotIdCandidates = resolveSlotIdAliases(params.sourceSlotId ?? '');
+  if (!params.assetId && !normalizedFilepath && slotIdCandidates.length === 0 && !normalizedRunId) return;
 
   const slots = await listImageStudioSlots(params.projectId);
   const matchedSlots = slots.filter((slot) => {
     if (!isGenerationDerivedSlot(slot.metadata)) return false;
 
+    if (slotIdCandidates.length > 0) {
+      const candidates = resolveSlotIdAliases(slot.id);
+      if (candidates.some((candidate) => slotIdCandidates.includes(candidate))) {
+        return true;
+      }
+    }
+
     if (params.assetId && slot.imageFileId === params.assetId) {
       return true;
     }
 
-    if (!normalizedFilepath) return false;
-    const slotImagePath = normalizePublicPath(slot.imageFile?.filepath ?? null);
-    if (slotImagePath && slotImagePath === normalizedFilepath) return true;
-    const slotImageUrl = normalizePublicPath(slot.imageUrl);
-    return Boolean(slotImageUrl && slotImageUrl === normalizedFilepath);
+    if (normalizedFilepath) {
+      const slotImagePath = normalizePublicPath(slot.imageFile?.filepath ?? null);
+      if (slotImagePath && slotImagePath === normalizedFilepath) return true;
+      const slotImageUrl = normalizePublicPath(slot.imageUrl);
+      if (slotImageUrl && slotImageUrl === normalizedFilepath) return true;
+    }
+
+    if (!normalizedRunId) return false;
+    const metadata = asRecord(slot.metadata);
+    const slotRunId = asTrimmedString(metadata?.['generationRunId']);
+    if (!slotRunId || slotRunId !== normalizedRunId) return false;
+    if (outputIndex !== null) {
+      const slotOutputIndex = asFiniteNumber(metadata?.['generationOutputIndex']);
+      if (slotOutputIndex !== outputIndex) return false;
+    }
+    if (sourceSlotIdCandidates.length === 0) return true;
+
+    const sourceSlotIds = new Set<string>();
+    resolveSlotIdAliases(asTrimmedString(metadata?.['sourceSlotId'])).forEach((candidate) => {
+      sourceSlotIds.add(candidate);
+    });
+    const nestedSourceIds = metadata?.['sourceSlotIds'];
+    if (Array.isArray(nestedSourceIds)) {
+      nestedSourceIds.forEach((value: unknown) => {
+        resolveSlotIdAliases(asTrimmedString(value)).forEach((candidate) => {
+          sourceSlotIds.add(candidate);
+        });
+      });
+    }
+    return sourceSlotIdCandidates.some((candidate) => sourceSlotIds.has(candidate));
   });
 
-  await Promise.allSettled(
-    matchedSlots.map(async (slot) => {
-      await deleteImageStudioSlot(slot.id);
-    })
-  );
+  const deletedSlotIds = new Set<string>();
+  for (const slot of matchedSlots) {
+    if (deletedSlotIds.has(slot.id)) continue;
+    const result = await deleteImageStudioSlotCascade(slot.id).catch(() => ({ deletedSlotIds: [] }));
+    (result.deletedSlotIds ?? []).forEach((deletedSlotId) => {
+      deletedSlotIds.add(deletedSlotId);
+    });
+  }
 }
 
 export async function POST_handler(
@@ -176,6 +252,10 @@ export async function POST_handler(
       projectId,
       assetId,
       filepath: normalized,
+      slotId: parsed.data.slotId ?? null,
+      generationRunId: parsed.data.generationRunId ?? null,
+      generationOutputIndex: parsed.data.generationOutputIndex ?? null,
+      sourceSlotId: parsed.data.sourceSlotId ?? null,
     }).catch(() => {});
     return new Response(null, { status: 204 });
   }
@@ -204,8 +284,11 @@ export async function POST_handler(
   await deleteGenerationSlotsLinkedToAsset({
     projectId,
     filepath: normalized,
+    slotId: parsed.data.slotId ?? null,
+    generationRunId: parsed.data.generationRunId ?? null,
+    generationOutputIndex: parsed.data.generationOutputIndex ?? null,
+    sourceSlotId: parsed.data.sourceSlotId ?? null,
   }).catch(() => {});
 
   return new Response(null, { status: 204 });
 }
-

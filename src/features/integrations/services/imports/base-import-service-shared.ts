@@ -10,6 +10,7 @@ import type {
   BaseImportMode,
   BaseImportPreflightIssue,
   BaseImportRunParams,
+  BaseImportRunStatus,
 } from '@/features/integrations/types/base-import-runs';
 import type { ProductRecord } from '@/features/products/types';
 import type { ProductCreateInput } from '@/features/products/validations/schemas';
@@ -178,6 +179,17 @@ export const normalizeSelectedIds = (selectedIds: string[] | undefined): string[
         .filter((id: string) => id.length > 0)
     )
   );
+
+export const shouldFilterToUniqueOnly = (input: {
+  uniqueOnly: boolean;
+  selectedIds?: string[];
+}): boolean => {
+  if (!input.uniqueOnly) return false;
+  return normalizeSelectedIds(input.selectedIds).length === 0;
+};
+
+export const shouldReuseIdempotentRun = (status: BaseImportRunStatus): boolean =>
+  status === 'queued' || status === 'running';
 
 export const resolveMode = (mode: BaseImportMode | undefined): BaseImportMode =>
   mode ?? 'upsert_on_base_id';

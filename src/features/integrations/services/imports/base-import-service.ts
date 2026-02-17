@@ -41,6 +41,8 @@ import {
   normalizeSelectedIds,
   nowIso,
   resolveMode,
+  shouldReuseIdempotentRun,
+  shouldFilterToUniqueOnly,
   type BaseConnectionContext,
   type StartBaseImportRunInput,
 } from '@/features/integrations/services/imports/base-import-service-shared';
@@ -160,7 +162,7 @@ const resolveRunItems = async (input: {
     ids = ids.slice(0, input.limit);
   }
 
-  if (!input.uniqueOnly || ids.length === 0) {
+  if (!shouldFilterToUniqueOnly(input) || ids.length === 0) {
     return ids;
   }
 
@@ -234,7 +236,7 @@ export const prepareBaseImportRun = async (
   const recentRuns = await listBaseImportRuns(100);
   const existing = recentRuns.find((run) => {
     if (run.idempotencyKey !== idempotencyKey) return false;
-    if (run.status === 'failed' || run.status === 'canceled') return false;
+    if (!shouldReuseIdempotentRun(run.status)) return false;
     const createdAtMs = new Date(run.createdAt).getTime();
     if (!Number.isFinite(createdAtMs)) return false;
     return Date.now() - createdAtMs < 30 * 60_000;

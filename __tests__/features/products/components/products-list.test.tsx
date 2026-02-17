@@ -9,8 +9,14 @@ import { http, HttpResponse } from 'msw';
 import { vi } from 'vitest';
 
 import AdminProductsPage from '@/app/(admin)/admin/products/page';
+import { getProductColumns } from '@/features/products/components/list/ProductColumns';
+import {
+  ProductListProvider,
+  type ProductListContextType,
+} from '@/features/products/context/ProductListContext';
 import { server } from '@/mocks/server';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { DataTable } from '@/shared/ui';
 import { ToastProvider } from '@/shared/ui/toast';
 
 
@@ -38,6 +44,10 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }));
 
+vi.mock('@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
+  TriggerButtonBar: () => null,
+}));
+
 const mockProducts = [
   {
     id: 'product-1',
@@ -62,6 +72,140 @@ const mockProducts = [
     images: [],
   },
 ];
+
+const buildContextValue = (
+  overrides: Partial<ProductListContextType> = {}
+): ProductListContextType => ({
+  onCreateProduct: vi.fn(),
+  onCreateFromDraft: vi.fn(),
+  activeDrafts: [],
+  page: 1,
+  totalPages: 1,
+  setPage: vi.fn(),
+  pageSize: 24,
+  setPageSize: vi.fn(),
+  nameLocale: 'name_en',
+  setNameLocale: vi.fn(),
+  languageOptions: [{ value: 'name_en', label: 'English' }],
+  currencyCode: 'USD',
+  setCurrencyCode: vi.fn(),
+  currencyOptions: ['USD'],
+  filtersCollapsedByDefault: false,
+  catalogFilter: 'all',
+  setCatalogFilter: vi.fn(),
+  catalogs: [],
+  search: '',
+  setSearch: vi.fn(),
+  sku: '',
+  setSku: vi.fn(),
+  description: '',
+  setDescription: vi.fn(),
+  categoryId: '',
+  setCategoryId: vi.fn(),
+  minPrice: undefined,
+  setMinPrice: vi.fn(),
+  maxPrice: undefined,
+  setMaxPrice: vi.fn(),
+  startDate: '',
+  setStartDate: vi.fn(),
+  endDate: '',
+  setEndDate: vi.fn(),
+  baseExported: '',
+  setBaseExported: vi.fn(),
+  data: mockProducts,
+  isLoading: false,
+  loadError: null,
+  actionError: null,
+  onDismissActionError: vi.fn(),
+  setRefreshTrigger: vi.fn(),
+  rowSelection: {},
+  setRowSelection: vi.fn(),
+  onSelectAllGlobal: vi.fn().mockResolvedValue(undefined),
+  loadingGlobal: false,
+  onDeleteSelected: vi.fn().mockResolvedValue(undefined),
+  onAddToMarketplace: vi.fn(),
+  handleProductsTableRender: vi.fn(),
+  tableColumns: getProductColumns('file', null, new Map()),
+  getRowClassName: undefined,
+  getRowId: (row) => row.id,
+  skeletonRows: null,
+  maxHeight: undefined,
+  stickyHeader: false,
+  productNameKey: 'name_en',
+  priceGroups: [],
+  onProductNameClick: vi.fn(),
+  onProductEditClick: vi.fn(),
+  onProductDeleteClick: vi.fn(),
+  onDuplicateProduct: vi.fn(),
+  onIntegrationsClick: vi.fn(),
+  onExportSettingsClick: vi.fn(),
+  integrationBadgeIds: new Set(),
+  integrationBadgeStatuses: new Map(),
+  traderaBadgeIds: new Set(),
+  traderaBadgeStatuses: new Map(),
+  queuedProductIds: new Set(),
+  isCreateOpen: false,
+  isPromptOpen: false,
+  setIsPromptOpen: vi.fn(),
+  handleConfirmSku: vi.fn().mockResolvedValue(undefined),
+  initialSku: '',
+  createDraft: null,
+  initialCatalogId: null,
+  onCloseCreate: vi.fn(),
+  onCreateSuccess: vi.fn(),
+  editingProduct: null,
+  onCloseEdit: vi.fn(),
+  onEditSuccess: vi.fn(),
+  onEditSave: vi.fn(),
+  integrationsProduct: null,
+  onCloseIntegrations: vi.fn(),
+  onStartListing: vi.fn(),
+  showListProductModal: false,
+  onCloseListProduct: vi.fn(),
+  onListProductSuccess: vi.fn(),
+  listProductPreset: null,
+  exportSettingsProduct: null,
+  onCloseExportSettings: vi.fn(),
+  onListingsUpdated: vi.fn(),
+  massListIntegration: null,
+  massListProductIds: [],
+  onCloseMassList: vi.fn(),
+  onMassListSuccess: vi.fn(),
+  showIntegrationModal: false,
+  onCloseIntegrationModal: vi.fn(),
+  onSelectIntegrationFromModal: vi.fn(),
+  ...overrides,
+});
+
+const renderProductTable = (
+  overrides: Partial<ProductListContextType> = {}
+): ProductListContextType => {
+  const contextValue = buildContextValue(overrides);
+
+  render(
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <ProductListProvider value={contextValue}>
+          <DataTable
+            columns={contextValue.tableColumns}
+            data={contextValue.data}
+            getRowId={contextValue.getRowId}
+            rowSelection={contextValue.rowSelection}
+            onRowSelectionChange={contextValue.setRowSelection}
+            isLoading={contextValue.isLoading}
+            skeletonRows={contextValue.skeletonRows}
+            getRowClassName={contextValue.getRowClassName}
+            maxHeight={contextValue.maxHeight}
+            stickyHeader={contextValue.stickyHeader}
+            meta={{ currencyCode: contextValue.currencyCode }}
+          />
+        </ProductListProvider>
+      </ToastProvider>
+    </QueryClientProvider>
+  );
+
+  return contextValue;
+};
 
 describe('Admin Products List UI', () => {
   beforeEach(() => {
@@ -96,38 +240,28 @@ describe('Admin Products List UI', () => {
   });
 
   it('renders product rows', async () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <AdminProductsPage />
-        </ToastProvider>
-      </QueryClientProvider>
-    );
+    renderProductTable();
 
-    await waitFor(() => {
-      expect(screen.getAllByLabelText('Open row actions').length).toBeGreaterThan(0);
-    }, { timeout: 5000 });
+    expect(await screen.findByText('Product Alpha')).toBeInTheDocument();
+    expect(screen.getByText('Product Beta')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Open row actions')).toHaveLength(2);
   });
 
   it('shows row actions menu with Edit, Duplicate, and Remove', async () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <AdminProductsPage />
-        </ToastProvider>
-      </QueryClientProvider>
-    );
-    await waitFor(() => {
-      expect(screen.getAllByLabelText('Open row actions').length).toBeGreaterThan(0);
-    }, { timeout: 5000 });
+    const contextValue = renderProductTable();
 
     const user = userEvent.setup();
     const actionButtons = screen.getAllByLabelText('Open row actions');
     await user.click(actionButtons[0]!);
 
-    expect(await screen.findByText('Edit')).toBeInTheDocument();
-    expect(screen.getByText('Duplicate')).toBeInTheDocument();
-    expect(screen.getByText('Remove')).toBeInTheDocument();
+    const editAction = await screen.findByRole('menuitem', { name: 'Edit' });
+    expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Remove' })).toBeInTheDocument();
+
+    await user.click(editAction);
+    expect(contextValue.onProductEditClick).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'product-1' })
+    );
   });
 
   it('prompts for SKU before opening the create modal and pre-fills SKU', async () => {
@@ -140,7 +274,8 @@ describe('Admin Products List UI', () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getAllByLabelText('Create new product')[0]!);
+    const createButtons = await screen.findAllByLabelText('Create new product');
+    await user.click(createButtons[0]!);
 
     // Interact with PromptModal
     const promptModal = await screen.findByRole('dialog', { name: /Create New Product/i });

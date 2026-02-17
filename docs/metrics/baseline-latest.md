@@ -1,19 +1,19 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T22:10:20.795Z
+Generated at: 2026-02-17T22:24:32.639Z
 
 ## Snapshot
 
-- Source files: 2767
-- Source lines: 441084
+- Source files: 2776
+- Source lines: 442729
 - use client files: 903
-- Files >= 1000 LOC: 10
+- Files >= 1000 LOC: 11
 - Files >= 1500 LOC: 5
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
-- API routes: 296
+- API routes: 297
 - API delegated server routes: 21
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 296/296 (100.0%)
+- API explicit cache policy coverage: 297/297 (100.0%)
 - Cross-feature dependency pairs: 118
 - Shared -> features imports: 15
 - setInterval occurrences: 22
@@ -68,6 +68,7 @@ Generated at: 2026-02-17T22:10:20.795Z
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 1968 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1502 |
 | `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1148 |
+| `src/features/ai/ai-paths/server/settings-store.ts` | 1126 |
 | `src/features/foldertree/master/useMasterFolderTree.ts` | 1056 |
 | `src/features/case-resolver/__tests__/settings.test.ts` | 1016 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1014 |
@@ -81,4 +82,3 @@ Generated at: 2026-02-17T22:10:20.795Z
 | `src/features/prompt-exploder/pattern-pack-rules.ts` | 990 |
 | `src/features/ai/agent-runtime/planning/llm.ts` | 989 |
 | `src/features/integrations/services/category-mapping-repository.ts` | 988 |
-| `src/app/api/integrations/products/[id]/export-to-base/handler.ts` | 986 |

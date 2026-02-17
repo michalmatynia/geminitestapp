@@ -144,16 +144,26 @@ const refreshGenerationQueries = (queryClient: QueryClient): void => {
 };
 
 const deleteVariantAssetFallback = async (
+  activeRunId: string | null,
   projectId: string | null,
+  rootVariantSourceSlotId: string | null,
   variant: VariantThumbnailInfo,
 ): Promise<void> => {
   const output = variant.output;
   if (!output || !projectId) return;
+  const runIdFromVariantId = variant.id.startsWith('run:')
+    ? variant.id.split(':')[1]?.trim() ?? ''
+    : '';
+  const generationRunId = runIdFromVariantId || activeRunId?.trim() || null;
 
   try {
     await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
       id: output.id,
       filepath: output.filepath,
+      slotId: variant.slotId ?? undefined,
+      generationRunId: generationRunId ?? undefined,
+      generationOutputIndex: Number.isFinite(variant.index) ? variant.index : undefined,
+      sourceSlotId: rootVariantSourceSlotId ?? undefined,
     });
   } catch (error: unknown) {
     if (error instanceof ApiError && error.status === 404) {
@@ -243,13 +253,14 @@ export const deleteVariantFromCenterPreview = async ({
       refreshSlots: async (): Promise<void> => {
         if (!projectId) return;
         await queryClient.invalidateQueries({ queryKey: studioKeys.slots(projectId) });
-      },      rootVariantSourceSlotId,
+      },
+      rootVariantSourceSlotId,
       slots,
       variant,
     });
 
     if (!targetSlotId) {
-      await deleteVariantAssetFallback(projectId, variant);
+      await deleteVariantAssetFallback(activeRunId, projectId, rootVariantSourceSlotId, variant);
       dismissVariantFromUi(
         buildVariantDismissKeys,
         clearActiveRunError,
@@ -273,7 +284,7 @@ export const deleteVariantFromCenterPreview = async ({
       refreshGenerationQueries(queryClient);
     } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 404) {
-        await deleteVariantAssetFallback(projectId, variant);
+        await deleteVariantAssetFallback(activeRunId, projectId, rootVariantSourceSlotId, variant);
         dismissVariantFromUi(
           buildVariantDismissKeys,
           clearActiveRunError,

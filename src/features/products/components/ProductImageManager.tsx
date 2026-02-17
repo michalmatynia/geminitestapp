@@ -17,7 +17,9 @@ import {
 import { DebugInfo, ProductImageSlot } from '@/features/products/types/products-ui';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { internalError } from '@/shared/errors/app-error';
+import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import type { ImageFileSelection } from '@/shared/types/domain/files';
 import {
   Button,
   DropdownMenu,
@@ -42,6 +44,7 @@ export type ProductImageManagerController = Pick<
   | 'setImageLinkAt'
   | 'setImageBase64At'
   | 'handleSlotImageChange'
+  | 'handleSlotFileSelect'
   | 'handleSlotDisconnectImage'
   | 'setShowFileManager'
   | 'swapImageSlots'
@@ -89,6 +92,13 @@ export default function ProductImageManager({
     uploadError,
     setImagesReordering,
   } = resolvedController;
+  const handleSlotFileSelect:
+    | ((file: ImageFileSelection | null, index: number) => void)
+    | undefined =
+    'handleSlotFileSelect' in resolvedController &&
+    typeof resolvedController.handleSlotFileSelect === 'function'
+      ? resolvedController.handleSlotFileSelect
+      : undefined;
   const setShowFileManagerForSlot: ((slotIndex: number) => void) | undefined =
     'setShowFileManagerForSlot' in resolvedController &&
     typeof resolvedController.setShowFileManagerForSlot === 'function'
@@ -121,6 +131,7 @@ export default function ProductImageManager({
     Array(imageSlots.length).fill('upload')
   );
   const [base64LoadingSlots, setBase64LoadingSlots] = useState<Record<number, boolean>>({});
+  const [linkToFileLoadingSlots, setLinkToFileLoadingSlots] = useState<Record<number, boolean>>({});
   const currentSlotIndexRef = React.useRef<number | null>(null);
   const fileInputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
   const reportedImageErrorsRef = React.useRef<Set<string>>(new Set());
@@ -278,6 +289,30 @@ export default function ProductImageManager({
       reader.onerror = (): void => reject(new Error('Failed to read image file'));
       reader.readAsDataURL(file);
     });
+
+  const extensionForMimeType = (mimetype: string): string => {
+    const normalized = mimetype.trim().toLowerCase();
+    if (normalized === 'image/png') return '.png';
+    if (normalized === 'image/webp') return '.webp';
+    if (normalized === 'image/gif') return '.gif';
+    if (normalized === 'image/avif') return '.avif';
+    if (normalized === 'image/svg+xml') return '.svg';
+    return '.jpg';
+  };
+
+  const filenameFromLink = (url: string, mimetype: string, slotIndex: number): string => {
+    try {
+      const parsed = new URL(url);
+      const pathname = parsed.pathname.trim();
+      const basename = pathname.split('/').pop()?.trim() ?? '';
+      if (basename.length > 0) {
+        return basename;
+      }
+    } catch {
+      // Fallback filename for invalid URLs.
+    }
+    return `linked-image-${slotIndex + 1}${extensionForMimeType(mimetype)}`;
+  };
 
   const convertSlotToBase64 = async (index: number): Promise<void> => {
     const slot = imageSlots[index];

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-17T22:24:32.639Z",
+  "generatedAt": "2026-02-17T22:20:11.268Z",
   "source": {
-    "totalFiles": 2776,
-    "totalLines": 442729,
+    "totalFiles": 2772,
+    "totalLines": 442385,
     "useClientFiles": 903,
     "filesOver800": 86,
     "filesOver1000": 11,
@@ -13,15 +13,15 @@
     }
   },
   "api": {
-    "totalRoutes": 297,
-    "routesWithApiHandler": 276,
+    "totalRoutes": 296,
+    "routesWithApiHandler": 275,
     "delegatedServerRoutes": 21,
     "routesWithoutApiHandler": 0,
     "forceDynamicRoutes": 75,
     "revalidateRoutes": 25,
     "routesWithCacheHeader": 0,
     "routesWithCacheOption": 20,
-    "routesWithExplicitCachePolicy": 297,
+    "routesWithExplicitCachePolicy": 296,
     "routesWithoutExplicitCachePolicy": 0,
     "topRouteHotspots": [
       {
@@ -108,7 +108,7 @@
   },
   "imports": {
     "appFeatureBarrelImports": 0,
-    "appFeatureDeepImports": 401,
+    "appFeatureDeepImports": 400,
     "sharedToFeaturesStaticImports": 0,
     "sharedToFeaturesDynamicImports": 15,
     "sharedToFeaturesTotalImports": 15
@@ -220,13 +220,13 @@
     "featureSizeByLines": [
       {
         "feature": "ai",
-        "files": 534,
-        "lines": 129426
+        "files": 532,
+        "lines": 129301
       },
       {
         "feature": "products",
         "files": 200,
-        "lines": 40166
+        "lines": 40155
       },
       {
         "feature": "cms",

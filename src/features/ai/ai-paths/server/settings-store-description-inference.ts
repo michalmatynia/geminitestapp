@@ -669,9 +669,9 @@ export const needsDescriptionInferenceV2ConfigUpgrade = (
     const nodes = Array.isArray(parsed['nodes'])
       ? (parsed['nodes'] as Array<Record<string, unknown>>)
       : [];
-    const edges = Array.isArray(parsed['edges'])
-      ? (parsed['edges'] as Array<Record<string, unknown>>)
-      : [];
+    const version =
+      typeof parsed['version'] === 'number' ? parsed['version'] : 0;
+    if (version < 1) return true;
 
     const triggerNode = nodes.find(
       (node: Record<string, unknown>) => node?.['id'] === 'node-trigger-desc-v2'
@@ -690,27 +690,6 @@ export const needsDescriptionInferenceV2ConfigUpgrade = (
         : null;
     if (triggerEvent !== DESCRIPTION_INFERENCE_V2_TRIGGER_BUTTON_ID) return true;
 
-    const hasQualityGateNodes = [
-      'node-prompt-facts-v2',
-      'node-model-facts-v2',
-      'node-prompt-draft-v2',
-      'node-model-draft-v2',
-      'node-prompt-validate-v2',
-      'node-model-validate-v2',
-      'node-compare-quality-v2',
-      'node-update-desc-final-v2',
-      'node-update-desc-fallback-v2',
-    ].every((id: string) =>
-      nodes.some((node: Record<string, unknown>) => node?.['id'] === id)
-    );
-    if (!hasQualityGateNodes) return true;
-
-    const finalUpdateNode = nodes.find(
-      (node: Record<string, unknown>) => node?.['id'] === 'node-update-desc-final-v2'
-    );
-    const fallbackUpdateNode = nodes.find(
-      (node: Record<string, unknown>) => node?.['id'] === 'node-update-desc-fallback-v2'
-    );
     const extractMappings = (node: Record<string, unknown> | undefined): Array<Record<string, unknown>> => {
       if (!node || typeof node !== 'object') return [];
       const config =
@@ -727,28 +706,13 @@ export const needsDescriptionInferenceV2ConfigUpgrade = (
         ? (database?.['mappings'] as Array<Record<string, unknown>>)
         : [];
     };
-    const finalMappings = extractMappings(finalUpdateNode);
-    const fallbackMappings = extractMappings(fallbackUpdateNode);
-    const finalWritesDescription = finalMappings.some(
-      (mapping: Record<string, unknown>) =>
-        mapping['targetPath'] === 'description_en' &&
-        mapping['sourcePort'] === 'result'
+    const hasDescriptionWriter = nodes.some((node: Record<string, unknown>) =>
+      extractMappings(node).some(
+        (mapping: Record<string, unknown>) =>
+          mapping['targetPath'] === 'description_en'
+      )
     );
-    const fallbackWritesDescription = fallbackMappings.some(
-      (mapping: Record<string, unknown>) =>
-        mapping['targetPath'] === 'description_en' &&
-        mapping['sourcePort'] === 'value'
-    );
-    if (!finalWritesDescription || !fallbackWritesDescription) return true;
-
-    const hasGateEdge = edges.some(
-      (edge: Record<string, unknown>) =>
-        edge['from'] === 'node-compare-quality-v2' &&
-        edge['to'] === 'node-router-pass-v2' &&
-        edge['fromPort'] === 'valid' &&
-        edge['toPort'] === 'valid'
-    );
-    return !hasGateEdge;
+    return !hasDescriptionWriter;
   } catch {
     return true;
   }

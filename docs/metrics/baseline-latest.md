@@ -1,14 +1,14 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-17T20:58:30.863Z
+Generated at: 2026-02-17T21:00:26.940Z
 
 ## Snapshot
 
-- Source files: 2740
-- Source lines: 437592
+- Source files: 2742
+- Source lines: 437699
 - use client files: 901
 - Files >= 1000 LOC: 8
-- Files >= 1500 LOC: 6
+- Files >= 1500 LOC: 5
 - Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
 - API routes: 294
 - API delegated server routes: 21
@@ -64,10 +64,10 @@ Generated at: 2026-02-17T20:58:30.863Z
 | --- | ---: |
 | `src/features/database/services/database-sync.ts` | 3352 |
 | `src/features/ai/ai-paths/lib/core/runtime/handlers/integration.ts` | 3289 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2604 |
+| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2603 |
 | `src/shared/ui/vector-canvas.tsx` | 2472 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2056 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1550 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1498 |
 | `src/features/case-resolver/__tests__/settings.test.ts` | 1016 |
 | `src/features/ai/image-studio/components/RightSidebar.tsx` | 1014 |
 | `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 999 |

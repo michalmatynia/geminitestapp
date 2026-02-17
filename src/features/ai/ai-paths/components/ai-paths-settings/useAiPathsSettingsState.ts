@@ -996,7 +996,7 @@ export function useAiPathsSettingsState({
     pathConfigs,
     setPathConfigs,
     paths,
-    persistPathSettings: async (...args) => { await persistPathSettings(...args); },
+    persistPathSettings,
     reportAiPathsError,
     pruneRuntimeInputs,
   });
@@ -1159,7 +1159,7 @@ export function useAiPathsSettingsState({
     paths,
     setPaths,
     setPathConfigs,
-    persistPathSettings: async (...args) => { await persistPathSettings(...args); },
+    persistPathSettings,
     persistSettingsBulk,
     reportAiPathsError,
     toast,
@@ -1205,47 +1205,11 @@ export function useAiPathsSettingsState({
     toast,
   });
 
-  const handleCopyDocsWiring = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(DOCS_WIRING_SNIPPET);
-      toast('Wiring copied to clipboard.', { variant: 'success' });
-    } catch (error) {
-      reportAiPathsError(
-        error,
-        { action: 'copyDocsWiring' },
-        'Failed to copy wiring:',
-      );
-      toast('Failed to copy wiring.', { variant: 'error' });
-    }
-  };
-
-  const handleCopyDocsDescription = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(DOCS_DESCRIPTION_SNIPPET);
-      toast('AI Description wiring copied.', { variant: 'success' });
-    } catch (error) {
-      reportAiPathsError(
-        error,
-        { action: 'copyDocsDescription' },
-        'Failed to copy wiring:',
-      );
-      toast('Failed to copy wiring.', { variant: 'error' });
-    }
-  };
-
-  const handleCopyDocsJobs = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(DOCS_JOBS_SNIPPET);
-      toast('AI job wiring copied.', { variant: 'success' });
-    } catch (error) {
-      reportAiPathsError(
-        error,
-        { action: 'copyDocsJobs' },
-        'Failed to copy wiring:',
-      );
-      toast('Failed to copy wiring.', { variant: 'error' });
-    }
-  };
+  const { handleCopyDocsWiring, handleCopyDocsDescription, handleCopyDocsJobs } =
+    useAiPathsSettingsDocsActions({
+      toast,
+      reportAiPathsError,
+    });
 
   React.useEffect((): void | (() => void) => {
     if (loading || !activePathId) return;
